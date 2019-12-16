@@ -252,8 +252,8 @@ class Handle {
 public:
   // Handle members for a Particle need to be given the name declared for that handle in the
   // particle manifest, and the 'this' pointer of the particle itself. For example:
-  //   arcs::Singleton<arcs::Data> data_{"data", this};
-  Handle(const char* name, Particle* particle);
+  //   arcs::Singleton<arcs::Data> data_{this, "data"};
+  Handle(Particle* particle, const char* name);
 
   virtual ~Handle() {}
 

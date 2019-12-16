@@ -14,7 +14,7 @@ class ReferenceClassApiTest : public TestBase<arcs::ReferenceClassApiTest_Errors
 public:
   // This handle is required so we can specify the desired inline schema in the particle spec
   // to get the generated class for testing, but we don't actually use the handle itself.
-  arcs::Singleton<arcs::ReferenceClassApiTest_Data> unused_{"data", this};
+  arcs::Singleton<arcs::ReferenceClassApiTest_Data> unused_{this, "data"};
 
   // Used to inject values into a dereference call.
   arcs::ReferenceClassApiTest_Data data_;

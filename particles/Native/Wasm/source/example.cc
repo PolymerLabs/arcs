@@ -49,8 +49,8 @@ public:
 
 private:
   // name arg must match the manifest, particle arg must be 'this'; note the {} brace style
-  arcs::Singleton<arcs::BasicParticle_Foo> foo_{"foo", this};
-  arcs::Collection<arcs::BasicParticle_Bar> bar_{"bar", this};
+  arcs::Singleton<arcs::BasicParticle_Foo> foo_{this, "foo"};
+  arcs::Collection<arcs::BasicParticle_Bar> bar_{this, "bar"};
   int num_clicks_ = 0;
 };
 
@@ -70,7 +70,7 @@ public:
   }
 
 private:
-  arcs::Collection<arcs::Watcher_Bar> bar_{"bar", this};
+  arcs::Collection<arcs::Watcher_Bar> bar_{this, "bar"};
 };
 
 

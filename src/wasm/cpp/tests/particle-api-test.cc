@@ -22,9 +22,9 @@ public:
     res_.store(out);
   }
 
-  arcs::Singleton<arcs::HandleSyncUpdateTest_Sng> sng_{"sng", this};
-  arcs::Collection<arcs::HandleSyncUpdateTest_Col> col_{"col", this};
-  arcs::Collection<arcs::HandleSyncUpdateTest_Res> res_{"res", this};
+  arcs::Singleton<arcs::HandleSyncUpdateTest_Sng> sng_{this, "sng"};
+  arcs::Collection<arcs::HandleSyncUpdateTest_Col> col_{this, "col"};
+  arcs::Collection<arcs::HandleSyncUpdateTest_Res> res_{this, "res"};
 };
 
 DEFINE_PARTICLE(HandleSyncUpdateTest)
@@ -45,7 +45,7 @@ public:
     renderSlot("root", flags._template(), flags.model());
   }
 
-  arcs::Singleton<arcs::RenderTest_Flags> flags_{"flags", this};
+  arcs::Singleton<arcs::RenderTest_Flags> flags_{this, "flags"};
 };
 
 DEFINE_PARTICLE(RenderTest)
@@ -62,7 +62,7 @@ public:
     return data.has_txt() ? data.txt() : "empty";
   }
 
-  arcs::Singleton<arcs::AutoRenderTest_Data> data_{"data", this};
+  arcs::Singleton<arcs::AutoRenderTest_Data> data_{this, "data"};
 };
 
 DEFINE_PARTICLE(AutoRenderTest)
@@ -77,7 +77,7 @@ public:
     output_.set(out);
   }
 
-  arcs::Singleton<arcs::EventsTest_Output> output_{"output", this};
+  arcs::Singleton<arcs::EventsTest_Output> output_{this, "output"};
 };
 
 DEFINE_PARTICLE(EventsTest)
@@ -111,7 +111,7 @@ public:
     output_.store(out);
   }
 
-  arcs::Collection<arcs::ServicesTest_Output> output_{"output", this};
+  arcs::Collection<arcs::ServicesTest_Output> output_{this, "output"};
 };
 
 DEFINE_PARTICLE(ServicesTest)
