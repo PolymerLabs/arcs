@@ -185,7 +185,10 @@ describe('FindHostedParticle', () => {
     assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
     delete particleSpec.id;
     await arc.idle;
-    console.log('arc idle');
-    assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
+    if (Flags.useNewStorageStack) {
+      assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec.toLiteral());
+    } else {
+      assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
+    }
   });
 });

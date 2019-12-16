@@ -69,6 +69,10 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
   }
 
+  toManifestString(): string {
+    return `'${this._id}'`;
+  }
+
   get entityClass(): EntityClass {
     if (this.type instanceof EntityType) {
       return Entity.createEntityClass(this.type.entitySchema, null);
@@ -197,7 +201,7 @@ class ImmediateSerializer implements Serializer<ParticleSpec, Referenceable> {
   }
 
   deserialize(value)  {
-    return value.rawData;
+    return ParticleSpec.fromLiteral(value.rawData);
   }
 }
 
