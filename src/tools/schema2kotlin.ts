@@ -22,15 +22,15 @@ const keywords = [
   'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
   'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
   'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'field', 'it', 'internalId'
+  'suspend', 'tailrec', 'vararg', 'it', 'internalId'
 ];
 
 const typeMap = {
-  'T': {type: 'String', decodeFn: 'decodeText()'},
-  'U': {type: 'String', decodeFn: 'decodeText()'},
-  'N': {type: 'Double', decodeFn: 'decodeNum()'},
-  'B': {type: 'Boolean', decodeFn: 'decodeBool()'},
-  'R': {type: '', decodeFn: ''},
+  'T': {type: 'String', decodeFn: 'decodeText()', delegate: `TextDelegate()`},
+  'U': {type: 'String', decodeFn: 'decodeText()', delegate: `TextDelegate()`},
+  'N': {type: 'Double', decodeFn: 'decodeNum()', delegate: 'NumDelegate()'},
+  'B': {type: 'Boolean', decodeFn: 'decodeBool()', delegate: 'BooleanDelegate()'},
+  'R': {type: '', decodeFn: '', delegate: ''},
 };
 
 export class Schema2Kotlin extends Schema2Base {
@@ -55,33 +55,82 @@ ${withCustomPackage(`import arcs.Particle;
 import arcs.Entity
 import arcs.StringEncoder
 import arcs.StringDecoder
-`)}`;
+`)}
+import kotlin.reflect.KProperty`;
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
     return new KotlinGenerator(node);
   }
+
+  fileFooter(): string { 
+    console.log(`child`);
+    return `
+class TextDelegate {
+    var isSet = false
+    var v = ""
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
+        return v
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
+        this.isSet = true
+        this.v = value
+    }
+}
+
+class NumDelegate {
+    var isSet = false
+    var v = 0.0
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): Double {
+        return v
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Double) {
+        this.isSet = true
+        this.v = value
+    }
+}
+
+class BooleanDelegate {
+    var isSet = false
+    var v = false
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean {
+        return v
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
+        this.isSet = true
+        this.v = value
+    }
+}
+`;
+  }
 }
 
 class KotlinGenerator implements ClassGenerator {
   fields: string[] = [];
+  fieldVals: string[] = [];
+  fieldSets: string[] = [];
   encode: string[] = [];
   decode: string[] = [];
 
   constructor(readonly node: SchemaNode) {}
 
   addField(field: string, typeChar: string) {
-    const {type, decodeFn} = typeMap[typeChar];
+    const {type, decodeFn, delegate} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
 
-    this.fields.push(`var ${fixed}: ${type}`);
+    this.fields.push(`${fixed}: ${type}`);
+    this.fieldVals.push(`var ${fixed} by ${delegate}`);
+    this.fieldSets.push(`this.${fixed} = ${fixed}`)
 
     this.decode.push(`"${field}" -> {`,
-                     `  decoder.validate("${typeChar}")`,
-                     `  this.${fixed} = decoder.${decodeFn}`,
+                     `    decoder.validate("${typeChar}")`,
+                     `    this.${fixed} = decoder.${decodeFn}`,
                      `}`);
-
-    this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", it) }`);
+                     
+    this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
   }
 
   addReference(field: string, refName: string) {
@@ -101,39 +150,44 @@ class KotlinGenerator implements ClassGenerator {
 
     return `\
 
-${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  ')}\n`) }) : Entity<${name}>() {
+class ${name}() : Entity<${name}>() {
 
-  override fun decodeEntity(encoded: String): ${name}? {
-    if (encoded.isEmpty()) return null
+    ${ withFields(`${this.fieldVals.join('\n    ')}`) }
 
-    val decoder = StringDecoder(encoded)
-    internalId = decoder.decodeText()
-    decoder.validate("|")
-    ${withFields(`  for (_i in 0 until ${fieldCount}) {
-         if (decoder.done()) break
-         val name = decoder.upTo(":")
-         when (name) {
-           ${this.decode.join('\n           ')}
-         }
-         decoder.validate("|")
-        }
-   `)}
+    constructor(${ withFields(`\n        ${this.fields.join(',\n        ')}\n    `) }): this() {
+        ${ withFields(`${this.fieldSets.join('\n        ')}`)}
+    }
+  
 
-    return this
+    override fun decodeEntity(encoded: String): ${name}? {
+        if (encoded.isEmpty()) return null
+
+        val decoder = StringDecoder(encoded)
+        internalId = decoder.decodeText()
+        decoder.validate("|")
+        ${withFields(`for (_i in 0 until ${fieldCount}) {
+            if (decoder.done()) break
+            val name = decoder.upTo(":")
+            when (name) {
+                ${this.decode.join('\n                ')}
+            }
+            decoder.validate("|")
+        }`)}
+        return this
+    }
+
+    override fun encodeEntity(): String {
+        val encoder = StringEncoder()
+        encoder.encode("", internalId)
+        ${this.encode.join('\n        ')}
+        return encoder.result()
+    }
+    ${withoutFields(`
+    override fun toString(): String {
+        return "${name}()"
+    }`)}
   }
-
-  override fun encodeEntity(): String {
-    val encoder = StringEncoder()
-    encoder.encode("", internalId)
-    ${this.encode.join('\n    ')}
-    return encoder.result()
-  }
-  ${withoutFields(`
-  override fun toString(): String {
-    return "${name}()"
-  }`)}
-}
 ${typeDecls}
-`;
+`
   }
 }
