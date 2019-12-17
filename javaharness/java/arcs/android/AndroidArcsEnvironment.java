@@ -162,6 +162,7 @@ final class AndroidArcsEnvironment {
     if (settings.useCacheManager()) {
       url += "&use-cache";
     }
+    url += "&systrace=" + settings.systemTraceChannel();
 
     Log.i("Arcs", "runtime url: " + url);
     webView.loadUrl(url);

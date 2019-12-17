@@ -25,6 +25,8 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   private static final String DEV_SERVER_PORT_PROPERTY = "debug.arcs.runtime.dev_server_port";
   // Equivalent to &use-cache parameter
   private static final String USE_CACHE_MANAGER_PROPERTY = "debug.arcs.runtime.use_cache_mgr";
+  // Equivalent to &systrace parameter
+  private static final String SYSTEM_TRACE_CHANNEL_PROPERTY = "debug.arcs.runtime.systrace";
 
   // Default settings:
   // Logs the most information
@@ -44,6 +46,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   private static final int DEFAULT_DEV_SERVER_PORT = 8786;
   // Activates the Arcs Cache Manager.
   private static final boolean DEFAULT_USE_CACHE_MANAGER = true;
+  private static final String DEFAULT_SYSTEM_TRACE_CHANNEL = "";
 
   private static final Logger logger = Logger.getLogger(
       AndroidRuntimeSettings.class.getName());
@@ -56,6 +59,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
     abstract boolean loadAssetsFromWorkstation();
     abstract int devServerPort();
     abstract boolean useCacheManager();
+    abstract String systemTraceChannel();
 
     static Builder builder() {
       return new AutoValue_AndroidRuntimeSettings_Settings.Builder();
@@ -69,6 +73,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
       abstract Builder setLoadAssetsFromWorkstation(boolean loadAssetsFromWorkstation);
       abstract Builder setDevServerPort(int devServerPort);
       abstract Builder setUseCacheManager(boolean useCacheManager);
+      abstract Builder setSystemTraceChannel(String systemTraceChannel);
       abstract Settings build();
     }
   }
@@ -95,6 +100,11 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
             getProperty(DEV_SERVER_PORT_PROPERTY, Integer::valueOf, DEFAULT_DEV_SERVER_PORT))
         .setUseCacheManager(
             getProperty(USE_CACHE_MANAGER_PROPERTY, Boolean::valueOf, DEFAULT_USE_CACHE_MANAGER))
+        .setSystemTraceChannel(
+            getProperty(
+                SYSTEM_TRACE_CHANNEL_PROPERTY,
+                String::valueOf,
+                DEFAULT_SYSTEM_TRACE_CHANNEL))
         .build();
   }
 
@@ -126,6 +136,11 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   @Override
   public boolean useCacheManager() {
     return settings.useCacheManager();
+  }
+
+  @Override
+  public String systemTraceChannel() {
+    return settings.systemTraceChannel();
   }
 
   /**
