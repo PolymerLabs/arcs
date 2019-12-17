@@ -13,7 +13,7 @@ kt_android_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/internal",
-        "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data:entity",
         "//java/arcs/core/data/util",
         "//third_party/java/jsr305_annotations",
     ],
