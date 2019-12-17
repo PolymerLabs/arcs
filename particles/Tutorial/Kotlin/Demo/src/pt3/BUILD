@@ -14,4 +14,3 @@ arcs_kt_particles(
     srcs = glob(["*.kt"]),
     deps = [":game_schemas"],
 )
-
