@@ -15,6 +15,9 @@ import android.content.ComponentName
 import android.content.ServiceConnection
 import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.crdt.ParcelableCrdtType
+import arcs.android.storage.ParcelableStoreOptions
+import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.ExistenceCriteria
@@ -24,9 +27,6 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.storage.ParcelableStoreOptions
-import arcs.android.storage.toParcelable
 import arcs.sdk.android.storage.service.BindingContext
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DeferredResult
@@ -42,7 +42,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Tests for the [ServiceStore]. */
+/** Unit-Tests for the [ServiceStore]. */
 @RunWith(AndroidJUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
 class ServiceStoreTest {
