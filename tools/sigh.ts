@@ -585,10 +585,19 @@ async function cycles(args: string[]): Promise<boolean> {
     sighLog('');
   }
 
-  // TODO For now this is just informative, so always succeeds. Once all circular
-  // dependencies are removed, it should return the result code to fail if any
-  // are found.
-  return true;
+  // This should only go down!
+  // Please adjust this number down when you remove cycles.
+  // https://github.com/PolymerLabs/arcs/issues/1878
+  const CURRENT_NUMBER_OF_CYCLES = 13;
+
+  if (res.length > CURRENT_NUMBER_OF_CYCLES)  {
+    sighLog('You seem to have added a dependency cycle, please refactor your code.');
+  } else if (res.length < CURRENT_NUMBER_OF_CYCLES) {
+    sighLog(`Congrats! You've removed a dependency cycle.\n` +
+        'Please adjust the CURRENT_NUMBER_OF_CYCLES constant in sigh.ts.');
+  }
+
+  return res.length === CURRENT_NUMBER_OF_CYCLES;
 }
 
 function licenses(): boolean {
