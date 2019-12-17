@@ -313,12 +313,13 @@ describe.only('Arc', () => {
       assert.fail();
     } catch (e) {
       console.log(e);
-      assert.isTrue(e.toString().includes('store \'storeInContext\' was not found'));
+      assert.isTrue(e.toString().includes('store \'storeInContext\'')); // with "use" fate was not found'));
     }
 
     const arc = await runtime.newArc('test2', Flags.useNewStorageStack ? null : 'volatile://');
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     await arc.createStore(thingClass.type, 'name', 'storeInArc');
+    console.log(arc.activeRecipe.toString());
     const resolver = new RecipeResolver(arc);
 
     // Fails resolving a recipe with 'copy' handle for store in the arc (not in context).

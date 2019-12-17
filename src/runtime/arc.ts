@@ -430,6 +430,8 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
 
   async mergeIntoActiveRecipe(recipe: Recipe) {
     const {handles, particles, slots} = recipe.mergeInto(this._activeRecipe);
+    // handles represents only the new handles; it doesn't include 'use' handles that have
+    // resolved against the existing recipe.
     this._recipeDeltas.push({particles, handles, slots, patterns: recipe.patterns});
 
     // TODO(mmandlis, jopra): Get rid of populating the missing local slot & slandle IDs here,
@@ -441,7 +443,16 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
       }
     });
 
+    console.log('------------------');
+    console.log(recipe.toString());
+    console.log(handles.map(a => a.id));
+
+
     for (const recipeHandle of handles) {
+      if (recipeHandle.fate === 'use') {
+        // throw new Error(`store '${recipeHandle.id}' with "use" fate was not found in recipe`);
+      }
+
       const store = this.context.findStoreById(recipeHandle.id);
       // TODO(sjmiles): I added `(store instanceof StorageStub)` clause below because the context generators used
       // in shells/* work today by creating and updating inflated stores in the context.
