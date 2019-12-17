@@ -1,3 +1,9 @@
+package arcs.api;
+
+public class SingletonProxy {
+
+}
+
 // package arcs.api;
 
 // public class SingletonProxy extends StorageProxy implements SingletonStore {
