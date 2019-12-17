@@ -36,6 +36,10 @@ data class ReferenceModeStorageKey(
             StorageKeyParser.addParser(REFERENCE_MODE_PROTOCOL, ::fromString)
         }
 
+        fun registerParser() {
+            StorageKeyParser.addParser(REFERENCE_MODE_PROTOCOL, ::fromString)
+        }
+
         private fun fromString(rawValue: String): ReferenceModeStorageKey {
             val invalidFormatMessage: () -> String =
                 { "Invalid format for ReferenceModeStorageKey: $rawValue" }
@@ -76,7 +80,7 @@ data class ReferenceModeStorageKey(
 }
 
 /* internal */ fun String.unEmbed(): StorageKey =
-    StorageKeyParser.parse(replace("\\{\\{".toRegex(), "{").replace("}}".toRegex(), "}"))
+    StorageKeyParser.parse(replace("\\{\\{".toRegex(), "{").replace("\\}\\}".toRegex(), "}"))
 
 /* internal */ fun StorageKey.embed() =
-    toString().replace("\\{".toRegex(), "{{").replace("}".toRegex(), "}}")
+    toString().replace("\\{".toRegex(), "{{").replace("\\}".toRegex(), "}}")

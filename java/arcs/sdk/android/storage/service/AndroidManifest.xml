@@ -10,13 +10,13 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="arcs.storage.service">
+        package="arcs.sdk.android.storage.service">
 
     <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="29"/>
 
     <application>
         <!-- Service entry for the StorageService. -->
-        <service android:name="arcs.sdk.android.storage.service.StorageService" android:exported="false" />
+        <service android:name=".StorageService" android:exported="false" android:process=":storage" />
     </application>
 
 </manifest>
