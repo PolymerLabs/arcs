@@ -19,8 +19,8 @@ class EntityClassApiTest : public TestBase<arcs::EntityClassApiTest_Errors> {
 public:
   // These handles are required so we can specify the desired inline schemas in the particle spec
   // to get the generated classes for testing, but we don't actually use the handles themselves.
-  arcs::Singleton<arcs::EntityClassApiTest_Data> unused1_{"data", this};
-  arcs::Singleton<arcs::EntityClassApiTest_Empty> unused2_{"empty", this};
+  arcs::Singleton<arcs::EntityClassApiTest_Data> unused1_{this, "data"};
+  arcs::Singleton<arcs::EntityClassApiTest_Empty> unused2_{this, "empty"};
 
   void init() override {
     RUN(test_field_methods);
@@ -584,7 +584,7 @@ class SpecialSchemaFieldsTest : public TestBase<arcs::SpecialSchemaFieldsTest_Er
 public:
   // This handle is required so we can specify the desired inline schema in the particle spec
   // to get the generated class for testing, but we don't actually use the handle itself.
-  arcs::Singleton<arcs::SpecialSchemaFieldsTest_Fields> unused_{"fields", this};
+  arcs::Singleton<arcs::SpecialSchemaFieldsTest_Fields> unused_{this, "fields"};
 
   void init() override {
     RUN(test_language_keyword_field);

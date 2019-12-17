@@ -31,8 +31,8 @@ public:
     personOut.set(out);
   }
 
-  arcs::Singleton<arcs::Test_Person> personIn{"personIn", this};
-  arcs::Singleton<arcs::Test_Person> personOut{"personOut", this};
+  arcs::Singleton<arcs::Test_Person> personIn{this, "personIn"};
+  arcs::Singleton<arcs::Test_Person> personOut{this, "personOut"};
 };
 
 DEFINE_PARTICLE(ReloadHandleTest);

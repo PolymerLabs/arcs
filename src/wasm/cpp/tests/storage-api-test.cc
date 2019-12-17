@@ -20,9 +20,9 @@ public:
     }
   }
 
-  arcs::Singleton<arcs::SingletonApiTest_InHandle> in_{"inHandle", this};
-  arcs::Singleton<arcs::SingletonApiTest_OutHandle> out_{"outHandle", this};
-  arcs::Singleton<arcs::SingletonApiTest_IoHandle> io_{"ioHandle", this};
+  arcs::Singleton<arcs::SingletonApiTest_InHandle> in_{this, "inHandle"};
+  arcs::Singleton<arcs::SingletonApiTest_OutHandle> out_{this, "outHandle"};
+  arcs::Singleton<arcs::SingletonApiTest_IoHandle> io_{this, "ioHandle"};
 };
 
 DEFINE_PARTICLE(SingletonApiTest)
@@ -92,9 +92,9 @@ public:
     }
   }
 
-  arcs::Collection<arcs::CollectionApiTest_InHandle> in_{"inHandle", this};
-  arcs::Collection<arcs::CollectionApiTest_OutHandle> out_{"outHandle", this};
-  arcs::Collection<arcs::CollectionApiTest_IoHandle> io_{"ioHandle", this};
+  arcs::Collection<arcs::CollectionApiTest_InHandle> in_{this, "inHandle"};
+  arcs::Collection<arcs::CollectionApiTest_OutHandle> out_{this, "outHandle"};
+  arcs::Collection<arcs::CollectionApiTest_IoHandle> io_{this, "ioHandle"};
   arcs::CollectionApiTest_OutHandle stored_;
 };
 
@@ -133,9 +133,9 @@ public:
     res_.store(d);
   }
 
-  arcs::Singleton<arcs::Ref<arcs::ReferenceHandlesTest_Sng>> sng_{"sng", this};
-  arcs::Collection<arcs::Ref<arcs::ReferenceHandlesTest_Col>> col_{"col", this};
-  arcs::Collection<arcs::ReferenceHandlesTest_Res> res_{"res", this};
+  arcs::Singleton<arcs::Ref<arcs::ReferenceHandlesTest_Sng>> sng_{this, "sng"};
+  arcs::Collection<arcs::Ref<arcs::ReferenceHandlesTest_Col>> col_{this, "col"};
+  arcs::Collection<arcs::ReferenceHandlesTest_Res> res_{this, "res"};
 };
 
 DEFINE_PARTICLE(ReferenceHandlesTest)
@@ -177,9 +177,9 @@ public:
     res_.store(d);
   }
 
-  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Input> input_{"input", this};
-  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Output> output_{"output", this};
-  arcs::Collection<arcs::SchemaReferenceFieldsTest_Res> res_{"res", this};
+  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Input> input_{this, "input"};
+  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Output> output_{this, "output"};
+  arcs::Collection<arcs::SchemaReferenceFieldsTest_Res> res_{this, "res"};
 };
 
 DEFINE_PARTICLE(SchemaReferenceFieldsTest)

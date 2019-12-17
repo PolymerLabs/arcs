@@ -71,7 +71,7 @@ public:
   }
 
   std::string test_name_;
-  arcs::Collection<T> errors_{"errors", this};
+  arcs::Collection<T> errors_{this, "errors"};
   char marker_;
 };
 
