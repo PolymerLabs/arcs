@@ -411,3 +411,43 @@ be populate with the avatar set in the resource. By using this
 sample code, this is an "X".
 
 Next up, adding the computer player!
+
+## Execute with Random Compute
+So you can click around the board. While this is cool because it
+means we're on our way to being able to play the game, it is
+rather boring. It also makes it far too easy to win. So let's
+create a computer to play against!
+
+To do this, we need the game to understand that there are two
+players, and they need to alternate turns. As a result we need
+to add a currentPlayer field to gameState. Because we want to
+handle personal player information, such as the name, with care,
+we will make this an id integer. This in turn means we need to
+update Person to include an id.
+
+In addition, we need to add a random computer particle, along
+with the associated additional handles for a second player.
+All of these changes can be viewed here in the [Arcs Manifest
+File](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTGame.arcs).
+
+We also need the game to verify that moves are only accepted from
+the current player and that each player only attempts to move
+when it is their turn. This implementation can be seen in the
+updated
+[Game particle here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTGame.kt).
+
+Inside the human player particle, we need to update it to only
+execute when the human player is the current player. This can
+be seen in the
+[code here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTHumanPlayer.kt).
+
+And now we can get to the whole point of this tutorial, the
+random computer! Within this particle, we need to find the
+empty cells on the board, and then pick one of them at
+random. While this may not be the most exciting computer to
+play against, it is sufficient to see how Arcs works. The
+code for the random computer particle can be
+[viewed here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTRandomComputer.kt).
+
+And, as always, we end with the updated
+[build file](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/BUILD).
