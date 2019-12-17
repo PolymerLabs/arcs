@@ -54,7 +54,7 @@ def arcs_kt_particles(name, srcs = [], deps = [], visibility = None):
         if not src.endswith(".kt"):
             fail("%s is not a Kotlin file (must end in .kt)" % src)
         particle = src[:-3]
-        wasm_lib = particle + _WASM_SUFFIX + "-lib"
+        wasm_lib = particle + "-lib" + _WASM_SUFFIX
         kt_native_library(
             name = wasm_lib,
             srcs = [src],

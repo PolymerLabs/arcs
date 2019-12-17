@@ -14,7 +14,19 @@ arcs_kt_schema(
 
 arcs_kt_particles(
     name = "test-module",
-    srcs = glob(["*.kt"]),
+    srcs = glob(
+        ["*.kt"],
+        exclude = ["TestBase.kt"],
+    ),
     visibility = ["//visibility:public"],
+    deps = [
+        ":TestBase-lib",
+        ":schemas",
+    ],
+)
+
+arcs_kt_particles(
+    name = "TestBase",
+    srcs = ["TestBase.kt"],
     deps = [":schemas"],
 )
