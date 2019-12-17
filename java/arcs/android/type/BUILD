@@ -10,7 +10,6 @@ kt_android_library(
     idl_parcelables = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
-        "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/type",
     ],
