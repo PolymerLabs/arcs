@@ -470,8 +470,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
           assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
           const particleClone = particleSpec.clone().toLiteral();
           particleClone.id = newStore.id;
-          // TODO(shans): clean this up when we have interfaces for Singleton, Collection, etc.
-          // tslint:disable-next-line: no-any
+
           if (Flags.useNewStorageStack) {
             const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type);
             const handle = unifiedHandleFor({proxy, idGenerator: this.idGenerator, particleId: this.generateID().toString()});
@@ -523,6 +522,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
           if (!type.isSingleton && !type.isCollectionType()) {
             type = new SingletonType(type);
           }
+          console.log(storageKey);
           const store = new Store({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id});
           assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
           await this._registerStore(store, recipeHandle.tags);

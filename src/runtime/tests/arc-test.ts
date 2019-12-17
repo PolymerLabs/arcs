@@ -169,16 +169,19 @@ describe('Arc new storage', () => {
     assert.deepEqual(refVarData, d4);
   }));
 });
-describe('Arc', () => {
+
+const doSetup = async () => Flags.useNewStorageStack ? setup(arcId => new VolatileStorageKey(arcId, '')) : setup('volatile://');
+
+describe.only('Arc', () => {
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();
-    const arc = runtime.newArc('test', 'volatile://');
+    const arc = runtime.newArc('test', Flags.useNewStorageStack ? null : 'volatile://');
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
   });
 
   it('applies existing stores to a particle', async () => {
-    const {arc, recipe, Foo, Bar} = await setup('volatile://');
+    const {arc, recipe, Foo, Bar} = await doSetup();
     const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     const fooHandle = await singletonHandleForTest(arc, fooStore);
@@ -194,7 +197,7 @@ describe('Arc', () => {
   });
 
   it('applies new stores to a particle ', async () => {
-    const {arc, recipe, Foo, Bar} = await setup('volatile://');
+    const {arc, recipe, Foo, Bar} = await doSetup();
     const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     const fooHandle = await singletonHandleForTest(arc, fooStore);
@@ -233,7 +236,7 @@ describe('Arc', () => {
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const id = ArcId.newForTest('test');
-    const storageKey = 'volatile://' + id.toString();
+    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -261,7 +264,9 @@ describe('Arc', () => {
     assert.isNull(await dHandle.get());
   });
 
-  it('instantiates recipes only if fate is correct', async () => {
+  it.only('instantiates recipes only if fate is correct', async () => {
+    const data = Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[]';
+    const type = Flags.useNewStorageStack ? '![Thing]' : 'Thing';
     const manifest = await Manifest.parse(`
       schema Thing
       particle A in 'a.js'
@@ -284,9 +289,9 @@ describe('Arc', () => {
           thing: h0
       resource MyThing
         start
-        [
-        ]
-      store ThingStore of Thing 'storeInContext' in MyThing
+        ${data}
+
+      store ThingStore of ${type} 'storeInContext' in MyThing
     `);
     assert.isTrue(manifest.recipes.every(r => r.normalize()));
     assert.isTrue(manifest.recipes[0].isResolved());
@@ -300,19 +305,20 @@ describe('Arc', () => {
     const runtime = new Runtime(loader, FakeSlotComposer, manifest);
 
     // Successfully instantiates a recipe with 'copy' handle for store in a context.
-    await runtime.newArc('test0', 'volatile://').instantiate(manifest.recipes[0]);
+    await runtime.newArc('test0', Flags.useNewStorageStack ? null : 'volatile://').instantiate(manifest.recipes[0]);
 
     // Fails instantiating a recipe with 'use' handle for store in a context.
     try {
-      await runtime.newArc('test1', 'volatile://').instantiate(manifest.recipes[1]);
+      await runtime.newArc('test1', Flags.useNewStorageStack ? null : 'volatile://').instantiate(manifest.recipes[1]);
       assert.fail();
     } catch (e) {
+      console.log(e);
       assert.isTrue(e.toString().includes('store \'storeInContext\' was not found'));
     }
 
-    const arc = await runtime.newArc('test2', 'volatile://');
+    const arc = await runtime.newArc('test2', Flags.useNewStorageStack ? null : 'volatile://');
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-    const thingStore = await arc.createStore(thingClass.type, 'name', 'storeInArc');
+    await arc.createStore(thingClass.type, 'name', 'storeInArc');
     const resolver = new RecipeResolver(arc);
 
     // Fails resolving a recipe with 'copy' handle for store in the arc (not in context).
