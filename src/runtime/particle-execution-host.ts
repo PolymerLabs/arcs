@@ -32,7 +32,7 @@ import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
 import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import {getExternalTraceApis} from '../tracelib/systrace-helpers.js';
+import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -171,9 +171,16 @@ export class ParticleExecutionHost {
 
 class PECOuterPortImpl extends PECOuterPort {
   arc: Arc;
+  readonly externalTraceClient: Client | undefined;
+
   constructor(port, arc: Arc) {
     super(port, arc);
     this.arc = arc;
+
+    const clientClass = getClientClass();
+    if (clientClass) {
+      this.externalTraceClient = new clientClass();
+    }
   }
 
   onRender(particle: Particle, slotName: string, content: Content) {
@@ -409,16 +416,14 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   onExternalTraceBegin(tag: string, cookie: number) {
-    if (getExternalTraceApis().asyncTraceBegin) {
-      ((...args) => getExternalTraceApis().asyncTraceBegin(...args))(
-          tag, cookie);
+    if (this.externalTraceClient) {
+      this.externalTraceClient.asyncTraceBegin(tag, cookie);
     }
   }
 
   onExternalTraceEnd(tag: string, cookie: number) {
-    if (getExternalTraceApis().asyncTraceEnd) {
-      ((...args) => getExternalTraceApis().asyncTraceEnd(...args))(
-          tag, cookie);
+    if (this.externalTraceClient) {
+      this.externalTraceClient.asyncTraceEnd(tag, cookie);
     }
   }
 }
