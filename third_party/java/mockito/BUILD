@@ -6,3 +6,8 @@ alias(
     name = "mockito",
     actual = "@maven//:org_mockito_mockito_core",
 )
+
+alias(
+    name = "mockito-android",
+    actual = "@maven//:org_mockito_mockito_core",
+)

@@ -16,7 +16,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
         "//java/arcs/core/testutil",
-        "//third_party/java/junit",
-        "//third_party/java/truth",
+        "//third_party/java/junit:junit-android",
+        "//third_party/java/truth:truth-android",
     ],
 )

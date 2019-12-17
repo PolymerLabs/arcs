@@ -23,6 +23,8 @@ def arcs_kt_jvm_library(**kwargs):
             "PackageName",
             "TopLevelName",
         ]
+        kwargs["constraints"] = ["android"]
+
     kt_jvm_library(**kwargs)
 
 def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
@@ -137,12 +139,23 @@ def kt_jvm_and_js_library(
         # kt_jvm_library doesn't support the "exports" property. Instead, we
         # will wrap it in a java_library rule and export everything that is
         # needed from there.
+        #
+        # Also, 'constraints' doesn't exist for java_library in Bazel, so we have to fork based on
+        # that as well.
         kt_name = name + _KT_SUFFIX
-        java_library(
-            name = name,
-            exports = exports + [kt_name],
-            visibility = visibility,
-        )
+        if IS_BAZEL:
+            java_library(
+                name = name,
+                exports = exports + [kt_name],
+                visibility = visibility,
+            )
+        else:
+            java_library(
+                name = name,
+                exports = exports + [kt_name],
+                visibility = visibility,
+                constraints = ["android"],
+            )
 
     arcs_kt_jvm_library(
         name = kt_name,
@@ -197,6 +210,10 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
         deps = deps,
     )
 
+    android_local_test_deps = [":%s" % name]
+    if IS_BAZEL:
+        android_local_test_deps.append("@robolectric//bazel:android-all")
+
     for src in native.glob(["*.kt"]):
         class_name = src[:-3]
         android_local_test(
@@ -205,10 +222,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             manifest = manifest,
             test_class = "%s.%s" % (package, class_name),
             tags = tags,
-            deps = [
-                ":%s" % name,
-                "@robolectric//bazel:android-all",
-            ],
+            deps = android_local_test_deps,
         )
 
 def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
