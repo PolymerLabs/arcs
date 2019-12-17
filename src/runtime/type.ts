@@ -154,6 +154,10 @@ export abstract class Type {
     return false;
   }
 
+  get isInterface(): boolean {
+    return false;
+  }
+
   collectionOf() {
     return new CollectionType(this);
   }

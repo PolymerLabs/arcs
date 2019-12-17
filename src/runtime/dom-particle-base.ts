@@ -13,7 +13,6 @@ import {BigCollection, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
-import {PreEntityMutationHandle, CollectionHandle} from './storageNG/handle.js';
 
 export type RenderModel = object;
 

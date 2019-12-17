@@ -18,6 +18,8 @@ import {InterfaceType} from '../../../runtime/type.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
+import {singletonHandleForTest} from '../../../runtime/testing/handle-for-test.js';
+import {Flags} from '../../../runtime/flags.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
@@ -172,9 +174,22 @@ describe('FindHostedParticle', () => {
 
     assert.isEmpty(arc._stores);
     await arc.instantiate(outRecipe);
-    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType) as SingletonStorageProvider;
-    const particleSpec = await particleSpecStore.get();
+    // TODO(shans): This is not really the right way to look for stores on an arc...
+    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType || store.type.getContainedType() instanceof InterfaceType);
+    let particleSpec;
+    if (Flags.useNewStorageStack) {
+      const handle = await singletonHandleForTest(arc, particleSpecStore);
+      particleSpec = await handle.get();
+    } else {
+      particleSpec = await (particleSpecStore as SingletonStorageProvider).get();
+    }
     assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
-    delete particleSpec.id;    assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
+    delete particleSpec.id;
+    await arc.idle;
+    if (Flags.useNewStorageStack) {
+      assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec.toLiteral());
+    } else {
+      assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
+    }
   });
 });

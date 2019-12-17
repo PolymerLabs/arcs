@@ -18,7 +18,6 @@ import {Relevance} from './relevance.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
-import {PreEntityMutationHandle} from './storageNG/handle.js';
 
 export interface Capabilities {
   constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>;

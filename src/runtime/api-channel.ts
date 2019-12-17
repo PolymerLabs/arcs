@@ -311,6 +311,9 @@ function convert<T>(info: MappingInfo<T> | undefined, value: any, mapper: ThingM
   if (info === undefined) {
     return;
   }
+  if (value === null) {
+    return null;
+  }
   switch (info.type) {
     case MappingType.Mapped:
       return mapper.identifierForThing(value);
@@ -341,6 +344,9 @@ function convert<T>(info: MappingInfo<T> | undefined, value: any, mapper: ThingM
 function unconvert<T>(info: MappingInfo<T> | undefined, value: any, mapper: ThingMapper) {
   if (info === undefined) {
     return;
+  }
+  if (value === null) {
+    return null;
   }
   switch (info.type) {
     case MappingType.Mapped:
