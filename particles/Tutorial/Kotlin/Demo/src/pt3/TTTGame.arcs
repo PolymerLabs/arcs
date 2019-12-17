@@ -33,12 +33,12 @@ resource HumanDefault
 store ComputerStore of Person in ComputerDefault
 store HumanStore of Person in HumanDefault
 
-particle TTTBoard in 'TTTBoard.wasm'
+particle TTTBoard in 'particles.wasm'
   events: writes [Event]
   gameState: reads GameState
   boardSlot: consumes
 
-particle TTTGame in 'TTTGame.wasm'
+particle TTTGame in 'particles.wasm'
   gameState: reads writes GameState
   playerOne: reads writes Person
   playerOneMove: reads writes Move
@@ -48,13 +48,13 @@ particle TTTGame in 'TTTGame.wasm'
   root: consumes
     boardSlot: provides
 
-particle TTTHumanPlayer in 'TTTHumanPlayer.wasm'
+particle TTTHumanPlayer in 'particles.wasm'
   gameState: reads GameState
   events: reads [Event]
   player: reads Person
   myMove: writes Move
 
-particle TTTRandomComputer in 'TTTRandomComputer.wasm'
+particle TTTRandomComputer in 'particles.wasm'
   gameState: reads GameState
   player: reads Person
   myMove: writes Move
