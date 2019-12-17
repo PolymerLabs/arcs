@@ -75,7 +75,7 @@ export async function bundleListing(...entryPoints: string[]): Promise<BundleEnt
 
   const filePathsSet = new Set<string>();
   entryManifests.forEach(m => collectDependencies(m, filePathsSet));
-  const filePaths = [...filePathsSet].sort();
+  const filePaths = [...filePathsSet].sort().map(p => loader.resolve(p));
 
   const prefixLengthToSubtract = dirPrefixForSortedPaths(filePaths);
   const entryManifestsFileNames = entryManifests.map(m => m.fileName);

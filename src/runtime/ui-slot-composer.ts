@@ -13,6 +13,7 @@ import {Particle} from './recipe/particle.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {Dictionary} from './hot.js';
+import {Slot} from './recipe/slot.js';
 
 type RenderPacket = {
   content?
@@ -34,6 +35,11 @@ export class UiSlotComposer {
   arc?: Arc;
 
   dispose(): void {
+  }
+
+  getSlots() {
+    const {activeRecipe: slots} = this.arc;
+    return [slots, new Slot(null, 'root')];
   }
 
   createHostedSlot(innerArc: Arc, particle: Particle, slotName: string, storeId: string): string {
@@ -79,6 +85,7 @@ export class UiSlotComposer {
     // will scan connections for container and slotMap
     const connections = particle.getSlandleConnections();
     // identify parent container
+    console.log(particle.recipe.toString());
     const container = this.identifyContainer(connections[0]);
     Object.assign(packet, container);
     // build slot map

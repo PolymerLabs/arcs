@@ -38,8 +38,13 @@ describe('Bundle Tool', () => {
       {filePath: 'src/tools/tests/test-data/b/b.json', bundlePath: 'b.json', entryPoint: false},
     ]);
   });
-  it('handles manifest imports', async () => {
-    assert.deepEqual(relativize(await bundleListing('src/tools/tests/test-data/c/c.arcs')), [
+  it('handles bundled manifest imports', async () => {
+    // TODO(sjmiles): compound statements are hard to debug
+    //assert.deepEqual(relativize(await bundleListing('src/tools/tests/test-data/c/c.arcs')), [
+    debugger;
+    const listing = await bundleListing('src/tools/tests/test-data/c/c.arcs');
+    const relativeListing = relativize(listing);
+    assert.deepEqual(relativeListing, [
       {filePath: 'src/tools/tests/test-data/a/a.arcs', bundlePath: 'a/a.arcs', entryPoint: false},
       {filePath: 'src/tools/tests/test-data/a/a.js', bundlePath: 'a/a.js', entryPoint: false},
       {filePath: 'src/tools/tests/test-data/b/b.arcs', bundlePath: 'b/b.arcs', entryPoint: false},
@@ -96,6 +101,8 @@ describe('Bundle Tool', () => {
           done();
         });
   });
+
+
   it('bundles Products demo', async () => {
     await bundle(['src/runtime/tests/artifacts/Products/Products.recipes'], 'test-output/bundle/products.zip', false);
     const data = fs.readFileSync('test-output/bundle/products.zip');

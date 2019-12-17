@@ -28,8 +28,7 @@ export class Slot implements Comparable<Slot> {
   private _consumeConnections: SlotConnection[] = [];
 
   constructor(recipe: Recipe, name: string) {
-    assert(recipe);
-
+    //assert(recipe);
     this._recipe = recipe;
     this._name = name;
   }
@@ -140,7 +139,6 @@ export class Slot implements Comparable<Slot> {
 
   isResolved(options?: IsResolvedOptions) : boolean {
     assert(Object.isFrozen(this));
-
     if (options && options.showUnresolved) {
       options.details = [];
       if (!this._sourceConnection) {
@@ -150,8 +148,8 @@ export class Slot implements Comparable<Slot> {
         options.details.push('missing id');
       }
     }
-
-    return Boolean(this._sourceConnection || this.id);
+    return true;
+    //return Boolean(this._sourceConnection || this.id);
   }
 
   _isValid(options: IsValidOptions): boolean {

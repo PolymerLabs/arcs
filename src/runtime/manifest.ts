@@ -42,13 +42,9 @@ import {StorageStub} from './storage-stub.js';
 import {Flags} from './flags.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {Exists, DriverFactory} from './storageNG/drivers/driver-factory.js';
+import {Exists} from './storageNG/drivers/driver-factory.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
-import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
-import {Entity} from './entity.js';
-import {SerializedEntity} from './storage-proxy.js';
 
 export enum ErrorSeverity {
   Error = 'error',

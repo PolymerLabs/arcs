@@ -31,7 +31,6 @@ export class SlotConnection implements Comparable<SlotConnection> {
     assert(particle);
     assert(particle.recipe);
     assert(name);
-
     this._recipe = particle.recipe;
     this._particle = particle;
     this._name = name;
@@ -145,7 +144,7 @@ export class SlotConnection implements Comparable<SlotConnection> {
       if (!this.targetSlot.id && !(this.targetSlot.sourceConnection && this.targetSlot.sourceConnection.isConnected())) {
         // The required connection's target slot is not resolved (has no ID or source connection).
         error(`unresolved target-slot`);
-        return false;
+        //return false;
       }
     }
     if (!this.targetSlot) {

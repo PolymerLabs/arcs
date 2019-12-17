@@ -125,7 +125,7 @@ export class Runtime {
     this.cacheService = new RuntimeCacheService();
     this.loader = loader;
     this.pecFactory = pecFactory;
-    this.composerClass = composerClass;
+    this.composerClass = composerClass || SlotComposer;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.ramDiskMemory = new VolatileMemory();
     runtime = this;

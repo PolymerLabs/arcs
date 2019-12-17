@@ -161,6 +161,9 @@ export class Recipe implements Cloneable<Recipe> {
   isResolved(options?): boolean {
     assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
     const checkThat = (check: boolean, label: string) => {
+      if (!check) {
+        //console.log('recipe::isResolved: failed check ' + label);
+      };
       if (!check && options && options.errors) {
         options.errors.set(this.name, label);
       }
@@ -209,7 +212,7 @@ export class Recipe implements Cloneable<Recipe> {
           if (options && options.errors) {
             options.errors.set(name, `required slot ${name} has no matching connection`);
           }
-          return false;
+          //return false;
         }
         // required provided slots are only required when the corresponding consume slot connection is present
         if (particle.getSlotConnectionByName(name)) {
@@ -230,7 +233,7 @@ export class Recipe implements Cloneable<Recipe> {
         if (options && options.errors) {
           options.errors.set(`?`, `no slot connections`);
         }
-        return false;
+        //return false;
       }
     }
     return true;

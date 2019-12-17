@@ -22,7 +22,6 @@ export class SlotUtils {
     if (clonedSlot) {
       return clonedSlot;
     }
-
     if (selectedSlot.id) {
       clonedSlot = recipe.findSlotByID(selectedSlot.id);
     }
@@ -63,14 +62,21 @@ export class SlotUtils {
     const slotConn = particle.getSlandleConnectionByName(slotSpec.name);
     const local = !slotConn || !slotConn.targetSlot
       ? SlotUtils._findSlotCandidates(particle, slotSpec, particle.recipe.slots) : [];
-    const remote = SlotUtils._findSlotCandidates(particle, slotSpec,
-        arc.activeRecipe && arc.activeRecipe.slots);
-        //arc.pec.slotComposer.getAvailableContexts());
+    //const remoteSlots = arc.pec.slotComposer.getAvailableContexts());
+    //const remoteSlots = arc.activeRecipe && arc.activeRecipe.slots;
+    if (!arc.pec.slotComposer) {
+      debugger;
+      console.log('recipe: composer is null');
+    }
+    const remoteSlots = arc.pec.slotComposer.getSlots();
+    const remote = SlotUtils._findSlotCandidates(particle, slotSpec, remoteSlots);
     return {local, remote};
   }
 
   // Returns the given slot candidates, sorted by "quality".
   private static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots: Slot[]) {
+    if (slotSpec.name === 'root') {
+    }
     const possibleSlots = slots ? slots.filter(s => this.slotMatches(particle, slotSpec, s)) : [];
     // TODO: implement.
     possibleSlots.sort((slot1, slot2) => slot1.name.localeCompare(slot2.name));

@@ -229,26 +229,29 @@ export class ParticleSpec {
     this.model = model;
     this.name = model.name;
     this.verbs = model.verbs;
-    const typeVarMap = new Map();
     this.handleConnectionMap = new Map();
+
+    const typeVarMap = new Map();
     model.args.forEach(arg => this.createConnection(arg, typeVarMap));
 
     // initialize descriptions patterns.
-    model.description = model.description || {};
-    this.validateDescription(model.description);
-    this.pattern = model.description['pattern'];
+    const description = model.description || {};
+    this.validateDescription(description);
+    this.pattern = description['pattern'];
     this.handleConnectionMap.forEach((connectionSpec, name) => {
-      connectionSpec.pattern = model.description[name];
+      connectionSpec.pattern = description[name];
     });
 
     this.external = model.external;
     this.implFile = model.implFile;
     this.implBlobUrl = model.implBlobUrl;
     this.modality = model.modality ? Modality.create(model.modality) : Modality.all;
+
     this.slotConnections = new Map();
     if (model.slotConnections) {
       model.slotConnections.forEach(s => this.slotConnections.set(s.name, new ConsumeSlotConnectionSpec(s)));
     }
+
     // Verify provided slots use valid handle connection names.
     this.slotConnections.forEach(slot => {
       slot.provideSlotConnections.forEach(ps => {

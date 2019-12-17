@@ -184,7 +184,7 @@ export class Particle implements Comparable<Particle> {
         if (options && options.showUnresolved) {
           options.details = `unfulfilled slot connections ${JSON.stringify([...this.spec.slotConnections])}`;
         }
-        return false;
+        //return false;
       }
     }
     if (!this.spec) {
