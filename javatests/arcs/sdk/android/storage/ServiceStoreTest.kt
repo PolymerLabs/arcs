@@ -14,6 +14,7 @@ package arcs.sdk.android.storage
 import android.content.ComponentName
 import android.content.ServiceConnection
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.ParcelableStoreOptions
@@ -33,7 +34,6 @@ import arcs.sdk.android.storage.service.DeferredResult
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import com.google.common.truth.Truth.assertThat
-import com.nhaarman.mockitokotlin2.mock
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -57,7 +57,7 @@ class ServiceStoreTest {
     fun setUp() {
         RamDisk.clear()
         RamDiskDriverProvider()
-        lifecycle = mock()
+        lifecycle = FakeLifecycle()
     }
 
     @Test
@@ -153,5 +153,13 @@ class ServiceStoreTest {
     private suspend fun buildService(storeOpts: ParcelableStoreOptions): BindingContext {
         val store = Store(storeOpts.actual)
         return BindingContext(store, ParcelableCrdtType.Count, coroutineContext)
+    }
+
+    private class FakeLifecycle : Lifecycle() {
+        override fun addObserver(p0: LifecycleObserver) = Unit
+
+        override fun removeObserver(p0: LifecycleObserver) = Unit
+
+        override fun getCurrentState(): State = State.CREATED
     }
 }
