@@ -1,5 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_library",
     "arcs_kt_particles",
     "arcs_kt_schema",
 )
@@ -18,15 +19,17 @@ arcs_kt_particles(
         ["*.kt"],
         exclude = ["TestBase.kt"],
     ),
+    jvm = False,
     visibility = ["//visibility:public"],
     deps = [
-        ":TestBase-lib",
+        ":TestBase",
         ":schemas",
     ],
 )
 
-arcs_kt_particles(
+arcs_kt_library(
     name = "TestBase",
     srcs = ["TestBase.kt"],
+    jvm = False,
     deps = [":schemas"],
 )

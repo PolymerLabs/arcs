@@ -27,16 +27,55 @@ def arcs_kt_jvm_library(**kwargs):
 
     kt_jvm_library(**kwargs)
 
-def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
-    """Declares kotlin library targets for Kotlin particle sources."""
-    kt_jvm_and_wasm_library(
-        name = name,
-        srcs = srcs,
-        deps = _ARCS_KOTLIN_LIBS + deps,
-        visibility = visibility,
-    )
+def arcs_kt_library(
+        name,
+        srcs = [],
+        deps = [],
+        visibility = None,
+        wasm = True,
+        jvm = True):
+    """Declares kotlin library targets for Kotlin particle sources.
 
-def arcs_kt_particles(name, srcs = [], deps = [], visibility = None):
+    Defines both jvm and wasm Kotlin libraries.
+
+    Args:
+      name: String; Name of the library
+      srcs: List; List of sources
+      deps: List; List of dependencies
+      visibility: List; List of visibilities
+      wasm: whether to build a wasm library
+      jvm: whether to build a jvm library
+    """
+    if not jvm and not wasm:
+        fail("At least one of wasm or jvm must be built.")
+
+    deps = _ARCS_KOTLIN_LIBS + deps
+
+    if jvm:
+        arcs_kt_jvm_library(
+            name = name,
+            srcs = srcs,
+            deps = [_to_jvm_dep(dep) for dep in deps],
+            visibility = visibility,
+        )
+
+    if wasm:
+        kt_native_library(
+            name = name + _WASM_SUFFIX,
+            srcs = srcs,
+            deps = [_to_wasm_dep(dep) for dep in deps],
+            visibility = visibility,
+        )
+
+def arcs_kt_particles(
+        name,
+        srcs = [],
+        deps = [],
+        visibility = None,
+        wasm = True,
+        # TODO: Set jvm to true by default, once all of the wasm cruft is
+        # removed from the standard Arcs libraries and particle code.
+        jvm = False):
     """Performs final compilation of wasm and bundling if necessary.
 
     Args:
@@ -46,72 +85,57 @@ def arcs_kt_particles(name, srcs = [], deps = [], visibility = None):
         in a .arcs file.
       deps: list of dependencies
       visibility: list of visibilities
+      wasm: whether to build wasm libraries
+      jvm: whether to build a jvm library
     """
+    if not jvm and not wasm:
+        fail("At least one of wasm or jvm must be built.")
+
     deps = _ARCS_KOTLIN_LIBS + deps
-    wasm_deps = [_to_wasm_dep(dep) for dep in deps]
 
-    # Create a library for each particle.
-    wasm_particle_libs = []
-    for src in srcs:
-        if not src.endswith(".kt"):
-            fail("%s is not a Kotlin file (must end in .kt)" % src)
-        particle = src[:-3]
-        wasm_lib = particle + "-lib" + _WASM_SUFFIX
-        kt_native_library(
-            name = wasm_lib,
-            srcs = [src],
-            deps = wasm_deps,
+    if jvm:
+        # Create a jvm library just as a build test.
+        arcs_kt_jvm_library(
+            name = name + "-jvm",
+            srcs = srcs,
+            deps = deps,
+            visibility = visibility,
         )
-        wasm_particle_libs.append(wasm_lib)
 
-    # Create a kt_native_binary that groups everything together.
-    native_binary_name = name + _WASM_SUFFIX
-    kt_native_binary(
-        name = native_binary_name,
-        entry_point = "arcs.main",
-        deps = wasm_particle_libs,
-        # Don't build this manually. Build the wasm_kt_binary rule below
-        # instead; otherwise this rule will build a non-wasm binary.
-        tags = ["manual", "notap"],
-    )
+    if wasm:
+        wasm_deps = [_to_wasm_dep(dep) for dep in deps]
 
-    # Create a wasm binary from the native binary.
-    wasm_kt_binary(
-        name = name,
-        kt_target = ":" + native_binary_name,
-        visibility = visibility,
-    )
+        # Create a wasm library for each particle.
+        wasm_particle_libs = []
+        for src in srcs:
+            if not src.endswith(".kt"):
+                fail("%s is not a Kotlin file (must end in .kt)" % src)
+            particle = src[:-3]
+            wasm_lib = particle + "-lib" + _WASM_SUFFIX
+            kt_native_library(
+                name = wasm_lib,
+                srcs = [src],
+                deps = wasm_deps,
+            )
+            wasm_particle_libs.append(wasm_lib)
 
-def kt_jvm_and_wasm_library(
-        name = None,
-        srcs = [],
-        deps = [],
-        visibility = None,
-        **kwargs):
-    """Simultaneously defines JVM and WASM kotlin libraries.
+        # Create a kt_native_binary that groups everything together.
+        native_binary_name = name + _WASM_SUFFIX
+        kt_native_binary(
+            name = native_binary_name,
+            entry_point = "arcs.main",
+            deps = wasm_particle_libs,
+            # Don't build this manually. Build the wasm_kt_binary rule below
+            # instead; otherwise this rule will build a non-wasm binary.
+            tags = ["manual", "notap"],
+        )
 
-    Args:
-      name: String; Name of the library
-      srcs: List; List of sources
-      deps: List; List of dependencies
-      visibility: List; List of visibilities
-      **kwargs: other arguments to feed into kt_jvm_library and kt_native_library
-    """
-    arcs_kt_jvm_library(
-        name = name,
-        srcs = srcs,
-        deps = [_to_jvm_dep(dep) for dep in deps],
-        visibility = visibility,
-        **kwargs
-    )
-
-    kt_native_library(
-        name = name + _WASM_SUFFIX,
-        srcs = srcs,
-        deps = [_to_wasm_dep(dep) for dep in deps],
-        visibility = visibility,
-        **kwargs
-    )
+        # Create a wasm binary from the native binary.
+        wasm_kt_binary(
+            name = name,
+            kt_target = ":" + native_binary_name,
+            visibility = visibility,
+        )
 
 def kt_jvm_and_js_library(
         name,
