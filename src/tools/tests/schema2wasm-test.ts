@@ -51,8 +51,8 @@ describe('schema2wasm', () => {
     const manifest = await Manifest.parse(`\
       particle Foo
         input1: reads * {txt: Text}
-        input2: writes Reference<* {txt: Text, num: Number}>
-        input3: reads writes [Site {url: URL, ref: Reference<* {txt: Text}>}]
+        input2: writes &* {txt: Text, num: Number}
+        input3: reads writes [Site {url: URL, ref: &* {txt: Text}}]
     `);
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {
@@ -76,8 +76,8 @@ describe('schema2wasm', () => {
   it('supports nested references with schema aliasing', async () => {
     const manifest = await Manifest.parse(`\
       particle Foo
-        h1: reads * {a: Text, r: Reference<* {b: Text}>}
-        h2: reads * {s: Reference<* {f: Boolean, t: Reference<* {x: Number}>}>}
+        h1: reads * {a: Text, r: &* {b: Text}}
+        h2: reads * {s: &* {f: Boolean, t: &* {x: Number}}}
     `);
     const mock = new Schema2Mock(manifest);
     assert.deepStrictEqual(mock.res, {

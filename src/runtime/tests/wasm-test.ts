@@ -22,7 +22,7 @@ async function setup() {
       lnk: URL
       num: Number
       flg: Boolean
-      ref: Reference<Bar {a: Text}>
+      ref: &Bar {a: Text}
     `);
   const fooClass = Entity.createEntityClass(manifest.schemas.Foo, null);
   const barType = EntityType.make(['Bar'], {a: 'Text'});

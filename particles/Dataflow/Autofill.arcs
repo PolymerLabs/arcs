@@ -28,10 +28,10 @@ particle AutofillMatcher in 'empty.js'
 
   // By outputting a reference, the dataflow analyser can see that this must
   // have come from capturedEntities only.
-  autofillEntity: writes Reference<CapturedEntity>
+  autofillEntity: writes &CapturedEntity
 
 particle AutofillUX in 'empty.js'
-  autofillEntity: reads Reference<CapturedEntity>
+  autofillEntity: reads &CapturedEntity
 
   // Check that the autofill dialog is being filled with an entity from a
   // recent trusted source.

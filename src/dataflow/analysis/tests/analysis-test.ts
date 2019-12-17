@@ -1852,9 +1852,9 @@ describe('FlowGraph validation', () => {
         particle P2
           foo: reads [Foo {}]
           bar: reads [Bar {}]
-          ref: writes Reference<Foo {}>
+          ref: writes &Foo {}
         particle P3
-          ref: reads Reference<Foo {}>
+          ref: reads &Foo {}
           check ref is trusted
         recipe R
           P1
@@ -1876,10 +1876,10 @@ describe('FlowGraph validation', () => {
         particle P1
           ingress: reads Bar {}
           foo: writes Foo {}
-          ref: writes Reference<Foo {}>
+          ref: writes &Foo {}
           claim foo is trusted
         particle P2
-          ref: reads Reference<Foo {}>
+          ref: reads &Foo {}
           check ref is trusted
         recipe R
           P1
@@ -1902,10 +1902,10 @@ describe('FlowGraph validation', () => {
         particle P2
           foo: reads [Foo {}]
           bar: reads [Bar {}]
-          ref: writes Reference<Foo {}>
+          ref: writes &Foo {}
           claim ref derives from bar
         particle P3
-          ref: reads Reference<Foo {}>
+          ref: reads &Foo {}
           check ref is trusted
         recipe R
           P1

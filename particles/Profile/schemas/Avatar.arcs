@@ -3,4 +3,4 @@ schema Avatar
 
 import 'Share.arcs'
 schema AvatarShare extends Share
-  ref: Reference<Avatar>
+  ref: &Avatar

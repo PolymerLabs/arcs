@@ -25,7 +25,7 @@ schema Song
   // The collections below may not work in which case the involved particles
   // will need to define them to go along with the non-collection fields we
   // do keep here.
-  notes: [Reference<Note>]
-  tempos: [Reference<TempoEntry>]
-  quantizationInfo: Reference<QuantizationInfo>
+  notes: [&Note]
+  tempos: [&TempoEntry]
+  quantizationInfo: &QuantizationInfo
   totalQuantizedSteps: Number

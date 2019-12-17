@@ -232,8 +232,8 @@ describe('schema', () => {
       schema ReferencedTwo
         bar: Number
       schema References
-        one: Reference<ReferencedOne>
-        two: Reference<ReferencedTwo>`);
+        one: &ReferencedOne
+        two: &ReferencedTwo`);
 
     const References = Entity.createEntityClass(manifest.findSchemaByName('References'), null);
 
@@ -259,7 +259,7 @@ describe('schema', () => {
   it('enforces rules when storing collection types', async () => {
     const manifest = await Manifest.parse(`
       schema Collections
-        collection: [Reference<Foo {value: Text}>]
+        collection: [&Foo {value: Text}]
     `);
 
     const Collections = Entity.createEntityClass(manifest.findSchemaByName('Collections'), null);

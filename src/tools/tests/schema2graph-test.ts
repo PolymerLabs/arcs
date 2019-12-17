@@ -199,7 +199,7 @@ describe('schema2graph', () => {
         age: writes Data {n: Number}
         moniker: reads [Thing Product {z: Text}]
         oldness: reads writes [Data {n: Number}]
-        mainAddress: writes Reference<* {u: URL}>
+        mainAddress: writes &* {u: URL}
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -216,10 +216,10 @@ describe('schema2graph', () => {
   it('collections and handle-level references do not affect the graph', async () => {
     const manifest = await Manifest.parse(`
       particle W
-        h1: reads Reference<* {a: Text}>
+        h1: reads &* {a: Text}
         h2: reads [* {a: Text, b: Text}]
-        h3: reads [Reference<* {a: Text, b: Text, c: Text}>]
-        h4: reads * {a: Text, b: Text, r: [Reference<* {d: Text}>]}
+        h3: reads [&* {a: Text, b: Text, c: Text}]
+        h4: reads * {a: Text, b: Text, r: [&* {d: Text}]}
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -275,8 +275,8 @@ describe('schema2graph', () => {
   it('nested schemas use camel-cased path names', async () => {
     const manifest = await Manifest.parse(`
       particle Names
-        data: reads * {outer: Reference<* {t: Text, inner: Reference<* {u: URL}>}>}
-        dupe: reads * {t: Text, inner: Reference<* {u: URL}>}
+        data: reads * {outer: &* {t: Text, inner: &* {u: URL}}}
+        dupe: reads * {t: Text, inner: &* {u: URL}}
     `);
     const graph = new SchemaGraph(manifest.particles[0]);
     const res = convert(graph);
@@ -295,8 +295,8 @@ describe('schema2graph', () => {
     const manifest = await Manifest.parse(`
       particle N
         h1: reads * {a: Text}
-        h2: reads * {a: Text, r: Reference<* {b: Text}>}
-        h3: reads * {a: Text, r: Reference<* {b: Text}>, c: Text}
+        h2: reads * {a: Text, r: &* {b: Text}}
+        h3: reads * {a: Text, r: &* {b: Text}, c: Text}
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -317,10 +317,10 @@ describe('schema2graph', () => {
     // the same innermost schema, so they should also have aliases set up.
     const manifest = await Manifest.parse(`
       particle Q
-        h1: reads * {r: Reference<* {t: Reference<* {u: Reference<* {a: Text}>}>}>, \
-                     s: Reference<* {t: Reference<* {u: Reference<* {a: Text}>}>}>}
+        h1: reads * {r: &* {t: &* {u: &* {a: Text}}}, \
+                     s: &* {t: &* {u: &* {a: Text}}}}
         h2: reads * {a: Text}
-        h3: reads * {v: Reference<* {a: Text}>}
+        h3: reads * {v: &* {a: Text}}
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -347,7 +347,7 @@ describe('schema2graph', () => {
       particle I
         h1: reads * {a: Text}
         h2: reads * {a: Text, b: Text, c: Text}
-        h3: reads * {r: Reference<* {a: Text, b: Text}>, s: Reference<* {a: Text, c: Text}>}
+        h3: reads * {r: &* {a: Text, b: Text}, s: &* {a: Text, c: Text}}
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -363,11 +363,11 @@ describe('schema2graph', () => {
   it('deeply nested schemas', async () => {
     const manifest = await Manifest.parse(`
       particle Y
-        h1: reads * {r: Reference<* {a: Text}>}
-        h2: reads * {a: Text, s: Reference<* {a: Text}>}
-        h3: reads * {t: Reference<* {b: Text, u: Reference<* {b: Text, c: Text, v: Reference<* {d: Text}>}>}>}
+        h1: reads * {r: &* {a: Text}}
+        h2: reads * {a: Text, s: &* {a: Text}}
+        h3: reads * {t: &* {b: Text, u: &* {b: Text, c: Text, v: &* {d: Text}}}}
         h4: reads * {a: Text, d: Text, e: Text}
-        h5: reads * {b: Text, c: Text, v: Reference<* {d: Text}>}
+        h5: reads * {b: Text, c: Text, v: &* {d: Text}}
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -396,7 +396,7 @@ describe('schema2graph', () => {
     const manifest = await Manifest.parse(`
       particle V
         h1: reads * {a: Text}
-        h2: reads * {a: Text, r: Reference<* {a: Text, b: Text, c: Text}>}
+        h2: reads * {a: Text, r: &* {a: Text, b: Text, c: Text}}
         h3: reads * {a: Text, b: Text}
         h4: reads * {a: Text, b: Text, c: Text}
     `);
@@ -416,22 +416,22 @@ describe('schema2graph', () => {
     const manifest = await Manifest.parse(`
       particle R
         // Starting node with a reference
-        h1: reads * {r: Reference<* {a: Text}>}
+        h1: reads * {r: &* {a: Text}}
 
         // Starting node with a reference descending from h1
-        h2: reads * {s: Reference<* {a: Text, b: Text}>}
+        h2: reads * {s: &* {a: Text, b: Text}}
 
         // Separate starting node
-        k1: reads * {i: Reference<* {n: Number}>}
+        k1: reads * {i: &* {n: Number}}
 
         // Descendant node with multiple independent references
-        h3: reads * {r: Reference<* {a: Text}>, t: Reference<* {c: Text}>, u: Reference<* {d: Text}>}
+        h3: reads * {r: &* {a: Text}, t: &* {c: Text}, u: &* {d: Text}}
 
         // Descendant node with co-descendant reference
-        h4: reads * {r: Reference<* {a: Text}>, v: Reference<* {a: Text, e: Text}>}
+        h4: reads * {r: &* {a: Text}, v: &* {a: Text, e: Text}}
 
         // Separate starting node with co-descendant reference
-        k2: reads * {j: Reference<* {n: Number, o: Number}>}
+        k2: reads * {j: &* {n: Number, o: Number}}
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
