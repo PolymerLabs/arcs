@@ -5,6 +5,12 @@ import android.webkit.JavascriptInterface;
 
 /**
  * Bridging the android.os.Trace APIs to the Arcs runtime/shell.
+ *
+ * TODO:
+ * Event tag-cookie pairs can be extended to implement more valuable
+ * performance metrics i.e. latency stats (percentile, average and so forth).
+ * The metrics can also be integrated with the existing logging and profiling
+ * frameworks e.g., westworld, perfgate and so on.
  */
 public final class ArcsExternalTrace {
 

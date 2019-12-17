@@ -116,3 +116,4 @@ Android properties are used to change and tweak Arcs settings at run-time.
 | debug.arcs.runtime.shell_url | Specify which shell to use | https://appassets.androidplatform.net/<br/>assets/arcs/index.html? (on-device pipes-shell with the Arcs Cache Manager) |
 | debug.arcs.runtime.load_workstation_assets | Whether to load recipes and particles from the workstation | false (assets from the APK) |
 | debug.arcs.runtime.use_cache_mgr | Whether to use the Arcs Cache Manager | true
+| debug.arcs.runtime.systrace | Specify system tracing channel (options: [android,console]) | n/a (trace off)
