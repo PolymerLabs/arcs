@@ -1,0 +1,30 @@
+<!--
+  ~ Copyright 2019 Google LLC.
+  ~
+  ~ This code may only be used under the BSD style license found at
+  ~ http://polymer.github.io/LICENSE.txt
+  ~
+  ~ Code distributed by Google as part of this project is also subject to an additional IP rights
+  ~ grant found at
+  ~ http://polymer.github.io/PATENTS.txt
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="arcs.storage.testapp">
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="29"/>
+
+    <application android:label="@string/app_name" android:name=".TestApplication">
+        <activity android:name=".MainActivity" android:process=":ui" android:theme="@style/Theme.AppCompat.DayNight">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <!-- Service entry for the StorageService. -->
+        <service
+                android:name="arcs.storage.service.StorageService"
+                android:exported="false"
+                android:process=":storage" />
+    </application>
+
+</manifest>

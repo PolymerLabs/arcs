@@ -26,6 +26,7 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Log
 import arcs.core.util.guardWith
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
@@ -152,6 +153,7 @@ class ArcsSet<T, StoreData, StoreOp>(
     private var callbackId: Int = -1
     private val activated =
         CompletableDeferred<ActiveStore<StoreData, StoreOp, Set<T>>>(initialized)
+    var onUpdate: (() -> Unit)? = { }
 
     init {
         var activeStore: ActiveStore<StoreData, StoreOp, Set<T>>? = null
@@ -210,6 +212,7 @@ class ArcsSet<T, StoreData, StoreOp>(
      * Returns whether or not the element could be added.
      */
     suspend fun add(element: T): Boolean {
+        Log.debug { "ArcsSet adding: $element" }
         activated.await()
 
         val (success, op) = crdtMutex.withLock {
@@ -359,6 +362,7 @@ class ArcsSet<T, StoreData, StoreOp>(
                     handleModelUpdateMessage(message).also { syncJob?.complete() }
             }.also { updateCache() }
         }
+        onUpdate?.invoke()
         return messageBackToStore?.let { activated.await().onProxyMessage(it) } ?: true
     }
 

@@ -20,6 +20,7 @@ import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.toParcelable
 import arcs.core.storage.StoreOptions
+import arcs.core.util.Log
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -67,7 +68,14 @@ class DefaultStorageServiceBindingDelegate(
         conn: ServiceConnection,
         flags: Int,
         options: ParcelableStoreOptions
-    ): Boolean = context.bindService(StorageService.createBindIntent(context, options), conn, flags)
+    ): Boolean {
+        Log.debug { "DefaultStorageServiceBindingDelegate - calling bindService" }
+        return context.bindService(
+            StorageService.createBindIntent(context, options),
+            conn,
+            flags or Context.BIND_AUTO_CREATE
+        )
+    }
 
     override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)
 }
@@ -100,6 +108,7 @@ class StorageServiceConnection(
      * with the [IStorageService] binder.
      */
     fun connectAsync(): Deferred<IStorageService> {
+        Log.debug { "StorageServiceConnection - connectAsync" }
         if (isConnected) {
             return requireNotNull(service.value) {
                 "isConnected is true, but the deferred was null"
@@ -119,6 +128,7 @@ class StorageServiceConnection(
                     )
                 }
             }
+        Log.debug { "StorageServiceConnection - connectAsync - returnValue = $needsDisconnect" }
         return deferred
     }
 
@@ -134,7 +144,8 @@ class StorageServiceConnection(
     }
 
     override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-        this.service.value?.complete(service as IStorageService)
+        Log.debug { "StorageServiceConnection - onServiceConnected: $service" }
+        this.service.value?.complete(IStorageService.Stub.asInterface(service))
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {

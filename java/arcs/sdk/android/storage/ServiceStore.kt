@@ -26,11 +26,13 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.ActiveStoreFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.util.ProxyCallbackManager
 import arcs.core.storage.util.SendQueue
+import arcs.core.util.Log
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageServiceConnection
@@ -56,16 +58,17 @@ import kotlinx.coroutines.withContext
  */
 @ExperimentalCoroutinesApi
 @UseExperimental(FlowPreview::class)
-class ServiceStoreFactory<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
+class ServiceStoreFactory(
     private val context: Context,
     private val lifecycle: Lifecycle,
     private val crdtType: ParcelableCrdtType,
     private val coroutineContext: CoroutineContext = Dispatchers.IO,
     private val connectionFactory: ConnectionFactory? = null
-) {
-    suspend operator fun invoke(
+) : ActiveStoreFactory {
+    override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
         options: StoreOptions<Data, Op, ConsumerData>
     ): ServiceStore<Data, Op, ConsumerData> {
+        Log.debug { "ServiceStoreFactory creating for options: $options" }
         val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
         return ServiceStore(
             options = options,
@@ -126,7 +129,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
         sendQueue.enqueue {
-            service.sendProxyMessage(message.toParcelable(crdtType), result)
+            service.sendProxyMessage(message.toParcelable(crdtType, serviceCallbackToken), result)
         }
         return result.await()
     }
@@ -139,12 +142,11 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             "Connection to StorageService is already alive."
         }
         val connection = connectionFactory(options, crdtType)
+        Log.debug { "ServiceStore initialize - connection: $connection" }
         val service = connection.connectAsync().await()
 
-        val messageChannel =
-            ParcelableProxyMessageChannel(
-                coroutineContext
-            )
+        Log.debug { "ServiceStore initialize - service: $connection" }
+        val messageChannel = ParcelableProxyMessageChannel(coroutineContext)
         serviceCallbackToken = withContext(coroutineContext) {
             service.registerCallback(messageChannel)
         }

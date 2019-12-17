@@ -24,6 +24,10 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Log
+import arcs.core.util.TaggedLog
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
@@ -48,7 +52,16 @@ class StorageService : ResurrectorService() {
         startTime = startTime ?: System.currentTimeMillis()
     }
 
+    init {
+        // Inititalization/registration
+        Log.debug { "StorageService - initialization" }
+        RamDiskDriverProvider()
+        RamDiskStorageKey("poo")
+        ReferenceModeStorageKey.registerParser()
+    }
+
     override fun onBind(intent: Intent): IBinder? {
+        log.debug { "onBind" }
         val parcelableOptions = requireNotNull(
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
@@ -69,6 +82,7 @@ class StorageService : ResurrectorService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        log.debug { "onDestroy" }
         scope.cancel()
     }
 
@@ -102,6 +116,7 @@ class StorageService : ResurrectorService() {
 
     companion object {
         private const val EXTRA_OPTIONS = "storeOptions"
+        private val log = TaggedLog { "StorageService" }
 
         init {
             RamDiskDriverProvider()
