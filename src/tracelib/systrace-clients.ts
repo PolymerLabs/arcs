@@ -27,11 +27,11 @@ export abstract class Client {
  */
 class ConsoleClient extends Client {
   asyncTraceBegin(tag: string, cookie: number) {
-    console.log(`S|${tag}|${cookie}|${Date.now()}`);
+    console.log(`${Date.now()}: S|${tag}|${cookie}`);
   }
 
   asyncTraceEnd(tag: string, cookie: number) {
-    console.log(`F|${tag}|${cookie}|${Date.now()}`);
+    console.log(`${Date.now()}: F|${tag}|${cookie}`);
   }
 }
 
