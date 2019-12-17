@@ -30,6 +30,16 @@ import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../storageNG/driv
 import {digest} from '../../platform/digest-web.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {RefinementExpression, BinaryExpressionNode} from '../manifest-ast-nodes.js';
+import {RamDiskMemoryProvider} from '../ram-disk-memory-provider.js';
+import {VolatileMemory} from '../storageNG/drivers/volatile.js';
+
+class RamDiskMemoryImpl implements RamDiskMemoryProvider {
+  private readonly ramDiskMemory: VolatileMemory = new VolatileMemory();
+
+  getRamDiskMemory(): VolatileMemory {
+    return this.ramDiskMemory;
+  }
+}
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -3133,7 +3143,7 @@ resource NobIdJson
     },
     "locations": {}
   }
-`);
+`, {ramDiskMemoryProvider: new RamDiskMemoryImpl()});
     assert.lengthOf(manifest.stores, 1);
     const store = manifest.stores[0];
 
