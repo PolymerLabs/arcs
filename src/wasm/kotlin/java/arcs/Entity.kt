@@ -36,7 +36,7 @@ class StringDecoder(private var bytes: ByteArray) {
         return chunk
     }
 
-    fun getInt(sep: Char): Int = utf8ToString(upTo(sep)).toInt()
+    fun getInt(sep: Char): Int = upTo(sep).utf8ToString().toInt()
 
     fun chomp(len: Int): ByteArray {
         // TODO: detect overrun
@@ -46,16 +46,16 @@ class StringDecoder(private var bytes: ByteArray) {
     }
 
     fun validate(token: String) {
-        if (utf8ToString(chomp(token.length)) != token) {
+        if (chomp(token.length).utf8ToString() != token) {
             throw IllegalArgumentException("Packaged entity decoding failed in validate()")
         }
     }
 
-    fun decodeText(): String = utf8ToString(chomp(getInt(':')))
+    fun decodeText(): String = chomp(getInt(':')).utf8ToString()
 
-    fun decodeNum(): Double = utf8ToString(upTo(':')).toDouble()
+    fun decodeNum(): Double = upTo(':').utf8ToString().toDouble()
 
-    fun decodeBool(): Boolean = utf8ToString(chomp(1)) == "1"
+    fun decodeBool(): Boolean = chomp(1).utf8ToString() == "1"
 
     companion object {
         fun decodeDictionary(bytes: ByteArray): Map<String, String> {
@@ -65,10 +65,10 @@ class StringDecoder(private var bytes: ByteArray) {
             var num = decoder.getInt(':')
             while (num-- > 0) {
                 val klen = decoder.getInt(':')
-                val key = utf8ToString(decoder.chomp(klen))
+                val key = decoder.chomp(klen).utf8ToString()
 
                 val vlen = decoder.getInt(':')
-                val value = utf8ToString(decoder.chomp(vlen))
+                val value = decoder.chomp(vlen).utf8ToString()
 
                 dict[key] = value
             }
@@ -85,7 +85,7 @@ class StringEncoder(
     fun encodeDictionary(dict: Map<String, Any?>): StringEncoder {
         addStr("${dict.size}:")
         for ((key, value) in dict) {
-            addBytes("", stringtoUtf8(key))
+            addBytes("", key.stringToUtf8())
             encodeValue(value)
         }
         return this
@@ -97,9 +97,9 @@ class StringEncoder(
         return this
     }
 
-    private fun encodeValue(value: Any?) {
+    fun encodeValue(value: Any?) {
         when (value) {
-            is String -> addBytes("T", stringtoUtf8(value))
+            is String -> addBytes("T", value.stringToUtf8())
             is Boolean -> addStr("B${if (value) 1 else 0}")
             is Double -> addStr("N$value:")
             is Map<*, *> -> {
@@ -117,7 +117,7 @@ class StringEncoder(
     }
 
     fun encode(prefix: String, str: String) {
-        addBytes(prefix, stringtoUtf8(str))
+        addBytes(prefix, str.stringToUtf8())
         addStr("|")
     }
 
@@ -130,7 +130,7 @@ class StringEncoder(
     }
 
     private fun addStr(str: String) {
-        stringtoUtf8(str).also {
+        str.stringToUtf8().also {
             buffers.add(it)
             size += it.size
         }

@@ -11,8 +11,8 @@
 
 package arcs
 
-actual fun utf8ToString(bytes: ByteArray): String = throw NotImplementedError()
-actual fun stringtoUtf8(str: String): ByteArray = throw NotImplementedError()
+actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
+actual fun stringToUtf8Impl(str: String): ByteArray = str.toByteArray(Charsets.UTF_8)
 
 // TODO(alxr): Implement Jvm Runtime
 actual object RuntimeClient {

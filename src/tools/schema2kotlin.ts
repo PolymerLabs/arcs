@@ -113,7 +113,7 @@ ${withFields('data ')}class ${name}(${ withFields(`\n  ${this.fields.join(',\n  
     decoder.validate("|")
     ${withFields(`  for (_i in 0 until ${fieldCount}) {
          if (decoder.done()) break
-         val name = utf8ToString(decoder.upTo(':'))
+         val name = decoder.upTo(':').utf8ToString()
          when (name) {
            ${this.decode.join('\n           ')}
          }

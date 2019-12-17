@@ -29,8 +29,8 @@ import arcs.wasm.toWasmString
 import arcs.wasm.toWasmAddress
 import arcs.wasm.WasmString
 
-actual fun utf8ToString(bytes: ByteArray): String = bytes.decodeToString()
-actual fun stringtoUtf8(str: String): ByteArray = str.encodeToByteArray()
+actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.decodeToString()
+actual fun stringToUtf8Impl(str: String): ByteArray = str.encodeToByteArray()
 
 actual object RuntimeClient {
     actual fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>) =

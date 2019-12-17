@@ -53,7 +53,7 @@ class SpecialSchemaFieldsTest(
             internal_id = 0.0,
             internalId_ = 0.0
         )
-        val encoding = utf8ToString(s.encodeEntity().bytes)
+        val encoding = s.encodeEntity().bytes.utf8ToString()
         assertTrue("The encoding uses the language keyword", encoding.contains("|for:"))
     }
 
@@ -84,7 +84,7 @@ class SpecialSchemaFieldsTest(
             internal_id = 0.0,
             internalId_ = 10.0
         )
-        val encoding = utf8ToString(s.encodeEntity().bytes)
+        val encoding = s.encodeEntity().bytes.utf8ToString()
         assertTrue("The encoding uses the keyword 'internalId'", encoding.contains("|internalId:"))
     }
 }

@@ -11,8 +11,11 @@
 
 package arcs
 
-expect fun utf8ToString(bytes: ByteArray): String
-expect fun stringtoUtf8(str: String): ByteArray
+expect fun utf8ToStringImpl(bytes: ByteArray): String
+expect fun stringToUtf8Impl(str: String): ByteArray
+
+fun ByteArray.utf8ToString(): String = utf8ToStringImpl(this)
+fun String.stringToUtf8(): ByteArray = stringToUtf8Impl(this)
 
 /**
  * Delegate core runtime operations to the appropriate platform.
