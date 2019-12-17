@@ -118,12 +118,10 @@ abstract class Particle {
     fun renderOutput() {
         val slotName = ""
         val template = getTemplate(slotName)
-        val model = populateModel(slotName)?.let { StringEncoder.encodeDictionary(it) }
-        RuntimeClient.onRenderOutput(
-            this,
-            template,
-            model
-        )
+        val model = populateModel(slotName)?.let {
+          StringEncoder().encodeDictionary(it).toNullTermByteArray()
+        }
+        RuntimeClient.onRenderOutput(this, template, model)
     }
 
     /**
@@ -162,13 +160,8 @@ abstract class Particle {
      * @param tag Optionally, give a name to the particular service call
      */
     fun serviceRequest(call: String, args: Map<String, String> = mapOf(), tag: String = "") {
-        val encoded = StringEncoder.encodeDictionary(args)
-        RuntimeClient.serviceRequest(
-            this,
-            call,
-            encoded,
-            tag
-        )
+        val encoded = StringEncoder().encodeDictionary(args).toNullTermByteArray()
+        RuntimeClient.serviceRequest(this, call, encoded, tag)
     }
 
     /**
@@ -198,32 +191,30 @@ abstract class Handle(val name: String, val particle: Particle) {
     init { particle.registerHandle(this) }
 
     var direction: Direction = Direction.Unconnected
-    abstract fun sync(encoded: String?)
-    abstract fun update(added: String?, removed: String?)
+    abstract fun sync(encoded: ByteArray)
+    abstract fun update(added: ByteArray, removed: ByteArray)
 }
 
-open class Singleton<T : Entity<T>>(particle: Particle, name: String, private val entityCtor: () -> T) :
-        Handle(name, particle) {
+open class Singleton<T : Entity<T>>(
+    particle: Particle,
+    name: String,
+    private val entityCtor: () -> T
+) : Handle(name, particle) {
+
     private var entity: T? = null
 
-    override fun sync(encoded: String?) {
-        entity = encoded?.let { entityCtor().decodeEntity(encoded) } ?: entityCtor()
+    override fun sync(encoded: ByteArray) {
+        entity = entityCtor().decodeEntity(encoded)
     }
 
-    override fun update(added: String?, removed: String?) {
-        entity = added?.let { entityCtor().decodeEntity(added) } ?: entityCtor()
-    }
+    override fun update(added: ByteArray, removed: ByteArray) = sync(added)
 
     fun get() = entity
 
     fun set(entity: T) {
         this.entity = entity
         val encoded = entity.encodeEntity()
-        RuntimeClient.singletonSet(
-            particle,
-            this,
-            encoded
-        )
+        RuntimeClient.singletonSet(particle, this, encoded)
     }
 
     fun clear() {
@@ -232,8 +223,12 @@ open class Singleton<T : Entity<T>>(particle: Particle, name: String, private va
     }
 }
 
-class Collection<T : Entity<T>>(particle: Particle, name: String, private val entityCtor: () -> T) :
-        Handle(name, particle), Iterable<T> {
+class Collection<T : Entity<T>>(
+    particle: Particle,
+    name: String,
+    private val entityCtor: () -> T
+) : Handle(name, particle), Iterable<T> {
+
     private val entities: MutableMap<String, T> = mutableMapOf()
 
     val size: Int
@@ -241,23 +236,21 @@ class Collection<T : Entity<T>>(particle: Particle, name: String, private val en
 
     override fun iterator() = entities.values.iterator()
 
-    override fun sync(encoded: String?) {
+    override fun sync(encoded: ByteArray) {
         entities.clear()
-        encoded?.let { add(it) }
+        add(encoded)
     }
 
-    override fun update(added: String?, removed: String?) {
-        added?.let { add(added) }
-        removed?.let {
-            with(StringDecoder(it)) {
-                var num = getInt(":")
-                while (num-- > 0) {
-                    val len = getInt(":")
-                    val chunk = chomp(len)
-                    // TODO: just get the id, no need to decode the full entity
-                    val entity = entityCtor().decodeEntity(chunk)!!
-                    entities.remove(entity.internalId)
-                }
+    override fun update(added: ByteArray, removed: ByteArray) {
+        add(added)
+        with(StringDecoder(removed)) {
+            var num = getInt(':')
+            while (num-- > 0) {
+                val len = getInt(':')
+                val chunk = chomp(len)
+                // TODO: just get the id, no need to decode the full entity
+                val entity = requireNotNull(entityCtor().decodeEntity(chunk))
+                entities.remove(entity.internalId)
             }
         }
     }
@@ -272,18 +265,18 @@ class Collection<T : Entity<T>>(particle: Particle, name: String, private val en
 
     fun remove(entity: T) {
         entities[entity.internalId]?.let {
-            val encoded: String = it.encodeEntity()
+            val encoded = it.encodeEntity()
             entities.remove(entity.internalId)
             RuntimeClient.collectionRemove(particle, this, encoded)
         }
     }
 
-    private fun add(added: String) {
+    private fun add(added: ByteArray) {
         with(StringDecoder(added)) {
-            repeat(getInt(":")) {
-                val len = getInt(":")
+            repeat(getInt(':')) {
+                val len = getInt(':')
                 val chunk = chomp(len)
-                val entity = entityCtor().decodeEntity(chunk)!!
+                val entity = requireNotNull(entityCtor().decodeEntity(chunk))
                 entities[entity.internalId] = entity
             }
         }

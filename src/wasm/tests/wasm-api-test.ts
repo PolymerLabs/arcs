@@ -175,11 +175,13 @@ class TestLoader extends Loader {
       assert.match(clock.payload, /^value:20[0-9]{2}-[0-9]{2}-[0-9]{2};$/);  // eg. 'value:2019-11-07;'
     });
 
-    // Some wasm tests print out lists of test cases, and it is much more readable if these can be
-    // printed after the main test name.
+    // Some C++ wasm tests print out lists of test cases, and it is much more readable if these
+    // can be printed after the main test name.
     function prefix(title, fn) {
       it(title, async () => {
-        console.log('    »', title);
+        if (env.includes('cpp')) {
+          console.log('    »', title);
+        }
         await fn();
       });
     }
@@ -422,6 +424,23 @@ class TestLoader extends Loader {
       assert.isNotEmpty(data.ref.storageKey);
       delete data.ref.storageKey;
       assert.deepStrictEqual(data, {num: 12, txt: 'xyz', ref: {id: 'foo1'}});
+    });
+
+    it('unicode strings', async () => {
+      const {arc, stores} = await setup('UnicodeTest');
+      const sng = stores.get('sng') as VolatileSingleton;
+      const col = stores.get('col') as VolatileCollection;
+      const res = stores.get('res') as VolatileCollection;
+
+      // 'pass' tests passthrough of unicode data in entities.
+      const pass = 'A:₤⛲ℜ|あ表⏳:Z';
+      await sng.set({id: 'i1', rawData: {pass}});
+      await col.store({id: 'i2', rawData: {pass}}, ['k1']);
+      await arc.idle;
+
+      // 'src' is set directly by the particle.
+      const val = {pass, src: 'åŗċş 🌈'};
+      assert.deepStrictEqual((await res.toList()).map(e => e.rawData), [val, val]);
     });
   });
 });

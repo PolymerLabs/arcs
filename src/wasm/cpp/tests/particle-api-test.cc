@@ -115,3 +115,24 @@ public:
 };
 
 DEFINE_PARTICLE(ServicesTest)
+
+
+class UnicodeTest : public arcs::Particle {
+public:
+  void onHandleUpdate(const std::string& name) override {
+    arcs::UnicodeTest_Res out;
+    out.set_src("åŗċş 🌈");
+    if (name == "sng") {
+      out.set_pass(sng_.get().pass());
+    } else {
+      out.set_pass(col_.begin()->pass());
+    }
+    res_.store(out);
+  }
+
+  arcs::Singleton<arcs::UnicodeTest_Sng> sng_{"sng", this};
+  arcs::Collection<arcs::UnicodeTest_Col> col_{"col", this};
+  arcs::Collection<arcs::UnicodeTest_Res> res_{"res", this};
+};
+
+DEFINE_PARTICLE(UnicodeTest)

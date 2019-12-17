@@ -11,16 +11,23 @@
 
 package arcs
 
+actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
+actual fun stringToUtf8Impl(str: String): ByteArray = str.toByteArray(Charsets.UTF_8)
+
 // TODO(alxr): Implement Jvm Runtime
 actual object RuntimeClient {
     actual fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>): Unit =
         throw NotImplementedError()
 
-    actual fun <T : Entity<T>> singletonSet(particle: Particle, singleton: Singleton<T>, encoded: String): Unit =
-        throw NotImplementedError()
+    actual fun <T : Entity<T>> singletonSet(particle: Particle,
+        singleton: Singleton<T>,
+        encoded: NullTermByteArray
+    ): Unit = throw NotImplementedError()
 
-    actual fun <T : Entity<T>> collectionRemove(particle: Particle, collection: Collection<T>, encoded: String): Unit =
-        throw NotImplementedError()
+    actual fun <T : Entity<T>> collectionRemove(particle: Particle,
+        collection: Collection<T>,
+        encoded: NullTermByteArray
+    ): Unit = throw NotImplementedError()
 
     actual fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>): Unit =
         throw NotImplementedError()
@@ -28,14 +35,15 @@ actual object RuntimeClient {
     actual fun <T : Entity<T>> collectionStore(
         particle: Particle,
         collection: Collection<T>,
-        encoded: String): String? = throw NotImplementedError()
+        encoded: NullTermByteArray
+    ): String? = throw NotImplementedError()
 
     actual fun log(msg: String): Unit = throw NotImplementedError()
 
-    actual fun onRenderOutput(particle: Particle, template: String?, model: String?): Unit =
+    actual fun onRenderOutput(particle: Particle, template: String?, model: NullTermByteArray?): Unit =
         throw NotImplementedError()
 
-    actual fun serviceRequest(particle: Particle, call: String, encoded: String, tag: String): Unit =
+    actual fun serviceRequest(particle: Particle, call: String, encoded: NullTermByteArray, tag: String): Unit =
         throw NotImplementedError()
 
     actual fun resolveUrl(url: String): String = throw NotImplementedError()
@@ -44,4 +52,3 @@ actual object RuntimeClient {
 
     actual fun assert(message: String, cond: Boolean): Unit = throw NotImplementedError()
 }
-

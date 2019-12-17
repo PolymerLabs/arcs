@@ -10,6 +10,7 @@
 import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 import {Loader} from '../platform/loader.js';
+import {TextEncoder, TextDecoder} from '../platform/text-encoder-web.js';
 import {Entity} from './entity.js';
 import {Reference} from './reference.js';
 import {Type, EntityType, CollectionType, ReferenceType} from './type.js';
@@ -24,6 +25,65 @@ import {ParticleExecutionContext} from './particle-execution-context.js';
 import {BiMap} from './bimap.js';
 
 type EntityTypeMap = BiMap<number, EntityType>;
+
+// Wraps a Uint8Array buffer which is automatically resized as more space is needed.
+export class DynamicBuffer {
+  private data: Uint8Array;
+  size = 0;
+
+  constructor(initialSize = 100) {
+    this.data = new Uint8Array(initialSize);
+  }
+
+  // Returns a view of the populated region of the underlying Uint8Array.
+  view() {
+    return this.data.subarray(0, this.size);
+  }
+
+  // Adds "plain text" strings, which should not contain any non-ascii characters.
+  addAscii(...strs: string[]) {
+    for (const str of strs) {
+      this.ensureSpace(str.length);
+      for (let i = 0; i < str.length; i++) {
+        this.data[this.size++] = str.charCodeAt(i);
+      }
+    }
+  }
+
+  // Adds UTF8 strings, prefixed with their byte length: '<len>:<string>'.
+  addUnicode(str: string) {
+    if (!str) {
+      this.addAscii('0:');
+    } else {
+      const bytes = new TextEncoder().encode(str);
+      this.addAscii(bytes.length + ':');
+      this.ensureSpace(bytes.length);
+      this.data.set(bytes, this.size);
+      this.size += bytes.length;
+    }
+  }
+
+  // Adds raw bytes from another DynamicBuffer, prefixed with the length: '<len>:<bytes>'.
+  addBytes(buf: DynamicBuffer) {
+    this.addAscii(buf.size + ':');
+    this.ensureSpace(buf.size);
+    this.data.set(buf.view(), this.size);
+    this.size += buf.size;
+  }
+
+  private ensureSpace(required: number) {
+    let newSize = this.data.length;
+    while (newSize - this.size < required) {
+      newSize *= 2;
+    }
+    if (newSize !== this.data.length) {
+      // ArrayBuffer.transfer() would make this more efficient, but it's not implemented yet.
+      const old = this.data;
+      this.data = new Uint8Array(newSize);
+      this.data.set(old);
+    }
+  }
+}
 
 // Encoders/decoders for the wire format for transferring entities over the wasm boundary.
 // Note that entities must have an id before serializing for use in a wasm particle.
@@ -52,6 +112,8 @@ type EntityTypeMap = BiMap<number, EntityType>;
 //   Collection:  3:29:4:id12|txt:T4:qwer|num:N9.2:|18:6:id2670|num:N-7:|15:5:id501|flg:B0|
 
 export abstract class StringEncoder {
+  buf: DynamicBuffer|null = null;
+
   protected constructor(protected readonly schema: Schema, protected typeMap: EntityTypeMap) {}
 
   static create(type: Type, typeMap: EntityTypeMap): StringEncoder {
@@ -67,32 +129,58 @@ export abstract class StringEncoder {
     throw new Error(`Unsupported type for StringEncoder: ${type}`);
   }
 
-  abstract encodeSingleton(entity: Storable): string;
+  protected abstract encodeStorable(storable: Storable);
 
-  encodeCollection(entities: Storable[]): string {
-    let encoded = entities.length + ':';
+  encodeSingleton(storable: Storable): DynamicBuffer {
+    this.buf = new DynamicBuffer();
+    this.encodeStorable(storable);
+    const res = this.buf;
+    this.buf = null;
+    return res;
+  }
+
+  encodeCollection(entities: Storable[]): DynamicBuffer {
+    const bufs: DynamicBuffer[] = [];
+    let len = 10;  // for 'num-entities:' prefix
     for (const entity of entities) {
-      encoded += StringEncoder.encodeStr(this.encodeSingleton(entity));
+      const buf = this.encodeSingleton(entity);
+      bufs.push(buf);
+      len += 10 + buf.size;  // +10 for 'length:' prefix
     }
-    return encoded;
+
+    const collection = new DynamicBuffer(len);
+    collection.addAscii(entities.length + ':');
+    for (const buf of bufs) {
+      collection.addBytes(buf);
+    }
+    return collection;
   }
 
-  static encodeDictionary(dict: Dictionary<string>): string {
+  static encodeDictionary(dict: Dictionary<string>): DynamicBuffer {
+    const buf = new DynamicBuffer();
     const entries = Object.entries(dict);
-    let encoded = entries.length + ':';
+    buf.addAscii(entries.length + ':');
     for (const [key, value] of entries) {
-      encoded += StringEncoder.encodeStr(key) + StringEncoder.encodeStr(value);
+      buf.addUnicode(key);
+      buf.addUnicode(value);
     }
-    return encoded;
+    return buf;
   }
 
-  protected encodeField(field, name: string, value: string|number|boolean|Reference): string {
+  protected encodeField(field, name: string, value: string|number|boolean|Reference) {
+    // TODO: support unicode field names
     switch (field.kind) {
       case 'schema-primitive':
-        return name + ':' + field.type.substr(0, 1) + this.encodeValue(field.type, value as string|number|boolean) + '|';
+        this.buf.addAscii(name, ':', field.type.substr(0, 1));
+        this.encodeValue(field.type, value as string|number|boolean);
+        this.buf.addAscii('|');
+        break;
 
       case 'schema-reference':
-        return name + ':R' + this.encodeReference(value as Reference) + '|';
+        this.buf.addAscii(name, ':R');
+        this.encodeReference(value as Reference);
+        this.buf.addAscii('|');
+        break;
 
       case 'schema-collection':
       case 'schema-union':
@@ -104,7 +192,7 @@ export abstract class StringEncoder {
     }
   }
 
-  protected encodeReference(ref: Reference): string {
+  protected encodeReference(ref: Reference) {
     const entityType = ref.type.referredType as EntityType;
     assert(entityType instanceof EntityType);
     let index = this.typeMap.getR(entityType);
@@ -113,20 +201,26 @@ export abstract class StringEncoder {
       this.typeMap.set(index, entityType);
     }
     const {id, storageKey} = ref.dataClone();
-    return StringEncoder.encodeStr(id) + '|' + StringEncoder.encodeStr(storageKey) + '|' + index + ':';
+    this.buf.addUnicode(id);
+    this.buf.addAscii('|');
+    this.buf.addUnicode(storageKey);
+    this.buf.addAscii('|', index + ':');
   }
 
-  protected encodeValue(type: string, value: string|number|boolean): string  {
+  protected encodeValue(type: string, value: string|number|boolean)  {
     switch (type) {
       case 'Text':
       case 'URL':
-        return StringEncoder.encodeStr(value as string);
+        this.buf.addUnicode(value as string);
+        break;
 
       case 'Number':
-        return value + ':';
+        this.buf.addAscii(value + ':');
+        break;
 
       case 'Boolean':
-        return (value ? '1' : '0');
+        this.buf.addAscii(value ? '1' : '0');
+        break;
 
       case 'Bytes':
       case 'Object':
@@ -136,41 +230,36 @@ export abstract class StringEncoder {
         throw new Error(`Unknown primitive value type '${type}' in schema`);
     }
   }
-
-  protected static encodeStr(str: string) {
-    if (!str) {
-      return '0:';
-    }
-    return str.length + ':' + str;
-  }
 }
 
 class EntityEncoder extends StringEncoder {
-  encodeSingleton(entity: Storable): string {
+  encodeStorable(entity: Storable) {
     if (!(entity instanceof Entity)) {
       throw new Error(`non-Entity passed to EntityEncoder: ${entity}`);
     }
-    const id = Entity.id(entity);
-    let encoded = StringEncoder.encodeStr(id) + '|';
+    this.buf.addUnicode(Entity.id(entity));
+    this.buf.addAscii('|');
     for (const [name, value] of Object.entries(entity)) {
-      encoded += this.encodeField(this.schema.fields[name], name, value);
+      this.encodeField(this.schema.fields[name], name, value);
     }
-    return encoded;
   }
 }
 
 class ReferenceEncoder extends StringEncoder {
-  encodeSingleton(ref: Storable): string {
+  encodeStorable(ref: Storable) {
     if (!(ref instanceof Reference)) {
       throw new Error(`non-Reference passed to EntityEncoder: ${ref}`);
     }
-    return this.encodeReference(ref) + '|';
+    this.encodeReference(ref);
+    this.buf.addAscii('|');
   }
 }
 
 
 export abstract class StringDecoder {
-  protected str: string;
+  protected bytes: Uint8Array;
+  protected pos: number;
+  protected textDecoder = new TextDecoder();
 
   protected constructor(protected readonly schema: Schema,
                         protected typeMap: EntityTypeMap,
@@ -189,11 +278,16 @@ export abstract class StringDecoder {
     throw new Error(`Unsupported type for StringDecoder: ${type}`);
   }
 
-  abstract decodeSingleton(str: string): Storable;
+  protected init(bytes: Uint8Array) {
+    this.bytes = bytes;
+    this.pos = 0;
+  }
 
-  static decodeDictionary(str: string): Dictionary<string> {
+  abstract decodeSingleton(bytes: Uint8Array): Storable;
+
+  static decodeDictionary(bytes: Uint8Array): Dictionary<string> {
     const decoder = new EntityDecoder(null, null, null);
-    decoder.str = str;
+    decoder.init(bytes);
     const dict = {};
     let num = Number(decoder.upTo(':'));
     while (num--) {
@@ -214,9 +308,9 @@ export abstract class StringDecoder {
   }
 
   // TODO: make work in the new world.
-  static decodeArray(str: string): string[] {
+  static decodeArray(bytes: Uint8Array): string[] {
     const decoder = new EntityDecoder(null, null, null);
-    decoder.str = str;
+    decoder.init(bytes);
     const arr = [];
     let num = Number(decoder.upTo(':'));
     while (num--) {
@@ -226,9 +320,8 @@ export abstract class StringDecoder {
       if (typeChar >= '0' && typeChar <= '9') {
         const len = Number(`${typeChar}${decoder.upTo(':')}`);
         arr.push(decoder.chomp(len));
-      }
-      // otherwise typeChar is value-type specifier
-      else {
+      } else {
+        // otherwise typeChar is value-type specifier
         arr.push(decoder.decodeValue(typeChar));
       }
     }
@@ -236,27 +329,33 @@ export abstract class StringDecoder {
   }
 
   protected upTo(char: string): string {
-    const i = this.str.indexOf(char);
+    assert(char.length === 1);
+    const i = this.bytes.indexOf(char.charCodeAt(0), this.pos);
     if (i < 0) {
-      throw new Error(`Packaged entity decoding fail: expected '${char}' separator in '${this.str}'`);
+      throw new Error(`Packaged entity decoding fail: could not find '${char}'`);
     }
-    const token = this.str.slice(0, i);
-    this.str = this.str.slice(i + 1);
+    const token = this.textDecoder.decode(this.bytes.subarray(this.pos, i));
+    this.pos = i + 1;
     return token;
   }
 
   protected chomp(len: number): string {
-    if (len > this.str.length) {
-      throw new Error(`Packaged entity decoding fail: expected '${len}' chars to remain in '${this.str}'`);
+    return this.textDecoder.decode(this.chompBytes(len));
+  }
+
+  protected chompBytes(len: number): Uint8Array {
+    if (this.pos + len > this.bytes.length) {
+      throw new Error(`Packaged entity decoding fail: expected ${len} chars to remain ` +
+                      `but only had ${this.bytes.length - this.pos}`);
     }
-    const token = this.str.slice(0, len);
-    this.str = this.str.slice(len);
-    return token;
+    const start = this.pos;
+    this.pos += len;
+    return this.bytes.subarray(start, this.pos);
   }
 
   protected validate(token: string) {
     if (this.chomp(token.length) !== token) {
-      throw new Error(`Packaged entity decoding fail: expected '${token}' at start of '${this.str}'`);
+      throw new Error(`Packaged entity decoding fail: expected '${token}'`);
     }
   }
 
@@ -279,16 +378,16 @@ export abstract class StringDecoder {
 
       case 'D': {
         const len = Number(this.upTo(':'));
-        const dictionary = this.chomp(len);
+        const dictionary = this.chompBytes(len);
         return StringDecoder.decodeDictionary(dictionary);
       }
       case 'A': {
         const len = Number(this.upTo(':'));
-        const array = this.chomp(len);
+        const array = this.chompBytes(len);
         return StringDecoder.decodeArray(array);
       }
       default:
-        throw new Error(`Packaged entity decoding fail: unknown or unsupported primitive value type '${typeChar}'`);
+        throw new Error(`Packaged entity decoding fail: unknown primitive value type '${typeChar}'`);
     }
   }
 
@@ -304,21 +403,23 @@ export abstract class StringDecoder {
     const typeIndex = Number(this.upTo(':'));
     const entityType = this.typeMap.getL(typeIndex);
     if (!entityType) {
-      throw new Error(`Packaged entity decoding fail: invalid type index ${typeIndex} for reference '${id}|${storageKey}'`);
+      throw new Error(`Packaged entity decoding fail: invalid type index ${typeIndex} for ` +
+                      `reference '${id}|${storageKey}'`);
     }
     return new Reference({id, storageKey}, new ReferenceType(entityType), this.pec);
   }
 }
 
 class EntityDecoder extends StringDecoder {
-  decodeSingleton(str: string): Storable {
-    this.str = str;
+  decodeSingleton(bytes: Uint8Array): Storable {
+    this.init(bytes);
+
     const len = Number(this.upTo(':'));
     const id = this.chomp(len);
     this.validate('|');
 
     const data = {};
-    while (this.str.length > 0) {
+    while (this.pos < this.bytes.length) {
       const name = this.upTo(':');
       const typeChar = this.chomp(1);
       data[name] = this.decodeValue(typeChar);
@@ -333,7 +434,8 @@ class EntityDecoder extends StringDecoder {
 }
 
 class ReferenceDecoder extends StringDecoder {
-  decodeSingleton(str: string): Storable {
+  decodeSingleton(bytes: Uint8Array): Storable {
+    this.init(bytes);
     return this.decodeReference();
   }
 }
@@ -445,11 +547,11 @@ class EmscriptenWasmDriver implements WasmDriver {
       _emscripten_memcpy_big: (dst, src, num) => container.heapU8.set(container.heapU8.subarray(src, src + num), dst),
 
       // Error handling
-      _systemError: (msg) => { throw new Error(container.read(msg)); },
+      _systemError: (msg) => { throw new Error(container.readStr(msg)); },
       abortOnCannotGrowMemory: (size)  => { throw new Error(`abortOnCannotGrowMemory(${size})`); },
 
       // Logging
-      _setLogInfo: (file, line) => this.logInfo = [container.read(file).split(/[/\\]/).pop(), line],
+      _setLogInfo: (file, line) => this.logInfo = [container.readStr(file).split(/[/\\]/).pop(), line],
       ___syscall146: (which, varargs) => this.sysWritev(container, which, varargs),
     });
   }
@@ -458,7 +560,7 @@ class EmscriptenWasmDriver implements WasmDriver {
     // Emscripten doesn't need main() invoked
   }
 
-  // C++ printf support cribbed from emscripten glue js - currently only supports ASCII
+  // C++ printf support cribbed from emscripten glue js.
   sysWritev(container, which, varargs) {
     const get = () => {
       varargs += 4;
@@ -469,8 +571,13 @@ class EmscriptenWasmDriver implements WasmDriver {
     const iov = get();
     const iovcnt = get();
 
-    // TODO: does this need to be persistent across calls? (i.e. due to write buffering)
-    let str = this.logInfo ? `[${this.logInfo[0]}:${this.logInfo[1]}] ` : '';
+    const decoder = new TextDecoder();
+    let info = '';
+    if (this.logInfo) {
+      info = `[${this.logInfo[0]}:${this.logInfo[1]}] `;
+      this.logInfo = null;
+    }
+    let bytes = [];
     let ret = 0;
     for (let i = 0; i < iovcnt; i++) {
       const ptr = container.heap32[(((iov)+(i*8))>>2)];
@@ -478,15 +585,15 @@ class EmscriptenWasmDriver implements WasmDriver {
       for (let j = 0; j < len; j++) {
         const curr = container.heapU8[ptr+j];
         if (curr === 0 || curr === 10) {  // NUL or \n
-          output(str);
-          str = '';
+          output(info + decoder.decode(Uint8Array.from(bytes)));
+          info = '';
+          bytes = [];
         } else {
-          str += String.fromCharCode(curr);
+          bytes.push(curr);
         }
       }
       ret += len;
     }
-    this.logInfo = null;
     return ret;
   }
 }
@@ -503,14 +610,14 @@ class KotlinWasmDriver implements WasmDriver {
       Konan_js_freeArena: (arenaIndex) => {},
 
       // These two are used by logging functions
-      write: (ptr) => console.log(container.read(ptr)),
+      write: (ptr) => console.log(container.readStr(ptr)),
       flush: () => {},
 
       // Apparently used by Kotlin Memory management
       Konan_notify_memory_grow: () => this.updateMemoryViews(container),
 
       // Kotlin's own glue for abort and exit
-      Konan_abort: (pointer) => { throw new Error('Konan_abort(' + container.read(pointer) + ')'); },
+      Konan_abort: (pointer) => { throw new Error('Konan_abort(' + container.readStr(pointer) + ')'); },
       Konan_exit: (status) => {},
 
       // Needed by some code that tries to get the current time in it's runtime
@@ -611,16 +718,23 @@ export class WasmContainer {
 
   // Allocates memory in the wasm container; the calling particle is responsible for freeing.
   resolve(urlPtr: WasmAddress): WasmAddress {
-    return this.store(this.loader.resolve(this.read(urlPtr)));
+    return this.storeStr(this.loader.resolve(this.readStr(urlPtr)));
   }
 
-  // Allocates memory in the wasm container.
-  store(str: string): WasmAddress {
-    const p = this.exports._malloc(str.length + 1);
-    for (let i = 0; i < str.length; i++) {
-      this.heapU8[p + i] = str.charCodeAt(i);
-    }
-    this.heapU8[p + str.length] = 0;
+  // Allocates memory in the wasm container and stores a null-terminated UTF8 string.
+  storeStr(str: string): WasmAddress {
+    const bytes = new TextEncoder().encode(str);
+    const p = this.exports._malloc(bytes.length + 1);
+    this.heapU8.set(bytes, p);
+    this.heapU8[p + bytes.length] = 0;
+    return p;
+  }
+
+  // Allocates memory in the wasm container and stores the given byte array.
+  storeBytes(buf: DynamicBuffer): WasmAddress {
+    const p = this.exports._malloc(buf.size + 1);
+    this.heapU8.set(buf.view(), p);
+    this.heapU8[p + buf.size] = 0;
     return p;
   }
 
@@ -629,13 +743,16 @@ export class WasmContainer {
     ptrs.forEach(p => p && this.exports._free(p));
   }
 
-  // Currently only supports ASCII. TODO: unicode
-  read(idx: WasmAddress): string {
-    let str = '';
-    while (idx < this.heapU8.length && this.heapU8[idx] !== 0) {
-      str += String.fromCharCode(this.heapU8[idx++]);
+  readStr(idx: WasmAddress): string {
+    return new TextDecoder().decode(this.readBytes(idx));
+  }
+
+  readBytes(idx: WasmAddress): Uint8Array {
+    let end = idx;
+    while (end < this.heapU8.length && this.heapU8[end] !== 0) {
+      end++;
     }
-    return str;
+    return this.heapU8.subarray(idx, end);
   }
 }
 
@@ -686,7 +803,7 @@ export class WasmParticle extends Particle {
   // transfer format. Obviously this can be improved.
   async setHandles(handles: ReadonlyMap<string, Handle>) {
     for (const [name, handle] of handles) {
-      const p = this.container.store(name);
+      const p = this.container.storeStr(name);
       const wasmHandle = this.exports._connectHandle(this.innerParticle, p, handle.canRead, handle.canWrite);
       this.container.free(p);
       if (wasmHandle === 0) {
@@ -706,9 +823,9 @@ export class WasmParticle extends Particle {
     const encoder = this.getEncoder(handle.type);
     let p;
     if (handle instanceof Singleton) {
-      p = this.container.store(encoder.encodeSingleton(model));
+      p = this.container.storeBytes(encoder.encodeSingleton(model));
     } else {
-      p = this.container.store(encoder.encodeCollection(model));
+      p = this.container.storeBytes(encoder.encodeCollection(model));
     }
     this.exports._syncHandle(this.innerParticle, wasmHandle, p);
     this.container.free(p);
@@ -725,11 +842,11 @@ export class WasmParticle extends Particle {
     let p2 = 0;
     if (handle instanceof Singleton) {
       if (update.data) {
-        p1 = this.container.store(encoder.encodeSingleton(update.data));
+        p1 = this.container.storeBytes(encoder.encodeSingleton(update.data));
       }
     } else {
-      p1 = this.container.store(encoder.encodeCollection(update.added || []));
-      p2 = this.container.store(encoder.encodeCollection(update.removed || []));
+      p1 = this.container.storeBytes(encoder.encodeCollection(update.added || []));
+      p2 = this.container.storeBytes(encoder.encodeCollection(update.removed || []));
     }
     this.exports._updateHandle(this.innerParticle, wasmHandle, p1, p2);
     this.container.free(p1, p2);
@@ -752,7 +869,7 @@ export class WasmParticle extends Particle {
   singletonSet(wasmHandle: WasmAddress, entityPtr: WasmAddress): WasmAddress {
     const singleton = this.getHandle(wasmHandle) as Singleton;
     const decoder = this.getDecoder(singleton.type);
-    const entity = decoder.decodeSingleton(this.container.read(entityPtr));
+    const entity = decoder.decodeSingleton(this.container.readBytes(entityPtr));
     const p = this.ensureIdentified(entity, singleton);
     void singleton.set(entity);
     return p;
@@ -769,7 +886,7 @@ export class WasmParticle extends Particle {
   collectionStore(wasmHandle: WasmAddress, entityPtr: WasmAddress): WasmAddress {
     const collection = this.getHandle(wasmHandle) as Collection;
     const decoder = this.getDecoder(collection.type);
-    const entity = decoder.decodeSingleton(this.container.read(entityPtr));
+    const entity = decoder.decodeSingleton(this.container.readBytes(entityPtr));
     const p = this.ensureIdentified(entity, collection);
     void collection.store(entity);
     return p;
@@ -778,7 +895,7 @@ export class WasmParticle extends Particle {
   collectionRemove(wasmHandle: WasmAddress, entityPtr: WasmAddress) {
     const collection = this.getHandle(wasmHandle) as Collection;
     const decoder = this.getDecoder(collection.type);
-    const entity = decoder.decodeSingleton(this.container.read(entityPtr));
+    const entity = decoder.decodeSingleton(this.container.readBytes(entityPtr));
     void collection.remove(entity);
   }
 
@@ -789,14 +906,14 @@ export class WasmParticle extends Particle {
 
   // Retrieves the entity held by a reference.
   async dereference(idPtr: WasmAddress, keyPtr: WasmAddress, typeIndex: number, continuationId: number) {
-    const id = this.container.read(idPtr);
-    const storageKey = this.container.read(keyPtr);
+    const id = this.container.readStr(idPtr);
+    const storageKey = this.container.readStr(keyPtr);
     const entityType = this.typeMap.getL(typeIndex);
 
     const encoder = this.getEncoder(entityType);
     const entity = await Reference.retrieve(this.container.pec, id, storageKey, entityType);
 
-    const p = this.container.store(encoder.encodeSingleton(entity));
+    const p = this.container.storeBytes(encoder.encodeSingleton(entity));
     this.exports._dereferenceResponse(this.innerParticle, continuationId, p);
     this.container.free(p);
   }
@@ -835,7 +952,7 @@ export class WasmParticle extends Particle {
     // TODO: rework Reference/Entity internals to avoid this instance check?
     if (entity instanceof Entity && !Entity.isIdentified(entity)) {
       handle.createIdentityFor(entity);
-      p = this.container.store(Entity.id(entity));
+      p = this.container.storeStr(Entity.id(entity));
     }
     return p;
   }
@@ -850,10 +967,10 @@ export class WasmParticle extends Particle {
   onRenderOutput(templatePtr: WasmAddress, modelPtr: WasmAddress) {
     const content: Content = {};
     if (templatePtr) {
-      content.template = this.container.read(templatePtr);
+      content.template = this.container.readStr(templatePtr);
     }
     if (modelPtr) {
-      content.model = StringDecoder.decodeDictionary(this.container.read(modelPtr));
+      content.model = StringDecoder.decodeDictionary(this.container.readBytes(modelPtr));
     }
     this.output(content);
   }
@@ -863,7 +980,7 @@ export class WasmParticle extends Particle {
    */
   // Called by the shell to initiate rendering; the particle will call env._render in response.
   renderSlot(slotName: string, contentTypes: string[]) {
-    const p = this.container.store(slotName);
+    const p = this.container.storeStr(slotName);
     const sendTemplate = contentTypes.includes('template');
     const sendModel = contentTypes.includes('model');
     this.exports._renderSlot(this.innerParticle, p, sendTemplate, sendModel);
@@ -885,15 +1002,15 @@ export class WasmParticle extends Particle {
   // or directly from the wasm particle itself (e.g. in response to a data update).
   // template is a string provided by the particle. model is an encoded Dictionary.
   renderImpl(slotNamePtr: WasmAddress, templatePtr: WasmAddress, modelPtr: WasmAddress) {
-    const slot = this.slotProxiesByName.get(this.container.read(slotNamePtr));
+    const slot = this.slotProxiesByName.get(this.container.readStr(slotNamePtr));
     if (slot) {
       const content: Content = {templateName: 'default'};
       if (templatePtr) {
-        content.template = this.container.read(templatePtr);
+        content.template = this.container.readStr(templatePtr);
         slot.requestedContentTypes.add('template');
       }
       if (modelPtr) {
-        content.model = StringDecoder.decodeDictionary(this.container.read(modelPtr));
+        content.model = StringDecoder.decodeDictionary(this.container.readBytes(modelPtr));
         slot.requestedContentTypes.add('model');
       }
       slot.render(content);
@@ -903,9 +1020,9 @@ export class WasmParticle extends Particle {
   // Wasm particles can request service calls with a Dictionary of arguments and an optional string
   // tag to disambiguate different requests to the same service call.
   async serviceRequest(callPtr: WasmAddress, argsPtr: WasmAddress, tagPtr: WasmAddress) {
-    const call = this.container.read(callPtr);
-    const args = StringDecoder.decodeDictionary(this.container.read(argsPtr));
-    const tag = this.container.read(tagPtr);
+    const call = this.container.readStr(callPtr);
+    const args = StringDecoder.decodeDictionary(this.container.readBytes(argsPtr));
+    const tag = this.container.readStr(tagPtr);
     // tslint:disable-next-line: no-any
     const response: any = await this.service({call, ...args});
 
@@ -925,17 +1042,17 @@ export class WasmParticle extends Particle {
     // We can't re-use the string pointers passed in as args to this method, because the await
     // point above means the call to internal::serviceRequest inside the wasm module will already
     // have completed, and the memory for those args will have been freed.
-    const cp = this.container.store(call);
-    const rp = this.container.store(StringEncoder.encodeDictionary(dict));
-    const tp = this.container.store(tag);
+    const cp = this.container.storeStr(call);
+    const rp = this.container.storeBytes(StringEncoder.encodeDictionary(dict));
+    const tp = this.container.storeStr(tag);
     this.exports._serviceResponse(this.innerParticle, cp, rp, tp);
     this.container.free(cp, rp, tp);
   }
 
   fireEvent(slotName: string, event) {
-    const sp = this.container.store(slotName);
-    const hp = this.container.store(event.handler);
-    const data = this.container.store(StringEncoder.encodeDictionary(event.data || {}));
+    const sp = this.container.storeStr(slotName);
+    const hp = this.container.storeStr(event.handler);
+    const data = this.container.storeBytes(StringEncoder.encodeDictionary(event.data || {}));
     this.exports._fireEvent(this.innerParticle, sp, hp, data);
     this.container.free(sp, hp, data);
   }

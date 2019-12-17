@@ -19,7 +19,6 @@ import arcs.Particle
 import arcs.StringDecoder
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
-import kotlin.native.toUtf8
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
@@ -63,8 +62,19 @@ fun WasmNullableString.toNullableKString(): String? {
     return this.toLong().toCPointer<ByteVar>()?.toKStringFromUtf8()
 }
 
+/** Convert a nullable WasmString pointer into a possibly empty UTF8-encoded ByteArray */
+fun WasmNullableString.toByteArray(): ByteArray {
+    // TODO: find a way to view the wasm address as bytes without round-tripping through String
+    return this.toNullableKString()?.encodeToByteArray() ?: ByteArray(0)
+}
+
 @SymbolName("Kotlin_Arrays_getByteArrayAddressOfElement")
 external fun ByteArray.addressOfElement(index: Int): CPointer<ByteVar>
+
+/** Convert a ByteArray into a WasmAddress */
+fun ByteArray.toWasmAddress(): WasmAddress {
+    return this.addressOfElement(0).toLong().toWasmAddress()
+}
 
 /** Convert a Kotlin String into a WasmAddress */
 fun String.toWasmString(): WasmString {
@@ -74,8 +84,7 @@ fun String.toWasmString(): WasmString {
     val array2 = ByteArray(array.size + 1)
     array.copyInto(array2)
     array2[array.size] = 0.toByte()
-    // When UTF16 is supported by CPP, we can remove all of this
-    return array2.addressOfElement(0).toLong().toWasmAddress()
+    return array2.toWasmAddress()
 }
 
 /** Convert a Kotlin String to a WasmAddress, where `null` is a valid value. */
@@ -134,9 +143,8 @@ fun init(particlePtr: WasmAddress) {
 @ExportForCppRuntime("_syncHandle")
 fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNullableString) {
     val handle = handlePtr.toObject<Handle>()
-    val encodedStr: String? = encoded.toNullableKString()
     handle?.let {
-        it.sync(encodedStr)
+        it.sync(encoded.toByteArray())
         particlePtr.toObject<Particle>()?.sync(it)
     }
 }
@@ -151,7 +159,7 @@ fun updateHandle(
 ) {
     val handle = handlePtr.toObject<Handle>()
     handle?.let {
-        it.update(encoded1Ptr.toNullableKString(), encoded2Ptr.toNullableKString())
+        it.update(encoded1Ptr.toByteArray(), encoded2Ptr.toByteArray())
         particlePtr.toObject<Particle>()?.onHandleUpdate(it)
     }
 }
@@ -179,7 +187,7 @@ fun fireEvent(
     particlePtr.toObject<Particle>()?.fireEvent(
         slotNamePtr.toKString(),
         handlerNamePtr.toKString(),
-        StringDecoder.decodeDictionary(eventData.toKString())
+        StringDecoder.decodeDictionary(eventData.toByteArray())
     )
 }
 
@@ -191,7 +199,7 @@ fun serviceResponse(
     responsePtr: WasmString,
     tagPtr: WasmString
 ) {
-    val dict = StringDecoder.decodeDictionary(responsePtr.toKString())
+    val dict = StringDecoder.decodeDictionary(responsePtr.toByteArray())
     particlePtr.toObject<Particle>()?.serviceResponse(callPtr.toKString(), dict, tagPtr.toKString())
 }
 

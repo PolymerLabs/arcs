@@ -11,6 +11,12 @@
 
 package arcs
 
+expect fun utf8ToStringImpl(bytes: ByteArray): String
+expect fun stringToUtf8Impl(str: String): ByteArray
+
+fun ByteArray.utf8ToString(): String = utf8ToStringImpl(this)
+fun String.stringToUtf8(): ByteArray = stringToUtf8Impl(this)
+
 /**
  * Delegate core runtime operations to the appropriate platform.
  */
@@ -30,7 +36,7 @@ expect object RuntimeClient {
      * @param singleton target to be cleared
      * @param encoded serialized representation of an entity
      */
-    fun <T : Entity<T>> singletonSet(particle: Particle, singleton: Singleton<T>, encoded: String)
+    fun <T : Entity<T>> singletonSet(particle: Particle, singleton: Singleton<T>, encoded: NullTermByteArray)
 
     /**
      * Removes all entities to produce an empty collection.
@@ -47,7 +53,7 @@ expect object RuntimeClient {
      * @param collection target to be mutated
      * @param encoded serialized representation of an entity
      */
-    fun <T : Entity<T>> collectionRemove(particle: Particle, collection: Collection<T>, encoded: String)
+    fun <T : Entity<T>> collectionRemove(particle: Particle, collection: Collection<T>, encoded: NullTermByteArray)
 
     /**
      * Add a single entity to a collection
@@ -60,7 +66,7 @@ expect object RuntimeClient {
     fun <T : Entity<T>> collectionStore(
         particle: Particle,
         collection: Collection<T>,
-        encoded: String
+        encoded: NullTermByteArray
     ): String?
 
     /** @param msg message to write to a logging system. */
@@ -73,7 +79,7 @@ expect object RuntimeClient {
      * @param template string encoding of UI template
      * @param model data model to be interpolated in the template
      */
-    fun onRenderOutput(particle: Particle, template: String?, model: String?)
+    fun onRenderOutput(particle: Particle, template: String?, model: NullTermByteArray?)
 
     /**
      * Request an action to be performed by a Service
@@ -83,7 +89,7 @@ expect object RuntimeClient {
      * @param encoded serialized key-value data to be passed to the service
      * @param tag name the request to the service
      */
-    fun serviceRequest(particle: Particle, call: String, encoded: String, tag: String)
+    fun serviceRequest(particle: Particle, call: String, encoded: NullTermByteArray, tag: String)
 
     /** @param url translate to absolute location */
     fun resolveUrl(url: String): String
