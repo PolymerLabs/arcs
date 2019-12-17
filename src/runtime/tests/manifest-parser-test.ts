@@ -233,6 +233,34 @@ describe('manifest parser', () => {
         optionalType: reads * {value}
     `);
   });
+  it('parses inline schemas with any name', () => {
+    parse(`
+      particle Foo
+        anonSchema: reads [* {value: Text, num: Number}]
+    `);
+    parse(`
+      particle Foo
+        union: reads * {value: (Text or Number)}
+    `);
+    parse(`
+      particle Foo
+        optionalType: reads * {value}
+    `);
+  });
+  it('parses inline schemas with no name', () => {
+    parse(`
+      particle Foo
+        anonSchema: reads [{value: Text, num: Number}]
+    `);
+    parse(`
+      particle Foo
+        union: reads {value: (Text or Number)}
+    `);
+    parse(`
+      particle Foo
+        optionalType: reads {value}
+    `);
+  });
   it('parses a schema with a bytes field', () => {
     parse(`
       schema Avatar
