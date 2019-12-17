@@ -12,17 +12,14 @@
 package arcs.tutorials
 
 import arcs.Collection
-import arcs.CollectionsParticle_InputData
+import arcs.Collections_InputData
 import arcs.Particle
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 /**
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
-class CollectionsParticle : Particle() {
-    private val people = Collection(this, "inputData") { CollectionsParticle_InputData(
+class Collections : Particle() {
+    private val people = Collection(this, "inputData") { Collections_InputData(
         name = "",
         age = 0.0
     ) }
@@ -51,7 +48,3 @@ class CollectionsParticle : Particle() {
         </template>"""
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newCollectionsParticle")
-fun constructCollectionsParticle() = CollectionsParticle().toAddress()

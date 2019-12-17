@@ -13,14 +13,11 @@ package arcs.tutorials
 
 import arcs.Particle
 import arcs.Singleton
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 /**
  * Sample WASM Particle.
  */
-class GetPersonParticle : Particle() {
+class GetPerson : Particle() {
     private val person = Singleton(this, "person") { GetPerson_Person("Human") }
 
     override fun getTemplate(slotName: String) = """
@@ -35,7 +32,3 @@ class GetPersonParticle : Particle() {
         }
     }
 }
-
-@Retain
-@ExportForCppRuntime()
-fun _newGetPerson() = GetPersonParticle().toAddress()

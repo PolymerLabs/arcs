@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.tutorials
+package arcs.tutorials.tictactoe
 
 import arcs.Collection
 import arcs.Handle
@@ -17,9 +17,6 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTGame_Events
 import arcs.TTTGame_GameState
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
@@ -41,7 +38,3 @@ class TTTGame : Particle() {
         <div slotid="boardSlot"></div>
         """.trimIndent()
 }
-
-@Retain
-@ExportForCppRuntime("_newTTTGame")
-fun constructTTTGame() = TTTGame().toAddress()

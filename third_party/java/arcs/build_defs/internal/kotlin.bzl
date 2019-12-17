@@ -9,6 +9,7 @@ load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_b
 load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_library", "java_test")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
+load("//third_party/java/arcs/build_defs/internal:wasm.bzl", "create_wasm_prelude")
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
 _WASM_SUFFIX = "-wasm"
@@ -69,17 +70,17 @@ def arcs_kt_library(
 
 def arcs_kt_particles(
         name,
+        package,
         srcs = [],
         deps = [],
         visibility = None,
         wasm = True,
-        # TODO: Set jvm to true by default, once all of the wasm cruft is
-        # removed from the standard Arcs libraries and particle code.
-        jvm = False):
+        jvm = True):
     """Performs final compilation of wasm and bundling if necessary.
 
     Args:
       name: name of the target to create
+      package: Kotlin package for the particles
       srcs: List of source files to include. Each file must contain a Kotlin
         class of the same name, which must match the name of a particle defined
         in a .arcs file.
@@ -110,11 +111,21 @@ def arcs_kt_particles(
         for src in srcs:
             if not src.endswith(".kt"):
                 fail("%s is not a Kotlin file (must end in .kt)" % src)
-            particle = src[:-3]
+            particle = src.split("/")[-1][:-3]
             wasm_lib = particle + "-lib" + _WASM_SUFFIX
+            prelude_file = particle + ".prelude.kt"
+            create_wasm_prelude(
+                name = particle + "-prelude",
+                particle = particle,
+                package = package,
+                out = prelude_file,
+            )
             kt_native_library(
                 name = wasm_lib,
-                srcs = [src],
+                srcs = [
+                    src,
+                    prelude_file,
+                ],
                 deps = wasm_deps,
             )
             wasm_particle_libs.append(wasm_lib)

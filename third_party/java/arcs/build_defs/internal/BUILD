@@ -8,3 +8,5 @@ define_kt_toolchain(
     jvm_target = "1.8",
     language_version = "1.3",
 )
+
+exports_files(["wasm_prelude_template.kt"])

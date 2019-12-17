@@ -9,11 +9,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package kotlin.native
+// GENERATED FILE!
 
-/**
- * Preserve the function entry point during global optimizations.
- */
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.BINARY)
-public annotation class Retain
+package {package}
+
+import arcs.addressable.toAddress
+import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
+
+@Retain
+@ExportForCppRuntime()
+fun _new{particle}() = {particle}().toAddress()

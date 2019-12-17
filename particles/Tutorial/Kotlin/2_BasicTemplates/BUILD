@@ -5,4 +5,5 @@ licenses(["notice"])
 arcs_kt_particles(
     name = "BasicTemplate",
     srcs = ["BasicTemplate.kt"],
+    package = "arcs.tutorials",
 )

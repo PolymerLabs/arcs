@@ -11,10 +11,7 @@
 
 package arcs.tutorials
 
-import arcs.addressable.toAddress
 import arcs.Particle
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
 
 /**
  * Sample WASM Particle.
@@ -22,7 +19,3 @@ import kotlin.native.Retain
 class ChildParticle : Particle() {
     override fun getTemplate(slotName: String) = "Child"
 }
-
-@Retain
-@ExportForCppRuntime()
-fun _newChildParticle() = ChildParticle().toAddress()
