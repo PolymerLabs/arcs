@@ -12,7 +12,6 @@ import {Client, getClientClass} from './systrace-clients.js';
 
 /** Interface that describes a traced symbol. */
 interface Symbol {
-  target: object | Function;
   prototype: Function;
   property: string;
   tag: string;
@@ -99,11 +98,10 @@ function harnessSystemTracing(obj: object, client: Client) {
               return typeof obj[element] === 'function';
             })
             .map(element => ({
-                   target: that,
-                   prototype: obj as Function,  // Foo.prototype
-                   property: element,
-                   tag: 'o' + obj.constructor.name + '::' + element + contextId,
-                 })));
+              prototype: obj as Function,  // Foo.prototype
+              property: element,
+              tag: 'o' + obj.constructor.name + '::' + element + contextId,
+            })));
 
     // Collects and binds class static functions
     boundSymbols = boundSymbols.concat(
@@ -112,25 +110,36 @@ function harnessSystemTracing(obj: object, client: Client) {
               return typeof obj.constructor[element] === 'function';
             })
             .map(element => ({
-                   target: obj.constructor,
-                   prototype: obj.constructor,  // Foo.prototype.constructor
-                   property: element,
-                   tag: 's' + obj.constructor.name + '::' + element + contextId,
-                 })));
+              prototype: obj.constructor,  // Foo.prototype.constructor
+              property: element,
+              tag: 's' + obj.constructor.name + '::' + element + contextId,
+            })));
   }
 
-  // Property filters (don't harness system tracing to):
-  boundSymbols = boundSymbols.filter(
-      (element, index, array) => element.property !== 'constructor');
+  // Property filters (determine if harnessing system tracing to properties):
+  boundSymbols = boundSymbols.filter((element, index, array) => {
+    const desc =
+        Object.getOwnPropertyDescriptor(element.prototype, element.property);
+    // Not interested in properties that can not be changed
+    // i.e. with only single getter.
+    if (!desc.writable) {
+      return false;
+    }
+    // Not interested in constructors at this moment.
+    if (element.property === 'constructor') {
+      return false;
+    }
+    return true;
+  });
 
   // Harnesses system tracing to all property candidates.
   boundSymbols.forEach((element) => {
     const tracedFunction = element.prototype[element.property];
     element.prototype[element.property] =
-        (...args): ReturnType<typeof tracedFunction> => {
+        function(...args): ReturnType<typeof tracedFunction> {
           const cookie = idGenerator.getCookie();
           client.asyncTraceBegin(element.tag, cookie);
-          const ret = tracedFunction.call(element.target, ...args);
+          const ret = tracedFunction.call(this, ...args);
           client.asyncTraceEnd(element.tag, cookie);
           return ret;
         };
