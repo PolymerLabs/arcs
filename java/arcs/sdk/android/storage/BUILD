@@ -20,6 +20,9 @@ kt_android_library(
         "//java/arcs/core/storage/util",
         "//java/arcs/core/type",
         "//java/arcs/sdk/android/storage/service",
+        "//java/arcs/sdk/android/storage/service:aidl",
+        "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/lifecycle",
+        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
     ],
 )
