@@ -62,10 +62,10 @@ Finally, we need a 'BUILD' file. Arcs particles can be built using Bazel rules. 
 
 ```BUILD
 // Required imports
-load("//build_defs:build_defs.bzl", "arcs_kt_binary")
+load("//build_defs:build_defs.bzl", "arcs_kt_particles")
 
 // Arcs Kotlin particle build rule
-arcs_kt_binary(
+arcs_kt_particles(
     name = "HelloWorld",
     srcs = ["HelloWorld.kt"],
 )
@@ -127,9 +127,9 @@ fun constructBasicTemplateParticle() = BasicTemplateParticle().toAddress()
 
 Finally, the Bazel BUILD file, which looks nearly identical to the one we used in the hello world program.
 ```
-load("//build_defs:build_defs.bzl", "arcs_kt_binary")
+load("//build_defs:build_defs.bzl", "arcs_kt_particles")
 
-arcs_kt_binary(
+arcs_kt_particles(
     name = "BasicTemplate",
     srcs = ["BasicTemplate.kt"],
 )
@@ -150,7 +150,7 @@ This all is a bit theoretical, so let's get to an example. To show how particles
 As usual, we start with the Arcs manifest file:
 ```
 // The "parent" particle. It provides a slot for another particle to be rendered inside it.
-particle ParentParticle in 'ParentParticle.wasm'
+particle ParentParticle in 'particles.wasm'
   // This particle renders to the root slot ("consumes" it), and provides a slot inside it called
   // "mySlot" in which another particle can render itself. The child particle will be rendered inside
   // a special div with the identifier "mySlot", which this particle will need to provide in its HTML.
@@ -159,7 +159,7 @@ particle ParentParticle in 'ParentParticle.wasm'
 
 // The "child" particle. Instead of consuming "root" it consumes "mySlot", which connects it to the
 // slot provided by ParentParticle.
-particle ChildParticle in 'ChildParticle.wasm'
+particle ChildParticle in 'particles.wasm'
   render: consumes
 
 recipe RenderSlotsRecipe
@@ -212,18 +212,15 @@ fun _newChildParticle() = ChildParticle().toAddress()
 
 And finally the BUILD file, which is the same as in the previous tutorials, but has a second rule.
 ```
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles")
 
-arcs_kt_binary(
-    name = "ParentParticle",
-    srcs = ["ParentParticle.kt"],
+arcs_kt_particles(
+    name = "particles",
+    srcs = [
+        "ParentParticle.kt",
+        "ChildParticle.kt",
+    ],
 )
-
-arcs_kt_binary(
-    name = "ChildParticle",
-    srcs = ["ChildParticle.kt"],
-)
-
 ```
 
 And there you have it! The mystery of root solved, and a basic understanding of slots. Slots are a large part of the power of Arcs to hide user data, so we'll be using them a lot going forward. So don't worry if you don't fully understand them yet, there will plenty more examples to come!
@@ -255,14 +252,14 @@ schema Person
 // The GetPerson particle allows the user to input their name, then writes
 // the input to the Person handle.
 // This particle also provides a slot to display a greeting to the person.
-particle GetPerson in 'GetPerson.wasm'
+particle GetPerson in 'particles.wasm'
   person: writes Person
   root: consumes
     greetingSlot: provides
 
 // The DisplayGreeting particle, takes the name passed through the Person
 // handle, and displays a greeting.
-particle DisplayGreeting in 'DisplayGreeting.wasm'
+particle DisplayGreeting in 'particles.wasm'
   person: reads Person
   greetingSlot: consumes
 
@@ -362,7 +359,7 @@ And finally, the BUILD file. Note the `arcs_kt_schema` rule which will generate 
 '$ParticleName_EntityName'. This is why `DisplayGreeting.kt` referenced `GetPerson_Person()` while `DisplayGreeting.kt`
 referenced `DisplayGreeting_Person()`.
 ```build
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles", "arcs_kt_schema")
 
 arcs_kt_schema(
     name = "handles_schemas",
@@ -370,15 +367,12 @@ arcs_kt_schema(
     package = "arcs.tutorials",
 )
 
-arcs_kt_binary(
-    name = "GetPerson",
-    srcs = ["GetPerson.kt"],
-    deps = [":handles_schemas"],
-)
-
-arcs_kt_binary(
-    name = "DisplayGreeting",
-    srcs = ["DisplayGreeting.kt"],
+arcs_kt_particles(
+    name = "particles",
+    srcs = [
+        "GetPerson.kt",
+        "DisplayGreeting.kt",
+    ],
     deps = [":handles_schemas"],
 )
 ```
@@ -494,14 +488,14 @@ fun constructCollectionsParticle(): Address = CollectionsParticle().toAddress()
 
 And the BUILD file:
 ```build
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles", "arcs_kt_schema")
 
 arcs_kt_schema(
     name = "collections_schemas",
     srcs = ["Collections.arcs"],
 )
 
-arcs_kt_binary(
+arcs_kt_particles(
     name = "Collections",
     srcs = ["Collections.kt"],
     deps = [":collections_schemas"],

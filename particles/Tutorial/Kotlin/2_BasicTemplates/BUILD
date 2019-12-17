@@ -1,6 +1,8 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles")
 
-arcs_kt_binary(
+licenses(["notice"])
+
+arcs_kt_particles(
     name = "BasicTemplate",
     srcs = ["BasicTemplate.kt"],
 )
