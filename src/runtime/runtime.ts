@@ -16,6 +16,7 @@ import {UnifiedStore} from './storageNG/unified-store.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
+import {RamDiskMemoryProvider} from './ram-disk-memory-provider.js';
 import {SlotComposer} from './slot-composer.js';
 import {UiSlotComposer} from './ui-slot-composer.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
@@ -56,7 +57,7 @@ let runtime: Runtime | null = null;
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
-export class Runtime {
+export class Runtime implements RamDiskMemoryProvider {
   public context: Manifest;
   public readonly pecFactory: PecFactory;
   private cacheService: RuntimeCacheService;

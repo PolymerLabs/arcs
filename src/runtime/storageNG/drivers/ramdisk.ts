@@ -58,6 +58,8 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
     }
 
     // Use a VolatileDriver backed by the Runtime's RamDisk memory instance.
+    // TODO(wkorman): Pass in the RamDiskMemoryProvider rather than grabbing
+    // from Runtime directly.
     const memory = Runtime.getRuntime().getRamDiskMemory();
     return new VolatileDriver<Data>(storageKey as RamDiskStorageKey, exists, memory);
   }
