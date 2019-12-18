@@ -4,8 +4,15 @@ import arcs.core.common.Referencable;
 import arcs.core.crdt.CrdtSet;
 import arcs.core.crdt.internal.VersionMap;
 
+
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
