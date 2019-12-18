@@ -11,7 +11,7 @@
 
 package arcs
 
-import arcs.addressable.toAddress
+import arcs.wasm.toAddress
 import arcs.NullTermByteArray
 import arcs.wasm._free
 import arcs.wasm.collectionClear
