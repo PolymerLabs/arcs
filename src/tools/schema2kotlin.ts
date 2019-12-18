@@ -26,11 +26,11 @@ const keywords = [
 ];
 
 const typeMap = {
-  'T': {type: 'String', decodeFn: 'decodeText()'},
-  'U': {type: 'String', decodeFn: 'decodeText()'},
-  'N': {type: 'Double', decodeFn: 'decodeNum()'},
-  'B': {type: 'Boolean', decodeFn: 'decodeBool()'},
-  'R': {type: '', decodeFn: ''},
+  'T': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
+  'U': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
+  'N': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
+  'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
+  'R': {type: '', decodeFn: '', defaultVal: ''},
 };
 
 export class Schema2Kotlin extends Schema2Base {
@@ -55,10 +55,7 @@ ${withCustomPackage(`
 import arcs.Entity
 import arcs.Particle;
 import arcs.StringEncoder
-import arcs.StringDecoder
-import arcs.entityField
-`)}
-`;
+import arcs.StringDecoder`)}`;
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
@@ -69,6 +66,7 @@ import arcs.entityField
 class KotlinGenerator implements ClassGenerator {
   fields: string[] = [];
   fieldVals: string[] = [];
+  setFields: string[] = [];
   fieldSets: string[] = [];
   encode: string[] = [];
   decode: string[] = [];
@@ -76,12 +74,21 @@ class KotlinGenerator implements ClassGenerator {
   constructor(readonly node: SchemaNode) {}
 
   addField(field: string, typeChar: string) {
-    const {type, decodeFn} = typeMap[typeChar];
+    const {type, decodeFn, defaultVal} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
 
     this.fields.push(`${fixed}: ${type}`);
-    this.fieldVals.push(`var ${fixed}: ${type} by entityField()`);
-    this.fieldSets.push(`this.${fixed} = ${fixed}`);
+    this.fieldVals.push(
+      `var _${fixed}Set = false\n` +
+      `    var ${fixed} = ${defaultVal}\n` +
+      `        get() = field\n` +
+      `        set(value) {\n` +
+      `            field = value\n` +
+      `            _${fixed}Set = true\n` +
+      `        }`
+    );
+    this.setFields.push(`this.${fixed} = ${fixed}`);
+    this.fieldSets.push(`_${fixed}Set`);
 
     this.decode.push(`"${field}" -> {`,
                      `    decoder.validate("${typeChar}")`,
@@ -115,8 +122,12 @@ class ${name}() : Entity<${name}>() {
     ${withFields(`constructor(
         ${this.fields.join(',\n        ')}
     ): this() {
-        ${this.fieldSets.join('\n        ')}
+        ${this.setFields.join('\n        ')}
     }`)}
+
+    override fun isSet(): Boolean {
+      return ${withFields(this.fieldSets.join(' || '))}${withoutFields('true')}
+    }
   
     override fun decodeEntity(encoded: String): ${name}? {
         if (encoded.isEmpty()) return null
