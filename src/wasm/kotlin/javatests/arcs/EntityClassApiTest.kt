@@ -12,9 +12,6 @@
 package sdk.kotlin.javatests.arcs
 
 import arcs.Singleton
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
     TestBase<EntityClassApiTest_Errors>(ctor) {
@@ -25,6 +22,8 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
         flg = false
     ) }
     private val unused2 = Singleton(this, "empty") { EntityClassApiTest_Empty() }
+
+    constructor() : this({ txt: String -> EntityClassApiTest_Errors(txt) })
 
     /** Run tests on particle initialization */
     override fun init() {
@@ -101,9 +100,3 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
         )
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newEntityClassApiTest")
-fun constructEntityClassApiTest() = EntityClassApiTest { txt: String ->
-    EntityClassApiTest_Errors(txt)
-}.toAddress()

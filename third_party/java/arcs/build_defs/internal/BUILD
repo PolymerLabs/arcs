@@ -8,3 +8,7 @@ define_kt_toolchain(
     jvm_target = "1.8",
     language_version = "1.3",
 )
+
+exports_files([
+    "kotlin_wasm_annotations_template.kt",
+])

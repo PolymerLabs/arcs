@@ -17,10 +17,6 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
-
 class TTTBoard : Particle() {
 
     private val defaultGameState = TTTBoard_GameState(
@@ -102,7 +98,3 @@ class TTTBoard : Particle() {
             Please hit reset to start a new game.<button on-click="reset">Reset</button>
         """.trimIndent()
 }
-
-@Retain
-@ExportForCppRuntime("_newTTTBoard")
-fun constructTTTBoard() = TTTBoard().toAddress()

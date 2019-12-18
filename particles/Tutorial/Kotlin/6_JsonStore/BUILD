@@ -15,5 +15,6 @@ arcs_kt_schema(
 arcs_kt_particles(
     name = "JsonStore",
     srcs = ["JsonStore.kt"],
+    package = "arcs.tutorials",
     deps = [":store_schemas"],
 )

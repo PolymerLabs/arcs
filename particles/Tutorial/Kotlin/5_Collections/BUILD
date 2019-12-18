@@ -14,5 +14,6 @@ arcs_kt_schema(
 arcs_kt_particles(
     name = "Collections",
     srcs = ["Collections.kt"],
+    package = "arcs.tutorials",
     deps = [":collections_schemas"],
 )

@@ -15,5 +15,6 @@ arcs_kt_schema(
 arcs_kt_particles(
     name = "Handles",
     srcs = glob(["*.kt"]),
+    package = "arcs.tutorials",
     deps = [":handles_schemas"],
 )

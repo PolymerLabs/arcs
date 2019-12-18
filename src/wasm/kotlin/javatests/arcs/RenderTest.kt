@@ -14,9 +14,6 @@ package sdk.kotlin.javatests.arcs
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class RenderTest : Particle() {
     private val flags = Singleton(this, "flags") { RenderTest_Flags(false, false) }
@@ -40,7 +37,3 @@ class RenderTest : Particle() {
         renderOutput()
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newRenderTest")
-fun constructRenderTest() = RenderTest().toAddress()

@@ -11,11 +11,8 @@
 
 package arcs.test
 
-import arcs.addressable.Address
-import arcs.addressable.toAddress
 import arcs.Particle
 import arcs.log
-import kotlin.native.internal.ExportForCppRuntime
 
 class ServiceParticle : Particle() {
 
@@ -65,11 +62,4 @@ class ServiceParticle : Particle() {
             else -> rand[if(tag == "first") 0 else 1] = response["value"]  ?: "<working>"
         }
     }
-}
-
-@Retain
-@ExportForCppRuntime("_newServiceParticle")
-fun constructServiceParticle(): Address {
-  log("__newServiceParticle called")
-  return ServiceParticle().toAddress()
 }

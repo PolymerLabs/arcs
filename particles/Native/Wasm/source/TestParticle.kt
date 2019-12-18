@@ -17,11 +17,8 @@ import arcs.TestParticle_Data
 import arcs.TestParticle_Info
 import arcs.TestParticle_Res
 import arcs.abort
-import arcs.addressable.toAddress
 import arcs.log
 import kotlin.Exception
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 /**
  * Sample WASM Particle.
@@ -179,7 +176,3 @@ class TestParticle : Particle() {
         }
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newTestParticle")
-fun construct() = TestParticle().toAddress()

@@ -174,7 +174,7 @@ of the Game as this is what provides the slot for the Board. This
 is shown below:
 
 ```kotlin
-package arcs.tutorials
+package arcs.tutorials.tictactoe
 
 import arcs.Collection
 import arcs.Handle
@@ -182,9 +182,6 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTGame_Events
 import arcs.TTTGame_GameState
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
@@ -206,10 +203,6 @@ class TTTGame : Particle() {
         <div slotid="boardSlot"></div>
         """.trimIndent()
 }
-
-@Retain
-@ExportForCppRuntime("_newTTTGame")
-fun constructTTTGame() = TTTGame().toAddress()
 ```
 
 Next, we implement the Game. This is explained in more detail
@@ -223,9 +216,6 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
 
@@ -308,10 +298,6 @@ class TTTBoard : Particle() {
             Please hit reset to start a new game.<button on-click="reset">Reset</button>
         """.trimIndent()
 }
-
-@Retain
-@ExportForCppRuntime("_newTTTBoard")
-fun constructTTTBoard() = TTTBoard().toAddress()
 ```
 
 And finally, to build it all we need the BUILD file:
@@ -448,4 +434,5 @@ code for the random computer particle can be
 [viewed here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTRandomComputer.kt).
 
 And, as always, we end with the updated
-[build file](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/BUILD).
+[build
+file](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/BUILD).

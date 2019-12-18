@@ -20,6 +20,7 @@ arcs_kt_particles(
         exclude = ["TestBase.kt"],
     ),
     jvm = False,
+    package = "sdk.kotlin.javatests.arcs",
     visibility = ["//visibility:public"],
     deps = [
         ":TestBase",

@@ -9,7 +9,7 @@ schema PersonDetails
 // Creates a data store of type PersonDetails, named PersonToGreetStore. The data will be loaded from the file data.json.
 store PersonToGreetStore of PersonDetails in 'data.json'
 
-particle JsonStoreParticle in 'JsonStore.wasm'
+particle JsonStore in 'JsonStore.wasm'
   // This particle has an input parameter called inputData. We can use this parameter in the particle's Kotlin file.
   inputData: reads PersonDetails
   root: consumes
@@ -19,8 +19,8 @@ recipe JsonStoreRecipe
   // it inside the scope of this recipe.
   data: map PersonToGreetStore
 
-  JsonStoreParticle
-    // Binds the PersonDetails stored in the data store to JsonStoreParticle's inputData parameter.
+  JsonStore
+    // Binds the PersonDetails stored in the data store to JsonStore's inputData parameter.
     inputData: reads data
 
   description `Kotlin Tutorial 6: JSON Store`

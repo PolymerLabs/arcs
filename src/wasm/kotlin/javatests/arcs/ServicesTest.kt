@@ -13,9 +13,6 @@ package sdk.kotlin.javatests.arcs
 
 import arcs.Collection
 import arcs.Particle
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class ServicesTest : Particle() {
     private val output = Collection(this, "output") { ServicesTest_Output(
@@ -43,7 +40,3 @@ class ServicesTest : Particle() {
         output.store(ServicesTest_Output(call, tag, payload))
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newServicesTest")
-fun constructServiceTest() = ServicesTest().toAddress()
