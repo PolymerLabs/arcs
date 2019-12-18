@@ -11,10 +11,10 @@
 package arcs.core.host
 
 /**
- * A particle marked as [Prod] will be automatically registered to run in a [ProdHost] in the Arcs
- * runtime.
+ * A particle marked as [ProdParticle] will be automatically registered to run in a [ProdHost] in
+ * the Arcs runtime.
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @TargetHost(ProdHost::class)
-annotation class Prod
+annotation class ProdParticle

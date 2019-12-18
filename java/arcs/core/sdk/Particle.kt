@@ -11,7 +11,7 @@
 package arcs.core.sdk
 
 /**
- * Base class for all particles. This is a placeholder for testing host functionality and will
+ * Base type for all particles. This is a placeholder for testing host functionality and will
  * be replaced with the real API soon.
  */
-open class Particle
+interface Particle

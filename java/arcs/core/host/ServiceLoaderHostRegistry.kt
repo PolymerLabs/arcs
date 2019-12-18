@@ -62,7 +62,7 @@ class ServiceLoaderHostRegistry() : HostRegistry {
             .filter { part ->
                 part.java.annotations.filter { target: Annotation ->
                     targetHostMatches(target, host)
-                }.count() > 0
+                }.isNotEmpty()
             }.toList()
     }
 

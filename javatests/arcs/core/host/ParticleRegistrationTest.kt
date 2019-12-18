@@ -34,7 +34,7 @@ class ParticleRegistrationTest {
         assertThat(foundTestHost).isEqualTo(true)
     }
 
-    class DummyParticle : Particle()
+    class DummyParticle : Particle
     class DummyHost : AbstractArcHost() {
         init {
             registerParticle(DummyParticle::class)

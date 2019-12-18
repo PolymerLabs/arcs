@@ -1,4 +1,4 @@
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
 
