@@ -1,13 +1,11 @@
 package arcs.api;
 
-import arcs.crdt.CRDTCollection;
-import arcs.crdt.CollectionOperation;
-import arcs.crdt.Referenceable;
-import arcs.crdt.VersionMap;
-import arcs.crdt.VersionedValue;
-import java.util.ArrayList;
+import arcs.core.common.Referencable;
+import arcs.core.crdt.CrdtSet;
+import arcs.core.crdt.internal.VersionMap;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 class CollectionProxy extends StorageProxy implements CollectionStore {
-  CRDTCollection<ModelEntry> model;
+  CrdtSet<ModelEntry> model;
 
   public CollectionProxy(
       String id,
@@ -36,13 +34,16 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
   @Override
   public boolean synchronizeModel(Integer version, PortableJson model) {
     this.version = version;
-    List<VersionedValue<ModelEntry>> values = new ArrayList<>();
+    Map<String, CrdtSet.DataValue<ModelEntry>> values = new HashMap<>();
     for (int i = 0; i < model.getLength(); ++i) {
       ModelEntry entry = ModelEntry.fromJson(model.getObject(i));
       String key = entry.keys.iterator().next();
-      values.add(new VersionedValue<>(entry, VersionMap.of(key, version)));
+      //noinspection unchecked
+      values.put(entry.getId(), new CrdtSet.DataValue<>(new VersionMap(key, version), entry));
     }
-    this.model = new CRDTCollection<>(values, VersionMap.of("", version));
+    //noinspection unchecked
+    this.model = new CrdtSet<>(new CrdtSet.DataImpl<>(new VersionMap("", version), values));
+
     return true;
   }
 
@@ -73,18 +74,15 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
     } else if (update.hasKey("remove")) {
       for (int i = 0; i < update.getArray("remove").getLength(); ++i) {
         PortableJson remove = update.getArray("remove").getObject(i);
-        VersionedValue<ModelEntry> vv =
-            model.getData().get(remove.getObject("value").getString("id"));
-        ModelEntry entry = vv.value;
+        CrdtSet.DataValue<ModelEntry> vv =
+            model.getData().getValues().get(remove.getObject("value").getString("id"));
+        ModelEntry entry = vv.getValue();
+        String actor = remove.getObject(ModelEntry.KEYS).getString(0);
         boolean effective = remove.getBool("effective");
-        if (((apply
+        if ((apply
                 && model.applyOperation(
-                    new CollectionOperation<>(
-                        CollectionOperation.Type.REMOVE,
-                        entry,
-                        vv.version,
-                        remove.getObject(ModelEntry.KEYS).getString(0))))
-            || (!apply && effective))) {
+                    new CrdtSet.Operation.Remove<>(vv.getVersionMap(), actor, entry)))
+            || (!apply && effective)) {
           removed.put(removed.getLength(), entry.value.value);
         }
       }
@@ -109,7 +107,7 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
   @Override
   public CompletableFuture<PortableJson> get(String id) {
     if (syncState == SyncState.FULL) {
-      return CompletableFuture.completedFuture(model.getData().getValue(id).value.value);
+      return CompletableFuture.completedFuture(model.getData().getValues().get(id).getValue().value.value);
     } else {
       CompletableFuture<PortableJson> future = new CompletableFuture<>();
       port.handleToList(
@@ -160,10 +158,10 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
     }
 
     PortableJson items = jsonParser.emptyArray();
-    for (String id : model.getData().keys()) {
+    for (String id : model.getData().getValues().keySet()) {
       PortableJson item = jsonParser.emptyObject().put("id", id);
       PortableJson keysJson = jsonParser.emptyArray();
-      model.getData().getValue(id).keys.forEach(key -> keysJson.put(keysJson.getLength(), key));
+      model.getData().getValues().keySet().forEach(key -> keysJson.put(keysJson.getLength(), key));
       item.put(ModelEntry.KEYS, keysJson);
       items.put(items.getLength(), item);
     }
@@ -172,14 +170,13 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
     PortableJson removedItems = jsonParser.emptyArray();
     for (int i = 0; i < items.getLength(); ++i) {
       PortableJson item = items.getObject(i);
-      VersionedValue<ModelEntry> vv = model.getData().get(item.getString("id"));
-      ModelEntry entry = vv.value;
+      CrdtSet.DataValue<ModelEntry> vv = model.getData().getValues().get(item.getString("id"));
+      ModelEntry entry = vv.getValue();
       if (model.applyOperation(
-          new CollectionOperation<>(
-              CollectionOperation.Type.REMOVE,
-              entry,
-              vv.version,
-              item.getObject("keys").getString(0)))) {
+          new CrdtSet.Operation.Remove<>(
+              vv.getVersionMap(),
+              item.getObject("keys").getString(0),
+              entry))) {
         removedItems.put(
             removedItems.getLength(), item.put("rawData", entry.value.value.getObject("rawData")));
       }
@@ -202,8 +199,8 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
       return;
     }
 
-    VersionedValue<ModelEntry> vv = model.getData().get(id);
-    ModelEntry entry = vv.value;
+    CrdtSet.DataValue<ModelEntry> vv = model.getData().getValues().get(id);
+    ModelEntry entry = vv.getValue();
     PortableJson value = entry.value.value;
     if (value == null) {
       return;
@@ -219,8 +216,7 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
     port.handleRemove(this, (unused) -> {}, data, particleId);
 
     if (!model.applyOperation(
-        new CollectionOperation<>(
-            CollectionOperation.Type.REMOVE, entry, vv.version, /* actor= */ ""))) {
+        new CrdtSet.Operation.Remove<>(vv.getVersionMap(), /* actor= */"", entry))) {
       return;
     }
     PortableJson update =
@@ -237,30 +233,33 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
       return CompletableFuture.completedFuture(thisModelToList());
     } else {
       CompletableFuture<PortableJson> future = new CompletableFuture<>();
-      port.handleToList(this, result -> future.complete(result));
+      port.handleToList(this, future::complete);
       return future;
     }
   }
 
-  private CollectionOperation<ModelEntry> createAddOperation(
+  private CrdtSet.IOperation<ModelEntry> createAddOperation(
       PortableJson value, List<String> keys) {
-    return new CollectionOperation<>(
-        CollectionOperation.Type.ADD,
-        new ModelEntry(value.getString("id"), value, keys),
-        VersionMap.of(keys.get(0), model.nextVersion(keys.get(0))),
-        keys.get(0));
+    VersionMap modelVersion = model.getVersionMap();
+    int itemVersion = modelVersion.get(keys.get(0)) + 1;
+    //noinspection unchecked
+    return new CrdtSet.Operation.Add<>(
+        new VersionMap(keys.get(0), itemVersion),
+        keys.get(0),
+        new ModelEntry(value.getString("id"), value, keys));
   }
 
   private PortableJson thisModelToList() {
     PortableJson result = jsonParser.emptyArray();
     model
         .getData()
-        .keys()
-        .forEach(id -> result.put(result.getLength(), model.getData().getValue(id).value.value));
+        .getValues()
+        .keySet()
+        .forEach(id -> result.put(result.getLength(), model.getData().getValues().get(id).getValue().value.value));
     return result;
   }
 
-  static class ModelEntry implements Referenceable {
+  static class ModelEntry implements Referencable {
     static final String KEYS = "keys";
 
     ModelValue value;
@@ -280,6 +279,11 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
     @Override
     public String getId() {
       return value.id;
+    }
+
+    @Override
+    public Referencable tryDereference() {
+      return this;
     }
   }
 

@@ -19,6 +19,7 @@ typealias Version = Int
 class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     constructor(initialData: VersionMap) : this(initialData.backingMap)
     constructor(vararg initialData: Pair<Actor, Version>) : this(mapOf(*initialData))
+    constructor(actor: Actor, version: Version) : this(mapOf(actor to version))
 
     private val backingMap = HashMap(initialData)
 
