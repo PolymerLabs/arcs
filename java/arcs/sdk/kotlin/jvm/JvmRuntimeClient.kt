@@ -9,7 +9,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs
+package arcs.sdk.kotlin.jvm
+
+import arcs.sdk.kotlin.Collection
+import arcs.sdk.kotlin.Entity
+import arcs.sdk.kotlin.NullTermByteArray
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.Singleton
 
 actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
 actual fun stringToUtf8Impl(str: String): ByteArray = str.toByteArray(Charsets.UTF_8)
@@ -20,13 +26,13 @@ actual object RuntimeClient {
         throw NotImplementedError()
 
     actual fun <T : Entity<T>> singletonSet(particle: Particle,
-        singleton: Singleton<T>,
-        encoded: NullTermByteArray
+                                            singleton: Singleton<T>,
+                                            encoded: NullTermByteArray
     ): Unit = throw NotImplementedError()
 
     actual fun <T : Entity<T>> collectionRemove(particle: Particle,
-        collection: Collection<T>,
-        encoded: NullTermByteArray
+                                                collection: Collection<T>,
+                                                encoded: NullTermByteArray
     ): Unit = throw NotImplementedError()
 
     actual fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>): Unit =

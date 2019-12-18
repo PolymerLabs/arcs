@@ -11,9 +11,9 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Handle
-import arcs.Particle
-import arcs.Singleton
+import arcs.sdk.kotlin.Handle
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.Singleton
 
 class AutoRenderTest : Particle() {
     private val data = Singleton(this, "data") { AutoRenderTest_Data("") }

@@ -11,8 +11,8 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Particle
-import arcs.Singleton
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.Singleton
 
 class EventsTest : Particle() {
     private val output = Singleton(this, "output") { EventsTest_Output("") }

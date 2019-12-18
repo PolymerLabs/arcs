@@ -11,8 +11,8 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Particle
-import arcs.Singleton
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.Singleton
 
 class SingletonApiTest : Particle() {
     private val in_ = Singleton(this, "inHandle") { SingletonApiTest_InHandle(

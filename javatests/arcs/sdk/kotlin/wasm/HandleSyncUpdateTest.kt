@@ -11,10 +11,10 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Collection
-import arcs.Handle
-import arcs.Particle
-import arcs.Singleton
+import arcs.sdk.kotlin.Collection
+import arcs.sdk.kotlin.Handle
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.Singleton
 
 class HandleSyncUpdateTest : Particle() {
     private val sng = Singleton(this, "sng") { HandleSyncUpdateTest_Sng(

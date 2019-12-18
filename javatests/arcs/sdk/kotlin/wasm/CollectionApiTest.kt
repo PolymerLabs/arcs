@@ -11,8 +11,8 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Collection
-import arcs.Particle
+import arcs.sdk.kotlin.Collection
+import arcs.sdk.kotlin.Particle
 
 class CollectionApiTest : Particle() {
     private val _in = Collection(this, "inHandle") { CollectionApiTest_InHandle(0.0) }

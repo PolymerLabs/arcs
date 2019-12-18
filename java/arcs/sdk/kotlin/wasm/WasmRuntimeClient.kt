@@ -9,25 +9,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs
+package arcs.sdk.kotlin.wasm
 
-import arcs.wasm.toAddress
-import arcs.NullTermByteArray
-import arcs.wasm._free
-import arcs.wasm.collectionClear
-import arcs.wasm.collectionRemove
-import arcs.wasm.collectionStore
-import arcs.wasm.onRenderOutput
-import arcs.wasm.resolveUrl
-import arcs.wasm.singletonClear
-import arcs.wasm.singletonSet
-import arcs.wasm.serviceRequest
-import arcs.wasm.toKString
-import arcs.wasm.toNullableKString
-import arcs.wasm.toWasmNullableString
-import arcs.wasm.toWasmString
-import arcs.wasm.toWasmAddress
-import arcs.wasm.WasmString
+import arcs.sdk.kotlin.Collection
+import arcs.sdk.kotlin.Entity
+import arcs.sdk.kotlin.NullTermByteArray
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.Singleton
 
 actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.decodeToString()
 actual fun stringToUtf8Impl(str: String): ByteArray = str.encodeToByteArray()
@@ -72,7 +60,7 @@ actual object RuntimeClient {
         return wasmId.toNullableKString()?.let { _free(wasmId); it }
     }
 
-    actual fun log(msg: String) = arcs.wasm.log(msg)
+    actual fun log(msg: String) = arcs.sdk.kotlin.wasm.log(msg)
 
     actual fun onRenderOutput(particle: Particle, template: String?, model: NullTermByteArray?) =
         onRenderOutput(
@@ -96,7 +84,7 @@ actual object RuntimeClient {
         return resolved
     }
 
-    actual fun abort() = arcs.wasm.abort()
+    actual fun abort() = arcs.sdk.kotlin.wasm.abort()
 
     actual fun assert(message: String, cond: Boolean) {
         if (cond) return

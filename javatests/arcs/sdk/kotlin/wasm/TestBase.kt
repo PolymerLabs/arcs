@@ -11,9 +11,9 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Collection
-import arcs.Entity
-import arcs.Particle
+import arcs.sdk.kotlin.Collection
+import arcs.sdk.kotlin.Entity
+import arcs.sdk.kotlin.Particle
 
 import kotlin.test.Asserter
 import kotlin.AssertionError

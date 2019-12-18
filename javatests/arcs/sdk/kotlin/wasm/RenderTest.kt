@@ -11,9 +11,9 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Handle
-import arcs.Particle
-import arcs.Singleton
+import arcs.sdk.kotlin.Handle
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.Singleton
 
 class RenderTest : Particle() {
     private val flags = Singleton(this, "flags") { RenderTest_Flags(false, false) }

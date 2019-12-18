@@ -9,11 +9,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.wasm
+package arcs.sdk.kotlin.wasm
 
-import arcs.wasm.AddressableMap.address2Addressable
-import arcs.wasm.AddressableMap.addressable2Address
-import arcs.wasm.AddressableMap.nextAddress
+import arcs.sdk.kotlin.wasm.AddressableMap.address2Addressable
+import arcs.sdk.kotlin.wasm.AddressableMap.addressable2Address
+import arcs.sdk.kotlin.wasm.AddressableMap.nextAddress
 
 typealias Address = Int
 

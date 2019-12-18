@@ -11,7 +11,7 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Singleton
+import arcs.sdk.kotlin.Singleton
 
 class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
     TestBase<EntityClassApiTest_Errors>(ctor) {

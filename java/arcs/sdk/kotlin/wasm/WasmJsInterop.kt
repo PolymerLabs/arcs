@@ -9,14 +9,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.wasm
+package arcs.sdk.kotlin.wasm
 
-import arcs.wasm.Address
-import arcs.wasm.toAddress
-import arcs.wasm.toObject
-import arcs.Handle
-import arcs.Particle
-import arcs.StringDecoder
+import arcs.sdk.kotlin.Handle
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.StringDecoder
 import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
 import kotlinx.cinterop.ByteVar

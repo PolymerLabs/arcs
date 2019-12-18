@@ -9,7 +9,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs
+package arcs.sdk.kotlin
+
 
 /**
  * Utilities for ease-of-use

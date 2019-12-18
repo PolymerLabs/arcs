@@ -11,8 +11,7 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Singleton
-import arcs.utf8ToString
+import arcs.sdk.kotlin.Singleton
 
 class SpecialSchemaFieldsTest(
     ctor: (String) -> SpecialSchemaFieldsTest_Errors

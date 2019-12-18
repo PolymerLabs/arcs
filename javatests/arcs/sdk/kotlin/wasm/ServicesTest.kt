@@ -11,8 +11,8 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.Collection
-import arcs.Particle
+import arcs.sdk.kotlin.Collection
+import arcs.sdk.kotlin.Particle
 
 class ServicesTest : Particle() {
     private val output = Collection(this, "output") { ServicesTest_Output(
