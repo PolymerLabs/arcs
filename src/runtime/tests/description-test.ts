@@ -67,7 +67,7 @@ const tests = [
   },
 ];
 
-describe('Description', () => {
+describe.only('Description', () => {
   const schemaManifest = `
 schema Foo
   name: Text
@@ -100,6 +100,8 @@ recipe
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
+    console.log(recipe);
+    console.log('&&&&');
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
     recipe.handles[0].mapToStorage({id: 'test:1', type: fooType});
     if (recipe.handles.length > 1) {
@@ -116,10 +118,11 @@ recipe
     const ofoosHandleConn = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoos');
     const ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
 
-    const arc = createTestArc(recipe, manifest);
+    const newRecipe = recipe.clone();
+    const arc = createTestArc(newRecipe, manifest);
     const fooStore = await singletonHandleForTest(arc, await arc.createStore(fooType, undefined, 'test:1'));
     const foosStore = await collectionHandleForTest(arc, await arc.createStore(fooType.collectionOf(), undefined, 'test:2'));
-    return {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore};
+    return {arc, recipe: newRecipe, ifooHandle, ofoosHandle, fooStore, foosStore};
   }
 
   tests.forEach((test) => {
@@ -155,7 +158,7 @@ ${recipeManifest}
   });
 
   tests.forEach((test) => {
-    it('one particle and connections descriptions ' + test.name, async () => {
+    it.only('one particle and connections descriptions ' + test.name, async () => {
       const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
@@ -164,6 +167,8 @@ ${aParticleManifest}
     ofoos \`my-out-foos\`
 ${recipeManifest}
     `));
+
+      console.log(recipe);
 
       let description = await test.verifySuggestion({arc}, 'Read from my-in-foo and populate my-out-foos.');
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');

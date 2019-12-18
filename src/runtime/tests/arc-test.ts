@@ -172,7 +172,7 @@ describe('Arc new storage', () => {
 
 const doSetup = async () => Flags.useNewStorageStack ? setup(arcId => new VolatileStorageKey(arcId, '')) : setup('volatile://');
 
-describe.only('Arc', () => {
+describe('Arc', () => {
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();
     const arc = runtime.newArc('test', Flags.useNewStorageStack ? null : 'volatile://');
@@ -1027,7 +1027,7 @@ describe.only('Arc', () => {
     assert.strictEqual(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });
 
-  it.only('handles serialization/deserialization of empty arcs handles', async () => {
+  it('handles serialization/deserialization of empty arcs handles', async () => {
     const id = ArcId.newForTest('test');
     const loader = new Loader();
 
@@ -1073,8 +1073,6 @@ describe.only('Arc', () => {
     const serialization = await arc.serialize();
 
     const slotComposer = new FakeSlotComposer();
-
-    console.log(serialization);
 
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
     assert.strictEqual(newArc._stores.length, 1);

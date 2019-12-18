@@ -288,6 +288,18 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     const options: IsValidOptions = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
     await arc.instantiate(recipe);
+
+    // TODO(shanestephens): if we decide that merging a 'use' handle adds any tags on that handle to
+    // the handle in the underlying recipe, then we can remove this from here.
+    for (const handle of recipe.handles) {
+      const newHandle = arc._activeRecipe.findHandleByID(handle.id);
+      for (const tag of handle.tags) {
+        if (newHandle.tags.includes(tag)) {
+          continue;
+        }
+        newHandle.tags.push(tag);
+      }
+    }
     return arc;
   }
 
@@ -529,7 +541,6 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
           if (!type.isSingleton && !type.isCollectionType()) {
             type = new SingletonType(type);
           }
-          console.log(storageKey);
           const store = new Store({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id});
           assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
           await this._registerStore(store, recipeHandle.tags);
@@ -543,10 +554,6 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
   // Critical section for instantiate,
   private async _doInstantiate(recipe: Recipe): Promise<void> {
     const {handles, particles, slots} = await this.mergeIntoActiveRecipe(recipe);
-    console.log('^^^^');
-    console.log(recipe.toString());
-    console.log(this.activeRecipe.toString());
-    console.log('----');
 
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 
