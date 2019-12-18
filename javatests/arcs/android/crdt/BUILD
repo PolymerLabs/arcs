@@ -17,6 +17,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data:entity",
+        "//java/arcs/core/data/util",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
