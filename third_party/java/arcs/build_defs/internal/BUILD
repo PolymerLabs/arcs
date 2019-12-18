@@ -9,4 +9,6 @@ define_kt_toolchain(
     language_version = "1.3",
 )
 
-exports_files(["wasm_prelude_template.kt"])
+exports_files([
+    "kotlin_wasm_annotations_template.kt",
+])

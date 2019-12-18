@@ -3,13 +3,32 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
-load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library")
-load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
-load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
-load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_library", "java_test")
+load(
+    "//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl",
+    "kt_js_library")
+load(
+    "//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl",
+    "kt_native_binary",
+    "kt_native_library",
+)
+load(
+    "//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl",
+    "wasm_kt_binary",
+)
+load(
+    "//third_party/java/arcs/build_defs:native.oss.bzl", "java_library",
+    "java_test",
+)
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
-load("//third_party/java/arcs/build_defs/internal:wasm.bzl", "create_wasm_prelude")
+load(
+    "//tools/build_defs/kotlin:rules.bzl",
+    "kt_android_library",
+    "kt_jvm_library",
+)
+load(
+    "//third_party/java/arcs/build_defs/internal:kotlin_wasm_annotations.bzl",
+    "kotlin_wasm_annotations",
+)
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
 _WASM_SUFFIX = "-wasm"
@@ -113,18 +132,19 @@ def arcs_kt_particles(
                 fail("%s is not a Kotlin file (must end in .kt)" % src)
             particle = src.split("/")[-1][:-3]
             wasm_lib = particle + "-lib" + _WASM_SUFFIX
-            prelude_file = particle + ".prelude.kt"
-            create_wasm_prelude(
-                name = particle + "-prelude",
+            wasm_annotations_file = particle + ".wasm.kt"
+
+            kotlin_wasm_annotations(
+                name = particle + "-wasm-annotations",
                 particle = particle,
                 package = package,
-                out = prelude_file,
+                out = wasm_annotations_file,
             )
             kt_native_library(
                 name = wasm_lib,
                 srcs = [
                     src,
-                    prelude_file,
+                    wasm_annotations_file,
                 ],
                 deps = wasm_deps,
             )
