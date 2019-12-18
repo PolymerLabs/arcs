@@ -69,6 +69,12 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
   };
 }
 
+function isFunction(target: object | Function, property: string): boolean {
+  const desc = Object.getOwnPropertyDescriptor(target, property);
+  // Type Function and non-getter/setter
+  return (!desc.get && !desc.set && typeof desc.value === 'function');
+}
+
 function harnessSystemTracing(obj: object, client: Client) {
   const that: object = obj;
   const contextId: string = idGenerator.getUniqueId();
@@ -95,24 +101,24 @@ function harnessSystemTracing(obj: object, client: Client) {
     boundSymbols = boundSymbols.concat(
         Object.getOwnPropertyNames(obj)
             .filter((element, index, array) => {
-              return typeof obj[element] === 'function';
+              return isFunction(obj, element);
             })
             .map(element => ({
               prototype: obj as Function,  // Foo.prototype
               property: element,
-              tag: 'o' + obj.constructor.name + '::' + element + contextId,
+              tag: obj.constructor.name + '::' + element + contextId,
             })));
 
     // Collects and binds class static functions
     boundSymbols = boundSymbols.concat(
         Object.getOwnPropertyNames(obj.constructor)
             .filter((element, index, array) => {
-              return typeof obj.constructor[element] === 'function';
+              return isFunction(obj.constructor, element);
             })
             .map(element => ({
               prototype: obj.constructor,  // Foo.prototype.constructor
               property: element,
-              tag: 's' + obj.constructor.name + '::' + element + contextId,
+              tag: obj.constructor.name + '::' + element + contextId,
             })));
   }
 
@@ -120,8 +126,7 @@ function harnessSystemTracing(obj: object, client: Client) {
   boundSymbols = boundSymbols.filter((element, index, array) => {
     const desc =
         Object.getOwnPropertyDescriptor(element.prototype, element.property);
-    // Not interested in properties that can not be changed
-    // i.e. with only single getter.
+    // Not interested in properties that can not be changed.
     if (!desc.writable) {
       return false;
     }
