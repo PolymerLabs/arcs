@@ -9,4 +9,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+package arcs.sdk.kotlin.wasm
+
 annotation class Test

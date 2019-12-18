@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package sdk.kotlin.javatests.arcs
+package arcs.sdk.kotlin.wasm
 
 import arcs.sdk.kotlin.Singleton
 
