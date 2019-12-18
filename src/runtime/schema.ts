@@ -16,22 +16,7 @@ import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
 import {Refinement} from './manifest-ast-nodes.js';
-
-const expressionString = (expr) : string => {
-  if (expr.kind === 'binary-expression-node') {
-    return '(' + expressionString(expr.leftExpr) + ' ' + expr.operator + ' ' + expressionString(expr.rightExpr) + ')';
-  } else if (expr.kind === 'unary-expression-node') {
-    return '(' + expr.operator + ' ' + expr.expr + ')';
-  }
-  return expr.toString();
-};
-
-export const refinementString = (type) : string => {
-  if (!type.refinement) {
-    return '';
-  }
-  return '[' + expressionString(type.refinement.expression) + ']';
-};
+import {Refiner} from './refiner.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; }) => Schema;
@@ -198,7 +183,7 @@ export class Schema {
   // tslint:disable-next-line: no-any
   static fieldToString([name, type]: [string, any]) {
     const typeStr = Schema._typeString(type);
-    const refExpr = refinementString(type);
+    const refExpr = Refiner.refinementString(type);
     return `${name}: ${typeStr}${refExpr}`;
   }
 
