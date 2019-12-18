@@ -15,6 +15,8 @@ kt_android_library(
         "//java/arcs/android/storage",
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/util",
         "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",

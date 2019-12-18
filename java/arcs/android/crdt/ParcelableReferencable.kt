@@ -16,6 +16,7 @@ import android.os.Parcelable
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencablePrimitive
 import java.lang.IllegalArgumentException
 import javax.annotation.OverridingMethodsMustInvokeSuper
 
@@ -29,12 +30,11 @@ interface ParcelableReferencable : Parcelable {
     val actual: Referencable
 
     /** Indicates which subclass of [ParcelableReferencable] is being parceled. */
-    enum class Type(
-        val creator: Parcelable.Creator<out ParcelableReferencable>
-    ) : Parcelable {
+    enum class Type(val creator: Parcelable.Creator<out ParcelableReferencable>) : Parcelable {
         // TODO: Add other ParcelableReferencable subclasses.
         RawEntity(ParcelableRawEntity.CREATOR),
-        CrdtEntityReferenceImpl(ParcelableCrdtEntity.ReferenceImpl);
+        CrdtEntityReferenceImpl(ParcelableCrdtEntity.ReferenceImpl),
+        Primitive(ParcelableReferencablePrimitive.CREATOR);
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             parcel.writeInt(ordinal)
@@ -56,25 +56,25 @@ interface ParcelableReferencable : Parcelable {
                 // TODO: Add other ParcelableReferencable subclasses.
                 is ParcelableRawEntity -> Type.RawEntity
                 is ParcelableCrdtEntity.ReferenceImpl -> Type.CrdtEntityReferenceImpl
+                is ParcelableReferencablePrimitive -> Type.Primitive
                 else -> throw IllegalArgumentException(
                     "Unsupported Referencable type: ${this.javaClass}"
                 )
             },
-            flags)
+            flags
+        )
     }
 
-    override fun describeContents(): Int {
-        return 0
-    }
+    override fun describeContents(): Int = 0
 
     companion object {
         operator fun invoke(actual: Referencable): ParcelableReferencable = when (actual) {
             // TODO: Add other ParcelableReferencable subclasses.
             is RawEntity -> ParcelableRawEntity(actual)
             is CrdtEntity.ReferenceImpl -> ParcelableCrdtEntity.ReferenceImpl(actual)
-            else -> throw IllegalArgumentException(
-                "Unsupported Referencable type: ${actual.javaClass}"
-            )
+            is ReferencablePrimitive<*> -> ParcelableReferencablePrimitive(actual)
+            else ->
+                throw IllegalArgumentException("Unsupported Referencable type: ${actual.javaClass}")
         }
 
         object CREATOR : Parcelable.Creator<ParcelableReferencable> {

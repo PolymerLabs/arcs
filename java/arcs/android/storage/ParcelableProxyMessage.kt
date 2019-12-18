@@ -14,19 +14,19 @@ package arcs.android.storage
 import android.annotation.SuppressLint
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperation
-import arcs.core.storage.ProxyMessage
-import arcs.core.storage.ProxyMessage.Type
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.crdt.readModelData
 import arcs.android.crdt.readOperations
 import arcs.android.crdt.writeModelData
 import arcs.android.crdt.writeOperations
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ProxyMessage
+import arcs.core.storage.ProxyMessage.Type
 
 /** Defines parcelable variants of the [ProxyMessage]s. */
 sealed class ParcelableProxyMessage(
-    /** Identifier for the [ProxyMessage]. */
+    /** Identifier for the sender of the [ProxyMessage]. */
     open val id: Int?,
     /** Type of CRDT this message is intended for. */
     open val crdtType: ParcelableCrdtType,
@@ -150,7 +150,8 @@ sealed class ParcelableProxyMessage(
 
 /** Converts the [ProxyMessage] into its [Parcelable] variant. */
 fun <Data, Op, ConsumerData> ProxyMessage<Data, Op, ConsumerData>.toParcelable(
-    crdtType: ParcelableCrdtType
+    crdtType: ParcelableCrdtType,
+    id: Int? = this.id
 ): ParcelableProxyMessage where Data : CrdtData, Op : CrdtOperation =
     when (this) {
         is ProxyMessage.ModelUpdate ->
