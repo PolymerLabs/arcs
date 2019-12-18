@@ -21,26 +21,23 @@ import arcs.core.crdt.internal.Actor
 import arcs.core.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a set of items [T]. */
-class CrdtSet<T : Referencable> (
+class CrdtSet<T : Referencable>(
     /** Initial data. */
     /* internal */ var _data: Data<T> = DataImpl(),
     /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
-    private val dataBuilder: (VersionMap) -> Data<T>// = { DataImpl(it) }
-    ) : CrdtModel<Data<T>, CrdtSet.IOperation<T>, Set<T>> {
+    private val dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
+) : CrdtModel<Data<T>, CrdtSet.IOperation<T>, Set<T>> {
 
     // TODO(mmandlis): get rid of the secondary constructors, once Java code has migrated to Kotlin
     // and there is no more need for @JvmOverloads annotation, that fails to compile to JS.
     constructor() : this(DataImpl())
 
-    constructor(
-        data: Data<T>
-    ) : this(data, { DataImpl(it) })
+    constructor(data: Data<T>) : this(data, { DataImpl(it) })
 
     override val versionMap: VersionMap
         get() = _data.versionMap.copy()
     override val data: Data<T>
         get() = _data.copy()
-
 
     override val consumerView: Set<T>
         get() = HashSet<T>().apply { addAll(_data.values.values.map { it.value }) }
