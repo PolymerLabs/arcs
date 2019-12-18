@@ -12,13 +12,8 @@ kt_android_library(
     deps = [
         "//java/arcs/android/crdt",
         "//java/arcs/android/type",
-        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/internal",
-        "//java/arcs/core/data",
         "//java/arcs/core/storage",
-        "//java/arcs/core/storage/referencemode",
-        "//java/arcs/core/storage/util",
         "//java/arcs/core/type",
     ],
 )
