@@ -30,9 +30,7 @@ interface ParcelableReferencable : Parcelable {
     val actual: Referencable
 
     /** Indicates which subclass of [ParcelableReferencable] is being parceled. */
-    enum class Type(
-        val creator: Parcelable.Creator<out ParcelableReferencable>
-    ) : Parcelable {
+    enum class Type(val creator: Parcelable.Creator<out ParcelableReferencable>) : Parcelable {
         // TODO: Add other ParcelableReferencable subclasses.
         RawEntity(ParcelableRawEntity.CREATOR),
         CrdtEntityReferenceImpl(ParcelableCrdtEntity.ReferenceImpl),
@@ -63,12 +61,11 @@ interface ParcelableReferencable : Parcelable {
                     "Unsupported Referencable type: ${this.javaClass}"
                 )
             },
-            flags)
+            flags
+        )
     }
 
-    override fun describeContents(): Int {
-        return 0
-    }
+    override fun describeContents(): Int = 0
 
     companion object {
         operator fun invoke(actual: Referencable): ParcelableReferencable = when (actual) {
