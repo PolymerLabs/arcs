@@ -22,15 +22,15 @@ const keywords = [
   'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
   'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
   'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'it', 'internalId'
+  'suspend', 'tailrec', 'vararg', 'it', 'internalId', 'ready'
 ];
 
 const typeMap = {
-  'T': {type: 'String', decodeFn: 'decodeText()', delegate: `TextDelegate()`},
-  'U': {type: 'String', decodeFn: 'decodeText()', delegate: `TextDelegate()`},
-  'N': {type: 'Double', decodeFn: 'decodeNum()', delegate: 'NumDelegate()'},
-  'B': {type: 'Boolean', decodeFn: 'decodeBool()', delegate: 'BooleanDelegate()'},
-  'R': {type: '', decodeFn: '', delegate: ''},
+  'T': {type: 'String', decodeFn: 'decodeText()'},
+  'U': {type: 'String', decodeFn: 'decodeText()'},
+  'N': {type: 'Double', decodeFn: 'decodeNum()',},
+  'B': {type: 'Boolean', decodeFn: 'decodeBool()'},
+  'R': {type: '', decodeFn: ''},
 };
 
 export class Schema2Kotlin extends Schema2Base {
@@ -51,13 +51,12 @@ package ${this.scope}
 //
 // Current implementation doesn't support references or optional field detection
 
-${withCustomPackage(`import arcs.BooleanDelegate
+${withCustomPackage(`
 import arcs.Entity
-import arcs.NumDelegate
 import arcs.Particle;
 import arcs.StringEncoder
 import arcs.StringDecoder
-import arcs.TextDelegate
+import arcs.entityField
 `)}
 `;
   }
@@ -77,18 +76,18 @@ class KotlinGenerator implements ClassGenerator {
   constructor(readonly node: SchemaNode) {}
 
   addField(field: string, typeChar: string) {
-    const {type, decodeFn, delegate} = typeMap[typeChar];
+    const {type, decodeFn} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
 
     this.fields.push(`${fixed}: ${type}`);
-    this.fieldVals.push(`var ${fixed} by ${delegate}`);
+    this.fieldVals.push(`var ${fixed}: ${type} by entityField()`);
     this.fieldSets.push(`this.${fixed} = ${fixed}`);
 
     this.decode.push(`"${field}" -> {`,
                      `    decoder.validate("${typeChar}")`,
                      `    this.${fixed} = decoder.${decodeFn}`,
                      `}`);
-
+                     
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
   }
 
@@ -118,6 +117,7 @@ class ${name}() : Entity<${name}>() {
     ): this() {
         ${this.fieldSets.join('\n        ')}
     }`)}
+  
 
     override fun decodeEntity(encoded: String): ${name}? {
         if (encoded.isEmpty()) return null

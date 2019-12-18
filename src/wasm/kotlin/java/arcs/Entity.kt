@@ -11,11 +11,12 @@
 
 package arcs
 
+import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 typealias URL = String
 
-abstract class Entity<T> {
+abstract class Entity<T> : BaseEntity() {
     var internalId = ""
     abstract fun decodeEntity(encoded: String): T?
     abstract fun encodeEntity(): String
@@ -144,41 +145,89 @@ class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
     }
 }
 
-class TextDelegate {
-    private var isSet = false
-    private var v = ""
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
-        return v
+abstract class BaseEntity {
+    private var nextFieldId = 0
+    private val fieldSets = mutableSetOf<Int>()
+
+    internal fun registerField(delegate: EntityFieldDelegate<*>) {
+        val fieldId = nextFieldId++
+        delegate.onSet = {
+            fieldSets.add(fieldId)
+
+            if (fieldSets.size == nextFieldId) {
+                isSet()
+            }
+        }
     }
 
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
-        this.isSet = true
-        this.v = value
+    open fun isSet() = Unit
+}
+
+abstract class EntityField<T> {
+    operator fun provideDelegate(
+        thisRef: BaseEntity,
+        prop: KProperty<*>
+    ): ReadWriteProperty<BaseEntity, T> {
+        val delegate = getDelegate()
+        thisRef.registerField(delegate)
+        return delegate
+    }
+
+    abstract fun getDelegate(): EntityFieldDelegate<T>
+}
+
+abstract class EntityFieldDelegate<T> : ReadWriteProperty<BaseEntity, T> {
+    lateinit var onSet: () -> Unit
+    abstract override fun getValue(thisRef: BaseEntity, property: KProperty<*>): T
+    abstract override fun setValue(thisRef: BaseEntity, property: KProperty<*>, value: T)
+}
+
+class EntityDoubleField : EntityField<Double>() {
+    override fun getDelegate(): EntityFieldDelegate<Double> = EntityDoubleFieldDelegate()
+}
+
+class EntityStringField : EntityField<String>() {
+    override fun getDelegate(): EntityFieldDelegate<String> = EntityStringFieldDelegate()
+}
+
+class EntityBooleanField : EntityField<Boolean>() {
+    override fun getDelegate(): EntityFieldDelegate<Boolean> = EntityBooleanFieldDelegate()
+}
+
+class EntityDoubleFieldDelegate : EntityFieldDelegate<Double>() {
+    private var value: Double = 0.0
+    override fun getValue(thisRef: BaseEntity, property: KProperty<*>): Double = value
+
+    override fun setValue(thisRef: BaseEntity, property: KProperty<*>, value: Double) {
+        this.value = value
+        onSet()
     }
 }
 
-class NumDelegate {
-    private var isSet = false
-    private var v = 0.0
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): Double {
-        return v
-    }
+class EntityStringFieldDelegate : EntityFieldDelegate<String>() {
+    private var value: String = ""
+    override fun getValue(thisRef: BaseEntity, property: KProperty<*>): String = value
 
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Double) {
-        this.isSet = true
-        this.v = value
+    override fun setValue(thisRef: BaseEntity, property: KProperty<*>, value: String) {
+        this.value = value
+        onSet()
     }
 }
 
-class BooleanDelegate {
-    private var isSet = false
-    private var v = false
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean {
-        return v
-    }
+class EntityBooleanFieldDelegate : EntityFieldDelegate<Boolean>() {
+    private var value: Boolean = false
+    override fun getValue(thisRef: BaseEntity, property: KProperty<*>): Boolean = value
 
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
-        this.isSet = true
-        this.v = value
+    override fun setValue(thisRef: BaseEntity, property: KProperty<*>, value: Boolean) {
+        this.value = value
+        onSet()
     }
+}
+
+@Suppress("UNCHECKED_CAST")
+inline fun <reified T : Any> BaseEntity.entityField(): EntityField<T> = when (T::class) {
+    Double::class -> EntityDoubleField() as EntityField<T>
+    String::class -> EntityStringField() as EntityField<T>
+    Boolean::class -> EntityBooleanField() as EntityField<T>
+    else -> throw IllegalArgumentException("Unsupported entity field type: ${T::class}")
 }
