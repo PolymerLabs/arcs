@@ -130,9 +130,9 @@ public:
     res_.store(out);
   }
 
-  arcs::Singleton<arcs::UnicodeTest_Sng> sng_{"sng", this};
-  arcs::Collection<arcs::UnicodeTest_Col> col_{"col", this};
-  arcs::Collection<arcs::UnicodeTest_Res> res_{"res", this};
+  arcs::Singleton<arcs::UnicodeTest_Sng> sng_{this, "sng"};
+  arcs::Collection<arcs::UnicodeTest_Col> col_{this, "col"};
+  arcs::Collection<arcs::UnicodeTest_Res> res_{this, "res"};
 };
 
 DEFINE_PARTICLE(UnicodeTest)
