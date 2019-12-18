@@ -765,19 +765,6 @@ ParticleProvidedSlot
     });
   }
 
-
-ParticleProvidedSlotItem
-  = ParticleProvidedSlotHandle
-
-ParticleProvidedSlotHandle
-  = 'handle' whiteSpace handle:lowerIdent eolWhiteSpace
-  {
-    return toAstNode<AstNode.ParticleProvidedSlotHandle>({
-      kind: 'particle-provided-slot-handle',
-      handle,
-    });
-  }
-
 Description
   = 'description' whiteSpace pattern:backquotedString eolWhiteSpace handleDescriptions:(Indent (SameIndent ParticleHandleDescription)+)?
   {
