@@ -118,7 +118,6 @@ class ${name}() : Entity<${name}>() {
         ${this.fieldSets.join('\n        ')}
     }`)}
   
-
     override fun decodeEntity(encoded: String): ${name}? {
         if (encoded.isEmpty()) return null
 

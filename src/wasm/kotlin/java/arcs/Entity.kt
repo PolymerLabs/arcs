@@ -20,6 +20,12 @@ abstract class Entity<T> : BaseEntity() {
     var internalId = ""
     abstract fun decodeEntity(encoded: String): T?
     abstract fun encodeEntity(): String
+
+    protected var ready = false
+
+    override fun isSet() {
+        ready = true
+    }
 }
 
 class StringDecoder(private var str: String) {

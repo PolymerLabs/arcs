@@ -1,6 +1,6 @@
 package arcs.core.delegates
 
-import arcs.BaseEntity
+import arcs.Entity
 import arcs.entityField
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -9,15 +9,10 @@ import org.junit.runners.JUnit4
 
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
 @RunWith(JUnit4::class)
-class DelegateTest : BaseEntity() {
+class DelegateTest : Entity<DelegateTest>() {
     var n: Double by entityField()
     var s: String by entityField()
     var b: Boolean by entityField()
-    private var ready = false
-
-    override fun isSet() {
-        ready = true
-    }
 
     @Test
     fun TestDelegates() {
@@ -38,4 +33,7 @@ class DelegateTest : BaseEntity() {
         assertThat(this.b).isEqualTo(true)
         assertThat(this.ready).isEqualTo(true)
     }
+
+    override fun decodeEntity(encoded: String) = DelegateTest()
+    override fun encodeEntity() = "fooBar"
 }
