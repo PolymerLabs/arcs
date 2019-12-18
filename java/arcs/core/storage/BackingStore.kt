@@ -33,7 +33,6 @@ import kotlinx.coroutines.withContext
 class BackingStore(
     private val options: StoreOptions<CrdtData, CrdtOperation, Any?>
 ) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
-    val stores = mutableMapOf<String, StoreRecord>()
     private val storeMutex = Mutex()
     /* internal */ val stores = mutableMapOf<String, StoreRecord>()
     private val callbacks = ProxyCallbackManager<CrdtData, CrdtOperation, Any?>()
