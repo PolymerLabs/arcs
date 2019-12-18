@@ -21,6 +21,7 @@ abstract class Entity<T> {
     abstract fun schemaHash(): String
     abstract fun decodeEntity(encoded: ByteArray): T?
     abstract fun encodeEntity(): NullTermByteArray
+    abstract fun isSet(): Boolean
 }
 
 class StringDecoder(private var bytes: ByteArray) {
