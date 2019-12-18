@@ -264,7 +264,7 @@ describe.only('Arc', () => {
     assert.isNull(await dHandle.get());
   });
 
-  it.only('instantiates recipes only if fate is correct', async () => {
+  it('instantiates recipes only if fate is correct', async () => {
     const data = Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[]';
     const type = Flags.useNewStorageStack ? '![Thing]' : 'Thing';
     const manifest = await Manifest.parse(`
@@ -312,7 +312,6 @@ describe.only('Arc', () => {
       await runtime.newArc('test1', Flags.useNewStorageStack ? null : 'volatile://').instantiate(manifest.recipes[1]);
       assert.fail();
     } catch (e) {
-      console.log(e);
       assert.isTrue(e.toString().includes('store \'storeInContext\'')); // with "use" fate was not found'));
     }
 
@@ -1028,7 +1027,7 @@ describe.only('Arc', () => {
     assert.strictEqual(rootSlotConsumer._content.template, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });
 
-  it('handles serialization/deserialization of empty arcs handles', async () => {
+  it.only('handles serialization/deserialization of empty arcs handles', async () => {
     const id = ArcId.newForTest('test');
     const loader = new Loader();
 
@@ -1073,6 +1072,8 @@ describe.only('Arc', () => {
     const serialization = await arc.serialize();
 
     const slotComposer = new FakeSlotComposer();
+
+    console.log(serialization);
 
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
     assert.strictEqual(newArc._stores.length, 1);

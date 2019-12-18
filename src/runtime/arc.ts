@@ -282,6 +282,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
       }
       const store = await storeStub.activate();
       await arc._registerStore(store.baseStore, tags);
+      arc.addStoreToRecipe(store.baseStore);
     }));
     const recipe = manifest.activeRecipe.clone();
     const options: IsValidOptions = {errors: new Map()};
@@ -443,14 +444,9 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
       }
     });
 
-    console.log('------------------');
-    console.log(recipe.toString());
-    console.log(handles.map(a => a.id));
-
-
     for (const recipeHandle of handles) {
       if (recipeHandle.fate === 'use') {
-        // throw new Error(`store '${recipeHandle.id}' with "use" fate was not found in recipe`);
+        throw new Error(`store '${recipeHandle.id}' with "use" fate was not found in recipe`);
       }
 
       const store = this.context.findStoreById(recipeHandle.id);
@@ -468,12 +464,8 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
-        const volatileKey = recipeHandle.immediateValue ? (
-          Flags.useNewStorageStack ? new VolatileStorageKey(this.id, '') : 'volatile'
-        ) : undefined;
-
-        const newStore = await this.createStore(type, /* name= */ null, this.generateID().toString(),
-            recipeHandle.tags, volatileKey);
+        const newStore = await this.createStoreInternal(type, /* name= */ null, this.generateID().toString(),
+            recipeHandle.tags);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
@@ -527,6 +519,10 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
         assert(type.isResolved());
         if (typeof storageKey === 'string') {
           const store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
+          // Note that at one stage this assertion ensured that recipes couldn't "use" handles which weren't
+          // in the current arc. Hopefully this is now handled by correct "use" handles not being returned from
+          // mergeRecipe (because the handle must have already been in the recipe in order for "use" to be
+          // valid); and the toplevel exception when a "use" handle is found.
           assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
           await this._registerStore(store, recipeHandle.tags);
         } else {
@@ -560,7 +556,21 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     }
   }
 
+  private addStoreToRecipe(store: UnifiedStore) {
+    const handle = this.activeRecipe.newHandle();
+    handle.mapToStorage(store);
+    handle.fate = 'use';
+    // TODO(shans): is this the right thing to do?
+    handle._type = handle.mappedType;
+  }
+
   async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey): Promise<UnifiedStore> {
+    const store = await this.createStoreInternal(type, name, id, tags, storageKey);
+    this.addStoreToRecipe(store);
+    return store;
+  }
+
+  private async createStoreInternal(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey): Promise<UnifiedStore> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (Flags.useNewStorageStack) {
