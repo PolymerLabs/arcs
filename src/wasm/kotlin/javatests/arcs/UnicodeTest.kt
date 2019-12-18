@@ -11,13 +11,10 @@
 
 package sdk.kotlin.javatests.arcs
 
-import arcs.addressable.toAddress
 import arcs.Collection
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
 
 class UnicodeTest : Particle() {
     private val sng = Singleton(this, "sng") { UnicodeTest_Sng(
@@ -44,7 +41,3 @@ class UnicodeTest : Particle() {
         res.store(out)
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newUnicodeTest")
-fun constructUnicodeTest() = UnicodeTest().toAddress()

@@ -15,9 +15,6 @@ import arcs.Collection
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class HandleSyncUpdateTest : Particle() {
     private val sng = Singleton(this, "sng") { HandleSyncUpdateTest_Sng(
@@ -59,7 +56,3 @@ class HandleSyncUpdateTest : Particle() {
         res.store(out)
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newHandleSyncUpdateTest")
-fun constructHandleSyncUpdateTest() = HandleSyncUpdateTest().toAddress()

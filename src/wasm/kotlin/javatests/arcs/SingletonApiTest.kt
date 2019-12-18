@@ -13,9 +13,6 @@ package sdk.kotlin.javatests.arcs
 
 import arcs.Particle
 import arcs.Singleton
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class SingletonApiTest : Particle() {
     private val in_ = Singleton(this, "inHandle") { SingletonApiTest_InHandle(
@@ -58,7 +55,3 @@ class SingletonApiTest : Particle() {
         }
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newSingletonApiTest")
-fun constructSingletonApiTest() = SingletonApiTest().toAddress()
