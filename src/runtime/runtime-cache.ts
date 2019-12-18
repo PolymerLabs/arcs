@@ -16,9 +16,7 @@ class CacheKey<K, V> {
 }
 
 export class RuntimeCacheService {
-
   private map = new Map<string, unknown>();
-  private nextID = 0;
 
   getOrCreateCache<K, V>(name): Map<K, V> {
     if (!this.map.has(name)) {
