@@ -17,7 +17,7 @@ import {SlotInfo} from './slot-info.js';
 function fromLiteral(literal: TypeLiteral) : Type {
   switch (literal.tag) {
     case 'Entity':
-      return new EntityType(Schema.fromLiteral(literal.data), literal.refinement);
+      return new EntityType(Schema.fromLiteral(literal.data));
     case 'TypeVariable':
       return new TypeVariable(TypeVariableInfo.fromLiteral(literal.data));
     case 'Collection':

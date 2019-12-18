@@ -25,7 +25,6 @@ export interface TypeLiteral extends Literal {
   tag: string;
   // tslint:disable-next-line: no-any
   data?: any;
-  refinement?: AstNode.Refinement;
 }
 
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
@@ -309,16 +308,14 @@ export class SingletonType<T extends Type> extends Type {
 
 export class EntityType extends Type {
   readonly entitySchema: Schema;
-  readonly refinement?: AstNode.Refinement;
 
-  constructor(schema: Schema, refinement?: AstNode.Refinement) {
+  constructor(schema: Schema) {
     super('Entity');
     this.entitySchema = schema;
-    this.refinement = refinement ? refinement : null;
   }
 
   static make(names: string[], fields: {}, description?, refinement?): EntityType {
-    return new EntityType(new Schema(names, fields, description), refinement);
+    return new EntityType(new Schema(names, fields, description, refinement));
   }
 
   // These type identifier methods are being left in place for non-runtime code.
@@ -339,7 +336,7 @@ export class EntityType extends Type {
   }
 
   toLiteral(): TypeLiteral {
-    return {tag: this.tag, data: this.entitySchema.toLiteral(), refinement: this.refinement};
+    return {tag: this.tag, data: this.entitySchema.toLiteral()};
   }
 
   toString(options = undefined): string {

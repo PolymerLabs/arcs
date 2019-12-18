@@ -37,8 +37,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       deepEqual(entity.toLiteral(), {
         tag: 'Entity',
-        refinement: null,
-        data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', refinement: null, type: 'Text'}}, description: {}}
+        data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', refinement: null, type: 'Text'}}, refinement: null, description: {}}
       });
       deepEqual(entity, Type.fromLiteral(entity.toLiteral()));
       deepEqual(entity, entity.clone(new Map()));
@@ -48,8 +47,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: {kind: 'schema-primitive', refinement: {kind: 'refinement', expression: {kind: 'unary-expression-node', expr: 'value', operator: 'not'}}, type: 'Text'}}, null, {kind: 'refinement', expression: {kind: 'binary-expression-node', leftExpr: 'a', rightExpr: 'b', operator: 'and'}});
       deepEqual(entity.toLiteral(), {
         tag: 'Entity',
-        refinement: {kind: 'refinement', expression: {kind: 'binary-expression-node', leftExpr: 'a', rightExpr: 'b', operator: 'and'}},
-        data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', refinement: {kind: 'refinement', expression: {kind: 'unary-expression-node', expr: 'value', operator: 'not'}}, type: 'Text'}}, description: {}}
+        data: {names: ['Foo'], refinement: {kind: 'refinement', expression: {kind: 'binary-expression-node', leftExpr: 'a', rightExpr: 'b', operator: 'and'}}, fields: {value: {kind: 'schema-primitive', refinement: {kind: 'refinement', expression: {kind: 'unary-expression-node', expr: 'value', operator: 'not'}}, type: 'Text'}}, description: {}}
       });
       deepEqual(entity, Type.fromLiteral(entity.toLiteral()));
       deepEqual(entity, entity.clone(new Map()));

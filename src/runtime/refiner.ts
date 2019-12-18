@@ -13,11 +13,11 @@ import {Dictionary} from './hot.js';
 import {assert} from '../platform/assert-node.js';
 
 export class Refiner {
-    static refinementString(type) : string {
-        if (!type.refinement) {
+    static refinementString(refinement) : string {
+        if (!refinement) {
             return '';
         }
-        return '[' + Refiner.expressionString(type.refinement.expression) + ']';
+        return '[' + Refiner.expressionString(refinement.expression) + ']';
     }
 
     private static expressionString(expr) : string {

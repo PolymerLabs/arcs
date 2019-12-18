@@ -19,12 +19,14 @@ import {Refinement} from './manifest-ast-nodes.js';
 import {Refiner} from './refiner.js';
 
 // tslint:disable-next-line: no-any
-type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; }) => Schema;
+type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
 
 export class Schema {
   readonly names: string[];
   // tslint:disable-next-line: no-any
   readonly fields: Dictionary<any>;
+  // tslint:disable-next-line: no-any
+  refinement?: any;
   description: Dictionary<string> = {};
   isAlias: boolean;
   hashStr: string = null;
@@ -35,9 +37,10 @@ export class Schema {
   // For convenience, primitive field types can be specified as {name: 'Type'}
   // in `fields`; the constructor will convert these to the correct schema form.
   // tslint:disable-next-line: no-any
-  constructor(names: string[], fields: Dictionary<any>, description?) {
+  constructor(names: string[], fields: Dictionary<any>, description?, refinement?) {
     this.names = names;
     this.fields = {};
+    this.refinement = refinement ? refinement : null;
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
         this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field};
@@ -66,7 +69,7 @@ export class Schema {
       fields[key] = updateField(this.fields[key]);
     }
 
-    return {names: this.names, fields, description: this.description};
+    return {names: this.names, fields, description: this.description, refinement: this.refinement};
   }
 
   // TODO(cypher1): This should only be an ident used in manifest parsing.
@@ -183,7 +186,7 @@ export class Schema {
   // tslint:disable-next-line: no-any
   static fieldToString([name, type]: [string, any]) {
     const typeStr = Schema._typeString(type);
-    const refExpr = Refiner.refinementString(type);
+    const refExpr = Refiner.refinementString(type.refinement);
     return `${name}: ${typeStr}${refExpr}`;
   }
 

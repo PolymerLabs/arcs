@@ -572,7 +572,7 @@ ${particleStr1}
       const entity = manifest.particles[0].handleConnectionMap.get('input').type;
       assert.strictEqual(entity.tag, 'Entity');
       // tslint:disable-next-line: no-any
-      const ref = (entity as any).refinement;
+      const ref = (entity as any).getEntitySchema().refinement;
       assert.exists(ref);
       assert.strictEqual(ref.kind, 'refinement');
       assert.strictEqual(ref.expression.kind, 'binary-expression-node');

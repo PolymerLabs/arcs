@@ -586,14 +586,14 @@ ${e.message}
               }
               fields[name] = type;
             }
-            let schema = new Schema(names, fields);
+            let schema = new Schema(names, fields, null, node.refinement);
             for (const alias of aliases) {
               schema = Schema.union(alias, schema);
               if (!schema) {
                 throw new ManifestError(node.location, `Could not merge schema aliases`);
               }
             }
-            node.model = new EntityType(schema, node.refinement);
+            node.model = new EntityType(schema);
             delete node.fields;
             return;
           }

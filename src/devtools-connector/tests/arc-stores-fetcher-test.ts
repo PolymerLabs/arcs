@@ -77,9 +77,9 @@ describe('ArcStoresFetcher', () => {
                 }
               },
               hashStr: null,
-              names: ['Foo']
+              names: ['Foo'],
+              refinement: null,
             },
-            refinement: null,
           },
           tag: 'Singleton',
         },
