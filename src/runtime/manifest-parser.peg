@@ -863,6 +863,7 @@ RecipeParticle
 
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
+// TODO(cypher1): s/dir/direction/ to match slot connections and the rest of the code base
 RecipeParticleConnection
   = param:NameWithColon? dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
@@ -870,7 +871,13 @@ RecipeParticleConnection
       kind: 'handle-connection',
       param: param || '*',
       dir,
-      target: optional(target, t => t[1], null),
+      target: optional(target, t => t[1], toAstNode<AstNode.ParticleConnectionTargetComponents>({
+        kind: 'handle-connection-components',
+        name: null,
+        particle: null,
+        tags: []
+        }
+      )),
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
   }
@@ -885,7 +892,25 @@ RecipeParticleConnection
     });
   }
 
-ParticleConnectionTargetComponents
+RecipeParticleSlotConnection
+  = param: NameWithColon? direction:SlotDirection target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
+  {
+    return toAstNode<AstNode.RecipeParticleSlotConnection>({
+      kind: 'slot-connection',
+      param: param || '*',
+      direction,
+      target: optional(target, t => t[1], toAstNode<AstNode.ParticleConnectionTargetComponents>({
+        kind: 'handle-connection-components',
+        name: null,
+        particle: null,
+        tags: []
+        }
+      )),
+      dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
+    });
+  }
+
+ParticleConnectionTargetComponents "a particle connection target"
   = param:(upperIdent / lowerIdent) tags:(whiteSpace TagList)?
   {
     param = optional(param, param => param, null);
@@ -913,19 +938,6 @@ ParticleConnectionTargetComponents
       name: null,
       particle: null,
       tags
-    });
-  }
-
-RecipeParticleSlotConnection
-  = param: NameWithColon? direction:SlotDirection name:(whiteSpace lowerIdent)? tags:SpaceTagList? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
-  {
-    return toAstNode<AstNode.RecipeParticleSlotConnection>({
-      kind: 'slot-connection',
-      direction,
-      param: param || '*',
-      tags: tags || [],
-      name: optional(name, name=>name[1], null),
-      dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
     });
   }
 
