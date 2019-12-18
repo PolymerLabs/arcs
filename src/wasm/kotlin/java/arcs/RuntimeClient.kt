@@ -11,23 +11,23 @@
 
 package arcs
 
-expect fun utf8ToStringImpl(bytes: ByteArray): String
-expect fun stringToUtf8Impl(str: String): ByteArray
-
-fun ByteArray.utf8ToString(): String = utf8ToStringImpl(this)
-fun String.stringToUtf8(): ByteArray = stringToUtf8Impl(this)
-
+//expect fun utf8ToStringImpl(bytes: ByteArray): String
+//expect fun stringToUtf8Impl(str: String): ByteArray
+//
+fun ByteArray.utf8ToString(): String =  throw NotImplementedError()
+fun String.stringToUtf8(): ByteArray =  throw NotImplementedError()
 /**
  * Delegate core runtime operations to the appropriate platform.
  */
-expect object RuntimeClient {
+/*expect*/ object RuntimeClient {
     /**
      * Remove the entity within the Singleton handle of [particle].
      *
      * @param particle particle in scope
      * @param singleton target to be cleared
      */
-    fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>)
+    @Suppress("UNUSED_PARAMETER")
+    fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>): Unit = throw NotImplementedError()
 
     /**
      * Set the entity of the Singleton handle of [particle].
@@ -36,7 +36,8 @@ expect object RuntimeClient {
      * @param singleton target to be cleared
      * @param encoded serialized representation of an entity
      */
-    fun <T : Entity<T>> singletonSet(particle: Particle, singleton: Singleton<T>, encoded: NullTermByteArray)
+    @Suppress("UNUSED_PARAMETER")
+    fun <T : Entity<T>> singletonSet(particle: Particle, singleton: Singleton<T>, encoded: NullTermByteArray): Unit = throw NotImplementedError()
 
     /**
      * Removes all entities to produce an empty collection.
@@ -44,7 +45,8 @@ expect object RuntimeClient {
      * @param particle particle in scope
      * @param collection target to be made empty
      */
-    fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>)
+    @Suppress("UNUSED_PARAMETER")
+    fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>): Unit = throw NotImplementedError()
 
     /**
      * Remove a single entity from a collection
@@ -53,7 +55,8 @@ expect object RuntimeClient {
      * @param collection target to be mutated
      * @param encoded serialized representation of an entity
      */
-    fun <T : Entity<T>> collectionRemove(particle: Particle, collection: Collection<T>, encoded: NullTermByteArray)
+    @Suppress("UNUSED_PARAMETER")
+    fun <T : Entity<T>> collectionRemove(particle: Particle, collection: Collection<T>, encoded: NullTermByteArray): Unit = throw NotImplementedError()
 
     /**
      * Add a single entity to a collection
@@ -63,14 +66,16 @@ expect object RuntimeClient {
      * @param encoded serialized representation of an entity
      * @return the ID [String] of the stored entity, or null.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun <T : Entity<T>> collectionStore(
         particle: Particle,
         collection: Collection<T>,
         encoded: NullTermByteArray
-    ): String?
+    ): String? = throw NotImplementedError()
 
     /** @param msg message to write to a logging system. */
-    fun log(msg: String)
+    @Suppress("UNUSED_PARAMETER")
+    fun log(msg: String): Unit = throw NotImplementedError()
 
     /**
      * React to UI Rendering
@@ -79,7 +84,8 @@ expect object RuntimeClient {
      * @param template string encoding of UI template
      * @param model data model to be interpolated in the template
      */
-    fun onRenderOutput(particle: Particle, template: String?, model: NullTermByteArray?)
+    @Suppress("UNUSED_PARAMETER")
+    fun onRenderOutput(particle: Particle, template: String?, model: NullTermByteArray?): Unit = throw NotImplementedError()
 
     /**
      * Request an action to be performed by a Service
@@ -89,10 +95,12 @@ expect object RuntimeClient {
      * @param encoded serialized key-value data to be passed to the service
      * @param tag name the request to the service
      */
-    fun serviceRequest(particle: Particle, call: String, encoded: NullTermByteArray, tag: String)
+    @Suppress("UNUSED_PARAMETER")
+    fun serviceRequest(particle: Particle, call: String, encoded: NullTermByteArray, tag: String): Unit = throw NotImplementedError()
 
     /** @param url translate to absolute location */
-    fun resolveUrl(url: String): String
+    @Suppress("UNUSED_PARAMETER")
+    fun resolveUrl(url: String): String = throw NotImplementedError()
 
     /**
      * Ensure that a Boolean condition is true, otherwise [abort].
@@ -100,8 +108,10 @@ expect object RuntimeClient {
      * @param message description of assertion condition
      * @param cond evaluation of assertion condition
      */
-    fun assert(message: String, cond: Boolean)
+    @Suppress("UNUSED_PARAMETER")
+    fun assert(message: String, cond: Boolean): Unit = throw NotImplementedError()
 
     /** Halt the runtime. */
-    fun abort()
+    @Suppress("UNUSED_PARAMETER")
+    fun abort(): Unit = throw NotImplementedError()
 }

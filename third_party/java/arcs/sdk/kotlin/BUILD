@@ -12,3 +12,8 @@ alias(
     name = "kotlin-wasm",
     actual = "//src/wasm/kotlin/java/arcs:arcs-wasm",
 )
+
+alias(
+    name = "kotlin-js",
+    actual = "//src/wasm/kotlin/java/arcs:arcs-js",
+)

@@ -5,5 +5,6 @@ licenses(["notice"])
 arcs_kt_particles(
     name = "HelloWorld",
     srcs = ["HelloWorld.kt"],
+    js = True,
     package = "arcs.tutorials",
 )

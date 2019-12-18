@@ -37,6 +37,11 @@ _WASM_SUFFIX = "-wasm"
 _JS_SUFFIX = "-js"
 _KT_SUFFIX = "-kt"
 
+_KOTLINC_OPTS = [
+    "-Xmulti-platform",
+    "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
+]
+
 IS_BAZEL = not (hasattr(native, "genmpm"))
 
 def arcs_kt_jvm_library(**kwargs):
@@ -47,7 +52,14 @@ def arcs_kt_jvm_library(**kwargs):
         ]
         kwargs["constraints"] = ["android"]
 
+    kwargs["kotlincopts"] = _KOTLINC_OPTS + ["-Xallow-kotlin-package"]
+
     kt_jvm_library(**kwargs)
+
+def arcs_kt_js_library(**kwargs):
+    kwargs["kotlincopts"] = _KOTLINC_OPTS
+
+    kt_js_library(**kwargs)
 
 def arcs_kt_library(
         name,
@@ -77,7 +89,7 @@ def arcs_kt_library(
         arcs_kt_jvm_library(
             name = name,
             srcs = srcs,
-            deps = [_to_jvm_dep(dep) for dep in deps],
+            deps = _to_jvm_deps(deps),
             visibility = visibility,
         )
 
@@ -85,7 +97,7 @@ def arcs_kt_library(
         kt_native_library(
             name = name + _WASM_SUFFIX,
             srcs = srcs,
-            deps = [_to_wasm_dep(dep) for dep in deps],
+            deps = _to_wasm_deps(deps),
             visibility = visibility,
         )
 
@@ -96,7 +108,8 @@ def arcs_kt_particles(
         deps = [],
         visibility = None,
         wasm = True,
-        jvm = True):
+        jvm = True,
+        js = False):
     """Performs final compilation of wasm and bundling if necessary.
 
     Args:
@@ -124,9 +137,15 @@ def arcs_kt_particles(
             visibility = visibility,
         )
 
-    if wasm:
-        wasm_deps = [_to_wasm_dep(dep) for dep in deps]
+    if js:
+        kt_js_library(
+            name = name + _JS_SUFFIX,
+            srcs = srcs,
+            deps = _to_js_deps(deps),
+            visibility = visibility,
+        )
 
+    if wasm:
         # Create a wasm library for each particle.
         wasm_particle_libs = []
         for src in srcs:
@@ -148,7 +167,7 @@ def arcs_kt_particles(
                     src,
                     wasm_annotations_file,
                 ],
-                deps = wasm_deps,
+                deps = _to_wasm_deps(deps),
             )
             wasm_particle_libs.append(wasm_lib)
 
@@ -217,28 +236,40 @@ def kt_jvm_and_js_library(
     arcs_kt_jvm_library(
         name = kt_name,
         srcs = srcs,
-        deps = [_to_jvm_dep(dep) for dep in deps],
+        deps = _to_jvm_deps(deps),
         visibility = visibility,
         **kwargs
     )
 
     if IS_BAZEL:
-        js_kwargs = dict(**kwargs)
-        kt_js_library(
+        arcs_kt_js_library(
             name = js_name,
             srcs = srcs,
-            deps = [_to_js_dep(dep) for dep in deps],
-            **js_kwargs
+            deps = _to_js_deps(deps),
+            visibility = visibility,
+            **kwargs
         )
 
-def _to_wasm_dep(dep):
-    last_part = dep.split("/")[-1]
+def _to_jvm_deps(deps):
+    return deps
 
-    index_of_colon = dep.find(":")
-    if (index_of_colon == -1):
-        return dep + (":%s%s" % (last_part, _WASM_SUFFIX))
-    else:
-        return dep + _WASM_SUFFIX
+def _to_wasm_deps(deps):
+    return _to_deps_with_suffix(deps, _WASM_SUFFIX)
+
+def _to_js_deps(deps):
+    return _to_deps_with_suffix(deps, _JS_SUFFIX)
+
+def _to_deps_with_suffix(deps, suffix):
+    result = []
+    for dep in deps:
+        last_part = dep.split("/")[-1]
+
+        index_of_colon = dep.find(":")
+        if (index_of_colon == -1):
+            result.append(dep + (":%s%s" % (last_part, suffix)))
+        else:
+            result.append(dep + suffix)
+    return result
 
 def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = []):
     """Defines Kotlin Android test targets for a directory.
@@ -316,15 +347,3 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
             runtime_deps = [":%s" % name],
             tags = tags,
         )
-
-def _to_jvm_dep(dep):
-    return dep
-
-def _to_js_dep(dep):
-    last_part = dep.split("/")[-1]
-
-    index_of_colon = dep.find(":")
-    if (index_of_colon == -1):
-        return dep + (":%s%s" % (last_part, _JS_SUFFIX))
-    else:
-        return dep + _JS_SUFFIX
