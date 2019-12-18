@@ -15,6 +15,7 @@ import {Entity} from '../entity.js';
 import {Reference} from '../reference.js';
 import {StringEncoder, StringDecoder, DynamicBuffer} from '../wasm.js';
 import {BiMap} from '../bimap.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 
 async function setup() {
   const manifest = await Manifest.parse(`
@@ -28,8 +29,8 @@ async function setup() {
   const fooClass = Entity.createEntityClass(manifest.schemas.Foo, null);
   const barType = EntityType.make(['Bar'], {a: 'Text'});
 
-  const typeMap = new BiMap<number, EntityType>();
-  const encoder = StringEncoder.create(fooClass.type, typeMap);
+  const typeMap = new BiMap<string, EntityType>();
+  const encoder = StringEncoder.create(fooClass.type);
   const decoder = StringDecoder.create(fooClass.type, typeMap, null);
   return {fooClass, barType, encoder, decoder, typeMap};
 }
@@ -41,9 +42,9 @@ describe('wasm', () => {
     const foo = new fooClass({txt: 'abc', lnk: 'http://def', num: 37, flg: true, ref});
     Entity.identify(foo, 'test');
 
-    const encoded = encoder.encodeSingleton(foo);
-    assert.deepStrictEqual([...typeMap.entries()], [[1, barType]]);
+    typeMap.set(await barType.getEntitySchema().hash(), barType);
 
+    const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
     assert.deepStrictEqual(foo, foo2);
   });
@@ -53,7 +54,7 @@ describe('wasm', () => {
     const foo = new fooClass({txt: 'abc', num: -5.1});
     Entity.identify(foo, '!test:foo:bar|');
 
-    const encoded = encoder.encodeSingleton(foo);
+    const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
     assert.deepStrictEqual(foo, foo2);
   });
@@ -63,7 +64,7 @@ describe('wasm', () => {
     const foo = new fooClass({txt: '', lnk: '', num: 0, flg: false});
     Entity.identify(foo, 'te|st');
 
-    const encoded = encoder.encodeSingleton(foo);
+    const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
     assert.deepStrictEqual(foo, foo2);
   });
@@ -73,7 +74,7 @@ describe('wasm', () => {
     const foo = new fooClass({});
     Entity.identify(foo, 'te st');
 
-    const encoded = encoder.encodeSingleton(foo);
+    const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
     assert.deepStrictEqual(foo, foo2);
   });
@@ -90,12 +91,13 @@ describe('wasm', () => {
     const f2 = make('id2|two', {});
     const f3 = make('!id:3!', {txt: 'def', num: -7});
 
-    const encoded = encoder.encodeCollection([f1, f2, f3]);
+    const hash = await barType.getEntitySchema().hash();
+    const encoded = await encoder.encodeCollection([f1, f2, f3]);
 
     // Decoding of collections hasn't been implemented (yet?).
     assert.strictEqual(new TextDecoder().decode(encoded.view()),
       '3:' +
-      '71:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|ref:R2:r1|2:k1|1:|' +
+      '110:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|ref:R2:r1|2:k1|' + hash + ':|' +
       '10:7:id2|two|' +
       '29:6:!id:3!|txt:T3:def|num:N-7:|');
   });
@@ -114,7 +116,9 @@ describe('wasm', () => {
       const entityClass = Entity.createEntityClass(schema, null);
       const e = new entityClass({value});
       Entity.identify(e, 'test');
-      assert.throws(() => StringEncoder.create(entityClass.type, null).encodeSingleton(e), 'not yet supported');
+      assertThrowsAsync(async () => {
+        await StringEncoder.create(entityClass.type).encodeSingleton(e);
+      }, 'not yet supported');
     };
 
     verify(multifest.schemas.BytesFail, new Uint8Array([2]));

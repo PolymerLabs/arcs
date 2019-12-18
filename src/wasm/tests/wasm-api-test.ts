@@ -159,7 +159,7 @@ class TestLoader extends Loader {
       if (env.includes('kotlin')) {
         assert.deepStrictEqual(resolve, {call: 'resolveUrl', tag: '', payload: 'RESOLVED($resolve-me)'});
       } else {
-       assert.deepStrictEqual(resolve, {call: 'resolveUrl', payload: 'RESOLVED($resolve-me)'});
+        assert.deepStrictEqual(resolve, {call: 'resolveUrl', payload: 'RESOLVED($resolve-me)'});
       }
 
       for (const tag of ['first', 'second']) {
@@ -241,18 +241,18 @@ class TestLoader extends Loader {
       await inStore.set({id: 'i3', rawData: {num: 4}});
       await sendEvent('case2');
       if (env.includes('kotlin')) {
-       assert.deepStrictEqual((await outStore.get()).rawData, {num: 8, txt: ''});
+        assert.deepStrictEqual((await outStore.get()).rawData, {num: 8, txt: ''});
       } else {
-       assert.deepStrictEqual((await outStore.get()).rawData, {num: 8});
+        assert.deepStrictEqual((await outStore.get()).rawData, {num: 8});
       }
 
       // io.get()/set()
       await ioStore.set({id: 'i3', rawData: {num: 4}});
       await sendEvent('case3');
       if (env.includes('kotlin')) {
-       assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12, txt: ''});
+        assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12, txt: ''});
       } else {
-       assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12});
+        assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12});
       }
     });
 
@@ -279,9 +279,9 @@ class TestLoader extends Loader {
       await inStore.store({id: 'id3', rawData: {num: 3}}, ['k3']);
       await sendEvent('case2');
       if (env.includes('kotlin')) {
-       assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, txt: '', num: 1}]);
+        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, txt: '', num: 1}]);
       } else {
-              assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, num: 1}]);
+        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, num: 1}]);
       }
 
       // out.remove() - clears entity stored as the previous result
@@ -292,17 +292,17 @@ class TestLoader extends Loader {
       // TODO(alxr): Extract out to be a C++ specific test case
       await sendEvent('case4');
       if (env.includes('kotlin')) {
-       assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-        {txt: '{id3}, num: 3', num: 6, flg: true},
-        {txt: 'eq', num: 0, flg: false},
-        {txt: 'ne', num: 0, flg: true},
-       ]);
+        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
+          {txt: '{id3}, num: 3', num: 6, flg: true},
+          {txt: 'eq', num: 0, flg: false},
+          {txt: 'ne', num: 0, flg: true},
+        ]);
       } else {
-       assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-        {txt: '{id3}, num: 3', num: 6, flg: true},
-        {txt: 'eq', flg: false},
-        {txt: 'ne', flg: true},
-       ]);
+        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
+          {txt: '{id3}, num: 3', num: 6, flg: true},
+          {txt: 'eq', flg: false},
+          {txt: 'ne', flg: true},
+        ]);
       }
 
       // io.* and ranged iteration
@@ -312,23 +312,23 @@ class TestLoader extends Loader {
       await outStore.clearItemsForTesting();
       await sendEvent('case5');
       if (env.includes('kotlin')) {
-       assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-        {num: 4, flg: false, txt: ''},      // store() an entity in addition to the 3 above
-        {num: 3, flg: false, txt: ''},                  // remove() the entity
-        {txt: '{id4}, num: 0', num: 0, flg: false},    // ranged loop over the 3 entities above, using num to sort
-        {txt: '{id5}, num: 1', num: 0, flg: false},
-        {txt: '{id6}, num: 2', num: 0, flg: false},
-        {num: 0, flg: true, txt: ''},       // clear()
-       ]);
+        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
+          {num: 4, flg: false, txt: ''},               // store() an entity in addition to the 3 above
+          {num: 3, flg: false, txt: ''},               // remove() the entity
+          {txt: '{id4}, num: 0', num: 0, flg: false},  // ranged loop over the 3 entities above, using num to sort
+          {txt: '{id5}, num: 1', num: 0, flg: false},
+          {txt: '{id6}, num: 2', num: 0, flg: false},
+          {num: 0, flg: true, txt: ''},                // clear()
+        ]);
       } else {
-       assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-        {num: 4, flg: false},      // store() an entity in addition to the 3 above
-        {num: 3},                  // remove() the entity
-        {txt: '{id4}, num: 0'},    // ranged loop over the 3 entities above, using num to sort
-        {txt: '{id5}, num: 1'},
-        {txt: '{id6}, num: 2'},
-        {num: 0, flg: true},       // clear()
-       ]);
+        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
+          {num: 4, flg: false},      // store() an entity in addition to the 3 above
+          {num: 3},                  // remove() the entity
+          {txt: '{id4}, num: 0'},    // ranged loop over the 3 entities above, using num to sort
+          {txt: '{id5}, num: 1'},
+          {txt: '{id6}, num: 2'},
+          {num: 0, flg: true},       // clear()
+        ]);
       }
     });
 

@@ -21,9 +21,10 @@ import {Schema2Kotlin} from '../schema2kotlin.js';
 class Schema2Mock extends Schema2Base {
   res: Dictionary<{count: number, adds: string[]}> = {};
 
-  constructor(manifest: Manifest) {
-    super({'_': []});
-    this.processManifest(manifest);
+  static async create(manifest: Manifest): Promise<Schema2Mock> {
+    const mock = new Schema2Mock({'_': []});
+    await mock.processManifest(manifest);
+    return mock;
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
@@ -38,7 +39,7 @@ class Schema2Mock extends Schema2Base {
         collector.adds.push(field + ':' + refName);
       },
 
-      generate(fieldCount: number): string {
+      generate(schemaHash: string, fieldCount: number): string {
         collector.count = fieldCount;
         return '';
       }
@@ -54,7 +55,7 @@ describe('schema2wasm', () => {
         input2: writes &* {txt: Text, num: Number}
         input3: reads writes [Site {url: URL, ref: &* {txt: Text}}]
     `);
-    const mock = new Schema2Mock(manifest);
+    const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
       'FooInternal1': {count: 1, adds: ['txt:T']},
       'Foo_Input3':   {count: 2, adds: ['url:U', 'ref:FooInternal1']},
@@ -67,7 +68,7 @@ describe('schema2wasm', () => {
       particle Foo
         input: reads * {txt: Text, url: URL, num: Number, flg: Boolean}
     `);
-    const mock = new Schema2Mock(manifest);
+    const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
       'Foo_Input': {count: 4, adds: ['txt:T', 'url:U', 'num:N', 'flg:B']}
     });
@@ -79,7 +80,7 @@ describe('schema2wasm', () => {
         h1: reads * {a: Text, r: &* {b: Text}}
         h2: reads * {s: &* {f: Boolean, t: &* {x: Number}}}
     `);
-    const mock = new Schema2Mock(manifest);
+    const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
       'Foo_H1':     {count: 2, adds: ['a:T', 'r:Foo_H1_R']},
       'Foo_H1_R':   {count: 1, adds: ['b:T']},
