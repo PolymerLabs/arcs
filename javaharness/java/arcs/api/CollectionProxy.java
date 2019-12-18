@@ -3,8 +3,6 @@ package arcs.api;
 import arcs.core.common.Referencable;
 import arcs.core.crdt.CrdtSet;
 import arcs.core.crdt.internal.VersionMap;
-
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -81,7 +79,9 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
         ModelEntry entry = vv.getValue();
         String actor = remove.getObject(ModelEntry.KEYS).getString(0);
         boolean effective = remove.getBool("effective");
-        if (apply && model.applyOperation(new CrdtSet.Operation.Remove<>(vv.getVersionMap(), actor, entry))
+        if ((apply
+                && model.applyOperation(
+                    new CrdtSet.Operation.Remove<>(vv.getVersionMap(), actor, entry)))
             || !apply && effective) {
           removed.put(removed.getLength(), entry.value.value);
         }
@@ -215,7 +215,8 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
             .put(ModelEntry.KEYS, jsonParser.fromStringArray(Arrays.asList(keys)));
     port.handleRemove(this, (unused) -> {}, data, particleId);
 
-    if (!model.applyOperation(new CrdtSet.Operation.Remove<>(vv.getVersionMap(), /* actor= */"", entry))) {
+    if (!model.applyOperation(
+        new CrdtSet.Operation.Remove<>(vv.getVersionMap(), /* actor= */"", entry))) {
       return;
     }
     PortableJson update =
