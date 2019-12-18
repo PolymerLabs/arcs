@@ -18,7 +18,6 @@ import arcs.Particle
 import kotlin.test.Asserter
 import kotlin.AssertionError
 
-annotation class Test
 
 open class TestBase <T: Entity<T>> (val ctor: (txt: String) -> T): Particle(), Asserter {
     private val errors = Collection(this, "errors") { ctor("") }
