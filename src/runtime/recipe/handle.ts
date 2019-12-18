@@ -77,11 +77,8 @@ export class Handle implements Comparable<Handle> {
 
   _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: VariableMap) {
     let handle: Handle = undefined;
-    console.log(`_copyInto ${this._id}`);
-    console.log(recipe.handles.map(h => h.id));
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate)) {
       handle = recipe.findHandle(this._id);
-      console.log('found', handle);
     }
 
     if (handle == undefined) {

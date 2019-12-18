@@ -363,8 +363,14 @@ class PECOuterPortImpl extends PECOuterPort {
           // resolution which will have already normalized the recipe.
           if ((missingHandles.length > 0) || recipe0.normalize(options)) {
             if (recipe0.isResolved()) {
-              console.log(recipe0.toString());
-              console.log(this.arc.activeRecipe.toString());
+              // Map handles from the external environment that aren't yet in the inner arc.
+              // TODO(shans): restrict these to only the handles that are listed on the particle.
+              for (const handle of recipe0.handles) {
+                if (!arc.findStoreById(handle.id)) {
+                  await arc.createStore(handle.type, handle.localName, handle.id, handle.tags, handle.storageKey);
+                }
+              }
+
               // TODO: pass tags through too, and reconcile with similar logic
               // in Arc.deserialize.
               for (const store of manifest.stores) {
@@ -379,7 +385,6 @@ class PECOuterPortImpl extends PECOuterPort {
                 try {
                   await arc.instantiate(recipe0);
                 } catch (e) {
-                  console.log(e);
                   this.SimpleCallback(callback, {error: e.message + e.stack});
                 }
               };
