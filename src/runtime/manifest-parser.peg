@@ -72,15 +72,41 @@
     return {...data, location: location()} as T;
   }
 
-  function buildInterfaceArgument(name: string, direction: AstNode.Direction, type: AstNode.ParticleHandleConnectionType) {
+  function buildInterfaceArgument(name: string, direction: AstNode.Direction | AstNode.SlotDirection, isOptional: boolean, type: AstNode.ParticleHandleConnectionType) {
     if (direction === 'hosts') {
       error(`Interface cannot have arguments with a 'hosts' direction.`);
+    }
+    if (direction === 'consumes' || direction === 'provides') {
+      let isSet = false;
+      if (type && type.kind === 'collection-type') {
+        isSet = true;
+        type = type.type; // unwrap the inner type of the collection type;
+      }
+      if (type && type.kind === 'slot-type') {
+        const slotType = type as AstNode.SlotType;
+        slotType.fields.forEach(({name, value}) => {
+          error(`interface slots do not currently support fields`);
+        });
+      } else if (type !== null) {
+        error('cannot consume or provide non slot types');
+      }
+      return toAstNode<AstNode.InterfaceSlot>({
+        kind: 'interface-slot',
+        name,
+        isRequired: !isOptional,
+        direction,
+        isSet,
+      });
+    }
+    if (isOptional) {
+      // TODO: Support interface optionality
+      error('interface handles do not support optionality');
     }
     return toAstNode<AstNode.InterfaceArgument>({
       kind: 'interface-argument',
       direction,
       type,
-      name
+      name: name || '*',
     });
   }
 }
@@ -237,7 +263,7 @@ Import
   }
 
 Interface "an interface"
-  = 'interface' whiteSpace name:upperIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent InterfaceItem)*)? eolWhiteSpace?
+  = 'interface' whiteSpace name:upperIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent InterfaceArgument)*)? eolWhiteSpace?
   {
     return toAstNode<AstNode.Interface>({
       kind: 'interface',
@@ -247,37 +273,13 @@ Interface "an interface"
     });
   }
 
-InterfaceItem
-  = InterfaceSlot
-  / InterfaceArgument
-
 InterfaceArgument
-  = name:NameWithColon direction:Direction? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
-  { return buildInterfaceArgument(name, direction || 'any', optional(type, t => t[1], null)); }
-  / direction:Direction type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
-  { return buildInterfaceArgument('*', direction || 'any', optional(type, t => t[1], null)); }
-  / type:(whiteSpace? ParticleHandleConnectionType) eolWhiteSpace
-  { return buildInterfaceArgument('*', 'any', type); }
-
-InterfaceSlot
-  = name:NameWithColon? direction:('consumes' / 'provides') isOptional:'?'? type:(whiteSpace SlandleType)? eolWhiteSpace
-  {
-    let isSet = false;
-    if (type) {
-      type = type[1]; // remove the whitespace.
-      isSet = type.isSet;
-      type.fields.forEach(({name, value}) => {
-        error(`interface slots do not currently support fields`);
-      });
-    }
-    return toAstNode<AstNode.InterfaceSlot>({
-      kind: 'interface-slot',
-      name,
-      isRequired: !isOptional,
-      direction,
-      isSet,
-    });
-  }
+  = name:NameWithColon direction:(Direction / SlotDirection)? isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  { return buildInterfaceArgument(name, direction || 'any', isOptional, optional(type, t => t[1], null)); }
+  / direction:(Direction / SlotDirection) isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  { return buildInterfaceArgument(null, direction || 'any', isOptional, optional(type, t => t[1], null)); }
+  / isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType) eolWhiteSpace
+  { return buildInterfaceArgument(null, 'any', isOptional, type); }
 
 Meta
   = 'meta' eolWhiteSpace items:(Indent (SameIndent MetaItem)*)? eolWhiteSpace?

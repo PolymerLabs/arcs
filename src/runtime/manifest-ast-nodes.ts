@@ -601,7 +601,7 @@ export interface InterfaceSlot extends BaseNode {
   kind: 'interface-slot';
   name: string|null;
   isRequired: boolean;
-  direction: Direction;
+  direction: SlotDirection;
   isSet: boolean;
 }
 
