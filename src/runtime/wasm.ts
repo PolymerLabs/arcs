@@ -24,7 +24,7 @@ import {UserException} from './arc-exceptions.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {BiMap} from './bimap.js';
 
-type EntityTypeMap = BiMap<number, EntityType>;
+type EntityTypeMap = BiMap<string, EntityType>;
 
 // Wraps a Uint8Array buffer which is automatically resized as more space is needed.
 export class DynamicBuffer {
@@ -94,7 +94,7 @@ export class DynamicBuffer {
 //    URL          U<length>:<text>
 //    Number       N<number>:
 //    Boolean      B<zero-or-one>
-//    Reference    R<length>:<id>|<length>:<storage-key>|<type-index>:
+//    Reference    R<length>:<id>|<length>:<storage-key>|<schema-hash>:
 //    Dictionary   D<length>:<dictionary format>
 //    Array        A<length>:<array format>
 //
@@ -112,38 +112,34 @@ export class DynamicBuffer {
 //   Collection:  3:29:4:id12|txt:T4:qwer|num:N9.2:|18:6:id2670|num:N-7:|15:5:id501|flg:B0|
 
 export abstract class StringEncoder {
-  buf: DynamicBuffer|null = null;
+  protected constructor(protected readonly schema: Schema) {}
 
-  protected constructor(protected readonly schema: Schema, protected typeMap: EntityTypeMap) {}
-
-  static create(type: Type, typeMap: EntityTypeMap): StringEncoder {
+  static create(type: Type): StringEncoder {
     if (type instanceof CollectionType) {
       type = type.getContainedType();
     }
     if (type instanceof EntityType) {
-      return new EntityEncoder(type.getEntitySchema(), typeMap);
+      return new EntityEncoder(type.getEntitySchema());
     }
     if (type instanceof ReferenceType) {
-      return new ReferenceEncoder(type.getEntitySchema(), typeMap);
+      return new ReferenceEncoder(type.getEntitySchema());
     }
     throw new Error(`Unsupported type for StringEncoder: ${type}`);
   }
 
-  protected abstract encodeStorable(storable: Storable);
+  protected abstract async encodeStorable(buf: DynamicBuffer, storable: Storable);
 
-  encodeSingleton(storable: Storable): DynamicBuffer {
-    this.buf = new DynamicBuffer();
-    this.encodeStorable(storable);
-    const res = this.buf;
-    this.buf = null;
-    return res;
+  async encodeSingleton(storable: Storable): Promise<DynamicBuffer> {
+    const buf = new DynamicBuffer();
+    await this.encodeStorable(buf, storable);
+    return buf;
   }
 
-  encodeCollection(entities: Storable[]): DynamicBuffer {
+  async encodeCollection(entities: Storable[]): Promise<DynamicBuffer> {
     const bufs: DynamicBuffer[] = [];
     let len = 10;  // for 'num-entities:' prefix
     for (const entity of entities) {
-      const buf = this.encodeSingleton(entity);
+      const buf = await this.encodeSingleton(entity);
       bufs.push(buf);
       len += 10 + buf.size;  // +10 for 'length:' prefix
     }
@@ -167,19 +163,19 @@ export abstract class StringEncoder {
     return buf;
   }
 
-  protected encodeField(field, name: string, value: string|number|boolean|Reference) {
+  protected async encodeField(buf: DynamicBuffer, field, name: string, value: string|number|boolean|Reference) {
     // TODO: support unicode field names
     switch (field.kind) {
       case 'schema-primitive':
-        this.buf.addAscii(name, ':', field.type.substr(0, 1));
-        this.encodeValue(field.type, value as string|number|boolean);
-        this.buf.addAscii('|');
+        buf.addAscii(name, ':', field.type.substr(0, 1));
+        this.encodeValue(buf, field.type, value as string|number|boolean);
+        buf.addAscii('|');
         break;
 
       case 'schema-reference':
-        this.buf.addAscii(name, ':R');
-        this.encodeReference(value as Reference);
-        this.buf.addAscii('|');
+        buf.addAscii(name, ':R');
+        await this.encodeReference(buf, value as Reference);
+        buf.addAscii('|');
         break;
 
       case 'schema-collection':
@@ -192,34 +188,30 @@ export abstract class StringEncoder {
     }
   }
 
-  protected encodeReference(ref: Reference) {
+  protected async encodeReference(buf: DynamicBuffer, ref: Reference) {
     const entityType = ref.type.referredType as EntityType;
     assert(entityType instanceof EntityType);
-    let index = this.typeMap.getR(entityType);
-    if (!index) {
-      index = this.typeMap.size + 1;  // avoid index 0
-      this.typeMap.set(index, entityType);
-    }
     const {id, storageKey} = ref.dataClone();
-    this.buf.addUnicode(id);
-    this.buf.addAscii('|');
-    this.buf.addUnicode(storageKey);
-    this.buf.addAscii('|', index + ':');
+    const hash = await entityType.getEntitySchema().hash();
+    buf.addUnicode(id);
+    buf.addAscii('|');
+    buf.addUnicode(storageKey);
+    buf.addAscii('|', hash + ':');
   }
 
-  protected encodeValue(type: string, value: string|number|boolean)  {
+  protected encodeValue(buf: DynamicBuffer, type: string, value: string|number|boolean)  {
     switch (type) {
       case 'Text':
       case 'URL':
-        this.buf.addUnicode(value as string);
+        buf.addUnicode(value as string);
         break;
 
       case 'Number':
-        this.buf.addAscii(value + ':');
+        buf.addAscii(value + ':');
         break;
 
       case 'Boolean':
-        this.buf.addAscii(value ? '1' : '0');
+        buf.addAscii(value ? '1' : '0');
         break;
 
       case 'Bytes':
@@ -233,25 +225,25 @@ export abstract class StringEncoder {
 }
 
 class EntityEncoder extends StringEncoder {
-  encodeStorable(entity: Storable) {
+  async encodeStorable(buf: DynamicBuffer, entity: Storable) {
     if (!(entity instanceof Entity)) {
       throw new Error(`non-Entity passed to EntityEncoder: ${entity}`);
     }
-    this.buf.addUnicode(Entity.id(entity));
-    this.buf.addAscii('|');
+    buf.addUnicode(Entity.id(entity));
+    buf.addAscii('|');
     for (const [name, value] of Object.entries(entity)) {
-      this.encodeField(this.schema.fields[name], name, value);
+      await this.encodeField(buf, this.schema.fields[name], name, value);
     }
   }
 }
 
 class ReferenceEncoder extends StringEncoder {
-  encodeStorable(ref: Storable) {
+  async encodeStorable(buf: DynamicBuffer, ref: Storable) {
     if (!(ref instanceof Reference)) {
       throw new Error(`non-Reference passed to EntityEncoder: ${ref}`);
     }
-    this.encodeReference(ref);
-    this.buf.addAscii('|');
+    await this.encodeReference(buf, ref);
+    buf.addAscii('|');
   }
 }
 
@@ -400,11 +392,10 @@ export abstract class StringDecoder {
     const storageKey = this.chomp(klen);
     this.validate('|');
 
-    const typeIndex = Number(this.upTo(':'));
-    const entityType = this.typeMap.getL(typeIndex);
+    const schemaHash = this.upTo(':');
+    const entityType = this.typeMap.getL(schemaHash);
     if (!entityType) {
-      throw new Error(`Packaged entity decoding fail: invalid type index ${typeIndex} for ` +
-                      `reference '${id}|${storageKey}'`);
+      throw new Error(`Packaged entity decoding fail: invalid schema hash '${schemaHash}' for reference '${id}|${storageKey}'`);
     }
     return new Reference({id, storageKey}, new ReferenceType(entityType), this.pec);
   }
@@ -685,7 +676,7 @@ export class WasmContainer {
       _collectionRemove: (p, h, entity) => this.getParticle(p).collectionRemove(h, entity),
       _collectionClear: (p, h) => this.getParticle(p).collectionClear(h),
       _onRenderOutput: (p, template, model) => this.getParticle(p).onRenderOutput(template, model),
-      _dereference: (p, id, key, typeIndex, cid) => this.getParticle(p).dereference(id, key, typeIndex, cid),
+      _dereference: (p, id, key, hash, cid) => this.getParticle(p).dereference(id, key, hash, cid),
       _render: (p, slot, template, model) => this.getParticle(p).renderImpl(slot, template, model),
       _serviceRequest: (p, call, args, tag) => this.getParticle(p).serviceRequest(call, args, tag),
       _resolveUrl: (url) => this.resolve(url),
@@ -767,8 +758,8 @@ export class WasmParticle extends Particle {
   private encoders = new Map<Type, StringEncoder>();
   private decoders = new Map<Type, StringDecoder>();
 
-  // Map of type indexes given to wasm code to the EntityTypes used by Reference values.
-  private typeMap: EntityTypeMap = new BiMap<number, EntityType>();
+  // Map of schema hashes to the EntityTypes used by Reference values.
+  private typeMap: EntityTypeMap = new BiMap<string, EntityType>();
 
   constructor(id: string, container: WasmContainer) {
     super();
@@ -802,6 +793,7 @@ export class WasmParticle extends Particle {
   // which then notifies this class (calling onHandle*), and we then serialize into the wasm
   // transfer format. Obviously this can be improved.
   async setHandles(handles: ReadonlyMap<string, Handle>) {
+    const refTypePromises = [];
     for (const [name, handle] of handles) {
       const p = this.container.storeStr(name);
       const wasmHandle = this.exports._connectHandle(this.innerParticle, p, handle.canRead, handle.canWrite);
@@ -810,8 +802,34 @@ export class WasmParticle extends Particle {
         throw new Error(`Wasm particle failed to connect handle '${name}'`);
       }
       this.handleMap.set(handle, wasmHandle);
+      refTypePromises.push(this.extractReferenceTypes(this.getEntityType(handle.type)));
     }
+    await Promise.all(refTypePromises);
     this.exports._init(this.innerParticle);
+  }
+
+  private getEntityType(type: Type): null|EntityType {
+    while (type) {
+      if (type instanceof EntityType) {
+        return type;
+      }
+      type = type.getContainedType();
+    }
+    return null;
+  }
+
+  private async extractReferenceTypes(entityType: EntityType) {
+    if (!entityType) return;
+
+    const schema = entityType.getEntitySchema();
+    this.typeMap.set(await schema.hash(), entityType);
+    for (const [field, descriptor] of Object.entries(schema.fields)) {
+      if (descriptor.kind === 'schema-reference') {
+        await this.extractReferenceTypes(descriptor.schema.model);
+      } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
+        await this.extractReferenceTypes(descriptor.schema.schema.model);
+      }
+    }
   }
 
   async onHandleSync(handle: Handle, model) {
@@ -823,9 +841,9 @@ export class WasmParticle extends Particle {
     const encoder = this.getEncoder(handle.type);
     let p;
     if (handle instanceof Singleton) {
-      p = this.container.storeBytes(encoder.encodeSingleton(model));
+      p = this.container.storeBytes(await encoder.encodeSingleton(model));
     } else {
-      p = this.container.storeBytes(encoder.encodeCollection(model));
+      p = this.container.storeBytes(await encoder.encodeCollection(model));
     }
     this.exports._syncHandle(this.innerParticle, wasmHandle, p);
     this.container.free(p);
@@ -842,11 +860,11 @@ export class WasmParticle extends Particle {
     let p2 = 0;
     if (handle instanceof Singleton) {
       if (update.data) {
-        p1 = this.container.storeBytes(encoder.encodeSingleton(update.data));
+        p1 = this.container.storeBytes(await encoder.encodeSingleton(update.data));
       }
     } else {
-      p1 = this.container.storeBytes(encoder.encodeCollection(update.added || []));
-      p2 = this.container.storeBytes(encoder.encodeCollection(update.removed || []));
+      p1 = this.container.storeBytes(await encoder.encodeCollection(update.added || []));
+      p2 = this.container.storeBytes(await encoder.encodeCollection(update.removed || []));
     }
     this.exports._updateHandle(this.innerParticle, wasmHandle, p1, p2);
     this.container.free(p1, p2);
@@ -905,15 +923,19 @@ export class WasmParticle extends Particle {
   }
 
   // Retrieves the entity held by a reference.
-  async dereference(idPtr: WasmAddress, keyPtr: WasmAddress, typeIndex: number, continuationId: number) {
+  async dereference(idPtr: WasmAddress, keyPtr: WasmAddress, hashPtr: WasmAddress, continuationId: number) {
     const id = this.container.readStr(idPtr);
     const storageKey = this.container.readStr(keyPtr);
-    const entityType = this.typeMap.getL(typeIndex);
+    const hash = this.container.readStr(hashPtr);
+    const entityType = this.typeMap.getL(hash);
+    if (!entityType) {
+      throw this.reportedError(`entity type not found for schema hash '${hash}'`);
+    }
 
     const encoder = this.getEncoder(entityType);
     const entity = await Reference.retrieve(this.container.pec, id, storageKey, entityType);
 
-    const p = this.container.storeBytes(encoder.encodeSingleton(entity));
+    const p = this.container.storeBytes(await encoder.encodeSingleton(entity));
     this.exports._dereferenceResponse(this.innerParticle, continuationId, p);
     this.container.free(p);
   }
@@ -921,7 +943,7 @@ export class WasmParticle extends Particle {
   private getEncoder(type: Type) {
     let encoder = this.encoders.get(type);
     if (!encoder) {
-      encoder = StringEncoder.create(type, this.typeMap);
+      encoder = StringEncoder.create(type);
       this.encoders.set(type, encoder);
     }
     return encoder;
@@ -939,10 +961,7 @@ export class WasmParticle extends Particle {
   private getHandle(wasmHandle: WasmAddress): Handle {
     const handle = this.handleMap.getR(wasmHandle);
     if (!handle) {
-      const err = new Error(`wasm particle '${this.spec.name}' attempted to write to unconnected handle`);
-      const userException = new UserException(err, 'WasmParticle::getHandle', this.id, this.spec.name);
-      this.container.apiPort.ReportExceptionInHost(userException);
-      throw err;
+      throw this.reportedError('attempted to write to unconnected handle');
     }
     return handle;
   }
@@ -1055,5 +1074,15 @@ export class WasmParticle extends Particle {
     const data = this.container.storeBytes(StringEncoder.encodeDictionary(event.data || {}));
     this.exports._fireEvent(this.innerParticle, sp, hp, data);
     this.container.free(sp, hp, data);
+  }
+
+  reportedError(msg: string): Error {
+    const err = new Error(msg);
+    // 1st line = 'Error: <msg>', 2nd line = this method, 3rd line = calling method, with the form:
+    //   '    at WasmParticle.<method> (<file-info>)'
+    const method = err.stack.split('\n')[2].match(/ at ([a-zA-Z._]+) /)[1];
+    const userException = new UserException(err, method, this.id, this.spec.name);
+    this.container.apiPort.ReportExceptionInHost(userException);
+    return err;
   }
 }

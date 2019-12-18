@@ -104,7 +104,7 @@ class KotlinGenerator implements ClassGenerator {
     // TODO: support reference types in kotlin
   }
 
-  generate(fieldCount: number): string {
+  generate(schemaHash: string, fieldCount: number): string {
     const {name, aliases} = this.node;
 
     let typeDecls = '';
@@ -120,16 +120,18 @@ class KotlinGenerator implements ClassGenerator {
 class ${name}() : Entity<${name}>() {
 
     ${ withFields(`${this.fieldVals.join('\n    ')}`) }
-  
+
     ${withFields(`constructor(
         ${this.fields.join(',\n        ')}
     ): this() {
         ${this.setFields.join('\n        ')}
     }`)}
-  
+    
     override fun isSet(): Boolean {
         return ${withFields(this.fieldSets.join(' || '))}${withoutFields('true')}
     }
+
+    override fun schemaHash() = "${schemaHash}"
 
     override fun decodeEntity(encoded: ByteArray): ${name}? {
         if (encoded.isEmpty()) return null

@@ -9,11 +9,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.addressable
+package arcs.wasm
 
-import arcs.addressable.AddressableMap.address2Addressable
-import arcs.addressable.AddressableMap.addressable2Address
-import arcs.addressable.AddressableMap.nextAddress
+import arcs.wasm.AddressableMap.address2Addressable
+import arcs.wasm.AddressableMap.addressable2Address
+import arcs.wasm.AddressableMap.nextAddress
 
 typealias Address = Int
 

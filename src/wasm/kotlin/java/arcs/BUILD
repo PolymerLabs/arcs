@@ -12,7 +12,6 @@ arcs_kt_jvm_library(
     name = "arcs",
     srcs = glob([
         "*.kt",
-        "**/addressable/*.kt",
         "**/jvm/*.kt",
     ]),
     kotlincopts = KOTLINC_OPTS + ["-Xallow-kotlin-package"],
@@ -21,13 +20,10 @@ arcs_kt_jvm_library(
 
 kt_native_library(
     name = "arcs-wasm",
-    srcs = glob(
-        [
-            "*.kt",
-            "**/addressable/*.kt",
-            "**/wasm/*.kt",
-        ],
-    ),
+    srcs = glob([
+        "*.kt",
+        "**/wasm/*.kt",
+    ]),
     kotlincopts = KOTLINC_OPTS + ["-Xinline-classes"],
     visibility = ["//visibility:public"],
 )

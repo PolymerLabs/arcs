@@ -162,7 +162,7 @@ class CppGenerator implements ClassGenerator {
                         `  printer.add("${field}: ", entity.${field}_);`);
   }
 
-  generate(fieldCount: number): string {
+  generate(schemaHash: string, fieldCount: number): string {
     const {name, aliases} = this.node;
 
     // Template constructor allows implicit type slicing from appropriately matching entities.
@@ -221,9 +221,11 @@ protected:
   ${name}(const ${name}&) = default;
   ${name}& operator=(const ${name}&) = default;
 
+  static const char* _schema_hash() { return "${schemaHash}"; }
+  static const int _field_count = ${fieldCount};
+
   ${this.fields.join('\n  ')}
   std::string _internal_id_;
-  static const int _FIELD_COUNT = ${fieldCount};
 
   friend class Singleton<${name}>;
   friend class Collection<${name}>;
@@ -269,7 +271,7 @@ inline void internal::Accessor::decode_entity(${name}* entity, const char* str) 
   internal::StringDecoder decoder(str);
   decoder.decode(entity->_internal_id_);
   decoder.validate("|");
-  for (int i = 0; !decoder.done() && i < ${name}::_FIELD_COUNT; i++) {
+  for (int i = 0; !decoder.done() && i < ${name}::_field_count; i++) {
     std::string name = decoder.upTo(':');
     if (0) {
     ${this.decode.join('\n    ')}

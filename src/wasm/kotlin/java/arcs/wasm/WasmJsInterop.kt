@@ -11,9 +11,9 @@
 
 package arcs.wasm
 
-import arcs.addressable.Address
-import arcs.addressable.toAddress
-import arcs.addressable.toObject
+import arcs.wasm.Address
+import arcs.wasm.toAddress
+import arcs.wasm.toObject
 import arcs.Handle
 import arcs.Particle
 import arcs.StringDecoder
