@@ -37,6 +37,7 @@ import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
 import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
+import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 // database providers are optional, these tests use these provider(s)
 import '../storage/firebase/firebase-provider.js';
 import '../storage/pouchdb/pouch-db-provider.js';
@@ -74,7 +75,7 @@ describe('Arc new storage', () => {
     // between parsing a manifest for public consumption (e.g. with RamDisk resources in it) and parsing a serialized
     // arc (with an @activeRecipe). We'll fix this by adding a 'private' keyword to store serializations which will
     // be used when serializing arcs. Once that is working then the following registration should be removed.
-    RamDiskStorageDriverProvider.register();
+    RamDiskStorageDriverProvider.register(new TestVolatileMemoryProvider());
     const loader = new StubLoader({
       manifest: `
         schema Data

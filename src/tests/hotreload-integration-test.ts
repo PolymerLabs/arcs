@@ -18,6 +18,8 @@ import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {singletonHandleForTest} from '../runtime/testing/handle-for-test.js';
+import {RuntimeCacheService} from '../runtime/runtime-cache.js';
+import {VolatileStorage} from '../runtime/storage/volatile-storage.js';
 
 class StubWasmLoader extends Loader {
   public reloaded = false;
@@ -37,6 +39,10 @@ class StubWasmLoader extends Loader {
 }
 
 describe('Hot Code Reload for JS Particle', async () => {
+  beforeEach(() => {
+    VolatileStorage.setStorageCache(new RuntimeCacheService());
+  });
+
   it('updates model and template', async () =>{
     const context = await Manifest.parse(`
       particle A in 'A.js'
@@ -171,6 +177,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
   before(function() {
     if (!global['testFlags'].bazel) {
       this.skip();
+    } else {
+      VolatileStorage.setStorageCache(new RuntimeCacheService());
     }
   });
 

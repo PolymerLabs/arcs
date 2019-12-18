@@ -23,16 +23,13 @@ function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTyp
 
 describe('RamDisk + Store Integration', async () => {
 
-  beforeEach(() => {
-    RamDiskStorageDriverProvider.register();
-  });
-
   afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
   it('will store a sequence of model and operation updates as models', async () => {
     const runtime = new Runtime();
+    RamDiskStorageDriverProvider.register(runtime);
     const storageKey = new RamDiskStorageKey('unique');
     const store = createStore(storageKey, Exists.ShouldCreate);
     const activeStore = await store.activate();
@@ -48,13 +45,14 @@ describe('RamDisk + Store Integration', async () => {
       {type: CountOpTypes.Increment, actor: 'them', version: {from: 0, to: 1}}
     ], id: 1});
 
-    const volatileEntry = runtime.getRamDiskMemory().entries.get(storageKey.unique);
+    const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.unique);
     assert.deepEqual(volatileEntry.root.data, activeStore['localModel'].getData());
     assert.strictEqual(volatileEntry.root.version, 3);
   });
 
   it('will store operation updates from multiple sources', async () => {
     const runtime = new Runtime();
+    RamDiskStorageDriverProvider.register(runtime);
     const storageKey = new RamDiskStorageKey('unique');
     const store1 = createStore(storageKey, Exists.ShouldCreate);
     const activeStore1 = await store1.activate();
@@ -88,7 +86,7 @@ describe('RamDisk + Store Integration', async () => {
     await activeStore1.idle();
     await activeStore2.idle();
 
-    const volatileEntry = runtime.getRamDiskMemory().entries.get(storageKey.unique);
+    const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.unique);
     assert.deepEqual(volatileEntry.root.data, activeStore1['localModel'].getData());
     assert.strictEqual(volatileEntry.root.version, 3);
   });
@@ -96,6 +94,7 @@ describe('RamDisk + Store Integration', async () => {
   it('will store operation updates from multiple sources with some timing delays', async () => {
     // store1.onProxyMessage, DELAY, DELAY, DELAY, store1.onProxyMessage, store2.onProxyMessage, DELAY, DELAY, DELAY, store2.onProxyMessage, DELAY, DELAY, DELAY, DELAY, DELAY
     const runtime = new Runtime();
+    RamDiskStorageDriverProvider.register(runtime);
     const storageKey = new RamDiskStorageKey('unique');
     const store1 = createStore(storageKey, Exists.ShouldCreate);
     const activeStore1 = await store1.activate();
@@ -133,7 +132,7 @@ describe('RamDisk + Store Integration', async () => {
     await activeStore1.idle();
     await activeStore2.idle();
 
-    const volatileEntry = runtime.getRamDiskMemory().entries.get(storageKey.unique);
+    const volatileEntry = runtime.getVolatileMemory().entries.get(storageKey.unique);
     assert.deepEqual(volatileEntry.root.data, activeStore1['localModel'].getData());
     assert.strictEqual(volatileEntry.root.version, 4);
   });

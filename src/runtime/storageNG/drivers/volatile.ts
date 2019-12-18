@@ -74,7 +74,14 @@ export class VolatileMemory {
     }
     this.entries.set(unique, entry);
   }
+}
 
+/**
+ * Allows for loosely coupled memory provisioning by clients of the storage
+ * stack.
+ */
+export interface VolatileMemoryProvider {
+  getVolatileMemory(): VolatileMemory;
 }
 
 let id = 0;
