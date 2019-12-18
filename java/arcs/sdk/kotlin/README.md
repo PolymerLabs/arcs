@@ -6,11 +6,11 @@ Our code is built by Bazel. It uses Kotlin Mutliplatform to target JVM and Wasm
 runtimes. Bazel must be installed to build and run the code and tests, which
 reside in `src/wasm/`.
 
-1. **Installing Bazel:** Follow [project install instructions](../../../README.md#install).
+1. **Installing Bazel:** Follow [project install instructions](../../../../README.md#install).
 
 ## Build
 
-See [here](../../../particles/Native/Wasm) or [here](../../../particles/Tutorial/Kotlin) for working examples.
+See [here](../../../../particles/Native/Wasm) or [here](../../../../particles/Tutorial/Kotlin) for working examples.
 
 - Add a `BUILD` file in the relevant directory
 - Generate Kotlin Data Classes from your particle spec using the
@@ -25,7 +25,7 @@ See [here](../../../particles/Native/Wasm) or [here](../../../particles/Tutorial
       package = "arcs.example",
   )
   ```
-- Write your Kotlin particle(s): See [the Kotlin tutorial](../../../particles/Tutorial/Kotlin) for greater detail.
+- Write your Kotlin particle(s): See [the Kotlin tutorial](../../../../particles/Tutorial/Kotlin) for greater detail.
 - To target both Wasm and the JVM, add `arcs_kt_particles` to the `BUILD` file.
   ```
   # This library is optional, you might not need one if you only have particle files.
