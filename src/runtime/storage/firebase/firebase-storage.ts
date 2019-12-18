@@ -487,7 +487,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
         referenceMode: this.referenceMode
       };
     });
-    assert(result.committed, 'uncommited transaction (offline?) not supported yet');
+    assert(result.committed, 'uncommitted transaction (offline?) not supported yet');
     const data = result.snapshot.val();
     assert(data !== 0);
     assert(data.version >= version);
