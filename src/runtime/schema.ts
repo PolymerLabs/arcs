@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {digest} from '../platform/digest-web.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
@@ -41,6 +42,7 @@ export class Schema {
   readonly fields: Dictionary<any>;
   description: Dictionary<string> = {};
   isAlias: boolean;
+  hashStr: string = null;
   // The implementation of fromLiteral creates a cyclic dependency, so it is
   // separated out. This variable serves the purpose of an abstract static.
   static fromLiteral: SchemaMethod = null;
@@ -220,5 +222,28 @@ export class Schema {
     }
     return results.join('\n');
   }
-}
 
+  async hash(): Promise<string> {
+    if (!this.hashStr) {
+      this.hashStr = await digest(this.normalizeForHash());
+    }
+    return this.hashStr;
+  }
+
+  normalizeForHash(): string {
+    let str = this.names.slice().sort().join(' ') + '/';
+    for (const field of Object.keys(this.fields).sort()) {
+      const {kind, type, schema} = this.fields[field];
+      if (kind === 'schema-primitive') {
+        str += field + ':' + type + '|';
+      } else if (kind === 'schema-reference') {
+        str += field + '&[' + schema.model.entitySchema.normalizeForHash() + ']';
+      } else if (kind === 'schema-collection' && schema.kind === 'schema-reference') {
+        str += field + '@[' + schema.schema.model.entitySchema.normalizeForHash() + ']';
+      } else {
+        throw new Error('Schema hash: unsupported field type');
+      }
+    }
+    return str;
+  }
+}

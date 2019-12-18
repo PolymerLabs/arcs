@@ -31,7 +31,7 @@ extern void singletonClear(Particle* p, Handle* h);
 extern const char* collectionStore(Particle* p, Handle* h, const char* encoded);
 extern void collectionRemove(Particle* p, Handle* h, const char* encoded);
 extern void collectionClear(Particle* p, Handle* h);
-extern void dereference(Particle* p, const char* id, const char* key, int type_index, int continuation_id);
+extern void dereference(Particle* p, const char* id, const char* key, const char* schema_hash, int continuation_id);
 extern void render(Particle* p, const char* slotName, const char* template_str, const char* model);
 extern void serviceRequest(Particle* p, const char* call, const char* args, const char* tag);
 
@@ -188,6 +188,11 @@ public:
   template<typename T>
   static void set_id(T* entity, const std::string& id) {
     entity->_internal_id_ = id;
+  }
+
+  template<typename T>
+  static const char* get_schema_hash() {
+    return T::_schema_hash();
   }
 
   template<typename T> static void bind(Ref<T>* ref, const T& entity);
@@ -443,9 +448,7 @@ protected:
 
   std::string _internal_id_;
   std::string storage_key_;
-
-  // An index provided by the runtime that maps to the JS EntityType object for this reference.
-  int type_index_ = 0;
+  const char* schema_hash_;
 
   friend class Particle;
   friend class internal::Accessor;
@@ -460,7 +463,9 @@ class Ref : public RefBase {
   };
 
 public:
-  Ref() : payload_(new Payload()) {}
+  Ref() : payload_(new Payload()) {
+    schema_hash_ = T::_schema_hash();
+  }
 
   // References are copyable and share a pointer to the underlying entity data.
   Ref(const Ref&) = default;
@@ -495,13 +500,12 @@ protected:
   // 'bind_<field>()' method on the generated entity classes instead.
   void bind(const T& entity) {
     _internal_id_ = internal::Accessor::get_id(entity);
-    if (_internal_id_ != "" && storage_key_ != "" && type_index_ != 0) {
+    if (_internal_id_ != "" && storage_key_ != "") {
       payload_.reset(new Payload({true, entity}));
     } else {
       // TODO: binding to a newly minted entity, or with a currently unbound Ref instance
-      std::string msg =
-          "Binding a reference requires a valid id, storage key and type index: id='" +
-          _internal_id_ + "', key='" + storage_key_ + "', index=" + std::to_string(type_index_);
+      std::string msg = "Binding a reference requires a valid id and storage key: id='" +
+                        _internal_id_ + "', key='" + storage_key_;
       internal::systemError(msg.c_str());
     }
   }
@@ -538,14 +542,19 @@ void StringDecoder::decode(Ref<T>& ref) {
   validate("|");
   decode(ref.storage_key_);
   validate("|");
-  ref.type_index_ = getInt(':');
+  std::string hash = upTo(':');
+  if (hash != ref.schema_hash_) {
+    std::string msg = "reference received with schema hash '" + hash +
+                      "', but the generated entity code has '" + ref.schema_hash_ + "'\n";
+    systemError(msg.c_str());
+  }
 }
 
 template<typename T>
 void StringEncoder::encode(const char* prefix, const Ref<T>& ref) {
   str_ += prefix + encodeStr(ref._internal_id_) + "|"
                  + encodeStr(ref.storage_key_) + "|"
-                 + std::to_string(ref.type_index_) + ":|";
+                 + ref.schema_hash_ + ":|";
 }
 
 template<typename T>
@@ -682,7 +691,7 @@ public:
     if (wrapped) {
       continuations_.emplace(++continuation_id_, std::move(wrapped));
       internal::dereference(this, ref._internal_id_.c_str(), ref.storage_key_.c_str(),
-                            ref.type_index_, continuation_id_);
+                            ref.schema_hash_, continuation_id_);
     }
   }
 

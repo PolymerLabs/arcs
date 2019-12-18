@@ -76,6 +76,7 @@ describe('ArcStoresFetcher', () => {
                   type: 'Text'
                 }
               },
+              hashStr: null,
               names: ['Foo']
             },
             refinement: null,

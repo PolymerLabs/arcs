@@ -425,11 +425,11 @@ describe('schema', () => {
         name: Text
         phoneNumber: Text
         website: URL
-        
+
       schema Person extends Base
         jobTitle: Text
         age: Number
-      
+
       particle P
         person: reads Person {name, age, custom: Bytes}`);
 
@@ -448,10 +448,10 @@ describe('schema', () => {
     const manifest = await Manifest.parse(`
       alias schema Event Occurrence as EventAlias
         name: Text
-        
+
       schema Accident extends EventAlias
         financialCost: Number
-      
+
       schema Crisis extends Accident`);
 
     const alias = manifest.findSchemaByName('EventAlias');
@@ -486,5 +486,33 @@ describe('schema', () => {
 
     assert.isEmpty(schema.names);
     assert.isEmpty(schema.fields);
+  });
+
+  it('normalize for hash', async () => {
+    const manifest = await Manifest.parse(`
+      particle P
+        empty: reads * {}
+        noNames: reads * {msg: Text}
+        noFields: reads Foo {}
+
+        orderedA: reads Foo Wiz Bar {x: Number, f: Boolean, s: Text}
+        orderedB: reads Wiz Bar Foo {f: Boolean, x: Number, s: Text}
+
+        nestedRefs: reads Foo {num: Number, ref: &Bar {str: Text, inner: &* {val: Boolean}}}
+        refCollection: reads * {rc: [&Wiz {str: Text}], z: Number}
+    `);
+    const getHash = handleName => {
+      return manifest.particles[0].getConnectionByName(handleName).type.getEntitySchema().normalizeForHash();
+    };
+
+    assert.strictEqual(getHash('empty'), '/');
+    assert.strictEqual(getHash('noNames'), '/msg:Text|');
+    assert.strictEqual(getHash('noFields'), 'Foo/');
+
+    assert.strictEqual(getHash('orderedA'), 'Bar Foo Wiz/f:Boolean|s:Text|x:Number|');
+    assert.strictEqual(getHash('orderedA'), getHash('orderedB'));
+
+    assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref&[Bar/inner&[/val:Boolean|]str:Text|]');
+    assert.strictEqual(getHash('refCollection'), '/rc@[Wiz/str:Text|]z:Number|');
   });
 });

@@ -18,7 +18,7 @@ import {SchemaGraph, SchemaNode} from './schema2graph.js';
 export interface ClassGenerator {
   addField(field: string, typeChar: string);
   addReference(field: string, refName: string);
-  generate(fieldCount: number): string;
+  generate(schemaHash: string, fieldCount: number): string;
 }
 
 export abstract class Schema2Base {
@@ -52,7 +52,7 @@ export abstract class Schema2Base {
     if (manifest.errors.length) {
       return;
     }
-    const classes = this.processManifest(manifest);
+    const classes = await this.processManifest(manifest);
     if (classes.length === 0) {
       console.warn(`Could not find any particle connections with schemas in '${src}'`);
       return;
@@ -67,7 +67,7 @@ export abstract class Schema2Base {
     fs.closeSync(outFile);
   }
 
-  processManifest(manifest: Manifest): string[] {
+  async processManifest(manifest: Manifest): Promise<string[]> {
     // TODO: consider an option to generate one file per particle
     const classes: string[] = [];
     for (const particle of manifest.allParticles) {
@@ -79,50 +79,26 @@ export abstract class Schema2Base {
         const fields = Object.entries(node.schema.fields);
 
         for (const [field, descriptor] of fields) {
-          switch (this.typeSummary(descriptor)) {
-            case 'schema-primitive:Text':
-              generator.addField(field, 'T');
-              break;
-
-            case 'schema-primitive:URL':
-              generator.addField(field, 'U');
-              break;
-
-            case 'schema-primitive:Number':
-              generator.addField(field, 'N');
-              break;
-
-            case 'schema-primitive:Boolean':
-              generator.addField(field, 'B');
-              break;
-
-            case 'schema-reference':
-              generator.addReference(field, node.refs.get(field).name);
-              break;
-
-            default:
-              console.log(`Schema type for field '${field}' is not yet supported:`);
-              console.dir(descriptor, {depth: null});
-              process.exit(1);
+          if (descriptor.kind === 'schema-primitive') {
+            if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
+              generator.addField(field, descriptor.type[0]);
+            } else {
+              throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
+            }
+          } else if (descriptor.kind === 'schema-reference') {
+            generator.addReference(field, node.refs.get(field).name);
+          } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
+            // TODO: support collections of references
+          } else {
+            console.log(`Schema type for field '${field}' is not supported:`);
+            console.dir(descriptor, {depth: null});
+            process.exit(1);
           }
         }
-        classes.push(generator.generate(fields.length));
+        classes.push(generator.generate(await node.schema.hash(), fields.length));
       }
     }
     return classes;
-  }
-
-  private typeSummary(descriptor) {
-    switch (descriptor.kind) {
-      case 'schema-primitive':
-        return `schema-primitive:${descriptor.type}`;
-
-      case 'schema-collection':
-        return `schema-collection:${new EntityType(descriptor.schema)}`;
-
-      default:
-        return descriptor.kind;
-    }
   }
 
   outputName(baseName: string): string { return ''; }

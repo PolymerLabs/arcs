@@ -18,6 +18,7 @@ inline class NullTermByteArray(val bytes: ByteArray)
 
 abstract class Entity<T> {
     var internalId = ""
+    abstract fun schemaHash(): String
     abstract fun decodeEntity(encoded: ByteArray): T?
     abstract fun encodeEntity(): NullTermByteArray
 }
