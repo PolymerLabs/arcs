@@ -727,17 +727,7 @@ ParticleSlotConnection
   }
 
 ParticleSlotConnectionItem
-  = SlotFormFactor
-  / ParticleProvidedSlot
-
-SlotFormFactor
-  = 'formFactor' whiteSpace formFactor:('fullscreen' / 'big' / 'medium' / 'small') eolWhiteSpace
-  {
-    return toAstNode<AstNode.SlotFormFactor>({
-      kind: 'form-factor',
-      formFactor
-    });
-  }
+  = ParticleProvidedSlot
 
 ParticleProvidedSlot
   = name:NameWithColon? 'provides' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace?
@@ -777,8 +767,7 @@ ParticleProvidedSlot
 
 
 ParticleProvidedSlotItem
-  = SlotFormFactor
-  / ParticleProvidedSlotHandle
+  = ParticleProvidedSlotHandle
 
 ParticleProvidedSlotHandle
   = 'handle' whiteSpace handle:lowerIdent eolWhiteSpace
