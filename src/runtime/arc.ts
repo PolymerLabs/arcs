@@ -543,6 +543,10 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
   // Critical section for instantiate,
   private async _doInstantiate(recipe: Recipe): Promise<void> {
     const {handles, particles, slots} = await this.mergeIntoActiveRecipe(recipe);
+    console.log('^^^^');
+    console.log(recipe.toString());
+    console.log(this.activeRecipe.toString());
+    console.log('----');
 
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 
