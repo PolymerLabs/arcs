@@ -2,6 +2,12 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_test_suite",
 )
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_library",
+    "arcs_kt_particles",
+    "arcs_kt_schema",
+)
 
 licenses(["notice"])
 
@@ -17,4 +23,32 @@ arcs_kt_jvm_test_suite(
         "//third_party/kotlin/kotlinx/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
+)
+
+arcs_kt_schema(
+    name = "schemas",
+    srcs = ["//src/wasm/tests:manifest.arcs"],
+    package = "package arcs.sdk.kotlin.wasm",
+)
+
+arcs_kt_particles(
+    name = "test-module",
+    srcs = glob(
+        ["*.kt"],
+        exclude = ["TestBase.kt"],
+    ),
+    jvm = False,
+    package = "package arcs.sdk.kotlin.wasm",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":TestBase",
+        ":schemas",
+    ],
+)
+
+arcs_kt_library(
+    name = "TestBase",
+    srcs = ["TestBase.kt"],
+    jvm = False,
+    deps = [":schemas"],
 )

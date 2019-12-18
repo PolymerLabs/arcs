@@ -13,6 +13,6 @@ arcs_ts_test(
     deps = [
         ":manifest_srcs",
         "//src/wasm/cpp/tests:test-module",
-        "//src/wasm/kotlin/javatests/arcs:test-module",
+        "//javatests/arcs/sdk/kotlin:test-module",
     ],
 )
