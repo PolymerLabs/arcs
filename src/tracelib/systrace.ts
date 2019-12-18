@@ -12,6 +12,7 @@ import {Client, getClientClass} from './systrace-clients.js';
 
 /** Interface that describes a traced symbol. */
 interface Symbol {
+  className: string;
   prototype: Function;
   property: string;
   tag: string;
@@ -20,6 +21,12 @@ interface Symbol {
 // Identifies whether a class has already been traced in its
 // inheritance hierarchies.
 const SYSTEM_TRACED_PROPERTY = '_systemTraced';
+
+// Don't trace these [class]: properties
+// Usually add low-overhead, atomic and/or trace APIs themselves to the list.
+const PROPERTY_BLACKLIST = new Map([
+    ['PECOuterPortImpl', ['onSystemTraceBegin', 'onSystemTraceEnd']],
+]);
 
 // Generates unique ids and cookies to identify tracing sessions or function
 // calls among contexts and tracing sessions or function calls.
@@ -105,6 +112,7 @@ function harnessSystemTracing(obj: object, client: Client) {
               return isFunction(obj, element);
             })
             .map(element => ({
+              className: obj.constructor.name,
               prototype: obj as Function,  // Foo.prototype
               property: element,
               tag: obj.constructor.name + '::' + element + contextId,
@@ -117,6 +125,7 @@ function harnessSystemTracing(obj: object, client: Client) {
               return isFunction(obj.constructor, element);
             })
             .map(element => ({
+              className: obj.constructor.name,
               prototype: obj.constructor,  // Foo.prototype.constructor
               property: element,
               tag: obj.constructor.name + '::' + element + contextId,
@@ -133,6 +142,11 @@ function harnessSystemTracing(obj: object, client: Client) {
     }
     // Not interested in constructors at this moment.
     if (element.property === 'constructor') {
+      return false;
+    }
+    // Skips tracing on blacklisted properties.
+    const cls = PROPERTY_BLACKLIST.get(element.className);
+    if (cls && cls.indexOf(element.property) !== -1) {
       return false;
     }
     return true;
