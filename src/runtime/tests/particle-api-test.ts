@@ -490,7 +490,7 @@ describe('particle-api', () => {
     assert.deepStrictEqual(await newHandle.get(), {value: 'success'});
   });
 
-  it('can load a recipe referencing a tagged handle in containing arc', async () => {
+  it.only('can load a recipe referencing a tagged handle in containing arc', async () => {
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
@@ -520,6 +520,7 @@ describe('particle-api', () => {
               var resultHandle = handles.get('result');
               let inHandle = await arc.createHandle(resultHandle.type, "the-in");
               let outHandle = await arc.createHandle(resultHandle.type, "the-out");
+              console.log(inHandle._id, outHandle._id);
               try {
                 await arc.loadRecipe(\`
                    schema Foo
@@ -546,6 +547,7 @@ describe('particle-api', () => {
                 inHandle.set(new resultHandle.entityClass({value: 'success'}));
                 resultHandle.set(new resultHandle.entityClass({value: 'done'}));
               } catch (e) {
+                console.log(e);
                 resultHandle.set(new resultHandle.entityClass({value: e}));
               }
             }

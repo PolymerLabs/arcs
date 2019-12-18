@@ -67,7 +67,7 @@ const tests = [
   },
 ];
 
-describe.only('Description', () => {
+describe('Description', () => {
   const schemaManifest = `
 schema Foo
   name: Text
@@ -100,8 +100,6 @@ recipe
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    console.log(recipe);
-    console.log('&&&&');
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
     recipe.handles[0].mapToStorage({id: 'test:1', type: fooType});
     if (recipe.handles.length > 1) {
@@ -111,14 +109,19 @@ recipe
       recipe.handles[2].mapToStorage({id: 'test:3', type: fooType});
     }
     recipe.normalize();
-
     assert.isTrue(recipe.isResolved());
-    const ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ifoo');
+
+    // TODO(shans): This clone is required because for some bizarre reason we're stuffing
+    // the recipe into activeRecipes here instead of simply instantiating it. That makes
+    // the activeRecipe frozen if we don't clone, as we just normalized. A frozen active
+    // recipe is A Bad Thing.
+    const newRecipe = recipe.clone();
+
+    const ifooHandleConn = newRecipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ifoo');
     const ifooHandle = ifooHandleConn ? ifooHandleConn.handle : null;
-    const ofoosHandleConn = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoos');
+    const ofoosHandleConn = newRecipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoos');
     const ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
 
-    const newRecipe = recipe.clone();
     const arc = createTestArc(newRecipe, manifest);
     const fooStore = await singletonHandleForTest(arc, await arc.createStore(fooType, undefined, 'test:1'));
     const foosStore = await collectionHandleForTest(arc, await arc.createStore(fooType.collectionOf(), undefined, 'test:2'));
@@ -158,7 +161,7 @@ ${recipeManifest}
   });
 
   tests.forEach((test) => {
-    it.only('one particle and connections descriptions ' + test.name, async () => {
+    it('one particle and connections descriptions ' + test.name, async () => {
       const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
@@ -167,8 +170,6 @@ ${aParticleManifest}
     ofoos \`my-out-foos\`
 ${recipeManifest}
     `));
-
-      console.log(recipe);
 
       let description = await test.verifySuggestion({arc}, 'Read from my-in-foo and populate my-out-foos.');
       assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
@@ -214,13 +215,14 @@ ${recipeManifest}
             ofoo: writes fooHandle
             root: consumes slot0`);
 
-      const recipe = manifest.recipes[0];
+      let recipe = manifest.recipes[0];
       const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
 
       recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.bigCollectionOf()});
       recipe.handles[1].mapToStorage({id: 'test:2', type: fooType});
       assert.isTrue(recipe.normalize());
       assert.isTrue(recipe.isResolved());
+      recipe = recipe.clone();
 
       const arc = createTestArc(recipe, manifest);
       const foosStore = await arc.createStore(fooType.bigCollectionOf(), undefined, 'test:1') as BigCollectionStorageProvider;
@@ -416,12 +418,13 @@ recipe
     `;
       const manifest = (await Manifest.parse(manifestStr));
       assert.lengthOf(manifest.recipes, 1);
-      const recipe = manifest.recipes[0];
+      let recipe = manifest.recipes[0];
       const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
       recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.collectionOf()});
       recipe.handles[1].mapToStorage({id: 'test:2', type: fooType.collectionOf()});
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
+      recipe = recipe.clone();
 
       const arc = createTestArc(recipe, manifest);
       const fooStore1 = await collectionHandleForTest(arc, await arc.createStore(fooType.collectionOf(), undefined, 'test:1'));
@@ -538,11 +541,12 @@ recipe
           root: consumes slot0
       `;
       const manifest = (await Manifest.parse(manifestStr));
-      const recipe = manifest.recipes[0];
+      let recipe = manifest.recipes[0];
       const scriptDateType = Entity.createEntityClass(manifest.findSchemaByName('ScriptDate'), null).type;
       recipe.handles[0].mapToStorage({id: 'test:1', type: scriptDateType});
       assert.isTrue(recipe.normalize());
       assert.isTrue(recipe.isResolved());
+      recipe = recipe.clone();
       const arc = createTestArc(recipe, manifest);
       const store = await singletonHandleForTest(arc, await arc.createStore(scriptDateType, undefined, 'test:1'));
       await test.verifySuggestion({arc}, 'Stardate .');
@@ -571,12 +575,13 @@ recipe
            root: consumes slot0`;
         const manifest = (await Manifest.parse(manifestStr));
         assert.lengthOf(manifest.recipes, 1);
-        const recipe = manifest.recipes[0];
+        let recipe = manifest.recipes[0];
         const myBESTType = Entity.createEntityClass(manifest.findSchemaByName('MyBESTType'), null).type;
         recipe.handles[0].mapToStorage({id: 'test:1', type: myBESTType});
         recipe.handles[1].mapToStorage({id: 'test:2', type: myBESTType.collectionOf()});
         recipe.normalize();
         assert.isTrue(recipe.isResolved());
+        recipe = recipe.clone();
 
         const arc = createTestArc(recipe, manifest);
         const tStore = await singletonHandleForTest(arc, await arc.createStore(myBESTType, undefined, 'test:1'));
@@ -811,13 +816,14 @@ recipe
 `;
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
-    const recipe = manifest.recipes[0];
+    let recipe = manifest.recipes[0];
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
     const descriptionType = Entity.createEntityClass(manifest.findSchemaByName('Description'), null).type;
     recipe.handles[0].mapToStorage({id: 'test:1', type: fooType});
     recipe.handles[1].mapToStorage({id: 'test:2', type: descriptionType.collectionOf()});
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
+    recipe = recipe.clone();
     const arc = createTestArc(recipe, manifest);
     const fooStore = await singletonHandleForTest(arc, await arc.createStore(fooType, undefined, 'test:1'));
     const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2');

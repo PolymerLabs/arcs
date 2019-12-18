@@ -316,74 +316,88 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onArcLoadRecipe(arc: Arc, recipe: string, callback: number) {
-    const manifest = await Manifest.parse(recipe, {loader: arc.loader, fileName: ''});
-    const successResponse = {
-      providedSlotIds: {}
-    };
-    let error = undefined;
-    // TODO(wkorman): Consider reporting an error or at least warning if
-    // there's more than one recipe since currently we silently ignore them.
-    let recipe0 = manifest.recipes[0];
-    if (recipe0) {
-      for (const slot of recipe0.slots) {
-        slot.id = slot.id || arc.generateID('slot').toString();
-        if (slot.sourceConnection) {
-          const particlelocalName = slot.sourceConnection.particle.localName;
-          if (particlelocalName) {
-            successResponse.providedSlotIds[`${particlelocalName}.${slot.name}`] = slot.id;
-          }
-        }
-      }
-      const missingHandles: Handle[] = [];
-      for (const handle of recipe0.handles) {
-        const fromHandle = this.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
-        if (fromHandle) {
-          handle.mapToStorage(fromHandle);
-        } else {
-          missingHandles.push(handle);
-          continue;
-        }
-      }
-      if (missingHandles.length > 0) {
-        let recipeToResolve = recipe0;
-        // We're resolving both against the inner and the outer arc.
-        for (const resolver of [new RecipeResolver(arc /* inner */), new RecipeResolver(this.arc /* outer */)]) {
-          recipeToResolve = await resolver.resolve(recipeToResolve) || recipeToResolve;
-        }
-        if (recipeToResolve === recipe0) {
-          error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
-        } else {
-          recipe0 = recipeToResolve;
-        }
-      }
-      if (!error) {
-        const options = {errors: new Map()};
-        // If we had missing handles but we made it here, then we ran recipe
-        // resolution which will have already normalized the recipe.
-        if ((missingHandles.length > 0) || recipe0.normalize(options)) {
-          if (recipe0.isResolved()) {
-            // TODO: pass tags through too, and reconcile with similar logic
-            // in Arc.deserialize.
-            for (const store of manifest.stores) {
-              if (store instanceof StorageStub) {
-                await this.arc._registerStore(await store.inflate(), []);
-              } else {
-                await this.arc._registerStore(store, []);
-              }
+    try {
+      const manifest = await Manifest.parse(recipe, {loader: arc.loader, fileName: ''});
+      const successResponse = {
+        providedSlotIds: {}
+      };
+      let error = undefined;
+      // TODO(wkorman): Consider reporting an error or at least warning if
+      // there's more than one recipe since currently we silently ignore them.
+      let recipe0 = manifest.recipes[0];
+      if (recipe0) {
+        for (const slot of recipe0.slots) {
+          slot.id = slot.id || arc.generateID('slot').toString();
+          if (slot.sourceConnection) {
+            const particlelocalName = slot.sourceConnection.particle.localName;
+            if (particlelocalName) {
+              successResponse.providedSlotIds[`${particlelocalName}.${slot.name}`] = slot.id;
             }
-            // TODO: Awaiting this promise causes tests to fail...
-            floatingPromiseToAudit(arc.instantiate(recipe0));
-          } else {
-            error = `Recipe is not resolvable:\n${recipe0.toString({showUnresolved: true})}`;
           }
-        } else {
-          error = `Recipe ${recipe0} could not be normalized:\n${[...options.errors.values()].join('\n')}`;
         }
+        const missingHandles: Handle[] = [];
+        for (const handle of recipe0.handles) {
+          const fromHandle = this.arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
+          if (fromHandle) {
+            handle.mapToStorage(fromHandle);
+          } else {
+            missingHandles.push(handle);
+            continue;
+          }
+        }
+        if (missingHandles.length > 0) {
+          let recipeToResolve = recipe0;
+          // We're resolving both against the inner and the outer arc.
+          for (const resolver of [new RecipeResolver(arc /* inner */), new RecipeResolver(this.arc /* outer */)]) {
+            recipeToResolve = await resolver.resolve(recipeToResolve) || recipeToResolve;
+          }
+          if (recipeToResolve === recipe0) {
+            error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
+          } else {
+            recipe0 = recipeToResolve;
+          }
+        }
+        if (!error) {
+          const options = {errors: new Map()};
+          // If we had missing handles but we made it here, then we ran recipe
+          // resolution which will have already normalized the recipe.
+          if ((missingHandles.length > 0) || recipe0.normalize(options)) {
+            if (recipe0.isResolved()) {
+              console.log(recipe0.toString());
+              console.log(this.arc.activeRecipe.toString());
+              // TODO: pass tags through too, and reconcile with similar logic
+              // in Arc.deserialize.
+              for (const store of manifest.stores) {
+                if (store instanceof StorageStub) {
+                  await this.arc._registerStore(await store.inflate(), []);
+                } else {
+                  await this.arc._registerStore(store, []);
+                }
+              }
+              // TODO: Awaiting this promise causes tests to fail...
+              const instantiateAndCaptureError = async () => {
+                try {
+                  await arc.instantiate(recipe0);
+                } catch (e) {
+                  console.log(e);
+                  this.SimpleCallback(callback, {error: e.message + e.stack});
+                }
+              };
+              floatingPromiseToAudit(instantiateAndCaptureError());
+            } else {
+              error = `Recipe is not resolvable:\n${recipe0.toString({showUnresolved: true})}`;
+            }
+          } else {
+            error = `Recipe ${recipe0} could not be normalized:\n${[...options.errors.values()].join('\n')}`;
+          }
+        }
+      } else {
+        error = 'No recipe defined';
       }
-    } else {
-      error = 'No recipe defined';
+      this.SimpleCallback(callback, error ? {error} : successResponse);
+    } catch (e) {
+      this.SimpleCallback(callback, {error: e.message + e.stack});
     }
-    this.SimpleCallback(callback, error ? {error} : successResponse);
   }
 
   // TODO(sjmiles): experimental `output` impl
