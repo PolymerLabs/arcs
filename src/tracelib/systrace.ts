@@ -22,11 +22,18 @@ interface Symbol {
 // inheritance hierarchies.
 const SYSTEM_TRACED_PROPERTY = '_systemTraced';
 
+// Specifies the functions of a prototype/constructor not being traced.
+const DONT_TRACE_PROPERTY = '_dontTrace';
+
 // Don't trace these [class]: properties
 // Usually add low-overhead, atomic and/or trace APIs themselves to the list.
-const PROPERTY_BLACKLIST = new Map([
-    ['PECOuterPortImpl', ['onSystemTraceBegin', 'onSystemTraceEnd']],
-]);
+//
+// Works jointly with @DontTrace{WithReason} which is used when modifying source
+// codes is allowed, whereas using this blacklist when modifying source codes
+// i.e. third-parties' is forbidden.
+const PROPERTY_BLACKLIST = new Map(
+    // [['Foo', ['bar', 'xyz']],]
+);
 
 // Generates unique ids and cookies to identify tracing sessions or function
 // calls among contexts and tracing sessions or function calls.
@@ -52,6 +59,28 @@ const idGenerator = new class {
     return this.cookie++;
   }
 }();
+
+/**
+ * Method decorator for specifying that don't harness system trace
+ * to this method with a reason.
+ */
+export function DontTraceWithReason(reason: string = '') {
+  return function _(
+      target: object, property: string, descriptor: PropertyDescriptor) {
+    if (!target.hasOwnProperty(DONT_TRACE_PROPERTY)) {
+      Object.defineProperty(target, DONT_TRACE_PROPERTY, {value: [property]});
+    } else {
+      target[DONT_TRACE_PROPERTY].push(property);
+    }
+  };
+}
+
+/**
+ * Method decorator for specifying that don't harness system trace
+ * to this method.
+ */
+// tslint:disable-next-line: variable-name
+export const DontTrace = DontTraceWithReason();
 
 /**
  * Class decorator for installing system tracing capability
@@ -142,6 +171,11 @@ function harnessSystemTracing(obj: object, client: Client) {
     }
     // Not interested in constructors at this moment.
     if (element.property === 'constructor') {
+      return false;
+    }
+    // Skips tracing when a function is decorated with @DontTrace.
+    const props = element.prototype[DONT_TRACE_PROPERTY];
+    if (props && props.indexOf(element.property) !== -1) {
       return false;
     }
     // Skips tracing on blacklisted properties.
