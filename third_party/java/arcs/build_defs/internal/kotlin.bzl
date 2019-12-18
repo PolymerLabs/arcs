@@ -5,7 +5,8 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 
 load(
     "//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl",
-    "kt_js_library")
+    "kt_js_library",
+)
 load(
     "//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl",
     "kt_native_binary",
@@ -16,18 +17,19 @@ load(
     "wasm_kt_binary",
 )
 load(
-    "//third_party/java/arcs/build_defs:native.oss.bzl", "java_library",
+    "//third_party/java/arcs/build_defs:native.oss.bzl",
+    "java_library",
     "java_test",
+)
+load(
+    "//third_party/java/arcs/build_defs/internal:kotlin_wasm_annotations.bzl",
+    "kotlin_wasm_annotations",
 )
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load(
     "//tools/build_defs/kotlin:rules.bzl",
     "kt_android_library",
     "kt_jvm_library",
-)
-load(
-    "//third_party/java/arcs/build_defs/internal:kotlin_wasm_annotations.bzl",
-    "kotlin_wasm_annotations",
 )
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
