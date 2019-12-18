@@ -11,23 +11,22 @@
 package arcs.core.host
 
 import arcs.core.sdk.Particle
+import kotlin.reflect.KClass
 
 /**
  * Base helper class for [ArcHost] implementations to provide implementation of
  * registration.
  */
 abstract class AbstractArcHost : ArcHost {
-    var particles: MutableList<Class<out Particle>> = mutableListOf()
+    var particles: MutableList<KClass<out Particle>> = mutableListOf()
 
-    override fun registerParticle(particle: Class<out Particle>) {
+    override fun registerParticle(particle: KClass<out Particle>) {
         particles.add(particle)
     }
 
-    override fun unregisterParticle(particle: Class<out Particle>) {
+    override fun unregisterParticle(particle: KClass<out Particle>) {
         particles.remove(particle)
     }
 
-    override fun registeredParticles(): List<Class<out Particle>> {
-        return particles
-    }
+    override fun registeredParticles(): List<KClass<out Particle>> = particles
 }

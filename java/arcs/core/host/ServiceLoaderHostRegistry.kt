@@ -12,6 +12,7 @@ package arcs.core.host
 
 import arcs.core.sdk.Particle
 import java.util.ServiceLoader
+import kotlin.reflect.KClass
 import kotlin.sequences.asSequence
 
 /**
@@ -36,37 +37,38 @@ class ServiceLoaderHostRegistry() : HostRegistry {
     private fun loadAndRegisterHostsAndParticles(): List<ArcHost> {
         // Load all @AutoService(Particle.class) types
         val allParticles = ServiceLoader.load(Particle::class.java).iterator().asSequence()
-            .map { p -> p.javaClass }.toList()
+            .map { p -> p.javaClass.kotlin }.toList()
 
         // Load @AutoService(ArcsHost) types and construct them, handing each a list of particles
-        return ServiceLoader.load(ArcHost::class.java).iterator().iterator().asSequence()
+        return ServiceLoader.load(ArcHost::class.java).iterator().asSequence()
             .map { host ->
                 registerParticles(findParticlesForHost(allParticles, host), host)
             }.toList()
     }
 
     private fun registerParticles(
-        particles: List<Class<out Particle>>,
+        particles: List<KClass<out Particle>>,
         host: ArcHost
     ): ArcHost {
         particles.forEach { particle -> host.registerParticle(particle) }
         return host
     }
 
-    private fun findParticlesForHost(allParticles: List<Class<out Particle>>, host: ArcHost?):
-        List<Class<out Particle>> {
+    private fun findParticlesForHost(
+        allParticles: List<KClass<out Particle>>,
+        host: ArcHost?
+    ): List<KClass<out Particle>> {
         return allParticles
             .filter { part ->
-                part.annotations.filter { target: Annotation ->
+                part.java.annotations.filter { target: Annotation ->
                     targetHostMatches(target, host)
                 }.count() > 0
             }.toList()
     }
 
     private fun targetHostMatches(target: Annotation, host: ArcHost?) =
-        target.annotationClass.java.getAnnotation(
-            TargetHost::class.java
-        )?.value?.java == host?.javaClass
+        target.annotationClass.java.getAnnotation(TargetHost::class.java)
+            ?.value?.java == host?.javaClass
 
     override fun registerHost(host: ArcHost) {
         hosts.add(host)

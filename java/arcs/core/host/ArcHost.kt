@@ -12,27 +12,28 @@
 package arcs.core.host
 
 import arcs.core.sdk.Particle
+import kotlin.reflect.KClass
 
 /**
- * An ArcHost manages the instantiation and execution of particles participating in an Arc by
- * responding to `startArc` and `stopArc` messages from an Allocator, starting or stopping
+ * An [ArcHost] manages the instantiation and execution of particles participating in an Arc by
+ * responding to `startArc` and `stopArc` messages from an [Allocator], starting or stopping
  * particles, and connecting them to storage keys.
  */
 interface ArcHost {
 
     /**
-     * Register a list of [Particle] classes with this host.
+     * Registers a [Particle] class with this host.
      */
-    fun registerParticle(particles: Class<out Particle>): Unit
+    fun registerParticle(particles: KClass<out Particle>): Unit
 
     /**
-     * Unregister a [Particle] class.
+     * Unregisters a [Particle] class.
      */
-    fun unregisterParticle(particle: Class<out Particle>): Unit
+    fun unregisterParticle(particle: KClass<out Particle>): Unit
 
     /**
      * Returns a list of Particles registered to run in this host.
      */
-    fun registeredParticles(): List<Class<out Particle>>
+    fun registeredParticles(): List<KClass<out Particle>>
     // TODO: Implement startArc/stopArc/handleMessage
 }
