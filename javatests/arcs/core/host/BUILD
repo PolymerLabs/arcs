@@ -31,5 +31,3 @@ arcs_kt_jvm_library(
         "//third_party/java/auto:auto_service",
     ],
 )
-
-
