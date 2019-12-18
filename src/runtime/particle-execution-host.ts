@@ -171,7 +171,7 @@ export class ParticleExecutionHost {
 
 class PECOuterPortImpl extends PECOuterPort {
   arc: Arc;
-  readonly externalTraceClient: Client | undefined;
+  readonly systemTraceClient: Client | undefined;
 
   constructor(port, arc: Arc) {
     super(port, arc);
@@ -179,7 +179,7 @@ class PECOuterPortImpl extends PECOuterPort {
 
     const clientClass = getClientClass();
     if (clientClass) {
-      this.externalTraceClient = new clientClass();
+      this.systemTraceClient = new clientClass();
     }
   }
 
@@ -415,15 +415,15 @@ class PECOuterPortImpl extends PECOuterPort {
     this.SimpleCallback(callback, response);
   }
 
-  onExternalTraceBegin(tag: string, cookie: number) {
-    if (this.externalTraceClient) {
-      this.externalTraceClient.asyncTraceBegin(tag, cookie);
+  onSystemTraceBegin(tag: string, cookie: number) {
+    if (this.systemTraceClient) {
+      this.systemTraceClient.asyncTraceBegin(tag, cookie);
     }
   }
 
-  onExternalTraceEnd(tag: string, cookie: number) {
-    if (this.externalTraceClient) {
-      this.externalTraceClient.asyncTraceEnd(tag, cookie);
+  onSystemTraceEnd(tag: string, cookie: number) {
+    if (this.systemTraceClient) {
+      this.systemTraceClient.asyncTraceEnd(tag, cookie);
     }
   }
 }

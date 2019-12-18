@@ -32,7 +32,7 @@ import {Dictionary} from './hot.js';
 import {UserException} from './arc-exceptions.js';
 import {Store} from './store.js';
 import {Flags} from './flags.js';
-import {delegateExternalTraceApis} from '../tracelib/systrace-helpers.js';
+import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 type UnifiedStorageProxy = Store|StorageProxyNG<CRDTTypeRecord>;
@@ -163,7 +163,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     this.idGenerator = idGenerator;
     this.loader = loader;
     loader.setParticleExecutionContext(this);
-    delegateExternalTraceApis(this.apiPort);
+
+    // Encapsulates system trace calls in messages.
+    delegateSystemTraceApis(this.apiPort);
 
     /*
      * This code ensures that the relevant types are known

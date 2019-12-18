@@ -18,34 +18,34 @@ const getGlobalScope = () => {
   return {};
 };
 
-/** Gets external Trace APIs i.e. Android Trace.* */
-export const getExternalTraceApis = () => {
-  return getGlobalScope().externalTraceApis || {};
+/** Gets System Trace APIs i.e. android.os.Trace.* */
+export const getSystemTraceApis = () => {
+  return getGlobalScope().systemTraceApis || {};
 };
 
 /**
- * Delegates the location of the external Trace APIs to ${externalTraceApis}
+ * Delegates the location of the System Trace APIs to ${systemTraceApis}
  * property in the current global execution context.
  *
- * In main renderer context, ${externalTraceApis} is delegated by external
+ * In main renderer context, ${systemTraceApis} is delegated by external
  * implementations i.e. addJavascriptInterface at Android Webview.
- * In worker context, ${externalTraceApis} is delegated by PECInnerPort.
+ * In worker context, ${systemTraceApis} is delegated by PECInnerPort.
  *
- * The contract of ${externalTraceApis}:
- *   asyncTraceBegin(...args): start a new asynchronous tracing
- *   asyncTraceEnd(...args): stop the asynchronous tracing
+ * The contract of ${systemTraceApis}:
+ *   asyncTraceBegin(...args): start a new asynchronous system tracing
+ *   asyncTraceEnd(...args): stop the asynchronous system tracing
  *
- * @param {string} port The port/location to talk to external APIs
+ * @param {string} port The port/location to talk to System Trace APIs
  */
-export const delegateExternalTraceApis = port => {
+export const delegateSystemTraceApis = port => {
   const gs = getGlobalScope();
-  if (!gs.externalTraceApis && port) {
-    gs.externalTraceApis = new class {
+  if (!gs.systemTraceApis && port) {
+    gs.systemTraceApis = new class {
       asyncTraceBegin(...args) {
-        port.ExternalTraceBegin(...args);
+        port.SystemTraceBegin(...args);
       }
       asyncTraceEnd(...args) {
-        port.ExternalTraceEnd(...args);
+        port.SystemTraceEnd(...args);
       }
     }();
   }

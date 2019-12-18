@@ -46,6 +46,7 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   private static final int DEFAULT_DEV_SERVER_PORT = 8786;
   // Activates the Arcs Cache Manager.
   private static final boolean DEFAULT_USE_CACHE_MANAGER = true;
+  // Disables system trace
   private static final String DEFAULT_SYSTEM_TRACE_CHANNEL = "";
 
   private static final Logger logger = Logger.getLogger(

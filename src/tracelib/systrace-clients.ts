@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {getExternalTraceApis, getSystemTraceChannel} from './systrace-helpers.js';
+import {getSystemTraceApis, getSystemTraceChannel} from './systrace-helpers.js';
 
 const CONSOLE_CLIENT_NAME = 'console';
 const ANDROID_CLIENT_NAME = 'android';
@@ -45,15 +45,17 @@ class ConsoleClient extends Client {
  */
 class AndroidClient extends Client {
   asyncTraceBegin(tag: string, cookie: number) {
-    if (getExternalTraceApis().asyncTraceBegin) {
-      ((...args) => getExternalTraceApis().asyncTraceBegin(...args))(
+    // Don't assign getSystemTraceApis().XXX to a local object due to the error:
+    // java bridge method can't be invoked on a non injected object
+    if (getSystemTraceApis().asyncTraceBegin) {
+      ((...args) => getSystemTraceApis().asyncTraceBegin(...args))(
           tag, cookie);
     }
   }
 
   asyncTraceEnd(tag: string, cookie: number) {
-    if (getExternalTraceApis().asyncTraceEnd) {
-      ((...args) => getExternalTraceApis().asyncTraceEnd(...args))(
+    if (getSystemTraceApis().asyncTraceEnd) {
+      ((...args) => getSystemTraceApis().asyncTraceEnd(...args))(
           tag, cookie);
     }
   }

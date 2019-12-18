@@ -30,6 +30,7 @@ import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {Loader} from '../platform/loader.js';
 import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';
+import {SystemTrace} from '../tracelib/systrace.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -58,6 +59,7 @@ let runtime: Runtime | null = null;
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
+@SystemTrace
 export class Runtime {
   public context: Manifest;
   public readonly pecFactory: PecFactory;

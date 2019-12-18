@@ -32,11 +32,11 @@ public interface RuntimeSettings {
   // protocol complying with the security origin policy.
   boolean useCacheManager();
 
-  // Used only by Javascript-based Arcs runtime to specify system trace channel.
+  // Used only by Javascript-based Arcs runtime to specify system tracing channel.
   // Available options:
-  //   'android': trace messages are dispatched to the Android Trace APIs
-  //   'console': trace messages are dispatched to JS console
+  //   'android': trace messages are bridged to the Android Trace APIs
+  //   'console': trace messages are bridged to JS console
   // Options not listed above would be skipped, namely trace messages are
-  // neither generated nor dispatched.
+  // neither generated nor bridged.
   String systemTraceChannel();
 }
