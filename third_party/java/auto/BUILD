@@ -24,8 +24,17 @@ java_plugin(
 )
 
 java_library(
-    name = "auto_service",
+    name = "auto_service_internal",
     exported_plugins = [":autoservice_plugin"],
-    neverlink = 1,  # Only used at compilation rather than at run-time.
     exports = ["@maven//:com_google_auto_service_auto_service_annotations"],
+)
+
+# For some reason, auto_service maven artifacts aren't downloaded if is exported and consumed
+# by kt_jvm rules. This dummy forces it by running the compiler and dep'ing on the maven dep.
+java_library(
+    name = "auto_service",
+    srcs = ["Dummy.java"],
+    # This has to be repeated here and above (unknown, but it doesn't work otherwise)
+    exported_plugins = [":autoservice_plugin"],
+    deps = [":auto_service_internal"],
 )
