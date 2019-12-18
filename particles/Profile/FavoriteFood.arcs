@@ -4,7 +4,7 @@ schema FavoriteFood
 import 'schemas/Share.arcs'
 
 schema FavoriteFoodShare extends Share
-  ref: Reference<FavoriteFood>
+  ref: &FavoriteFood
 
 particle FavoriteFoodPicker in 'source/FavoriteFoodPicker.js'
   foods: reads writes [FavoriteFood]

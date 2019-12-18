@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
 import {Direction, SlotDirection, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Schema} from './schema.js';
+import {Schema, refinementString} from './schema.js';
 import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
@@ -403,10 +403,11 @@ export class ParticleSpec {
     }
     results.push(line);
     const indent = '  ';
+
     const writeConnection = (connection, indent) => {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
       const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
-      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${tags}`);
+      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${refinementString(connection.type)}${tags}`);
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }

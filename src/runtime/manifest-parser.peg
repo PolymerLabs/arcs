@@ -557,7 +557,11 @@ ParticleHandleConnectionType
   / BigCollectionType
   / ReferenceType
   / SlotType
-  / SchemaInline
+  / type: SchemaInline whiteSpace? refinement:Refinement? 
+  {
+    type.refinement = refinement;
+    return type;
+  }
   / TypeName
 
 SingletonType
@@ -1205,11 +1209,11 @@ RecipeSlot
   }
 
 SchemaInline
-  = names:((upperIdent / '*') whiteSpace)+ '{' whiteSpace? fields:(SchemaInlineField (',' whiteSpace? SchemaInlineField)*)? whiteSpace? '}'
+  = names:((upperIdent / '*') whiteSpace)* '{' whiteSpace? fields:(SchemaInlineField (',' whiteSpace? SchemaInlineField)*)? whiteSpace? '}'
   {
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
-      names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), []),
+      names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
       fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
     });
   }

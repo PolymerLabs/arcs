@@ -12,9 +12,6 @@
 package sdk.kotlin.javatests.arcs
 
 import arcs.Singleton
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
     TestBase<EntityClassApiTest_Errors>(ctor) {
@@ -25,6 +22,8 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
         flg = false
     ) }
     private val unused2 = Singleton(this, "empty") { EntityClassApiTest_Empty() }
+
+    constructor() : this({ txt: String -> EntityClassApiTest_Errors(txt) })
 
     /** Run tests on particle initialization */
     override fun init() {
@@ -68,13 +67,13 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
             lnk = "",
             flg = false
         )
-        val emptyStr = empty.encodeEntity()
+        val encodedEmpty = empty.encodeEntity()
         val decodedEmpty = EntityClassApiTest_Data(
             num = 10.0,
             txt = "20",
             lnk = "https://thirty.net",
             flg = true
-        ).decodeEntity(emptyStr)
+        ).decodeEntity(encodedEmpty.bytes)
         assertEquals(
             "Encoding and Decoding an empty entity results in the same entity",
             empty,
@@ -87,14 +86,13 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
             lnk = "https://thirty.net",
             flg = true
         )
-        val fullStr = full.encodeEntity()
-        println("fullStr $fullStr")
+        val encodedFull = full.encodeEntity()
         val decodedFull = EntityClassApiTest_Data(
             num = 10.0,
             txt = "20",
             lnk = "https://thirty.net",
             flg = true
-        ).decodeEntity(fullStr)
+        ).decodeEntity(encodedFull.bytes)
         assertEquals(
             "Encoding and Decoding an full entity results in the same entity",
             full,
@@ -102,9 +100,3 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
         )
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newEntityClassApiTest")
-fun constructEntityClassApiTest() = EntityClassApiTest { txt: String ->
-    EntityClassApiTest_Errors(txt)
-}.toAddress()

@@ -51,11 +51,13 @@ package ${this.scope}
 //
 // Current implementation doesn't support references or optional field detection
 
-${withCustomPackage(`
-import arcs.Entity
-import arcs.Particle;
+${withCustomPackage(`import arcs.Entity
+import arcs.NullTermByteArray
+import arcs.Particle
+import arcs.StringDecoder
 import arcs.StringEncoder
-import arcs.StringDecoder`)}`;
+import arcs.utf8ToString
+`)}`;
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
@@ -118,45 +120,43 @@ class KotlinGenerator implements ClassGenerator {
 class ${name}() : Entity<${name}>() {
 
     ${ withFields(`${this.fieldVals.join('\n    ')}`) }
-
+  
     ${withFields(`constructor(
         ${this.fields.join(',\n        ')}
     ): this() {
         ${this.setFields.join('\n        ')}
     }`)}
-
-    override fun isSet(): Boolean {
-      return ${withFields(this.fieldSets.join(' || '))}${withoutFields('true')}
-    }
   
-    override fun decodeEntity(encoded: String): ${name}? {
-        if (encoded.isEmpty()) return null
-
-        val decoder = StringDecoder(encoded)
-        internalId = decoder.decodeText()
-        decoder.validate("|")
-        ${withFields(`for (_i in 0 until ${fieldCount}) {
-            if (decoder.done()) break
-            val name = decoder.upTo(":")
-            when (name) {
-                ${this.decode.join('\n                ')}
-            }
-            decoder.validate("|")
-        }`)}
-        return this
+    override fun isSet(): Boolean {
+        return ${withFields(this.fieldSets.join(' || '))}${withoutFields('true')}
     }
 
-    override fun encodeEntity(): String {
-        val encoder = StringEncoder()
-        encoder.encode("", internalId)
-        ${this.encode.join('\n        ')}
-        return encoder.result()
-    }
-    ${withoutFields(`
-    override fun toString(): String {
-        return "${name}()"
-    }`)}
+  override fun decodeEntity(encoded: ByteArray): ${name}? {
+    if (encoded.isEmpty()) return null
+
+    val decoder = StringDecoder(encoded)
+    internalId = decoder.decodeText()
+    decoder.validate("|")
+    ${withFields(`  for (_i in 0 until ${fieldCount}) {
+         if (decoder.done()) break
+         val name = decoder.upTo(':').utf8ToString()
+         when (name) {
+           ${this.decode.join('\n           ')}
+         }
+         decoder.validate("|")
+        }
+   `)}
+
+    return this
   }
+
+  override fun encodeEntity(): NullTermByteArray {
+    val encoder = StringEncoder()
+    encoder.encode("", internalId)
+    ${this.encode.join('\n    ')}
+    return encoder.toNullTermByteArray()
+  }
+}
 ${typeDecls}
 `;
   }

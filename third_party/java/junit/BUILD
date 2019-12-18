@@ -6,3 +6,8 @@ alias(
     name = "junit",
     actual = "@maven//:junit_junit",
 )
+
+alias(
+    name = "junit-android",
+    actual = "@maven//:junit_junit",
+)

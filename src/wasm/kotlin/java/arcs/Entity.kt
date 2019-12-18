@@ -13,28 +13,63 @@ package arcs
 
 typealias URL = String
 
-abstract class Entity<T>() {
+/** Wraps a ByteArray whose final byte is set to 0. */
+inline class NullTermByteArray(val bytes: ByteArray)
+
+abstract class Entity<T> {
     var internalId = ""
-    abstract fun decodeEntity(encoded: String): T?
-    abstract fun encodeEntity(): String
+    abstract fun decodeEntity(encoded: ByteArray): T?
+    abstract fun encodeEntity(): NullTermByteArray
     abstract fun isSet(): Boolean
 }
 
-class StringDecoder(private var str: String) {
+class StringDecoder(private var bytes: ByteArray) {
+
+    fun done(): Boolean = bytes.isEmpty() || bytes[0] == 0.toByte()
+
+    fun upTo(sep: Char): ByteArray {
+        val ind = bytes.indexOf(sep.toByte())
+        if (ind == -1) {
+            error("Packaged entity decoding failed in upTo()\n")
+        }
+        val chunk = bytes.sliceArray(0..(ind - 1))
+        bytes = bytes.sliceArray((ind + 1)..(bytes.size - 1))
+        return chunk
+    }
+
+    fun getInt(sep: Char): Int = upTo(sep).utf8ToString().toInt()
+
+    fun chomp(len: Int): ByteArray {
+        // TODO: detect overrun
+        val chunk = bytes.sliceArray(0..(len - 1))
+        bytes = bytes.sliceArray(len..(bytes.size - 1))
+        return chunk
+    }
+
+    fun validate(token: String) {
+        if (chomp(token.length).utf8ToString() != token) {
+            throw IllegalArgumentException("Packaged entity decoding failed in validate()")
+        }
+    }
+
+    fun decodeText(): String = chomp(getInt(':')).utf8ToString()
+
+    fun decodeNum(): Double = upTo(':').utf8ToString().toDouble()
+
+    fun decodeBool(): Boolean = chomp(1).utf8ToString() == "1"
 
     companion object {
-
-        fun decodeDictionary(str: String): Map<String, String> {
-            val decoder = StringDecoder(str)
+        fun decodeDictionary(bytes: ByteArray): Map<String, String> {
+            val decoder = StringDecoder(bytes)
             val dict = mutableMapOf<String, String>()
 
-            var num = decoder.getInt(":")
+            var num = decoder.getInt(':')
             while (num-- > 0) {
-                val klen = decoder.getInt(":")
-                val key = decoder.chomp(klen)
+                val klen = decoder.getInt(':')
+                val key = decoder.chomp(klen).utf8ToString()
 
-                val vlen = decoder.getInt(":")
-                val value = decoder.chomp(vlen)
+                val vlen = decoder.getInt(':')
+                val value = decoder.chomp(vlen).utf8ToString()
 
                 dict[key] = value
             }
@@ -42,103 +77,91 @@ class StringDecoder(private var str: String) {
             return dict
         }
     }
-
-    fun done(): Boolean {
-        return str.isEmpty()
-    }
-
-    fun upTo(sep: String): String {
-        val ind = str.indexOf(sep)
-        if (ind == -1) {
-            error("Packaged entity decoding failed in upTo()\n")
-        }
-        val token = str.substring(0, ind)
-        str = str.substring(ind + 1)
-        return token
-    }
-
-    fun getInt(sep: String): Int {
-        val token = upTo(sep)
-        return token.toInt()
-    }
-
-    fun chomp(len: Int): String {
-        // TODO: detect overrun
-        val token = str.substring(0, len)
-        str = str.substring(len)
-        return token
-    }
-
-    fun validate(token: String) {
-        if (chomp(token.length) != token) {
-            throw Exception("Packaged entity decoding failed in validate()\n")
-        }
-    }
-
-    fun decodeText(): String {
-        val len = getInt(":")
-        return chomp(len)
-    }
-
-    fun decodeNum(): Double {
-        val token = upTo(":")
-        return token.toDouble()
-    }
-
-    fun decodeBool(): Boolean {
-        return (chomp(1)[0] == '1')
-    }
 }
 
-class StringEncoder(private val sb: StringBuilder = StringBuilder()) {
-
-    companion object {
-        fun encodeDictionary(dict: Map<String, Any?>): String {
-            val sb = StringBuilder()
-            sb.append(dict.size).append(":")
-
-            for ((key, value) in dict) {
-                sb.append(key.length).append(":").append(key)
-                sb.append(encodeValue(value))
-            }
-            return sb.toString()
+class StringEncoder(
+    private val buffers: MutableList<ByteArray> = mutableListOf(),
+    private var size: Int = 0
+) {
+    fun encodeDictionary(dict: Map<String, Any?>): StringEncoder {
+        addStr("${dict.size}:")
+        for ((key, value) in dict) {
+            addBytes("", key.stringToUtf8())
+            encodeValue(value)
         }
+        return this
+    }
 
-        fun encodeList(list: List<Any>): String {
-            return list.joinToString(separator = "", prefix = "${list.size}:") { encodeValue(it) }
-        }
+    fun encodeList(list: List<Any>): StringEncoder {
+        addStr("${list.size}:")
+        list.forEach { encodeValue(it) }
+        return this
+    }
 
-        fun encodeValue(value: Any?): String {
-            return when (value) {
-                is String -> "T${value.length}:$value"
-                is Boolean -> "B${if (value) 1 else 0}"
-                is Double -> "N$value:"
-                is Map<*, *> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val dictString = encodeDictionary(value as Map<String, Any?>)
-                    "D${dictString.length}:$dictString"
-                }
-                is List<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val listString = encodeList(value as List<Any>)
-                    "A${listString.length}:$listString"
-                }
-                else -> throw IllegalArgumentException("Unknown expression.")
+    fun encodeValue(value: Any?) {
+        when (value) {
+            is String -> addBytes("T", value.stringToUtf8())
+            is Boolean -> addStr("B${if (value) 1 else 0}")
+            is Double -> addStr("N$value:")
+            is Map<*, *> -> {
+                @Suppress("UNCHECKED_CAST")
+                val se = StringEncoder().encodeDictionary(value as Map<String, Any?>)
+                addBytes("D", se.toByteArray())
             }
+            is List<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                val se = StringEncoder().encodeList(value as List<Any>)
+                addBytes("A", se.toByteArray())
+            }
+            else -> throw IllegalArgumentException("Unknown expression.")
         }
     }
 
-    fun result(): String = sb.toString()
-
     fun encode(prefix: String, str: String) {
-        sb.append("$prefix${str.length}:$str|")
+        addBytes(prefix, str.stringToUtf8())
+        addStr("|")
     }
 
     fun encode(prefix: String, num: Double) {
-        sb.append("$prefix$num:|")
+        addStr("$prefix$num:|")
     }
 
     fun encode(prefix: String, flag: Boolean) {
-        sb.append("$prefix${if (flag) "1" else "0"}|")
+        addStr("$prefix${if (flag) "1" else "0"}|")
+    }
+
+    private fun addStr(str: String) {
+        str.stringToUtf8().also {
+            buffers.add(it)
+            size += it.size
+        }
+    }
+
+    private fun addBytes(prefix: String, bytes: ByteArray) {
+        addStr("$prefix${bytes.size}:")
+        buffers.add(bytes)
+        size += bytes.size
+    }
+
+    fun toByteArray(): ByteArray {
+        val res = ByteArray(size)
+        populate(res)
+        return res
+    }
+
+    fun toNullTermByteArray(): NullTermByteArray {
+        val res = ByteArray(size + 1)
+        var pos = populate(res)
+        res[pos] = 0.toByte()
+        return NullTermByteArray(res)
+    }
+
+    private fun populate(res: ByteArray): Int {
+        var pos = 0
+        buffers.forEach {
+            it.copyInto(res, pos)
+            pos += it.size
+        }
+        return pos
     }
 }

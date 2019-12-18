@@ -17,9 +17,6 @@ import arcs.Singleton
 import arcs.TTTRandomComputer_GameState
 import arcs.TTTRandomComputer_MyMove
 import arcs.TTTRandomComputer_Player
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class TTTRandomComputer : Particle() {
     private val defaultGameState = TTTRandomComputer_GameState(
@@ -61,7 +58,3 @@ class TTTRandomComputer : Particle() {
         }
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newTTTRandomComputer")
-fun constructTTTHRandomComputer() = TTTRandomComputer().toAddress()

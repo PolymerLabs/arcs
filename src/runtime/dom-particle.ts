@@ -117,6 +117,8 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
     const done = () => {
       try {
         fn.call(this);
+      } catch (err) {
+        this.onError(err);
       } finally {
         this.doneBusy();
       }

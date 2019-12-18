@@ -11,12 +11,12 @@ schema Event
   time: Number
 
 
-particle TTTBoard in 'TTTBoard.wasm'
+particle TTTBoard in 'particles.wasm'
   events: writes [Event]
   gameState: reads GameState
   boardSlot: consumes
 
-particle TTTGame in 'TTTGame.wasm'
+particle TTTGame in 'particles.wasm'
   gameState: reads writes GameState
   events: reads writes [Event]
   root: consumes

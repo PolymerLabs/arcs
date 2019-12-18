@@ -14,7 +14,7 @@ Don’t worry if you don’t understand everything at the moment, we’ll be goi
 ```
 // The file begins by defining our particle. Based on the file
 // path, We can assume the particle is implemented in kotlin.
-particle HelloWorldParticle in 'HelloWorld.wasm'
+particle HelloWorld in 'HelloWorld.wasm'
   // Notice the tab that starts this line. Whitespace matters
   // in the Arcs manifest language, so this is very important.
   // Don't worry about what this line does at the moment, we'll
@@ -24,8 +24,8 @@ particle HelloWorldParticle in 'HelloWorld.wasm'
 // And now we are at the recipe definition!
 recipe HelloWorldRecipe
   // Once again, notice the tab. This line tells us that the
-  // HelloWorldRecipe contains a HelloWorldParticle.
-  HelloWorldParticle
+  // HelloWorldRecipe contains a HelloWorld.
+  HelloWorld
   // Finally, we provide a human readable description for the
   // recipe. This is optional, but will make it much easier and
   // nicer to debug. Once again, notice the tab.
@@ -39,33 +39,24 @@ package arcs.tutorials
 
 // We start with the required imports.
 import arcs.Particle
-import arcs.wasm.toAddress
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
 
-// We define the HelloWorldParticle class to be a child
+// We define the HelloWorld class to be a child
 // of the Particle class.
-class HelloWorldParticle : Particle() {
+class HelloWorld : Particle() {
     // Set the template to be "Hello, world!" as this is what we want
     // to display.
     override fun getTemplate(slotName: String) = "<b>Hello, world!</b>"
 }
-
-// Here is the boilerplate to ensure a function to instantiate a particle is
-// available outside the wasm modue.
-@Retain
-@ExportForCppRuntime("_newHelloWorldParticle")
-fun constructHelloWorldParticle() = HelloWorldParticle().toAddress()
 ```
 
 Finally, we need a 'BUILD' file. Arcs particles can be built using Bazel rules. Here's an example Bazel BUILD file for HelloWorld:
 
 ```BUILD
 // Required imports
-load("//build_defs:build_defs.bzl", "arcs_kt_binary")
+load("//build_defs:build_defs.bzl", "arcs_kt_particles")
 
 // Arcs Kotlin particle build rule
-arcs_kt_binary(
+arcs_kt_particles(
     name = "HelloWorld",
     srcs = ["HelloWorld.kt"],
 )
@@ -87,11 +78,11 @@ To get started, we want a way to make our UI dynamic. Simply returning static HT
 This interpolation occurs when `populateModel()` returns a dictionary with keys that match elements in the template. The best way to explain how this works is to see it in action. The Arcs manifest file looks pretty much the same as with our Hello World example.
 
 ```
-particle BasicTemplateParticle in 'BasicTemplate.wasm'
+particle BasicTemplate in 'BasicTemplate.wasm'
   root: consumes
 
 recipe BasicTemplateRecipe
-  BasicTemplateParticle
+  BasicTemplate
   description `Kotlin Tutorial 2: Basic Templates`
 ```
 
@@ -101,11 +92,8 @@ Meanwhile, the Kotlin looks quite different, as this is where the magic occurs:
 package arcs.tutorials
 
 import arcs.Particle
-import arcs.wasm.toAddress
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
 
-class BasicTemplateParticle : Particle() {
+class BasicTemplate : Particle() {
     // Returns a map that goes from placeholder name to value.
     override fun populateModel(slotName: String, model: Map<String, String>): Map<String, String> {
         return model + mapOf(
@@ -119,17 +107,13 @@ class BasicTemplateParticle : Particle() {
      // (here, a <span>).
     override fun getTemplate(slotName: String) = "<b>Hello, <span>{{name}}</span>!</b>"
 }
-
-@Retain
-@ExportForCppRuntime("_newBasicTemplateParticle")
-fun constructBasicTemplateParticle() = BasicTemplateParticle().toAddress()
 ```
 
 Finally, the Bazel BUILD file, which looks nearly identical to the one we used in the hello world program.
 ```
-load("//build_defs:build_defs.bzl", "arcs_kt_binary")
+load("//build_defs:build_defs.bzl", "arcs_kt_particles")
 
-arcs_kt_binary(
+arcs_kt_particles(
     name = "BasicTemplate",
     srcs = ["BasicTemplate.kt"],
 )
@@ -150,7 +134,7 @@ This all is a bit theoretical, so let's get to an example. To show how particles
 As usual, we start with the Arcs manifest file:
 ```
 // The "parent" particle. It provides a slot for another particle to be rendered inside it.
-particle ParentParticle in 'ParentParticle.wasm'
+particle ParentParticle in 'particles.wasm'
   // This particle renders to the root slot ("consumes" it), and provides a slot inside it called
   // "mySlot" in which another particle can render itself. The child particle will be rendered inside
   // a special div with the identifier "mySlot", which this particle will need to provide in its HTML.
@@ -159,7 +143,7 @@ particle ParentParticle in 'ParentParticle.wasm'
 
 // The "child" particle. Instead of consuming "root" it consumes "mySlot", which connects it to the
 // slot provided by ParentParticle.
-particle ChildParticle in 'ChildParticle.wasm'
+particle ChildParticle in 'particles.wasm'
   render: consumes
 
 recipe RenderSlotsRecipe
@@ -178,52 +162,35 @@ Next, we implement the parent and child particles in Kotlin. To do this, we will
 package arcs.tutorials
 
 import arcs.Particle
-import arcs.wasm.toAddress
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
 
 class ParentParticle : Particle() {
     // The parent particle needs to provide a div with slotid "mySlot".
     override fun getTemplate(slotName: String) = "<b>Hello:</b><div slotId=\"mySlot\"></div>"
 }
-
-@Retain
-@ExportForCppRuntime()
-fun _newParentParticle() = ParentParticle().toAddress()
 ```
 
 The ChildParticle looks nearly identical to the particles we created in our first tutorials.
 ```Kotlin
 package arcs.tutorials
 
-import arcs.addressable.toAddress
 import arcs.Particle
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
 
 class ChildParticle : Particle() {
     override fun getTemplate(slotName: String) = "Child"
 }
-
-@Retain
-@ExportForCppRuntime()
-fun _newChildParticle() = ChildParticle().toAddress()
 ```
 
 And finally the BUILD file, which is the same as in the previous tutorials, but has a second rule.
 ```
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles")
 
-arcs_kt_binary(
-    name = "ParentParticle",
-    srcs = ["ParentParticle.kt"],
+arcs_kt_particles(
+    name = "particles",
+    srcs = [
+        "ParentParticle.kt",
+        "ChildParticle.kt",
+    ],
 )
-
-arcs_kt_binary(
-    name = "ChildParticle",
-    srcs = ["ChildParticle.kt"],
-)
-
 ```
 
 And there you have it! The mystery of root solved, and a basic understanding of slots. Slots are a large part of the power of Arcs to hide user data, so we'll be using them a lot going forward. So don't worry if you don't fully understand them yet, there will plenty more examples to come!
@@ -255,14 +222,14 @@ schema Person
 // The GetPerson particle allows the user to input their name, then writes
 // the input to the Person handle.
 // This particle also provides a slot to display a greeting to the person.
-particle GetPerson in 'GetPerson.wasm'
+particle GetPerson in 'particles.wasm'
   person: writes Person
   root: consumes
     greetingSlot: provides
 
 // The DisplayGreeting particle, takes the name passed through the Person
 // handle, and displays a greeting.
-particle DisplayGreeting in 'DisplayGreeting.wasm'
+particle DisplayGreeting in 'particles.wasm'
   person: reads Person
   greetingSlot: consumes
 
@@ -288,11 +255,8 @@ Setting up handles is done in two steps: type setting and registration. We will 
 ```kotlin
 package arcs.tutorials
 
-import arcs.addressable.toAddress
 import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
 
 class GetPersonParticle : Particle() {
     // We start by setting the type of the handle and associating it with the name defined in the Arcs manifest file.
@@ -318,22 +282,15 @@ class GetPersonParticle : Particle() {
         }
     }
 }
-
-@Retain
-@ExportForCppRuntime()
-fun _newGetPerson() = GetPersonParticle().toAddress()
 ```
 Next we have the DisplayGreeting.kt particle:
 
 ```kotlin
 package arcs.tutorials
 
-import arcs.addressable.toAddress
 import arcs.Particle
 import arcs.Handle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
 
 class DisplayGreetingParticle : Particle() {
     // Note that this autogenerated schema class has a different name from the GetPersonParticle. This is due to the
@@ -352,17 +309,13 @@ class DisplayGreetingParticle : Particle() {
         )
     }
 }
-
-@Retain
-@ExportForCppRuntime()
-fun _newDisplayGreeting() = DisplayGreetingParticle().toAddress()
 ```
 
 And finally, the BUILD file. Note the `arcs_kt_schema` rule which will generate schemas of the form
 '$ParticleName_EntityName'. This is why `DisplayGreeting.kt` referenced `GetPerson_Person()` while `DisplayGreeting.kt`
 referenced `DisplayGreeting_Person()`.
 ```build
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles", "arcs_kt_schema")
 
 arcs_kt_schema(
     name = "handles_schemas",
@@ -370,15 +323,12 @@ arcs_kt_schema(
     package = "arcs.tutorials",
 )
 
-arcs_kt_binary(
-    name = "GetPerson",
-    srcs = ["GetPerson.kt"],
-    deps = [":handles_schemas"],
-)
-
-arcs_kt_binary(
-    name = "DisplayGreeting",
-    srcs = ["DisplayGreeting.kt"],
+arcs_kt_particles(
+    name = "particles",
+    srcs = [
+        "GetPerson.kt",
+        "DisplayGreeting.kt",
+    ],
     deps = [":handles_schemas"],
 )
 ```
@@ -438,12 +388,9 @@ And the Kotlin:
 ```kotlin
 package arcs.tutorials
 
-import arcs.addressable.toAddress
-import arcs.addressable.Address
 import arcs.Collection
 import arcs.Particle
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
+
 /**
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
@@ -486,22 +433,18 @@ class CollectionsParticle : Particle() {
         </template>"""
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newCollectionsParticle")
-fun constructCollectionsParticle(): Address = CollectionsParticle().toAddress()
 ```
 
 And the BUILD file:
 ```build
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles", "arcs_kt_schema")
 
 arcs_kt_schema(
     name = "collections_schemas",
     srcs = ["Collections.arcs"],
 )
 
-arcs_kt_binary(
+arcs_kt_particles(
     name = "Collections",
     srcs = ["Collections.kt"],
     deps = [":collections_schemas"],
@@ -556,11 +499,9 @@ And finally, the Kotlin which should look fairly familiar:
 ```kotlin
 package arcs.tutorials
 
-import arcs.addressable.toAddress
 import arcs.Particle
 import arcs.Singleton
-import kotlin.native.internal.ExportForCppRuntime
-import kotlin.native.Retain
+
 /**
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
@@ -581,10 +522,6 @@ class JsonStoreParticle : Particle() {
         return "<b>Hello, <span>{{name}}</span>, aged <span>{{age}}</span>!</b>"
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newJsonStoreParticle")
-fun constructJsonStoreParticle() = JsonStoreParticle().toAddress()
 ```
 
 

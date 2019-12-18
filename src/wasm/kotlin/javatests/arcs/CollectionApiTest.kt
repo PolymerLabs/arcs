@@ -13,9 +13,6 @@ package sdk.kotlin.javatests.arcs
 
 import arcs.Collection
 import arcs.Particle
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class CollectionApiTest : Particle() {
     private val _in = Collection(this, "inHandle") { CollectionApiTest_InHandle(0.0) }
@@ -134,7 +131,3 @@ class CollectionApiTest : Particle() {
         }
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newCollectionApiTest")
-fun constructCollectionApiTest() = CollectionApiTest().toAddress()

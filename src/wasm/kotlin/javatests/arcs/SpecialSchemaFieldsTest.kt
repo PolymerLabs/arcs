@@ -12,9 +12,7 @@
 package sdk.kotlin.javatests.arcs
 
 import arcs.Singleton
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
+import arcs.utf8ToString
 
 class SpecialSchemaFieldsTest(
     ctor: (String) -> SpecialSchemaFieldsTest_Errors
@@ -24,6 +22,8 @@ class SpecialSchemaFieldsTest(
         internal_id = 0.0,
         internalId_ = 0.0
     ) }
+
+    constructor() : this({ txt: String -> SpecialSchemaFieldsTest_Errors(txt) })
 
     /** Run tests on particle initialization */
     override fun init() {
@@ -52,8 +52,8 @@ class SpecialSchemaFieldsTest(
             internal_id = 0.0,
             internalId_ = 0.0
         )
-        val encoding: String = s.encodeEntity()
-        assertTrue("The encoding uses the language keyword", encoding.contains("for"))
+        val encoding = s.encodeEntity().bytes.utf8ToString()
+        assertTrue("The encoding uses the language keyword", encoding.contains("|for:"))
     }
 
     @Test
@@ -83,13 +83,7 @@ class SpecialSchemaFieldsTest(
             internal_id = 0.0,
             internalId_ = 10.0
         )
-        val encoding: String = s.encodeEntity()
-        assertTrue("The encoding uses the keyword 'internalId'", encoding.contains("internalId"))
+        val encoding = s.encodeEntity().bytes.utf8ToString()
+        assertTrue("The encoding uses the keyword 'internalId'", encoding.contains("|internalId:"))
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newSpecialSchemaFieldsTest")
-fun constructSpecialSchemaFieldsTest() = SpecialSchemaFieldsTest { txt: String ->
-    SpecialSchemaFieldsTest_Errors(txt)
-}.toAddress()

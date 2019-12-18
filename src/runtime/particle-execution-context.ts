@@ -213,6 +213,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     const pec = this;
     return {
       async createHandle(type: Type, name: string, hostParticle?: Particle) {
+        if (type === null) {
+          throw new Error(`Can't create handle with null Type`);
+        }
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateHandle(proxy => {
             const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, name, particleId: Math.random() + '', particle: hostParticle});

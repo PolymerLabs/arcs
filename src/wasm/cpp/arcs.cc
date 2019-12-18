@@ -305,7 +305,7 @@ std::string num_to_str(double num) {
 // --- Storage classes ---
 
 // Handle
-Handle::Handle(const char* name, Particle* particle) : name_(name), particle_(particle) {
+Handle::Handle(Particle* particle, const char* name) : name_(name), particle_(particle) {
   particle_->registerHandle(this);
 }
 

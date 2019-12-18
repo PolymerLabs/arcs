@@ -8,11 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
+import {TextEncoder, TextDecoder} from '../../platform/text-encoder-web.js';
 import {Manifest} from '../manifest.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Entity} from '../entity.js';
 import {Reference} from '../reference.js';
-import {StringEncoder, StringDecoder} from '../wasm.js';
+import {StringEncoder, StringDecoder, DynamicBuffer} from '../wasm.js';
 import {BiMap} from '../bimap.js';
 
 async function setup() {
@@ -22,7 +23,7 @@ async function setup() {
       lnk: URL
       num: Number
       flg: Boolean
-      ref: Reference<Bar {a: Text}>
+      ref: &Bar {a: Text}
     `);
   const fooClass = Entity.createEntityClass(manifest.schemas.Foo, null);
   const barType = EntityType.make(['Bar'], {a: 'Text'});
@@ -43,7 +44,7 @@ describe('wasm', () => {
     const encoded = encoder.encodeSingleton(foo);
     assert.deepStrictEqual([...typeMap.entries()], [[1, barType]]);
 
-    const foo2 = decoder.decodeSingleton(encoded);
+    const foo2 = decoder.decodeSingleton(encoded.view());
     assert.deepStrictEqual(foo, foo2);
   });
 
@@ -53,7 +54,7 @@ describe('wasm', () => {
     Entity.identify(foo, '!test:foo:bar|');
 
     const encoded = encoder.encodeSingleton(foo);
-    const foo2 = decoder.decodeSingleton(encoded);
+    const foo2 = decoder.decodeSingleton(encoded.view());
     assert.deepStrictEqual(foo, foo2);
   });
 
@@ -63,7 +64,7 @@ describe('wasm', () => {
     Entity.identify(foo, 'te|st');
 
     const encoded = encoder.encodeSingleton(foo);
-    const foo2 = decoder.decodeSingleton(encoded);
+    const foo2 = decoder.decodeSingleton(encoded.view());
     assert.deepStrictEqual(foo, foo2);
   });
 
@@ -73,7 +74,7 @@ describe('wasm', () => {
     Entity.identify(foo, 'te st');
 
     const encoded = encoder.encodeSingleton(foo);
-    const foo2 = decoder.decodeSingleton(encoded);
+    const foo2 = decoder.decodeSingleton(encoded.view());
     assert.deepStrictEqual(foo, foo2);
   });
 
@@ -92,7 +93,7 @@ describe('wasm', () => {
     const encoded = encoder.encodeCollection([f1, f2, f3]);
 
     // Decoding of collections hasn't been implemented (yet?).
-    assert.strictEqual(encoded,
+    assert.strictEqual(new TextDecoder().decode(encoded.view()),
       '3:' +
       '71:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|ref:R2:r1|2:k1|1:|' +
       '10:7:id2|two|' +
@@ -122,31 +123,31 @@ describe('wasm', () => {
   });
 
   it('decodes string values in dictionary', () => {
-    const enc = '1:3:foo3:bar';
-    const dic = StringDecoder.decodeDictionary(enc);
+    const str = '1:3:foo3:bar';
+    const dic = StringDecoder.decodeDictionary(new TextEncoder().encode(str));
     assert.deepStrictEqual(dic, {foo: 'bar'});
   });
 
   it('decodes type-coded values in dictionary', () => {
-    const enc = '1:3:fooT3:bar';
-    const dic = StringDecoder.decodeDictionary(enc);
+    const str = '1:3:fooT3:bar';
+    const dic = StringDecoder.decodeDictionary(new TextEncoder().encode(str));
     assert.deepStrictEqual(dic, {foo: 'bar'});
   });
 
   it('decodes nested dictionaries', () => {
     const base = '1:3:fooT3:bar';
-    const nestedEnc = `1:3:fooD${base.length}:${base}`;
-    const enc = `1:3:fooD${nestedEnc.length}:${nestedEnc}`;
-    const dic = StringDecoder.decodeDictionary(enc);
+    const nested = `1:3:fooD${base.length}:${base}`;
+    const str = `1:3:fooD${nested.length}:${nested}`;
+    const dic = StringDecoder.decodeDictionary(new TextEncoder().encode(str));
     assert.deepStrictEqual<{}>(dic, {foo: {foo: {foo: 'bar'}}});
   });
 
   it('decodes complex dictionary', () => {
     const data = '2:okB13:numN42:3:fooT3:bar';
     const base = `3:${data}`;
-    const nestedEnc = `4:${data}3:bazD${base.length}:${base}`;
-    const enc = `2:3:zotT3:zoo3:fooD${nestedEnc.length}:${nestedEnc}`;
-    const dic = StringDecoder.decodeDictionary(enc);
+    const nested = `4:${data}3:bazD${base.length}:${base}`;
+    const str = `2:3:zotT3:zoo3:fooD${nested.length}:${nested}`;
+    const dic = StringDecoder.decodeDictionary(new TextEncoder().encode(str));
     assert.deepStrictEqual<{}>(dic, {
       zot: 'zoo',
       foo: {
@@ -157,11 +158,44 @@ describe('wasm', () => {
 
   it('decodes array', () => {
     const str = '3:D27:2:4:nameT4:Jill3:ageT4:70.0D27:2:4:nameT4:Jack3:ageT4:25.0D26:2:4:nameT3:Jen3:ageT4:50.0';
-    const list = StringDecoder.decodeArray(str);
+    const list = StringDecoder.decodeArray(new TextEncoder().encode(str));
     assert.deepStrictEqual<{}>(list, [
         {name: 'Jill', age: '70.0'},
         {name: 'Jack', age: '25.0'},
         {name: 'Jen', age: '50.0'}
     ]);
+  });
+
+  it('DynamicBuffer supports ascii, unicode and other DynamicBuffers', () => {
+    const decoder = new TextDecoder();
+
+    const b1 = new DynamicBuffer(1);
+    b1.addAscii('abc', '!!');
+    assert.strictEqual(decoder.decode(b1.view()), 'abc!!');
+
+    const b2 = new DynamicBuffer(1);
+    b2.addUnicode('-⛲-');
+    assert.strictEqual(decoder.decode(b2.view()), '5:-⛲-');
+
+    b1.addBytes(b2);
+    assert.strictEqual(decoder.decode(b1.view()), 'abc!!7:5:-⛲-');
+  });
+
+  it('DynamicBuffer resizes for large inputs', () => {
+    const decoder = new TextDecoder();
+    const str = 'abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789';
+    const input = str + str + str;
+
+    const b1 = new DynamicBuffer(2);
+    b1.addAscii(input);
+    assert.strictEqual(decoder.decode(b1.view()), input);
+
+    const b2 = new DynamicBuffer(3);
+    b2.addUnicode(input);
+    assert.strictEqual(decoder.decode(b2.view()), `192:${input}`);
+
+    const b3 = new DynamicBuffer(5);
+    b3.addBytes(b2);
+    assert.strictEqual(decoder.decode(b3.view()), `196:192:${input}`);
   });
 });

@@ -3,12 +3,34 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
-load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", "kt_js_library")
-load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_binary", "kt_native_library")
-load("//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl", "wasm_kt_binary")
-load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_library", "java_test")
+load(
+    "//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl",
+    "kt_js_library",
+)
+load(
+    "//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl",
+    "kt_native_binary",
+    "kt_native_library",
+)
+load(
+    "//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl",
+    "wasm_kt_binary",
+)
+load(
+    "//third_party/java/arcs/build_defs:native.oss.bzl",
+    "java_library",
+    "java_test",
+)
+load(
+    "//third_party/java/arcs/build_defs/internal:kotlin_wasm_annotations.bzl",
+    "kotlin_wasm_annotations",
+)
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library", "kt_jvm_library")
+load(
+    "//tools/build_defs/kotlin:rules.bzl",
+    "kt_android_library",
+    "kt_jvm_library",
+)
 
 _ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
 _WASM_SUFFIX = "-wasm"
@@ -23,84 +45,130 @@ def arcs_kt_jvm_library(**kwargs):
             "PackageName",
             "TopLevelName",
         ]
+        kwargs["constraints"] = ["android"]
+
     kt_jvm_library(**kwargs)
 
-def arcs_kt_library(name, srcs = [], deps = [], visibility = None):
-    """Declares kotlin library targets for Kotlin particle sources."""
-    kt_jvm_and_wasm_library(
-        name = name,
-        srcs = srcs,
-        deps = _ARCS_KOTLIN_LIBS + deps,
-        visibility = visibility,
-    )
-
-def arcs_kt_binary(name, srcs = [], deps = [], visibility = None):
-    """Performs final compilation of wasm and bundling if necessary.
-
-    Args:
-      name: name of the target to create
-      srcs: list of source files to include
-      deps: list of dependencies
-      visibility: list of visibilities
-    """
-
-    if srcs:
-        libname = name + "_lib"
-
-        # Declare a library because g3 kt_native_binary doesn't take srcs
-        kt_native_library(
-            name = libname + _WASM_SUFFIX,
-            srcs = srcs,
-            deps = [_to_wasm_dep(dep) for dep in _ARCS_KOTLIN_LIBS + deps],
-            visibility = visibility,
-        )
-
-        deps = [":" + libname]
-
-    bin_name = name + "_bin"
-    kt_native_binary(
-        name = bin_name,
-        entry_point = "arcs.main",
-        deps = [_to_wasm_dep(dep) for dep in _ARCS_KOTLIN_LIBS + deps],
-        tags = ["manual", "notap"],
-        visibility = visibility,
-    )
-
-    wasm_kt_binary(
-        name = name,
-        kt_target = ":" + bin_name,
-    )
-
-def kt_jvm_and_wasm_library(
-        name = None,
+def arcs_kt_library(
+        name,
         srcs = [],
         deps = [],
         visibility = None,
-        **kwargs):
-    """Simultaneously defines JVM and WASM kotlin libraries.
+        wasm = True,
+        jvm = True):
+    """Declares kotlin library targets for Kotlin particle sources.
+
+    Defines both jvm and wasm Kotlin libraries.
 
     Args:
       name: String; Name of the library
       srcs: List; List of sources
       deps: List; List of dependencies
       visibility: List; List of visibilities
-      **kwargs: other arguments to feed into kt_jvm_library and kt_native_library
+      wasm: whether to build a wasm library
+      jvm: whether to build a jvm library
     """
-    arcs_kt_jvm_library(
-        name = name,
-        srcs = srcs,
-        deps = [_to_jvm_dep(dep) for dep in deps],
-        visibility = visibility,
-        **kwargs
-    )
+    if not jvm and not wasm:
+        fail("At least one of wasm or jvm must be built.")
 
-    kt_native_library(
-        name = name + _WASM_SUFFIX,
-        srcs = srcs,
-        deps = [_to_wasm_dep(dep) for dep in deps],
-        visibility = visibility,
-        **kwargs
-    )
+    deps = _ARCS_KOTLIN_LIBS + deps
+
+    if jvm:
+        arcs_kt_jvm_library(
+            name = name,
+            srcs = srcs,
+            deps = [_to_jvm_dep(dep) for dep in deps],
+            visibility = visibility,
+        )
+
+    if wasm:
+        kt_native_library(
+            name = name + _WASM_SUFFIX,
+            srcs = srcs,
+            deps = [_to_wasm_dep(dep) for dep in deps],
+            visibility = visibility,
+        )
+
+def arcs_kt_particles(
+        name,
+        package,
+        srcs = [],
+        deps = [],
+        visibility = None,
+        wasm = True,
+        jvm = True):
+    """Performs final compilation of wasm and bundling if necessary.
+
+    Args:
+      name: name of the target to create
+      package: Kotlin package for the particles
+      srcs: List of source files to include. Each file must contain a Kotlin
+        class of the same name, which must match the name of a particle defined
+        in a .arcs file.
+      deps: list of dependencies
+      visibility: list of visibilities
+      wasm: whether to build wasm libraries
+      jvm: whether to build a jvm library
+    """
+    if not jvm and not wasm:
+        fail("At least one of wasm or jvm must be built.")
+
+    deps = _ARCS_KOTLIN_LIBS + deps
+
+    if jvm:
+        # Create a jvm library just as a build test.
+        arcs_kt_jvm_library(
+            name = name + "-jvm",
+            srcs = srcs,
+            deps = deps,
+            visibility = visibility,
+        )
+
+    if wasm:
+        wasm_deps = [_to_wasm_dep(dep) for dep in deps]
+
+        # Create a wasm library for each particle.
+        wasm_particle_libs = []
+        for src in srcs:
+            if not src.endswith(".kt"):
+                fail("%s is not a Kotlin file (must end in .kt)" % src)
+            particle = src.split("/")[-1][:-3]
+            wasm_lib = particle + "-lib" + _WASM_SUFFIX
+            wasm_annotations_file = particle + ".wasm.kt"
+
+            kotlin_wasm_annotations(
+                name = particle + "-wasm-annotations",
+                particle = particle,
+                package = package,
+                out = wasm_annotations_file,
+            )
+            kt_native_library(
+                name = wasm_lib,
+                srcs = [
+                    src,
+                    wasm_annotations_file,
+                ],
+                deps = wasm_deps,
+            )
+            wasm_particle_libs.append(wasm_lib)
+
+        # Create a kt_native_binary that groups everything together.
+        native_binary_name = name + _WASM_SUFFIX
+        kt_native_binary(
+            name = native_binary_name,
+            entry_point = "arcs.main",
+            deps = wasm_particle_libs,
+            # Don't build this manually. Build the wasm_kt_binary rule below
+            # instead; otherwise this rule will build a non-wasm binary.
+            tags = ["manual", "notap"],
+        )
+
+        # Create a wasm binary from the native binary.
+        wasm_kt_binary(
+            name = name,
+            kt_target = ":" + native_binary_name,
+            visibility = visibility,
+        )
 
 def kt_jvm_and_js_library(
         name,
@@ -128,12 +196,23 @@ def kt_jvm_and_js_library(
         # kt_jvm_library doesn't support the "exports" property. Instead, we
         # will wrap it in a java_library rule and export everything that is
         # needed from there.
+        #
+        # Also, 'constraints' doesn't exist for java_library in Bazel, so we have to fork based on
+        # that as well.
         kt_name = name + _KT_SUFFIX
-        java_library(
-            name = name,
-            exports = exports + [kt_name],
-            visibility = visibility,
-        )
+        if IS_BAZEL:
+            java_library(
+                name = name,
+                exports = exports + [kt_name],
+                visibility = visibility,
+            )
+        else:
+            java_library(
+                name = name,
+                exports = exports + [kt_name],
+                visibility = visibility,
+                constraints = ["android"],
+            )
 
     arcs_kt_jvm_library(
         name = kt_name,
@@ -188,6 +267,10 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
         deps = deps,
     )
 
+    android_local_test_deps = [":%s" % name]
+    if IS_BAZEL:
+        android_local_test_deps.append("@robolectric//bazel:android-all")
+
     for src in native.glob(["*.kt"]):
         class_name = src[:-3]
         android_local_test(
@@ -196,10 +279,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             manifest = manifest,
             test_class = "%s.%s" % (package, class_name),
             tags = tags,
-            deps = [
-                ":%s" % name,
-                "@robolectric//bazel:android-all",
-            ],
+            deps = android_local_test_deps,
         )
 
 def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):

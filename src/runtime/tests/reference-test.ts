@@ -27,10 +27,10 @@ describe('references', () => {
 
         particle Referencer in 'referencer.js'
           inResult: reads Result
-          outResult: writes Reference<Result>
+          outResult: writes &Result
 
         particle Dereferencer in 'dereferencer.js'
-          inResult: reads Reference<Result>
+          inResult: reads &Result
           outResult: writes Result
 
         recipe
@@ -60,7 +60,7 @@ describe('references', () => {
           value: Text
 
         particle Dereferencer in 'dereferencer.js'
-          inResult: reads Reference<Result>
+          inResult: reads &Result
           outResult: writes Result
 
         recipe
@@ -117,7 +117,7 @@ describe('references', () => {
           value: Text
 
         particle Dereferencer in 'dereferencer.js'
-          inResult: reads [Reference<Result>]
+          inResult: reads [&Result]
           outResult: writes [Result]
 
         recipe
@@ -182,7 +182,7 @@ describe('references', () => {
 
         particle Referencer in 'referencer.js'
           inResult: reads Result
-          outResult: writes Reference<Result>
+          outResult: writes &Result
 
         recipe
           handle0: create 'input:1'
@@ -236,7 +236,7 @@ describe('references', () => {
           value: Text
 
         particle ExtractReference in 'extractReference.js'
-          referenceIn: reads Foo {result: Reference<Result>}
+          referenceIn: reads Foo {result: &Result}
           rawOut: writes Result
 
         recipe
@@ -304,8 +304,8 @@ describe('references', () => {
 
         particle Referencer in 'referencer.js'
           inResult: reads [Result]
-          inFoo: reads Foo {result: Reference<Result>, shortForm: Text}
-          outResult: reads writes [Foo {result: Reference<Result>, shortForm: Text}]
+          inFoo: reads Foo {result: &Result, shortForm: Text}
+          outResult: reads writes [Foo {result: &Result, shortForm: Text}]
 
         recipe
           handle0: create 'input:1'
@@ -409,7 +409,7 @@ describe('references', () => {
           value: Text
 
         particle ExtractReferences in 'extractReferences.js'
-          referenceIn: reads Foo {result: [Reference<Result>]}
+          referenceIn: reads Foo {result: [&Result]}
           rawOut: writes [Result]
 
         recipe
@@ -475,7 +475,7 @@ describe('references', () => {
           value: Text
 
         particle ConstructReferenceCollection in 'constructReferenceCollection.js'
-          referenceOut: writes Foo {result: [Reference<Result>]}
+          referenceOut: writes Foo {result: [&Result]}
           rawIn: reads [Result]
 
         recipe

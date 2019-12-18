@@ -17,7 +17,7 @@ import arcs.core.storage.ProxyMessage.Type
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-    /** Identifier for the [ProxyMessage]. */
+    /** Identifier for the sender of the [ProxyMessage]. */
     open val id: Int?,
     /** [Type] of the message. */
     internal open val type: Type

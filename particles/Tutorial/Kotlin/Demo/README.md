@@ -174,7 +174,7 @@ of the Game as this is what provides the slot for the Board. This
 is shown below:
 
 ```kotlin
-package arcs.tutorials
+package arcs.tutorials.tictactoe
 
 import arcs.Collection
 import arcs.Handle
@@ -182,9 +182,6 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTGame_Events
 import arcs.TTTGame_GameState
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class TTTGame : Particle() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
@@ -206,10 +203,6 @@ class TTTGame : Particle() {
         <div slotid="boardSlot"></div>
         """.trimIndent()
 }
-
-@Retain
-@ExportForCppRuntime("_newTTTGame")
-fun constructTTTGame() = TTTGame().toAddress()
 ```
 
 Next, we implement the Game. This is explained in more detail
@@ -223,9 +216,6 @@ import arcs.Particle
 import arcs.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class TTTBoard : Particle() {
 
@@ -308,30 +298,24 @@ class TTTBoard : Particle() {
             Please hit reset to start a new game.<button on-click="reset">Reset</button>
         """.trimIndent()
 }
-
-@Retain
-@ExportForCppRuntime("_newTTTBoard")
-fun constructTTTBoard() = TTTBoard().toAddress()
 ```
 
 And finally, to build it all we need the BUILD file:
 ```BUILD
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema")
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_particles",
+    "arcs_kt_schema",
+)
 
 arcs_kt_schema(
     name = "game_schemas",
     srcs = ["TTTGame.arcs"],
 )
 
-arcs_kt_binary(
-    name = "TTTBoard",
-    srcs = ["TTTBoard.kt"],
-    deps = [":game_schemas"],
-)
-
-arcs_kt_binary(
-    name = "TTTGame",
-    srcs = ["TTTGame.kt"],
+arcs_kt_particles(
+    name = "particles",
+    srcs = glob("*.kt"),
     deps = [":game_schemas"],
 )
 ```
@@ -382,25 +366,25 @@ game!
 
 Currently you should have a tic-tac-toe board that does nothing.
 Sure, you can click it and see the Events populate, but that is
-still rather boring. Let's make it more fun by adding a human 
+still rather boring. Let's make it more fun by adding a human
 player. By now, that original design we made in the first section
 is probably not in the forefront of your mind, so we'll start by
 looking at our design diagram.
 
-![Tic Tac Toe Design](diagrams/TTT.jpg)  
+![Tic Tac Toe Design](diagrams/TTT.jpg)
 
 From this, we can see that the Human Player needs a Player and
 Move handle, and these handles connect the Game and Human Player.
 We also need to populate the information about the player, so
-we create a store. This updates our Arcs Manifest File to 
+we create a store. This updates our Arcs Manifest File to
 the one [here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTGame.arcs).
 
 Next, we create the human player to take the events stream and
-convert it to a move. This can be viewed in TTTHumanPlayer.kt 
+convert it to a move. This can be viewed in TTTHumanPlayer.kt
 [here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTHumanPlayer.kt).
 
 Next, we need to update the game particle to update the board
-based on the move. This gives us the updated TTTGame file 
+based on the move. This gives us the updated TTTGame file
 [here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTGame.kt).
 
 And finally, as always, we need to add the HumanPlayer to the
@@ -411,3 +395,44 @@ be populate with the avatar set in the resource. By using this
 sample code, this is an "X".
 
 Next up, adding the computer player!
+
+## Execute with Random Compute
+So you can click around the board. While this is cool because it
+means we're on our way to being able to play the game, it is
+rather boring. It also makes it far too easy to win. So let's
+create a computer to play against!
+
+To do this, we need the game to understand that there are two
+players, and they need to alternate turns. As a result we need
+to add a currentPlayer field to gameState. Because we want to
+handle personal player information, such as the name, with care,
+we will make this an id integer. This in turn means we need to
+update Person to include an id.
+
+In addition, we need to add a random computer particle, along
+with the associated additional handles for a second player.
+All of these changes can be viewed here in the [Arcs Manifest
+File](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTGame.arcs).
+
+We also need the game to verify that moves are only accepted from
+the current player and that each player only attempts to move
+when it is their turn. This implementation can be seen in the
+updated
+[Game particle here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTGame.kt).
+
+Inside the human player particle, we need to update it to only
+execute when the human player is the current player. This can
+be seen in the
+[code here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTHumanPlayer.kt).
+
+And now we can get to the whole point of this tutorial, the
+random computer! Within this particle, we need to find the
+empty cells on the board, and then pick one of them at
+random. While this may not be the most exciting computer to
+play against, it is sufficient to see how Arcs works. The
+code for the random computer particle can be
+[viewed here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTRandomComputer.kt).
+
+And, as always, we end with the updated
+[build
+file](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/BUILD).

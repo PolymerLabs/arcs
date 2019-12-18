@@ -233,6 +233,34 @@ describe('manifest parser', () => {
         optionalType: reads * {value}
     `);
   });
+  it('parses inline schemas with any name', () => {
+    parse(`
+      particle Foo
+        anonSchema: reads [* {value: Text, num: Number}]
+    `);
+    parse(`
+      particle Foo
+        union: reads * {value: (Text or Number)}
+    `);
+    parse(`
+      particle Foo
+        optionalType: reads * {value}
+    `);
+  });
+  it('parses inline schemas with no name', () => {
+    parse(`
+      particle Foo
+        anonSchema: reads [{value: Text, num: Number}]
+    `);
+    parse(`
+      particle Foo
+        union: reads {value: (Text or Number)}
+    `);
+    parse(`
+      particle Foo
+        optionalType: reads {value}
+    `);
+  });
   it('parses a schema with a bytes field', () => {
     parse(`
       schema Avatar
@@ -243,7 +271,7 @@ describe('manifest parser', () => {
   it('parses a schema with a reference field', () => {
     parse(`
       schema Product
-        review: Reference<Review>
+        review: &Review
     `);
   });
   it('parses a schema with a reference field (with sugar)', () => {
@@ -255,7 +283,7 @@ describe('manifest parser', () => {
   it('parses a schema with a referenced inline schema', () => {
     parse(`
       schema Product
-        review: Reference<Review {reviewText: Text}>
+        review: &Review {reviewText: Text}
     `);
   });
   it('parses a schema with a referenced inline schema (with sugar)', () => {
@@ -267,7 +295,7 @@ describe('manifest parser', () => {
   it('parses an inline schema with a reference to a schema', () => {
     parse(`
       particle Foo
-        inReview: reads Product {review: Reference<Review>}
+        inReview: reads Product {review: &Review}
     `);
   });
   it('parses an inline schema with a reference to a schema (with sugar)', () => {
@@ -279,7 +307,7 @@ describe('manifest parser', () => {
   it('parses an inline schema with a collection of references to schemas', () => {
     parse(`
       particle Foo
-        inResult: reads Product {review: [Reference<Review>]}
+        inResult: reads Product {review: [&Review]}
     `);
   });
   it('parses an inline schema with a collection of references to schemas (with sugar)', () => {
@@ -291,7 +319,7 @@ describe('manifest parser', () => {
   it('parses an inline schema with a referenced inline schema', () => {
     parse(`
     particle Foo
-      inReview: reads Product {review: Reference<Review {reviewText: Text}> }
+      inReview: reads Product {review: &Review {reviewText: Text} }
     `);
   });
   it('parses an inline schema with a referenced inline schema (with sugar)', () => {
@@ -303,7 +331,7 @@ describe('manifest parser', () => {
   it('parses an inline schema with a collection of references to inline schemas', () => {
     parse(`
       particle Foo
-        productReviews: reads Product {review: [Reference<Review {reviewText: Text}>]}
+        productReviews: reads Product {review: [&Review {reviewText: Text}]}
     `);
   });
   it('parses an inline schema with a collection of references to inline schemas (with sugar)', () => {
@@ -322,8 +350,8 @@ describe('manifest parser', () => {
   it('parses reference types (with sugar)', () => {
     parse(`
       particle Foo
-        inRef: reads &Reference<Foo>
-        outRef: writes &Reference<Bar>
+        inRef: reads &Foo
+        outRef: writes &Bar
     `);
   });
   it('parses refinement types in a schema', () => {
@@ -337,24 +365,69 @@ describe('manifest parser', () => {
     particle Foo
       input: reads Something {value: Text [ (square - 5) < 11 and (square * square > 5) or square == 0] }
     `);
+    parse(`
+    particle Foo
+      input: reads Something {value: Number [value > 0], price: Number [price > 0]} [value > 10 and price < 5]
+    `);
+    parse(`
+    particle Foo
+      input: reads Something {value: Number, price: Number} [value > 10 and price < 5]
+    `);
+  });
+  it('tests the refinement syntax tree', () => {
+    const manifestAst = parse(`
+    particle Foo
+      input: reads Something {value: Text [ a < b and d > 2*2+1 ] }
+    `);
+    const particle = manifestAst[0];
+    const handle = particle.args[0];
+    const htype = handle.type;
+    assert.deepEqual(htype.kind, 'schema-inline', 'Unexpected handle type.');
+    const refExpr = htype.fields[0].type.refinement.expression;
+
+    let root = refExpr;
+    assert.deepEqual(root.kind, 'binary-expression-node');
+    assert.deepEqual(root.operator, 'and');
+
+    root = refExpr.leftExpr;
+    assert.deepEqual(root.kind, 'binary-expression-node');
+    assert.deepEqual(root.operator, '<');
+    assert.deepEqual(root.leftExpr, 'a');
+    assert.deepEqual(root.rightExpr, 'b');
+
+    root = refExpr.rightExpr;
+    assert.deepEqual(root.kind, 'binary-expression-node');
+    assert.deepEqual(root.operator, '>');
+    assert.deepEqual(root.leftExpr, 'd');
+
+    root = refExpr.rightExpr.rightExpr;
+    assert.deepEqual(root.kind, 'binary-expression-node');
+    assert.deepEqual(root.operator, '+');
+    assert.deepEqual(root.rightExpr, 1);
+
+    root = refExpr.rightExpr.rightExpr.leftExpr;
+    assert.deepEqual(root.kind, 'binary-expression-node');
+    assert.deepEqual(root.operator, '*');
+    assert.deepEqual(root.leftExpr, 2);
+    assert.deepEqual(root.rightExpr, 2);
   });
   it('does not parse invalid refinement expressions', () => {
       assert.throws(() => {
-      const manifestAst = parse(`
+      parse(`
       particle Foo
         input: reads Something {value: Text [value <<>>>>> ]}
       `);
       }, `a valid refinement expression`);
 
       assert.throws(() => {
-        const manifestAst = parse(`
+        parse(`
         particle Foo
           input: reads Something {value: Text [ [[ value *- 2 ]}
         `);
         }, `a valid refinement expression`);
 
       assert.throws(() => {
-        const manifestAst = parse(`
+        parse(`
         particle Foo
           input: reads Something {value: Text [ value */ 2 ]}
         `);

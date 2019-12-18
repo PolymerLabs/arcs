@@ -1,4 +1,10 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_binary", "arcs_kt_schema")
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_particles",
+    "arcs_kt_schema",
+)
+
+licenses(["notice"])
 
 arcs_kt_schema(
     name = "store_schemas",
@@ -6,8 +12,9 @@ arcs_kt_schema(
     package = "arcs.tutorials",
 )
 
-arcs_kt_binary(
+arcs_kt_particles(
     name = "JsonStore",
     srcs = ["JsonStore.kt"],
+    package = "arcs.tutorials",
     deps = [":store_schemas"],
 )

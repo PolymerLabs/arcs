@@ -14,9 +14,6 @@ package sdk.kotlin.javatests.arcs
 import arcs.Handle
 import arcs.Particle
 import arcs.Singleton
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class AutoRenderTest : Particle() {
     private val data = Singleton(this, "data") { AutoRenderTest_Data("") }
@@ -26,7 +23,3 @@ class AutoRenderTest : Particle() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = renderOutput()
     override fun getTemplate(slotName: String): String = data.get()?.txt ?: "empty"
 }
-
-@Retain
-@ExportForCppRuntime("_newAutoRenderTest")
-fun constructAutoRenderTest() = AutoRenderTest().toAddress()

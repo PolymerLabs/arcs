@@ -19,9 +19,6 @@ import arcs.TTTHumanPlayer_Events
 import arcs.TTTHumanPlayer_GameState
 import arcs.TTTHumanPlayer_MyMove
 import arcs.TTTHumanPlayer_Player
-import arcs.addressable.toAddress
-import kotlin.native.Retain
-import kotlin.native.internal.ExportForCppRuntime
 
 class TTTHumanPlayer : Particle() {
     private val gameState = Singleton(this, "gameState") { TTTHumanPlayer_GameState(
@@ -49,7 +46,3 @@ class TTTHumanPlayer : Particle() {
         }
     }
 }
-
-@Retain
-@ExportForCppRuntime("_newTTTHumanPlayer")
-fun constructTTTHumanPlayer() = TTTHumanPlayer().toAddress()

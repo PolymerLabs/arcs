@@ -593,7 +593,7 @@ ${e.message}
                 throw new ManifestError(node.location, `Could not merge schema aliases`);
               }
             }
-            node.model = new EntityType(schema);
+            node.model = new EntityType(schema, node.refinement);
             delete node.fields;
             return;
           }

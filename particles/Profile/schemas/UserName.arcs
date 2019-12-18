@@ -3,4 +3,4 @@ schema UserName
 
 import 'Share.arcs'
 schema UserNameShare extends Share
-  ref: Reference<UserName>
+  ref: &UserName
