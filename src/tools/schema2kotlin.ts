@@ -22,7 +22,7 @@ const keywords = [
   'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
   'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
   'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'it', 'internalId', 'ready'
+  'suspend', 'tailrec', 'vararg', 'it', 'internalId', 'isSet'
 ];
 
 const typeMap = {
@@ -131,31 +131,29 @@ class ${name}() : Entity<${name}>() {
         return ${withFields(this.fieldSets.join(' || '))}${withoutFields('true')}
     }
 
-  override fun decodeEntity(encoded: ByteArray): ${name}? {
-    if (encoded.isEmpty()) return null
+    override fun decodeEntity(encoded: ByteArray): ${name}? {
+        if (encoded.isEmpty()) return null
 
-    val decoder = StringDecoder(encoded)
-    internalId = decoder.decodeText()
-    decoder.validate("|")
-    ${withFields(`  for (_i in 0 until ${fieldCount}) {
-         if (decoder.done()) break
-         val name = decoder.upTo(':').utf8ToString()
-         when (name) {
-           ${this.decode.join('\n           ')}
-         }
-         decoder.validate("|")
-        }
-   `)}
+        val decoder = StringDecoder(encoded)
+        internalId = decoder.decodeText()
+        decoder.validate("|")
+        ${withFields(`for (_i in 0 until ${fieldCount}) {
+            if (decoder.done()) break
+            val name = decoder.upTo(':').utf8ToString()
+            when (name) {
+                ${this.decode.join('\n                ')}
+            }
+            decoder.validate("|")
+        }`)}
+        return this
+    }
 
-    return this
-  }
-
-  override fun encodeEntity(): NullTermByteArray {
-    val encoder = StringEncoder()
-    encoder.encode("", internalId)
-    ${this.encode.join('\n    ')}
-    return encoder.toNullTermByteArray()
-  }
+    override fun encodeEntity(): NullTermByteArray {
+        val encoder = StringEncoder()
+        encoder.encode("", internalId)
+        ${this.encode.join('\n        ')}
+        return encoder.toNullTermByteArray()
+    }
 }
 ${typeDecls}
 `;
