@@ -82,7 +82,7 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
         if ((apply
                 && model.applyOperation(
                     new CrdtSet.Operation.Remove<>(vv.getVersionMap(), actor, entry)))
-            || !apply && effective) {
+            || (!apply && effective)) {
           removed.put(removed.getLength(), entry.value.value);
         }
       }
