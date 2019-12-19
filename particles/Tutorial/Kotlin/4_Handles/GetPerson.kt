@@ -18,7 +18,7 @@ import arcs.sdk.kotlin.Singleton
  * Sample WASM Particle.
  */
 class GetPerson : Particle() {
-    private val person = Singleton(this, "person") { GetPerson_Person("Human") }
+    private val person = Singleton(this, "person") { GetPerson_Person() }
 
     override fun getTemplate(slotName: String) = """
         <input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">

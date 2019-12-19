@@ -15,11 +15,7 @@ import arcs.sdk.kotlin.Collection
 import arcs.sdk.kotlin.Particle
 
 class ServicesTest : Particle() {
-    private val output = Collection(this, "output") { ServicesTest_Output(
-        call = "",
-        tag = "",
-        payload = ""
-    ) }
+    private val output = Collection(this, "output") { ServicesTest_Output() }
 
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")

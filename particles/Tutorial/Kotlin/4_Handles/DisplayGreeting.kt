@@ -19,7 +19,7 @@ import arcs.sdk.kotlin.Singleton
  * Sample WASM Particle.
  */
 class DisplayGreeting : Particle() {
-    private val person = Singleton(this, "person") { DisplayGreeting_Person("Human") }
+    private val person = Singleton(this, "person") { DisplayGreeting_Person() }
 
     override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
 

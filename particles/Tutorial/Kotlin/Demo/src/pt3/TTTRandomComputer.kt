@@ -19,27 +19,17 @@ import arcs.sdk.kotlin.TTTRandomComputer_MyMove
 import arcs.sdk.kotlin.TTTRandomComputer_Player
 
 class TTTRandomComputer : Particle() {
-    private val defaultGameState = TTTRandomComputer_GameState(
-        board = ",,,,,,,,",
-        currentPlayer = (0..1).random().toDouble()
-    )
-    private val defaultMove = TTTRandomComputer_MyMove(-1.0)
-    private val defaultPlayer = TTTRandomComputer_Player(
-        name = "Computer",
-        avatar = "",
-        id = -1.0
-    )
 
-    private val gameState = Singleton(this, "gameState") { defaultGameState }
-    private val myMove = Singleton(this, "myMove") { defaultMove }
-    private val player = Singleton(this, "player") { defaultPlayer }
+    private val gameState = Singleton(this, "gameState") { TTTRandomComputer_GameState() }
+    private val myMove = Singleton(this, "myMove") { TTTRandomComputer_MyMove() }
+    private val player = Singleton(this, "player") { TTTRandomComputer_Player() }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(gameState)
 
     override fun onHandleUpdate(handle: Handle) {
         if (gameState.get()?.currentPlayer != player.get()?.id) return
 
-        val gs = gameState.get() ?: defaultGameState
+        val gs = gameState.get() ?: TTTRandomComputer_GameState()
 
         val boardArr = gs.board.split(",")
         val emptyCells = mutableListOf<Double>()

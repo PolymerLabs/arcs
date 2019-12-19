@@ -15,18 +15,9 @@ import arcs.sdk.kotlin.Particle
 import arcs.sdk.kotlin.Singleton
 
 class SingletonApiTest : Particle() {
-    private val in_ = Singleton(this, "inHandle") { SingletonApiTest_InHandle(
-        num = 0.0,
-        txt = ""
-    ) }
-    private val out_ = Singleton(this, "outHandle") { SingletonApiTest_OutHandle(
-        num = 0.0,
-        txt = ""
-    ) }
-    private val io_ = Singleton(this, "ioHandle") { SingletonApiTest_IoHandle(
-        num = 0.0,
-        txt = ""
-    ) }
+    private val in_ = Singleton(this, "inHandle") { SingletonApiTest_InHandle() }
+    private val out_ = Singleton(this, "outHandle") { SingletonApiTest_OutHandle() }
+    private val io_ = Singleton(this, "ioHandle") { SingletonApiTest_IoHandle() }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {

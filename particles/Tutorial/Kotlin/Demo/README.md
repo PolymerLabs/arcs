@@ -436,3 +436,93 @@ code for the random computer particle can be
 And, as always, we end with the updated
 [build
 file](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/BUILD).
+
+## Exclusivity to Avoid Infinity 
+Alright, now we've got our game setup, and you can play it, but it isn't quite meeting all our
+requirements. Let's take a look to see how we're doing:
+
+ [X] 1. Play Tic Tac Toe with the traditional rules.
+ [X] 2. Be able to have a human play against a computer.
+ [] 3. The players (human or computer) may make invalid moves at invalid times.
+ [X] 4. Personal information, such as names, should be restricted to the components that need to know about them.
+ [] 5. The system should say who's turn it is.
+ [] 6. The system should congratulate the winner by name.
+ [] 7. The system should let you reset the game.
+
+Three requirements down, only four to go! While this may sound like a lot, we've set ourselves up
+to make them really easy to tackle.
+
+Before we get to the code, it's important we remember that particles are reactive in nature. In
+practice, this means anytime we update any handle that a particle has access to, `onHandleUpdate`
+will be called. In the context of our Game particle, this has some deep reaching consequences.
+
+Game should update GameState within `onHandlUpdate`, however `onHandleUpdate` will be called 
+anytime a handle input to Game is updated. This includes GameState. Thus, if we are not careful,
+we can easily create an infinite loop. To avoid this, we extensively use `if` statements to act as
+guards when we go to set a handle. Let's look at this in practice with a snippet of code from
+`TTTGame.kt`:
+
+```kotlin
+if (gs.gameOver != true) {
+    // Check the handle updated matches playerOne and that playerOne is the current player.
+    // This also ensures the handle updated was NOT gameState
+    if (handle.name == "playerOneMove" && gs.currentPlayer == 0.0) {
+        // applyMove sets gameState
+        applyMove(
+            mv = mv1.move.toInt(),
+            avatar = p1.avatar,
+            boardList = boardList,
+            gs = gs
+        )
+    // Check the handle updated matches playerTwo and that playerTwo is the current player.
+    // This also ensures the handle updated was NOT gameState
+    } else if (handle.name == "playerTwoMove" && gs.currentPlayer == 1.0) {
+        // applyMove sets gameState
+        applyMove(
+            mv = mv2.move.toInt(),
+            avatar = p2.avatar,
+            boardList = boardList,
+            gs = gs
+        )
+    }
+}
+```
+
+The rest of the changes are fairly straight forward. We update the template and create a model
+to inform users who is the current player. To congratulate the winner by name, we first have to know
+someone has won. We do this by creating an array that represents all the combinations a player can
+win by, then check if any player has claimed all those cells. If so, we congratulate them by using
+the template and model. 
+
+And finally, we need to reset the game. When the Game sees a "reset" event, it simply sets gameState
+back to the original condition and resets the player's moves. You can see the completed TTTGame code
+[here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt4/TTTGame.kt).
+
+And, that's it, we've met all of our requirements! But wait, just like every great info-mercial,
+there's more! Checkout the next (and final) tutorial to see how Arcs lets us combine these particles
+to create 2 more variations of tic-tac-toe without writing another line of Kotlin code.
+
+## Extensibility via a Recipe
+
+By now you're probably thinking what could we possibly have left to cover? After all, in the last
+tutorial we finished our tic-tac-toe game, and even checked it against the requirements! Well,
+while this is true, there is one very nifty feature of Arcs that we haven't had a chance to show
+off yet. And, well, this being written by an Arcs engineers, we'd like to show off just a little.
+
+So we've created a tic-tac-toe game where a human can play against a computer. But what if the user
+instead wanted to play against one of their friends? Or what if they wanted to watch two computer's
+play? Because of the extensibility of the system, we can simply create new recipes with the existing
+particles to create these systems. 
+
+We just change whether a `TTTHumanPlayer` particle or a 
+`TTTRandomComputer` particle is updating the associated `move` handle.  This means we can create
+these two variants of tic-tac-toe without writing another line of Kotlin code!  You can see all of
+this in the
+[Arcs Manifest file.](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/total/TTTGame.arcs)
+
+Upon closer inspection of this file, you'll also note we changed the "X"s and "O"s to be emojis.
+This is because Arcs supports Unicode and, once again, we wanted a chance to show off just a little.
+
+And there you have it! Three fully functional tic-tac-toe games. By now you should feel comfortable
+working with particles and handles and combining them to form recipes. These recipes allow you as a
+developer to maintain user sovereignty from design through to implementation.

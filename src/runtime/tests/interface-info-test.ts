@@ -17,7 +17,7 @@ describe('interface', () => {
   it('round trips interface info', async () => {
     const interfStr = `interface HostedInterface
   reads ~a
-  name: writes Text {name: Text}
+  name: writes Name {name: Text}
   root: consumes? Slot
   other: provides [Slot]`;
     const manifest = await Manifest.parse(interfStr);

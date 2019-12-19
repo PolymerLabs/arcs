@@ -15,12 +15,7 @@ import arcs.sdk.kotlin.Singleton
 
 class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
     TestBase<EntityClassApiTest_Errors>(ctor) {
-    private val unused1 = Singleton(this, "data") { EntityClassApiTest_Data(
-        num = 0.0,
-        txt = "",
-        lnk = "",
-        flg = false
-    ) }
+    private val unused1 = Singleton(this, "data") { EntityClassApiTest_Data() }
     private val unused2 = Singleton(this, "empty") { EntityClassApiTest_Empty() }
 
     constructor() : this({ txt: String -> EntityClassApiTest_Errors(txt) })
@@ -61,12 +56,7 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
 
     @Test
     fun testEncodingDecoding() {
-        val empty = EntityClassApiTest_Data(
-            num = 0.0,
-            txt = "",
-            lnk = "",
-            flg = false
-        )
+        val empty = EntityClassApiTest_Data()
         val encodedEmpty = empty.encodeEntity()
         val decodedEmpty = EntityClassApiTest_Data(
             num = 10.0,

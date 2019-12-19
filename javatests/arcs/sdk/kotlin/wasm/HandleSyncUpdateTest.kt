@@ -17,32 +17,16 @@ import arcs.sdk.kotlin.Particle
 import arcs.sdk.kotlin.Singleton
 
 class HandleSyncUpdateTest : Particle() {
-    private val sng = Singleton(this, "sng") { HandleSyncUpdateTest_Sng(
-        num = 0.0,
-        txt = "",
-        lnk = "",
-        flg = false
-    ) }
-    private val col = Collection(this, "col") { HandleSyncUpdateTest_Col(
-        num = 0.0,
-        txt = "",
-        lnk = "",
-        flg = false
-    ) }
-    private val res = Collection(this, "res") { HandleSyncUpdateTest_Res(
-        txt = "",
-        num = 0.0
-    ) }
+    private val sng = Singleton(this, "sng") { HandleSyncUpdateTest_Sng() }
+    private val col = Collection(this, "col") { HandleSyncUpdateTest_Col() }
+    private val res = Collection(this, "res") { HandleSyncUpdateTest_Res() }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val out = HandleSyncUpdateTest_Res(
-            txt = "",
-            num = 0.0
-        )
+        val out = HandleSyncUpdateTest_Res()
         out.txt = "update:${handle.name}"
         if (handle.name == "sng") {
             val data = (handle as Singleton<*>).get() as HandleSyncUpdateTest_Sng

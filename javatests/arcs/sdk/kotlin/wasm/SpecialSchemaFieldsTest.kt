@@ -17,11 +17,7 @@ import arcs.sdk.kotlin.utf8ToString
 class SpecialSchemaFieldsTest(
     ctor: (String) -> SpecialSchemaFieldsTest_Errors
 ) : TestBase<SpecialSchemaFieldsTest_Errors>(ctor) {
-    private val unused = Singleton(this, "fields") { SpecialSchemaFieldsTest_Fields(
-        for_ = "",
-        internal_id = 0.0,
-        internalId_ = 0.0
-    ) }
+    private val unused = Singleton(this, "fields") { SpecialSchemaFieldsTest_Fields() }
 
     constructor() : this({ txt: String -> SpecialSchemaFieldsTest_Errors(txt) })
 
@@ -35,11 +31,7 @@ class SpecialSchemaFieldsTest(
 
     @Test
     fun testLanguageKeywordField() {
-        val s = SpecialSchemaFieldsTest_Fields(
-            for_ = "",
-            internal_id = 0.0,
-            internalId_ = 0.0
-        )
+        val s = SpecialSchemaFieldsTest_Fields()
         assertEquals("Keyword field `for_` should start as assigned Value", "", s.for_)
         s.for_ = "for"
         assertEquals("language keyword field gets is mutable", "for", s.for_)
@@ -58,11 +50,7 @@ class SpecialSchemaFieldsTest(
 
     @Test
     fun testInternalIdField() {
-        val s = SpecialSchemaFieldsTest_Fields(
-            for_ = "",
-            internal_id = 0.0,
-            internalId_ = 0.0
-        )
+        val s = SpecialSchemaFieldsTest_Fields()
         assertEquals(
             "Keyword field `internalId_` should start as assigned value",
             0.0,

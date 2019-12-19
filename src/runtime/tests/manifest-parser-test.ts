@@ -340,6 +340,28 @@ describe('manifest parser', () => {
         productReviews: reads Product {review: [&Review {reviewText: Text}]}
     `);
   });
+  it('parses typenames with reserved type names as a prefix (Boolean)', () => {
+    parse(`
+      particle Foo
+        inRef: reads Booleanlike
+    `);
+  });
+  it('fails to parse reserved type names (Boolean)', () => {
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          inRef: reads Boolean
+      `);
+    }, 'Expected an upper case identifier but "Boolean" found.');
+  });
+  it('fails to parse reserved type names (URL)', () => {
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          outRef: writes URL
+      `);
+    }, 'Expected an upper case identifier but "URL" found.');
+  });
   it('parses reference types', () => {
     parse(`
       particle Foo
@@ -432,6 +454,20 @@ describe('manifest parser', () => {
           input: reads Something {value: Text [ value */ 2 ]}
         `);
         }, `a valid refinement expression`);
+  });
+  it('parses nested referenced inline schemas', () => {
+    parse(`
+      particle Foo
+        mySchema: reads MySchema {value: &OtherSchema {name: Text}}
+    `);
+  });
+  it('fails to parse nested (non-referenced) inline schemas', () => {
+    assert.throws(() => {
+    parse(`
+      particle Foo
+        mySchema: reads MySchema {value: OtherSchema {name: Text}}
+    `);
+    }, 'a schema type');
   });
   it('parses require section using local name', () => {
     parse(`

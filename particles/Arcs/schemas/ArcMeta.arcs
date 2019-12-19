@@ -15,4 +15,4 @@ schema ArcMeta
 
 import '../../Profile/schemas/Share.arcs'
 schema ArcMetaShare extends Share
-  ref: Reference<ArcMeta>
+  ref: &ArcMeta

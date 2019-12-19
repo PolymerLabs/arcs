@@ -17,18 +17,9 @@ import arcs.sdk.kotlin.Particle
 import arcs.sdk.kotlin.Singleton
 
 class UnicodeTest : Particle() {
-    private val sng = Singleton(this, "sng") { UnicodeTest_Sng(
-        pass = "",
-        src = ""
-    ) }
-    private val col = Collection(this, "col") { UnicodeTest_Col(
-        pass = "",
-        src = ""
-    ) }
-    private val res = Collection(this, "res") { UnicodeTest_Res(
-        pass = "",
-        src = ""
-    ) }
+    private val sng = Singleton(this, "sng") { UnicodeTest_Sng() }
+    private val col = Collection(this, "col") { UnicodeTest_Col() }
+    private val res = Collection(this, "res") { UnicodeTest_Res() }
 
     override fun onHandleUpdate(handle: Handle) {
         val out = UnicodeTest_Res(pass = "", src = "")

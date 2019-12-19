@@ -11,14 +11,14 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.kotlin.Collection
-import arcs.sdk.kotlin.Handle
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.Singleton
-import arcs.sdk.kotlin.TTTHumanPlayer_Events
-import arcs.sdk.kotlin.TTTHumanPlayer_GameState
-import arcs.sdk.kotlin.TTTHumanPlayer_MyMove
-import arcs.sdk.kotlin.TTTHumanPlayer_Player
+import arcs.Collection
+import arcs.Handle
+import arcs.Particle
+import arcs.Singleton
+import arcs.TTTHumanPlayer_Events
+import arcs.TTTHumanPlayer_GameState
+import arcs.TTTHumanPlayer_MyMove
+import arcs.TTTHumanPlayer_Player
 
 class TTTHumanPlayer : Particle() {
     private val gameState = Singleton(this, "gameState") { TTTHumanPlayer_GameState() }
@@ -27,12 +27,12 @@ class TTTHumanPlayer : Particle() {
     private val player = Singleton(this, "player") { TTTHumanPlayer_Player() }
 
     override fun onHandleUpdate(handle: Handle) {
-        if (events.size <= 0) return
+        if (events.size <= 0 || gameState.get()?.currentPlayer != player.get()?.id) return
 
         // Get the element with the largest time as this will be the most recent.
         val event = events.sortedBy { it.time }.last()
         // Set the move
-        if (event.type == "move" && event.time > -1.0) {
+        if (event.type == "move") {
             myMove.set(TTTHumanPlayer_MyMove(event.move))
         }
     }

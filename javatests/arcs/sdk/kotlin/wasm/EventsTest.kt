@@ -15,7 +15,7 @@ import arcs.sdk.kotlin.Particle
 import arcs.sdk.kotlin.Singleton
 
 class EventsTest : Particle() {
-    private val output = Singleton(this, "output") { EventsTest_Output("") }
+    private val output = Singleton(this, "output") { EventsTest_Output() }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         output.set(EventsTest_Output(txt = "event:$slotName:$eventName:${eventData["info"]}"))

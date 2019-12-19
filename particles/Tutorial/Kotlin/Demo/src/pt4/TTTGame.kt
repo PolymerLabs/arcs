@@ -11,16 +11,16 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.kotlin.Collection
-import arcs.sdk.kotlin.Handle
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.Singleton
-import arcs.sdk.kotlin.TTTGame_Events
-import arcs.sdk.kotlin.TTTGame_GameState
-import arcs.sdk.kotlin.TTTGame_PlayerOne
-import arcs.sdk.kotlin.TTTGame_PlayerOneMove
-import arcs.sdk.kotlin.TTTGame_PlayerTwo
-import arcs.sdk.kotlin.TTTGame_PlayerTwoMove
+import arcs.Collection
+import arcs.Handle
+import arcs.Particle
+import arcs.Singleton
+import arcs.TTTGame_Events
+import arcs.TTTGame_GameState
+import arcs.TTTGame_PlayerOne
+import arcs.TTTGame_PlayerOneMove
+import arcs.TTTGame_PlayerTwo
+import arcs.TTTGame_PlayerTwoMove
 
 class TTTGame : Particle() {
     private val defaultGame = TTTGame_GameState(
@@ -49,7 +49,7 @@ class TTTGame : Particle() {
     )
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.get() == null) {
+        if (gameState.get()?.board == null) {
             gameState.set(defaultGame)
         }
         if (handle.name == "playerOne" && playerOne.get()?.id != 0.0) {
@@ -86,7 +86,7 @@ class TTTGame : Particle() {
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val gs = gameState.get() ?: TTTGame_GameState()
+        val gs = gameState.get() ?: defaultGame
         val p1 = playerOne.get() ?: TTTGame_PlayerOne()
         val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
         val mv1 = playerOneMove.get() ?: TTTGame_PlayerOneMove()

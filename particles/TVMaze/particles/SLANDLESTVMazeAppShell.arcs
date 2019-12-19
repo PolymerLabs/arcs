@@ -2,7 +2,7 @@ import '../../Profile/schemas/User.arcs'
 import '../../Profile/schemas/UserName.arcs'
 import '../../Common/schemas/Description.arcs'
 import '../schemas/TVMazeShow.arcs'
-import '../schemas/Text.arcs'
+import '../schemas/Info.arcs'
 
 particle SlandleTVMazeAppShell in './js/TVMazeAppShell.js'
   recentShows: reads [TVMazeShow]
@@ -13,7 +13,7 @@ particle SlandleTVMazeAppShell in './js/TVMazeAppShell.js'
   friends: reads [User]
   boxedUserNames: reads [UserName]
   watchers: reads writes [User]
-  watcherText: writes Text
+  watcherText: writes Info
   descriptions: writes [Description]
   root: `consumes Slot
     shows: `provides Slot
