@@ -11,12 +11,12 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.Handle
-import arcs.Particle
-import arcs.Singleton
-import arcs.TTTRandomComputer_GameState
-import arcs.TTTRandomComputer_MyMove
-import arcs.TTTRandomComputer_Player
+import arcs.sdk.kotlin.Handle
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.Singleton
+import arcs.sdk.kotlin.TTTRandomComputer_GameState
+import arcs.sdk.kotlin.TTTRandomComputer_MyMove
+import arcs.sdk.kotlin.TTTRandomComputer_Player
 
 class TTTRandomComputer : Particle() {
 

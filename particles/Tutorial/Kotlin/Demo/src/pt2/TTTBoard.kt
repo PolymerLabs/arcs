@@ -17,6 +17,7 @@ import arcs.sdk.kotlin.Particle
 import arcs.sdk.kotlin.Singleton
 import arcs.sdk.kotlin.TTTBoard_Events
 import arcs.sdk.kotlin.TTTBoard_GameState
+
 class TTTBoard : Particle() {
 
     private val gameState = Singleton(this, "gameState") { TTTBoard_GameState() }
