@@ -48,6 +48,7 @@ import {Flags} from './flags.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
+import { StorageKeyParser } from './storageNG/storage-key-parser.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -272,7 +273,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const storageProviderFactory = Flags.useNewStorageStack ? null : manifest.storageProviderFactory;
     const id = Id.fromString(manifest.meta.name);
-    const storageKey = manifest.meta.storageKey;
+    const storageKey = Flags.useNewStorageStack ? StorageKeyParser.parse(manifest.meta.storageKey) : manifest.meta.storageKey;
     const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, storageProviderFactory, context, inspectorFactory});
 
     await Promise.all(manifest.stores.map(async storeStub => {
