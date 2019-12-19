@@ -14,12 +14,10 @@ package arcs.sdk.kotlin.wasm
 import arcs.sdk.kotlin.Collection
 import arcs.sdk.kotlin.Entity
 import arcs.sdk.kotlin.Particle
-
-import kotlin.test.Asserter
 import kotlin.AssertionError
+import kotlin.test.Asserter
 
-
-open class TestBase <T: Entity<T>> (val ctor: (txt: String) -> T): Particle(), Asserter {
+open class TestBase <T : Entity<T>> (val ctor: (txt: String) -> T) : Particle(), Asserter {
     private val errors = Collection(this, "errors") { ctor("") }
 
     private fun <T : Entity<T>> assertContainerEqual(
@@ -33,27 +31,29 @@ open class TestBase <T: Entity<T>> (val ctor: (txt: String) -> T): Particle(), A
 
         // Convert result values to strings and sort them when checking an unordered container.
         val converted = container.map(converter)
-        val res = if(isOrdered) converted else converted.sorted()
+        val res = if (isOrdered) converted else converted.sorted()
 
-        val comparison  = expected zip res
-        val marks = comparison.map { if(it.first == it.second) " " else "*"}
+        val comparison = expected zip res
+        val marks = comparison.map { if (it.first == it.second) " " else "*" }
         val ok = marks.none { it.contains("*") }
 
         if (!ok) {
             val ordering = if (isOrdered) "ordered" else "unordered"
-            val comparisonStrings = comparison.map { "Expected: ${it.first}\t|\tActual: ${it.second}"}
+            val comparisonStrings = comparison.map {
+                "Expected: ${it.first}\t|\tActual: ${it.second}"
+            }
             val mismatches = (marks zip comparisonStrings).map { "${it.first} ${it.second}" }
 
-            fail("Mismatched items in $ordering container: ${mismatches.joinToString(prefix="\n", separator = "\n")}")
+            fail("Mismatched items in $ordering container: " +
+                mismatches.joinToString(prefix = "\n", separator = "\n"))
         }
     }
-
 
     override fun fail(message: String?): Nothing {
         val err = if (message == null) ctor("Failure") else ctor(message)
         errors.store(err)
 
-        if(message == null)
+        if (message == null)
             throw AssertionError()
         else
             throw AssertionError(message)
@@ -61,7 +61,8 @@ open class TestBase <T: Entity<T>> (val ctor: (txt: String) -> T): Particle(), A
 
     fun assertFalse(message: String?, actual: Boolean) = super.assertTrue(message, !actual)
 
-    fun assertFalse(lazyMessage: () -> String?, actual: Boolean) = super.assertTrue(lazyMessage, !actual)
-
+    fun assertFalse(
+        lazyMessage: () -> String?,
+        actual: Boolean
+    ) = super.assertTrue(lazyMessage, !actual)
 }
-
