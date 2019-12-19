@@ -32,7 +32,7 @@ import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
 import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import {DontTrace} from '../tracelib/systrace.js';
+import {DontTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 
 export type StartRenderOptions = {
@@ -47,6 +47,7 @@ export type StopRenderOptions = {
   slotName: string;
 };
 
+@SystemTrace
 export class ParticleExecutionHost {
   private readonly _apiPorts: PECOuterPort[];
   private readonly _portByParticle = new Map<Particle, PECOuterPort>();
