@@ -9,7 +9,7 @@
  */
 
 import {firebase, FirebaseDriver, FirebaseStorageKey, FirebaseAppCache} from '../storageNG/drivers/firebase.js';
-import {Exists} from '../storageNG/drivers/driver-factory.js';
+import {Exists} from '../storageNG/drivers/driver.js';
 import {assert} from '../../platform/chai-web.js';
 
 const testKey = 'AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8';

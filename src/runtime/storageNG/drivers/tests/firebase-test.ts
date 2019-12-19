@@ -10,7 +10,7 @@
 
 import {Runtime} from '../../../runtime.js';
 import {assert} from '../../../../platform/chai-web.js';
-import {Exists} from '../driver-factory.js';
+import {Exists} from '../driver.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../../testing/mock-firebase.js';
 import {assertThrowsAsync} from '../../../../testing/test-util.js';
 

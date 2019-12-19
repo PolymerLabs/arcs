@@ -11,7 +11,8 @@
 
 import {firebase, FirebaseStorageKey, FirebaseStorageDriverProvider, FirebaseDriver, FirebaseAppCache} from '../drivers/firebase.js';
 import {StorageKey} from '../storage-key.js';
-import {Exists, DriverFactory} from '../drivers/driver-factory.js';
+import {DriverFactory} from '../drivers/driver-factory.js';
+import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {assert} from '../../../platform/chai-web.js';
 
@@ -363,5 +364,3 @@ export class MockFirebaseStorageKey extends FirebaseStorageKey {
     super('test-project', 'test.domain', 'testKey', location);
   }
 }
-
-

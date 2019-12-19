@@ -23,7 +23,7 @@ import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ArcType, SingletonType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
-import {DriverFactory, Exists} from '../storageNG/drivers/driver-factory.js';
+import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {VolatileStorageKey, VolatileDriver} from '../storageNG/drivers/volatile.js';
 import {Flags} from '../flags.js';
 import {StorageKey} from '../storageNG/storage-key.js';

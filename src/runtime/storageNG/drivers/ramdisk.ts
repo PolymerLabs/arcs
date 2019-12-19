@@ -10,8 +10,10 @@
 
 import {StorageKey} from '../storage-key.js';
 import {Runtime} from '../../runtime.js';
-import {StorageDriverProvider, Exists, DriverFactory} from './driver-factory.js';
+import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {VolatileDriver} from './volatile.js';
+import {StorageKeyParser} from '../storage-key-parser.js';
+import {Exists} from './driver.js';
 
 export class RamDiskStorageKey extends StorageKey {
   readonly unique: string;
@@ -64,6 +66,7 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
 
   static register() {
     DriverFactory.register(new RamDiskStorageDriverProvider());
+    StorageKeyParser.addParser('ramdisk', RamDiskStorageKey.fromString);
   }
 }
 

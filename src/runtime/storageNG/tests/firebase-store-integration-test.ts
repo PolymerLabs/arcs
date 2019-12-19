@@ -11,7 +11,8 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Store, ProxyMessageType} from '../store.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-count.js';
-import {Exists, DriverFactory} from '../drivers/driver-factory.js';
+import {DriverFactory} from '../drivers/driver-factory.js';
+import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../testing/mock-firebase.js';
 import {CountType} from '../../type.js';

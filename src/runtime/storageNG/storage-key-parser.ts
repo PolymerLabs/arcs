@@ -9,8 +9,6 @@
  */
 import {StorageKey} from './storage-key.js';
 import {VolatileStorageKey} from './drivers/volatile.js';
-import {RamDiskStorageKey} from './drivers/ramdisk.js';
-import {FirebaseStorageKey} from './drivers/firebase.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 
 type ParserTopLevel = (key: string) => StorageKey;
@@ -27,13 +25,12 @@ type Parser = (key: string, parse: ParserTopLevel) => StorageKey;
 export class StorageKeyParser {
   private static parsers = StorageKeyParser.getDefaultParsers();
 
+  private static defaultParsers: [string, Parser][] = [
+    ['reference-mode', ReferenceModeStorageKey.fromString]
+  ];
+
   private static getDefaultParsers(): Map<string, Parser> {
-    return new Map<string, Parser>([
-      ['volatile', VolatileStorageKey.fromString],
-      ['firebase', FirebaseStorageKey.fromString],
-      ['ramdisk', RamDiskStorageKey.fromString],
-      ['reference-mode', ReferenceModeStorageKey.fromString]
-    ]);
+    return new Map<string, Parser>(this.defaultParsers);
   }
 
   static parse(key: string): StorageKey {
@@ -58,5 +55,9 @@ export class StorageKeyParser {
       throw new Error(`Parser for storage key protocol ${protocol} already exists.`);
     }
     this.parsers.set(protocol, parser);
+  }
+
+  static addDefaultParser(protocol: string, parser: Parser) {
+    this.defaultParsers.push([protocol, parser]);
   }
 }
