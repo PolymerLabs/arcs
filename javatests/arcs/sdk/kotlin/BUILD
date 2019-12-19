@@ -35,7 +35,10 @@ arcs_kt_particles(
     name = "test-module",
     srcs = glob(
         ["wasm/*.kt"],
-        exclude = ["wasm/TestBase.kt", "wasm/Test.kt"],
+        exclude = [
+            "wasm/TestBase.kt",
+            "wasm/Test.kt",
+        ],
     ),
     jvm = False,
     package = "arcs.sdk.kotlin.wasm",
@@ -48,7 +51,10 @@ arcs_kt_particles(
 
 arcs_kt_library(
     name = "TestBase",
-    srcs = ["wasm/TestBase.kt", "wasm/Test.kt"],
+    srcs = [
+        "wasm/Test.kt",
+        "wasm/TestBase.kt",
+    ],
     jvm = False,
     deps = [":schemas"],
 )
