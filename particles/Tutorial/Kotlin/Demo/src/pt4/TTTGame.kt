@@ -49,7 +49,7 @@ class TTTGame : Particle() {
     )
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.get() == null) {
+        if (gameState.get()?.board == null) {
             gameState.set(defaultGame)
         }
         if (handle.name == "playerOne" && playerOne.get()?.id != 0.0) {
@@ -86,7 +86,7 @@ class TTTGame : Particle() {
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val gs = gameState.get() ?: TTTGame_GameState()
+        val gs = gameState.get() ?: defaultGame
         val p1 = playerOne.get() ?: TTTGame_PlayerOne()
         val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
         val mv1 = playerOneMove.get() ?: TTTGame_PlayerOneMove()
