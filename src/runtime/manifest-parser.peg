@@ -863,25 +863,25 @@ RecipeParticle
 
 // TODO(cypher1): s/dir/direction/ to match slot connections and the rest of the code base
 RecipeParticleConnection
-  = param: NameWithColon? direction:SlotDirection target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param: NameWithColon? direction:(SlotDirection / Direction) target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
-    // RecipeParticleSlotConnection
-    return toAstNode<AstNode.RecipeParticleSlotConnection>({
-      kind: 'slot-connection',
-      param: param || '*',
-      direction,
-      target: optional(target, t => t[1], toAstNode<AstNode.ParticleConnectionTargetComponents>({
-        kind: 'handle-connection-components',
-        name: null,
-        particle: null,
-        tags: []
-        }
-      )),
-      dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
-    });
-  }
-  / param:NameWithColon? direction:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
-  {
+    if (direction === 'consumes' || direction === 'provides') {
+      // RecipeParticleSlotConnection
+      return toAstNode<AstNode.RecipeParticleSlotConnection>({
+        kind: 'slot-connection',
+        param: param || '*',
+        direction,
+        target: optional(target, t => t[1], toAstNode<AstNode.ParticleConnectionTargetComponents>({
+          kind: 'handle-connection-components',
+          name: null,
+          particle: null,
+          tags: []
+          }
+        )),
+        dependentSlotConnections: optional(dependentConnections, extractIndented, []),
+      });
+    // RecipeParticleConnection
+    }
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param: param || '*',
