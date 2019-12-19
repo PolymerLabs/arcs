@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {getSystemTraceApis, getSystemTraceChannel} from './systrace-helpers.js';
+import {getGlobalScope, getSystemTraceApis, getSystemTraceChannel} from './systrace-helpers.js';
 
 const CONSOLE_CLIENT_NAME = 'console';
 const ANDROID_CLIENT_NAME = 'android';
@@ -80,5 +80,6 @@ export const getClientClass =
         default:
           break;
       }
-      return clientClass;
+      // Allows overriding client for testing if specified.
+      return getGlobalScope().systemTraceClientClassOverride || clientClass;
     };

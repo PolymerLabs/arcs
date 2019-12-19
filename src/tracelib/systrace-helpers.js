@@ -11,10 +11,10 @@
 const CHANNEL_URL_PARAMETER = 'systrace';
 
 /** Gets current global execution context */
-const getGlobalScope = () => {
-  if (self !== 'undefined') return self;
-  if (window !== 'undefined') return window;
-  if (global !== 'undefined') return global;
+export const getGlobalScope = () => {
+  if (typeof self !== 'undefined') return self;
+  if (typeof window !== 'undefined') return window;
+  if (typeof global !== 'undefined') return global;
   return {};
 };
 
@@ -58,8 +58,11 @@ export const delegateSystemTraceApis = port => {
  * context is used at dedicated workers.
  */
 export const getSystemTraceChannel = () => {
-  const params = new URLSearchParams(location.search);
-  return params.get(CHANNEL_URL_PARAMETER) ||
-      getGlobalScope().systemTraceChannel ||
-      '';
+  const location = getGlobalScope().location;
+  let urlChannel;
+  if (location) {
+    const params = new URLSearchParams(location.search);
+    urlChannel = params.get(CHANNEL_URL_PARAMETER);
+  }
+  return urlChannel || getGlobalScope().systemTraceChannel || '';
 };
