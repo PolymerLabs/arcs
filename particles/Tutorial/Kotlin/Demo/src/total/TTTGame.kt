@@ -30,29 +30,13 @@ class TTTGame : Particle() {
         gameOver = false,
         winnerAvatar = ""
     )
-    private val defaultPlayerOne = TTTGame_PlayerOne(
-        name = "PlayerOne",
-        avatar = "",
-        id = -1.0
-    )
-    private val defaultPlayerOneMove = TTTGame_PlayerOneMove(-1.0)
-    private val defaultPlayerTwo = TTTGame_PlayerTwo(
-        name = "PlayerTwo",
-        avatar = "",
-        id = -1.0
-    )
-    private val defaultPlayerTwoMove = TTTGame_PlayerTwoMove(-1.0)
 
     private val gameState = Singleton(this, "gameState") { defaultGame }
-    private val playerOne = Singleton(this, "playerOne") { defaultPlayerOne }
-    private val playerOneMove = Singleton(this, "playerOneMove") { defaultPlayerOneMove }
-    private val playerTwo = Singleton(this, "playerTwo") { defaultPlayerTwo }
-    private val playerTwoMove = Singleton(this, "playerTwoMove") { defaultPlayerOneMove }
-    private val events = Collection(this, "events") { TTTGame_Events(
-        type = "",
-        move = -1.0,
-        time = -1.0
-    ) }
+    private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
+    private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
+    private val playerTwo = Singleton(this, "playerTwo") { TTTGame_PlayerTwo() }
+    private val playerTwoMove = Singleton(this, "playerTwoMove") { TTTGame_PlayerTwoMove() }
+    private val events = Collection(this, "events") { TTTGame_Events() }
 
     private val winningSequences = arrayOf(
         arrayOf(0, 1, 2),
@@ -70,21 +54,21 @@ class TTTGame : Particle() {
             gameState.set(defaultGame)
         }
         if (handle.name == "playerOne" && playerOne.get()?.id != 0.0) {
-            val p1 = playerOne.get() ?: defaultPlayerOne
+            val p1 = playerOne.get() ?: TTTGame_PlayerOne()
             p1.id = 0.0
             playerOne.set(p1)
         }
         if (handle.name == "playerTwo" && playerTwo.get()?.id != 1.0) {
-            val p2 = playerTwo.get() ?: defaultPlayerTwo
+            val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
             p2.id = 1.0
             playerTwo.set(p2)
         }
     }
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        val gs = gameState.get() ?: defaultGame
-        val p1 = playerOne.get() ?: defaultPlayerOne
-        val p2 = playerTwo.get() ?: defaultPlayerTwo
+        val gs = gameState.get() ?: TTTGame_GameState()
+        val p1 = playerOne.get() ?: TTTGame_PlayerOne()
+        val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
 
         val cpName = if (gs.currentPlayer == p1.id) p1.name else p2.name
         val cpAvatar = if (gs.currentPlayer == p1.id) p1.avatar else p2.avatar
@@ -103,11 +87,11 @@ class TTTGame : Particle() {
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val gs = gameState.get() ?: defaultGame
-        val p1 = playerOne.get() ?: defaultPlayerOne
-        val p2 = playerTwo.get() ?: defaultPlayerTwo
-        val mv1 = playerOneMove.get() ?: defaultPlayerOneMove
-        val mv2 = playerTwoMove.get() ?: defaultPlayerTwoMove
+        val gs = gameState.get() ?: TTTGame_GameState()
+        val p1 = playerOne.get() ?: TTTGame_PlayerOne()
+        val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
+        val mv1 = playerOneMove.get() ?: TTTGame_PlayerOneMove()
+        val mv2 = playerTwoMove.get() ?: TTTGame_PlayerTwoMove()
         // Apply the moves
         if (gs.gameOver != true) {
             val boardList = gs.board.split(",").toMutableList()

@@ -27,41 +27,25 @@ class TTTGame : Particle() {
         board = ",,,,,,,,",
         currentPlayer = (0..1).random().toDouble()
     )
-    private val defaultPlayerOne = TTTGame_PlayerOne(
-        name = "PlayerOne",
-        avatar = "",
-        id = -1.0
-    )
-    private val defaultPlayerOneMove = TTTGame_PlayerOneMove(-1.0)
-    private val defaultPlayerTwo = TTTGame_PlayerTwo(
-        name = "PlayerTwo",
-        avatar = "",
-        id = -1.0
-    )
-    private val defaultPlayerTwoMove = TTTGame_PlayerTwoMove(-1.0)
 
     private val gameState = Singleton(this, "gameState") { defaultGame }
-    private val playerOne = Singleton(this, "playerOne") { defaultPlayerOne }
-    private val playerOneMove = Singleton(this, "playerOneMove") { defaultPlayerOneMove }
-    private val playerTwo = Singleton(this, "playerTwo") { defaultPlayerTwo }
-    private val playerTwoMove = Singleton(this, "playerTwoMove") { defaultPlayerOneMove }
-    private val events = Collection(this, "events") { TTTGame_Events(
-        type = "",
-        move = -1.0,
-        time = -1.0
-    ) }
+    private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
+    private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
+    private val playerTwo = Singleton(this, "playerTwo") { TTTGame_PlayerTwo() }
+    private val playerTwoMove = Singleton(this, "playerTwoMove") { TTTGame_PlayerTwoMove() }
+    private val events = Collection(this, "events") { TTTGame_Events() }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (gameState.get()?.board == null) {
             gameState.set(defaultGame)
         }
         if (handle.name == "playerOne" && playerOne.get()?.id != 0.0) {
-            val p1 = playerOne.get() ?: defaultPlayerOne
+            val p1 = playerOne.get() ?: TTTGame_PlayerOne()
             p1.id = 0.0
             playerOne.set(p1)
         }
         if (handle.name == "playerTwo" && playerTwo.get()?.id != 1.0) {
-            val p2 = playerTwo.get() ?: defaultPlayerTwo
+            val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
             p2.id = 1.0
             playerTwo.set(p2)
         }
@@ -69,10 +53,10 @@ class TTTGame : Particle() {
 
     override fun onHandleUpdate(handle: Handle) {
         val gs = gameState.get() ?: defaultGame
-        val p1 = playerOne.get() ?: defaultPlayerOne
-        val p2 = playerTwo.get() ?: defaultPlayerTwo
-        val mv1 = playerOneMove.get() ?: defaultPlayerOneMove
-        val mv2 = playerTwoMove.get() ?: defaultPlayerTwoMove
+        val p1 = playerOne.get() ?: TTTGame_PlayerOne()
+        val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
+        val mv1 = playerOneMove.get() ?: TTTGame_PlayerOneMove()
+        val mv2 = playerTwoMove.get() ?: TTTGame_PlayerTwoMove()
 
         // Apply the moves
         val boardList = gs.board.split(",").toMutableList()
