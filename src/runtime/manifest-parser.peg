@@ -880,12 +880,12 @@ RecipeParticleConnection
       dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
     });
   }
-  / param:NameWithColon? dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  / param:NameWithColon? direction:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param: param || '*',
-      dir,
+      direction,
       target: optional(target, t => t[1], toAstNode<AstNode.ParticleConnectionTargetComponents>({
         kind: 'handle-connection-components',
         name: null,
@@ -901,7 +901,7 @@ RecipeParticleConnection
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param: param || '*',
-      dir: 'any',
+      direction: 'any',
       target,
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
