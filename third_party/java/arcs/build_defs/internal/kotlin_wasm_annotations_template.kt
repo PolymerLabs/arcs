@@ -15,7 +15,7 @@
 
 package {package}
 
-import arcs.wasm.toAddress
+import arcs.sdk.kotlin.wasm.toAddress
 import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 
