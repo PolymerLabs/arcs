@@ -8,6 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+@file:Suppress("PackageName", "TopLevelName")
 
 package arcs.sdk.kotlin
 
