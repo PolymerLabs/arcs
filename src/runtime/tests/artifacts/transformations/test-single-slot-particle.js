@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle}) => {
-  return class SingleSlotParticle extends DomParticle {
+defineParticle(({UiParticle}) => {
+  return class SingleSlotParticle extends UiParticle {
     get template() {
       return `<div><{{value}}/div>`;
     }

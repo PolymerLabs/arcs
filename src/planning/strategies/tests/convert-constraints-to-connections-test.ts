@@ -279,7 +279,7 @@ describe('ConvertConstraintsToConnections', () => {
     d: reads writes handle0`);
   });
 
-  it('verifies modality', async () => {
+  it.skip('verifies modality', async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A in 'A.js'
@@ -306,6 +306,7 @@ describe('ConvertConstraintsToConnections', () => {
       context: manifest,
       loader: new Loader()
     }));
+    // TODO(sjmiles): SlotComposer no longer has a 'modality'
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);

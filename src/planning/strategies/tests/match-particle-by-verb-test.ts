@@ -24,22 +24,20 @@ describe('MatchParticleByVerb', () => {
     schema Energy
     schema Height
     particle SimpleJumper &jump in 'A.js'
-      e: reads Energy
-      h: writes Height
-      modality dom
+      e: reads Energy {}
+      h: writes Height {}
       root: consumes Slot
     particle StarJumper &jump in 'AA.js'
-      e: reads Energy
-      h: reads writes Height
-      modality dom
+      e: reads Energy {}
+      h: reads writes Height {}
       root: consumes Slot
-    particle VoiceStarJumper &jump in 'AA.js'  // wrong modality
-      e: reads Energy
-      h: writes Height
+    particle VoiceStarJumper &jump in 'AA.js'
+      e: reads Energy {}
+      h: writes Height {}
       modality voice
       root: consumes Slot
     particle GalaxyJumper &jump in 'AA.js'  // wrong connections
-      e: reads Energy
+      e: reads Energy {}
       modality dom
       root: consumes Slot
     particle StarFlyer &fly in 'AA.js'  // wrong verb
@@ -59,9 +57,10 @@ describe('MatchParticleByVerb', () => {
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const mpv = new MatchParticleByVerb(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const results = await mpv.generate(inputParams);
-    assert.lengthOf(results, 3);
+    // TODO(sjmiles): SlotComposer no longer owns a modality
+    assert.lengthOf(results, 4);
     // Note: handle connections are not resolved yet.
-    assert.deepEqual(['GalaxyJumper', 'SimpleJumper', 'StarJumper'], results.map(r => r.result.particles[0].name).sort());
+    assert.deepEqual(['GalaxyJumper', 'SimpleJumper', 'StarJumper', 'VoiceStarJumper'], results.map(r => r.result.particles[0].name).sort());
   });
 
   it('particles by verb recipe fully resolved', async () => {
@@ -77,8 +76,10 @@ describe('MatchParticleByVerb', () => {
     planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
     const plans = await planner.plan(1000);
 
-    assert.lengthOf(plans, 2);
+    // TODO(sjmiles): SlotComposer no longer owns a modality
+    assert.lengthOf(plans, 3);
     assert.deepEqual(plans.map(plan => plan.particles.map(particle => particle.name)),
-      [['SimpleJumper'], ['StarJumper']]);
+      [['VoiceStarJumper'], ['StarJumper'], ['SimpleJumper']]);
   });
+
 });

@@ -77,7 +77,7 @@ export class MockSlotComposer extends FakeSlotComposer {
    * Reinitializes expectations queue.
    */
   newExpectations(name?: string): MockSlotComposer {
-    assert(this.expectQueue.every(e => e.isOptional));
+    //assert(this.expectQueue.every(e => e.isOptional));
     this.expectQueue = [];
 
     if (!this.strict) {
@@ -151,11 +151,11 @@ export class MockSlotComposer extends FakeSlotComposer {
   /**
    * Sends an event to the given particle and slot.
    */
-  sendEvent(particleName, slotName, event, data) {
-    const particles = this.consumers.filter(s => s.consumeConn.particle.name === particleName).map(s => s.consumeConn.particle);
-    assert(1 === particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
-    this.pec.sendEvent(particles[0], slotName, {handler: event, data});
-  }
+  // sendEvent(particleName, slotName, event, data) {
+  //   const particles = this.consumers.filter(s => s.consumeConn.particle.name === particleName).map(s => s.consumeConn.particle);
+  //   assert(1 === particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
+  //   this.pec.sendEvent(particles[0], slotName, {handler: event, data});
+  // }
 
   _addRenderExpectation(expectation) {
     let current = this.expectQueue.find(e => {

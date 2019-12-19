@@ -16,7 +16,6 @@ import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
-import {UiSlotComposer} from './ui-slot-composer.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
@@ -116,14 +115,12 @@ export class Runtime {
   static init(root?: string, urls?: {}): Runtime {
     const map = {...Runtime.mapFromRootPath(root), ...urls};
     const loader = new Loader(map);
+    const composerClass = SlotComposer;
     const pecFactory = pecIndustry(loader);
     const memoryProvider = new SimpleVolatileMemoryProvider();
-    // TODO(sjmiles): UiSlotComposer type shenanigans are temporary pending complete replacement
-    // of SlotComposer by UiSlotComposer. Also it's weird that `new Runtime(..., UiSlotComposer, ...)`
-    // doesn't bother tslint at all when done in other modules.
     const runtime = new Runtime({
       loader,
-      composerClass: UiSlotComposer as unknown as typeof SlotComposer,
+      composerClass,
       pecFactory,
       memoryProvider
     });

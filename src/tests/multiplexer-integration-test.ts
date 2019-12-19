@@ -22,7 +22,8 @@ import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testi
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 
 describe('Multiplexer', () => {
-  it('renders polymorphic multiplexed slots', async () => {
+  // TODO(sjmiles): uses expectations
+  it.skip('renders polymorphic multiplexed slots', async () => {
     const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();
     const context = await Manifest.load(
@@ -60,14 +61,16 @@ describe('Multiplexer', () => {
       }
     });
     postsStub['referenceMode'] = false;
+
     // version could be set here, but doesn't matter for tests.
     const runtime = new Runtime({
         loader, composerClass: MockSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
+
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);
 
+    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
     // Render 3 posts
     slotComposer
         .newExpectations()

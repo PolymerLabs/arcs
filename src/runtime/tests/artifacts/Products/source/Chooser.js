@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, resolver, log}) => {
+defineParticle(({UiParticle, html, resolver, log}) => {
 
   const host = `[chooser]`;
 
@@ -120,7 +120,7 @@ ${productStyles}
 </div>
   `;
 
-  return class Chooser extends DomParticle {
+  return class Chooser extends UiParticle {
     get template() {
       return template;
     }
@@ -137,7 +137,7 @@ ${productStyles}
         items: result.map(({rawData, id}, index) => {
           return Object.assign({}, rawData, {
             subId: id,
-            image: resolver ? resolver(rawData.image) : rawData.image,
+            image: rawData ? (resolver ? resolver(rawData.image) : rawData.image) : '',
             index
           });
         })

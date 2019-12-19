@@ -34,14 +34,14 @@ export class FakeSlotComposer extends SlotComposer {
     return super.createHostedSlot(innerArc, transformationParticle, transformationSlotName, storeId);
   }
 
-  renderSlot(particle: Particle, slotName: string, content: Content) {
-    super.renderSlot(particle, slotName, content);
+  // renderSlot(particle: Particle, slotName: string, content: Content) {
+  //   super.renderSlot(particle, slotName, content);
 
-    // In production updateProvidedContexts() is done in DOM Mutation Observer.
-    // We don't have it in tests, so we do it here.
-    const slotConsumer = this.getSlotConsumer(particle, slotName);
-    if (slotConsumer) slotConsumer.updateProvidedContexts();
-  }
+  //   // In production updateProvidedContexts() is done in DOM Mutation Observer.
+  //   // We don't have it in tests, so we do it here.
+  //   const slotConsumer = this.getSlotConsumer(particle, slotName);
+  //   if (slotConsumer) slotConsumer.updateProvidedContexts();
+  // }
 
   // Accessors for testing.
   get contexts(): SlotContext[] {
@@ -60,21 +60,21 @@ export class RozSlotComposer extends FakeSlotComposer {
   // tslint:disable-next-line: no-any
   public received: [string, string, any][] = [];
 
-  renderSlot(particle: Particle, slotName: string, content: Content) {
-    // super.renderSlot may modify 'content', so record a copy of it before calling that.
-    const copy = JSON.parse(JSON.stringify(content));
-    if (copy.templateName) {
-      // Currently templateName can only ever be 'default'; no need to keep checking that in tests.
-      // If this ever changes, blow up here so we catch the change early.
-      if (copy.templateName !== 'default') {
-        throw new Error(`renderSlot called with templateName set to '${copy.templateName}' ` +
-                        `instead of 'default'; some unit tests will probably need updating`);
-      }
-      delete copy.templateName;
-    }
-    this.received.push([particle.name, slotName, copy]);
-    super.renderSlot(particle, slotName, content);
-  }
+  // renderSlot(particle: Particle, slotName: string, content: Content) {
+  //   // super.renderSlot may modify 'content', so record a copy of it before calling that.
+  //   const copy = JSON.parse(JSON.stringify(content));
+  //   if (copy.templateName) {
+  //     // Currently templateName can only ever be 'default'; no need to keep checking that in tests.
+  //     // If this ever changes, blow up here so we catch the change early.
+  //     if (copy.templateName !== 'default') {
+  //       throw new Error(`renderSlot called with templateName set to '${copy.templateName}' ` +
+  //                       `instead of 'default'; some unit tests will probably need updating`);
+  //     }
+  //     delete copy.templateName;
+  //   }
+  //   this.received.push([particle.name, slotName, copy]);
+  //   super.renderSlot(particle, slotName, content);
+  // }
 
   /** Listener for experimental `output` implementation */
   delegateOutput(arc: Arc, particle: Particle, content) {

@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({UiParticle, html, log}) => {
   const host = `social-edit-post`;
 
   const template = html`
@@ -79,7 +79,7 @@ defineParticle(({DomParticle, html, log}) => {
   </model-input>
 </div>`;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
@@ -119,7 +119,7 @@ defineParticle(({DomParticle, html, log}) => {
       // for example, we could move more of it into PostMuxer.
       if (renderParticle && !state.renderParticleSpec) {
         const renderParticleSpec = JSON.stringify(renderParticle.toLiteral());
-        const renderRecipe = DomParticle
+        const renderRecipe = UiParticle
                                  .buildManifest`
 ${renderParticle}
 recipe

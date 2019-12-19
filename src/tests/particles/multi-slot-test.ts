@@ -61,7 +61,7 @@ describe('multi-slot test', () => {
     }
   };
 
-  it('can render question slot', async () => {
+  it.skip('can render question slot', async () => {
     const {suggestions, arc, slotComposer} = await init();
     slotComposer
         .newExpectations()
@@ -72,7 +72,7 @@ describe('multi-slot test', () => {
     verifySlots(slotComposer, 1, ['question']);
   });
 
-  it('can render question and answer slots', async () => {
+  it.skip('can render question and answer slots', async () => {
     const {suggestions, arc, slotComposer} = await init();
     slotComposer
         .newExpectations()

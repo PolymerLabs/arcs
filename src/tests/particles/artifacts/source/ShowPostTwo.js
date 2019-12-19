@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle}) => {
-  return class ShowPostTwo extends DomParticle {
+defineParticle(({UiParticle}) => {
+  return class ShowPostTwo extends UiParticle {
     get template() {
       return `
         <div><span>TWO: </span><span>{{message}}</span></div>

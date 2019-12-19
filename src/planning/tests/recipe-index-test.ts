@@ -91,10 +91,14 @@ describe('RecipeIndex', () => {
         A
           root: consumes
         B
-    `), [
+    `),
+    // TODO(sjmiles): `slot1: slot 'rootslotid-root' #root` line did not appear
+    // until ui-slot-composer replaced slot-composer
+    [
 `recipe
+  slot1: slot 'rootslotid-root' #root
   A as particle0
-    root: consumes
+    root: consumes slot1
       detail: provides slot0
   B as particle1
     detail: consumes slot0`

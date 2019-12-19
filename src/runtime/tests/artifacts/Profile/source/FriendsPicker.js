@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, resolver}) => {
+defineParticle(({UiParticle, html, resolver}) => {
 
   const host = `friends-picker`;
 
@@ -55,7 +55,7 @@ ${styles}
 
   `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

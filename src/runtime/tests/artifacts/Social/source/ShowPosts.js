@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver, log, html}) => {
+defineParticle(({UiParticle, resolver, log, html}) => {
   const host = `social-show-posts`;
 
   const template = html`
@@ -155,7 +155,7 @@ defineParticle(({DomParticle, resolver, log, html}) => {
   <div blogDescription><input value="{{blogDescription}}" placeholder="Name your blog" on-blur="onBlurDescription"></div>
 </template>`;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

@@ -10,9 +10,9 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
 
-  return class LightCandles extends DomParticle {
+  return class LightCandles extends UiParticle {
     get template() {
       return html`
       <div>

@@ -1200,8 +1200,8 @@ describe('particle-api', () => {
           root: consumes slot0`);
 
     const loader = new StubLoader({
-      'TransformationParticle.js': `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
+      'TransformationParticle.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
           async setHandles(handles) {
             super.setHandles(handles);
 
@@ -1233,12 +1233,13 @@ describe('particle-api', () => {
           renderHostedSlot(slotName, hostedSlotId, content) {}
         };
       });`,
-      '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
+      '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
+
     // TODO(lindner): add strict rendering
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
-    const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
-        storageKey: 'key', loader, slotComposer, context});
+    const id = IdGenerator.newSession().newArcId('demo');
+    const arc = new Arc({id, storageKey: 'key', loader, slotComposer, context});
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 
@@ -1253,7 +1254,7 @@ describe('particle-api', () => {
 
     const sessionId = innerArc.idGeneratorForTesting.currentSessionIdForTesting;
     assert.strictEqual(innerArc.activeRecipe.toString(), `recipe
-  slot0: slot '!${sessionId}:demo:inner2:slot1'
+  slot0: slot 'rootslotid-root___!${sessionId}:demo:inner2:slot1'
   slot1: slot '!${sessionId}:demo:inner2:slot2'
   A as particle0
     content: consumes slot0
@@ -1274,8 +1275,8 @@ describe('particle-api', () => {
           root: consumes slot0`);
 
     const loader = new StubLoader({
-      'TransformationParticle.js': `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
+      'TransformationParticle.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
           async setHandles(handles) {
             super.setHandles(handles);
 
@@ -1307,7 +1308,7 @@ describe('particle-api', () => {
           renderHostedSlot(slotName, hostedSlotId, content) {}
         };
       });`,
-      '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
+      '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     // TODO(lindner): add strict rendering
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
@@ -1327,7 +1328,7 @@ describe('particle-api', () => {
 
     const sessionId = innerArc.idGeneratorForTesting.currentSessionIdForTesting;
     assert.strictEqual(innerArc.activeRecipe.toString(), `recipe
-  slot0: slot '!${sessionId}:demo:inner2:slot1'
+  slot0: slot 'rootslotid-root___!${sessionId}:demo:inner2:slot1'
   slot1: slot '!${sessionId}:demo:inner2:slot2'
   A as particle0
     content: consumes slot0
