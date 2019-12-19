@@ -11,8 +11,8 @@
 import {Refinement, SchemaPrimitiveType, RefinementExpression} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {assert} from '../platform/assert-node.js';
-import { Schema } from './schema.js';
-import { Entity } from './entity.js';
+import {Schema} from './schema.js';
+import {Entity} from './entity.js';
 
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
@@ -39,7 +39,6 @@ export class Refiner {
         return expr.value.toString();
     }
 
-    // tslint:disable-next-line: no-any
     static refineData(entity: Entity, schema: Schema): void {
         for (const [name, value] of Object.entries(entity)) {
             const refDict = {}; refDict[name] = value;
@@ -52,7 +51,7 @@ export class Refiner {
         }
     }
 
-    static isValidData(refinement: Refinement, data: Dictionary<any>): boolean {
+    static isValidData(refinement: Refinement, data: Dictionary<ExpressionPrimitives>): boolean {
         if (!refinement) {
             return true;
         }
