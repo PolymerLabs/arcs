@@ -38,7 +38,6 @@ export class Refiner {
         return expr.value.toString();
     }
 
-    // tslint:disable-next-line: no-any
     static refineData(entity: Entity, schema: Schema): void {
         for (const [name, value] of Object.entries(entity)) {
             const refDict = {}; refDict[name] = value;
@@ -51,7 +50,7 @@ export class Refiner {
         }
     }
 
-    static isValidData(refinement: Refinement, data: Dictionary<any>): boolean {
+    static isValidData(refinement: Refinement, data: Dictionary<ExpressionPrimitives>): boolean {
         if (!refinement) {
             return true;
         }
