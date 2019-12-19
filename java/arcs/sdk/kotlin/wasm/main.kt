@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.kotlin.wasm
+package arcs.sdk.kotlin
 
 /**
  * This entrypoint is required by Kotlin-Native and kt_native_binary rules.

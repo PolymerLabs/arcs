@@ -9,13 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.kotlin.jvm
-
-import arcs.sdk.kotlin.Collection
-import arcs.sdk.kotlin.Entity
-import arcs.sdk.kotlin.NullTermByteArray
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.Singleton
+package arcs.sdk.kotlin
 
 actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
 actual fun stringToUtf8Impl(str: String): ByteArray = str.toByteArray(Charsets.UTF_8)

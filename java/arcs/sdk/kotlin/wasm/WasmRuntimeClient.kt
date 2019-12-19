@@ -9,13 +9,24 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.kotlin.wasm
+package arcs.sdk.kotlin
 
-import arcs.sdk.kotlin.Collection
-import arcs.sdk.kotlin.Entity
-import arcs.sdk.kotlin.NullTermByteArray
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.Singleton
+import arcs.sdk.kotlin.wasm.toAddress
+import arcs.sdk.kotlin.wasm._free
+import arcs.sdk.kotlin.wasm.collectionClear
+import arcs.sdk.kotlin.wasm.collectionRemove
+import arcs.sdk.kotlin.wasm.collectionStore
+import arcs.sdk.kotlin.wasm.onRenderOutput
+import arcs.sdk.kotlin.wasm.resolveUrl
+import arcs.sdk.kotlin.wasm.singletonClear
+import arcs.sdk.kotlin.wasm.singletonSet
+import arcs.sdk.kotlin.wasm.serviceRequest
+import arcs.sdk.kotlin.wasm.toKString
+import arcs.sdk.kotlin.wasm.toNullableKString
+import arcs.sdk.kotlin.wasm.toWasmNullableString
+import arcs.sdk.kotlin.wasm.toWasmString
+import arcs.sdk.kotlin.wasm.toWasmAddress
+import arcs.sdk.kotlin.wasm.WasmString
 
 actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.decodeToString()
 actual fun stringToUtf8Impl(str: String): ByteArray = str.encodeToByteArray()
