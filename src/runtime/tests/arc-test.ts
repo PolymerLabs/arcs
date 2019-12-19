@@ -754,7 +754,7 @@ describe('Arc', () => {
       return slotComposerCreateHostedSlot.apply(slotComposer, args);
     };
 
-    const id = Id.fromString('test');
+    const id = Id.fromString('test2');
     const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
     const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader()});
 
