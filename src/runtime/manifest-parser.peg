@@ -676,19 +676,21 @@ ParticleModality
     });
   }
 
-SlandleType = type:SlotType {
-    type.isSet = false;
-    return type;
-  }
-  / type:('[' SlotType ']')
-  {
-    type = type[1];
-    type.isSet = true;
+SlandleType = whiteSpace type:ParticleHandleConnectionType {
+    let isSet = false;
+    if (type.kind === 'collection-type') {
+      isSet = true;
+      type = type.type;
+    }
+    if (type.kind !== 'slot-type') {
+      expected('a slot type');
+    }
+    type.isSet = isSet;
     return type;
   }
 
 ParticleSlotConnection
-  = name:NameWithColon? 'consumes' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace
+  = name:NameWithColon? 'consumes' isOptional:'?'? type:SlandleType? maybeTags:SpaceTagList? eolWhiteSpace
     items:(Indent (SameIndent ParticleProvidedSlot)*)?
   {
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
@@ -703,7 +705,6 @@ ParticleSlotConnection
     let formFactor: AstNode.SlotFormFactor|null = null;
     let isSet = false;
     if (type) {
-      type = type[1]; // remove the whitespace.
       isSet = type.isSet;
       type.fields.forEach(({name, value}) => {
         if (name === 'formFactor') {
@@ -730,14 +731,13 @@ ParticleSlotConnection
   }
 
 ParticleProvidedSlot
-  = name:NameWithColon? 'provides' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace?
+  = name:NameWithColon? 'provides' isOptional:'?'? type:SlandleType? maybeTags:SpaceTagList? eolWhiteSpace?
   {
     const provideSlotConnections: AstNode.ParticleProvidedSlot[] = [];
     let formFactor: AstNode.SlotFormFactor|null = null;
     const handles: AstNode.ParticleProvidedSlotHandle[] = [];
     let isSet = false;
     if (type) {
-      type = type[1]; // remove the whitespace.
       isSet = type.isSet;
       type.fields.forEach(({name, value}) => {
         if (name === 'formFactor') {
@@ -863,36 +863,32 @@ RecipeParticle
 
 // TODO(cypher1): s/dir/direction/ to match slot connections and the rest of the code base
 RecipeParticleConnection
-  = param: NameWithColon? direction:(SlotDirection / Direction) target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param:NameWithColon? direction:((SlotDirection / Direction) whiteSpace?) target:ParticleConnectionTargetComponents? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
-    if (direction === 'consumes' || direction === 'provides') {
+    direction = optional(direction, d => d[0], null);
+    target = optional(target, t => t, toAstNode<AstNode.ParticleConnectionTargetComponents>({
+      kind: 'handle-connection-components',
+      name: null,
+      particle: null,
+      tags: []
+      }
+    ));
+    if (!Flags.useSlandles && (direction === 'consumes' || direction === 'provides')) {
       // RecipeParticleSlotConnection
       return toAstNode<AstNode.RecipeParticleSlotConnection>({
         kind: 'slot-connection',
         param: param || '*',
         direction,
-        target: optional(target, t => t[1], toAstNode<AstNode.ParticleConnectionTargetComponents>({
-          kind: 'handle-connection-components',
-          name: null,
-          particle: null,
-          tags: []
-          }
-        )),
+        target,
         dependentSlotConnections: optional(dependentConnections, extractIndented, []),
       });
-    // RecipeParticleConnection
     }
+    // RecipeParticleConnection
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param: param || '*',
       direction,
-      target: optional(target, t => t[1], toAstNode<AstNode.ParticleConnectionTargetComponents>({
-        kind: 'handle-connection-components',
-        name: null,
-        particle: null,
-        tags: []
-        }
-      )),
+      target,
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
   }
@@ -935,16 +931,6 @@ ParticleConnectionTargetComponents "a particle connection target"
       name: null,
       particle: null,
       tags
-    });
-  }
-
-RecipeSlotConnectionRef
-  = param:lowerIdent tags:SpaceTagList?
-  {
-    return toAstNode<AstNode.RecipeSlotConnectionRef>({
-      kind: 'slot-connection-ref',
-      param,
-      tags: tags || [],
     });
   }
 
