@@ -1283,11 +1283,12 @@ SchemaField
   }
 
 SchemaType
-  = type:(SchemaReferenceType 
-  / SchemaCollectionType 
-  / SchemaPrimitiveType 
-  / SchemaUnionType 
+  = type:(SchemaReferenceType
+  / SchemaCollectionType
+  / SchemaPrimitiveType
+  / SchemaUnionType
   / SchemaTupleType
+  / [^\n\]}]* { expected('a schema type'); }
   ) whiteSpace? refinement:Refinement?
   {
       type.refinement = refinement;
@@ -1483,9 +1484,18 @@ SameOrMoreIndent "same or more indentation" = &(i:" "* &{
 }) " "* { return text(); }
 
 // Should only be used as a negative match.
+UpperReservedWord
+  = keyword:( SchemaPrimitiveType
+  ) &([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
+{
+  expected(`an upper case identifier`);
+}
+
+// Should only be used as a negative match.
 ReservedWord
   = keyword:( Direction
   / SlotDirection
+  / SchemaPrimitiveType
   / RecipeHandleFate
   / 'particle'
   / 'recipe'
@@ -1506,7 +1516,7 @@ backquotedString "a `backquoted string`"
 id "an identifier (e.g. 'id')"
   = "'" id:[^'\n]+ ("'" / . { expected('\' at the end of an identifier'); }) { return id.join(''); }
 upperIdent "an uppercase identifier (e.g. Foo)"
-  = [A-Z][a-z0-9_]i* { return text(); }
+  = !UpperReservedWord [A-Z][a-z0-9_]i* { return text(); }
 lowerIdent "a lowercase identifier (e.g. foo)"
   = !ReservedWord unsafeLowerIdent { return text(); }
 unsafeLowerIdent "a lowercase identifier or keyword"
