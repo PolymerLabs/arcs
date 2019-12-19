@@ -51,12 +51,12 @@ package ${this.scope}
 //
 // Current implementation doesn't support references or optional field detection
 
-${withCustomPackage(`import arcs.Entity
-import arcs.NullTermByteArray
-import arcs.Particle
-import arcs.StringDecoder
-import arcs.StringEncoder
-import arcs.utf8ToString
+${withCustomPackage(`import arcs.sdk.kotlin.Entity
+import arcs.sdk.kotlin.NullTermByteArray
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.StringDecoder
+import arcs.sdk.kotlin.StringEncoder
+import arcs.sdk.kotlin.utf8ToString
 `)}`;
   }
 
