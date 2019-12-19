@@ -16,7 +16,7 @@ import arcs.Particle
 import arcs.Singleton
 
 class RenderTest : Particle() {
-    private val flags = Singleton(this, "flags") { RenderTest_Flags(false, false) }
+    private val flags = Singleton(this, "flags") { RenderTest_Flags() }
     private var shouldTemplate: Boolean = true
     private var shouldPopulate: Boolean = true
 

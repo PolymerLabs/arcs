@@ -15,11 +15,7 @@ import arcs.Collection
 import arcs.Particle
 
 class ServicesTest : Particle() {
-    private val output = Collection(this, "output") { ServicesTest_Output(
-        call = "",
-        tag = "",
-        payload = ""
-    ) }
+    private val output = Collection(this, "output") { ServicesTest_Output() }
 
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")
