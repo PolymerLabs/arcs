@@ -27,7 +27,7 @@ jobs:
     - stage: test
       script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //particles/... && bazel --bazelrc=tools/travis.bazelrc test //particles/... && tools/sigh webpackStorage && tools/sigh testShells"
       name: "Bazel: //particles/... + testShells"
-    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //java/... //javatests/... && bazel --bazelrc=tools/travis.bazelrc test //java/... //javatests/..."
+    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build --spawn_strategy=standalone //java/... //javatests/... && bazel --bazelrc=tools/travis.bazelrc test --spawn_strategy=standalone //java/... //javatests/..."
       name: "Bazel: //java/... and //javatests/..."
     - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src/... && bazel --bazelrc=tools/travis.bazelrc test //src/..."
       name: "Bazel: //src/..."
