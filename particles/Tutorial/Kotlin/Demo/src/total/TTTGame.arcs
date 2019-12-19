@@ -25,37 +25,37 @@ schema Move
 resource ComputerDefault
   start
   [
-    {"name": "Computer", "avatar": "O"}
+    {"name": "Computer", "avatar": "🤖"}
   ]
 
 resource FirstComputer
   start
   [
-    {"name": "Computer One", "avatar": "X"}
+    {"name": "Computer One", "avatar": "🕹️"}
   ]
 
 resource SecondComputer
   start
   [
-    {"name": "Computer Two", "avatar": "O"}
+    {"name": "Computer Two", "avatar": "🚀"}
   ]
 
 resource HumanDefault
   start
   [
-    {"name": "Human", "avatar": "X"}
+    {"name": "Human", "avatar": "🧑"}
   ]
 
 resource FirstHuman
   start
   [
-    {"name": "Player One", "avatar": "X"}
+    {"name": "Player One", "avatar": "👨‍🚀"}
   ]
 
 resource SecondHuman
   start
   [
-    {"name": "Player Two", "avatar": "O"}
+    {"name": "Player Two", "avatar": "🦸"}
   ]
 
 store ComputerStore of Person in ComputerDefault
