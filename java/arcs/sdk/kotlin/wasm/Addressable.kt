@@ -20,7 +20,7 @@ typealias Address = Int
 internal object AddressableMap {
     internal val address2Addressable = mutableMapOf<Address, Any>()
     internal val addressable2Address = mutableMapOf<Any, Address>()
-    internal var nextAddress = 1;
+    internal var nextAddress = 1
 }
 
 /**

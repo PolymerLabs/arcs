@@ -36,7 +36,11 @@ expect object RuntimeClient {
      * @param singleton target to be cleared
      * @param encoded serialized representation of an entity
      */
-    fun <T : Entity<T>> singletonSet(particle: Particle, singleton: Singleton<T>, encoded: NullTermByteArray)
+    fun <T : Entity<T>> singletonSet(
+        particle: Particle,
+        singleton: Singleton<T>,
+        encoded: NullTermByteArray
+    )
 
     /**
      * Removes all entities to produce an empty collection.
@@ -53,7 +57,11 @@ expect object RuntimeClient {
      * @param collection target to be mutated
      * @param encoded serialized representation of an entity
      */
-    fun <T : Entity<T>> collectionRemove(particle: Particle, collection: Collection<T>, encoded: NullTermByteArray)
+    fun <T : Entity<T>> collectionRemove(
+        particle: Particle,
+        collection: Collection<T>,
+        encoded: NullTermByteArray
+    )
 
     /**
      * Add a single entity to a collection

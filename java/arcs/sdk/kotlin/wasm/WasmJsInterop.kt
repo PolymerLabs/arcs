@@ -14,14 +14,12 @@ package arcs.sdk.kotlin.wasm
 import arcs.sdk.kotlin.Handle
 import arcs.sdk.kotlin.Particle
 import arcs.sdk.kotlin.StringDecoder
-import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.Retain
+import kotlin.native.internal.ExportForCppRuntime
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.NativePtr
-import kotlinx.cinterop.StableRef
-import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.toKStringFromUtf8
 import kotlinx.cinterop.toLong

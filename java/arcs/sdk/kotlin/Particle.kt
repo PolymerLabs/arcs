@@ -119,7 +119,7 @@ abstract class Particle {
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let {
-          StringEncoder().encodeDictionary(it).toNullTermByteArray()
+            StringEncoder().encodeDictionary(it).toNullTermByteArray()
         }
         RuntimeClient.onRenderOutput(this, template, model)
     }
