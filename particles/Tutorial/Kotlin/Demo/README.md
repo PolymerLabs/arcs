@@ -501,3 +501,28 @@ back to the original condition and resets the player's moves. You can see the co
 And, that's it, we've met all of our requirements! But wait, just like every great info-mercial,
 there's more! Checkout the next (and final) tutorial to see how Arcs lets us combine these particles
 to create 2 more variations of tic-tac-toe without writing another line of Kotlin code.
+
+## Extensibility via a Recipe
+
+By now you're probably thinking what could we possibly have left to cover? After all, in the last
+tutorial we finished our tic-tac-toe game, and even checked it against the requirements! Well,
+while this is true, there is one very nifty feature of Arcs that we haven't had a chance to show
+off yet. And, well, this being written by an Arcs engineers, we'd like to show off just a little.
+
+So we've created a tic-tac-toe game where a human can play against a computer. But what if the user
+instead wanted to play against one of their friends? Or what if they wanted to watch two computer's
+play? Because of the extensibility of the system, we can simply create new recipes with the existing
+particles to create these systems. 
+
+We just change whether a `TTTHumanPlayer` particle or a 
+`TTTRandomComputer` particle is updating the associated `move` handle.  This means we can create
+these two variants of tic-tac-toe without writing another line of Kotlin code!  You can see all of
+this in the
+[Arcs Manifest file.](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/total/TTTGame.arcs)
+
+Upon closer inspection of this file, you'll also note we changed the "X"s and "O"s to be emojis.
+This is because Arcs supports Unicode and, once again, we wanted a chance to show off just a little.
+
+And there you have it! Three fully functional tic-tac-toe games. By now you should feel comfortable
+working with particles and handles and combining them to form recipes. These recipes allow you as a
+developer to maintain user sovereignty from design through to implementation.
