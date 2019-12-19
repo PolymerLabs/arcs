@@ -11,6 +11,8 @@
 import {Refinement, SchemaPrimitiveType, RefinementExpression} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {assert} from '../platform/assert-node.js';
+import { Schema } from './schema.js';
+import { Entity } from './entity.js';
 
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
@@ -38,7 +40,22 @@ export class Refiner {
     }
 
     // tslint:disable-next-line: no-any
-    static refineData(refinement: Refinement, data: Dictionary<any>): boolean {
+    static refineData(entity: Entity, schema: Schema): void {
+        for (const [name, value] of Object.entries(entity)) {
+            const refDict = {}; refDict[name] = value;
+            if (!Refiner.isValidData(schema.fields[name].refinement, refDict)) {
+                throw new Error(`Entity schema field '${name}' does not conform to the refinement.`);
+            }
+        }
+        if (!Refiner.isValidData(schema.refinement, entity)) {
+            throw new Error('Entity data does not conform to the refinement.');
+        }
+    }
+
+    static isValidData(refinement: Refinement, data: Dictionary<any>): boolean {
+        if (!refinement) {
+            return true;
+        }
         const result = Refiner.applyRefinement(refinement.expression, data);
         if (result instanceof Error) {
             throw result;

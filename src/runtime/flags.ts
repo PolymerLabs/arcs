@@ -12,6 +12,7 @@
 
 class FlagDefaults {
   static useNewStorageStack = false;
+  static enforceRefinements = true;
 }
 
 export class Flags extends FlagDefaults {

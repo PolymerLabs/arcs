@@ -11,6 +11,9 @@
 import {Refiner} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
+import {Manifest} from '../manifest.js';
+import {Entity, EntityClass} from '../entity.js';
+import {Schema} from '../schema.js';
 
 describe('refiner', () => {
     it('Refines data given an expression.', () => {
@@ -22,7 +25,7 @@ describe('refiner', () => {
         const data = {
             num: 6
         };
-        const res = Refiner.refineData(ref, data);
+        const res = Refiner.isValidData(ref, data);
         assert.strictEqual(res, data.num === 0 || data.num === 6);
     });
     it('Throws error when field name not found.', () => {
@@ -35,7 +38,7 @@ describe('refiner', () => {
             const data = {
                 num: 6,
             };
-            const _ = Refiner.refineData(ref, data);
+            const _ = Refiner.isValidData(ref, data);
         }, `Unresolved field name 'num2' in the refinement expression.\n`);
     });
     it('Throws error when expression does not produce boolean result.', () => {
@@ -48,7 +51,7 @@ describe('refiner', () => {
             const data = {
                 num: 6,
             };
-            const _ = Refiner.refineData(ref, data);
+            const _ = Refiner.isValidData(ref, data);
         }, `Refinement expression evaluated to a non-boolean type.\n`);
     });
     it('Throws error when operators and operands are incompatible.', () => {
@@ -61,7 +64,7 @@ describe('refiner', () => {
             const data = {
                 num: 6,
             };
-            const _ = Refiner.refineData(ref, data);
+            const _ = Refiner.isValidData(ref, data);
         }, `Got type boolean. Expected number.\n`);
         assert.throws(() => {
             const manifestAst = parse(`
@@ -72,7 +75,32 @@ describe('refiner', () => {
             const data = {
                 num: 6,
             };
-            const _ = Refiner.refineData(ref, data);
+            const _ = Refiner.isValidData(ref, data);
         }, `Got type number. Expected boolean.\n`);
     });
+});
+
+
+describe('refiner', () => {
+
+    let schema: Schema;
+    let entityClass: EntityClass;
+    before(async () => {
+      const manifest = await Manifest.parse(`
+        schema Foo
+          txt: Text
+          num: Number [num < 10]
+          flg: Boolean
+      `);
+      schema = manifest.schemas.Foo;
+      entityClass = Entity.createEntityClass(schema, null);
+    });
+
+    it('data does not conform to the refinement', () => {
+      assert.throws(() => { const e = new entityClass({txt: 'abc', num: 56}); }, `Entity schema field 'num' does not conform to the refinement.`);
+    });
+
+    it('data does conform to the refinement', () => {
+        assert.doesNotThrow(() => { const e = new entityClass({txt: 'abc', num: 8}); });
+      });
 });
