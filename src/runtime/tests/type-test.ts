@@ -44,10 +44,60 @@ describe('types', () => {
     });
 
     it('Entity', async () => {
-      const entity = EntityType.make(['Foo'], {value: {kind: 'schema-primitive', refinement: {kind: 'refinement', expression: {kind: 'unary-expression-node', expr: 'value', operator: 'not'}}, type: 'Text'}}, null, {kind: 'refinement', expression: {kind: 'binary-expression-node', leftExpr: 'a', rightExpr: 'b', operator: 'and'}});
+      const ref = {
+        kind: 'refinement',
+        expression: {
+          kind: 'binary-expression-node',
+          leftExpr: 'a',
+          rightExpr: 'b',
+          operator: 'and'
+        }
+      // tslint:disable-next-line: no-any
+      } as any;
+      const entity = EntityType.make(['Foo'], {
+        value: {
+          kind: 'schema-primitive',
+          refinement: {
+            kind: 'refinement',
+            expression: {
+              kind: 'unary-expression-node',
+              expr: 'value',
+              operator: 'not'
+            }
+          },
+          type: 'Text'
+        }},
+        {refinement: ref}
+      );
       deepEqual(entity.toLiteral(), {
         tag: 'Entity',
-        data: {names: ['Foo'], refinement: {kind: 'refinement', expression: {kind: 'binary-expression-node', leftExpr: 'a', rightExpr: 'b', operator: 'and'}}, fields: {value: {kind: 'schema-primitive', refinement: {kind: 'refinement', expression: {kind: 'unary-expression-node', expr: 'value', operator: 'not'}}, type: 'Text'}}, description: {}}
+        data: {
+          names: ['Foo'],
+          refinement: {
+            kind: 'refinement',
+            expression: {
+              kind: 'binary-expression-node',
+              leftExpr: 'a',
+              rightExpr: 'b',
+              operator: 'and'
+            }
+          },
+          fields: {
+            value: {
+              kind: 'schema-primitive',
+              refinement: {
+                kind: 'refinement',
+                expression: {
+                  kind: 'unary-expression-node',
+                  expr: 'value',
+                  operator: 'not'
+                }
+              },
+              type: 'Text'
+            }
+          },
+          description: {}
+        }
       });
       deepEqual(entity, Type.fromLiteral(entity.toLiteral()));
       deepEqual(entity, entity.clone(new Map()));

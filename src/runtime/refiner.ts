@@ -8,29 +8,31 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Refinement, SchemaPrimitiveType} from './manifest-ast-nodes.js';
+import {Refinement, SchemaPrimitiveType, RefinementExpression} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {assert} from '../platform/assert-node.js';
 
 export class Refiner {
-    static refinementString(refinement) : string {
+    // Converts refinement ast-node to string. 
+    // Ast-nodes are typically interfaces with no behaviour.
+    static refinementString(refinement: Refinement): string {
         if (!refinement) {
             return '';
         }
         return '[' + Refiner.expressionString(refinement.expression) + ']';
     }
 
-    private static expressionString(expr) : string {
+    private static expressionString(expr: RefinementExpression): string {
         if (expr.kind === 'binary-expression-node') {
             return '(' + Refiner.expressionString(expr.leftExpr) + ' ' + expr.operator + ' ' + Refiner.expressionString(expr.rightExpr) + ')';
         } else if (expr.kind === 'unary-expression-node') {
             return '(' + expr.operator + ' ' + expr.expr + ')';
         }
-        return expr.toString();
+        return expr.value.toString();
     }
 
     // tslint:disable-next-line: no-any
-    static refineData(refinement, data) {
+    static refineData(refinement, data): boolean {
         const result = Refiner.applyRefinement(refinement.expression, data);
         if (result instanceof Error) {
             throw result;
@@ -40,7 +42,7 @@ export class Refiner {
         return result;
     }
 
-    private static applyRefinement(expr, data) {
+    private static applyRefinement(expr, data): number | boolean | Error {
         if (expr.kind === 'binary-expression-node') {
             const left = Refiner.applyRefinement(expr.leftExpr, data);
             const right = Refiner.applyRefinement(expr.rightExpr, data);
@@ -57,16 +59,16 @@ export class Refiner {
         }
         // TODO(ragdev): Update when true, false and string literals are supported
         // in the refinement expression.
-        if (typeof expr === 'number') {
-            return expr;
-        } else if (typeof expr === 'string') {
-            if (data[expr] !== undefined) {
-                return data[expr];
+        if (expr.kind === 'number-node') {
+            return expr.value;
+        } else if (expr.kind === 'field-name-node') {
+            if (data[expr.value] !== undefined) {
+                return data[expr.value];
             } else {
-                return new Error(`Unresolved field name '${expr}' in the refinement expression.`);
+                return new Error(`Unresolved field name '${expr.value}' in the refinement expression.`);
             }
         }
-        return new Error(`Unsupported expression node of type ${typeof expr}`);
+        return new Error(`Unsupported expression node of type ${expr.kind}`);
     }
 
     private static applyOperator(op, expr) {

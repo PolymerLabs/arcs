@@ -20,6 +20,7 @@ import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Schema} from './schema.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
+import {Refinement} from './manifest-ast-nodes.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -314,8 +315,12 @@ export class EntityType extends Type {
     this.entitySchema = schema;
   }
 
-  static make(names: string[], fields: {}, description?, refinement?): EntityType {
-    return new EntityType(new Schema(names, fields, description, refinement));
+  static make(
+    names: string[],
+    fields: {},
+    options: {description?, refinement?: Refinement} = {}
+  ): EntityType {
+    return new EntityType(new Schema(names, fields, options));
   }
 
   // These type identifier methods are being left in place for non-runtime code.

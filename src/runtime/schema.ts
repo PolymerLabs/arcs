@@ -15,7 +15,7 @@ import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/cr
 import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
-import {Refinement} from './manifest-ast-nodes.js';
+import {Refinement, SchemaType} from './manifest-ast-nodes.js';
 import {Refiner} from './refiner.js';
 
 // tslint:disable-next-line: no-any
@@ -37,10 +37,12 @@ export class Schema {
   // For convenience, primitive field types can be specified as {name: 'Type'}
   // in `fields`; the constructor will convert these to the correct schema form.
   // tslint:disable-next-line: no-any
-  constructor(names: string[], fields: Dictionary<any>, description?, refinement?) {
+  constructor(names: string[], fields: Dictionary<any>,
+      options: {description?, refinement?: Refinement} = {}
+    ) {
     this.names = names;
     this.fields = {};
-    this.refinement = refinement ? refinement : null;
+    this.refinement = options.refinement || null;
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
         this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field};
@@ -48,8 +50,8 @@ export class Schema {
         this.fields[name] = field;
       }
     }
-    if (description) {
-      description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
+    if (options.description) {
+      options.description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
   }
 
@@ -184,7 +186,7 @@ export class Schema {
 
   // TODO(jopra): Enforce that 'type' of a field is a Type.
   // tslint:disable-next-line: no-any
-  static fieldToString([name, type]: [string, any]) {
+  static fieldToString([name, type]: [string, SchemaType]) {
     const typeStr = Schema._typeString(type);
     const refExpr = Refiner.refinementString(type.refinement);
     return `${name}: ${typeStr}${refExpr}`;

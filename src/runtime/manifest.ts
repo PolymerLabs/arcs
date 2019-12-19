@@ -586,7 +586,7 @@ ${e.message}
               }
               fields[name] = type;
             }
-            let schema = new Schema(names, fields, null, node.refinement);
+            let schema = new Schema(names, fields, {refinement: node.refinement});
             for (const alias of aliases) {
               schema = Schema.union(alias, schema);
               if (!schema) {
@@ -696,7 +696,7 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    const schema = new Schema(names, fields, description);
+    const schema = new Schema(names, fields, {description});
     if (schemaItem.alias) {
       schema.isAlias = true;
     }

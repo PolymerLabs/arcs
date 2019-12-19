@@ -557,8 +557,8 @@ ${particleStr1}
       const ref = manifest.schemas.Foo.fields.test.refinement;
       assert.strictEqual(ref.kind, 'refinement');
       assert.strictEqual(ref.expression.kind, 'binary-expression-node');
-      assert.strictEqual(ref.expression.leftExpr, 'num');
-      assert.strictEqual(ref.expression.rightExpr, 5);
+      assert.strictEqual(ref.expression.leftExpr.value, 'num');
+      assert.strictEqual(ref.expression.rightExpr.value, 5);
       assert.strictEqual(ref.expression.operator, '<');
     };
     verify(manifest);
@@ -579,12 +579,12 @@ ${particleStr1}
       assert.strictEqual(ref.expression.operator, 'and');
       assert.strictEqual(ref.expression.leftExpr.kind, 'binary-expression-node');
       assert.strictEqual(ref.expression.leftExpr.operator, '>');
-      assert.strictEqual(ref.expression.leftExpr.leftExpr, 'value');
-      assert.strictEqual(ref.expression.leftExpr.rightExpr, 10);
+      assert.strictEqual(ref.expression.leftExpr.leftExpr.value, 'value');
+      assert.strictEqual(ref.expression.leftExpr.rightExpr.value, 10);
       assert.strictEqual(ref.expression.rightExpr.kind, 'binary-expression-node');
       assert.strictEqual(ref.expression.rightExpr.operator, '<');
-      assert.strictEqual(ref.expression.rightExpr.leftExpr, 'price');
-      assert.strictEqual(ref.expression.rightExpr.rightExpr, 2);
+      assert.strictEqual(ref.expression.rightExpr.leftExpr.value, 'price');
+      assert.strictEqual(ref.expression.rightExpr.rightExpr.value, 2);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
