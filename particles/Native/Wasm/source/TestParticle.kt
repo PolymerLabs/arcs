@@ -9,15 +9,15 @@
  */
 package arcs.test
 
-import arcs.Collection
-import arcs.Handle
-import arcs.Particle
-import arcs.Singleton
-import arcs.TestParticle_Data
-import arcs.TestParticle_Info
-import arcs.TestParticle_Res
-import arcs.abort
-import arcs.log
+import arcs.sdk.kotlin.Collection
+import arcs.sdk.kotlin.Handle
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.Singleton
+import arcs.sdk.kotlin.TestParticle_Data
+import arcs.sdk.kotlin.TestParticle_Info
+import arcs.sdk.kotlin.TestParticle_Res
+import arcs.sdk.kotlin.abort
+import arcs.sdk.kotlin.log
 import kotlin.Exception
 
 /**

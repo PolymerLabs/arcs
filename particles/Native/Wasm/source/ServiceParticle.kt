@@ -11,8 +11,8 @@
 
 package arcs.test
 
-import arcs.Particle
-import arcs.log
+import arcs.sdk.kotlin.Particle
+import arcs.sdk.kotlin.log
 
 class ServiceParticle : Particle() {
 
