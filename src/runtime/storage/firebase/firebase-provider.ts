@@ -9,8 +9,6 @@
  */
 
 import {StorageProviderFactory} from '../storage-provider-factory.js';
-import {firebase, FirebaseStorage} from './firebase-storage.js';
+import {FirebaseStorage} from './firebase-storage.js';
 
 StorageProviderFactory.register('firebase', {storage: FirebaseStorage, isPersistent: true});
-
-export {firebase};

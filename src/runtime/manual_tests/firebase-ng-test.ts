@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {firebase, FirebaseDriver, FirebaseStorageKey, FirebaseAppCache} from '../storageNG/drivers/firebase.js';
+import {FirebaseDriver, FirebaseStorageKey, FirebaseAppCache} from '../storageNG/drivers/firebase.js';
+import {firebase} from '../../platform/firebase-web.js';
 import {Exists} from '../storageNG/drivers/driver-factory.js';
 import {assert} from '../../platform/chai-web.js';
 

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright (c) 2019 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -8,5 +8,5 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// -web.js replaced with -node.js as needed by loaders/tools
-export * from './platform/firebase-web.js';
+import protobufjs from 'protobufjs';
+export {protobufjs};

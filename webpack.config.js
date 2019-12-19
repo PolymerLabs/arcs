@@ -24,7 +24,9 @@ module.exports = {
   },
   devtool: 'source-map',
   entry: {
-    worker: `${lib}/source/worker.js`
+    worker: `${lib}/source/worker.js`,
+    firebase: `${lib}/source/firebase.js`,
+    pouchdb: `${lib}/source/pouchdb.js`
   },
   output: {
     filename: '[name].js',
@@ -53,11 +55,11 @@ module.exports = {
       onEnd({compilation}) {
         if (numCyclesDetected > MAX_CYCLES) {
           compilation.errors.push(new Error(
-            `cycle detection: ${numCyclesDetected} cycles exceeds configured limit of ${MAX_CYCLES}`
+            `Detected ${numCyclesDetected} cycles which exceeds configured limit of ${MAX_CYCLES}`
           ));
         } else if (numCyclesDetected > 0) {
           compilation.warnings.unshift(new Error(
-            `cycle detection: ${numCyclesDetected} cycles found (configured limit is ${MAX_CYCLES})`
+            `Detected ${numCyclesDetected} cycles (configured limit is ${MAX_CYCLES})`
           ));
         }
       },

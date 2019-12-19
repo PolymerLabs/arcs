@@ -54,7 +54,6 @@ import {ClaimType} from '../../runtime/particle-claim.js';
 const build = buildPath('.', cleanObsolete);
 const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
-const webpackStorage = webpackPkg('storage');
 
 const buildLS = buildPath('./src/tools/language-server', () => {
   getOptionalDependencies(['vscode-jsonrpc', 'vscode-languageserver'], 'Build the languageServer');
@@ -68,8 +67,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   test: [peg, railroad, build, runTests],
   testShells: [peg, railroad, build, webpack, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
-  webpack: [peg, railroad, build, lint, tslint, webpack],
-  webpackStorage: [webpackStorage],
+  webpack: [peg, railroad, build, webpack],
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   watch: [watch],
@@ -87,10 +85,8 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   flowcheck: runNodeScriptSteps('flowcheck'),
   run: [peg, build, runNodeScript],
   licenses: [build],
-  default: [
-    check, peg, railroad, build, lint, tslint, buildifier, cycles, runTestsOrHealthOnCron,
-    webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
-  ]
+  default: [check, peg, railroad, build, runTestsOrHealthOnCron, webpack,
+            webpackTools, lint, tslint, buildifier, cycles, devServerAsync, testWdioShells],
 };
 
 /**
@@ -561,7 +557,6 @@ function buildifier(args: string[]): boolean {
   for (const file of findProjectFiles(process.cwd(), exclude, include)) {
     const result = saneSpawnSync('npx', ['buildifier', ...buildifierOptions, file]);
     if (!result) {
-      console.log('failed target was ' + file);
       allSucceeded = false;
     }
   }
