@@ -1,20 +1,21 @@
-# Kotlin --> Wasm particles
+# Arcs Kotlin SDK
 
-## Setup
+## Build the SDK
 
-Our code is built by Bazel. It uses Kotlin Mutliplatform to target JVM and Wasm
-runtimes. Bazel must be installed to build and run the code and tests, which
-reside in `src/wasm/`.
+- Jvm: `bazel build //java/arcs/sdk/kotlin:arcs`
+- Wasm: `bazel build //java/arcs/sdk/kotlin:arcs-wasm`
 
-1. **Installing Bazel:** Follow [project install instructions](../../../../README.md#install).
+## Test the SDK
 
-## Build
+- Jvm: `bazel test //javatests/arcs/sdk/kotlin/...`
+- Wasm: `bazel test //src/wasm:wasm-api-test`
 
-See [here](../../../../particles/Native/Wasm) or [here](../../../../particles/Tutorial/Kotlin) for working examples.
+## Creating Kotlin Particles
+
+See [this](../../../../particles/Native/Wasm) or [this](../../../../particles/Tutorial/Kotlin) for working examples.
 
 - Add a `BUILD` file in the relevant directory
-- Generate Kotlin Data Classes from your particle spec using the
-  `arcs_kt_schema` build rule:
+- Generate Kotlin entities from your particle spec using the `arcs_kt_schema` build rule:
   ```
   arcs_kt_schema(
       # Name of the BUILD rule (tell Bazel to build this schema using this name).
@@ -25,8 +26,8 @@ See [here](../../../../particles/Native/Wasm) or [here](../../../../particles/Tu
       package = "arcs.example",
   )
   ```
-- Write your Kotlin particle(s): See [the Kotlin tutorial](../../../../particles/Tutorial/Kotlin) for greater detail.
-- To target both Wasm and the JVM, add `arcs_kt_particles` to the `BUILD` file.
+- Write your Kotlin particle(s): See [this Kotlin tutorial](../../../../particles/Tutorial/Kotlin) for greater detail.
+- Add a `arcs_kt_particles` rule to the `BUILD` file.
   ```
   # This library is optional, you might not need one if you only have particle files.
   arcs_kt_library(
@@ -56,9 +57,6 @@ See [here](../../../../particles/Native/Wasm) or [here](../../../../particles/Tu
 ## Execute
 
 - `tools/sigh devServer`
-- Visit [localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs](http://localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs)
+- Visit [localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs](http://localhost:8786/shells/dev-shell/?m=https://$particles/Native/Wasm/wasm.arcs) to view your particle in the WebShell.
 
 
-## Test
-
-`bazel test //src/wasm:wasm-api-test`
