@@ -28,17 +28,17 @@ arcs_kt_jvm_test_suite(
 arcs_kt_schema(
     name = "schemas",
     srcs = ["//src/wasm/tests:manifest.arcs"],
-    package = "package arcs.sdk.kotlin.wasm",
+    package = "arcs.sdk.kotlin.wasm",
 )
 
 arcs_kt_particles(
     name = "test-module",
     srcs = glob(
-        ["*.kt"],
-        exclude = ["TestBase.kt"],
+        ["wasm/*.kt"],
+        exclude = ["wasm/TestBase.kt", "wasm/Test.kt"],
     ),
     jvm = False,
-    package = "package arcs.sdk.kotlin.wasm",
+    package = "arcs.sdk.kotlin.wasm",
     visibility = ["//visibility:public"],
     deps = [
         ":TestBase",
@@ -48,7 +48,7 @@ arcs_kt_particles(
 
 arcs_kt_library(
     name = "TestBase",
-    srcs = ["TestBase.kt"],
+    srcs = ["wasm/TestBase.kt", "wasm/Test.kt"],
     jvm = False,
     deps = [":schemas"],
 )
