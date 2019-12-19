@@ -20,7 +20,6 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Manifest} from './manifest.js';
 import {Id} from './id.js';
 import {VolatileMemory, VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import { assert } from '../platform/assert-node.js';
 
 /**
  * @license

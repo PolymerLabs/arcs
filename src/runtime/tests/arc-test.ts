@@ -788,7 +788,7 @@ describe('Arc', () => {
     assert.strictEqual(slotsCreated, 1);
   });
 
-  it('serialization roundtrip preserves data for volatile stores', async function () {
+  it('serialization roundtrip preserves data for volatile stores', async function() {
     if (Flags.useNewStorageStack) {
       this.skip();
     }
@@ -929,7 +929,7 @@ describe('Arc', () => {
   });
 
 
-  it('persist serialization for', async function () {
+  it('persist serialization for', async function() {
     if (Flags.useNewStorageStack) {
       // We don't currently support ArcInfo through the new stack
       this.skip();

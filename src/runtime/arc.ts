@@ -48,7 +48,7 @@ import {Flags} from './flags.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
-import { StorageKeyParser } from './storageNG/storage-key-parser.js';
+import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
