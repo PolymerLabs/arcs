@@ -36,19 +36,20 @@ const PROPERTY_BLACKLIST = new Map(
 );
 
 // Generates unique ids and cookies to identify tracing sessions or function
-// calls among contexts and tracing sessions or function calls.
+// calls among execution contexts (main runtime, dedicated workers and etc).
 const idGenerator = new class {
-  private cookie: number = Date.now();
+  private cookie: number = Date.now() & 0x7FFFFFFF;
+  private id: string = Math.random().toString(36).substr(2, 9);
 
   /**
-   * An id is used to identify execution context (main runtime, workers, etc).
+   * An id is used to identify execution context.
    *
    * Relies on v8 pseudo-random number generator (PRNG).
    * The random number is derived from an internal state, which is altered by
    * a fixed algorithm for every new random number.
    */
   getUniqueId(): string {
-    return '::' + Math.random().toString(36).substr(2, 9);
+    return this.id;
   }
 
   /**
@@ -56,7 +57,9 @@ const idGenerator = new class {
    * asynchronous tracing session or function call.
    */
   getCookie(): number {
-    return this.cookie++;
+    const cookie = this.cookie++;
+    this.cookie &= 0x7FFFFFFF;
+    return cookie;
   }
 }();
 
@@ -134,6 +137,8 @@ function harnessSystemTracing(obj: object, client: Client) {
         SYSTEM_TRACED_PROPERTY,
         {value: true, writable: false});
 
+    const classTagName = obj.constructor.name || 'anon';
+
     // Collects and binds instance functions
     boundSymbols = boundSymbols.concat(
         Object.getOwnPropertyNames(obj)
@@ -144,7 +149,8 @@ function harnessSystemTracing(obj: object, client: Client) {
               className: obj.constructor.name,
               prototype: obj as Function,  // Foo.prototype
               property: element,
-              tag: obj.constructor.name + '::' + element + contextId,
+              // Places contextId first to group visual results in catapult.
+              tag: contextId + '::' + classTagName + '::' + element,
             })));
 
     // Collects and binds class static functions
@@ -157,7 +163,7 @@ function harnessSystemTracing(obj: object, client: Client) {
               className: obj.constructor.name,
               prototype: obj.constructor,  // Foo.prototype.constructor
               property: element,
-              tag: obj.constructor.name + '::' + element + contextId,
+              tag: contextId + '::' + classTagName + '::' + element,
             })));
   }
 
