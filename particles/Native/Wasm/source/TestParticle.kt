@@ -104,22 +104,9 @@ class TestParticle : Particle() {
                  </table>""".trimIndent()
     }
 
-    private val defaultData = TestParticle_Data(
-        num = 0.0,
-        txt = "",
-        lnk = "",
-        flg = false
-    )
-    private val defaultRes = TestParticle_Res(
-        num = 0.0,
-        txt = "",
-        lnk = "",
-        flg = false
-    )
-    private val defaultInfo = TestParticle_Info(
-        for_ = "",
-        val_ = 0.0
-    )
+    private val defaultData = TestParticle_Data()
+    private val defaultRes = TestParticle_Res()
+    private val defaultInfo = TestParticle_Info()
     private val data = Singleton(this, "data") { defaultData }
     private val res = Singleton(this, "res") { defaultRes }
     private val info = Collection(this, "info") { defaultInfo }

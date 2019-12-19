@@ -22,20 +22,11 @@ import arcs.TTTGame_PlayerOneMove
 
 class TTTGame : Particle() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
-    private val defaultPlayerOne = TTTGame_PlayerOne(
-        name = "PlayerOne",
-        avatar = ""
-    )
-    private val defaultMove = TTTGame_PlayerOneMove(-1.0)
 
-    private val gameState = Singleton(this, "gameState") { defaultGame }
-    private val playerOne = Singleton(this, "playerOne") { defaultPlayerOne }
-    private val playerOneMove = Singleton(this, "playerOneMove") { defaultMove }
-    private val events = Collection(this, "events") { TTTGame_Events(
-        type = "",
-        move = -1.0,
-        time = -1.0
-    ) }
+    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
+    private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
+    private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
+    private val events = Collection(this, "events") { TTTGame_Events() }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (gameState.get() == null) {
@@ -45,8 +36,8 @@ class TTTGame : Particle() {
 
     override fun onHandleUpdate(handle: Handle) {
         val gs = gameState.get() ?: defaultGame
-        val p1 = playerOne.get() ?: defaultPlayerOne
-        val mv = playerOneMove.get() ?: defaultMove
+        val p1 = playerOne.get() ?: TTTGame_PlayerOne()
+        val mv = playerOneMove.get() ?: TTTGame_PlayerOneMove()
         val boardList = gs.board.split(",").toMutableList()
         // Check the handle updated matches the current player
         if (handle.name == "playerOneMove") {

@@ -16,7 +16,7 @@ import arcs.Particle
 import arcs.Singleton
 
 class AutoRenderTest : Particle() {
-    private val data = Singleton(this, "data") { AutoRenderTest_Data("") }
+    private val data = Singleton(this, "data") { AutoRenderTest_Data() }
 
     override fun init() = renderOutput()
     override fun onHandleUpdate(handle: Handle) = renderOutput()

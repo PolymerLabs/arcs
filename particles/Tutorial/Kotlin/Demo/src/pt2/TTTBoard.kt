@@ -19,20 +19,9 @@ import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
 class TTTBoard : Particle() {
 
-    private val defaultGameState = TTTBoard_GameState(
-        board = ",,,,,,,,"
-    )
-
-    private val defaultEvent = TTTBoard_Events(
-        type = "",
-        move = -1.0,
-        time = -1.0
-    )
-
-    private val gameState = Singleton(this, "gameState") { defaultGameState }
-    private val events = Collection(this, "events") { defaultEvent }
+    private val gameState = Singleton(this, "gameState") { TTTBoard_GameState() }
+    private val events = Collection(this, "events") { TTTBoard_Events() }
     private var clicks = 0.0
-    private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
 
     init {
         eventHandler("onClick") { eventData ->
@@ -53,7 +42,7 @@ class TTTBoard : Particle() {
     override fun onHandleUpdate(handle: Handle) = renderOutput()
 
     override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
-        val gs = gameState.get() ?: defaultGameState
+        val gs = gameState.get() ?: TTTBoard_GameState()
         val boardList = gs.board.split(",")
         val boardModel = mutableListOf<Map<String, String?>>()
         boardList.forEachIndexed { index, cell ->
