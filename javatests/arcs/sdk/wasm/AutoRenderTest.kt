@@ -11,9 +11,9 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.kotlin.Handle
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.Singleton
+import arcs.sdk.common.Handle
+import arcs.sdk.common.Particle
+import arcs.sdk.common.Singleton
 
 class AutoRenderTest : Particle() {
     private val data = Singleton(this, "data") { AutoRenderTest_Data() }

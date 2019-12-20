@@ -11,10 +11,10 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.kotlin.Collection
-import arcs.sdk.kotlin.Handle
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.Singleton
+import arcs.sdk.common.Collection
+import arcs.sdk.common.Handle
+import arcs.sdk.common.Particle
+import arcs.sdk.common.Singleton
 
 class HandleSyncUpdateTest : Particle() {
     private val sng = Singleton(this, "sng") { HandleSyncUpdateTest_Sng() }

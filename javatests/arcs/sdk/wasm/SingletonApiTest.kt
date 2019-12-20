@@ -11,8 +11,8 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.Singleton
+import arcs.sdk.common.Particle
+import arcs.sdk.common.Singleton
 
 class SingletonApiTest : Particle() {
     private val in_ = Singleton(this, "inHandle") { SingletonApiTest_InHandle() }

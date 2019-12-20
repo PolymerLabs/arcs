@@ -11,7 +11,7 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.kotlin.Singleton
+import arcs.sdk.common.Singleton
 
 class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
     TestBase<EntityClassApiTest_Errors>(ctor) {

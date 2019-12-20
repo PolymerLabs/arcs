@@ -11,9 +11,9 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.kotlin.Collection
-import arcs.sdk.kotlin.Entity
-import arcs.sdk.kotlin.Particle
+import arcs.sdk.common.Collection
+import arcs.sdk.common.Entity
+import arcs.sdk.common.Particle
 import kotlin.AssertionError
 import kotlin.test.Asserter
 

@@ -11,8 +11,8 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.kotlin.Collection
-import arcs.sdk.kotlin.Particle
+import arcs.sdk.common.Collection
+import arcs.sdk.common.Particle
 
 class ServicesTest : Particle() {
     private val output = Collection(this, "output") { ServicesTest_Output() }

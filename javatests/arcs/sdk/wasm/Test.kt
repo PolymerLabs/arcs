@@ -11,4 +11,5 @@
 
 package arcs.sdk.wasm
 
+/** Annotation to mark methods as Wasm Tests */
 annotation class Test
