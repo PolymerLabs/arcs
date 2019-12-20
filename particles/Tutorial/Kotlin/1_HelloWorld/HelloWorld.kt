@@ -1,6 +1,6 @@
 package arcs.tutorials
 
-import arcs.sdk.kotlin.Particle
+import arcs.sdk.common.Particle
 
 /**
  * Sample WASM Particle.

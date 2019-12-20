@@ -11,12 +11,12 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.kotlin.Collection
-import arcs.sdk.kotlin.Handle
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.Singleton
-import arcs.sdk.kotlin.TTTBoard_Events
-import arcs.sdk.kotlin.TTTBoard_GameState
+import arcs.sdk.common.Collection
+import arcs.sdk.common.Handle
+import arcs.sdk.common.Particle
+import arcs.sdk.common.Singleton
+import arcs.sdk.common.TTTBoard_Events
+import arcs.sdk.common.TTTBoard_GameState
 
 class TTTBoard : Particle() {
 

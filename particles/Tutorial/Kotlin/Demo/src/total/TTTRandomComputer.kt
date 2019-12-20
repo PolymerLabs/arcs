@@ -11,12 +11,12 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.kotlin.Handle
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.Singleton
-import arcs.sdk.kotlin.TTTRandomComputer_GameState
-import arcs.sdk.kotlin.TTTRandomComputer_MyMove
-import arcs.sdk.kotlin.TTTRandomComputer_Player
+import arcs.sdk.common.Handle
+import arcs.sdk.common.Particle
+import arcs.sdk.common.Singleton
+import arcs.sdk.common.TTTRandomComputer_GameState
+import arcs.sdk.common.TTTRandomComputer_MyMove
+import arcs.sdk.common.TTTRandomComputer_Player
 
 class TTTRandomComputer : Particle() {
     private val gameState = Singleton(this, "gameState") { TTTRandomComputer_GameState() }
