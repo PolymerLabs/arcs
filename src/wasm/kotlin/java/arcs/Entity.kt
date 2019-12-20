@@ -22,6 +22,7 @@ abstract class Entity<T> {
     abstract fun decodeEntity(encoded: ByteArray): T?
     abstract fun encodeEntity(): NullTermByteArray
     abstract fun isSet(): Boolean
+    abstract fun getFieldsNotSet(): List<String>
 }
 
 class StringDecoder(private var bytes: ByteArray) {

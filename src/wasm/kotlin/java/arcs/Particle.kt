@@ -119,7 +119,7 @@ abstract class Particle {
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let {
-          StringEncoder().encodeDictionary(it).toNullTermByteArray()
+            StringEncoder().encodeDictionary(it).toNullTermByteArray()
         }
         RuntimeClient.onRenderOutput(this, template, model)
     }
@@ -215,6 +215,11 @@ open class Singleton<T : Entity<T>>(
         this.entity = entity
         val encoded = entity.encodeEntity()
         RuntimeClient.singletonSet(particle, this, encoded)
+        if (!entity.isSet()) {
+            log("WARNING: ${
+                entity.getFieldsNotSet().joinToString(", ")
+            } fields on $entity are not set")
+        }
     }
 
     fun clear() {

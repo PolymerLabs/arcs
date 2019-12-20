@@ -72,6 +72,7 @@ class KotlinGenerator implements ClassGenerator {
   fieldSets: string[] = [];
   encode: string[] = [];
   decode: string[] = [];
+  getUnsetFields: string[] = [];
 
   constructor(readonly node: SchemaNode) {}
 
@@ -91,6 +92,11 @@ class KotlinGenerator implements ClassGenerator {
     );
     this.setFields.push(`this.${fixed} = ${fixed}`);
     this.fieldSets.push(`_${fixed}Set`);
+    this.getUnsetFields.push(
+      `if(!_${fixed}Set) {\n` +
+      `             rtn.add("${fixed}")\n` +
+      `         }`
+    );
 
     this.decode.push(`"${field}" -> {`,
                      `    decoder.validate("${typeChar}")`,
@@ -126,9 +132,15 @@ class ${name}() : Entity<${name}>() {
     ): this() {
         ${this.setFields.join('\n        ')}
     }`)}
-    
+
     override fun isSet(): Boolean {
-        return ${withFields(this.fieldSets.join(' || '))}${withoutFields('true')}
+        return ${withFields(`${this.fieldSets.join(' && ')}`)}${withoutFields('true')}
+    }
+
+    override fun getFieldsNotSet(): List<String> {
+        val rtn = mutableListOf<String>()
+        ${withFields(this.getUnsetFields.join('\n        '))}
+        return rtn
     }
 
     override fun schemaHash() = "${schemaHash}"
