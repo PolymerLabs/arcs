@@ -12,22 +12,22 @@
 
 package arcs.sdk.kotlin
 
-import arcs.sdk.kotlin.wasm.WasmString
-import arcs.sdk.kotlin.wasm._free
-import arcs.sdk.kotlin.wasm.collectionClear
-import arcs.sdk.kotlin.wasm.collectionRemove
-import arcs.sdk.kotlin.wasm.collectionStore
-import arcs.sdk.kotlin.wasm.onRenderOutput
-import arcs.sdk.kotlin.wasm.resolveUrl
-import arcs.sdk.kotlin.wasm.serviceRequest
-import arcs.sdk.kotlin.wasm.singletonClear
-import arcs.sdk.kotlin.wasm.singletonSet
-import arcs.sdk.kotlin.wasm.toAddress
-import arcs.sdk.kotlin.wasm.toKString
-import arcs.sdk.kotlin.wasm.toNullableKString
-import arcs.sdk.kotlin.wasm.toWasmAddress
-import arcs.sdk.kotlin.wasm.toWasmNullableString
-import arcs.sdk.kotlin.wasm.toWasmString
+import arcs.sdk.wasm.WasmString
+import arcs.sdk.wasm._free
+import arcs.sdk.wasm.collectionClear
+import arcs.sdk.wasm.collectionRemove
+import arcs.sdk.wasm.collectionStore
+import arcs.sdk.wasm.onRenderOutput
+import arcs.sdk.wasm.resolveUrl
+import arcs.sdk.wasm.serviceRequest
+import arcs.sdk.wasm.singletonClear
+import arcs.sdk.wasm.singletonSet
+import arcs.sdk.wasm.toAddress
+import arcs.sdk.wasm.toKString
+import arcs.sdk.wasm.toNullableKString
+import arcs.sdk.wasm.toWasmAddress
+import arcs.sdk.wasm.toWasmNullableString
+import arcs.sdk.wasm.toWasmString
 
 actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.decodeToString()
 actual fun stringToUtf8Impl(str: String): ByteArray = str.encodeToByteArray()
@@ -72,7 +72,7 @@ actual object RuntimeClient {
         return wasmId.toNullableKString()?.let { _free(wasmId); it }
     }
 
-    actual fun log(msg: String) = arcs.sdk.kotlin.wasm.log(msg)
+    actual fun log(msg: String) = arcs.sdk.wasm.log(msg)
 
     actual fun onRenderOutput(particle: Particle, template: String?, model: NullTermByteArray?) =
         onRenderOutput(
@@ -100,7 +100,7 @@ actual object RuntimeClient {
         return resolved
     }
 
-    actual fun abort() = arcs.sdk.kotlin.wasm.abort()
+    actual fun abort() = arcs.sdk.wasm.abort()
 
     actual fun assert(message: String, cond: Boolean) {
         if (cond) return
