@@ -17,7 +17,7 @@ kt_jvm_and_js_library(
         "//java/arcs/core/crdt/internal",
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage/referencemode",
-        "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
-        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
