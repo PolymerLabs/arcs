@@ -39,14 +39,14 @@ class TestLoader extends Loader {
   }
 }
 
-['cpp/tests', '../../javatests/arcs/sdk/kotlin'].forEach(env => {
+['cpp/tests', '../../javatests/arcs/sdk/wasm'].forEach(env => {
   // Run tests for C++ and Kotlin
   describe(`wasm tests (${env.split('/')[0]})`, () => {
 
     let loader;
     let manifestPromise;
 
-    const isKotlin = env.includes('kotlin');
+    const isKotlin = env.includes('sdk');
     const isCpp = env.includes('cpp');
 
     before(function() {
