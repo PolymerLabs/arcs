@@ -478,8 +478,12 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
+        const volatileKey = recipeHandle.immediateValue ? (
+          Flags.useNewStorageStack ? new VolatileStorageKey(this.id, '') : 'volatile'
+        ) : undefined;
+
         const newStore = await this.createStoreInternal(type, /* name= */ null, this.generateID().toString(),
-            recipeHandle.tags);
+            recipeHandle.tags, volatileKey);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
