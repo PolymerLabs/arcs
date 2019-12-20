@@ -9,8 +9,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.kotlin
+package arcs.sdk.common
 
+import arcs.sdk.kotlin.StringDecoder
+import arcs.sdk.kotlin.stringToUtf8
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -9,10 +9,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.kotlin.wasm
+package arcs.sdk.wasm
 
 import arcs.sdk.kotlin.Singleton
-import arcs.sdk.kotlin.utf8ToString
 
 class SpecialSchemaFieldsTest(
     ctor: (String) -> SpecialSchemaFieldsTest_Errors

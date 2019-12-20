@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.kotlin.wasm
+package arcs.sdk.wasm
 
 import arcs.sdk.kotlin.Collection
 import arcs.sdk.kotlin.Particle
