@@ -5,7 +5,7 @@ def wasm_kt_binary(name, kt_target, visibility = None):
         name = name,
         srcs = [kt_target + ".wasm", kt_target + ".wasm.js"],
         cmd = "cp $(location %s.wasm) $(@D)/%s.wasm; cp $(location %s.wasm.js) $(@D)/%s.wasm.js" % (kt_target, outname, kt_target, outname),
-        outs = ["%s.wasm" % name, "%s.wasm.js" % name],
+        outs = ["%s.wasm" % outname, "%s.wasm.js" % outname],
         tools = [kt_target],
         visibility = visibility,
     )
