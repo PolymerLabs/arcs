@@ -39,12 +39,15 @@ class TestLoader extends Loader {
   }
 }
 
-['cpp/tests', 'kotlin/javatests/arcs'].forEach(env => {
+['cpp/tests', '../../javatests/arcs/sdk/kotlin'].forEach(env => {
   // Run tests for C++ and Kotlin
   describe(`wasm tests (${env.split('/')[0]})`, () => {
 
     let loader;
     let manifestPromise;
+
+    const isKotlin = env.includes('kotlin');
+    const isCpp = env.includes('cpp');
 
     before(function() {
       if (!global['testFlags'].bazel) {
@@ -156,7 +159,7 @@ class TestLoader extends Loader {
       assert.lengthOf(results, 4);
 
       const resolve = results.shift();
-      if (env.includes('kotlin')) {
+      if (isKotlin) {
         assert.deepStrictEqual(resolve, {call: 'resolveUrl', tag: '', payload: 'RESOLVED($resolve-me)'});
       } else {
         assert.deepStrictEqual(resolve, {call: 'resolveUrl', payload: 'RESOLVED($resolve-me)'});
@@ -179,7 +182,7 @@ class TestLoader extends Loader {
     // can be printed after the main test name.
     function prefix(title, fn) {
       it(title, async () => {
-        if (env.includes('cpp')) {
+        if (isCpp) {
           console.log('    »', title);
         }
         await fn();
@@ -206,7 +209,7 @@ class TestLoader extends Loader {
 
     prefix('reference class API', async () => {
       // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
+      if (isKotlin) {
         return;
       }
       const {stores} = await setup('ReferenceClassApiTest');
@@ -240,7 +243,7 @@ class TestLoader extends Loader {
       // in.get(), out.set()
       await inStore.set({id: 'i3', rawData: {num: 4}});
       await sendEvent('case2');
-      if (env.includes('kotlin')) {
+      if (isKotlin) {
         assert.deepStrictEqual((await outStore.get()).rawData, {num: 8, txt: ''});
       } else {
         assert.deepStrictEqual((await outStore.get()).rawData, {num: 8});
@@ -249,7 +252,7 @@ class TestLoader extends Loader {
       // io.get()/set()
       await ioStore.set({id: 'i3', rawData: {num: 4}});
       await sendEvent('case3');
-      if (env.includes('kotlin')) {
+      if (isKotlin) {
         assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12, txt: ''});
       } else {
         assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12});
@@ -278,7 +281,7 @@ class TestLoader extends Loader {
       // in.empty(), in.size(), out.store()
       await inStore.store({id: 'id3', rawData: {num: 3}}, ['k3']);
       await sendEvent('case2');
-      if (env.includes('kotlin')) {
+      if (isKotlin) {
         assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, txt: '', num: 1}]);
       } else {
         assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, num: 1}]);
@@ -291,7 +294,7 @@ class TestLoader extends Loader {
       // in.begin(), in.end() and iterator methods
       // TODO(alxr): Extract out to be a C++ specific test case
       await sendEvent('case4');
-      if (env.includes('kotlin')) {
+      if (isKotlin) {
         assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
           {txt: '{id3}, num: 3', num: 6, flg: true},
           {txt: 'eq', num: 0, flg: false},
@@ -311,7 +314,7 @@ class TestLoader extends Loader {
       await ioStore.store({id: 'id6', rawData: {num: 2}}, ['k6']);
       await outStore.clearItemsForTesting();
       await sendEvent('case5');
-      if (env.includes('kotlin')) {
+      if (isKotlin) {
         assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
           {num: 4, flg: false, txt: ''},               // store() an entity in addition to the 3 above
           {num: 3, flg: false, txt: ''},               // remove() the entity
@@ -335,7 +338,7 @@ class TestLoader extends Loader {
     // TODO: writing to reference-typed handles
     it('reference-typed handles', async () => {
       // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
+      if (isKotlin) {
         return;
       }
       const {arc, stores} = await setup('ReferenceHandlesTest');
@@ -389,7 +392,7 @@ class TestLoader extends Loader {
     // TODO: nested references
     it('reference-typed schema fields', async () => {
       // TODO(alxr): Remove when tests are ready
-      if (env.includes('kotlin')) {
+      if (isKotlin) {
         return;
       }
       const {arc, stores} = await setup('SchemaReferenceFieldsTest');
