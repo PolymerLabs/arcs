@@ -26,7 +26,7 @@ export abstract class Schema2Base {
 
   constructor(readonly opts: minimist.ParsedArgs) {
     Runtime.init('../..');
-    this.scope = this.opts.package || 'arcs.sdk.kotlin';
+    this.scope = this.opts.package || 'arcs.sdk.common';
   }
 
   async call() {

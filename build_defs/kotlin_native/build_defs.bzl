@@ -74,8 +74,8 @@ kt_wasm_binary = rule(
             cfg = "host",
         ),
         "entry_point": attr.string(
-            default = "arcs.sdk.kotlin.wasm.main",
-            doc = "Specify the entrypoint (path to main function) for the binary. For example, `arcs.sdk.kotlin.wasm.main`.",
+            default = "arcs.sdk.common.main",
+            doc = "Specify the entrypoint (path to main function) for the binary. For example, `arcs.sdk.common.main`.",
         ),
         "kotlincopts": attr.string_list(
             doc = """Flags to pass to kotlinc compiler.""",

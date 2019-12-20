@@ -156,7 +156,7 @@ def arcs_kt_particles(
         native_binary_name = name + _WASM_SUFFIX
         kt_native_binary(
             name = native_binary_name,
-            entry_point = "arcs.sdk.kotlin.main",
+            entry_point = "arcs.sdk.common.main",
             deps = wasm_particle_libs,
             # Don't build this manually. Build the wasm_kt_binary rule below
             # instead; otherwise this rule will build a non-wasm binary.
