@@ -14,7 +14,7 @@ import {VolatileStorageKey} from '../drivers/volatile.js';
 import {FirebaseStorageKey, FirebaseStorageDriverProvider} from '../drivers/firebase.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
-import { DriverFactory } from '../drivers/driver-factory.js';
+import {DriverFactory} from '../drivers/driver-factory.js';
 
 describe('StorageKey', () => {
 
