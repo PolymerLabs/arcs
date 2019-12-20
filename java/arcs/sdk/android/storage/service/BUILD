@@ -18,8 +18,8 @@ kt_android_library(
         "//java/arcs/core/storage/util",
         "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",
-        "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
-        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 

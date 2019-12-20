@@ -29,8 +29,8 @@ arcs_kt_android_test_suite(
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/robolectric",
         "//third_party/java/truth:truth-android",
-        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx/kotlinx_coroutines:kotlinx_coroutines_test",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
         "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],
 )

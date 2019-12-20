@@ -23,9 +23,9 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/util",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
-        "//third_party/kotlin/kotlinx/kotlinx_atomicfu",
-        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx/kotlinx_coroutines:kotlinx_coroutines_test",
+        "//third_party/kotlin/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
 
@@ -42,6 +42,6 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/util",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
-        "//third_party/kotlin/kotlinx/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
