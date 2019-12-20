@@ -176,10 +176,10 @@ is shown below:
 ```kotlin
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.common.Collection
-import arcs.sdk.common.Handle
-import arcs.sdk.common.Particle
-import arcs.sdk.common.Singleton
+import arcs.sdk.Collection
+import arcs.sdk.Handle
+import arcs.sdk.Particle
+import arcs.sdk.Singleton
 import arcs.TTTGame_Events
 import arcs.TTTGame_GameState
 
@@ -210,10 +210,10 @@ in the comments.
 ```kotlin
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.common.Collection
-import arcs.sdk.common.Handle
-import arcs.sdk.common.Particle
-import arcs.sdk.common.Singleton
+import arcs.sdk.Collection
+import arcs.sdk.Handle
+import arcs.sdk.Particle
+import arcs.sdk.Singleton
 import arcs.TTTBoard_Events
 import arcs.TTTBoard_GameState
 

@@ -11,14 +11,14 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.common.Collection
-import arcs.sdk.common.Handle
-import arcs.sdk.common.Particle
-import arcs.sdk.common.Singleton
-import arcs.sdk.common.TTTGame_Events
-import arcs.sdk.common.TTTGame_GameState
-import arcs.sdk.common.TTTGame_PlayerOne
-import arcs.sdk.common.TTTGame_PlayerOneMove
+import arcs.sdk.Collection
+import arcs.sdk.Handle
+import arcs.sdk.Particle
+import arcs.sdk.Singleton
+import arcs.sdk.TTTGame_Events
+import arcs.sdk.TTTGame_GameState
+import arcs.sdk.TTTGame_PlayerOne
+import arcs.sdk.TTTGame_PlayerOneMove
 
 class TTTGame : Particle() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")

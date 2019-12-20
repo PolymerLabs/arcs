@@ -11,8 +11,8 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.common.Particle
-import arcs.sdk.common.Singleton
+import arcs.sdk.Particle
+import arcs.sdk.Singleton
 
 class EventsTest : Particle() {
     private val output = Singleton(this, "output") { EventsTest_Output() }

@@ -11,9 +11,9 @@
 
 package arcs.tutorials
 
-import arcs.sdk.common.Handle
-import arcs.sdk.common.Particle
-import arcs.sdk.common.Singleton
+import arcs.sdk.Handle
+import arcs.sdk.Particle
+import arcs.sdk.Singleton
 
 /**
  * Sample WASM Particle.

@@ -11,8 +11,8 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.common.Collection
-import arcs.sdk.common.Particle
+import arcs.sdk.Collection
+import arcs.sdk.Particle
 
 class CollectionApiTest : Particle() {
     private val _in = Collection(this, "inHandle") { CollectionApiTest_InHandle() }

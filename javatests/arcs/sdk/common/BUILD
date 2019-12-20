@@ -6,7 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
     name = "stringEncoder",
-    package = "arcs.sdk.common",
+    package = "arcs.sdk",
     deps = [
         "//java/arcs/sdk/jvm:arcs",
         "//third_party/java/junit:junit-android",

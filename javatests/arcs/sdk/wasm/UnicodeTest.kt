@@ -11,10 +11,10 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.common.Collection
-import arcs.sdk.common.Handle
-import arcs.sdk.common.Particle
-import arcs.sdk.common.Singleton
+import arcs.sdk.Collection
+import arcs.sdk.Handle
+import arcs.sdk.Particle
+import arcs.sdk.Singleton
 
 class UnicodeTest : Particle() {
     private val sng = Singleton(this, "sng") { UnicodeTest_Sng() }

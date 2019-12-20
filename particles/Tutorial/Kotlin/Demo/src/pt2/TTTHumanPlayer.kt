@@ -11,14 +11,14 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.common.Collection
-import arcs.sdk.common.Handle
-import arcs.sdk.common.Particle
-import arcs.sdk.common.Singleton
-import arcs.sdk.common.TTTHumanPlayer_Events
-import arcs.sdk.common.TTTHumanPlayer_GameState
-import arcs.sdk.common.TTTHumanPlayer_MyMove
-import arcs.sdk.common.TTTHumanPlayer_Player
+import arcs.sdk.Collection
+import arcs.sdk.Handle
+import arcs.sdk.Particle
+import arcs.sdk.Singleton
+import arcs.sdk.TTTHumanPlayer_Events
+import arcs.sdk.TTTHumanPlayer_GameState
+import arcs.sdk.TTTHumanPlayer_MyMove
+import arcs.sdk.TTTHumanPlayer_Player
 
 class TTTHumanPlayer : Particle() {
     private val gameState = Singleton(this, "gameState") { TTTHumanPlayer_GameState() }

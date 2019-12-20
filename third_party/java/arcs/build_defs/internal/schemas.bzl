@@ -52,7 +52,7 @@ def arcs_cc_schema(name, src, out = None, package = "arcs"):
         package = package,
     )
 
-def arcs_kt_schema(name, srcs, package = "arcs.sdk.common"):
+def arcs_kt_schema(name, srcs, package = "arcs.sdk"):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:

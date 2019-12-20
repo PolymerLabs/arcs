@@ -10,7 +10,7 @@
  */
 @file:Suppress("PackageName", "TopLevelName")
 
-package arcs.sdk.common
+package arcs.sdk
 
 import arcs.sdk.wasm.WasmString
 import arcs.sdk.wasm._free

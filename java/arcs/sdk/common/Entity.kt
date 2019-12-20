@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.common
+package arcs.sdk
 
 typealias URL = String
 

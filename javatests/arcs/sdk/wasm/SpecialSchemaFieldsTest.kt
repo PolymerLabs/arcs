@@ -11,8 +11,8 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.common.Singleton
-import arcs.sdk.common.utf8ToString
+import arcs.sdk.Singleton
+import arcs.sdk.utf8ToString
 
 class SpecialSchemaFieldsTest(
     ctor: (String) -> SpecialSchemaFieldsTest_Errors

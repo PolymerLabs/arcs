@@ -11,9 +11,9 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.common.Handle
-import arcs.sdk.common.Particle
-import arcs.sdk.common.Singleton
+import arcs.sdk.Handle
+import arcs.sdk.Particle
+import arcs.sdk.Singleton
 
 class RenderTest : Particle() {
     private val flags = Singleton(this, "flags") { RenderTest_Flags() }
