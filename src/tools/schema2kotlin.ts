@@ -93,9 +93,9 @@ class KotlinGenerator implements ClassGenerator {
     this.setFields.push(`this.${fixed} = ${fixed}`);
     this.fieldSets.push(`_${fixed}Set`);
     this.getUnsetFields.push(
-      `if(!_${fixed}Set) {\n` +
-      `             rtn.add("${fixed}")\n` +
-      `         }`
+      `if (!_${fixed}Set) {\n` +
+      `            rtn.add("${fixed}")\n` +
+      `        }`
     );
 
     this.decode.push(`"${field}" -> {`,
@@ -129,7 +129,7 @@ class ${name}() : Entity<${name}>() {
 
     ${withFields(`constructor(
         ${this.fields.join(',\n        ')}
-    ): this() {
+    ) : this() {
         ${this.setFields.join('\n        ')}
     }`)}
 
@@ -169,7 +169,6 @@ class ${name}() : Entity<${name}>() {
         return encoder.toNullTermByteArray()
     }
 }
-${typeDecls}
-`;
+${typeDecls}`;
   }
 }
