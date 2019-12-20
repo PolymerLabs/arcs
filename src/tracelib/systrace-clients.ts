@@ -12,6 +12,7 @@ import {getGlobalScope, getSystemTraceApis, getSystemTraceChannel} from './systr
 
 const CONSOLE_CLIENT_NAME = 'console';
 const ANDROID_CLIENT_NAME = 'android';
+const DEVTOOLS_TIMELINE_CLIENT_NAME = 'devtools_timeline';
 
 /** Abstraction of System Trace Client */
 export abstract class Client {
@@ -32,6 +33,22 @@ class ConsoleClient extends Client {
 
   asyncTraceEnd(tag: string, cookie: number) {
     console.log(`${Date.now()}: F|${tag}|${cookie}`);
+  }
+}
+
+/**
+ * Client: DevTools Timeline marking
+ *
+ * This client implements more precise performance/latency measurement
+ * at both of the main renderer and dedicated workers.
+ */
+class DevToolsTimelineClient extends Client {
+  asyncTraceBegin(tag: string, cookie: number) {
+    console.timeStamp(`S|${tag}`);
+  }
+
+  asyncTraceEnd(tag: string, cookie: number) {
+    console.timeStamp(`F|${tag}`);
   }
 }
 
@@ -73,6 +90,9 @@ export const getClientClass =
       switch (getSystemTraceChannel()) {
         case CONSOLE_CLIENT_NAME:
           clientClass = ConsoleClient;
+          break;
+        case DEVTOOLS_TIMELINE_CLIENT_NAME:
+          clientClass = DevToolsTimelineClient;
           break;
         case ANDROID_CLIENT_NAME:
           clientClass = AndroidClient;
