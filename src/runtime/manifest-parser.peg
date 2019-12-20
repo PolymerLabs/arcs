@@ -152,6 +152,14 @@ Trigger "a trigger for a recipe"
   });
 }
 
+ParameterizedAnnotation "a parameterized annotation (e.g. @foo(bar))"
+  = simpleAnnotation:SimpleAnnotation '(' parameter:[a-z0-9_]i* ')' {
+  return toAstNode<AstNode.ParameterizedAnnotation>({
+    kind: 'param-annotation',
+    simpleAnnotation,
+    parameter: parameter.join(''),
+  });
+}
 
 SimpleAnnotation "an annotation (e.g. @foo)"
   = '@' annotation:lowerIdent { return annotation; }
@@ -1042,13 +1050,14 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotation:(whiteSpace ParameterizedAnnotation)? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
-      fate
+      fate,
+      annotation
     });
   }
 
