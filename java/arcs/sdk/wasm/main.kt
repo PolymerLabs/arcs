@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 @file:Suppress("PackageName", "TopLevelName")
-package arcs.sdk.kotlin
+package arcs.sdk.common
 
 /**
  * This entrypoint is required by Kotlin-Native and kt_native_binary rules.

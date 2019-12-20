@@ -9,8 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 @file:Suppress("PackageName", "TopLevelName")
-
-package arcs.sdk.kotlin
+package arcs.sdk.common
 
 actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
 actual fun stringToUtf8Impl(str: String): ByteArray = str.toByteArray(Charsets.UTF_8)

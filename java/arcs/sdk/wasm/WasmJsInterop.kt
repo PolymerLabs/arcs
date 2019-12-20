@@ -11,9 +11,9 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.kotlin.Handle
-import arcs.sdk.kotlin.Particle
-import arcs.sdk.kotlin.StringDecoder
+import arcs.sdk.common.Handle
+import arcs.sdk.common.Particle
+import arcs.sdk.common.StringDecoder
 import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 import kotlinx.cinterop.ByteVar

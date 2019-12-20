@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.kotlin
+package arcs.sdk.common
 
 /**
  * Base class for all Particles.

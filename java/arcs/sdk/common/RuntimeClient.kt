@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.kotlin
+package arcs.sdk.common
 
 expect fun utf8ToStringImpl(bytes: ByteArray): String
 expect fun stringToUtf8Impl(str: String): ByteArray
