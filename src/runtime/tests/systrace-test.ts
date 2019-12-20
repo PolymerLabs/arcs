@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {DontTrace, SystemTrace} from '../../tracelib/systrace.js';
+import {DontTrace, SystemTrace, SystemTraceable, makeSystemTraceable} from '../../tracelib/systrace.js';
 import {getGlobalScope} from '../../tracelib/systrace-helpers.js';
 import {Client} from '../../tracelib/systrace-clients.js';
 
@@ -233,6 +233,34 @@ describe('System Trace', () => {
     // instantiation would harness tracing on both of SubClass and BaseClass.
     obj.call();
 
+    assert.deepStrictEqual(TestClient.answer, answer);
+  });
+
+  it('extends makeSystemTraceable(<Class>)', () => {
+    const answer = [
+        '++call', '--call',
+    ];
+
+    (new class extends makeSystemTraceable(class {call() {}}) {}()).call();
+    assert.deepStrictEqual(TestClient.answer, answer);
+  });
+
+  it('multiple makeSystemTraceable(<Class>) in prototype chain', () => {
+    const answer = [
+        '++call', '--call',
+    ];
+
+    const root = class extends makeSystemTraceable(class {call() {}}) {};
+    (new class extends makeSystemTraceable(root) {}()).call();
+    assert.deepStrictEqual(TestClient.answer, answer);
+  });
+
+  it('extends SystemTraceable', () => {
+    const answer = [
+        '++call', '--call',
+    ];
+
+    (new class extends SystemTraceable {call() {}}()).call();
     assert.deepStrictEqual(TestClient.answer, answer);
   });
 });

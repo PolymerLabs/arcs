@@ -68,7 +68,7 @@ class AndroidClient extends Client {
  *   ${ANDROID_CLIENT_NAME}: using Android Arcs Tracing APIs
  */
 export const getClientClass =
-    (): (typeof Client & {new(...args): Client}) | undefined => {
+    (): (typeof Client & {new (...args): Client}) | undefined => {
       let clientClass = undefined;
       switch (getSystemTraceChannel()) {
         case CONSOLE_CLIENT_NAME:

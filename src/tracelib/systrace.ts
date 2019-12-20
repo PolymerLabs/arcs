@@ -18,6 +18,8 @@ interface Symbol {
   tag: string;
 }
 
+type Constructor<T> = new (...args) => T;
+
 // Identifies whether a class has already been traced in its
 // inheritance hierarchies.
 const SYSTEM_TRACED_PROPERTY = '_systemTraced';
@@ -26,11 +28,11 @@ const SYSTEM_TRACED_PROPERTY = '_systemTraced';
 const DONT_TRACE_PROPERTY = '_dontTrace';
 
 // Don't trace these [class]: properties
-// Usually add low-overhead, atomic and/or trace APIs themselves to the list.
 //
 // Works jointly with @DontTrace{WithReason} which is used when modifying source
-// codes is allowed, whereas using this blacklist when modifying source codes
-// i.e. third-parties' is forbidden.
+// codes is allowed, whereas using this blacklist when modifying source codes in
+// i.e. third-party libraries is forbidden. The list is usually used to shut up
+// chatty trace messages on third-party class methods.
 const PROPERTY_BLACKLIST = new Map(
     // [['Foo', ['bar', 'xyz']],]
 );
@@ -90,7 +92,7 @@ export const DontTrace = DontTraceWithReason();
  * to a class and its subclasses.
  */
 // tslint:disable-next-line:enforce-name-casing
-export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
+export function SystemTrace<T extends Constructor<{}>>(ctor: T) {
   return class extends ctor {
     constructor(...args) {
       super(...args);
@@ -106,6 +108,23 @@ export function SystemTrace<T extends {new(...args): {}}>(ctor: T) {
       }
     }
   };
+}
+
+/**
+ * Used at sources that cannot decorate class by @SystemTrace.
+ * Extends SystemTraceable to declare your class system-traceable,
+ * e.g. class Foo extends SystemTraceable {...}
+ */
+// tslint:disable-next-line: variable-name
+export const SystemTraceable = SystemTrace(class {});
+
+/**
+ * Used at sources that cannot decorate class by @SystemTrace.
+ * Extends makeSystemTraceable(Base) to inherit from a system-traceable Base,
+ * e.g. class Foo extends makeSystemTraceable(Base) {...}
+ */
+export function makeSystemTraceable<T extends Constructor<{}>>(cls: T) {
+  return SystemTrace(cls);
 }
 
 function isFunction(target: object | Function, property: string): boolean {
