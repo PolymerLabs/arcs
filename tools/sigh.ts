@@ -62,31 +62,27 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 const webpackLS = webpackPkg('webpack-languageserver');
 
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
-  languageServer: [peg, build, buildLS, webpackLS],
   peg: [peg, railroad],
-  railroad: [railroad],
-  test: [peg, railroad, build, runTests],
-  testShells: [peg, railroad, build, webpack, devServerAsync, testWdioShells],
+  test: [peg, build, runTests],
+  testShells: [peg, build, webpack, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
-  webpack: [peg, railroad, build, lint, tslint, webpack],
+  webpack: [peg, build, webpack],
   webpackStorage: [webpackStorage],
   webpackTools: [peg, build, webpackTools],
   build: [peg, build],
   watch: [watch],
   buildifier: [buildifier],
   lint: [peg, build, lint, tslint, cycles, buildifier],
-  tslint: [peg, build, tslint],
   cycles: [cycles],
   check: [check],
   clean: [clean],
-  unit: [unit],
   health: [health],
   bundle: runNodeScriptSteps('bundle'),
   schema2wasm: runNodeScriptSteps('schema2wasm'),
-  devServer: [peg, build, webpack, devServer],
   flowcheck: runNodeScriptSteps('flowcheck'),
+  devServer: [peg, build, webpack, devServer],
+  languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
-  licenses: [build],
   default: [
     check, peg, railroad, build, lint, tslint, buildifier, cycles, runTestsOrHealthOnCron,
     webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
@@ -265,48 +261,6 @@ function clean(): boolean {
       recursiveDelete(buildDir);
       sighLog('Removed', buildDir);
     }
-  }
-  return true;
-}
-
-// Run unit tests on the parts of this tool itself.
-function unit(): boolean {
-  const dummySrc = 'src/foo.js';
-  const dummyDest = 'build/foo.js';
-  const success = linkUnit(dummySrc, dummyDest);
-  if (fs.existsSync(dummySrc)) {
-    fs.unlinkSync(dummySrc);
-  }
-  if (fs.existsSync(dummyDest)) {
-    fs.unlinkSync(dummyDest);
-  }
-  return success;
-}
-
-function linkUnit(dummySrc: string, dummyDest: string): boolean {
-  fs.writeFileSync(dummySrc, 'Just some nonsense');
-
-  if (!link([dummySrc])) {
-    console.error('Dummy link failed when it should have succeeded.');
-    return false;
-  }
-
-  if (!fs.existsSync(dummyDest)) {
-    console.error('Dummy link succeeded, but new hard link does not exist.');
-    return false;
-  }
-
-  if (!link([dummySrc])) {
-    console.error('Attempted idempotent link failed when it should have succeeded.');
-    return false;
-  }
-
-  fs.unlinkSync(dummyDest);
-  fs.writeFileSync(dummyDest, 'Some different nonsense, a bit longer this time');
-
-  if (!link([dummySrc])) {
-    console.error('Differing destination exists, but link failed');
-    return false;
   }
   return true;
 }
