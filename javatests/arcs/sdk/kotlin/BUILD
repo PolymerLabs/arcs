@@ -1,9 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_test_suite",
-)
-load(
-    "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_library",
     "arcs_kt_particles",
     "arcs_kt_schema",
