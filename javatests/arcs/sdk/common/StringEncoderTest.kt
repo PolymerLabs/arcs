@@ -11,8 +11,6 @@
 
 package arcs.sdk.common
 
-import arcs.sdk.kotlin.StringEncoder
-import arcs.sdk.kotlin.utf8ToString
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
