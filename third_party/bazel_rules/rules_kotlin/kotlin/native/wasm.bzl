@@ -1,6 +1,6 @@
 # Alias wasm split transition rule unless G3 Kotlin Native synced with GH rules
 def wasm_kt_binary(name, kt_target, visibility = None):
-    outname = name.rstrip('-wasm')
+    outname = name.rstrip("-wasm")
     native.genrule(
         name = name,
         srcs = [kt_target + ".wasm", kt_target + ".wasm.js"],

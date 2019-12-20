@@ -15,4 +15,3 @@ arcs_kt_jvm_test_suite(
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
-
