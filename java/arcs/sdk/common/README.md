@@ -1,13 +1,13 @@
-# Arcs Kotlin SDK
+# Arcs SDK – Common
 
 ## Build the SDK
 
-- Jvm: `bazel build //java/arcs/sdk/kotlin:arcs`
-- Wasm: `bazel build //java/arcs/sdk/kotlin:arcs-wasm`
+- Jvm: `bazel build //java/arcs/sdk/jvm:arcs`
+- Wasm: `bazel build //java/arcs/sdk/wasm:arcs`
 
 ## Test the SDK
 
-- Jvm: `bazel test //javatests/arcs/sdk/kotlin/...`
+- Jvm: `bazel test //javatests/arcs/sdk/...`
 - Wasm: `bazel test //src/wasm:wasm-api-test`
 
 ## Creating Kotlin Particles
