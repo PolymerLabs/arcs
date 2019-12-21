@@ -32,12 +32,18 @@ load(
     "kt_jvm_library",
 )
 
-_ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
+_ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/jvm:arcs"]
 _WASM_SUFFIX = "-wasm"
 _JS_SUFFIX = "-js"
 _KT_SUFFIX = "-kt"
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
+
+# Kotlin Compiler Options
+KOTLINC_OPTS = [
+    "-Xmulti-platform",
+    "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
+]
 
 def arcs_kt_jvm_library(**kwargs):
     if not IS_BAZEL:
