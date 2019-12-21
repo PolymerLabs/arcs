@@ -1,18 +1,20 @@
-# Arcs SDK – Common
+# Arcs SDK 
 
 ## Build the SDK
 
+- Android: TBD
 - Jvm: `bazel build //java/arcs/sdk:arcs`
 - Wasm: `bazel build //java/arcs/sdk:arcs-wasm`
 
 ## Test the SDK
 
+- Android: TBD
 - Jvm: `bazel test //javatests/arcs/sdk/...`
 - Wasm: `bazel test //src/wasm:wasm-api-test`
 
 ## Creating Kotlin Particles
 
-See [this](../../../../particles/Native/Wasm) or [this](../../../../particles/Tutorial/Kotlin) for working examples.
+See [this](../../../particles/Native/Wasm) or [this](../../../particles/Tutorial/Kotlin) for working examples.
 
 - Add a `BUILD` file in the relevant directory
 - Generate Kotlin entities from your particle spec using the `arcs_kt_schema` build rule:
@@ -26,7 +28,7 @@ See [this](../../../../particles/Native/Wasm) or [this](../../../../particles/Tu
       package = "arcs.example",
   )
   ```
-- Write your Kotlin particle(s): See [this Kotlin tutorial](../../../../particles/Tutorial/Kotlin) for greater detail.
+- Write your Kotlin particle(s): See [this Kotlin tutorial](../../../particles/Tutorial/Kotlin) for greater detail.
 - Add a `arcs_kt_particles` rule to the `BUILD` file.
   ```
   # This library is optional, you might not need one if you only have particle files.
