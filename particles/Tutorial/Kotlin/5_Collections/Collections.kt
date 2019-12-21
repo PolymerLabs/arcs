@@ -11,9 +11,9 @@
 
 package arcs.tutorials
 
-import arcs.Collection
-import arcs.Collections_InputData
-import arcs.Particle
+import arcs.sdk.Collection
+import arcs.sdk.Collections_InputData
+import arcs.sdk.Particle
 
 /**
  * Sample Kotlin-WASM Particle to use a JSON store.

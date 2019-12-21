@@ -153,7 +153,7 @@ kotlin {
         }
         fromPreset(presets.wasm32, 'wasm32') {
             compilations.main.outputKinds 'EXECUTABLE'
-            compilations.main.entryPoint 'arcs.main'
+            compilations.main.entryPoint 'arcs.sdk.wasm.main'
         }
     }
 }

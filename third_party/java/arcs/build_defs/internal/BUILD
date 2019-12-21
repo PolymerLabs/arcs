@@ -10,5 +10,5 @@ define_kt_toolchain(
 )
 
 exports_files([
-    "kotlin_wasm_annotations_template.kt",
+    "kotlin_wasm_annotations_template.tmpl",
 ])

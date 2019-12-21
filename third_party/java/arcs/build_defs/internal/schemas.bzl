@@ -40,6 +40,7 @@ def _run_schema2wasm(name, src, out, language_name, language_flag, package):
                    "{SRC}",
     )
 
+# TODO: Specify the appropriate c++ package name, given the new repo structure
 def arcs_cc_schema(name, src, out = None, package = "arcs"):
     """Generates a C++ header file for the given .arcs schema file."""
     _run_schema2wasm(
@@ -51,7 +52,7 @@ def arcs_cc_schema(name, src, out = None, package = "arcs"):
         package = package,
     )
 
-def arcs_kt_schema(name, srcs, package = "arcs"):
+def arcs_kt_schema(name, srcs, package = "arcs.sdk"):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:

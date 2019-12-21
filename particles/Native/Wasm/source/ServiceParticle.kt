@@ -11,8 +11,8 @@
 
 package arcs.test
 
-import arcs.Particle
-import arcs.log
+import arcs.sdk.Particle
+import arcs.sdk.log
 
 class ServiceParticle : Particle() {
 
@@ -24,8 +24,8 @@ class ServiceParticle : Particle() {
     override fun init() {
         log("Service Particle initialized")
         serviceRequest("ml5.classifyImage", mapOf("imageUrl" to url))
-        serviceRequest("random.next", tag="first")
-        serviceRequest("random.next", tag="second")
+        serviceRequest("random.next", tag = "first")
+        serviceRequest("random.next", tag = "second")
     }
 
     override fun getTemplate(slotName: String): String {
@@ -54,12 +54,12 @@ class ServiceParticle : Particle() {
     override fun serviceResponse(call: String, response: Map<String, String>, tag: String) {
         log("service call '$call' (tag '$tag') completed\n")
 
-        when(call) {
+        when (call) {
             "ml5.classifyImage" -> {
                 label = response["label"] ?: "<working>"
                 probability = response["probability"] ?: "<working>"
             }
-            else -> rand[if(tag == "first") 0 else 1] = response["value"]  ?: "<working>"
+            else -> rand[if (tag == "first") 0 else 1] = response["value"] ?: "<working>"
         }
     }
 }

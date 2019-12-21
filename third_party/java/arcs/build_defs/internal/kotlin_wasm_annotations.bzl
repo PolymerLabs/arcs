@@ -21,7 +21,7 @@ kotlin_wasm_annotations = rule(
             doc = "Output file created by this rule.",
         ),
         "_template": attr.label(
-            default = "kotlin_wasm_annotations_template.kt",
+            default = "kotlin_wasm_annotations_template.tmpl",
             allow_single_file = True,
         ),
     },

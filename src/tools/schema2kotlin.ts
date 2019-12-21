@@ -41,7 +41,7 @@ export class Schema2Kotlin extends Schema2Base {
   }
 
   fileHeader(outName: string): string {
-    const withCustomPackage = (populate: string) => this.scope !== 'arcs' ? populate : '';
+    const withCustomPackage = (populate: string) => this.scope !== 'arcs.sdk' ? populate : '';
     return `\
 @file:Suppress("PackageName", "TopLevelName")
 package ${this.scope}
@@ -51,12 +51,12 @@ package ${this.scope}
 //
 // Current implementation doesn't support references or optional field detection
 
-${withCustomPackage(`import arcs.Entity
-import arcs.NullTermByteArray
-import arcs.Particle
-import arcs.StringDecoder
-import arcs.StringEncoder
-import arcs.utf8ToString
+${withCustomPackage(`import arcs.sdk.Entity
+import arcs.sdk.NullTermByteArray
+import arcs.sdk.Particle
+import arcs.sdk.StringDecoder
+import arcs.sdk.StringEncoder
+import arcs.sdk.utf8ToString
 `)}`;
   }
 

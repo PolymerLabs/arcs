@@ -12,7 +12,7 @@ arcs_ts_test(
     src = "wasm-api-test.ts",
     deps = [
         ":manifest_srcs",
+        "//javatests/arcs/sdk/wasm:test-module",
         "//src/wasm/cpp/tests:test-module",
-        "//src/wasm/kotlin/javatests/arcs:test-module",
     ],
 )

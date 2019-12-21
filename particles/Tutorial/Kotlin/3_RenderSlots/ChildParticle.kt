@@ -11,7 +11,7 @@
 
 package arcs.tutorials
 
-import arcs.Particle
+import arcs.sdk.Particle
 
 /**
  * Sample WASM Particle.

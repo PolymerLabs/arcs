@@ -39,6 +39,12 @@ _KT_SUFFIX = "-kt"
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
 
+# Kotlin Compiler Options
+KOTLINC_OPTS = [
+    "-Xmulti-platform",
+    "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
+]
+
 def arcs_kt_jvm_library(**kwargs):
     if not IS_BAZEL:
         kwargs["disable_lint_checks"] = [
@@ -156,7 +162,7 @@ def arcs_kt_particles(
         native_binary_name = name + _WASM_SUFFIX
         kt_native_binary(
             name = native_binary_name,
-            entry_point = "arcs.main",
+            entry_point = "arcs.sdk.main",
             deps = wasm_particle_libs,
             # Don't build this manually. Build the wasm_kt_binary rule below
             # instead; otherwise this rule will build a non-wasm binary.
