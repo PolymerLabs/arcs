@@ -8,10 +8,10 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-@file:Suppress("PackageName", "TopLevelName")
 
 package arcs.sdk
 
+import arcs.sdk.wasm.Test
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
