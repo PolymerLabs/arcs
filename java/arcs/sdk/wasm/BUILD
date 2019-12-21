@@ -12,7 +12,7 @@ kt_native_library(
     name = "arcs",
     srcs = glob([
         "*.kt",
-    ]) + ["//java/arcs/sdk/common:arcs"],
+    ]) + ["//third_party/java/arcs/sdk/kotlin:kotlin-common"],
     kotlincopts = KOTLINC_OPTS + ["-Xinline-classes"],
     visibility = ["//visibility:public"],
 )

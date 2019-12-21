@@ -12,3 +12,8 @@ alias(
     name = "kotlin-wasm",
     actual = "//java/arcs/sdk/wasm:arcs",
 )
+
+alias(
+    name = "kotlin-common",
+    actual = "//java/arcs/sdk/common:arcs",
+)
