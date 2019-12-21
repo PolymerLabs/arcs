@@ -13,32 +13,38 @@ import {assert} from '../../platform/assert-web.js';
 export enum TtlUnits {Minute = 'm', Hour = 'h', Day = 'd'}
 
 export class Ttl {
-
-  private readonly _count: number;
-  private readonly _units: TtlUnits;
-  
-  constructor(count: number, units: string) {
-    this._count = count;
-    switch (units) {
-      case 'm':
-        this._units = TtlUnits.Minute;
-        break;
-      case 'h':
-        this._units = TtlUnits.Hour;
-        break;
-      case 'd':
-        this._units = TtlUnits.Day;
-        break;
-      default:
-        assert(`Invalid ttl units ${units}`);
-    }
-  }
-
-  get count(): number { return this._count; }
-  get units(): TtlUnits { return this._units; }
+  constructor(
+      public readonly count: number,
+      public readonly units: TtlUnits) {}
 
   public toString(): string {
     return `${this.count}${TtlUnits[this.units]}`;
+  }
+
+  public static fromString(ttlStr: string): Ttl {
+    const ttlTokens = ttlStr.match(/([0-9]+)([d|h|m])/);
+    assert(ttlTokens.length === 3, `Invalid ttl: ${ttlStr}`);
+    return  new Ttl(Number(ttlTokens[1]),
+        ttlTokens[2] === 'm' ? TtlUnits.Minute : ttlTokens[2] === 'h'
+            ? TtlUnits.Hour : TtlUnits.Day);
+  }
+
+  calculateExpiration(start: Date = new Date()): Date {
+    let ttlMillis = 1;
+    switch (this.units) {
+      case TtlUnits.Minute:
+        ttlMillis = this.count * 60 * 1000;
+        break;
+      case TtlUnits.Hour:
+        ttlMillis = this.count * 60 * 60 * 1000;
+        break;
+      case TtlUnits.Day:
+        ttlMillis = this.count * 24 * 60 * 60 * 1000;
+        break;
+      default:
+        assert(false);
+    }
+    return new Date(start.getTime() + ttlMillis);
   }
 }
 

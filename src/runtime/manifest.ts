@@ -847,9 +847,7 @@ ${e.message}
       if (item.kind === 'handle' && item.annotation) {
         assert(item.annotation.simpleAnnotation === 'ttl',
                `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
-        const ttlTokens = item.annotation.parameter.match(/([0-9]+)([d|h|m])/);
-        assert(ttlTokens.length === 3, `Invalid ttl: ${item.annotation.parameter}`);
-        handle.ttl = new Ttl(Number(ttlTokens[1]), ttlTokens[2]);
+        handle.ttl = Ttl.fromString(item.annotation.parameter);
       }
       items.byHandle.set(handle, item);
     }

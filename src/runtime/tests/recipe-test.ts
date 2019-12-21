@@ -16,7 +16,7 @@ import {Type} from '../type.js';
 
 import {Flags} from '../flags.js';
 import {Entity} from '../entity.js';
-import { TtlUnits } from '../recipe/ttl';
+import {TtlUnits} from '../recipe/ttl.js';
 
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
