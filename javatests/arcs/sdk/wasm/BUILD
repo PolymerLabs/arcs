@@ -5,6 +5,8 @@ load(
     "arcs_kt_schema",
 )
 
+licenses(["notice"])
+
 arcs_kt_schema(
     name = "schemas",
     srcs = ["//src/wasm/tests:manifest.arcs"],
