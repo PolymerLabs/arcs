@@ -1,5 +1,5 @@
-load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_library")
 load("//java/arcs/sdk/common:variables.bzl", "KOTLINC_OPTS")
+load("//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl", "kt_native_library")
 
 licenses(["notice"])
 
