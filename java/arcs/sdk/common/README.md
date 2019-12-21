@@ -2,8 +2,8 @@
 
 ## Build the SDK
 
-- Jvm: `bazel build //java/arcs/sdk/jvm:arcs`
-- Wasm: `bazel build //java/arcs/sdk/wasm:arcs`
+- Jvm: `bazel build //java/arcs/sdk:arcs`
+- Wasm: `bazel build //java/arcs/sdk:arcs-wasm`
 
 ## Test the SDK
 

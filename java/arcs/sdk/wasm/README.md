@@ -3,7 +3,7 @@
 ## Build
 
 ```
-bazel build //java/arcs/sdk/wasm:arcs
+bazel build //java/arcs/sdk:arcs-wasm
 ```
 
 ## Test

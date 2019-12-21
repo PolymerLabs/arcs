@@ -8,7 +8,7 @@ arcs_kt_jvm_test_suite(
     name = "stringEncoder",
     package = "arcs.sdk",
     deps = [
-        "//java/arcs/sdk/jvm:arcs",
+        "//java/arcs/sdk:arcs",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
