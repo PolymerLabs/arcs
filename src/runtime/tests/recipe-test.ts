@@ -16,6 +16,7 @@ import {Type} from '../type.js';
 
 import {Flags} from '../flags.js';
 import {Entity} from '../entity.js';
+import { TtlUnits } from '../recipe/ttl';
 
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
@@ -782,5 +783,19 @@ describe('recipe', () => {
     const recipeClone = recipe.clone();
     const recipeCloneResolvedType = verifyRecipe(recipeClone, 'recipe-clone');
     assert.notStrictEqual(recipeResolvedType, recipeCloneResolvedType);
+  });
+  it('parses recipe handle ttls', async () => {
+    const recipe = (await Manifest.parse(`
+      recipe
+        h0: create @ttl(20d)
+        h1: create @ttl(5m)
+        h2: create
+    `)).recipes[0];
+    assert.lengthOf(recipe.handles, 3);
+    assert.equal(recipe.handles[0].ttl.count, 20);
+    assert.equal(recipe.handles[0].ttl.units, TtlUnits.Day);
+    assert.equal(recipe.handles[1].ttl.count, 5);
+    assert.equal(recipe.handles[1].ttl.units, TtlUnits.Minute);
+    assert.isUndefined(recipe.handles[2].ttl);
   });
 });

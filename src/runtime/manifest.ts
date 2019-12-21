@@ -31,6 +31,7 @@ import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {Ttl} from './recipe/ttl.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {HandleRetriever} from './storage/handle-retriever.js';
 import {Schema} from './schema.js';
@@ -843,6 +844,13 @@ ${e.message}
         items.byName.set(item.name, {item, handle});
       }
       handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
+      if (item.kind === 'handle' && item.annotation) {
+        assert(item.annotation.simpleAnnotation === 'ttl',
+               `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
+        const ttlTokens = item.annotation.parameter.match(/([0-9]+)([d|h|m])/);
+        assert(ttlTokens.length === 3, `Invalid ttl: ${item.annotation.parameter}`);
+        handle.ttl = new Ttl(Number(ttlTokens[1]), ttlTokens[2]);
+      }
       items.byHandle.set(handle, item);
     }
 

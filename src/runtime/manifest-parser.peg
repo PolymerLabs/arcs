@@ -1057,7 +1057,7 @@ RecipeHandle
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate,
-      annotation
+      annotation: optional(annotation, s => s[1], null),
     });
   }
 

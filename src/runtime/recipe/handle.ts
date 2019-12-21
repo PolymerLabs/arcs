@@ -15,6 +15,7 @@ import {Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Slot} from './slot.js';
 import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';
+import {Ttl} from './ttl.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
@@ -41,6 +42,8 @@ export class Handle implements Comparable<Handle> {
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
   claims: Claim[] | undefined = undefined;
+  private _ttl: Ttl | undefined = undefined;
+
 
   constructor(recipe: Recipe) {
     assert(recipe);
@@ -209,6 +212,8 @@ export class Handle implements Comparable<Handle> {
   set mappedType(mappedType: Type) { this._mappedType = mappedType; }
   get immediateValue() { return this._immediateValue; }
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
+  get ttl() { return this._ttl; }
+  set ttl(ttl: Ttl) { this._ttl = ttl; }
 
   static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
