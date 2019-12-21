@@ -32,7 +32,7 @@ load(
     "kt_jvm_library",
 )
 
-_ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/jvm:arcs"]
+_ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
 _WASM_SUFFIX = "-wasm"
 _JS_SUFFIX = "-js"
 _KT_SUFFIX = "-kt"
