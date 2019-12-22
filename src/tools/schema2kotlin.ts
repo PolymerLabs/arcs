@@ -92,11 +92,7 @@ class KotlinGenerator implements ClassGenerator {
     );
     this.setFields.push(`this.${fixed} = ${fixed}`);
     this.fieldSets.push(`_${fixed}Set`);
-    this.getUnsetFields.push(
-      `if (!_${fixed}Set) {\n` +
-      `            rtn.add("${fixed}")\n` +
-      `        }`
-    );
+    this.getUnsetFields.push(`if (!_${fixed}Set) rtn.add("${fixed}")`);
 
     this.decode.push(`"${field}" -> {`,
                      `    decoder.validate("${typeChar}")`,
@@ -133,9 +129,8 @@ class ${name}() : Entity<${name}>() {
         ${this.setFields.join('\n        ')}
     }`)}
 
-    override fun isSet(): Boolean {
-        return ${withFields(`${this.fieldSets.join(' && ')}`)}${withoutFields('true')}
-    }
+    override val isSet: Boolean 
+        get() = ${withFields(`${this.fieldSets.join(' && ')}`)}${withoutFields('true')}
 
     override fun getFieldsNotSet(): List<String> {
         val rtn = mutableListOf<String>()
