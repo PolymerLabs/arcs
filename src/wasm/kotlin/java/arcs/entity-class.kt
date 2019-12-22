@@ -50,24 +50,26 @@ class Test_Data() : Entity<Test_Data>() {
         this.flg = flg
     }
 
-    override fun isSet(): Boolean {
-        return _numSet && _txtSet && _lnkSet && _flgSet
+    override val isSet: Boolean
+        get() = _numSet && _txtSet && _lnkSet && _flgSet
+
+    fun reset() {
+        num = 0.0
+        _numSet = false
+        txt = ""
+        _txtSet = false
+        lnk = ""
+        _lnkSet = false
+        flg = false
+        _flgSet = false
     }
 
     override fun getFieldsNotSet(): List<String> {
         val rtn = mutableListOf<String>()
-        if (!_numSet) {
-            rtn.add("num")
-        }
-        if (!_txtSet) {
-            rtn.add("txt")
-        }
-        if (!_lnkSet) {
-            rtn.add("lnk")
-        }
-        if (!_flgSet) {
-            rtn.add("flg")
-        }
+        if (!_numSet) rtn.add("num")
+        if (!_txtSet) rtn.add("txt")
+        if (!_lnkSet) rtn.add("lnk")
+        if (!_flgSet) rtn.add("flg")
         return rtn
     }
 
@@ -79,23 +81,28 @@ class Test_Data() : Entity<Test_Data>() {
         val decoder = StringDecoder(encoded)
         internalId = decoder.decodeText()
         decoder.validate("|")
+        this.reset()
         for (_i in 0 until 5) {
             if (decoder.done()) break
             val name = decoder.upTo(':').utf8ToString()
             when (name) {
                 "num" -> {
+                    if (_numSet) log("WARNING: there are multiple fields num")
                     decoder.validate("N")
                     this.num = decoder.decodeNum()
                 }
                 "txt" -> {
+                    if (_txtSet) log("WARNING: there are multiple fields txt")
                     decoder.validate("T")
                     this.txt = decoder.decodeText()
                 }
                 "lnk" -> {
+                    if (_lnkSet) log("WARNING: there are multiple fields lnk")
                     decoder.validate("U")
                     this.lnk = decoder.decodeText()
                 }
                 "flg" -> {
+                    if (_flgSet) log("WARNING: there are multiple fields flg")
                     decoder.validate("B")
                     this.flg = decoder.decodeBool()
                 }
