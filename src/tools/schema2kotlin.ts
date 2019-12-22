@@ -72,6 +72,7 @@ class KotlinGenerator implements ClassGenerator {
   fieldSets: string[] = [];
   encode: string[] = [];
   decode: string[] = [];
+  fieldsReset: string[] = [];
   getUnsetFields: string[] = [];
 
   constructor(readonly node: SchemaNode) {}
@@ -79,22 +80,28 @@ class KotlinGenerator implements ClassGenerator {
   addField(field: string, typeChar: string) {
     const {type, decodeFn, defaultVal} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
+    const set = `_${fixed}Set`
 
     this.fields.push(`${fixed}: ${type}`);
     this.fieldVals.push(
-      `var _${fixed}Set = false\n` +
+      `var ${set} = false\n` +
       `    var ${fixed} = ${defaultVal}\n` +
       `        get() = field\n` +
       `        set(value) {\n` +
       `            field = value\n` +
-      `            _${fixed}Set = true\n` +
+      `            ${set} = true\n` +
       `        }`
     );
     this.setFields.push(`this.${fixed} = ${fixed}`);
-    this.fieldSets.push(`_${fixed}Set`);
-    this.getUnsetFields.push(`if (!_${fixed}Set) rtn.add("${fixed}")`);
+    this.fieldSets.push(`${set}`);
+    this.fieldsReset.push(
+      `${fixed} = ${defaultVal}`,
+      `${set} = false`
+    );
+    this.getUnsetFields.push(`if (!${set}) rtn.add("${fixed}")`);
 
     this.decode.push(`"${field}" -> {`,
+                     `    if (${set}) log("WARNING: there are multiple fields ${field}")`,
                      `    decoder.validate("${typeChar}")`,
                      `    this.${fixed} = decoder.${decodeFn}`,
                      `}`);
@@ -131,6 +138,10 @@ class ${name}() : Entity<${name}>() {
 
     override val isSet: Boolean 
         get() = ${withFields(`${this.fieldSets.join(' && ')}`)}${withoutFields('true')}
+    
+    fun reset() {
+        ${withFields(`${this.fieldsReset.join('\n        ')}`)}
+    }
 
     override fun getFieldsNotSet(): List<String> {
         val rtn = mutableListOf<String>()
@@ -146,6 +157,7 @@ class ${name}() : Entity<${name}>() {
         val decoder = StringDecoder(encoded)
         internalId = decoder.decodeText()
         decoder.validate("|")
+        this.reset()
         ${withFields(`for (_i in 0 until ${fieldCount}) {
             if (decoder.done()) break
             val name = decoder.upTo(':').utf8ToString()
