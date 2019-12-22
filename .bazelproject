@@ -28,7 +28,5 @@ additional_languages:
 
 java_language_level: 8
 
-android_sdk_platform: android-29
-
 build_flags:
   --incompatible_depset_is_not_iterable=false
