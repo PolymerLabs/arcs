@@ -56,6 +56,7 @@ import arcs.sdk.NullTermByteArray
 import arcs.sdk.Particle
 import arcs.sdk.StringDecoder
 import arcs.sdk.StringEncoder
+import arcs.sdk.log
 import arcs.sdk.utf8ToString
 `)}`;
   }

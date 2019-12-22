@@ -37,7 +37,7 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
         )
         d1.num = 7.3
         assertEquals("setting num property is successful", 7.3, d1.num)
-        assertFalse("isSet() is false before every field is set", d1.isSet())
+        assertFalse("isSet is false before every field is set", d1.isSet)
         assertEquals(
             "After setting num it doesn't appear as a not set field",
             listOf("txt", "lnk", "flg"),
@@ -47,7 +47,7 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
         assertEquals("txt field is default value before it's initialized", "", d1.txt)
         d1.txt = "test"
         assertEquals("setting txt property is successful", "test", d1.txt)
-        assertFalse("isSet() is false before every field is set", d1.isSet())
+        assertFalse("isSet is false before every field is set", d1.isSet)
         assertEquals(
             "After setting txt it doesn't appear as a not set field",
             listOf("lnk", "flg"),
@@ -57,7 +57,7 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
         assertEquals("lnk field is default value before it's initialized", "", d1.lnk)
         d1.lnk = "https://google.com"
         assertEquals("setting lnk property is successful", "https://google.com", d1.lnk)
-        assertFalse("isSet() is false before every field is set", d1.isSet())
+        assertFalse("isSet is false before every field is set", d1.isSet)
         assertEquals(
             "After setting lnk it doesn't appear as a not set field",
             listOf("flg"),
@@ -70,7 +70,7 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
         d1.flg = false
         assertNotNull("flg field is set", d1.flg)
         assertFalse("setting flg property is successful: false", d1.flg)
-        assertTrue("isSet() is true once every field is set", d1.isSet())
+        assertTrue("isSet is true once every field is set", d1.isSet)
         assertEquals(
             "After setting all the fields, getFieldsNotSet() returns an empty list",
             mutableListOf<String>(),
