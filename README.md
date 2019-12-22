@@ -2,7 +2,6 @@
 [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/rswlpkq2vtp9cns0/branch/master?svg=true)](https://ci.appveyor.com/project/arcs/arcs-3i77k/branch/master)
 
 
-
 # Arcs
 
 A hosted version of Arcs is available at https://live.arcs.dev.
@@ -141,38 +140,36 @@ Arcs can be developed in the IDE of your choice. Here are some helpful hints to 
 - Upon restarting Android, click "Import Bazel Project"
 - Select the workspace by navigating to the arcs folder, then click "Next".
 - Choose "Import project view file" and click on the three dots.
-- Navigate to the arcs folder, and select the `.bazelproject` file. Click "OK".
+- Navigate to the arcs folder, and select the `as.bazelproject` file. Click "OK".
 - Click "Next".
 - Click "Finish".
 
-If you get a `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory` error, follow these instructions:
-- Go to Android Studio -> Preferences -> Bazel Settings
-- Find the Bazel binary location, and click the three dots next to it.
-- Navigate to the correct location, and select the Bazel binary.
-  - If you don't know where the Bazel binary is located, open a terminal and run `which bazel`.
-- Click "Apply" then "OK"
-- Re-import the project by hitting the bazel logo in the upper right hand corner.
-
 ### IntelliJ
 
-- Install IntelliJ. Community Edition is sufficient.
+- Install IntelliJ. Community Edition is sufficient. For web technologies support, install Professional Edition.
 - Open IntelliJ and install the Bazel extension.
 - Upon restarting IntelliJ, click "Import Bazel Project"
 - Select the workspace by navigating to the arcs folder, then click "Next".
 - Choose "Import project view file" and click on the three dots.
-- Navigate to the arcs folder, and select the `intellij.bazelproject` file. Click "OK".
+- Navigate to the arcs folder, and select the `ij.bazelproject` file. Click "OK".
 - Click "Next".
 - Click "Finish".
 
-If you get a `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory` error, follow these instructions:
-- Go to IntelliJ IDEA -> Preferences -> Bazel Settings
+### Troubleshooting
+#### `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory`
+- Go to your IDE Preferences -> Bazel Settings
 - Find the Bazel binary location, and click the three dots next to it.
 - Navigate to the correct location, and select the Bazel binary.
   - If you don't know where the Bazel binary is located, open a terminal and run `which bazel`.
 - Click "Apply" then "OK"
-- Re-import the project by hitting the bazel logo in the upper right hand corner.
+- Re-import the project by hitting the Bazel logo in the upper right hand corner.
 
-If you get an error related to the Android SDK not being installed, follow the prompts and then restart IntelliJ.
+#### Android SDK not installed
+follow the prompts and then restart your IDE.
+
+#### `arcs/.aswb` or `arcs/.ijwb` already exists
+- You may have already imported the project into your preferred IDE. Please try reopening it.
+- Optional: Delete the hidden folder and repeat the appropriate steps above.
 
 ## Testing
 
