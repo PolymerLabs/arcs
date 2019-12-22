@@ -30,6 +30,8 @@ import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../storageNG/driv
 import {digest} from '../../platform/digest-web.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {RefinementExpression, BinaryExpressionNode} from '../manifest-ast-nodes.js';
+import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
+import {VolatileMemory} from '../storageNG/drivers/volatile.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -1424,7 +1426,7 @@ ${particleStr1}
     assert.isFalse(broken, 'a particle doesn\'t parse correctly');
   });
   it('loads entities from json files', async () => {
-    RamDiskStorageDriverProvider.register();
+    RamDiskStorageDriverProvider.register(new TestVolatileMemoryProvider());
     const manifestSource = `
         schema Thing
           someProp: Text
@@ -1486,7 +1488,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
   });
   it('loads entities from a resource section', async () => {
     if (Flags.useNewStorageStack) {
-      RamDiskStorageDriverProvider.register();
+      RamDiskStorageDriverProvider.register(new TestVolatileMemoryProvider());
       const manifest = await Manifest.parse(`
         schema Thing
           someProp: Text
@@ -3133,7 +3135,7 @@ resource NobIdJson
     },
     "locations": {}
   }
-`);
+`, {memoryProvider: new TestVolatileMemoryProvider()});
     assert.lengthOf(manifest.stores, 1);
     const store = manifest.stores[0];
 

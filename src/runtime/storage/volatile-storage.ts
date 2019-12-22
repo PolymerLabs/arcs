@@ -15,7 +15,7 @@ import {CrdtCollectionModel, ModelValue, SerializedModelEntry} from './crdt-coll
 import {KeyBase} from './key-base.js';
 import {BigCollectionStorageProvider, ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, SingletonStorageProvider} from './storage-provider-base.js';
 import {Dictionary} from '../hot.js';
-import {Runtime} from '../runtime.js';
+import {RuntimeCacheService} from '../runtime-cache.js';
 
 export function resetVolatileStorageForTesting() {
   const cache = storageCache();
@@ -69,13 +69,22 @@ class VolatileKey extends KeyBase {
   }
 }
 
-const storageCache = () => Runtime.getRuntime().getCacheService().getOrCreateCache<string, VolatileStorage>('volatileStorageCache');
+// Note the below is an inelegant method of setting the storage cache, but the old storage
+// stack is deprecated and the new one is almost ready, so we just need something temporarily
+// serviceable.
+let storageCache: (() => Map<string, VolatileStorage>) = () => {
+  throw new Error(`Attempt to use volatile storage cache before it's been set.`);
+};
 
 export class VolatileStorage extends StorageBase {
   _memoryMap: Dictionary<VolatileStorageProvider>;
   _typeMap: Dictionary<VolatileCollection>;
   private readonly typePromiseMap: Dictionary<Promise<VolatileCollection>>;
   localIDBase: number;
+
+  static setStorageCache(cacheService: RuntimeCacheService) {
+    storageCache = () => cacheService.getOrCreateCache<string, VolatileStorage>('volatileStorageCache');
+  }
 
   constructor(arcId: Id) {
     super(arcId);

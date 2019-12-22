@@ -26,17 +26,13 @@ function assertHasModel(message: ProxyMessage<CRDTCountTypeRecord>, model: CRDTC
 }
 
 describe('RamDisk + Backing Store Integration', async () => {
-
-  beforeEach(() => {
-    RamDiskStorageDriverProvider.register();
-  });
-
   afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
   it('will allow storage of a number of objects', async () => {
     const runtime = new Runtime();
+    RamDiskStorageDriverProvider.register(runtime);
     const storageKey = new RamDiskStorageKey('unique');
     const baseStore = new Store<CRDTCountTypeRecord>({storageKey, exists: Exists.ShouldCreate, type: new CountType(), id: 'base-store-id'});
     const store = await BackingStore.construct<CRDTCountTypeRecord>({

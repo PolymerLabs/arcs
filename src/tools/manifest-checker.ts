@@ -11,6 +11,8 @@
 import minimist from 'minimist';
 import {Manifest, ManifestWarning} from '../runtime/manifest.js';
 import {Loader} from '../platform/loader.js';
+import {RuntimeCacheService} from '../runtime/runtime-cache.js';
+import {VolatileStorage} from '../runtime/storage/volatile-storage.js';
 
 // Script to check that a bundle of Arcs manifest files, particle
 // implementations and JSON data files is complete (i.e. no explicitly mentioned
@@ -24,6 +26,7 @@ import {Loader} from '../platform/loader.js';
  */
 async function checkManifest(src: string) {
   const loader = new Loader({});
+  VolatileStorage.setStorageCache(new RuntimeCacheService());
   const manifest = await Manifest.load(src, loader);
 
   // Look for errors from parsing the manifest (ignore warnings). This covers

@@ -44,11 +44,10 @@ import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Exists, DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
 import {Entity, SerializedEntity} from './entity.js';
-import {Runtime} from './runtime.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -120,6 +119,7 @@ interface ManifestParseOptions {
   fileName?: string;
   loader?: Loader;
   registry?: Dictionary<Promise<Manifest>>;
+  memoryProvider?: VolatileMemoryProvider;
   context?: Manifest;
   throwImportErrors?: boolean;
 }
@@ -405,7 +405,7 @@ export class Manifest {
 
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
-    let {fileName, loader, registry, context} = options;
+    let {fileName, loader, registry, context, memoryProvider} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
 
@@ -524,7 +524,7 @@ ${e.message}
       await processItems('schema', item => Manifest._processSchema(manifest, item));
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
-      await processItems('store', item => Manifest._processStore(manifest, item, loader));
+      await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
@@ -1185,7 +1185,7 @@ ${e.message}
     }
   }
 
-  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader) {
+  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader, memoryProvider?: VolatileMemoryProvider) {
     const name = item.name;
     let id = item.id;
     const originalId = item.originalId;
@@ -1247,8 +1247,10 @@ ${e.message}
     if (Flags.useNewStorageStack) {
       const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
       if (storageKey instanceof RamDiskStorageKey) {
-        const memory = Runtime.getRuntime().getRamDiskMemory();
-        memory.deserialize(entities, storageKey.unique);
+        if (!memoryProvider) {
+          throw new ManifestError(item.location, `Creating ram disk stores requires having a memory provider.`);
+        }
+        memoryProvider.getVolatileMemory().deserialize(entities, storageKey.unique);
       }
       // Note that we used to use a singleton entity ID (if present) instead of the hash. It seems
       // cleaner not to rely on that.
