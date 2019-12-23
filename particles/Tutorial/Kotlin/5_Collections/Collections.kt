@@ -21,7 +21,7 @@ import arcs.sdk.Particle
 class Collections : Particle() {
     private val people = Collection(this, "inputData") { Collections_InputData() }
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
         people.forEach { people ->
             peopleList.add(mapOf("name" to people.name, "age" to people.age))

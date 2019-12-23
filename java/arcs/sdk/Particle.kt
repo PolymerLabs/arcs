@@ -142,8 +142,8 @@ abstract class Particle {
      */
     open fun populateModel(
         slotName: String,
-        model: Map<String, Any?> = mapOf()
-    ): Map<String, Any?>? = model
+        model: Map<String, Any> = mapOf()
+    ): Map<String, Any>? = model
 
     /** @deprecated for contexts using UiBroker (e.g Kotlin) */
     @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()"))

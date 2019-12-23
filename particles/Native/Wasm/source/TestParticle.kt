@@ -36,7 +36,7 @@ class TestParticle : Particle() {
         }
     }
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?>? {
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val dataCol = if (updated == 1) "color: blue;" else ""
         val dataStr = "${data.get()}\n"
 
