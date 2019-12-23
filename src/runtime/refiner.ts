@@ -12,8 +12,14 @@ import {Refinement, SchemaPrimitiveType, RefinementExpression} from './manifest-
 import {Dictionary} from './hot.js';
 import {assert} from '../platform/assert-node.js';
 
+// Using 'any' because operators are type dependent and generically can only be applied to any.
+// tslint:disable-next-line: no-any
+type ExpressionPrimitives = any;
+type Evaluator = (exprs: ExpressionPrimitives[]) => ExpressionPrimitives | Error;
+type GenericOperator = {eval:Evaluator};
+
 export class Refiner {
-    // Converts refinement ast-node to string. 
+    // Converts refinement ast-node to string.
     // Ast-nodes are typically interfaces with no behaviour.
     static refinementString(refinement: Refinement): string {
         if (!refinement) {
@@ -32,7 +38,7 @@ export class Refiner {
     }
 
     // tslint:disable-next-line: no-any
-    static refineData(refinement, data): boolean {
+    static refineData(refinement: Refinement, data: Dictionary<any>): boolean {
         const result = Refiner.applyRefinement(refinement.expression, data);
         if (result instanceof Error) {
             throw result;
@@ -42,7 +48,8 @@ export class Refiner {
         return result;
     }
 
-    private static applyRefinement(expr, data): number | boolean | Error {
+    // tslint:disable-next-line: no-any
+    private static applyRefinement(expr: RefinementExpression, data: Dictionary<any>): ExpressionPrimitives | Error {
         if (expr.kind === 'binary-expression-node') {
             const left = Refiner.applyRefinement(expr.leftExpr, data);
             const right = Refiner.applyRefinement(expr.rightExpr, data);
@@ -68,10 +75,10 @@ export class Refiner {
                 return new Error(`Unresolved field name '${expr.value}' in the refinement expression.`);
             }
         }
-        return new Error(`Unsupported expression node of type ${expr.kind}`);
+        return new Error(`Unsupported expression node.`);
     }
 
-    private static applyOperator(op, expr) {
+    private static applyOperator(op: string, expr: ExpressionPrimitives[]): ExpressionPrimitives | Error {
         const eqBoolOp = new RefinementOperator(['boolean', 'boolean'], (expr) => expr[0] === expr[1]);
         const eqNumOp = new RefinementOperator(['number', 'number'], (expr) => expr[0] === expr[1]);
         const neqBoolOp = new RefinementOperator(['boolean', 'boolean'], (expr) => expr[0] !== expr[1]);
@@ -96,7 +103,7 @@ export class Refiner {
         return operators[op].eval(expr);
     }
 
-    private static manageErrors(errors) {
+    private static manageErrors(errors: (ExpressionPrimitives | Error)[]): Error {
         let errorMessage = '';
         for (const error of errors) {
             if (error instanceof Error) {
@@ -107,16 +114,16 @@ export class Refiner {
     }
 }
 
-class RefinementOperator {
+class RefinementOperator implements GenericOperator {
     exprTypes: string[];
-    fn: (exprs) => {};
+    fn: Evaluator;
 
-    constructor(exprTypes, fn) {
+    constructor(exprTypes: string[], fn: Evaluator) {
         this.exprTypes = exprTypes;
         this.fn = fn;
     }
 
-    eval(exprs) {
+    eval(exprs: ExpressionPrimitives[]): ExpressionPrimitives | Error {
         if (exprs.length !== this.exprTypes.length) {
             return new Error(`Got ${exprs.length} operands. Expected ${this.exprTypes.length}.`);
         }
@@ -128,7 +135,7 @@ class RefinementOperator {
         return this.fn(exprs);
     }
 
-    or(alternative) {
+    or(alternative: GenericOperator): GenericOperator {
         return {
             eval: (exprs) => {
                 let res = this.eval(exprs);
