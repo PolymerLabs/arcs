@@ -81,7 +81,7 @@ export class Refiner {
         }
         // TODO(ragdev): Update when true, false and string literals are supported
         // in the refinement expression.
-        if (expr.kind === 'number-node') {
+        if (expr.kind === 'number-node' || expr.kind === 'boolean-node') {
             return expr.value;
         } else if (expr.kind === 'field-name-node') {
             if (data[expr.value] !== undefined) {
@@ -122,7 +122,7 @@ export class Refiner {
         let errorMessage = '';
         for (const error of errors) {
             if (error instanceof Error) {
-                errorMessage += (error.message + '\n');
+                errorMessage += error.message + '\n';
             }
         }
         return new Error(errorMessage);

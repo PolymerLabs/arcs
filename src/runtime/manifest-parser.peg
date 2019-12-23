@@ -1422,6 +1422,10 @@ PrimaryExpression
   {
     return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num});
   }
+  / bool:('true'i / 'false'i)
+  {
+    return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase()==='true'});
+  }
   / fn: fieldName
   {
     return toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn});
