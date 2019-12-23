@@ -303,7 +303,7 @@ class DisplayGreetingParticle : Particle() {
         this.renderOutput()
     }
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         return model + mapOf(
             "name" to (person.get()?.name ?: "Human")
         )
@@ -398,7 +398,7 @@ class CollectionsParticle : Particle() {
     // Note this is a Collection handle instead of a Singleton.
    private val people = Collection(this, "inputData") { CollectionsParticle_InputData() }
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         // We begin by generating the list of models that should fill the template. Our template
         // has name ang age so we will use these names.
         val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
@@ -509,7 +509,7 @@ class JsonStoreParticle : Particle() {
 
     private val res = Singleton(this, "inputData") { JsonStoreParticle_InputData() }
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val person = res.get() ?: JsonStoreParticle_InputData()
 
         return model + mapOf(

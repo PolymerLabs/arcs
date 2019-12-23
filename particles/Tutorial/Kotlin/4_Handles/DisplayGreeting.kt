@@ -27,7 +27,7 @@ class DisplayGreeting : Particle() {
         this.renderOutput()
     }
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         return model + mapOf(
             "name" to (person.get()?.name ?: "Human")
         )

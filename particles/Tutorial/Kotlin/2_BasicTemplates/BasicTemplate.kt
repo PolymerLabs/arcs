@@ -7,7 +7,7 @@ import arcs.sdk.Particle
  */
 class BasicTemplate : Particle() {
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         return model + mapOf(
             "name" to "Human"
         )
