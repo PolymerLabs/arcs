@@ -273,6 +273,9 @@ Interface "an interface"
     });
   }
 
+// This rule is effectively capturing name? direction? '?'? type? &{name || direction || isOptional || type} but is
+// split into multiple capture clauses because the combined one is able to match against an empty string (this would
+// cause an infinite loop).
 InterfaceArgument
   = name:NameWithColon direction:(Direction / SlotDirection)? isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
   { return buildInterfaceArgument(name, direction || 'any', isOptional, optional(type, t => t[1], null)); }
