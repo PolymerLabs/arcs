@@ -172,13 +172,13 @@ export class Range {
     static copyOf(range: Range): Range {
         const copy = new Range();
         for (const subRange of range.segments) {
-            copy.segments.push({from: subRange.from, to: subRange.to});
+            copy.segments.push(new Segment(subRange.from, subRange.to));
         }
         return copy;
     }
     static infiniteRange(): Range {
         const infRange = new Range();
-        infRange.segments = [{from: Number.NEGATIVE_INFINITY, to: Number.POSITIVE_INFINITY}];
+        infRange.segments = [Segment.openOpen(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)];
         return infRange;
     }
     union(range: Range): void {
@@ -196,40 +196,141 @@ export class Range {
         this.segments = newRange.segments;
     }
     unionWithSeg(seg: Segment): void {
-        let i: number = 0, j: number = this.segments.length;
-        let x: number = seg.from, y: number = seg.to;
+        let i = 0; let j: number = this.segments.length;
+        let x: Boundary = seg.from; let y: Boundary = seg.to;
         for (const subRange of this.segments) {
-            if (seg.from > subRange.to) {
+            if (seg.isGreaterThan(subRange, false)) {
                 i += 1;
             } else {
-                x = Math.min(x, subRange.from);
+                if (seg.mergableWith(subRange)) {
+                    const m = Segment.merge(seg, subRange);
+                    x = m.from;
+                } else {
+                    x = subRange.from.val < x.val ? subRange.from : x;
+                }
                 break;
             }
         }
         for (const subRange of this.segments.slice().reverse()) {
-            if (seg.to < subRange.from) {
+            if (seg.isLessThan(subRange, false)) {
                 j -= 1;
             } else {
-                y = Math.max(y, subRange.to);
+                if (seg.mergableWith(subRange)) {
+                    const m = Segment.merge(seg, subRange);
+                    y = m.to;
+                } else {
+                    y = subRange.to.val > y.val ? subRange.to : y;
+                }
                 break;
             }
         }
-        this.segments.splice(i, j-i, {from: x, to: y});
+        this.segments.splice(i, j-i, new Segment(x, y));
     }
     intersectWithSeg(seg: Segment): void {
         const newRange = new Range();
         for (const subRange of this.segments) {
-            const x = Math.max(subRange.from, seg.from);
-            const y = Math.min(subRange.to, seg.to);
-            if (x <= y) {
-                newRange.segments.push({from: x, to: y});
+            if (subRange.overlapsWith(seg)) {
+                newRange.segments.push(Segment.overlap(seg, subRange));
             }
         }
         this.segments = newRange.segments;
     }
 }
 
-export interface Segment {
-    from: number;
-    to: number;
+export class Segment {
+    from: Boundary;
+    to: Boundary;
+    constructor(from: Boundary, to: Boundary) {
+        if (to.val < from.val) {
+            throw new Error(`Invalid range from: ${from}, to:${to}`);
+        }
+        this.from = from;
+        this.to = to;
+    }
+    static closedClosed(from: number, to: number): Segment {
+        const seg = new Segment({val: from, kind: 'closed'}, {val: to, kind: 'closed'});
+        return seg;
+    }
+    static openOpen(from: number, to: number): Segment {
+        const seg = new Segment({val: from, kind: 'open'}, {val: to, kind: 'open'});
+        return seg;
+    }
+    static closedOpen(from: number, to: number): Segment {
+        const seg = new Segment({val: from, kind: 'closed'}, {val: to, kind: 'open'});
+        return seg;
+    }
+    static openClosed(from: number, to: number): Segment {
+        const seg = new Segment({val: from, kind: 'open'}, {val: to, kind: 'closed'});
+        return seg;
+    }
+    // If strict is false, (a,x) is NOT less than [x,b)
+    isLessThan(seg: Segment, strict: boolean): boolean {
+        if (this.to.val === seg.from.val) {
+            if (strict) {
+                return this.to.kind === 'open' || seg.from.kind === 'open';
+            }
+            return this.to.kind === 'open' && seg.from.kind === 'open';
+        }
+        return this.to.val < seg.from.val;
+    }
+    // If strict is false, (x,a) is NOT greater than (b,x]
+    isGreaterThan(seg: Segment, strict: boolean): boolean {
+        if (this.from.val === seg.to.val) {
+            if (strict) {
+                return this.from.kind === 'open' || seg.to.kind === 'open';
+            }
+            return this.from.kind === 'open' && seg.to.kind === 'open';
+        }
+        return this.from.val > seg.to.val;
+    }
+    mergableWith(seg: Segment): boolean {
+        return !this.isLessThan(seg, false) && !this.isGreaterThan(seg, false);
+    }
+    overlapsWith(seg: Segment): boolean {
+        return !this.isLessThan(seg, true) && !this.isGreaterThan(seg, true);
+    }
+    static merge(a: Segment, b: Segment): Segment {
+        if (!a.mergableWith(b)) {
+            throw new Error('Cannot merge non-overlapping segments');
+        }
+        let left: Boundary; let right: Boundary;
+        if (a.from.val === b.from.val) {
+            left = a.from;
+            left.kind = a.from.kind === b.from.kind ? a.from.kind : 'closed';
+        } else {
+            left = a.from.val < b.from.val ? a.from : b.from;
+        }
+        if (a.to.val === b.to.val) {
+            right = a.to;
+            right.kind = a.to.kind === b.to.kind ? a.to.kind : 'closed';
+        } else {
+            right = a.to.val > b.to.val ? a.to : b.to;
+        }
+        return new Segment(left, right);
+    }
+    static overlap(a: Segment, b: Segment): Segment {
+        if (!a.overlapsWith(b)) {
+            throw new Error('Cannot find intersection of non-overlapping segments');
+        }
+        let left: Boundary; let right: Boundary;
+        if (a.from.val === b.from.val) {
+            left = a.from;
+            left.kind = a.from.kind === b.from.kind ? a.from.kind : 'open';
+        } else {
+            left = a.from.val > b.from.val ? a.from : b.from;
+        }
+        if (a.to.val === b.to.val) {
+            right = a.to;
+            right.kind = a.to.kind === b.to.kind ? a.to.kind : 'open';
+        } else {
+            right = a.to.val < b.to.val ? a.to : b.to;
+        }
+        return new Segment(left, right);
+    }
+
+}
+
+interface Boundary {
+    val: number;
+    kind: 'open' | 'closed';
 }
