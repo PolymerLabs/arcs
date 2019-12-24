@@ -1074,11 +1074,14 @@ async function runSteps(command: string, args: string[]): Promise<boolean> {
     boolean: ['install'],
   })};
   for (const key in globalOptions) {
-    const value = globalOptions[key];
-    if (value === 'true') {
-      globalOptions[key] = true;
-    } else if (value === 'false') {
-      globalOptions[key] = false;
+    if (globalOptions.hasOwnProperty(key)) {
+      let value = globalOptions[key];
+      if (value === 'true') {
+        value = true;
+      } else if (value === 'false') {
+        value = false;
+      }
+      globalOptions[key] = value;
     }
   }
 
