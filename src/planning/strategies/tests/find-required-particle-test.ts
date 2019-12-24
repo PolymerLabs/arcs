@@ -15,7 +15,6 @@ import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {FindRequiredParticle} from '../../strategies/find-required-particle.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {Flags} from '../../../runtime/flags.js';
 
 describe('FindRequiredParticles', () => {
   it('find single required particle that provides a slot', async () => {

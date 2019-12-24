@@ -404,8 +404,7 @@ export interface RecipeHandle extends BaseNode {
 export interface RecipeParticleSlotConnection extends BaseNode {
   kind: 'slot-connection';
   param: string;
-  tags: TagList;
-  name: string;
+  target: ParticleConnectionTargetComponents;
   dependentSlotConnections: RecipeParticleSlotConnection[];
   direction: SlotDirection;
 }
@@ -601,7 +600,7 @@ export interface InterfaceSlot extends BaseNode {
   kind: 'interface-slot';
   name: string|null;
   isRequired: boolean;
-  direction: Direction;
+  direction: SlotDirection;
   isSet: boolean;
 }
 
