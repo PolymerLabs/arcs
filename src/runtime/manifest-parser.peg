@@ -1429,8 +1429,14 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
-  / NumberType
-  / fieldName
+  / num: NumberType
+  {
+    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num});
+  }
+  / fn: fieldName
+  {
+    return toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn});
+  }
 
 NumberType
   = whole:[0-9]+ fractional:('.' [0-9]+)?

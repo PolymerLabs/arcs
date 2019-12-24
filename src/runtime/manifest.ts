@@ -586,14 +586,14 @@ ${e.message}
               }
               fields[name] = type;
             }
-            let schema = new Schema(names, fields);
+            let schema = new Schema(names, fields, {refinement: node.refinement});
             for (const alias of aliases) {
               schema = Schema.union(alias, schema);
               if (!schema) {
                 throw new ManifestError(node.location, `Could not merge schema aliases`);
               }
             }
-            node.model = new EntityType(schema, node.refinement);
+            node.model = new EntityType(schema);
             delete node.fields;
             return;
           }
@@ -696,7 +696,7 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    const schema = new Schema(names, fields, description);
+    const schema = new Schema(names, fields, {description});
     if (schemaItem.alias) {
       schema.isAlias = true;
     }
