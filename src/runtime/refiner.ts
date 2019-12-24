@@ -162,3 +162,70 @@ class RefinementOperator implements GenericOperator {
         };
     }
 }
+
+
+class Range {
+    segments: Segment[];
+    constructor() {
+        this.segments = [];
+    }
+    union(range: Range): void {
+        for (const seg of range.segments) {
+            this.unionWithSeg(seg);
+        }
+    }
+    unionWithSeg(seg: Segment): void {
+        let x: number, y:number, i:number, j:number;
+        for (const [index, subRange] of this.segments.entries()) {
+            if(i === undefined && seg.from <= subRange.to) {
+                i = index;
+                x = Math.min(subRange.from, seg.from);
+            }
+            if(seg.to >= subRange.from) {
+                j = index;
+                y = Math.max(subRange.to, seg.to);
+            }
+        }
+        if (i === undefined && j === undefined) {
+            this.segments = [seg];
+        } else if (i === undefined) {
+            this.segments.splice(j+1, 0, seg);
+        } else if (j === undefined) {
+            this.segments.splice(i, 0, seg);
+        } else if (j < i) {
+            this.segments.splice(j+1, 0, seg);
+        } else {
+            this.segments.splice(i, j-i+1, {from: x, to: y});
+        }
+    }
+
+    intersectWithSeg(seg: Segment): void {
+        let i:number, j:number;
+        for (const [index, subRange] of this.segments.entries()) {
+            if(i === undefined && seg.from <= subRange.to) {
+                i = index;
+            }
+            if(seg.to >= subRange.from) {
+                j = index;
+            }
+        }
+        if (i === undefined || j === undefined || j < i) {
+            this.segments = [];
+        } else {
+            const newRange = new Range();
+            for (let x = i; x <= j; x++) {
+                const newSeg = {
+                    from: Math.max(this.segments[x].from, seg.from),
+                    to: Math.min(this.segments[x].to, seg.to)
+                };
+                newRange.unionWithSeg(newSeg);
+            }
+            this.segments = newRange.segments;
+        }
+    }
+}
+
+interface Segment {
+    from: number;
+    to: number;
+}
