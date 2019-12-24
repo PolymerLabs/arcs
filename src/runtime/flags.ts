@@ -19,7 +19,10 @@ class FlagDefaults {
 export class Flags extends FlagDefaults {
   /** Resets flags. To be called in test teardown methods. */
   static reset() {
+    // Use the defaults
     Object.assign(Flags, FlagDefaults);
+    // Overwrite the defaults with the testFlags.
+    Object.assign(Flags, global['testFlags']);
   }
 
   // tslint:disable-next-line: no-any
@@ -37,7 +40,7 @@ export class Flags extends FlagDefaults {
   static withFlags<T, Args extends any[]>(flagsSettings: Partial<typeof FlagDefaults>, f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return async (...args) => {
       Object.assign(Flags, flagsSettings);
-      let res;
+      let res: T;
       try {
         res = await f(...args);
       } finally {
