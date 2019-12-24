@@ -9,6 +9,7 @@
  */
 
 import {Refiner} from '../refiner.js';
+import {Range} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -83,7 +84,6 @@ describe('refiner', () => {
 
 
 describe('refiner', () => {
-
     let schema: Schema;
     let entityClass: EntityClass;
     before(async () => {
@@ -104,4 +104,44 @@ describe('refiner', () => {
     it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
         assert.doesNotThrow(() => { const e = new entityClass({txt: 'abc', num: 8}); });
       }));
+});
+
+describe('Range', () => {
+    it('tests union operations on a range.', () => {
+        const range1 = new Range();
+        // range1 = [];
+        assert.strictEqual(range1.segments.length, 0);
+        range1.unionWithSeg({from: 0, to: 10});
+        // range1 = [0, 10];
+        assert.deepEqual(range1.segments, [{from: 0, to: 10}]);
+        range1.unionWithSeg({from: 20, to: 30});
+        // range1 = [0, 10] U [20,30];
+        assert.deepEqual(range1.segments, [{from: 0, to: 10}, {from: 20, to: 30}]);
+        range1.unionWithSeg({from: 5, to: 15});
+        // range1 = [0, 15] U [20,30];
+        assert.deepEqual(range1.segments, [{from: 0, to: 15}, {from: 20, to: 30}]);
+        const range2 = new Range();
+        range2.segments = [{from: -1, to: -1}, {from: 5, to: 7}, {from: 12, to: 19}];
+        // range2 = [-1, -1] U [5, 7] U [12,19];
+        range1.union(range2);
+        // range1 = [-1, -1] U [0, 19] U [20, 30] 
+        assert.deepEqual(range1.segments, [{from: -1, to: -1}, {from: 0, to: 19}, {from: 20, to: 30}]);
+    });
+    it.only('tests intersection operations on a range.', () => {
+        const range1 = new Range();
+        range1.segments = [{from: 0, to: 10}, {from: 20, to: 30}];
+        // range1 = [0, 10] U [20,30];
+        range1.intersectWithSeg({from: 5, to: 25});
+        // range1 = [5, 10] U [20, 25];
+        assert.deepEqual(range1.segments, [{from: 5, to: 10}, {from: 20, to: 25}]);
+        range1.intersectWithSeg({from: 5, to: 15});
+        // range1 = [5, 10];
+        assert.deepEqual(range1.segments, [{from: 5, to: 10}]);
+        const range2 = new Range();
+        range2.segments = [{from: -1, to: -1}, {from: 5, to: 7}, {from: 9, to: 19}];
+        // range2 = [-1, -1] U [5, 7] U [9,19];
+        range1.intersect(range2);
+        // range1 = [5, 7] U [9, 10]; 
+        assert.deepEqual(range1.segments, [{from: 5, to: 7}, {from: 9, to: 10}]);
+    });
 });

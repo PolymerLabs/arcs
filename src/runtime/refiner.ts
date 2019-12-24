@@ -164,68 +164,72 @@ class RefinementOperator implements GenericOperator {
 }
 
 
-class Range {
+export class Range {
     segments: Segment[];
     constructor() {
         this.segments = [];
+    }
+    static copyOf(range: Range): Range {
+        const copy = new Range();
+        for (const subRange of range.segments) {
+            copy.segments.push({from: subRange.from, to: subRange.to});
+        }
+        return copy;
+    }
+    static infiniteRange(): Range {
+        const infRange = new Range();
+        infRange.segments = [{from: Number.NEGATIVE_INFINITY, to: Number.POSITIVE_INFINITY}];
+        return infRange;
     }
     union(range: Range): void {
         for (const seg of range.segments) {
             this.unionWithSeg(seg);
         }
     }
-    unionWithSeg(seg: Segment): void {
-        let x: number, y:number, i:number, j:number;
-        for (const [index, subRange] of this.segments.entries()) {
-            if(i === undefined && seg.from <= subRange.to) {
-                i = index;
-                x = Math.min(subRange.from, seg.from);
-            }
-            if(seg.to >= subRange.from) {
-                j = index;
-                y = Math.max(subRange.to, seg.to);
-            }
+    intersect(range: Range): void {
+        const newRange = new Range();
+        for (const seg of range.segments) {
+            const dup = Range.copyOf(this);
+            dup.intersectWithSeg(seg);
+            newRange.union(dup);
         }
-        if (i === undefined && j === undefined) {
-            this.segments = [seg];
-        } else if (i === undefined) {
-            this.segments.splice(j+1, 0, seg);
-        } else if (j === undefined) {
-            this.segments.splice(i, 0, seg);
-        } else if (j < i) {
-            this.segments.splice(j+1, 0, seg);
-        } else {
-            this.segments.splice(i, j-i+1, {from: x, to: y});
-        }
+        this.segments = newRange.segments;
     }
-
+    unionWithSeg(seg: Segment): void {
+        let i: number = 0, j: number = this.segments.length;
+        let x: number = seg.from, y: number = seg.to;
+        for (const subRange of this.segments) {
+            if (seg.from > subRange.to) {
+                i += 1;
+            } else {
+                x = Math.min(x, subRange.from);
+                break;
+            }
+        }
+        for (const subRange of this.segments.slice().reverse()) {
+            if (seg.to < subRange.from) {
+                j -= 1;
+            } else {
+                y = Math.max(y, subRange.to);
+                break;
+            }
+        }
+        this.segments.splice(i, j-i, {from: x, to: y});
+    }
     intersectWithSeg(seg: Segment): void {
-        let i:number, j:number;
-        for (const [index, subRange] of this.segments.entries()) {
-            if(i === undefined && seg.from <= subRange.to) {
-                i = index;
-            }
-            if(seg.to >= subRange.from) {
-                j = index;
+        const newRange = new Range();
+        for (const subRange of this.segments) {
+            const x = Math.max(subRange.from, seg.from);
+            const y = Math.min(subRange.to, seg.to);
+            if (x <= y) {
+                newRange.segments.push({from: x, to: y});
             }
         }
-        if (i === undefined || j === undefined || j < i) {
-            this.segments = [];
-        } else {
-            const newRange = new Range();
-            for (let x = i; x <= j; x++) {
-                const newSeg = {
-                    from: Math.max(this.segments[x].from, seg.from),
-                    to: Math.min(this.segments[x].to, seg.to)
-                };
-                newRange.unionWithSeg(newSeg);
-            }
-            this.segments = newRange.segments;
-        }
+        this.segments = newRange.segments;
     }
 }
 
-interface Segment {
+export interface Segment {
     from: number;
     to: number;
 }
