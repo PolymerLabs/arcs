@@ -28,6 +28,20 @@ filegroup(
     ),
 )
 
+# concrete-storage/node_modules
+filegroup(
+    name = "concrete_storage_node_modules",
+    srcs = glob(
+        ["concrete-storage/node_modules/**/*"],
+        exclude = [
+            "concrete-storage/node_modules/test/**",
+            "concrete-storage/node_modules/docs/**",
+            "concrete-storage/node_modules/**/* */**",
+            "concrete-storage/node_modules/**/* *",
+        ],
+    ),
+)
+
 filegroup(
     name = "all_srcs",
     # NOTE: This glob doesn't include files in directories which have their own
