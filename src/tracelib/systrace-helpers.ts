@@ -12,10 +12,17 @@ const CHANNEL_URL_PARAMETER = 'systrace';
 
 /** Gets current global execution context */
 export const getGlobalScope = () => {
-  if (typeof self !== 'undefined') return self;
-  if (typeof window !== 'undefined') return window;
-  if (typeof global !== 'undefined') return global;
-  return {};
+  if (typeof self !== 'undefined') {
+    return self;
+  }
+  if (typeof window !== 'undefined') {
+    return window;
+  }
+  if (typeof global !== 'undefined') {
+    return global;
+  }
+  // tslint:disable-next-line:no-any
+  return {} as any;
 };
 
 /** Gets System Trace APIs i.e. android.os.Trace.* */
