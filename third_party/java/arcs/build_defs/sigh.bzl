@@ -55,6 +55,7 @@ def sigh_command(
         tags = EXECUTION_REQUIREMENTS_TAGS,
         deps = [
             "//:all_srcs",
+            "//:concrete_storage_node_modules",
             "//:node_modules",
             "//tools:sigh_bin",
             "//tools:tools_srcs",
