@@ -16,6 +16,7 @@ import {SlotComposerOptions} from '../../runtime/ui-slot-composer.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {HeadlessSuggestDomConsumer} from '../headless-suggest-dom-consumer.js';
 import {PlanningModalityHandler} from '../planning-modality-handler.js';
 import {Planner} from '../planner.js';
@@ -42,8 +43,9 @@ class TestSlotComposer extends MockSlotComposer {
 describe('suggestion composer', () => {
   it('singleton suggestion slots', async () => {
     const loader = new StubLoader({});
-    const context = await Manifest.load('./src/runtime/tests/artifacts/suggestions/Cake.recipes', loader);
-    const runtime = new Runtime(loader, TestSlotComposer, context);
+    const memoryProvider = new TestVolatileMemoryProvider();
+    const context = await Manifest.load('./src/runtime/tests/artifacts/suggestions/Cake.recipes', loader, {memoryProvider});
+    const runtime = new Runtime(loader, TestSlotComposer, context, null, memoryProvider);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.pec.slotComposer as MockSlotComposer;
     slotComposer.newExpectations('debug');
@@ -85,8 +87,9 @@ describe('suggestion composer', () => {
 
   it('suggestion set-slots', async () => {
     const loader = new StubLoader({});
-    const context = await Manifest.load('./src/runtime/tests/artifacts/suggestions/Cakes.recipes', loader);
-    const runtime = new Runtime(loader, TestSlotComposer, context);
+    const memoryProvider = new TestVolatileMemoryProvider();
+    const context = await Manifest.load('./src/runtime/tests/artifacts/suggestions/Cakes.recipes', loader, {memoryProvider});
+    const runtime = new Runtime(loader, TestSlotComposer, context, null, memoryProvider);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.pec.slotComposer as MockSlotComposer;
     slotComposer.newExpectations('debug');

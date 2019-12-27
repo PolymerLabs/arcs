@@ -16,15 +16,17 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {checkNotNull} from '../../runtime/testing/preconditions.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
 
 describe('multi-slot test', () => {
   async function init() {
     const loader = new StubLoader({});
+    const memoryProvider = new TestVolatileMemoryProvider();
     const context = await Manifest.load(
-        './src/tests/particles/artifacts/multi-slot-test.manifest', loader);
-    const runtime = new Runtime(loader, MockSlotComposer, context);
+        './src/tests/particles/artifacts/multi-slot-test.manifest', loader, {memoryProvider});
+    const runtime = new Runtime(loader, MockSlotComposer, context, null, memoryProvider);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.pec.slotComposer as MockSlotComposer;
     const suggestions = await StrategyTestHelper.planForArc(arc);

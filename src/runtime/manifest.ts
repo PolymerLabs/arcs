@@ -115,7 +115,7 @@ const globalWarningKeys: Set<string> = new Set();
 type ManifestFinder<a> = (manifest: Manifest) => a;
 type ManifestFinderGenerator<a> = ((manifest: Manifest) => IterableIterator<a>) | ((manifest: Manifest) => a[]);
 
-interface ManifestParseOptions {
+export interface ManifestParseOptions {
   fileName?: string;
   loader?: Loader;
   registry?: Dictionary<Promise<Manifest>>;
@@ -126,6 +126,7 @@ interface ManifestParseOptions {
 
 interface ManifestLoadOptions {
   registry?: Dictionary<Promise<Manifest>>;
+  memoryProvider?: VolatileMemoryProvider;
 }
 
 export class Manifest {
@@ -381,7 +382,7 @@ export class Manifest {
   }
 
   static async load(fileName: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Manifest> {
-    let {registry} = options;
+    let {registry, memoryProvider} = options;
     registry = registry || {};
     if (registry && registry[fileName]) {
       return await registry[fileName];
@@ -393,7 +394,8 @@ export class Manifest {
       return await Manifest.parse(content, {
         fileName,
         loader,
-        registry
+        registry,
+        memoryProvider
       });
     })();
     return await registry[fileName];
@@ -498,7 +500,7 @@ ${e.message}
           const path = loader.path(manifest.fileName);
           const target = loader.join(path, item.path);
           try {
-            manifest._imports.push(await Manifest.load(target, loader, {registry}));
+            manifest._imports.push(await Manifest.load(target, loader, {registry, memoryProvider}));
           } catch (e) {
             manifest.errors.push(e);
             manifest.errors.push(new ManifestError(item.location, `Error importing '${target}'`));

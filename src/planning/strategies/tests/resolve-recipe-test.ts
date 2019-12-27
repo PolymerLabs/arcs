@@ -12,11 +12,19 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
 import {Entity} from '../../../runtime/entity.js';
 
 const {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;
 
 describe('resolve recipe', () => {
+  let memoryProvider;
+  beforeEach(() => {
+    memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
   it('does not resolve a mapping of a handle with an invalid type', async () => {
     const manifest = await Manifest.parse(`
       schema Car
@@ -36,7 +44,7 @@ describe('resolve recipe', () => {
       resource EmptyListJson
         start
         []
-    `);
+    `, {memoryProvider});
 
     const [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
@@ -63,7 +71,7 @@ describe('resolve recipe', () => {
       resource EmptyListJson
         start
         []
-    `);
+    `, {memoryProvider});
 
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
@@ -91,7 +99,7 @@ describe('resolve recipe', () => {
       resource EmptyListJson
         start
         []
-    `);
+    `, {memoryProvider});
 
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
@@ -119,7 +127,7 @@ describe('resolve recipe', () => {
       resource EmptyListJson
         start
         []
-    `);
+    `, {memoryProvider});
 
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
@@ -129,14 +137,14 @@ describe('resolve recipe', () => {
   });
 
   it('maps slots by tags', async () => {
-    const manifest = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A in 'A.js'
         master: consumes Slot #parent
 
       recipe
         s0: slot 'id0' #parent
         A
-    `));
+    `, {memoryProvider});
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
@@ -145,7 +153,7 @@ describe('resolve recipe', () => {
   });
 
   it('map slots by slot connection tags', async () => {
-    const manifest = (await Manifest.parse(`
+    const manifest = await Manifest.parse(`
       particle A in 'A.js'
         master: consumes Slot #root
           detail: provides? Slot #info #detail
@@ -156,7 +164,7 @@ describe('resolve recipe', () => {
           master: consumes #root
         B
           info: consumes #detail
-    `));
+    `, {memoryProvider});
 
     const strategy = new ResolveRecipe(createTestArc(manifest));
     const results = await strategy.generateFrom([{result: manifest.recipes[0], score: 1}]);
@@ -177,7 +185,7 @@ describe('resolve recipe', () => {
       resource EmptyListJson
         start
         []
-    `);
+    `, {memoryProvider});
 
     // Separating context from the recipe as otherwise
     // manifest parser maps to storage all by itself itself.
@@ -192,7 +200,7 @@ describe('resolve recipe', () => {
         h0: map 'batmobile'
         P
           param: reads h0
-    `)).recipes[0];
+    `, {memoryProvider})).recipes[0];
 
     recipe.normalize();
     assert.isUndefined(recipe.handles[0].storageKey);
@@ -219,7 +227,7 @@ describe('resolve recipe', () => {
         h0: use 'batmobile'
         P
           param: reads h0
-    `);
+    `, {memoryProvider});
 
     const arc = createTestArc(manifest);
 

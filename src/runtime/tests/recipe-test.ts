@@ -17,7 +17,16 @@ import {Type} from '../type.js';
 import {Flags} from '../flags.js';
 import {Entity} from '../entity.js';
 
+import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
+import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+
 describe('recipe', () => {
+  let memoryProvider;
+  beforeEach(() => {
+      memoryProvider = new TestVolatileMemoryProvider();
+      RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
   it('normalize errors', async () => {
     const manifest = await Manifest.parse(`
         schema S1
@@ -226,7 +235,7 @@ describe('recipe', () => {
   const getFirstRecipeHash = async manifestContent => {
     const loader = new Loader();
     const manifest = await Manifest.parse(manifestContent,
-        {loader, fileName: './manifest.manifest'});
+        {loader, fileName: './manifest.manifest', memoryProvider});
     const [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
     return recipe.digest();
@@ -410,7 +419,7 @@ describe('recipe', () => {
       resource ThingsJson
         start
         [{}]
-    `);
+    `, {memoryProvider});
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     recipe.handles[0].id = 'my-things';
@@ -745,7 +754,7 @@ describe('recipe', () => {
         P
           inThing: handle0
           outThing: handle1
-    `)).recipes[0];
+    `, {memoryProvider})).recipes[0];
     const verifyRecipe = (recipe, errorPrefix) => {
       const errors: string[] = [];
       const resolvedType = recipe.handleConnections[0].type.resolvedType();

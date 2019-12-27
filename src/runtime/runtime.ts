@@ -22,7 +22,7 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {FakeSlotComposer} from './testing/fake-slot-composer.js';
 import {RamDiskStorageDriverProvider} from './storageNG/drivers/ramdisk.js';
-import {VolatileMemory, VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Recipe} from './recipe/recipe.js';
@@ -58,13 +58,13 @@ let runtime: Runtime | null = null;
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
-export class Runtime implements VolatileMemoryProvider {
+export class Runtime {
   public context: Manifest;
   public readonly pecFactory: PecFactory;
   private cacheService: RuntimeCacheService;
   private loader: Loader | null;
   private composerClass: typeof SlotComposer | null;
-  private readonly memory: VolatileMemory;
+  private memoryProvider: VolatileMemoryProvider;
   readonly arcById = new Map<string, Arc>();
 
   /**
@@ -103,11 +103,12 @@ export class Runtime implements VolatileMemoryProvider {
     const map = {...Runtime.mapFromRootPath(root), ...urls};
     const loader = new Loader(map);
     const pecFactory = pecIndustry(loader);
+    const memoryProvider = new SimpleVolatileMemoryProvider();
     // TODO(sjmiles): UiSlotComposer type shenanigans are temporary pending complete replacement
     // of SlotComposer by UiSlotComposer. Also it's weird that `new Runtime(..., UiSlotComposer, ...)`
     // doesn't bother tslint at all when done in other modules.
-    const runtime = new Runtime(loader, UiSlotComposer as unknown as typeof SlotComposer, null, pecFactory);
-    RamDiskStorageDriverProvider.register(runtime);
+    const runtime = new Runtime(loader, UiSlotComposer as unknown as typeof SlotComposer, null, pecFactory, memoryProvider);
+    RamDiskStorageDriverProvider.register(memoryProvider);
     return runtime;
   }
 
@@ -128,7 +129,10 @@ export class Runtime implements VolatileMemoryProvider {
     };
   }
 
-  constructor(loader?: Loader, composerClass?: typeof SlotComposer, context?: Manifest, pecFactory?: PecFactory) {
+  // TODO(wkorman): Consider refactoring Runtime ctor to take an options object.
+  // We need to allow passing a MemoryProvider so that tests that prepare a
+  // context manifest that may use stores can pass along the memory as well.
+  constructor(loader?: Loader, composerClass?: typeof SlotComposer, context?: Manifest, pecFactory?: PecFactory, memoryProvider?: VolatileMemoryProvider) {
     this.cacheService = new RuntimeCacheService();
     // We have to do this here based on a vast swathe of tests that just create
     // a Runtime instance and forge ahead. This is only temporary until we move
@@ -138,7 +142,7 @@ export class Runtime implements VolatileMemoryProvider {
     this.pecFactory = pecFactory;
     this.composerClass = composerClass;
     this.context = context || new Manifest({id: 'manifest:default'});
-    this.memory = new VolatileMemory();
+    this.memoryProvider = memoryProvider || new SimpleVolatileMemoryProvider();
     runtime = this;
     // user information. One persona per runtime for now.
   }
@@ -147,8 +151,8 @@ export class Runtime implements VolatileMemoryProvider {
     return this.cacheService;
   }
 
-  getVolatileMemory(): VolatileMemory {
-    return this.memory;
+  getMemoryProvider(): VolatileMemoryProvider {
+    return this.memoryProvider;
   }
 
   destroy() {

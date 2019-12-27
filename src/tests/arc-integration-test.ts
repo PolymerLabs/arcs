@@ -12,8 +12,10 @@ import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
+import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
+import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 
 describe('Arc integration', () => {
   it('copies store tags', async () => {
@@ -23,6 +25,7 @@ describe('Arc integration', () => {
         }
       });`
     });
+    const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`
       schema Thing
         name: Text
@@ -38,9 +41,10 @@ describe('Arc integration', () => {
           {"name": "mything"}
         ]
       store ThingStore of Thing 'mything' #best in ThingResource
-    `);
+    `, {memoryProvider});
+    const runtime = new Runtime(loader, FakeSlotComposer, manifest, null, memoryProvider);
+    RamDiskStorageDriverProvider.register(memoryProvider);
 
-    const runtime = new Runtime(loader, FakeSlotComposer, manifest);
     const arc = runtime.newArc('demo', 'volatile://');
     assert.lengthOf(arc._stores, 0);
     assert.isEmpty(arc.storeTags);
