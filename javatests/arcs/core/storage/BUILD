@@ -7,8 +7,11 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+TEST_SRCS = glob(["*Test.kt"])
+
 arcs_kt_android_test_suite(
     name = "storage",
+    srcs = TEST_SRCS,
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.core.storage",
     deps = [

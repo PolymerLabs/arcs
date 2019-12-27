@@ -13,9 +13,12 @@ package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
+import arcs.core.storage.Handle
+import arcs.core.storage.StorageProxy
 
 /** These typealiases are defined to clean up the class declaration below. */
 private typealias SetProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+
 private typealias SetHandle<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 
 /**
@@ -27,16 +30,12 @@ private typealias SetHandle<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, 
 class CollectionImpl<T : Referencable>(
     name: String,
     storageProxy: SetProxy<T>
-) : SetHandle<T>(name, storageProxy), Iterable<T> {
+) : SetHandle<T>(name, storageProxy) {
     /** Return the number of items in the storage proxy view of the collection. */
-    val size: Int
-        get() = value.size
+    suspend fun size(): Int = value().size
 
     /** Returns true if the current storage proxy view of the collection is empty. */
-    fun isEmpty(): Boolean = value.isEmpty()
-
-    /** Return in iterator over them items in then storage proxy view of the collection. */
-    override fun iterator(): Iterator<T> = value.iterator()
+    suspend fun isEmpty(): Boolean = value().isEmpty()
 
     /**
      * Store a new entity in the collection.
@@ -44,10 +43,9 @@ class CollectionImpl<T : Referencable>(
      * It will be passed to the storage proxy in an add operation, with an incremented version
      * for this Handle in the version map.
      */
-    fun store(entity: T) {
+    suspend fun store(entity: T) {
         versionMap.increment()
         storageProxy.applyOp(CrdtSet.Operation.Add(name, versionMap, entity))
-        notifyListeners()
     }
 
     /**
@@ -56,11 +54,10 @@ class CollectionImpl<T : Referencable>(
      * This currently works by iterating over all items in the storage proxy view of the
      * collection, and sending a Remove command for each one.
      */
-    fun clear() {
+    suspend fun clear() {
         storageProxy.getParticleView().value.forEach {
             storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, it))
         }
-        notifyListeners()
     }
 
     /**
@@ -68,8 +65,7 @@ class CollectionImpl<T : Referencable>(
      *
      * The specified entity will be passed to the storage proxy in a remove operation.
      */
-    fun remove(entity: T) {
+    suspend fun remove(entity: T) {
         storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, entity))
-        notifyListeners()
     }
 }

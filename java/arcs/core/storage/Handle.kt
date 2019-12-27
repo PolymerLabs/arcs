@@ -9,20 +9,34 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage.handle
+package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.internal.VersionMap
 
 /**
- * The [Callbacks] interface is a simple stand-in for the callbacks that a [Handle] might want
- * to use* to signal information back to the runtime.
- *
- * This is mostly a place-holder at the moment.
+ * The [Callbacks] interface is a simple stand-in for the callbacks that a [Handle] might want to
+ * use to signal information back to a subscriber (like a handle).
  */
-interface Callbacks {
-    fun onUpdate(handle: Handle<*, *, *>)
+interface Callbacks<Op : CrdtOperation> {
+    /**
+     * [onUpdate] is called when a diff is received from storage, or from a handle. Handles can
+     * be notified for their own writes.
+     * This method is not called for every change! A model sync will call [onSync] instead.
+     * Do not depend on seeing every update via this callback.
+     */
+    fun onUpdate(op: Op)
+
+    /**
+     * [onSync] is called when the proxy is synced from its backing [Store].
+     */
+    fun onSync()
+
+    /**
+     * [onDesync] is called when the proxy realizes it is out of sync with its backing [Store].
+     */
+    fun onDesync()
 }
 
 /**
@@ -44,36 +58,33 @@ interface Callbacks {
  * Implementations using this base are assumed to be based on a [CrdtModel] type. Concrete
  * subclasses should select a [CrdtData] and [CrdtOperation] type for the [Handle] when
  * implementing a concrete version of it, and expose only the consumer type [T].
+ *
+ * The base handle interface is at this layer to avoid circular dependencies.
  */
-abstract class Handle<Data : CrdtData, Op : CrdtOperation, T>(
+open class Handle<Data : CrdtData, Op : CrdtOperation, T>(
+    /** [name] is the unique name for this handle, used to track state in the [VersionMap]. */
     val name: String,
-    val storageProxy: StorageProxy<Data, Op, T>
+    val storageProxy: StorageProxy<Data, Op, T>,
+    /**
+     * [canRead] is whether this handle reads data so proxy can decide whether to keep its crdt
+     * up to date
+     */
+    val canRead: Boolean = true
 ) {
 
-    /** A list of current registered [Callbacks] instances */
-    private val callbacks = mutableListOf<Callbacks>()
+    /** The currently registered [Callbacks] instance */
+    var callback: Callbacks<Op>? = null
 
     /** Local copy of the [VersionMap] for the backing CRDT. */
     var versionMap = VersionMap()
         protected set
 
-    /** Add a new [Callback] to the list. */
-    fun addCallbacks(callbacks: Callbacks) {
-        this.callbacks.add(callbacks)
-    }
-
-    /** Notify all registered [Callbacks] instances that an update has occurred. */
-    protected fun notifyListeners() {
-        callbacks.forEach {
-            it.onUpdate(this)
-        }
-    }
-
     /** Read value from the backing [StorageProxy], updating the internal clock copy. */
-    protected val value: T
-        get() = storageProxy.getParticleView().also { (_, versionMap) ->
-            this.versionMap = versionMap
-        }.value
+    suspend fun value(): T {
+        val particleView = storageProxy.getParticleView()
+        this.versionMap = particleView.versionMap
+        return particleView.value
+    }
 
     /** Helper that subclasses can use to increment their version in the [VersionMap]. */
     protected fun VersionMap.increment() {

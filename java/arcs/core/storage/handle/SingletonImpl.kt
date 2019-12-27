@@ -13,6 +13,8 @@ package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.storage.Handle
+import arcs.core.storage.StorageProxy
 
 /** These typealiases are defined to clean up the class declaration below. */
 private typealias SingletonProxy<T> =
@@ -31,18 +33,16 @@ class SingletonImpl<T : Referencable>(
     storageProxy: SingletonProxy<T>
 ) : SingletonHandle<T>(name, storageProxy) {
     /** Get the current value from the backing [StorageProxy]. */
-    fun get() = value
+    suspend fun get() = value()
 
     /** Send a new value to the backing [StorageProxy]. */
-    fun set(entity: T) {
+    suspend fun set(entity: T) {
         versionMap.increment()
         storageProxy.applyOp(CrdtSingleton.Operation.Update(name, versionMap, entity))
-        notifyListeners()
     }
 
     /** Clear the value from the backing [StorageProxy]. */
-    fun clear() {
+    suspend fun clear() {
         storageProxy.applyOp(CrdtSingleton.Operation.Clear(name, versionMap))
-        notifyListeners()
     }
 }
