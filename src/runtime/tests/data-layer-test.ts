@@ -12,6 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {Entity} from '../entity.js';
@@ -22,7 +23,7 @@ describe('entity', () => {
   it('can be created, stored, and restored', async () => {
     const schema = new Schema(['TestSchema'], {value: 'Text'});
 
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), context: null, loader: new Loader()});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), context: null, loader: new Loader(), storeRegistry: new TestStoreRegistry()});
     const entity = new (Entity.createEntityClass(schema, null))({value: 'hello world'});
     assert.isDefined(entity);
 

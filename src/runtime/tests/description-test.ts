@@ -18,6 +18,7 @@ import {Recipe} from '../recipe/recipe.js';
 import {Relevance} from '../relevance.js';
 import {SingletonStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 import {EntityType} from '../type.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
@@ -26,7 +27,8 @@ import {ConCap} from '../../testing/test-util.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
-  const arc = new Arc({slotComposer, id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+  const storeRegistry = new TestStoreRegistry();
+  const arc = new Arc({slotComposer, id: ArcId.newForTest('test'), context: manifest, loader: new Loader(), storeRegistry});
   // TODO(lindner) stop messing with arc internal state, or provide a way to supply in constructor..
   arc['_activeRecipe'] = recipe;
   arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});

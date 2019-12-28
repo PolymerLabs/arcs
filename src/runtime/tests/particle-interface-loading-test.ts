@@ -19,6 +19,7 @@ import {ParticleSpec} from '../particle-spec.js';
 import {ArcId} from '../id.js';
 import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {singletonHandleForTest} from '../testing/handle-for-test.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 
 describe('particle interface loading', () => {
 
@@ -61,7 +62,8 @@ describe('particle interface loading', () => {
           });`});
 
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
-    const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id: ArcId.newForTest('test'), loader, storeRegistry, context: manifest});
 
     const fooType = new EntityType(manifest.schemas.Foo);
     const barType = new EntityType(manifest.schemas.Bar);
@@ -132,7 +134,8 @@ describe('particle interface loading', () => {
           input: reads h1
       `, {loader, fileName: './test.manifest'});
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
 
     const fooType = manifest.findTypeByName('Foo');
     const barType = manifest.findTypeByName('Bar');
@@ -215,7 +218,8 @@ describe('particle interface loading', () => {
         });
       `
     });
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
     const fooType = manifest.findTypeByName('Foo');
     const fooStore = await arc.createStore(fooType);
     recipe.handles[0].mapToStorage(fooStore);

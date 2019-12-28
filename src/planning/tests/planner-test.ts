@@ -14,6 +14,7 @@ import {Particle} from '../../runtime/particle.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {TestStoreRegistry} from '../../runtime/testing/test-store-registry.js';
 import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
 
@@ -99,7 +100,9 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   const loadedManifest = await Manifest.load('manifest', loader, {registry, memoryProvider});
   manifestLoadedCallback(loadedManifest);
 
-  const arc = new Arc({id: ArcId.newForTest('test-plan-arc'), context: loadedManifest, loader});
+  const storeRegistry = new TestStoreRegistry();
+  const arc = new Arc({id: ArcId.newForTest('test-plan-arc'),
+      context: loadedManifest, loader, storeRegistry});
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator()};
   planner.init(arc, options);

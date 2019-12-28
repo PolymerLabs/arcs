@@ -18,6 +18,7 @@ import {PouchDbStorage} from '../../../storage/pouchdb/pouch-db-storage.js';
 import {PouchDbSingleton} from '../../../storage/pouchdb/pouch-db-singleton.js';
 import {StorageProviderFactory} from '../../../storage/storage-provider-factory.js';
 import {CallbackTracker} from '../../../testing/callback-tracker.js';
+import {TestStoreRegistry} from '../../../testing/test-store-registry.js';
 import {EntityType, ReferenceType} from '../../../type.js';
 import {Id, ArcId} from '../../../id.js';
 
@@ -60,13 +61,25 @@ describe('pouchdb for ' + testUrl, () => {
     storageInstances.clear();
   });
 
+  const newArc = async () => {
+    const context = await Manifest.parse(`
+      schema Bar
+        value: Text
+    `);
+    return {
+        manifest: context,
+        arc: new Arc({
+            id: ArcId.newForTest('test'),
+            context,
+            loader: new Loader(),
+            storeRegistry: new TestStoreRegistry()
+        })
+    };
+  };
+
   describe('variable', () => {
     it('supports basic construct and mutate', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
@@ -80,11 +93,7 @@ describe('pouchdb for ' + testUrl, () => {
     });
 
     it('resolves concurrent set', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('variable');
@@ -111,12 +120,7 @@ describe('pouchdb for ' + testUrl, () => {
     });
 
     it('enables referenceMode by default', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
@@ -134,12 +138,7 @@ describe('pouchdb for ' + testUrl, () => {
     });
 
     it('supports references', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-
-      const arc = new Arc({id: ArcId.newForTest('test'),  context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
@@ -157,11 +156,7 @@ describe('pouchdb for ' + testUrl, () => {
 
   describe('collection', () => {
     it('supports basic construct and mutate', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
@@ -176,11 +171,7 @@ describe('pouchdb for ' + testUrl, () => {
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
     it('resolves concurrent add of same id', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
@@ -197,11 +188,7 @@ describe('pouchdb for ' + testUrl, () => {
     });
 
     it('resolves concurrent add/remove of same id', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
@@ -217,11 +204,7 @@ describe('pouchdb for ' + testUrl, () => {
       assert.isEmpty(await collection2.toList());
     });
     it('resolves concurrent add of different id', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
@@ -238,12 +221,7 @@ describe('pouchdb for ' + testUrl, () => {
     });
 
     it('enables referenceMode by default', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
@@ -266,11 +244,7 @@ describe('pouchdb for ' + testUrl, () => {
     });
 
     it('supports removeMultiple', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = new StorageProviderFactory(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collectionRemoveMultiple');
@@ -286,12 +260,7 @@ describe('pouchdb for ' + testUrl, () => {
     });
 
     it('supports references', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
@@ -312,11 +281,7 @@ describe('pouchdb for ' + testUrl, () => {
       callbackTracker.verify();
     });
     it('supports removeMultiple', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
+      const {manifest, arc} = await newArc();
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');

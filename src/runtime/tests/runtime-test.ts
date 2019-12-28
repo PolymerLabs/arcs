@@ -15,6 +15,7 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 import {ArcId} from '../id.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
@@ -33,8 +34,13 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
 
 describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), loader: new Loader(),
-                         context: new Manifest({id: ArcId.newForTest('test')})});
+    const arc = new Arc({
+        slotComposer: new FakeSlotComposer(),
+        id: ArcId.newForTest('test'),
+        loader: new Loader(),
+        storeRegistry: new TestStoreRegistry(),
+        context: new Manifest({id: ArcId.newForTest('test')})
+      });
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();
     const actual = await Runtime.getArcDescription(arc);

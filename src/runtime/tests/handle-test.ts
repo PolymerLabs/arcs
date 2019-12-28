@@ -17,6 +17,7 @@ import {EntityType, InterfaceType} from '../type.js';
 import {Entity} from '../entity.js';
 import {ArcId, IdGenerator} from '../id.js';
 import {NoOpStorageProxy} from '../storage-proxy.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 // database providers are optional, these tests use these provider(s)
 import '../storage/pouchdb/pouch-db-provider.js';
 
@@ -24,13 +25,15 @@ describe('Handle', () => {
 
   let loader;
   let manifest;
+  let storeRegistry;
   before(async () => {
     loader = new Loader();
+    storeRegistry = new TestStoreRegistry();
     manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
   });
 
   it('clear singleton store', async () => {
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
     const barStore = await arc.createStore(new EntityType(manifest.schemas.Bar)) as SingletonStorageProvider;
     await barStore.set({id: 'an id', value: 'a Bar'});
     await barStore.clear();
@@ -41,7 +44,7 @@ describe('Handle', () => {
     // NOTE: Until entity mutation is distinct from collection modification,
     // referenceMode stores *can't* ignore duplicate stores of the same
     // entity value.
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
     const store = await arc.createStore(new EntityType(manifest.schemas.Bar)) as SingletonStorageProvider;
     let version = 0;
     store.legacyOn(() => version++);
@@ -57,7 +60,7 @@ describe('Handle', () => {
   });
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
     const barStore = await arc.createStore(new EntityType(manifest.schemas.Bar).collectionOf()) as CollectionStorageProvider;
     let version = 0;
     barStore.legacyOn(({add: [{effective}]}) => {if (effective) version++;});
@@ -74,7 +77,7 @@ describe('Handle', () => {
   });
 
   it('dedupes common user-provided ids', async () => {
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
 
     // tslint:disable-next-line: variable-name
     const Foo = Entity.createEntityClass(manifest.schemas.Foo, null);
@@ -87,7 +90,7 @@ describe('Handle', () => {
   });
 
   it('allows updates with same user-provided ids but different value (collection)', async () => {
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
 
     // tslint:disable-next-line: variable-name
     const Foo = Entity.createEntityClass(manifest.schemas.Foo, null);
@@ -100,7 +103,7 @@ describe('Handle', () => {
   });
 
   it('allows updates with same user-provided ids but different value (singleton)', async () => {
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
 
     // tslint:disable-next-line: variable-name
     const Foo = Entity.createEntityClass(manifest.schemas.Foo, null);
@@ -113,7 +116,7 @@ describe('Handle', () => {
   });
 
   it('disable handle sets storage into a noOp storage', async () => {
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
 
     // tslint:disable-next-line: variable-name
     const Foo = Entity.createEntityClass(manifest.schemas.Foo, null);
@@ -126,7 +129,7 @@ describe('Handle', () => {
   });
 
   it('remove entry from store', async () => {
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
     const barStore = await arc.createStore(new EntityType(manifest.schemas.Bar).collectionOf()) as CollectionStorageProvider;
     const bar = {id: 'an id', value: 'a Bar'};
     await barStore.store(bar, ['key1']);
@@ -135,7 +138,7 @@ describe('Handle', () => {
   });
 
   it('can store a particle in an interface store', async () => {
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
 
     const iface = InterfaceType.make('Test', [
       {type: new EntityType(manifest.schemas.Foo), direction: 'any'},
@@ -149,7 +152,7 @@ describe('Handle', () => {
   });
 
   it('createHandle only allows valid tags & types in stores', async () => {
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader, storeRegistry});
 
     await arc.createStore(new EntityType(manifest.schemas.Bar), 'name', 'id1', ['#sufficient']);
     await arc.createStore(new EntityType(manifest.schemas.Bar), 'name', 'id2', ['#valid']);
@@ -161,7 +164,7 @@ describe('Handle', () => {
 
   it('uses default storage keys', async () => {
     const arc = new Arc({id: ArcId.newForTest('test'), storageKey: 'pouchdb://memory/yyy/test',
-                         context: manifest, loader});
+                         context: manifest, loader, storeRegistry});
     const singleton = await arc.createStore(new EntityType(manifest.schemas.Bar), 'foo', 'test1') as SingletonStorageProvider;
     assert.strictEqual(singleton.storageKey, 'pouchdb://memory/yyy/test/handles/test1');
   });

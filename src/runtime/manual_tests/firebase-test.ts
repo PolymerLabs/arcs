@@ -18,8 +18,10 @@ import {Runtime} from '../runtime.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {resetStorageForTesting} from '../storage/firebase/firebase-storage.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
+import {StoreRegistry} from '../storageNG/unified-store.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 import {StubLoader} from '../testing/stub-loader.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
@@ -64,13 +66,21 @@ describe('firebase', function() {
     storageInstances = [];
   });
 
+  const newArc = (context, loader?: Loader, storeRegistry?: StoreRegistry) => {
+    return new Arc({
+        id: ArcId.newForTest('test'),
+        loader: loader || new Loader(),
+        storeRegistry: storeRegistry || new TestStoreRegistry(),
+        context});
+  };
+
   describe('variable', () => {
     it('supports basic construct and mutate', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
           value: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
@@ -92,7 +102,7 @@ describe('firebase', function() {
         schema Bar
           value: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('variable');
@@ -110,7 +120,7 @@ describe('firebase', function() {
         schema Bar
           value: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
@@ -132,8 +142,7 @@ describe('firebase', function() {
         schema Bar
           value: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('varPtr');
@@ -156,7 +165,7 @@ describe('firebase', function() {
           data: Text
       `);
       const barType = new EntityType(manifest.schemas.Bar1);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
 
       const var1 = await storage.construct('test1', barType, newStoreKey('variable')) as SingletonStorageProvider;
@@ -191,7 +200,7 @@ describe('firebase', function() {
         schema Bar
           value: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
@@ -217,7 +226,7 @@ describe('firebase', function() {
         schema Bar
           value: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
@@ -234,7 +243,7 @@ describe('firebase', function() {
         schema Bar
           value: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
@@ -254,7 +263,7 @@ describe('firebase', function() {
         schema Bar
           value: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
@@ -273,7 +282,7 @@ describe('firebase', function() {
           value: Text
       `);
 
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
@@ -301,7 +310,7 @@ describe('firebase', function() {
           value: Text
       `);
 
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key1 = newStoreKey('colPtr');
@@ -324,7 +333,7 @@ describe('firebase', function() {
         schema Bar
           value: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collection');
@@ -343,7 +352,7 @@ describe('firebase', function() {
           data: Text
       `);
       const barType = new EntityType(manifest.schemas.Bar2);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
 
       const col1 = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
@@ -406,7 +415,7 @@ describe('firebase', function() {
         schema Bar
           data: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('bigcollection');
@@ -482,7 +491,7 @@ describe('firebase', function() {
         schema Bar
           data: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', barType.bigCollectionOf(), newStoreKey('bigcollection')) as BigCollectionStorageProvider;
@@ -559,7 +568,7 @@ describe('firebase', function() {
         schema Bar
           data: Text
       `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const barType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', barType.bigCollectionOf(), newStoreKey('bigcollection')) as BigCollectionStorageProvider;
@@ -725,7 +734,8 @@ describe('firebase', function() {
         `
       });
       const manifest = await Manifest.load('manifest', loader);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader, context: manifest});
+      const storeRegistry = new TestStoreRegistry();
+      const arc = newArc(manifest, loader, storeRegistry);
       const storage = createStorage(arc.id);
       const dataType = new EntityType(manifest.schemas.Data);
 
@@ -758,7 +768,9 @@ describe('firebase', function() {
       await colStore.store({id: 'i5', rawData: {value: 'v5'}}, ['k5']);
       await bigStore.store({id: 'i6', rawData: {value: 'v6'}}, ['k6']);
 
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', pecFactories: undefined, slotComposer: undefined, context: manifest});
+      const arc2 = await Arc.deserialize({serialization, loader,
+          storeRegistry, fileName: '', pecFactories: undefined,
+          slotComposer: undefined, context: manifest});
       const varStore2 = arc2.findStoreById(varStore.id) as SingletonStorageProvider;
       const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
       const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider;
@@ -789,7 +801,7 @@ describe('firebase', function() {
           data: Text
       `);
       const barType = new EntityType(manifest.schemas.Bar3);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
+      const arc = newArc(manifest);
       const storage = createStorage(arc.id);
       const col = await storage.construct('test1', barType.collectionOf(), newStoreKey('collection')) as CollectionStorageProvider;
       const backing = await col.ensureBackingStore();

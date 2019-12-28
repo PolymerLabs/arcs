@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
-import {UnifiedStore} from './storageNG/unified-store.js';
+import {StoreRegistry, UnifiedStore} from './storageNG/unified-store.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -55,6 +55,35 @@ type SpawnArgs = {
 
 let runtime: Runtime | null = null;
 
+class SimpleStoreRegistry implements StoreRegistry {
+  private context: Manifest;
+
+  constructor(context) {
+    this.context = context;
+  }
+
+  // TODO: This is a temporary method to allow sharing stores with other Arcs.
+  registerStore(store: UnifiedStore, tags: string[]): void {
+    if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
+      this.context['_addStore'](store, tags);
+    }
+  }
+
+  // Temporary method to allow sharing stores with other Arcs.
+  unregisterStore(storeId: string, tags: string[]) {
+    // #shared tag indicates that a store was made available to all arcs.
+    if (!tags.includes('shared')) {
+      return;
+    }
+    const index = this.context.stores.findIndex(store => store.id === storeId);
+    if (index >= 0) {
+      const store = this.context.stores[index];
+      this.context.storeTags.delete(store);
+      this.context.stores.splice(index, 1);
+    }
+  }
+}
+
 // To start with, this class will simply hide the runtime classes that are
 // currently imported by ArcsLib.js. Once that refactoring is done, we can
 // think about what the api should actually look like.
@@ -65,6 +94,7 @@ export class Runtime {
   private loader: Loader | null;
   private composerClass: typeof SlotComposer | null;
   private memoryProvider: VolatileMemoryProvider;
+  private storeRegistry: StoreRegistry;
   readonly arcById = new Map<string, Arc>();
 
   /**
@@ -132,7 +162,13 @@ export class Runtime {
   // TODO(wkorman): Consider refactoring Runtime ctor to take an options object.
   // We need to allow passing a MemoryProvider so that tests that prepare a
   // context manifest that may use stores can pass along the memory as well.
-  constructor(loader?: Loader, composerClass?: typeof SlotComposer, context?: Manifest, pecFactory?: PecFactory, memoryProvider?: VolatileMemoryProvider) {
+  constructor(
+      loader?: Loader,
+      composerClass?: typeof SlotComposer,
+      context?: Manifest,
+      pecFactory?: PecFactory,
+      memoryProvider?: VolatileMemoryProvider,
+      storeRegistry?: StoreRegistry) {
     this.cacheService = new RuntimeCacheService();
     // We have to do this here based on a vast swathe of tests that just create
     // a Runtime instance and forge ahead. This is only temporary until we move
@@ -143,6 +179,7 @@ export class Runtime {
     this.composerClass = composerClass;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.memoryProvider = memoryProvider || new SimpleVolatileMemoryProvider();
+    this.storeRegistry = storeRegistry || new SimpleStoreRegistry(this.context);
     runtime = this;
     // user information. One persona per runtime for now.
   }
@@ -153,6 +190,10 @@ export class Runtime {
 
   getMemoryProvider(): VolatileMemoryProvider {
     return this.memoryProvider;
+  }
+
+  getStoreRegistry(): StoreRegistry {
+    return this.storeRegistry;
   }
 
   destroy() {
@@ -168,7 +209,7 @@ export class Runtime {
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
   // How best to provide default storage to an arc given whatever we decide?
   newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey) | null, options?: RuntimeArcOptions): Arc {
-    const {loader, context} = this;
+    const {loader, storeRegistry, context} = this;
     const id = IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
     let storageKey : string | StorageKey;
@@ -179,7 +220,7 @@ export class Runtime {
     } else {
       storageKey = storageKeyPrefix(id);
     }
-    return new Arc({id, storageKey, loader, slotComposer, context, ...options});
+    return new Arc({id, storageKey, loader, slotComposer, context, storeRegistry, ...options});
   }
 
   // Stuff the shell needs
@@ -206,27 +247,6 @@ export class Runtime {
 
   findArcByParticleId(particleId: string): Arc {
     return [...this.arcById.values()].find(arc => !!arc.activeRecipe.findParticle(particleId));
-  }
-
-  // TODO: This is a temporary method to allow sharing stores with other Arcs.
-  registerStore(store: UnifiedStore, tags: string[]): void {
-    if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
-      this.context['_addStore'](store, tags);
-    }
-  }
-
-  // Temporary method to allow sharing stores with other Arcs.
-  unregisterStore(storeId: string, tags: string[]) {
-    // #shared tag indicates that a store was made available to all arcs.
-    if (!tags.includes('shared')) {
-      return;
-    }
-    const index = this.context.stores.findIndex(store => store.id === storeId);
-    if (index >= 0) {
-      const store = this.context.stores[index];
-      this.context.storeTags.delete(store);
-      this.context.stores.splice(index, 1);
-    }
   }
 
   /**
@@ -319,6 +339,7 @@ export class Runtime {
       serialization,
       context,
       storageKey: storage || 'volatile',
+      storeRegistry: this.storeRegistry,
       slotComposer: composer,
       pecFactories: [this.pecFactory, ...(portFactories || [])],
       loader: this.loader,

@@ -14,17 +14,21 @@ import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Modality} from '../../runtime/modality.js';
+import {StoreRegistry} from '../../runtime/storageNG/unified-store.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../../runtime/testing/test-store-registry.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
 import {Planner} from '../planner.js';
 import {Suggestion} from '../plan/suggestion.js';
 
 export class StrategyTestHelper {
-  static createTestArc(context: Manifest, options: {arcId?: Id, modalityName?: string, loader?: Loader} = {}) {
+  static createTestArc(context: Manifest, options: {
+      arcId?: Id, modalityName?: string, loader?: Loader, storeRegistry?: StoreRegistry} = {}) {
     return new Arc({
       id: options.arcId || ArcId.newForTest('test-arc'),
       loader: options.loader || new Loader(),
+      storeRegistry: options.storeRegistry || new TestStoreRegistry(),
       context,
       slotComposer: new FakeSlotComposer(options)
     });

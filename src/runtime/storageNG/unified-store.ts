@@ -182,3 +182,8 @@ export type StoreInfo = {
    */
   readonly includeKey?: string;
 };
+
+export interface StoreRegistry {
+  registerStore(store: UnifiedStore, tags: string[]): void;
+  unregisterStore(storeId: string, tags: string[]);
+}

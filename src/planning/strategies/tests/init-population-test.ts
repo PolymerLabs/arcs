@@ -13,6 +13,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
+import {TestStoreRegistry} from '../../../runtime/testing/test-store-registry.js';
 import {InitPopulation} from '../../strategies/init-population.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
@@ -37,7 +38,9 @@ describe('InitPopulation', () => {
     });
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    const arc = new Arc({id: ArcId.newForTest('test-plan-arc'), context: manifest, loader});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id: ArcId.newForTest('test-plan-arc'),
+        context: manifest, loader, storeRegistry});
 
     async function scoreOfInitPopulationOutput() {
       const results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
@@ -63,10 +66,11 @@ describe('InitPopulation', () => {
     const loader = new StubLoader({
       'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
     });
+    const storeRegistry = new TestStoreRegistry();
     const arc = new Arc({
       id: ArcId.newForTest('test-plan-arc'),
       context: new Manifest({id: ArcId.newForTest('test')}),
-      loader
+      loader, storeRegistry
     });
 
     const results = await new InitPopulation(arc, {contextual: false,

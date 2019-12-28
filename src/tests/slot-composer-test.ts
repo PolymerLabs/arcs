@@ -16,6 +16,7 @@ import {Loader} from '../platform/loader.js';
 import {HostedSlotContext, ProvidedSlotContext} from '../runtime/slot-context.js';
 import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
+import {TestStoreRegistry} from '../runtime/testing/test-store-registry.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {Id, ArcId} from '../runtime/id.js';
 import {Manifest} from '../runtime/manifest.js';
@@ -28,11 +29,13 @@ async function initSlotComposer(recipeStr) {
   const loader = new StubLoader({
     '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
   });
+  const storeRegistry = new TestStoreRegistry();
   const arc = new Arc({
     id: ArcId.newForTest('test-plan-arc'),
     context: manifest,
     slotComposer,
-    loader
+    loader,
+    storeRegistry
   });
   const startRenderParticles: string[] = [];
   arc.pec.startRender = ({particle}) => { startRenderParticles.push(particle.name); };

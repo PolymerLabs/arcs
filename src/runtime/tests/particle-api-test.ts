@@ -11,6 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Arc} from '../arc.js';
 import {Description} from '../description.js';
@@ -946,7 +947,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id, loader, storeRegistry, context: null});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -998,7 +1000,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id, loader, storeRegistry, context: null});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1050,7 +1053,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id, loader, storeRegistry, context: null});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1101,18 +1105,19 @@ describe('particle-api', () => {
       `
     });
 
-     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id, loader, storeRegistry, context: null});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
-     const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'h0', 'test:0');
+    const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'h0', 'test:0');
     const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'h1', 'test:1');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
 
-     const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
@@ -1163,13 +1168,14 @@ describe('particle-api', () => {
       `
     });
 
-     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id, loader, storeRegistry, context: null});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
 
-     const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
@@ -1222,8 +1228,14 @@ describe('particle-api', () => {
     });
     // TODO(lindner): add strict rendering
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
-    const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
-        storageKey: 'key', loader, slotComposer, context});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({
+        id: IdGenerator.newSession().newArcId('demo'),
+        storageKey: 'key',
+        loader,
+        storeRegistry,
+        slotComposer,
+        context});
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 
@@ -1296,8 +1308,14 @@ describe('particle-api', () => {
     });
     // TODO(lindner): add strict rendering
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
-    const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
-        storageKey: 'key', loader, slotComposer, context});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({
+        id: IdGenerator.newSession().newArcId('demo'),
+        storageKey: 'key',
+        loader,
+        storeRegistry,
+        slotComposer,
+        context});
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 

@@ -16,6 +16,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../../runtime/testing/test-store-registry.js';
 import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 
@@ -49,10 +50,12 @@ describe('products test', () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const slotComposer = new MockSlotComposer({strict: false});
     const id = IdGenerator.newSession().newArcId('demo');
+    const storeRegistry = new TestStoreRegistry();
     const arc = new Arc({
       id,
       storageKey: `volatile://${id.toString()}`,
       loader,
+      storeRegistry,
       slotComposer,
       context: await Manifest.load(manifestFilename, loader, {memoryProvider})
     });

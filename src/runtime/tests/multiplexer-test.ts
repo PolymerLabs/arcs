@@ -15,6 +15,7 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {checkDefined} from '../testing/preconditions.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
 
@@ -48,7 +49,7 @@ describe('Multiplexer', () => {
       return slotComposerCreateHostedSlot.apply(slotComposer, args);
     };
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader(), storeRegistry: new TestStoreRegistry()});
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
     const barHandle = await collectionHandleForTest(arc, barStore);
     recipe.handles[0].mapToStorage(barStore);
@@ -96,7 +97,7 @@ describe('Multiplexer', () => {
       return slotComposerCreateHostedSlot.apply(slotComposer, args);
     };
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader(), storeRegistry: new TestStoreRegistry()});
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
     const barHandle = await collectionHandleForTest(arc, barStore);
     recipe.handles[0].mapToStorage(barStore);

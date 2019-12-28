@@ -15,6 +15,7 @@ import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 import {Manifest} from '../manifest.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 
 describe('Particle Execution Context', () => {
   it('substitutes slot names for model references', async () => {
@@ -36,7 +37,8 @@ describe('Particle Execution Context', () => {
       });`
     });
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
-    const arc = new Arc({id: ArcId.newForTest('demo'), storageKey: 'volatile://', slotComposer, loader, context});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id: ArcId.newForTest('demo'), storageKey: 'volatile://', slotComposer, loader, storeRegistry, context});
     const [recipe] = arc.context.recipes;
     recipe.normalize();
     await arc.instantiate(recipe);

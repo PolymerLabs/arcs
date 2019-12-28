@@ -16,6 +16,7 @@ import {Runtime} from '../../../runtime/runtime.js';
 import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../../../runtime/testing/test-store-registry.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
@@ -172,13 +173,15 @@ describe('plan producer - search', () => {
 
   async function init(): Promise<TestSearchPlanProducer> {
     const loader = new Loader();
+    const storeRegistry = new TestStoreRegistry();
     const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`
       schema Bar
         value: Text
     `, {memoryProvider});
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test'),
-                         storageKey: 'volatile://test^^123'});
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader,
+        storeRegistry, context: manifest, id: ArcId.newForTest('test'),
+        storageKey: 'volatile://test^^123'});
     const searchStore = await Planificator['_initSearchStore'](arc);
 
     const producer = new TestSearchPlanProducer(arc, searchStore);

@@ -19,6 +19,7 @@ import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
 import {singletonHandleForTest} from '../../../runtime/testing/handle-for-test.js';
+import {TestStoreRegistry} from '../../../runtime/testing/test-store-registry.js';
 import {Flags} from '../../../runtime/flags.js';
 
 async function runStrategy(manifestStr) {
@@ -147,6 +148,7 @@ describe('FindHostedParticle', () => {
   });
   it(`produces recipes that can be instantiated with particle spec`, async () => {
     const loader = new Loader();
+    const storeRegistry = new TestStoreRegistry();
     const manifest = await Manifest.parse(`
       import 'src/runtime/tests/artifacts/test-particles.manifest'
 
@@ -158,7 +160,8 @@ describe('FindHostedParticle', () => {
           output: h0
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest,
+        loader, storeRegistry});
     const strategy = new FindHostedParticle(arc);
 
     const inRecipe = manifest.recipes[0];

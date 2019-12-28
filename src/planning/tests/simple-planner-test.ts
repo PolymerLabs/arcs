@@ -15,6 +15,7 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Match, SimplePlanner} from '../simple-planner.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../../runtime/testing/test-store-registry.js';
 import {Id, ArcId} from '../../runtime/id.js';
 import {RecipeResolver} from '../../runtime/recipe/recipe-resolver.js';
 
@@ -108,7 +109,11 @@ describe('trigger parsing', () => {
 });
 
 describe('simple planner', () => {
-  const createArc = (manifest) => new Arc({id: ArcId.newForTest('test'), slotComposer: new FakeSlotComposer(), loader: new Loader(), context: manifest});
+  const createArc = (manifest) => new Arc({id: ArcId.newForTest('test'),
+      slotComposer: new FakeSlotComposer(),
+      loader: new Loader(),
+      storeRegistry: new TestStoreRegistry(),
+      context: manifest});
 
   it('If no triggers are present, the table is empty', async () => {
     const manifest = await Manifest.parse(`

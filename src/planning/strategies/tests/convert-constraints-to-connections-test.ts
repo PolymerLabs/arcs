@@ -13,6 +13,7 @@ import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../../../runtime/testing/test-store-registry.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 import {InstanceEndPoint} from '../../../runtime/recipe/connection-constraint.js';
 import {ArcId} from '../../../runtime/id.js';
@@ -25,7 +26,8 @@ describe('ConvertConstraintsToConnections', () => {
       id: ArcId.newForTest('test-plan-arc'),
       slotComposer: new FakeSlotComposer(),
       context: manifest,
-      loader: new Loader()
+      loader: new Loader(),
+      storeRegistry: new TestStoreRegistry()
     });
   };
 
@@ -304,7 +306,8 @@ describe('ConvertConstraintsToConnections', () => {
       id: ArcId.newForTest('test-plan-arc'),
       slotComposer: new FakeSlotComposer({modalityName: Modality.Name.Vr}),
       context: manifest,
-      loader: new Loader()
+      loader: new Loader(),
+      storeRegistry: new TestStoreRegistry()
     }));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);

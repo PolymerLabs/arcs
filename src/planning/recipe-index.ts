@@ -23,6 +23,7 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {SlotUtils} from '../runtime/recipe/slot-utils.js';
 import {Slot} from '../runtime/recipe/slot.js';
 import {Descendant} from '../runtime/recipe/walker.js';
+import {Runtime} from '../runtime/runtime.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
 
@@ -109,7 +110,8 @@ export class RecipeIndex {
         modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
         noRoot: true
       }),
-      stub: true
+      stub: true,
+      storeRegistry: Runtime.getRuntime().getStoreRegistry()
     });
     const strategizer = new Strategizer(
       [

@@ -17,9 +17,15 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {EntityType, ReferenceType, CollectionType} from '../type.js';
 import {Id} from '../id.js';
 import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 import {Entity} from '../entity.js';
 
 describe('references', () => {
+  let storeRegistry;
+  beforeEach(() => {
+    storeRegistry = new TestStoreRegistry();
+  });
+
   it('can parse & validate a recipe containing references', async () => {
     const manifest = await Manifest.parse(`
         schema Result
@@ -89,7 +95,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, storeRegistry, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
@@ -148,7 +154,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, storeRegistry, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
@@ -212,7 +218,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, storeRegistry, context: manifest});
 
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -269,7 +275,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, storeRegistry, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
@@ -369,7 +375,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, storeRegistry, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
@@ -443,7 +449,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, storeRegistry, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
@@ -523,7 +529,7 @@ describe('references', () => {
     });
 
     const manifest = await Manifest.load('manifest', loader);
-    const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
+    const arc = new Arc({id: Id.fromString('test:0'), loader, storeRegistry, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());

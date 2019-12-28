@@ -15,6 +15,7 @@ import {Loader} from '../../../platform/loader.js';
 import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
+import {TestStoreRegistry} from '../../../runtime/testing/test-store-registry.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
@@ -93,6 +94,7 @@ describe('remote planificator', () => {
     const deserializedArc = await Arc.deserialize({serialization,
       slotComposer: new FakeSlotComposer(),
       loader: new Loader(),
+      storeRegistry: new TestStoreRegistry(),
       fileName: '',
       pecFactories: undefined,
       context: consumePlanificator.arc.context});

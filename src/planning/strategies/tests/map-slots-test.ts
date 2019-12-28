@@ -14,6 +14,7 @@ import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../../../runtime/testing/test-store-registry.js';
 import {MapSlots} from '../../strategies/map-slots.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 
@@ -159,6 +160,7 @@ ${recipeManifest}
     const arc = new Arc({
       id: ArcId.newForTest('test-plan-arc'),
       loader: new Loader(),
+      storeRegistry: new TestStoreRegistry(),
       context: new Manifest({id: ArcId.newForTest('test')}),
       slotComposer: new FakeSlotComposer({containers: {root: {}, action: {}}})
     });

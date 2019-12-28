@@ -18,6 +18,7 @@ import {HostedSlotContext, ProvidedSlotContext} from '../slot-context.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
+import {TestStoreRegistry} from '../testing/test-store-registry.js';
 import {CollectionHandle} from '../storageNG/handle.js';
 import {Entity} from '../entity.js';
 
@@ -41,7 +42,8 @@ describe('particle interface loading with slots', () => {
       `, {loader, fileName: ''});
     const recipe = manifest.recipes[0];
 
-    const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest, loader});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest, loader, storeRegistry});
 
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);

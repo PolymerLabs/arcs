@@ -40,7 +40,7 @@ import {DriverFactory, Exists} from './storageNG/drivers/driver-factory.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Store} from './storageNG/store.js';
 import {KeyBase} from './storage/key-base.js';
-import {UnifiedStore} from './storageNG/unified-store.js';
+import {StoreRegistry, UnifiedStore} from './storageNG/unified-store.js';
 import {StorageProxy} from './storageNG/storage-proxy.js';
 import {SingletonHandle} from './storageNG/handle.js';
 import {unifiedHandleFor} from './handle.js';
@@ -57,6 +57,7 @@ export type ArcOptions = Readonly<{
   loader: Loader;
   storageKey?: string | StorageKey;
   storageProviderFactory?: StorageProviderFactory;
+  storeRegistry: StoreRegistry;
   speculative?: boolean;
   innerArc?: boolean;
   stub?: boolean
@@ -71,6 +72,7 @@ type DeserializeArcOptions = Readonly<{
   loader: Loader;
   fileName: string;
   context: Manifest;
+  storeRegistry: StoreRegistry;
   inspectorFactory?: ArcInspectorFactory;
 }>;
 
@@ -92,6 +94,7 @@ export class Arc implements ArcInterface {
   private storageKeys: Dictionary<string | StorageKey> = {};
   public readonly storageKey?: string | StorageKey;
   storageProviderFactory: StorageProviderFactory;
+  private storeRegistry: StoreRegistry;
   // Map from each store to a set of tags. public for debug access
   public readonly storeTags = new Map<UnifiedStore, Set<string>>();
   // Map from each store to its description (originating in the manifest).
@@ -112,7 +115,7 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory} : ArcOptions) {
+constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory, storeRegistry} : ArcOptions) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactories should not be optional. update all callers and fix here.
@@ -142,7 +145,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
     this.pec = new ParticleExecutionHost(slotComposer, this, ports);
     this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
-
+    this.storeRegistry = storeRegistry;
     this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
     DriverFactory.register(this.volatileStorageDriverProvider);
   }
@@ -180,7 +183,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     DriverFactory.unregister(this.volatileStorageDriverProvider);
 
     for (const store of this._stores) {
-      Runtime.getRuntime().unregisterStore(store.id, [...this.findStoreTags(store)]);
+      this.storeRegistry.unregisterStore(store.id, [...this.findStoreTags(store)]);
     }
   }
 
@@ -234,7 +237,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
 
   createInnerArc(transformationParticle: Particle): Arc {
     const id = this.generateID('inner');
-    const innerArc = new Arc({id, pecFactories: this.pecFactories, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory});
+    const innerArc = new Arc({id, pecFactories: this.pecFactories, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory, storeRegistry: this.storeRegistry});
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
     if (!particleInnerArcs) {
@@ -268,12 +271,12 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     await store.set(arcInfoType.newInstance(this.id, serialization));
   }
 
-  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory}: DeserializeArcOptions): Promise<Arc> {
+  static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory, storeRegistry}: DeserializeArcOptions): Promise<Arc> {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const storageProviderFactory = Flags.useNewStorageStack ? null : manifest.storageProviderFactory;
     const id = Id.fromString(manifest.meta.name);
     const storageKey = manifest.meta.storageKey;
-    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, storageProviderFactory, context, inspectorFactory});
+    const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, storageProviderFactory, context, inspectorFactory, storeRegistry});
 
     await Promise.all(manifest.stores.map(async storeStub => {
       const tags = manifest.storeTags.get(storeStub);
@@ -364,7 +367,8 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
                          loader: this._loader,
                          speculative: true,
                          innerArc: this.isInnerArc,
-                         inspectorFactory: this.inspectorFactory});
+                         inspectorFactory: this.inspectorFactory,
+                         storeRegistry: this.storeRegistry});
     const storeMap: Map<UnifiedStore, UnifiedStore> = new Map();
     for (const store of this._stores) {
       const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');
@@ -627,7 +631,7 @@ constructor({id, context, pecFactories, slotComposer, loader, storageKey, storag
     const activeStore = await store.activate();
     activeStore.on(async () => this._onDataChange());
 
-    Runtime.getRuntime().registerStore(store, tags);
+    this.storeRegistry.registerStore(store, tags);
   }
 
   _tagStore(store: UnifiedStore, tags: Set<string>): void {

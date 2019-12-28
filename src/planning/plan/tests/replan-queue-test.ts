@@ -12,6 +12,7 @@ import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {TestStoreRegistry} from '../../../runtime/testing/test-store-registry.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {ReplanQueue} from '../../plan/replan-queue.js';
@@ -40,7 +41,9 @@ async function init(options?) {
     schema Bar
       value: Text
   `);
-  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test')});
+  const arc = new Arc({slotComposer: new FakeSlotComposer(), loader,
+      storeRegistry: new TestStoreRegistry(),
+      context: manifest, id: ArcId.newForTest('test')});
 
   const producer = new TestPlanProducer(arc);
   const queue = new ReplanQueue(producer, options);

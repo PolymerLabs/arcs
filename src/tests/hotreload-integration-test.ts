@@ -19,6 +19,7 @@ import {FakePecFactory} from '../runtime/fake-pec-factory.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {singletonHandleForTest} from '../runtime/testing/handle-for-test.js';
 import {RuntimeCacheService} from '../runtime/runtime-cache.js';
+import {TestStoreRegistry} from '../runtime/testing/test-store-registry.js';
 import {VolatileStorage} from '../runtime/storage/volatile-storage.js';
 
 class StubWasmLoader extends Loader {
@@ -67,7 +68,8 @@ describe('Hot Code Reload for JS Particle', async () => {
     const id = ArcId.newForTest('HotReload');
     const pecFactories = [FakePecFactory(loader).bind(null)];
     const slotComposer = new FakeSlotComposer();
-    const arc = new Arc({id, pecFactories, slotComposer, loader, context});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id, pecFactories, slotComposer, loader, context, storeRegistry});
 
     const [recipe] = arc.context.recipes;
     assert.isTrue(recipe.normalize() && recipe.isResolved());
@@ -131,7 +133,8 @@ describe('Hot Code Reload for JS Particle', async () => {
       });`
     });
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id: ArcId.newForTest('test'), context, loader, storeRegistry});
     const personType = context.findTypeByName('Person');
 
     const personStoreIn = await arc.createStore(personType);
@@ -198,7 +201,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const id = ArcId.newForTest('HotReload');
     const pecFactories = [FakePecFactory(loader).bind(null)];
     const slotComposer = new FakeSlotComposer();
-    const arc = new Arc({id, pecFactories, slotComposer, loader, context});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id, pecFactories, slotComposer, loader, storeRegistry, context});
 
     const [recipe] = arc.context.recipes;
     assert.isTrue(recipe.normalize() && recipe.isResolved());
@@ -233,7 +237,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
           personIn: reads personIn
           personOut: writes personOut`, {loader, fileName: './input.arcs'});
 
-    const arc = new Arc({id: ArcId.newForTest('test'), context, loader});
+    const storeRegistry = new TestStoreRegistry();
+    const arc = new Arc({id: ArcId.newForTest('test'), context, loader, storeRegistry});
     const personType = context.findTypeByName('Person');
 
     const personStoreIn = await arc.createStore(personType);
