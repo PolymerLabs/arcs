@@ -684,7 +684,7 @@ describe('firebase', function() {
       };
       const loader = new StubLoader(fileMap);
       const manifest = await Manifest.parse(fileMap.manifest);
-      const runtime = new Runtime(loader, FakeSlotComposer, manifest);
+      const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context: manifest});
       const arc = runtime.newArc('demo', 'volatile://');
       const storage = createStorage(arc.id);
       const dataType = new EntityType(manifest.schemas.Data);

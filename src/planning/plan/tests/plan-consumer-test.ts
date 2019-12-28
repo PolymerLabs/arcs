@@ -70,7 +70,8 @@ async function storeResults(consumer, suggestions) {
             other: consumes other
           description \`Test Recipe\`
       `, {loader, fileName: '', memoryProvider});
-      const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
+      const runtime = new Runtime({
+          loader, composerClass: FakeSlotComposer, context, memoryProvider});
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
       let suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -166,7 +167,8 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
           });
         }
       }
-      const runtime = new Runtime(loader, ModalitySlotComposer, context, null, memoryProvider);
+      const runtime = new Runtime({
+          loader, composerClass: ModalitySlotComposer, context, memoryProvider});
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
       assert.lengthOf(arc.context.allRecipes, 4);
       const consumer = await createPlanConsumer('volatile', arc);

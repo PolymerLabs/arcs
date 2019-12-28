@@ -42,7 +42,8 @@ describe('Arc integration', () => {
         ]
       store ThingStore of Thing 'mything' #best in ThingResource
     `, {memoryProvider});
-    const runtime = new Runtime(loader, FakeSlotComposer, manifest, null, memoryProvider);
+    const runtime = new Runtime({
+        loader, composerClass: FakeSlotComposer, context: manifest, memoryProvider});
     RamDiskStorageDriverProvider.register(memoryProvider);
 
     const arc = runtime.newArc('demo', 'volatile://');

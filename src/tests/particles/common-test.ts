@@ -75,7 +75,8 @@ describe('common particles test', () => {
     const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();
     const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader, {memoryProvider});
-    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
+    const runtime = new Runtime({
+        loader, composerClass: FakeSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', 'volatile://');
 
     const suggestions = await StrategyTestHelper.planForArc(arc);

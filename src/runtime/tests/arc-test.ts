@@ -55,7 +55,8 @@ async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) 
         foo: reads handle0
         bar: writes handle1
   `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
-  const runtime = new Runtime(loader, FakeSlotComposer, manifest, null, memoryProvider);
+  const runtime = new Runtime({
+      loader, composerClass: FakeSlotComposer, context: manifest, memoryProvider});
   const arc = runtime.newArc('test', storageKeyPrefix);
 
   return {
@@ -323,7 +324,8 @@ describe('Arc ' + storageKeyPrefix, () => {
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const runtime = new Runtime(loader, FakeSlotComposer, manifest, null, memoryProvider);
+    const runtime = new Runtime({
+        loader, composerClass: FakeSlotComposer, context: manifest, memoryProvider});
 
     // Successfully instantiates a recipe with 'copy' handle for store in a context.
     await runtime.newArc('test0', storageKeyPrefix).instantiate(manifest.recipes[0]);
