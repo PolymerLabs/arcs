@@ -15,16 +15,24 @@ import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 describe('planning result', () => {
+  let memoryProvider;
+  beforeEach(() => {
+    memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
   async function testResultSerialization(manifestFilename) {
     const loader = new StubLoader({});
-    const context = await Manifest.load(manifestFilename, loader);
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const context = await Manifest.load(manifestFilename, loader, {memoryProvider});
+    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -45,8 +53,8 @@ describe('planning result', () => {
 
   it('appends search suggestions', async () => {
     const loader = new StubLoader({});
-    const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader);
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
+    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -77,6 +85,12 @@ describe('planning result', () => {
 });
 
 describe('planning result merge', () => {
+  let memoryProvider;
+  beforeEach(() => {
+    memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
   const commonManifestStr = `
 schema Thing
   foo: Text
@@ -125,7 +139,7 @@ recipe R3
       return suggestion;
     };
     const manifestToResult = async (manifestStr) =>  {
-      const manifest = await Manifest.parse(manifestStr, {loader, fileName: ''});
+      const manifest = await Manifest.parse(manifestStr, {loader, fileName: '', memoryProvider});
       const result = new PlanningResult({context: arc.context, loader});
 
       const suggestions: Suggestion[] = await Promise.all(

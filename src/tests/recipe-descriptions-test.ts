@@ -17,11 +17,14 @@ import {Runtime} from '../runtime/runtime.js';
 import {Planner} from '../planning/planner.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
+import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
+import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
   // these tests are not going to be executed (i.e. another test file uses 'only').
   let loader;
+  let memoryProvider;
   before(() => {
     loader = new StubLoader({
       'test.js': `defineParticle(({Particle}) => {
@@ -30,6 +33,8 @@ describe('recipe descriptions test', () => {
         }
       });`
     });
+    memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
   });
 
   function createManifestString(options) {
@@ -88,8 +93,10 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    const context =  await Manifest.parse(options.manifestString || createManifestString(options), loader);
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const context =  await Manifest.parse(
+        options.manifestString || createManifestString(options),
+        {loader, memoryProvider, fileName: 'foo.js'});
+    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
     const arc = runtime.newArc('demo', 'volatile://');
     arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
 
@@ -249,7 +256,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           ShowFoo
             foo: writes fooHandle
           description \`cannot show duplicate \${ShowFoo.foo}\`
-      `, {loader, fileName: ''});
+      `, {loader, fileName: '', memoryProvider});
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', 'volatile://');
 
@@ -301,7 +308,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           foo: writes fooHandle
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
-    `, {loader, fileName: ''});
+    `, {loader, fileName: '', memoryProvider});
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', 'volatile://');
     // Plan for arc
@@ -333,7 +340,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
       recipe
         C
         description \`do C\`
-    `, {loader, fileName: ''});
+    `, {loader, fileName: '', memoryProvider});
     const runtime = new Runtime(loader, FakeSlotComposer, context);
     const arc = runtime.newArc('demo', 'volatile://');
 

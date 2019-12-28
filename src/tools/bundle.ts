@@ -14,6 +14,7 @@ import JSZip from 'jszip';
 
 import {Loader} from '../platform/loader.js';
 import {Manifest} from '../runtime/manifest.js';
+import {SimpleVolatileMemoryProvider} from '../runtime/storageNG/drivers/volatile.js';
 
 export type BundleEntry = {
   filePath: string,
@@ -71,7 +72,8 @@ export async function bundleListing(...entryPoints: string[]): Promise<BundleEnt
       : path.resolve(process.cwd(), ep).split(path.sep).join('/'));
 
   const loader = new Loader();
-  const entryManifests = await Promise.all(entryPoints.map(ep => Manifest.load(ep, loader)));
+  const memoryProvider = new SimpleVolatileMemoryProvider();
+  const entryManifests = await Promise.all(entryPoints.map(ep => Manifest.load(ep, loader, {memoryProvider})));
 
   const filePathsSet = new Set<string>();
   entryManifests.forEach(m => collectDependencies(m, filePathsSet));

@@ -14,14 +14,16 @@ import {Runtime} from '../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 
 describe('transformation slots', () => {
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
     const loader = new StubLoader({});
+    const memoryProvider = new TestVolatileMemoryProvider();
     const context = await Manifest.load(
-        './src/tests/particles/artifacts/provide-hosted-particle-slots.manifest', loader);
-    const runtime = new Runtime(loader, MockSlotComposer, context);
+        './src/tests/particles/artifacts/provide-hosted-particle-slots.manifest', loader, {memoryProvider});
+    const runtime = new Runtime(loader, MockSlotComposer, context, null, memoryProvider);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.pec.slotComposer as MockSlotComposer;
 

@@ -17,14 +17,16 @@ import {Runtime} from '../runtime/runtime.js';
 import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 import {checkDefined} from '../runtime/testing/preconditions.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
+import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
     const loader = new StubLoader({});
+    const memoryProvider = new TestVolatileMemoryProvider();
     const context = await Manifest.load(
-        './src/tests/particles/artifacts/polymorphic-muxing.recipes', loader);
+        './src/tests/particles/artifacts/polymorphic-muxing.recipes', loader, {memoryProvider});
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
     const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
@@ -59,7 +61,7 @@ describe('Multiplexer', () => {
     });
     postsStub['referenceMode'] = false;
     // version could be set here, but doesn't matter for tests.
-    const runtime = new Runtime(loader, MockSlotComposer, context);
+    const runtime = new Runtime(loader, MockSlotComposer, context, null, memoryProvider);
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.pec.slotComposer as MockSlotComposer;
     const suggestions = await StrategyTestHelper.planForArc(arc);

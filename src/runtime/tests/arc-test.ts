@@ -44,6 +44,8 @@ import '../storage/pouchdb/pouch-db-provider.js';
 
 async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) {
   const loader = new Loader();
+  const memoryProvider = new TestVolatileMemoryProvider();
+
   const manifest = await Manifest.parse(`
     import 'src/runtime/tests/artifacts/test-particles.manifest'
     recipe TestRecipe
@@ -52,8 +54,8 @@ async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) 
       TestParticle
         foo: reads handle0
         bar: writes handle1
-  `, {loader, fileName: process.cwd() + '/input.manifest'});
-  const runtime = new Runtime(loader, FakeSlotComposer, manifest);
+  `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
+  const runtime = new Runtime(loader, FakeSlotComposer, manifest, null, memoryProvider);
   const arc = runtime.newArc('test', storageKeyPrefix);
 
   return {
@@ -75,7 +77,8 @@ describe('Arc new storage', () => {
     // between parsing a manifest for public consumption (e.g. with RamDisk resources in it) and parsing a serialized
     // arc (with an @activeRecipe). We'll fix this by adding a 'private' keyword to store serializations which will
     // be used when serializing arcs. Once that is working then the following registration should be removed.
-    RamDiskStorageDriverProvider.register(new TestVolatileMemoryProvider());
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new StubLoader({
       manifest: `
         schema Data
@@ -100,7 +103,7 @@ describe('Arc new storage', () => {
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('manifest', loader, {memoryProvider});
     const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = ArcId.fromString('test');
     const storageKey = new VolatileStorageKey(id, 'unique');
@@ -284,6 +287,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       // TODO(lindner): fix pouch/firebase timing
       this.skip();
     }
+    const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`
       schema Thing
       particle A in 'a.js'
@@ -309,7 +313,7 @@ describe('Arc ' + storageKeyPrefix, () => {
         [
         ]
       store ThingStore of Thing 'storeInContext' in MyThing
-    `);
+    `, {memoryProvider});
     assert.isTrue(manifest.recipes.every(r => r.normalize()));
     assert.isTrue(manifest.recipes[0].isResolved());
     assert.isTrue(manifest.recipes[1].isResolved());
@@ -319,7 +323,7 @@ describe('Arc ' + storageKeyPrefix, () => {
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const runtime = new Runtime(loader, FakeSlotComposer, manifest);
+    const runtime = new Runtime(loader, FakeSlotComposer, manifest, null, memoryProvider);
 
     // Successfully instantiates a recipe with 'copy' handle for store in a context.
     await runtime.newArc('test0', storageKeyPrefix).instantiate(manifest.recipes[0]);

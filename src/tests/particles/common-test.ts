@@ -14,11 +14,13 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {VolatileCollection} from '../../runtime/storage/volatile-storage.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {
+    const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`
   schema Thing
     name: Text
@@ -58,7 +60,7 @@ describe('common particles test', () => {
       {"name": "ball"}
     ]
   store Store1 of [Thing] 'smallthings' in SmallThings
-    `);
+    `, {memoryProvider});
 
     const recipe = manifest.recipes[0];
     const newRecipe = recipe.clone();
@@ -71,8 +73,9 @@ describe('common particles test', () => {
 
   it('copy handle test', async () => {
     const loader = new StubLoader({});
-    const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader);
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const memoryProvider = new TestVolatileMemoryProvider();
+    const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader, {memoryProvider});
+    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
     const arc = runtime.newArc('demo', 'volatile://');
 
     const suggestions = await StrategyTestHelper.planForArc(arc);

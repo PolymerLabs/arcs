@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Particle} from '../../runtime/particle.js';
@@ -24,15 +23,18 @@ import {Id, ArcId} from '../../runtime/id.js';
 
 import {Flags} from '../../runtime/flags.js';
 import {StorageKey} from '../../runtime/storageNG/storage-key.js';
-import {RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {EntityType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
+  const memoryProvider = new TestVolatileMemoryProvider();
+  RamDiskStorageDriverProvider.register(memoryProvider);
   if (typeof manifest === 'string') {
     const fileName = './test.manifest';
-    manifest = await Manifest.parse(manifest, {loader, fileName});
+    manifest = await Manifest.parse(manifest, {loader, fileName, memoryProvider});
   }
 
   arcFactory = arcFactory || ((manifest) => StrategyTestHelper.createTestArc(manifest));
@@ -92,8 +94,9 @@ class MyLoader extends StubLoader {
 
 const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) => {
   const registry = {};
+  const memoryProvider = new TestVolatileMemoryProvider();
   const loader = new MyLoader(manifest);
-  const loadedManifest = await Manifest.load('manifest', loader, {registry});
+  const loadedManifest = await Manifest.load('manifest', loader, {registry, memoryProvider});
   manifestLoadedCallback(loadedManifest);
 
   const arc = new Arc({id: ArcId.newForTest('test-plan-arc'), context: loadedManifest, loader});
@@ -571,9 +574,15 @@ ${recipeManifest}
 });
 
 describe('Type variable resolution', () => {
+  let memoryProvider;
+  beforeEach(() => {
+    memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
   const loadAndPlan = async (manifestStr) => {
     const loader = new NullLoader();
-    const manifest = (await Manifest.parse(manifestStr, {loader}));
+    const manifest = (await Manifest.parse(manifestStr, {loader, memoryProvider}));
     const arc = StrategyTestHelper.createTestArc(manifest);
     const planner = new Planner();
     const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};

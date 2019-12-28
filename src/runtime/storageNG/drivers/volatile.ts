@@ -84,6 +84,14 @@ export interface VolatileMemoryProvider {
   getVolatileMemory(): VolatileMemory;
 }
 
+export class SimpleVolatileMemoryProvider implements VolatileMemoryProvider {
+  private readonly memory: VolatileMemory = new VolatileMemory();
+
+  getVolatileMemory(): VolatileMemory {
+    return this.memory;
+  }
+}
+
 let id = 0;
 
 export class VolatileDriver<Data> extends Driver<Data> {
