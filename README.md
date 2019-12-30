@@ -104,6 +104,7 @@ $ git config core.hooksPath tools/hooks
   described [here](https://stackoverflow.com/questions/24557224/git-bash-path-cannot-parse-windows-directory-with-space) and [here](https://github.com/coreybutler/nvm-windows/issues/41).
 
 ### Mac Installation Notes
+
 - When installing, if you run into SSL Cert verification errors, consider certifying Python 3.6 on Mac:
 `/Applications/Python\ 3.6/Install\ Certificates.command` ([source](https://stackoverflow.com/a/42334357))
 
@@ -119,6 +120,7 @@ Then open `http://localhost:8786/shells/web-shell/` in a web browser
 (or, on MacOS, use `open 'http://localhost:8786/shells/web-shell/`).
 
 ## Subprojects
+
 Subcomponents have more detailed descriptions. Particularly the extensions
 also have individual installation steps.
 
@@ -131,6 +133,7 @@ See [extension](extension/README.md).
 See [devtools](devtools/README.md).
 
 ## IDE Setup
+
 Arcs can be developed in the IDE of your choice. Here are some helpful hints to get started in some more common IDEs.
 
 ### Android Studio
@@ -157,6 +160,7 @@ Arcs can be developed in the IDE of your choice. Here are some helpful hints to 
 
 ### Troubleshooting
 #### `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory`
+
 - Go to your IDE Preferences -> Bazel Settings
 - Find the Bazel binary location, and click the three dots next to it.
 - Navigate to the correct location, and select the Bazel binary.
@@ -165,9 +169,11 @@ Arcs can be developed in the IDE of your choice. Here are some helpful hints to 
 - Re-import the project by hitting the Bazel logo in the upper right hand corner.
 
 #### Android SDK not installed
-follow the prompts and then restart your IDE.
+
+Follow the prompts and then restart your IDE.
 
 #### `arcs/.aswb` or `arcs/.ijwb` already exists
+
 - You may have already imported the project into your preferred IDE. Please try reopening it.
 - Optional: Delete the hidden folder and repeat the appropriate steps above.
 
