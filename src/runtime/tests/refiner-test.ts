@@ -164,7 +164,7 @@ describe('Range', () => {
         // range1 = [0, 10) U [20,30];
         assert.isTrue(range1.isSubsetOf(range2));
     });
-    it.only('tests the difference of ranges', () => {
+    it('tests the difference of ranges', () => {
         const range1 = Range.infiniteRange();
         // range1 = (-inf, +inf)
         const range2 = new Range();
