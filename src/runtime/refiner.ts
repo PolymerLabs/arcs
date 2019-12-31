@@ -79,7 +79,7 @@ export class Refiner {
             }
             return Refiner.applyOperator(expr.operator, [curr]);
         }
-        // TODO(ragdev): Update when true, false and string literals are supported
+        // TODO(ragdev): Update when string literals are supported
         // in the refinement expression.
         if (expr.kind === 'number-node' || expr.kind === 'boolean-node') {
             return expr.value;
@@ -163,11 +163,15 @@ class RefinementOperator implements GenericOperator {
     }
 }
 
-
 export class Range {
     segments: Segment[];
     constructor() {
         this.segments = [];
+    }
+    static infiniteRange(): Range {
+        const infRange = new Range();
+        infRange.segments = [Segment.openOpen(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)];
+        return infRange;
     }
     static copyOf(range: Range): Range {
         const copy = new Range();
@@ -176,10 +180,44 @@ export class Range {
         }
         return copy;
     }
-    static infiniteRange(): Range {
-        const infRange = new Range();
-        infRange.segments = [Segment.openOpen(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)];
-        return infRange;
+    static unionOf(range1: Range, range2: Range): Range {
+        const newRange = Range.copyOf(range1);
+        newRange.union(range2);
+        return newRange;
+    }
+    static intersectionOf(range1: Range, range2: Range): Range {
+        const newRange = Range.copyOf(range1);
+        newRange.intersect(range2);
+        return newRange;
+    }
+    // difference(A,B) = A\B = A - B
+    static difference(range1: Range, range2: Range): Range {
+        const newRange = new Range();
+        for (const seg of range1.segments) {
+            const ntrsct = Range.copyOf(range2);
+            ntrsct.intersectWithSeg(seg);
+            let from: Boundary = {...seg.from};
+            for (const iseg of ntrsct.segments) {
+                const to: Boundary = {...iseg.from};
+                to.kind = to.kind === 'open' ? 'closed' : 'open';
+                try {
+                    newRange.segments.push(new Segment(from, to));
+                } catch (e) {}
+                from = iseg.to;
+                from.kind = from.kind === 'open' ? 'closed' : 'open';
+            }
+            const to: Boundary = {...seg.to};
+            try {
+                newRange.segments.push(new Segment(from, to));
+            } catch (e) {}
+        }
+        return newRange;
+    }
+    equals(range: Range): Boolean {
+        return JSON.stringify(this) === JSON.stringify(range);
+    }
+    isSubsetOf(range: Range): Boolean {
+        return this.equals(Range.intersectionOf(this, range));
     }
     union(range: Range): void {
         for (const seg of range.segments) {
@@ -196,17 +234,17 @@ export class Range {
         this.segments = newRange.segments;
     }
     unionWithSeg(seg: Segment): void {
-        let i = 0; let j: number = this.segments.length;
-        let x: Boundary = seg.from; let y: Boundary = seg.to;
+        let i = 0; let j = this.segments.length;
+        let x: Boundary = {...seg.from}; let y: Boundary = {...seg.to};
         for (const subRange of this.segments) {
             if (seg.isGreaterThan(subRange, false)) {
                 i += 1;
             } else {
                 if (seg.mergableWith(subRange)) {
                     const m = Segment.merge(seg, subRange);
-                    x = m.from;
+                    x = {...m.from};
                 } else {
-                    x = subRange.from.val < x.val ? subRange.from : x;
+                    x = subRange.from.val < x.val ? {...subRange.from} : x;
                 }
                 break;
             }
@@ -217,9 +255,9 @@ export class Range {
             } else {
                 if (seg.mergableWith(subRange)) {
                     const m = Segment.merge(seg, subRange);
-                    y = m.to;
+                    y = {...m.to};
                 } else {
-                    y = subRange.to.val > y.val ? subRange.to : y;
+                    y = subRange.to.val > y.val ? {...subRange.to} : y;
                 }
                 break;
             }
@@ -243,9 +281,11 @@ export class Segment {
     constructor(from: Boundary, to: Boundary) {
         if (to.val < from.val) {
             throw new Error(`Invalid range from: ${from}, to:${to}`);
+        } else if (from.val === to.val && (from.kind === 'open' || to.kind === 'open')) {
+            throw new Error(`Invalid range from: ${from}, to:${to}`);
         }
-        this.from = from;
-        this.to = to;
+        this.from = {...from};
+        this.to = {...to};
     }
     static closedClosed(from: number, to: number): Segment {
         const seg = new Segment({val: from, kind: 'closed'}, {val: to, kind: 'closed'});
@@ -295,13 +335,13 @@ export class Segment {
         }
         let left: Boundary; let right: Boundary;
         if (a.from.val === b.from.val) {
-            left = a.from;
+            left = {...a.from};
             left.kind = a.from.kind === b.from.kind ? a.from.kind : 'closed';
         } else {
             left = a.from.val < b.from.val ? a.from : b.from;
         }
         if (a.to.val === b.to.val) {
-            right = a.to;
+            right = {...a.to};
             right.kind = a.to.kind === b.to.kind ? a.to.kind : 'closed';
         } else {
             right = a.to.val > b.to.val ? a.to : b.to;
@@ -314,13 +354,13 @@ export class Segment {
         }
         let left: Boundary; let right: Boundary;
         if (a.from.val === b.from.val) {
-            left = a.from;
+            left = {...a.from};
             left.kind = a.from.kind === b.from.kind ? a.from.kind : 'open';
         } else {
             left = a.from.val > b.from.val ? a.from : b.from;
         }
         if (a.to.val === b.to.val) {
-            right = a.to;
+            right = {...a.to};
             right.kind = a.to.kind === b.to.kind ? a.to.kind : 'open';
         } else {
             right = a.to.val < b.to.val ? a.to : b.to;
