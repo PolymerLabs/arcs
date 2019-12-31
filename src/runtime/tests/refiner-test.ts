@@ -173,12 +173,12 @@ describe('Range', () => {
         let diff = Range.difference(range1, range2);
         // diff = (-inf, 0) U (10,20) U (30, inf)
         assert.deepEqual(diff.segments, [Segment.openOpen(Number.NEGATIVE_INFINITY, 0), Segment.openOpen(10, 20), Segment.openOpen(30, Number.POSITIVE_INFINITY)]);
-        range1.segments = [Segment.closedOpen(0, 20), Segment.openClosed(40, 50)]
+        range1.segments = [Segment.closedOpen(0, 20), Segment.openClosed(40, 50)];
         // range1 = [0,20) U (40, 50]
-        range2.segments = [Segment.openOpen(0, 5), Segment.closedOpen(7,12), Segment.closedClosed(15, 43), Segment.openClosed(45, 50)];
+        range2.segments = [Segment.openOpen(0, 5), Segment.closedOpen(7, 12), Segment.closedClosed(15, 43), Segment.openClosed(45, 50)];
         // range2 = (0,5) U [7,12) U [15, 43] U (45, 50]
         diff = Range.difference(range1, range2);
         // diff = [0, 0] U [5,7) U [12,15) U (43, 45]
-        assert.deepEqual(diff.segments, [Segment.closedClosed(0,0), Segment.closedOpen(5,7), Segment.closedOpen(12,15), Segment.openClosed(43, 45)]);
+        assert.deepEqual(diff.segments, [Segment.closedClosed(0, 0), Segment.closedOpen(5, 7), Segment.closedOpen(12, 15), Segment.openClosed(43, 45)]);
     });
 });

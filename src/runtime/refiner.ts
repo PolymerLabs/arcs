@@ -202,21 +202,21 @@ export class Range {
                 to.kind = to.kind === 'open' ? 'closed' : 'open';
                 try {
                     newRange.segments.push(new Segment(from, to));
-                } catch (e) {}
+                } catch (e) {const _ = e;}
                 from = iseg.to;
                 from.kind = from.kind === 'open' ? 'closed' : 'open';
             }
             const to: Boundary = {...seg.to};
             try {
                 newRange.segments.push(new Segment(from, to));
-            } catch (e) {}
+            } catch (e) {const _ = e;}
         }
         return newRange;
     }
-    equals(range: Range): Boolean {
+    equals(range: Range): boolean {
         return JSON.stringify(this) === JSON.stringify(range);
     }
-    isSubsetOf(range: Range): Boolean {
+    isSubsetOf(range: Range): boolean {
         return this.equals(Range.intersectionOf(this, range));
     }
     union(range: Range): void {
