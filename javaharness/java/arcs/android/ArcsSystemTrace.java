@@ -15,9 +15,6 @@ import android.webkit.JavascriptInterface;
  * {@see <a href="https://developer.android.com/reference/android/util/StatsLog">Android StatsLog</a>}
  */
 final class ArcsSystemTrace {
-  public ArcsSystemTrace() {
-  }
-
   @JavascriptInterface
   public void asyncTraceBegin(String tag, int cookie) {
     Trace.beginAsyncSection(tag, cookie);
