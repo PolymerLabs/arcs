@@ -134,48 +134,7 @@ See [devtools](devtools/README.md).
 
 ## IDE Setup
 
-Arcs can be developed in the IDE of your choice. Here are some helpful hints to get started in some more common IDEs.
-
-### Android Studio
-
-- Install Android Studio. When prompted, install the needed SDK Android 10 (SDK version 29).
-- Open Android Studio and install the Bazel extension. This should prompt you to restart the IDE, if not restart anyway.
-- Upon restarting Android, click "Import Bazel Project"
-- Select the workspace by navigating to the arcs folder, then click "Next".
-- Choose "Import project view file" and click on the three dots.
-- Navigate to the arcs folder, and select the `as.bazelproject` file. Click "OK".
-- Click "Next".
-- Click "Finish".
-
-### IntelliJ
-
-- Install IntelliJ. Community Edition is sufficient. For web technologies support, install Professional Edition.
-- Open IntelliJ and install the Bazel extension.
-- Upon restarting IntelliJ, click "Import Bazel Project"
-- Select the workspace by navigating to the arcs folder, then click "Next".
-- Choose "Import project view file" and click on the three dots.
-- Navigate to the arcs folder, and select the `ij.bazelproject` file. Click "OK".
-- Click "Next".
-- Click "Finish".
-
-### Troubleshooting
-#### `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory`
-
-- Go to your IDE Preferences -> Bazel Settings
-- Find the Bazel binary location, and click the three dots next to it.
-- Navigate to the correct location, and select the Bazel binary.
-  - If you don't know where the Bazel binary is located, open a terminal and run `which bazel`.
-- Click "Apply" then "OK"
-- Re-import the project by hitting the Bazel logo in the upper right hand corner.
-
-#### Android SDK not installed
-
-Follow the prompts and then restart your IDE.
-
-#### `arcs/.aswb` or `arcs/.ijwb` already exists
-
-- You may have already imported the project into your preferred IDE. Please try reopening it.
-- Optional: Delete the hidden folder and repeat the appropriate steps above.
+See [IDE Setup](docs/IDE-Setup.md).
 
 ## Testing
 
