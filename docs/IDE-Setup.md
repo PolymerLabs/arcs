@@ -28,6 +28,8 @@ Set up the IDE with Bazel support
 - Navigate to the arcs folder, and select the `ij.bazelproject` file. Click "OK".
 - Click "Next".
 - Click "Finish".
+- Install or Update the Kotlin Plugin, at minimum version 1.3+.
+  - If installed, update the plugin to the latest version via Tools > Kotlin > Configure Kotlin Plugin Updates. 
 
 Add Android support
 - If you have Android Studio already installed, you may skip the next few steps, as this will be automated.
@@ -47,6 +49,7 @@ Add Android support
 
 
 ## Troubleshooting
+
 #### `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory`
 
 - Go to your IDE Preferences -> Bazel Settings
@@ -58,7 +61,8 @@ Add Android support
 
 #### Android SDK not installed
 
-Follow the prompts and then restart your IDE.
+Android Studio: Follow the prompts and then restart your IDE.
+IntelliJ: Follow the above instructions.
 
 #### `arcs/.aswb` or `arcs/.ijwb` already exists
 
@@ -72,8 +76,22 @@ Follow the prompts and then restart your IDE.
 
 #### `Typescript is not supported by this IDE`
 
-If web technology support is not needed, choose `.bazelproject` instead of `ij.bazelproject`. If web technologies are needed, consider upgrading to the Professional edition of Intellij.
+If web technology support is not needed, choose `.bazelproject` instead of `ij.bazelproject`. If web technologies are needed, consider upgrading to the professional edition of IntelliJ.
 
-#### My OS (read: MacOS) doesn't let me point to the Android SDK / it only displayes user created directories
+#### My OS (read: MacOS) doesn't let me point to the Android SDK / It only displays user created directories
+
 Consider using the [IDE file chooser](https://intellij-support.jetbrains.com/hc/en-us/community/posts/115000128290-Use-IDE-File-Chooser-Rather-Than-Native-One) instead of the native one. 
 
+#### IDE not responding after Bazel Sync
+
+- Try increasing the [memory heap allocation](https://www.jetbrains.com/help/idea/increasing-memory-heap.html). 
+- Open the `.bazelproject` file. Comment out the targets or directories that are not relevant to your current task, then re-sync. 
+
+#### IDE shows `Unresolved Reference` for generated entities
+
+- Try Invalidating Caches: File > Invalidate Caches > Invalidate and Restart
+- Try [this workaround](https://github.com/bazelbuild/intellij/issues/490#issuecomment-454030118) (1 should be sufficient).
+
+## References
+
+[Bazel integration with IntelliJ documentation](https://ij.bazel.build/)
