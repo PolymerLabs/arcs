@@ -4,7 +4,8 @@ import android.os.Trace;
 import android.webkit.JavascriptInterface;
 
 /**
- * Bridging the android.os.Trace APIs to the Arcs runtime/shell.
+ * Bridging the Arcs runtime/shell to the android.os.Trace APIs.
+ * {@see <a href="https://developer.android.com/reference/android/os/Trace">android.os.Trace</a>}
  *
  * TODO(ianchang):
  * Event tag-cookie pairs can be extended to implement more valuable
@@ -13,8 +14,8 @@ import android.webkit.JavascriptInterface;
  * e.g., westworld, perfgate and so on.
  */
 final class ArcsSystemTrace {
-
-  public ArcsSystemTrace() {}
+  public ArcsSystemTrace() {
+  }
 
   @JavascriptInterface
   public void asyncTraceBegin(String tag, int cookie) {
