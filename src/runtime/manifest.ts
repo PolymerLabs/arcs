@@ -1362,6 +1362,27 @@ ${e.message}
     return recipe;
   }
 
+  // TODO: This is a temporary method to allow sharing stores with other Arcs.
+  registerStore(store: UnifiedStore, tags: string[]): void {
+    if (!this.findStoreById(store.id) && tags.includes('shared')) {
+      this._addStore(store, tags);
+    }
+  }
+
+  // Temporary method to allow sharing stores with other Arcs.
+  unregisterStore(storeId: string, tags: string[]) {
+    // #shared tag indicates that a store was made available to all arcs.
+    if (!tags.includes('shared')) {
+      return;
+    }
+    const index = this.stores.findIndex(store => store.id === storeId);
+    if (index >= 0) {
+      const store = this.stores[index];
+      this.storeTags.delete(store);
+      this.stores.splice(index, 1);
+    }
+  }
+
   toString(options: {recursive?: boolean, showUnresolved?: boolean, hideFields?: boolean} = {}): string {
     // TODO: sort?
     const results: string[] = [];
