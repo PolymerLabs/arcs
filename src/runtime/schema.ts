@@ -169,10 +169,8 @@ export class Schema {
     const collections = {};
     // TODO(shans) do this properly
     for (const [field, {type}] of Object.entries(this.fields)) {
-      if (type === 'Text') {
+      if (['Text', 'URL', 'Boolean', 'Number'].includes(type)) {
         singletons[field] = new CRDTSingleton<{id: string}>();
-      } else if (type === 'Number') {
-        singletons[field] = new CRDTSingleton<{id: string, value: number}>();
       } else {
         throw new Error(`Big Scary Exception: entity field ${field} of type ${type} doesn't yet have a CRDT mapping implemented`);
       }
