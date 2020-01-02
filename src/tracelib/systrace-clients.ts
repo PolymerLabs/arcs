@@ -58,10 +58,11 @@ class DevToolsTimelineClient extends Client {
 /**
  * Client: Android Arcs Tracing
  *
- * This client implement more coarse performance/latency measurement
+ * This client implement more vague performance/latency measurement
  * at dedicated workers due to the overhead of passing messages from workers
- * to the main renderer and also at the main renderer due to the singleton
- * JavaBridge thread waiting for messages at the browser process.
+ * to the main renderer and also at the main renderer as there is only single
+ * JavaBridge thread handling all trace messages in a fifo queue at the browser
+ * process.
  */
 class AndroidClient extends Client {
   asyncTraceBegin(tag: string, cookie: number) {
