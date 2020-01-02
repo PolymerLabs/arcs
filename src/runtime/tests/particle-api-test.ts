@@ -28,6 +28,7 @@ import {Flags} from '../flags.js';
 import {StorageProxy} from '../storageNG/storage-proxy.js';
 import {unifiedHandleFor} from '../handle.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 
 class ResultInspector {
   private readonly _arc: Arc;
@@ -98,7 +99,8 @@ class ResultInspector {
 
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
-  const runtime = new Runtime(new StubLoader(fileMap), FakeSlotComposer, manifest);
+  const runtime = new Runtime({
+      loader: new StubLoader(fileMap), composerClass: FakeSlotComposer, context: manifest});
   return runtime.newArc('demo', Flags.useNewStorageStack ? null : 'volatile://');
 }
 
@@ -391,7 +393,7 @@ describe('particle-api', () => {
   // TODO(cypher1): Disabling this for now. The resolution seems to depend on order.
   // It is likely that this usage was depending on behavior that may not be intended.
   it.skip('can load a recipe referencing a manifest store', async () => {
-    RamDiskStorageDriverProvider.register();
+    RamDiskStorageDriverProvider.register(new TestVolatileMemoryProvider());
     const nobType = Flags.useNewStorageStack ? '![NobIdStore {nobId: Text}]' : 'NobIdStore {nobId: Text}';
     const nobData = Flags.useNewStorageStack ? '{"root": {"values": {"nid": {"value": {"id": "nid", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}}, "version": {"u": 1}}, "locations": {}}' : '[{"nobId": "12345"}]';
 
@@ -945,7 +947,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -997,7 +1000,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1049,7 +1053,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1100,8 +1105,9 @@ describe('particle-api', () => {
       `
     });
 
-     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1162,8 +1168,9 @@ describe('particle-api', () => {
       `
     });
 
-     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());

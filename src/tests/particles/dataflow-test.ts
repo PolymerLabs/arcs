@@ -12,6 +12,8 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {analyseDataflow} from '../../dataflow/analysis/analysis.js';
 import {assert} from '../../platform/chai-web.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 
 // Checks that all of the Dataflow example recipes successfully pass dataflow
 // analysis.
@@ -21,7 +23,9 @@ describe('Dataflow example recipes', () => {
 
   for (const filename of filenames) {
     it(`passes dataflow analysis: ${filename}`, async () => {
-      const manifest = await Manifest.load(filename, loader);
+      const memoryProvider = new TestVolatileMemoryProvider();
+      RamDiskStorageDriverProvider.register(memoryProvider);
+      const manifest = await Manifest.load(filename, loader, {memoryProvider});
       for (const recipe of manifest.recipes) {
         recipe.normalize();
         const [_graph, result] = analyseDataflow(recipe, manifest);

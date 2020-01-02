@@ -11,7 +11,7 @@
 import {Schema} from './schema.js';
 import {Type} from './type.js';
 
-function fromLiteral(data = {fields: {}, names: [], description: {}}) {
+function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: {}}) {
   const fields = {};
   const updateField = field => {
     if (field.kind === 'schema-reference') {
@@ -26,9 +26,9 @@ function fromLiteral(data = {fields: {}, names: [], description: {}}) {
   for (const key of Object.keys(data.fields)) {
     fields[key] = updateField(data.fields[key]);
   }
-
   const result = new Schema(data.names, fields);
   result.description = data.description || {};
+  result.refinement = data.refinement;
   return result;
 }
 

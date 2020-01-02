@@ -11,41 +11,49 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
+import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
 import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
-async function tryCoalesceRecipes(manifestStr: string) {
-  const manifest = await Manifest.parse(manifestStr);
-  const recipes = manifest.recipes;
-  assert.isTrue(recipes.every(recipe => recipe.normalize()));
-  assert.isFalse(recipes.every(recipe => recipe.isResolved()));
-  const arc = StrategyTestHelper.createTestArc(manifest);
-  const strategy = new CoalesceRecipes(arc, StrategyTestHelper.createTestStrategyArgs(arc));
-  const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
-  return await strategy.generate(inputParams);
-}
-
-async function doNotCoalesceRecipes(manifestStr: string) {
-  const results = await tryCoalesceRecipes(manifestStr);
-  assert.isEmpty(results);
-}
-
-async function doCoalesceRecipes(manifestStr: string, options?) {
-  options = options || {};
-  const results = await tryCoalesceRecipes(manifestStr);
-  // dedup identical coalescing outputs
-  const resultsMap = new Map();
-  results.forEach(r => {
-    if (!options.skipUnresolved || r.result.isResolved()) {
-      resultsMap.set(r.result.toString(), r.result);
-    }
-  });
-  assert.strictEqual(1, resultsMap.size);
-  return [...resultsMap.values()][0];
-}
-
 describe('CoalesceRecipes', () => {
+  let memoryProvider;
+  beforeEach(() => {
+      memoryProvider = new TestVolatileMemoryProvider();
+      RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
+  async function tryCoalesceRecipes(manifestStr: string) {
+    const manifest = await Manifest.parse(manifestStr, {memoryProvider});
+    const recipes = manifest.recipes;
+    assert.isTrue(recipes.every(recipe => recipe.normalize()));
+    assert.isFalse(recipes.every(recipe => recipe.isResolved()));
+    const arc = StrategyTestHelper.createTestArc(manifest);
+    const strategy = new CoalesceRecipes(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
+    return await strategy.generate(inputParams);
+  }
+
+  async function doNotCoalesceRecipes(manifestStr: string) {
+    const results = await tryCoalesceRecipes(manifestStr);
+    assert.isEmpty(results);
+  }
+
+  async function doCoalesceRecipes(manifestStr: string, options?) {
+    options = options || {};
+    const results = await tryCoalesceRecipes(manifestStr);
+    // dedup identical coalescing outputs
+    const resultsMap = new Map();
+    results.forEach(r => {
+      if (!options.skipUnresolved || r.result.isResolved()) {
+        resultsMap.set(r.result.toString(), r.result);
+      }
+    });
+    assert.strictEqual(1, resultsMap.size);
+    return [...resultsMap.values()][0];
+  }
+
   it('coalesces required slots', async () => {
     const recipe = await doCoalesceRecipes(`
       particle P1

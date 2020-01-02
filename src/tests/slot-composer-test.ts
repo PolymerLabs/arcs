@@ -121,7 +121,7 @@ recipe
     const loader = new StubLoader({});
     const context = await Manifest.load(
         './src/tests/particles/artifacts/products-test.recipes', loader);
-    const runtime = new Runtime(loader, MockSlotComposer, context);
+    const runtime = new Runtime({loader, composerClass: MockSlotComposer, context});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.pec.slotComposer as MockSlotComposer;
 
@@ -297,7 +297,7 @@ recipe
         slot0: slot 'rootslotid-root'
         TransformationParticle
           root: consumes slot0`, {loader, fileName: ''});
-    const runtime = new Runtime(loader, MockSlotComposer, context);
+    const runtime = new Runtime({loader, composerClass: MockSlotComposer, context});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.pec.slotComposer as MockSlotComposer;
     slotComposer.newExpectations()

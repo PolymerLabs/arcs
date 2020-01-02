@@ -12,11 +12,19 @@ import {Manifest} from '../../runtime/manifest.js';
 import glob from 'glob';
 import {Loader} from '../../platform/loader.js';
 import {assert} from '../../platform/chai-web.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 
 /** Tests that all .schema, .recipe(s) and .manifest files in the particles folder compile successfully. */
 describe('Particle definitions', () => {
   const loader = new Loader();
   const filenames = glob.sync('particles/**/*.arcs');
+
+  let memoryProvider;
+  beforeEach(() => {
+    memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+  });
 
   filenames
     .forEach(filename => {
@@ -25,7 +33,7 @@ describe('Particle definitions', () => {
         return;
       }
       it(`parses successfully: ${filename}`, async () => {
-        const manifest = await Manifest.load(filename, loader);
+        const manifest = await Manifest.load(filename, loader, {memoryProvider});
         for (const particle of manifest.particles) {
           if (particle.implFile == null) {
             // It's ok for some particles to not have implementation files (e.g.

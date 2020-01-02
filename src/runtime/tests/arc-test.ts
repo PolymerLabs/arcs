@@ -37,12 +37,15 @@ import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
 import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
+import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 // database providers are optional, these tests use these provider(s)
 import '../storage/firebase/firebase-provider.js';
 import '../storage/pouchdb/pouch-db-provider.js';
 
 async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) {
   const loader = new Loader();
+  const memoryProvider = new TestVolatileMemoryProvider();
+
   const manifest = await Manifest.parse(`
     import 'src/runtime/tests/artifacts/test-particles.manifest'
     recipe TestRecipe
@@ -51,12 +54,14 @@ async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) 
       TestParticle
         foo: reads handle0
         bar: writes handle1
-  `, {loader, fileName: process.cwd() + '/input.manifest'});
-  const runtime = new Runtime(loader, FakeSlotComposer, manifest);
+  `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
+  const runtime = new Runtime({
+      loader, composerClass: FakeSlotComposer, context: manifest, memoryProvider});
   const arc = runtime.newArc('test', storageKeyPrefix);
 
   return {
     arc,
+    context: manifest,
     recipe: manifest.recipes[0],
     Foo: Entity.createEntityClass(manifest.findSchemaByName('Foo'), null),
     Bar: Entity.createEntityClass(manifest.findSchemaByName('Bar'), null),
@@ -74,7 +79,8 @@ describe('Arc new storage', () => {
     // between parsing a manifest for public consumption (e.g. with RamDisk resources in it) and parsing a serialized
     // arc (with an @activeRecipe). We'll fix this by adding a 'private' keyword to store serializations which will
     // be used when serializing arcs. Once that is working then the following registration should be removed.
-    RamDiskStorageDriverProvider.register();
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new StubLoader({
       manifest: `
         schema Data
@@ -99,7 +105,7 @@ describe('Arc new storage', () => {
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('manifest', loader, {memoryProvider});
     const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = ArcId.fromString('test');
     const storageKey = new VolatileStorageKey(id, 'unique');
@@ -283,6 +289,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       // TODO(lindner): fix pouch/firebase timing
       this.skip();
     }
+    const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`
       schema Thing
       particle A in 'a.js'
@@ -308,7 +315,7 @@ describe('Arc ' + storageKeyPrefix, () => {
         [
         ]
       store ThingStore of Thing 'storeInContext' in MyThing
-    `);
+    `, {memoryProvider});
     assert.isTrue(manifest.recipes.every(r => r.normalize()));
     assert.isTrue(manifest.recipes[0].isResolved());
     assert.isTrue(manifest.recipes[1].isResolved());
@@ -318,7 +325,8 @@ describe('Arc ' + storageKeyPrefix, () => {
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const runtime = new Runtime(loader, FakeSlotComposer, manifest);
+    const runtime = new Runtime({
+        loader, composerClass: FakeSlotComposer, context: manifest, memoryProvider});
 
     // Successfully instantiates a recipe with 'copy' handle for store in a context.
     await runtime.newArc('test0', storageKeyPrefix).instantiate(manifest.recipes[0]);
@@ -714,10 +722,11 @@ describe('Arc ' + storageKeyPrefix, () => {
     const loader = new Loader();
     const id = Id.fromString('test');
     const storageKey = storageKeyPrefix + id.toString();
-    const arc = new Arc({slotComposer, loader, id, storageKey, context: undefined});
+    const context = new Manifest({id});
+    const arc = new Arc({slotComposer, loader, id, storageKey, context});
 
     const serialization = await arc.serialize();
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest'});
     assert.strictEqual(newArc._stores.length, 0);
     assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
@@ -729,7 +738,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       this.skip();
     }
 
-    const {arc, recipe, Foo, Bar, loader} = await setup(storageKeyPrefix);
+    const {arc, context, recipe, Foo, Bar, loader} = await setup(storageKeyPrefix);
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const fooHandle = await singletonHandleForTest(arc, fooStore);
     const fooStoreCallbacks = await CallbackTracker.create(fooStore, 1);
@@ -751,7 +760,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new FakeSlotComposer(), context: undefined});
+    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new FakeSlotComposer(), context});
     fooStore = newArc.findStoreById(fooStore.id);
     barStore = newArc.findStoreById(barStore.id);
     assert.strictEqual(fooStore.versionToken, '1');
@@ -1118,7 +1127,7 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const slotComposer = new FakeSlotComposer();
 
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: manifest, fileName: 'foo.manifest'});
     assert.strictEqual(newArc._stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');

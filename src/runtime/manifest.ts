@@ -44,11 +44,10 @@ import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Exists, DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
 import {Entity, SerializedEntity} from './entity.js';
-import {Runtime} from './runtime.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -116,16 +115,18 @@ const globalWarningKeys: Set<string> = new Set();
 type ManifestFinder<a> = (manifest: Manifest) => a;
 type ManifestFinderGenerator<a> = ((manifest: Manifest) => IterableIterator<a>) | ((manifest: Manifest) => a[]);
 
-interface ManifestParseOptions {
+export interface ManifestParseOptions {
   fileName?: string;
   loader?: Loader;
   registry?: Dictionary<Promise<Manifest>>;
+  memoryProvider?: VolatileMemoryProvider;
   context?: Manifest;
   throwImportErrors?: boolean;
 }
 
 interface ManifestLoadOptions {
   registry?: Dictionary<Promise<Manifest>>;
+  memoryProvider?: VolatileMemoryProvider;
 }
 
 export class Manifest {
@@ -381,7 +382,7 @@ export class Manifest {
   }
 
   static async load(fileName: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Manifest> {
-    let {registry} = options;
+    let {registry, memoryProvider} = options;
     registry = registry || {};
     if (registry && registry[fileName]) {
       return await registry[fileName];
@@ -393,7 +394,8 @@ export class Manifest {
       return await Manifest.parse(content, {
         fileName,
         loader,
-        registry
+        registry,
+        memoryProvider
       });
     })();
     return await registry[fileName];
@@ -405,7 +407,7 @@ export class Manifest {
 
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
     // TODO(sjmiles): allow `context` for including an existing manifest in the import list
-    let {fileName, loader, registry, context} = options;
+    let {fileName, loader, registry, context, memoryProvider} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
 
@@ -498,7 +500,7 @@ ${e.message}
           const path = loader.path(manifest.fileName);
           const target = loader.join(path, item.path);
           try {
-            manifest._imports.push(await Manifest.load(target, loader, {registry}));
+            manifest._imports.push(await Manifest.load(target, loader, {registry, memoryProvider}));
           } catch (e) {
             manifest.errors.push(e);
             manifest.errors.push(new ManifestError(item.location, `Error importing '${target}'`));
@@ -524,7 +526,7 @@ ${e.message}
       await processItems('schema', item => Manifest._processSchema(manifest, item));
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
-      await processItems('store', item => Manifest._processStore(manifest, item, loader));
+      await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
@@ -586,14 +588,14 @@ ${e.message}
               }
               fields[name] = type;
             }
-            let schema = new Schema(names, fields);
+            let schema = new Schema(names, fields, {refinement: node.refinement});
             for (const alias of aliases) {
               schema = Schema.union(alias, schema);
               if (!schema) {
                 throw new ManifestError(node.location, `Could not merge schema aliases`);
               }
             }
-            node.model = new EntityType(schema, node.refinement);
+            node.model = new EntityType(schema);
             delete node.fields;
             return;
           }
@@ -696,7 +698,7 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    const schema = new Schema(names, fields, description);
+    const schema = new Schema(names, fields, {description});
     if (schemaItem.alias) {
       schema.isAlias = true;
     }
@@ -945,7 +947,7 @@ ${e.message}
           }
           slotConn = particle.addSlotConnection(slotConnectionItem.param);
         }
-        slotConn.tags = slotConnectionItem.tags || [];
+        slotConn.tags = slotConnectionItem.target.tags;
         slotConnectionItem.dependentSlotConnections.forEach(ps => {
           if (ps.direction === 'consumes') {
             throw new ManifestError(item.location, `invalid slot connection: consume slot must not be dependent`);
@@ -955,7 +957,7 @@ ${e.message}
           }
           if (recipe instanceof RequireSection) {
             // replace provided slot if it already exist in recipe.
-            const existingSlot = recipe.parent.slots.find(rslot => rslot.localName === ps.name);
+            const existingSlot = recipe.parent.slots.find(rslot => rslot.localName === ps.target.name);
             if (existingSlot !== undefined) {
               slotConn.providedSlots[ps.param] = existingSlot;
               existingSlot.sourceConnection = slotConn;
@@ -964,47 +966,48 @@ ${e.message}
           }
           let providedSlot = slotConn.providedSlots[ps.param];
           if (providedSlot) {
-            if (ps.name) {
-              if (items.byName.has(ps.name)) {
+            if (ps.target.name) {
+              if (items.byName.has(ps.target.name)) {
                 // The slot was added to the recipe twice - once as part of the
                 // slots in the manifest, then as part of particle spec.
                 // Unifying both slots, updating name and source slot connection.
-                const theSlot = items.byName.get(ps.name);
+                const theSlot = items.byName.get(ps.target.name);
                 assert(theSlot !== providedSlot);
                 assert(!theSlot.name && providedSlot);
                 assert(!theSlot.sourceConnection && providedSlot.sourceConnection);
                 providedSlot.id = theSlot.id;
                 providedSlot.tags = theSlot.tags;
-                items.byName.set(ps.name, providedSlot);
+                items.byName.set(ps.target.name, providedSlot);
                 recipe.removeSlot(theSlot);
               } else {
-                items.byName.set(ps.name, providedSlot);
+                items.byName.set(ps.target.name, providedSlot);
               }
             }
             items.bySlot.set(providedSlot, ps);
           } else {
-            providedSlot = items.byName.get(ps.name);
+            providedSlot = items.byName.get(ps.target.name);
           }
           if (!providedSlot) {
             providedSlot = recipe.newSlot(ps.param);
-            providedSlot.localName = ps.name;
+            providedSlot.localName = ps.target.name;
             providedSlot.sourceConnection = slotConn;
-            if (ps.name) {
-              assert(!items.byName.has(ps.name));
-              items.byName.set(ps.name, providedSlot);
+            if (ps.target.name) {
+              assert(!items.byName.has(ps.target.name));
+              items.byName.set(ps.target.name, providedSlot);
             }
             items.bySlot.set(providedSlot, ps);
           }
           if (!slotConn.providedSlots[ps.param]) {
             slotConn.providedSlots[ps.param] = providedSlot;
           }
-          providedSlot.localName = ps.name;
+          providedSlot.localName = ps.target.name;
         });
       }
     }
 
     const newConnection = (particle: Particle, connectionItem: AstNode.RecipeParticleConnection) => {
         let connection;
+        // Find or create the connection.
         if (connectionItem.param === '*') {
           connection = particle.addUnnamedConnection();
         } else {
@@ -1111,41 +1114,48 @@ ${e.message}
         connectionItem.dependentConnections.forEach(item => newConnection(particle, item));
     };
 
+    const newSlotConnection = (particle: Particle, slotConnectionItem: AstNode.RecipeParticleSlotConnection) => {
+      let targetSlot = items.byName.get(slotConnectionItem.target.name);
+      // Note: Support for 'target' (instead of name + tags) is new, and likely buggy.
+      // TODO(cypher1): target.particle should not be ignored (but currently is).
+      if (targetSlot) {
+        assert(items.bySlot.has(targetSlot));
+        if (!targetSlot.name) {
+          targetSlot.name = slotConnectionItem.param;
+        }
+        assert(targetSlot === items.byName.get(slotConnectionItem.target.name),
+          `Target slot ${targetSlot.name} doesn't match slot connection ${slotConnectionItem.param}`);
+      } else if (slotConnectionItem.target.name) {
+        // if this is a require section, check if slot exists in recipe.
+        if (recipe instanceof RequireSection) {
+          targetSlot = recipe.parent.slots.find(slot => slot.localName === slotConnectionItem.target.name);
+          if (targetSlot !== undefined) {
+            items.bySlot.set(targetSlot, slotConnectionItem);
+            if (slotConnectionItem.target.name) {
+              items.byName.set(slotConnectionItem.target.name, targetSlot);
+            }
+          }
+        }
+        if (targetSlot == undefined) {
+          targetSlot = recipe.newSlot(slotConnectionItem.param);
+          targetSlot.localName = slotConnectionItem.target.name;
+          items.byName.set(slotConnectionItem.target.name, targetSlot);
+          items.bySlot.set(targetSlot, slotConnectionItem);
+        }
+      }
+      if (targetSlot) {
+        particle.getSlotConnectionByName(slotConnectionItem.param).connectToSlot(targetSlot);
+      }
+    };
+
+
     for (const [particle, item] of items.byParticle) {
       for (const connectionItem of item.connections) {
         newConnection(particle, connectionItem);
       }
 
       for (const slotConnectionItem of item.slotConnections) {
-        let targetSlot = items.byName.get(slotConnectionItem.name);
-        if (targetSlot) {
-          assert(items.bySlot.has(targetSlot));
-          if (!targetSlot.name) {
-            targetSlot.name = slotConnectionItem.param;
-          }
-          assert(targetSlot === items.byName.get(slotConnectionItem.name),
-            `Target slot ${targetSlot.name} doesn't match slot connection ${slotConnectionItem.param}`);
-        } else if (slotConnectionItem.name) {
-          // if this is a require section, check if slot exists in recipe.
-          if (recipe instanceof RequireSection) {
-            targetSlot = recipe.parent.slots.find(slot => slot.localName === slotConnectionItem.name);
-            if (targetSlot !== undefined) {
-              items.bySlot.set(targetSlot, slotConnectionItem);
-              if (slotConnectionItem.name) {
-                items.byName.set(slotConnectionItem.name, targetSlot);
-              }
-            }
-          }
-          if (targetSlot == undefined) {
-            targetSlot = recipe.newSlot(slotConnectionItem.param);
-            targetSlot.localName = slotConnectionItem.name;
-            items.byName.set(slotConnectionItem.name, targetSlot);
-            items.bySlot.set(targetSlot, slotConnectionItem);
-          }
-        }
-        if (targetSlot) {
-          particle.getSlotConnectionByName(slotConnectionItem.param).connectToSlot(targetSlot);
-        }
+        newSlotConnection(particle, slotConnectionItem);
       }
     }
 
@@ -1185,7 +1195,7 @@ ${e.message}
     }
   }
 
-  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader) {
+  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader, memoryProvider?: VolatileMemoryProvider) {
     const name = item.name;
     let id = item.id;
     const originalId = item.originalId;
@@ -1247,8 +1257,10 @@ ${e.message}
     if (Flags.useNewStorageStack) {
       const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
       if (storageKey instanceof RamDiskStorageKey) {
-        const memory = Runtime.getRuntime().getRamDiskMemory();
-        memory.deserialize(entities, storageKey.unique);
+        if (!memoryProvider) {
+          throw new ManifestError(item.location, `Creating ram disk stores requires having a memory provider.`);
+        }
+        memoryProvider.getVolatileMemory().deserialize(entities, storageKey.unique);
       }
       // Note that we used to use a singleton entity ID (if present) instead of the hash. It seems
       // cleaner not to rely on that.

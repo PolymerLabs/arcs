@@ -9,9 +9,8 @@
  */
 
 import {StorageKey} from '../storage-key.js';
-import {Runtime} from '../../runtime.js';
 import {StorageDriverProvider, Exists, DriverFactory} from './driver-factory.js';
-import {VolatileDriver} from './volatile.js';
+import {VolatileDriver, VolatileMemoryProvider} from './volatile.js';
 
 export class RamDiskStorageKey extends StorageKey {
   readonly unique: string;
@@ -47,6 +46,11 @@ export class RamDiskStorageKey extends StorageKey {
  * tied to a specific running Arc.
  */
 export class RamDiskStorageDriverProvider implements StorageDriverProvider {
+  private readonly memoryProvider: VolatileMemoryProvider;
+
+  constructor(memoryProvider: VolatileMemoryProvider) {
+    this.memoryProvider = memoryProvider;
+  }
 
   willSupport(storageKey: StorageKey): boolean {
     return storageKey.protocol === 'ramdisk';
@@ -57,18 +61,11 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
       throw new Error(`This provider does not support storageKey ${storageKey.toString()}`);
     }
 
-    // Use a VolatileDriver backed by the Runtime's RamDisk memory instance.
-    const memory = Runtime.getRuntime().getRamDiskMemory();
+    const memory = this.memoryProvider.getVolatileMemory();
     return new VolatileDriver<Data>(storageKey as RamDiskStorageKey, exists, memory);
   }
 
-  static register() {
-    DriverFactory.register(new RamDiskStorageDriverProvider());
+  static register(memoryProvider: VolatileMemoryProvider) {
+    DriverFactory.register(new RamDiskStorageDriverProvider(memoryProvider));
   }
 }
-
-// Note that this will automatically register for any production code
-// that uses ramdisk drivers; but it won't automatically register in
-// testing; for safety, call RamDiskStorageDriverProvider.register()
-// from your test code somewhere.
-RamDiskStorageDriverProvider.register();

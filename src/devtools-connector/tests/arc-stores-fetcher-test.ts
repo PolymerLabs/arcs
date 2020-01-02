@@ -29,7 +29,11 @@ describe('ArcStoresFetcher', () => {
     const context = await Manifest.parse(`
       schema Foo
         value: Text`);
-    const runtime = new Runtime(new StubLoader({}), FakeSlotComposer, context);
+    const runtime = new Runtime({
+        loader: new StubLoader({}),
+        composerClass: FakeSlotComposer,
+        context
+      });
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
@@ -77,9 +81,9 @@ describe('ArcStoresFetcher', () => {
                 }
               },
               hashStr: null,
-              names: ['Foo']
+              names: ['Foo'],
+              refinement: null,
             },
-            refinement: null,
           },
           tag: 'Singleton',
         },
@@ -111,7 +115,11 @@ describe('ArcStoresFetcher', () => {
         foo: create *
         P
           foo: foo`);
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const runtime = new Runtime({
+        loader,
+        composerClass: FakeSlotComposer,
+        context
+      });
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const recipe = arc.context.recipes[0];

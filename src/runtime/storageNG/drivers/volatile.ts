@@ -69,12 +69,29 @@ export class VolatileMemory {
     assert(!this.entries.has(unique));
     const entry: VolatileEntryCollection<unknown> = {root: null, locations: {}};
     entry.root = {data: data.root, version: 0, drivers: []};
-    for (const [key, value] of Object.entries(data.locations)) {
-      entry.locations[key] = {data: value, version: 0, drivers: []};
+    if (data.locations) {
+      for (const [key, value] of Object.entries(data.locations)) {
+        entry.locations[key] = {data: value, version: 0, drivers: []};
+      }
     }
     this.entries.set(unique, entry);
   }
+}
 
+/**
+ * Allows for loosely coupled memory provisioning by clients of the storage
+ * stack.
+ */
+export interface VolatileMemoryProvider {
+  getVolatileMemory(): VolatileMemory;
+}
+
+export class SimpleVolatileMemoryProvider implements VolatileMemoryProvider {
+  private readonly memory: VolatileMemory = new VolatileMemory();
+
+  getVolatileMemory(): VolatileMemory {
+    return this.memory;
+  }
 }
 
 let id = 0;

@@ -12,6 +12,7 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {RozSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
 import {VolatileCollection, VolatileSingleton, VolatileStorage} from '../../runtime/storage/volatile-storage.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ReferenceType} from '../../runtime/type.js';
@@ -54,13 +55,14 @@ class TestLoader extends Loader {
         this.skip();
       } else {
         loader = new TestLoader(env);
+        VolatileStorage.setStorageCache(new RuntimeCacheService());
         manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`,
                                          {loader, fileName: process.cwd() + '/manifest.arcs'});
       }
     });
 
     async function setup(recipeName) {
-      const runtime = new Runtime(loader, RozSlotComposer, await manifestPromise);
+      const runtime = new Runtime({loader, composerClass: RozSlotComposer, context: await manifestPromise});
       const arc = runtime.newArc('wasm-test', 'volatile://');
 
       const recipe = arc.context.allRecipes.find(r => r.name === recipeName);

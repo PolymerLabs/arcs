@@ -17,6 +17,7 @@ import {Runtime} from '../runtime.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {ArcId} from '../id.js';
 import {StubLoader} from '../testing/stub-loader.js';
+import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
@@ -74,7 +75,8 @@ describe('Runtime', () => {
     assert.hasAllKeys(runtime.arcById, ['test-arc', 'other-test-arc']);
   });
   it('registers and unregisters stores', async () => {
-    const context = await Manifest.parse(``);
+    const memoryProvider = new TestVolatileMemoryProvider();
+    const context = await Manifest.parse(``, {memoryProvider});
     const loader = new StubLoader({
       manifest: `
         schema Thing
@@ -93,9 +95,9 @@ describe('Runtime', () => {
       `,
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
     const arc = runtime.runArc('test-arc', 'volatile://');
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('manifest', loader, {memoryProvider});
     manifest.recipes[0].normalize();
     await arc.instantiate(manifest.recipes[0]);
     assert.lengthOf(arc.context.stores, 2);

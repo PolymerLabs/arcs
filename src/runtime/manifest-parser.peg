@@ -72,15 +72,41 @@
     return {...data, location: location()} as T;
   }
 
-  function buildInterfaceArgument(name: string, direction: AstNode.Direction, type: AstNode.ParticleHandleConnectionType) {
+  function buildInterfaceArgument(name: string, direction: AstNode.Direction | AstNode.SlotDirection, isOptional: boolean, type: AstNode.ParticleHandleConnectionType) {
     if (direction === 'hosts') {
       error(`Interface cannot have arguments with a 'hosts' direction.`);
+    }
+    if (direction === 'consumes' || direction === 'provides') {
+      let isSet = false;
+      if (type && type.kind === 'collection-type') {
+        isSet = true;
+        type = type.type; // unwrap the inner type of the collection type;
+      }
+      if (type && type.kind === 'slot-type') {
+        const slotType = type as AstNode.SlotType;
+        slotType.fields.forEach(({name, value}) => {
+          error(`interface slots do not currently support fields`);
+        });
+      } else if (type !== null) {
+        error('cannot consume or provide non slot types');
+      }
+      return toAstNode<AstNode.InterfaceSlot>({
+        kind: 'interface-slot',
+        name,
+        isRequired: !isOptional,
+        direction,
+        isSet,
+      });
+    }
+    if (isOptional) {
+      // TODO: Support interface optionality
+      error('interface handles do not support optionality');
     }
     return toAstNode<AstNode.InterfaceArgument>({
       kind: 'interface-argument',
       direction,
       type,
-      name
+      name: name || '*',
     });
   }
 }
@@ -237,7 +263,7 @@ Import
   }
 
 Interface "an interface"
-  = 'interface' whiteSpace name:upperIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent InterfaceItem)*)? eolWhiteSpace?
+  = 'interface' whiteSpace name:upperIdent typeVars:(whiteSpace? '<' whiteSpace? TypeVariableList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent InterfaceArgument)*)? eolWhiteSpace?
   {
     return toAstNode<AstNode.Interface>({
       kind: 'interface',
@@ -247,37 +273,16 @@ Interface "an interface"
     });
   }
 
-InterfaceItem
-  = InterfaceSlot
-  / InterfaceArgument
-
+// This rule is effectively capturing name? direction? '?'? type? &{name || direction || isOptional || type} but is
+// split into multiple capture clauses because the combined one is able to match against an empty string (this would
+// cause an infinite loop).
 InterfaceArgument
-  = name:NameWithColon direction:Direction? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
-  { return buildInterfaceArgument(name, direction || 'any', optional(type, t => t[1], null)); }
-  / direction:Direction type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
-  { return buildInterfaceArgument('*', direction || 'any', optional(type, t => t[1], null)); }
-  / type:(whiteSpace? ParticleHandleConnectionType) eolWhiteSpace
-  { return buildInterfaceArgument('*', 'any', type); }
-
-InterfaceSlot
-  = name:NameWithColon? direction:('consumes' / 'provides') isOptional:'?'? type:(whiteSpace SlandleType)? eolWhiteSpace
-  {
-    let isSet = false;
-    if (type) {
-      type = type[1]; // remove the whitespace.
-      isSet = type.isSet;
-      type.fields.forEach(({name, value}) => {
-        error(`interface slots do not currently support fields`);
-      });
-    }
-    return toAstNode<AstNode.InterfaceSlot>({
-      kind: 'interface-slot',
-      name,
-      isRequired: !isOptional,
-      direction,
-      isSet,
-    });
-  }
+  = name:NameWithColon direction:(Direction / SlotDirection)? isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  { return buildInterfaceArgument(name, direction || 'any', isOptional, optional(type, t => t[1], null)); }
+  / direction:(Direction / SlotDirection) isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  { return buildInterfaceArgument(null, direction || 'any', isOptional, optional(type, t => t[1], null)); }
+  / isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType) eolWhiteSpace
+  { return buildInterfaceArgument(null, 'any', isOptional, type); }
 
 Meta
   = 'meta' eolWhiteSpace items:(Indent (SameIndent MetaItem)*)? eolWhiteSpace?
@@ -725,17 +730,7 @@ ParticleSlotConnection
   }
 
 ParticleSlotConnectionItem
-  = SlotFormFactor
-  / ParticleProvidedSlot
-
-SlotFormFactor
-  = 'formFactor' whiteSpace formFactor:('fullscreen' / 'big' / 'medium' / 'small') eolWhiteSpace
-  {
-    return toAstNode<AstNode.SlotFormFactor>({
-      kind: 'form-factor',
-      formFactor
-    });
-  }
+  = ParticleProvidedSlot
 
 ParticleProvidedSlot
   = name:NameWithColon? 'provides' isOptional:'?'? type:(whiteSpace SlandleType)? maybeTags:SpaceTagList? eolWhiteSpace?
@@ -770,20 +765,6 @@ ParticleProvidedSlot
       isSet,
       formFactor,
       handles
-    });
-  }
-
-
-ParticleProvidedSlotItem
-  = SlotFormFactor
-  / ParticleProvidedSlotHandle
-
-ParticleProvidedSlotHandle
-  = 'handle' whiteSpace handle:lowerIdent eolWhiteSpace
-  {
-    return toAstNode<AstNode.ParticleProvidedSlotHandle>({
-      kind: 'particle-provided-slot-handle',
-      handle,
     });
   }
 
@@ -885,6 +866,7 @@ RecipeParticle
 
 RecipeParticleItem = RecipeParticleSlotConnection / RecipeParticleConnection
 
+// TODO(cypher1): s/dir/direction/ to match slot connections and the rest of the code base
 RecipeParticleConnection
   = param:NameWithColon? dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
@@ -892,7 +874,13 @@ RecipeParticleConnection
       kind: 'handle-connection',
       param: param || '*',
       dir,
-      target: optional(target, t => t[1], null),
+      target: optional(target, t => t[1], toAstNode<AstNode.ParticleConnectionTargetComponents>({
+        kind: 'handle-connection-components',
+        name: null,
+        particle: null,
+        tags: []
+        }
+      )),
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
   }
@@ -907,7 +895,25 @@ RecipeParticleConnection
     });
   }
 
-ParticleConnectionTargetComponents
+RecipeParticleSlotConnection
+  = param: NameWithColon? direction:SlotDirection target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
+  {
+    return toAstNode<AstNode.RecipeParticleSlotConnection>({
+      kind: 'slot-connection',
+      param: param || '*',
+      direction,
+      target: optional(target, t => t[1], toAstNode<AstNode.ParticleConnectionTargetComponents>({
+        kind: 'handle-connection-components',
+        name: null,
+        particle: null,
+        tags: []
+        }
+      )),
+      dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
+    });
+  }
+
+ParticleConnectionTargetComponents "a particle connection target"
   = param:(upperIdent / lowerIdent) tags:(whiteSpace TagList)?
   {
     param = optional(param, param => param, null);
@@ -935,19 +941,6 @@ ParticleConnectionTargetComponents
       name: null,
       particle: null,
       tags
-    });
-  }
-
-RecipeParticleSlotConnection
-  = param: NameWithColon? direction:SlotDirection name:(whiteSpace lowerIdent)? tags:SpaceTagList? eolWhiteSpace dependentSlotConnections:(Indent (SameIndent RecipeParticleSlotConnection)*)?
-  {
-    return toAstNode<AstNode.RecipeParticleSlotConnection>({
-      kind: 'slot-connection',
-      direction,
-      param: param || '*',
-      tags: tags || [],
-      name: optional(name, name=>name[1], null),
-      dependentSlotConnections: optional(dependentSlotConnections, extractIndented, []),
     });
   }
 
@@ -1436,8 +1429,14 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
-  / NumberType
-  / fieldName
+  / num: NumberType
+  {
+    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num});
+  }
+  / fn: fieldName
+  {
+    return toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn});
+  }
 
 NumberType
   = whole:[0-9]+ fractional:('.' [0-9]+)?

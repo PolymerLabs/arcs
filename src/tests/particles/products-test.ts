@@ -17,6 +17,7 @@ import {Runtime} from '../../runtime/runtime.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 
 describe('products test', () => {
   const manifestFilename = './src/tests/particles/artifacts/products-test.recipes';
@@ -31,7 +32,13 @@ describe('products test', () => {
 
   it('filters', async () => {
     const loader = new Loader();
-    const runtime = new Runtime(loader, FakeSlotComposer, await Manifest.load(manifestFilename, loader));
+    const memoryProvider = new TestVolatileMemoryProvider();
+    const runtime = new Runtime({
+        loader,
+        composerClass: FakeSlotComposer,
+        context: await Manifest.load(manifestFilename, loader, {memoryProvider}),
+        memoryProvider
+      });
     const arc = runtime.newArc('demo', 'volatile://');
     const recipe = arc.context.recipes.find(r => r.name === 'FilterBooks');
     assert.isTrue(recipe.normalize() && recipe.isResolved());
@@ -42,6 +49,7 @@ describe('products test', () => {
 
   it('filters and displays', async () => {
     const loader = new Loader();
+    const memoryProvider = new TestVolatileMemoryProvider();
     const slotComposer = new MockSlotComposer({strict: false});
     const id = IdGenerator.newSession().newArcId('demo');
     const arc = new Arc({
@@ -49,7 +57,7 @@ describe('products test', () => {
       storageKey: `volatile://${id.toString()}`,
       loader,
       slotComposer,
-      context: await Manifest.load(manifestFilename, loader)
+      context: await Manifest.load(manifestFilename, loader, {memoryProvider})
     });
     const recipe = arc.context.recipes.find(r => r.name === 'FilterAndDisplayBooks');
     assert.isTrue(recipe.normalize() && recipe.isResolved());

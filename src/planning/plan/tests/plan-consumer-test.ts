@@ -23,6 +23,8 @@ import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
 import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
+import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 // database providers are optional, these tests use these provider(s)
 import '../../../runtime/storage/firebase/firebase-provider.js';
 import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
@@ -46,6 +48,8 @@ async function storeResults(consumer, suggestions) {
   describe('plan consumer for ' + storageKeyBase, () => {
     it('consumes', async () => {
       const loader = new StubLoader({});
+      const memoryProvider = new TestVolatileMemoryProvider();
+      RamDiskStorageDriverProvider.register(memoryProvider);
       const context =  await Manifest.parse(`
         import './src/runtime/tests/artifacts/Products/Products.recipes'
 
@@ -65,8 +69,9 @@ async function storeResults(consumer, suggestions) {
           Test2
             other: consumes other
           description \`Test Recipe\`
-      `, {loader, fileName: ''});
-      const runtime = new Runtime(loader, FakeSlotComposer, context);
+      `, {loader, fileName: '', memoryProvider});
+      const runtime = new Runtime({
+          loader, composerClass: FakeSlotComposer, context, memoryProvider});
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
       let suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -136,6 +141,8 @@ describe('plan consumer', () => {
         `;
       };
       const loader = new StubLoader({});
+      const memoryProvider = new TestVolatileMemoryProvider();
+      RamDiskStorageDriverProvider.register(memoryProvider);
       const context =  await Manifest.parse(`
 particle ParticleDom in './src/runtime/tests/artifacts/consumer-particle.js'
   root: consumes Slot
@@ -150,7 +157,7 @@ ${addRecipe(['ParticleDom'])}
 ${addRecipe(['ParticleTouch'])}
 ${addRecipe(['ParticleDom', 'ParticleBoth'])}
 ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
-        `, {loader, fileName: ''});
+        `, {loader, fileName: '', memoryProvider});
       class ModalitySlotComposer extends FakeSlotComposer {
         prototype: {};
         constructor(options?: SlotComposerOptions) {
@@ -160,7 +167,8 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
           });
         }
       }
-      const runtime = new Runtime(loader, ModalitySlotComposer, context);
+      const runtime = new Runtime({
+          loader, composerClass: ModalitySlotComposer, context, memoryProvider});
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
       assert.lengthOf(arc.context.allRecipes, 4);
       const consumer = await createPlanConsumer('volatile', arc);

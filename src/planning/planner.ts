@@ -196,7 +196,7 @@ export class Planner implements InspectablePlanner {
           args: {groupIndex}
         });
 
-        const suggestion = await this.retriveOrCreateSuggestion(hash, plan, this.arc);
+        const suggestion = await this.retrieveOrCreateSuggestion(hash, plan, this.arc);
         if (!suggestion) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           planTrace.end({name: '[Irrelevant suggestion]', args: {hash, groupIndex}});
@@ -219,7 +219,7 @@ export class Planner implements InspectablePlanner {
     suggestionByHash().clear();
   }
 
-  private async retriveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion|undefined> {
+  private async retrieveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion|undefined> {
     const cachedSuggestion = suggestionByHash().get(hash);
     if (cachedSuggestion && cachedSuggestion.isUpToDate(arc, plan)) {
       return cachedSuggestion;

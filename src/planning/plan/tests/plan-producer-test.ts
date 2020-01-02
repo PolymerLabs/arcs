@@ -16,6 +16,7 @@ import {Runtime} from '../../../runtime/runtime.js';
 import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {Planificator} from '../../plan/planificator.js';
@@ -87,8 +88,10 @@ class TestPlanProducer extends PlanProducer {
   describe('plan producer for ' + storageKeyBase, () => {
     async function createProducer(manifestFilename) {
       const loader = new StubLoader({});
-      const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader);
-      const runtime = new Runtime(loader, FakeSlotComposer, context);
+      const memoryProvider = new TestVolatileMemoryProvider();
+      const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
+      const runtime = new Runtime({
+          loader, composerClass: FakeSlotComposer, context, memoryProvider});
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
       const suggestions = await StrategyTestHelper.planForArc(
           runtime.newArc('demo', storageKeyPrefixForTest())
@@ -170,10 +173,11 @@ describe('plan producer - search', () => {
 
   async function init(): Promise<TestSearchPlanProducer> {
     const loader = new Loader();
+    const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`
       schema Bar
         value: Text
-    `);
+    `, {memoryProvider});
     const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test'),
                          storageKey: 'volatile://test^^123'});
     const searchStore = await Planificator['_initSearchStore'](arc);
@@ -230,4 +234,3 @@ describe('plan producer - search', () => {
   });
   }); // end describe
 }); // end forEach
-

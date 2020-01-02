@@ -12,8 +12,10 @@ import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {Loader} from '../../../platform/loader.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
+import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../runtime/util.js';
@@ -23,7 +25,8 @@ import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
-    const runtime = new Runtime(new StubLoader({}), FakeSlotComposer);
+    const runtime = new Runtime({
+        loader: new StubLoader({}), composerClass: FakeSlotComposer});
     const arc = runtime.newArc(
         'demo',
         'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo'
@@ -52,13 +55,19 @@ describe('remote planificator', () => {
   // TODO: support arc storage key be in PouchDB as well.
   const storageKey = 'volatile://!123:demo^^abcdef';
 
+  let memoryProvider;
+  beforeEach(() => {
+    memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+  });
   async function createArc(options, storageKey) {
     const {manifestString, manifestFilename} = options;
     const loader = new StubLoader({});
     const context = manifestString
-        ? await Manifest.parse(manifestString, {loader, fileName: ''})
-        : await Manifest.load(manifestFilename, loader);
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+        ? await Manifest.parse(manifestString, {loader, fileName: '', memoryProvider})
+        : await Manifest.load(manifestFilename, loader, {memoryProvider});
+    const runtime = new Runtime({
+        loader, composerClass: FakeSlotComposer, context, memoryProvider});
     return runtime.newArc('demo', storageKey);
   }
   async function createConsumePlanificator(plannerStorageKeyBase, manifestFilename) {
