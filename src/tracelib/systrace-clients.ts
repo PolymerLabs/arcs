@@ -10,9 +10,12 @@
 
 import {getGlobalScope, getSystemTraceApis, getSystemTraceChannel} from './systrace-helpers.js';
 
-const CONSOLE_CLIENT_NAME = 'console';
-const ANDROID_CLIENT_NAME = 'android';
-const DEVTOOLS_TIMELINE_CLIENT_NAME = 'devtools_timeline';
+/** Outputs trace messages to JS console */
+export const CONSOLE_CLIENT_NAME = 'console';
+/** Outputs trace messages to [android.os.Trace]{@link https://developer.android.com/reference/android/os/Trace} */
+export const ANDROID_CLIENT_NAME = 'android';
+/** Outputs trace messages to DevTools timeline */
+export const DEVTOOLS_TIMELINE_CLIENT_NAME = 'devtools_timeline';
 
 /** Abstraction of System Trace Client */
 export abstract class Client {
