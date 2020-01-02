@@ -80,6 +80,30 @@ describe('refiner', () => {
             const _ = Refiner.isValidData(ref, data);
         }, `Got type number. Expected boolean.\n`);
     });
+    it('tests expression to range conversion.', () => {
+        let manifestAst = parse(`
+            particle Foo
+                input: reads Something {num: Number [ ((num < 3) and (num > 0)) or (num == 5) ] }
+        `);
+        let expr = manifestAst[0].args[0].type.fields[0].type.refinement.expression;
+        let range = Refiner.expressionToRange(expr);
+        assert.deepEqual(range.segments, [Segment.openOpen(0, 3), Segment.closedClosed(5, 5)]);
+        manifestAst = parse(`
+            particle Foo
+                input: reads Something {num: Number [(num > 10) == (num >= 20)] }
+        `);
+        expr = manifestAst[0].args[0].type.fields[0].type.refinement.expression;
+        range = Refiner.expressionToRange(expr);
+        assert.deepEqual(range.segments, [Segment.openClosed(Number.NEGATIVE_INFINITY, 10), Segment.closedOpen(20, Number.POSITIVE_INFINITY)]);
+        manifestAst = parse(`
+            particle Foo
+                input: reads Something {num: Number [not (num != 10)] }
+        `);
+        expr = manifestAst[0].args[0].type.fields[0].type.refinement.expression;
+        range = Refiner.expressionToRange(expr);
+        assert.deepEqual(range.segments, [Segment.closedClosed(10, 10)]);
+
+    });
 });
 
 

@@ -118,6 +118,36 @@ export class Refiner {
         return operators[op].evaluate(expr);
     }
 
+    // This function assumes the following:
+    // ~ The expression is univariate i.e. has exactly one fieldName
+    // ~ The expression is valid i.e. no expressions like (num < 3) < (num > 5)
+    // This function does the following:
+    // ~ Simplifies mathematical expressions e.g. (num + 3) < 4 => num < 1
+    // ~ Converts a binary node to {leftExpr: fieldName, rightExpr: val} (where applicable).
+    // ~ Converts a unary node {op: '-', val: x} into a number node {val: -x}
+    // ~ Removes redundant info like expression == false => not expression
+    static normaliseExpression(expr: RefinementExpression) {
+        console.log('TODO(ragdev): WIP');
+    }
+
+    // This function assumes that the expression is univariate
+    // and has been normalised (see above for definition).
+    // TODO(ragdev): Currently only Number types are supported. Add Boolean and String support.
+    static expressionToRange(expr: RefinementExpression): Range {
+        if (expr.kind === 'binary-expression-node') {
+            if (expr.leftExpr.kind === 'field-name-node' && expr.rightExpr.kind === 'number-node') {
+                return Range.makeInitialGivenOp(expr.operator, expr.rightExpr.value);
+            }
+            const left = Refiner.expressionToRange(expr.leftExpr);
+            const right = Refiner.expressionToRange(expr.rightExpr);
+            return Range.updateGivenOp(expr.operator, [left, right]);
+        } else if (expr.kind === 'unary-expression-node') {
+            const rg = Refiner.expressionToRange(expr.expr);
+            return Range.updateGivenOp(expr.operator, [rg]);
+        }
+        throw new Error(`Cannot resolve primitive nodes by themselves.`);
+    }
+
     private static manageErrors(errors: (ExpressionPrimitives | Error)[]): Error {
         let errorMessage = '';
         for (const error of errors) {
@@ -180,6 +210,13 @@ export class Range {
         }
         return copy;
     }
+    static fromSegments(segs: Segment[]): Range {
+        const newRange = new Range();
+        for (const subRange of segs) {
+            newRange.segments.push(new Segment(subRange.from, subRange.to));
+        }
+        return newRange;
+    }
     static unionOf(range1: Range, range2: Range): Range {
         const newRange = Range.copyOf(range1);
         newRange.union(range2);
@@ -189,6 +226,9 @@ export class Range {
         const newRange = Range.copyOf(range1);
         newRange.intersect(range2);
         return newRange;
+    }
+    static complementOf(range: Range, from: Range = Range.infiniteRange()) {
+        return Range.difference(from, range);
     }
     // difference(A,B) = A\B = A - B
     static difference(range1: Range, range2: Range): Range {
@@ -273,6 +313,45 @@ export class Range {
         }
         this.segments = newRange.segments;
     }
+    static makeInitialGivenOp(op: string, val: ExpressionPrimitives): Range {
+        switch (op) {
+            case '<': return Range.fromSegments([Segment.openOpen(Number.NEGATIVE_INFINITY, val)]);
+            case '<=': return Range.fromSegments([Segment.openClosed(Number.NEGATIVE_INFINITY, val)]);
+            case '>': return Range.fromSegments([Segment.openOpen(val, Number.POSITIVE_INFINITY)]);
+            case '>=': return Range.fromSegments([Segment.closedOpen(val, Number.POSITIVE_INFINITY)]);
+            case '==': return Range.fromSegments([Segment.closedClosed(val, val)]);
+            case '!=': return Range.complementOf(Range.fromSegments([Segment.closedClosed(val, val)]));
+            default: throw new Error(`Unsupported operator: field ${op} number`);
+        }
+    }
+    static updateGivenOp(op: string, ranges: Range[]): Range {
+        switch (op) {
+            case 'and': {
+                return Range.intersectionOf(ranges[0], ranges[1]);
+            }
+            case 'or': {
+                return Range.unionOf(ranges[0], ranges[1]);
+            }
+            case '==': {
+                const lc = Range.complementOf(ranges[0]);
+                const rc = Range.complementOf(ranges[1]);
+                const lnr = Range.intersectionOf(ranges[0], ranges[1]);
+                const lcnrc = Range.intersectionOf(lc, rc);
+                return Range.unionOf(lnr, lcnrc);
+            }
+            case '!=': {
+                const lc = Range.complementOf(ranges[0]);
+                const rc = Range.complementOf(ranges[1]);
+                const lnrc = Range.intersectionOf(ranges[0], rc);
+                const lcnr = Range.intersectionOf(lc, ranges[1]);
+                return Range.unionOf(lnrc, lcnr);
+            }
+            case 'not': {
+                return Range.complementOf(ranges[0]);
+            }
+            default: throw new Error(`Unsupported operator: cannot update range`);
+        }
+    }
 }
 
 export class Segment {
@@ -304,6 +383,7 @@ export class Segment {
         return seg;
     }
     // If strict is false, (a,x) is NOT less than [x,b)
+    // even though mathematically it is.
     isLessThan(seg: Segment, strict: boolean): boolean {
         if (this.to.val === seg.from.val) {
             if (strict) {
@@ -314,6 +394,7 @@ export class Segment {
         return this.to.val < seg.from.val;
     }
     // If strict is false, (x,a) is NOT greater than (b,x]
+    // even though mathematically it is.
     isGreaterThan(seg: Segment, strict: boolean): boolean {
         if (this.from.val === seg.to.val) {
             if (strict) {
@@ -338,13 +419,13 @@ export class Segment {
             left = {...a.from};
             left.kind = a.from.kind === b.from.kind ? a.from.kind : 'closed';
         } else {
-            left = a.from.val < b.from.val ? a.from : b.from;
+            left = a.from.val < b.from.val ? {...a.from} : {...b.from};
         }
         if (a.to.val === b.to.val) {
             right = {...a.to};
             right.kind = a.to.kind === b.to.kind ? a.to.kind : 'closed';
         } else {
-            right = a.to.val > b.to.val ? a.to : b.to;
+            right = a.to.val > b.to.val ? {...a.to} : {...b.to};
         }
         return new Segment(left, right);
     }
@@ -357,13 +438,13 @@ export class Segment {
             left = {...a.from};
             left.kind = a.from.kind === b.from.kind ? a.from.kind : 'open';
         } else {
-            left = a.from.val > b.from.val ? a.from : b.from;
+            left = a.from.val > b.from.val ? {...a.from} : {...b.from};
         }
         if (a.to.val === b.to.val) {
             right = {...a.to};
             right.kind = a.to.kind === b.to.kind ? a.to.kind : 'open';
         } else {
-            right = a.to.val < b.to.val ? a.to : b.to;
+            right = a.to.val < b.to.val ? {...a.to} : {...b.to};
         }
         return new Segment(left, right);
     }

@@ -1376,7 +1376,7 @@ EqualityExpression
   }
 
 ComparisonExpression
-  = leftExpr:AdditiveExpression tail:(whiteSpace? ('<' / '<=' / '>' / '>=') whiteSpace? AdditiveExpression)*
+  = leftExpr:AdditiveExpression tail:(whiteSpace? ('<=' / '<' / '>=' / '>') whiteSpace? AdditiveExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
