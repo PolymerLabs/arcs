@@ -146,7 +146,7 @@ final class AndroidArcsEnvironment {
     });
 
     webView.addJavascriptInterface(this, "DeviceClient");
-    webView.addJavascriptInterface(new ArcsSystemTrace(), "systemTraceApis");
+    webView.addJavascriptInterface(new ArcsSystemTrace(), "SystemTraceApis");
 
     RuntimeSettings settings = runtimeSettings.get();
     // If using any of the host shells, i.e. pipe-shells at the host:
