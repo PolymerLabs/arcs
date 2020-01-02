@@ -8,114 +8,34 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Refinement, RefinementExpression} from './manifest-ast-nodes.js';
+import {RefinementNode, SchemaPrimitiveType, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, NumberNode, BooleanNode} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
-import { Schema } from './schema.js';
-import { Entity } from './entity.js';
+import {assert} from '../platform/assert-node.js';
+import {Schema} from './schema.js';
+import {Entity} from './entity.js';
+import {deepEqual} from 'assert';
+import e from 'express';
+import {Expression} from 'estree';
+import {CheckBooleanExpression} from './particle-check.js';
 
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
 type ExpressionPrimitives = any;
 type Evaluator = (exprs: ExpressionPrimitives[]) => ExpressionPrimitives | Error;
-type GenericOperator = {evaluate: Evaluator};
 
 export class Refiner {
-    // Converts refinement ast-node to string.
-    // Ast-nodes are typically interfaces with no behaviour.
-    static refinementString(refinement: Refinement): string {
-        if (!refinement) {
-            return '';
-        }
-        return '[' + Refiner.expressionString(refinement.expression) + ']';
-    }
-
-    private static expressionString(expr: RefinementExpression): string {
-        if (expr.kind === 'binary-expression-node') {
-            return '(' + Refiner.expressionString(expr.leftExpr) + ' ' + expr.operator + ' ' + Refiner.expressionString(expr.rightExpr) + ')';
-        } else if (expr.kind === 'unary-expression-node') {
-            return '(' + expr.operator + ' ' + expr.expr + ')';
-        }
-        return expr.value.toString();
-    }
-
     static refineData(entity: Entity, schema: Schema): void {
         for (const [name, value] of Object.entries(entity)) {
             const refDict = {}; refDict[name] = value;
-            if (!Refiner.isValidData(schema.fields[name].refinement, refDict)) {
+            const ref = schema.fields[name].refinement;
+            if (ref && !ref.validateData(refDict)) {
                 throw new Error(`Entity schema field '${name}' does not conform to the refinement.`);
             }
         }
-        if (!Refiner.isValidData(schema.refinement, entity)) {
+        const ref = schema.refinement;
+        if (ref && !ref.validateData(entity)) {
             throw new Error('Entity data does not conform to the refinement.');
         }
-    }
-
-    static isValidData(refinement: Refinement, data: Dictionary<ExpressionPrimitives>): boolean {
-        if (!refinement) {
-            return true;
-        }
-        const result = Refiner.applyRefinement(refinement.expression, data);
-        if (result instanceof Error) {
-            throw result;
-        } else if (typeof result !== 'boolean') {
-            throw new Error(`Refinement expression evaluated to a non-boolean type.\n`);
-        }
-        return result;
-    }
-
-    // tslint:disable-next-line: no-any
-    private static applyRefinement(expr: RefinementExpression, data: Dictionary<any>): ExpressionPrimitives | Error {
-        if (expr.kind === 'binary-expression-node') {
-            const left = Refiner.applyRefinement(expr.leftExpr, data);
-            const right = Refiner.applyRefinement(expr.rightExpr, data);
-            if (left instanceof Error || right instanceof Error) {
-                return Refiner.manageErrors([left, right]);
-            }
-            return Refiner.applyOperator(expr.operator, [left, right]);
-        } else if (expr.kind === 'unary-expression-node') {
-            const curr = Refiner.applyRefinement(expr.expr, data);
-            if (curr instanceof Error) {
-                return Refiner.manageErrors([curr]);
-            }
-            return Refiner.applyOperator(expr.operator, [curr]);
-        }
-        // TODO(ragdev): Update when string literals are supported
-        // in the refinement expression.
-        if (expr.kind === 'number-node' || expr.kind === 'boolean-node') {
-            return expr.value;
-        } else if (expr.kind === 'field-name-node') {
-            if (data[expr.value] !== undefined) {
-                return data[expr.value];
-            } else {
-                return new Error(`Unresolved field name '${expr.value}' in the refinement expression.`);
-            }
-        }
-        return new Error(`Unsupported expression node.`);
-    }
-
-    private static applyOperator(op: string, expr: ExpressionPrimitives[]): ExpressionPrimitives | Error {
-        const eqBoolOp = new RefinementOperator(['boolean', 'boolean'], (expr) => expr[0] === expr[1]);
-        const eqNumOp = new RefinementOperator(['number', 'number'], (expr) => expr[0] === expr[1]);
-        const neqBoolOp = new RefinementOperator(['boolean', 'boolean'], (expr) => expr[0] !== expr[1]);
-        const neqNumOp = new RefinementOperator(['number', 'number'], (expr) => expr[0] !== expr[1]);
-        const operators = {
-            'and': new RefinementOperator(['boolean', 'boolean'], (expr) => expr[0] && expr[1]),
-            'or': new RefinementOperator(['boolean', 'boolean'], (expr) => expr[0] || expr[1]),
-            '<': new RefinementOperator(['number', 'number'], (expr) => expr[0] < expr[1]),
-            '>': new RefinementOperator(['number', 'number'], (expr) => expr[0] > expr[1]),
-            '<=': new RefinementOperator(['number', 'number'], (expr) => expr[0] <= expr[1]),
-            '>=': new RefinementOperator(['number', 'number'], (expr) => expr[0] >= expr[1]),
-            '+': new RefinementOperator(['number', 'number'], (expr) => expr[0] + expr[1]),
-            '-': new RefinementOperator(['number', 'number'], (expr) => expr[0] - expr[1]),
-            '*': new RefinementOperator(['number', 'number'], (expr) => expr[0] * expr[1]),
-            '/': new RefinementOperator(['number', 'number'], (expr) => expr[0] / expr[1]),
-            'not': new RefinementOperator(['boolean'], (expr) => !expr[0]),
-            'neg': new RefinementOperator(['number'], (expr) => -expr[0]),
-            '==': eqBoolOp.or(eqNumOp),
-            '!=': neqBoolOp.or(neqNumOp),
-        };
-        op = (op === '-' && expr.length === 1) ? 'neg' : op;
-        return operators[op].evaluate(expr);
     }
 
     // This function assumes the following:
@@ -128,68 +48,6 @@ export class Refiner {
     // ~ Removes redundant info like expression == false => not expression
     static normaliseExpression(expr: RefinementExpression) {
         console.log('TODO(ragdev): WIP');
-    }
-
-    // This function assumes that the expression is univariate
-    // and has been normalised (see above for definition).
-    // TODO(ragdev): Currently only Number types are supported. Add Boolean and String support.
-    static expressionToRange(expr: RefinementExpression): Range {
-        if (expr.kind === 'binary-expression-node') {
-            if (expr.leftExpr.kind === 'field-name-node' && expr.rightExpr.kind === 'number-node') {
-                return Range.makeInitialGivenOp(expr.operator, expr.rightExpr.value);
-            }
-            const left = Refiner.expressionToRange(expr.leftExpr);
-            const right = Refiner.expressionToRange(expr.rightExpr);
-            return Range.updateGivenOp(expr.operator, [left, right]);
-        } else if (expr.kind === 'unary-expression-node') {
-            const rg = Refiner.expressionToRange(expr.expr);
-            return Range.updateGivenOp(expr.operator, [rg]);
-        }
-        throw new Error(`Cannot resolve primitive nodes by themselves.`);
-    }
-
-    private static manageErrors(errors: (ExpressionPrimitives | Error)[]): Error {
-        let errorMessage = '';
-        for (const error of errors) {
-            if (error instanceof Error) {
-                errorMessage += error.message + '\n';
-            }
-        }
-        return new Error(errorMessage);
-    }
-}
-
-class RefinementOperator implements GenericOperator {
-    exprTypes: string[];
-    fn: Evaluator;
-
-    constructor(exprTypes: string[], fn: Evaluator) {
-        this.exprTypes = exprTypes;
-        this.fn = fn;
-    }
-
-    evaluate(exprs: ExpressionPrimitives[]): ExpressionPrimitives | Error {
-        if (exprs.length !== this.exprTypes.length) {
-            return new Error(`Got ${exprs.length} operands. Expected ${this.exprTypes.length}.`);
-        }
-        for (const [index, expr] of exprs.entries()) {
-            if (typeof expr !== this.exprTypes[index]) {
-                return new Error(`Got type ${typeof expr}. Expected ${this.exprTypes[index]}.`);
-            }
-        }
-        return this.fn(exprs);
-    }
-
-    or(alternative: GenericOperator): GenericOperator {
-        return {
-            evaluate: (exprs) => {
-                let res = this.evaluate(exprs);
-                if (res instanceof Error) {
-                    res = alternative.evaluate(exprs);
-                }
-                return res;
-            }
-        };
     }
 }
 
@@ -216,6 +74,23 @@ export class Range {
             newRange.segments.push(new Segment(subRange.from, subRange.to));
         }
         return newRange;
+    }
+    // This function assumes that the expression is univariate
+    // and has been normalised (see above for definition).
+    // TODO(ragdev): Currently only Number types are supported. Add Boolean and String support.
+    static fromExpression(expr: RefinementExpressionNode): Range {
+        if (expr.kind === 'binary-expression-node') {
+            if (expr.leftExpr.kind === 'field-name-node' && expr.rightExpr.kind === 'number-node') {
+                return Range.makeInitialGivenOp(expr.operator, expr.rightExpr.value);
+            }
+            const left = Range.fromExpression(expr.leftExpr);
+            const right = Range.fromExpression(expr.rightExpr);
+            return Range.updateGivenOp(expr.operator, [left, right]);
+        } else if (expr.kind === 'unary-expression-node') {
+            const rg = Range.fromExpression(expr.expr);
+            return Range.updateGivenOp(expr.operator, [rg]);
+        }
+        throw new Error(`Cannot resolve primitive nodes by themselves.`);
     }
     static unionOf(range1: Range, range2: Range): Range {
         const newRange = Range.copyOf(range1);
@@ -454,4 +329,349 @@ export class Segment {
 interface Boundary {
     val: number;
     kind: 'open' | 'closed';
+}
+
+export class Refinement {
+    kind: 'refinement';
+    expression: RefinementExpression;
+    private constructor() {
+        this.kind = 'refinement';
+        this.expression = null;
+    }
+    static fromAst(ref: RefinementNode, typeData: Dictionary<ExpressionPrimitives>): Refinement {
+        const refinement = new Refinement();
+        refinement.expression = RefinementExpression.fromAst(ref.expression, typeData);
+        return refinement;
+    }
+    toString(): string {
+        return '[' + this.expression.toString() + ']';
+    }
+    validateData(data: Dictionary<ExpressionPrimitives>): boolean {
+        const res = this.expression.applyOperator(data);
+        if (typeof res !== 'boolean') {
+            throw new Error('Refinement expression evaluated to a non-boolean type.\n');
+        }
+        return res;
+    }
+}
+
+class RefinementExpression {
+    kind: 'binary-expression' | 'unary-expression' | 'field-name' | 'number' | 'boolean';
+    type: 'Boolean' | 'Number' | 'Text';
+    static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+        switch (expr.kind) {
+            case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
+            case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
+            case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
+            case 'number-node': return NumberPrimitive.fromAst(expr);
+            case 'boolean-node': return BooleanPrimitive.fromAst(expr);
+            default: throw new Error('Unknown node type.');
+        }
+    }
+    toString(): string {
+        switch (this.kind) {
+            // tslint:disable-next-line: no-any
+            case 'binary-expression': return (this as any as BinaryExpression).toString();
+            // tslint:disable-next-line: no-any
+            case 'unary-expression': return (this as any as UnaryExpression).toString();
+            // tslint:disable-next-line: no-any
+            case 'field-name': return (this as any as FieldNamePrimitive).toString();
+            // tslint:disable-next-line: no-any
+            case 'number': return (this as any as NumberPrimitive).toString();
+            // tslint:disable-next-line: no-any
+            case 'boolean': return (this as any as BooleanPrimitive).toString();
+            default: throw new Error('Unknown node type.');
+        }
+    }
+    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+        switch (this.kind) {
+            // tslint:disable-next-line: no-any
+            case 'binary-expression': return (this as any as BinaryExpression).applyOperator(data);
+            // tslint:disable-next-line: no-any
+            case 'unary-expression': return (this as any as UnaryExpression).applyOperator(data);
+            // tslint:disable-next-line: no-any
+            case 'field-name': return (this as any as FieldNamePrimitive).applyOperator(data);
+            // tslint:disable-next-line: no-any
+            case 'number': return (this as any as NumberPrimitive).applyOperator();
+            // tslint:disable-next-line: no-any
+            case 'boolean': return (this as any as BooleanPrimitive).applyOperator();
+            default: throw new Error('Unknown node type.');
+        }
+    }
+}
+
+class BinaryExpression extends RefinementExpression {
+    kind: 'binary-expression';
+    type: 'Number' | 'Boolean';
+    leftExpr: RefinementExpression;
+    rightExpr: RefinementExpression;
+    operator: RefinementOperator;
+    private constructor() {
+        super();
+    }
+    static fromAst(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+        const expr = new BinaryExpression();
+        expr.kind = 'binary-expression';
+        expr.leftExpr = RefinementExpression.fromAst(expression.leftExpr, typeData);
+        expr.rightExpr = RefinementExpression.fromAst(expression.rightExpr, typeData);
+        expr.operator = new RefinementOperator(expression.operator);
+        expr.operator.assertOperandCompatibility([expr.leftExpr.type, expr.rightExpr.type]);
+        expr.type = expr.operator.evalType();
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return '(' + this.leftExpr.toString() + ' ' + this.operator.op + ' ' + this.rightExpr.toString() + ')';
+    }
+    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+        const left = this.leftExpr.applyOperator(data);
+        const right = this.rightExpr.applyOperator(data);
+        return this.operator.eval([left, right]);
+    }
+}
+
+class UnaryExpression extends RefinementExpression {
+    kind: 'unary-expression';
+    type: 'Number' | 'Boolean';
+    expr: RefinementExpression;
+    operator: RefinementOperator;
+    private constructor() {
+        super();
+    }
+    static fromAst(expression: UnaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+        const expr = new UnaryExpression();
+        expr.kind = 'unary-expression';
+        expr.expr = RefinementExpression.fromAst(expression.expr, typeData);
+        expr.operator = new RefinementOperator((expression.operator === '-') ? 'neg' : expression.operator);
+        expr.operator.assertOperandCompatibility([expr.expr.type]);
+        expr.type = expr.operator.evalType();
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return this.operator.op + '(' + this.expr.toString() + ')';
+    }
+    // tslint:disable-next-line: no-any
+    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+        const expression = this.expr.applyOperator(data);
+        return this.operator.eval([expression]);
+    }
+}
+
+class FieldNamePrimitive extends RefinementExpression {
+    kind: 'field-name';
+    type: 'Number' | 'Boolean' | 'Text';
+    value: string;
+    private constructor() {
+        super();
+    }
+    // tslint:disable-next-line: no-any
+    static fromAst(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+        const expr = new FieldNamePrimitive();
+        expr.kind = 'field-name';
+        expr.value = expression.value;
+        if (typeData[expr.value] === undefined) {
+            throw new Error(`Unresolved field name '${expr.value}' in the refinement expression.`);
+        }
+        expr.type = typeData[expr.value];
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return this.value.toString();
+    }
+    // tslint:disable-next-line: no-any
+    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+        if (data[this.value] !== undefined) {
+            return data[this.value];
+        }
+        return new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
+    }
+}
+
+class NumberPrimitive extends RefinementExpression {
+    kind: 'number';
+    type: 'Number';
+    value: number;
+    private constructor() {
+        super();
+    }
+    static fromAst(expression: NumberNode): RefinementExpression {
+        const expr = new NumberPrimitive();
+        expr.kind = 'number';
+        expr.value = expression.value;
+        expr.type = 'Number';
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return this.value.toString();
+    }
+    applyOperator(): ExpressionPrimitives {
+        return this.value;
+    }
+}
+
+class BooleanPrimitive extends RefinementExpression {
+    kind: 'boolean';
+    type: 'Boolean';
+    value: boolean;
+    private constructor() {
+        super();
+    }
+    static fromAst(expression: BooleanNode): RefinementExpression {
+        const expr = new BooleanPrimitive();
+        expr.kind = 'boolean';
+        expr.value = expression.value;
+        expr.type = 'Boolean';
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return this.value.toString();
+    }
+    applyOperator(): ExpressionPrimitives {
+        return this.value;
+    }
+}
+
+class RefinementOperator {
+    op: string;
+    fn: Evaluator;
+    constructor(operator: string) {
+        this.op = operator;
+        switch (this.op) {
+            case 'and': this.fn = (expr) => expr[0] && expr[1]; break;
+            case 'or': this.fn = (expr) => expr[0] || expr[1]; break;
+            case '<': this.fn = (expr) => expr[0] < expr[1]; break;
+            case '>': this.fn = (expr) => expr[0] > expr[1]; break;
+            case '<=': this.fn = (expr) => expr[0] <= expr[1]; break;
+            case '>=': this.fn = (expr) => expr[0] >= expr[1]; break;
+            case '+': this.fn = (expr) => expr[0] + expr[1]; break;
+            case '-': this.fn = (expr) => expr[0] - expr[1]; break;
+            case '*': this.fn = (expr) => expr[0] * expr[1]; break;
+            case '/': this.fn = (expr) => expr[0] / expr[1]; break;
+            case 'not': this.fn = (expr) => !expr[0]; break;
+            case 'neg': this.fn = (expr) => -expr[0]; break;
+            case '==': this.fn = (expr) => expr[0] === expr[1]; break;
+            case '!=': this.fn = (expr) => expr[0] !== expr[1]; break;
+            default: throw new Error(`Invalid refinement operator ${this.op}`);
+        }
+    }
+
+    // tslint:disable-next-line: no-any
+    eval(exprs: ExpressionPrimitives[]): ExpressionPrimitives {
+        return this.fn(exprs);
+    }
+
+    evalType(): 'Number' | 'Boolean' {
+        switch (this.op) {
+            case 'and': return 'Boolean';
+            case 'or': return 'Boolean';
+            case '<': return 'Boolean';
+            case '>': return 'Boolean';
+            case '<=': return 'Boolean';
+            case '>=': return 'Boolean';
+            case '+': return 'Number';
+            case '-': return 'Number';
+            case '*': return 'Number';
+            case '/': return 'Number';
+            case 'not': return 'Boolean';
+            case 'neg': return 'Number';
+            case '==': return 'Boolean';
+            case '!=': return 'Boolean';
+            default: throw new Error(`Invalid refinement operator ${this.op}`);
+        }
+    }
+
+    assertOperandCompatibility(operandTypes: string[]): void {
+        switch (this.op) {
+            case 'and': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Boolean');
+                this.assertType(operandTypes[1], 'Boolean');
+                break;
+            }
+            case 'or': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Boolean');
+                this.assertType(operandTypes[1], 'Boolean');
+                break;
+            }
+            case '<': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Number');
+                this.assertType(operandTypes[1], 'Number');
+                break;
+            }
+            case '>': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Number');
+                this.assertType(operandTypes[1], 'Number');
+                break;
+            }
+            case '<=': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Number');
+                this.assertType(operandTypes[1], 'Number');
+                break;
+            }
+            case '>=': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Number');
+                this.assertType(operandTypes[1], 'Number');
+                break;
+            }
+            case '+': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Number');
+                this.assertType(operandTypes[1], 'Number');
+                break;
+            }
+            case '-': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Number');
+                this.assertType(operandTypes[1], 'Number');
+                break;
+            }
+            case '*': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Number');
+                this.assertType(operandTypes[1], 'Number');
+                break;
+            }
+            case '/': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertType(operandTypes[0], 'Number');
+                this.assertType(operandTypes[1], 'Number');
+                break;
+            }
+            case 'not': {
+                assert.strictEqual(operandTypes.length, 1);
+                this.assertType(operandTypes[0], 'Boolean');
+                break;
+            }
+            case 'neg': {
+                assert.strictEqual(operandTypes.length, 1);
+                this.assertType(operandTypes[0], 'Number');
+                break;
+            }
+            case '==': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertTypeEquality(operandTypes[0], operandTypes[1]);
+                break;
+            }
+            case '!=': {
+                assert.strictEqual(operandTypes.length, 2);
+                this.assertTypeEquality(operandTypes[0], operandTypes[1]);
+                break;
+            }
+            default: throw new Error('Invalid refinement operator');
+        }
+    }
+    assertType(actual: string, expected: string): void {
+        if (actual !== expected) {
+            throw new Error(`Got type ${actual}. Expected ${expected}.`);
+        }
+    }
+    assertTypeEquality(t1: string, t2: string): void {
+        if (t1 !== t2) {
+            throw new Error(`Expected ${t1} and ${t2} to be the same.`);
+        }
+    }
 }

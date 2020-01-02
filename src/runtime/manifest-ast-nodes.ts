@@ -45,7 +45,7 @@ export class BaseNode {
 }
 
 export class BaseNodeWithRefinement extends BaseNode {
-    refinement?: Refinement;
+    refinement?: RefinementNode;
 }
 
 //  PARTICLE TYPES
@@ -525,12 +525,12 @@ export interface SchemaTupleType extends BaseNodeWithRefinement {
   types: string[];
 }
 
-export interface Refinement extends BaseNode {
+export interface RefinementNode extends BaseNode {
   kind: 'refinement';
-  expression: RefinementExpression;
+  expression: RefinementExpressionNode;
 }
 
-export type RefinementExpression = BinaryExpressionNode | UnaryExpressionNode | FieldNode | NumberNode | BooleanNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | NumberNode | BooleanNode;
 
 export interface ExpressionNode extends BaseNode {
   operator: string;
@@ -538,13 +538,13 @@ export interface ExpressionNode extends BaseNode {
 
 export interface BinaryExpressionNode extends ExpressionNode {
   kind: 'binary-expression-node';
-  leftExpr: RefinementExpression;
-  rightExpr: RefinementExpression;
+  leftExpr: RefinementExpressionNode;
+  rightExpr: RefinementExpressionNode;
 }
 
 export interface UnaryExpressionNode extends ExpressionNode {
   kind: 'unary-expression-node';
-  expr: RefinementExpression;
+  expr: RefinementExpressionNode;
 }
 
 export interface FieldNode extends BaseNode {

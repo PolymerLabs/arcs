@@ -409,7 +409,8 @@ export class ParticleSpec {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
       const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
       const entitySchema = connection.type.getEntitySchema();
-      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${Refiner.refinementString(entitySchema ? entitySchema.refinement : null)}${tags}`);
+      const ref = entitySchema ? entitySchema.refinement : null;
+      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${ref ? ref.toString() : ''}${tags}`);
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }

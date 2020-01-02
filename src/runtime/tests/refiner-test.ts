@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Refiner, Segment} from '../refiner.js';
+import {Refiner, Segment, Refinement} from '../refiner.js';
 import {Range} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
@@ -23,11 +23,12 @@ describe('refiner', () => {
             particle Foo
                 input: reads Something {num: Number [ (num/-3 < 0 and num*num == 36) or num == 0 ] }
         `);
-        const ref = manifestAst[0].args[0].type.fields[0].type.refinement;
+        const typeData = {}; typeData['num'] = 'Number';
+        const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         const data = {
             num: 6
         };
-        const res = Refiner.isValidData(ref, data);
+        const res = ref.validateData(data);
         assert.strictEqual(res, data.num === 0 || data.num === 6);
     });
     it('Throws error when field name not found.', () => {
@@ -36,12 +37,13 @@ describe('refiner', () => {
                 particle Foo
                     input: reads Something {num: Number [ num < num2 ] }
             `);
-            const ref = manifestAst[0].args[0].type.fields[0].type.refinement;
+            const typeData = {}; typeData['num'] = 'Number';
+            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
             const data = {
                 num: 6,
             };
-            const _ = Refiner.isValidData(ref, data);
-        }, `Unresolved field name 'num2' in the refinement expression.\n`);
+            const _ = ref.validateData(data);
+        }, `Unresolved field name 'num2' in the refinement expression.`);
     });
     it('Throws error when expression does not produce boolean result.', () => {
         assert.throws(() => {
@@ -49,11 +51,12 @@ describe('refiner', () => {
                 particle Foo
                     input: reads Something {num: Number [ num + 5 ] }
             `);
-            const ref = manifestAst[0].args[0].type.fields[0].type.refinement;
+            const typeData = {}; typeData['num'] = 'Number';
+            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
             const data = {
                 num: 6,
             };
-            const _ = Refiner.isValidData(ref, data);
+            const _ = ref.validateData(data);
         }, `Refinement expression evaluated to a non-boolean type.\n`);
     });
     it('Throws error when operators and operands are incompatible.', () => {
@@ -62,23 +65,25 @@ describe('refiner', () => {
                 particle Foo
                     input: reads Something {num: Number [ (num < 5) + 3 == 0 ] }
             `);
-            const ref = manifestAst[0].args[0].type.fields[0].type.refinement;
+            const typeData = {}; typeData['num'] = 'Number';
+            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
             const data = {
                 num: 6,
             };
-            const _ = Refiner.isValidData(ref, data);
-        }, `Got type boolean. Expected number.\n`);
+            const _ = ref.validateData(data);
+        }, `Got type Boolean. Expected Number.`);
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
                     input: reads Something {num: Number [ (num and 3) == 0 ] }
             `);
-            const ref = manifestAst[0].args[0].type.fields[0].type.refinement;
+            const typeData = {}; typeData['num'] = 'Number';
+            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
             const data = {
                 num: 6,
             };
-            const _ = Refiner.isValidData(ref, data);
-        }, `Got type number. Expected boolean.\n`);
+            const _ = ref.validateData(data);
+        }, `Got type Number. Expected Boolean.`);
     });
     it('tests expression to range conversion.', () => {
         let manifestAst = parse(`
@@ -86,21 +91,21 @@ describe('refiner', () => {
                 input: reads Something {num: Number [ ((num < 3) and (num > 0)) or (num == 5) ] }
         `);
         let expr = manifestAst[0].args[0].type.fields[0].type.refinement.expression;
-        let range = Refiner.expressionToRange(expr);
+        let range = Range.fromExpression(expr);
         assert.deepEqual(range.segments, [Segment.openOpen(0, 3), Segment.closedClosed(5, 5)]);
         manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [(num > 10) == (num >= 20)] }
         `);
         expr = manifestAst[0].args[0].type.fields[0].type.refinement.expression;
-        range = Refiner.expressionToRange(expr);
+        range = Range.fromExpression(expr);
         assert.deepEqual(range.segments, [Segment.openClosed(Number.NEGATIVE_INFINITY, 10), Segment.closedOpen(20, Number.POSITIVE_INFINITY)]);
         manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [not (num != 10)] }
         `);
         expr = manifestAst[0].args[0].type.fields[0].type.refinement.expression;
-        range = Refiner.expressionToRange(expr);
+        range = Range.fromExpression(expr);
         assert.deepEqual(range.segments, [Segment.closedClosed(10, 10)]);
 
     });

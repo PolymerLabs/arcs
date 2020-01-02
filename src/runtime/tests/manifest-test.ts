@@ -563,14 +563,14 @@ ${particleStr1}
   it('can construct manifest containing schema with refinement types', async () => {
     const manifest = await parseManifest(`
       schema Foo
-        test: Text [num < 5]`);
+        num: Number [num < 5]`);
     const verify = (manifest: Manifest) => {
-      const ref = manifest.schemas.Foo.fields.test.refinement;
+      const ref = manifest.schemas.Foo.fields.num.refinement;
       assert.strictEqual(ref.kind, 'refinement');
-      assert.strictEqual(ref.expression.kind, 'binary-expression-node');
+      assert.strictEqual(ref.expression.kind, 'binary-expression');
       assert.strictEqual(ref.expression.leftExpr.value, 'num');
       assert.strictEqual(ref.expression.rightExpr.value, 5);
-      assert.strictEqual(ref.expression.operator, '<');
+      assert.strictEqual(ref.expression.operator.op, '<');
     };
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
@@ -586,14 +586,14 @@ ${particleStr1}
       const ref = (entity as any).getEntitySchema().refinement;
       assert.exists(ref);
       assert.strictEqual(ref.kind, 'refinement');
-      assert.strictEqual(ref.expression.kind, 'binary-expression-node');
-      assert.strictEqual(ref.expression.operator, 'and');
-      assert.strictEqual(ref.expression.leftExpr.kind, 'binary-expression-node');
-      assert.strictEqual(ref.expression.leftExpr.operator, '>');
+      assert.strictEqual(ref.expression.kind, 'binary-expression');
+      assert.strictEqual(ref.expression.operator.op, 'and');
+      assert.strictEqual(ref.expression.leftExpr.kind, 'binary-expression');
+      assert.strictEqual(ref.expression.leftExpr.operator.op, '>');
       assert.strictEqual(ref.expression.leftExpr.leftExpr.value, 'value');
       assert.strictEqual(ref.expression.leftExpr.rightExpr.value, 10);
-      assert.strictEqual(ref.expression.rightExpr.kind, 'binary-expression-node');
-      assert.strictEqual(ref.expression.rightExpr.operator, '<');
+      assert.strictEqual(ref.expression.rightExpr.kind, 'binary-expression');
+      assert.strictEqual(ref.expression.rightExpr.operator.op, '<');
       assert.strictEqual(ref.expression.rightExpr.leftExpr.value, 'price');
       assert.strictEqual(ref.expression.rightExpr.rightExpr.value, 2);
     };

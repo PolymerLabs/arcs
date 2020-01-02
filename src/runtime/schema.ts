@@ -15,8 +15,8 @@ import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/cr
 import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
-import {Refinement, SchemaType} from './manifest-ast-nodes.js';
-import {Refiner} from './refiner.js';
+import {RefinementNode, SchemaType, SchemaPrimitiveType} from './manifest-ast-nodes.js';
+import {Refiner, Refinement} from './refiner.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -186,7 +186,7 @@ export class Schema {
   // tslint:disable-next-line: no-any
   static fieldToString([name, type]: [string, SchemaType]) {
     const typeStr = Schema._typeString(type);
-    const refExpr = Refiner.refinementString(type.refinement);
+    const refExpr = type.refinement ? type.refinement.toString() : '';
     return `${name}: ${typeStr}${refExpr}`;
   }
 

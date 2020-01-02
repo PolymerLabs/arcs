@@ -1335,7 +1335,7 @@ SchemaTupleType
 Refinement
   = '[' whiteSpace? expression:RefinementExpression whiteSpace? ']'
   {
-      return toAstNode<AstNode.Refinement>({kind: 'refinement', expression});
+      return toAstNode<AstNode.RefinementNode>({kind: 'refinement', expression});
   }
   / '[' { expected("a valid refinement expression"); }
 
