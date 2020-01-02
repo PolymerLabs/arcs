@@ -25,7 +25,8 @@ import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
-    const runtime = new Runtime(new StubLoader({}), FakeSlotComposer);
+    const runtime = new Runtime({
+        loader: new StubLoader({}), composerClass: FakeSlotComposer});
     const arc = runtime.newArc(
         'demo',
         'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo'
@@ -65,7 +66,8 @@ describe('remote planificator', () => {
     const context = manifestString
         ? await Manifest.parse(manifestString, {loader, fileName: '', memoryProvider})
         : await Manifest.load(manifestFilename, loader, {memoryProvider});
-    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
+    const runtime = new Runtime({
+        loader, composerClass: FakeSlotComposer, context, memoryProvider});
     return runtime.newArc('demo', storageKey);
   }
   async function createConsumePlanificator(plannerStorageKeyBase, manifestFilename) {

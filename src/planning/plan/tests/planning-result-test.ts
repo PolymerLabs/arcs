@@ -32,7 +32,8 @@ describe('planning result', () => {
   async function testResultSerialization(manifestFilename) {
     const loader = new StubLoader({});
     const context = await Manifest.load(manifestFilename, loader, {memoryProvider});
-    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
+    const runtime = new Runtime({
+        loader, composerClass: FakeSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -54,7 +55,8 @@ describe('planning result', () => {
   it('appends search suggestions', async () => {
     const loader = new StubLoader({});
     const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
-    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
+    const runtime = new Runtime({
+        loader, composerClass: FakeSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -125,7 +127,7 @@ recipe R3
         `;
   async function prepareMerge(manifestStr1, manifestStr2) {
     const loader = new StubLoader({});
-    const runtime = new Runtime(loader, FakeSlotComposer);
+    const runtime = new Runtime({loader, composerClass: FakeSlotComposer});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const planToSuggestion = async (plan: Recipe): Promise<Suggestion> => {

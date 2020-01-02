@@ -90,7 +90,8 @@ class TestPlanProducer extends PlanProducer {
       const loader = new StubLoader({});
       const memoryProvider = new TestVolatileMemoryProvider();
       const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
-      const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
+      const runtime = new Runtime({
+          loader, composerClass: FakeSlotComposer, context, memoryProvider});
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
       const suggestions = await StrategyTestHelper.planForArc(
           runtime.newArc('demo', storageKeyPrefixForTest())

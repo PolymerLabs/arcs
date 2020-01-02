@@ -61,7 +61,8 @@ describe('Multiplexer', () => {
     });
     postsStub['referenceMode'] = false;
     // version could be set here, but doesn't matter for tests.
-    const runtime = new Runtime(loader, MockSlotComposer, context, null, memoryProvider);
+    const runtime = new Runtime({
+        loader, composerClass: MockSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.pec.slotComposer as MockSlotComposer;
     const suggestions = await StrategyTestHelper.planForArc(arc);

@@ -39,7 +39,7 @@ const getCollectionData = async (arc: Arc, index: number) => {
 };
 
 const spawnTestArc = async (loader) => {
-  const runtime = new Runtime(loader, FakeSlotComposer);
+  const runtime = new Runtime({loader, composerClass: FakeSlotComposer});
   const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
   const manifest = await Manifest.load('manifest', loader);
   const [recipe] = manifest.recipes;

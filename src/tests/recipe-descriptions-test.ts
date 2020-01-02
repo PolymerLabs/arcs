@@ -96,7 +96,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const context =  await Manifest.parse(
         options.manifestString || createManifestString(options),
         {loader, memoryProvider, fileName: 'foo.js'});
-    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
+    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', 'volatile://');
     arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
 
@@ -257,7 +257,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
             foo: writes fooHandle
           description \`cannot show duplicate \${ShowFoo.foo}\`
       `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', 'volatile://');
 
     await StrategyTestHelper.planForArc(arc).then(() => assert('expected exception for duplicate particles'))
@@ -309,7 +309,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
     `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', 'volatile://');
     // Plan for arc
     const suggestions0 = await StrategyTestHelper.planForArc(arc);
@@ -341,7 +341,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         C
         description \`do C\`
     `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime(loader, FakeSlotComposer, context);
+    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', 'volatile://');
 
     const suggestions = await StrategyTestHelper.planForArc(arc);

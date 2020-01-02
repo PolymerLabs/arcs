@@ -33,9 +33,12 @@ describe('products test', () => {
   it('filters', async () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
-    const runtime = new Runtime(loader, FakeSlotComposer,
-        await Manifest.load(manifestFilename, loader, {memoryProvider}),
-        null, memoryProvider);
+    const runtime = new Runtime({
+        loader,
+        composerClass: FakeSlotComposer,
+        context: await Manifest.load(manifestFilename, loader, {memoryProvider}),
+        memoryProvider
+      });
     const arc = runtime.newArc('demo', 'volatile://');
     const recipe = arc.context.recipes.find(r => r.name === 'FilterBooks');
     assert.isTrue(recipe.normalize() && recipe.isResolved());

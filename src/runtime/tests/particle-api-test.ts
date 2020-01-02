@@ -99,7 +99,8 @@ class ResultInspector {
 
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
-  const runtime = new Runtime(new StubLoader(fileMap), FakeSlotComposer, manifest);
+  const runtime = new Runtime({
+      loader: new StubLoader(fileMap), composerClass: FakeSlotComposer, context: manifest});
   return runtime.newArc('demo', Flags.useNewStorageStack ? null : 'volatile://');
 }
 

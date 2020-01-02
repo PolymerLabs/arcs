@@ -33,6 +33,14 @@ import {logsFactory} from '../platform/logs-factory.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
+export type RuntimeOptions = Readonly<{
+  loader?: Loader;
+  composerClass?: typeof SlotComposer;
+  context?: Manifest;
+  pecFactory?: PecFactory;
+  memoryProvider?: VolatileMemoryProvider;
+}>;
+
 export type RuntimeArcOptions = Readonly<{
   pecFactories?: PecFactory[];
   storageProviderFactory?: StorageProviderFactory;
@@ -90,7 +98,10 @@ export class Runtime {
   }
 
   static newForNodeTesting(context?: Manifest) {
-    return new Runtime(new Loader(), FakeSlotComposer, context);
+    return new Runtime({
+        loader: new Loader(),
+        composerClass: FakeSlotComposer,
+        context});
   }
 
   /**
@@ -107,7 +118,12 @@ export class Runtime {
     // TODO(sjmiles): UiSlotComposer type shenanigans are temporary pending complete replacement
     // of SlotComposer by UiSlotComposer. Also it's weird that `new Runtime(..., UiSlotComposer, ...)`
     // doesn't bother tslint at all when done in other modules.
-    const runtime = new Runtime(loader, UiSlotComposer as unknown as typeof SlotComposer, null, pecFactory, memoryProvider);
+    const runtime = new Runtime({
+      loader,
+      composerClass: UiSlotComposer as unknown as typeof SlotComposer,
+      pecFactory,
+      memoryProvider
+    });
     RamDiskStorageDriverProvider.register(memoryProvider);
     return runtime;
   }
@@ -129,10 +145,8 @@ export class Runtime {
     };
   }
 
-  // TODO(wkorman): Consider refactoring Runtime ctor to take an options object.
-  // We need to allow passing a MemoryProvider so that tests that prepare a
-  // context manifest that may use stores can pass along the memory as well.
-  constructor(loader?: Loader, composerClass?: typeof SlotComposer, context?: Manifest, pecFactory?: PecFactory, memoryProvider?: VolatileMemoryProvider) {
+  constructor(options: RuntimeOptions = {}) {
+    const {loader, composerClass, context, pecFactory, memoryProvider} = options;
     this.cacheService = new RuntimeCacheService();
     // We have to do this here based on a vast swathe of tests that just create
     // a Runtime instance and forge ahead. This is only temporary until we move

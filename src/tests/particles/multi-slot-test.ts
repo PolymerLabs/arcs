@@ -26,7 +26,8 @@ describe('multi-slot test', () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const context = await Manifest.load(
         './src/tests/particles/artifacts/multi-slot-test.manifest', loader, {memoryProvider});
-    const runtime = new Runtime(loader, MockSlotComposer, context, null, memoryProvider);
+    const runtime = new Runtime({
+        loader, composerClass: MockSlotComposer, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const slotComposer = arc.pec.slotComposer as MockSlotComposer;
     const suggestions = await StrategyTestHelper.planForArc(arc);

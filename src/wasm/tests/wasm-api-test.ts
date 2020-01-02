@@ -62,7 +62,7 @@ class TestLoader extends Loader {
     });
 
     async function setup(recipeName) {
-      const runtime = new Runtime(loader, RozSlotComposer, await manifestPromise);
+      const runtime = new Runtime({loader, composerClass: RozSlotComposer, context: await manifestPromise});
       const arc = runtime.newArc('wasm-test', 'volatile://');
 
       const recipe = arc.context.allRecipes.find(r => r.name === recipeName);

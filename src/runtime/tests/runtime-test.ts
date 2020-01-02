@@ -95,7 +95,7 @@ describe('Runtime', () => {
       `,
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
-    const runtime = new Runtime(loader, FakeSlotComposer, context, null, memoryProvider);
+    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
     const arc = runtime.runArc('test-arc', 'volatile://');
     const manifest = await Manifest.load('manifest', loader, {memoryProvider});
     manifest.recipes[0].normalize();
