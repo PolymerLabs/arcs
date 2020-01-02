@@ -22,7 +22,7 @@ const keywords = [
   'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
   'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
   'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'it', 'internalId', 'isSet'
+  'suspend', 'tailrec', 'vararg', 'it', 'internalId'
 ];
 
 const typeMap = {
@@ -56,7 +56,6 @@ import arcs.sdk.NullTermByteArray
 import arcs.sdk.Particle
 import arcs.sdk.StringDecoder
 import arcs.sdk.StringEncoder
-import arcs.sdk.log
 import arcs.sdk.utf8ToString
 `)}`;
   }
@@ -102,7 +101,6 @@ class KotlinGenerator implements ClassGenerator {
     this.getUnsetFields.push(`if (!${set}) rtn.add("${fixed}")`);
 
     this.decode.push(`"${field}" -> {`,
-                     `    if (${set}) log("WARNING: there are multiple fields ${field}")`,
                      `    decoder.validate("${typeChar}")`,
                      `    this.${fixed} = decoder.${decodeFn}`,
                      `}`);
@@ -137,8 +135,9 @@ class ${name}() : Entity<${name}>() {
         ${this.setFields.join('\n        ')}
     }`)}
 
-    override val isSet: Boolean 
-        get() = ${withFields(`${this.fieldSets.join(' && ')}`)}${withoutFields('true')}
+    override fun isSet(): Boolean {
+        return ${withFields(`${this.fieldSets.join(' && ')}`)}${withoutFields('true')}
+    }
     
     fun reset() {
         ${withFields(`${this.fieldsReset.join('\n        ')}`)}

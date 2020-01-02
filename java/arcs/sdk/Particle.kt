@@ -215,7 +215,7 @@ open class Singleton<T : Entity<T>>(
         this.entity = entity
         val encoded = entity.encodeEntity()
         RuntimeClient.singletonSet(particle, this, encoded)
-        if (!entity.isSet) {
+        if (!entity.isSet()) {
             log("WARNING: ${
                 entity.getFieldsNotSet().joinToString(", ")
             } fields on $entity are not set")

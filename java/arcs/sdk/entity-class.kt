@@ -3,7 +3,15 @@
 // particle Test
 //   data: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &{val: Text}}
 
+@file:Suppress("PackageName", "TopLevelName")
 package arcs
+
+import arcs.sdk.Entity
+import arcs.sdk.NullTermByteArray
+import arcs.sdk.Particle
+import arcs.sdk.StringDecoder
+import arcs.sdk.StringEncoder
+import arcs.sdk.utf8ToString
 
 class Test_Data_Ref() // Implementation omitted for brevity
 
@@ -50,8 +58,9 @@ class Test_Data() : Entity<Test_Data>() {
         this.flg = flg
     }
 
-    override val isSet: Boolean
-        get() = _numSet && _txtSet && _lnkSet && _flgSet
+    override fun isSet(): Boolean {
+        return _numSet && _txtSet && _lnkSet && _flgSet
+    }
 
     fun reset() {
         num = 0.0
@@ -87,22 +96,18 @@ class Test_Data() : Entity<Test_Data>() {
             val name = decoder.upTo(':').utf8ToString()
             when (name) {
                 "num" -> {
-                    if (_numSet) log("WARNING: there are multiple fields num")
                     decoder.validate("N")
                     this.num = decoder.decodeNum()
                 }
                 "txt" -> {
-                    if (_txtSet) log("WARNING: there are multiple fields txt")
                     decoder.validate("T")
                     this.txt = decoder.decodeText()
                 }
                 "lnk" -> {
-                    if (_lnkSet) log("WARNING: there are multiple fields lnk")
                     decoder.validate("U")
                     this.lnk = decoder.decodeText()
                 }
                 "flg" -> {
-                    if (_flgSet) log("WARNING: there are multiple fields flg")
                     decoder.validate("B")
                     this.flg = decoder.decodeBool()
                 }

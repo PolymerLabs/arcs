@@ -21,7 +21,7 @@ abstract class Entity<T> {
     abstract fun schemaHash(): String
     abstract fun decodeEntity(encoded: ByteArray): T?
     abstract fun encodeEntity(): NullTermByteArray
-    abstract val isSet: Boolean
+    abstract fun isSet(): Boolean
     abstract fun getFieldsNotSet(): List<String>
 }
 
