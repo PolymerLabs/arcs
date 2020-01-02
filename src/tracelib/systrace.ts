@@ -25,11 +25,11 @@ type Constructor<T> = new (...args) => T;
 const SYSTEM_TRACED_PROPERTY = '_systemTraced';
 
 // Specifies the functions of a prototype/constructor not being traced.
-const DONT_TRACE_PROPERTY = '_dontTrace';
+const NO_TRACE_PROPERTY = '_noTrace';
 
 // Don't trace these [class]: properties
 //
-// Works jointly with @DontTrace{WithReason} which is used when modifying source
+// Works jointly with @NoTrace{WithReason} which is used when modifying source
 // codes is allowed, whereas using this blacklist when modifying source codes in
 // i.e. third-party libraries is forbidden. The list is usually used to shut up
 // chatty trace messages on third-party class methods.
@@ -69,13 +69,13 @@ const idGenerator = new class {
  * Method decorator for specifying that don't harness system trace
  * to this method with a reason.
  */
-export function DontTraceWithReason(reason: string = '') {
+export function NoTraceWithReason(reason: string = '') {
   return function _(
       target: object, property: string, descriptor: PropertyDescriptor) {
-    if (!target.hasOwnProperty(DONT_TRACE_PROPERTY)) {
-      Object.defineProperty(target, DONT_TRACE_PROPERTY, {value: [property]});
+    if (!target.hasOwnProperty(NO_TRACE_PROPERTY)) {
+      Object.defineProperty(target, NO_TRACE_PROPERTY, {value: [property]});
     } else {
-      target[DONT_TRACE_PROPERTY].push(property);
+      target[NO_TRACE_PROPERTY].push(property);
     }
   };
 }
@@ -85,7 +85,7 @@ export function DontTraceWithReason(reason: string = '') {
  * to this method.
  */
 // tslint:disable-next-line: variable-name
-export const DontTrace = DontTraceWithReason();
+export const NoTrace = NoTraceWithReason();
 
 /**
  * Class decorator for installing system tracing capability
@@ -198,8 +198,8 @@ function harnessSystemTracing(obj: object, client: Client) {
     if (element.property === 'constructor') {
       return false;
     }
-    // Skips tracing when a function is decorated with @DontTrace.
-    const props = element.prototype[DONT_TRACE_PROPERTY];
+    // Skips tracing when a function is decorated with @NoTrace.
+    const props = element.prototype[NO_TRACE_PROPERTY];
     if (props && props.indexOf(element.property) !== -1) {
       return false;
     }

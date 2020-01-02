@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {DontTrace, SystemTrace, SystemTraceable, makeSystemTraceable} from '../../tracelib/systrace.js';
+import {NoTrace, SystemTrace, SystemTraceable, makeSystemTraceable} from '../../tracelib/systrace.js';
 import {getGlobalScope} from '../../tracelib/systrace-helpers.js';
 import {Client} from '../../tracelib/systrace-clients.js';
 
@@ -49,18 +49,18 @@ class Foo extends Base {
   value: number = DATA_PROPERTY_VALUE;
 
   static staticMethodFoo() {}
-  @DontTrace
-  static staticMethodFooDontTrace() {}
+  @NoTrace
+  static staticMethodFooNoTrace() {}
 
   constructor() { super(); }
 
   instanceMethodFoo() {}
   instanceMethodForOverride1() {}
-  @DontTrace
+  @NoTrace
   instanceMethodForOverride2() {}
   instanceMethodForOverride3() {}
-  @DontTrace
-  instanceMethodFooDontTrace() {}
+  @NoTrace
+  instanceMethodFooNoTrace() {}
 
   set data(value: number) { this.value = value; }
   get data() { return this.value; }
@@ -70,8 +70,8 @@ class Bar extends Foo {
   value: number = DATA_PROPERTY_VALUE;
 
   static staticMethodBar() {}
-  @DontTrace
-  static staticMethodBarDontTrace() {}
+  @NoTrace
+  static staticMethodBarNoTrace() {}
 
   constructor() { super(); }
 
@@ -79,8 +79,8 @@ class Bar extends Foo {
   instanceMethodForOverride1() { super.instanceMethodForOverride1(); }
   instanceMethodForOverride2() { super.instanceMethodForOverride2(); }
   instanceMethodForOverride3() {}
-  @DontTrace
-  instanceMethodBarDontTrace() {}
+  @NoTrace
+  instanceMethodBarNoTrace() {}
 
   set data(value: number) { this.value = value; }
   get data() { return this.value; }
@@ -136,13 +136,13 @@ describe('System Trace', () => {
     assert.deepStrictEqual(TestClient.answer, answer);
   });
 
-  it('@DontTrace annotated methods should bypass tracing', () => {
+  it('@NoTrace annotated methods should bypass tracing', () => {
     const foo = new Foo();
     const bar = new Bar();
-    Foo.staticMethodFooDontTrace();
-    Bar.staticMethodBarDontTrace();
-    foo.instanceMethodFooDontTrace();
-    bar.instanceMethodBarDontTrace();
+    Foo.staticMethodFooNoTrace();
+    Bar.staticMethodBarNoTrace();
+    foo.instanceMethodFooNoTrace();
+    bar.instanceMethodBarNoTrace();
     assert.isEmpty(TestClient.answer);
   });
 
@@ -178,7 +178,7 @@ describe('System Trace', () => {
     assert.deepStrictEqual(TestClient.answer, answer);
   });
 
-  it('overridden instance method tracing (@DontTrace super-class call)', () => {
+  it('overridden instance method tracing (@NoTrace super-class call)', () => {
     const answer = [
         '++instanceMethodForOverride2', '--instanceMethodForOverride2',
     ];

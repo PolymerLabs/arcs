@@ -29,7 +29,7 @@ import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
-import {DontTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
+import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -259,7 +259,7 @@ export class APIPort {
     this._port.close();
   }
 
-  @DontTraceWithReason('Chatty')
+  @NoTraceWithReason('Chatty')
   async _processMessage(e) {
     assert(this['before' + e.data.messageType] !== undefined);
     const count = this.messageCount++;
@@ -276,7 +276,7 @@ export class APIPort {
     }
   }
 
-  @DontTraceWithReason('Recursion on sending trace messages inner->outer')
+  @NoTraceWithReason('Recursion on sending trace messages inner->outer')
   async send(name: string, args: {}) {
     const call = {messageType: name, messageBody: args, stack: this.attachStack ? new Error().stack : undefined};
     const count = this.messageCount++;
@@ -289,7 +289,7 @@ export class APIPort {
     await this._port.postMessage(call);
   }
 
-  @DontTraceWithReason('Chatty')
+  @NoTraceWithReason('Chatty')
   supportsExternalParticle(): boolean {
     // TODO: improve heuristics.
     return Object.getPrototypeOf(this._port.constructor).name === 'MessagePort';
@@ -489,7 +489,7 @@ export abstract class PECOuterPort extends APIPort {
     }
   }
 
-  @DontTraceWithReason('Chatty')
+  @NoTraceWithReason('Chatty')
   async _processMessage(e) {
     // Modifying pec messages on the host side is a problem as they can be transmited to DevTools
     // with a delay. If the object representing a message is modified, it appears as if a different

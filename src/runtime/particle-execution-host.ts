@@ -32,7 +32,7 @@ import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
 import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import {DontTrace, SystemTrace} from '../tracelib/systrace.js';
+import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 
 export type StartRenderOptions = {
@@ -417,14 +417,14 @@ class PECOuterPortImpl extends PECOuterPort {
     this.SimpleCallback(callback, response);
   }
 
-  @DontTrace
+  @NoTrace
   onSystemTraceBegin(tag: string, cookie: number) {
     if (this.systemTraceClient) {
       this.systemTraceClient.asyncTraceBegin(tag, cookie);
     }
   }
 
-  @DontTrace
+  @NoTrace
   onSystemTraceEnd(tag: string, cookie: number) {
     if (this.systemTraceClient) {
       this.systemTraceClient.asyncTraceEnd(tag, cookie);
