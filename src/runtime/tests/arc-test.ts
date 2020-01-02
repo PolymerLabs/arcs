@@ -61,6 +61,7 @@ async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) 
 
   return {
     arc,
+    context: manifest,
     recipe: manifest.recipes[0],
     Foo: Entity.createEntityClass(manifest.findSchemaByName('Foo'), null),
     Bar: Entity.createEntityClass(manifest.findSchemaByName('Bar'), null),
@@ -721,10 +722,11 @@ describe('Arc ' + storageKeyPrefix, () => {
     const loader = new Loader();
     const id = Id.fromString('test');
     const storageKey = storageKeyPrefix + id.toString();
-    const arc = new Arc({slotComposer, loader, id, storageKey, context: undefined});
+    const context = new Manifest({id});
+    const arc = new Arc({slotComposer, loader, id, storageKey, context});
 
     const serialization = await arc.serialize();
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest'});
     assert.strictEqual(newArc._stores.length, 0);
     assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
@@ -736,7 +738,7 @@ describe('Arc ' + storageKeyPrefix, () => {
       this.skip();
     }
 
-    const {arc, recipe, Foo, Bar, loader} = await setup(storageKeyPrefix);
+    const {arc, context, recipe, Foo, Bar, loader} = await setup(storageKeyPrefix);
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     const fooHandle = await singletonHandleForTest(arc, fooStore);
     const fooStoreCallbacks = await CallbackTracker.create(fooStore, 1);
@@ -758,7 +760,7 @@ describe('Arc ' + storageKeyPrefix, () => {
     const serialization = await arc.serialize();
     arc.dispose();
 
-    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new FakeSlotComposer(), context: undefined});
+    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new FakeSlotComposer(), context});
     fooStore = newArc.findStoreById(fooStore.id);
     barStore = newArc.findStoreById(barStore.id);
     assert.strictEqual(fooStore.versionToken, '1');
@@ -1125,7 +1127,7 @@ describe('Arc ' + storageKeyPrefix, () => {
 
     const slotComposer = new FakeSlotComposer();
 
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: undefined, fileName: 'foo.manifest'});
+    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: manifest, fileName: 'foo.manifest'});
     assert.strictEqual(newArc._stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');

@@ -947,7 +947,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -999,7 +1000,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1051,7 +1053,8 @@ describe('particle-api', () => {
     });
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1102,8 +1105,9 @@ describe('particle-api', () => {
       `
     });
 
-     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1164,8 +1168,9 @@ describe('particle-api', () => {
       `
     });
 
-     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
-    const arc = new Arc({id, loader, context: null});
+    const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
+    const context = new Manifest({id});
+    const arc = new Arc({id, loader, context});
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
