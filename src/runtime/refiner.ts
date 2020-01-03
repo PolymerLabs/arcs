@@ -677,6 +677,7 @@ class RefinementOperator {
             throw new Error(`Invalid refinement operator ${this.op}`);
 
         }
+        assert.strictEqual(operandTypes.length, expected.length);
         for (const [i, opT] of operandTypes.entries()) {
             if (opT !== expected[i]) {
                 throw new Error(`Got type ${opT}. Expected ${expected[i]}.`);
