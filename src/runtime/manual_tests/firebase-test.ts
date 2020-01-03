@@ -13,7 +13,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Id, ArcId} from '../id.js';
 import {Loader} from '../../platform/loader.js';
-import {Manifest} from '../manifest.js';
+import {Manifest, ManifestHandleRetriever} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {resetStorageForTesting} from '../storage/firebase/firebase-storage.js';
@@ -54,7 +54,7 @@ describe('firebase', function() {
   let storageInstances: StorageProviderFactory[] = [];
 
   function createStorage(id: Id): StorageProviderFactory {
-    const storage = new StorageProviderFactory(id);
+    const storage = new StorageProviderFactory(id, new ManifestHandleRetriever());
     storageInstances.push(storage);
     return storage;
   }

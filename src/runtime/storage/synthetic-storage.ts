@@ -19,6 +19,7 @@ import {setDiffCustom} from '../util.js';
 import {KeyBase} from './key-base.js';
 import {ChangeEvent, CollectionStorageProvider, StorageBase, StorageProviderBase, SingletonStorageProvider} from './storage-provider-base.js';
 import {StorageProviderFactory} from './storage-provider-factory.js';
+import {HandleRetriever} from './handle-retriever.js';
 
 enum Scope {
   arc = 1  // target must be a storage key for an ArcInfo Singleton
@@ -141,11 +142,17 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
   private model: ArcHandle[] = [];
   backingStore = undefined;
 
-  static async create(type: Type, id: string, key: string, targetStore: SingletonStorageProvider, storageFactory: StorageProviderFactory) {
+  static async create(
+      type: Type,
+      id: string,
+      key: string,
+      targetStore: SingletonStorageProvider,
+      storageFactory: StorageProviderFactory) {
     const sc = new SyntheticCollection(type, id, key, targetStore, storageFactory);
     const data = await targetStore.get();
-    await sc.process(data, false);
-    targetStore.legacyOn(details => sc.process(details.data, true));
+    const retriever = storageFactory.getHandleRetriever();
+    await sc.process(data, false, retriever);
+    targetStore.legacyOn(details => sc.process(details.data, true, retriever));
     return sc;
   }
 
@@ -155,15 +162,15 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     this.storageFactory = storageFactory;
   }
 
-  private async process(data, fireEvent) {
+  private async process(data, fireEvent, handleRetriever) {
     let handles: Handle[];
-    try {
-      if (data) {
-        const manifest = await Manifest.parse(ArcInfo.extractSerialization(data), {});
-        handles = manifest.activeRecipe && manifest.activeRecipe.handles;
+    if (data) {
+      try {
+        const manifestContent = ArcInfo.extractSerialization(data);
+        handles = await handleRetriever.getHandlesFromManifest(manifestContent);
+      } catch (error) {
+        console.warn(`Error parsing manifest at ${this.storageKey}:\n${error.message}`);
       }
-    } catch (e) {
-      console.warn(`Error parsing manifest at ${this.storageKey}:\n${e.message}`);
     }
 
     const oldModel = this.model;

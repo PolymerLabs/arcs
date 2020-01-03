@@ -31,6 +31,7 @@ import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
+import {HandleRetriever} from './storage/handle-retriever.js';
 import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
@@ -129,6 +130,16 @@ interface ManifestLoadOptions {
   memoryProvider?: VolatileMemoryProvider;
 }
 
+export class ManifestHandleRetriever implements HandleRetriever {
+  async getHandlesFromManifest(content: string) : Promise<Handle[]> {
+    const manifest = await Manifest.parse(content, {});
+    if (!manifest.activeRecipe) {
+      return null;
+    }
+    return manifest.activeRecipe.handles || [];
+  }
+}
+
 export class Manifest {
   private _recipes: Recipe[] = [];
   private _imports: Manifest[] = [];
@@ -174,7 +185,7 @@ export class Manifest {
       throw new Error('Not present in the new storage stack.');
     }
     if (this._storageProviderFactory == undefined) {
-      this._storageProviderFactory = new StorageProviderFactory(this.id);
+      this._storageProviderFactory = new StorageProviderFactory(this.id, new ManifestHandleRetriever());
     }
     return this._storageProviderFactory;
   }
