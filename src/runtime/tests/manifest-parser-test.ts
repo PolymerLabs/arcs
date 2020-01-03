@@ -54,7 +54,7 @@ describe('manifest parser', () => {
       recipe Thing
         h0: create #myTag @ttl(20d)
         h1: create 'my-id' #anotherTag @ttl(1h)
-        h2: create @ttl(30m)`);
+        h2: create @ttl ( 30m )`);
   });
   it('parses recipes with particles', () => {
     parse(`

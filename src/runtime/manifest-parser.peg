@@ -153,7 +153,7 @@ Trigger "a trigger for a recipe"
 }
 
 ParameterizedAnnotation "a parameterized annotation (e.g. @foo(bar))"
-  = simpleAnnotation:SimpleAnnotation '(' parameter:[a-z0-9_]i* ')' {
+  = simpleAnnotation:SimpleAnnotation whiteSpace? '(' whiteSpace? parameter:[a-z0-9_]i* whiteSpace? ')' {
   return toAstNode<AstNode.ParameterizedAnnotation>({
     kind: 'param-annotation',
     simpleAnnotation,
