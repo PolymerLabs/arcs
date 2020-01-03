@@ -21,11 +21,12 @@ function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTyp
   return new Store({storageKey, exists, type: new CountType(), id: 'an-id'});
 }
 
-describe('Firebase + Store Integration', async () => {
-
+describe('chicken Firebase + Store Integration', async () => {
+  let runtime;
   beforeEach(() => {
     DriverFactory.clearRegistrationsForTesting();
-    MockFirebaseStorageDriverProvider.register();
+    runtime = new Runtime();
+    MockFirebaseStorageDriverProvider.register(runtime.getCacheService());
   });
 
   after(() => {
@@ -33,7 +34,6 @@ describe('Firebase + Store Integration', async () => {
   });
 
   it('will store a sequence of model and operation updates as models', async () => {
-    const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('location');
     const store = createStore(storageKey, Exists.ShouldCreate);
     const activeStore = await store.activate();
@@ -50,13 +50,12 @@ describe('Firebase + Store Integration', async () => {
     ], id: 1});
 
     await activeStore.idle();
-    const firebaseEntry = MockFirebaseStorageDriverProvider.getValueForTesting(storageKey);
+    const firebaseEntry = MockFirebaseStorageDriverProvider.getValueForTesting(runtime.getCacheService(), storageKey);
     assert.deepEqual(firebaseEntry.model, activeStore['localModel'].getData());
     assert.strictEqual(firebaseEntry.version, 2);
   });
 
   it('will store operation updates from multiple sources', async () => {
-    const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('unique');
     const store1 = createStore(storageKey, Exists.ShouldCreate);
     const activeStore1 = await store1.activate();
@@ -90,13 +89,13 @@ describe('Firebase + Store Integration', async () => {
     const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
     assert.strictEqual(results.filter(a => !a).length, 0);
 
-    const firebaseEntry = MockFirebaseStorageDriverProvider.getValueForTesting(storageKey);
+    const firebaseEntry = MockFirebaseStorageDriverProvider.getValueForTesting(
+        runtime.getCacheService(), storageKey);
     assert.deepEqual(firebaseEntry.model, activeStore1['localModel'].getData());
     assert.strictEqual(firebaseEntry.version, 3);
   });
 
   it('will store operation updates from multiple sources with some delays', async () => {
-    const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('unique');
     const store1 = createStore(storageKey, Exists.ShouldCreate);
     const activeStore1 = await store1.activate();
@@ -138,7 +137,6 @@ describe('Firebase + Store Integration', async () => {
   // This test is derived from a previously failing sequence test run. The number of awaits is important here,
   // as it allows the specific conditions that were causing deadlock to be established.
   it(`doesn't deadlock given a particular timing pattern`, async () => {
-    const runtime = new Runtime();
     const storageKey = new MockFirebaseStorageKey('unique');
     const store1 = createStore(storageKey, Exists.ShouldCreate);
     const activeStore1 = await store1.activate();

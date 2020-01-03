@@ -10,7 +10,7 @@
 
 import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} from './driver-factory.js';
 import {StorageKey} from '../storage-key.js';
-import {Runtime} from '../../runtime.js';
+import {RuntimeCacheService} from '../../runtime-cache.js';
 import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
 
@@ -53,8 +53,8 @@ export class FirebaseStorageKey extends StorageKey {
 export class FirebaseAppCache {
   protected appCache: Map<string, firebase.app.App>;
 
-  constructor(runtime: Runtime) {
-    this.appCache = runtime.getCacheService().getOrCreateCache<string, firebase.app.App>('firebase-driver');
+  constructor(cacheService: RuntimeCacheService) {
+    this.appCache = cacheService.getOrCreateCache<string, firebase.app.App>('firebase-driver');
   }
 
   getApp(key: FirebaseStorageKey) {
@@ -70,8 +70,8 @@ export class FirebaseAppCache {
     this.appCache.clear();
   }
 
-  static async stop() {
-    await new FirebaseAppCache(Runtime.getRuntime()).stopAllApps();
+  static async stop(cacheService: RuntimeCacheService) {
+    await new FirebaseAppCache(cacheService).stopAllApps();
   }
 }
 
@@ -91,7 +91,7 @@ export class FirebaseAppCache {
 // Isn't firebase *wonderful*?
 export class FirebaseDriver<Data> extends Driver<Data> {
   private receiver: ReceiveMethod<Data>;
-  appCache: FirebaseAppCache = new FirebaseAppCache(Runtime.getRuntime());
+  appCache: FirebaseAppCache;
 
   storageKey: FirebaseStorageKey;
   private reference: firebase.database.Reference;
@@ -101,7 +101,8 @@ export class FirebaseDriver<Data> extends Driver<Data> {
   private pendingModel: Data = null;
   private pendingVersion: number;
 
-  async init() {
+  async init(appCache: FirebaseAppCache) {
+    this.appCache = appCache;
     const app = this.appCache.getApp(this.storageKey);
     const reference = app.database().ref(this.storageKey.location);
     const currentSnapshot = await reference.once('value');
@@ -197,6 +198,11 @@ export class FirebaseDriver<Data> extends Driver<Data> {
 
 
 export class FirebaseStorageDriverProvider implements StorageDriverProvider {
+  protected readonly cacheService: RuntimeCacheService;
+
+  constructor(cacheService: RuntimeCacheService) {
+    this.cacheService = cacheService;
+  }
 
   willSupport(storageKey: StorageKey): boolean {
     return storageKey.protocol === 'firebase';
@@ -208,19 +214,15 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     }
 
     const driver = new FirebaseDriver<Data>(storageKey, exists);
-    await driver.init();
+    await driver.init(new FirebaseAppCache(this.cacheService));
     return driver;
   }
 
-  static register() {
-    DriverFactory.register(new FirebaseStorageDriverProvider());
+  static register(cacheService: RuntimeCacheService) {
+    DriverFactory.register(new FirebaseStorageDriverProvider(cacheService));
   }
 }
 
-// Note that this will automatically register for any production code
-// that uses firebase drivers; but it won't automatically register in
-// testing.
-//
 // If you want to test using the firebase driver you have three options.
 // (1) for (_slow_) manual testing, call FirebaseStorageDriverProvider.register()
 // somewhere at the beginning of your test; if you want to be hermetic,
@@ -233,4 +235,3 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
 // the DriverFactory by calling FakeFirebaseStorageDriverProvider.register();
 // again your storageKey databaseURLs must be test-url and don't forget
 // to clean up with DriverFactory.clearRegistrationsForTesting().
-FirebaseStorageDriverProvider.register();
