@@ -1,11 +1,11 @@
 # IDE Setup
 
-Arcs can be developed in the IDE of your choice. Here are some helpful hints to get started in some more common IDEs.
+Arcs can be developed in the IDE of your choice. Here are some helpful hints to get started.
 
 ## Android Studio
 
 - Install Android Studio. When prompted, install the needed SDK Android 10 (SDK version 29).
-- Open Android Studio and install the Bazel extension. This should prompt you to restart the IDE, if not restart anyway.
+- Open Android Studio and install the Bazel extension (Configure > Plugins). This should prompt you to restart the IDE, if not restart anyway.
 - Upon restarting Android, click "Import Bazel Project"
 - Select the workspace by navigating to the arcs folder, then click "Next".
 - Choose "Import project view file" and click on the three dots.
@@ -18,10 +18,10 @@ Arcs can be developed in the IDE of your choice. Here are some helpful hints to 
 ## IntelliJ
 
 - Install IntelliJ. Community Edition is sufficient. For web technologies support, install Professional Edition.
-- During the setup (within Featured Pluggins stage), ensure that Android is enabled.
+- During the setup (within Featured Plugins stage), ensure that Android is enabled.
 
 Set up the IDE with Bazel support
-- Open IntelliJ and install the Bazel extension (Configure > Plugins)
+- Open IntelliJ and install the Bazel extension (Configure > Plugins). This should prompt you to restart the IDE, if not restart anyway.
 - Upon restarting IntelliJ, click "Import Bazel Project"
 - Select the workspace by navigating to the arcs folder, then click "Next".
 - Choose "Import project view file" and click on the three dots.
@@ -52,7 +52,7 @@ Add Android support
 
 #### `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory`
 
-- Go to your IDE Preferences -> Bazel Settings
+- Go to your IDE Preferences > Bazel Settings
 - Find the Bazel binary location, and click the three dots next to it.
 - Navigate to the correct location, and select the Bazel binary.
   - If you don't know where the Bazel binary is located, open a terminal and run `which bazel`.
@@ -68,11 +68,6 @@ IntelliJ: Follow the above instructions.
 
 - You may have already imported the project into your preferred IDE. Please try reopening it.
 - Optional: Delete the hidden folder and repeat the appropriate steps above.
-
-#### `Cannot run program "bazel" (in directory "..."): error=2, No such file or directory`
-
-- Determine where the Bazel binary is location (`which bazel`).
-- Settings > Other Settings > Bazel Settings > Bazel binary location = /path/to/your/bazel
 
 #### `Typescript is not supported by this IDE`
 
