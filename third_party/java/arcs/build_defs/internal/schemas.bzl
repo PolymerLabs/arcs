@@ -77,5 +77,4 @@ def arcs_kt_schema(name, srcs, package = "arcs.sdk"):
         name = name,
         srcs = outs,
         deps = [],
-        jvm = True,
     )
