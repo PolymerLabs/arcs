@@ -146,8 +146,7 @@ export class Runtime {
     };
   }
 
-  constructor(options: RuntimeOptions = {}) {
-    const {loader, composerClass, context, pecFactory, memoryProvider} = options;
+  constructor({loader, composerClass, context, pecFactory, memoryProvider}: RuntimeOptions = {}) {
     this.cacheService = new RuntimeCacheService();
     // We have to do this here based on a vast swathe of tests that just create
     // a Runtime instance and forge ahead. This is only temporary until we move
