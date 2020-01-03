@@ -1374,22 +1374,12 @@ ${e.message}
 
   // TODO: This is a temporary method to allow sharing stores with other Arcs.
   registerStore(store: UnifiedStore, tags: string[]): void {
-    if (!this.findStoreById(store.id) && tags.includes('shared')) {
+    // Only register stores that have non-volatile storage key and don't have a
+    // #volatile tag.
+    if (!this.findStoreById(store.id) &&
+        !store.storageKey.toString().startsWith('volatile')
+        && !tags.includes('volatile')) {
       this._addStore(store, tags);
-    }
-  }
-
-  // Temporary method to allow sharing stores with other Arcs.
-  unregisterStore(storeId: string, tags: string[]) {
-    // #shared tag indicates that a store was made available to all arcs.
-    if (!tags.includes('shared')) {
-      return;
-    }
-    const index = this.stores.findIndex(store => store.id === storeId);
-    if (index >= 0) {
-      const store = this.stores[index];
-      this.storeTags.delete(store);
-      this.stores.splice(index, 1);
     }
   }
 
