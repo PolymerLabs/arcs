@@ -1,0 +1,32 @@
+{
+  parserClass="com.google.arcs.parser.ArcsParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="Arcs"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.google.arcs.psi"
+  psiImplPackage="com.google.arcs.psi.impl"
+
+  elementTypeHolderClass="com.google.arcs.psi.ArcsTypes"
+  elementTypeClass="com.google.arcs.psi.ArcsElementType"
+  tokenTypeClass="com.google.arcs.psi.ArcsTokenType"
+}
+
+arcsFile ::= item_*
+
+item_ ::= (import_decl|schema_decl|particle_decl|recipe_decl|store_decl|handle_decl|description_decl|COMMENT|SPACE|CRLF|NEWLINE)
+
+import_decl::= IMPORT SPACE FILE
+
+schema_decl::= SCHEMA SPACE NAME
+
+particle_decl::= PARTICLE SPACE NAME SPACE IN SPACE FILE
+
+recipe_decl::= RECIPE SPACE NAME
+
+store_decl::= STORE SPACE NAME SPACE OF SPACE NAME SPACE IN SPACE FILE
+
+description_decl::= DESCRIPTION SPACE STRING_LITERAL
+
+handle_decl::= NAME|(HANDLE COLON SPACE (TYPE|HANDLE))|(HANDLE COLON SPACE VERB (SPACE (TYPE|HANDLE))?)

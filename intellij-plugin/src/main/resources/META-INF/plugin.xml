@@ -1,0 +1,20 @@
+<idea-plugin>
+    <id>com.google.arcs.arcs_gradle_plugin</id>
+    <name>Arcs support</name>
+    <vendor>Arcs team</vendor>
+
+    <description><![CDATA[Arcs manifest support]]></description>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileTypeFactory implementation="com.google.arcs.ArcsFileTypeFactory"/>
+        <lang.parserDefinition language="Arcs" implementationClass="com.google.arcs.ArcsParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="Arcs" implementationClass="com.google.arcs.ArcsSyntaxHighlighterFactory"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="Arcs manifest file" implementationClass="com.google.arcs.ArcsFileType"
+                  fieldName="INSTANCE" language="Arcs" extensions="arcs"/>
+        <lang.parserDefinition language="Arcs" implementationClass="com.google.arcs.ArcsParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="Arcs" implementationClass="com.google.arcs.ArcsSyntaxHighlighterFactory"/>
+    </extensions>
+</idea-plugin>
