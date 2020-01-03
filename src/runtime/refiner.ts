@@ -8,22 +8,29 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, SchemaPrimitiveType, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, NumberNode, BooleanNode} from './manifest-ast-nodes.js';
+import {RefinementNode, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, NumberNode, BooleanNode} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {assert} from '../platform/assert-node.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
-import {deepEqual} from 'assert';
-import e from 'express';
-import {Expression} from 'estree';
-import {CheckBooleanExpression} from './particle-check.js';
 
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
 type ExpressionPrimitives = any;
 type Evaluator = (exprs: ExpressionPrimitives[]) => ExpressionPrimitives | Error;
 
-export class Refiner {
+export class Refinement {
+    kind: 'refinement';
+    expression: RefinementExpression;
+    private constructor() {
+        this.kind = 'refinement';
+        this.expression = null;
+    }
+    static fromAst(ref: RefinementNode, typeData: Dictionary<ExpressionPrimitives>): Refinement {
+        const refinement = new Refinement();
+        refinement.expression = RefinementExpression.fromAst(ref.expression, typeData);
+        return refinement;
+    }
     static refineData(entity: Entity, schema: Schema): void {
         for (const [name, value] of Object.entries(entity)) {
             const refDict = {}; refDict[name] = value;
@@ -37,7 +44,6 @@ export class Refiner {
             throw new Error('Entity data does not conform to the refinement.');
         }
     }
-
     // This function assumes the following:
     // ~ The expression is univariate i.e. has exactly one fieldName
     // ~ The expression is valid i.e. no expressions like (num < 3) < (num > 5)
@@ -48,6 +54,191 @@ export class Refiner {
     // ~ Removes redundant info like expression == false => not expression
     static normaliseExpression(expr: RefinementExpression) {
         console.log('TODO(ragdev): WIP');
+    }
+    toString(): string {
+        return '[' + this.expression.toString() + ']';
+    }
+    validateData(data: Dictionary<ExpressionPrimitives>): boolean {
+        const res = this.expression.applyOperator(data);
+        if (typeof res !== 'boolean') {
+            throw new Error('Refinement expression evaluated to a non-boolean type.\n');
+        }
+        return res;
+    }
+}
+
+class RefinementExpression {
+    kind: 'binary-expression' | 'unary-expression' | 'field-name' | 'number' | 'boolean';
+    type: 'Boolean' | 'Number' | 'Text';
+    static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+        switch (expr.kind) {
+            case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
+            case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
+            case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
+            case 'number-node': return NumberPrimitive.fromAst(expr);
+            case 'boolean-node': return BooleanPrimitive.fromAst(expr);
+            default: throw new Error('Unknown node type.');
+        }
+    }
+    toString(): string {
+        switch (this.kind) {
+            // tslint:disable-next-line: no-any
+            case 'binary-expression': return (this as any as BinaryExpression).toString();
+            // tslint:disable-next-line: no-any
+            case 'unary-expression': return (this as any as UnaryExpression).toString();
+            // tslint:disable-next-line: no-any
+            case 'field-name': return (this as any as FieldNamePrimitive).toString();
+            // tslint:disable-next-line: no-any
+            case 'number': return (this as any as NumberPrimitive).toString();
+            // tslint:disable-next-line: no-any
+            case 'boolean': return (this as any as BooleanPrimitive).toString();
+            default: throw new Error('Unknown node type.');
+        }
+    }
+    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+        switch (this.kind) {
+            // tslint:disable-next-line: no-any
+            case 'binary-expression': return (this as any as BinaryExpression).applyOperator(data);
+            // tslint:disable-next-line: no-any
+            case 'unary-expression': return (this as any as UnaryExpression).applyOperator(data);
+            // tslint:disable-next-line: no-any
+            case 'field-name': return (this as any as FieldNamePrimitive).applyOperator(data);
+            // tslint:disable-next-line: no-any
+            case 'number': return (this as any as NumberPrimitive).applyOperator();
+            // tslint:disable-next-line: no-any
+            case 'boolean': return (this as any as BooleanPrimitive).applyOperator();
+            default: throw new Error('Unknown node type.');
+        }
+    }
+}
+
+class BinaryExpression extends RefinementExpression {
+    kind: 'binary-expression';
+    type: 'Number' | 'Boolean';
+    leftExpr: RefinementExpression;
+    rightExpr: RefinementExpression;
+    operator: RefinementOperator;
+    private constructor() {
+        super();
+    }
+    static fromAst(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+        const expr = new BinaryExpression();
+        expr.kind = 'binary-expression';
+        expr.leftExpr = RefinementExpression.fromAst(expression.leftExpr, typeData);
+        expr.rightExpr = RefinementExpression.fromAst(expression.rightExpr, typeData);
+        expr.operator = new RefinementOperator(expression.operator);
+        expr.operator.assertOperandCompatibility([expr.leftExpr.type, expr.rightExpr.type]);
+        expr.type = expr.operator.evalType();
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return '(' + this.leftExpr.toString() + ' ' + this.operator.op + ' ' + this.rightExpr.toString() + ')';
+    }
+    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+        const left = this.leftExpr.applyOperator(data);
+        const right = this.rightExpr.applyOperator(data);
+        return this.operator.eval([left, right]);
+    }
+}
+
+class UnaryExpression extends RefinementExpression {
+    kind: 'unary-expression';
+    type: 'Number' | 'Boolean';
+    expr: RefinementExpression;
+    operator: RefinementOperator;
+    private constructor() {
+        super();
+    }
+    static fromAst(expression: UnaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+        const expr = new UnaryExpression();
+        expr.kind = 'unary-expression';
+        expr.expr = RefinementExpression.fromAst(expression.expr, typeData);
+        expr.operator = new RefinementOperator((expression.operator === '-') ? 'neg' : expression.operator);
+        expr.operator.assertOperandCompatibility([expr.expr.type]);
+        expr.type = expr.operator.evalType();
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return this.operator.op + '(' + this.expr.toString() + ')';
+    }
+    // tslint:disable-next-line: no-any
+    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+        const expression = this.expr.applyOperator(data);
+        return this.operator.eval([expression]);
+    }
+}
+
+class FieldNamePrimitive extends RefinementExpression {
+    kind: 'field-name';
+    type: 'Number' | 'Boolean' | 'Text';
+    value: string;
+    private constructor() {
+        super();
+    }
+    // tslint:disable-next-line: no-any
+    static fromAst(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+        const expr = new FieldNamePrimitive();
+        expr.kind = 'field-name';
+        expr.value = expression.value;
+        if (typeData[expr.value] === undefined) {
+            throw new Error(`Unresolved field name '${expr.value}' in the refinement expression.`);
+        }
+        expr.type = typeData[expr.value];
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return this.value.toString();
+    }
+    // tslint:disable-next-line: no-any
+    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+        if (data[this.value] !== undefined) {
+            return data[this.value];
+        }
+        return new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
+    }
+}
+
+class NumberPrimitive extends RefinementExpression {
+    kind: 'number';
+    type: 'Number';
+    value: number;
+    private constructor() {
+        super();
+    }
+    static fromAst(expression: NumberNode): RefinementExpression {
+        const expr = new NumberPrimitive();
+        expr.kind = 'number';
+        expr.value = expression.value;
+        expr.type = 'Number';
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return this.value.toString();
+    }
+    applyOperator(): ExpressionPrimitives {
+        return this.value;
+    }
+}
+
+class BooleanPrimitive extends RefinementExpression {
+    kind: 'boolean';
+    type: 'Boolean';
+    value: boolean;
+    private constructor() {
+        super();
+    }
+    static fromAst(expression: BooleanNode): RefinementExpression {
+        const expr = new BooleanPrimitive();
+        expr.kind = 'boolean';
+        expr.value = expression.value;
+        expr.type = 'Boolean';
+        return expr as RefinementExpression;
+    }
+    toString(): string {
+        return this.value.toString();
+    }
+    applyOperator(): ExpressionPrimitives {
+        return this.value;
     }
 }
 
@@ -78,18 +269,21 @@ export class Range {
     // This function assumes that the expression is univariate
     // and has been normalised (see above for definition).
     // TODO(ragdev): Currently only Number types are supported. Add Boolean and String support.
-    static fromExpression(expr: RefinementExpressionNode): Range {
-        if (expr.kind === 'binary-expression-node') {
-            if (expr.leftExpr.kind === 'field-name-node' && expr.rightExpr.kind === 'number-node') {
-                return Range.makeInitialGivenOp(expr.operator, expr.rightExpr.value);
+    static fromExpression(expr: RefinementExpression): Range {
+        if (expr.kind === 'binary-expression') {
+            const bexpr = expr as BinaryExpression;
+            if (bexpr.leftExpr.kind === 'field-name' && bexpr.rightExpr.kind === 'number') {
+                return Range.makeInitialGivenOp(bexpr.operator.op, (bexpr.rightExpr as NumberPrimitive).value);
             }
-            const left = Range.fromExpression(expr.leftExpr);
-            const right = Range.fromExpression(expr.rightExpr);
-            return Range.updateGivenOp(expr.operator, [left, right]);
-        } else if (expr.kind === 'unary-expression-node') {
-            const rg = Range.fromExpression(expr.expr);
-            return Range.updateGivenOp(expr.operator, [rg]);
+            const left = Range.fromExpression(bexpr.leftExpr);
+            const right = Range.fromExpression(bexpr.rightExpr);
+            return Range.updateGivenOp(bexpr.operator.op, [left, right]);
+        } else if (expr.kind === 'unary-expression') {
+            const uexpr = expr as UnaryExpression;
+            const rg = Range.fromExpression(uexpr.expr);
+            return Range.updateGivenOp(uexpr.operator.op, [rg]);
         }
+        console.log(expr);
         throw new Error(`Cannot resolve primitive nodes by themselves.`);
     }
     static unionOf(range1: Range, range2: Range): Range {
@@ -329,205 +523,6 @@ export class Segment {
 interface Boundary {
     val: number;
     kind: 'open' | 'closed';
-}
-
-export class Refinement {
-    kind: 'refinement';
-    expression: RefinementExpression;
-    private constructor() {
-        this.kind = 'refinement';
-        this.expression = null;
-    }
-    static fromAst(ref: RefinementNode, typeData: Dictionary<ExpressionPrimitives>): Refinement {
-        const refinement = new Refinement();
-        refinement.expression = RefinementExpression.fromAst(ref.expression, typeData);
-        return refinement;
-    }
-    toString(): string {
-        return '[' + this.expression.toString() + ']';
-    }
-    validateData(data: Dictionary<ExpressionPrimitives>): boolean {
-        const res = this.expression.applyOperator(data);
-        if (typeof res !== 'boolean') {
-            throw new Error('Refinement expression evaluated to a non-boolean type.\n');
-        }
-        return res;
-    }
-}
-
-class RefinementExpression {
-    kind: 'binary-expression' | 'unary-expression' | 'field-name' | 'number' | 'boolean';
-    type: 'Boolean' | 'Number' | 'Text';
-    static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-        switch (expr.kind) {
-            case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
-            case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
-            case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
-            case 'number-node': return NumberPrimitive.fromAst(expr);
-            case 'boolean-node': return BooleanPrimitive.fromAst(expr);
-            default: throw new Error('Unknown node type.');
-        }
-    }
-    toString(): string {
-        switch (this.kind) {
-            // tslint:disable-next-line: no-any
-            case 'binary-expression': return (this as any as BinaryExpression).toString();
-            // tslint:disable-next-line: no-any
-            case 'unary-expression': return (this as any as UnaryExpression).toString();
-            // tslint:disable-next-line: no-any
-            case 'field-name': return (this as any as FieldNamePrimitive).toString();
-            // tslint:disable-next-line: no-any
-            case 'number': return (this as any as NumberPrimitive).toString();
-            // tslint:disable-next-line: no-any
-            case 'boolean': return (this as any as BooleanPrimitive).toString();
-            default: throw new Error('Unknown node type.');
-        }
-    }
-    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
-        switch (this.kind) {
-            // tslint:disable-next-line: no-any
-            case 'binary-expression': return (this as any as BinaryExpression).applyOperator(data);
-            // tslint:disable-next-line: no-any
-            case 'unary-expression': return (this as any as UnaryExpression).applyOperator(data);
-            // tslint:disable-next-line: no-any
-            case 'field-name': return (this as any as FieldNamePrimitive).applyOperator(data);
-            // tslint:disable-next-line: no-any
-            case 'number': return (this as any as NumberPrimitive).applyOperator();
-            // tslint:disable-next-line: no-any
-            case 'boolean': return (this as any as BooleanPrimitive).applyOperator();
-            default: throw new Error('Unknown node type.');
-        }
-    }
-}
-
-class BinaryExpression extends RefinementExpression {
-    kind: 'binary-expression';
-    type: 'Number' | 'Boolean';
-    leftExpr: RefinementExpression;
-    rightExpr: RefinementExpression;
-    operator: RefinementOperator;
-    private constructor() {
-        super();
-    }
-    static fromAst(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-        const expr = new BinaryExpression();
-        expr.kind = 'binary-expression';
-        expr.leftExpr = RefinementExpression.fromAst(expression.leftExpr, typeData);
-        expr.rightExpr = RefinementExpression.fromAst(expression.rightExpr, typeData);
-        expr.operator = new RefinementOperator(expression.operator);
-        expr.operator.assertOperandCompatibility([expr.leftExpr.type, expr.rightExpr.type]);
-        expr.type = expr.operator.evalType();
-        return expr as RefinementExpression;
-    }
-    toString(): string {
-        return '(' + this.leftExpr.toString() + ' ' + this.operator.op + ' ' + this.rightExpr.toString() + ')';
-    }
-    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
-        const left = this.leftExpr.applyOperator(data);
-        const right = this.rightExpr.applyOperator(data);
-        return this.operator.eval([left, right]);
-    }
-}
-
-class UnaryExpression extends RefinementExpression {
-    kind: 'unary-expression';
-    type: 'Number' | 'Boolean';
-    expr: RefinementExpression;
-    operator: RefinementOperator;
-    private constructor() {
-        super();
-    }
-    static fromAst(expression: UnaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-        const expr = new UnaryExpression();
-        expr.kind = 'unary-expression';
-        expr.expr = RefinementExpression.fromAst(expression.expr, typeData);
-        expr.operator = new RefinementOperator((expression.operator === '-') ? 'neg' : expression.operator);
-        expr.operator.assertOperandCompatibility([expr.expr.type]);
-        expr.type = expr.operator.evalType();
-        return expr as RefinementExpression;
-    }
-    toString(): string {
-        return this.operator.op + '(' + this.expr.toString() + ')';
-    }
-    // tslint:disable-next-line: no-any
-    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
-        const expression = this.expr.applyOperator(data);
-        return this.operator.eval([expression]);
-    }
-}
-
-class FieldNamePrimitive extends RefinementExpression {
-    kind: 'field-name';
-    type: 'Number' | 'Boolean' | 'Text';
-    value: string;
-    private constructor() {
-        super();
-    }
-    // tslint:disable-next-line: no-any
-    static fromAst(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-        const expr = new FieldNamePrimitive();
-        expr.kind = 'field-name';
-        expr.value = expression.value;
-        if (typeData[expr.value] === undefined) {
-            throw new Error(`Unresolved field name '${expr.value}' in the refinement expression.`);
-        }
-        expr.type = typeData[expr.value];
-        return expr as RefinementExpression;
-    }
-    toString(): string {
-        return this.value.toString();
-    }
-    // tslint:disable-next-line: no-any
-    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
-        if (data[this.value] !== undefined) {
-            return data[this.value];
-        }
-        return new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
-    }
-}
-
-class NumberPrimitive extends RefinementExpression {
-    kind: 'number';
-    type: 'Number';
-    value: number;
-    private constructor() {
-        super();
-    }
-    static fromAst(expression: NumberNode): RefinementExpression {
-        const expr = new NumberPrimitive();
-        expr.kind = 'number';
-        expr.value = expression.value;
-        expr.type = 'Number';
-        return expr as RefinementExpression;
-    }
-    toString(): string {
-        return this.value.toString();
-    }
-    applyOperator(): ExpressionPrimitives {
-        return this.value;
-    }
-}
-
-class BooleanPrimitive extends RefinementExpression {
-    kind: 'boolean';
-    type: 'Boolean';
-    value: boolean;
-    private constructor() {
-        super();
-    }
-    static fromAst(expression: BooleanNode): RefinementExpression {
-        const expr = new BooleanPrimitive();
-        expr.kind = 'boolean';
-        expr.value = expression.value;
-        expr.type = 'Boolean';
-        return expr as RefinementExpression;
-    }
-    toString(): string {
-        return this.value.toString();
-    }
-    applyOperator(): ExpressionPrimitives {
-        return this.value;
-    }
 }
 
 class RefinementOperator {

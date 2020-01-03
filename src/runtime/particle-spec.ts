@@ -19,7 +19,6 @@ import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 import {Flags} from './flags.js';
 import * as AstNode from './manifest-ast-nodes.js';
-import {Refiner} from './refiner.js';
 
 // TODO: clean up the real vs. literal separation in this file
 

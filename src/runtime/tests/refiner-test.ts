@@ -8,8 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Refiner, Segment, Refinement} from '../refiner.js';
-import {Range} from '../refiner.js';
+import {Range, Segment, Refinement} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -90,22 +89,23 @@ describe('refiner', () => {
             particle Foo
                 input: reads Something {num: Number [ ((num < 3) and (num > 0)) or (num == 5) ] }
         `);
-        let expr = manifestAst[0].args[0].type.fields[0].type.refinement.expression;
-        let range = Range.fromExpression(expr);
+        const typeData = {}; typeData['num'] = 'Number';
+        let ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+        let range = Range.fromExpression(ref.expression);
         assert.deepEqual(range.segments, [Segment.openOpen(0, 3), Segment.closedClosed(5, 5)]);
         manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [(num > 10) == (num >= 20)] }
         `);
-        expr = manifestAst[0].args[0].type.fields[0].type.refinement.expression;
-        range = Range.fromExpression(expr);
+        ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+        range = Range.fromExpression(ref.expression);
         assert.deepEqual(range.segments, [Segment.openClosed(Number.NEGATIVE_INFINITY, 10), Segment.closedOpen(20, Number.POSITIVE_INFINITY)]);
         manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [not (num != 10)] }
         `);
-        expr = manifestAst[0].args[0].type.fields[0].type.refinement.expression;
-        range = Range.fromExpression(expr);
+        ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+        range = Range.fromExpression(ref.expression);
         assert.deepEqual(range.segments, [Segment.closedClosed(10, 10)]);
 
     });

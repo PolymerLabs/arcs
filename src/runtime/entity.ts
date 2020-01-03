@@ -17,7 +17,7 @@ import {Storable} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary, Consumer} from './hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
-import {Refiner} from './refiner.js';
+import {Refinement} from './refiner.js';
 import {Flags} from './flags.js';
 
 export type EntityRawData = {};
@@ -358,6 +358,6 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
     target[name] = sanitizedValue;
   }
   if (Flags.enforceRefinements) {
-    Refiner.refineData(target, schema);
+    Refinement.refineData(target, schema);
   }
 }

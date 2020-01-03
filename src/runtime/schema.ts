@@ -16,7 +16,7 @@ import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
 import {RefinementNode, SchemaType, SchemaPrimitiveType} from './manifest-ast-nodes.js';
-import {Refiner, Refinement} from './refiner.js';
+import {Refinement} from './refiner.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
