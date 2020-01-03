@@ -252,7 +252,7 @@ class TTTBoard : Particle() {
 
     override fun onHandleUpdate(handle: Handle) = renderOutput()
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val gs = gameState.get() ?: defaultGameState
         val boardList = gs.board.split(",")
         val boardModel = mutableListOf<Map<String, String?>>()

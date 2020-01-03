@@ -64,7 +64,7 @@ class TTTGame : Particle() {
         }
     }
 
-    override fun populateModel(slotName: String, model: Map<String, Any?>): Map<String, Any?> {
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val gs = gameState.get() ?: TTTGame_GameState()
         val p1 = playerOne.get() ?: TTTGame_PlayerOne()
         val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
