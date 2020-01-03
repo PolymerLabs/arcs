@@ -92,12 +92,12 @@ final class AndroidArcsEnvironment {
   }
 
   void init(Context context) {
+    WebView.setWebContentsDebuggingEnabled(true);
     webView = new WebView(context);
     webView.setVisibility(View.GONE);
     webView.getSettings().setAppCacheEnabled(false);
     webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
     webView.clearCache(true);
-    webView.setWebContentsDebuggingEnabled(true);
 
     WebSettings arcsSettings = webView.getSettings();
     arcsSettings.setDatabaseEnabled(true);
