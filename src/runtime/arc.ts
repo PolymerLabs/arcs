@@ -34,7 +34,6 @@ import {ArcType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
 import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
-import {Runtime} from './runtime.js';
 import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {DriverFactory, Exists} from './storageNG/drivers/driver-factory.js';
 import {StorageKey} from './storageNG/storage-key.js';
@@ -179,7 +178,7 @@ export class Arc implements ArcInterface {
     DriverFactory.unregister(this.volatileStorageDriverProvider);
 
     for (const store of this._stores) {
-      Runtime.getRuntime().unregisterStore(store.id, [...this.findStoreTags(store)]);
+      this.context.unregisterStore(store.id, [...this.findStoreTags(store)]);
     }
   }
 
@@ -626,7 +625,7 @@ export class Arc implements ArcInterface {
     const activeStore = await store.activate();
     activeStore.on(async () => this._onDataChange());
 
-    Runtime.getRuntime().registerStore(store, tags);
+    this.context.registerStore(store, tags);
   }
 
   _tagStore(store: UnifiedStore, tags: Set<string>): void {

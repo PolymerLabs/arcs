@@ -12,7 +12,6 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
-import {UnifiedStore} from './storageNG/unified-store.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -220,27 +219,6 @@ export class Runtime {
 
   findArcByParticleId(particleId: string): Arc {
     return [...this.arcById.values()].find(arc => !!arc.activeRecipe.findParticle(particleId));
-  }
-
-  // TODO: This is a temporary method to allow sharing stores with other Arcs.
-  registerStore(store: UnifiedStore, tags: string[]): void {
-    if (!this.context.findStoreById(store.id) && tags.includes('shared')) {
-      this.context['_addStore'](store, tags);
-    }
-  }
-
-  // Temporary method to allow sharing stores with other Arcs.
-  unregisterStore(storeId: string, tags: string[]) {
-    // #shared tag indicates that a store was made available to all arcs.
-    if (!tags.includes('shared')) {
-      return;
-    }
-    const index = this.context.stores.findIndex(store => store.id === storeId);
-    if (index >= 0) {
-      const store = this.context.stores[index];
-      this.context.storeTags.delete(store);
-      this.context.stores.splice(index, 1);
-    }
   }
 
   /**
