@@ -32,6 +32,8 @@ import {Dictionary} from './hot.js';
 import {UserException} from './arc-exceptions.js';
 import {Store} from './store.js';
 import {Flags} from './flags.js';
+import {SystemTrace} from '../tracelib/systrace.js';
+import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 type UnifiedStorageProxy = Store|StorageProxyNG<CRDTTypeRecord>;
@@ -43,6 +45,7 @@ export type InnerArcHandle = {
   loadRecipe(recipe: string): Promise<{error?: string}>;
 };
 
+@SystemTrace
 export class ParticleExecutionContext implements StorageCommunicationEndpointProvider<CRDTTypeRecord> {
   private readonly apiPort : PECInnerPort;
   private readonly particles = new Map<string, Particle>();
@@ -162,6 +165,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     this.idGenerator = idGenerator;
     this.loader = loader;
     loader.setParticleExecutionContext(this);
+
+    // Encapsulates system trace calls in messages.
+    delegateSystemTraceApis(this.apiPort);
 
     /*
      * This code ensures that the relevant types are known

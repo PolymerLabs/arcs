@@ -47,6 +47,7 @@ import {Flags} from './flags.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
+import {SystemTrace} from '../tracelib/systrace.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -73,6 +74,7 @@ type DeserializeArcOptions = Readonly<{
   inspectorFactory?: ArcInspectorFactory;
 }>;
 
+@SystemTrace
 export class Arc implements ArcInterface {
   private readonly _context: Manifest;
   private readonly pecFactories: PecFactory[];

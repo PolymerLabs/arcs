@@ -146,6 +146,7 @@ final class AndroidArcsEnvironment {
     });
 
     webView.addJavascriptInterface(this, "DeviceClient");
+    webView.addJavascriptInterface(new ArcsSystemTrace(), "SystemTraceApis");
 
     RuntimeSettings settings = runtimeSettings.get();
     // If using any of the host shells, i.e. pipe-shells at the host:
@@ -161,6 +162,7 @@ final class AndroidArcsEnvironment {
     if (settings.useCacheManager()) {
       url += "&use-cache";
     }
+    url += "&systrace=" + settings.systemTraceChannel();
 
     Log.i("Arcs", "runtime url: " + url);
     webView.loadUrl(url);

@@ -32,6 +32,8 @@ import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
 import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
+import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 
 export type StartRenderOptions = {
   particle: Particle;
@@ -45,6 +47,7 @@ export type StopRenderOptions = {
   slotName: string;
 };
 
+@SystemTrace
 export class ParticleExecutionHost {
   private readonly _apiPorts: PECOuterPort[];
   private readonly _portByParticle = new Map<Particle, PECOuterPort>();
@@ -170,9 +173,16 @@ export class ParticleExecutionHost {
 
 class PECOuterPortImpl extends PECOuterPort {
   arc: Arc;
+  readonly systemTraceClient: Client | undefined;
+
   constructor(port, arc: Arc) {
     super(port, arc);
     this.arc = arc;
+
+    const clientClass = getClientClass();
+    if (clientClass) {
+      this.systemTraceClient = new clientClass();
+    }
   }
 
   onRender(particle: Particle, slotName: string, content: Content) {
@@ -405,5 +415,19 @@ class PECOuterPortImpl extends PECOuterPort {
   async onServiceRequest(particle: Particle, request: {}, callback: number): Promise<void> {
     const response = await Services.request(request);
     this.SimpleCallback(callback, response);
+  }
+
+  @NoTrace
+  onSystemTraceBegin(tag: string, cookie: number) {
+    if (this.systemTraceClient) {
+      this.systemTraceClient.asyncTraceBegin(tag, cookie);
+    }
+  }
+
+  @NoTrace
+  onSystemTraceEnd(tag: string, cookie: number) {
+    if (this.systemTraceClient) {
+      this.systemTraceClient.asyncTraceEnd(tag, cookie);
+    }
   }
 }

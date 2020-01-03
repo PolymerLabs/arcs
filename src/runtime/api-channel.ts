@@ -29,6 +29,7 @@ import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
+import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -232,6 +233,7 @@ class ThingMapper {
   }
 }
 
+@SystemTrace
 export class APIPort {
   private readonly _port: MessagePort;
   _mapper: ThingMapper;
@@ -257,6 +259,7 @@ export class APIPort {
     this._port.close();
   }
 
+  @NoTraceWithReason('Chatty')
   async _processMessage(e) {
     assert(this['before' + e.data.messageType] !== undefined);
     const count = this.messageCount++;
@@ -273,6 +276,7 @@ export class APIPort {
     }
   }
 
+  @NoTraceWithReason('Recursion on sending trace messages inner->outer')
   async send(name: string, args: {}) {
     const call = {messageType: name, messageBody: args, stack: this.attachStack ? new Error().stack : undefined};
     const count = this.messageCount++;
@@ -285,6 +289,7 @@ export class APIPort {
     await this._port.postMessage(call);
   }
 
+  @NoTraceWithReason('Chatty')
   supportsExternalParticle(): boolean {
     // TODO: improve heuristics.
     return Object.getPrototypeOf(this._port.constructor).name === 'MessagePort';
@@ -484,6 +489,7 @@ export abstract class PECOuterPort extends APIPort {
     }
   }
 
+  @NoTraceWithReason('Chatty')
   async _processMessage(e) {
     // Modifying pec messages on the host side is a problem as they can be transmited to DevTools
     // with a delay. If the object representing a message is modified, it appears as if a different
@@ -549,6 +555,9 @@ export abstract class PECOuterPort extends APIPort {
 
   // TODO(sjmiles): experimental `services` impl
   abstract onServiceRequest(particle: recipeParticle.Particle, request: {}, callback: number);
+
+  abstract onSystemTraceBegin(tag: string, cookie: number);
+  abstract onSystemTraceEnd(tag: string, cookie: number);
 
   // We need an API call to tell the context side that DevTools has been connected, so it can start sending
   // stack traces attached to the API calls made from that side.
@@ -618,6 +627,9 @@ export abstract class PECInnerPort extends APIPort {
 
   // TODO(sjmiles): experimental `services` impl
   ServiceRequest(@Mapped particle: Particle, @Direct content: {}, @LocalMapped callback: Function) {}
+
+  SystemTraceBegin(@Direct tag: string, @Direct cookie: number) {}
+  SystemTraceEnd(@Direct tag: string, @Direct cookie: number) {}
 
   ArcCreateSlot(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
   abstract onCreateSlotCallback(callback: Consumer<string>, hostedSlotId: string);
