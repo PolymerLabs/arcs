@@ -40,7 +40,9 @@ class StubWasmLoader extends Loader {
 
 describe('Hot Code Reload for JS Particle', async () => {
   beforeEach(() => {
-    VolatileStorage.setStorageCache(new RuntimeCacheService());
+    const cacheService = new RuntimeCacheService();
+    HeadlessSlotDomConsumer.setCacheService(cacheService);
+    VolatileStorage.setStorageCache(cacheService);
   });
 
   it('updates model and template', async () =>{

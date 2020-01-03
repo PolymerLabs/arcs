@@ -16,18 +16,20 @@ import {Arc} from './arc.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {SlotConsumer, Content, Rendering} from './slot-consumer.js';
 import {ProvidedSlotContext} from './slot-context.js';
-import {Runtime} from './runtime.js';
+import {RuntimeCacheService} from './runtime-cache.js';
 
 export interface DomRendering extends Rendering {
   liveDom?: Template;
 }
 
-const templateByName = () => Runtime.getRuntime().getCacheService().getOrCreateCache<string, HTMLElement>('templateByName');
-
 // this style sheet is installed in every particle shadow-root
 let commonStyleTemplate;
 
+const templateByName = () => SlotDomConsumer.templateByName();
+
 export class SlotDomConsumer extends SlotConsumer {
+  private static cacheService: RuntimeCacheService;
+
   private readonly _observer: MutationObserver;
 
   constructor(arc: Arc, consumeConn?: SlotConnection, containerKind?: string) {
@@ -43,6 +45,15 @@ export class SlotDomConsumer extends SlotConsumer {
       request.push('template');
     }
     return request;
+  }
+
+  static setCacheService(cacheService: RuntimeCacheService) {
+    SlotDomConsumer.cacheService = cacheService;
+  }
+
+  static templateByName() {
+    assert(SlotDomConsumer.cacheService, `SlotDomConsumer requires provisioning with a cache service before use.`);
+    return SlotDomConsumer.cacheService.getOrCreateCache<string, HTMLElement>('templateByName');
   }
 
   static hasTemplate(templatePrefix: string): string {
