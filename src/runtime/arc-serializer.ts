@@ -195,7 +195,6 @@ ${this.arc.activeRecipe.toString()}`;
     let id = 0;
     const importSet: Set<string> = new Set();
     const handlesToSerialize: Set<string> = new Set();
-    const contextSet = new Set(this.arc.context.stores.map(store => store.id));
     const handlesToSkip: Set<string> = new Set();
 
     for (const handle of this.arc.activeRecipe.handles) {
@@ -217,7 +216,7 @@ ${this.arc.activeRecipe.toString()}`;
 
     for (const store of this.arc._stores) {
 
-      if (Flags.useNewStorageStack || (handlesToSerialize.has(store.id) && !contextSet.has(store.id))) {
+      if (Flags.useNewStorageStack || (handlesToSerialize.has(store.id))) {
         if (handlesToSkip.has(store.id)) {
           continue;
         }

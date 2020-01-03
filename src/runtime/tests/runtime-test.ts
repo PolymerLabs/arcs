@@ -18,11 +18,7 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {ArcId} from '../id.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-<<<<<<< HEAD
-import {storageKeyPrefixForTest} from '../testing/handle-for-test.js';
-=======
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
->>>>>>> Distinguish between 'ramdisk' and 'volatile' in runtime.ts and java code.
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
