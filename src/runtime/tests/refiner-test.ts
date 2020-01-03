@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Range, Segment, Refinement} from '../refiner.js';
+import {Range, Segment, Refinement, BinaryExpression, UnaryExpression} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -133,6 +133,57 @@ describe('refiner', () => {
     it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
         assert.doesNotThrow(() => { const e = new entityClass({txt: 'abc', num: 8}); });
       }));
+});
+
+describe('normalisation', () => {
+    it('tests if field name is rearranged to left in a binary node.', () => {
+        const manifestAst1 = parse(`
+            particle Foo
+                input: reads Something {num: Number [ (10+2) > num ] }
+        `);
+        const typeData = {}; typeData['num'] = 'Number';
+        const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
+        ref1.normalise();
+        const manifestAst2 = parse(`
+            particle Foo
+                input: reads Something {num: Number [ num < 12 ] }
+        `);
+        const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
+        // normalised version of ref1 should be the same as ref2
+        assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+    });
+    it('tests if primitive boolean expressions are automatically evaluated', () => {
+        const manifestAst1 = parse(`
+            particle Foo
+                input: reads Something {num: Boolean [ num == not (true or false) ] }
+        `);
+        const typeData = {}; typeData['num'] = 'Boolean';
+        const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
+        ref1.normalise();
+        const manifestAst2 = parse(`
+            particle Foo
+                input: reads Something {num: Boolean [ num == false ] }
+        `);
+        const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
+        // normalised version of ref1 should be the same as ref2
+        assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+    });
+    it('tests if primitive math expressions are automatically evaluated', () => {
+        const manifestAst1 = parse(`
+            particle Foo
+                input: reads Something {num: Number [ (2+11-9) > num or False ] }
+        `);
+        const typeData = {}; typeData['num'] = 'Number';
+        const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
+        ref1.normalise();
+        const manifestAst2 = parse(`
+            particle Foo
+                input: reads Something {num: Number [ num < 4 ] }
+        `);
+        const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
+        // normalised version of ref1 should be the same as ref2
+        assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+    });
 });
 
 describe('Range', () => {

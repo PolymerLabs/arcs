@@ -20,17 +20,14 @@ type ExpressionPrimitives = any;
 type Evaluator = (exprs: ExpressionPrimitives[]) => ExpressionPrimitives | Error;
 
 export class Refinement {
-    kind: 'refinement';
-    expression: RefinementExpression;
-    private constructor() {
-        this.kind = 'refinement';
-        this.expression = null;
-    }
+    kind = 'refinement';
+    expression: RefinementExpression = null;
     static fromAst(ref: RefinementNode, typeData: Dictionary<ExpressionPrimitives>): Refinement {
         const refinement = new Refinement();
         refinement.expression = RefinementExpression.fromAst(ref.expression, typeData);
         return refinement;
     }
+
     static refineData(entity: Entity, schema: Schema): void {
         for (const [name, value] of Object.entries(entity)) {
             const refDict = {}; refDict[name] = value;
@@ -44,20 +41,23 @@ export class Refinement {
             throw new Error('Entity data does not conform to the refinement.');
         }
     }
+
     // This function assumes the following:
     // ~ The expression is univariate i.e. has exactly one fieldName
     // ~ The expression is valid i.e. no expressions like (num < 3) < (num > 5)
     // This function does the following:
-    // ~ Simplifies mathematical expressions e.g. (num + 3) < 4 => num < 1
+    // ~ Simplifies mathematical and boolean expressions e.g. (num + (1 + 3) < 4) and True => (num + 4) < 4
     // ~ Converts a binary node to {leftExpr: fieldName, rightExpr: val} (where applicable).
     // ~ Converts a unary node {op: '-', val: x} into a number node {val: -x}
-    // ~ Removes redundant info like expression == false => not expression
-    static normaliseExpression(expr: RefinementExpression) {
-        console.log('TODO(ragdev): WIP');
+    // ~ Removes redundant info like expression && false => false
+    normalise() {
+        this.expression = this.expression.normalise();
     }
+
     toString(): string {
         return '[' + this.expression.toString() + ']';
     }
+
     validateData(data: Dictionary<ExpressionPrimitives>): boolean {
         const res = this.expression.applyOperator(data);
         if (typeof res !== 'boolean') {
@@ -67,129 +67,173 @@ export class Refinement {
     }
 }
 
-class RefinementExpression {
-    kind: 'binary-expression' | 'unary-expression' | 'field-name' | 'number' | 'boolean';
+abstract class RefinementExpression {
     type: 'Boolean' | 'Number' | 'Text';
+
+    constructor(readonly kind: 'binary-expression' | 'unary-expression' | 'field-name' | 'number' | 'boolean') {}
+
     static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
         switch (expr.kind) {
-            case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
-            case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
-            case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
-            case 'number-node': return NumberPrimitive.fromAst(expr);
-            case 'boolean-node': return BooleanPrimitive.fromAst(expr);
+            case 'binary-expression-node': return new BinaryExpression(expr, typeData);
+            case 'unary-expression-node': return new UnaryExpression(expr, typeData);
+            case 'field-name-node': return new FieldNamePrimitive(expr, typeData);
+            case 'number-node': return new NumberPrimitive(expr);
+            case 'boolean-node': return new BooleanPrimitive(expr);
             default: throw new Error('Unknown node type.');
         }
     }
-    toString(): string {
-        switch (this.kind) {
-            // tslint:disable-next-line: no-any
-            case 'binary-expression': return (this as any as BinaryExpression).toString();
-            // tslint:disable-next-line: no-any
-            case 'unary-expression': return (this as any as UnaryExpression).toString();
-            // tslint:disable-next-line: no-any
-            case 'field-name': return (this as any as FieldNamePrimitive).toString();
-            // tslint:disable-next-line: no-any
-            case 'number': return (this as any as NumberPrimitive).toString();
-            // tslint:disable-next-line: no-any
-            case 'boolean': return (this as any as BooleanPrimitive).toString();
-            default: throw new Error('Unknown node type.');
-        }
+
+    normalise(): RefinementExpression {
+        return this;
     }
-    applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
-        switch (this.kind) {
-            // tslint:disable-next-line: no-any
-            case 'binary-expression': return (this as any as BinaryExpression).applyOperator(data);
-            // tslint:disable-next-line: no-any
-            case 'unary-expression': return (this as any as UnaryExpression).applyOperator(data);
-            // tslint:disable-next-line: no-any
-            case 'field-name': return (this as any as FieldNamePrimitive).applyOperator(data);
-            // tslint:disable-next-line: no-any
-            case 'number': return (this as any as NumberPrimitive).applyOperator();
-            // tslint:disable-next-line: no-any
-            case 'boolean': return (this as any as BooleanPrimitive).applyOperator();
-            default: throw new Error('Unknown node type.');
-        }
-    }
+
+    abstract toString();
+
+    abstract applyOperator(data: Dictionary<ExpressionPrimitives>);
 }
 
-class BinaryExpression extends RefinementExpression {
-    kind: 'binary-expression';
+export class BinaryExpression extends RefinementExpression {
     type: 'Number' | 'Boolean';
     leftExpr: RefinementExpression;
     rightExpr: RefinementExpression;
     operator: RefinementOperator;
-    private constructor() {
-        super();
+
+    constructor(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>) {
+        super('binary-expression');
+        this.leftExpr = RefinementExpression.fromAst(expression.leftExpr, typeData);
+        this.rightExpr = RefinementExpression.fromAst(expression.rightExpr, typeData);
+        this.operator = new RefinementOperator(expression.operator);
+        this.operator.assertOperandCompatibility([this.leftExpr.type, this.rightExpr.type]);
+        this.type = this.operator.evalType();
     }
-    static fromAst(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-        const expr = new BinaryExpression();
-        expr.kind = 'binary-expression';
-        expr.leftExpr = RefinementExpression.fromAst(expression.leftExpr, typeData);
-        expr.rightExpr = RefinementExpression.fromAst(expression.rightExpr, typeData);
-        expr.operator = new RefinementOperator(expression.operator);
-        expr.operator.assertOperandCompatibility([expr.leftExpr.type, expr.rightExpr.type]);
-        expr.type = expr.operator.evalType();
-        return expr as RefinementExpression;
-    }
+
     toString(): string {
         return '(' + this.leftExpr.toString() + ' ' + this.operator.op + ' ' + this.rightExpr.toString() + ')';
     }
+
     applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
         const left = this.leftExpr.applyOperator(data);
         const right = this.rightExpr.applyOperator(data);
         return this.operator.eval([left, right]);
     }
+
+    swapChildren() {
+        const temp = this.rightExpr;
+        this.rightExpr = this.leftExpr;
+        this.leftExpr = temp;
+        switch (this.operator.op) {
+            case '<': this.operator.updateOp('>'); break;
+            case '>': this.operator.updateOp('<'); break;
+            case '<=': this.operator.updateOp('>='); break;
+            case '>=': this.operator.updateOp('<='); break;
+            default: break;
+        }
+    }
+
+    simplifyPrimitive() {
+        if (this.leftExpr.kind === 'boolean' && this.rightExpr.kind === 'boolean') {
+            return BooleanPrimitive.fromValue(this.applyOperator({}));
+        } else if (this.leftExpr.kind === 'number' && this.rightExpr.kind === 'number') {
+            if (this.type === 'Boolean') {
+                return BooleanPrimitive.fromValue(this.applyOperator({}));
+            }
+            return NumberPrimitive.fromValue(this.applyOperator({}));
+        }
+        return null;
+    }
+
+    normalise() {
+        this.leftExpr = this.leftExpr.normalise();
+        this.rightExpr = this.rightExpr.normalise();
+        const sp = this.simplifyPrimitive();
+        if (sp) {
+            return sp;
+        }
+        if (this.rightExpr.kind === 'field-name') {
+            this.swapChildren();
+        }
+        switch (this.operator.op) {
+            case 'and': {
+                if (this.leftExpr.kind === 'boolean') {
+                    return (this.leftExpr as BooleanPrimitive).value ? this.rightExpr : this.leftExpr;
+                } else if (this.rightExpr.kind === 'boolean') {
+                    return (this.rightExpr as BooleanPrimitive).value ? this.leftExpr : this.rightExpr;
+                }
+                return this;
+            }
+            case 'or': {
+                if (this.leftExpr.kind === 'boolean') {
+                    return (this.leftExpr as BooleanPrimitive).value ? this.leftExpr : this.rightExpr;
+                } else if (this.rightExpr.kind === 'boolean') {
+                    return (this.rightExpr as BooleanPrimitive).value ? this.rightExpr : this.leftExpr;
+                }
+                return this;
+            }
+            default: return this;
+        }
+    }
 }
 
-class UnaryExpression extends RefinementExpression {
-    kind: 'unary-expression';
+export class UnaryExpression extends RefinementExpression {
     type: 'Number' | 'Boolean';
     expr: RefinementExpression;
     operator: RefinementOperator;
-    private constructor() {
-        super();
+
+    constructor(expression: UnaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>) {
+        super('unary-expression');
+        this.expr = RefinementExpression.fromAst(expression.expr, typeData);
+        this.operator = new RefinementOperator((expression.operator === '-') ? 'neg' : expression.operator);
+        this.operator.assertOperandCompatibility([this.expr.type]);
+        this.type = this.operator.evalType();
     }
-    static fromAst(expression: UnaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-        const expr = new UnaryExpression();
-        expr.kind = 'unary-expression';
-        expr.expr = RefinementExpression.fromAst(expression.expr, typeData);
-        expr.operator = new RefinementOperator((expression.operator === '-') ? 'neg' : expression.operator);
-        expr.operator.assertOperandCompatibility([expr.expr.type]);
-        expr.type = expr.operator.evalType();
-        return expr as RefinementExpression;
-    }
+
     toString(): string {
         return this.operator.op + '(' + this.expr.toString() + ')';
     }
-    // tslint:disable-next-line: no-any
+
     applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
         const expression = this.expr.applyOperator(data);
         return this.operator.eval([expression]);
     }
+
+    simplifyPrimitive() {
+        if (this.expr.kind === 'boolean' && this.operator.op === 'not') {
+            return BooleanPrimitive.fromValue(this.applyOperator({}));
+        } else if (this.expr.kind === 'number' && this.operator.op === 'neg') {
+            return NumberPrimitive.fromValue(this.applyOperator({}));
+        }
+        return null;
+    }
+
+    normalise(): RefinementExpression {
+        this.expr = this.expr.normalise();
+        return this.simplifyPrimitive() || this;
+    }
 }
 
 class FieldNamePrimitive extends RefinementExpression {
-    kind: 'field-name';
     type: 'Number' | 'Boolean' | 'Text';
     value: string;
-    private constructor() {
-        super();
-    }
-    // tslint:disable-next-line: no-any
-    static fromAst(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-        const expr = new FieldNamePrimitive();
-        expr.kind = 'field-name';
-        expr.value = expression.value;
-        if (typeData[expr.value] === undefined) {
-            throw new Error(`Unresolved field name '${expr.value}' in the refinement expression.`);
+
+    constructor(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>) {
+        super('field-name');
+        this.value = expression.value;
+        if (typeData[this.value] === undefined) {
+            throw new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
         }
-        expr.type = typeData[expr.value];
-        return expr as RefinementExpression;
+        this.type = typeData[this.value];
     }
+
+    static fromValue(value: string, type: 'Number' | 'Boolean' | 'Text'): RefinementExpression {
+        const typeData = {}; typeData[value] = type;
+        const expr = new FieldNamePrimitive({'value': value} as FieldNode, typeData);
+        return expr;
+    }
+
     toString(): string {
         return this.value.toString();
     }
-    // tslint:disable-next-line: no-any
+
     applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
         if (data[this.value] !== undefined) {
             return data[this.value];
@@ -199,18 +243,19 @@ class FieldNamePrimitive extends RefinementExpression {
 }
 
 class NumberPrimitive extends RefinementExpression {
-    kind: 'number';
     type: 'Number';
     value: number;
-    private constructor() {
-        super();
+
+    constructor(expression: NumberNode) {
+        super('number');
+        this.value = expression.value;
+        this.type = 'Number';
+        return this;
     }
-    static fromAst(expression: NumberNode): RefinementExpression {
-        const expr = new NumberPrimitive();
-        expr.kind = 'number';
-        expr.value = expression.value;
-        expr.type = 'Number';
-        return expr as RefinementExpression;
+
+    static fromValue(value: number): RefinementExpression {
+        const expr = new NumberPrimitive({'value': value} as NumberNode);
+        return expr;
     }
     toString(): string {
         return this.value.toString();
@@ -221,37 +266,38 @@ class NumberPrimitive extends RefinementExpression {
 }
 
 class BooleanPrimitive extends RefinementExpression {
-    kind: 'boolean';
     type: 'Boolean';
     value: boolean;
-    private constructor() {
-        super();
+
+    constructor(expression: BooleanNode) {
+        super('boolean');
+        this.value = expression.value;
+        this.type = 'Boolean';
     }
-    static fromAst(expression: BooleanNode): RefinementExpression {
-        const expr = new BooleanPrimitive();
-        expr.kind = 'boolean';
-        expr.value = expression.value;
-        expr.type = 'Boolean';
-        return expr as RefinementExpression;
+
+    static fromValue(value: boolean): RefinementExpression {
+        const expr = new BooleanPrimitive({'value': value} as BooleanNode);
+        return expr;
     }
+
     toString(): string {
         return this.value.toString();
     }
+
     applyOperator(): ExpressionPrimitives {
         return this.value;
     }
 }
 
 export class Range {
-    segments: Segment[];
-    constructor() {
-        this.segments = [];
-    }
+    segments: Segment[] = [];
+
     static infiniteRange(): Range {
         const infRange = new Range();
         infRange.segments = [Segment.openOpen(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)];
         return infRange;
     }
+
     static copyOf(range: Range): Range {
         const copy = new Range();
         for (const subRange of range.segments) {
@@ -259,6 +305,7 @@ export class Range {
         }
         return copy;
     }
+
     static fromSegments(segs: Segment[]): Range {
         const newRange = new Range();
         for (const subRange of segs) {
@@ -266,6 +313,7 @@ export class Range {
         }
         return newRange;
     }
+
     // This function assumes that the expression is univariate
     // and has been normalised (see above for definition).
     // TODO(ragdev): Currently only Number types are supported. Add Boolean and String support.
@@ -283,22 +331,25 @@ export class Range {
             const rg = Range.fromExpression(uexpr.expr);
             return Range.updateGivenOp(uexpr.operator.op, [rg]);
         }
-        console.log(expr);
         throw new Error(`Cannot resolve primitive nodes by themselves.`);
     }
+
     static unionOf(range1: Range, range2: Range): Range {
         const newRange = Range.copyOf(range1);
         newRange.union(range2);
         return newRange;
     }
+
     static intersectionOf(range1: Range, range2: Range): Range {
         const newRange = Range.copyOf(range1);
         newRange.intersect(range2);
         return newRange;
     }
+
     static complementOf(range: Range, from: Range = Range.infiniteRange()) {
         return Range.difference(from, range);
     }
+
     // difference(A,B) = A\B = A - B
     static difference(range1: Range, range2: Range): Range {
         const newRange = new Range();
@@ -311,28 +362,32 @@ export class Range {
                 to.kind = to.kind === 'open' ? 'closed' : 'open';
                 try {
                     newRange.segments.push(new Segment(from, to));
-                } catch (e) {const _ = e;}
+                } catch (e) {/*linter requires non-empty catch blocks*/const _ = e;}
                 from = iseg.to;
                 from.kind = from.kind === 'open' ? 'closed' : 'open';
             }
             const to: Boundary = {...seg.to};
             try {
                 newRange.segments.push(new Segment(from, to));
-            } catch (e) {const _ = e;}
+            } catch (e) {/*linter requires non-empty catch blocks*/const _ = e;}
         }
         return newRange;
     }
+
     equals(range: Range): boolean {
         return JSON.stringify(this) === JSON.stringify(range);
     }
+
     isSubsetOf(range: Range): boolean {
         return this.equals(Range.intersectionOf(this, range));
     }
+
     union(range: Range): void {
         for (const seg of range.segments) {
             this.unionWithSeg(seg);
         }
     }
+
     intersect(range: Range): void {
         const newRange = new Range();
         for (const seg of range.segments) {
@@ -342,6 +397,7 @@ export class Range {
         }
         this.segments = newRange.segments;
     }
+
     unionWithSeg(seg: Segment): void {
         let i = 0; let j = this.segments.length;
         let x: Boundary = {...seg.from}; let y: Boundary = {...seg.to};
@@ -373,6 +429,7 @@ export class Range {
         }
         this.segments.splice(i, j-i, new Segment(x, y));
     }
+
     intersectWithSeg(seg: Segment): void {
         const newRange = new Range();
         for (const subRange of this.segments) {
@@ -382,6 +439,7 @@ export class Range {
         }
         this.segments = newRange.segments;
     }
+
     static makeInitialGivenOp(op: string, val: ExpressionPrimitives): Range {
         switch (op) {
             case '<': return Range.fromSegments([Segment.openOpen(Number.NEGATIVE_INFINITY, val)]);
@@ -393,6 +451,7 @@ export class Range {
             default: throw new Error(`Unsupported operator: field ${op} number`);
         }
     }
+
     static updateGivenOp(op: string, ranges: Range[]): Range {
         switch (op) {
             case 'and': {
@@ -426,6 +485,7 @@ export class Range {
 export class Segment {
     from: Boundary;
     to: Boundary;
+
     constructor(from: Boundary, to: Boundary) {
         if (to.val < from.val) {
             throw new Error(`Invalid range from: ${from}, to:${to}`);
@@ -435,22 +495,27 @@ export class Segment {
         this.from = {...from};
         this.to = {...to};
     }
+
     static closedClosed(from: number, to: number): Segment {
         const seg = new Segment({val: from, kind: 'closed'}, {val: to, kind: 'closed'});
         return seg;
     }
+
     static openOpen(from: number, to: number): Segment {
         const seg = new Segment({val: from, kind: 'open'}, {val: to, kind: 'open'});
         return seg;
     }
+
     static closedOpen(from: number, to: number): Segment {
         const seg = new Segment({val: from, kind: 'closed'}, {val: to, kind: 'open'});
         return seg;
     }
+
     static openClosed(from: number, to: number): Segment {
         const seg = new Segment({val: from, kind: 'open'}, {val: to, kind: 'closed'});
         return seg;
     }
+
     // If strict is false, (a,x) is NOT less than [x,b)
     // even though mathematically it is.
     isLessThan(seg: Segment, strict: boolean): boolean {
@@ -462,6 +527,7 @@ export class Segment {
         }
         return this.to.val < seg.from.val;
     }
+
     // If strict is false, (x,a) is NOT greater than (b,x]
     // even though mathematically it is.
     isGreaterThan(seg: Segment, strict: boolean): boolean {
@@ -473,12 +539,15 @@ export class Segment {
         }
         return this.from.val > seg.to.val;
     }
+
     mergableWith(seg: Segment): boolean {
         return !this.isLessThan(seg, false) && !this.isGreaterThan(seg, false);
     }
+
     overlapsWith(seg: Segment): boolean {
         return !this.isLessThan(seg, true) && !this.isGreaterThan(seg, true);
     }
+
     static merge(a: Segment, b: Segment): Segment {
         if (!a.mergableWith(b)) {
             throw new Error('Cannot merge non-overlapping segments');
@@ -498,6 +567,7 @@ export class Segment {
         }
         return new Segment(left, right);
     }
+
     static overlap(a: Segment, b: Segment): Segment {
         if (!a.overlapsWith(b)) {
             throw new Error('Cannot find intersection of non-overlapping segments');
@@ -517,7 +587,6 @@ export class Segment {
         }
         return new Segment(left, right);
     }
-
 }
 
 interface Boundary {
@@ -525,11 +594,37 @@ interface Boundary {
     kind: 'open' | 'closed';
 }
 
+// Does not contain == and !=
+const operandCompatability = {
+    'and': ['Boolean', 'Boolean'],
+    'or': ['Boolean', 'Boolean'],
+    '<': ['Number', 'Number'],
+    '>': ['Number', 'Number'],
+    '<=': ['Number', 'Number'],
+    '>=': ['Number', 'Number'],
+    '+': ['Number', 'Number'],
+    '-': ['Number', 'Number'],
+    '*': ['Number', 'Number'],
+    '/': ['Number', 'Number'],
+    'not': ['Boolean'],
+    'neg': ['Number'],
+};
+
 class RefinementOperator {
     op: string;
     fn: Evaluator;
+
     constructor(operator: string) {
         this.op = operator;
+        this.updateFn();
+    }
+
+    updateOp(op: string) {
+        this.op = op;
+        this.updateFn();
+    }
+
+    private updateFn() {
         switch (this.op) {
             case 'and': this.fn = (expr) => expr[0] && expr[1]; break;
             case 'or': this.fn = (expr) => expr[0] || expr[1]; break;
@@ -549,124 +644,43 @@ class RefinementOperator {
         }
     }
 
-    // tslint:disable-next-line: no-any
     eval(exprs: ExpressionPrimitives[]): ExpressionPrimitives {
         return this.fn(exprs);
     }
 
     evalType(): 'Number' | 'Boolean' {
         switch (this.op) {
-            case 'and': return 'Boolean';
-            case 'or': return 'Boolean';
-            case '<': return 'Boolean';
-            case '>': return 'Boolean';
-            case '<=': return 'Boolean';
-            case '>=': return 'Boolean';
-            case '+': return 'Number';
-            case '-': return 'Number';
-            case '*': return 'Number';
-            case '/': return 'Number';
-            case 'not': return 'Boolean';
-            case 'neg': return 'Number';
-            case '==': return 'Boolean';
+            // Boolean
+            case 'and': case 'or':
+            case '<': case '>':
+            case '<=': case '>=':
+            case 'not': case '==':
             case '!=': return 'Boolean';
+            // Number
+            case '+': case '-':
+            case '*': case '/':
+            case 'neg': return 'Number';
             default: throw new Error(`Invalid refinement operator ${this.op}`);
         }
     }
 
     assertOperandCompatibility(operandTypes: string[]): void {
-        switch (this.op) {
-            case 'and': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Boolean');
-                this.assertType(operandTypes[1], 'Boolean');
-                break;
+        if (['==', '!='].includes(this.op)) {
+            assert.strictEqual(operandTypes.length, 2);
+            if (operandTypes[0] !== operandTypes[1]) {
+                throw new Error(`Expected ${operandTypes[0]} and ${operandTypes[1]} to be the same.`);
             }
-            case 'or': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Boolean');
-                this.assertType(operandTypes[1], 'Boolean');
-                break;
-            }
-            case '<': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Number');
-                this.assertType(operandTypes[1], 'Number');
-                break;
-            }
-            case '>': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Number');
-                this.assertType(operandTypes[1], 'Number');
-                break;
-            }
-            case '<=': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Number');
-                this.assertType(operandTypes[1], 'Number');
-                break;
-            }
-            case '>=': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Number');
-                this.assertType(operandTypes[1], 'Number');
-                break;
-            }
-            case '+': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Number');
-                this.assertType(operandTypes[1], 'Number');
-                break;
-            }
-            case '-': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Number');
-                this.assertType(operandTypes[1], 'Number');
-                break;
-            }
-            case '*': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Number');
-                this.assertType(operandTypes[1], 'Number');
-                break;
-            }
-            case '/': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertType(operandTypes[0], 'Number');
-                this.assertType(operandTypes[1], 'Number');
-                break;
-            }
-            case 'not': {
-                assert.strictEqual(operandTypes.length, 1);
-                this.assertType(operandTypes[0], 'Boolean');
-                break;
-            }
-            case 'neg': {
-                assert.strictEqual(operandTypes.length, 1);
-                this.assertType(operandTypes[0], 'Number');
-                break;
-            }
-            case '==': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertTypeEquality(operandTypes[0], operandTypes[1]);
-                break;
-            }
-            case '!=': {
-                assert.strictEqual(operandTypes.length, 2);
-                this.assertTypeEquality(operandTypes[0], operandTypes[1]);
-                break;
-            }
-            default: throw new Error('Invalid refinement operator');
+            return;
         }
-    }
-    assertType(actual: string, expected: string): void {
-        if (actual !== expected) {
-            throw new Error(`Got type ${actual}. Expected ${expected}.`);
+        const expected = operandCompatability[this.op];
+        if (!expected) {
+            throw new Error(`Invalid refinement operator ${this.op}`);
+
         }
-    }
-    assertTypeEquality(t1: string, t2: string): void {
-        if (t1 !== t2) {
-            throw new Error(`Expected ${t1} and ${t2} to be the same.`);
+        for (const [i, opT] of operandTypes.entries()) {
+            if (opT !== expected[i]) {
+                throw new Error(`Got type ${opT}. Expected ${expected[i]}.`);
+            }
         }
     }
 }
