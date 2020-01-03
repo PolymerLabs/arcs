@@ -12,7 +12,7 @@ import '../../../storage/pouchdb/pouch-db-provider.js';
 import {assert} from '../../../../platform/chai-web.js';
 import {Arc} from '../../../arc.js';
 import {Loader} from '../../../../platform/loader.js';
-import {Manifest} from '../../../manifest.js';
+import {Manifest, ManifestHandleRetriever} from '../../../manifest.js';
 import {PouchDbCollection} from '../../../storage/pouchdb/pouch-db-collection.js';
 import {PouchDbStorage} from '../../../storage/pouchdb/pouch-db-storage.js';
 import {PouchDbSingleton} from '../../../storage/pouchdb/pouch-db-singleton.js';
@@ -46,7 +46,7 @@ describe('pouchdb for ' + testUrl, () => {
   function createStorage(id: Id) {
     let storage = storageInstances.get(id);
     if (!storage) {
-      storage = new StorageProviderFactory(id);
+      storage = new StorageProviderFactory(id, new ManifestHandleRetriever());
       storageInstances.set(id, storage);
     }
 
@@ -271,7 +271,7 @@ describe('pouchdb for ' + testUrl, () => {
           value: Text
       `);
       const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
-      const storage = new StorageProviderFactory(arc.id);
+      const storage = new StorageProviderFactory(arc.id, new ManifestHandleRetriever());
       const barType = new EntityType(manifest.schemas.Bar);
       const key = newStoreKey('collectionRemoveMultiple');
       const collection = await storage.construct('test1', barType.collectionOf(), key) as PouchDbCollection;

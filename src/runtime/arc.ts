@@ -15,7 +15,7 @@ import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from '../platform/loader.js';
 import {Runnable} from './hot.js';
-import {Manifest} from './manifest.js';
+import {Manifest, ManifestHandleRetriever} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Modality} from './modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
@@ -141,7 +141,8 @@ export class Arc implements ArcInterface {
     this.storageKey = storageKey;
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
     this.pec = new ParticleExecutionHost(slotComposer, this, ports);
-    this.storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
+    this.storageProviderFactory = storageProviderFactory ||
+        new StorageProviderFactory(this.id, new ManifestHandleRetriever());
 
     this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
     DriverFactory.register(this.volatileStorageDriverProvider);

@@ -10,6 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Id, ArcId} from '../id.js';
+import {ManifestHandleRetriever} from '../manifest.js';
 import {ChangeEvent, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
@@ -24,7 +25,7 @@ describe('synthetic storage ', () => {
 
   async function setup(serialization): Promise<{id: Id, targetStore: SingletonStorageProvider, synth: CollectionStorageProvider}> {
     const id = ArcId.newForTest('test');
-    const storage = new StorageProviderFactory(id);
+    const storage = new StorageProviderFactory(id, new ManifestHandleRetriever());
     const type = new ArcType();
     const key = storage.parseStringAsKey(`volatile://${id}`).childKeyForArcInfo().toString();
     const targetStore = await storage.construct('id0', type, key) as SingletonStorageProvider;
@@ -39,7 +40,7 @@ describe('synthetic storage ', () => {
   }
 
   it('invalid synthetic keys', async () => {
-    const storage = new StorageProviderFactory(ArcId.newForTest('test'));
+    const storage = new StorageProviderFactory(ArcId.newForTest('test'), new ManifestHandleRetriever());
     const check = (key, msg) => assertThrowsAsync(() => storage.connect('id1', null, key), msg);
 
     await Promise.all([
@@ -53,7 +54,7 @@ describe('synthetic storage ', () => {
   });
 
   it('non-existent target key', async () => {
-    const storage = new StorageProviderFactory(ArcId.newForTest('test'));
+    const storage = new StorageProviderFactory(ArcId.newForTest('test'), new ManifestHandleRetriever());
     const synth = await storage.connect('id1', null, `synthetic://arc/handles/volatile://nope`);
     assert.isNull(synth);
   });

@@ -11,6 +11,7 @@
 import {StorageBase, StorageProviderBase} from './storage-provider-base.js';
 import {VolatileStorage} from './volatile-storage.js';
 import {SyntheticStorage} from './synthetic-storage.js';
+import {HandleRetriever} from './handle-retriever.js';
 import {Id} from '../id.js';
 import {Type} from '../type.js';
 import {KeyBase} from './key-base.js';
@@ -34,13 +35,19 @@ export class StorageProviderFactory {
   private _storageInstances: Dictionary<{storage: StorageBase, isPersistent: boolean}>;
 
   private readonly mutexMap: Map<string, Mutex> = new Map<string, Mutex>();
+  private readonly handleRetriever: HandleRetriever;
 
-  constructor(private readonly arcId: Id) {
+  constructor(private readonly arcId: Id, handleRetriever: HandleRetriever) {
+    this.handleRetriever = handleRetriever;
     this._storageInstances = {};
     Object.keys(providers).forEach(name => {
       const {storage, isPersistent} = providers[name];
       this._storageInstances[name] = {storage: new storage(arcId, this), isPersistent};
     });
+  }
+
+  getHandleRetriever(): HandleRetriever {
+    return this.handleRetriever;
   }
 
   private getInstance(key: string) {

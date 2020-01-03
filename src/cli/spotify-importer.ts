@@ -11,7 +11,7 @@
 
 import fs from 'fs';
 import {Id} from '../runtime/id.js';
-import {Manifest} from '../runtime/manifest.js';
+import {Manifest, ManifestHandleRetriever} from '../runtime/manifest.js';
 import {EntityType} from '../runtime/type.js';
 import {StorageProviderFactory} from '../runtime/storage/storage-provider-factory.js';
 import {resetStorageForTesting} from '../runtime/storage/firebase/firebase-storage.js';
@@ -105,7 +105,7 @@ void (async () => {
     const playlistType = new EntityType(manifest.schemas.Playlist);
 
     const id = Id.fromString('import');
-    const storage = new StorageProviderFactory(id);
+    const storage = new StorageProviderFactory(id, new ManifestHandleRetriever());
     const construct = () => storage.construct('import', playlistType.bigCollectionOf(), key);
     const connect = () => storage.connect('import', playlistType.bigCollectionOf(), key);
 

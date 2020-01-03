@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
-import {Manifest} from '../manifest.js';
+import {Manifest, ManifestHandleRetriever} from '../manifest.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
@@ -38,14 +38,22 @@ describe('volatile', () => {
     resetVolatileStorageForTesting();
   });
 
+  const newArc = async () => {
+     const context = await Manifest.parse(`
+       schema Bar
+         value: Text
+     `);
+     const id = ArcId.newForTest('test');
+     return {
+         manifest: context,
+         arc: new Arc({id, context, loader: new Loader()}),
+         storage: new StorageProviderFactory(id, new ManifestHandleRetriever())
+     };
+   };
+
   describe('variable', () => {
     it('supports basic construct and mutate', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const value = 'Hi there' + Math.random();
       const variable = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
@@ -55,12 +63,7 @@ describe('volatile', () => {
     });
 
     it('resolves concurrent set', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const var1 = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
       const var2 = await storage.connect('test0', barType, var1.storageKey) as SingletonStorageProvider;
@@ -69,13 +72,7 @@ describe('volatile', () => {
     });
 
     it('enables referenceMode by default', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
 
       const var1 = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
@@ -91,13 +88,7 @@ describe('volatile', () => {
     });
 
     it('supports references', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
 
       const var1 = await storage.construct('test0', new ReferenceType(barType), storeKey) as SingletonStorageProvider;
@@ -114,12 +105,7 @@ describe('volatile', () => {
 
   describe('collection', () => {
     it('supports basic construct and mutate', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const value1 = 'Hi there' + Math.random();
       const value2 = 'Goodbye' + Math.random();
@@ -132,12 +118,7 @@ describe('volatile', () => {
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
     });
     it('resolves concurrent add of same id', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
       const collection2 = await storage.connect('test1', barType.collectionOf(), collection1.storageKey) as CollectionStorageProvider;
@@ -147,12 +128,7 @@ describe('volatile', () => {
       assert.deepEqual(await collection1.toList(), await collection2.toList());
     });
     it('resolves concurrent add/remove of same id', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
       const collection2 = await storage.connect('test1', barType.collectionOf(), collection1.storageKey) as CollectionStorageProvider;
@@ -165,12 +141,7 @@ describe('volatile', () => {
       assert.isEmpty(await collection2.toList());
     });
     it('resolves concurrent add of different id', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
       const collection2 = await storage.connect('test1', barType.collectionOf(), collection1.storageKey) as CollectionStorageProvider;
@@ -181,13 +152,7 @@ describe('volatile', () => {
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
     it('enables referenceMode by default', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
 
       const collection1 = await storage.construct('test0', barType.collectionOf(), storeKey) as CollectionStorageProvider;
@@ -206,12 +171,7 @@ describe('volatile', () => {
       assert.deepEqual(await collection1.backingStore.toList(), await collection1.toList());
     });
     it('supports removeMultiple', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const collection = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
       await collection.store({id: 'id1', value: 'value'}, ['key1']);
@@ -222,13 +182,7 @@ describe('volatile', () => {
       assert.isEmpty(await collection.toList());
     });
     it('supports references', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          value: Text
-      `);
-
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
 
       const collection1 = await storage.construct('test0', new ReferenceType(barType).collectionOf(), storeKey) as CollectionStorageProvider;
@@ -248,12 +202,7 @@ describe('volatile', () => {
 
   describe('big collection', () => {
     it('supports get, store and remove (including concurrently)', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          data: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const collection1 = await storage.construct('test0', barType.bigCollectionOf(), storeKey) as CollectionStorageProvider;
       const collection2 = await storage.connect('test0', barType.bigCollectionOf(), collection1.storageKey) as CollectionStorageProvider;
@@ -297,12 +246,7 @@ describe('volatile', () => {
     }
 
     it('supports version-stable streamed reads forwards', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          data: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), loader: new Loader(), context: manifest});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', barType.bigCollectionOf(), storeKey) as BigCollectionStorageProvider;
 
@@ -340,12 +284,7 @@ describe('volatile', () => {
     });
 
     it('supports version-stable streamed reads backwards', async () => {
-      const manifest = await Manifest.parse(`
-        schema Bar
-          data: Text
-      `);
-      const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
-      const storage = new StorageProviderFactory(arc.id);
+      const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
       const col = await storage.construct('test0', barType.bigCollectionOf(), storeKey) as BigCollectionStorageProvider;
 
