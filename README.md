@@ -2,7 +2,6 @@
 [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/rswlpkq2vtp9cns0/branch/master?svg=true)](https://ci.appveyor.com/project/arcs/arcs-3i77k/branch/master)
 
 
-
 # Arcs
 
 A hosted version of Arcs is available at https://live.arcs.dev.
@@ -105,6 +104,7 @@ $ git config core.hooksPath tools/hooks
   described [here](https://stackoverflow.com/questions/24557224/git-bash-path-cannot-parse-windows-directory-with-space) and [here](https://github.com/coreybutler/nvm-windows/issues/41).
 
 ### Mac Installation Notes
+
 - When installing, if you run into SSL Cert verification errors, consider certifying Python 3.6 on Mac:
 `/Applications/Python\ 3.6/Install\ Certificates.command` ([source](https://stackoverflow.com/a/42334357))
 
@@ -120,6 +120,7 @@ Then open `http://localhost:8786/shells/web-shell/` in a web browser
 (or, on MacOS, use `open 'http://localhost:8786/shells/web-shell/`).
 
 ## Subprojects
+
 Subcomponents have more detailed descriptions. Particularly the extensions
 also have individual installation steps.
 
@@ -132,47 +133,8 @@ See [extension](extension/README.md).
 See [devtools](devtools/README.md).
 
 ## IDE Setup
-Arcs can be developed in the IDE of your choice. Here are some helpful hints to get started in some more common IDEs.
 
-### Android Studio
-
-- Install Android Studio. When prompted, install the needed SDK Android 10 (SDK version 29).
-- Open Android Studio and install the Bazel extension. This should prompt you to restart the IDE, if not restart anyway.
-- Upon restarting Android, click "Import Bazel Project"
-- Select the workspace by navigating to the arcs folder, then click "Next".
-- Choose "Import project view file" and click on the three dots.
-- Navigate to the arcs folder, and select the `.bazelproject` file. Click "OK".
-- Click "Next".
-- Click "Finish".
-
-If you get a `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory` error, follow these instructions:
-- Go to Android Studio -> Preferences -> Bazel Settings
-- Find the Bazel binary location, and click the three dots next to it.
-- Navigate to the correct location, and select the Bazel binary.
-  - If you don't know where the Bazel binary is located, open a terminal and run `which bazel`.
-- Click "Apply" then "OK"
-- Re-import the project by hitting the bazel logo in the upper right hand corner.
-
-### IntelliJ
-
-- Install IntelliJ. Community Edition is sufficient.
-- Open IntelliJ and install the Bazel extension.
-- Upon restarting IntelliJ, click "Import Bazel Project"
-- Select the workspace by navigating to the arcs folder, then click "Next".
-- Choose "Import project view file" and click on the three dots.
-- Navigate to the arcs folder, and select the `intellij.bazelproject` file. Click "OK".
-- Click "Next".
-- Click "Finish".
-
-If you get a `Error:Cannot run program "bazel" (in directory "$path"): error=2, No such file or directory` error, follow these instructions:
-- Go to IntelliJ IDEA -> Preferences -> Bazel Settings
-- Find the Bazel binary location, and click the three dots next to it.
-- Navigate to the correct location, and select the Bazel binary.
-  - If you don't know where the Bazel binary is located, open a terminal and run `which bazel`.
-- Click "Apply" then "OK"
-- Re-import the project by hitting the bazel logo in the upper right hand corner.
-
-If you get an error related to the Android SDK not being installed, follow the prompts and then restart IntelliJ.
+See [IDE Setup](docs/IDE-Setup.md).
 
 ## Testing
 
