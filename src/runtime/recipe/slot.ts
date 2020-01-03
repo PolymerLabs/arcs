@@ -12,13 +12,14 @@ import {assert} from '../../platform/assert-web.js';
 
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
-import {CloneMap, IsResolvedOptions, IsValidOptions, Recipe, RecipeComponent, ToStringOptions} from './recipe.js';
+import {CloneMap, Recipe, IsResolvedOptions, IsValidOptions, RecipeComponent, ToStringOptions, RequireSection} from './recipe.js';
+import {RecipeInterface} from './recipe-interface.js';
 import {SlotConnection} from './slot-connection.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Flags} from '../flags.js';
 
 export class Slot implements Comparable<Slot> {
-  private readonly _recipe: Recipe;
+  private readonly _recipe: RecipeInterface;
   private _id?: string = undefined;
   private _localName?: string = undefined;
   private _name: string;
@@ -27,14 +28,14 @@ export class Slot implements Comparable<Slot> {
   private _formFactor?: string = undefined;
   private _consumeConnections: SlotConnection[] = [];
 
-  constructor(recipe: Recipe, name: string) {
+  constructor(recipe: RecipeInterface, name: string) {
     assert(recipe);
-
     this._recipe = recipe;
     this._name = name;
   }
 
-  get recipe(): Recipe { return this._recipe; }
+  get recipe(): RecipeInterface { return this._recipe; }
+  // get recipe(): Recipe { return this._recipe as Recipe; }
   get id(): string|undefined { return this._id; }
   set id(id: string) { this._id = id; }
   get localName(): string|undefined { return this._localName; }
@@ -129,13 +130,6 @@ export class Slot implements Comparable<Slot> {
     const idx = this._consumeConnections.indexOf(slotConnection);
     assert(idx > -1);
     this._consumeConnections.splice(idx, 1);
-    if (this._consumeConnections.length === 0) {
-      this.remove();
-    }
-  }
-
-  remove(): void {
-    this._recipe.removeSlot(this);
   }
 
   isResolved(options?: IsResolvedOptions) : boolean {

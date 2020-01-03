@@ -267,10 +267,10 @@ export class RecipeIndex {
     return consumeConns;
   }
 
-  findProvidedSlot(particle: Particle, slotSpec: ConsumeSlotConnectionSpec): Slot[] {
+  findProvidedSlot(particle: Particle, slotSpec: ConsumeSlotConnectionSpec): {slot: Slot, recipe: Recipe}[] {
     this.ensureReady();
 
-    const providedSlots: Slot[] = [];
+    const providedSlots: {slot: Slot, recipe: Recipe}[] = [];
     for (const recipe of this._recipes) {
       if (recipe.particles.some(particle => !particle.name)) {
         // Skip recipes where not all verbs are resolved to specific particles
@@ -280,7 +280,7 @@ export class RecipeIndex {
       for (const consumeConn of recipe.slotConnections) {
         for (const providedSlot of Object.values(consumeConn.providedSlots)) {
           if (SlotUtils.slotMatches(particle, slotSpec, providedSlot)) {
-            providedSlots.push(providedSlot);
+            providedSlots.push({slot: providedSlot, recipe});
           }
         }
       }

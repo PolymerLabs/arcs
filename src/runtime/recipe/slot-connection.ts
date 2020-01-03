@@ -37,10 +37,6 @@ export class SlotConnection implements Comparable<SlotConnection> {
     this._name = name;
   }
 
-  remove(): void {
-    this._particle.removeSlotConnection(this);
-  }
-
   get recipe(): Recipe { return this._recipe; }
   get particle(): Particle  { return this._particle; }
   get name(): string { return this._name; }

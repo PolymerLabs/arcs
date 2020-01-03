@@ -46,20 +46,20 @@ export class CoalesceRecipes extends Strategy {
         const results = [];
         // TODO: It is possible that provided-slot wasn't matched due to different handles, but actually
         // these handles are coalescable? Add support for this.
-        for (const providedSlot of index.findProvidedSlot(particle, slotSpec)) {
+        for (const provided of index.findProvidedSlot(particle, slotSpec)) {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
-          if (recipe.particles.length + providedSlot.recipe.particles.length > 10) continue;
+          if (recipe.particles.length + provided.recipe.particles.length > 10) continue;
 
-          if (RecipeUtil.matchesRecipe(arc.activeRecipe, providedSlot.recipe)) {
+          if (RecipeUtil.matchesRecipe(arc.activeRecipe, provided.recipe)) {
             // skip candidate recipe, if matches the shape of the arc's active recipe
             continue;
           }
 
           results.push((recipe:Recipe, particle:Particle, slotSpec:ConsumeSlotConnectionSpec) => {
-            const otherToHandle = index.findCoalescableHandles(recipe, providedSlot.recipe);
+            const otherToHandle = index.findCoalescableHandles(recipe, provided.recipe);
 
-            const {cloneMap} = providedSlot.recipe.mergeInto(recipe);
-            const mergedSlot = cloneMap.get(providedSlot);
+            const {cloneMap} = provided.recipe.mergeInto(recipe);
+            const mergedSlot = cloneMap.get(provided.slot);
             const newSlotConnection = particle.addSlotConnection(slotSpec.name);
             newSlotConnection.connectToSlot(mergedSlot);
 
@@ -96,25 +96,25 @@ export class CoalesceRecipes extends Strategy {
         const results = [];
         // TODO: It is possible that provided-slot wasn't matched due to different handles, but actually
         // these handles are coalescable? Add support for this.
-        for (const providedSlot of index.findProvidedSlot(slotConnection.particle, slotConnection.spec)) {
+        for (const provided of index.findProvidedSlot(slotConnection.particle, slotConnection.spec)) {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
-          if (recipe.particles.length + providedSlot.recipe.particles.length > 10) continue;
+          if (recipe.particles.length + provided.recipe.particles.length > 10) continue;
 
-          if (RecipeUtil.matchesRecipe(arc.activeRecipe, providedSlot.recipe)) {
+          if (RecipeUtil.matchesRecipe(arc.activeRecipe, provided.recipe)) {
             // skip candidate recipe, if matches the shape of the arc's active recipe
             continue;
           }
 
-          if (RecipeUtil.matchesRecipe(recipe, providedSlot.recipe)) {
+          if (RecipeUtil.matchesRecipe(recipe, provided.recipe)) {
             // skip candidate recipe, if matches the shape of the currently explored recipe
             continue;
           }
 
           results.push((recipe, slotConnection) => {
-            const otherToHandle = index.findCoalescableHandles(recipe, providedSlot.recipe);
+            const otherToHandle = index.findCoalescableHandles(recipe, provided.recipe);
 
-            const {cloneMap} = providedSlot.recipe.mergeInto(slotConnection.recipe);
-            const mergedSlot = cloneMap.get(providedSlot);
+            const {cloneMap} = provided.recipe.mergeInto(slotConnection.recipe);
+            const mergedSlot = cloneMap.get(provided.slot);
             slotConnection.connectToSlot(mergedSlot);
 
             this._connectOtherHandles(recipe, otherToHandle, cloneMap, false);

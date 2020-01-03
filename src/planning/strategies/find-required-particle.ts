@@ -30,11 +30,11 @@ export class FindRequiredParticle extends Strategy {
             const oldSlot = slotConn.targetSlot;
             const matchedSlotConn = particleMatch.getSlotConnectionByName(slotConn.name);
             const newSlot = matchedSlotConn.targetSlot;
-            if (!SlotUtils.replaceOldSlot(recipe, oldSlot, newSlot)) return undefined;
+            if (!SlotUtils.replaceOldSlot(oldSlot, newSlot)) return undefined;
 
             for (const [pname, oldPSlot] of Object.entries(slotConn.providedSlots)) {
               const pslot = matchedSlotConn.providedSlots[pname];
-              if (!SlotUtils.replaceOldSlot(recipe, oldPSlot, pslot)) return undefined;
+              if (!SlotUtils.replaceOldSlot(oldPSlot, pslot)) return undefined;
             }
 
             // remove particle from require section

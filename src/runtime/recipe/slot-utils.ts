@@ -136,7 +136,7 @@ export class SlotUtils {
     return consumeSlotSpec.name === (provideSlot ? provideSlot.name : provideSlotSpec.name);
   }
 
-  static replaceOldSlot(recipe: Recipe, oldSlot: Slot, newSlot: Slot): boolean {
+  static replaceOldSlot(oldSlot: Slot, newSlot: Slot): boolean {
     if (oldSlot && (!oldSlot.id || oldSlot.id !== newSlot.id)) {
       if (oldSlot.sourceConnection !== undefined) {
         if (newSlot.sourceConnection === undefined) return false;
@@ -149,7 +149,8 @@ export class SlotUtils {
         conn.disconnectFromSlot();
         SlotUtils.connectSlotConnection(conn, newSlot);
       }
-
+      // TODO(mmandlis): Investigate this, recipes and require sections interfere with slot's parent recipe.
+      (oldSlot.recipe as Recipe).removeSlot(oldSlot);
     }
 
     return true;

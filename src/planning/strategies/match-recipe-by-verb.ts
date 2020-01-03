@@ -102,7 +102,7 @@ export class MatchRecipeByVerb extends Strategy {
                       const {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
 
                       const consumeConn = particle.getSlotConnectionByName(consumeSlot) || particle.addSlotConnection(consumeSlot);
-                      consumeConn.providedSlots[slotName].remove();
+                      outputRecipe.removeSlot(consumeConn.providedSlots[slotName]);
                       consumeConn.providedSlots[slotName] = mappedSlot;
                       mappedSlot._sourceConnection = consumeConn;
                     }

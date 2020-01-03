@@ -55,7 +55,7 @@ export class Handle implements Comparable<Handle> {
     if (this.fate !== '`slot') {
       return undefined;
     }
-    const slandle = new Slot(this.recipe as Recipe, this.localName);
+    const slandle = new Slot(this.recipe, this.localName);
     slandle.tags = this.tags;
     slandle.id = this.id;
 

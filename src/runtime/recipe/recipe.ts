@@ -116,7 +116,15 @@ export class Recipe implements Cloneable<Recipe>, RecipeInterface {
     const idx = this._particles.indexOf(particle);
     assert(idx > -1);
     this._particles.splice(idx, 1);
-    particle.getSlotConnections().forEach(conn => conn.remove());
+    particle.getSlotConnections().forEach(conn => this.removeSlotConnection(particle, conn));
+  }
+
+  removeSlotConnection(particle: Particle, slotConn: SlotConnection) {
+    const targetSlot = slotConn.targetSlot;
+    particle.removeSlotConnection(slotConn);
+    if (!!targetSlot && targetSlot.consumeConnections.length === 0) {
+      this.removeSlot(targetSlot);
+    }
   }
 
   newHandle(): Handle {
