@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {RuntimeCacheService} from '../runtime-cache.js';
 import {firebase, FirebaseDriver, FirebaseStorageKey, FirebaseAppCache} from '../storageNG/drivers/firebase.js';
 import {Exists} from '../storageNG/drivers/driver-factory.js';
 import {assert} from '../../platform/chai-web.js';
@@ -34,18 +35,21 @@ describe('firebase-ng-driver', function() {
     const storageKey = new FirebaseStorageKey(testProject, testDomain, testKey, 'foo');
     await resetStorageKeyForTesting(storageKey);
     const driver = new FirebaseDriver<number>(storageKey, Exists.ShouldCreate);
-    await driver.init();
+    const cacheService = new RuntimeCacheService();
+    const appCache = new FirebaseAppCache(cacheService);
+    await driver.init(appCache);
     driver.registerReceiver((model: number, version: number) => { assert.fail(); });
     await driver.send(24, 1);
 
     const output = new FirebaseDriver<number>(storageKey, Exists.ShouldExist);
-    await output.init();
+    const outputAppCache = new FirebaseAppCache(cacheService);
+    await output.init(outputAppCache);
 
     return new Promise((resolve, reject) => {
       output.registerReceiver((model: number, version: number) => {
         assert.strictEqual(model, 24);
         assert.strictEqual(version, 1);
-        FirebaseAppCache.stop().then(() => resolve()).catch(reject);
+        FirebaseAppCache.stop(cacheService).then(() => resolve()).catch(reject);
       });
     });
   });
@@ -54,10 +58,13 @@ describe('firebase-ng-driver', function() {
     const storageKey = new FirebaseStorageKey(testProject, testDomain, testKey, 'foo');
     await resetStorageKeyForTesting(storageKey);
     const driver1 = new FirebaseDriver<number>(storageKey, Exists.ShouldCreate);
-    await driver1.init();
+    const cacheService = new RuntimeCacheService();
+    const appCache = new FirebaseAppCache(cacheService);
+    await driver1.init(appCache);
 
     const driver2 = new FirebaseDriver<number>(storageKey, Exists.ShouldExist);
-    await driver2.init();
+    const appCache2 = new FirebaseAppCache(cacheService);
+    await driver2.init(appCache2);
 
     const receivedData = new Promise((resolve, reject) => {
       driver2.registerReceiver((model: number, version: number) => {
@@ -70,6 +77,6 @@ describe('firebase-ng-driver', function() {
     const result = await Promise.all([driver1.send(13, 1), driver2.send(18, 1), receivedData]);
     assert.isTrue(result[0]);
     assert.isFalse(result[1]);
-    await FirebaseAppCache.stop();
+    await FirebaseAppCache.stop(cacheService);
   });
  });
