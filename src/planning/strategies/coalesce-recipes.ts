@@ -63,7 +63,7 @@ export class CoalesceRecipes extends Strategy {
             const newSlotConnection = particle.addSlotConnection(slotSpec.name);
             newSlotConnection.connectToSlot(mergedSlot);
 
-            this._connectOtherHandles(otherToHandle, cloneMap, false);
+            this._connectOtherHandles(recipe, otherToHandle, cloneMap, false);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -117,7 +117,7 @@ export class CoalesceRecipes extends Strategy {
             const mergedSlot = cloneMap.get(providedSlot);
             slotConnection.connectToSlot(mergedSlot);
 
-            this._connectOtherHandles(otherToHandle, cloneMap, false);
+            this._connectOtherHandles(recipe, otherToHandle, cloneMap, false);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -161,7 +161,7 @@ export class CoalesceRecipes extends Strategy {
             const otherToHandle = index.findCoalescableHandles(recipe, recipeParticle.recipe,
               new Set(slot.handles.concat(matchingHandles.map(({handle, matchingConn}) => matchingConn.handle))));
 
-            const {cloneMap} = recipeParticle.recipe.mergeInto(slot.recipe);
+            const {cloneMap} = recipeParticle.recipe.mergeInto(recipe);
             const slotConn = recipeParticle.getSlotConnectionByName(slot.name);
             let mergedSlotConn = cloneMap.get(slotConn);
             if (!mergedSlotConn) {
@@ -186,7 +186,7 @@ export class CoalesceRecipes extends Strategy {
               recipe.removeHandle(disconnectedHandle);
             }
 
-            this._connectOtherHandles(otherToHandle, cloneMap, false);
+            this._connectOtherHandles(recipe, otherToHandle, cloneMap, false);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -212,43 +212,43 @@ export class CoalesceRecipes extends Strategy {
             || handle.name === 'descriptions') return undefined;
         const results = [];
 
-        for (const otherHandle of index.findHandleMatch(handle, index.coalescableFates)) {
+        for (const other of index.findHandleMatch(handle, index.coalescableFates)) {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
-          if (recipe.particles.length + otherHandle.recipe.particles.length > 10) continue;
+          if (recipe.particles.length + other.recipe.particles.length > 10) continue;
 
           // This is a poor man's proxy for the other handle being an output of a recipe.
-          if (otherHandle.findConnectionByDirection('reads')) continue;
+          if (other.handle.findConnectionByDirection('reads')) continue;
 
           // We ignore type variables not constrained for reading, otherwise
           // generic recipes would apply - which we currently don't want here.
-          if (otherHandle.type.hasVariable) {
-            let resolved = otherHandle.type.resolvedType();
+          if (other.handle.type.hasVariable) {
+            let resolved = other.handle.type.resolvedType();
             // TODO: getContainedType returns non-null for references ... is that correct here?
             resolved = resolved.getContainedType() || resolved;
             if (resolved instanceof TypeVariable && !resolved.canReadSubset) continue;
           }
 
-          if (RecipeUtil.matchesRecipe(arc.activeRecipe, otherHandle.recipe)) {
+          if (RecipeUtil.matchesRecipe(arc.activeRecipe, other.recipe)) {
             // skip candidate recipe, if matches the shape of the arc's active recipe
             continue;
           }
 
-          if (RecipeUtil.matchesRecipe(recipe, otherHandle.recipe)) {
+          if (RecipeUtil.matchesRecipe(recipe, other.recipe)) {
             // skip candidate recipe, if matches the shape of the currently explored recipe
             continue;
           }
 
           results.push((recipe, handle) => {
             // Find other handles in the original recipe that could be coalesced with handles in otherHandle's recipe.
-            const otherToHandle = index.findCoalescableHandles(recipe, otherHandle.recipe, new Set([handle, otherHandle]));
+            const otherToHandle = index.findCoalescableHandles(recipe, other.recipe, new Set([handle, other.handle]));
 
-            const {cloneMap} = otherHandle.recipe.mergeInto(handle.recipe);
+            const {cloneMap} = other.recipe.mergeInto(handle.recipe);
 
             // Connect the handle that the recipes are being coalesced on.
-            cloneMap.get(otherHandle).mergeInto(handle);
+            recipe.mergeHandles(cloneMap.get(other.handle), handle);
 
             // Connect all other connectable handles.
-            this._connectOtherHandles(otherToHandle, cloneMap, true);
+            this._connectOtherHandles(recipe, otherToHandle, cloneMap, true);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -263,7 +263,7 @@ export class CoalesceRecipes extends Strategy {
         return results;
       }
 
-      _connectOtherHandles(otherToHandle, cloneMap, verifyTypes) {
+      _connectOtherHandles(recipe, otherToHandle, cloneMap, verifyTypes) {
         otherToHandle.forEach((otherHandle, handle) => {
           const otherHandleClone = cloneMap.get(otherHandle);
 
@@ -281,7 +281,7 @@ export class CoalesceRecipes extends Strategy {
             }
           }
 
-          otherHandleClone.mergeInto(handle);
+          recipe.mergeHandles(otherHandleClone, handle);
         });
       }
 

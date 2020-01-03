@@ -96,7 +96,7 @@ export class SearchTokensToParticles extends Strategy {
                 const otherToHandle = this.recipeIndex.findCoalescableHandles(recipe, innerRecipe);
                 assert(innerRecipe);
                 const {cloneMap} = innerRecipe.mergeInto(recipe);
-                otherToHandle.forEach((otherHandle, handle) => cloneMap.get(otherHandle).mergeInto(handle));
+                otherToHandle.forEach((otherHandle, handle) => recipe.mergeHandles(cloneMap.get(otherHandle), handle));
               }
             });
             return resolvedTokens.size;

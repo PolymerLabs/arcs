@@ -156,12 +156,12 @@ export class RecipeIndex {
    * Given provided handle and requested fates, finds handles with
    * matching type and requested fate.
    */
-  findHandleMatch(handle: Handle, requestedFates?: string[]): Handle[] {
+  findHandleMatch(handle: Handle, requestedFates?: string[]): {handle: Handle, recipe: Recipe}[] {
     this.ensureReady();
 
     const particleNames = handle.connections.map(conn => conn.particle.name);
 
-    const results: Handle[] = [];
+    const results: {handle: Handle, recipe: Recipe}[] = [];
     for (const recipe of this._recipes) {
       if (recipe.particles.some(particle => !particle.name)) {
         // Skip recipes where not all verbs are resolved to specific particles
@@ -184,7 +184,7 @@ export class RecipeIndex {
         if (connectedParticles.size === particleNames.length
             && particleNames.length === otherParticleNames.length) continue;
 
-        results.push(otherHandle);
+        results.push({handle: otherHandle, recipe});
       }
     }
     return results;

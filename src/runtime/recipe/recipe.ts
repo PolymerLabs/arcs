@@ -27,6 +27,7 @@ import {Slot} from './slot.js';
 import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
 import {Dictionary} from '../hot.js';
+import {RecipeInterface} from './recipe-interface.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
@@ -36,7 +37,7 @@ export type IsResolvedOptions = {showUnresolved?: boolean, details?: string[]}; 
 export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>};
 export type ToStringOptions = {showUnresolved?: boolean, hideFields?: boolean, details?: string[]};
 
-export class Recipe implements Cloneable<Recipe> {
+export class Recipe implements Cloneable<Recipe>, RecipeInterface {
   private readonly _requires: RequireSection[] = [];
   private _particles: Particle[] = [];
   private _handles: Handle[] = [];
@@ -528,6 +529,11 @@ export class Recipe implements Cloneable<Recipe> {
       slots: recipe._slots.slice(numSlots),
       cloneMap
     };
+  }
+
+  mergeHandles(otherHandle: Handle, handle: Handle) {
+    otherHandle.mergeInto(handle);
+    this.removeHandle(otherHandle);
   }
 
   _copyInto(recipe: Recipe, cloneMap: CloneMap): void {

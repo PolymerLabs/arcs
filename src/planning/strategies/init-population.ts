@@ -64,7 +64,7 @@ export class InitPopulation extends Strategy {
     }
     for (const handle of ([] as Handle[]).concat(...this.arc.allDescendingArcs.map(arc => arc.activeRecipe.handles))) {
       results.push(...this._recipeIndex.findHandleMatch(handle, ['use', '?']).map(
-          otherHandle => ({recipe: otherHandle.recipe})));
+          other => ({recipe: other.recipe})));
     }
     return results;
   }

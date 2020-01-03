@@ -21,9 +21,10 @@ import {compareArrays, compareComparables, compareStrings, Comparable} from './c
 import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
+import {RecipeInterface} from './recipe-interface.js';
 
 export class Handle implements Comparable<Handle> {
-  private readonly _recipe: Recipe;
+  private readonly _recipe: RecipeInterface;
   private _id: string | null = null;
   private _localName: string | undefined = undefined;
   private _tags: string[] = [];
@@ -42,7 +43,7 @@ export class Handle implements Comparable<Handle> {
   private _immediateValue: ParticleSpec | undefined = undefined;
   claims: Claim[] | undefined = undefined;
 
-  constructor(recipe: Recipe) {
+  constructor(recipe: RecipeInterface) {
     assert(recipe);
     this._recipe = recipe;
   }
@@ -54,7 +55,7 @@ export class Handle implements Comparable<Handle> {
     if (this.fate !== '`slot') {
       return undefined;
     }
-    const slandle = new Slot(this.recipe, this.localName);
+    const slandle = new Slot(this.recipe as Recipe, this.localName);
     slandle.tags = this.tags;
     slandle.id = this.id;
 
@@ -102,6 +103,8 @@ export class Handle implements Comparable<Handle> {
   }
 
   // Merges `this` recipe handle into `handle`
+  // Note: Must be called from the recipe class, so that `this` is removed
+  // right after merging.
   mergeInto(handle: Handle) {
     assert(this.recipe === handle.recipe, 'Cannot merge handles from different recipes.');
     while (this.connections.length > 0) {
@@ -111,7 +114,6 @@ export class Handle implements Comparable<Handle> {
     }
     handle._immediateValue = this._immediateValue;
     handle.tags = handle.tags.concat(this.tags);
-    handle.recipe.removeHandle(this);
     handle.fate = this._mergedFate([this.fate, handle.fate]);
   }
 
@@ -171,7 +173,7 @@ export class Handle implements Comparable<Handle> {
   }
   get originalFate() { return this._originalFate || '?'; }
   get originalId(): string | null { return this._originalId; }
-  get recipe(): Recipe { return this._recipe; }
+  get recipe(): RecipeInterface { return this._recipe; }
   get tags(): string[] { return this._tags; } // only tags owned by the handle
   set tags(tags: string[]) { this._tags = tags; }
   get type(): Type { return this._type; } // nullable
