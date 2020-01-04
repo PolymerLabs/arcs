@@ -12,11 +12,11 @@ import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../particle-spec.js';
 import {Type} from '../type.js';
 
+import {acceptedDirections} from './direction-util.js';
 import {Handle} from './handle.js';
 import {SlotConnection} from './slot-connection.js';
 import {Particle} from './particle.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, VariableMap} from './recipe.js';
-import {acceptedDirections} from './recipe-util.js';
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 
