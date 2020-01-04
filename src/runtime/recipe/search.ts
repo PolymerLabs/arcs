@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Recipe, ToStringOptions} from './recipe.js';
+import {Recipe} from './recipe.js';
+import {ToStringOptions} from './recipe-types.js';
 import {assert} from '../../platform/assert-web.js';
 
 export class Search {

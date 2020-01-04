@@ -12,7 +12,8 @@ import {assert} from '../../platform/assert-web.js';
 
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
-import {CloneMap, Recipe, IsResolvedOptions, IsValidOptions, RecipeComponent, ToStringOptions, RequireSection} from './recipe.js';
+import {Recipe} from './recipe.js';
+import {CloneMap, IsResolvedOptions, IsValidOptions, RecipeComponent, ToStringOptions} from './recipe-types.js';
 import {RecipeInterface} from './recipe-interface.js';
 import {SlotConnection} from './slot-connection.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
@@ -35,7 +36,6 @@ export class Slot implements Comparable<Slot> {
   }
 
   get recipe(): RecipeInterface { return this._recipe; }
-  // get recipe(): Recipe { return this._recipe as Recipe; }
   get id(): string|undefined { return this._id; }
   set id(id: string) { this._id = id; }
   get localName(): string|undefined { return this._localName; }

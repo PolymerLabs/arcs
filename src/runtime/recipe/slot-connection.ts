@@ -11,7 +11,9 @@
 import {assert} from '../../platform/assert-web.js';
 
 import {Particle} from './particle.js';
-import {CloneMap, IsValidOptions, Recipe, RecipeComponent, RequireSection, ToStringOptions} from './recipe.js';
+import {Recipe} from './recipe.js';
+import {RecipeInterface} from './recipe-interface.js';
+import {CloneMap, IsValidOptions, RecipeComponent, ToStringOptions} from './recipe-types.js';
 import {Slot} from './slot.js';
 import {compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Dictionary} from '../hot.js';
@@ -55,7 +57,8 @@ export class SlotConnection implements Comparable<SlotConnection> {
   connectToSlot(targetSlot: Slot): void {
     assert(targetSlot);
     assert(!this.targetSlot);
-    assert(this.recipe instanceof RequireSection || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
+    // assert(this.recipe instanceof RequireSection || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
+    assert(('parent' in this.recipe) || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
 
     this._targetSlot = targetSlot;
     targetSlot.consumeConnections.push(this);

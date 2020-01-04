@@ -16,7 +16,8 @@ import {HandleConnection} from './handle-connection.js';
 import {Direction} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
-import {Recipe, RecipeComponent} from './recipe.js';
+import {Recipe} from './recipe.js';
+import {RecipeComponent} from './recipe-types.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../hot.js';
 
