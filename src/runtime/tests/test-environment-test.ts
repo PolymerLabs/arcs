@@ -7,7 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {registerSystemExceptionHandler, PropagatedException, removeSystemExceptionHandler, defaultSystemExceptionHandler} from '../arc-exceptions.js';
+import {registerSystemExceptionHandler, removeSystemExceptionHandler, defaultSystemExceptionHandler} from '../arc-exceptions.js';
+import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 
 let exceptions: Error[] = [];
 
@@ -23,4 +24,5 @@ afterEach(function() {
     // Error function not yet included in mocha typescript declarations...
     this.test['error'](exception);
   }
+  DriverFactory.clearRegistrationsForTesting();
 });

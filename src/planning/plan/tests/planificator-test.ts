@@ -22,6 +22,7 @@ import {floatingPromiseToAudit} from '../../../runtime/util.js';
 // database providers are optional, these tests use these provider(s)
 import '../../../runtime/storage/firebase/firebase-provider.js';
 import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
+import {DriverFactory} from '../../../runtime/storageNG/drivers/driver-factory.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
@@ -60,6 +61,11 @@ describe('remote planificator', () => {
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   async function createArc(options, storageKey) {
     const {manifestString, manifestFilename} = options;
     const loader = new StubLoader({});

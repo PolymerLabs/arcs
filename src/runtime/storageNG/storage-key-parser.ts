@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {StorageKey} from './storage-key.js';
-import {VolatileStorageKey} from './drivers/volatile.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 
 type ParserTopLevel = (key: string) => StorageKey;
@@ -59,5 +58,8 @@ export class StorageKeyParser {
 
   static addDefaultParser(protocol: string, parser: Parser) {
     this.defaultParsers.push([protocol, parser]);
+    if (!this.parsers.has(protocol)) {
+      this.parsers.set(protocol, parser);
+    }
   }
 }

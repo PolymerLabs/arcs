@@ -15,15 +15,17 @@ import {FirebaseStorageKey, FirebaseStorageDriverProvider} from '../drivers/fire
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
+import {Runtime} from '../../runtime.js';
 
 describe('StorageKey', () => {
 
-  before(() => {
-    RamDiskStorageDriverProvider.register();
-    FirebaseStorageDriverProvider.register();
+  beforeEach(() => {
+    const runtime = Runtime.getRuntime();
+    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
+    FirebaseStorageDriverProvider.register(runtime.getCacheService());
   });
 
-  after(() => {
+  afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 

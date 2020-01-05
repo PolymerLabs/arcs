@@ -28,6 +28,7 @@ import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile
 // database providers are optional, these tests use these provider(s)
 import '../../../runtime/storage/firebase/firebase-provider.js';
 import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
+import {DriverFactory} from '../../../runtime/storageNG/drivers/driver-factory.js';
 
 async function createPlanConsumer(storageKeyBase, arc) {
   arc.storageKey = 'volatile://!158405822139616:demo^^volatile-0';
@@ -123,6 +124,8 @@ async function storeResults(consumer, suggestions) {
 
       consumer.setSuggestFilter(true);
       assert.lengthOf(consumer.getCurrentSuggestions(), 3);
+
+      DriverFactory.clearRegistrationsForTesting();
     });
   }); // end describe
 }); // end forEach
@@ -190,13 +193,18 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
     assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),
         [['ParticleDom'], ['ParticleDom', 'ParticleBoth']]);
 
+    DriverFactory.clearRegistrationsForTesting();
+
     const consumerVr = await initConsumer(Modality.Name.Vr);
     assert.isEmpty(consumerVr.getCurrentSuggestions());
+
+    DriverFactory.clearRegistrationsForTesting();
 
     const consumerTouch = await initConsumer(Modality.Name.DomTouch);
     const touchSuggestions = consumerTouch.getCurrentSuggestions();
     assert.lengthOf(touchSuggestions, 2);
     assert.deepEqual(touchSuggestions.map(s => s.plan.particles.map(p => p.name)),
         [['ParticleTouch'], ['ParticleTouch', 'ParticleBoth']]);
+    DriverFactory.clearRegistrationsForTesting();
   });
 });
