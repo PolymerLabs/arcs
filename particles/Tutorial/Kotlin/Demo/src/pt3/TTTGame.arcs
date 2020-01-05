@@ -60,8 +60,8 @@ particle TTTRandomComputer in 'particles.wasm'
   myMove: writes Move
 
 recipe GamePlayersDemoRecipe
-  playerOne: use HumanStore
-  playerTwo: use ComputerStore
+  playerOne: copy HumanStore
+  playerTwo: copy ComputerStore
   playerOneMove: create #humanMove
   playerTwoMove: create #computerMove
   TTTGame
