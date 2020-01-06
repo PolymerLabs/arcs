@@ -5,6 +5,9 @@
 _MIN_BAZEL_VERSION = "1.2.0"
 
 def _parse_version(version):
+    # On homebrew, bazel version is of the form x.y.z-homebrew.
+    # Nuke the `-homebrew` suffix.
+    version = version.replace("-homebrew", "")
     # Bazel version should be of form x.y.z
     parts = version.split(".")
     if len(parts) != 3:
