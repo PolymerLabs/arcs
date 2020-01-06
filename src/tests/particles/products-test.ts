@@ -30,7 +30,7 @@ describe('products test', () => {
   });
 
   const manifestFilename = Flags.useNewStorageStack ?
-      './src/tests/particles/artifacts/products-test-ng.recipes' :
+      './src/tests/particles/artifacts/ProductsTestNg.arcs' :
       './src/tests/particles/artifacts/products-test.recipes';
 
   const verifyFilteredBook = async (arc: Arc) => {
