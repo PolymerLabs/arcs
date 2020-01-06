@@ -19,10 +19,11 @@ import {ParticleSpec} from '../particle-spec.js';
 import {ArcId} from '../id.js';
 import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {singletonHandleForTest} from '../testing/handle-for-test.js';
+import {Flags} from '../flags.js';
 
 describe('particle interface loading', () => {
 
-  it('loads interfaces into particles', async () => {
+  it('loads interfaces into particles', Flags.withNewStorageStack(async () => {
     const loader = new StubLoader({
       'outer-particle.js': `
           'use strict';
@@ -119,7 +120,7 @@ describe('particle interface loading', () => {
     await arc.idle;
     const outHandle = await singletonHandleForTest(arc, outStore);
     assert.deepStrictEqual(await outHandle.get(), {value: 'a foo1'});
-  });
+  }));
 
   it('loads interfaces into particles declaratively', async () => {
     const loader = new Loader();
