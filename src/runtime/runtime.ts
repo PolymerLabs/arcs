@@ -118,12 +118,7 @@ export class Runtime {
     const composerClass = SlotComposer;
     const pecFactory = pecIndustry(loader);
     const memoryProvider = new SimpleVolatileMemoryProvider();
-    const runtime = new Runtime({
-      loader,
-      composerClass,
-      pecFactory,
-      memoryProvider
-    });
+    const runtime = new Runtime({loader, composerClass, pecFactory, memoryProvider});
     RamDiskStorageDriverProvider.register(memoryProvider);
     return runtime;
   }
@@ -156,7 +151,7 @@ export class Runtime {
     SlotDomConsumer.setCacheService(this.cacheService);
     this.loader = loader;
     this.pecFactory = pecFactory;
-    this.composerClass = composerClass;
+    this.composerClass = composerClass || SlotComposer;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.memoryProvider = memoryProvider || new SimpleVolatileMemoryProvider();
     runtime = this;

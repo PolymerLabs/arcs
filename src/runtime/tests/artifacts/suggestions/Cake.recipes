@@ -10,6 +10,24 @@
 
 import './Cake.manifest'
 
+resource CakeData
+  start
+  [
+    {
+      "name": "Cheesecake",
+      "occasion": "anniversary"
+    },
+    {
+      "name": "Chocolate"
+    },
+    {
+      "name": "Tiramisu",
+      "occasion": "birthday"
+    }
+  ]
+
+store ACake of Cake #cake in CakeData
+
 recipe
   cakeHandle: map #cake
   rootSlot: slot #root
@@ -22,4 +40,3 @@ recipe
   LightCandles
     birthdayCake: reads cakeHandle
 
-store ACake of Cake #cake in 'cakes.json'

@@ -28,13 +28,13 @@ export const SlotObserver = class {
     this.root.querySelectorAll(':host > [slotid]').forEach(n => n.innerText = '');
   }
   observe(slot) {
-    this.render(slot);
-  }
-  render(slot) {
     if (typeof slot === 'string') {
       slot = JSON.parse(slot);
     }
-    // capture the slot, even if we can't process it yet, only keep the latest slot info per outputId
+    this.render(slot);
+  }
+  render(slot) {
+    // capture the slot, even if we can't process it yet, but only keep the latest slot info per outputId
     const i = this.pendingSlots.findIndex(s => s.outputSlotId === slot.outputSlotId);
     if (i >= 0) {
       this.pendingSlots[i] = slot;
