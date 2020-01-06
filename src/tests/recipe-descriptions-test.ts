@@ -14,18 +14,20 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
-import {Planner} from '../planning/planner.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
+import {Flags} from '../runtime/flags.js';
+import {VolatileStorageKey} from '../runtime/storageNG/drivers/volatile.js';
+import {ArcId} from '../runtime/id.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
   // these tests are not going to be executed (i.e. another test file uses 'only').
   let loader;
   let memoryProvider;
-  before(() => {
+  beforeEach(() => {
     loader = new StubLoader({
       'test.js': `defineParticle(({Particle}) => {
         return class P extends Particle {
@@ -39,6 +41,47 @@ describe('recipe descriptions test', () => {
 
   function createManifestString(options) {
     options = options || {};
+
+    const myBoxType = Flags.useNewStorageStack ? '![Box]' : 'Box';
+    const myBoxData = Flags.useNewStorageStack ?
+`  {
+    "root": {
+      "values": {
+        "anid": {
+          "value": {"id": "anid", "rawData": {"height": 3, "width": 5${options.includeEntityName ? ', "name": "favorite-box"': ''}}},
+          "version": {"u": 1}
+        }
+      },
+      "version": {"u": 1}
+    },
+    "locations": {}
+  }` :
+`  [
+    {"height": 3, "width": 5${options.includeEntityName ? ', "name": "favorite-box"' : ''}}
+  ]`;
+
+    const allBoxData = Flags.useNewStorageStack ?
+`  {
+    "root": {
+      "values": {
+        "anid": {
+          "value": {"id": "anid", "rawData": {"height": 1, "width": 2}},
+          "version": {"u": 1}
+        },
+        "atwoid": {
+          "value": {"id": "atwoid", "rawData": {"height": 2, "width": 3}},
+          "version": {"u": 1}
+        }
+      },
+      "version": {"u": 1}
+    },
+    "locations": {}
+  }` :
+`  [
+    {"height": 1, "width": 2},
+    {"height": 2, "width": 3}
+  ]`;
+
     return `
 schema Box
   name: Text
@@ -76,18 +119,14 @@ recipe
 ${options.includeStore ? `
 resource MyBox
   start
-  [
-    {"height": 3, "width": 5${options.includeEntityName ? ', "name": "favorite-box"' : ''}}
-  ]
+${myBoxData}
 
-store BoxStore of Box 'mybox' in MyBox` : ''}
+store BoxStore of ${myBoxType} 'mybox' in MyBox` : ''}
 ${options.includeAllStore ? `
 resource AllBoxes
   start
-  [
-    {"height": 1, "width": 2},
-    {"height": 2, "width": 3}
-  ]
+${allBoxData}
+
 store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 `;
   }
@@ -97,16 +136,18 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         options.manifestString || createManifestString(options),
         {loader, memoryProvider, fileName: 'foo.js'});
     const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
-    const arc = runtime.newArc('demo', 'volatile://');
+    const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
+    const arc = runtime.newArc('demo', key);
     arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);
-    return suggestions[0].getDescription(arc.modality.names[0]);
+    const result = suggestions[0].getDescription(arc.modality.names[0]);
+    return result;
   }
   async function testRecipeDescription(options, expectedDescription) {
     const description = await generateRecipeDescription(options);
-    assert.strictEqual(expectedDescription, description);
+    assert.strictEqual(description, expectedDescription);
   }
 
   it('generates recipe description', async () => {
@@ -310,11 +351,12 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`show \${ShowFoo.foo} with dummy\`
     `, {loader, fileName: '', memoryProvider});
     const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
-    const arc = runtime.newArc('demo', 'volatile://');
+    const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
+    const arc = runtime.newArc('demo', key);
     // Plan for arc
     const suggestions0 = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions0, 2);
-    assert.strictEqual('Show foo.', await suggestions0[0].descriptionText);
+    assert.strictEqual('Show foo.', suggestions0[0].descriptionText);
 
     // Instantiate suggestion
     await suggestions0[0].instantiate(arc);
@@ -323,7 +365,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     // Plan again.
     const suggestions1 = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions1, 1);
-    assert.strictEqual('Show foo with dummy.', await suggestions1[0].descriptionText);
+    assert.strictEqual('Show foo with dummy.', suggestions1[0].descriptionText);
   });
   it('joins recipe descriptions', async () => {
     const context =  await Manifest.parse(`
@@ -342,7 +384,8 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`do C\`
     `, {loader, fileName: '', memoryProvider});
     const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
-    const arc = runtime.newArc('demo', 'volatile://');
+    const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
+    const arc = runtime.newArc('demo', key);
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
