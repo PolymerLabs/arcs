@@ -195,7 +195,6 @@ export class Description {
     } else if (store.type instanceof EntityType) {
       const singletonStore = store as SingletonStorageProvider;
       const value = await singletonStore.get();
-      console.log(value);
       if (value && value['rawData']) {
         return {entityValue: value['rawData'], valueDescription: store.type.entitySchema.description.value};
       }
