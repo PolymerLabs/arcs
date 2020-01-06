@@ -271,6 +271,13 @@ export class Collection extends HandleOld {
   }
 
   /**
+   * For compatibility with the NG handle.
+   */
+  async add(entity: Storable) {
+    return this.store(entity);
+  }
+
+  /**
    * Removes all known entities from the Handle.
    * @throws {Error} if this handle is not configured as a writeable handle (i.e. 'writes' or 'reads writes')
    * in the particle's manifest.
