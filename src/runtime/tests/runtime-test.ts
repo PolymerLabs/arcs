@@ -18,6 +18,7 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {ArcId} from '../id.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
+import {storageKeyPrefixForTest} from '../testing/handle-for-test.js';
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
@@ -66,12 +67,12 @@ describe('Runtime', () => {
   it('runs arcs', async () => {
     const runtime = Runtime.getRuntime();
     assert.equal(runtime.arcById.size, 0);
-    const arc = runtime.runArc('test-arc', 'volatile://');
+    const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
     assert.isNotNull(arc);
     assert.hasAllKeys(runtime.arcById, ['test-arc']);
-    runtime.runArc('test-arc', 'volatile://');
+    runtime.runArc('test-arc', storageKeyPrefixForTest());
     assert.hasAllKeys(runtime.arcById, ['test-arc']);
-    runtime.runArc('other-test-arc', 'volatile://');
+    runtime.runArc('other-test-arc', storageKeyPrefixForTest());
     assert.hasAllKeys(runtime.arcById, ['test-arc', 'other-test-arc']);
   });
   it('registers and unregisters stores', async () => {
@@ -96,7 +97,7 @@ describe('Runtime', () => {
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
     const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
-    const arc = runtime.runArc('test-arc', 'volatile://');
+    const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
     const manifest = await Manifest.load('manifest', loader, {memoryProvider});
     manifest.recipes[0].normalize();
     await arc.instantiate(manifest.recipes[0]);
