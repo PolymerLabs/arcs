@@ -80,19 +80,9 @@ describe('products test', () => {
         .newExpectations()
           .expectRenderSlot('List', 'root', {contentTypes: ['template']})
           .expectRenderSlot('List', 'root', {contentTypes: ['model'], verify: (content) => {
-            const verified = content.model && content.model.hasItems
+            return content.model && content.model.hasItems
                 && content.model.items['$template'].length > 0
                 && 1 === content.model.items.models.length;
-            if (verified && !Flags.useNewStorageStack) {
-              // TODO: reaching directly into data objects like this is super dodgy and we should
-              // fix. It's particularly bad here as there's no guarantee that the backingStore
-              // exists - should await ensureBackingStore() before accessing it.
-              const reference = arc._stores[0]['_model'].getValue(content.model.items.models[0].id);
-              const store = (arc._stores[0] as StorageProviderBase).backingStore;
-              assert.equal(store.storageKey, reference.storageKey);
-              assert.equal('Harry Potter', store['_model'].getValue(reference.id).rawData.name);
-            }
-            return verified;
           }})
           .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model']})
           .expectRenderSlot('ItemMultiplexer', 'item', {hostedParticle: 'ShowProduct', verify: (content) => {
