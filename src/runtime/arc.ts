@@ -18,7 +18,7 @@ import {Runnable} from './hot.js';
 import {Manifest, ManifestHandleRetriever} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Modality} from './modality.js';
-import {ParticleExecutionHost} from './particle-execution-host.js';
+import {ParticleExecutionHost, PECOuterPortImpl} from './particle-execution-host.js';
 import {ParticleSpec} from './particle-spec.js';
 import {StorageStub} from './storage-stub.js';
 import {Handle} from './recipe/handle.js';
@@ -134,7 +134,8 @@ export class Arc implements ArcInterface {
     this.inspector = inspectorFactory && inspectorFactory.create(this);
     this.storageKey = storageKey;
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
-    this.pec = new ParticleExecutionHost(slotComposer, this, ports);
+    this.pec = new ParticleExecutionHost(
+        slotComposer, ports.map(port => new PECOuterPortImpl(port, this)));
     this.storageProviderFactory = storageProviderFactory ||
         new StorageProviderFactory(this.id, new ManifestHandleRetriever());
 

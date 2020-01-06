@@ -52,7 +52,6 @@ export class ParticleExecutionHost {
   private readonly _apiPorts: PECOuterPort[];
   private readonly _portByParticle = new Map<Particle, PECOuterPort>();
   close : Runnable;
-  private readonly arc: Arc;
   private nextIdentifier = 0;
   public readonly slotComposer: SlotComposer;
   private idleVersion = 0;
@@ -60,18 +59,13 @@ export class ParticleExecutionHost {
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
   public readonly particles: Particle[] = [];
 
-  constructor(slotComposer: SlotComposer, arc: Arc, ports: MessagePort[]) {
+  constructor(slotComposer: SlotComposer, apiPorts: PECOuterPort[]) {
     this.close = () => {
-      ports.forEach(port => port.close());
       this._apiPorts.forEach(apiPort => apiPort.close());
     };
 
-    this.arc = arc;
     this.slotComposer = slotComposer;
-
-    const pec = this;
-
-    this._apiPorts = ports.map(port => new PECOuterPortImpl(port, arc));
+    this._apiPorts = apiPorts;
   }
 
   private choosePortForParticle(particle: Particle): PECOuterPort {
@@ -171,7 +165,7 @@ export class ParticleExecutionHost {
   }
 }
 
-class PECOuterPortImpl extends PECOuterPort {
+export class PECOuterPortImpl extends PECOuterPort {
   arc: Arc;
   readonly systemTraceClient: Client | undefined;
 
