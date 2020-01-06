@@ -55,6 +55,7 @@ export const workerPool = new (class {
     const entry = this.inUse.get(port as MessagePort);
     if (entry) {
       this.inUse.delete(port as MessagePort);
+      entry.channel.port2.close();
       entry.worker.terminate();
     }
   }
@@ -75,8 +76,22 @@ export const workerPool = new (class {
     return entry;
   }
 
+  clear() {
+    this.inUse.forEach(entry => {
+      entry.channel.port2.close();
+      entry.worker.terminate();
+    });
+    this.inUse.clear();
+
+    this.suspended.forEach(entry => {
+      entry.channel.port2.close();
+      entry.worker.terminate();
+    });
+    this.suspended.length = 0;
+  }
+
   async shrinkOrGrow(minSize: number = MIN_SIZE_OF_POOL) {
-    // Yields cpu resources politely and passively.
+    // Yields cpu resources politely and aggressively.
     await 0;
 
     // TODO(ianchang):
