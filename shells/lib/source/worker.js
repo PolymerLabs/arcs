@@ -12,16 +12,26 @@ import {ParticleExecutionContext} from '../../../build/runtime/particle-executio
 import {Id, IdGenerator} from '../../../build/runtime/id.js';
 import {Loader} from '../../../build/platform/loader.js';
 
+let port = null;
+
 self.onmessage = function(e) {
-  // immediately close message channel, this is one-time use
-  self.onmessage = null;
   // snarf out scope data
-  const {id, base, logLevel, traceChannel} = e.data;
+  const {id, base, logLevel, traceChannel, inWorkerPool} = e.data;
+  if (!inWorkerPool) {
+    // immediately close message channel, this is one-time use
+    self.onmessage = null;
+  }
   // TODO(sjmiles): happens too late for modules that immediately construct loggers, but
   // soon enough for `log` injected into Particle.
   global.logLevel = logLevel;
   // selection on system tracing channel
   global.systemTraceChannel = traceChannel;
+  // whether this worker is managed by the worker pool
+  global.inWorkerPool = inWorkerPool;
+  // the saved port will be re-used at each resumed worker
+  port = port || e.ports[0];
   // construct execution context with scope data
-  new ParticleExecutionContext(e.ports[0], Id.fromString(id), IdGenerator.newSession(), new Loader(base));
+  // PEC context will be freshly clean despite a new spun-up worker or a resumed
+  // worker as one dedicated worker can only handle one PEC at a time.
+  new ParticleExecutionContext(port, Id.fromString(id), IdGenerator.newSession(), new Loader(base));
 };

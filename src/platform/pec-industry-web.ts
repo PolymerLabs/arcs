@@ -10,6 +10,7 @@
 
 import {PecFactory} from '../runtime/particle-execution-context.js';
 import {Id, IdGenerator} from '../runtime/id.js';
+import {workerPool} from '../runtime/worker-pool.js';
 
 const WORKER_PATH = `https://$build/worker.js`;
 
@@ -33,14 +34,23 @@ export const pecIndustry = (loader): PecFactory => {
     if (!workerBlobUrl && !useCache) {
       console.warn('workerBlob not available, falling back to network URL');
     }
-    const worker = new Worker(workerBlobUrl || workerUrl);
-    const channel = new MessageChannel();
+    const poolEntry = workerPool.resume();
+    const shouldEmplace = workerPool.active && !poolEntry;
+    const shouldTransferPort = !workerPool.active || shouldEmplace;
+    const worker =
+        poolEntry ? poolEntry.worker : new Worker(workerBlobUrl || workerUrl);
+    const channel =
+        poolEntry ? poolEntry.channel : new MessageChannel();
+    if (shouldEmplace) {
+      workerPool.emplace(worker, channel);
+    }
     worker.postMessage({
       id: `${id}:inner`,
       base: remap,
       logLevel: window['logLevel'],
       traceChannel: systemTraceChannel,
-    }, [channel.port1]);
+      inWorkerPool: workerPool.exist(channel.port2),
+    }, shouldTransferPort ? [channel.port1] : []);
     return channel.port2;
   };
   // TODO(sjmiles): PecFactory type is defined against custom `MessageChannel` and `MessagePort` objects, not the

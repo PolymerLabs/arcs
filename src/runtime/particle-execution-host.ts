@@ -34,6 +34,7 @@ import {StorageKey} from './storageNG/storage-key.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
+import {workerPool} from './worker-pool.js';
 
 export type StartRenderOptions = {
   particle: Particle;
