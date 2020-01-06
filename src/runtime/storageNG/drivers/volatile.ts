@@ -8,13 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Driver, ReceiveMethod, StorageDriverProvider, Exists, DriverFactory} from './driver-factory.js';
+import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
+import {Driver, ReceiveMethod, Exists} from './driver.js';
 import {StorageKey} from '../storage-key.js';
 import {Arc} from '../../arc.js';
 import {ArcId} from '../../id.js';
 import {RamDiskStorageKey} from './ramdisk.js';
 import {Dictionary} from '../../hot.js';
 import {assert} from '../../../platform/assert-web.js';
+import {StorageKeyParser} from '../storage-key-parser.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
 type VolatileEntryCollection<Data> = {root: VolatileEntry<Data>, locations: Dictionary<VolatileEntry<Data>>};
@@ -247,3 +249,5 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
     DriverFactory.register(new VolatileStorageDriverProvider(arc));
   }
 }
+
+StorageKeyParser.addDefaultParser('volatile', VolatileStorageKey.fromString);

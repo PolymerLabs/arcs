@@ -11,11 +11,23 @@
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {assert} from '../../../platform/chai-web.js';
 import {VolatileStorageKey} from '../drivers/volatile.js';
-import {FirebaseStorageKey} from '../drivers/firebase.js';
-import {RamDiskStorageKey} from '../drivers/ramdisk.js';
+import {FirebaseStorageKey, FirebaseStorageDriverProvider} from '../drivers/firebase.js';
+import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
+import {DriverFactory} from '../drivers/driver-factory.js';
+import {Runtime} from '../../runtime.js';
 
 describe('StorageKey', () => {
+
+  beforeEach(() => {
+    const runtime = Runtime.getRuntime();
+    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
+    FirebaseStorageDriverProvider.register(runtime.getCacheService());
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
+  });
 
   it('can round-trip VolatileStorageKey', () => {
     const encoded = 'volatile://!1234:my-arc-id/first/second/@';

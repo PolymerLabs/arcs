@@ -19,7 +19,7 @@ import {Speculator} from '../speculator.js';
 
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
-import {Id, ArcId} from '../../runtime/id.js';
+import {ArcId} from '../../runtime/id.js';
 
 import {Flags} from '../../runtime/flags.js';
 import {StorageKey} from '../../runtime/storageNG/storage-key.js';
@@ -27,6 +27,7 @@ import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../../runtime/sto
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {EntityType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
+import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();
@@ -44,7 +45,11 @@ async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?,
   const planner = new Planner();
   const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
   planner.init(arc, options);
-  return await testSteps(planner);
+  const result = await testSteps(planner);
+
+  DriverFactory.clearRegistrationsForTesting();
+
+  return result;
 }
 
 const assertRecipeResolved = recipe => {
@@ -575,9 +580,14 @@ ${recipeManifest}
 
 describe('Type variable resolution', () => {
   let memoryProvider;
+
   beforeEach(() => {
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
+  });
+
+  afterEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
   });
 
   const loadAndPlan = async (manifestStr) => {

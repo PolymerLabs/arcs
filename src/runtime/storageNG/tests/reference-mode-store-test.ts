@@ -10,7 +10,8 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Store, ProxyMessageType} from '../store.js';
-import {Exists, DriverFactory} from '../drivers/driver-factory.js';
+import {DriverFactory} from '../drivers/driver-factory.js';
+import {Exists} from '../drivers/driver.js';
 import {DirectStore} from '../direct-store.js';
 import {MockStorageDriverProvider, MockDriver, MockHierarchicalStorageKey} from '../testing/test-storage.js';
 import {ReferenceModeStore, ReferenceCollection, Reference} from '../reference-mode-store.js';

@@ -16,7 +16,6 @@ import {Manifest} from '../manifest.js';
 import {checkDefined} from '../testing/preconditions.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
-import {Flags} from '../flags.js';
 
 describe('Multiplexer', () => {
   it('Processes multiple inputs', async () => {
@@ -63,6 +62,9 @@ describe('Multiplexer', () => {
     await barHandle.add(new barHandle.entityClass({value: 'two'}));
     await barHandle.add(new barHandle.entityClass({value: 'three'}));
 
+    await arc.idle;
+    // TODO(shans): awaiting idle isn't quite working with the new storage stack; some storage events aren't
+    // causing idle to be delayed properly. Figure out why and fix it!
     await arc.idle;
 
     assert.strictEqual(slotsCreated, 3);
@@ -114,6 +116,10 @@ describe('Multiplexer', () => {
     await barHandle.add(new barHandle.entityClass({value: 'three'}));
 
     await arc.idle;
+    // TODO(shans): awaiting idle isn't quite working with the new storage stack; some storage events aren't
+    // causing idle to be delayed properly. Figure out why and fix it!
+    await arc.idle;
+
 
     assert.strictEqual(slotsCreated, 3);
   });

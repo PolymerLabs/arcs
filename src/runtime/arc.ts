@@ -35,7 +35,8 @@ import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
 import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import {DriverFactory, Exists} from './storageNG/drivers/driver-factory.js';
+import {DriverFactory} from './storageNG/drivers/driver-factory.js';
+import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Store} from './storageNG/store.js';
 import {KeyBase} from './storage/key-base.js';
@@ -48,6 +49,7 @@ import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
+import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -265,7 +267,7 @@ export class Arc implements ArcInterface {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const storageProviderFactory = Flags.useNewStorageStack ? null : manifest.storageProviderFactory;
     const id = Id.fromString(manifest.meta.name);
-    const storageKey = manifest.meta.storageKey;
+    const storageKey = Flags.useNewStorageStack ? StorageKeyParser.parse(manifest.meta.storageKey) : manifest.meta.storageKey;
     const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, storageProviderFactory, context, inspectorFactory});
 
     await Promise.all(manifest.stores.map(async storeStub => {
@@ -275,11 +277,24 @@ export class Arc implements ArcInterface {
       }
       const store = await storeStub.activate();
       await arc._registerStore(store.baseStore, tags);
+      arc.addStoreToRecipe(store.baseStore);
     }));
     const recipe = manifest.activeRecipe.clone();
     const options: IsValidOptions = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
     await arc.instantiate(recipe);
+
+    // TODO(shanestephens): if we decide that merging a 'use' handle adds any tags on that handle to
+    // the handle in the underlying recipe, then we can remove this from here.
+    for (const handle of recipe.handles) {
+      const newHandle = arc._activeRecipe.findHandleByID(handle.id);
+      for (const tag of handle.tags) {
+        if (newHandle.tags.includes(tag)) {
+          continue;
+        }
+        newHandle.tags.push(tag);
+      }
+    }
     return arc;
   }
 
@@ -423,6 +438,8 @@ export class Arc implements ArcInterface {
 
   async mergeIntoActiveRecipe(recipe: Recipe) {
     const {handles, particles, slots} = recipe.mergeInto(this._activeRecipe);
+    // handles represents only the new handles; it doesn't include 'use' handles that have
+    // resolved against the existing recipe.
     this._recipeDeltas.push({particles, handles, slots, patterns: recipe.patterns});
 
     // TODO(mmandlis, jopra): Get rid of populating the missing local slot & slandle IDs here,
@@ -435,6 +452,10 @@ export class Arc implements ArcInterface {
     });
 
     for (const recipeHandle of handles) {
+      if (recipeHandle.fate === 'use') {
+        throw new Error(`store '${recipeHandle.id}' with "use" fate was not found in recipe`);
+      }
+
       const store = this.context.findStoreById(recipeHandle.id);
       // TODO(sjmiles): I added `(store instanceof StorageStub)` clause below because the context generators used
       // in shells/* work today by creating and updating inflated stores in the context.
@@ -454,7 +475,7 @@ export class Arc implements ArcInterface {
           Flags.useNewStorageStack ? new VolatileStorageKey(this.id, '') : 'volatile'
         ) : undefined;
 
-        const newStore = await this.createStore(type, /* name= */ null, this.generateID().toString(),
+        const newStore = await this.createStoreInternal(type, /* name= */ null, this.generateID().toString(),
             recipeHandle.tags, volatileKey);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
@@ -463,8 +484,7 @@ export class Arc implements ArcInterface {
           assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
           const particleClone = particleSpec.clone().toLiteral();
           particleClone.id = newStore.id;
-          // TODO(shans): clean this up when we have interfaces for Singleton, Collection, etc.
-          // tslint:disable-next-line: no-any
+
           if (Flags.useNewStorageStack) {
             const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type);
             const handle = unifiedHandleFor({proxy, idGenerator: this.idGenerator, particleId: this.generateID().toString()});
@@ -510,6 +530,10 @@ export class Arc implements ArcInterface {
         assert(type.isResolved());
         if (typeof storageKey === 'string') {
           const store = await this.storageProviderFactory.connect(recipeHandle.id, type, storageKey);
+          // Note that at one stage this assertion ensured that recipes couldn't "use" handles which weren't
+          // in the current arc. Hopefully this is now handled by correct "use" handles not being returned from
+          // mergeRecipe (because the handle must have already been in the recipe in order for "use" to be
+          // valid); and the toplevel exception when a "use" handle is found.
           assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
           await this._registerStore(store, recipeHandle.tags);
         } else {
@@ -542,7 +566,21 @@ export class Arc implements ArcInterface {
     }
   }
 
+  private addStoreToRecipe(store: UnifiedStore) {
+    const handle = this.activeRecipe.newHandle();
+    handle.mapToStorage(store);
+    handle.fate = 'use';
+    // TODO(shans): is this the right thing to do?
+    handle._type = handle.mappedType;
+  }
+
   async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey): Promise<UnifiedStore> {
+    const store = await this.createStoreInternal(type, name, id, tags, storageKey);
+    this.addStoreToRecipe(store);
+    return store;
+  }
+
+  private async createStoreInternal(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey): Promise<UnifiedStore> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (Flags.useNewStorageStack) {

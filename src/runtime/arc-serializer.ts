@@ -75,6 +75,7 @@ ${this.arc.activeRecipe.toString()}`;
     let resourceNum = 0;
     let serialization = '';
     const indent = '  ';
+
     if (Flags.useNewStorageStack) {
       for (const [key, value] of this.arc.volatileMemory.entries.entries()) {
         this.memoryResourceNames.set(key, `VolatileMemoryResource${resourceNum}`);
@@ -195,12 +196,17 @@ ${this.arc.activeRecipe.toString()}`;
     const importSet: Set<string> = new Set();
     const handlesToSerialize: Set<string> = new Set();
     const contextSet = new Set(this.arc.context.stores.map(store => store.id));
+    const handlesToSkip: Set<string> = new Set();
+
     for (const handle of this.arc.activeRecipe.handles) {
       if (handle.fate === 'map') {
         importSet.add(this.arc.context.findManifestUrlForHandleId(handle.id));
       } else {
         // Immediate value handles have values inlined in the recipe and are not serialized.
-        if (handle.immediateValue) continue;
+        if (handle.immediateValue) {
+          handlesToSkip.add(handle.id);
+          continue;
+        }
 
         handlesToSerialize.add(handle.id);
       }
@@ -212,6 +218,9 @@ ${this.arc.activeRecipe.toString()}`;
     for (const store of this.arc._stores) {
 
       if (Flags.useNewStorageStack || (handlesToSerialize.has(store.id) && !contextSet.has(store.id))) {
+        if (handlesToSkip.has(store.id)) {
+          continue;
+        }
         await this._serializeStore(store, `Store${id++}`);
       }
     }

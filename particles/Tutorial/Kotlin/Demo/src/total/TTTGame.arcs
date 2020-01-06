@@ -93,8 +93,8 @@ particle TTTRandomComputer in 'particles.wasm'
 
 
 recipe GamePlayersDemoRecipe
-  playerOne: use HumanStore
-  playerTwo: use ComputerStore
+  playerOne: copy HumanStore
+  playerTwo: copy ComputerStore
   playerOneMove: create #humanMove
   playerTwoMove: create #computerMove
   TTTGame
@@ -122,8 +122,8 @@ recipe GamePlayersDemoRecipe
   description `Kotlin Tutorial TicTacToe One Player Demo`
 
 recipe GamePlayersDemoRecipe
-  playerOne: use HumanOneStore
-  playerTwo: use HumanTwoStore
+  playerOne: copy HumanOneStore
+  playerTwo: copy HumanTwoStore
   playerOneMove: create #firstHuman
   playerTwoMove: create #secondHuman
   TTTGame
@@ -152,8 +152,8 @@ recipe GamePlayersDemoRecipe
   description `Kotlin Tutorial TicTacToe Two Players Demo`
 
 recipe GamePlayersDemoRecipe
-  playerOne: use ComputerOneStore
-  playerTwo: use ComputerTwoStore
+  playerOne: copy ComputerOneStore
+  playerTwo: copy ComputerTwoStore
   playerOneMove: create #firstComputer
   playerTwoMove: create #secondComputer
   TTTGame
@@ -178,6 +178,3 @@ recipe GamePlayersDemoRecipe
     myMove: writes playerTwoMove
     player: reads playerTwo
   description `Kotlin Tutorial TicTacToe Zero Players Demo`
-
-
-

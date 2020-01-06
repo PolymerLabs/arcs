@@ -29,9 +29,9 @@ import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
 import {digest} from '../../platform/digest-web.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
-import {RefinementExpression, BinaryExpressionNode} from '../manifest-ast-nodes.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {VolatileMemory} from '../storageNG/drivers/volatile.js';
+import {FirebaseStorageDriverProvider} from '../storageNG/drivers/firebase.js';
+import {Runtime} from '../runtime.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -2163,6 +2163,7 @@ resource SomeName
   });
 
   it('can parse a manifest with storage key handle definitions', async () => {
+    FirebaseStorageDriverProvider.register(Runtime.getRuntime().getCacheService());
     const manifest = await parseManifest(`
       schema Bar
         value: Text
@@ -2182,6 +2183,7 @@ resource SomeName
     assert.isTrue(validRecipe.isResolved());
     assert.strictEqual(manifest.stores[0].toManifestString(),
                  (await parseManifest(manifest.stores[0].toManifestString())).toString());
+    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('can process a schema alias', async () => {

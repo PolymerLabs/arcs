@@ -44,7 +44,7 @@ particle TTTHumanPlayer in 'particles.wasm'
   myMove: writes Move
 
 recipe GamePlayersDemoRecipe
-  playerOne: use HumanStore
+  playerOne: copy HumanStore
   playerOneMove: create #humanMove
   TTTGame
     gameState: reads writes gameState

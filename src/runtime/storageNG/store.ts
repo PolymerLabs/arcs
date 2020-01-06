@@ -9,11 +9,9 @@
  */
 
 import {CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
-import {Type} from '../type.js';
-import {Exists} from './drivers/driver-factory.js';
+import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
-import {DirectStore} from './direct-store.js';
 import {UnifiedStore, StoreInfo} from './unified-store.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 

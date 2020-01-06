@@ -10,7 +10,8 @@
 
 import {PropagatedException} from '../arc-exceptions.js';
 import {CRDTModel, CRDTTypeRecord, CRDTChange, ChangeType, CRDTError, CRDTData} from '../crdt/crdt.js';
-import {Driver, DriverFactory} from './drivers/driver-factory.js';
+import {DriverFactory} from './drivers/driver-factory.js';
+import {Driver} from './drivers/driver.js';
 import {ActiveStore, ProxyCallback, ProxyMessageType, ProxyMessage, StoreConstructorOptions} from './store-interface.js';
 import {noAwait} from '../util.js';
 

@@ -186,4 +186,3 @@ exports.openNewArc = async function(testTitle, storageType, useSolo) {
   // only to ensure time for the app to configure itself
   await exports.waitFor('input[search]');
 };
-

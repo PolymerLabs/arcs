@@ -32,8 +32,8 @@ particle RandomComputer in './source/TTTRandomComputer.js'
 recipe GameDemoRecipe
   playerOneMove: create #humanMove
   playerTwoMove: create #computerMove
-  playerOne: use HumanStore
-  playerTwo: use ComputerStore
+  playerOne: copy HumanStore
+  playerTwo: copy ComputerStore
   gameState: create
 
   Game
@@ -50,7 +50,7 @@ recipe GameDemoRecipe
     gameState: reads gameState
     events: writes events
     boardSlot: consumes board
-  
+
   HumanPlayer
     gameState: reads gameState
     events: reads events
@@ -68,8 +68,8 @@ recipe GamePlayersDemoRecipe
   playerOneMove: create #playerOne
   playerTwoMove: create #playerTwo
   gameState: create
-  playerOne: use HumanOneStore
-  playerTwo: use HumanTwoStore
+  playerOne: copy HumanOneStore
+  playerTwo: copy HumanTwoStore
 
   Game
     root: consumes
@@ -85,7 +85,7 @@ recipe GamePlayersDemoRecipe
     gameState: reads gameState
     events: writes events
     boardSlot: consumes board
-  
+
   HumanPlayer
     gameState: reads gameState
     events: reads events
@@ -104,8 +104,8 @@ recipe GameComputersDemoRecipe
   playerOneMove: create #playerOne
   playerTwoMove: create #playerTwo
   gameState: create
-  playerOne: use ComputerOneStore
-  playerTwo: use ComputerTwoStore
+  playerOne: copy ComputerOneStore
+  playerTwo: copy ComputerTwoStore
 
 
   Game
@@ -122,16 +122,15 @@ recipe GameComputersDemoRecipe
     gameState: reads gameState
     events: writes events
     boardSlot: consumes board
-  
+
   RandomComputer
     computerMove: writes playerOneMove
     player: reads playerOne
     gameState: reads gameState
-  
+
   RandomComputer
     computerMove: writes playerTwoMove
     player: reads playerTwo
     gameState: reads gameState
 
   description `Javascript Tutorial Zero Players TicTacToe Demo`
-
