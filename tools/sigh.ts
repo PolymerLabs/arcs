@@ -537,12 +537,14 @@ async function cycles(args: string[]): Promise<boolean> {
       sighLog(`${i + 1}) ${res[i].join(' > ')}`);
     }
     sighLog('');
+  } else if (res.length === 0) {
+    sighLog(`CONGRATS! No circular dependencies found!!!\n`);
   }
 
   // This should only go down!
   // Please adjust this number down when you remove cycles.
   // https://github.com/PolymerLabs/arcs/issues/1878
-  const CURRENT_NUMBER_OF_CYCLES = 6;
+  const CURRENT_NUMBER_OF_CYCLES = 0;
 
   if (res.length > CURRENT_NUMBER_OF_CYCLES)  {
     sighLog('You seem to have added a dependency cycle, please refactor your code.');

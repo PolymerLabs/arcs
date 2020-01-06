@@ -13,10 +13,11 @@ import {ParticleSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
 import {Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';
-import {CloneMap, IsValidOptions, Recipe, RecipeComponent, RequireSection, VariableMap, ToStringOptions} from './recipe.js';
+import {CloneMap, IsValidOptions, Recipe, RecipeComponent, VariableMap, ToStringOptions} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
 import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
+import {isRequireSection} from './util.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Id} from '../id.js';
 import {Dictionary} from '../hot.js';
@@ -62,7 +63,7 @@ export class Particle implements Comparable<Particle> {
 
       // if recipe is a requireSection, then slot may already exist in recipe.
       if (cloneMap.has(slotConn.targetSlot)) {
-        assert(recipe instanceof RequireSection);
+        assert(isRequireSection(recipe));
         const targetSlot = cloneMap.get(slotConn.targetSlot) as Slot;
         particle.getSlotConnectionByName(key).connectToSlot(targetSlot);
         if (particle.recipe.slots.indexOf(targetSlot) === -1) {
@@ -71,7 +72,7 @@ export class Particle implements Comparable<Particle> {
       }
       for (const [name, slot] of Object.entries(slotConn.providedSlots)) {
         if (cloneMap.has(slot)) {
-          assert(recipe instanceof RequireSection);
+          assert(isRequireSection(recipe));
           const clonedSlot = cloneMap.get(slot) as Slot;
           clonedSlot.sourceConnection = particle.getSlotConnectionByName(key);
           particle.getSlotConnectionByName(key).providedSlots[name] = clonedSlot;

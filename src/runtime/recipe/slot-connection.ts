@@ -11,13 +11,14 @@
 import {assert} from '../../platform/assert-web.js';
 
 import {Particle} from './particle.js';
-import {CloneMap, IsValidOptions, Recipe, RecipeComponent, RequireSection, ToStringOptions} from './recipe.js';
+import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions} from './recipe.js';
 import {Slot} from './slot.js';
 import {compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Dictionary} from '../hot.js';
 import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
 
 import {Flags} from '../flags.js';
+import {isRequireSection} from './util.js';
 
 export class SlotConnection implements Comparable<SlotConnection> {
   private readonly _recipe: Recipe;
@@ -59,7 +60,7 @@ export class SlotConnection implements Comparable<SlotConnection> {
   connectToSlot(targetSlot: Slot): void {
     assert(targetSlot);
     assert(!this.targetSlot);
-    assert(this.recipe instanceof RequireSection || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
+    assert(isRequireSection(this.recipe) || this.recipe === targetSlot.recipe, 'Cannot connect to slot from different recipe');
 
     this._targetSlot = targetSlot;
     targetSlot.consumeConnections.push(this);
