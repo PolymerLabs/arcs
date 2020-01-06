@@ -19,10 +19,6 @@ export class RamSlotComposer extends SlotComposer {
       modalityHandler: ModalityHandler.createHeadlessHandler()
     });
   }
-  // sendEvent(particleName, slotName, event, data) {
-  //   const particles = this.consumers.filter(s => s.consumeConn.particle.name == particleName).map(s => s.consumeConn.particle);
-  //   this.pec.sendEvent(particles[0], slotName, {handler: event, data});
-  // }
   renderSlot(particle, slotName, content) {
     super.renderSlot(particle, slotName, content);
     const slotConsumer = this.getSlotConsumer(particle, slotName);
