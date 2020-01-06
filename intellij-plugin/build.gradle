@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.4.15'
+}
+
+group 'com.google.arcs'
+version '1.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+// See https://github.com/JetBrains/gradle-intellij-plugin/
+intellij {
+    version '2019.2.4'
+    updateSinceUntilBuild false
+}
+patchPluginXml {
+    changeNotes """
+      Initial draft
+      """
+}
+
+sourceSets.main.java.srcDirs = ['src/main/java','src/main/gen']
+
