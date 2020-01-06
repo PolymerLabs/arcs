@@ -84,11 +84,14 @@ describe('particle interface loading', () => {
       ],
     });
 
-    const ifaceStore = await arc.createStore(ifaceType) as SingletonStorageProvider;
-    await ifaceStore.set(manifest.particles[0].toLiteral());
+    const ifaceStore = await arc.createStore(ifaceType);
+    const ifaceHandle = await singletonHandleForTest(arc, ifaceStore);
+    await ifaceHandle.set(manifest.particles[0].toLiteral());
+
     const outStore = await arc.createStore(barType);
-    const inStore = await arc.createStore(fooType) as SingletonStorageProvider;
-    await inStore.set({id: 'id', rawData: {value: 'a foo'}});
+    const inStore = await arc.createStore(fooType);
+    const inHandle = await singletonHandleForTest(arc, inStore);
+    await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
 
     const recipe = new Recipe();
     const particle = recipe.newParticle('outerParticle');
