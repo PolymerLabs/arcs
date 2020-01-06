@@ -22,7 +22,7 @@ import {StorageProviderFactory} from '../../build/runtime/storage/storage-provid
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
-import {RuntimeCacheService} from '../../build/runtime//runtime-cache.js';
+import {RuntimeCacheService} from '../../build/runtime/runtime-cache.js';
 import {VolatileStorage} from '../../build/runtime/storage/volatile-storage.js';
 
 import '../../build/services/ml5-service.js';
