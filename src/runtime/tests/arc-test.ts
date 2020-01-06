@@ -752,18 +752,7 @@ describe('Arc', () => {
     `, {loader, fileName: ''});
 
     const recipe = manifest.recipes[0];
-
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
-
-    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
-
-    let slotsCreated = 0;
-
-    slotComposer.createHostedSlot = (...args) => {
-      slotsCreated++;
-      return slotComposerCreateHostedSlot.apply(slotComposer, args);
-    };
-
     const id = Id.fromString('test2');
     const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
     const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader()});
@@ -795,7 +784,7 @@ describe('Arc', () => {
     await newArc.idle;
     await newArc.idle;
 
-    assert.strictEqual(slotsCreated, 1);
+    assert.strictEqual(slotComposer.slotsCreated, 1);
   });
 
   it('serialization roundtrip preserves data for volatile stores', async function() {

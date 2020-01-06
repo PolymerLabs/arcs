@@ -19,13 +19,19 @@ import {Arc} from '../arc.js';
  * A helper class for NodeJS tests that mimics SlotComposer without relying on DOM APIs.
  */
 export class FakeSlotComposer extends SlotComposer {
+  slotsCreated: number;
+
   constructor(options: SlotComposerOptions = {}) {
     if (options.modalityHandler === undefined) {
       options.modalityHandler = ModalityHandler.createHeadlessHandler();
     }
-    super({
-      rootContainer: {'root': 'root-context'},
-      ...options});
+    super({rootContainer: {'root': 'root-context'}, ...options});
+    this.slotsCreated = 0;
+  }
+
+  createHostedSlot(innerArc: Arc, transformationParticle: Particle, transformationSlotName: string, storeId: string) {
+    this.slotsCreated++;
+    return super.createHostedSlot(innerArc, transformationParticle, transformationSlotName, storeId);
   }
 
   renderSlot(particle: Particle, slotName: string, content: Content) {
@@ -36,6 +42,7 @@ export class FakeSlotComposer extends SlotComposer {
     const slotConsumer = this.getSlotConsumer(particle, slotName);
     if (slotConsumer) slotConsumer.updateProvidedContexts();
   }
+
   // Accessors for testing.
   get contexts(): SlotContext[] {
     return this._contexts;
@@ -68,7 +75,6 @@ export class RozSlotComposer extends FakeSlotComposer {
     this.received.push([particle.name, slotName, copy]);
     super.renderSlot(particle, slotName, content);
   }
-
 
   /** Listener for experimental `output` implementation */
   delegateOutput(arc: Arc, particle: Particle, content) {
