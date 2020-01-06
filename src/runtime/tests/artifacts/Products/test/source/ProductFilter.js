@@ -55,7 +55,7 @@ defineParticle(({Particle}) => {
     }
     async onHandleUpdate(handle, update) {
       if (handle.name.startsWith('result')) {
-        this._resultsHandle.store(update.data);
+        this._resultsHandle.add(update.data);
       }
     }
   };

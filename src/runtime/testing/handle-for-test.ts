@@ -88,6 +88,13 @@ export function storageKeyPrefixForTest(): string|((arcId: ArcId) => StorageKey)
   return 'volatile://';
 }
 
+export function storageKeyForTest(arcId: ArcId): string|StorageKey {
+  if (Flags.useNewStorageStack) {
+    return (storageKeyPrefixForTest() as ((arcId: ArcId) => StorageKey))(arcId);
+  }
+  return 'volatile://' + arcId.toString();
+}
+
 async function createStorageProxyForTest<T extends CRDTTypeRecord>(
     arcOrManifest: Arc | Manifest, store: UnifiedStore): Promise<StorageProxy<T>> {
   const activeStore = await store.activate();
