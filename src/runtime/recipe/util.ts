@@ -10,6 +10,10 @@
 
 import {Recipe} from './recipe.js';
 
+// TODO(mmandlis): checking whether `recipe` is Recipe or RequireSection by
+// `recipe instanceof RequireSection` causes a circular dependency. Either
+// resolve it, or add boolean to recipe. Also the file name is too generic
+// and should be improved.
 export function isRequireSection(recipe: Recipe) {
   return 'parent' in recipe;
 }
