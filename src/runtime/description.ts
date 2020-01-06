@@ -14,7 +14,7 @@ import {UnifiedStore} from './storageNG/unified-store.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceType} from './type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, SingletonType} from './type.js';
 import {CollectionStorageProvider, BigCollectionStorageProvider, SingletonStorageProvider} from './storage/storage-provider-base.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
@@ -168,7 +168,7 @@ export class Description {
       if (handle instanceof SingletonHandle) {
         const entityValue = await handle.get();
         if (entityValue) {
-          return {entityValue};
+          return {entityValue, valueDescription: store.type.getEntitySchema().description.value};
         }
       } else if (handle instanceof CollectionHandle) {
         const values = await handle.toList();
