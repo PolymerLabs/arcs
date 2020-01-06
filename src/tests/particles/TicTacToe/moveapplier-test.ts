@@ -14,7 +14,7 @@ import {Loader} from '../../../platform/loader.js';
 import {Arc} from '../../../runtime/arc.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {ArcId} from '../../../runtime/id.js';
-import {singletonHandleForTest} from '../../../runtime/testing/handle-for-test.js';
+import {singletonHandleForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 
 async function createTestHandles(arc: Arc) {
   const connections = arc.activeRecipe.particles[0].connections;
@@ -36,8 +36,14 @@ describe('TicTacToe MoveApplier tests', () => {
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved(), recipe.toString({showUnresolved: true}));
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test'),
-                         storageKey: 'volatile://test^^123'});
+    const id = ArcId.newForTest('test');
+    const arc = new Arc({
+      slotComposer: new FakeSlotComposer(),
+      loader,
+      context: manifest,
+      id,
+      storageKey: storageKeyForTest(id)
+    });
     await arc.instantiate(recipe);
     const {nextMoveStore, stateStore, boardResultStore, messageResultStore, boardStore} = await createTestHandles(arc);
 
@@ -61,8 +67,14 @@ describe('TicTacToe MoveApplier tests', () => {
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved(), recipe.toString({showUnresolved: true}));
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test'),
-                         storageKey: 'volatile://test^^123'});
+    const id = ArcId.newForTest('test');
+    const arc = new Arc({
+      slotComposer: new FakeSlotComposer(),
+      loader,
+      context: manifest,
+      id,
+      storageKey: storageKeyForTest(id)
+    });
     await arc.instantiate(recipe);
     const {nextMoveStore, stateStore, boardResultStore, messageResultStore, boardStore} = await createTestHandles(arc);
 
