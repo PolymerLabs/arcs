@@ -31,7 +31,7 @@ class TestSuggestionComposer extends SuggestionComposer {
   }
 }
 
-describe('suggestion composerFOO', () => {
+describe('suggestion composer', () => {
   it('singleton suggestion slots', async () => {
     const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();
@@ -54,14 +54,15 @@ describe('suggestion composerFOO', () => {
     // Accept suggestion and replan: a suggestion consumer is created, but its content is empty.
     assert.deepEqual(suggestions[0].plan.particles.map(p => p.name), ['MakeCake']);
 
-    //slotComposer.newExpectations().expectRenderSlot('MakeCake', 'item', {'contentTypes': ['template', 'model', 'templateName']});
     observer.newExpectations('debug');
     observer.expectRenderSlot('MakeCake', 'item');
 
     // Accept suggestion and replan: a suggestion consumer is created, but its content is empty.
     await suggestions[0].instantiate(arc);
-    // TODO(sjmiles): waiting for what here, rendering?
     await arc.idle;
+
+    // TODO(sjmiles): done rendering first setup?
+    await observer.expectationsCompleted();
 
     const suggestions1 = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions1, 1);
@@ -113,14 +114,13 @@ describe('suggestion composerFOO', () => {
       .expectRenderSlot('MakeCake', 'item')
       .expectRenderSlot('MakeCake', 'item')
       .expectRenderSlot('MakeCake', 'item')
-      .expectRenderSlot('CakeMuxer', 'item')
       ;
 
     await suggestions[0].instantiate(arc);
     await arc.idle;
 
     // TODO(sjmiles): done rendering first setup?
-    // TODO(sjmiles): no expectationsCompleted check?
+    await observer.expectationsCompleted();
 
     const planner = new Planner();
     planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator()});

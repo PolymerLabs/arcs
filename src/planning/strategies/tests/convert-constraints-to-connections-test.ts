@@ -12,18 +12,19 @@ import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+//import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 import {InstanceEndPoint} from '../../../runtime/recipe/connection-constraint.js';
 import {ArcId} from '../../../runtime/id.js';
 
-import {Flags} from '../../../runtime/flags.js';
+//import {Flags} from '../../../runtime/flags.js';
 
 describe('ConvertConstraintsToConnections', () => {
   const newArc = (manifest: Manifest) => {
     return new Arc({
       id: ArcId.newForTest('test-plan-arc'),
-      slotComposer: new FakeSlotComposer(),
+      slotComposer: new SlotComposer(),
       context: manifest,
       loader: new Loader()
     });
@@ -279,19 +280,19 @@ describe('ConvertConstraintsToConnections', () => {
     d: reads writes handle0`);
   });
 
-  it.skip('verifies modality', async () => {
+  it('verifies modality', async () => {
     const manifest = await Manifest.parse(`
       schema S
       particle A in 'A.js'
-        b: writes S
+        b: writes S {}
         modality vr
         root: consumes
       particle C in 'C.js'
-        d: reads S
+        d: reads S {}
         modality vr
         root: consumes
       particle E in 'E.js'
-        f: reads S
+        f: reads S {}
         root: consumes
 
       recipe
@@ -299,13 +300,18 @@ describe('ConvertConstraintsToConnections', () => {
       recipe
         A.b: writes E.f
     `);
-    const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(new Arc({
+    const generated = [
+      {result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true},
+      {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}
+    ];
+    const arc = new Arc({
       id: ArcId.newForTest('test-plan-arc'),
-      slotComposer: new FakeSlotComposer({modalityName: Modality.Name.Vr}),
+      slotComposer: new SlotComposer(), //new FakeSlotComposer({modalityName: Modality.Name.Vr}),
       context: manifest,
       loader: new Loader()
-    }));
+    });
+    arc.modality = Modality.vr;
+    const cctc = new ConvertConstraintsToConnections(arc);
     // TODO(sjmiles): SlotComposer no longer has a 'modality'
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);

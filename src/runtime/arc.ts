@@ -87,6 +87,7 @@ export class Arc implements ArcInterface {
   private _recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   // Public for debug access
   public readonly _loader: Loader;
+  private _modality: Modality;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // All the stores, mapped by store ID
   private readonly storesById = new Map<string, UnifiedStore>();
@@ -104,7 +105,6 @@ export class Arc implements ArcInterface {
   public readonly inspector?: ArcInspector;
   private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
   private readonly instantiateMutex = new Mutex();
-
 
   readonly id: Id;
   private readonly idGenerator: IdGenerator = IdGenerator.newSession();
@@ -146,7 +146,14 @@ export class Arc implements ArcInterface {
     return this._loader;
   }
 
+  set modality(modality: Modality) {
+    this._modality = modality;
+  }
+
   get modality(): Modality {
+    if (this._modality) {
+      return this._modality;
+    }
     if (this.pec.slotComposer && this.pec.slotComposer.modality) {
       return this.pec.slotComposer.modality;
     }

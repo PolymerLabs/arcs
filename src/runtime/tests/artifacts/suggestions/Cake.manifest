@@ -13,7 +13,7 @@ schema Cake
   occasion: Text
 
 particle MakeCake in 'source/MakeCake.js'
-  cake: reads Cake
+  cake: reads Cake {name, occasion}
   item: consumes Slot
     special: provides? Slot {handle: cake}
   description `Make a ${cake} cake`
@@ -21,6 +21,6 @@ particle MakeCake in 'source/MakeCake.js'
 particle LightCandles in 'source/LightCandles.js'
   // Note: birthday cake should is an input connection.
   // It is only made 'reads writes' to force speculative execution.
-  birthdayCake: reads writes Cake
+  birthdayCake: reads writes Cake {name, occasion}
   candles: consumes Slot #special
   description `Light candles on ${birthdayCake} cake`
