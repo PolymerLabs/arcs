@@ -62,7 +62,6 @@ export class ParticleExecutionHost {
 
   constructor(slotComposer: SlotComposer, arc: Arc, ports: MessagePort[]) {
     this.close = () => {
-      ports.forEach(port => port.close());
       this._apiPorts.forEach(apiPort => apiPort.close());
     };
 
