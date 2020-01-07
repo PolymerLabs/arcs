@@ -207,7 +207,19 @@ export class UnaryExpression extends RefinementExpression {
 
     normalise(): RefinementExpression {
         this.expr = this.expr.normalise();
-        return this.simplifyPrimitive() || this;
+        const sp = this.simplifyPrimitive();
+        if (sp) {
+            return sp;
+        }
+        switch (this.operator.op) {
+            case 'not': {
+                if (this.expr.kind === 'unary-expression' && (this.expr as UnaryExpression).operator.op === 'not') {
+                    return (this.expr as UnaryExpression).expr;
+                }
+                return this;
+            }
+            default: return this;
+        }
     }
 }
 
@@ -360,16 +372,16 @@ export class Range {
             for (const iseg of ntrsct.segments) {
                 const to: Boundary = {...iseg.from};
                 to.kind = to.kind === 'open' ? 'closed' : 'open';
-                try {
+                if(Segment.isValid(from, to)) {
                     newRange.segments.push(new Segment(from, to));
-                } catch (e) {/*linter requires non-empty catch blocks*/const _ = e;}
+                }
                 from = iseg.to;
                 from.kind = from.kind === 'open' ? 'closed' : 'open';
             }
             const to: Boundary = {...seg.to};
-            try {
+            if(Segment.isValid(from, to)) {
                 newRange.segments.push(new Segment(from, to));
-            } catch (e) {/*linter requires non-empty catch blocks*/const _ = e;}
+            }
         }
         return newRange;
     }
@@ -487,13 +499,20 @@ export class Segment {
     to: Boundary;
 
     constructor(from: Boundary, to: Boundary) {
-        if (to.val < from.val) {
-            throw new Error(`Invalid range from: ${from}, to:${to}`);
-        } else if (from.val === to.val && (from.kind === 'open' || to.kind === 'open')) {
+        if (!Segment.isValid(from, to)) {
             throw new Error(`Invalid range from: ${from}, to:${to}`);
         }
         this.from = {...from};
         this.to = {...to};
+    }
+
+    static isValid(from: Boundary, to: Boundary): boolean {
+        if (to.val < from.val) {
+            return false;
+        } else if (from.val === to.val && (from.kind === 'open' || to.kind === 'open')) {
+            return false;
+        }
+        return true;
     }
 
     static closedClosed(from: number, to: number): Segment {

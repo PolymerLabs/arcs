@@ -184,6 +184,22 @@ describe('normalisation', () => {
         // normalised version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
+    it(`tests if multiple 'not's are cancelled. `, () => {
+        const manifestAst1 = parse(`
+            particle Foo
+                input: reads Something {num: Boolean [ not (not num) ] }
+        `);
+        const typeData = {}; typeData['num'] = 'Boolean';
+        const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
+        ref1.normalise();
+        const manifestAst2 = parse(`
+            particle Foo
+                input: reads Something {num: Boolean [ num ] }
+        `);
+        const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
+        // normalised version of ref1 should be the same as ref2
+        assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+    });
 });
 
 describe('Range', () => {
