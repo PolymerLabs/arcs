@@ -51,7 +51,8 @@ export class PropagatedException extends Error {
         exception = new UserException(cause, literal.method, literal.particleId, literal.particleName);
         break;
       default:
-        throw new Error(`Unknown exception type: ${literal.exceptionType}`);
+        exception = new PropagatedException(cause, literal.method, literal.particleId, literal.particleName);
+        break;
     }
     exception.stack = literal.stack;
     return exception;
