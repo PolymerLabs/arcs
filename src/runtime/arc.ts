@@ -134,7 +134,7 @@ export class Arc implements ArcInterface {
     this.inspector = inspectorFactory && inspectorFactory.create(this);
     this.storageKey = storageKey;
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
-    this.pec = new ParticleExecutionHost(slotComposer, this, ports);
+    this.pec = new ParticleExecutionHost({slotComposer, arc: this, ports});
     this.storageProviderFactory = storageProviderFactory ||
         new StorageProviderFactory(this.id, new ManifestHandleRetriever());
 
