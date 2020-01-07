@@ -15,19 +15,17 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import android.text.format.DateFormat
 import android.text.format.DateUtils
-import android.util.TimeUtils
+import arcs.android.storage.ParcelableStoreOptions
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
-import arcs.android.storage.ParcelableStoreOptions
+import java.io.FileDescriptor
+import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import java.io.FileDescriptor
-import java.io.PrintWriter
 
 /**
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
@@ -38,6 +36,7 @@ class StorageService : Service() {
     private val scope = CoroutineScope(coroutineContext)
     private val stores = ConcurrentHashMap<StoreOptions<*, *, *>, Store<*, *, *>>()
     private var startTime: Long? = null
+    private val stats = BindingContextStatsImpl()
 
     override fun onCreate() {
         super.onCreate()
@@ -52,7 +51,8 @@ class StorageService : Service() {
         return BindingContext(
             stores.computeIfAbsent(parcelableOptions.actual) { Store(it) },
             parcelableOptions.crdtType,
-            coroutineContext
+            coroutineContext,
+            stats
         )
     }
 
@@ -65,7 +65,9 @@ class StorageService : Service() {
         super.dump(fd, writer, args)
 
         val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
-        val storageKeys= stores.keys.map { it.storageKey }.toSet()
+        val storageKeys = stores.keys.map { it.storageKey }.toSet()
+
+        val statsPercentiles = stats.roundtripPercentiles
 
         writer.println(
             """
@@ -75,7 +77,12 @@ class StorageService : Service() {
                 Uptime: ${DateUtils.formatElapsedTime(elapsedTime)}
                 Active StorageKeys: 
                 ${storageKeys.joinToString(",\n", prefix = "[\n", postfix = "\n]")}
-                
+                ProxyMessage Roundtrip Statistics (ms):
+                  - Average: ${stats.roundtripMean}
+                  - StdDev:  ${stats.roundtripStdDev}
+                  - 75th percentile: ${statsPercentiles.seventyFifth}
+                  - 90th percentile: ${statsPercentiles.ninetieth}
+                  - 99th percentile: ${statsPercentiles.ninetyNinth}
             """.trimIndent()
         )
     }

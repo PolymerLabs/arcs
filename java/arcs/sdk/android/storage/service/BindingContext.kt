@@ -12,6 +12,10 @@
 package arcs.sdk.android.storage.service
 
 import androidx.annotation.VisibleForTesting
+import arcs.android.crdt.ParcelableCrdtType
+import arcs.android.crdt.toParcelable
+import arcs.android.storage.ParcelableProxyMessage
+import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
@@ -20,10 +24,6 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.util.SendQueue
-import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.crdt.toParcelable
-import arcs.android.storage.ParcelableProxyMessage
-import arcs.android.storage.toParcelable
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -48,7 +48,9 @@ class BindingContext(
      */
     private val crdtType: ParcelableCrdtType,
     /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
-    parentCoroutineContext: CoroutineContext
+    parentCoroutineContext: CoroutineContext,
+    /** Sink to use for recording statistics about accessing data. */
+    private val bindingContextStatisticsSink: BindingContextStatisticsSink
 ) : IStorageService.Stub() {
     @VisibleForTesting
     val id = nextId.incrementAndGet()
@@ -62,11 +64,8 @@ class BindingContext(
     /** The local [CoroutineContext]. */
     private val coroutineContext = parentCoroutineContext + CoroutineName("BindingContext-$id")
 
-    @VisibleForTesting
-    val scope = CoroutineScope(coroutineContext)
-
     override fun getLocalData(callback: IStorageServiceCallback) {
-        scope.launch {
+        bindingContextStatisticsSink.measure(coroutineContext) {
             val activeStore = store.activate()
 
             val deferredResult = DeferredResult(coroutineContext)
@@ -115,7 +114,7 @@ class BindingContext(
         message: ParcelableProxyMessage,
         resultCallback: IResultCallback
     ) {
-        scope.launch {
+        bindingContextStatisticsSink.measure(coroutineContext) {
             val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
             val actualMessage = message.actual as ProxyMessage<CrdtData, CrdtOperation, Any?>
             try {
@@ -129,7 +128,7 @@ class BindingContext(
     }
 
     override fun unregisterCallback(token: Int) {
-        scope.launch { store.activate().off(token) }
+        CoroutineScope(coroutineContext).launch { store.activate().off(token) }
     }
 
     companion object {
