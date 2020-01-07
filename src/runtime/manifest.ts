@@ -1377,7 +1377,9 @@ ${e.message}
     // Only register stores that have non-volatile storage key and don't have a
     // #volatile tag.
     if (!this.findStoreById(store.id) &&
-        !store.storageKey.toString().startsWith('volatile')
+        (Flags.useNewStorageStack
+            ? (store.storageKey as StorageKey).protocol !== 'volatile'
+            : !store.storageKey.toString().startsWith('volatile'))
         && !tags.includes('volatile')) {
       this._addStore(store, tags);
     }
