@@ -79,8 +79,8 @@ describe('MatchParticleByVerb', () => {
     const plans = await planner.plan(1000);
 
     assert.lengthOf(plans, 2);
-    assert.deepEqual(plans.map(plan => plan.particles.map(particle => particle.name)),
-      [['SimpleJumper'],['StarJumper']]);
+    const planNames = plans.map(plan => plan.particles.map(particle => particle.name));
+    assert.deepEqual(planNames, [['SimpleJumper'], ['StarJumper']]);
   });
 
 });

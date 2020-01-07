@@ -9,17 +9,17 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Particle} from '../recipe/particle.js';
+//import {Particle} from '../recipe/particle.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
-import {InterfaceType} from '../type.js';
-import {Arc} from '../arc.js';
+//import {InterfaceType} from '../type.js';
+//import {Arc} from '../arc.js';
 import {RenderPacket} from '../slot-composer.js';
 
 //import {FakeSlotComposer} from './fake-slot-composer.js';
-import {StorageProviderBase} from '../storage/storage-provider-base.js';
+//import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 const logging = false;
-const log = !logging ? () => {} : console.log.bind(console, '---------- SlotTestObserverOptions::');
+const log = !logging ? (...args) => {} : console.log.bind(console, 'SlotTestObserver::');
 
 type SlotTestObserverOptions = {
   strict?: boolean;
@@ -30,7 +30,7 @@ class AbstractSlotObserver {
   observe(packet: RenderPacket) {}
   dispatch() {}
   dispose() {}
-};
+}
 
 /**
  * A helper SlotComposer allowing expressing and asserting expectations on slot rendering.
@@ -136,30 +136,31 @@ export class SlotTestObserver extends AbstractSlotObserver {
   }
 
   addRenderExpectation(expectation) {
-    let current; // = this.expectQueue.find(e =>
+    //let current = this.expectQueue.find(e =>
     //   e.particleName === expectation.particleName
     //   && e.slotName === expectation.slotName
     //   && e.hostedParticle === expectation.hostedParticle
     //   && e.isOptional === expectation.isOptional
     // );
     // if (!current) {
-      const {particleName, slotName, hostedParticle, isOptional, ignoreUnexpected} = expectation;
+      const {particleName, slotName, hostedParticle, isOptional, ignoreUnexpected, verifyComplete} = expectation;
       const toString = () => `render:${isOptional ? '  optional' : ' '} ${particleName}:${slotName} ${hostedParticle}`; // ${contentTypes}`
-      current = {
+      const current = {
         type: 'render',
         particleName,
         slotName,
         hostedParticle,
         isOptional,
         ignoreUnexpected,
-        toString
+        toString,
+        verifyComplete
       };
       this.expectQueue.push(current);
     // }
-    if (expectation.verifyComplete) {
-      assert(!current.verifyComplete);
-      current.verifyComplete = expectation.verifyComplete;
-    }
+    // if (expectation.verifyComplete) {
+    //   assert(!current.verifyComplete);
+    //   current.verifyComplete = expectation.verifyComplete;
+    // }
     //current.contentTypes = (current.contentTypes || []).concat(expectation.contentTypes);
     return this;
   }
@@ -209,8 +210,8 @@ export class SlotTestObserver extends AbstractSlotObserver {
   //renderSlot(particle, slotName, content) {
   observe(packet: RenderPacket) {
     const {particle, containerSlotName: slotName, content} = packet;
-    console.log(`slot-test-observer: observe: ${particle.name}:${slotName}`);
-    console.log('slot-test-observer: queue:', this.expectQueue.map(e => `${e.particleName}:${e.slotName}`).join(','));
+    log(`slot-test-observer: observe: ${particle.name}:${slotName}`);
+    log('slot-test-observer: queue:', this.expectQueue.map(e => `${e.particleName}:${e.slotName}`).join(','));
 
     //const names = this._getHostedParticleNames(particle);
     //const nameJoin = names.length > 0 ? `(${names.join(',')}) ` : '(no-names)';

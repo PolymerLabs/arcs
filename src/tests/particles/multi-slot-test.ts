@@ -82,11 +82,11 @@ describe('multi-slot test', () => {
       ['Show question.', 'Show answer.', 'Show question and answer.', 'Show question and hints.'].sort()
     );
     return {suggestions, arc, slotComposer, observer};
-  }
+  };
 
   const findSuggestionByDescription = (suggestions: Suggestion[], descriptionText: string): Suggestion => {
     return checkNotNull(suggestions.find(s => s.descriptionText === descriptionText));
-  }
+  };
 
   const verifySlots = (slotComposer: SlotComposer, numConsumers: number, expectedSlotNames) => {
     assert.lengthOf(slotComposer.consumers, numConsumers);
