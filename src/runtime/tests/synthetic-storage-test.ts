@@ -16,8 +16,10 @@ import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ArcType} from '../type.js';
+import {Flags} from '../flags.js';
 
 describe('synthetic storage ', () => {
+
   before(() => {
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
     resetVolatileStorageForTesting();
@@ -103,7 +105,10 @@ describe('synthetic storage ', () => {
     assert.isEmpty(await synth.toList());
   });
 
-  it('manifest with persistent handles', async () => {
+  it('manifest with persistent handles', async function() {
+    if (Flags.useNewStorageStack) {
+      this.skip();
+    }
     const {synth} = await setup(`
       schema Foo
       schema Bar
@@ -122,7 +127,10 @@ describe('synthetic storage ', () => {
          'pouchdb://aa.pouchdb.org/bb [Bar {}] <>']);
   });
 
-  it('updates to the target store are propagated', async () => {
+  it('updates to the target store are propagated', async function() {
+    if (Flags.useNewStorageStack) {
+      this.skip();
+    }
     const {id, targetStore, synth} = await setup(`
       schema Foo
       store Store0 of [Foo] at 'firebase://xx.firebaseio.com/yy'

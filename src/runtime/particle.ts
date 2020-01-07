@@ -262,6 +262,8 @@ export class Particle {
         let bitStr: string;
         if (typeof bits[i] === 'string') {
           bitStr = bits[i];
+        } else if (!bits[i].toManifestString) {
+          throw new Error(`${bits[i]} doesn't have toManifestString implementation`);
         } else {
           bitStr = bits[i].toManifestString();
         }

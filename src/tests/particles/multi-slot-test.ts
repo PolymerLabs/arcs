@@ -19,11 +19,13 @@ import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {checkNotNull} from '../../runtime/testing/preconditions.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
 
 describe('multi-slot test', () => {
   async function init() {
     const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.load(
         './src/tests/particles/artifacts/multi-slot-test.manifest', loader, {memoryProvider});
     const runtime = new Runtime({

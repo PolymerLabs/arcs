@@ -92,6 +92,7 @@ describe('products test', () => {
           }});
     await arc.instantiate(recipe);
     await arc.idle;
+    await arc.idle;
     await verifyFilteredBook(arc);
   });
 });

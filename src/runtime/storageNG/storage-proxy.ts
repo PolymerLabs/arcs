@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js';
 import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 import {PropagatedException, SystemException} from '../arc-exceptions.js';
 import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
@@ -177,10 +176,13 @@ export class StorageProxy<T extends CRDTTypeRecord> {
             this.clearSynchronized();
             return this.requestSynchronization();
           }
+          if (this.synchronized === false) {
+            // If we didn't think we were synchronized but the operation applied cleanly,
+            // then actually we were synchronized after all. Tell the handle that.
+            this.setSynchronized();
+          }
           this.notifyUpdate(op);
         }
-        // If we have consumed all operations, we've caught up.
-        this.synchronized = true;
         break;
       }
       case ProxyMessageType.SyncRequest:
