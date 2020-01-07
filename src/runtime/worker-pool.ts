@@ -37,10 +37,27 @@ export const workerPool = new (class {
     }
   }
 
+  /**
+   * Checks if a worker associating with the host port is in-use.
+   *
+   * @param port the host port being used to talk to its associated worker
+   */
   exist(port: object): boolean {
     return this.active && !!this.inUse.get(port as MessagePort);
   }
 
+  /**
+   * Emplaces a new worker and its messaging channel into the target collection.
+   *
+   * @param worker the new spun-up worker
+   * @param channel the new established channel associating with the worker
+   * @param toInUse where to emplace worker/channel to. If this parameter is
+   *                true, the worker/channel is emplaced into a hash map
+   *                collecting all in-use workers for the time being and being
+   *                indexed by the host port; else the worker/channel is emplaced
+   *                emplaced into an array representing all suspended (aka free)
+   *                workers waiting for being resumed to serve new PECs.
+   */
   emplace(worker: Worker, channel: MessageChannel, toInUse: boolean = true) {
     if (toInUse) {
       // The path is for resurrecting workers spun up by the PEC factory.
@@ -51,6 +68,11 @@ export const workerPool = new (class {
     }
   }
 
+  /**
+   * Closes a host port and destroys the worker associating with it.
+   *
+   * @param port the host port being used to talk to its associated worker
+   */
   destroy(port: object) {
     const entry = this.inUse.get(port as MessagePort);
     if (entry) {
@@ -60,6 +82,11 @@ export const workerPool = new (class {
     }
   }
 
+  /**
+   * Suspends the worker associating with the given port.
+   *
+   * @param port the host port being used to talk to its associated worker
+   */
   suspend(port: object) {
     const entry = this.inUse.get(port as MessagePort);
     if (entry) {
@@ -68,6 +95,11 @@ export const workerPool = new (class {
     }
   }
 
+  /**
+   * Resumes a worker from the suspended list if there is any.
+   *
+   * @return a PoolEntry specifying a resumed worker and its messaging channel
+   */
   resume(): PoolEntry | undefined {
     const entry = this.suspended.pop();
     if (entry) {
@@ -76,6 +108,7 @@ export const workerPool = new (class {
     return entry;
   }
 
+  /** Cleans up (destroy & close) all managed workers and their channels. */
   clear() {
     this.inUse.forEach(entry => {
       entry.channel.port2.close();
@@ -90,12 +123,18 @@ export const workerPool = new (class {
     this.suspended.length = 0;
   }
 
+  /**
+   * Shrinks or grows the worker pool on demand.
+   *
+   * @param minSize the watermark which the worker pool size should be kept
+   *                at minimum
+   */
   async shrinkOrGrow(minSize: number = MIN_SIZE_OF_POOL) {
     // Yields cpu resources politely and aggressively.
     await 0;
 
     // TODO(ianchang):
-    // shrink or grow number of workers to ${minSize} at least.
+    // shrink or grow number of workers to the minSize.
     // This provides the capabilities (included but not limited to):
     // a) Prepare workers in advance at the initialization path.
     // b) Shrink number of workers under memory pressure.
