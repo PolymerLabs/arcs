@@ -372,14 +372,14 @@ export class Range {
             for (const iseg of ntrsct.segments) {
                 const to: Boundary = {...iseg.from};
                 to.kind = to.kind === 'open' ? 'closed' : 'open';
-                if(Segment.isValid(from, to)) {
+                if (Segment.isValid(from, to)) {
                     newRange.segments.push(new Segment(from, to));
                 }
                 from = iseg.to;
                 from.kind = from.kind === 'open' ? 'closed' : 'open';
             }
             const to: Boundary = {...seg.to};
-            if(Segment.isValid(from, to)) {
+            if (Segment.isValid(from, to)) {
                 newRange.segments.push(new Segment(from, to));
             }
         }
