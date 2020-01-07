@@ -39,6 +39,10 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DR
             StorageKeyParser.addParser(RAMDISK_DRIVER_PROTOCOL, ::fromString)
         }
 
+        fun registerParser() {
+            StorageKeyParser.addParser(RAMDISK_DRIVER_PROTOCOL, ::fromString)
+        }
+
         private fun fromString(rawKeyString: String): RamDiskStorageKey {
             val match =
                 requireNotNull(RAMDISK_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
