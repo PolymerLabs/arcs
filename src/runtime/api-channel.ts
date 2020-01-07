@@ -588,7 +588,7 @@ export abstract class PECInnerPort extends APIPort {
   constructor(messagePort: MessagePort) {
     // TODO(shanestephens): Try to feed some more information through to PropagatedException - can perhaps
     // recover the method invoked and (sometimes) the particle.
-    super(messagePort, 'i', err => this.ReportExceptionInHost(new PropagatedException(err, '??', '??')));
+    super(messagePort, 'i', err => this.ReportExceptionInHost(new PropagatedException(err)));
   }
 
   abstract onStop();

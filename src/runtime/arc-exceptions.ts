@@ -20,7 +20,7 @@ export interface SerializedPropagatedException extends Literal {
 
 /** An exception that is to be propagated back to the host. */
 export class PropagatedException extends Error {
-  constructor(public cause: Error, public method: string, public particleId: string, public particleName?: string) {
+  constructor(public cause: Error, public method?: string, public particleId?: string, public particleName?: string) {
     super();
     this.stack += `\nCaused by: ${this.cause.stack}`;
   }
@@ -50,8 +50,11 @@ export class PropagatedException extends Error {
       case UserException.name:
         exception = new UserException(cause, literal.method, literal.particleId, literal.particleName);
         break;
+      case PropagatedException.name:
+        exception = new PropagatedException(cause, literal.method, literal.particleId, literal.particleName);
+        break;
       default:
-        throw new Error(`Unknown exception type: ${literal.exceptionType}`);
+        throw new Error(`Unknown exception type: ${JSON.stringify(literal)}`);
     }
     exception.stack = literal.stack;
     return exception;
@@ -106,7 +109,13 @@ export function removeSystemExceptionHandler(handler: ExceptionHandler) {
 }
 
 export const defaultSystemExceptionHandler = (exception) => {
-  console.log(exception.method, exception.particleName);
+  if (exception.particleName && exception.method) {
+    console.log(`Exception in particle '${exception.particleName}', method '${exception.method}'`);
+  } else if (exception.particleName) {
+    console.log(`Exception in particle '${exception.particleName}', unknown method`);
+  } else if (exception.method) {
+    console.log(`Exception in unknown particle, method '${exception.method}'`);
+  }
   throw exception;
 };
 
