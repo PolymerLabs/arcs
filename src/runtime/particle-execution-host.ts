@@ -47,6 +47,12 @@ export type StopRenderOptions = {
   slotName: string;
 };
 
+export type ParticleExecutionHostOptions = Readonly<{
+  slotComposer: SlotComposer;
+  arc: Arc;
+  ports: MessagePort[];
+}>;
+
 @SystemTrace
 export class ParticleExecutionHost {
   private readonly _apiPorts: PECOuterPort[];
@@ -60,7 +66,7 @@ export class ParticleExecutionHost {
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
   public readonly particles: Particle[] = [];
 
-  constructor(slotComposer: SlotComposer, arc: Arc, ports: MessagePort[]) {
+  constructor({slotComposer, arc, ports}: ParticleExecutionHostOptions) {
     this.close = () => {
       this._apiPorts.forEach(apiPort => apiPort.close());
     };
