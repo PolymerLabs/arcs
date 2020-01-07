@@ -10,16 +10,16 @@ schema Foo
   value: Text
 
 particle SingleSlotParticle in 'test-single-slot-particle.js'
-  foo: reads Foo
+  foo: reads Foo {value}
   annotation: consumes Slot
   description `test slot particle0`
 
 interface HostedParticleInterface
-  foo: reads Foo
+  foo: reads Foo {value}
   annotation: consumes Slot
 
 particle MultiplexSlotsParticle in 'test-multiplex-slots-particle.js'
   particle0: hosts HostedParticleInterface
-  foos: reads [Foo]
+  foos: reads [Foo {value}]
   annotationsSet: consumes [Slot]
   description `outer test slot particle0`

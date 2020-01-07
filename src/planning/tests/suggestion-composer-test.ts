@@ -108,7 +108,6 @@ describe('suggestion composer', () => {
 
     const observer = new SlotTestObserver();
     slotComposer.observeSlots(observer);
-
     observer.newExpectations()
       .expectRenderSlot('List', 'root')
       .expectRenderSlot('MakeCake', 'item')

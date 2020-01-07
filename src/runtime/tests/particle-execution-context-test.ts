@@ -8,46 +8,46 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
-import {ArcId} from '../id.js';
-import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
-import {Manifest} from '../manifest.js';
-import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {StubLoader} from '../testing/stub-loader.js';
+// import {assert} from '../../platform/chai-web.js';
+// import {Arc} from '../arc.js';
+// import {ArcId} from '../id.js';
+// import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
+// import {Manifest} from '../manifest.js';
+// import {MockSlotComposer} from '../testing/mock-slot-composer.js';
+// import {StubLoader} from '../testing/stub-loader.js';
 
 describe('Particle Execution Context', () => {
   // TODO(sjmiles): uses deprecated rendering data
   it.skip('substitutes slot names for model references', async () => {
-    const context = await Manifest.parse(`
-      particle A in 'A.js'
-        root: consumes Slot
-          detail: provides? Slot
-          annotation: provides? Slot
+    // const context = await Manifest.parse(`
+    //   particle A in 'A.js'
+    //     root: consumes Slot
+    //       detail: provides? Slot
+    //       annotation: provides? Slot
 
-      recipe
-        slot0: slot 'rootslotid-root'
-        A
-          root: consumes slot0`
-    );
+    //   recipe
+    //     slot0: slot 'rootslotid-root'
+    //     A
+    //       root: consumes slot0`
+    // );
 
-    const loader = new StubLoader({
-      'A.js': `defineParticle(({UiParticle}) => {
-        return class extends UiParticle {
-          get template() { return '<div><div slotid$="{{$detail}}"></div><div slotid="annotation"></div></div>'; }
-        };
-      });`
-    });
+    // const loader = new StubLoader({
+    //   'A.js': `defineParticle(({UiParticle}) => {
+    //     return class extends UiParticle {
+    //       get template() { return '<div><div slotid$="{{$detail}}"></div><div slotid="annotation"></div></div>'; }
+    //     };
+    //   });`
+    // });
 
-    const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
-    const id = ArcId.newForTest('demo');
+    // const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+    // const id = ArcId.newForTest('demo');
 
-    const arc = new Arc({id, storageKey: 'volatile://', slotComposer, loader, context});
+    // const arc = new Arc({id, storageKey: 'volatile://', slotComposer, loader, context});
 
-    const [recipe] = arc.context.recipes;
-    recipe.normalize();
+    // const [recipe] = arc.context.recipes;
+    // recipe.normalize();
 
-    await arc.instantiate(recipe);
+    // await arc.instantiate(recipe);
 
     //const slotConsumer = slotComposer.consumers[0] as HeadlessSlotDomConsumer;
     // const detailContext = slotConsumer.directlyProvidedSlotContexts.find(ctx => ctx.name === 'detail');
