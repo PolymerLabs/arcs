@@ -461,7 +461,6 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
           if (initializer !== -1 && descriptor[initializer].redundant) {
             if (this._mapper.hasMappingForId(messageBody['identifier'])) {
               // No need to process again.
-              console.log('ssssskipping<=================', messageBody['identifier']);
               return;
             }
           }
