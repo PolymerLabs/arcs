@@ -36,9 +36,9 @@ export const pecIndustry = (loader): PecFactory => {
     }
     const poolEntry = workerPool.resume();
     // Should emplace if the worker pool management is ON and
-    // a new worker and its new messaging channel are created.
+    // a new worker and its messaging channel are created.
     const shouldEmplace = workerPool.active && !poolEntry;
-    // Should transfer port only if the worker is newly spawned.
+    // Transfers port only if the worker is newly spawned.
     const shouldTransferPort = !workerPool.active || shouldEmplace;
     const worker =
         poolEntry ? poolEntry.worker : new Worker(workerBlobUrl || workerUrl);

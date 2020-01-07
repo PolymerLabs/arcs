@@ -260,8 +260,8 @@ export class APIPort {
     if (!workerPool.exist(this._port)) {
       this._port.close();
     } else {
-      // The worker associated with this port will be put into the suspended
-      // list rather than being destroyed immediately when this PEH/PEC APIPort
+      // The worker associated with this port is put into the suspended list
+      // rather than being destroyed immediately when this PEH/PEC APIPort
       // is closed.
       workerPool.suspend(this._port);
     }

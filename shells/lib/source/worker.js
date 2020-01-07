@@ -32,6 +32,6 @@ self.onmessage = function(e) {
   port = port || e.ports[0];
   // construct execution context with scope data
   // PEC context will be freshly clean despite a new spun-up worker or a resumed
-  // worker as one dedicated worker can only handle one PEC at a time.
+  // worker as one dedicated worker is associated with one single PEC at a time.
   new ParticleExecutionContext(port, Id.fromString(id), IdGenerator.newSession(), new Loader(base));
 };
