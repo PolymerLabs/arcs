@@ -22,7 +22,7 @@ import '../../services/clock-service.js';
 import '../../services/random-service.js';
 
 class TestLoader extends Loader {
-  constructor(readonly env: string) {
+  constructor(readonly testDir: string) {
     super();
   }
 
@@ -30,7 +30,7 @@ class TestLoader extends Loader {
     // The manifest is in the same dir as this test file but the compiled wasm binaries
     // are in language-specific dirs, so we need to adjust the loading path accordingly.
     if (path.endsWith('$module.wasm')) {
-      return path.replace('tests/$module.wasm', `${this.env}/test-module.wasm`);
+      return path.replace('tests/$module.wasm', `${this.testDir}/test-module.wasm`);
     }
     return (path[0] === '$') ? `RESOLVED(${path})` : path;
   }
@@ -40,21 +40,23 @@ class TestLoader extends Loader {
   }
 }
 
-['cpp/tests', '../../javatests/arcs/sdk/wasm'].forEach(env => {
-  // Run tests for C++ and Kotlin
-  describe(`wasm tests (${env.split('/')[0]})`, () => {
+const testMap = {
+  'C++': 'cpp/tests',
+  'Kotlin': '../../javatests/arcs/sdk/wasm',
+};
+
+Object.entries(testMap).forEach(([testLabel, testDir]) => {
+  describe(`wasm tests (${testLabel})`, () => {
+    const isKotlin = testLabel === 'Kotlin';
+    const isCpp = testLabel === 'C++';
 
     let loader;
     let manifestPromise;
-
-    const isKotlin = env.includes('sdk');
-    const isCpp = env.includes('cpp');
-
     before(function() {
       if (!global['testFlags'].bazel) {
         this.skip();
       } else {
-        loader = new TestLoader(env);
+        loader = new TestLoader(testDir);
         VolatileStorage.setStorageCache(new RuntimeCacheService());
         manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`,
                                          {loader, fileName: process.cwd() + '/manifest.arcs'});

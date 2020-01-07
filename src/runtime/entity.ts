@@ -181,12 +181,17 @@ class EntityInternals {
     // internals object so it will appear in the log output, with a few tweaks for better display.
     const original = this.entity;
 
-    const copy = new EntityInternals(null, this.entityClass, this.schema, this.context, this.userIDComponent);
+    // The 'any' type is required to modify some readonly fields below.
+    // tslint:disable-next-line: no-any
+    const copy: any = new EntityInternals(null, this.entityClass, this.schema, null, this.userIDComponent);
     copy.id = this.id;
 
-    // Force 'entity' to show as '[Circular]'. The 'any' is required because 'entity' is readonly.
-    // tslint:disable-next-line: no-any
-    (copy as any).entity = copy;
+    // Force '.entity' to show as '[Circular]'.
+    copy.entity = copy;
+
+    // We don't want to log the ParticleExecutionContext object but showing '.context' as null
+    // could be confusing, so omit it altogether.
+    delete copy.context;
 
     // Set up a class that looks the same as the real entity, copy the schema fields in, add an
     // enumerable version of the copied internals, and use console.dir to show the full object.
@@ -199,7 +204,9 @@ class EntityInternals {
         this[SYMBOL_INTERNALS] = copy;
       }
     };
-    Object.defineProperty(entity, 'name', {value: original.constructor.name});
+    if (original.constructor.name) {
+      Object.defineProperty(entity, 'name', {value: original.constructor.name});
+    }
     console.dir(new entity(), {depth: null});
   }
 }
