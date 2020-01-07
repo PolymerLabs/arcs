@@ -67,12 +67,12 @@ describe('Runtime', () => {
   it('runs arcs', async () => {
     const runtime = Runtime.getRuntime();
     assert.equal(runtime.arcById.size, 0);
-    const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
+    const arc = runtime.runArc('test-arc', volatileStorageKeyPrefixForTest());
     assert.isNotNull(arc);
     assert.hasAllKeys(runtime.arcById, ['test-arc']);
-    runtime.runArc('test-arc', storageKeyPrefixForTest());
+    runtime.runArc('test-arc', volatileStorageKeyPrefixForTest());
     assert.hasAllKeys(runtime.arcById, ['test-arc']);
-    runtime.runArc('other-test-arc', storageKeyPrefixForTest());
+    runtime.runArc('other-test-arc', volatileStorageKeyPrefixForTest());
     assert.hasAllKeys(runtime.arcById, ['test-arc', 'other-test-arc']);
   });
   it('registers and unregisters stores', async () => {
