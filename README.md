@@ -161,8 +161,25 @@ suite using `describe.only()` instead of `describe()`.
 
 Test using Bazel (run from your repo root):
 
+First you will need to make sure you have set the path attribute of
+android_sdk_repository or the ANDROID_HOME environment variable. To
+do this, you can run the following commands:
 ```
-bazel test //src/wasm/... //src/tests/...
+export ANDROID_HOME=$Path_to_SDK
+```
+If you don't know the path to the Android SDK, you can find it using
+Android Studio by going to the SDK Manager tool.
+```
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+source ~/.bash_profile
+```
+To verify ANDROID_HOME has been set properly, you can run
+`echo ANDROID_HOME`.
+
+Once your Android environment has been setup, you can run the tests
+using bazel:
+```
+bazel test javatests/... javaharness/javatests/...
 ```
 
 ### Debugging tests
