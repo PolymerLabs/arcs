@@ -27,6 +27,3 @@ additional_languages:
   android
 
 java_language_level: 8
-
-build_flags:
-  --incompatible_depset_is_not_iterable=false
