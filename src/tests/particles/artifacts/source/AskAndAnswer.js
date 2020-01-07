@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({UiParticle, html}) => {
+defineParticle(({UiParticle, html, log}) => {
 
   const host = `ask-and-answer`;
   const colors = {question: 'red', answer: 'green'};
@@ -55,7 +55,8 @@ defineParticle(({UiParticle, html}) => {
           case 'hints':
             return {items: []};
           default:
-            log.error(`Unexpected slot name ${this.currentSlotName}`);
+            log(`Error: unexpected slot name ${this.currentSlotName}`);
+            break;
         }
       }
     }

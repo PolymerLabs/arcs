@@ -24,7 +24,7 @@ import {CollectionHandle} from '../storageNG/handle.js';
 import {Entity} from '../entity.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 
-describe('particle interface loading with slotsFOO', () => {
+describe('particle interface loading with slots', () => {
   async function initializeManifestAndArc(contextContainer?): Promise<{manifest: Manifest, recipe: Recipe, observer: SlotTestObserver, arc: Arc}> {
     const loader = new Loader();
     const manifest = `

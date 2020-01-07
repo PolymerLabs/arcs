@@ -10,24 +10,27 @@
 
 import {assert} from '../platform/chai-web.js';
 import {Entity} from '../runtime/entity.js';
-import {HostedSlotContext} from '../runtime/slot-context.js';
-import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
+//import {HostedSlotContext} from '../runtime/slot-context.js';
+//import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
-import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
+//import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
+import {SlotTestObserver} from '../runtime/testing/slot-test-observer.js';
 import {checkDefined} from '../runtime/testing/preconditions.js';
 import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 
-describe('Multiplexer', () => {
-  // TODO(sjmiles): uses expectations
-  it.skip('renders polymorphic multiplexed slots', async () => {
+describe('MultiplexerFOO', () => {
+  it('renders polymorphic multiplexed slots', async () => {
     const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();
     const context = await Manifest.load(
-        './src/tests/particles/artifacts/polymorphic-muxing.recipes', loader, {memoryProvider});
+      './src/tests/particles/artifacts/polymorphic-muxing.recipes',
+      loader,
+      {memoryProvider}
+    );
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
     const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
@@ -63,62 +66,76 @@ describe('Multiplexer', () => {
     postsStub['referenceMode'] = false;
 
     // version could be set here, but doesn't matter for tests.
-    const runtime = new Runtime({
-        loader, composerClass: MockSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+
+    const observer = new SlotTestObserver();
+    arc.pec.slotComposer.observeSlots(observer);
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);
 
-    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
+    const slotComposer = arc.pec.slotComposer;
+
     // Render 3 posts
-    slotComposer
+    observer
         .newExpectations()
-        .expectRenderSlot('List', 'root', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['template', 'templateName', 'model']})
-        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2, isOptional: true})
-        .expectRenderSlot('ShowOne', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2})
-        .expectRenderSlot('ShowTwo', 'item', {contentTypes: ['template', 'templateName', 'model']});
+        .expectRenderSlot('List', 'root')
+        //.expectRenderSlot('PostMuxer', 'item')
+        //.expectRenderSlot('PostMuxer', 'item', {times: 2, isOptional: true})
+        .expectRenderSlot('ShowOne', 'item', {times: 2})
+        .expectRenderSlot('ShowTwo', 'item')
+        ;
 
     await suggestions[0].instantiate(arc);
     await arc.idle;
 
     // Add and render one more post
-    slotComposer
+    observer
         .newExpectations()
-        .expectRenderSlot('List', 'root', {contentTypes: ['templateName', 'model']})
-        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
-        .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
-        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
+        .expectRenderSlot('List', 'root')
+        //.expectRenderSlot('PostMuxer', 'item')
+        .expectRenderSlot('ShowOne', 'item')
+        //.expectRenderSlot('PostMuxer', 'item')
+        ;
+
     const postsStore = await collectionHandleForTest(arc, arc.findStoreById(arc.activeRecipe.handles[0].id));
     await postsStore.add(
         Entity.identify(new postsStore.entityClass({message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}), '4'));
+
     await arc.idle;
-    assert.lengthOf(slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
+
+    // TODO(sjmiles): contexts have been evacipated
+    //assert.lengthOf(slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
     assert.lengthOf(slotComposer.consumers, 6);
-    const itemSlot = checkDefined(slotComposer.consumers.find(s => s.consumeConn.name === 'item'));
-    const items = itemSlot.renderings.map(([subId, item]) => item);
+
+    const itemSlot = slotComposer.consumers.find(s => s.consumeConn.name === 'item');
+    // TODO(sjmiles): why not assert?
+    checkDefined(itemSlot);
+
+    // TODO(sjmiles): tested information is no longer tracked in these objects
 
     // verify model
-    assert.lengthOf(items, 4);
-    [{subId: '1', message: 'x'}, {subId: '2', message: 'y'}, {subId: '3', message: 'z'}, {subId: '4', message: 'w'}].forEach(expected => {
-        assert(items.find(item => item.model.subId === expected.subId && item.model.message === expected.message),
-              `Cannot find item {subId: '${expected.subId}', message: '${expected.message}'`);
-    });
+    // const items = itemSlot.renderings.map(([subId, item]) => item);
+    // assert.lengthOf(items, 4);
+    // [{subId: '1', message: 'x'}, {subId: '2', message: 'y'}, {subId: '3', message: 'z'}, {subId: '4', message: 'w'}].forEach(expected => {
+    //     assert(items.find(item => item.model.subId === expected.subId && item.model.message === expected.message),
+    //           `Cannot find item {subId: '${expected.subId}', message: '${expected.message}'`);
+    // });
 
-    // verify template names
-    for (const item of items) {
-      if (item.model.subId === '2') {
-        assert.strictEqual('PostMuxer::item::ShowTwo::item::default', item.templateName);
-      } else {
-        assert.strictEqual('PostMuxer::item::ShowOne::item::default', item.templateName);
-      }
-    }
+    // // verify template names
+    // for (const item of items) {
+    //   if (item.model.subId === '2') {
+    //     assert.strictEqual('PostMuxer::item::ShowTwo::item::default', item.templateName);
+    //   } else {
+    //     assert.strictEqual('PostMuxer::item::ShowOne::item::default', item.templateName);
+    //   }
+    // }
 
     // verify template cache
-    HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowOne::item::default');
-    HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowTwo::item::default');
-    HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::default');
-    HeadlessSlotDomConsumer.hasTemplate('Root::item::ShowOne::item::default');
+    // HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowOne::item::default');
+    // HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowTwo::item::default');
+    // HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::default');
+    // HeadlessSlotDomConsumer.hasTemplate('Root::item::ShowOne::item::default');
   });
 });
