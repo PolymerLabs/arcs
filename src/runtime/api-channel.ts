@@ -222,6 +222,10 @@ class ThingMapper {
     return this._reverseIdMap.has(thing);
   }
 
+  hasMappingForId(id) {
+    return this._idMap.has(id);
+  }
+
   identifierForThing(thing) {
     assert(this._reverseIdMap.has(thing), `Missing thing [${thing}]`);
     return this._reverseIdMap.get(thing);
@@ -451,6 +455,16 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
               args[a.position] = (args[a.position] as (() => unknown))();
             });
           }
+
+          // For redundant initializers, we first check if we already have a
+          // mapping for that ID.
+          if (initializer !== -1 && descriptor[initializer].redundant) {
+            if (this._mapper.hasMappingForId(messageBody['identifier'])) {
+              // No need to process again.
+              return;
+            }
+          }
+
           const result = this['on' + f](...args);
 
           // If this message is an initializer, need to establish a mapping
