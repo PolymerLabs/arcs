@@ -16,10 +16,11 @@ import {portIndustry} from '../pec-port.js';
 
 const {log, warn} = logsFactory('runArc');
 
-const runQueue = [];
-
+/*
 // TODO(sjmiles): serialize requests to runArc to reduce synchronization
 // burden on apps. Revisit at some point.
+
+const runQueue = [];
 
 export const runArc = async (...args) => {
   if (runArc.busy) {
@@ -43,10 +44,11 @@ const _runArc = async(...args) => {
     runArc.busy = false;
   }
 };
+*/
 
 // This implementation was forked from verbs/spawn.js
 
-export const __runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
+export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
   const {recipe, arcId, storageKeyPrefix, pecId, particles} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcId) {
