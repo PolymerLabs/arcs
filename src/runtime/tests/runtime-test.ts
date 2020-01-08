@@ -16,6 +16,7 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {ArcId} from '../id.js';
+import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
@@ -77,6 +78,7 @@ describe('Runtime', () => {
   });
   it('registers and unregisters stores', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.parse(``, {memoryProvider});
     const loader = new StubLoader({
       manifest: `
