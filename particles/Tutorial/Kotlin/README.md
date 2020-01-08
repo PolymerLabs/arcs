@@ -351,11 +351,20 @@ In essence, a store is where the data physically exists. The handle lets differe
 In the last tutorial, we set the Person handle inside of the particles. Person was also a singleton, it represented a single instance of the Person schema. In this tutorial, we will instead define a collection with multiple instances of Person inside the Arcs Manifest file. While a collection can be thought of as a list, there are no guarantees about the order of elements within the collection.
 Using some more sophisticated template interpolation, we can easily greet everyone in our collection. But that’s enough explanation, let’s get to some code!
 
-We begin with the Arcs manifest file which includes the collection of `PersonDetails`.
+We begin with the Arcs manifest file which only includes the collection of `PersonDetails`.
 ```
+// CollectionsSchemas.arcs
 schema PersonDetails
   name: Text
   age: Number
+```
+
+We may want to reuse this schema later. Next, we proceed to our party greeting particle:
+
+```
+// Collections.arcs
+
+import './CollectionsSchemas.arcs'
 
 // This is essentially a JSON file defined inside the manifest.
 resource PeopleData
@@ -442,6 +451,7 @@ load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles", "
 arcs_kt_schema(
     name = "collections_schemas",
     srcs = ["Collections.arcs"],
+    deps = ["CollectionsSchemas.arcs"]
 )
 
 arcs_kt_particles(
