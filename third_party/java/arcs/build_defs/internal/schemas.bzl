@@ -15,7 +15,7 @@ def _output_name(src, suffix = ""):
         src = src.split(":")[1]
     return src.replace(".arcs", "").replace("_", "-").replace(".", "-") + suffix
 
-def _run_schema2wasm(name, src, out, language_name, language_flag, package):
+def _run_schema2wasm(name, src, deps, out, language_name, language_flag, package):
     """Generates source code for the given .arcs schema file.
 
     Runs sigh schema2wasm to generate the output.
@@ -24,10 +24,14 @@ def _run_schema2wasm(name, src, out, language_name, language_flag, package):
     if not src.endswith(".arcs"):
         fail("src must be a .arcs file")
 
+    if type(deps) == str:
+        deps = [deps]
+
     sigh_command(
         name = name,
         srcs = [src],
         outs = [out],
+        deps = deps,
         progress_message = "Generating {} entity schemas".format(language_name),
 
         # TODO: generated header guard should contain whole workspace-relative
@@ -41,18 +45,19 @@ def _run_schema2wasm(name, src, out, language_name, language_flag, package):
     )
 
 # TODO: Specify the appropriate c++ package name, given the new repo structure
-def arcs_cc_schema(name, src, out = None, package = "arcs"):
+def arcs_cc_schema(name, src, deps, out = None, package = "arcs"):
     """Generates a C++ header file for the given .arcs schema file."""
     _run_schema2wasm(
         name = name + "_genrule",
         src = src,
+        deps = deps,
         out = out or _output_name(src, ".h"),
         language_flag = "--cpp",
         language_name = "C++",
         package = package,
     )
 
-def arcs_kt_schema(name, srcs, package = "arcs.sdk"):
+def arcs_kt_schema(name, srcs, deps, package = "arcs.sdk"):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:
@@ -68,6 +73,7 @@ def arcs_kt_schema(name, srcs, package = "arcs.sdk"):
             name = _output_name(src, "_genrule"),
             src = src,
             out = out,
+            deps = deps,
             language_flag = "--kotlin",
             language_name = "Kotlin",
             package = package,
