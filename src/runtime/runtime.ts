@@ -31,6 +31,7 @@ import {Loader} from '../platform/loader.js';
 import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {SystemTrace} from '../tracelib/systrace.js';
+import {workerPool} from './worker-pool.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -174,6 +175,7 @@ export class Runtime {
   }
 
   destroy() {
+    workerPool.clear();
   }
 
   // Allow dynamic context binding to this runtime.

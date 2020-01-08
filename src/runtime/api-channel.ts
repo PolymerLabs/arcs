@@ -30,6 +30,7 @@ import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
+import {workerPool} from './worker-pool.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -260,7 +261,14 @@ export class APIPort {
   }
 
   close(): void {
-    this._port.close();
+    if (!workerPool.exist(this._port)) {
+      this._port.close();
+    } else {
+      // The worker associated with this port is put into the suspended list
+      // rather than being destroyed immediately when this PEH/PEC APIPort
+      // is closed.
+      workerPool.suspend(this._port);
+    }
   }
 
   @NoTraceWithReason('Chatty')

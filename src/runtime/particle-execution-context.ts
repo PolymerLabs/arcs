@@ -113,7 +113,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       }
 
       onStop(): void {
-        if (global['close']) {
+        if (global['close'] && !global['inWorkerPool']) {
           global['close']();
         }
       }
