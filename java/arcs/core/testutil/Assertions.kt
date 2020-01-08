@@ -11,7 +11,7 @@
 
 package arcs.core.testutil
 
-import java.lang.AssertionError
+import kotlin.AssertionError
 import kotlin.reflect.KClass
 import org.junit.Assert.fail
 
@@ -40,3 +40,6 @@ suspend fun assertSuspendingThrows(expected: KClass<out Exception>, thrower: sus
     }
     fail("Expected exception of type $expected, but none was thrown.")
 }
+
+/** Implementation of `fail` which returns [Nothing], and thus will work in elvis-situations. */
+fun fail(message: String): Nothing = throw AssertionError(message)

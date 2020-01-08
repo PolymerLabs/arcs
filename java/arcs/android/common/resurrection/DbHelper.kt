@@ -55,54 +55,69 @@ class DbHelper(
     /**
      * Stores a [ResurrectionRequest] in the database.
      */
-    fun registerRequest(request: ResurrectionRequest) {
-        writableDatabase.use { db ->
-            db.transaction {
-                val requestContent = ContentValues()
-                    .apply {
-                        put("component_package", request.componentName.packageName)
-                        put("component_class", request.componentName.className)
-                        put("component_type", request.componentType.name)
-                        put("intent_action", request.intentAction)
-                        val extrasBlob = if (request.intentExtras != null) {
-                            with(Parcel.obtain()) {
-                                writeTypedObject(request.intentExtras, 0)
-                                marshall()
-                            }
-                        } else null
-                        put("intent_extras", extrasBlob)
+    fun registerRequest(request: ResurrectionRequest) = writableDatabase.useTransaction {
+        val requestContent = ContentValues()
+            .apply {
+                put("component_package", request.componentName.packageName)
+                put("component_class", request.componentName.className)
+                put("component_type", request.componentType.name)
+                put("intent_action", request.intentAction)
+                val extrasBlob = if (request.intentExtras != null) {
+                    with(Parcel.obtain()) {
+                        writeTypedObject(request.intentExtras, 0)
+                        marshall()
                     }
-                db.insertWithOnConflict(
-                    "resurrection_requests",
-                    null,
-                    requestContent,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-
-                db.delete(
-                    "requested_notifiers",
-                    "component_package = ? AND component_class = ?",
-                    arrayOf(
-                        request.componentName.packageName,
-                        request.componentName.className
-                    )
-                )
-
-                val notifierValues = ContentValues()
-                request.notifyOn.forEach {
-                    notifierValues.put(
-                        "component_package",
-                        request.componentName.packageName
-                    )
-                    notifierValues.put(
-                        "component_class",
-                        request.componentName.className
-                    )
-                    notifierValues.put("notification_key", it.toString())
-                    db.insert("requested_notifiers", null, notifierValues)
-                }
+                } else null
+                put("intent_extras", extrasBlob)
             }
+        insertWithOnConflict(
+            "resurrection_requests",
+            null,
+            requestContent,
+            SQLiteDatabase.CONFLICT_REPLACE
+        )
+
+        delete(
+            "requested_notifiers",
+            "component_package = ? AND component_class = ?",
+            arrayOf(
+                request.componentName.packageName,
+                request.componentName.className
+            )
+        )
+
+        val notifierValues = ContentValues()
+        request.notifyOn.forEach {
+            notifierValues.put(
+                "component_package",
+                request.componentName.packageName
+            )
+            notifierValues.put(
+                "component_class",
+                request.componentName.className
+            )
+            notifierValues.put("notification_key", it.toString())
+            insert("requested_notifiers", null, notifierValues)
         }
+    }
+
+    /** Unregisters a [component] for resurrection. */
+    fun unregisterRequest(component: ComponentName) = writableDatabase.useTransaction {
+        val componentArgs = arrayOf(component.packageName, component.className)
+        execSQL(
+            """
+                DELETE FROM requested_notifiers 
+                WHERE component_package = ? AND component_class = ?
+            """,
+            componentArgs
+        )
+        execSQL(
+            """
+                DELETE FROM resurrection_requests
+                WHERE component_package = ? AND component_class = ?
+            """,
+            componentArgs
+        )
     }
 
     /**
@@ -112,66 +127,75 @@ class DbHelper(
         val notifiersByComponentName = mutableMapOf<ComponentName, MutableList<StorageKey>>()
         val result = mutableListOf<ResurrectionRequest>()
 
-        readableDatabase.use { db ->
-            db.transaction {
-                db.rawQuery(
-                    """
-                        SELECT 
-                            component_package, component_class, notification_key 
-                        FROM requested_notifiers
-                    """.trimIndent(),
-                    null
-                ).use {
-                    while (it.moveToNext()) {
-                        val componentName = ComponentName(it.getString(0), it.getString(1))
-                        val key = it.getString(2)
+        readableDatabase.useTransaction {
+            rawQuery(
+                """
+                    SELECT 
+                        component_package, component_class, notification_key 
+                    FROM requested_notifiers
+                """.trimIndent(),
+                null
+            ).use {
+                while (it.moveToNext()) {
+                    val componentName = ComponentName(it.getString(0), it.getString(1))
+                    val key = it.getString(2)
 
-                        val notifiers = notifiersByComponentName[componentName] ?: mutableListOf()
-                        notifiers.add(StorageKeyParser.parse(key))
-                        notifiersByComponentName[componentName] = notifiers
-                    }
+                    val notifiers = notifiersByComponentName[componentName] ?: mutableListOf()
+                    notifiers.add(StorageKeyParser.parse(key))
+                    notifiersByComponentName[componentName] = notifiers
                 }
+            }
 
-                db.rawQuery(
-                    """
-                        SELECT 
-                            component_package, 
-                            component_class, 
-                            component_type, 
-                            intent_action, 
-                            intent_extras 
-                        FROM resurrection_requests
-                    """.trimIndent(),
-                    null
-                ).use {
-                    while (it.moveToNext()) {
-                        val componentName = ComponentName(it.getString(0), it.getString(1))
-                        val type = ResurrectionRequest.ComponentType.valueOf(it.getString(2))
-                        val action = if (it.isNull(3)) null else it.getString(3)
-                        val extras = if (it.isNull(4)) null else {
-                            with(Parcel.obtain()) {
-                                val bytes = it.getBlob(4)
-                                unmarshall(bytes, 0, bytes.size)
-                                setDataPosition(0)
-                                readTypedObject(PersistableBundle.CREATOR)
-                            }
+            rawQuery(
+                """
+                    SELECT 
+                        component_package, 
+                        component_class, 
+                        component_type, 
+                        intent_action, 
+                        intent_extras 
+                    FROM resurrection_requests
+                """.trimIndent(),
+                null
+            ).use {
+                while (it.moveToNext()) {
+                    val componentName = ComponentName(it.getString(0), it.getString(1))
+                    val type = ResurrectionRequest.ComponentType.valueOf(it.getString(2))
+                    val action = if (it.isNull(3)) null else it.getString(3)
+                    val extras = if (it.isNull(4)) null else {
+                        with(Parcel.obtain()) {
+                            val bytes = it.getBlob(4)
+                            unmarshall(bytes, 0, bytes.size)
+                            setDataPosition(0)
+                            readTypedObject(PersistableBundle.CREATOR)
                         }
-
-                        result.add(
-                            ResurrectionRequest(
-                                componentName,
-                                type,
-                                action,
-                                extras,
-                                notifiersByComponentName[componentName] ?: emptyList()
-                            )
-                        )
                     }
+
+                    result.add(
+                        ResurrectionRequest(
+                            componentName,
+                            type,
+                            action,
+                            extras?.deepCopy(),
+                            notifiersByComponentName[componentName] ?: emptyList()
+                        )
+                    )
                 }
             }
         }
         return result
     }
+
+    /** Resets the registrations by deleting everything from the database. */
+    fun reset() {
+        writableDatabase.useTransaction {
+            execSQL("DELETE FROM requested_notifiers")
+            execSQL("DELETE FROM resurrection_requests")
+        }
+    }
+
+    private inline fun <T : Any?> SQLiteDatabase.useTransaction(block: SQLiteDatabase.() -> T): T =
+        use { transaction(block) }
 
     private inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T): T {
         beginTransaction()
