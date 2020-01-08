@@ -21,8 +21,7 @@ notifications:
     on_success: never # default: change
     on_failure: always # default: always
 
-# Bazel build & test everything. Can't use `bazel build ...` yet, because
-# javaharness doesn't build on Travis (needs working Android SDK).
+# Bazel build & test everything.
 jobs:
   include:
     - stage: test
@@ -30,8 +29,6 @@ jobs:
       name: "Bazel: //particles/... + testShells"
     - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //java/... //javatests/... && bazel --bazelrc=tools/travis.bazelrc test //java/... //javatests/..."
       name: "Bazel: //java/... and //javatests/..."
-    - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc test //javaharness/javatests/..."
-      name: "Bazel: //javaharness/javatests/..."
     - script: tools/run_in_docker "bazel --bazelrc=tools/travis.bazelrc build //src/... && bazel --bazelrc=tools/travis.bazelrc test //src/..."
       name: "Bazel: //src/..."
     # run ktlint against every kotlin file in the diff between the branch and master's head.
