@@ -19,12 +19,18 @@ import {ArcId, IdGenerator} from '../id.js';
 import {NoOpStorageProxy} from '../storage-proxy.js';
 // database providers are optional, these tests use these provider(s)
 import '../storage/pouchdb/pouch-db-provider.js';
+import {Flags} from '../flags.js';
 
 describe('Handle', () => {
 
   let loader;
   let manifest;
-  before(async () => {
+  before(async function() {
+    // This handle implementation does not work with the new storage stack,
+    // which has its own implementation in storageNG/handle.ts.
+    if (Flags.useNewStorageStack) {
+      this.skip();
+    }
     loader = new Loader();
     manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
   });
