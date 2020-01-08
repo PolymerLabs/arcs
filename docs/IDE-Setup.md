@@ -42,6 +42,13 @@ Add Android support
 | Windows  | `C:\Users\<USER_NAME>\AppData\Local\Android\sdk` |
 | MacOS    | `/Users/<USER_NAME>/Library/Android/sdk` |
 
+- Download an SDK using the `sdkmanager` binary in `Android/sdk/tools`:
+```
+  $ sdkmanager --update
+  $ sdkmanager --list
+  $ sdkmanager 'platforms;android-29'
+```
+(If you encounter `"Warning: File ~/.android/repositories.cfg could not be loaded."`, create one with "`touch ~/.android/repositories.cfg`".)
 - Within IntelliJ, go to File > Project Structure
 - Go to Platform Settings > SDKs
 - Click the `+` button, choose Android SDK
