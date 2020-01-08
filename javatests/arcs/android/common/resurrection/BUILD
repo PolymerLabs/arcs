@@ -35,7 +35,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/testutil",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
-        "//third_party/android/androidx_test/rules",
+        "//third_party/android/androidx_test/runner/rules",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/robolectric",
