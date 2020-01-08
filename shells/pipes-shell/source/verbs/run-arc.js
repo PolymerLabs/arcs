@@ -16,36 +16,6 @@ import {portIndustry} from '../pec-port.js';
 
 const {log, warn} = logsFactory('runArc');
 
-/*
-// TODO(sjmiles): serialize requests to runArc to reduce synchronization
-// burden on apps. Revisit at some point.
-
-const runQueue = [];
-
-export const runArc = async (...args) => {
-  if (runArc.busy) {
-    runQueue.push(args);
-    warn('queue.push: length is ', runQueue.length);
-  } else {
-    await _runArc(...args);
-    warn('queue.shift: length is ', runQueue.length);
-    const nextArgs = runQueue.shift();
-    if (nextArgs) {
-      await runArc(...nextArgs);
-    }
-  }
-};
-
-const _runArc = async(...args) => {
-  runArc.busy = true;
-  try {
-    await __runArc(...args);
-  } finally {
-    runArc.busy = false;
-  }
-};
-*/
-
 // This implementation was forked from verbs/spawn.js
 
 export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
