@@ -12,7 +12,6 @@ import {Entity, EntityClass} from './entity.js';
 import {Handle, Collection, Singleton} from './handle.js';
 import {Particle} from './particle.js';
 import {CollectionHandle, SingletonHandle} from './storageNG/handle.js';
-import {Consumer} from './hot.js';
 
 export interface UiParticleConfig {
   handleNames: string[];
@@ -169,8 +168,10 @@ export class UiParticleBase extends Particle {
    */
   async clear(handleName: string): Promise<void> {
     const handle = this._requireHandle(handleName);
-    if (!(handle instanceof Singleton) && !(handle instanceof Collection) &&
-        !(handle instanceof SingletonHandle) && !(handle instanceof CollectionHandle)) {
+    if (!(handle instanceof Singleton)
+        && !(handle instanceof Collection)
+        && !(handle instanceof SingletonHandle)
+        && !(handle instanceof CollectionHandle)) {
       throw new Error('Can only clear Singleton or Collection handles');
     }
     return this.await(p => handle.clear());

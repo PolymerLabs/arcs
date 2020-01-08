@@ -18,7 +18,6 @@ import {SlotConsumer} from './slot-consumer.js';
 import {ProvidedSlotContext, SlotContext} from './slot-context.js';
 import {SlotConnection} from './recipe/slot-connection.js';
 import {Dictionary} from './hot.js';
-import {Slot} from './recipe/slot.js';
 import {logsFactory} from '../platform/logs-factory.js';
 
 const {log, warn} = logsFactory('SlotComposer', 'brown');
@@ -100,7 +99,7 @@ export class SlotComposer {
     // who renderered the slot (i.e. the dom node or other container). The renderer identifies these
     // slots by entity-id (`subid`) instead. But `subid` is not unique, we need more information to
     // locate the output slot, so we embed the muxed-slot's id into our output-slot-id.
-     const connection = particle.getSlandleConnections()[0];
+    const connection = particle.getSlandleConnections()[0];
     return `${connection.targetSlot.id}___${innerArc.generateID('slot')}`;
   }
 

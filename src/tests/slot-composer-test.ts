@@ -60,7 +60,7 @@ async function initSlotComposer(recipeStr) {
   return {arc, slotComposer, observer, plan/*, startRenderParticles*/};
 }
 
-describe('slot composer', function() {
+describe('slot composer', () => {
   // TODO(sjmiles): why?
   //this.timeout(4000);
 
