@@ -15,9 +15,12 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import android.text.format.DateUtils
+import arcs.android.storage.ParcelableStoreOptions
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
-import arcs.android.storage.ParcelableStoreOptions
+import java.io.FileDescriptor
+import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +35,13 @@ class StorageService : Service() {
     private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
     private val stores = ConcurrentHashMap<StoreOptions<*, *, *>, Store<*, *, *>>()
+    private var startTime: Long? = null
+    private val stats = BindingContextStatsImpl()
+
+    override fun onCreate() {
+        super.onCreate()
+        startTime = startTime ?: System.currentTimeMillis()
+    }
 
     override fun onBind(intent: Intent): IBinder? {
         val parcelableOptions = requireNotNull(
@@ -41,13 +51,40 @@ class StorageService : Service() {
         return BindingContext(
             stores.computeIfAbsent(parcelableOptions.actual) { Store(it) },
             parcelableOptions.crdtType,
-            coroutineContext
+            coroutineContext,
+            stats
         )
     }
 
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
+    }
+
+    override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
+        super.dump(fd, writer, args)
+
+        val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
+        val storageKeys = stores.keys.map { it.storageKey }.toSet()
+
+        val statsPercentiles = stats.roundtripPercentiles
+
+        writer.println(
+            """
+                Arcs StorageService:
+                --------------------
+                
+                Uptime: ${DateUtils.formatElapsedTime(elapsedTime)}
+                Active StorageKeys: 
+                ${storageKeys.joinToString(",\n", prefix = "[\n", postfix = "\n]")}
+                ProxyMessage Roundtrip Statistics (ms):
+                  - Average: ${stats.roundtripMean}
+                  - StdDev:  ${stats.roundtripStdDev}
+                  - 75th percentile: ${statsPercentiles.seventyFifth}
+                  - 90th percentile: ${statsPercentiles.ninetieth}
+                  - 99th percentile: ${statsPercentiles.ninetyNinth}
+            """.trimIndent()
+        )
     }
 
     companion object {

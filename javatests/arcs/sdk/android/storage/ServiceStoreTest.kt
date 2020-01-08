@@ -29,6 +29,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.sdk.android.storage.service.BindingContext
+import arcs.sdk.android.storage.service.BindingContextStatsImpl
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DeferredResult
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
@@ -152,7 +153,12 @@ class ServiceStoreTest {
 
     private suspend fun buildService(storeOpts: ParcelableStoreOptions): BindingContext {
         val store = Store(storeOpts.actual)
-        return BindingContext(store, ParcelableCrdtType.Count, coroutineContext)
+        return BindingContext(
+            store,
+            ParcelableCrdtType.Count,
+            coroutineContext,
+            BindingContextStatsImpl()
+        )
     }
 
     private class FakeLifecycle : Lifecycle() {
