@@ -769,7 +769,7 @@ export class WasmParticle extends Particle {
 
     const fn = `_new${this.spec.name}`;
     if (!(fn in this.exports)) {
-      throw new Error(`wasm module does not export instantiator function '${fn}' for particle '${this.spec.name}'`);
+      throw this.reportedError(`wasm module does not export instantiator function '${fn}' for particle '${this.spec.name}'`);
     }
     this.innerParticle = this.exports[fn]();
     this.container.register(this, this.innerParticle);
@@ -799,7 +799,7 @@ export class WasmParticle extends Particle {
       const wasmHandle = this.exports._connectHandle(this.innerParticle, p, handle.canRead, handle.canWrite);
       this.container.free(p);
       if (wasmHandle === 0) {
-        throw new Error(`Wasm particle failed to connect handle '${name}'`);
+        throw this.reportedError(`Wasm particle failed to connect handle '${name}'`);
       }
       this.handleMap.set(handle, wasmHandle);
       refTypePromises.push(this.extractReferenceTypes(this.getEntityType(handle.type)));
@@ -1011,7 +1011,7 @@ export class WasmParticle extends Particle {
    */
   // TODO
   renderHostedSlot(slotName: string, hostedSlotId: string, content: Content) {
-    throw new Error('renderHostedSlot not implemented for wasm particles');
+    throw this.reportedError('renderHostedSlot not implemented for wasm particles');
   }
 
   /**
