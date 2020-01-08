@@ -25,6 +25,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -44,7 +45,6 @@ import org.junit.runner.RunWith
 @UseExperimental(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class BindingContextTest {
     private lateinit var store: Store<CrdtCount.Data, CrdtCount.Operation, Int>
-    private lateinit var stats: BindingContextStatistics
 
     @Before
     fun setup() {
@@ -57,17 +57,18 @@ class BindingContextTest {
                 CountType()
             )
         )
-        stats = BindingContextStatsImpl()
     }
+
+    private suspend fun buildContext() = BindingContext(
+        store,
+        ParcelableCrdtType.Count,
+        coroutineContext,
+        BindingContextStatsImpl()
+    )
 
     @Test
     fun getLocalData_fetchesLocalData() = runBlocking {
-        val bindingContext = BindingContext(
-            store,
-            ParcelableCrdtType.Count,
-            coroutineContext,
-            stats
-        )
+        val bindingContext = buildContext()
         val messageChannel = ParcelableProxyMessageChannel(coroutineContext)
         bindingContext.getLocalData(messageChannel)
 
@@ -101,13 +102,7 @@ class BindingContextTest {
 
     @Test
     fun sendProxyMessage_propagatesToTheStore() = runBlocking {
-        val bindingContext = BindingContext(
-            store,
-            ParcelableCrdtType.Count,
-            coroutineContext,
-            stats
-        )
-
+        val bindingContext = buildContext()
         val deferredResult = DeferredResult(coroutineContext)
         val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
             listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
@@ -130,12 +125,7 @@ class BindingContextTest {
 
     @Test
     fun registerCallback_registersCallbackWithStore() = runBlocking {
-        val bindingContext = BindingContext(
-            store,
-            ParcelableCrdtType.Count,
-            coroutineContext,
-            stats
-        )
+        val bindingContext = buildContext()
         val callback = ParcelableProxyMessageChannel(coroutineContext)
         val token = bindingContext.registerCallback(callback)
 
@@ -166,12 +156,7 @@ class BindingContextTest {
 
     @Test
     fun unregisterCallback_unregistersCallbackFromStroe() = runBlocking {
-        val bindingContext = BindingContext(
-            store,
-            ParcelableCrdtType.Count,
-            coroutineContext,
-            stats
-        )
+        val bindingContext = buildContext()
         val callback = ParcelableProxyMessageChannel(coroutineContext)
         val token = bindingContext.registerCallback(callback)
 
