@@ -40,8 +40,7 @@ describe('DevtoolsArcInspector', () => {
         foo: use *
         P
           foo: foo`);
-    const runtime = new Runtime({
-      loader, composerClass: MockSlotComposer, context});
+    const runtime = new Runtime({loader, composerClass: MockSlotComposer, context});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);

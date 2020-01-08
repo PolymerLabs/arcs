@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {SlotComposerOptions} from '../../runtime/ui-slot-composer.js';
+import {SlotComposerOptions} from '../../runtime/slot-composer.js';
 import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
