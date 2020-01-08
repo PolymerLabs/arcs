@@ -29,6 +29,13 @@ export const pecIndustry = (loader): PecFactory => {
   if (!useCache) {
     loader.provisionObjectUrl(workerUrl).then((url: string) => workerBlobUrl = url);
   }
+  // delegate worker and channel creation api to the worker pool factory
+  workerPool.apis = {
+    create: () => ({
+      worker: new Worker(workerBlobUrl || workerUrl),
+      channel: new MessageChannel(),
+    })
+  };
   // return a pecfactory
   const factory = (id: Id, idGenerator?: IdGenerator) => {
     if (!workerBlobUrl && !useCache) {
