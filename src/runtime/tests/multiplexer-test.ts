@@ -18,7 +18,7 @@ import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
 
 describe('Multiplexer', () => {
-  it('Processes multiple inputs', async () => {
+  it('processes multiple inputs', async () => {
     const manifest = await Manifest.parse(`
       import 'src/runtime/tests/artifacts/Common/Multiplexer.manifest'
       import 'src/runtime/tests/artifacts/test-particles.manifest'
@@ -33,19 +33,8 @@ describe('Multiplexer', () => {
     `, {loader: new Loader(), fileName: ''});
 
     const recipe = manifest.recipes[0];
-
     const barType = checkDefined(manifest.findTypeByName('Bar'));
-
     const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
-
-    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
-
-    let slotsCreated = 0;
-
-    slotComposer.createHostedSlot = (...args) => {
-      slotsCreated++;
-      return slotComposerCreateHostedSlot.apply(slotComposer, args);
-    };
 
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
@@ -55,7 +44,6 @@ describe('Multiplexer', () => {
     assert(recipe.isResolved());
 
     await arc.instantiate(recipe);
-
     await arc.idle;
 
     await barHandle.add(new barHandle.entityClass({value: 'one'}));
@@ -67,61 +55,6 @@ describe('Multiplexer', () => {
     // causing idle to be delayed properly. Figure out why and fix it!
     await arc.idle;
 
-    assert.strictEqual(slotsCreated, 3);
+    assert.strictEqual(slotComposer.slotsCreated, 3);
   });
-
-  it('Processes multiple inputs', async () => {
-    const manifest = await Manifest.parse(`
-      import 'src/runtime/tests/artifacts/Common/Multiplexer.manifest'
-      import 'src/runtime/tests/artifacts/test-particles.manifest'
-
-      recipe
-        slot0: slot 'rootslotid-slotid'
-        handle0: use 'test:1'
-        Multiplexer
-          hostedParticle: ConsumerParticle
-          annotation: consumes slot0
-          list: reads handle0
-    `, {loader: new Loader(), fileName: ''});
-    const recipe = manifest.recipes[0];
-
-    const barType = checkDefined(manifest.findTypeByName('Bar'));
-
-    const slotComposer = new FakeSlotComposer({rootContainer: {'slotid': 'dummy-container'}});
-
-    const slotComposerCreateHostedSlot = slotComposer.createHostedSlot;
-
-    let slotsCreated = 0;
-
-    slotComposer.createHostedSlot = (...args) => {
-      slotsCreated++;
-      return slotComposerCreateHostedSlot.apply(slotComposer, args);
-    };
-
-    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
-    const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
-    const barHandle = await collectionHandleForTest(arc, barStore);
-    recipe.handles[0].mapToStorage(barStore);
-    const options = {errors: new Map()};
-    const n = recipe.normalize(options);
-    assert(n, 'normalizes');
-    assert(recipe.isResolved());
-
-    await arc.instantiate(recipe);
-
-    await arc.idle;
-
-    await barHandle.add(new barHandle.entityClass({value: 'one'}));
-    await barHandle.add(new barHandle.entityClass({value: 'two'}));
-    await barHandle.add(new barHandle.entityClass({value: 'three'}));
-
-    await arc.idle;
-    // TODO(shans): awaiting idle isn't quite working with the new storage stack; some storage events aren't
-    // causing idle to be delayed properly. Figure out why and fix it!
-    await arc.idle;
-
-
-    assert.strictEqual(slotsCreated, 3);
-  });
-
 });
