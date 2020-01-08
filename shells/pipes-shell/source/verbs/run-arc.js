@@ -14,10 +14,39 @@ import {devtoolsArcInspectorFactory} from '../../../../build/devtools-connector/
 import {Runtime} from '../../../../build/runtime/runtime.js';
 import {portIndustry} from '../pec-port.js';
 
-const {log, warn} = logsFactory('pipe');
+const {log, warn} = logsFactory('runArc');
 
-// The implementation was forked from verbs/spawn.js
-export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
+const runQueue = [];
+
+// TODO(sjmiles): serialize requests to runArc to reduce synchronization
+// burden on apps. Revisit at some point.
+
+export const runArc = async (...args) => {
+  if (runArc.busy) {
+    runQueue.push(args);
+    warn('queue.push: length is ', runQueue.length);
+  } else {
+    await _runArc(...args);
+    warn('queue.shift: length is ', runQueue.length);
+    const nextArgs = runQueue.shift();
+    if (nextArgs) {
+      await runArc(...nextArgs);
+    }
+  }
+};
+
+const _runArc = async(...args) => {
+  runArc.busy = true;
+  try {
+    await __runArc(...args);
+  } finally {
+    runArc.busy = false;
+  }
+};
+
+// This implementation was forked from verbs/spawn.js
+
+export const __runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
   const {recipe, arcId, storageKeyPrefix, pecId, particles} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
   if (!arcId) {
@@ -41,7 +70,6 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
     },
     dispose: () => null
   };
-
   // optionally instantiate recipe
   if (action && await instantiateRecipe(arc, action, particles || [])) {
     log(`successfully instantiated ${recipe} in ${arc.id}`);
