@@ -49,6 +49,10 @@ data class VolatileStorageKey(
             StorageKeyParser.addParser(VOLATILE_DRIVER_PROTOCOL, ::fromString)
         }
 
+        fun registerParser() {
+            StorageKeyParser.addParser(VOLATILE_DRIVER_PROTOCOL, ::fromString)
+        }
+
         private fun fromString(rawKeyString: String): VolatileStorageKey {
             val match =
                 requireNotNull(VOLATILE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
