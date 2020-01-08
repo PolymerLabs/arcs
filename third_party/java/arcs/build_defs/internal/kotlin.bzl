@@ -267,7 +267,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
 
     kt_android_library(
         name = name,
-        srcs = native.glob(["*.kt"]),
+        srcs = srcs,
         manifest = manifest,
         testonly = True,
         deps = deps,
@@ -277,7 +277,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
     if IS_BAZEL:
         android_local_test_deps.append("@robolectric//bazel:android-all")
 
-    for src in native.glob(["*.kt"]):
+    for src in srcs:
         class_name = src[:-3]
         android_local_test(
             name = class_name,

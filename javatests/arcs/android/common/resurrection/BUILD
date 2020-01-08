@@ -22,6 +22,7 @@ kt_android_library(
 arcs_kt_android_test_suite(
     name = "resurrection",
     srcs = [
+        "DbHelperTest.kt",
         "ResurrectionRequestTest.kt",
     ],
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
