@@ -22,7 +22,7 @@ import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memor
 import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 
-describe('MultiplexerFOO', () => {
+describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
     const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();

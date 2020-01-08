@@ -60,9 +60,9 @@ async function initSlotComposer(recipeStr) {
   return {arc, slotComposer, observer, plan/*, startRenderParticles*/};
 }
 
-describe('slot composerFOO', function() {
+describe('slot composer', function() {
   // TODO(sjmiles): why?
-  this.timeout(4000);
+  //this.timeout(4000);
 
   it('initialize recipe and render slots', async () => {
     const manifestStr = `
