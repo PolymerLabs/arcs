@@ -9,6 +9,7 @@ licenses(["notice"])
 arcs_kt_schema(
     name = "collections_schemas",
     srcs = ["Collections.arcs"],
+    package = "arcs.tutorials",
 )
 
 arcs_kt_particles(

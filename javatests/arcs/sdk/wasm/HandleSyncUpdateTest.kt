@@ -13,14 +13,9 @@ package arcs.sdk.wasm
 
 import arcs.sdk.Collection
 import arcs.sdk.Handle
-import arcs.sdk.Particle
 import arcs.sdk.Singleton
 
-class HandleSyncUpdateTest : Particle() {
-    private val sng = Singleton(this, "sng") { HandleSyncUpdateTest_Sng() }
-    private val col = Collection(this, "col") { HandleSyncUpdateTest_Col() }
-    private val res = Collection(this, "res") { HandleSyncUpdateTest_Res() }
-
+class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
     }

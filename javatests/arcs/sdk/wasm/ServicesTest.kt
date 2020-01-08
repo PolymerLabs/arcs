@@ -11,12 +11,7 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Collection
-import arcs.sdk.Particle
-
-class ServicesTest : Particle() {
-    private val output = Collection(this, "output") { ServicesTest_Output() }
-
+class ServicesTest : AbstractServicesTest() {
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")
         output.store(ServicesTest_Output("resolveUrl", tag = "", payload = url))

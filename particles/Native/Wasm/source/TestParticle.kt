@@ -9,13 +9,7 @@
  */
 package arcs.test
 
-import arcs.sdk.Collection
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-import arcs.sdk.TestParticle_Data
-import arcs.sdk.TestParticle_Info
-import arcs.sdk.TestParticle_Res
 import arcs.sdk.abort
 import arcs.sdk.log
 import kotlin.Exception
@@ -23,7 +17,7 @@ import kotlin.Exception
 /**
  * Sample WASM Particle.
  */
-class TestParticle : Particle() {
+class TestParticle : AbstractTestParticle() {
 
     override fun onHandleUpdate(handle: Handle) {
         log("A handle was updated!")
@@ -104,9 +98,6 @@ class TestParticle : Particle() {
                  </table>""".trimIndent()
     }
 
-    private val data = Singleton(this, "data") { TestParticle_Data() }
-    private val res = Singleton(this, "res") { TestParticle_Res() }
-    private val info = Collection(this, "info") { TestParticle_Info() }
     private var updated = 0
     private var storeCount = 0
 

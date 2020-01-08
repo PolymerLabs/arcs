@@ -12,15 +12,11 @@
 package arcs.tutorials
 
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
 
 /**
  * Sample WASM Particle.
  */
-class DisplayGreeting : Particle() {
-    private val person = Singleton(this, "person") { DisplayGreeting_Person() }
-
+class DisplayGreeting : AbstractDisplayGreeting() {
     override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
 
     override fun onHandleUpdate(handle: Handle) {

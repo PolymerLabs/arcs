@@ -9,7 +9,6 @@
  */
 import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
-import {Dictionary} from '../runtime/hot.js';
 
 export class SchemaNode {
   schema: Schema;

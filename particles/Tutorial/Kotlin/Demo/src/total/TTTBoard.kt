@@ -11,17 +11,9 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Collection
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-import arcs.sdk.TTTBoard_Events
-import arcs.sdk.TTTBoard_GameState
 
-class TTTBoard : Particle() {
-
-    private val gameState = Singleton(this, "gameState") { TTTBoard_GameState() }
-    private val events = Collection(this, "events") { TTTBoard_Events() }
+class TTTBoard : AbstractTTTBoard() {
     private var clicks = 0.0
 
     init {

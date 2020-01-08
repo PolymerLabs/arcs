@@ -16,11 +16,7 @@ import arcs.sdk.Handle
 import arcs.sdk.Particle
 import arcs.sdk.Singleton
 
-class UnicodeTest : Particle() {
-    private val sng = Singleton(this, "sng") { UnicodeTest_Sng() }
-    private val col = Collection(this, "col") { UnicodeTest_Col() }
-    private val res = Collection(this, "res") { UnicodeTest_Res() }
-
+class UnicodeTest : AbstractUnicodeTest() {
     override fun onHandleUpdate(handle: Handle) {
         val out = UnicodeTest_Res(pass = "", src = "")
         out.src = "åŗċş 🌈"

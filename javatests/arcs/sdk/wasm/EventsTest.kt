@@ -11,12 +11,7 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-
-class EventsTest : Particle() {
-    private val output = Singleton(this, "output") { EventsTest_Output() }
-
+class EventsTest : AbstractEventsTest() {
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         output.set(EventsTest_Output(txt = "event:$slotName:$eventName:${eventData["info"]}"))
     }

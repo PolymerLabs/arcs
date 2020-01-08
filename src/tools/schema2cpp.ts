@@ -9,6 +9,7 @@
  */
 import {Schema2Base, ClassGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
+import {ParticleSpec} from '../runtime/particle-spec.js';
 
 // https://en.cppreference.com/w/cpp/keyword
 // [...document.getElementsByClassName('wikitable')[0].getElementsByTagName('code')].map(x => x.innerHTML);
@@ -55,6 +56,10 @@ export class Schema2Cpp extends Schema2Base {
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
     return new CppGenerator(node, this.scope.replace(/\./g, '::'));
+  }
+
+  generateParticleClass(particle: ParticleSpec): string {
+    return '// TODO: Generate particle base class.';
   }
 }
 

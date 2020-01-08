@@ -12,12 +12,12 @@ import path from 'path';
 import minimist from 'minimist';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
-import {EntityType} from '../runtime/type.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
+import {ParticleSpec} from '../runtime/particle-spec.js';
 
 export interface ClassGenerator {
-  addField(field: string, typeChar: string);
-  addReference(field: string, refName: string);
+  addField(field: string, typeChar: string): void;
+  addReference(field: string, refName: string): void;
   generate(schemaHash: string, fieldCount: number): string;
 }
 
@@ -97,6 +97,8 @@ export abstract class Schema2Base {
         }
         classes.push(generator.generate(await node.schema.hash(), fields.length));
       }
+
+      classes.push(this.generateParticleClass(particle));
     }
     return classes;
   }
@@ -108,4 +110,6 @@ export abstract class Schema2Base {
   fileFooter(): string { return ''; }
 
   abstract getClassGenerator(node: SchemaNode): ClassGenerator;
+
+  abstract generateParticleClass(particle: ParticleSpec): string;
 }

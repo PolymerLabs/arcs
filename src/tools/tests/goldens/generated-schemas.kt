@@ -184,3 +184,8 @@ class Gold_Data() : Entity<Gold_Data>() {
         return encoder.toNullTermByteArray()
     }
 }
+
+abstract class AbstractGold : Particle() {
+    protected val data = Singleton(this, "data") { Gold_Data() }
+    protected val alias = Singleton(this, "alias") { Gold_Alias() }
+}
