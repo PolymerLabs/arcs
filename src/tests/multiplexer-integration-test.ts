@@ -118,6 +118,7 @@ describe('Multiplexer', () => {
         .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
         // Current implementation of multiplexer is to update all the existing hosted particle inputs.
+        // TODO: fix the multiplexer particle implementation to not re-render everything.
         .expectRenderSlot('ShowOne', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2})
         .expectRenderSlot('ShowTwo', 'item', {contentTypes: ['template', 'templateName', 'model']});
     const postsStore = await collectionHandleForTest(arc, arc.findStoreById(arc.activeRecipe.handles[0].id));
