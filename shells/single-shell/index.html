@@ -36,7 +36,7 @@ http://polymer.github.io/PATENTS.txt
   import '../services/ml5-service.js';
   import '../configuration/whitelisted.js';
   import {Runtime} from '../../build/runtime/runtime.js';
-  import {DomSlotComposer} from '../lib/components/dom-slot-composer.js';
+  import {SlotComposer} from '../../build/runtime/slot-composer.js';
   import {App} from './app.js';
 
   const getUrlParam = name => {
@@ -44,7 +44,7 @@ http://polymer.github.io/PATENTS.txt
   }
   const runtime = Runtime.init('../..');
 
-  const composer = new DomSlotComposer({
+  const composer = new SlotComposer({
     rootContainer: document.body
   });
 

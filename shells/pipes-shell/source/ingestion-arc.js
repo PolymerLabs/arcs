@@ -13,7 +13,7 @@
 // longer important.
 
 import {logsFactory} from '../../../build/platform/logs-factory.js';
-import {RamSlotComposer} from '../../lib/components/ram-slot-composer.js';
+import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {ArcHost} from '../../lib/components/arc-host.js';
 import {portIndustry} from './pec-port.js';
 import {Sharing} from './sharing.js';
@@ -34,7 +34,7 @@ const initIngestionArc = async (storage, bus) => {
   log('initIngestionArc');
   // TODO(sjmiles): use ArcHost because it supports serialization, this core support should be available
   // via something lower-level (Utils? other lib?)
-  const host = new ArcHost(null, storage, new RamSlotComposer(), [portIndustry(bus)]);
+  const host = new ArcHost(null, storage, new SlotComposer(), [portIndustry(bus)]);
   const arc = await host.spawn({id, manifest});
   await Sharing.init(arc);
   return arc;

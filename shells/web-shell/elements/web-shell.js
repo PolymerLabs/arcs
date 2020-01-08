@@ -18,7 +18,6 @@ import {Xen} from '../../lib/components/xen.js';
 import '../../lib/elements/arc-element.js';
 import './web-config.js';
 import './web-context.js';
-import './web-launcher.js';
 import './web-planner.js';
 import './ui/web-shell-ui.js';
 //import './pipes/device-client-pipe.js';

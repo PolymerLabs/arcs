@@ -22,7 +22,7 @@ import {pecIndustry} from '../../build/platform/pec-industry-web.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
 import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
-import {UiSlotComposer} from '../../build/runtime/ui-slot-composer.js';
+import {SlotComposer} from '../../build/runtime/slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
 import {RuntimeCacheService} from '../../build/runtime/runtime-cache.js';
 import {VolatileStorage} from '../../build/runtime/storage/volatile-storage.js';
@@ -141,7 +141,7 @@ async function wrappedExecute() {
       continue;
     }
 
-    const slotComposer = new UiSlotComposer();
+    const slotComposer = new SlotComposer();
     slotComposer.observeSlots(new SlotObserver(arcPanel.shadowRoot));
 
     const storage = new StorageProviderFactory(id);

@@ -12,8 +12,8 @@ import './config.js';
 // platform agnostic code
 import {DevtoolsConnection} from '../../build/devtools-connector/devtools-connection.js';
 import {Runtime} from '../../build/runtime/runtime.js';
+import {SlotComposer} from '../../build/runtime/slot-composer.js';
 import {ArcHost} from '../lib/components/arc-host.js';
-import {RamSlotComposer} from '../lib/components/ram-slot-composer.js';
 import {Const} from '../configuration/constants.js';
 import {UserArcs} from './user-arcs.js';
 import {UserContext} from './user-context.js';
@@ -64,7 +64,7 @@ export class PlannerShellInterface {
       visualizeContext(context);
       // define a host factory
       const hostFactory = () => {
-        const composer = new RamSlotComposer({rootContainer});
+        const composer = new SlotComposer({rootContainer});
         const host = new ArcHost(context, storage, composer);
         return host;
       };

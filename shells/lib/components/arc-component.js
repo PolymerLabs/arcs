@@ -10,7 +10,7 @@
 
 import {Xen} from './xen.js';
 import {ArcHost} from './arc-host.js';
-import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
+import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {logsFactory} from '../../../build/platform/logs-factory.js';
 
 const {log, warn} = logsFactory('ArcComponent', '#cb23a6');
@@ -56,7 +56,7 @@ export const ArcComponentMixin = Base => class extends Base {
       if (config.suggestionContainer) {
         containers.suggestions = config.suggestionContainer;
       }
-      composer = new UiSlotComposer(/*{containers}*/);
+      composer = new SlotComposer();
       // TODO(sjmiles): slotObserver could be late attached or we could attach
       // a thunk that dispatches to an actual broker configured elsewhere.
       composer.slotObserver = config.broker || this.createBroker();
