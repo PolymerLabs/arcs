@@ -25,7 +25,7 @@ arcs_kt_android_test_suite(
         "DbHelperTest.kt",
         "ResurrectionRequestTest.kt",
     ],
-    manifest = "//java/arcs/android/common:AndroidManifest.xml",
+    manifest = "AndroidManifest.xml",
     package = "arcs.android.common.resurrection",
     deps = [
         ":support",
