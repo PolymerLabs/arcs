@@ -260,7 +260,7 @@ final class AndroidArcsEnvironment {
         .put(Constants.MESSAGE_FIELD, Constants.CONFIGURE_MESSAGE)
         .put("config", jsonParser.emptyObject()
             .put("rootPath", ".")
-            .put("storage", "volatile://")
+            .put("storage", "ramdisk://")
             .put("manifest", "import '" + ASSETS_PREFIX + ROOT_MANIFEST_FILENAME + "'")
             .put("urlMap", urlMap))));
   }

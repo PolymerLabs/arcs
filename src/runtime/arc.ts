@@ -173,10 +173,6 @@ export class Arc implements ArcInterface {
     }
 
     DriverFactory.unregister(this.volatileStorageDriverProvider);
-
-    for (const store of this._stores) {
-      this.context.unregisterStore(store.id, [...this.findStoreTags(store)]);
-    }
   }
 
   // Returns a promise that spins sending a single `AwaitIdle` message until it

@@ -16,9 +16,10 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
 import {ArcId} from '../id.js';
+import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {storageKeyPrefixForTest} from '../testing/handle-for-test.js';
+import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
@@ -67,16 +68,17 @@ describe('Runtime', () => {
   it('runs arcs', async () => {
     const runtime = Runtime.getRuntime();
     assert.equal(runtime.arcById.size, 0);
-    const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
+    const arc = runtime.runArc('test-arc', volatileStorageKeyPrefixForTest());
     assert.isNotNull(arc);
     assert.hasAllKeys(runtime.arcById, ['test-arc']);
-    runtime.runArc('test-arc', storageKeyPrefixForTest());
+    runtime.runArc('test-arc', volatileStorageKeyPrefixForTest());
     assert.hasAllKeys(runtime.arcById, ['test-arc']);
-    runtime.runArc('other-test-arc', storageKeyPrefixForTest());
+    runtime.runArc('other-test-arc', volatileStorageKeyPrefixForTest());
     assert.hasAllKeys(runtime.arcById, ['test-arc', 'other-test-arc']);
   });
   it('registers and unregisters stores', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.parse(``, {memoryProvider});
     const loader = new StubLoader({
       manifest: `
@@ -86,23 +88,56 @@ describe('Runtime', () => {
           t2: writes Thing
           t3: writes [Thing]
         recipe
-          t1: create #shared
-          t2: create *
-          t3: create #shared #things
+          t1: create
+          t2: create * #volatile
+          t3: create #things
           MyParticle
             t1: writes t1
             t2: writes t2
             t3: writes t3
+        particle MyOtherParticle in './my-other-particle.js'
+          t4: reads [Thing]
+        recipe
+          t4: map #things
+          MyOtherParticle
+            t4: reads t4
       `,
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
     const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
-    const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
     const manifest = await Manifest.load('manifest', loader, {memoryProvider});
     manifest.recipes[0].normalize();
-    await arc.instantiate(manifest.recipes[0]);
-    assert.lengthOf(arc.context.stores, 2);
-    arc.dispose();
-    assert.lengthOf(arc.context.stores, 0);
+    const volatileArc = runtime.runArc('test-arc-1', volatileStorageKeyPrefixForTest());
+    const ramdiskArc = runtime.runArc('test-arc-2', ramDiskStorageKeyPrefixForTest());
+    assert.equal(runtime.context, ramdiskArc.context);
+    assert.equal(runtime.context, volatileArc.context);
+
+    await volatileArc.instantiate(manifest.recipes[0]);
+    assert.lengthOf(runtime.context.stores, 0);
+
+    await ramdiskArc.instantiate(manifest.recipes[0]);
+    assert.lengthOf(runtime.context.stores, 2);
+
+    const volatileArc1 = runtime.runArc('test-arc-v1', volatileStorageKeyPrefixForTest());
+    const recipe1 = await runtime.resolveRecipe(volatileArc1, manifest.recipes[1]);
+    assert.isTrue(recipe1 && recipe1.isResolved());
+    await volatileArc1.instantiate(recipe1);
+    assert.lengthOf(runtime.context.stores, 2);
+    volatileArc1.dispose();
+    assert.lengthOf(runtime.context.stores, 2);
+
+    volatileArc.dispose();
+    assert.lengthOf(runtime.context.stores, 2);
+
+    ramdiskArc.dispose();
+    assert.lengthOf(runtime.context.stores, 2);
+
+    const volatileArc2 = runtime.runArc('test-arc-v2', volatileStorageKeyPrefixForTest());
+    const recipe2 = await runtime.resolveRecipe(volatileArc2, manifest.recipes[1]);
+    assert.isTrue(recipe2 && recipe2.isResolved());
+    await volatileArc2.instantiate(recipe2);
+    assert.lengthOf(runtime.context.stores, 2);
+    assert.isTrue(runtime.context.stores.map(s => s.storageKey).includes(
+        volatileArc2.activeRecipe.handles[0].storageKey));
   });
 });

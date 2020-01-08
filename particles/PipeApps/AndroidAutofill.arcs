@@ -35,6 +35,6 @@ external particle CapturePerson
   people: reads writes [Person]
 
 recipe IngestPeople
-  people: create #recentPeople #shared
+  people: create #recentPeople
   CapturePerson
     people: reads writes people

@@ -31,19 +31,20 @@ class VolatileKey extends KeyBase {
     super();
     let parts = key.split('://');
     this.protocol = parts[0];
-    assert(this.protocol === 'volatile', `can't construct volatile key for protocol ${this.protocol} (input key ${key})`);
+    assert(this.protocol === 'volatile' || this.protocol === 'ramdisk',
+           `can't construct volatile key for protocol ${this.protocol} (input key ${key})`);
     parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
     this.arcId = parts[0];
     this.location = parts[1];
     assert(this.toString() === key, `Expected ${key}, but got ${this.toString()} volatile key base.`);
   }
 
-  base(): string { return 'volatile'; }
+  base(): string { return this.protocol; }
   get arcId(): string { return this._arcId; }
   set arcId(arcId: string) { this._arcId = arcId; }
 
   childKeyForHandle(id): VolatileKey {
-    return new VolatileKey('volatile');
+    return new VolatileKey(this.protocol);
   }
 
   childKeyForArcInfo(): VolatileKey {
