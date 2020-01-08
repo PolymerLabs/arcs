@@ -186,7 +186,7 @@ import arcs.TTTGame_GameState
 class TTTGame : Particle() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
 
-    private val gameState = Singleton(this, "gameState") { defaultGame }
+    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
     private val events = Collection(this, "events") { TTTGame_Events(
         type = "",
         move = -1.0,
@@ -229,8 +229,8 @@ class TTTBoard : Particle() {
         time = -1.0
     )
 
-    private val gameState = Singleton(this, "gameState") { defaultGameState }
-    private val events = Collection(this, "events") { defaultEvent }
+    private val gameState = Singleton(this, "gameState") { TTTBoard_GameState() }
+    private val events = Collection(this, "events") { TTTBoard_Events() }
     private var clicks = 0.0
     private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
 
