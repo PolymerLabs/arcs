@@ -1,9 +1,7 @@
 // Tutorial: Collections
 // Shows how to use an input list, and store data in a manifest file.
 
-schema PersonDetails
-  name: Text
-  age: Number
+import './CollectionsSchemas.arcs'
 
 // This is essentially a JSON file defined inside the manifest.
 resource PeopleData

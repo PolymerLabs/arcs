@@ -1,0 +1,3 @@
+schema PersonDetails
+  name: Text
+  age: Number
