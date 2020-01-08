@@ -30,7 +30,7 @@ class TTTGame : Particle() {
         winnerAvatar = ""
     )
 
-    private val gameState = Singleton(this, "gameState") { defaultGame }
+    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
     private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
     private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
     private val playerTwo = Singleton(this, "playerTwo") { TTTGame_PlayerTwo() }
