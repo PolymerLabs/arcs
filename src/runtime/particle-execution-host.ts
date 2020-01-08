@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 
 import {PECOuterPort} from './api-channel.js';
-import {reportSystemException, PropagatedException} from './arc-exceptions.js';
+import {reportSystemException, PropagatedException, SystemException} from './arc-exceptions.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
@@ -270,6 +270,10 @@ class PECOuterPortImpl extends PECOuterPort {
   async onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number) {
     // Need an ActiveStore here in order to forward messages. Calling
     // .activate() should generally be a no-op.
+    if (!(store instanceof Store)) {
+      this.onReportExceptionInHost(new SystemException(new Error('expected new-style store but found old-style store hooked up to new stack'), 'onProxyMessage', ''));
+      return;
+    }
     const res = await (await store.activate()).onProxyMessage(message);
     this.SimpleCallback(callback, res);
   }

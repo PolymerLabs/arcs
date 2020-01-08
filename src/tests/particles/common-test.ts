@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Planner} from '../../planning/planner.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {VolatileCollection} from '../../runtime/storage/volatile-storage.js';
@@ -17,6 +16,12 @@ import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
+import {Flags} from '../../runtime/flags.js';
+import {handleNGFor, CollectionHandle} from '../../runtime/storageNG/handle.js';
+import {StorageProxy} from '../../runtime/storageNG/storage-proxy.js';
+import {Referenceable} from '../../runtime/crdt/crdt-collection.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {
@@ -74,10 +79,11 @@ describe('common particles test', () => {
   it('copy handle test', async () => {
     const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
     const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader, {memoryProvider});
     const runtime = new Runtime({
         loader, composerClass: FakeSlotComposer, context, memoryProvider});
-    const arc = runtime.newArc('demo', 'volatile://');
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);
@@ -88,9 +94,17 @@ describe('common particles test', () => {
 
     await suggestion.instantiate(arc);
     await arc.idle;
+    await arc.idle;
 
-    // Copied 2 and 3 entities from two collections.
-    const collection = arc._stores[2] as VolatileCollection;
-    assert.strictEqual(5, collection._model.size);
+    if (Flags.useNewStorageStack) {
+      const endpointProvider = await arc._stores[2].activate();
+      const storageProxy = new StorageProxy('aid', endpointProvider, arc._stores[2].type);
+      const handle = await handleNGFor('crdt-key', storageProxy, arc.idGeneratorForTesting, null, true, true) as CollectionHandle<Referenceable>;
+      assert.strictEqual((await handle.toList()).length, 5);
+    } else {
+      // Copied 2 and 3 entities from two collections.
+      const collection = arc._stores[2] as VolatileCollection;
+      assert.strictEqual(collection._model.size, 5);
+    }
   });
 });

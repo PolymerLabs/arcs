@@ -168,7 +168,9 @@ export class Description {
       if (handle instanceof SingletonHandle) {
         const entityValue = await handle.get();
         if (entityValue) {
-          return {entityValue, valueDescription: store.type.getEntitySchema().description.value};
+          const schema = store.type.getEntitySchema();
+          const valueDescription = schema ? schema.description.value : undefined;
+          return {entityValue, valueDescription};
         }
       } else if (handle instanceof CollectionHandle) {
         const values = await handle.toList();

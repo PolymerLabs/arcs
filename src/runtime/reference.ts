@@ -46,7 +46,7 @@ export class Reference implements Storable {
     if (this.storageProxy == null) {
       this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referredType);
       // tslint:disable-next-line: no-any
-      this.handle = unifiedHandleFor({proxy: this.storageProxy, idGenerator: this.context.idGenerator}) as CollectionHandle<any>;
+      this.handle = unifiedHandleFor({proxy: this.storageProxy, idGenerator: this.context.idGenerator, particleId: this.context.generateID()}) as CollectionHandle<any>;
       if (this.storageKey) {
         assert(this.storageKey === this.storageProxy.storageKey);
       } else {

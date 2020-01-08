@@ -961,7 +961,11 @@ describe('particle-api', () => {
 
     await arc.instantiate(recipe);
 
-    await (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
+    const inHandle = await singletonHandleForTest(arc, inStore);
+    const entityType = Entity.createEntityClass(inStore.type.getEntitySchema(), null);
+    const entity = new entityType({}, '1');
+    await inHandle.set(entity);
+
     await arc.idle;
     const outHandle = await singletonHandleForTest(arc, outStore);
     assert.deepStrictEqual(await outHandle.get(), {result: 'hi'});
@@ -1014,7 +1018,11 @@ describe('particle-api', () => {
 
     await arc.instantiate(recipe);
 
-    await (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
+    const inHandle = await singletonHandleForTest(arc, inStore);
+    const entityType = Entity.createEntityClass(inStore.type.getEntitySchema(), null);
+    const entity = new entityType({}, '1');
+    await inHandle.set(entity);
+
     await arc.idle;
     const outHandle = await singletonHandleForTest(arc, outStore);
     assert.deepStrictEqual(await outHandle.get(), {result: 'hi'});
