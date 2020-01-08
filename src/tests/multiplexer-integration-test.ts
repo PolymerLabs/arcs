@@ -20,11 +20,15 @@ import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
+import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
+import {Flags} from '../runtime/flags.js';
+import {DriverFactory} from '../runtime/storageNG/drivers/driver-factory.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
     const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.load(
         './src/tests/particles/artifacts/polymorphic-muxing.recipes', loader, {memoryProvider});
 
@@ -34,32 +38,58 @@ describe('Multiplexer', () => {
     const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
     const recipeOne = `${showOneParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowOne\n    post: reads v1\n    item: consumes s1`;
     const recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowTwo\n    post: reads v1\n    item: consumes s1`;
-    const postsStub = context.stores[0].castToStorageStub();
-    postsStub.model.push({
-      id: '1',
-      keys: ['key1'],
-      value: {
+    if (Flags.useNewStorageStack) {
+      const postsHandle =
+          await collectionHandleForTest(context, context.stores[0]);
+      await postsHandle.add(Entity.identify(
+          new postsHandle.entityClass({
+            message: 'x',
+            renderRecipe: recipeOne,
+            renderParticleSpec: showOneSpec
+          }),
+          '1'));
+      await postsHandle.add(Entity.identify(
+          new postsHandle.entityClass({
+            message: 'y',
+            renderRecipe: recipeTwo,
+            renderParticleSpec: showTwoSpec
+          }),
+          '2'));
+      await postsHandle.add(Entity.identify(
+          new postsHandle.entityClass({
+            message: 'z',
+            renderRecipe: recipeOne,
+            renderParticleSpec: showOneSpec
+          }),
+          '3'));
+    } else {
+      const postsStub = context.stores[0].castToStorageStub();
+      postsStub.model.push({
         id: '1',
-        rawData: {message: 'x', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}
-      }
-    });
-    postsStub.model.push({
-      id: '2',
-      keys: ['key2'],
-      value: {
+        keys: ['key1'],
+        value: {
+          id: '1',
+          rawData: {message: 'x', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}
+        }
+      });
+      postsStub.model.push({
         id: '2',
-        rawData: {message: 'y', renderRecipe: recipeTwo, renderParticleSpec: showTwoSpec}
-      }
-    });
-    postsStub.model.push({
-      id: '3',
-      keys: ['key3'],
-      value: {
+        keys: ['key2'],
+        value: {
+          id: '2',
+          rawData: {message: 'y', renderRecipe: recipeTwo, renderParticleSpec: showTwoSpec}
+        }
+      });
+      postsStub.model.push({
         id: '3',
-        rawData: {message: 'z', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}
-      }
-    });
-    postsStub['referenceMode'] = false;
+        keys: ['key3'],
+        value: {
+          id: '3',
+          rawData: {message: 'z', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}
+        }
+      });
+      postsStub['referenceMode'] = false;
+    }
     // version could be set here, but doesn't matter for tests.
     const runtime = new Runtime({
         loader, composerClass: MockSlotComposer, context, memoryProvider});
@@ -86,10 +116,14 @@ describe('Multiplexer', () => {
         .expectRenderSlot('List', 'root', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
-        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
+        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
+        // Current implementation of multiplexer is to update all the existing hosted particle inputs.
+        .expectRenderSlot('ShowOne', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2})
+        .expectRenderSlot('ShowTwo', 'item', {contentTypes: ['template', 'templateName', 'model']});
     const postsStore = await collectionHandleForTest(arc, arc.findStoreById(arc.activeRecipe.handles[0].id));
     await postsStore.add(
         Entity.identify(new postsStore.entityClass({message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}), '4'));
+    await arc.idle;
     await arc.idle;
     assert.lengthOf(slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
     assert.lengthOf(slotComposer.consumers, 6);
@@ -117,5 +151,7 @@ describe('Multiplexer', () => {
     HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowTwo::item::default');
     HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::default');
     HeadlessSlotDomConsumer.hasTemplate('Root::item::ShowOne::item::default');
+
+    DriverFactory.clearRegistrationsForTesting();
   });
 });
