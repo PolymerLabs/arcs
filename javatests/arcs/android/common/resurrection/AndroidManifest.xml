@@ -13,8 +13,8 @@
   package="arcs.android.common.resurrection">
 
   <application>
-    <activity android:name=".ClientActivity"/>
-    <service android:name=".ClientService"/>
+    <activity android:name=".ClientActivity" android:exported="false"/>
+    <service android:name=".ClientService" android:exported="false"/>
   </application>
 
 </manifest>
