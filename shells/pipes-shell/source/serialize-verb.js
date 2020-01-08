@@ -12,8 +12,8 @@ import {logsFactory} from '../../../build/platform/logs-factory.js';
 
 const {log} = logsFactory('SerializeVerb');
 
-// TODO(sjmiles): serialize requests to runArc to reduce synchronization
-// burden on apps. Revisit at some point.
+// TODO(sjmiles): allow serializing verbs to reduce synchronization
+// burden on apps. Not strictly part of runtime api: revisit at some point.
 
 // have separate queues per verb
 const work = {};
