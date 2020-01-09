@@ -1074,6 +1074,8 @@ async function runSteps(command: string, args: string[]): Promise<boolean> {
     boolean: ['install'],
   })};
   for (const key in globalOptions) {
+    // This converts command line arguments that should be interpreted as booleans.
+    // This is to avoid accidentally interpreting 'false' as a truthy value.
     if (globalOptions.hasOwnProperty(key)) {
       let value = globalOptions[key];
       if (value === 'true') {
