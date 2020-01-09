@@ -16,6 +16,7 @@ arcs_kt_jvm_test_suite(
         ":particle",
          "//third_party/java/junit:junit-android",
          "//third_party/java/truth:truth-android",
+         "//third_party/java/auto:auto_service",
     ],
 )
 

@@ -19,19 +19,15 @@ import kotlin.sequences.asSequence
  * A HostRegistry that discovers the available [ArcHost]s available on this platform by using
  * Java ServiceLoader and SPI.
  */
-class ServiceLoaderHostRegistry() : HostRegistry {
-    val hosts: MutableList<ArcHost> = mutableListOf()
+class ServiceLoaderHostRegistry() : AnnotationBasedHostRegistry() {
 
     init {
         loadAndRegisterHostsAndParticles().forEach { host -> registerHost(host) }
     }
 
     companion object {
-        fun instance() = ServiceLoaderHostRegistry()
-    }
-
-    override fun availableArcHosts(): List<ArcHost> {
-        return hosts
+        val hostRegistry = ServiceLoaderHostRegistry()
+        fun instance() = hostRegistry
     }
 
     private fun loadAndRegisterHostsAndParticles(): List<ArcHost> {
@@ -46,35 +42,6 @@ class ServiceLoaderHostRegistry() : HostRegistry {
             }.toList()
     }
 
-    private fun registerParticles(
-        particles: List<KClass<out Particle>>,
-        host: ArcHost
-    ): ArcHost {
-        particles.forEach { particle -> host.registerParticle(particle) }
-        return host
-    }
 
-    private fun findParticlesForHost(
-        allParticles: List<KClass<out Particle>>,
-        host: ArcHost?
-    ): List<KClass<out Particle>> {
-        return allParticles
-            .filter { part ->
-                part.java.annotations.filter { target: Annotation ->
-                    targetHostMatches(target, host)
-                }.isNotEmpty()
-            }.toList()
-    }
-
-    private fun targetHostMatches(target: Annotation, host: ArcHost?) =
-        target.annotationClass.java.getAnnotation(TargetHost::class.java)
-            ?.value?.java == host?.javaClass
-
-    override fun registerHost(host: ArcHost) {
-        hosts.add(host)
-    }
-
-    override fun unregisterHost(host: ArcHost) {
-        hosts.remove(host)
-    }
 }
+
