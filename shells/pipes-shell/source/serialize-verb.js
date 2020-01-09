@@ -23,7 +23,7 @@ let index = 0;
 
 export const serializeVerb = async (verb, asyncTask) => {
   // only for logging
-  let id = ++index;
+  const id = ++index;
   // capture previous work-promise
   const busy = work[verb];
   // construct new work-promise
