@@ -1,5 +1,6 @@
 package arcs.sdk.android.storage
 
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import arcs.android.common.resurrection.ResurrectionRequest
@@ -64,8 +65,11 @@ class ResurrectionHelper(
      * Issue a request to be resurrected by the [StorageService] whenever the data identified by
      * the provided [keys] changes.
      */
-    fun requestResurrection(keys: List<StorageKey>) {
-        val intent = Intent(context, StorageService::class.java)
+    fun requestResurrection(
+        keys: List<StorageKey>,
+        serviceClass: Class<out Service> = StorageService::class.java
+    ) {
+        val intent = Intent(context, serviceClass)
         val request = ResurrectionRequest.createDefault(context, keys)
         request.populateRequestIntent(intent)
         context.startService(intent)

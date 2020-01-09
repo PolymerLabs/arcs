@@ -116,6 +116,8 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
 
+ANDROIDX_TEST_VERSION = "1.2.0"
+
 AUTO_VALUE_VERSION = "1.7"
 
 AUTO_SERVICE_VERSION = "1.0-rc6"
@@ -124,6 +126,8 @@ KOTLINX_ATOMICFU_VERSION = "0.13.1"
 
 KOTLINX_COROUTINES_VERSION = "1.3.2"
 
+ROBOLECTRIC_VERSION = "4.3.1"
+
 maven_install(
     artifacts = [
         "androidx.annotation:annotation:1.1.0",
@@ -131,10 +135,11 @@ maven_install(
         "androidx.lifecycle:lifecycle-common-java8:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-runtime:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.webkit:webkit:1.1.0-rc01",
-        "androidx.test:core:1.0.0",
-        "androidx.test.ext:junit:1.0.0",
-        "androidx.test:runner:1.1.0",
-        "androidx.test:rules:1.1.0",
+        "androidx.test:core:" + ANDROIDX_TEST_VERSION,
+        "androidx.test.ext:junit:1.1.1",
+        "androidx.test:monitor:" + ANDROIDX_TEST_VERSION,
+        "androidx.test:runner:" + ANDROIDX_TEST_VERSION,
+        "androidx.test:rules:" + ANDROIDX_TEST_VERSION,
         "com.google.flogger:flogger:0.4",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.flogger:flogger-system-backend:0.4",
@@ -155,7 +160,9 @@ maven_install(
         "org.jetbrains.kotlinx:atomicfu-js:" + KOTLINX_ATOMICFU_VERSION,
         "org.json:json:20141113",
         "org.mockito:mockito-core:2.23.0",
-        "org.robolectric:robolectric:4.1",
+        "org.robolectric:robolectric:" + ROBOLECTRIC_VERSION,
+        "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
+        "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
     ],
     fetch_sources = True,
     repositories = [

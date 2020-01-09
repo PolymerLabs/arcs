@@ -2,16 +2,29 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_android_test_suite",
 )
+load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+kt_android_library(
+    name = "support",
+    testonly = 1,
+    srcs = [
+        "ResurrectionHelperDummyService.kt",
+    ],
+    manifest = "AndroidManifest.xml",
+)
+
 arcs_kt_android_test_suite(
     name = "storage",
-    manifest = "//java/arcs/android/common:AndroidManifest.xml",
+    srcs = glob(["*Test.kt"]),
+    manifest = "AndroidManifest.xml",
     package = "arcs.sdk.android.storage",
     deps = [
+        ":support",
+        "//java/arcs/android/common/resurrection",
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
         "//java/arcs/core/crdt",
@@ -24,10 +37,13 @@ arcs_kt_android_test_suite(
         "//java/arcs/sdk/android/storage/service:aidl",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
+        "//third_party/android/androidx_test/runner/monitor",
+        "//third_party/android/androidx_test/runner/rules",
         "//third_party/java/androidx/lifecycle",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/robolectric",
+        "//third_party/java/robolectric:shadows",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
