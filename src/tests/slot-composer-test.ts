@@ -95,10 +95,12 @@ recipe
     assert.strictEqual(arc.pec.slotComposer, slotComposer);
     await arc.instantiate(plan);
     assert.deepEqual(['A'], startRenderParticles);
-    assert.lengthOf(slotComposer.getAvailableContexts(), 3);
-    verifyContext('root', {hasContainer: true, consumeConnNames: ['A::root']});
-    verifyContext('mySlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['B::mySlot', 'BB::mySlot']});
-    verifyContext('otherSlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['C::otherSlot']});
+
+    // TODO(sjmiles): contexts deprecated
+    // assert.lengthOf(slotComposer.getAvailableContexts(), 3);
+    // verifyContext('root', {hasContainer: true, consumeConnNames: ['A::root']});
+    // verifyContext('mySlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['B::mySlot', 'BB::mySlot']});
+    // verifyContext('otherSlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['C::otherSlot']});
 
     // render root slot
     const particle = arc.activeRecipe.particles[0];
@@ -108,13 +110,18 @@ recipe
     startRenderParticles.length = 0;
     await slotComposer.renderSlot(particle, 'root', {model: {'foo': 'bar'}});
     assert.deepEqual(['B', 'BB'], startRenderParticles);
-    assert.deepEqual({foo: 'bar'}, rootSlot.getRendering().model);
 
-    assert.lengthOf(slotComposer.getAvailableContexts(), 3);
-    verifyContext('root', {hasContainer: true, consumeConnNames: ['A::root']});
-    verifyContext('mySlot', {hasContainer: true, sourceSlotName: 'root', consumeConnNames: ['B::mySlot', 'BB::mySlot']});
-    verifyContext('otherSlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['C::otherSlot']});
-    await slotComposer.expectationsCompleted();
+    // TODO(sjmiles): render data no longer captured by slot objects
+    //assert.deepEqual({foo: 'bar'}, rootSlot.getRendering().model);
+
+    // TODO(sjmiles): contexts deprecated
+    // assert.lengthOf(slotComposer.getAvailableContexts(), 3);
+    // verifyContext('root', {hasContainer: true, consumeConnNames: ['A::root']});
+    // verifyContext('mySlot', {hasContainer: true, sourceSlotName: 'root', consumeConnNames: ['B::mySlot', 'BB::mySlot']});
+    // verifyContext('otherSlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['C::otherSlot']});
+
+    // TODO(sjmiles): no expectations anyway?
+    //await slotComposer.expectationsCompleted();
   });
 
   it.skip('initialize recipe and render hosted slots', async () => {
@@ -168,55 +175,60 @@ recipe
     `;
 
     let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
-    slotComposer = slotComposer
-      .expectRenderSlot('A', 'root', {'contentTypes': ['model']})
-      .expectRenderSlot('B', 'item', {'contentTypes': ['model']})
-      .expectRenderSlot('C', 'item', {'contentTypes': ['model']})
-      .expectRenderSlot('B', 'item', {'contentTypes': ['model']})
-      .expectRenderSlot('C', 'item', {'contentTypes': ['model']});
 
-    assert.lengthOf(slotComposer.getAvailableContexts(), 1);
+    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
+    // slotComposer = slotComposer
+    //   .expectRenderSlot('A', 'root', {'contentTypes': ['model']})
+    //   .expectRenderSlot('B', 'item', {'contentTypes': ['model']})
+    //   .expectRenderSlot('C', 'item', {'contentTypes': ['model']})
+    //   .expectRenderSlot('B', 'item', {'contentTypes': ['model']})
+    //   .expectRenderSlot('C', 'item', {'contentTypes': ['model']});
+
+    // TODO(sjmiles): context is deprecated
+    //assert.lengthOf(slotComposer.getAvailableContexts(), 1);
 
     plan = plan.clone();
     plan.normalize();
     assert.isTrue(plan.isResolved());
     await arc.instantiate(plan);
 
-    assert.deepEqual(['A'], startRenderParticles);
+    // TODO(sjmiles): uses various deprecated systems, e.g. `renderSlot` is deprecated
 
-    const [particleA, particleB, particleC] = arc.activeRecipe.particles;
-    const rootSlot = slotComposer.getSlotConsumer(particleA, 'root');
-    const itemSlotId = slotComposer.findContextsByName('item')[0].id;
-    rootSlot.getInnerContainer = (slotId) => slotId === itemSlotId
-        ? {'id1': 'dummy-inner-container-1', 'id2': 'dummy-inner-container-2'}
-        : null;
-    startRenderParticles.length = 0;
-    await slotComposer.renderSlot(particleA, 'root', {model: {'foo': 'bar'}});
-    assert.deepEqual(['B', 'C'], startRenderParticles);
+    // assert.deepEqual(['A'], startRenderParticles);
 
-    const gatherRenderings = slotContext => {
-      const result = {};
-      for (const consumer of slotContext.slotConsumers) {
-        for (const [subId, content] of consumer.renderings) {
-          if (!result[subId]) result[subId] = [];
-          if (content.model) result[subId].push(content.model.title);
-        }
-      }
-      return result;
-    };
+    // const [particleA, particleB, particleC] = arc.activeRecipe.particles;
+    // const rootSlot = slotComposer.getSlotConsumer(particleA, 'root');
+    // const itemSlotId = slotComposer.findContextsByName('item')[0].id;
+    // rootSlot.getInnerContainer = (slotId) => slotId === itemSlotId
+    //     ? {'id1': 'dummy-inner-container-1', 'id2': 'dummy-inner-container-2'}
+    //     : null;
+    // startRenderParticles.length = 0;
+    // await slotComposer.renderSlot(particleA, 'root', {model: {'foo': 'bar'}});
+    // assert.deepEqual(['B', 'C'], startRenderParticles);
 
-    const itemSlotContext = slotComposer.findContextsByName('item')[0];
+    // const gatherRenderings = slotContext => {
+    //   const result = {};
+    //   for (const consumer of slotContext.slotConsumers) {
+    //     for (const [subId, content] of consumer.renderings) {
+    //       if (!result[subId]) result[subId] = [];
+    //       if (content.model) result[subId].push(content.model.title);
+    //     }
+    //   }
+    //   return result;
+    // };
 
-    await slotComposer.renderSlot(particleB, 'item', {model: {subId: 'id1', title: 'Rendered by B'}});
-    await slotComposer.renderSlot(particleC, 'item', {model: {subId: 'id2', title: 'Rendered by C'}});
-    assert.deepEqual({'id1': ['Rendered by B'], 'id2': ['Rendered by C']}, gatherRenderings(itemSlotContext));
+    // const itemSlotContext = slotComposer.findContextsByName('item')[0];
 
-    await slotComposer.renderSlot(particleB, 'item', {model: {subId: 'id2', title: 'B moved to id2'}});
-    assert.deepEqual({'id1': [], 'id2': ['B moved to id2', 'Rendered by C']}, gatherRenderings(itemSlotContext));
+    // await slotComposer.renderSlot(particleB, 'item', {model: {subId: 'id1', title: 'Rendered by B'}});
+    // await slotComposer.renderSlot(particleC, 'item', {model: {subId: 'id2', title: 'Rendered by C'}});
+    // assert.deepEqual({'id1': ['Rendered by B'], 'id2': ['Rendered by C']}, gatherRenderings(itemSlotContext));
 
-    await slotComposer.renderSlot(particleC, 'item', {model: {subId: 'id1', title: 'C moved to id1'}});
-    assert.deepEqual({'id1': ['C moved to id1'], 'id2': ['B moved to id2']}, gatherRenderings(itemSlotContext));
-    await slotComposer.expectationsCompleted();
+    // await slotComposer.renderSlot(particleB, 'item', {model: {subId: 'id2', title: 'B moved to id2'}});
+    // assert.deepEqual({'id1': [], 'id2': ['B moved to id2', 'Rendered by C']}, gatherRenderings(itemSlotContext));
+
+    // await slotComposer.renderSlot(particleC, 'item', {model: {subId: 'id1', title: 'C moved to id1'}});
+    // assert.deepEqual({'id1': ['C moved to id1'], 'id2': ['B moved to id2']}, gatherRenderings(itemSlotContext));
+    // await slotComposer.expectationsCompleted();
   });
 
   it.skip('renders inner slots in transformations without intercepting', async () => {

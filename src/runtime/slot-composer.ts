@@ -122,15 +122,13 @@ export class SlotComposer {
   }
 
   createHostedSlot(innerArc: Arc, particle: Particle, slotName: string, storeId: string): string {
-    const slotConsumer = this.getSlotConsumer(particle, slotName);
-    assert(slotConsumer, `Transformation particle ${particle.name} with consumed ${slotName} not found`);
+    // TODO(sjmiles): rationalize this
+    const connection = particle.getSlandleConnections()[0];
     // TODO(sjmiles): this slot-id is created dynamically and was not available to the particle
     // who renderered the slot (i.e. the dom node or other container). The renderer identifies these
     // slots by entity-id (`subid`) instead. But `subid` is not unique, we need more information to
     // locate the output slot, so we embed the muxed-slot's id into our output-slot-id.
-    const hostedSlotId = `${slotConsumer.slotContext.id}___${innerArc.generateID('slot')}`;
-    //this._contexts.push(new HostedSlotContext(hostedSlotId, slotConsumer, storeId));
-    return hostedSlotId;
+    return `${connection.targetSlot.id}___${innerArc.generateID('slot')}`;
   }
 
   _addSlotConsumer(slot: SlotConsumer) {
