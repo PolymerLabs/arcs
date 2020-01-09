@@ -43,7 +43,6 @@ data class ResurrectionRequest(
      * Populates an [intent] with actions/extras needed to make a request to the
      * [ResurrectorService] for future resurrection.
      */
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     fun populateRequestIntent(intent: Intent) {
         intent.apply {
             action = ACTION_REQUEST_RESURRECTION
@@ -121,7 +120,6 @@ data class ResurrectionRequest(
          * Creates a [ResurrectionRequest] for the component defined by the given [context] when the
          * events listed in [resurrectOn] occur.
          */
-        @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
         fun createDefault(
             context: Context,
             resurrectOn: List<StorageKey>
