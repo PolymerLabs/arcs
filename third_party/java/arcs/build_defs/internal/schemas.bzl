@@ -63,6 +63,7 @@ def arcs_kt_schema(name, srcs, deps, package = "arcs.sdk"):
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
+      deps: list of imported manifests
       package: package name to use for the generated source code
     """
     outs = []
