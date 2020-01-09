@@ -120,7 +120,7 @@ recipe
     // verifyContext('mySlot', {hasContainer: true, sourceSlotName: 'root', consumeConnNames: ['B::mySlot', 'BB::mySlot']});
     // verifyContext('otherSlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['C::otherSlot']});
 
-    // TODO(sjmiles): no expectations anyway?
+    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
     //await slotComposer.expectationsCompleted();
   });
 
@@ -228,6 +228,8 @@ recipe
 
     // await slotComposer.renderSlot(particleC, 'item', {model: {subId: 'id1', title: 'C moved to id1'}});
     // assert.deepEqual({'id1': ['C moved to id1'], 'id2': ['B moved to id2']}, gatherRenderings(itemSlotContext));
+
+    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
     // await slotComposer.expectationsCompleted();
   });
 
