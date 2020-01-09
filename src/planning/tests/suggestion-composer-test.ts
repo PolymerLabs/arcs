@@ -92,7 +92,7 @@ describe('suggestion composer', () => {
     //await slotComposer.expectationsCompleted();
   });
 
-  it('suggestion set-slots FOOB', async () => {
+  it('suggestion set-slots', async () => {
     const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();
     const context = await Manifest.load('./src/runtime/tests/artifacts/suggestions/Cakes.recipes', loader, {memoryProvider});
