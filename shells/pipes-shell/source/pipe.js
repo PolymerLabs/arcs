@@ -10,7 +10,7 @@
 
 import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
-import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
+import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {pec} from './verbs/pec.js';
 import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
@@ -100,7 +100,7 @@ const populateDispatcher = (dispatcher, storage, context) => {
 };
 
 const composerFactory = (modality, bus, tid) => {
-  const composer = new UiSlotComposer();
+  const composer = new SlotComposer();
   // TODO(sjmiles): hack in transaction identity, make this cleaner
   composer.tid = tid;
   // TODO(sjmiles): slotObserver could be late attached or we could attach

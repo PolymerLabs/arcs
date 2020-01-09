@@ -62,28 +62,17 @@ export class MockSlotComposer extends FakeSlotComposer {
     HeadlessSlotDomConsumer.clearCache();
   }
 
-   // Overriding this method to investigate AppVeyor failures.
-   // TODO: get rid of it once the problem is fixed.
-  _addSlotConsumer(slot) {
-    super._addSlotConsumer(slot);
-    const startCallback = slot.startRenderCallback;
-    slot.startRenderCallback = ({particle, slotName, providedSlots, contentTypes}) => {
-      this._addDebugMessages(`  StartRender: ${slot.consumeConn.getQualifiedName()}`);
-      startCallback({particle, slotName, providedSlots, contentTypes});
-    };
-  }
-
   /**
    * Reinitializes expectations queue.
    */
   newExpectations(name?: string): MockSlotComposer {
-    assert(this.expectQueue.every(e => e.isOptional));
+    //assert(this.expectQueue.every(e => e.isOptional), `old expect queue not complete`);
     this.expectQueue = [];
 
-    if (!this.strict) {
-      this.ignoreUnexpectedRender();
-    }
-    this.debugMessages.push({name: name || `debug${Object.keys(this.debugMessages).length}`, messages: []});
+    // if (!this.strict) {
+    //   this.ignoreUnexpectedRender();
+    // }
+    // this.debugMessages.push({name: name || `debug${Object.keys(this.debugMessages).length}`, messages: []});
     return this;
   }
 
@@ -151,11 +140,11 @@ export class MockSlotComposer extends FakeSlotComposer {
   /**
    * Sends an event to the given particle and slot.
    */
-  sendEvent(particleName, slotName, event, data) {
-    const particles = this.consumers.filter(s => s.consumeConn.particle.name === particleName).map(s => s.consumeConn.particle);
-    assert(1 === particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
-    this.pec.sendEvent(particles[0], slotName, {handler: event, data});
-  }
+  // sendEvent(particleName, slotName, event, data) {
+  //   const particles = this.consumers.filter(s => s.consumeConn.particle.name === particleName).map(s => s.consumeConn.particle);
+  //   assert(1 === particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
+  //   this.pec.sendEvent(particles[0], slotName, {handler: event, data});
+  // }
 
   _addRenderExpectation(expectation) {
     let current = this.expectQueue.find(e => {
@@ -239,32 +228,33 @@ export class MockSlotComposer extends FakeSlotComposer {
     return found;
   }
 
-  renderSlot(particle, slotName, content) {
-    this._addDebugMessages(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
-    assert.isAbove(this.expectQueue.length, 0,
-      `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further. Enable {strict: false, logging: true} to diagnose`);
+  // TODO(sjmiles): renderSlot deprecated
+  // renderSlot(particle, slotName, content) {
+  //   this._addDebugMessages(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
+  //   assert.isAbove(this.expectQueue.length, 0,
+  //     `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further. Enable {strict: false, logging: true} to diagnose`);
 
-    // renderSlot must happen before _verifyRenderContent, because the latter removes this call from expectations,
-    // and potentially making mock-slot-composer idle before the renderSlot has actualy complete.
-    // TODO: split _verifyRenderContent to separate method for checking and then resolving expectations.
-    super.renderSlot(particle, slotName, content);
+  //   // renderSlot must happen before _verifyRenderContent, because the latter removes this call from expectations,
+  //   // and potentially making mock-slot-composer idle before the renderSlot has actualy complete.
+  //   // TODO: split _verifyRenderContent to separate method for checking and then resolving expectations.
+  //   super.renderSlot(particle, slotName, content);
 
-    const found = this._verifyRenderContent(particle, slotName, content);
-    if (!found) {
-      const canIgnore = this._canIgnore(particle.name, slotName, content);
-      if (canIgnore && !MockSlotComposer['warnedIgnore']) {
-        MockSlotComposer['warnedIgnore'] = true;
-        console.log(`Skipping unexpected render slot request: ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')})`);
-        console.log('expected? add this line:');
-        console.log(`  .expectRenderSlot('${particle.name}', '${slotName}', {'contentTypes': ['${Object.keys(content).join('\', \'')}']})`);
-        console.log(`(additional warnings are suppressed)`);
-      }
-      assert(canIgnore, `Unexpected render slot ${slotName} for particle ${particle.name} (content types: ${Object.keys(content).join(',')})`);
-    }
+  //   const found = this._verifyRenderContent(particle, slotName, content);
+  //   if (!found) {
+  //     const canIgnore = this._canIgnore(particle.name, slotName, content);
+  //     if (canIgnore && !MockSlotComposer['warnedIgnore']) {
+  //       MockSlotComposer['warnedIgnore'] = true;
+  //       console.log(`Skipping unexpected render slot request: ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')})`);
+  //       console.log('expected? add this line:');
+  //       console.log(`  .expectRenderSlot('${particle.name}', '${slotName}', {'contentTypes': ['${Object.keys(content).join('\', \'')}']})`);
+  //       console.log(`(additional warnings are suppressed)`);
+  //     }
+  //     assert(canIgnore, `Unexpected render slot ${slotName} for particle ${particle.name} (content types: ${Object.keys(content).join(',')})`);
+  //   }
 
-    this._expectationsMet();
-    this.detailedLogDebug();
-  }
+  //   this._expectationsMet();
+  //   this.detailedLogDebug();
+  // }
 
   _expectationsMet(): void {
     if (this.expectQueue.length === 0 || this.expectQueue.every(e => e.isOptional)) {
