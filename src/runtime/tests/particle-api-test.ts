@@ -1200,8 +1200,8 @@ describe('particle-api', () => {
           root: consumes slot0`);
 
     const loader = new StubLoader({
-      'TransformationParticle.js': `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
+      'TransformationParticle.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
           async setHandles(handles) {
             super.setHandles(handles);
 
@@ -1233,7 +1233,7 @@ describe('particle-api', () => {
           renderHostedSlot(slotName, hostedSlotId, content) {}
         };
       });`,
-      '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
+      '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     // TODO(lindner): add strict rendering
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
@@ -1275,8 +1275,8 @@ describe('particle-api', () => {
           root: consumes slot0`);
 
     const loader = new StubLoader({
-      'TransformationParticle.js': `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
+      'TransformationParticle.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
           async setHandles(handles) {
             super.setHandles(handles);
 
@@ -1308,7 +1308,7 @@ describe('particle-api', () => {
           renderHostedSlot(slotName, hostedSlotId, content) {}
         };
       });`,
-      '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
+      '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     // TODO(lindner): add strict rendering
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');

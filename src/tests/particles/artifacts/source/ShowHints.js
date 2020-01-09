@@ -10,11 +10,11 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
 
   const host = `show-hints`;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return html`
 <div ${host}>

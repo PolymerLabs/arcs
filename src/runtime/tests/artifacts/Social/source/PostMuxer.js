@@ -9,8 +9,8 @@
  */
 'use strict';
 
-defineParticle(({MultiplexerDomParticle, log}) => {
-  return class PostMultiplexer extends MultiplexerDomParticle {
+defineParticle(({UiMultiplexerParticle, log}) => {
+  return class PostMultiplexer extends UiMultiplexerParticle {
     constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
       // log(`PostMuxer input recipe: `, item.renderRecipe);
       let value = item.renderRecipe.replace('{{slot_id}}', slot.id);

@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({TransformationDomParticle}) => {
-  return class MultiplexSlotsParticle extends TransformationDomParticle {
+defineParticle(({UiTransformationParticle}) => {
+  return class MultiplexSlotsParticle extends UiTransformationParticle {
     constructor() {
       super();
       this._handleIds = new Set();
@@ -69,7 +69,7 @@ defineParticle(({TransformationDomParticle}) => {
         }
       }
 
-      this._setState({renderModel: {items: TransformationDomParticle.propsToItems(foos)}});
+      this._setState({renderModel: {items: UiTransformationParticle.propsToItems(foos)}});
     }
   };
 });

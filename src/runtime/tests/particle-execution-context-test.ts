@@ -32,8 +32,8 @@ describe('Particle Execution Context', () => {
   //       A
   //         root: consumes slot0`);
   //   const loader = new StubLoader({
-  //     'A.js': `defineParticle(({DomParticle}) => {
-  //       return class extends DomParticle {
+  //     'A.js': `defineParticle(({UiParticle}) => {
+  //       return class extends UiParticle {
   //         get template() { return '<div><div slotid$="{{$detail}}"></div><div slotid="annotation"></div></div>'; }
   //       };
   //     });`

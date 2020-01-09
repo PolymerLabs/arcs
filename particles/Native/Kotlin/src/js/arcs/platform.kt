@@ -15,12 +15,12 @@ import kotlin.reflect.KFunction0
  * Anything marked external in this file means the implementation lives in JS.
  */
 actual object Platform {
-    actual fun <T : DomParticle> installParticle(
+    actual fun <T : UiParticle> installParticle(
         particle: KClass<T>,
         particleConstructor: KFunction0<T>
     ) {
         // Actually invokes defineParticle() in global JS scope
-        defineParticle({ api -> inherit(particle.js, api.DomParticle, api) });
+        defineParticle({ api -> inherit(particle.js, api.UiParticle, api) });
     }
 
     actual fun <T> async(block: suspend () -> T): Any {
@@ -43,7 +43,7 @@ actual external interface EventData<T> {
  * Represents the callback arguments provided by defineParticle.
  */
 external interface ParticleApi {
-    val DomParticle: DomParticle
+    val UiParticle: UiParticle
     fun html(text: String): String
     fun log(log: String)
 }
@@ -53,7 +53,7 @@ external interface ParticleApi {
  * its prototype chain. We don't want that, so we tell the Kotlin compiler that it's JS name is "Object"
  */
 @JsName("Object")
-actual abstract external class DomParticle {
+actual abstract external class UiParticle {
     actual fun setState(state: Any)
     actual fun getState(): Any?
     actual open var template: String
@@ -75,7 +75,7 @@ actual external interface PromiseLike<T> {
 actual open class DomParticleBase<Props, State> actual constructor(
     propsSerializer: KSerializer<Props>,
     stateSerializer: KSerializer<State>
-) : DomParticle() {
+) : UiParticle() {
 
     val propsStrategy = propsSerializer
     val stateStrategy = stateSerializer
@@ -113,7 +113,7 @@ actual open class DomParticleBase<Props, State> actual constructor(
     }
 
     /**
-     * Invokes JS DomParticle.service(), converts JS object to JSON, and then pipes it
+     * Invokes JS UiParticle.service(), converts JS object to JSON, and then pipes it
      * through kotlinx.serialization to obtain typed data class objects, returned via promise.
      */
     actual fun <U, V> serviceCallAsync(
@@ -151,7 +151,7 @@ actual open class DomParticleBase<Props, State> actual constructor(
     }
 
     /**
-     * Returns DomParticle.getState() as a typed State object.
+     * Returns UiParticle.getState() as a typed State object.
      */
     actual fun fetchState(): State {
         return kotlinx.serialization.json.Json.nonstrict.parse(
@@ -165,7 +165,7 @@ actual open class DomParticleBase<Props, State> actual constructor(
     }
 
     /**
-     * Converts the DomParticle.render() call into a typed call to renderState().
+     * Converts the UiParticle.render() call into a typed call to renderState().
      */
     override fun render(props: Any, state: Any): Any {
         return JSON.parse(
@@ -185,7 +185,7 @@ actual open class DomParticleBase<Props, State> actual constructor(
     }
 
     /**
-     * Registers event handlers on DomParticle parent with type marshalling.
+     * Registers event handlers on UiParticle parent with type marshalling.
      */
     actual fun <U> eventHandler(
         eventName: String,
@@ -204,7 +204,7 @@ actual open class DomParticleBase<Props, State> actual constructor(
     }
 
     /**
-     * Registers an event handler on DomParticle with ignored event argument.
+     * Registers an event handler on UiParticle with ignored event argument.
      */
     actual fun eventHandler(
         eventName: String,
@@ -229,7 +229,7 @@ actual open class DomParticleBase<Props, State> actual constructor(
 
 // HERE BY DRAGONS
 
-external fun defineParticle(callback: (ParticleApi) -> DomParticle);
+external fun defineParticle(callback: (ParticleApi) -> UiParticle);
 
 external object Reflect {
     fun setPrototypeOf(a: dynamic, b: dynamic)
@@ -262,9 +262,9 @@ external class Proxy(obj: dynamic, handler: dynamic) {
  * child ES5 constructor, and return the resulting object. Ugly, but it works.
  */
 fun inherit(
-    child: JsClass<out DomParticle>, parent: dynamic,
+    child: JsClass<out UiParticle>, parent: dynamic,
     api: ParticleApi
-): DomParticle {
+): UiParticle {
     var childProto = js("child.prototype");
     while (childProto != null && childProto.constructor != null && childProto.constructor != DomParticleBase::class.js) {
         childProto = Reflect.getPrototypeOf(childProto)
@@ -288,7 +288,7 @@ fun inherit(
     val proxy = Proxy(child, handler);
     descriptor.value = proxy;
     Object.defineProperty(child, "constructor", descriptor);
-    val particle = proxy as DomParticle
+    val particle = proxy as UiParticle
     DomParticleBase.api = api;
     return particle;
 }

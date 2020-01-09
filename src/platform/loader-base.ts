@@ -14,10 +14,8 @@ import {ParticleExecutionContext} from '../runtime/particle-execution-context.js
 import {ClientReference} from '../runtime/reference.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Particle} from '../runtime/particle.js';
-import {DomParticle} from '../runtime/dom-particle.js';
-import {TransformationDomParticle} from '../runtime/transformation-dom-particle.js';
-import {MultiplexerDomParticle} from '../runtime/multiplexer-dom-particle.js';
 import {UiParticle} from '../runtime/ui-particle.js';
+import {UiTransformationParticle} from '../runtime/ui-transformation-particle.js';
 import {UiMultiplexerParticle} from '../runtime/ui-multiplexer-particle.js';
 import {html} from '../runtime/html.js';
 import {logsFactory} from '../platform/logs-factory.js';
@@ -270,15 +268,11 @@ export abstract class LoaderBase {
     return particleWrapper({
       // Particle base
       Particle,
-      // Dom-flavored Particles (deprecated?)
-      DomParticle,
-      MultiplexerDomParticle,
-      TransformationDomParticle,
       // Ui-flavored Particles
       UiParticle,
+      UiTransformationParticle,
       UiMultiplexerParticle,
       // Aliases
-      ReactiveParticle: UiParticle,
       SimpleParticle: UiParticle,
       // utilities
       Reference: ClientReference.newClientReference(this.pec),
