@@ -378,7 +378,7 @@ export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | 
 export interface RecipeParticleConnection extends BaseNode {
   kind: 'handle-connection';
   param: string;
-  dir: Direction;
+  direction: Direction;
   target: ParticleConnectionTargetComponents;
   dependentConnections: RecipeParticleConnection[];
 }

@@ -1028,7 +1028,7 @@ ${e.message}
           // TODO: else, merge tags? merge directions?
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
-        const direction = connectionItem.dir;
+        const direction = connectionItem.direction;
         if (!connectionMatchesHandleDirection(direction, connection.direction)) {
           throw new ManifestError(
               connectionItem.location,
