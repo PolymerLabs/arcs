@@ -82,9 +82,9 @@ const conservative = new (class implements SizingPolicy {
 })();
 
 /**
- * [Adaptive Policy]
- * It maintains an adaptive pool size by [Exponential Weighted Moving Average]
- * {@link https://en.wikipedia.org/wiki/Moving_average}
+ * [Predictive Policy]
+ * It forecasts the demand of pool size by [Exponential Weighted Moving Average]
+ * {@link https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average}
  *
  * Algorithm:
  * Let EWMA(t) := moving average pool size demand at the time t
@@ -103,7 +103,7 @@ const conservative = new (class implements SizingPolicy {
  *
  * Demand = Max(EWMA(t), target_size)
  */
-const adaptive = new (class implements SizingPolicy {
+const predictive = new (class implements SizingPolicy {
   readonly weight = 1;
   ewma = 0;
 
@@ -125,5 +125,5 @@ const adaptive = new (class implements SizingPolicy {
 export const policies = {
   aggressive,
   conservative,
-  adaptive,
+  predictive,
 };
