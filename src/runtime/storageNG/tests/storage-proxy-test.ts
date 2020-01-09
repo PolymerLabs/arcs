@@ -28,9 +28,11 @@ function getNoOpStorageProxy(): StorageProxy<CRDTSingletonTypeRecord<Entity>> {
   return new NoOpStorageProxy();
 }
 
+const initialData = {values: {'1': {value: {id: 'e1'}, version: {A: 1}}}, version: {A: 1}};
+
 describe('StorageProxy', async () => {
   it('will apply and propagate operation', async () => {
-    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(initialData);
     const storageProxy = getStorageProxy(mockStore);
 
     // Register a handle to verify updates are sent back.
@@ -38,9 +40,9 @@ describe('StorageProxy', async () => {
 
     const op: SingletonOperation<Entity> = {
       type: SingletonOpTypes.Set,
-      value: {id: 'e1'},
+      value: {id: 'e2'},
       actor: 'A',
-      clock: {A: 1}
+      clock: {A: 2}
     };
     const result = await storageProxy.applyOp(op);
     assert.isTrue(result);
@@ -50,23 +52,39 @@ describe('StorageProxy', async () => {
       id: 1
     });
     await storageProxy.idle();
-    assert.sameDeepMembers(handle.lastUpdate, [op, {A: 1}]);
+    assert.sameDeepMembers(handle.lastUpdate, [op, {A: 2}]);
+  });
+
+  it('does not notify keepSynced handles if desynced', async () => {
+    // Don't pass any data to the MockStore.
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const storageProxy = getStorageProxy(mockStore);
+
+    // Register a handle.
+    const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
+    // At this point the storage proxy has requested a sync but it is still not
+    // synchronized (as we did not pass any data to the mockStore).
+
+    const op: SingletonOperation<Entity> = {
+      type: SingletonOpTypes.Set,
+      value: {id: 'e1'},
+      actor: 'A',
+      clock: {A: 1}
+    };
+    const result = await storageProxy.applyOp(op);
+    assert.isTrue(result);
+    await storageProxy.idle();
+    // No updates were sent because the handle has keepSynced=true and the proxy
+    // was not synchronized.
+    assert.isNull(handle.lastUpdate);
   });
 
   it('will sync if desynced before returning the particle view', async () => {
-    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(initialData);
     const storageProxy = getStorageProxy(mockStore);
 
     // Register a handle to verify updates are sent back.
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
-
-    // When requested a sync, store will send back a model.
-    mockStore.onProxyMessage = async message => {
-      mockStore.lastCapturedMessage = message;
-      const crdtData = {values: {'1': {value: {id: 'e1'}, version: {A: 1}}}, version: {A: 1}};
-      await storageProxy.onMessage({type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1});
-      return true;
-    };
 
     // The first time we get the data, it will need to sync with the store.
     const [result, versionMap] = await storageProxy.getParticleView();
@@ -87,7 +105,7 @@ describe('StorageProxy', async () => {
   });
 
   it('can exchange models with the store', async () => {
-    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(initialData);
     const storageProxy = getStorageProxy(mockStore);
 
     // Registering a handle trigger the proxy to connect to the store and fetch the model.
@@ -97,8 +115,8 @@ describe('StorageProxy', async () => {
         {type: ProxyMessageType.SyncRequest, id: 1});
 
     const crdtData = {
-      values: {'e1': {value: {id: 'e1'}, version: {A: 1}}},
-      version: {A: 1}
+      values: {'e3': {value: {id: 'e3'}, version: {A: 3}}},
+      version: {A: 3}
     };
     // Send a model to the proxy.
     await storageProxy.onMessage(
@@ -111,24 +129,12 @@ describe('StorageProxy', async () => {
   });
 
   it('propagates exceptions to the store', async () => {
-    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
+    const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>(initialData);
     const storageProxy = getStorageProxy(mockStore);
 
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
     handle.onSync = () => {
       throw new Error('something wrong');
-    };
-
-    // When requested a sync, store will send back a model.
-    mockStore.onProxyMessage = async message => {
-      mockStore.lastCapturedMessage = message;
-      const crdtData = {
-        values: {'1': {value: {id: 'e1'}, version: {A: 1}}},
-        version: {A: 1}
-      };
-      await storageProxy.onMessage(
-          {type: ProxyMessageType.ModelUpdate, model: crdtData, id: 1});
-      return true;
     };
 
     await storageProxy.getParticleView();

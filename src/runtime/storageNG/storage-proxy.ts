@@ -174,6 +174,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
           if (!this.crdt.applyOperation(op)) {
             // If we cannot cleanly apply ops, sync the whole model.
             this.clearSynchronized();
+            this.notifyUpdate(op);
             return this.requestSynchronization();
           }
           if (this.synchronized === false) {
@@ -198,7 +199,8 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   protected notifyUpdate(operation: CRDTOperation) {
     const version: VersionMap = this.versionCopy();
     for (const handle of this.handles) {
-      if (handle.options.notifyUpdate) {
+      if (handle.options.notifyUpdate &&
+          (handle.options.keepSynced === false || this.synchronized)) {
         this.scheduler.enqueue(
             handle.particle,
             handle,

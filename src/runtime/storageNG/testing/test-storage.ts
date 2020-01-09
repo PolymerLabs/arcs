@@ -18,7 +18,7 @@ import {Driver, Exists, ReceiveMethod} from '../drivers/driver.js';
 import {Handle} from '../handle.js';
 import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
-import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode} from '../store.js';
+import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store.js';
 import {CountType} from '../../type.js';
 
 
@@ -51,7 +51,10 @@ export class MockDriver<Data> extends Driver<Data> {
 export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
-  constructor() {
+  crdtData: T['data'] = null;
+  callback: ProxyCallback<T> = null;
+  // Initial crdtData that will be sent to the proxy in response to SyncRequests.
+  constructor(crdtData?: T['data']) {
     super({
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
@@ -60,8 +63,10 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
       baseStore: null,
       versionToken: null
     });
+    this.crdtData = crdtData;
   }
   on(callback: ProxyCallback<T>): number {
+    this.callback = callback;
     return 1;
   }
   off(callback: number) {
@@ -69,7 +74,11 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
   async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
     this.lastCapturedMessage = message;
-    return Promise.resolve(true);
+    if (this.crdtData && message.type === ProxyMessageType.SyncRequest) {
+      await this.callback(
+          {type: ProxyMessageType.ModelUpdate, model: this.crdtData, id: 1});
+    }
+    return true;
   }
   reportExceptionInHost(exception: PropagatedException): void {
     this.lastCapturedException = exception;
