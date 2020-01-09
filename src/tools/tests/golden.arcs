@@ -1,0 +1,6 @@
+// Example manifest file, serving as a test for the schema2kotlin and schema2cpp
+// code generators.
+
+particle Gold
+  data: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &{val: Text}}
+  alias: writes {val: Text}

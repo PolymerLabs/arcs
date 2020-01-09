@@ -10,18 +10,17 @@
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import diff from 'diff';
-import {fail} from 'assert';
 
 const testData = [
   {
     label: 'C++',
-    generated: 'src/wasm/tests/manifest.h',
-    golden: 'src/wasm/tests/goldens/generated-schemas.h',
+    generated: 'src/tools/tests/golden.h',
+    golden: 'src/tools/tests/goldens/generated-schemas.h',
   },
   {
     label: 'Kotlin',
-    generated: 'src/wasm/tests/manifest_GeneratedSchemas.kt',
-    golden: 'src/wasm/tests/goldens/generated-schemas.kt',
+    generated: 'src/tools/tests/golden_GeneratedSchemas.kt',
+    golden: 'src/tools/tests/goldens/generated-schemas.kt',
   },
 ];
 
@@ -53,7 +52,7 @@ testData.forEach(data => {
         diffLog.push(...lines.map(line => `${operator} ${line}`));
       });
 
-      fail(`
+      assert.fail(`
 
     Generated ${data.label} file does not match golden! Diff:
 
