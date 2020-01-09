@@ -8,8 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-/** Arcs runtime flags. */
-
+/* Arcs runtime flags.
+ * These can be set via command line arguments and are generally for introducing
+ * incrementally introducing potentially breaking changes (e.g. adding/removing
+ * features).
+ *
+ * Example:
+ * To run all test, but use the new storage stack, use the following command:
+ * sigh test --useNewStorageStack=true
+ *
+ * Note: This does not override flag values set explicitly for a test.
+ */
 class FlagDefaults {
   static useNewStorageStack = false;
   static enforceRefinements = false;
