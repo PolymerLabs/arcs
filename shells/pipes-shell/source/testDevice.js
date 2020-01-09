@@ -105,6 +105,13 @@ const smokeTest = async (bus) => {
     send({message: 'spawn', modality: 'dom', recipe: 'HelloWorldRecipe'});
   };
   //
+  const runArcSerialTest = () => {
+    // async `runArc` commands are performed serially
+    send({message: 'runArc', arcId: 'pipe-notification-test1', modality: 'dom', recipe: 'Notification'});
+    send({message: 'runArc', arcId: 'pipe-notification-test2', modality: 'dom', recipe: 'Notification'});
+    send({message: 'runArc', arcId: 'pipe-notification-test3', modality: 'dom', recipe: 'Notification'});
+  };
+  //
   // perform tests
   enqueue([
     enableIngestion,
@@ -112,6 +119,7 @@ const smokeTest = async (bus) => {
     autofillTest,
     notificationTest,
     wasmTest,
-    parseTest
+    parseTest,
+    runArcSerialTest
   ], 500);
 };

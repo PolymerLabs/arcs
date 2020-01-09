@@ -21,6 +21,7 @@ import {instantiateRecipeByName} from './lib/utils.js';
 import {requireContext} from './context.js';
 import {dispatcher} from './dispatcher.js';
 import {requireIngestionArc} from './ingestion-arc.js';
+import {serializeVerb} from './serialize-verb.js';
 
 const {log} = logsFactory('pipe');
 
@@ -61,7 +62,8 @@ const populateDispatcher = (dispatcher, storage, context) => {
     // TODO: consolidate runArc and uiEvent with spawn and event, as well as
     // use of runtime object and composerFactory, brokerFactory below.
     runArc: async (msg, tid, bus) => {
-      return await runArc(msg, bus, runtime, storage);
+      const task = async () => await runArc(msg, bus, runtime, storage);
+      return await serializeVerb('runArc', task);
     },
     uiEvent: async (msg, tid, bus) => {
       return await uiEvent(msg, runtime);
