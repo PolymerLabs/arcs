@@ -6,7 +6,7 @@ java_library(
     name = "robolectric",
     exports = [
         "@maven//:org_robolectric_robolectric",
-    ]
+    ],
 )
 
 java_library(
