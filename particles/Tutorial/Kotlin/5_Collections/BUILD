@@ -13,7 +13,7 @@ arcs_manifest(
 )
 
 arcs_kt_schema(
-    name = "collections_schemas",
+    name = "collections_entities",
     srcs = ["Collections.arcs"],
     package = "arcs.tutorials",
     deps = [":shared_schemas"],
@@ -23,5 +23,5 @@ arcs_kt_particles(
     name = "Collections",
     srcs = ["Collections.kt"],
     package = "arcs.tutorials",
-    deps = [":collections_schemas"],
+    deps = [":collections_entities"],
 )

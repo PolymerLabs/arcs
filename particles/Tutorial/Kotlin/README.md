@@ -49,10 +49,13 @@ class HelloWorld : AbstractHelloWorld() {
 Finally, we need a 'BUILD' file. Arcs particles can be built using Bazel rules. Here's an example Bazel BUILD file for HelloWorld:
 
 ```BUILD
-// Required imports
-load("//build_defs:build_defs.bzl", "arcs_kt_particles")
+# Required imports
+load(
+    "//build_defs:build_defs.bzl",
+    "arcs_kt_particles"
+)
 
-// Arcs Kotlin particle build rule
+# Arcs Kotlin particle build rule
 arcs_kt_particles(
     name = "HelloWorld",
     srcs = ["HelloWorld.kt"],
@@ -329,20 +332,23 @@ In essence, a store is where the data physically exists. The handle lets differe
 In the last tutorial, we set the Person handle inside of the particles. Person was also a singleton, it represented a single instance of the Person schema. In this tutorial, we will instead define a collection with multiple instances of Person inside the Arcs Manifest file. While a collection can be thought of as a list, there are no guarantees about the order of elements within the collection.
 Using some more sophisticated template interpolation, we can easily greet everyone in our collection. But that’s enough explanation, let’s get to some code!
 
-We begin with the Arcs manifest file which only includes the collection of `PersonDetails`.
+We begin by creating a manifest file to contain a single schema. This gives us the option to reuse the same schema definition across multiple manifest files, if we so choose.
+Let's add `PersonDetails` to our schema manifest for now.
 ```
 // CollectionsSchemas.arcs
+
 schema PersonDetails
   name: Text
   age: Number
+  
 ```
 
-We may want to reuse this schema later. Next, we proceed to our party greeting particle:
+Next, we proceed to define a manifest for greeting a collection of people:
 
 ```
 // Collections.arcs
 
-import './CollectionsSchemas.arcs'
+import 'CollectionsSchemas.arcs'
 
 // This is essentially a JSON file defined inside the manifest.
 resource PeopleData
@@ -418,18 +424,32 @@ class CollectionsParticle : AbstractCollectionsParticle() {
 
 And the BUILD file:
 ```build
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_particles", "arcs_kt_schema")
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_particles",
+    "arcs_kt_schema",
+    "arcs_manifest",  
+)
 
+# This rule defines the manifest (i.e. a set of `.arcs` files) that should be depended upon for 
+# schema generation
+arcs_manifest(
+    name = "shared_schemas",
+    srcs = ["CollectionsSchemas.arcs"]
+)
+
+# Here, this rule generates entities for a target manifest. Only schemas used in a particle (or 
+# "particle connections") will generate entities.
 arcs_kt_schema(
-    name = "collections_schemas",
+    name = "collections_entities",
     srcs = ["Collections.arcs"],
-    deps = ["CollectionsSchemas.arcs"]
+    deps = [":shared_schemas"]
 )
 
 arcs_kt_particles(
     name = "Collections",
     srcs = ["Collections.kt"],
-    deps = [":collections_schemas"],
+    deps = [":collections_entities"],
 )
 ```
 
