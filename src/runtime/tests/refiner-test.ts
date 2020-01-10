@@ -21,8 +21,7 @@ describe('refiner', () => {
             particle Foo
                 input: reads Something {num: Number [ (num/-3 < 0 and num*num == 36) or num == 0 ] }
         `);
-        const typeData = {};
-        typeData['num'] = 'Number';
+        const typeData = {'num': 'Number'};
         const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         const data = {
             num: 6
@@ -36,8 +35,7 @@ describe('refiner', () => {
                 particle Foo
                     input: reads Something {num: Number [ num < num2 ] }
             `);
-            const typeData = {};
-            typeData['num'] = 'Number';
+            const typeData = {'num': 'Number'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
             const data = {
                 num: 6,
@@ -51,8 +49,7 @@ describe('refiner', () => {
                 particle Foo
                     input: reads Something {num: Number [ num + 5 ] }
             `);
-            const typeData = {};
-            typeData['num'] = 'Number';
+            const typeData = {'num': 'Number'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
             const data = {
                 num: 6,
@@ -66,8 +63,7 @@ describe('refiner', () => {
                 particle Foo
                     input: reads Something {num: Number [ (num < 5) + 3 == 0 ] }
             `);
-            const typeData = {};
-            typeData['num'] = 'Number';
+            const typeData = {'num': 'Number'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
             const data = {
                 num: 6,
@@ -79,8 +75,7 @@ describe('refiner', () => {
                 particle Foo
                     input: reads Something {num: Number [ (num and 3) == 0 ] }
             `);
-            const typeData = {};
-            typeData['num'] = 'Number';
+            const typeData = {'num': 'Number'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
             const data = {
                 num: 6,
@@ -93,8 +88,7 @@ describe('refiner', () => {
             particle Foo
                 input: reads Something {num: Number [ ((num < 3) and (num > 0)) or (num == 5) ] }
         `);
-        const typeData = {};
-        typeData['num'] = 'Number';
+        const typeData = {'num': 'Number'};
         let ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         let range = Range.fromExpression(ref.expression);
         assert.deepEqual(range.segments, [Segment.openOpen(0, 3), Segment.closedClosed(5, 5)]);
@@ -146,8 +140,7 @@ describe('normalisation', () => {
             particle Foo
                 input: reads Something {num: Number [ (10+2) > num ] }
         `);
-        const typeData = {};
-        typeData['num'] = 'Number';
+        const typeData = {'num': 'Number'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
         ref1.normalise();
         const manifestAst2 = parse(`
@@ -163,8 +156,7 @@ describe('normalisation', () => {
             particle Foo
                 input: reads Something {num: Boolean [ num == not (true or false) ] }
         `);
-        const typeData = {};
-        typeData['num'] = 'Boolean';
+        const typeData = {'num': 'Boolean'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
         ref1.normalise();
         const manifestAst2 = parse(`
@@ -180,8 +172,7 @@ describe('normalisation', () => {
             particle Foo
                 input: reads Something {num: Number [ (2+11-9) > num or False ] }
         `);
-        const typeData = {};
-        typeData['num'] = 'Number';
+        const typeData = {'num': 'Number'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
         ref1.normalise();
         const manifestAst2 = parse(`
@@ -197,8 +188,7 @@ describe('normalisation', () => {
             particle Foo
                 input: reads Something {num: Boolean [ not (not num) ] }
         `);
-        const typeData = {};
-        typeData['num'] = 'Boolean';
+        const typeData = {'num': 'Boolean'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
         ref1.normalise();
         const manifestAst2 = parse(`
