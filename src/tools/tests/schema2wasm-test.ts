@@ -32,12 +32,9 @@ class Schema2Mock extends Schema2Base {
     const collector = {count: 0, adds: []};
     this.res[node.name] = collector;
     return {
-      addField(field: string, typeChar: string) {
-        collector.adds.push(field + ':' + typeChar);
-      },
-
-      addReference(field: string, refName: string) {
-        collector.adds.push(field + ':' + refName);
+      addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
+        const refInfo = refClassName ? `<${refClassName}>` : '';
+        collector.adds.push(field + ':' + typeChar + refInfo + (isOptional ? '?' : ''));
       },
 
       generate(schemaHash: string, fieldCount: number): string {
@@ -63,12 +60,13 @@ describe('schema2wasm', () => {
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
       'FooInternal1': {count: 1, adds: ['txt:T']},
-      'Foo_Input3':   {count: 2, adds: ['url:U', 'ref:FooInternal1']},
+      'Foo_Input3':   {count: 2, adds: ['url:U', 'ref:R<FooInternal1>']},
       'Foo_Input2':   {count: 2, adds: ['txt:T', 'num:N']},
     });
   });
 
   it('supports all primitive types', async () => {
+    // TODO: test optional schema fields when supported
     const manifest = await Manifest.parse(`\
       particle Foo
         input: reads * {txt: Text, url: URL, num: Number, flg: Boolean}
@@ -87,10 +85,10 @@ describe('schema2wasm', () => {
     `);
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_H1':     {count: 2, adds: ['a:T', 'r:Foo_H1_R']},
+      'Foo_H1':     {count: 2, adds: ['a:T', 'r:R<Foo_H1_R>']},
       'Foo_H1_R':   {count: 1, adds: ['b:T']},
-      'Foo_H2':     {count: 1, adds: ['s:Foo_H2_S']},
-      'Foo_H2_S':   {count: 2, adds: ['f:B', 't:Foo_H2_S_T']},
+      'Foo_H2':     {count: 1, adds: ['s:R<Foo_H2_S>']},
+      'Foo_H2_S':   {count: 2, adds: ['f:B', 't:R<Foo_H2_S_T>']},
       'Foo_H2_S_T': {count: 1, adds: ['x:N']},
     });
   });

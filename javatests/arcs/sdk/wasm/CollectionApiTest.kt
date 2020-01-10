@@ -67,20 +67,17 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                 outHandle.store(d2)
 
                 // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
-                val res = mutableListOf<String>()
+                val sorted = arrayOfNulls<CollectionApiTest_IoHandle>(3)
                 for (data in ioHandle) {
-                    res.add("{${data.internalId}}, num: ${data.num.toInt()}")
+                    sorted[data.num.toInt()] = data
                 }
-
-                res
-                    .map { s: String ->
-                        CollectionApiTest_OutHandle(
-                            num = 0.0,
-                            txt = s,
-                            flg = false
-                        )
-                    }
-                    .forEach { h: CollectionApiTest_OutHandle -> outHandle.store(h) }
+                sorted.iterator().forEach {
+                    outHandle.store(CollectionApiTest_OutHandle(
+                        num = it!!.num,
+                        txt = it.internalId,
+                        flg = false
+                    ))
+                }
 
                 ioHandle.clear()
                 val d3 = CollectionApiTest_OutHandle(

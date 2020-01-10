@@ -138,7 +138,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // First renderSlot call is initiated by the runtime, before handles are synced.
       // With auto-render enabled, the second call occurs after sync and the third on handle update.
       assert.deepStrictEqual(slotComposer.received, [
-        ['AutoRenderTest', 'root', {template: 'empty', model: {}}],
+        ['AutoRenderTest', 'root', {template: '', model: {}}],
         ['AutoRenderTest', 'root', {template: 'initial', model: {}}],
         ['AutoRenderTest', 'root', {template: 'update', model: {}}],
       ]);
@@ -163,11 +163,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       assert.lengthOf(results, 4);
 
       const resolve = results.shift();
-      if (isKotlin) {
-        assert.deepStrictEqual(resolve, {call: 'resolveUrl', tag: '', payload: 'RESOLVED($resolve-me)'});
-      } else {
-        assert.deepStrictEqual(resolve, {call: 'resolveUrl', payload: 'RESOLVED($resolve-me)'});
-      }
+      assert.deepStrictEqual(resolve, {call: 'resolveUrl', tag: '', payload: 'RESOLVED($resolve-me)'});
 
       for (const tag of ['first', 'second']) {
         const random = results.shift();
@@ -247,20 +243,12 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // in.get(), out.set()
       await inStore.set({id: 'i3', rawData: {num: 4}});
       await sendEvent('case2');
-      if (isKotlin) {
-        assert.deepStrictEqual((await outStore.get()).rawData, {num: 8, txt: ''});
-      } else {
-        assert.deepStrictEqual((await outStore.get()).rawData, {num: 8});
-      }
+      assert.deepStrictEqual((await outStore.get()).rawData, {num: 8, txt: ''});
 
       // io.get()/set()
       await ioStore.set({id: 'i3', rawData: {num: 4}});
       await sendEvent('case3');
-      if (isKotlin) {
-        assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12, txt: ''});
-      } else {
-        assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12});
-      }
+      assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12, txt: ''});
     });
 
     it('collection storage API', async () => {
@@ -285,11 +273,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // in.empty(), in.size(), out.store()
       await inStore.store({id: 'id3', rawData: {num: 3}}, ['k3']);
       await sendEvent('case2');
-      if (isKotlin) {
-        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, txt: '', num: 1}]);
-      } else {
-        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, num: 1}]);
-      }
+      assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, txt: '', num: 1}]);
 
       // out.remove() - clears entity stored as the previous result
       await sendEvent('case3');
@@ -298,19 +282,11 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // in.begin(), in.end() and iterator methods
       // TODO(alxr): Extract out to be a C++ specific test case
       await sendEvent('case4');
-      if (isKotlin) {
-        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-          {txt: '{id3}, num: 3', num: 6, flg: true},
-          {txt: 'eq', num: 0, flg: false},
-          {txt: 'ne', num: 0, flg: true},
-        ]);
-      } else {
-        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-          {txt: '{id3}, num: 3', num: 6, flg: true},
-          {txt: 'eq', flg: false},
-          {txt: 'ne', flg: true},
-        ]);
-      }
+      assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
+        {txt: '{id3}, num: 3', num: 6, flg: true},
+        {txt: 'eq', num: 0, flg: false},
+        {txt: 'ne', num: 0, flg: true},
+      ]);
 
       // io.* and ranged iteration
       await ioStore.store({id: 'id4', rawData: {num: 0}}, ['k4']);
@@ -318,25 +294,14 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await ioStore.store({id: 'id6', rawData: {num: 2}}, ['k6']);
       await outStore.clearItemsForTesting();
       await sendEvent('case5');
-      if (isKotlin) {
-        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-          {num: 4, flg: false, txt: ''},               // store() an entity in addition to the 3 above
-          {num: 3, flg: false, txt: ''},               // remove() the entity
-          {txt: '{id4}, num: 0', num: 0, flg: false},  // ranged loop over the 3 entities above, using num to sort
-          {txt: '{id5}, num: 1', num: 0, flg: false},
-          {txt: '{id6}, num: 2', num: 0, flg: false},
-          {num: 0, flg: true, txt: ''},                // clear()
-        ]);
-      } else {
-        assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-          {num: 4, flg: false},      // store() an entity in addition to the 3 above
-          {num: 3},                  // remove() the entity
-          {txt: '{id4}, num: 0'},    // ranged loop over the 3 entities above, using num to sort
-          {txt: '{id5}, num: 1'},
-          {txt: '{id6}, num: 2'},
-          {num: 0, flg: true},       // clear()
-        ]);
-      }
+      assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
+        {num: 4, txt: '', flg: false},      // store() an entity in addition to the 3 above
+        {num: 3, txt: '', flg: false},      // remove() the entity
+        {num: 0, txt: 'id4', flg: false},   // ranged loop over the 3 entities above, using num to sort
+        {num: 1, txt: 'id5', flg: false},
+        {num: 2, txt: 'id6', flg: false},
+        {num: 0, txt: '', flg: true},       // clear()
+      ]);
     });
 
     // TODO: writing to reference-typed handles
@@ -361,16 +326,16 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // onHandleUpdate tests populated references handles.
       const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
       const backingStore = await volatileEngine.baseStorageFor(sng.type, volatileEngine.baseStorageKey(sng.type));
-      await backingStore.store({id: 'id1', rawData: {txt: 'ok'}}, ['key1']);
-      await backingStore.store({id: 'id2', rawData: {num: 23}}, ['key2']);
+      await backingStore.store({id: 'id1', rawData: {num: 6, txt: 'ok'}}, ['key1']);
+      await backingStore.store({id: 'id2', rawData: {num: 7, txt: 'ko'}}, ['key2']);
       const storageKey = backingStore.storageKey;
 
       // Singleton
       await sng.set({id: 'id1', storageKey});
       await arc.idle;
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        's::before <id1> !{}',              // before dereferencing: contained entity is empty
-        's::after <id1> {id1}, txt: ok'     // after: entity is populated, ids should match
+        's::before <id1> !{}',                      // before dereferencing: contained entity is empty
+        's::after <id1> {id1}, num: 6, txt: ok'     // after: entity is populated, ids should match
       ]);
       await res.clearItemsForTesting();
 
@@ -378,18 +343,18 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await col.store({id: 'id1', storageKey}, ['key1a']);
       await arc.idle;
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        'c::before <id1> !{}',              // ref to same entity as singleton; still empty in this handle
-        'c::after <id1> {id1}, txt: ok'
+        'c::before <id1> !{}',                      // ref to same entity as singleton; still empty in this handle
+        'c::after <id1> {id1}, num: 6, txt: ok'
       ]);
       await res.clearItemsForTesting();
 
       await col.store({id: 'id2', storageKey}, ['key2a']);
       await arc.idle;
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        'c::before <id1> {id1}, txt: ok',   // already populated by the previous deref
-        'c::after <id1> {id1}, txt: ok',
+        'c::before <id1> {id1}, num: 6, txt: ok',   // already populated by the previous deref
+        'c::after <id1> {id1}, num: 6, txt: ok',
         'c::before <id2> !{}',
-        'c::after <id2> {id2}, num: 23'
+        'c::after <id2> {id2}, num: 7, txt: ko'
       ]);
     });
 

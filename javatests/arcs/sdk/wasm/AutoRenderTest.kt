@@ -17,5 +17,5 @@ class AutoRenderTest : AbstractAutoRenderTest() {
     override fun init() = renderOutput()
     override fun onHandleUpdate(handle: Handle) = renderOutput()
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = renderOutput()
-    override fun getTemplate(slotName: String): String = data.get()?.txt ?: "empty"
+    override fun getTemplate(slotName: String): String = data.get()?.txt ?: ""
 }
