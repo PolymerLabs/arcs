@@ -459,7 +459,7 @@ arcs_manifest(
 )
 
 arcs_kt_schema(
-    name = "collections_entities",
+    name = "collections_schemas",
     srcs = ["Collections.arcs"],
     deps = [":shared_people_schemas"]
 )
