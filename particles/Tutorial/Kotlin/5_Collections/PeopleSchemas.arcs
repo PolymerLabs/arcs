@@ -1,0 +1,8 @@
+// Define a schema that allows us to store a person's name
+schema Person
+  name: Text
+
+// Defines a new Entity called PersonDetails, with two fields.
+schema PersonDetails
+  name: Text
+  age: Number

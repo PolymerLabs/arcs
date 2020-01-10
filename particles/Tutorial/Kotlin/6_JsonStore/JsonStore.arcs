@@ -1,10 +1,8 @@
 // Tutorial: JSON Store
 // Loads data stored in a JSON file.
 
-// Defines a new Entity called PersonDetails, with two fields.
-schema PersonDetails
-  name: Text
-  age: Number
+// Imports contents of another manifest via a relative path from this manifest.
+import 'PeopleSchemas.arcs'
 
 // Creates a data store of type PersonDetails, named PersonToGreetStore. The data will be loaded from the file data.json.
 store PersonToGreetStore of PersonDetails in 'data.json'
