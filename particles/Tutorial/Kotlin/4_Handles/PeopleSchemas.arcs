@@ -1,0 +1,4 @@
+// Define a schema that allows us to store a person's name
+schema Person
+  name: Text
+

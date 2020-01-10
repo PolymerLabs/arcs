@@ -432,7 +432,7 @@ load(
 # schema generation
 arcs_manifest(
     name = "shared_schemas",
-    srcs = ["CollectionsSchemas.arcs"]
+    srcs = [PersonDetails.arcs]
 )
 
 # Here, this rule generates entities for a target manifest. Only schemas used in a particle (or 
