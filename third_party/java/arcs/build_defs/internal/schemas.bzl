@@ -45,7 +45,7 @@ def _run_schema2wasm(name, src, deps, out, language_name, language_flag, package
     )
 
 # TODO: Specify the appropriate c++ package name, given the new repo structure
-def arcs_cc_schema(name, src, deps, out = None, package = "arcs"):
+def arcs_cc_schema(name, src, deps = [], out = None, package = "arcs"):
     """Generates a C++ header file for the given .arcs schema file."""
     _run_schema2wasm(
         name = name + "_genrule",
