@@ -11,18 +11,12 @@
 
 package arcs.tutorials
 
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-
 /**
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
-class JsonStore : Particle() {
-
-    private val res = Singleton(this, "inputData") { JsonStore_InputData() }
-
+class JsonStore : AbstractJsonStore() {
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val person = res.get() ?: JsonStore_InputData()
+        val person = inputData.get() ?: JsonStore_InputData()
 
         return model + mapOf(
             "name" to person.name,

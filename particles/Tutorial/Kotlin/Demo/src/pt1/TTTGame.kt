@@ -11,18 +11,10 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Collection
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-import arcs.sdk.TTTGame_Events
-import arcs.sdk.TTTGame_GameState
 
-class TTTGame : Particle() {
+class TTTGame : AbstractTTTGame() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
-
-    private val gameState = Singleton(this, "gameState") { TTTGame_GameState() }
-    private val events = Collection(this, "events") { TTTGame_Events() }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (gameState.get() == null) {

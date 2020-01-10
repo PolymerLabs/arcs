@@ -14,7 +14,7 @@ package arcs.test
 import arcs.sdk.Particle
 import arcs.sdk.log
 
-class ServiceParticle : Particle() {
+class ServiceParticle : AbstractServiceParticle() {
 
     private val url = resolveUrl("https://\$particles/Services/assets/waltbird.jpg")
     private var label = "<working>"

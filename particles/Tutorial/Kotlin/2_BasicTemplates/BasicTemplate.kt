@@ -1,11 +1,9 @@
 package arcs.tutorials
 
-import arcs.sdk.Particle
-
 /**
  * Sample WASM Particle.
  */
-class BasicTemplate : Particle() {
+class BasicTemplate : AbstractBasicTemplate() {
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         return model + mapOf(

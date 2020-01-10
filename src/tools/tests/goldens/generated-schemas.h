@@ -366,5 +366,5 @@ struct std::hash<arcs::Gold_Data> {
     return arcs::hash_entity(entity);
   }
 };
-
+// TODO: Generate particle base class.
 #endif

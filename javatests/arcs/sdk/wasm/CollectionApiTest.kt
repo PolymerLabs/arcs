@@ -11,70 +11,64 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Collection
-import arcs.sdk.Particle
-
-class CollectionApiTest : Particle() {
-    private val _in = Collection(this, "inHandle") { CollectionApiTest_InHandle() }
-    private val out = Collection(this, "outHandle") { CollectionApiTest_OutHandle() }
-    private val io = Collection(this, "ioHandle") { CollectionApiTest_IoHandle() }
+class CollectionApiTest : AbstractCollectionApiTest() {
     private val stored = CollectionApiTest_OutHandle()
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
             "case1" -> {
-                out.clear()
-                io.clear()
+                outHandle.clear()
+                ioHandle.clear()
             }
             "case2" -> {
-                stored.flg = _in.isEmpty()
-                stored.num = _in.size.toDouble()
-                out.store(stored)
+                stored.flg = inHandle.isEmpty()
+                stored.num = inHandle.size.toDouble()
+                outHandle.store(stored)
             }
             "case3" -> {
-                out.remove(stored)
+                outHandle.remove(stored)
             }
             "case4" -> {
                 val d1 = CollectionApiTest_OutHandle()
-                val iter = _in.iterator()
+                val iter = inHandle.iterator()
                 d1.flg = iter.hasNext()
                 val i1 = iter.next()
                 d1.txt = "{${i1.internalId}}, num: ${i1.num.toInt()}"
                 d1.num = i1.num.let { it * 2 }
-                out.store(d1)
+                outHandle.store(d1)
 
                 val d2 = CollectionApiTest_OutHandle()
                 d2.txt = "eq"
                 d2.flg = iter.hasNext()
-                out.store(d2)
+                outHandle.store(d2)
 
                 val d3 = CollectionApiTest_OutHandle()
                 d3.txt = "ne"
                 d3.flg = !iter.hasNext()
-                out.store(d3)
+                outHandle.store(d3)
             }
             "case5" -> {
                 val extra = CollectionApiTest_IoHandle()
 
                 extra.txt = "abc"
-                io.store(extra)
+                ioHandle.store(extra)
                 val d1 = CollectionApiTest_OutHandle(
-                    num = io.size.toDouble(),
+                    num = ioHandle.size.toDouble(),
                     txt = "",
-                    flg = io.isEmpty())
-                out.store(d1)
+                    flg = ioHandle.isEmpty())
+                outHandle.store(d1)
 
-                io.remove(extra)
+                ioHandle.remove(extra)
                 val d2 = CollectionApiTest_OutHandle(
-                    num = io.size.toDouble(),
+                    num = ioHandle.size.toDouble(),
                     txt = "",
                     flg = false
                 )
-                out.store(d2)
+                outHandle.store(d2)
 
                 // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
                 val res = mutableListOf<String>()
-                for (data in io) {
+                for (data in ioHandle) {
                     res.add("{${data.internalId}}, num: ${data.num.toInt()}")
                 }
 
@@ -86,15 +80,15 @@ class CollectionApiTest : Particle() {
                             flg = false
                         )
                     }
-                    .forEach { h: CollectionApiTest_OutHandle -> out.store(h) }
+                    .forEach { h: CollectionApiTest_OutHandle -> outHandle.store(h) }
 
-                io.clear()
+                ioHandle.clear()
                 val d3 = CollectionApiTest_OutHandle(
-                    num = io.size.toDouble(),
+                    num = ioHandle.size.toDouble(),
                     txt = "",
-                    flg = io.isEmpty()
+                    flg = ioHandle.isEmpty()
                 )
-                out.store(d3)
+                outHandle.store(d3)
             }
         }
     }

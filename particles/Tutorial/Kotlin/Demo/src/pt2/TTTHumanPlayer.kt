@@ -11,21 +11,9 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Collection
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-import arcs.sdk.TTTHumanPlayer_Events
-import arcs.sdk.TTTHumanPlayer_GameState
-import arcs.sdk.TTTHumanPlayer_MyMove
-import arcs.sdk.TTTHumanPlayer_Player
 
-class TTTHumanPlayer : Particle() {
-    private val gameState = Singleton(this, "gameState") { TTTHumanPlayer_GameState() }
-    private val events = Collection(this, "events") { TTTHumanPlayer_Events() }
-    private val myMove = Singleton(this, "myMove") { TTTHumanPlayer_MyMove() }
-    private val player = Singleton(this, "player") { TTTHumanPlayer_Player() }
-
+class TTTHumanPlayer : AbstractTTTHumanPlayer() {
     override fun onHandleUpdate(handle: Handle) {
         if (events.size <= 0) return
 

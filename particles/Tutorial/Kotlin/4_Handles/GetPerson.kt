@@ -11,15 +11,10 @@
 
 package arcs.tutorials
 
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-
 /**
  * Sample WASM Particle.
  */
-class GetPerson : Particle() {
-    private val person = Singleton(this, "person") { GetPerson_Person() }
-
+class GetPerson : AbstractGetPerson() {
     override fun getTemplate(slotName: String) = """
         <input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
         <div slotid="greetingSlot"></div>""".trimIndent()

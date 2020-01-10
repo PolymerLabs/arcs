@@ -11,11 +11,9 @@
 
 package arcs.tutorials
 
-import arcs.sdk.Particle
-
 /**
  * Sample WASM Particle.
  */
-class ChildParticle : Particle() {
+class ChildParticle : AbstractChildParticle() {
     override fun getTemplate(slotName: String) = "Child"
 }
