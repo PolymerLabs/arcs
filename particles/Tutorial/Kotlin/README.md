@@ -454,14 +454,14 @@ load(
 )
 
 arcs_manifest(
-    name = "shared_schemas",
-    srcs = [PersonDetails.arcs]
+    name = "shared_people_schemas",
+    srcs = ["PeopleSchemas.arcs"],
 )
 
 arcs_kt_schema(
     name = "collections_entities",
     srcs = ["Collections.arcs"],
-    deps = [":shared_schemas"]
+    deps = [":shared_people_schemas"]
 )
 
 arcs_kt_particles(
