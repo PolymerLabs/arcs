@@ -121,7 +121,9 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   // `options` may contain any of:
   // - keepSynced (bool): load full data on startup, maintain data in proxy and resync as required
   // - notifySync (bool): if keepSynced is true, call onHandleSync when the full data is received
-  // - notifyUpdate (bool): call onHandleUpdate for every change event received
+  // - notifyUpdate (bool): if keepSynced is true, call onHandleUpdate for every change event received
+  //     if the proxy is currently synchronized (i.e. updates received when desynced are ignored); if
+  //     keepSynced is false, just notify for all updates
   // - notifyDesync (bool): if keepSynced is true, call onHandleDesync when desync is detected
   // If both keepSynced and notifyUpdate are true, updates are only delivered while the proxy is synchronized.
   configure(options: {keepSynced?: boolean, notifySync?: boolean, notifyUpdate?: boolean, notifyDesync?: boolean}): void {

@@ -11,11 +11,11 @@
 import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 import {PropagatedException, SystemException} from '../arc-exceptions.js';
 import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
-import {Runnable, Dictionary} from '../hot.js';
+import {Runnable, Predicate} from '../hot.js';
 import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {EntityType, Type} from '../type.js';
-import {Handle} from './handle.js';
+import {Handle, HandleOptions} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
 
 /**
@@ -121,7 +121,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
       operations: [op],
     };
     await this.store.onProxyMessage(message);
-    this.notifyUpdate(op);
+    this.notifyUpdate(op, options => options.notifyUpdate);
     return true;
   }
 
@@ -166,6 +166,10 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         this.modelHasSynced();
         break;
       case ProxyMessageType.Operations: {
+        // Immediately notify any handles that are not configured with keepSynced but do want updates.
+        message.operations.forEach(
+            op => this.notifyUpdate(
+                op, options => !options.keepSynced && options.notifyUpdate));
         // Bail if we're not in synchronized mode.
         if (!this.keepSynced) {
           return false;
@@ -174,15 +178,15 @@ export class StorageProxy<T extends CRDTTypeRecord> {
           if (!this.crdt.applyOperation(op)) {
             // If we cannot cleanly apply ops, sync the whole model.
             this.clearSynchronized();
-            this.notifyUpdate(op);
             return this.requestSynchronization();
           }
-          if (this.synchronized === false) {
+          if (!this.synchronized) {
             // If we didn't think we were synchronized but the operation applied cleanly,
             // then actually we were synchronized after all. Tell the handle that.
             this.setSynchronized();
           }
-          this.notifyUpdate(op);
+          // Notify handles configured with keepSynced.
+          this.notifyUpdate(op, options => options.keepSynced && options.notifyUpdate);
         }
         break;
       }
@@ -196,11 +200,10 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return true;
   }
 
-  protected notifyUpdate(operation: CRDTOperation) {
+  protected notifyUpdate(operation: CRDTOperation, predicate: Predicate<HandleOptions>) {
     const version: VersionMap = this.versionCopy();
     for (const handle of this.handles) {
-      if (handle.options.notifyUpdate &&
-          (handle.options.keepSynced === false || this.synchronized)) {
+      if (predicate(handle.options)) {
         this.scheduler.enqueue(
             handle.particle,
             handle,
@@ -268,7 +271,7 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
   async onMessage(message: ProxyMessage<T>): Promise<boolean> {
     return new Promise(resolve => {});
   }
-  protected notifyUpdate(operation: CRDTOperation) {}
+  protected notifyUpdate(operation: CRDTOperation, predicate: Predicate<HandleOptions>) {}
 
   protected notifySync() {}
 

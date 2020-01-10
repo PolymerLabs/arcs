@@ -60,8 +60,11 @@ describe('StorageProxy', async () => {
     const mockStore = new MockStore<CRDTSingletonTypeRecord<Entity>>();
     const storageProxy = getStorageProxy(mockStore);
 
-    // Register a handle.
-    const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
+    // Register a keepSynced handle and a !keepSynced one.
+    const handle1 = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
+    handle1.configure({keepSynced: true, notifyUpdate: true});
+    const handle2 = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
+    handle2.configure({keepSynced: false, notifyUpdate: true});
     // At this point the storage proxy has requested a sync but it is still not
     // synchronized (as we did not pass any data to the mockStore).
 
@@ -69,14 +72,15 @@ describe('StorageProxy', async () => {
       type: SingletonOpTypes.Set,
       value: {id: 'e1'},
       actor: 'A',
-      clock: {A: 1}
+      clock: {A: 2}
     };
-    const result = await storageProxy.applyOp(op);
+    const result = await storageProxy.onMessage(
+        {type: ProxyMessageType.Operations, operations: [op], id: 1});
     assert.isTrue(result);
     await storageProxy.idle();
-    // No updates were sent because the handle has keepSynced=true and the proxy
-    // was not synchronized.
-    assert.isNull(handle.lastUpdate);
+    // Only handle2 is notified as the proxy is not synchronized.
+    assert.isNull(handle1.lastUpdate);
+    assert.sameDeepMembers(handle2.lastUpdate, [op, {}]);
   });
 
   it('will sync if desynced before returning the particle view', async () => {
