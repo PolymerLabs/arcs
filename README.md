@@ -179,7 +179,7 @@ To verify ANDROID_HOME has been set properly, you can run
 Once your Android environment has been setup, you can run the tests
 using bazel:
 ```
-bazel test javatests/... javaharness/javatests/...
+bazel test javatests/...
 ```
 
 ### Debugging tests

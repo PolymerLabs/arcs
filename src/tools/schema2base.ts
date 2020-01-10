@@ -16,8 +16,7 @@ import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
 export interface ClassGenerator {
-  addField(field: string, typeChar: string): void;
-  addReference(field: string, refName: string): void;
+  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null): void;
   generate(schemaHash: string, fieldCount: number): string;
 }
 
@@ -81,18 +80,16 @@ export abstract class Schema2Base {
         for (const [field, descriptor] of fields) {
           if (descriptor.kind === 'schema-primitive') {
             if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
-              generator.addField(field, descriptor.type[0]);
+              generator.addField(field, descriptor.type[0], false, null);
             } else {
               throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
             }
           } else if (descriptor.kind === 'schema-reference') {
-            generator.addReference(field, node.refs.get(field).name);
+            generator.addField(field, 'R', false, node.refs.get(field).name);
           } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
             // TODO: support collections of references
           } else {
-            console.log(`Schema type for field '${field}' is not supported:`);
-            console.dir(descriptor, {depth: null});
-            process.exit(1);
+            throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
           }
         }
         classes.push(generator.generate(await node.schema.hash(), fields.length));

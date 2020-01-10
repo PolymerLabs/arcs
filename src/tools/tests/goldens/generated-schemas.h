@@ -2,6 +2,9 @@
 #define _ARCS_GOLDEN_H
 
 // GENERATED CODE - DO NOT EDIT
+#ifndef _ARCS_H
+#error arcs.h must be included before entity class headers
+#endif
 
 namespace arcs {
 
@@ -21,8 +24,6 @@ public:
 
   const std::string& val() const { return val_; }
   void set_val(const std::string& value) { val_ = value; val_valid_ = true; }
-  void clear_val() { val_ = ""; val_valid_ = false; }
-  bool has_val() const { return val_valid_; }
 
   // Equality ops compare internal ids and all data fields.
   // Use arcs::fields_equal() to compare only the data fields.
@@ -31,14 +32,13 @@ public:
 
   // For STL containers.
   friend bool operator<(const GoldInternal1& a, const GoldInternal1& b) {
-    int cmp = a._internal_id_.compare(b._internal_id_);
-    if (cmp != 0) return cmp < 0;
-    if (a.val_valid_ != b.val_valid_) {
-      return !a.val_valid_;
-    } else {
-      cmp = a.val_.compare(b.val_);
-      if (cmp != 0) return cmp < 0;
-    };
+    if (int cmp = a._internal_id_.compare(b._internal_id_)) {
+      return cmp < 0;
+    }
+    if (0) {
+    } else if (int cmp = a.val_.compare(b.val_)) {
+      return cmp < 0;
+    }
     return false;
   }
 
@@ -76,14 +76,13 @@ template<>
 inline size_t internal::Accessor::hash_entity(const GoldInternal1& entity) {
   size_t h = 0;
   internal::hash_combine(h, entity._internal_id_);
-  if (entity.val_valid_)
-    internal::hash_combine(h, entity.val_);
+  internal::hash_combine(h, entity.val_);
   return h;
 }
 
 template<>
 inline bool internal::Accessor::fields_equal(const GoldInternal1& a, const GoldInternal1& b) {
-  return (a.val_valid_ ? (b.val_valid_ && a.val_ == b.val_) : !b.val_valid_);
+  return (a.val_ == b.val_);
 }
 
 inline bool GoldInternal1::operator==(const GoldInternal1& other) const {
@@ -94,8 +93,7 @@ template<>
 inline std::string internal::Accessor::entity_to_str(const GoldInternal1& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id_);
-  if (entity.val_valid_)
-    printer.add("val: ", entity.val_);
+  if (entity.val_valid_) printer.add("val: ", entity.val_);
   return printer.result(join);
 }
 
@@ -121,8 +119,7 @@ template<>
 inline std::string internal::Accessor::encode_entity(const GoldInternal1& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id_);
-  if (entity.val_valid_)
-    encoder.encode("val:T", entity.val_);
+  encoder.encode("val:T", entity.val_);
   return encoder.result();
 }
 
@@ -152,31 +149,23 @@ public:
     txt_(other.txt()), txt_valid_(other.has_txt()),
     lnk_(other.lnk()), lnk_valid_(other.has_lnk()),
     flg_(other.flg()), flg_valid_(other.has_flg()),
-    ref_(other.ref())
+    ref_(other.ref()), ref_valid_(other.has_ref())
   {}
 
   double num() const { return num_; }
   void set_num(double value) { num_ = value; num_valid_ = true; }
-  void clear_num() { num_ = 0; num_valid_ = false; }
-  bool has_num() const { return num_valid_; }
 
   const std::string& txt() const { return txt_; }
   void set_txt(const std::string& value) { txt_ = value; txt_valid_ = true; }
-  void clear_txt() { txt_ = ""; txt_valid_ = false; }
-  bool has_txt() const { return txt_valid_; }
 
   const URL& lnk() const { return lnk_; }
   void set_lnk(const URL& value) { lnk_ = value; lnk_valid_ = true; }
-  void clear_lnk() { lnk_ = ""; lnk_valid_ = false; }
-  bool has_lnk() const { return lnk_valid_; }
 
   bool flg() const { return flg_; }
   void set_flg(bool value) { flg_ = value; flg_valid_ = true; }
-  void clear_flg() { flg_ = false; flg_valid_ = false; }
-  bool has_flg() const { return flg_valid_; }
 
   const Ref<GoldInternal1>& ref() const { return ref_; }
-  void bind_ref(const GoldInternal1& value) { internal::Accessor::bind(&ref_, value); }
+  void set_ref(const GoldInternal1& value) { internal::Accessor::bind(&ref_, value); }
 
   // Equality ops compare internal ids and all data fields.
   // Use arcs::fields_equal() to compare only the data fields.
@@ -185,33 +174,29 @@ public:
 
   // For STL containers.
   friend bool operator<(const Gold_Data& a, const Gold_Data& b) {
-    int cmp = a._internal_id_.compare(b._internal_id_);
-    if (cmp != 0) return cmp < 0;
-    if (a.num_valid_ != b.num_valid_) {
-      return !a.num_valid_;
+    if (int cmp = a._internal_id_.compare(b._internal_id_)) {
+      return cmp < 0;
+    }
+    if (0) {
     } else if (a.num_ != b.num_) {
       return a.num_ < b.num_;
     }
-    if (a.txt_valid_ != b.txt_valid_) {
-      return !a.txt_valid_;
-    } else {
-      cmp = a.txt_.compare(b.txt_);
-      if (cmp != 0) return cmp < 0;
+    if (0) {
+    } else if (int cmp = a.txt_.compare(b.txt_)) {
+      return cmp < 0;
     }
-    if (a.lnk_valid_ != b.lnk_valid_) {
-      return !a.lnk_valid_;
-    } else {
-      cmp = a.lnk_.compare(b.lnk_);
-      if (cmp != 0) return cmp < 0;
+    if (0) {
+    } else if (int cmp = a.lnk_.compare(b.lnk_)) {
+      return cmp < 0;
     }
-    if (a.flg_valid_ != b.flg_valid_) {
-      return !a.flg_valid_;
+    if (0) {
     } else if (a.flg_ != b.flg_) {
       return a.flg_ < b.flg_;
     }
-    if (a.ref_ != b.ref_) {
+    if (0) {
+    } else if (a.ref_ != b.ref_) {
       return a.ref_ < b.ref_;
-    };
+    }
     return false;
   }
 
@@ -235,7 +220,8 @@ protected:
   bool flg_ = false;
   bool flg_valid_ = false;
 
-  Ref<GoldInternal1> ref_;
+  Ref<GoldInternal1> ref_ = {};
+  bool ref_valid_ = false;
 
   std::string _internal_id_;
 
@@ -257,6 +243,7 @@ inline Gold_Data internal::Accessor::clone_entity(const Gold_Data& entity) {
   clone.flg_ = entity.flg_;
   clone.flg_valid_ = entity.flg_valid_;
   clone.ref_ = entity.ref_;
+  clone.ref_valid_ = entity.ref_valid_;
   return clone;
 }
 
@@ -264,25 +251,20 @@ template<>
 inline size_t internal::Accessor::hash_entity(const Gold_Data& entity) {
   size_t h = 0;
   internal::hash_combine(h, entity._internal_id_);
-  if (entity.num_valid_)
-    internal::hash_combine(h, entity.num_);
-  if (entity.txt_valid_)
-    internal::hash_combine(h, entity.txt_);
-  if (entity.lnk_valid_)
-    internal::hash_combine(h, entity.lnk_);
-  if (entity.flg_valid_)
-    internal::hash_combine(h, entity.flg_);
-  if (entity.ref_._internal_id_ != "")
-    internal::hash_combine(h, entity.ref_);
+  internal::hash_combine(h, entity.num_);
+  internal::hash_combine(h, entity.txt_);
+  internal::hash_combine(h, entity.lnk_);
+  internal::hash_combine(h, entity.flg_);
+  internal::hash_combine(h, entity.ref_);
   return h;
 }
 
 template<>
 inline bool internal::Accessor::fields_equal(const Gold_Data& a, const Gold_Data& b) {
-  return (a.num_valid_ ? (b.num_valid_ && a.num_ == b.num_) : !b.num_valid_) &&
-         (a.txt_valid_ ? (b.txt_valid_ && a.txt_ == b.txt_) : !b.txt_valid_) &&
-         (a.lnk_valid_ ? (b.lnk_valid_ && a.lnk_ == b.lnk_) : !b.lnk_valid_) &&
-         (a.flg_valid_ ? (b.flg_valid_ && a.flg_ == b.flg_) : !b.flg_valid_) &&
+  return (a.num_ == b.num_) &&
+         (a.txt_ == b.txt_) &&
+         (a.lnk_ == b.lnk_) &&
+         (a.flg_ == b.flg_) &&
          (a.ref_ == b.ref_);
 }
 
@@ -294,16 +276,11 @@ template<>
 inline std::string internal::Accessor::entity_to_str(const Gold_Data& entity, const char* join) {
   internal::StringPrinter printer;
   printer.addId(entity._internal_id_);
-  if (entity.num_valid_)
-    printer.add("num: ", entity.num_);
-  if (entity.txt_valid_)
-    printer.add("txt: ", entity.txt_);
-  if (entity.lnk_valid_)
-    printer.add("lnk: ", entity.lnk_);
-  if (entity.flg_valid_)
-    printer.add("flg: ", entity.flg_);
-  if (entity.ref_._internal_id_ != "")
-    printer.add("ref: ", entity.ref_);
+  if (entity.num_valid_) printer.add("num: ", entity.num_);
+  if (entity.txt_valid_) printer.add("txt: ", entity.txt_);
+  if (entity.lnk_valid_) printer.add("lnk: ", entity.lnk_);
+  if (entity.flg_valid_) printer.add("flg: ", entity.flg_);
+  if (entity.ref_valid_) printer.add("ref: ", entity.ref_);
   return printer.result(join);
 }
 
@@ -335,6 +312,7 @@ inline void internal::Accessor::decode_entity(Gold_Data* entity, const char* str
     } else if (name == "ref") {
       decoder.validate("R");
       decoder.decode(entity->ref_);
+      entity->ref_valid_ = true;
     }
     decoder.validate("|");
   }
@@ -344,16 +322,11 @@ template<>
 inline std::string internal::Accessor::encode_entity(const Gold_Data& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id_);
-  if (entity.num_valid_)
-    encoder.encode("num:N", entity.num_);
-  if (entity.txt_valid_)
-    encoder.encode("txt:T", entity.txt_);
-  if (entity.lnk_valid_)
-    encoder.encode("lnk:U", entity.lnk_);
-  if (entity.flg_valid_)
-    encoder.encode("flg:B", entity.flg_);
-  if (entity.ref_._internal_id_ != "")
-    encoder.encode("ref:R", entity.ref_);
+  encoder.encode("num:N", entity.num_);
+  encoder.encode("txt:T", entity.txt_);
+  encoder.encode("lnk:U", entity.lnk_);
+  encoder.encode("flg:B", entity.flg_);
+  encoder.encode("ref:R", entity.ref_);
   return encoder.result();
 }
 

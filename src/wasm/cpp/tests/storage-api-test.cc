@@ -71,13 +71,14 @@ public:
       outHandle_.store(d2);
 
       // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
-      std::string res[3];
+      const arcs::CollectionApiTest_IoHandle* sorted[3];
       for (const arcs::CollectionApiTest_IoHandle& data : ioHandle_) {
-        res[static_cast<int>(data.num())] = arcs::entity_to_str(data);
+        sorted[static_cast<int>(data.num())] = &data;
       }
-      for (size_t i = 0; i < ioHandle_.size(); i++) {
+      for (size_t i = 0; i < 3; i++) {
         arcs::CollectionApiTest_OutHandle d;
-        d.set_txt(res[i]);
+        d.set_num(i);
+        d.set_txt(Accessor::get_id(*sorted[i]));
         outHandle_.store(d);
       }
 
@@ -151,7 +152,7 @@ public:
 
       arcs::SchemaReferenceFieldsTest_Output data = arcs::clone_entity(input_.get());
       data.set_txt("xyz");
-      data.bind_ref(foo);
+      data.set_ref(foo);
 
       output_.set(data);
     });
