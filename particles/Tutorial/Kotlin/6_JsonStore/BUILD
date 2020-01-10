@@ -7,17 +7,16 @@ load(
 
 licenses(["notice"])
 
-
 arcs_manifest(
     name = "shared_people_schemas",
-    srcs = ["PeopleSchemas.arcs"]
+    srcs = ["PeopleSchemas.arcs"],
 )
 
 arcs_kt_schema(
     name = "store_schemas",
     srcs = ["JsonStore.arcs"],
-    deps = [":shared_people_schemas"],
     package = "arcs.tutorials",
+    deps = [":shared_people_schemas"],
 )
 
 arcs_kt_particles(
