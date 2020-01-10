@@ -189,9 +189,9 @@ class ${name}_Spec() : EntitySpec<${name}> {
         if (encoded.isEmpty()) return null
 
         val decoder = StringDecoder(encoded)
-        decoder.validate("|")
         val entity = create().apply {
             internalId = decoder.decodeText()
+            decoder.validate("|")
             ${withFields(`for (_i in 0 until ${fieldCount}) {
                 if (decoder.done()) break
                 val name = decoder.upTo(':').utf8ToString()

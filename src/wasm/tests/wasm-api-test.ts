@@ -225,7 +225,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     // TODO - check that writing to read-only handles throws and vice versa
-    it('singleton storage API', async () => {
+    it.only('singleton storage API', async () => {
       const {arc, stores} = await setup('SingletonApiTest');
       const inStore = stores.get('inHandle') as VolatileSingleton;
       const outStore = stores.get('outHandle') as VolatileSingleton;

@@ -13,12 +13,12 @@ package arcs.sdk.wasm
 
 import arcs.sdk.Singleton
 
-class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
-    TestBase<EntityClassApiTest_Errors>(ctor) {
-    private val unused1 = Singleton(this, "data") { EntityClassApiTest_Data() }
-    private val unused2 = Singleton(this, "empty") { EntityClassApiTest_Empty() }
-
-    constructor() : this({ txt: String -> EntityClassApiTest_Errors(txt) })
+class EntityClassApiTest : TestBase<EntityClassApiTest_Errors>(
+    { txt: String -> EntityClassApiTest_Errors(txt) },
+    EntityClassApiTest_Errors_Spec()
+) {
+    private val unused1 = Singleton(this, "data", EntityClassApiTest_Data_Spec())
+    private val unused2 = Singleton(this, "empty", EntityClassApiTest_Empty_Spec())
 
     /** Run tests on particle initialization */
     override fun init() {
@@ -82,12 +82,7 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
     fun testEncodingDecoding() {
         val empty = EntityClassApiTest_Data()
         val encodedEmpty = empty.encodeEntity()
-        val decodedEmpty = EntityClassApiTest_Data(
-            num = 10.0,
-            txt = "20",
-            lnk = "https://thirty.net",
-            flg = true
-        ).decodeEntity(encodedEmpty.bytes)
+        val decodedEmpty = EntityClassApiTest_Data_Spec().decode(encodedEmpty.bytes)
         assertEquals(
             "Encoding and Decoding an empty entity results in the same entity",
             empty,
@@ -101,12 +96,7 @@ class EntityClassApiTest(ctor: (String) -> EntityClassApiTest_Errors) :
             flg = true
         )
         val encodedFull = full.encodeEntity()
-        val decodedFull = EntityClassApiTest_Data(
-            num = 10.0,
-            txt = "20",
-            lnk = "https://thirty.net",
-            flg = true
-        ).decodeEntity(encodedFull.bytes)
+        val decodedFull = EntityClassApiTest_Data_Spec().decode(encodedFull.bytes)
         assertEquals(
             "Encoding and Decoding an full entity results in the same entity",
             full,

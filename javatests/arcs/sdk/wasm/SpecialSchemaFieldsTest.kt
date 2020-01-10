@@ -14,12 +14,13 @@ package arcs.sdk.wasm
 import arcs.sdk.Singleton
 import arcs.sdk.utf8ToString
 
-class SpecialSchemaFieldsTest(
-    ctor: (String) -> SpecialSchemaFieldsTest_Errors
-) : TestBase<SpecialSchemaFieldsTest_Errors>(ctor) {
-    private val unused = Singleton(this, "fields") { SpecialSchemaFieldsTest_Fields() }
-
-    constructor() : this({ txt: String -> SpecialSchemaFieldsTest_Errors(txt) })
+class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
+    { txt: String -> SpecialSchemaFieldsTest_Errors(txt) },
+    SpecialSchemaFieldsTest_Errors_Spec()
+) {
+    private val unused = Singleton(
+        this, "fields", SpecialSchemaFieldsTest_Fields_Spec()
+    )
 
     /** Run tests on particle initialization */
     override fun init() {
