@@ -50,10 +50,7 @@ Finally, we need a 'BUILD' file. Arcs particles can be built using Bazel rules. 
 
 ```BUILD
 # Required imports
-load(
-    "//build_defs:build_defs.bzl",
-    "arcs_kt_particles"
-)
+load("//build_defs:build_defs.bzl", "arcs_kt_particles")
 
 # Arcs Kotlin particle build rule
 arcs_kt_particles(
