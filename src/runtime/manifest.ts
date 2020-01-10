@@ -847,7 +847,9 @@ ${e.message}
       if (item.kind === 'handle' && item.annotation) {
         assert(item.annotation.simpleAnnotation === 'ttl',
                `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
-        handle.ttl = Ttl.fromString(item.annotation.parameter);
+        handle.ttl = new Ttl(
+            item.annotation.parameter.count,
+            Ttl.ttlUnitsFromString(item.annotation.parameter.units));
       }
       items.byHandle.set(handle, item);
     }

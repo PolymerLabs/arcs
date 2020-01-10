@@ -24,9 +24,18 @@ export class Ttl {
   public static fromString(ttlStr: string): Ttl {
     const ttlTokens = ttlStr.match(/([0-9]+)([d|h|m])/);
     assert(ttlTokens.length === 3, `Invalid ttl: ${ttlStr}`);
-    return  new Ttl(Number(ttlTokens[1]),
-        ttlTokens[2] === 'm' ? TtlUnits.Minute : ttlTokens[2] === 'h'
-            ? TtlUnits.Hour : TtlUnits.Day);
+    return new Ttl(Number(ttlTokens[1]), Ttl.ttlUnitsFromString(ttlTokens[2]));
+  }
+
+  public static ttlUnitsFromString(units: string): TtlUnits|undefined {
+    switch (units) {
+      case 'm': return TtlUnits.Minute;
+      case 'h': return TtlUnits.Hour;
+      case 'd': return TtlUnits.Day;
+      default:
+        assert(`Unsupported ttl units ${units}`);
+        return undefined;
+    }
   }
 
   calculateExpiration(start: Date = new Date()): Date {

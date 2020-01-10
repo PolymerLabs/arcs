@@ -644,10 +644,16 @@ export interface Annotation extends BaseNode {
   simpleAnnotation?: string;
 }
 
-export interface ParameterizedAnnotation extends BaseNode{
+export interface ParameterizedAnnotation extends BaseNode {
   kind: 'param-annotation';
   simpleAnnotation: string;
-  parameter: string;
+  parameter: NumberedUnits;
+}
+
+export interface NumberedUnits extends BaseNode {
+  kind: 'numbered-units';
+  count: number;
+  units: string;
 }
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.

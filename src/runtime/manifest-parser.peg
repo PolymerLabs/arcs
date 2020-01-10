@@ -153,11 +153,11 @@ Trigger "a trigger for a recipe"
 }
 
 ParameterizedAnnotation "a parameterized annotation (e.g. @foo(bar))"
-  = simpleAnnotation:SimpleAnnotation whiteSpace? '(' whiteSpace? parameter:[a-z0-9_]i* whiteSpace? ')' {
+  = simpleAnnotation:SimpleAnnotation whiteSpace? '(' whiteSpace? parameter:NumberedUnits whiteSpace? ')' {
   return toAstNode<AstNode.ParameterizedAnnotation>({
     kind: 'param-annotation',
     simpleAnnotation,
-    parameter: parameter.join(''),
+    parameter,
   });
 }
 
@@ -1437,6 +1437,16 @@ Version "a version number (e.g. @012)"
   = '@' version:[^ ]+
   {
     return version.join('');
+  }
+
+NumberedUnits
+  = count:[0-9]+ units:[a-z]
+  {
+    return toAstNode<AstNode.NumberedUnits>({
+      kind: 'numbered-units',
+      count: count.join(''),
+      units
+    });
   }
 
 Indent "indentation" = &(i:" "+ &{
