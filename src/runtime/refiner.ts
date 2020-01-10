@@ -319,19 +319,13 @@ export class Range {
   private _segments: Segment[] = [];
 
   constructor(segs: Segment[] = []) {
-    this.segments = segs;
+    for (const seg of segs) {
+      this.unionWithSeg(seg);
+    }
   }
 
   get segments() {
     return this._segments;
-  }
-
-  set segments(segs: Segment[]) {
-    Range.validateSegments(segs);
-    this._segments = [];
-    for (const subRange of segs) {
-      this.segments.push(new Segment(subRange.from, subRange.to));
-    }
   }
 
   static validateSegments(segs: Segment[]): void {
@@ -409,7 +403,15 @@ export class Range {
   }
 
   equals(range: Range): boolean {
-    return JSON.stringify(this) === JSON.stringify(range);
+    if (this.segments.length !== range.segments.length) {
+      return false;
+    }
+    for (let i = 0; i < this.segments.length; i++) {
+      if (!this.segments[i].equals(range.segments[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   isSubsetOf(range: Range): boolean {
@@ -429,7 +431,7 @@ export class Range {
       dup.intersectWithSeg(seg);
       newRange.union(dup);
     }
-    this.segments = newRange.segments;
+    this._segments = newRange.segments;
   }
 
   unionWithSeg(seg: Segment): void {
@@ -473,7 +475,7 @@ export class Range {
         newRange.segments.push(Segment.overlap(seg, subRange));
       }
     }
-    this.segments = newRange.segments;
+    this._segments = newRange.segments;
   }
 
   static makeInitialGivenOp(op: string, val: ExpressionPrimitives): Range {
@@ -557,6 +559,13 @@ export class Segment {
   static openClosed(from: number, to: number): Segment {
     const seg = new Segment({val: from, kind: 'open'}, {val: to, kind: 'closed'});
     return seg;
+  }
+
+  equals(seg: Segment): boolean {
+    return this.from.kind === seg.from.kind &&
+      this.from.val === seg.from.val &&
+      this.to.kind === seg.to.kind &&
+      this.to.val === seg.to.val;
   }
 
   // If strict is false, (a,x) is NOT less than [x,b)
