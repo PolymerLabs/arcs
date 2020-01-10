@@ -103,4 +103,21 @@ class ResurrectionHelperTest {
                 expectedIntent.getStringArrayListExtra(EXTRA_REGISTRATION_NOTIFIERS)
             )
     }
+
+    @Test
+    fun cancelResurrectionRequest() {
+        helper.cancelResurrectionRequest(ResurrectionHelperDummyService::class.java)
+
+        val actualIntent = shadowOf(ApplicationProvider.getApplicationContext<Application>())
+            .nextStartedService
+        val expectedIntent = Intent(context, ResurrectionHelperDummyService::class.java).also {
+            ResurrectionRequest.createDefault(context, emptyList()).populateUnrequestIntent(it)
+        }
+
+        assertThat(actualIntent.action).isEqualTo(expectedIntent.action)
+        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
+            .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
+        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
+            .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
+    }
 }

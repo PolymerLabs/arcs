@@ -9,6 +9,11 @@ alias(
     actual = "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
 )
 
+alias(
+    name = "kotlinx_coroutines_android",
+    actual = "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_android",
+)
+
 kt_js_import(
     name = "kotlinx_coroutines-js",
     jars = [

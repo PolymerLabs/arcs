@@ -13,5 +13,6 @@ kt_android_library(
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/referencemode",
         "//third_party/java/androidx/annotation",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_android",
     ],
 )

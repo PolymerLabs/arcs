@@ -163,4 +163,62 @@ class ResurrectionRequestTest {
         }
         assertThat(ResurrectionRequest.createFromIntent(intent)).isNull()
     }
+
+    @Test
+    fun componentNameFromUnrequestIntent_returnsNull_ifWrongAction() {
+        val intent = Intent().apply {
+            action = "Not what we were looking for"
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_PACKAGE_NAME, "com.google.test")
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_CLASS_NAME, "MyService")
+        }
+        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent)).isNull()
+    }
+
+    @Test
+    fun componentNameFromUnrequestIntent_returnsNull_ifNoExtras() {
+        val intent = Intent().apply {
+            action = ResurrectionRequest.ACTION_REQUEST_NO_RESURRECTION
+        }
+        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent)).isNull()
+    }
+
+    @Test
+    fun componentNameFromUnrequestIntent_returnsNull_ifMissingPackagename() {
+        val intent = Intent().apply {
+            action = ResurrectionRequest.ACTION_REQUEST_NO_RESURRECTION
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_CLASS_NAME, "MyService")
+        }
+        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent)).isNull()
+    }
+
+    @Test
+    fun componentNameFromUnrequestIntent_returnsNull_ifMissingClassName() {
+        val intent = Intent().apply {
+            action = ResurrectionRequest.ACTION_REQUEST_NO_RESURRECTION
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_PACKAGE_NAME, "com.google.test")
+        }
+        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent)).isNull()
+    }
+
+    @Test
+    fun componentNameFromUnrequestIntent() {
+        val intent = Intent().apply {
+            action = ResurrectionRequest.ACTION_REQUEST_NO_RESURRECTION
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_PACKAGE_NAME, "com.google.test")
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_CLASS_NAME, "MyService")
+        }
+        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent))
+            .isEqualTo(ComponentName("com.google.test", "MyService"))
+    }
+
+    @Test
+    fun populateRequestIntent() {
+        val request = ResurrectionRequest.createDefault(activity.activity, emptyList())
+        val intent = Intent()
+        request.populateUnrequestIntent(intent)
+
+        val componentName = ResurrectionRequest.componentNameFromUnrequestIntent(intent)
+
+        assertThat(componentName).isEqualTo(request.componentName)
+    }
 }

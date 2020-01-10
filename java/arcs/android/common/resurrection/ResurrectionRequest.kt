@@ -58,6 +58,17 @@ data class ResurrectionRequest(
         }
     }
 
+    /**
+     * Populates an [intent] with actions/extras needed to unsubscribe for resurrection.
+     */
+    fun populateUnrequestIntent(intent: Intent) {
+        intent.apply {
+            action = ACTION_REQUEST_NO_RESURRECTION
+            putExtra(EXTRA_REGISTRATION_PACKAGE_NAME, componentName.packageName)
+            putExtra(EXTRA_REGISTRATION_CLASS_NAME, componentName.className)
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -109,6 +120,7 @@ data class ResurrectionRequest(
         const val EXTRA_RESURRECT_NOTIFIER = "arcs.android.common.resurrection.RESURRECT_NOTIFIER"
 
         const val ACTION_REQUEST_RESURRECTION = "arcs.android.common.resurrection.REQUEST"
+        const val ACTION_REQUEST_NO_RESURRECTION = "arcs.android.common.resurrection.UNREQUEST"
         const val EXTRA_REGISTRATION_PACKAGE_NAME = "registration_intent_package_name"
         const val EXTRA_REGISTRATION_CLASS_NAME = "registration_intent_class_name"
         const val EXTRA_REGISTRATION_COMPONENT_TYPE = "registration_intent_component_type"
@@ -164,6 +176,21 @@ data class ResurrectionRequest(
                 extras.getParcelable(EXTRA_REGISTRATION_EXTRAS),
                 notifiers
             )
+        }
+
+        /**
+         * Given an [intent] received by the [ResurrectorService] from a client, if it's a request
+         * to unsubscribe from resurrection - gets the component name of the component wishing to
+         * unsubscribe.
+         */
+        @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+        fun componentNameFromUnrequestIntent(intent: Intent?): ComponentName? {
+            if (intent?.action?.startsWith(ACTION_REQUEST_NO_RESURRECTION) != true) return null
+            val extras = intent.extras ?: return null
+            val packageName = extras.getString(EXTRA_REGISTRATION_PACKAGE_NAME) ?: return null
+            val className = extras.getString(EXTRA_REGISTRATION_CLASS_NAME) ?: return null
+
+            return ComponentName(packageName, className)
         }
     }
 }

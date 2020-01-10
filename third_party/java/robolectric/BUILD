@@ -2,9 +2,11 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-alias(
+java_library(
     name = "robolectric",
-    actual = "@maven//:org_robolectric_robolectric",
+    exports = [
+        "@maven//:org_robolectric_robolectric",
+    ]
 )
 
 java_library(

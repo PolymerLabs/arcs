@@ -126,7 +126,7 @@ KOTLINX_ATOMICFU_VERSION = "0.13.1"
 
 KOTLINX_COROUTINES_VERSION = "1.3.2"
 
-ROBOLECTRIC_VERSION = "4.3.1"
+ROBOLECTRIC_VERSION = "4.1"
 
 maven_install(
     artifacts = [
@@ -153,6 +153,7 @@ maven_install(
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
         "javax.inject:javax.inject:1",
         "junit:junit:4.11",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-android:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-test:" + KOTLINX_COROUTINES_VERSION,

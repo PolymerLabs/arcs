@@ -64,6 +64,9 @@ class ResurrectionHelper(
     /**
      * Issue a request to be resurrected by the [StorageService] whenever the data identified by
      * the provided [keys] changes.
+     *
+     * **Note:** This will overwrite any previous request. In other words, [keys] should be
+     * an exhaustive list of the [StorageKey]s the caller is interested in.
      */
     fun requestResurrection(
         keys: List<StorageKey>,
@@ -72,6 +75,16 @@ class ResurrectionHelper(
         val intent = Intent(context, serviceClass)
         val request = ResurrectionRequest.createDefault(context, keys)
         request.populateRequestIntent(intent)
+        context.startService(intent)
+    }
+
+    /**
+     * Issue a request to cancel any outstanding request for resurrection from the [StorageService].
+     */
+    fun cancelResurrectionRequest(serviceClass: Class<out Service> = StorageService::class.java) {
+        val intent = Intent(context, serviceClass)
+        val request = ResurrectionRequest.createDefault(context, emptyList())
+        request.populateUnrequestIntent(intent)
         context.startService(intent)
     }
 }

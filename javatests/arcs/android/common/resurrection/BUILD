@@ -14,17 +14,20 @@ kt_android_library(
     srcs = [
         "ClientActivity.kt",
         "ClientService.kt",
+        "ResurrectorServiceImpl.kt",
     ],
     manifest = "AndroidManifest.xml",
     visibility = ["//visibility:private"],
+    deps = [
+        "//java/arcs/android/common/resurrection",
+        "//java/arcs/core/storage:storage_key",
+        "//java/arcs/sdk/android/storage",
+    ],
 )
 
 arcs_kt_android_test_suite(
     name = "resurrection",
-    srcs = [
-        "DbHelperTest.kt",
-        "ResurrectionRequestTest.kt",
-    ],
+    srcs = glob(["*Test.kt"]),
     manifest = "AndroidManifest.xml",
     package = "arcs.android.common.resurrection",
     deps = [
@@ -33,6 +36,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/testutil",
+        "//java/arcs/sdk/android/storage",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/android/androidx_test/runner/rules",
@@ -40,5 +44,6 @@ arcs_kt_android_test_suite(
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/robolectric",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )

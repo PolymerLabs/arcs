@@ -11,6 +11,7 @@ kt_android_library(
     manifest = "AndroidManifest.xml",
     deps = [
         ":aidl",
+        "//java/arcs/android/common/resurrection",
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
         "//java/arcs/core/crdt",

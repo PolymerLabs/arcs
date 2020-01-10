@@ -4,8 +4,10 @@ import android.app.Service
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
+import androidx.annotation.VisibleForTesting
 import arcs.core.storage.StorageKey
 import arcs.core.util.guardWith
+import java.io.PrintWriter
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,9 +15,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 
 /**
  * Extension point for [Service]s which wish to be capable of resurrecting their clients.
@@ -34,15 +36,22 @@ abstract class ResurrectorService : Service() {
         by guardWith(mutex, setOf())
     private var registeredRequestsByNotifiers: Map<StorageKey?, Set<ResurrectionRequest>>
         by guardWith(mutex, mapOf())
-
-    override fun onCreate() {
-        super.onCreate()
-
-        CoroutineScope(job).loadRequests()
-    }
+    @VisibleForTesting lateinit var loadJob: Job
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        ResurrectionRequest.createFromIntent(intent)?.let { CoroutineScope(job).registerRequest(it) }
+        intent?.action?.takeIf { it == ACTION_RESET_REGISTRATIONS }?.let {
+            loadJob = CoroutineScope(job).resetRequests()
+        } ?: ResurrectionRequest.createFromIntent(intent)?.let {
+            loadJob = CoroutineScope(job).registerRequest(it)
+        } ?: ResurrectionRequest.componentNameFromUnrequestIntent(intent)?.let {
+            loadJob = CoroutineScope(job).unregisterRequest(it)
+        } ?: {
+            loadJob = CoroutineScope(job).launch {
+                val needToLoad = mutex.withLock { registeredRequests.isEmpty() }
+                if (needToLoad) loadRequests()
+            }
+        }()
+
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -55,26 +64,68 @@ abstract class ResurrectorService : Service() {
      * Makes [Context.startService] or [Context.startActivity] calls to all clients who are
      * registered for the specified [events] (or are registered for *all* events).
      */
-    protected fun resurrectClients(vararg events: StorageKey) = resurrectClients(events.toList())
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    suspend fun resurrectClients(vararg events: StorageKey) = resurrectClients(events.toList())
 
     /**
      * Makes [Context.startService] or [Context.startActivity] calls to all clients who are
      * registered for the specified [events] (or are registered for *all* events).
      */
-    protected fun resurrectClients(events: Collection<StorageKey>) {
-        CoroutineScope(job).launch {
-            val requests = mutableSetOf<ResurrectionRequest>()
-            mutex.withLock {
-                events.forEach { event ->
-                    registeredRequestsByNotifiers[event]?.let { requests.addAll(it) }
-                }
-                registeredRequestsByNotifiers[null]?.let { requests.addAll(it) }
-            }
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    suspend fun resurrectClients(events: Collection<StorageKey>) {
+        loadJob.join()
 
-            withContext(Dispatchers.Main) {
-                requests.forEach { it.issueResurrection(events) }
+        val requests = mutableSetOf<ResurrectionRequest>()
+        mutex.withLock {
+            events.forEach { event ->
+                registeredRequestsByNotifiers[event]?.let { requests.addAll(it) }
             }
+            registeredRequestsByNotifiers[null]?.let { requests.addAll(it) }
         }
+
+        requests.forEach { it.issueResurrection(events) }
+    }
+
+    /**
+     * Utility to call within the implementing-service's [Service.dump], which will include
+     * current registration requests.
+     */
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    fun dumpRegistrations(writer: PrintWriter) {
+        val registeredRequests = runBlocking {
+            loadJob.join()
+            mutex.withLock { this@ResurrectorService.registeredRequests.toList() }
+        }
+
+        writer.println(
+            """
+                Resurrection Requests
+                ---------------------
+            """.trimIndent()
+        )
+
+        val requests = StringBuilder().apply {
+            append("[")
+            var isFirst = true
+            registeredRequests.forEach {
+                if (!isFirst) {
+                    append(",\n")
+                } else {
+                    append("\n")
+                }
+                append("  ${it.componentName} [${it.componentType.name}]: [\n")
+                append(
+                    it.notifyOn.joinToString(separator = ",\n", postfix = "\n") {
+                        "    $it"
+                    }
+                )
+                append("  ]")
+                isFirst = false
+            }
+            append("\n]")
+        }
+
+        writer.println(requests)
     }
 
     private fun CoroutineScope.loadRequests() = launch {
@@ -101,28 +152,20 @@ abstract class ResurrectorService : Service() {
 
     private fun CoroutineScope.registerRequest(request: ResurrectionRequest) = launch {
         dbHelper.registerRequest(request)
-
-        mutex.withLock {
-            registeredRequests = registeredRequests + request
-            registeredRequestsByNotifiers = registeredRequestsByNotifiers.toMutableMap().apply {
-                request.notifyOn.forEach {
-                    val list = this[it]?.toMutableSet() ?: mutableSetOf()
-                    list.add(request)
-                    this[it] = list
-                }
-                if (request.notifyOn.isEmpty()) {
-                    val list = this[null]?.toMutableSet() ?: mutableSetOf()
-                    list.add(request)
-                    this[null] = list
-                }
-            }
-        }
+        loadRequests().join()
     }
 
     private fun CoroutineScope.unregisterRequest(componentName: ComponentName) = launch {
         dbHelper.unregisterRequest(componentName)
+        loadRequests().join()
+    }
 
-        loadRequests()
+    private fun CoroutineScope.resetRequests() = launch {
+        dbHelper.reset()
+        mutex.withLock {
+            registeredRequests = emptySet()
+            registeredRequestsByNotifiers = emptyMap()
+        }
     }
 
     private fun ResurrectionRequest.issueResurrection(events: Collection<StorageKey>) {
@@ -141,5 +184,10 @@ abstract class ResurrectorService : Service() {
             ResurrectionRequest.ComponentType.Activity -> startActivity(intent)
             ResurrectionRequest.ComponentType.Service -> startService(intent)
         }
+    }
+
+    companion object {
+        const val ACTION_RESET_REGISTRATIONS =
+            "arcs.android.common.resurrection.ACTION_RESET_REGISTRATIONS"
     }
 }
