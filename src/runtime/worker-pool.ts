@@ -19,6 +19,11 @@ interface PoolEntry {
   channel: MessageChannel;
 }
 
+interface WorkerFactory {
+  /** Creates a worker and an associating message channel. */
+  create?: () => PoolEntry;
+}
+
 /** Arcs Worker Pool Management */
 export const workerPool = new (class {
   // Suspended (aka free) workers.
@@ -27,6 +32,8 @@ export const workerPool = new (class {
   readonly inUse = new Map<MessagePort, PoolEntry>();
   // Whether the worker pool management is ON.
   active = false;
+  // Worker APIs
+  factory: WorkerFactory = {};
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -139,5 +146,21 @@ export const workerPool = new (class {
     // a) Prepare workers in advance at the initialization path.
     // b) Shrink number of workers under memory pressure.
     // c) Grow number of workers to accommodate more outstanding Arcs.
+  }
+
+  /**
+   * Delegates worker APIs.
+   *
+   * This allows delegations of single or multiple APIs to the internal
+   * worker factory.
+   *
+   * Note:
+   * If one API has already existed, it would be overwritten.
+   */
+  set apis(f: WorkerFactory) {
+    // tslint:disable-next-line:forin
+    for (const m in f) {
+      this.factory[m] = f[m];
+    }
   }
 })();

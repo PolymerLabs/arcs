@@ -14,9 +14,10 @@ import {devtoolsArcInspectorFactory} from '../../../../build/devtools-connector/
 import {Runtime} from '../../../../build/runtime/runtime.js';
 import {portIndustry} from '../pec-port.js';
 
-const {log, warn} = logsFactory('pipe');
+const {log, warn} = logsFactory('runArc');
 
-// The implementation was forked from verbs/spawn.js
+// This implementation was forked from verbs/spawn.js
+
 export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
   const {recipe, arcId, storageKeyPrefix, pecId, particles} = msg;
   const action = runtime.context.allRecipes.find(r => r.name === recipe);
@@ -41,7 +42,6 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
     },
     dispose: () => null
   };
-
   // optionally instantiate recipe
   if (action && await instantiateRecipe(arc, action, particles || [])) {
     log(`successfully instantiated ${recipe} in ${arc.id}`);

@@ -7,6 +7,7 @@ load(
 arcs_kt_schema(
     name = "game_schemas",
     srcs = ["TTTGame.arcs"],
+    package = "arcs.tutorials.tictactoe",
 )
 
 arcs_kt_particles(

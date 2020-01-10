@@ -28,13 +28,18 @@ cc_wasm_binary(
 
 arcs_kt_schema(
     name = "wasm_schemas",
-    srcs = ["Harness.arcs"],
+    srcs = [
+        "Harness.arcs",
+        "Services.arcs",
+    ],
+    package = "arcs.test",
 )
 
 arcs_kt_particles(
     name = "service_particle",
     srcs = ["source/ServiceParticle.kt"],
     package = "arcs.test",
+    deps = [":wasm_schemas"],
 )
 
 arcs_kt_particles(

@@ -10,7 +10,7 @@
 
 import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
-import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
+import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {pec} from './verbs/pec.js';
 import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
 import {event} from './verbs/event.js';
@@ -21,6 +21,7 @@ import {instantiateRecipeByName} from './lib/utils.js';
 import {requireContext} from './context.js';
 import {dispatcher} from './dispatcher.js';
 import {requireIngestionArc} from './ingestion-arc.js';
+import {serializeVerb} from './serialize-verb.js';
 
 const {log} = logsFactory('pipe');
 
@@ -61,7 +62,8 @@ const populateDispatcher = (dispatcher, storage, context) => {
     // TODO: consolidate runArc and uiEvent with spawn and event, as well as
     // use of runtime object and composerFactory, brokerFactory below.
     runArc: async (msg, tid, bus) => {
-      return await runArc(msg, bus, runtime, storage);
+      const task = async () => await runArc(msg, bus, runtime, storage);
+      return await serializeVerb('runArc', task);
     },
     uiEvent: async (msg, tid, bus) => {
       return await uiEvent(msg, runtime);
@@ -98,7 +100,7 @@ const populateDispatcher = (dispatcher, storage, context) => {
 };
 
 const composerFactory = (modality, bus, tid) => {
-  const composer = new UiSlotComposer();
+  const composer = new SlotComposer();
   // TODO(sjmiles): hack in transaction identity, make this cleaner
   composer.tid = tid;
   // TODO(sjmiles): slotObserver could be late attached or we could attach

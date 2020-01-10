@@ -8,15 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Refinement, SchemaPrimitiveType, RefinementExpression} from './manifest-ast-nodes.js';
+import {Refinement, RefinementExpression} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
-import {assert} from '../platform/assert-node.js';
 
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
 type ExpressionPrimitives = any;
 type Evaluator = (exprs: ExpressionPrimitives[]) => ExpressionPrimitives | Error;
-type GenericOperator = {eval:Evaluator};
+type GenericOperator = {evaluate: Evaluator};
 
 export class Refiner {
     // Converts refinement ast-node to string.
@@ -100,7 +99,7 @@ export class Refiner {
             '!=': neqBoolOp.or(neqNumOp),
         };
         op = (op === '-' && expr.length === 1) ? 'neg' : op;
-        return operators[op].eval(expr);
+        return operators[op].evaluate(expr);
     }
 
     private static manageErrors(errors: (ExpressionPrimitives | Error)[]): Error {
@@ -123,7 +122,7 @@ class RefinementOperator implements GenericOperator {
         this.fn = fn;
     }
 
-    eval(exprs: ExpressionPrimitives[]): ExpressionPrimitives | Error {
+    evaluate(exprs: ExpressionPrimitives[]): ExpressionPrimitives | Error {
         if (exprs.length !== this.exprTypes.length) {
             return new Error(`Got ${exprs.length} operands. Expected ${this.exprTypes.length}.`);
         }
@@ -137,10 +136,10 @@ class RefinementOperator implements GenericOperator {
 
     or(alternative: GenericOperator): GenericOperator {
         return {
-            eval: (exprs) => {
-                let res = this.eval(exprs);
+            evaluate: (exprs) => {
+                let res = this.evaluate(exprs);
                 if (res instanceof Error) {
-                    res = alternative.eval(exprs);
+                    res = alternative.evaluate(exprs);
                 }
                 return res;
             }

@@ -9,6 +9,7 @@
  */
 import {Schema2Base, ClassGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
+import {ParticleSpec} from '../runtime/particle-spec.js';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -52,8 +53,10 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 ${withCustomPackage(`import arcs.sdk.Entity
+import arcs.sdk.Collection
 import arcs.sdk.NullTermByteArray
 import arcs.sdk.Particle
+import arcs.sdk.Singleton
 import arcs.sdk.StringDecoder
 import arcs.sdk.StringEncoder
 import arcs.sdk.utf8ToString
@@ -62,6 +65,22 @@ import arcs.sdk.utf8ToString
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
     return new KotlinGenerator(node);
+  }
+
+  generateParticleClass(particle: ParticleSpec): string {
+    const particleName = particle.name;
+    const handleDecls: string[] = [];
+    for (const connection of particle.connections) {
+      const handleName = connection.name;
+      const handleType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
+      const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
+      handleDecls.push(`protected val ${handleName} = ${handleType}(this, "${handleName}") { ${entityType}() }`);
+    }
+    return `
+abstract class Abstract${particleName} : Particle() {
+    ${handleDecls.join('\n    ')}
+}
+`;
   }
 }
 
@@ -138,7 +157,7 @@ class ${name}() : Entity<${name}>() {
     override fun isSet(): Boolean {
         return ${withFields(`${this.fieldSets.join(' && ')}`)}${withoutFields('true')}
     }
-    
+
     fun reset() {
         ${withFields(`${this.fieldsReset.join('\n        ')}`)}
     }

@@ -176,22 +176,10 @@ is shown below:
 ```kotlin
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Collection
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-import arcs.TTTGame_Events
-import arcs.TTTGame_GameState
 
-class TTTGame : Particle() {
+class TTTGame : AbstractTTTGame() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
-
-    private val gameState = Singleton(this, "gameState") { defaultGame }
-    private val events = Collection(this, "events") { TTTGame_Events(
-        type = "",
-        move = -1.0,
-        time = -1.0
-    ) }
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (gameState.get() == null) {
@@ -210,14 +198,9 @@ in the comments.
 ```kotlin
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Collection
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-import arcs.TTTBoard_Events
-import arcs.TTTBoard_GameState
 
-class TTTBoard : Particle() {
+class TTTBoard : AbstractTTTBoard() {
 
     private val defaultGameState = TTTBoard_GameState(
         board = ",,,,,,,,"
@@ -229,8 +212,6 @@ class TTTBoard : Particle() {
         time = -1.0
     )
 
-    private val gameState = Singleton(this, "gameState") { defaultGameState }
-    private val events = Collection(this, "events") { defaultEvent }
     private var clicks = 0.0
     private val emptyBoard = listOf("", "", "", "", "", "", "", "", "")
 
@@ -437,7 +418,7 @@ And, as always, we end with the updated
 [build
 file](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/BUILD).
 
-## Exclusivity to Avoid Infinity 
+## Exclusivity to Avoid Infinity
 Alright, now we've got our game setup, and you can play it, but it isn't quite meeting all our
 requirements. Let's take a look to see how we're doing:
 
@@ -456,7 +437,7 @@ Before we get to the code, it's important we remember that particles are reactiv
 practice, this means anytime we update any handle that a particle has access to, `onHandleUpdate`
 will be called. In the context of our Game particle, this has some deep reaching consequences.
 
-Game should update GameState within `onHandlUpdate`, however `onHandleUpdate` will be called 
+Game should update GameState within `onHandlUpdate`, however `onHandleUpdate` will be called
 anytime a handle input to Game is updated. This includes GameState. Thus, if we are not careful,
 we can easily create an infinite loop. To avoid this, we extensively use `if` statements to act as
 guards when we go to set a handle. Let's look at this in practice with a snippet of code from
@@ -492,7 +473,7 @@ The rest of the changes are fairly straight forward. We update the template and 
 to inform users who is the current player. To congratulate the winner by name, we first have to know
 someone has won. We do this by creating an array that represents all the combinations a player can
 win by, then check if any player has claimed all those cells. If so, we congratulate them by using
-the template and model. 
+the template and model.
 
 And finally, we need to reset the game. When the Game sees a "reset" event, it simply sets gameState
 back to the original condition and resets the player's moves. You can see the completed TTTGame code
@@ -512,9 +493,9 @@ off yet. And, well, this being written by an Arcs engineers, we'd like to show o
 So we've created a tic-tac-toe game where a human can play against a computer. But what if the user
 instead wanted to play against one of their friends? Or what if they wanted to watch two computer's
 play? Because of the extensibility of the system, we can simply create new recipes with the existing
-particles to create these systems. 
+particles to create these systems.
 
-We just change whether a `TTTHumanPlayer` particle or a 
+We just change whether a `TTTHumanPlayer` particle or a
 `TTTRandomComputer` particle is updating the associated `move` handle.  This means we can create
 these two variants of tic-tac-toe without writing another line of Kotlin code!  You can see all of
 this in the

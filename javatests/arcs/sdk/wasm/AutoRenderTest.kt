@@ -12,12 +12,8 @@
 package arcs.sdk.wasm
 
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
 
-class AutoRenderTest : Particle() {
-    private val data = Singleton(this, "data") { AutoRenderTest_Data() }
-
+class AutoRenderTest : AbstractAutoRenderTest() {
     override fun init() = renderOutput()
     override fun onHandleUpdate(handle: Handle) = renderOutput()
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = renderOutput()

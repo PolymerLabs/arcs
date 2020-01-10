@@ -9,7 +9,7 @@
  */
 import {App} from './app.js';
 import {Runtime} from '../../build/runtime/runtime.js';
-import {UiSlotComposer} from '../../../build/runtime/ui-slot-composer.js';
+import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 
 // notify user we are live
 console.log('\n--- Arcs Shell ---\n');
@@ -20,7 +20,7 @@ console.log('\n--- Arcs Shell ---\n');
     // configure arcs environment
     Runtime.init('../..');
     // create a composer
-    const composer = new UiSlotComposer();
+    const composer = new SlotComposer();
     await App(composer);
   } catch (x) {
     console.error(x);

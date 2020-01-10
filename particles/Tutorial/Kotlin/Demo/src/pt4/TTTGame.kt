@@ -11,31 +11,15 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Collection
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-import arcs.sdk.TTTGame_Events
-import arcs.sdk.TTTGame_GameState
-import arcs.sdk.TTTGame_PlayerOne
-import arcs.sdk.TTTGame_PlayerOneMove
-import arcs.sdk.TTTGame_PlayerTwo
-import arcs.sdk.TTTGame_PlayerTwoMove
 
-class TTTGame : Particle() {
+class TTTGame : AbstractTTTGame() {
     private val defaultGame = TTTGame_GameState(
         board = ",,,,,,,,",
         currentPlayer = (0..1).random().toDouble(),
         gameOver = false,
         winnerAvatar = ""
     )
-
-    private val gameState = Singleton(this, "gameState") { defaultGame }
-    private val playerOne = Singleton(this, "playerOne") { TTTGame_PlayerOne() }
-    private val playerOneMove = Singleton(this, "playerOneMove") { TTTGame_PlayerOneMove() }
-    private val playerTwo = Singleton(this, "playerTwo") { TTTGame_PlayerTwo() }
-    private val playerTwoMove = Singleton(this, "playerTwoMove") { TTTGame_PlayerTwoMove() }
-    private val events = Collection(this, "events") { TTTGame_Events() }
 
     private val winningSequences = arrayOf(
         arrayOf(0, 1, 2),

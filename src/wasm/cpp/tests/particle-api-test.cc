@@ -1,7 +1,7 @@
 #include "src/wasm/cpp/arcs.h"
 #include "src/wasm/cpp/tests/entities.h"
 
-class HandleSyncUpdateTest : public arcs::Particle {
+class HandleSyncUpdateTest : public AbstractHandleSyncUpdateTest {
 public:
   void onHandleSync(const std::string& name, bool all_synced) override {
     arcs::HandleSyncUpdateTest_Res out;
@@ -21,16 +21,12 @@ public:
     }
     res_.store(out);
   }
-
-  arcs::Singleton<arcs::HandleSyncUpdateTest_Sng> sng_{this, "sng"};
-  arcs::Collection<arcs::HandleSyncUpdateTest_Col> col_{this, "col"};
-  arcs::Collection<arcs::HandleSyncUpdateTest_Res> res_{this, "res"};
 };
 
 DEFINE_PARTICLE(HandleSyncUpdateTest)
 
 
-class RenderTest : public arcs::Particle {
+class RenderTest : public AbstractRenderTest {
 public:
   std::string getTemplate(const std::string& slot_name) override {
     return "abc";
@@ -44,14 +40,12 @@ public:
     const arcs::RenderTest_Flags& flags = flags_.get();
     renderSlot("root", flags._template(), flags.model());
   }
-
-  arcs::Singleton<arcs::RenderTest_Flags> flags_{this, "flags"};
 };
 
 DEFINE_PARTICLE(RenderTest)
 
 
-class AutoRenderTest : public arcs::Particle {
+class AutoRenderTest : public AbstractAutoRenderTest {
 public:
   AutoRenderTest() {
     autoRender();
@@ -61,14 +55,12 @@ public:
     const arcs::AutoRenderTest_Data& data = data_.get();
     return data.has_txt() ? data.txt() : "empty";
   }
-
-  arcs::Singleton<arcs::AutoRenderTest_Data> data_{this, "data"};
 };
 
 DEFINE_PARTICLE(AutoRenderTest)
 
 
-class EventsTest : public arcs::Particle {
+class EventsTest : public AbstractEventsTest {
 public:
   void fireEvent(const std::string& slot_name, const std::string& handler,
                  const arcs::Dictionary& eventData) override {
@@ -76,14 +68,12 @@ public:
     out.set_txt("event:" + slot_name + ":" + handler + ":" + eventData.find("info")->second);
     output_.set(out);
   }
-
-  arcs::Singleton<arcs::EventsTest_Output> output_{this, "output"};
 };
 
 DEFINE_PARTICLE(EventsTest)
 
 
-class ServicesTest : public arcs::Particle {
+class ServicesTest : public AbstractServicesTest {
 public:
   void init() override {
     std::string url = resolveUrl("$resolve-me");
@@ -110,14 +100,12 @@ public:
     out.set_payload(payload);
     output_.store(out);
   }
-
-  arcs::Collection<arcs::ServicesTest_Output> output_{this, "output"};
 };
 
 DEFINE_PARTICLE(ServicesTest)
 
 
-class UnicodeTest : public arcs::Particle {
+class UnicodeTest : public AbstractUnicodeTest {
 public:
   void onHandleUpdate(const std::string& name) override {
     arcs::UnicodeTest_Res out;
@@ -129,10 +117,6 @@ public:
     }
     res_.store(out);
   }
-
-  arcs::Singleton<arcs::UnicodeTest_Sng> sng_{this, "sng"};
-  arcs::Collection<arcs::UnicodeTest_Col> col_{this, "col"};
-  arcs::Collection<arcs::UnicodeTest_Res> res_{this, "res"};
 };
 
 DEFINE_PARTICLE(UnicodeTest)

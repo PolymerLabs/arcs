@@ -15,6 +15,7 @@ import {Schema2Base, ClassGenerator} from '../schema2base.js';
 import {SchemaNode} from '../schema2graph.js';
 import {Schema2Cpp} from '../schema2cpp.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
+import {ParticleSpec} from '../../runtime/particle-spec.js';
 
 /* eslint key-spacing: ["error", {"mode": "minimum"}] */
 
@@ -44,6 +45,10 @@ class Schema2Mock extends Schema2Base {
         return '';
       }
     };
+  }
+
+  generateParticleClass(particle: ParticleSpec) {
+    return '';
   }
 }
 

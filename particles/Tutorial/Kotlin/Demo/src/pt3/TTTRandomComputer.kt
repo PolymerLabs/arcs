@@ -12,18 +12,8 @@
 package arcs.tutorials.tictactoe
 
 import arcs.sdk.Handle
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
-import arcs.sdk.TTTRandomComputer_GameState
-import arcs.sdk.TTTRandomComputer_MyMove
-import arcs.sdk.TTTRandomComputer_Player
 
-class TTTRandomComputer : Particle() {
-
-    private val gameState = Singleton(this, "gameState") { TTTRandomComputer_GameState() }
-    private val myMove = Singleton(this, "myMove") { TTTRandomComputer_MyMove() }
-    private val player = Singleton(this, "player") { TTTRandomComputer_Player() }
-
+class TTTRandomComputer : AbstractTTTRandomComputer() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(gameState)
 
     override fun onHandleUpdate(handle: Handle) {
