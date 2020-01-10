@@ -301,9 +301,7 @@ And finally, the BUILD file. Note the `arcs_kt_schema` rule which will generate 
 '$ParticleName_EntityName'. This is why `DisplayGreeting.kt` referenced `GetPerson_Person()` while `DisplayGreeting.kt`
 referenced `DisplayGreeting_Person()`.
 
-On that note: since we decided to utilize one manifest file for shared schemas, we need to define that
-separately. By defining it in an `arcs_manifest`, we give ourselves the option to depend on these schemas
-in many particles down the line.
+On that note: since we put the Person schema in its own Arcs Manifest file, we need to include this in our BUILD rule. To do this, we define an arcs_manifest rule. This gives us the option to use these schemas in many particles and recipes down the line.
 
 ```build
 load(
@@ -359,8 +357,9 @@ Using some more sophisticated template interpolation, we can easily greet everyo
 
 We begin by adding an additional schema to the `PeopleSchemas.arcs` manifest. 
 ```
-//...
-
+schema Person
+  name: Text
+  
 schema PersonDetails
   name: Text
   age: Number
@@ -479,6 +478,7 @@ Hopefully by now you are starting to see how the different components of Arcs wo
 
 Alright, let’s get to the actual tutorial! This time, instead of embedding the store's data directly inside
 the Arcs Manifest file (as a `resource`), we're going to load it from a separate JSON file. Let’s start with the Arcs Manifest file:
+
 ```
  import 'PeopleSchemas.arcs'
 
@@ -501,6 +501,8 @@ the Arcs Manifest file (as a `resource`), we're going to load it from a separate
 
    description `Kotlin Tutorial 6: JSON Store`
 ```
+
+You'll notice we import the same PeopleSchemas.arcs file that we created in the last tutorial. This is the power of imported Arcs Manifest files, they let you reuse schema definitions rather than having to recreate them in each recipe. 
 
 Next, we have the JSON file, which according to the Arcs Manifest should be called data.json:
 ```json
