@@ -52,8 +52,9 @@ package ${this.scope}
 //
 // Current implementation doesn't support references or optional field detection
 
-${withCustomPackage(`import arcs.sdk.Entity
-import arcs.sdk.Collection
+${withCustomPackage(`import arcs.sdk.Collection
+import arcs.sdk.Entity
+import arcs.sdk.EntitySpec
 import arcs.sdk.NullTermByteArray
 import arcs.sdk.Particle
 import arcs.sdk.Singleton
@@ -74,7 +75,7 @@ import arcs.sdk.utf8ToString
       const handleName = connection.name;
       const handleType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
-      handleDecls.push(`protected val ${handleName} = ${handleType}(this, "${handleName}") { ${entityType}() }`);
+      handleDecls.push(`protected val ${handleName} = ${handleType}(this, "${handleName}", ${entityType}_Spec())`);
     }
     return `
 abstract class Abstract${particleName} : Particle() {
@@ -134,17 +135,19 @@ class KotlinGenerator implements ClassGenerator {
   generate(schemaHash: string, fieldCount: number): string {
     const {name, aliases} = this.node;
 
-    let typeDecls = '';
-    if (aliases.length) {
-      typeDecls = '\n' + aliases.map(a => `typealias ${a} = ${name}`).join('\n') + '\n';
-    }
+    const typeDecls: string[] = [];
+    aliases.forEach(alias => {
+      typeDecls.push(
+          `typealias ${alias} = ${name}`,
+          `typealias ${alias}_Spec = ${name}_Spec`);
+    });
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
 
     return `\
 
-class ${name}() : Entity<${name}>() {
+class ${name}() : Entity() {
 
     ${ withFields(`${this.fieldVals.join('\n    ')}`) }
 
@@ -170,24 +173,6 @@ class ${name}() : Entity<${name}>() {
 
     override fun schemaHash() = "${schemaHash}"
 
-    override fun decodeEntity(encoded: ByteArray): ${name}? {
-        if (encoded.isEmpty()) return null
-
-        val decoder = StringDecoder(encoded)
-        internalId = decoder.decodeText()
-        decoder.validate("|")
-        this.reset()
-        ${withFields(`for (_i in 0 until ${fieldCount}) {
-            if (decoder.done()) break
-            val name = decoder.upTo(':').utf8ToString()
-            when (name) {
-                ${this.decode.join('\n                ')}
-            }
-            decoder.validate("|")
-        }`)}
-        return this
-    }
-
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
         encoder.encode("", internalId)
@@ -195,6 +180,31 @@ class ${name}() : Entity<${name}>() {
         return encoder.toNullTermByteArray()
     }
 }
-${typeDecls}`;
+
+class ${name}_Spec() : EntitySpec<${name}> {
+
+    override fun create() = ${name}()
+
+    override fun decode(encoded: ByteArray): ${name}? {
+        if (encoded.isEmpty()) return null
+
+        val decoder = StringDecoder(encoded)
+        decoder.validate("|")
+        val entity = create().apply {
+            internalId = decoder.decodeText()
+            ${withFields(`for (_i in 0 until ${fieldCount}) {
+                if (decoder.done()) break
+                val name = decoder.upTo(':').utf8ToString()
+                when (name) {
+                    ${this.decode.join('\n                    ')}
+                }
+                decoder.validate("|")
+            }`)}
+        }
+        return entity
+    }
+}
+
+${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
   }
 }

@@ -17,10 +17,10 @@ import arcs.sdk.Particle
 import kotlin.AssertionError
 import kotlin.test.Asserter
 
-open class TestBase <T : Entity<T>> (val ctor: (txt: String) -> T) : Particle(), Asserter {
+open class TestBase <T : Entity> (val ctor: (txt: String) -> T) : Particle(), Asserter {
     private val errors = Collection(this, "errors") { ctor("") }
 
-    private fun <T : Entity<T>> assertContainerEqual(
+    private fun <T : Entity> assertContainerEqual(
         container: Collection<T>,
         converter: (T) -> String,
         expected: List<String>,

@@ -7,7 +7,7 @@ package arcs.sdk
 // Current implementation doesn't support references or optional field detection
 
 
-class GoldInternal1() : Entity<GoldInternal1>() {
+class GoldInternal1() : Entity() {
 
     var _val_Set = false
     var val_ = ""
@@ -40,27 +40,6 @@ class GoldInternal1() : Entity<GoldInternal1>() {
 
     override fun schemaHash() = "485712110d89359a3e539dac987329cd2649d889"
 
-    override fun decodeEntity(encoded: ByteArray): GoldInternal1? {
-        if (encoded.isEmpty()) return null
-
-        val decoder = StringDecoder(encoded)
-        internalId = decoder.decodeText()
-        decoder.validate("|")
-        this.reset()
-        for (_i in 0 until 1) {
-            if (decoder.done()) break
-            val name = decoder.upTo(':').utf8ToString()
-            when (name) {
-                "val" -> {
-                    decoder.validate("T")
-                    this.val_ = decoder.decodeText()
-                }
-            }
-            decoder.validate("|")
-        }
-        return this
-    }
-
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
         encoder.encode("", internalId)
@@ -69,10 +48,39 @@ class GoldInternal1() : Entity<GoldInternal1>() {
     }
 }
 
-typealias Gold_Data_Ref = GoldInternal1
-typealias Gold_Alias = GoldInternal1
+class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
 
-class Gold_Data() : Entity<Gold_Data>() {
+    override fun create() = GoldInternal1()
+
+    override fun decode(encoded: ByteArray): GoldInternal1? {
+        if (encoded.isEmpty()) return null
+
+        val decoder = StringDecoder(encoded)
+        decoder.validate("|")
+        val entity = create().apply {
+            internalId = decoder.decodeText()
+            for (_i in 0 until 1) {
+                if (decoder.done()) break
+                val name = decoder.upTo(':').utf8ToString()
+                when (name) {
+                    "val" -> {
+                        decoder.validate("T")
+                        this.val_ = decoder.decodeText()
+                    }
+                }
+                decoder.validate("|")
+            }
+        }
+        return entity
+    }
+}
+
+typealias Gold_Data_Ref = GoldInternal1
+typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
+typealias Gold_Alias = GoldInternal1
+typealias Gold_Alias_Spec = GoldInternal1_Spec
+
+class Gold_Data() : Entity() {
 
     var _numSet = false
     var num = 0.0
@@ -141,39 +149,6 @@ class Gold_Data() : Entity<Gold_Data>() {
 
     override fun schemaHash() = "d8058d336e472da47b289eafb39733f77eadb111"
 
-    override fun decodeEntity(encoded: ByteArray): Gold_Data? {
-        if (encoded.isEmpty()) return null
-
-        val decoder = StringDecoder(encoded)
-        internalId = decoder.decodeText()
-        decoder.validate("|")
-        this.reset()
-        for (_i in 0 until 5) {
-            if (decoder.done()) break
-            val name = decoder.upTo(':').utf8ToString()
-            when (name) {
-                "num" -> {
-                    decoder.validate("N")
-                    this.num = decoder.decodeNum()
-                }
-                "txt" -> {
-                    decoder.validate("T")
-                    this.txt = decoder.decodeText()
-                }
-                "lnk" -> {
-                    decoder.validate("U")
-                    this.lnk = decoder.decodeText()
-                }
-                "flg" -> {
-                    decoder.validate("B")
-                    this.flg = decoder.decodeBool()
-                }
-            }
-            decoder.validate("|")
-        }
-        return this
-    }
-
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
         encoder.encode("", internalId)
@@ -185,7 +160,47 @@ class Gold_Data() : Entity<Gold_Data>() {
     }
 }
 
+class Gold_Data_Spec() : EntitySpec<Gold_Data> {
+
+    override fun create() = Gold_Data()
+
+    override fun decode(encoded: ByteArray): Gold_Data? {
+        if (encoded.isEmpty()) return null
+
+        val decoder = StringDecoder(encoded)
+        decoder.validate("|")
+        val entity = create().apply {
+            internalId = decoder.decodeText()
+            for (_i in 0 until 5) {
+                if (decoder.done()) break
+                val name = decoder.upTo(':').utf8ToString()
+                when (name) {
+                    "num" -> {
+                        decoder.validate("N")
+                        this.num = decoder.decodeNum()
+                    }
+                    "txt" -> {
+                        decoder.validate("T")
+                        this.txt = decoder.decodeText()
+                    }
+                    "lnk" -> {
+                        decoder.validate("U")
+                        this.lnk = decoder.decodeText()
+                    }
+                    "flg" -> {
+                        decoder.validate("B")
+                        this.flg = decoder.decodeBool()
+                    }
+                }
+                decoder.validate("|")
+            }
+        }
+        return entity
+    }
+}
+
+
 abstract class AbstractGold : Particle() {
-    protected val data = Singleton(this, "data") { Gold_Data() }
-    protected val alias = Singleton(this, "alias") { Gold_Alias() }
+    protected val data = Singleton(this, "data", Gold_Data_Spec())
+    protected val alias = Singleton(this, "alias", Gold_Alias_Spec())
 }
