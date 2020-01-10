@@ -10,6 +10,7 @@
 import {Schema2Base, ClassGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
+import {Type} from '../runtime/type.js';
 
 // https://en.cppreference.com/w/cpp/keyword
 // [...document.getElementsByClassName('wikitable')[0].getElementsByTagName('code')].map(x => x.innerHTML);
@@ -63,7 +64,34 @@ export class Schema2Cpp extends Schema2Base {
   }
 
   generateParticleClass(particle: ParticleSpec): string {
-    return '// TODO: Generate particle base class.';
+    const particleName = particle.name;
+    const handleDecls: string[] = [];
+
+    for (const connection of particle.connections) {
+      const handleName = connection.name;
+
+      // Recursively compute the C++ type from the given Arcs type.
+      const getCppType = (type: Type, wrapEntityInSingleton: boolean = false): string => {
+        if (type.isCollectionType()) {
+          return `arcs::Collection<${getCppType(type.getContainedType())}>`;
+        } else if (wrapEntityInSingleton) {
+          return `arcs::Singleton<${getCppType(type)}>`;
+        } else if (type.isReference) {
+          return `arcs::Ref<${getCppType(type.getContainedType())}>`;
+        } else {
+          return `arcs::${particleName}_${this.upperFirst(connection.name)}`;
+        }
+      };
+      const handleType = getCppType(connection.type, /* wrapEntityInSingleton= */ true);
+
+      handleDecls.push(`${handleType} ${handleName}_{this, "${handleName}"};`);
+    }
+    return `
+class Abstract${particleName} : public arcs::Particle {
+protected:
+  ${handleDecls.join('\n  ')}
+};
+`;
   }
 }
 

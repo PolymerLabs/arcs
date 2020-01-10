@@ -100,6 +100,10 @@ export abstract class Schema2Base {
     return classes;
   }
 
+  upperFirst(s: string): string {
+    return s[0].toUpperCase() + s.slice(1);
+  }
+
   outputName(baseName: string): string { return ''; }
 
   fileHeader(outName: string): string { return ''; }

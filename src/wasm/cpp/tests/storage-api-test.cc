@@ -3,106 +3,99 @@
 
 using arcs::internal::Accessor;
 
-class SingletonApiTest : public arcs::Particle {
+class SingletonApiTest : public AbstractSingletonApiTest {
 public:
   void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
     if (handler == "case1") {
-      out_.clear();
-      io_.clear();
+      outHandle_.clear();
+      ioHandle_.clear();
     } else if (handler == "case2") {
-      arcs::SingletonApiTest_OutHandle d = arcs::clone_entity(in_.get());
+      arcs::SingletonApiTest_OutHandle d = arcs::clone_entity(inHandle_.get());
       d.set_num(d.num() * 2);
-      out_.set(d);
+      outHandle_.set(d);
     } else if (handler == "case3") {
-      arcs::SingletonApiTest_IoHandle d = arcs::clone_entity(io_.get());
+      arcs::SingletonApiTest_IoHandle d = arcs::clone_entity(ioHandle_.get());
       d.set_num(d.num() * 3);
-      io_.set(d);
+      ioHandle_.set(d);
     }
   }
-
-  arcs::Singleton<arcs::SingletonApiTest_InHandle> in_{this, "inHandle"};
-  arcs::Singleton<arcs::SingletonApiTest_OutHandle> out_{this, "outHandle"};
-  arcs::Singleton<arcs::SingletonApiTest_IoHandle> io_{this, "ioHandle"};
 };
 
 DEFINE_PARTICLE(SingletonApiTest)
 
 
-class CollectionApiTest : public arcs::Particle {
+class CollectionApiTest : public AbstractCollectionApiTest {
 public:
   void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
     if (handler == "case1") {
-      out_.clear();
-      io_.clear();
+      outHandle_.clear();
+      ioHandle_.clear();
     } else if (handler == "case2") {
-      stored_.set_flg(in_.empty());
-      stored_.set_num(in_.size());
-      out_.store(stored_);
+      stored_.set_flg(inHandle_.empty());
+      stored_.set_num(inHandle_.size());
+      outHandle_.store(stored_);
     } else if (handler == "case3") {
-      // We can't read from out_ so use a previously stored entity to test remove().
-      out_.remove(stored_);
+      // We can't read from outHandle_ so use a previously stored entity to test remove().
+      outHandle_.remove(stored_);
     } else if (handler == "case4") {
       arcs::CollectionApiTest_OutHandle d1, d2, d3;
 
       // Test begin()/end() and WrappedIter operators
-      auto i1 = in_.begin();
+      auto i1 = inHandle_.begin();
       d1.set_txt(arcs::entity_to_str(*i1));  // op*
       d1.set_num(i1->num() * 2);             // op->
-      d1.set_flg(i1 != in_.end());           // op!=
-      out_.store(d1);
+      d1.set_flg(i1 != inHandle_.end());           // op!=
+      outHandle_.store(d1);
 
-      auto i2 = in_.begin();
+      auto i2 = inHandle_.begin();
       d2.set_txt((i2 == i1) ? "eq" : "ne");  // op==
-      d2.set_flg(i1++ == in_.end());         // postfix op++
-      out_.store(d2);
+      d2.set_flg(i1++ == inHandle_.end());         // postfix op++
+      outHandle_.store(d2);
 
       d3.set_txt((i2 != i1) ? "ne" : "eq");
-      d3.set_flg(++i2 == in_.end());         // prefix op++
-      out_.store(d3);
+      d3.set_flg(++i2 == inHandle_.end());         // prefix op++
+      outHandle_.store(d3);
     } else if (handler == "case5") {
       arcs::CollectionApiTest_OutHandle d1, d2, d3;
       arcs::CollectionApiTest_IoHandle extra;
 
       // Store and remove an entity.
       extra.set_txt("abc");
-      io_.store(extra);
-      d1.set_num(io_.size());
-      d1.set_flg(io_.empty());
-      out_.store(d1);
+      ioHandle_.store(extra);
+      d1.set_num(ioHandle_.size());
+      d1.set_flg(ioHandle_.empty());
+      outHandle_.store(d1);
 
-      io_.remove(extra);
-      d2.set_num(io_.size());
-      out_.store(d2);
+      ioHandle_.remove(extra);
+      d2.set_num(ioHandle_.size());
+      outHandle_.store(d2);
 
       // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
       const arcs::CollectionApiTest_IoHandle* sorted[3];
-      for (const arcs::CollectionApiTest_IoHandle& data : io_) {
+      for (const arcs::CollectionApiTest_IoHandle& data : ioHandle_) {
         sorted[static_cast<int>(data.num())] = &data;
       }
       for (size_t i = 0; i < 3; i++) {
         arcs::CollectionApiTest_OutHandle d;
         d.set_num(i);
         d.set_txt(Accessor::get_id(*sorted[i]));
-        out_.store(d);
+        outHandle_.store(d);
       }
 
-      io_.clear();
-      d3.set_num(io_.size());
-      d3.set_flg(io_.empty());
-      out_.store(d3);
+      ioHandle_.clear();
+      d3.set_num(ioHandle_.size());
+      d3.set_flg(ioHandle_.empty());
+      outHandle_.store(d3);
     }
   }
 
-  arcs::Collection<arcs::CollectionApiTest_InHandle> in_{this, "inHandle"};
-  arcs::Collection<arcs::CollectionApiTest_OutHandle> out_{this, "outHandle"};
-  arcs::Collection<arcs::CollectionApiTest_IoHandle> io_{this, "ioHandle"};
   arcs::CollectionApiTest_OutHandle stored_;
 };
 
 DEFINE_PARTICLE(CollectionApiTest)
 
 
-class ReferenceHandlesTest : public arcs::Particle {
+class ReferenceHandlesTest : public AbstractReferenceHandlesTest {
 public:
   void onHandleSync(const std::string& name, bool all_synced) override {
     if (!all_synced) return;
@@ -133,16 +126,12 @@ public:
     d.set_txt(label + " <" + id + "> " + bang + arcs::entity_to_str(ref.entity()));
     res_.store(d);
   }
-
-  arcs::Singleton<arcs::Ref<arcs::ReferenceHandlesTest_Sng>> sng_{this, "sng"};
-  arcs::Collection<arcs::Ref<arcs::ReferenceHandlesTest_Col>> col_{this, "col"};
-  arcs::Collection<arcs::ReferenceHandlesTest_Res> res_{this, "res"};
 };
 
 DEFINE_PARTICLE(ReferenceHandlesTest)
 
 
-class SchemaReferenceFieldsTest : public arcs::Particle {
+class SchemaReferenceFieldsTest : public AbstractSchemaReferenceFieldsTest {
 public:
   void onHandleSync(const std::string& name, bool all_synced) override {
     if (!all_synced) return;
@@ -177,10 +166,6 @@ public:
     d.set_txt(label + " <" + id + "> " + bang + arcs::entity_to_str(ref.entity()));
     res_.store(d);
   }
-
-  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Input> input_{this, "input"};
-  arcs::Singleton<arcs::SchemaReferenceFieldsTest_Output> output_{this, "output"};
-  arcs::Collection<arcs::SchemaReferenceFieldsTest_Res> res_{this, "res"};
 };
 
 DEFINE_PARTICLE(SchemaReferenceFieldsTest)

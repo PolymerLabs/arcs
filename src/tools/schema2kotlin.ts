@@ -72,7 +72,7 @@ import arcs.sdk.utf8ToString
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const handleType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
-      const entityType = `${particleName}_${upperFirst(connection.name)}`;
+      const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
       handleDecls.push(`protected val ${handleName} = ${handleType}(this, "${handleName}") { ${entityType}() }`);
     }
     return `
@@ -196,8 +196,4 @@ class ${name}() : Entity<${name}>() {
 }
 ${typeDecls}`;
   }
-}
-
-function upperFirst(s: string): string {
-  return s[0].toUpperCase() + s.slice(1);
 }
