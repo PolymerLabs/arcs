@@ -15,7 +15,6 @@ class SingletonApiTest : AbstractSingletonApiTest() {
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
             "case1" -> {
-
                 outHandle.clear()
                 ioHandle.clear()
             }

@@ -15,7 +15,7 @@ import arcs.sdk.Singleton
 import arcs.sdk.utf8ToString
 
 class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
-    { txt: String -> SpecialSchemaFieldsTest_Errors(txt) },
+    ::SpecialSchemaFieldsTest_Errors,
     SpecialSchemaFieldsTest_Errors_Spec()
 ) {
     private val unused = Singleton(

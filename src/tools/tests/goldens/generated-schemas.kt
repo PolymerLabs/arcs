@@ -56,9 +56,9 @@ class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
         if (encoded.isEmpty()) return null
 
         val decoder = StringDecoder(encoded)
-        decoder.validate("|")
-        val entity = create().apply {
+        return create().apply {
             internalId = decoder.decodeText()
+            decoder.validate("|")
             for (_i in 0 until 1) {
                 if (decoder.done()) break
                 val name = decoder.upTo(':').utf8ToString()
@@ -71,7 +71,6 @@ class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
                 decoder.validate("|")
             }
         }
-        return entity
     }
 }
 
@@ -168,9 +167,9 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
         if (encoded.isEmpty()) return null
 
         val decoder = StringDecoder(encoded)
-        decoder.validate("|")
-        val entity = create().apply {
+        return create().apply {
             internalId = decoder.decodeText()
+            decoder.validate("|")
             for (_i in 0 until 5) {
                 if (decoder.done()) break
                 val name = decoder.upTo(':').utf8ToString()
@@ -195,7 +194,6 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
                 decoder.validate("|")
             }
         }
-        return entity
     }
 }
 

@@ -189,7 +189,7 @@ class ${name}_Spec() : EntitySpec<${name}> {
         if (encoded.isEmpty()) return null
 
         val decoder = StringDecoder(encoded)
-        val entity = create().apply {
+        return create().apply {
             internalId = decoder.decodeText()
             decoder.validate("|")
             ${withFields(`for (_i in 0 until ${fieldCount}) {
@@ -201,7 +201,6 @@ class ${name}_Spec() : EntitySpec<${name}> {
                 decoder.validate("|")
             }`)}
         }
-        return entity
     }
 }
 

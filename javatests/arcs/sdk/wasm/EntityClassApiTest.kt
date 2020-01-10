@@ -14,7 +14,7 @@ package arcs.sdk.wasm
 import arcs.sdk.Singleton
 
 class EntityClassApiTest : TestBase<EntityClassApiTest_Errors>(
-    { txt: String -> EntityClassApiTest_Errors(txt) },
+    ::EntityClassApiTest_Errors,
     EntityClassApiTest_Errors_Spec()
 ) {
     private val unused1 = Singleton(this, "data", EntityClassApiTest_Data_Spec())
