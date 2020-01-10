@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// The interaction model between worker pool manager and pool policies:
+// The interaction model between worker pool manager and sizing policies:
 // The pool manager sends a wish of "demand" pool size to a policy, then the
 // policy answers with an "approval" pool size after arbitration.
 

@@ -133,7 +133,7 @@ export const workerPool = new (class {
   /**
    * Shrinks or grows the worker pool on demand.
    *
-   * @param demand a demand that hopes the worker pool size can be kept at
+   * @param demand a demand that wishes to keep the worker pool size
    *               at least at this value.
    */
   async shrinkOrGrow(demand: number = POOL_SIZE_DEMAND) {
@@ -141,7 +141,7 @@ export const workerPool = new (class {
     await 0;
 
     // TODO(ianchang):
-    // shrink or grow number of workers to the demand.
+    // shrink or grow number of workers per sizing policy arbitration result.
     // This provides the capabilities (included but not limited to):
     // a) Prepare workers in advance at the initialization path.
     // b) Shrink number of workers under memory pressure.
