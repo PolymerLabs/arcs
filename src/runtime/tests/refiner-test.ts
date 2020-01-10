@@ -15,8 +15,6 @@ import {Manifest} from '../manifest.js';
 import {Entity, EntityClass} from '../entity.js';
 import {Schema} from '../schema.js';
 import {Flags} from '../flags.js';
-import {range} from '@tensorflow/tfjs';
-
 describe('refiner', () => {
     it('Refines data given an expression.', () => {
         const manifestAst = parse(`
