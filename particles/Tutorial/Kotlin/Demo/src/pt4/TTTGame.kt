@@ -128,7 +128,6 @@ class TTTGame : AbstractTTTGame() {
         gs.board = boardList.joinToString(",")
 
         gs.currentPlayer = (gs.currentPlayer + 1) % 2
-        gameState.set(gs)
 
         gameState.set(checkGameOver(boardList, gs, avatar))
     }
