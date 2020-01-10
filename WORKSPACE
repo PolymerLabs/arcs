@@ -52,16 +52,16 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "e1a4f61521b9bba4b0584ef55f5cb621093d705d",
+    commit = "4f29ff058ebd7b49ece683f61c148e65b80806b3",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
-    shallow_since = "1574206775 -0800",
+    shallow_since = "1578612474 -0800"
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
-KOTLIN_VERSION = "1.3.31"
+KOTLIN_VERSION = "1.3.60"
 
-KOTLINC_RELEASE_SHA = "107325d56315af4f59ff28db6837d03c2660088e3efeb7d4e41f3e01bb848d6a"
+KOTLINC_RELEASE_SHA = "12f97cff23ff8116904cb97a7ef4e3af5c3b8e5df9d9e63baa251d9a73b42fbb"
 
 KOTLINC_RELEASE = {
     "urls": [
@@ -118,6 +118,8 @@ ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
 
 AUTO_VALUE_VERSION = "1.7"
 
+AUTO_SERVICE_VERSION = "1.0-rc6"
+
 KOTLINX_ATOMICFU_VERSION = "0.13.1"
 
 KOTLINX_COROUTINES_VERSION = "1.3.2"
@@ -140,6 +142,8 @@ maven_install(
         "com.google.dagger:dagger-compiler:2.23.1",
         "com.google.auto.value:auto-value:" + AUTO_VALUE_VERSION,
         "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
+        "com.google.auto.service:auto-service:" + AUTO_SERVICE_VERSION,
+        "com.google.auto.service:auto-service-annotations:" + AUTO_SERVICE_VERSION,
         "com.google.truth:truth:1.0",
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
         "javax.inject:javax.inject:1",
