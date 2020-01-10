@@ -11,9 +11,7 @@
 package arcs.core.host
 
 import arcs.core.sdk.Particle
-import java.util.ServiceLoader
 import kotlin.reflect.KClass
-import kotlin.sequences.asSequence
 
 /**
  * A HostRegistry that discovers the available [ArcHost]s available on this platform by using
@@ -23,17 +21,17 @@ import kotlin.sequences.asSequence
 class ExplicitHostRegistry() : AnnotationBasedHostRegistry() {
 
     companion object {
-        val hostRegistry = ExplicitHostRegistry()
-        fun instance() = hostRegistry
+        val instance: ExplicitHostRegistry by lazy(
+            LazyThreadSafetyMode.PUBLICATION
+        ) { ExplicitHostRegistry() }
     }
 
     /**
      * Explicitly register all particles used.
      */
-    fun registerParticles(allParticles: List<KClass<out Particle>>): Unit {
+    fun registerParticles(allParticles: List<KClass<out Particle>>) {
         hosts.map { host ->
             registerParticles(findParticlesForHost(allParticles, host), host)
         }
     }
 }
-

@@ -12,7 +12,6 @@ package arcs.core.host
 
 import arcs.core.sdk.Particle
 import java.util.ServiceLoader
-import kotlin.reflect.KClass
 import kotlin.sequences.asSequence
 
 /**
@@ -26,8 +25,9 @@ class ServiceLoaderHostRegistry() : AnnotationBasedHostRegistry() {
     }
 
     companion object {
-        val hostRegistry = ServiceLoaderHostRegistry()
-        fun instance() = hostRegistry
+        val instance: ServiceLoaderHostRegistry by lazy(
+            LazyThreadSafetyMode.PUBLICATION
+        ) { ServiceLoaderHostRegistry() }
     }
 
     private fun loadAndRegisterHostsAndParticles(): List<ArcHost> {
@@ -37,11 +37,7 @@ class ServiceLoaderHostRegistry() : AnnotationBasedHostRegistry() {
 
         // Load @AutoService(ArcsHost) types and construct them, handing each a list of particles
         return ServiceLoader.load(ArcHost::class.java).iterator().asSequence()
-            .map { host ->
-                registerParticles(findParticlesForHost(allParticles, host), host)
-            }.toList()
+            .map { host -> registerParticles(findParticlesForHost(allParticles, host), host) }
+            .toList()
     }
-
-
 }
-

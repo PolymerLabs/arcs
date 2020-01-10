@@ -8,12 +8,12 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class ParticleRegistrationTest {
-    // @Test disabled for now until Travis fixed
+    @Test
     fun serviceLoader_allParticlesAreRegistered() {
         var foundProdHost = false
         var foundTestHost = false
 
-        ServiceLoaderHostRegistry.instance().availableArcHosts().forEach { host: ArcHost ->
+        ServiceLoaderHostRegistry.instance.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
                 is ProdHost -> {
                     assertThat(TestProdParticle::class).isIn(
@@ -41,9 +41,9 @@ class ParticleRegistrationTest {
         }
     }
 
-    // @Test disabled for now until Travis fixed
+    @Test
     fun serviceLoader_registerHostDynamically() {
-        val hostRegistry = ServiceLoaderHostRegistry.instance()
+        val hostRegistry = ServiceLoaderHostRegistry.instance
         val dummyhost = DummyHost()
         hostRegistry.registerHost(dummyhost)
         assertThat(dummyhost).isIn(hostRegistry.availableArcHosts())
@@ -61,11 +61,11 @@ class ParticleRegistrationTest {
         var foundProdHost = false
         var foundTestHost = false
 
-        ExplicitHostRegistry.instance().registerHost(ProdHost())
-        ExplicitHostRegistry.instance().registerHost(TestHost())
-        ExplicitHostRegistry.instance()
+        ExplicitHostRegistry.instance.registerHost(ProdHost())
+        ExplicitHostRegistry.instance.registerHost(TestHost())
+        ExplicitHostRegistry.instance
             .registerParticles(listOf(TestProdParticle::class, TestHostParticle::class))
-        ExplicitHostRegistry.instance().availableArcHosts().forEach { host: ArcHost ->
+        ExplicitHostRegistry.instance.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
                 is ProdHost -> {
                     assertThat(TestProdParticle::class).isIn(
