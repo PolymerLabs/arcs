@@ -8,14 +8,14 @@ load(
 licenses(["notice"])
 
 arcs_manifest(
-    name = "person_details_schema",
+    name = "shared_schemas",
     srcs = ["CollectionsSchemas.arcs"],
 )
 
 arcs_kt_schema(
     name = "collections_schemas",
     srcs = ["Collections.arcs"],
-    deps = [":person_details_schema"],
+    deps = [":shared_schemas"],
 )
 
 arcs_kt_particles(
