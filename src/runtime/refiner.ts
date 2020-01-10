@@ -119,7 +119,7 @@ export class BinaryExpression extends RefinementExpression {
     this.leftExpr = RefinementExpression.fromAst(expression.leftExpr, typeData);
     this.rightExpr = RefinementExpression.fromAst(expression.rightExpr, typeData);
     this.operator = new RefinementOperator(expression.operator);
-    this.operator.validatetOperandCompatibility([this.leftExpr.evalType, this.rightExpr.evalType]);
+    this.operator.validateOperandCompatibility([this.leftExpr.evalType, this.rightExpr.evalType]);
     this.evalType = this.operator.evalType();
   }
 
@@ -199,7 +199,7 @@ export class UnaryExpression extends RefinementExpression {
     super();
     this.expr = RefinementExpression.fromAst(expression.expr, typeData);
     this.operator = new RefinementOperator((expression.operator === Op.SUB) ? Op.NEG : expression.operator);
-    this.operator.validatetOperandCompatibility([this.expr.evalType]);
+    this.operator.validateOperandCompatibility([this.expr.evalType]);
     this.evalType = this.operator.evalType();
   }
 
@@ -688,7 +688,7 @@ class RefinementOperator {
     return this.opInfo.evalType;
   }
 
-  validatetOperandCompatibility(operandTypes: string[]): void {
+  validateOperandCompatibility(operandTypes: string[]): void {
     if (operandTypes.length !== this.opInfo.nArgs) {
       throw new Error(`Expected ${this.opInfo.nArgs} operands. Got ${operandTypes.length}.`);
     }
