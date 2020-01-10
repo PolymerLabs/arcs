@@ -10,10 +10,11 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_android_test_suite(
     name = "service",
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
-    package = "arcs.sdk.android.storage.service",
+    package = "arcs.android.storage.service",
     deps = [
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
+        "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/internal",
@@ -22,7 +23,6 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/testutil",
         "//java/arcs/core/type",
-        "//java/arcs/sdk/android/storage/service",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",

@@ -16,6 +16,12 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
+import arcs.android.crdt.ParcelableCrdtType
+import arcs.android.storage.service.DeferredResult
+import arcs.android.storage.service.IStorageService
+import arcs.android.storage.service.ParcelableProxyMessageChannel
+import arcs.android.storage.service.ParcelableProxyMessageChannel.MessageAndResult
+import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
@@ -25,14 +31,8 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.util.ProxyCallbackManager
 import arcs.core.storage.util.SendQueue
-import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.storage.toParcelable
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
-import arcs.sdk.android.storage.service.DeferredResult
-import arcs.sdk.android.storage.service.IStorageService
-import arcs.sdk.android.storage.service.ParcelableProxyMessageChannel
-import arcs.sdk.android.storage.service.ParcelableProxyMessageChannel.MessageAndResult
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
@@ -41,7 +41,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.asFlow
@@ -103,7 +102,9 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     @Suppress("UNCHECKED_CAST")
     override suspend fun getLocalData(): Data {
         val service = checkNotNull(storageService)
-        val channel = ParcelableProxyMessageChannel(coroutineContext)
+        val channel = ParcelableProxyMessageChannel(
+            coroutineContext
+        )
         service.getLocalData(channel)
         val flow = channel.asFlow()
         val modelUpdate =
@@ -123,7 +124,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
-        val result = DeferredResult(coroutineContext)
+        val result =
+            DeferredResult(coroutineContext)
         sendQueue.enqueue {
             service.sendProxyMessage(message.toParcelable(crdtType), result)
         }
@@ -140,7 +142,10 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         val connection = connectionFactory(options, crdtType)
         val service = connection.connectAsync().await()
 
-        val messageChannel = ParcelableProxyMessageChannel(coroutineContext)
+        val messageChannel =
+            ParcelableProxyMessageChannel(
+                coroutineContext
+            )
         serviceCallbackToken = withContext(coroutineContext) {
             service.registerCallback(messageChannel)
         }

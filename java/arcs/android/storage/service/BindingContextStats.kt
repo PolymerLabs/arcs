@@ -1,4 +1,15 @@
-package arcs.sdk.android.storage.service
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+package arcs.android.storage.service
 
 import androidx.annotation.VisibleForTesting
 import arcs.core.util.RunningStatistics
@@ -21,7 +32,8 @@ interface BindingContextStatisticsSink {
  *
  * **Note:** This makes the assumption that the distribution of processing times is normal.
  */
-interface BindingContextStatistics : BindingContextStatisticsSink {
+interface BindingContextStatistics :
+    BindingContextStatisticsSink {
     val roundtripMean: Double
     val roundtripStdDev: Double
     val roundtripPercentiles: Percentiles
@@ -41,7 +53,8 @@ interface BindingContextStatistics : BindingContextStatisticsSink {
 }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-class BindingContextStatsImpl : BindingContextStatistics {
+class BindingContextStatsImpl :
+    BindingContextStatistics {
     private val runningStats = RunningStatistics()
     private val mutex = Mutex()
     override val roundtripMean: Double

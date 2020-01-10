@@ -18,6 +18,9 @@ import android.os.IBinder
 import android.text.format.DateUtils
 import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.android.storage.service.BindingContext
+import arcs.android.storage.service.BindingContextStatsImpl
+import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import java.io.FileDescriptor
@@ -54,7 +57,13 @@ class StorageService : ResurrectorService() {
             parcelableOptions.crdtType,
             coroutineContext,
             stats
-        )
+        ) { storageKey, message ->
+            when (message) {
+                is ProxyMessage.ModelUpdate<*, *, *>,
+                is ProxyMessage.Operations<*, *, *> -> resurrectClients(storageKey)
+                is ProxyMessage.SyncRequest<*, *, *> -> Unit
+            }
+        }
     }
 
     override fun onDestroy() {

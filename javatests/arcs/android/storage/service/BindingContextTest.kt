@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.android.storage.service
+package arcs.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
@@ -59,17 +59,21 @@ class BindingContextTest {
         )
     }
 
-    private suspend fun buildContext() = BindingContext(
-        store,
-        ParcelableCrdtType.Count,
-        coroutineContext,
-        BindingContextStatsImpl()
-    )
+    private suspend fun buildContext() =
+        BindingContext(
+            store,
+            ParcelableCrdtType.Count,
+            coroutineContext,
+            BindingContextStatsImpl()
+        )
 
     @Test
     fun getLocalData_fetchesLocalData() = runBlocking {
         val bindingContext = buildContext()
-        val messageChannel = ParcelableProxyMessageChannel(coroutineContext)
+        val messageChannel =
+            ParcelableProxyMessageChannel(
+                coroutineContext
+            )
         bindingContext.getLocalData(messageChannel)
 
         var message = messageChannel.asFlow().first()
@@ -103,7 +107,8 @@ class BindingContextTest {
     @Test
     fun sendProxyMessage_propagatesToTheStore() = runBlocking {
         val bindingContext = buildContext()
-        val deferredResult = DeferredResult(coroutineContext)
+        val deferredResult =
+            DeferredResult(coroutineContext)
         val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
             listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
             id = 1
@@ -126,7 +131,10 @@ class BindingContextTest {
     @Test
     fun registerCallback_registersCallbackWithStore() = runBlocking {
         val bindingContext = buildContext()
-        val callback = ParcelableProxyMessageChannel(coroutineContext)
+        val callback =
+            ParcelableProxyMessageChannel(
+                coroutineContext
+            )
         val token = bindingContext.registerCallback(callback)
 
         assertThat(token).isEqualTo(1)
@@ -157,7 +165,10 @@ class BindingContextTest {
     @Test
     fun unregisterCallback_unregistersCallbackFromStroe() = runBlocking {
         val bindingContext = buildContext()
-        val callback = ParcelableProxyMessageChannel(coroutineContext)
+        val callback =
+            ParcelableProxyMessageChannel(
+                coroutineContext
+            )
         val token = bindingContext.registerCallback(callback)
 
         bindingContext.unregisterCallback(token)

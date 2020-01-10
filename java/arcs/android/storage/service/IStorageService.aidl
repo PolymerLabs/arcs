@@ -9,11 +9,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.android.storage.service;
+package arcs.android.storage.service;
 
 import arcs.android.storage.ParcelableProxyMessage;
-import arcs.sdk.android.storage.service.IResultCallback;
-import arcs.sdk.android.storage.service.IStorageServiceCallback;
+import arcs.android.storage.service.IResultCallback;
+import arcs.android.storage.service.IStorageServiceCallback;
 
 /**
  * Exposed API for the StorageService.

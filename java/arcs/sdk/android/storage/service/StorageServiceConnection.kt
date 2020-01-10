@@ -15,10 +15,11 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.ServiceConnection
 import android.os.IBinder
-import arcs.core.storage.StoreOptions
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.android.storage.service.IStorageService
 import arcs.android.storage.toParcelable
+import arcs.core.storage.StoreOptions
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update

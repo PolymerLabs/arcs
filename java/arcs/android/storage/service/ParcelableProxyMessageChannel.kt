@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -9,15 +9,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.android.storage.service
+package arcs.android.storage.service
 
 import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.toParcelable
+import arcs.android.storage.ParcelableProxyMessage
+import arcs.android.storage.service.ParcelableProxyMessageChannel.MessageAndResult
 import arcs.core.crdt.CrdtException
 import arcs.core.storage.util.SendQueue
 import arcs.core.util.TaggedLog
-import arcs.android.storage.ParcelableProxyMessage
-import arcs.sdk.android.storage.service.ParcelableProxyMessageChannel.MessageAndResult
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName

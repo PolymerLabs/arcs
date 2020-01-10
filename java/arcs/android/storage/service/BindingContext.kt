@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.android.storage.service
+package arcs.android.storage.service
 
 import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.ParcelableCrdtType
@@ -22,6 +22,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
+import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
 import arcs.core.storage.util.SendQueue
 import kotlin.coroutines.CoroutineContext
@@ -50,7 +51,9 @@ class BindingContext(
     /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
     parentCoroutineContext: CoroutineContext,
     /** Sink to use for recording statistics about accessing data. */
-    private val bindingContextStatisticsSink: BindingContextStatisticsSink
+    private val bindingContextStatisticsSink: BindingContextStatisticsSink,
+    /** Callback to trigger when a proxy message has been received and send to the store. */
+    private val onProxyMessage: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
 ) : IStorageService.Stub() {
     @VisibleForTesting
     val id = nextId.incrementAndGet()
@@ -68,7 +71,8 @@ class BindingContext(
         bindingContextStatisticsSink.measure(coroutineContext) {
             val activeStore = store.activate()
 
-            val deferredResult = DeferredResult(coroutineContext)
+            val deferredResult =
+                DeferredResult(coroutineContext)
             sendQueue.enqueue {
                 callback.onProxyMessage(
                     ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
@@ -90,7 +94,10 @@ class BindingContext(
             // so that we catch any exceptions thrown within and re-throw on the same coroutine
             // as the callback-caller.
             supervisorScope {
-                val deferredResult = DeferredResult(coroutineContext)
+                val deferredResult =
+                    DeferredResult(
+                        coroutineContext
+                    )
                 callback.onProxyMessage(message.toParcelable(crdtType), deferredResult)
                 deferredResult.await()
             }
@@ -120,6 +127,8 @@ class BindingContext(
             try {
                 if (activeStore.onProxyMessage(actualMessage)) {
                     resultCallback.onResult(null)
+
+                    onProxyMessage(store.storageKey, actualMessage)
                 } else throw CrdtException("Failed to process message")
             } catch (e: CrdtException) {
                 resultCallback.onResult(e.toParcelable())

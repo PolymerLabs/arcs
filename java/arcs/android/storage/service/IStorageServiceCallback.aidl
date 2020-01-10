@@ -9,10 +9,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.android.storage.service;
+package arcs.android.storage.service;
 
 import arcs.android.storage.ParcelableProxyMessage;
-import arcs.sdk.android.storage.service.IResultCallback;
+import arcs.android.storage.service.IResultCallback;
 
 /** Variant of ProxyCallback intended for StorageService communications. */
 interface IStorageServiceCallback {

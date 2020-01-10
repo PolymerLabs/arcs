@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -9,16 +9,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.android.storage.service
+package arcs.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.crdt.ParcelableCrdtType
+import arcs.android.storage.ParcelableProxyMessage
+import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
-import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.storage.ParcelableProxyMessage
-import arcs.android.storage.toParcelable
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -40,7 +40,9 @@ import org.junit.runner.RunWith
 class ParcelableProxyMessageChannelTest {
     @Test
     fun proxyMessages_pipedToChannel() = runBlocking {
-        val channel = ParcelableProxyMessageChannel(coroutineContext)
+        val channel = ParcelableProxyMessageChannel(
+            coroutineContext
+        )
 
         // Subscribe to the flow of messages, and map them to their IDs.
         val receivedIds = async {
@@ -53,7 +55,9 @@ class ParcelableProxyMessageChannelTest {
         // Publish messages with different IDs.
         val messageJob = launch {
             repeat(100) {
-                channel.onProxyMessage(makeMessage(it), DeferredResult(coroutineContext))
+                channel.onProxyMessage(makeMessage(it),
+                    DeferredResult(coroutineContext)
+                )
             }
         }
 
@@ -71,8 +75,12 @@ class ParcelableProxyMessageChannelTest {
     fun proxyMessages_whenHandledResultIsFalse_sendExceptionToCallback() = runBlocking {
         try {
             supervisorScope {
-                val channel = ParcelableProxyMessageChannel(coroutineContext)
-                val deferredResult = DeferredResult(coroutineContext)
+                val channel =
+                    ParcelableProxyMessageChannel(
+                        coroutineContext
+                    )
+                val deferredResult =
+                    DeferredResult(coroutineContext)
                 channel.onProxyMessage(makeMessage(0), deferredResult)
                 channel.openSubscription().receive().result.complete(false)
                 deferredResult.await()
@@ -87,8 +95,12 @@ class ParcelableProxyMessageChannelTest {
     fun proxyMessages_whenResultIsCompletedExceptionally_sendExceptionToCallback() = runBlocking {
         try {
             supervisorScope {
-                val channel = ParcelableProxyMessageChannel(coroutineContext)
-                val deferredResult = DeferredResult(coroutineContext)
+                val channel =
+                    ParcelableProxyMessageChannel(
+                        coroutineContext
+                    )
+                val deferredResult =
+                    DeferredResult(coroutineContext)
                 channel.onProxyMessage(makeMessage(0), deferredResult)
                 channel.openSubscription().receive().result
                     .completeExceptionally(CrdtException("Uh Oh!"))
