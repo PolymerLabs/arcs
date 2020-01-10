@@ -366,5 +366,11 @@ struct std::hash<arcs::Gold_Data> {
     return arcs::hash_entity(entity);
   }
 };
-// TODO: Generate particle base class.
+
+class AbstractGold : public arcs::Particle {
+protected:
+  arcs::Singleton<arcs::Gold_Data> data_{this, "data"};
+  arcs::Singleton<arcs::Gold_Alias> alias_{this, "alias"};
+};
+
 #endif

@@ -2,5 +2,21 @@ schema Person
   name: Text
   age: Number
 
-particle Test
-  person: reads Person
+particle HotReloadTest in 'bazel-bin/src/tests/source/wasm-particle.wasm'
+  root: consumes Slot
+
+recipe HotReloadRecipe
+  slot0: slot 'rootslotid-root'
+  HotReloadTest
+    root: consumes slot0
+
+particle ReloadHandleTest in 'build/tests/source/test-module.wasm'
+  personIn: reads Person
+  personOut: writes Person
+
+recipe ReloadHandleRecipe
+  personIn: use *
+  personOut: use *
+  ReloadHandleTest
+    personIn: reads personIn
+    personOut: writes personOut
