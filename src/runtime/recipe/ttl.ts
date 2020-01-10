@@ -18,7 +18,7 @@ export class Ttl {
       public readonly units: TtlUnits) {}
 
   public toString(): string {
-    return `${this.count}${TtlUnits[this.units]}`;
+    return `${this.count}${this.units}`;
   }
 
   public static fromString(ttlStr: string): Ttl {
