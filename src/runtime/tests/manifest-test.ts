@@ -32,6 +32,7 @@ import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {FirebaseStorageDriverProvider} from '../storageNG/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
+import {BinaryExpression} from '../refiner.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -567,7 +568,7 @@ ${particleStr1}
     const verify = (manifest: Manifest) => {
       const ref = manifest.schemas.Foo.fields.num.refinement;
       assert.strictEqual(ref.kind, 'refinement');
-      assert.strictEqual(ref.expression.kind, 'binary-expression');
+      assert.isTrue(ref.expression instanceof BinaryExpression);
       assert.strictEqual(ref.expression.leftExpr.value, 'num');
       assert.strictEqual(ref.expression.rightExpr.value, 5);
       assert.strictEqual(ref.expression.operator.op, '<');
@@ -586,13 +587,13 @@ ${particleStr1}
       const ref = (entity as any).getEntitySchema().refinement;
       assert.exists(ref);
       assert.strictEqual(ref.kind, 'refinement');
-      assert.strictEqual(ref.expression.kind, 'binary-expression');
+      assert.isTrue(ref.expression instanceof BinaryExpression);
       assert.strictEqual(ref.expression.operator.op, 'and');
-      assert.strictEqual(ref.expression.leftExpr.kind, 'binary-expression');
+      assert.isTrue(ref.expression.leftExpr instanceof BinaryExpression);
       assert.strictEqual(ref.expression.leftExpr.operator.op, '>');
       assert.strictEqual(ref.expression.leftExpr.leftExpr.value, 'value');
       assert.strictEqual(ref.expression.leftExpr.rightExpr.value, 10);
-      assert.strictEqual(ref.expression.rightExpr.kind, 'binary-expression');
+      assert.isTrue(ref.expression.rightExpr instanceof BinaryExpression);
       assert.strictEqual(ref.expression.rightExpr.operator.op, '<');
       assert.strictEqual(ref.expression.rightExpr.leftExpr.value, 'price');
       assert.strictEqual(ref.expression.rightExpr.rightExpr.value, 2);

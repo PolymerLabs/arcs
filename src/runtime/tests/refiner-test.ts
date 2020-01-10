@@ -15,6 +15,7 @@ import {Manifest} from '../manifest.js';
 import {Entity, EntityClass} from '../entity.js';
 import {Schema} from '../schema.js';
 import {Flags} from '../flags.js';
+import {range} from '@tensorflow/tfjs';
 
 describe('refiner', () => {
     it('Refines data given an expression.', () => {
@@ -56,7 +57,7 @@ describe('refiner', () => {
                 num: 6,
             };
             const _ = ref.validateData(data);
-        }, `Refinement expression evaluated to a non-boolean type.\n`);
+        }, `Refinement expression evaluated to a non-boolean type.`);
     });
     it('Throws error when operators and operands are incompatible.', () => {
         assert.throws(() => {

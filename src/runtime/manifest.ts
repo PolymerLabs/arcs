@@ -603,13 +603,12 @@ ${e.message}
               }
               fields[name] = type;
               if (fields[name].refinement) {
-                const localTD = {}; localTD[name] = type.type;
-                fields[name].refinement = Refinement.fromAst(fields[name].refinement, localTD);
+                fields[name].refinement = Refinement.fromAst(fields[name].refinement, {[name]: type.type});
                 typeData[name] = type.type;
               }
             }
-            const ref = node.refinement ? Refinement.fromAst(node.refinement, typeData) : null;
-            let schema = new Schema(names, fields, {refinement: ref});
+            const refinement = node.refinement && Refinement.fromAst(node.refinement, typeData);
+            let schema = new Schema(names, fields, {refinement});
             for (const alias of aliases) {
               schema = Schema.union(alias, schema);
               if (!schema) {
@@ -683,8 +682,7 @@ ${e.message}
           }
           fields[field.name] = field.type;
           if (fields[field.name].refinement) {
-            const localTD = {}; localTD[field.name] = field.type.type;
-            fields[field.name].refinement = Refinement.fromAst(fields[field.name].refinement, localTD);
+            fields[field.name].refinement = Refinement.fromAst(fields[field.name].refinement, {[field.name]: field.type.type});
           }
           break;
         }

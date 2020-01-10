@@ -1424,7 +1424,7 @@ PrimaryExpression
   }
   / bool:('true'i / 'false'i)
   {
-    return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase()==='true'});
+    return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
   }
   / fn: fieldName
   {
