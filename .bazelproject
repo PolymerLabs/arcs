@@ -6,21 +6,16 @@ directories:
   third_party
   particles
   src
-  javaharness/java
-  javaharness/javatests
 
 targets:
   //java/...
   //javatests/...
-  //javaharness/java/...
-  //javaharness/javatests/...
   //particles/Native/Wasm/...
   //particles/Tutorial/Kotlin/...
 
 test_sources:
   javatests/
   shells/android/javatests/
-  javaharness/javatests/
 
 additional_languages:
   kotlin
