@@ -11,8 +11,8 @@
 // Enables the worker pool management via this url parameter.
 const URL_PARAMETER = 'use-worker-pool';
 
-// Keeps the pool size at least at this watermark.
-const MIN_SIZE_OF_POOL = 5;
+// Wants to keep the pool size at least at this watermark.
+const POOL_SIZE_DEMAND = 3;
 
 interface PoolEntry {
   worker: Worker;
@@ -133,15 +133,15 @@ export const workerPool = new (class {
   /**
    * Shrinks or grows the worker pool on demand.
    *
-   * @param minSize the watermark which the worker pool size should be kept
-   *                at minimum
+   * @param demand a demand that hopes the worker pool size can be kept at
+   *               at least at this value.
    */
-  async shrinkOrGrow(minSize: number = MIN_SIZE_OF_POOL) {
+  async shrinkOrGrow(demand: number = POOL_SIZE_DEMAND) {
     // Yields cpu resources politely and aggressively.
     await 0;
 
     // TODO(ianchang):
-    // shrink or grow number of workers to the minSize.
+    // shrink or grow number of workers to the demand.
     // This provides the capabilities (included but not limited to):
     // a) Prepare workers in advance at the initialization path.
     // b) Shrink number of workers under memory pressure.

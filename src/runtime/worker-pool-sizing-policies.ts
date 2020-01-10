@@ -8,21 +8,30 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+// The interaction model between worker pool manager and pool policies:
+// The pool manager sends a wish of "demand" pool size to a policy, then the
+// policy answers with an "approval" pool size after arbitration.
+
+// Sizing policies could start arbitration only if the number of total
+// workers is less than the cap or there is still free worker in the
+// pool for shrinking; otherwise sizing policies skips arbitration at once.
+const APPROVAL_SIZE_CAP = 16;
+
  /** Pool size state */
 interface SizeState {
-  target?: number;
+  demand?: number;
   free?: number;
   inUse?: number;
 }
 
-/** Sizing Policy APIs */
-interface SizingPolicy {
+/** Sizing policy apis and helpers */
+abstract class SizingPolicy {
   /**
    * Shrinks or grows worker pool size by arbitrating the number of workers
    * to be spawned or terminated in accordance with the current state of worker
    * pool size.
    *
-   * @param sizeState represents the current state of worker pool siz
+   * @param sizeState represents the current state of worker pool size
    *
    * @returns the number of workers to be changed. A positive number means
    * growing the pool whereas a negative number for shrinking the pool.
@@ -32,7 +41,33 @@ interface SizingPolicy {
    * untouched.
    *
    */
-  arbitrate(sizeState: SizeState): number;
+  abstract arbitrate(sizeState: SizeState): number;
+
+  /**
+   * Determines whether to skip arbitration in accordance with the current
+   * state of worker pool size.
+   *
+   * @param sizeState represents the current state of worker pool size
+   * @returns true to skip arbitration; otherwise, return false
+   */
+  skip(sizeState: SizeState): boolean {
+    const {demand, free, inUse} = sizeState;
+    // Skips as there is no chance of shrinking.
+    if ((free + inUse) >= APPROVAL_SIZE_CAP && free === 0) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Caps an approval into an allowed range.
+   *
+   * @param approval the arbitrated approval
+   * @returns a capped approval in an allowed range
+   */
+  cap(approval: number) {
+    return Math.max(Math.min(approval, APPROVAL_SIZE_CAP), 0);
+  }
 }
 
 /**
@@ -40,21 +75,25 @@ interface SizingPolicy {
  * It's eager to maintain a bigger pool with more free room if available.
  *
  * Algorithm:
- * Demand = 1.5 * Max(max_inUse_size_in_history, target_size)
+ * approval = Min(
+ *   1.5 * Max(max_historical_inUse, demand),
+ *   APPROVAL_SIZE_CAP
+ * );
  */
-const aggressive = new (class implements SizingPolicy {
+const aggressive = new (class extends SizingPolicy {
   maxInUse = 0;
   readonly scale = (n: number) => Math.floor(n * 3 / 2);
 
   arbitrate(sizeState: SizeState) {
-    const {target, free, inUse} = sizeState;
+    if (this.skip(sizeState)) return 0;
+    const {demand, free, inUse} = sizeState;
     try {
       if (inUse > this.maxInUse) {
         this.maxInUse = inUse;
       }
       const total = free + inUse;
-      const demand = this.scale(Math.max(this.maxInUse, target));
-      return demand - total;
+      const approval = this.cap(this.scale(Math.max(this.maxInUse, demand)));
+      return approval - total;
     } catch {
       return 0;
     }
@@ -63,18 +102,17 @@ const aggressive = new (class implements SizingPolicy {
 
 /**
  * [Conservative Policy]
- * It's passive to fulfill the minimum requirement of pool size.
+ * It's passive to just fulfill requested demand of pool size.
  *
  * Algorithm:
- * Demand = target_size
+ * approval = Min(demand, APPROVAL_SIZE_CAP);
  */
-const conservative = new (class implements SizingPolicy {
+const conservative = new (class extends SizingPolicy {
   arbitrate(sizeState: SizeState) {
-    const {target, free, inUse} = sizeState;
+    if (this.skip(sizeState)) return 0;
+    const {demand: approval, free, inUse} = sizeState;
     try {
-      const total = free + inUse;
-      const demand = target;
-      return demand - total;
+      return this.cap(approval) - free - inUse;
     } catch {
       return 0;
     }
@@ -83,11 +121,11 @@ const conservative = new (class implements SizingPolicy {
 
 /**
  * [Predictive Policy]
- * It forecasts the demand of pool size by [Exponential Weighted Moving Average]
+ * It forecasts target pool size via [Exponential Weighted Moving Average]
  * {@link https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average}
  *
  * Algorithm:
- * Let EWMA(t) := moving average pool size demand at the time t
+ * Let EWMA(t) := moving average pool size prediction at the time t
  * Let I := the number of current in-use workers
  * Let w := weight shift bits
  * Let c := coefficient = 1 / (1 << w)
@@ -101,20 +139,22 @@ const conservative = new (class implements SizingPolicy {
  *   = 1 / (1 << w) * (EWMA(t - 1) * (1 << w) + DIFF(t))
  *   = ((EWMA(t - 1) << w) + DIFF(t)) >> w
  *
- * Demand = Max(EWMA(t), target_size)
+ * Algorithm:
+ * approval = Min(Max(EWMA(t), demand), APPROVAL_SIZE_CAP);
  */
-const predictive = new (class implements SizingPolicy {
+const predictive = new (class extends SizingPolicy {
   readonly weight = 1;
   ewma = 0;
 
   arbitrate(sizeState: SizeState) {
-    const {target, free, inUse} = sizeState;
+    if (this.skip(sizeState)) return 0;
+    const {demand, free, inUse} = sizeState;
     try {
       const total = free + inUse;
       const diff = inUse - this.ewma;
       this.ewma = ((this.ewma << this.weight) + diff) >> this.weight;
-      const demand = Math.max(this.ewma, target);
-      return demand - total;
+      const approval = this.cap(Math.max(this.ewma, demand));
+      return approval - total;
     } catch {
       return 0;
     }
