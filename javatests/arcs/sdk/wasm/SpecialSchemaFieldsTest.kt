@@ -11,14 +11,13 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Singleton
 import arcs.sdk.utf8ToString
 
 class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
     ::SpecialSchemaFieldsTest_Errors,
     SpecialSchemaFieldsTest_Errors_Spec()
 ) {
-    private val unused = Singleton(
+    private val unused = WasmSingleton(
         this, "fields", SpecialSchemaFieldsTest_Fields_Spec()
     )
 

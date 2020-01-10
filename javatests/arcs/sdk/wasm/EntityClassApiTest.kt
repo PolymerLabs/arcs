@@ -11,14 +11,12 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Singleton
-
 class EntityClassApiTest : TestBase<EntityClassApiTest_Errors>(
     ::EntityClassApiTest_Errors,
     EntityClassApiTest_Errors_Spec()
 ) {
-    private val unused1 = Singleton(this, "data", EntityClassApiTest_Data_Spec())
-    private val unused2 = Singleton(this, "empty", EntityClassApiTest_Empty_Spec())
+    private val unused1 = WasmSingleton(this, "data", EntityClassApiTest_Data_Spec())
+    private val unused2 = WasmSingleton(this, "empty", EntityClassApiTest_Empty_Spec())
 
     /** Run tests on particle initialization */
     override fun init() {

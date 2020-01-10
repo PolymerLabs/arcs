@@ -11,7 +11,6 @@
 
 package arcs.test
 
-import arcs.sdk.Particle
 import arcs.sdk.log
 
 class ServiceParticle : AbstractServiceParticle() {

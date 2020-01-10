@@ -1,4 +1,6 @@
+/* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
+
 package arcs.sdk
 
 //
@@ -6,8 +8,23 @@ package arcs.sdk
 //
 // Current implementation doesn't support references or optional field detection
 
+import arcs.sdk.NullTermByteArray
+import arcs.sdk.ReadableCollection
+import arcs.sdk.ReadableSingleton
+import arcs.sdk.ReadWriteCollection
+import arcs.sdk.ReadWriteSingleton
+import arcs.sdk.StringDecoder
+import arcs.sdk.StringEncoder
+import arcs.sdk.WritableCollection
+import arcs.sdk.WritableSingleton
+import arcs.sdk.utf8ToString
+import arcs.sdk.wasm.WasmCollection
+import arcs.sdk.wasm.WasmEntity
+import arcs.sdk.wasm.WasmEntitySpec
+import arcs.sdk.wasm.WasmParticle
+import arcs.sdk.wasm.WasmSingleton
 
-class GoldInternal1() : Entity() {
+class GoldInternal1() : WasmEntity() {
 
     var _val_Set = false
     var val_ = ""
@@ -48,7 +65,7 @@ class GoldInternal1() : Entity() {
     }
 }
 
-class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
+class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
 
     override fun create() = GoldInternal1()
 
@@ -89,7 +106,7 @@ typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
 
-class Gold_Data() : Entity() {
+class Gold_Data() : WasmEntity() {
 
     var _numSet = false
     var num = 0.0
@@ -169,7 +186,7 @@ class Gold_Data() : Entity() {
     }
 }
 
-class Gold_Data_Spec() : EntitySpec<Gold_Data> {
+class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
 
     override fun create() = Gold_Data()
 
@@ -218,7 +235,7 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 }
 
 
-abstract class AbstractGold : Particle() {
-    protected val data = Singleton(this, "data", Gold_Data_Spec())
-    protected val alias = Singleton(this, "alias", Gold_Alias_Spec())
+abstract class AbstractGold : WasmParticle() {
+    protected val data: ReadableSingleton<Gold_Data> = WasmSingleton(this, "data", Gold_Data_Spec())
+    protected val alias: WritableSingleton<Gold_Alias> = WasmSingleton(this, "alias", Gold_Alias_Spec())
 }

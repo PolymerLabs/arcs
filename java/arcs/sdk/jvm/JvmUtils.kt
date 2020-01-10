@@ -1,3 +1,4 @@
+// ktlint-disable filename
 /*
  * Copyright 2020 Google LLC.
  *
@@ -9,7 +10,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+@file:Suppress("PackageName", "TopLevelName")
+
 package arcs.sdk
 
-/** Base interface for all particles. */
-interface Particle
+actual object Utils {
+    actual fun log(msg: String): Unit = throw NotImplementedError()
+
+    actual fun abort(): Unit = throw NotImplementedError()
+
+    actual fun assert(message: String, cond: Boolean): Unit = throw NotImplementedError()
+}

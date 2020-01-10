@@ -11,8 +11,6 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Handle
-import arcs.sdk.Particle
 import arcs.sdk.StringDecoder
 import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
@@ -123,7 +121,7 @@ fun connectHandle(
     canWrite: Boolean
 ): WasmAddress {
     return particlePtr
-        .toObject<Particle>()
+        .toObject<WasmParticle>()
         ?.connectHandle(handleName.toKString(), canRead, canWrite)
         ?.toAddress() ?: 0
 }
@@ -131,16 +129,16 @@ fun connectHandle(
 @Retain
 @ExportForCppRuntime("_init")
 fun init(particlePtr: WasmAddress) {
-    particlePtr.toObject<Particle>()?.init()
+    particlePtr.toObject<WasmParticle>()?.init()
 }
 
 @Retain
 @ExportForCppRuntime("_syncHandle")
 fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNullableString) {
-    val handle = handlePtr.toObject<Handle>()
+    val handle = handlePtr.toObject<WasmHandle<*>>()
     handle?.let {
         it.sync(encoded.toByteArray())
-        particlePtr.toObject<Particle>()?.sync(it)
+        particlePtr.toObject<WasmParticle>()?.sync(it)
     }
 }
 
@@ -152,10 +150,10 @@ fun updateHandle(
     encoded1Ptr: WasmNullableString,
     encoded2Ptr: WasmNullableString
 ) {
-    val handle = handlePtr.toObject<Handle>()
+    val handle = handlePtr.toObject<WasmHandle<*>>()
     handle?.let {
         it.update(encoded1Ptr.toByteArray(), encoded2Ptr.toByteArray())
-        particlePtr.toObject<Particle>()?.onHandleUpdate(it)
+        particlePtr.toObject<WasmParticle>()?.onHandleUpdate(it)
     }
 }
 
@@ -168,7 +166,11 @@ fun renderSlot(
     sendModel: Boolean
 ) {
     @Suppress("DEPRECATION")
-    particlePtr.toObject<Particle>()?.renderSlot(slotNamePtr.toKString(), sendTemplate, sendModel)
+    particlePtr.toObject<WasmParticle>()?.renderSlot(
+        slotNamePtr.toKString(),
+        sendTemplate,
+        sendModel
+    )
 }
 
 @Retain
@@ -179,7 +181,7 @@ fun fireEvent(
     handlerNamePtr: WasmString,
     eventData: WasmString
 ) {
-    particlePtr.toObject<Particle>()?.fireEvent(
+    particlePtr.toObject<WasmParticle>()?.fireEvent(
         slotNamePtr.toKString(),
         handlerNamePtr.toKString(),
         StringDecoder.decodeDictionary(eventData.toByteArray())
@@ -195,13 +197,17 @@ fun serviceResponse(
     tagPtr: WasmString
 ) {
     val dict = StringDecoder.decodeDictionary(responsePtr.toByteArray())
-    particlePtr.toObject<Particle>()?.serviceResponse(callPtr.toKString(), dict, tagPtr.toKString())
+    particlePtr.toObject<WasmParticle>()?.serviceResponse(
+        callPtr.toKString(),
+        dict,
+        tagPtr.toKString()
+    )
 }
 
 @Retain
 @ExportForCppRuntime("_renderOutput")
 fun renderOutput(particlePtr: WasmAddress) {
-    particlePtr.toObject<Particle>()
+    particlePtr.toObject<WasmParticle>()
         ?.renderOutput()
 }
 

@@ -1,3 +1,4 @@
+// ktlint-disable filename
 /*
  * Copyright 2020 Google LLC.
  *
@@ -9,7 +10,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+@file:Suppress("PackageName", "TopLevelName")
+
 package arcs.sdk
 
-/** Base interface for all particles. */
-interface Particle
+actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.decodeToString()
+actual fun stringToUtf8Impl(str: String): ByteArray = str.encodeToByteArray()

@@ -11,19 +11,17 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Collection
-import arcs.sdk.Entity
-import arcs.sdk.EntitySpec
-import arcs.sdk.Particle
 import kotlin.AssertionError
 import kotlin.test.Asserter
 
-open class TestBase<T : Entity>(val ctor: (txt: String) -> T, spec: EntitySpec<T>)
-    : Particle(), Asserter {
-    private val errors = Collection(this, "errors", spec)
+open class TestBase<T : WasmEntity>(
+    val ctor: (txt: String) -> T,
+    spec: WasmEntitySpec<T>
+) : WasmParticle(), Asserter {
+    private val errors = WasmCollection(this, "errors", spec)
 
-    private fun <T : Entity> assertContainerEqual(
-        container: Collection<T>,
+    private fun <T : WasmEntity> assertContainerEqual(
+        container: WasmCollection<T>,
         converter: (T) -> String,
         expected: List<String>,
         isOrdered: Boolean = true
