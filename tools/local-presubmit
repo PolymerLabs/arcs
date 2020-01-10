@@ -9,7 +9,7 @@ set -e
 source $(dirname $0)/logging.sh
 
 cd $ROOT
-status "Testing all of the things (except shells/android and javaharness)."
+status "Testing all of the things."
 
 ./tools/sigh webpack
 bazel test //java/... //javatests/... //src/... //particles/...
