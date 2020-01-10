@@ -44,13 +44,11 @@ abstract class Particle {
      * @see [registerHandle]
      * @see [onHandleSync]
      */
+    @Suppress("UNUSED_PARAMETER")
     fun connectHandle(name: String, canRead: Boolean, canWrite: Boolean): Handle? {
         handles[name]?.let {
             if (canRead) {
                 toSync.add(it)
-                it.direction = if (canWrite) Direction.InOut else Direction.In
-            } else {
-                it.direction = Direction.Out
             }
             return it
         }
@@ -185,12 +183,9 @@ abstract class Particle {
     fun resolveUrl(url: String): String = RuntimeClient.resolveUrl(url)
 }
 
-enum class Direction { Unconnected, In, Out, InOut }
-
 abstract class Handle(val name: String, val particle: Particle) {
     init { particle.registerHandle(this) }
 
-    var direction: Direction = Direction.Unconnected
     abstract fun sync(encoded: ByteArray)
     abstract fun update(added: ByteArray, removed: ByteArray)
 }
