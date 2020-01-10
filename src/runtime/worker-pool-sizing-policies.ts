@@ -52,8 +52,11 @@ abstract class SizingPolicy {
    */
   skip(sizeState: SizeState): boolean {
     const {demand, free, inUse} = sizeState;
+
     // Skips as there is no chance of shrinking.
     if ((free + inUse) >= APPROVAL_SIZE_CAP && free === 0) {
+      // Hint: lots of workers breathing! Forgot to kill?!
+      console.warn(`${inUse} workers. Any zombies?!`);
       return true;
     }
     return false;
@@ -85,9 +88,11 @@ const aggressive = new (class extends SizingPolicy {
   readonly scale = (n: number) => Math.floor(n * 3 / 2);
 
   arbitrate(sizeState: SizeState) {
-    if (this.skip(sizeState)) return 0;
-    const {demand, free, inUse} = sizeState;
     try {
+      if (this.skip(sizeState)) {
+        return 0;
+      }
+      const {demand, free, inUse} = sizeState;
       if (inUse > this.maxInUse) {
         this.maxInUse = inUse;
       }
@@ -109,9 +114,11 @@ const aggressive = new (class extends SizingPolicy {
  */
 const conservative = new (class extends SizingPolicy {
   arbitrate(sizeState: SizeState) {
-    if (this.skip(sizeState)) return 0;
-    const {demand: approval, free, inUse} = sizeState;
     try {
+      if (this.skip(sizeState)) {
+        return 0;
+      }
+      const {demand: approval, free, inUse} = sizeState;
       return this.cap(approval) - free - inUse;
     } catch {
       return 0;
@@ -147,9 +154,11 @@ const predictive = new (class extends SizingPolicy {
   ewma = 0;
 
   arbitrate(sizeState: SizeState) {
-    if (this.skip(sizeState)) return 0;
-    const {demand, free, inUse} = sizeState;
     try {
+      if (this.skip(sizeState)) {
+        return 0;
+      }
+      const {demand, free, inUse} = sizeState;
       const total = free + inUse;
       const diff = inUse - this.ewma;
       this.ewma = ((this.ewma << this.weight) + diff) >> this.weight;
