@@ -26,6 +26,8 @@ java_plugin(
 java_library(
     name = "auto_service",
     exported_plugins = [":autoservice_plugin"],
-    exports = ["@maven//:com_google_auto_service_auto_service_annotations",
-               "@maven//:com_google_auto_service_auto_service"],
+    exports = [
+        "@maven//:com_google_auto_service_auto_service",
+        "@maven//:com_google_auto_service_auto_service_annotations",
+    ],
 )

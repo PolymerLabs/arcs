@@ -24,7 +24,7 @@ object ServiceLoaderHostRegistry : AnnotationBasedHostRegistry() {
 
     init {
         loadAndRegisterHostsAndParticles()
-            .forEach { host -> registerHost(host) }
+            .forEach(::registerHost)
     }
 
     private fun loadAndRegisterHostsAndParticles(): List<ArcHost> {

@@ -53,5 +53,4 @@ abstract class AnnotationBasedHostRegistry : HostRegistry {
     private fun targetHostMatches(target: Annotation, host: ArcHost?) =
         target.annotationClass.java.getAnnotation(TargetHost::class.java)
             ?.value?.java == host?.javaClass
-
 }

@@ -14,10 +14,10 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.host",
     deps = [
         ":particle",
-         "//third_party/java/junit:junit-android",
-         "//third_party/java/truth:truth-android",
-         "//third_party/java/auto:auto_service",
-         "//java/arcs/jvm/host:host",
+        "//java/arcs/jvm/host",
+        "//third_party/java/auto:auto_service",
+        "//third_party/java/junit:junit-android",
+        "//third_party/java/truth:truth-android",
     ],
 )
 

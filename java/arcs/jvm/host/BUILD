@@ -7,9 +7,9 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_library(
     name = "host",
     srcs = glob(["*.kt"]),
+    wasm = False,
     deps = [
         "//java/arcs/core/host",
         "//java/arcs/core/sdk",
     ],
-    jvm = True,
 )
