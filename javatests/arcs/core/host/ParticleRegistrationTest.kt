@@ -1,6 +1,7 @@
 package arcs.core.host
 
 import arcs.core.sdk.Particle
+import arcs.jvm.core.host.ServiceLoaderHostRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,14 +47,14 @@ class ParticleRegistrationTest {
         val hostRegistry = ServiceLoaderHostRegistry.instance
         val dummyhost = DummyHost()
         hostRegistry.registerHost(dummyhost)
-        assertThat(dummyhost).isIn(hostRegistry.availableArcHosts())
-        assertThat(DummyParticle::class).isIn(dummyhost.registeredParticles())
+        assertThat(hostRegistry.availableArcHosts()).contains(dummyhost)
+        assertThat(dummyhost.registeredParticles()).contains(DummyParticle::class)
 
         dummyhost.unregisterParticle(DummyParticle::class)
-        assertThat(DummyParticle::class).isNotIn(dummyhost.registeredParticles())
+        assertThat(dummyhost.registeredParticles()).doesNotContain(DummyParticle::class)
 
         hostRegistry.unregisterHost(dummyhost)
-        assertThat(dummyhost).isNotIn(hostRegistry.availableArcHosts())
+        assertThat(hostRegistry.availableArcHosts()).doesNotContain(dummyhost)
     }
 
     @Test
@@ -68,21 +69,16 @@ class ParticleRegistrationTest {
         ExplicitHostRegistry.instance.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
                 is ProdHost -> {
-                    assertThat(TestProdParticle::class).isIn(
-                        host.registeredParticles()
-                    )
-
+                    assertThat(host.registeredParticles()).contains(TestProdParticle::class)
                     foundProdHost = true
                 }
                 is TestHost -> {
-                    assertThat(TestHostParticle::class).isIn(
-                        host.registeredParticles()
-                    )
+                    assertThat(host.registeredParticles()).contains(TestHostParticle::class)
                     foundTestHost = true
                 }
             }
         }
-        assertThat(foundProdHost).isEqualTo(true)
-        assertThat(foundTestHost).isEqualTo(true)
+        assertThat(foundProdHost).isTrue()
+        assertThat(foundTestHost).isTrue()
     }
 }
