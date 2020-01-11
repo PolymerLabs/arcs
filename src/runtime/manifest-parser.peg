@@ -152,6 +152,14 @@ Trigger "a trigger for a recipe"
   });
 }
 
+ParameterizedAnnotation "a parameterized annotation (e.g. @foo(bar))"
+  = simpleAnnotation:SimpleAnnotation whiteSpace? '(' whiteSpace? parameter:NumberedUnits whiteSpace? ')' {
+  return toAstNode<AstNode.ParameterizedAnnotation>({
+    kind: 'param-annotation',
+    simpleAnnotation,
+    parameter,
+  });
+}
 
 SimpleAnnotation "an annotation (e.g. @foo)"
   = '@' annotation:lowerIdent { return annotation; }
@@ -1042,13 +1050,14 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotation:(whiteSpace ParameterizedAnnotation)? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
-      fate
+      fate,
+      annotation: optional(annotation, s => s[1], null),
     });
   }
 
@@ -1428,6 +1437,16 @@ Version "a version number (e.g. @012)"
   = '@' version:[^ ]+
   {
     return version.join('');
+  }
+
+NumberedUnits
+  = count:[0-9]+ units:[a-z]
+  {
+    return toAstNode<AstNode.NumberedUnits>({
+      kind: 'numbered-units',
+      count: count.join(''),
+      units
+    });
   }
 
 Indent "indentation" = &(i:" "+ &{

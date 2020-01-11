@@ -399,6 +399,7 @@ export interface RecipeHandle extends BaseNode {
   name: string|null;
   ref: HandleRef;
   fate: Fate;
+  annotation: ParameterizedAnnotation|null;
 }
 
 export interface RecipeParticleSlotConnection extends BaseNode {
@@ -641,6 +642,18 @@ export interface Annotation extends BaseNode {
   kind: 'annotation';
   triggerSet: Triggers;
   simpleAnnotation?: string;
+}
+
+export interface ParameterizedAnnotation extends BaseNode {
+  kind: 'param-annotation';
+  simpleAnnotation: string;
+  parameter: NumberedUnits;
+}
+
+export interface NumberedUnits extends BaseNode {
+  kind: 'numbered-units';
+  count: number;
+  units: string;
 }
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.
