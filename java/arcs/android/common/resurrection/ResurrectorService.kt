@@ -76,25 +76,26 @@ abstract class ResurrectorService : Service() {
      * registered for the specified [events] (or are registered for *all* events).
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    suspend fun resurrectClients(vararg events: StorageKey) = resurrectClients(events.toList())
+    suspend fun resurrectClients(vararg storageKeys: StorageKey) =
+        resurrectClients(storageKeys.toList())
 
     /**
      * Makes [Context.startService] or [Context.startActivity] calls to all clients who are
      * registered for the specified [events] (or are registered for *all* events).
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    suspend fun resurrectClients(events: Collection<StorageKey>) {
+    suspend fun resurrectClients(storageKeys: Collection<StorageKey>) {
         loadJob.join()
 
         val requests = mutableSetOf<ResurrectionRequest>()
         mutex.withLock {
-            events.forEach { event ->
+            storageKeys.forEach { event ->
                 registeredRequestsByNotifiers[event]?.let { requests.addAll(it) }
             }
             registeredRequestsByNotifiers[null]?.let { requests.addAll(it) }
         }
 
-        requests.forEach { it.issueResurrection(events) }
+        requests.forEach { it.issueResurrection(storageKeys) }
     }
 
     /**
