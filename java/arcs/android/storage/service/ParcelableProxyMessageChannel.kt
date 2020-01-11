@@ -17,7 +17,6 @@ import arcs.android.storage.ParcelableProxyMessage
 import arcs.android.storage.service.ParcelableProxyMessageChannel.MessageAndResult
 import arcs.core.crdt.CrdtException
 import arcs.core.storage.util.SendQueue
-import arcs.core.util.TaggedLog
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
@@ -73,8 +72,4 @@ class ParcelableProxyMessageChannel(
         val message: ParcelableProxyMessage,
         val result: CompletableDeferred<Boolean>
     )
-
-    companion object {
-        private val log = TaggedLog { "ParcelableProxyMessageChannel" }
-    }
 }

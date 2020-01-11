@@ -19,6 +19,7 @@ import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.CountType
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.ProxyMessage
+import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDisk
@@ -45,35 +46,36 @@ import org.junit.runner.RunWith
 @UseExperimental(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class BindingContextTest {
     private lateinit var store: Store<CrdtCount.Data, CrdtCount.Operation, Int>
+    private lateinit var storageKey: StorageKey
 
     @Before
     fun setup() {
         RamDiskDriverProvider()
         RamDisk.clear()
+        storageKey = RamDiskStorageKey("myCount")
         store = Store(
             StoreOptions(
-                RamDiskStorageKey("myCount"),
+                storageKey,
                 ExistenceCriteria.ShouldCreate,
                 CountType()
             )
         )
     }
 
-    private suspend fun buildContext() =
-        BindingContext(
-            store,
-            ParcelableCrdtType.Count,
-            coroutineContext,
-            BindingContextStatsImpl()
-        )
+    private suspend fun buildContext(
+        callback: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
+    ) = BindingContext(
+        store,
+        ParcelableCrdtType.Count,
+        coroutineContext,
+        BindingContextStatsImpl(),
+        callback
+    )
 
     @Test
     fun getLocalData_fetchesLocalData() = runBlocking {
         val bindingContext = buildContext()
-        val messageChannel =
-            ParcelableProxyMessageChannel(
-                coroutineContext
-            )
+        val messageChannel = ParcelableProxyMessageChannel(coroutineContext)
         bindingContext.getLocalData(messageChannel)
 
         var message = messageChannel.asFlow().first()
@@ -107,8 +109,7 @@ class BindingContextTest {
     @Test
     fun sendProxyMessage_propagatesToTheStore() = runBlocking {
         val bindingContext = buildContext()
-        val deferredResult =
-            DeferredResult(coroutineContext)
+        val deferredResult = DeferredResult(coroutineContext)
         val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
             listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
             id = 1
@@ -131,10 +132,7 @@ class BindingContextTest {
     @Test
     fun registerCallback_registersCallbackWithStore() = runBlocking {
         val bindingContext = buildContext()
-        val callback =
-            ParcelableProxyMessageChannel(
-                coroutineContext
-            )
+        val callback = ParcelableProxyMessageChannel(coroutineContext)
         val token = bindingContext.registerCallback(callback)
 
         assertThat(token).isEqualTo(1)
@@ -163,7 +161,7 @@ class BindingContextTest {
     }
 
     @Test
-    fun unregisterCallback_unregistersCallbackFromStroe() = runBlocking {
+    fun unregisterCallback_unregistersCallbackFromStore() = runBlocking {
         val bindingContext = buildContext()
         val callback =
             ParcelableProxyMessageChannel(
@@ -189,5 +187,32 @@ class BindingContextTest {
 
         callback.close()
         assertThat(callback.asFlow().toList()).isEmpty()
+    }
+
+    @Test
+    fun sendProxyMessage_causesSendToCallback() = runBlocking {
+        var receivedKey: StorageKey? = null
+        var receivedMessage: ProxyMessage<*, *, *>? = null
+        val bindingContext = buildContext { key, message ->
+            receivedKey = key
+            receivedMessage = message
+        }
+        val deferredResult = DeferredResult(coroutineContext)
+        val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
+            listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
+            id = 1
+        )
+        bindingContext.sendProxyMessage(
+            message.toParcelable(ParcelableCrdtType.Count),
+            deferredResult
+        )
+
+        assertThat(deferredResult.await()).isTrue()
+
+        assertThat(receivedKey).isEqualTo(storageKey)
+        assertThat(receivedMessage).isEqualTo(message)
+
+        coroutineContext[Job.Key]?.cancelChildren()
+        Unit
     }
 }

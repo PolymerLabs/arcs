@@ -29,8 +29,7 @@ import org.junit.runner.RunWith
 class DeferredResultTest {
     @Test
     fun test_nullException_resolvesToTrue() = runBlockingTest {
-        val deferredResult =
-            DeferredResult(coroutineContext)
+        val deferredResult = DeferredResult(coroutineContext)
 
         launch {
             delay(1000)
@@ -42,8 +41,7 @@ class DeferredResultTest {
 
     @Test
     fun test_exception_completesExceptionally() = runBlockingTest {
-        val deferredResult =
-            DeferredResult(coroutineContext)
+        val deferredResult = DeferredResult(coroutineContext)
 
         launch {
             delay(1000)

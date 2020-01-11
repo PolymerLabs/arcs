@@ -75,10 +75,7 @@ class ParcelableProxyMessageChannelTest {
     fun proxyMessages_whenHandledResultIsFalse_sendExceptionToCallback() = runBlocking {
         try {
             supervisorScope {
-                val channel =
-                    ParcelableProxyMessageChannel(
-                        coroutineContext
-                    )
+                val channel = ParcelableProxyMessageChannel(coroutineContext)
                 val deferredResult =
                     DeferredResult(coroutineContext)
                 channel.onProxyMessage(makeMessage(0), deferredResult)
@@ -95,12 +92,8 @@ class ParcelableProxyMessageChannelTest {
     fun proxyMessages_whenResultIsCompletedExceptionally_sendExceptionToCallback() = runBlocking {
         try {
             supervisorScope {
-                val channel =
-                    ParcelableProxyMessageChannel(
-                        coroutineContext
-                    )
-                val deferredResult =
-                    DeferredResult(coroutineContext)
+                val channel = ParcelableProxyMessageChannel(coroutineContext)
+                val deferredResult = DeferredResult(coroutineContext)
                 channel.onProxyMessage(makeMessage(0), deferredResult)
                 channel.openSubscription().receive().result
                     .completeExceptionally(CrdtException("Uh Oh!"))
