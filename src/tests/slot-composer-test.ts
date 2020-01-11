@@ -235,8 +235,8 @@ recipe
 
   it.skip('renders inner slots in transformations without intercepting', async () => {
     const loader = new StubLoader({
-        'TransformationParticle.js': `defineParticle(({DomParticle}) => {
-          return class extends DomParticle {
+        'TransformationParticle.js': `defineParticle(({UiParticle}) => {
+          return class extends UiParticle {
             async setHandles(handles) {
               super.setHandles(handles);
 
@@ -282,8 +282,8 @@ recipe
             }
           };
         });`,
-        'A.js': `defineParticle(({DomParticle}) => {
-          return class extends DomParticle {
+        'A.js': `defineParticle(({UiParticle}) => {
+          return class extends UiParticle {
             get template() {
               return '<div><span>{{a}}</span><div slotid="detail"></div></div>';
             }
@@ -292,8 +292,8 @@ recipe
             }
           };
         });`,
-        'B.js': `defineParticle(({DomParticle}) => {
-          return class extends DomParticle {
+        'B.js': `defineParticle(({UiParticle}) => {
+          return class extends UiParticle {
             get template() {
               return '<div>{{b}}</div>';
             }

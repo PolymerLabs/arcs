@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, log}) => {
+defineParticle(({UiParticle, html, log}) => {
 
   const host = `show-tiles`;
 
@@ -63,7 +63,7 @@ defineParticle(({DomParticle, html, log}) => {
 <div ${host}>{{items}}</div>
     `.trim();
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

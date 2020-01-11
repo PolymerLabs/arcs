@@ -57,8 +57,8 @@ describe('Hot Code Reload for JS Particle', async () => {
         A
           root: consumes slot0`);
     const loader = new StubLoader({
-      'A.js': `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
+      'A.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
           get template() { return 'Hello <span>{{name}}</span>, old age: <span>{{age}}</span>'; }
 
           render() {
@@ -83,8 +83,8 @@ describe('Hot Code Reload for JS Particle', async () => {
     //assert.deepStrictEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '10'});
     //assert.deepStrictEqual(slotConsumer._content.template, `Hello <span>{{name}}</span>, old age: <span>{{age}}</span>`);
 
-    loader._fileMap['A.js'] = `defineParticle(({DomParticle}) => {
-      return class extends DomParticle {
+    loader._fileMap['A.js'] = `defineParticle(({UiParticle}) => {
+      return class extends UiParticle {
         get template() { return 'Hello <span>{{name}}</span>, new age: <span>{{age}}</span>'; }
 
         render() {

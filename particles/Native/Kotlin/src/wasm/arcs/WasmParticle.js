@@ -12,7 +12,7 @@ defineParticle(({SimpleParticle, html, log, resolver}) => {
      * pseudo-stack called 'Arenas' to pass arguments by integer reference to WASM. It cleans up
      * these areas after a lambda callback is finished, reducing the chance of a memory leak.
      */
-    return class extends DomParticle {
+    return class extends UiParticle {
         constructor() {
             super()
             importScripts(resolver(`WasmParticle/main.wasm.js`));
@@ -125,7 +125,7 @@ defineParticle(({SimpleParticle, html, log, resolver}) => {
                 this.wasmTemplate();
                 return this.wasmReturnSlot || '<span>Empty</span>';
             }
-            // HACK for demo: WASM loading is async, but DomParticle construction is sync,
+            // HACK for demo: WASM loading is async, but UiParticle construction is sync,
             // so it calls getTemplate() and caches the result before the WASM code has hookedup.
             // Need to investigate some kind of deferred lifecycle wherein WASM main() method
             // invokes defineParticle()

@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({UiParticle, resolver}) => {
 
   const host = `[manage-products]`;
 
@@ -139,7 +139,7 @@ ${productStyles}
 </div>
     `.trim();
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

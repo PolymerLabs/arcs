@@ -8,7 +8,7 @@ import kotlin.reflect.KFunction0
  * Base class for all Kotlin particles. Different implementations of this exist for JS, WASM, and JVM in
  * platform.kt files.
  */
-expect abstract class DomParticle {
+expect abstract class UiParticle {
     // Normally overridden by Particle authors.
     open var template: String
 
@@ -17,14 +17,14 @@ expect abstract class DomParticle {
     open fun render(props: Any, state: Any): Any
 
     /**
-     * Platform dependent DomParticle state manipulation. See mutateState for the public API.
+     * Platform dependent UiParticle state manipulation. See mutateState for the public API.
      */
     fun setState(state: Any)
     fun getState(): Any?
     fun updateVariable(variableName: String, rawData: Any)
 
     /**
-     * Platform dependent mechanism for executing service calls (e.g. DomParticle.service() call)
+     * Platform dependent mechanism for executing service calls (e.g. UiParticle.service() call)
      */
     fun <U, T> service(args: U): PromiseLike<T>
     constructor()
@@ -43,7 +43,7 @@ expect interface PromiseLike<T> {
 expect open class DomParticleBase<Props, State> constructor(
     propsSerializer: KSerializer<Props>,
     stateSerializer: KSerializer<State>
-) : DomParticle {
+) : UiParticle {
 
     companion object {
         fun log(msg: String)
@@ -116,7 +116,7 @@ expect object Platform {
     /**
      * Expose a particle to the Arcs Runtime for initialization.
      */
-    fun <T : DomParticle> installParticle(
+    fun <T : UiParticle> installParticle(
         particle: KClass<T>,
         particleConstructor: KFunction0<T>
     )

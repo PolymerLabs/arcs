@@ -12,7 +12,7 @@
 
 /* global defineParticle */
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
   const template = html`
 <style>
 body {
@@ -21,7 +21,7 @@ body {
 </style>
 `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

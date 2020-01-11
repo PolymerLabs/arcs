@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, resolver, html, log}) => {
+defineParticle(({UiParticle, resolver, html, log}) => {
 
   const host = `toast-panel`;
 
@@ -59,7 +59,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
 </div>
     `.trim();
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
