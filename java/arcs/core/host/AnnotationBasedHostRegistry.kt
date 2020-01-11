@@ -17,12 +17,10 @@ import kotlin.reflect.KClass
  * A HostRegistry that automatically registers particles with hosts by matching [TargetHost]
  * annotated annotations on [Particle] classes with [ArcHost]s.
  */
-open class AnnotationBasedHostRegistry : HostRegistry {
-    val hosts: MutableList<ArcHost> = mutableListOf()
+abstract class AnnotationBasedHostRegistry : HostRegistry {
+    private val hosts: MutableList<ArcHost> = mutableListOf()
 
-    override fun availableArcHosts(): List<ArcHost> {
-        return hosts
-    }
+    override val availableArcHosts: List<ArcHost> get() = hosts
 
     protected fun registerParticles(
         particles: List<KClass<out Particle>>,

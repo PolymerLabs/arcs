@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
  * registration.
  */
 abstract class AbstractArcHost : ArcHost {
-    var particles: MutableList<KClass<out Particle>> = mutableListOf()
+    private var particles: MutableList<KClass<out Particle>> = mutableListOf()
 
     override fun registerParticle(particle: KClass<out Particle>) {
         particles.add(particle)
@@ -28,5 +28,5 @@ abstract class AbstractArcHost : ArcHost {
         particles.remove(particle)
     }
 
-    override fun registeredParticles(): List<KClass<out Particle>> = particles
+    override val registeredParticles: List<KClass<out Particle>> get() = particles
 }

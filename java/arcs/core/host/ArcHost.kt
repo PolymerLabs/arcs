@@ -34,6 +34,6 @@ interface ArcHost {
     /**
      * Returns a list of Particles registered to run in this host.
      */
-    fun registeredParticles(): List<KClass<out Particle>>
+    val registeredParticles: List<KClass<out Particle>>
     // TODO: Implement startArc/stopArc/handleMessage
 }

@@ -18,19 +18,13 @@ import kotlin.reflect.KClass
  * explicitly registered [ArcHost]s and [Particle]s invoked by [HostRegistry.registerHost] and
  * [ExplicitHostRegistry.registerParticles].
  */
-class ExplicitHostRegistry() : AnnotationBasedHostRegistry() {
-
-    companion object {
-        val instance: ExplicitHostRegistry by lazy(
-            LazyThreadSafetyMode.PUBLICATION
-        ) { ExplicitHostRegistry() }
-    }
+object ExplicitHostRegistry : AnnotationBasedHostRegistry() {
 
     /**
      * Explicitly register all particles used.
      */
     fun registerParticles(allParticles: List<KClass<out Particle>>) {
-        hosts.map { host ->
+        availableArcHosts.forEach { host ->
             registerParticles(findParticlesForHost(allParticles, host), host)
         }
     }

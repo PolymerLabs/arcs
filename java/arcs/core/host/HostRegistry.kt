@@ -17,7 +17,7 @@ interface HostRegistry {
     /**
      * Returns a list of all current [ArcHost] implementations in the system.
      */
-    fun availableArcHosts(): List<ArcHost>
+    val availableArcHosts: List<ArcHost>
 
     /**
      * Register a new [ArcHost].

@@ -8,7 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.jvm.core.host
+package arcs.jvm.host
 
 import arcs.core.host.AnnotationBasedHostRegistry
 import arcs.core.host.ArcHost
@@ -20,18 +20,11 @@ import kotlin.sequences.asSequence
  * A HostRegistry that discovers the available [ArcHost]s available on this platform by using
  * Java ServiceLoader and SPI.
  */
-class ServiceLoaderHostRegistry() : AnnotationBasedHostRegistry() {
+object ServiceLoaderHostRegistry : AnnotationBasedHostRegistry() {
 
     init {
-        loadAndRegisterHostsAndParticles().forEach { host -> registerHost(host) }
-    }
-
-    companion object {
-        val instance: ServiceLoaderHostRegistry by lazy(
-            LazyThreadSafetyMode.PUBLICATION
-        ) {
-            ServiceLoaderHostRegistry()
-        }
+        loadAndRegisterHostsAndParticles()
+            .forEach { host -> registerHost(host) }
     }
 
     private fun loadAndRegisterHostsAndParticles(): List<ArcHost> {
