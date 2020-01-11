@@ -25,7 +25,7 @@ def _run_schema2wasm(name, src, deps, out, language_name, language_flag, package
         fail("src must be a .arcs file")
 
     if type(deps) == str:
-        deps = [deps]
+        fail("deps must be a list")
 
     sigh_command(
         name = name,
