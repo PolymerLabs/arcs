@@ -9,7 +9,7 @@
  */
 
 /* Arcs runtime flags.
- * These can be set via command line arguments and are generally for introducing
+ * These can be set via command line arguments and are generally for
  * incrementally introducing potentially breaking changes (e.g. adding/removing
  * features).
  *
