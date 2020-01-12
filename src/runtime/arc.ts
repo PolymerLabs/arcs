@@ -371,8 +371,17 @@ export class Arc implements ArcInterface {
                          inspectorFactory: this.inspectorFactory});
     const storeMap: Map<UnifiedStore, UnifiedStore> = new Map();
     for (const store of this._stores) {
-      const clone = await arc.storageProviderFactory.construct(store.id, store.type, 'volatile');
-      await clone.cloneFrom(await store.activate());
+      const clone: UnifiedStore = Flags.useNewStorageStack ?
+          new Store({
+            storageKey: new VolatileStorageKey(this.id, store.id),
+            exists: Exists.MayExist,
+            type: store.type,
+            id: store.id
+          }) :
+          await arc.storageProviderFactory.construct(
+              store.id, store.type, 'volatile');
+      await (await clone.activate()).cloneFrom(await store.activate());
+
       storeMap.set(store, clone);
       if (this.storeDescriptions.has(store)) {
         arc.storeDescriptions.set(clone, this.storeDescriptions.get(store));
