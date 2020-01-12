@@ -12,10 +12,13 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {RozSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {singletonHandleForTest, collectionHandleForTest} from '../../runtime/testing/handle-for-test.js';
 import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
 import {VolatileCollection, VolatileSingleton, VolatileStorage} from '../../runtime/storage/volatile-storage.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ReferenceType} from '../../runtime/type.js';
+import {Entity} from '../../runtime/entity.js';
+
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
 import '../../services/clock-service.js';
@@ -413,6 +416,55 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // 'src' is set directly by the particle.
       const val = {pass, src: 'åŗċş 🌈'};
       assert.deepStrictEqual((await res.toList()).map(e => e.rawData), [val, val]);
+    });
+
+    it('entity slicing', async () => {
+      // Entity slicing hasn't been implemented in the storage stack yet, but schema aliasing
+      // allows sliced types at the particle level. That means entities will be sent into wasm
+      // with the full field set, but only some of those are needed. This test checks that the
+      // extra fields are correctly ignored.
+      const manifest = await manifestPromise;
+      const runtime = new Runtime({loader, composerClass: RozSlotComposer, context: manifest});
+      const arc = runtime.newArc('wasm-test', 'volatile://');
+
+      const sliceClass = Entity.createEntityClass(manifest.findSchemaByName('Slice'), null);
+      const sngStore = await arc.createStore(sliceClass.type, undefined, 'test:0');
+      const colStore = await arc.createStore(sliceClass.type.collectionOf(), undefined, 'test:1');
+
+      const resType = manifest.findParticleByName('EntitySlicingTest').getConnectionByName('res').type;
+      const resStore = await arc.createStore(resType, undefined, 'test:2');
+
+      const sng = await singletonHandleForTest(arc, sngStore);
+      await sng.set(new sng.entityClass({num: 159, txt: 'Charlie', flg: true}));
+
+      const col = await collectionHandleForTest(arc, colStore);
+      await col.add(new col.entityClass({num: 30, txt: 'Moe', flg: false}));
+      await col.add(new col.entityClass({num: 60, txt: 'Larry', flg: false}));
+      await col.add(new col.entityClass({num: 90, txt: 'Curly', flg: true}));
+
+      const recipe = arc.context.allRecipes.find(r => r.name === 'EntitySlicingTest');
+      recipe.handles[0].mapToStorage(sngStore);
+      recipe.handles[1].mapToStorage(colStore);
+      recipe.handles[2].mapToStorage(resStore);
+      recipe.normalize();
+      await arc.instantiate(recipe);
+      await arc.idle;
+
+      const res = await collectionHandleForTest(arc, resStore);
+      assert.sameMembers((await res.toList()).map(e => e.val), [
+        's1:159',
+        's2:159,Charlie',
+        's3:159,Charlie,true',
+        'c1:30',
+        'c1:60',
+        'c1:90',
+        'c2:30,Moe',
+        'c2:60,Larry',
+        'c2:90,Curly',
+        'c3:30,Moe,false',
+        'c3:60,Larry,false',
+        'c3:90,Curly,true',
+      ]);
     });
   });
 });
