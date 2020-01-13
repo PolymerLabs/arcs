@@ -14,7 +14,7 @@ import arcs.core.sdk.Particle
 import kotlin.reflect.KClass
 
 /**
- * A HostRegistry that discovers the available [ArcHost]s available on this platform by using
+ * A []HostRegistry] that discovers the available [ArcHost]s available on this platform by using
  * explicitly registered [ArcHost]s and [Particle]s invoked by [HostRegistry.registerHost] and
  * [ExplicitHostRegistry.registerParticles].
  */

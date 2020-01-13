@@ -4,5 +4,5 @@ import arcs.core.sdk.Particle
 import com.google.auto.service.AutoService
 
 @AutoService(Particle::class)
-@RunInTest
+@RunInTestHost
 class TestHostParticle : Particle

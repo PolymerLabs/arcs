@@ -20,7 +20,8 @@ import kotlin.reflect.KClass
 abstract class AnnotationBasedHostRegistry : HostRegistry {
     private val hosts: MutableList<ArcHost> = mutableListOf()
 
-    override val availableArcHosts: List<ArcHost> get() = hosts
+    override val availableArcHosts: List<ArcHost>
+        get() = hosts
 
     protected fun registerParticles(
         particles: List<KClass<out Particle>>,
@@ -40,7 +41,7 @@ abstract class AnnotationBasedHostRegistry : HostRegistry {
 
     protected fun findParticlesForHost(
         allParticles: List<KClass<out Particle>>,
-        host: ArcHost?
+        host: ArcHost
     ): List<KClass<out Particle>> {
         return allParticles
             .filter { part ->
@@ -50,7 +51,7 @@ abstract class AnnotationBasedHostRegistry : HostRegistry {
             }.toList()
     }
 
-    private fun targetHostMatches(target: Annotation, host: ArcHost?) =
+    private fun targetHostMatches(target: Annotation, host: ArcHost) =
         target.annotationClass.java.getAnnotation(TargetHost::class.java)
-            ?.value?.java == host?.javaClass
+            ?.value?.java == host.javaClass
 }

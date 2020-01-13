@@ -28,5 +28,6 @@ abstract class AbstractArcHost : ArcHost {
         particles.remove(particle)
     }
 
-    override val registeredParticles: List<KClass<out Particle>> get() = particles
+    override val registeredParticles: List<KClass<out Particle>>
+        get() = particles
 }

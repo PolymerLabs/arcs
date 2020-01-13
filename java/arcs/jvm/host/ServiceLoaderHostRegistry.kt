@@ -17,8 +17,8 @@ import java.util.ServiceLoader
 import kotlin.sequences.asSequence
 
 /**
- * A HostRegistry that discovers the available [ArcHost]s available on this platform by using
- * Java ServiceLoader and SPI.
+ * A [HostRegistry] that discovers the available [ArcHost]s available on this platform by using
+ * Java [ServiceLoader] and SPI.
  */
 object ServiceLoaderHostRegistry : AnnotationBasedHostRegistry() {
 

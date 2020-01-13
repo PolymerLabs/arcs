@@ -16,4 +16,4 @@ package arcs.core.host
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @TargetHost(TestHost::class)
-annotation class RunInTest
+annotation class RunInTestHost

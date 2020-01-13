@@ -10,7 +10,7 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
     name = "host",
-    srcs = ["ParticleRegistrationTest.kt"],
+    srcs = glob(["*Test.kt"]),
     package = "arcs.core.host",
     deps = [
         ":particle",
@@ -25,7 +25,7 @@ arcs_kt_jvm_library(
     name = "particle",
     srcs = glob(
         ["*.kt"],
-        exclude = ["ParticleRegistrationTest.kt"],
+        exclude = ["*Test.kt"],
     ),
     deps = [
         "//java/arcs/core/host",

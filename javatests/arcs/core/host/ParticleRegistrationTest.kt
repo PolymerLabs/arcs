@@ -26,8 +26,8 @@ class ParticleRegistrationTest {
                 }
             }
         }
-        assertThat(foundProdHost).isEqualTo(true)
-        assertThat(foundTestHost).isEqualTo(true)
+        assertThat(foundProdHost).isTrue()
+        assertThat(foundTestHost).isTrue()
     }
 
     class DummyParticle : Particle
