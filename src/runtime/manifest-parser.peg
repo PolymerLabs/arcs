@@ -1335,7 +1335,7 @@ SchemaTupleType
 Refinement
   = '[' whiteSpace? expression:RefinementExpression whiteSpace? ']'
   {
-      return toAstNode<AstNode.Refinement>({kind: 'refinement', expression});
+      return toAstNode<AstNode.RefinementNode>({kind: 'refinement', expression});
   }
   / '[' { expected("a valid refinement expression"); }
 
@@ -1376,7 +1376,7 @@ EqualityExpression
   }
 
 ComparisonExpression
-  = leftExpr:AdditiveExpression tail:(whiteSpace? ('<' / '<=' / '>' / '>=') whiteSpace? AdditiveExpression)*
+  = leftExpr:AdditiveExpression tail:(whiteSpace? ('<=' / '<' / '>=' / '>') whiteSpace? AdditiveExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1421,6 +1421,10 @@ PrimaryExpression
   / num: NumberType
   {
     return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num});
+  }
+  / bool:('true'i / 'false'i)
+  {
+    return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
   }
   / fn: fieldName
   {

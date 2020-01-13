@@ -20,7 +20,7 @@ import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Schema} from './schema.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
-import {Refinement} from './manifest-ast-nodes.js';
+import {Refinement} from './refiner.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;

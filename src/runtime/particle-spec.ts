@@ -19,7 +19,6 @@ import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 import {Flags} from './flags.js';
 import * as AstNode from './manifest-ast-nodes.js';
-import {Refiner} from './refiner.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -409,7 +408,8 @@ export class ParticleSpec {
       const tags = connection.tags.map((tag) => ` #${tag}`).join('');
       const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
       const entitySchema = connection.type.getEntitySchema();
-      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${Refiner.refinementString(entitySchema ? entitySchema.refinement : null)}${tags}`);
+      const ref = entitySchema && entitySchema.refinement;
+      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${ref ? ref.toString() : ''}${tags}`);
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }

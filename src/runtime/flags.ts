@@ -12,6 +12,7 @@
 
 class FlagDefaults {
   static useNewStorageStack = false;
+  static enforceRefinements = false;
   static useSlandles = false;
 }
 
@@ -24,6 +25,11 @@ export class Flags extends FlagDefaults {
   // tslint:disable-next-line: no-any
   static withNewStorageStack<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return Flags.withFlags({useNewStorageStack: true}, f);
+  }
+
+  // tslint:disable-next-line: no-any
+  static whileEnforcingRefinements<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
+    return Flags.withFlags({enforceRefinements: true}, f);
   }
 
   // For testing with a different set of flags to the default.

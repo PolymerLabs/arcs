@@ -49,6 +49,9 @@ import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileMemoryProvider} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
+import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
+import {Entity, SerializedEntity} from './entity.js';
+import {Refinement} from './refiner.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -581,6 +584,7 @@ ${e.message}
             }
             // tslint:disable-next-line: no-any
             const fields: Dictionary<any> = {};
+            const typeData = {};
             for (let {name, type} of node.fields) {
               for (const schema of schemas) {
                 if (!type) {
@@ -598,8 +602,13 @@ ${e.message}
                 throw new ManifestError(node.location, `Could not infer type of '${name}' field`);
               }
               fields[name] = type;
+              if (fields[name].refinement) {
+                fields[name].refinement = Refinement.fromAst(fields[name].refinement, {[name]: type.type});
+                typeData[name] = type.type;
+              }
             }
-            let schema = new Schema(names, fields, {refinement: node.refinement});
+            const refinement = node.refinement && Refinement.fromAst(node.refinement, typeData);
+            let schema = new Schema(names, fields, {refinement});
             for (const alias of aliases) {
               schema = Schema.union(alias, schema);
               if (!schema) {
@@ -672,6 +681,9 @@ ${e.message}
             throw new ManifestError(field.location, `Duplicate definition of field '${field.name}'`);
           }
           fields[field.name] = field.type;
+          if (fields[field.name].refinement) {
+            fields[field.name].refinement = Refinement.fromAst(fields[field.name].refinement, {[field.name]: field.type.type});
+          }
           break;
         }
         case 'description': {
