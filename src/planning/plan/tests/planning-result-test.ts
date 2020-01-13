@@ -69,14 +69,14 @@ describe('planning result', () => {
     assert.isFalse(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 1);
 
-    // init results.
-    const otherSuggestion = new Suggestion(suggestions[0].plan, 'other-hash', 0, arc);
+    // Init results.
+    const otherSuggestion = new Suggestion(suggestions[0].plan, 'other-hash', 0, suggestions[0].versionByStore);
     otherSuggestion.descriptionByModality['text'] = 'other description';
     suggestions.push(otherSuggestion);
     assert.isTrue(result.merge({suggestions}, arc));
     assert.lengthOf(result.suggestions, 2);
 
-    const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, arc);
+    const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, otherSuggestion.versionByStore);
     suggestionWithSearch.descriptionByModality['text'] = otherSuggestion.descriptionText;
     suggestionWithSearch.setSearch(new Search('hello world', /* unresolvedTokens= */[]));
     suggestions.push(suggestionWithSearch);
