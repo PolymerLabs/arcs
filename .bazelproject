@@ -15,7 +15,6 @@ targets:
 
 test_sources:
   javatests/
-  shells/android/javatests/
 
 additional_languages:
   kotlin
