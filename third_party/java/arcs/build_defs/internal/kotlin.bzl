@@ -46,8 +46,9 @@ KOTLINC_OPTS = [
 ]
 
 def arcs_kt_jvm_library(**kwargs):
+    """TODO(cromwellian): Add a proper doc string. This is just to pass buildifier checks.
+    """
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
-
     if not IS_BAZEL:
         kwargs["disable_lint_checks"] = [
             "PackageName",
