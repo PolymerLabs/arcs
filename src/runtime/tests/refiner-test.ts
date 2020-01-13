@@ -91,23 +91,29 @@ describe('refiner', () => {
         const typeData = {'num': 'Number'};
         let ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         let range = Range.fromExpression(ref.expression);
-        assert.deepEqual(range.segments, [Segment.openOpen(0, 3), Segment.closedClosed(5, 5)]);
+        assert.isTrue(range.equals(new Range([Segment.openOpen(0, 3), Segment.closedClosed(5, 5)])));
         manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [(num > 10) == (num >= 20)] }
         `);
         ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         range = Range.fromExpression(ref.expression);
-        assert.deepEqual(range.segments, [Segment.openClosed(Number.NEGATIVE_INFINITY, 10), Segment.closedOpen(20, Number.POSITIVE_INFINITY)]);
+        assert.isTrue(range.equals(new Range([Segment.openClosed(Number.NEGATIVE_INFINITY, 10), Segment.closedOpen(20, Number.POSITIVE_INFINITY)])));
         manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [not (num != 10)] }
         `);
         ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         range = Range.fromExpression(ref.expression);
-        assert.deepEqual(range.segments, [Segment.closedClosed(10, 10)]);
+        assert.isTrue(range.equals(new Range([Segment.closedClosed(10, 10)])));
 
     });
+    it('regression test for parse failure on operator ordering.', () => {
+      const _ = parse(`
+      particle Foo
+          input: reads Something {num: Number [num <= 20] }
+      `);
+  });
 });
 
 
@@ -161,7 +167,7 @@ describe('normalisation', () => {
         ref1.normalise();
         const manifestAst2 = parse(`
             particle Foo
-                input: reads Something {num: Boolean [ num == false ] }
+                input: reads Something {num: Boolean [ not num ] }
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
         // normalised version of ref1 should be the same as ref2
@@ -205,36 +211,35 @@ describe('Range', () => {
     it('tests union operations on a range', () => {
         const range1 = new Range();
         // range1 = [];
-        assert.strictEqual(range1.segments.length, 0);
         range1.unionWithSeg(Segment.closedClosed(0, 10));
         // range1 = [0, 10];
-        assert.deepEqual(range1.segments, [Segment.closedClosed(0, 10)]);
+        assert.isTrue(range1.equals(new Range([Segment.closedClosed(0, 10)])));
         range1.unionWithSeg(Segment.openClosed(20, 30));
         // range1 = [0, 10] U (20,30];
-        assert.deepEqual(range1.segments, [Segment.closedClosed(0, 10), Segment.openClosed(20, 30)]);
+        assert.isTrue(range1.equals(new Range([Segment.closedClosed(0, 10), Segment.openClosed(20, 30)])));
         range1.unionWithSeg(Segment.closedOpen(5, 15));
         // range1 = [0, 15) U (20,30];
-        assert.deepEqual(range1.segments, [Segment.closedOpen(0, 15), Segment.openClosed(20, 30)]);
+        assert.isTrue(range1.equals(new Range([Segment.closedOpen(0, 15), Segment.openClosed(20, 30)])));
         const range2 = new Range([Segment.closedClosed(-1, -1), Segment.closedClosed(5, 7), Segment.openClosed(15, 19)]);
         // range2 = [-1, -1] U [5, 7] U (15,19];
         range1.union(range2);
         // range1 = [-1, -1] U [0, 15) U (15, 19] U (20, 30]
-        assert.deepEqual(range1.segments, [Segment.closedClosed(-1, -1), Segment.closedOpen(0, 15), Segment.openClosed(15, 19), Segment.openClosed(20, 30)]);
+        assert.isTrue(range1.equals(new Range([Segment.closedClosed(-1, -1), Segment.closedOpen(0, 15), Segment.openClosed(15, 19), Segment.openClosed(20, 30)])));
     });
     it('tests intersection operations on a range', () => {
         const range1 = new Range([Segment.closedClosed(0, 10), Segment.closedClosed(20, 30)]);
         // range1 = [0, 10] U [20,30];
         range1.intersectWithSeg(Segment.openOpen(5, 25));
         // range1 = (5, 10] U [20, 25);
-        assert.deepEqual(range1.segments, [Segment.openClosed(5, 10), Segment.closedOpen(20, 25)]);
+        assert.isTrue(range1.equals(new Range([Segment.openClosed(5, 10), Segment.closedOpen(20, 25)])));
         range1.intersectWithSeg(Segment.closedOpen(5, 15));
         // range1 = (5, 10];
-        assert.deepEqual(range1.segments, [Segment.openClosed(5, 10)]);
+        assert.isTrue(range1.equals(new Range([Segment.openClosed(5, 10)])));
         const range2 = new Range([Segment.closedClosed(-1, -1), Segment.closedOpen(4, 10), Segment.closedClosed(13, 19)]);
         // range2 = [-1, -1] U [4, 10) U [13,19];
         range1.intersect(range2);
         // range1 = (5, 10);
-        assert.deepEqual(range1.segments, [Segment.openOpen(5, 10)]);
+        assert.isTrue(range1.equals(new Range([Segment.openOpen(5, 10)])));
     });
     it('tests if a range is a subset of another', () => {
         let range1 = Range.infiniteRange();
@@ -263,13 +268,25 @@ describe('Range', () => {
         // range2 = [0, 10] U [20,30];
         let diff = Range.difference(range1, range2);
         // diff = (-inf, 0) U (10,20) U (30, inf)
-        assert.deepEqual(diff.segments, [Segment.openOpen(Number.NEGATIVE_INFINITY, 0), Segment.openOpen(10, 20), Segment.openOpen(30, Number.POSITIVE_INFINITY)]);
+        assert.isTrue(diff.equals(new Range([Segment.openOpen(Number.NEGATIVE_INFINITY, 0), Segment.openOpen(10, 20), Segment.openOpen(30, Number.POSITIVE_INFINITY)])));
         range1 = new Range([Segment.closedOpen(0, 20), Segment.openClosed(40, 50)]);
         // range1 = [0,20) U (40, 50]
         range2 = new Range([Segment.openOpen(0, 5), Segment.closedOpen(7, 12), Segment.closedClosed(15, 43), Segment.openClosed(45, 50)]);
         // range2 = (0,5) U [7,12) U [15, 43] U (45, 50]
         diff = Range.difference(range1, range2);
         // diff = [0, 0] U [5,7) U [12,15) U (43, 45]
-        assert.deepEqual(diff.segments, [Segment.closedClosed(0, 0), Segment.closedOpen(5, 7), Segment.closedOpen(12, 15), Segment.openClosed(43, 45)]);
+        assert.isTrue(diff.equals(new Range([Segment.closedClosed(0, 0), Segment.closedOpen(5, 7), Segment.closedOpen(12, 15), Segment.openClosed(43, 45)])));
+    });
+    it('tests the complement of ranges', () => {
+      let range = new Range([Segment.closedClosed(0, 10)]);
+      // range =  [0,10]
+      let complement = Range.complementOf(range);
+      // complement = (-inf, 0) U (10, inf)
+      assert.isTrue(complement.equals(new Range([Segment.openOpen(Number.NEGATIVE_INFINITY, 0), Segment.openOpen(10, Number.POSITIVE_INFINITY)])));
+      range = Range.booleanRange(0);
+      // range = [0,0]
+      complement = Range.complementOf(range);
+      // complement = [1,1]
+      assert.isTrue(complement.equals(Range.booleanRange(1)));
     });
 });
