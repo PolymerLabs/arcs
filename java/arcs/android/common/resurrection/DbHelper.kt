@@ -209,7 +209,7 @@ class DbHelper(
     }
 
     companion object {
-        private const val RESURRECTION_DB_NAME = "resurrection.sqlite3"
+        internal const val RESURRECTION_DB_NAME = "resurrection.sqlite3"
         private const val RESURRECTION_DB_VERSION = 1
 
         private val CREATE = arrayOf(

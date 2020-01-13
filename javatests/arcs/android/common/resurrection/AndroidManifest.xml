@@ -17,6 +17,7 @@
   <application>
     <activity android:name=".ClientActivity" android:exported="false"/>
     <service android:name=".ClientService" android:exported="false"/>
+    <service android:name=".ResurrectorService" android:exported="false"/>
   </application>
 
 </manifest>

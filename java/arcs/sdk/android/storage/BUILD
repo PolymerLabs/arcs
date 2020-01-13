@@ -9,6 +9,7 @@ kt_android_library(
     srcs = glob(["*.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
+        "//java/arcs/android/common/resurrection",
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
         "//java/arcs/core/crdt",
