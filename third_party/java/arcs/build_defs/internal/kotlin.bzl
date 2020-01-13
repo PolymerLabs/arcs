@@ -46,7 +46,9 @@ KOTLINC_OPTS = [
 ]
 
 def arcs_kt_jvm_library(**kwargs):
-    """TODO(cromwellian): Add a proper doc string. This is just to pass buildifier checks.
+    """Declares arbitrary kotlin library targets for the JVM.
+
+    TODO(cromwellian): Add a proper doc string. This is just to pass buildifier checks.
     Args:
       **kwargs: Set of arguments
     """
