@@ -33,10 +33,10 @@ actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.decodeToString()
 actual fun stringToUtf8Impl(str: String): ByteArray = str.encodeToByteArray()
 
 actual object RuntimeClient {
-    actual fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>) =
+    actual fun <T : Entity> singletonClear(particle: Particle, singleton: Singleton<T>) =
         singletonClear(particle.toAddress(), singleton.toAddress())
 
-    actual fun <T : Entity<T>> singletonSet(
+    actual fun <T : Entity> singletonSet(
         particle: Particle,
         singleton: Singleton<T>,
         encoded: NullTermByteArray
@@ -46,7 +46,7 @@ actual object RuntimeClient {
         encoded.bytes.toWasmAddress()
     )
 
-    actual fun <T : Entity<T>> collectionRemove(
+    actual fun <T : Entity> collectionRemove(
         particle: Particle,
         collection: Collection<T>,
         encoded: NullTermByteArray
@@ -56,10 +56,10 @@ actual object RuntimeClient {
         encoded.bytes.toWasmAddress()
     )
 
-    actual fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>) =
+    actual fun <T : Entity> collectionClear(particle: Particle, collection: Collection<T>) =
         collectionClear(particle.toAddress(), collection.toAddress())
 
-    actual fun <T : Entity<T>> collectionStore(
+    actual fun <T : Entity> collectionStore(
         particle: Particle,
         collection: Collection<T>,
         encoded: NullTermByteArray
