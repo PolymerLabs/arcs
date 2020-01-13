@@ -524,11 +524,10 @@ function buildifier(args: string[]): boolean {
 
 /** Reports on cyclic dependencies. */
 async function cycles(args: string[]): Promise<boolean> {
-  sighLog('Counting circular dependencies in runtime code');
-  sighLog('This is informative only until all cycles have been removed');
   // We are interested only in the runtime code, not the shells or devtools
   // TS support in madge 3.6.0 can't cope with our compiler version, 3.7.2 as of 12/12/19,
   // so we analyze the JS output in ./build rather than the TS.
+  // https://github.com/PolymerLabs/arcs/issues/1878
   const madge = require('madge');
   const res = (await madge('./build')).circular();
   if (res.length) {
@@ -537,23 +536,12 @@ async function cycles(args: string[]): Promise<boolean> {
       sighLog(`${i + 1}) ${res[i].join(' > ')}`);
     }
     sighLog('');
-  } else if (res.length === 0) {
-    sighLog(`CONGRATS! No circular dependencies found!!!\n`);
   }
 
-  // This should only go down!
-  // Please adjust this number down when you remove cycles.
-  // https://github.com/PolymerLabs/arcs/issues/1878
-  const CURRENT_NUMBER_OF_CYCLES = 0;
-
-  if (res.length > CURRENT_NUMBER_OF_CYCLES)  {
+  if (res.length)  {
     sighLog('You seem to have added a dependency cycle, please refactor your code.');
-  } else if (res.length < CURRENT_NUMBER_OF_CYCLES) {
-    sighLog(`Congrats! You've removed a dependency cycle.\n` +
-        'Please adjust the CURRENT_NUMBER_OF_CYCLES constant in sigh.ts.');
   }
-
-  return res.length === CURRENT_NUMBER_OF_CYCLES;
+  return res.length === 0;
 }
 
 function licenses(): boolean {
