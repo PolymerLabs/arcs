@@ -601,6 +601,64 @@ ${particleStr1}
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
   });
+
+  describe('relaxed reads and writes', async() => {
+    it('can parse a manifest containing relaxed reads', async () => {
+      const manifest = await parseManifest(`
+        schema Thing
+        schema NotAThing
+
+        particle PA
+          foo: writes Thing
+
+        particle PB
+          foo: writes NotAThing
+
+        particle PC
+          foo: reads Thing
+
+        recipe SomeRecipe
+          myFoo: ?
+          PA
+            foo: writes myFoo
+          PB
+            foo: writes myFoo
+          PC
+            foo: reads someof myFoo
+      `);
+      const recipe = manifest.recipes[0];
+      assert.lengthOf(recipe.particles, 3);
+      assert.lengthOf(recipe.handles, 1);
+      assert.lengthOf(recipe.handleConnections, 3);
+    });
+    it('can round trip a manifest containing relaxed reads', async () => {
+      const manifestStr = `schema Thing
+schema NotAThing
+particle PA
+  foo: writes Thing {}
+  modality dom
+
+particle PB
+  foo: writes NotAThing {}
+  modality dom
+
+particle PC
+  foo: reads Thing {}
+  modality dom
+
+recipe SomeRecipe
+  myFoo: ?
+  PA as particle0
+    foo: writes myFoo
+  PB as particle1
+    foo: writes myFoo
+  PC as particle2
+    foo: reads someof myFoo`;
+      const manifest = await parseManifest(manifestStr);
+      assert.strictEqual(manifest.toString(), manifestStr, 'round trip failed');
+    });
+  });
+
   it('can parse a manifest containing a recipe with slots', async () => {
     const manifest = await parseManifest(`
       schema Thing

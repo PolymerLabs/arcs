@@ -869,9 +869,8 @@ RecipeParticle
     });
   }
 
-// TODO(cypher1): s/dir/direction/ to match slot connections and the rest of the code base
 RecipeParticleConnection
-  = param:NameWithColon? direction:((SlotDirection / Direction) whiteSpace?) target:ParticleConnectionTargetComponents? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = param:NameWithColon? direction:((SlotDirection / Direction) whiteSpace?) relaxed:('someof' whiteSpace)? target:ParticleConnectionTargetComponents? eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     direction = optional(direction, d => d[0], null);
     target = optional(target, t => t, toAstNode<AstNode.ParticleConnectionTargetComponents>({
