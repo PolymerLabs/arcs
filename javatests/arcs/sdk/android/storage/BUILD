@@ -38,7 +38,6 @@ arcs_kt_android_test_suite(
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/android/androidx_test/runner/monitor",
-        "//third_party/android/androidx_test/runner/rules",
         "//third_party/java/androidx/lifecycle",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
@@ -46,7 +45,6 @@ arcs_kt_android_test_suite(
         "//third_party/java/robolectric:shadows",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
         "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],
 )
