@@ -153,7 +153,7 @@ public:
   }
 
   template<typename T>
-  static std::string entity_to_str(const T& entity, const char* join) {
+  static std::string entity_to_str(const T& entity, const char* join, bool with_id) {
     static_assert(sizeof(T) == 0, "Only schema-specific implementations of entity_to_str can be used");
     return "";
   }
@@ -174,7 +174,7 @@ public:
   // Ref-based versions of the above; implemented below the Ref class definition.
   // clone_entity and fields_equal are not available for references.
   template<typename T> static size_t hash_entity(const Ref<T>& ref);
-  template<typename T> static std::string entity_to_str(const Ref<T>& ref, const char* join);
+  template<typename T> static std::string entity_to_str(const Ref<T>& ref, const char* join, bool with_id);
   template<typename T> static void decode_entity(Ref<T>* ref, const char* str);
   template<typename T> static std::string encode_entity(const Ref<T>& ref);
 
@@ -241,8 +241,8 @@ bool fields_equal(const T& a, const T& b) {
 
 // Converts an entity to a string. Unset fields are omitted.
 template<typename T>
-std::string entity_to_str(const T& entity, const char* join = ", ") {
-  return internal::Accessor::entity_to_str(entity, join);
+std::string entity_to_str(const T& entity, const char* join = ", ", bool with_id = true) {
+  return internal::Accessor::entity_to_str(entity, join, with_id);
 }
 
 // Strips trailing zeros, and the decimal point for integer values.
@@ -571,7 +571,7 @@ inline size_t Accessor::hash_entity(const Ref<T>& ref) {
 }
 
 template<typename T>
-inline std::string Accessor::entity_to_str(const Ref<T>& ref, const char* unused) {
+inline std::string Accessor::entity_to_str(const Ref<T>& ref, const char* unused, bool with_id) {
   StringPrinter printer;
   printer.add("REF<");
   printer.add("", ref._internal_id_);
@@ -579,7 +579,7 @@ inline std::string Accessor::entity_to_str(const Ref<T>& ref, const char* unused
     printer.add("|", ref.storage_key_);
   }
   if (ref.is_dereferenced()) {
-    printer.add("|[", entity_to_str(ref.entity(), ", "));
+    printer.add("|[", entity_to_str(ref.entity(), ", ", with_id));
     printer.add("]");
   }
   printer.add(">");

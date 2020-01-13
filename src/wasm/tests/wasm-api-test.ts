@@ -84,41 +84,40 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     it('onHandleSync / onHandleUpdate', async () => {
       const {arc, stores} = await setup('HandleSyncUpdateTest');
-      const sng = stores.get('sng') as VolatileSingleton;
-      const col = stores.get('col') as VolatileCollection;
-      const res = stores.get('res') as VolatileCollection;
+      const sng = await singletonHandleForTest(arc, stores.get('sng'));
+      const col = await collectionHandleForTest(arc, stores.get('col'));
+      const res = await collectionHandleForTest(arc, stores.get('res'));
 
       // onHandleSync: txt = 'sync:<handle-name>:<all-synced>'
       // The order in which handles are synchronized isn't guaranteed, so allow for either result.
-      const syncs = (await res.toList()).map(e => e.rawData.txt);
+      const syncs = (await res.toList()).map(e => e.txt);
       if (syncs[0] === 'sync:sng:false') {
         assert.deepStrictEqual(syncs, ['sync:sng:false', 'sync:col:true']);
       } else {
         assert.deepStrictEqual(syncs, ['sync:col:false', 'sync:sng:true']);
       }
-      await res.clearItemsForTesting();
+      await res.clear();
 
-      await sng.set({id: 'i1', rawData: {num: 3}});
-      await col.store({id: 'i2', rawData: {num: 7}}, ['k1']);
+      await sng.set(new sng.entityClass({num: 3}));
+      await col.add(new col.entityClass({num: 7}));
       await arc.idle;
 
       // onHandleUpdate: txt = 'update:<handle-name>'; num = data.num
       // The updates order should match the set() calls above.
-      const updates = (await res.toList()).map(e => e.rawData);
-      assert.deepStrictEqual(updates, [{txt: 'update:sng', num: 3}, {txt: 'update:col', num: 7}]);
+      assert.deepStrictEqual(await res.toList(), [{txt: 'update:sng', num: 3}, {txt: 'update:col', num: 7}]);
     });
 
     it('getTemplate / populateModel / renderSlot', async () => {
       const {arc, stores, slotComposer} = await setup('RenderTest');
-      const flags = stores.get('flags') as VolatileSingleton;
+      const flags = await singletonHandleForTest(arc, stores.get('flags'));
 
-      await flags.set({id: 'i1', rawData: {template: false, model: true}});
+      await flags.set(new flags.entityClass({template: false, model: true}));
       await arc.idle;
 
-      await flags.set({id: 'i2', rawData: {template: true, model: false}});
+      await flags.set(new flags.entityClass({template: true, model: false}));
       await arc.idle;
 
-      await flags.set({id: 'i3', rawData: {template: true, model: true}});
+      await flags.set(new flags.entityClass({template: true, model: true}));
       await arc.idle;
 
       // First renderSlot call is initiated by the runtime; remaining ones are triggered by writing
@@ -133,9 +132,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     it('autoRender', async () => {
       const {arc, stores, slotComposer} = await setup('AutoRenderTest');
-      const data = stores.get('data') as VolatileSingleton;
+      const data = await singletonHandleForTest(arc, stores.get('data'));
 
-      await data.set({id: 'i1', rawData: {txt: 'update'}});
+      await data.set(new data.entityClass({txt: 'update'}));
       await arc.idle;
 
       // First renderSlot call is initiated by the runtime, before handles are synced.
@@ -149,20 +148,20 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     it('fireEvent', async () => {
       const {arc, stores, slotComposer} = await setup('EventsTest');
-      const output = stores.get('output') as VolatileSingleton;
+      const output = await singletonHandleForTest(arc, stores.get('output'));
 
       const particle = slotComposer.consumers[0].consumeConn.particle;
       arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
-      assert.deepStrictEqual((await output.get()).rawData, {txt: 'event:root:icanhazclick:fooBar'});
+      assert.deepStrictEqual(await output.get(), {txt: 'event:root:icanhazclick:fooBar'});
     });
 
     it('serviceRequest / serviceResponse / resolveUrl', async () => {
-      const {stores} = await setup('ServicesTest');
-      const output = stores.get('output') as VolatileCollection;
+      const {arc, stores} = await setup('ServicesTest');
+      const output = await collectionHandleForTest(arc, stores.get('output'));
 
-      const results = (await output.toList()).map(e => e.rawData);
+      const results = await output.toList();
       assert.lengthOf(results, 4);
 
       const resolve = results.shift();
@@ -193,18 +192,18 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     }
 
     prefix('entity class API', async () => {
-      const {stores} = await setup('EntityClassApiTest');
-      const errStore = stores.get('errors') as VolatileCollection;
-      const errors = (await errStore.toList()).map(e => e.rawData.msg);
+      const {arc, stores} = await setup('EntityClassApiTest');
+      const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
+      const errors = (await errHandle.toList()).map(e => e.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
       }
     });
 
     prefix('special schema fields', async () => {
-      const {stores} = await setup('SpecialSchemaFieldsTest');
-      const errStore = stores.get('errors') as VolatileCollection;
-      const errors = (await errStore.toList()).map(e => e.rawData.msg);
+      const {arc, stores} = await setup('SpecialSchemaFieldsTest');
+      const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
+      const errors = (await errHandle.toList()).map(e => e.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
       }
@@ -215,9 +214,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       if (isKotlin) {
         return;
       }
-      const {stores} = await setup('ReferenceClassApiTest');
-      const errStore = stores.get('errors') as VolatileCollection;
-      const errors = (await errStore.toList()).map(e => e.rawData.msg);
+      const {arc, stores} = await setup('ReferenceClassApiTest');
+      const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
+      const errors = (await errHandle.toList()).map(e => e.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
       }
@@ -226,9 +225,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     // TODO - check that writing to read-only handles throws and vice versa
     it('singleton storage API', async () => {
       const {arc, stores} = await setup('SingletonApiTest');
-      const inStore = stores.get('inHandle') as VolatileSingleton;
-      const outStore = stores.get('outHandle') as VolatileSingleton;
-      const ioStore = stores.get('ioHandle') as VolatileSingleton;
+      const inHandle = await singletonHandleForTest(arc, stores.get('inHandle'));
+      const outHandle = await singletonHandleForTest(arc, stores.get('outHandle'));
+      const ioHandle = await singletonHandleForTest(arc, stores.get('ioHandle'));
 
       const sendEvent = async handler => {
         await arc.idle;
@@ -237,28 +236,28 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       };
 
       // clear() on out/io with pre-populated stores
-      await outStore.set({id: 'i1', rawData: {txt: 'writes'}});
-      await ioStore.set({id: 'i2', rawData: {txt: 'reads writes'}});
+      await outHandle.set(new outHandle.entityClass({txt: 'writes'}));
+      await ioHandle.set(new ioHandle.entityClass({txt: 'reads writes'}));
       await sendEvent('case1');
-      assert.isNull(await outStore.get());
-      assert.isNull(await ioStore.get());
+      assert.isNull(await outHandle.get());
+      assert.isNull(await ioHandle.get());
 
       // in.get(), out.set()
-      await inStore.set({id: 'i3', rawData: {num: 4}});
+      await inHandle.set(new inHandle.entityClass({num: 4}));
       await sendEvent('case2');
-      assert.deepStrictEqual((await outStore.get()).rawData, {num: 8, txt: ''});
+      assert.deepStrictEqual(await outHandle.get(), {num: 8, txt: ''});
 
       // io.get()/set()
-      await ioStore.set({id: 'i3', rawData: {num: 4}});
+      await ioHandle.set(new ioHandle.entityClass({num: 4}));
       await sendEvent('case3');
-      assert.deepStrictEqual((await ioStore.get()).rawData, {num: 12, txt: ''});
+      assert.deepStrictEqual(await ioHandle.get(), {num: 12, txt: ''});
     });
 
     it('collection storage API', async () => {
       const {arc, stores} = await setup('CollectionApiTest');
-      const inStore = stores.get('inHandle') as VolatileCollection;
-      const outStore = stores.get('outHandle') as VolatileCollection;
-      const ioStore = stores.get('ioHandle') as VolatileCollection;
+      const inHandle = await collectionHandleForTest(arc, stores.get('inHandle'));
+      const outHandle = await collectionHandleForTest(arc, stores.get('outHandle'));
+      const ioHandle = await collectionHandleForTest(arc, stores.get('ioHandle'));
 
       const sendEvent = async handler => {
         await arc.idle;
@@ -267,47 +266,48 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       };
 
       // clear() on out/io with pre-populated stores
-      await outStore.store({id: 'id1', rawData: {num: 1}}, ['k1']);
-      await ioStore.store({id: 'id2', rawData: {num: 2}}, ['k2']);
+      await outHandle.add(new outHandle.entityClass({num: 1}));
+      await ioHandle.add(new ioHandle.entityClass({num: 2}));
       await sendEvent('case1');
-      assert.isEmpty(await outStore.toList());
-      assert.isEmpty(await ioStore.toList());
+      assert.isEmpty(await outHandle.toList());
+      assert.isEmpty(await ioHandle.toList());
 
       // in.empty(), in.size(), out.store()
-      await inStore.store({id: 'id3', rawData: {num: 3}}, ['k3']);
+      await inHandle.add(new inHandle.entityClass({num: 3}));
       await sendEvent('case2');
-      assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [{flg: false, txt: '', num: 1}]);
+      assert.deepStrictEqual(await outHandle.toList(), [{flg: false, txt: '', num: 1}]);
 
       // out.remove() - clears entity stored as the previous result
       await sendEvent('case3');
-      assert.isEmpty(await outStore.toList());
+      assert.isEmpty(await outHandle.toList());
 
       // in.begin(), in.end() and iterator methods
       // TODO(alxr): Extract out to be a C++ specific test case
       await sendEvent('case4');
-      assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-        {txt: '{id3}, num: 3', num: 6, flg: true},
+      assert.deepStrictEqual(await outHandle.toList(), [
+        {txt: 'num: 3', num: 6, flg: true},
         {txt: 'eq', num: 0, flg: false},
         {txt: 'ne', num: 0, flg: true},
       ]);
 
       // io.* and ranged iteration
-      await ioStore.store({id: 'id4', rawData: {num: 0}}, ['k4']);
-      await ioStore.store({id: 'id5', rawData: {num: 1}}, ['k5']);
-      await ioStore.store({id: 'id6', rawData: {num: 2}}, ['k6']);
-      await outStore.clearItemsForTesting();
+      await ioHandle.add(new ioHandle.entityClass({num: 0, txt: 'x'}));
+      await ioHandle.add(new ioHandle.entityClass({num: 1, txt: 'y'}));
+      await ioHandle.add(new ioHandle.entityClass({num: 2, txt: 'z'}));
+      await outHandle.clear();
       await sendEvent('case5');
-      assert.deepStrictEqual((await outStore.toList()).map(e => e.rawData), [
-        {num: 4, txt: '', flg: false},      // store() an entity in addition to the 3 above
-        {num: 3, txt: '', flg: false},      // remove() the entity
-        {num: 0, txt: 'id4', flg: false},   // ranged loop over the 3 entities above, using num to sort
-        {num: 1, txt: 'id5', flg: false},
-        {num: 2, txt: 'id6', flg: false},
-        {num: 0, txt: '', flg: true},       // clear()
+      assert.deepStrictEqual(await outHandle.toList(), [
+        {num: 4, txt: '', flg: false},    // store() an entity in addition to the 3 above
+        {num: 3, txt: '', flg: false},    // remove() the entity
+        {num: 0, txt: 'x', flg: false},   // ranged loop over the 3 entities above, using num to sort
+        {num: 1, txt: 'y', flg: false},
+        {num: 2, txt: 'z', flg: false},
+        {num: 0, txt: '', flg: true},     // clear()
       ]);
     });
 
     // TODO: writing to reference-typed handles
+    // TODO: convert to the new storage access pattern (ie. using *HandleForTest and handle.entityClass)
     it('reference-typed handles', async () => {
       // TODO(alxr): Remove when tests are ready
       if (isKotlin) {
@@ -324,7 +324,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
         's::empty <> !{}',  // no id or entity data; dereference is a no-op
       ]);
-      await res.clearItemsForTesting();
+      await res.clear();
 
       // onHandleUpdate tests populated references handles.
       const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
@@ -340,7 +340,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         's::before <id1> !{}',                      // before dereferencing: contained entity is empty
         's::after <id1> {id1}, num: 6, txt: ok'     // after: entity is populated, ids should match
       ]);
-      await res.clearItemsForTesting();
+      await res.clear();
 
       // Collection
       await col.store({id: 'id1', storageKey}, ['key1a']);
@@ -349,7 +349,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         'c::before <id1> !{}',                      // ref to same entity as singleton; still empty in this handle
         'c::after <id1> {id1}, num: 6, txt: ok'
       ]);
-      await res.clearItemsForTesting();
+      await res.clear();
 
       await col.store({id: 'id2', storageKey}, ['key2a']);
       await arc.idle;
@@ -362,6 +362,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     // TODO: nested references
+    // TODO: convert to the new storage access pattern (ie. using *HandleForTest and handle.entityClass)
     it('reference-typed schema fields', async () => {
       // TODO(alxr): Remove when tests are ready
       if (isKotlin) {
@@ -376,7 +377,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
         'empty <> !{}',  // no id or entity data; dereference is a no-op
       ]);
-      await res.clearItemsForTesting();
+      await res.clear();
 
       // onHandleUpdate tests populated reference fields.
       const refType = input.type.getEntitySchema().fields.ref.schema.model;  // yikes
@@ -403,19 +404,19 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     it('unicode strings', async () => {
       const {arc, stores} = await setup('UnicodeTest');
-      const sng = stores.get('sng') as VolatileSingleton;
-      const col = stores.get('col') as VolatileCollection;
-      const res = stores.get('res') as VolatileCollection;
+      const sng = await singletonHandleForTest(arc, stores.get('sng'));
+      const col = await collectionHandleForTest(arc, stores.get('col'));
+      const res = await collectionHandleForTest(arc, stores.get('res'));
 
       // 'pass' tests passthrough of unicode data in entities.
       const pass = 'A:₤⛲ℜ|あ表⏳:Z';
-      await sng.set({id: 'i1', rawData: {pass}});
-      await col.store({id: 'i2', rawData: {pass}}, ['k1']);
+      await sng.set(new sng.entityClass({pass}));
+      await col.add(new col.entityClass({pass}));
       await arc.idle;
 
       // 'src' is set directly by the particle.
       const val = {pass, src: 'åŗċş 🌈'};
-      assert.deepStrictEqual((await res.toList()).map(e => e.rawData), [val, val]);
+      assert.deepStrictEqual(await res.toList(), [val, val]);
     });
 
     it('entity slicing', async () => {

@@ -274,9 +274,11 @@ inline bool ${name}::operator==(const ${name}& other) const {
 }
 
 template<>
-inline std::string internal::Accessor::entity_to_str(const ${name}& entity, const char* join) {
+inline std::string internal::Accessor::entity_to_str(const ${name}& entity, const char* join, bool with_id) {
   internal::StringPrinter printer;
-  printer.addId(entity._internal_id_);
+  if (with_id) {
+    printer.addId(entity._internal_id_);
+  }
   ${this.stringify.join('\n  ')}
   return printer.result(join);
 }

@@ -33,7 +33,7 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                 val iter = inHandle.iterator()
                 d1.flg = iter.hasNext()
                 val i1 = iter.next()
-                d1.txt = "{${i1.internalId}}, num: ${i1.num.toInt()}"
+                d1.txt = "num: ${i1.num.toInt()}"
                 d1.num = i1.num.let { it * 2 }
                 outHandle.store(d1)
 
@@ -67,14 +67,11 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                 outHandle.store(d2)
 
                 // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
-                val sorted = arrayOfNulls<CollectionApiTest_IoHandle>(3)
-                for (data in ioHandle) {
-                    sorted[data.num.toInt()] = data
-                }
-                sorted.iterator().forEach {
+                val sorted = ioHandle.sortedBy { it.num.toInt() }
+                sorted.forEach {
                     outHandle.store(CollectionApiTest_OutHandle(
-                        num = it!!.num,
-                        txt = it.internalId,
+                        num = it.num,
+                        txt = it.txt,
                         flg = false
                     ))
                 }
