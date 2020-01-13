@@ -14,6 +14,7 @@ import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '.
 import {Runnable, Predicate} from '../hot.js';
 import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
+import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../type.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
@@ -43,6 +44,10 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     this.crdt = new (type.crdtInstanceConstructor<T>())();
     this.type = type;
     this.scheduler = new StorageProxyScheduler<T>();
+  }
+
+  getChannelConstructor(): ChannelConstructor {
+    return this.store.getChannelConstructor();
   }
 
   // TODO: remove this after migration.

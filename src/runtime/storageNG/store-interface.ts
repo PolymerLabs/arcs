@@ -17,6 +17,8 @@ import {StorageKey} from './storage-key.js';
 import {StorageProxy} from './storage-proxy.js';
 import {UnifiedActiveStore} from './unified-store.js';
 import {Store} from './store.js';
+import {Producer} from '../hot.js';
+import {ChannelConstructor} from '../channel-constructor.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -59,6 +61,7 @@ export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   setCallback(callback: ProxyCallback<T>): void;
   reportExceptionInHost(exception: PropagatedException): void;
   onProxyMessage(message: ProxyMessage<T>): Promise<boolean>;
+  getChannelConstructor: Producer<ChannelConstructor>;
 }
 
 export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> {
@@ -128,6 +131,18 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
       },
       reportExceptionInHost(exception: PropagatedException): void {
         store.reportExceptionInHost(exception);
+      },
+      getChannelConstructor(): ChannelConstructor {
+        // TODO(shans): implement so that we can use references outside of the PEC.
+        return {
+          generateID() {
+            throw new Error('References not yet supported outside of the PEC');
+          },
+          idGenerator: null,
+          getStorageProxy() {
+            throw new Error('References not yet supported outside of the PEC');
+          }
+        };
       }
     };
   }

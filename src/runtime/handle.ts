@@ -387,6 +387,12 @@ export class Singleton extends HandleOld {
     }
   }
 
+  async setFromData(entityData) {
+    const entity = new this.entityClass(entityData);
+    await this.set(entity);
+    return entity;
+  }
+
   /**
    * Clears any entity currently in the Singleton.
    * @throws {Error} if this Singleton is not configured as a writeable handle (i.e. 'writes' or 'reads writes')

@@ -10,14 +10,20 @@
 
 import {assert} from '../platform/assert-web.js';
 import {HandleOld, Collection, Storable, unifiedHandleFor} from './handle.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ReferenceType, EntityType} from './type.js';
 import {Entity, SerializedEntity} from './entity.js';
 import {StorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
-import {CollectionHandle} from './storageNG/handle.js';
+import {CollectionHandle, Handle} from './storageNG/handle.js';
+import {ChannelConstructor} from './channel-constructor.js';
+import {Flags} from './flags.js';
 
 enum ReferenceMode {Unstored, Stored}
+
+export type SerializedReference = {
+  id: string;
+  storageKey: string;
+};
 
 export class Reference implements Storable {
   public entity: Entity|null = null;
@@ -25,14 +31,14 @@ export class Reference implements Storable {
 
   protected readonly id: string;
   private storageKey: string;
-  private readonly context: ParticleExecutionContext;
+  private readonly context: ChannelConstructor;
   private storageProxy: StorageProxy = null;
   // tslint:disable-next-line: no-any
   protected handle: Collection|CollectionHandle<any>|null = null;
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
-  constructor(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext) {
+  constructor(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ChannelConstructor) {
     this.id = data.id;
     this.storageKey = data.storageKey;
     this.context = context;
@@ -47,8 +53,9 @@ export class Reference implements Storable {
       this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referredType);
       // tslint:disable-next-line: no-any
       this.handle = unifiedHandleFor({proxy: this.storageProxy, idGenerator: this.context.idGenerator, particleId: this.context.generateID()}) as CollectionHandle<any>;
-      if (this.storageKey) {
-        assert(this.storageKey === this.storageProxy.storageKey);
+      if (this.storageKey && !Flags.useNewStorageStack) {
+        // StorageProxies don't record their storageKeys in the new storage stack. Should they?
+        assert(this.storageKey === this.storageProxy.storageKey, `reference's storageKey differs from the storageKey of established channel.`);
       } else {
         this.storageKey = this.storageProxy.storageKey;
       }
@@ -68,12 +75,12 @@ export class Reference implements Storable {
     return this.entity;
   }
 
-  dataClone(): {storageKey: string, id: string} {
+  dataClone(): SerializedReference {
     return {storageKey: this.storageKey, id: this.id};
   }
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
-  static async retrieve(pec: ParticleExecutionContext, id: string, storageKey: string, entityType: EntityType) {
+  static async retrieve(pec: ChannelConstructor, id: string, storageKey: string, entityType: EntityType) {
     const proxy = await pec.getStorageProxy(storageKey, entityType);
     // tslint:disable-next-line: no-any
     const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator}) as CollectionHandle<any>;
@@ -87,7 +94,7 @@ export abstract class ClientReference extends Reference {
   public stored: Promise<void>;
 
   /** Use the newClientReference factory method instead. */
-  protected constructor(entity: Entity, context: ParticleExecutionContext) {
+  protected constructor(entity: Entity, context: ChannelConstructor) {
     // TODO(shans): start carrying storageKey information around on Entity objects
     super({id: Entity.id(entity), storageKey: null},
           new ReferenceType(Entity.entityClass(entity).type), context);
@@ -117,7 +124,7 @@ export abstract class ClientReference extends Reference {
     return Entity.isIdentified(this.entity);
   }
 
-  static newClientReference(context: ParticleExecutionContext): typeof ClientReference {
+  static newClientReference(context: ChannelConstructor): typeof ClientReference {
     return class extends ClientReference {
       constructor(entity: Entity) {
         super(entity, context);
@@ -126,8 +133,9 @@ export abstract class ClientReference extends Reference {
   }
 }
 
-function makeReference(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext): Reference {
+function makeReference(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ChannelConstructor): Reference {
  return new Reference(data, type, context);
 }
 
 HandleOld.makeReference = makeReference;
+Handle.makeReference = makeReference;

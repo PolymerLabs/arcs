@@ -16,10 +16,12 @@ import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../
 import {Particle} from '../particle.js';
 import {Entity, EntityClass, SerializedEntity} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
-import {EntityType, Type} from '../type.js';
+import {EntityType, Type, ReferenceType} from '../type.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../particle-spec.js';
+import {ChannelConstructor} from '../channel-constructor.js';
+import {Producer} from '../hot.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -33,6 +35,11 @@ interface Serializer<T, Serialized> {
   deserialize(value: Serialized): T;
   ensureHasId(value: T);
 }
+
+// The following must return a Reference, but we are trying to break the cyclic
+// dependency between this file and reference.ts, so we lose a little bit of type safety
+// to do that.
+type ReferenceMaker = (data: {id: string, storageKey: string | null}, type: ReferenceType, context: ChannelConstructor) => ReferenceInt;
 
 /**
  * Base class for Handles.
@@ -50,6 +57,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   readonly name: string;
   // tslint:disable-next-line no-any
   protected serializer: Serializer<any, Referenceable>;
+  static makeReference: ReferenceMaker;
 
   //TODO: this is used by multiplexer-dom-particle.ts, it probably won't work with this kind of store.
   get storage() {
@@ -75,11 +83,11 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
 
   get entityClass(): EntityClass {
     if (this.type instanceof EntityType) {
-      return Entity.createEntityClass(this.type.entitySchema, null);
+      return Entity.createEntityClass(this.type.entitySchema, this.storageProxy.getChannelConstructor());
     }
     const containedType = this.type.getContainedType();
     if (containedType instanceof EntityType) {
-      return Entity.createEntityClass(containedType.entitySchema, null);
+      return Entity.createEntityClass(containedType.entitySchema, this.storageProxy.getChannelConstructor());
     }
     return null;
   }
@@ -113,6 +121,8 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
       this.serializer = new PreEntityMutationSerializer(this.type, (e) => this.createIdentityFor(e));
     } else if (this.type.getContainedType() instanceof EntityType) {
       this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => this.createIdentityFor(e));
+    } else if (this.type.getContainedType() instanceof ReferenceType) {
+      this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType, this.storageProxy.getChannelConstructor());
     } else {
       this.serializer = new ImmediateSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
@@ -188,6 +198,27 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
     const entity = new this.entityClass(rawData);
     Entity.identify(entity, id);
     return entity;
+  }
+}
+
+type ReferenceSer = {id: string, storageKey: string};
+interface ReferenceInt {
+  dataClone: Producer<ReferenceSer>;
+}
+
+class ReferenceSerializer implements Serializer<ReferenceInt, ReferenceSer> {
+  constructor(private type: ReferenceType, private context: ChannelConstructor) {}
+
+  serialize(reference: ReferenceInt): ReferenceSer {
+    return reference.dataClone();
+  }
+
+  deserialize(value: ReferenceSer): ReferenceInt {
+    return Handle.makeReference(value, this.type, this.context);
+  }
+
+  ensureHasId(reference: ReferenceInt) {
+    // references must always have IDs
   }
 }
 
@@ -350,6 +381,12 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
       clock: this.clock,
     };
     return this.storageProxy.applyOp(op);
+  }
+
+  async setFromData(entityData: {}): Promise<T> {
+    const entity: T = new this.entityClass(entityData) as unknown as T;
+    const result = await this.set(entity);
+    return result ? entity : null;
   }
 
   async clear(): Promise<boolean> {

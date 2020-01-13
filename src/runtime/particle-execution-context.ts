@@ -20,12 +20,11 @@ import {Particle, Capabilities} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
-import {Handle as HandleNG} from './storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Type} from './type.js';
+import {Type, SingletonType} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
@@ -34,6 +33,7 @@ import {Store} from './store.js';
 import {Flags} from './flags.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
+import {ChannelConstructor} from './channel-constructor.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 type UnifiedStorageProxy = Store|StorageProxyNG<CRDTTypeRecord>;
@@ -211,6 +211,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       },
       reportExceptionInHost(exception: PropagatedException): void {
         pec.apiPort.ReportExceptionInHost(exception);
+      },
+      getChannelConstructor(): ChannelConstructor {
+        return pec;
       }
     };
   }
@@ -257,11 +260,14 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     };
   }
 
-  getStorageProxy(storageKey, type) {
+  getStorageProxy(storageKey: string, type: Type) {
+    if (Flags.useNewStorageStack) {
+      type = new SingletonType(type);
+    }
     if (!this.keyedProxies[storageKey]) {
       this.keyedProxies[storageKey] = new Promise((resolve, reject) => {
-        this.apiPort.GetBackingStore((proxy, storageKey) => {
-          this.keyedProxies[storageKey] = proxy;
+        this.apiPort.GetBackingStore((proxy, newStorageKeyThingFromHostWhatTheFuckIsThis) => {
+          this.keyedProxies[newStorageKeyThingFromHostWhatTheFuckIsThis] = proxy;
           resolve(proxy);
         }, storageKey, type);
       });

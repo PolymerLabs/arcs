@@ -9,11 +9,11 @@
  */
 
 import {Entity} from './entity.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Reference} from './reference.js';
 import {ReferenceType} from './type.js';
 import {Schema} from './schema.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {ChannelConstructor} from './channel-constructor.js';
 
 function convertToJsType(primitiveType, schemaName: string) {
   switch (primitiveType.type) {
@@ -102,7 +102,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
   }
 }
 
-function sanitizeEntry(type, value, name, context: ParticleExecutionContext) {
+function sanitizeEntry(type, value, name, context: ChannelConstructor) {
   if (!type) {
     // If there isn't a field type for this, the proxy will pick up
     // that fact and report a meaningful error.

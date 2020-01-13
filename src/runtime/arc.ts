@@ -135,11 +135,13 @@ export class Arc implements ArcInterface {
     this.storageKey = storageKey;
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
     this.pec = new ParticleExecutionHost({slotComposer, arc: this, ports});
-    this.storageProviderFactory = storageProviderFactory ||
-        new StorageProviderFactory(this.id, new ManifestHandleRetriever());
-
-    this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
-    DriverFactory.register(this.volatileStorageDriverProvider);
+    if (Flags.useNewStorageStack) {
+      this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
+      DriverFactory.register(this.volatileStorageDriverProvider);
+    } else {
+      this.storageProviderFactory = storageProviderFactory ||
+          new StorageProviderFactory(this.id, new ManifestHandleRetriever());
+    }
   }
 
   get loader(): Loader {
@@ -630,7 +632,7 @@ export class Arc implements ArcInterface {
         throw new Error(`Can't use string storage keys with the new storage stack.`);
       }
       // Wrap entity types in a singleton.
-      if (type.isEntity || type.isInterface) {
+      if (type.isEntity || type.isInterface || type.isReference) {
         // TODO: Once recipes can handle singleton types this conversion can be removed.
         type = new SingletonType(type);
       }
