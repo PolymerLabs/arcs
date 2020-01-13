@@ -47,10 +47,12 @@ KOTLINC_OPTS = [
 
 def arcs_kt_jvm_library(**kwargs):
     if not IS_BAZEL:
+        disable_lint_checks = kwargs.pop("disable_lint_checks", [])
+
         kwargs["disable_lint_checks"] = [
             "PackageName",
             "TopLevelName",
-        ]
+        ] + disable_lint_checks
         kwargs["constraints"] = ["android"]
 
     kt_jvm_library(**kwargs)

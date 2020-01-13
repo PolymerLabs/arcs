@@ -7,6 +7,7 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_library(
     name = "host",
     srcs = glob(["*.kt"]),
+    disable_lint_checks = ["NewApi"],
     wasm = False,
     deps = [
         "//java/arcs/core/host",
