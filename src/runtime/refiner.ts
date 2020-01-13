@@ -234,7 +234,8 @@ export class UnaryExpression extends RefinementExpression {
         }
         return this;
       }
-      default: return this;
+      default:
+        return this;
     }
   }
 }
@@ -515,7 +516,8 @@ export class Range {
       case Op.NOT: {
         return Range.complementOf(ranges[0]);
       }
-      default: throw new Error(`Unsupported operator: cannot update range`);
+      default:
+        throw new Error(`Unsupported operator: cannot update range`);
     }
   }
 }
@@ -542,23 +544,19 @@ export class Segment {
   }
 
   static closedClosed(from: number, to: number): Segment {
-    const seg = new Segment({val: from, kind: 'closed'}, {val: to, kind: 'closed'});
-    return seg;
+    return new Segment({val: from, kind: 'closed'}, {val: to, kind: 'closed'});
   }
 
   static openOpen(from: number, to: number): Segment {
-    const seg = new Segment({val: from, kind: 'open'}, {val: to, kind: 'open'});
-    return seg;
+    return new Segment({val: from, kind: 'open'}, {val: to, kind: 'open'});
   }
 
   static closedOpen(from: number, to: number): Segment {
-    const seg = new Segment({val: from, kind: 'closed'}, {val: to, kind: 'open'});
-    return seg;
+    return new Segment({val: from, kind: 'closed'}, {val: to, kind: 'open'});
   }
 
   static openClosed(from: number, to: number): Segment {
-    const seg = new Segment({val: from, kind: 'open'}, {val: to, kind: 'closed'});
-    return seg;
+    return new Segment({val: from, kind: 'open'}, {val: to, kind: 'closed'});
   }
 
   equals(seg: Segment): boolean {
@@ -655,7 +653,7 @@ interface OperatorInfo {
   evalFn: (exprs: ExpressionPrimitives[]) => ExpressionPrimitives;
 }
 
-const operandTable: Dictionary<OperatorInfo> = {
+const operatorTable: Dictionary<OperatorInfo> = {
   [Op.AND]: {nArgs: 2, argType: 'Boolean', evalType: 'Boolean', evalFn: e => e[0] && e[1]},
   [Op.OR]: {nArgs: 2, argType: 'Boolean', evalType: 'Boolean', evalFn: e => e[0] || e[1]},
   [Op.LT]: {nArgs: 2, argType: 'Number',  evalType: 'Boolean', evalFn: e => e[0] < e[1]},
@@ -683,7 +681,7 @@ class RefinementOperator {
 
   updateOp(operator: string) {
     this.op = operator;
-    this.opInfo = operandTable[operator];
+    this.opInfo = operatorTable[operator];
     if (!this.opInfo) {
       throw new Error(`Invalid refinement operator ${operator}`);
     }
