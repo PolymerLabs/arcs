@@ -118,7 +118,7 @@ describe.only('references', () => {
       const entity = await handle.setFromData({value: 'val1'});
 
       const refHandle = await singletonHandleForTest(arc, refStore);
-      await refHandle.set(new Reference({id: Entity.id(entity), storageKey: backingKey.toString()}, refStore.type.getContainedType() as ReferenceType, null));
+      await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: backingKey.toString()}, refStore.type.getContainedType() as ReferenceType, null));
     } else {
       const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
       const backingStore = await volatileEngine.baseStorageFor(refStore.type, volatileEngine.baseStorageKey(refStore.type));
@@ -201,8 +201,8 @@ describe.only('references', () => {
       const entity2 = await handle2.setFromData({value: 'val2'});
 
       const refHandle = await collectionHandleForTest(arc, refStore);
-      refHandle.add(new Reference({id: Entity.id(entity1), storageKey: backingKey1.toString()}, refStore.type.getContainedType() as ReferenceType, null));
-      refHandle.add(new Reference({id: Entity.id(entity2), storageKey: backingKey2.toString()}, refStore.type.getContainedType() as ReferenceType, null));
+      refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: backingKey1.toString()}, refStore.type.getContainedType() as ReferenceType, null));
+      refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: backingKey2.toString()}, refStore.type.getContainedType() as ReferenceType, null));
     } else {
       const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
       const backingStore = await volatileEngine.baseStorageFor(resType, volatileEngine.baseStorageKey(resType));
@@ -218,7 +218,7 @@ describe.only('references', () => {
     assert.deepStrictEqual(values, [{value: 'val1'}, {value: 'val2'}]);
   });
 
-  it('exposes a reference API to particles', async () => {
+  it.only('exposes a reference API to particles', async () => {
     const loader = new StubLoader({
       manifest: `
         schema Result

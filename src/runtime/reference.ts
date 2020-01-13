@@ -22,7 +22,7 @@ enum ReferenceMode {Unstored, Stored}
 
 export type SerializedReference = {
   id: string;
-  storageKey: string;
+  entityStorageKey: string;
 };
 
 export class Reference implements Storable {
@@ -30,7 +30,7 @@ export class Reference implements Storable {
   public type: ReferenceType;
 
   protected readonly id: string;
-  private storageKey: string;
+  private entityStorageKey: string;
   private readonly context: ChannelConstructor;
   private storageProxy: StorageProxy = null;
   // tslint:disable-next-line: no-any
@@ -38,9 +38,9 @@ export class Reference implements Storable {
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
-  constructor(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ChannelConstructor) {
+  constructor(data: {id: string, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor) {
     this.id = data.id;
-    this.storageKey = data.storageKey;
+    this.entityStorageKey = data.entityStorageKey;
     this.context = context;
     this.type = type;
     this[SYMBOL_INTERNALS] = {
@@ -50,14 +50,14 @@ export class Reference implements Storable {
 
   protected async ensureStorageProxy(): Promise<void> {
     if (this.storageProxy == null) {
-      this.storageProxy = await this.context.getStorageProxy(this.storageKey, this.type.referredType);
+      this.storageProxy = await this.context.getStorageProxy(this.entityStorageKey, this.type.referredType);
       // tslint:disable-next-line: no-any
       this.handle = unifiedHandleFor({proxy: this.storageProxy, idGenerator: this.context.idGenerator, particleId: this.context.generateID()}) as CollectionHandle<any>;
-      if (this.storageKey && !Flags.useNewStorageStack) {
+      if (this.entityStorageKey && !Flags.useNewStorageStack) {
         // StorageProxies don't record their storageKeys in the new storage stack. Should they?
-        assert(this.storageKey === this.storageProxy.storageKey, `reference's storageKey differs from the storageKey of established channel.`);
+        assert(this.entityStorageKey === this.storageProxy.storageKey, `reference's storageKey differs from the storageKey of established channel.`);
       } else {
-        this.storageKey = this.storageProxy.storageKey;
+        this.entityStorageKey = this.storageProxy.storageKey;
       }
     }
   }
@@ -76,7 +76,7 @@ export class Reference implements Storable {
   }
 
   dataClone(): SerializedReference {
-    return {storageKey: this.storageKey, id: this.id};
+    return {entityStorageKey: this.entityStorageKey, id: this.id};
   }
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
@@ -96,7 +96,7 @@ export abstract class ClientReference extends Reference {
   /** Use the newClientReference factory method instead. */
   protected constructor(entity: Entity, context: ChannelConstructor) {
     // TODO(shans): start carrying storageKey information around on Entity objects
-    super({id: Entity.id(entity), storageKey: null},
+    super({id: Entity.id(entity), entityStorageKey: null},
           new ReferenceType(Entity.entityClass(entity).type), context);
 
     this.entity = entity;
@@ -133,7 +133,12 @@ export abstract class ClientReference extends Reference {
   }
 }
 
-function makeReference(data: {id: string, storageKey: string | null}, type: ReferenceType, context: ChannelConstructor): Reference {
+/**
+ * makeReference exists to break a cyclic dependency between handle.ts (both old and NG variants) and reference.ts.
+ * Instead of statically depending on reference.ts, handle.ts defines a static makeReference method which is
+ * dynamically populated here.
+ */
+function makeReference(data: {id: string, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor): Reference {
  return new Reference(data, type, context);
 }
 

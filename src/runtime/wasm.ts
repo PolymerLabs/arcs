@@ -191,7 +191,7 @@ export abstract class StringEncoder {
   protected async encodeReference(buf: DynamicBuffer, ref: Reference) {
     const entityType = ref.type.referredType as EntityType;
     assert(entityType instanceof EntityType);
-    const {id, storageKey} = ref.dataClone();
+    const {id, entityStorageKey: storageKey} = ref.dataClone();
     const hash = await entityType.getEntitySchema().hash();
     buf.addUnicode(id);
     buf.addAscii('|');
@@ -397,7 +397,7 @@ export abstract class StringDecoder {
     if (!entityType) {
       throw new Error(`Packaged entity decoding fail: invalid schema hash '${schemaHash}' for reference '${id}|${storageKey}'`);
     }
-    return new Reference({id, storageKey}, new ReferenceType(entityType), this.pec);
+    return new Reference({id, entityStorageKey: storageKey}, new ReferenceType(entityType), this.pec);
   }
 }
 

@@ -60,7 +60,7 @@ type NoOpStorageAllocator = (id: string, type: Type) => Store;
 // The following must return a Reference, but we are trying to break the cyclic
 // dependency between this file and reference.ts, so we lose a little bit of type safety
 // to do that.
-type ReferenceMaker = (data: {id: string, storageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext) => {};
+type ReferenceMaker = (data: {id: string, entityStorageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext) => {};
 
 /**
  * Base class for Collections and Singletons.

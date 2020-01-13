@@ -38,7 +38,7 @@ async function setup() {
 describe('wasm', () => {
   it('entity packaging supports primitive field types and references', async () => {
     const {fooClass, barType, encoder, decoder, typeMap} = await setup();
-    const ref = new Reference({id: 'i', storageKey: 'k'}, new ReferenceType(barType), null);
+    const ref = new Reference({id: 'i', entityStorageKey: 'k'}, new ReferenceType(barType), null);
     const foo = new fooClass({txt: 'abc', lnk: 'http://def', num: 37, flg: true, ref});
     Entity.identify(foo, 'test');
 
@@ -86,7 +86,7 @@ describe('wasm', () => {
       Entity.identify(foo, id);
       return foo;
     };
-    const ref = new Reference({id: 'r1', storageKey: 'k1'}, new ReferenceType(barType), null);
+    const ref = new Reference({id: 'r1', entityStorageKey: 'k1'}, new ReferenceType(barType), null);
     const f1 = make('id1', {txt: 'abc', lnk: 'http://def', num: 9.2, flg: true, ref});
     const f2 = make('id2|two', {});
     const f3 = make('!id:3!', {txt: 'def', num: -7});
