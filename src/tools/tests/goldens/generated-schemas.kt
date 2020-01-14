@@ -24,7 +24,9 @@ import arcs.sdk.wasm.WasmEntitySpec
 import arcs.sdk.wasm.WasmParticle
 import arcs.sdk.wasm.WasmSingleton
 
-class GoldInternal1() : WasmEntity() {
+class GoldInternal1() : WasmEntity {
+
+    override var internalId = ""
 
     var _val_Set = false
     var val_ = ""
@@ -106,7 +108,9 @@ typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
 
-class Gold_Data() : WasmEntity() {
+class Gold_Data() : WasmEntity {
+
+    override var internalId = ""
 
     var _numSet = false
     var num = 0.0
