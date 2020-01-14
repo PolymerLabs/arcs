@@ -1,7 +1,7 @@
 """Checks that the correct version of bazel is installed."""
 
 # The minimum required version of bazel.
-# KEEP UP TO DATE WITH tools/install_bazel.sh
+# KEEP UP TO DATE WITH .bazelversion
 _MIN_BAZEL_VERSION = "1.2.0"
 
 def _parse_version(version):
