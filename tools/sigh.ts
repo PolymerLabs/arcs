@@ -115,10 +115,10 @@ const cleanFiles = ['manifest-railroad.html', eslintCache];
 const cleanDirs = ['shell/build', 'shells/lib/build', 'build', 'dist', 'src/gen', 'test-output', 'user-test', coverageDir];
 
 // RE pattern to exclude when finding within project source files.
-const srcExclude = /\b(node_modules|deps|build|gen|dist|third_party|hackathon|cloud|javaharness|Kotlin|particles[/\\]Native)\b/;
+const srcExclude = /\b(node_modules|deps|build|gen|dist|third_party|hackathon|cloud|Kotlin|particles[/\\]Native)\b/;
 
 // RE pattern to exclude when finding within project built files.
-const buildExclude = /\b(node_modules|deps|src|third_party|javaharness|Kotlin)\b/;
+const buildExclude = /\b(node_modules|deps|src|third_party|Kotlin)\b/;
 
 // Standard flags for invoking node.
 const nodeFlags = [
@@ -354,7 +354,7 @@ function railroad(): boolean {
 }
 
 function cleanObsolete() {
-  for (const file of [...findProjectFiles('build', /javaharness|sigh\.js/, /\.(js|h|wasm)$/)]) {
+  for (const file of [...findProjectFiles('build', /sigh\.js/, /\.(js|h|wasm)$/)]) {
     if (file.endsWith('.js')) {
       // js outputs - look for a corresponding source file (.js or .ts) in src.
       // Also remove the generated source map and type def files if they exist.

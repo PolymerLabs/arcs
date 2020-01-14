@@ -16,16 +16,16 @@ TODO: This code is undergoing refactoring, add packages descriptions, when compl
    above).
 1. Create a new bazel project in Android Studio, using the following paths:
    * Workspace: Arcs repo root
-   * Project view: from project view file: `javaharness/.bazelproject`
+   * Project view: from project view file: `as.bazelproject`
 1. Add a new run configuration of type Bazel Command, with command
    `mobile-install` and target expression:
-   `//javaharness/java/arcs/android/demo:demo`
+   `//java/arcs/sdk/android/dev/service/demo:demo`
 
 Before this will actually work, you will need to build pipes-shell
 
 ## Building
 
-The javaharness depends on pipes-shell and the Arcs runtime, which need to be
+The Dev service depends on pipes-shell and the Arcs runtime, which need to be
 webpacked before they can be used by the Android app. Thankfully bazel will
 automatically re-run webpack for you whenever those sources change. All you need
 to do is run the usual bazel mobile-install command (or build in Android Studio)
