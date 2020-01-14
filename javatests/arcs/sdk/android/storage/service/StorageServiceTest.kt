@@ -29,6 +29,7 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.sdk.android.storage.ResurrectionHelper
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -70,12 +71,13 @@ class StorageServiceTest {
         }
         service.onStartCommand(resurrectionRequestIntent, 0, 0)
 
-        // Wait to let the resurrection request propagate.
-        Thread.sleep(1000)
-
         // Act:
         // Issue a proxy message to the binding context (and transitively: to the storage service)
         runBlocking {
+            // Wait to let the resurrection request propagate.
+            while (service.loadJob == null) {
+                delay(100)
+            }
             service.loadJob?.join()
 
             val op = CrdtCount.Operation.Increment("foo", 0 to 1)
