@@ -39,6 +39,12 @@ class PoolOptions {
   nosuspend = false;
 }
 
+const enum PolicyState {
+  NOT_DESIGNATED,
+  STANDBY,
+  PROCESSING,
+}
+
 /** Arcs Worker Pool Management */
 export const workerPool = new (class {
   // Suspended (aka free) workers.
@@ -54,6 +60,8 @@ export const workerPool = new (class {
   // A pool sizing policy can be designated via {@link SIZING_POLICY_PARAMETER}
   // only when the worker pool management is active, otherwise undefined.
   policy?: SizingPolicy;
+  // Tracks policy state
+  policyState = PolicyState.NOT_DESIGNATED;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -75,6 +83,7 @@ export const workerPool = new (class {
         const p = urlParams.get(SIZING_POLICY_PARAMETER);
         if (p && policies[p]) {
           this.policy = policies[p];
+          this.policyState = PolicyState.STANDBY;
         }
       }
     }
@@ -179,15 +188,45 @@ export const workerPool = new (class {
    *               at least at this value.
    */
   async shrinkOrGrow(demand: number = POOL_SIZE_DEMAND) {
-    // Yields cpu resources politely and aggressively.
-    await 0;
+    // Resizing pool must be done by a single executor at a time.
+    if (this.policyState !== PolicyState.STANDBY) {
+      return;
+    }
+    this.policyState = PolicyState.PROCESSING;
 
-    // TODO(ianchang):
-    // shrink or grow number of workers per sizing policy arbitration result.
-    // This provides the capabilities (included but not limited to):
-    // a) Prepare workers in advance at the initialization path.
-    // b) Shrink number of workers under memory pressure.
-    // c) Grow number of workers to accommodate more outstanding Arcs.
+    // The actual shrink/grow process can be hanged up to the end of event
+    // loop to yield more computing resources with higher parallelism to other
+    // Arcs runtime/shell routines via relaxed 'await <reason>' calls.
+    await 'relax_in_general';
+
+    let numShrinkOrGrow = this.policy.arbitrate({
+      demand: POOL_SIZE_DEMAND,
+      free: this.suspended.length,
+      inUse: this.inUse.size,
+    });
+
+    if (numShrinkOrGrow > 0 && !!this.factory.create) {
+      // Grows the number of suspended/free workers by numShrinkOrGrow
+      for (; numShrinkOrGrow > 0; numShrinkOrGrow--) {
+        const {worker, channel} = this.factory.create();
+        this.emplace(worker, channel, /*toInUse=*/false);
+        await 'relax_growth';
+      }
+    } else if (numShrinkOrGrow < 0) {
+      // Shrinks the number of suspended/free workers by numShrinkOrGrow
+      for (; numShrinkOrGrow < 0; numShrinkOrGrow++) {
+        if (this.suspended.length === 0) {
+          // There are no spare suspended/free workers to terminated.
+          break;
+        }
+        const {worker, channel} = this.suspended.pop();
+        channel.port2.close();
+        worker.terminate();
+        await 'relax_shrink';
+      }
+    }
+
+    this.policyState = PolicyState.STANDBY;
   }
 
   /**
