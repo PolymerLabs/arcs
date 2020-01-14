@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver, html}) => {
+defineParticle(({UiParticle, resolver, html}) => {
 
   const host = `[show-product]`;
 
@@ -99,7 +99,7 @@ ${styles}
 </div>
   `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

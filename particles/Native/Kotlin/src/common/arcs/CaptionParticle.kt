@@ -52,7 +52,7 @@ class CaptionParticle :
         <p on-click="{{onClick}}" style="text-decoration: underline; color: blue">Click Me2</p>
   """.trimIndent()
 
-    // Initialize DomParticle event handlers
+    // Initialize UiParticle event handlers
     init {
         // An event handler with a payload
         eventHandler("onCaption", CaptionData.serializer(), this::onCaption)
@@ -74,7 +74,7 @@ class CaptionParticle :
         /*val entities = */classify(this@CaptionParticle, data.text) {
 
             if (it.labels.isNotEmpty()) {
-                // Invoke setState() in DomParticle with new caption and entities.
+                // Invoke setState() in UiParticle with new caption and entities.
                 this.mutateState(
                     CaptionState(
                         data.text,

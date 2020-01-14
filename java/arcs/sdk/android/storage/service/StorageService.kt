@@ -16,6 +16,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.text.format.DateUtils
+import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
@@ -31,7 +32,7 @@ import kotlinx.coroutines.cancel
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
  * the [IStorageService] interface when bound-to by a client.
  */
-class StorageService : Service() {
+class StorageService : ResurrectorService() {
     private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
     private val stores = ConcurrentHashMap<StoreOptions<*, *, *>, Store<*, *, *>>()
@@ -85,6 +86,8 @@ class StorageService : Service() {
                   - 99th percentile: ${statsPercentiles.ninetyNinth}
             """.trimIndent()
         )
+
+        dumpRegistrations(writer)
     }
 
     companion object {

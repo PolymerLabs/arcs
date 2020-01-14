@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, resolver, html}) => {
+defineParticle(({UiParticle, resolver, html}) => {
 
   const host = `google-map`;
 
@@ -40,7 +40,7 @@ ${styles}
 
   `.trim();
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

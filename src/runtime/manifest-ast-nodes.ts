@@ -45,7 +45,7 @@ export class BaseNode {
 }
 
 export class BaseNodeWithRefinement extends BaseNode {
-    refinement?: Refinement;
+    refinement?: RefinementNode;
 }
 
 //  PARTICLE TYPES
@@ -399,6 +399,7 @@ export interface RecipeHandle extends BaseNode {
   name: string|null;
   ref: HandleRef;
   fate: Fate;
+  annotation: ParameterizedAnnotation|null;
 }
 
 export interface RecipeParticleSlotConnection extends BaseNode {
@@ -524,12 +525,12 @@ export interface SchemaTupleType extends BaseNodeWithRefinement {
   types: string[];
 }
 
-export interface Refinement extends BaseNode {
+export interface RefinementNode extends BaseNode {
   kind: 'refinement';
-  expression: RefinementExpression;
+  expression: RefinementExpressionNode;
 }
 
-export type RefinementExpression = BinaryExpressionNode | UnaryExpressionNode | FieldNode | NumberNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | NumberNode | BooleanNode;
 
 export interface ExpressionNode extends BaseNode {
   operator: string;
@@ -537,13 +538,13 @@ export interface ExpressionNode extends BaseNode {
 
 export interface BinaryExpressionNode extends ExpressionNode {
   kind: 'binary-expression-node';
-  leftExpr: RefinementExpression;
-  rightExpr: RefinementExpression;
+  leftExpr: RefinementExpressionNode;
+  rightExpr: RefinementExpressionNode;
 }
 
 export interface UnaryExpressionNode extends ExpressionNode {
   kind: 'unary-expression-node';
-  expr: RefinementExpression;
+  expr: RefinementExpressionNode;
 }
 
 export interface FieldNode extends BaseNode {
@@ -554,6 +555,11 @@ export interface FieldNode extends BaseNode {
 export interface NumberNode extends BaseNode {
   kind: 'number-node';
   value: number;
+}
+
+export interface BooleanNode extends BaseNode {
+  kind: 'boolean-node';
+  value: boolean;
 }
 
 export interface SchemaInline extends BaseNodeWithRefinement {
@@ -641,6 +647,18 @@ export interface Annotation extends BaseNode {
   kind: 'annotation';
   triggerSet: Triggers;
   simpleAnnotation?: string;
+}
+
+export interface ParameterizedAnnotation extends BaseNode {
+  kind: 'param-annotation';
+  simpleAnnotation: string;
+  parameter: NumberedUnits;
+}
+
+export interface NumberedUnits extends BaseNode {
+  kind: 'numbered-units';
+  count: number;
+  units: string;
 }
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.

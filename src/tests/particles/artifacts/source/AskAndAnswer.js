@@ -10,12 +10,12 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({UiParticle, html}) => {
 
   const host = `ask-and-answer`;
   const colors = {question: 'red', answer: 'green'};
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     getTemplate(slotName) {
       if (slotName == 'question' || slotName == 'answer') {
         return html`

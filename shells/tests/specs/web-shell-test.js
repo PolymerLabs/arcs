@@ -64,7 +64,9 @@ describe(`WASM (${persona})`, () => {
       const calendarNode = `[particle="Calendar"]`;
       await waitFor(calendarNode);
     });
-    it('gifts', async function() {
+    // TODO(cypher1): Disabled due to being too unreliable.
+    // Disabled in https://github.com/PolymerLabs/arcs/pull/4416
+    it.skip('gifts', async function() {
       await openNewArc(this.test.fullTitle(), storageType);
       await searchFor(`products`);
       await chooseSuggestion('Create shopping list');

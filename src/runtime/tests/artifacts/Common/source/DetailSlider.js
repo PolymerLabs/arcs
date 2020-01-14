@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, resolver, html, log}) => {
+defineParticle(({UiParticle, resolver, html, log}) => {
 
   const host = `detail-slider`;
 
@@ -91,7 +91,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
 
 `;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

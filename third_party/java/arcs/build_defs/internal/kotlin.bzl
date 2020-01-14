@@ -46,11 +46,18 @@ KOTLINC_OPTS = [
 ]
 
 def arcs_kt_jvm_library(**kwargs):
+    """Declares arbitrary kotlin library targets for the JVM.
+
+    TODO(cromwellian): Add a proper doc string. This is just to pass buildifier checks.
+    Args:
+      **kwargs: Set of arguments
+    """
+    disable_lint_checks = kwargs.pop("disable_lint_checks", [])
     if not IS_BAZEL:
         kwargs["disable_lint_checks"] = [
             "PackageName",
             "TopLevelName",
-        ]
+        ] + disable_lint_checks
         kwargs["constraints"] = ["android"]
 
     kt_jvm_library(**kwargs)

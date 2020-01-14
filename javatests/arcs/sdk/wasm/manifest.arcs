@@ -166,3 +166,32 @@ recipe UnicodeTest
     sng: reads h1
     col: reads h2
     res: writes h3
+
+// -----------------------------------------------------------------------------------------------
+
+schema Slice
+  num: Number
+  flg: Boolean
+  txt: Text
+
+particle EntitySlicingTest in '$module.wasm'
+  s1: reads Slice {num}
+  s2: reads Slice {txt, num}
+  s3: reads Slice {num, flg, txt}
+  c1: reads [Slice {num}]
+  c2: reads [Slice {num, txt}]
+  c3: reads [Slice {flg, txt, num}]
+  res: writes [{val: Text}]
+
+recipe EntitySlicingTest
+  sngHandle: use *
+  colHandle: use *
+  resHandle: use *
+  EntitySlicingTest
+    s1: reads sngHandle
+    s2: reads sngHandle
+    s3: reads sngHandle
+    c1: reads colHandle
+    c2: reads colHandle
+    c3: reads colHandle
+    res: writes resHandle

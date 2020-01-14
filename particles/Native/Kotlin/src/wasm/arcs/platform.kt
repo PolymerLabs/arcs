@@ -14,7 +14,7 @@ import kotlin.reflect.KFunction0
  */
 actual object Platform {
     @Retain
-    actual fun <T : DomParticle> installParticle(
+    actual fun <T : UiParticle> installParticle(
         particle: KClass<T>,
         particleConstructor: KFunction0<T>
     ) {
@@ -49,7 +49,7 @@ val wasmParticleInstance: WasmParticle
         return WasmParticle(ArenaManager.currentArena, wasmRetVal)
     }
 
-actual abstract class DomParticle {
+actual abstract class UiParticle {
 
     /**
      * Setup callback functions on WasmParticle to invoke our Wasm methods, because callbacks define
@@ -120,7 +120,7 @@ actual fun updateVariable(variableName: String, rawData: Any) {
 actual open class DomParticleBase<Props, State> actual constructor(
     propsSerializer: KSerializer<Props>,
     stateSerializer: KSerializer<State>
-) : DomParticle() {
+) : UiParticle() {
 
     val propsStrategy = propsSerializer
     val stateStrategy = stateSerializer

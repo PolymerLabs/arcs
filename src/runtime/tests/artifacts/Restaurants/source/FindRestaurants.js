@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({UiParticle, resolver}) => {
 
   const host = `find-restaurants`;
 
@@ -24,7 +24,7 @@ defineParticle(({DomParticle, resolver}) => {
   const placesService =`${service}/places.php`;
   const photoService = `${service}/place-photo.php`;
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }

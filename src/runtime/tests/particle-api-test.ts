@@ -212,7 +212,6 @@ describe('particle-api', () => {
   });
 
   it('can sync/update and store/remove with collections', async () => {
-    const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
@@ -231,8 +230,8 @@ describe('particle-api', () => {
           return class P extends Particle {
             onHandleSync(handle, model) {
               let result = handle;
-              result.${addFunc}(new result.entityClass({value: 'one'}));
-              result.${addFunc}(new result.entityClass({value: 'two'}));
+              result.add(new result.entityClass({value: 'one'}));
+              result.add(new result.entityClass({value: 'two'}));
             }
             async onHandleUpdate(handle) {
               for (let entity of await handle.toList()) {
@@ -252,6 +251,7 @@ describe('particle-api', () => {
     const recipe = arc.context.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
+    await arc.idle;
     await arc.idle;
     const values = await resultHandle.toList();
     assert.deepStrictEqual(values, [{value: 'two'}]);
@@ -807,7 +807,11 @@ describe('particle-api', () => {
     assert.deepStrictEqual(await newHandle.get(), {value: 'WORLD'});
   });
 
-  it('big collection store and remove', async () => {
+  it('big collection store and remove', async function() {
+    // Big collection is not supported in new storage stack.
+    if (Flags.useNewStorageStack) {
+      this.skip();
+    }
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Data
@@ -853,7 +857,11 @@ describe('particle-api', () => {
     assert.deepStrictEqual(data.value.map(item => item.rawData.value), ['finn', 'jake']);
   });
 
-  it('big collection streamed reads', async () => {
+  it('big collection streamed reads', async function() {
+    // Big collection is not supported in new storage stack.
+    if (Flags.useNewStorageStack) {
+      this.skip();
+    }
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Data
@@ -1076,7 +1084,9 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
 
     await arc.idle;
-    await (inStore as unknown as SingletonStore).set({id: '1', rawData: {}}, 'a');
+    const inHandle = await singletonHandleForTest(arc, inStore);
+    await inHandle.set(new inHandle.entityClass({}));
+    await arc.idle;
     await arc.idle;
     const outHandle = await singletonHandleForTest(arc, outStore);
     assert.deepStrictEqual(await outHandle.get(), {result: 'hi'});
@@ -1120,13 +1130,13 @@ describe('particle-api', () => {
     const manifest = await Manifest.load('manifest', loader);
     const recipe = manifest.recipes[0];
 
-     const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'h0', 'test:0');
+    const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'h0', 'test:0');
     const outStore = await arc.createStore(new EntityType(new Schema([], {result: 'Text'})), 'h1', 'test:1');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
 
-     const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
@@ -1200,8 +1210,8 @@ describe('particle-api', () => {
           root: consumes slot0`);
 
     const loader = new StubLoader({
-      'TransformationParticle.js': `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
+      'TransformationParticle.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
           async setHandles(handles) {
             super.setHandles(handles);
 
@@ -1233,7 +1243,7 @@ describe('particle-api', () => {
           renderHostedSlot(slotName, hostedSlotId, content) {}
         };
       });`,
-      '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
+      '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     // TODO(lindner): add strict rendering
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
@@ -1275,8 +1285,8 @@ describe('particle-api', () => {
           root: consumes slot0`);
 
     const loader = new StubLoader({
-      'TransformationParticle.js': `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
+      'TransformationParticle.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
           async setHandles(handles) {
             super.setHandles(handles);
 
@@ -1308,7 +1318,7 @@ describe('particle-api', () => {
           renderHostedSlot(slotName, hostedSlotId, content) {}
         };
       });`,
-      '*': `defineParticle(({DomParticle}) => class extends DomParticle {});`,
+      '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     // TODO(lindner): add strict rendering
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');

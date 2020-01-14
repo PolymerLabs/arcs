@@ -9,8 +9,8 @@
  */
 'use strict';
 
-defineParticle(({Particle, MultiplexerDomParticle}) => {
-  return class SlandleSyntaxMultiplexer extends MultiplexerDomParticle {
+defineParticle(({Particle, UiMultiplexerParticle}) => {
+  return class SlandleSyntaxMultiplexer extends UiMultiplexerParticle {
     constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
       return Particle.buildManifest`
 ${hostedParticle}

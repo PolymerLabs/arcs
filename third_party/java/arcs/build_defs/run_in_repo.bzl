@@ -93,7 +93,9 @@ output file respectively.
     "progress_message": attr.string(
         doc = "Message to display when running the command.",
     ),
-    "deps": attr.label_list(),
+    "deps": attr.label_list(
+        allow_files = True,
+    ),
     "_template": attr.label(
         default = "run_in_repo_template.sh",
         allow_single_file = True,
@@ -103,7 +105,7 @@ output file respectively.
 run_in_repo = rule(
     attrs = _RUN_RULE_ATTRS,
     doc = """
-Runs the given shell command in the root directory of the respository. This lets
+Runs the given shell command in the root directory of the repository. This lets
 you read/write files directly from the repository (as opposed to the bazel
 sandbox), so it can be destructive and can overwrite existing files.
 

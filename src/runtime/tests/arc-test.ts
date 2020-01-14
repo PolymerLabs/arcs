@@ -980,8 +980,8 @@ describe('Arc', () => {
     // 'A', 'B', 'C', ..., 'Y'
     for (let current = 'A'; current < 'Z';) {
       const next = String.fromCharCode(current.charCodeAt(0) + 1);
-      sources[`${current}.js`] = `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
+      sources[`${current}.js`] = `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
           async setHandles(handles) {
             super.setHandles(handles);
 
@@ -1018,8 +1018,8 @@ describe('Arc', () => {
     const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
     const loader = new StubLoader({
       ...sources,
-      'Z.js': `defineParticle(({DomParticle}) => {
-        return class extends DomParticle {
+      'Z.js': `defineParticle(({UiParticle}) => {
+        return class extends UiParticle {
           getTemplate() { return 'Z'; }
         };
       });`,

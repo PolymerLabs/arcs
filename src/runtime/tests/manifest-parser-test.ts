@@ -49,6 +49,13 @@ describe('manifest parser', () => {
         map #someTag
         map 'some-id' #someTag`);
   });
+  it('parses recipes that creates handles with ttls', () => {
+    parse(`
+      recipe Thing
+        h0: create #myTag @ttl(20d)
+        h1: create 'my-id' #anotherTag @ttl(1h)
+        h2: create @ttl ( 30m )`);
+  });
   it('parses recipes with particles', () => {
     parse(`
       recipe Recipe

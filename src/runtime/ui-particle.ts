@@ -134,7 +134,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
           if (index >= 0) {
             prop.splice(index, 1);
           } else {
-            console.warn(`dom-particle::onHandleUpdate: couldn't find item to remove`);
+            console.warn(`ui-particle::onHandleUpdate: couldn't find item to remove`);
           }
         });
         this._setProps({[name]: prop});

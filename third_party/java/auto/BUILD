@@ -16,3 +16,18 @@ java_library(
     neverlink = 1,  # Only used at compilation rather than at run-time.
     exports = ["@maven//:com_google_auto_value_auto_value_annotations"],
 )
+
+java_plugin(
+    name = "autoservice_plugin",
+    processor_class = "com.google.auto.service.processor.AutoServiceProcessor",
+    deps = ["@maven//:com_google_auto_service_auto_service"],
+)
+
+java_library(
+    name = "auto_service",
+    exported_plugins = [":autoservice_plugin"],
+    exports = [
+        "@maven//:com_google_auto_service_auto_service",
+        "@maven//:com_google_auto_service_auto_service_annotations",
+    ],
+)

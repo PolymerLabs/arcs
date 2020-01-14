@@ -44,13 +44,11 @@ abstract class Particle {
      * @see [registerHandle]
      * @see [onHandleSync]
      */
+    @Suppress("UNUSED_PARAMETER")
     fun connectHandle(name: String, canRead: Boolean, canWrite: Boolean): Handle? {
         handles[name]?.let {
             if (canRead) {
                 toSync.add(it)
-                it.direction = if (canWrite) Direction.InOut else Direction.In
-            } else {
-                it.direction = Direction.Out
             }
             return it
         }
@@ -185,26 +183,23 @@ abstract class Particle {
     fun resolveUrl(url: String): String = RuntimeClient.resolveUrl(url)
 }
 
-enum class Direction { Unconnected, In, Out, InOut }
-
 abstract class Handle(val name: String, val particle: Particle) {
     init { particle.registerHandle(this) }
 
-    var direction: Direction = Direction.Unconnected
     abstract fun sync(encoded: ByteArray)
     abstract fun update(added: ByteArray, removed: ByteArray)
 }
 
-open class Singleton<T : Entity<T>>(
+open class Singleton<T : Entity>(
     particle: Particle,
     name: String,
-    private val entityCtor: () -> T
+    private val entitySpec: EntitySpec<T>
 ) : Handle(name, particle) {
 
     private var entity: T? = null
 
     override fun sync(encoded: ByteArray) {
-        entity = entityCtor().decodeEntity(encoded)
+        entity = entitySpec.decode(encoded)
     }
 
     override fun update(added: ByteArray, removed: ByteArray) = sync(added)
@@ -223,15 +218,15 @@ open class Singleton<T : Entity<T>>(
     }
 
     fun clear() {
-        entity = entityCtor()
+        entity = entitySpec.create()
         RuntimeClient.singletonClear(particle, this)
     }
 }
 
-class Collection<T : Entity<T>>(
+class Collection<T : Entity>(
     particle: Particle,
     name: String,
-    private val entityCtor: () -> T
+    private val entitySpec: EntitySpec<T>
 ) : Handle(name, particle), Iterable<T> {
 
     private val entities: MutableMap<String, T> = mutableMapOf()
@@ -254,7 +249,7 @@ class Collection<T : Entity<T>>(
                 val len = getInt(':')
                 val chunk = chomp(len)
                 // TODO: just get the id, no need to decode the full entity
-                val entity = requireNotNull(entityCtor().decodeEntity(chunk))
+                val entity = requireNotNull(entitySpec.decode(chunk))
                 entities.remove(entity.internalId)
             }
         }
@@ -281,7 +276,7 @@ class Collection<T : Entity<T>>(
             repeat(getInt(':')) {
                 val len = getInt(':')
                 val chunk = chomp(len)
-                val entity = requireNotNull(entityCtor().decodeEntity(chunk))
+                val entity = requireNotNull(entitySpec.decode(chunk))
                 entities[entity.internalId] = entity
             }
         }

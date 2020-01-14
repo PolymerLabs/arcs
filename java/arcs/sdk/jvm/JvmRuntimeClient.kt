@@ -16,27 +16,27 @@ actual fun stringToUtf8Impl(str: String): ByteArray = str.toByteArray(Charsets.U
 
 // TODO(alxr): Implement Jvm Runtime
 actual object RuntimeClient {
-    actual fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>): Unit =
+    actual fun <T : Entity> singletonClear(particle: Particle, singleton: Singleton<T>): Unit =
         throw NotImplementedError()
 
-    actual fun <T : Entity<T>> singletonSet(
+    actual fun <T : Entity> singletonSet(
         particle: Particle,
         singleton: Singleton<T>,
         encoded: NullTermByteArray
     ): Unit = throw NotImplementedError()
 
-    actual fun <T : Entity<T>> collectionRemove(
+    actual fun <T : Entity> collectionRemove(
         particle: Particle,
         collection: Collection<T>,
         encoded: NullTermByteArray
     ): Unit = throw NotImplementedError()
 
-    actual fun <T : Entity<T>> collectionClear(
+    actual fun <T : Entity> collectionClear(
         particle: Particle,
         collection: Collection<T>
     ): Unit = throw NotImplementedError()
 
-    actual fun <T : Entity<T>> collectionStore(
+    actual fun <T : Entity> collectionStore(
         particle: Particle,
         collection: Collection<T>,
         encoded: NullTermByteArray

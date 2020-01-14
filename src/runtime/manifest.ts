@@ -31,6 +31,7 @@ import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {Ttl} from './recipe/ttl.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {HandleRetriever} from './storage/handle-retriever.js';
 import {Schema} from './schema.js';
@@ -48,6 +49,9 @@ import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileMemoryProvider} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
+import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
+import {Entity, SerializedEntity} from './entity.js';
+import {Refinement} from './refiner.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -580,6 +584,7 @@ ${e.message}
             }
             // tslint:disable-next-line: no-any
             const fields: Dictionary<any> = {};
+            const typeData = {};
             for (let {name, type} of node.fields) {
               for (const schema of schemas) {
                 if (!type) {
@@ -597,8 +602,13 @@ ${e.message}
                 throw new ManifestError(node.location, `Could not infer type of '${name}' field`);
               }
               fields[name] = type;
+              if (fields[name].refinement) {
+                fields[name].refinement = Refinement.fromAst(fields[name].refinement, {[name]: type.type});
+                typeData[name] = type.type;
+              }
             }
-            let schema = new Schema(names, fields, {refinement: node.refinement});
+            const refinement = node.refinement && Refinement.fromAst(node.refinement, typeData);
+            let schema = new Schema(names, fields, {refinement});
             for (const alias of aliases) {
               schema = Schema.union(alias, schema);
               if (!schema) {
@@ -671,6 +681,9 @@ ${e.message}
             throw new ManifestError(field.location, `Duplicate definition of field '${field.name}'`);
           }
           fields[field.name] = field.type;
+          if (fields[field.name].refinement) {
+            fields[field.name].refinement = Refinement.fromAst(fields[field.name].refinement, {[field.name]: field.type.type});
+          }
           break;
         }
         case 'description': {
@@ -843,6 +856,13 @@ ${e.message}
         items.byName.set(item.name, {item, handle});
       }
       handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
+      if (item.kind === 'handle' && item.annotation) {
+        assert(item.annotation.simpleAnnotation === 'ttl',
+               `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
+        handle.ttl = new Ttl(
+            item.annotation.parameter.count,
+            Ttl.ttlUnitsFromString(item.annotation.parameter.units));
+      }
       items.byHandle.set(handle, item);
     }
 

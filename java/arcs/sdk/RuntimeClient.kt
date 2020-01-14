@@ -27,7 +27,7 @@ expect object RuntimeClient {
      * @param particle particle in scope
      * @param singleton target to be cleared
      */
-    fun <T : Entity<T>> singletonClear(particle: Particle, singleton: Singleton<T>)
+    fun <T : Entity> singletonClear(particle: Particle, singleton: Singleton<T>)
 
     /**
      * Set the entity of the Singleton handle of [particle].
@@ -36,7 +36,7 @@ expect object RuntimeClient {
      * @param singleton target to be cleared
      * @param encoded serialized representation of an entity
      */
-    fun <T : Entity<T>> singletonSet(
+    fun <T : Entity> singletonSet(
         particle: Particle,
         singleton: Singleton<T>,
         encoded: NullTermByteArray
@@ -48,7 +48,7 @@ expect object RuntimeClient {
      * @param particle particle in scope
      * @param collection target to be made empty
      */
-    fun <T : Entity<T>> collectionClear(particle: Particle, collection: Collection<T>)
+    fun <T : Entity> collectionClear(particle: Particle, collection: Collection<T>)
 
     /**
      * Remove a single entity from a collection
@@ -57,7 +57,7 @@ expect object RuntimeClient {
      * @param collection target to be mutated
      * @param encoded serialized representation of an entity
      */
-    fun <T : Entity<T>> collectionRemove(
+    fun <T : Entity> collectionRemove(
         particle: Particle,
         collection: Collection<T>,
         encoded: NullTermByteArray
@@ -71,7 +71,7 @@ expect object RuntimeClient {
      * @param encoded serialized representation of an entity
      * @return the ID [String] of the stored entity, or null.
      */
-    fun <T : Entity<T>> collectionStore(
+    fun <T : Entity> collectionStore(
         particle: Particle,
         collection: Collection<T>,
         encoded: NullTermByteArray

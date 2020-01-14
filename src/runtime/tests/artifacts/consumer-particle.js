@@ -10,7 +10,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
-  return class ConsumerParticle extends DomParticle {
+defineParticle(({UiParticle}) => {
+  return class ConsumerParticle extends UiParticle {
   };
 });

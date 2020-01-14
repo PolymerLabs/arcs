@@ -152,6 +152,14 @@ Trigger "a trigger for a recipe"
   });
 }
 
+ParameterizedAnnotation "a parameterized annotation (e.g. @foo(bar))"
+  = simpleAnnotation:SimpleAnnotation whiteSpace? '(' whiteSpace? parameter:NumberedUnits whiteSpace? ')' {
+  return toAstNode<AstNode.ParameterizedAnnotation>({
+    kind: 'param-annotation',
+    simpleAnnotation,
+    parameter,
+  });
+}
 
 SimpleAnnotation "an annotation (e.g. @foo)"
   = '@' annotation:lowerIdent { return annotation; }
@@ -1042,13 +1050,14 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotation:(whiteSpace ParameterizedAnnotation)? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
-      fate
+      fate,
+      annotation: optional(annotation, s => s[1], null),
     });
   }
 
@@ -1326,7 +1335,7 @@ SchemaTupleType
 Refinement
   = '[' whiteSpace? expression:RefinementExpression whiteSpace? ']'
   {
-      return toAstNode<AstNode.Refinement>({kind: 'refinement', expression});
+      return toAstNode<AstNode.RefinementNode>({kind: 'refinement', expression});
   }
   / '[' { expected("a valid refinement expression"); }
 
@@ -1367,7 +1376,7 @@ EqualityExpression
   }
 
 ComparisonExpression
-  = leftExpr:AdditiveExpression tail:(whiteSpace? ('<' / '<=' / '>' / '>=') whiteSpace? AdditiveExpression)*
+  = leftExpr:AdditiveExpression tail:(whiteSpace? ('<=' / '<' / '>=' / '>') whiteSpace? AdditiveExpression)*
   {
     for (const part of tail) {
       const operator = part[1];
@@ -1413,6 +1422,10 @@ PrimaryExpression
   {
     return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num});
   }
+  / bool:('true'i / 'false'i)
+  {
+    return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
+  }
   / fn: fieldName
   {
     return toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn});
@@ -1428,6 +1441,16 @@ Version "a version number (e.g. @012)"
   = '@' version:[^ ]+
   {
     return version.join('');
+  }
+
+NumberedUnits
+  = count:[0-9]+ units:[a-z]
+  {
+    return toAstNode<AstNode.NumberedUnits>({
+      kind: 'numbered-units',
+      count: count.join(''),
+      units
+    });
   }
 
 Indent "indentation" = &(i:" "+ &{

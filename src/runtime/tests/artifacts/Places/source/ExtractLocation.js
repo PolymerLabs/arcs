@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle}) => {
-  return class ExtractLocation extends DomParticle {
+defineParticle(({UiParticle}) => {
+  return class ExtractLocation extends UiParticle {
     willReceiveProps(props, state, lastProps) {
       // possibly undefined.
       const lastLatitude = lastProps.person && lastProps.person.latitude;

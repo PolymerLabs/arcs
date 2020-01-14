@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-defineParticle(({DomParticle, html, resolver}) => {
+defineParticle(({UiParticle, html, resolver}) => {
 
   const host = `avatar-picker`;
 
@@ -52,7 +52,7 @@ ${styles}
 
   `.trim();
 
-  return class extends DomParticle {
+  return class extends UiParticle {
     get template() {
       return template;
     }
