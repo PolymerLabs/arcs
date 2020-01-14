@@ -58,7 +58,7 @@ async function initSlotComposer(recipeStr) {
   return {arc, slotComposer, observer, plan};
 }
 
-describe('slot composer', function() {
+describe('slot composer', () => {
   it('initialize recipe and render slots', async () => {
     const manifestStr = `
 particle A in 'a.js'
