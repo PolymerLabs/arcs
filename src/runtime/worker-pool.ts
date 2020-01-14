@@ -8,12 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {policies} from './worker-pool-sizing-policies.js';
+import {SizingPolicy, policies} from './worker-pool-sizing-policies.js';
 
 // Enables the worker pool management via this url parameter.
 // The value of parameter represents boolean options applied to a worker pool.
 // Options are separated by comma.
 const USE_WORKER_POOL_PARAMETER = 'use-worker-pool';
+
 // Chooses worker pool sizing policy via this url parameter.
 // @see {@link policies} for all available sizing policies.
 const SIZING_POLICY_PARAMETER = 'sizing-policy';
@@ -32,7 +33,9 @@ interface WorkerFactory {
 }
 
 class PoolOptions {
-  // Don't suspend workers but destroy them directly (no resurrecting workers)
+  // Don't suspend workers but destroy them directly.
+  // The option forbids resurrecting workers at all contexts; in other
+  // words, the pool can be replenished only by spinning up new workers.
   nosuspend = false;
 }
 
@@ -42,12 +45,15 @@ export const workerPool = new (class {
   readonly suspended: PoolEntry[] = [];
   // In-use workers (indexed by the port allocated for the main renderer).
   readonly inUse = new Map<MessagePort, PoolEntry>();
+  // The additional boolean configurations are applied to the worker pool.
+  readonly options = new PoolOptions();
   // Whether the worker pool management is ON.
   active = false;
-  // The additional boolean options are applied to the worker pool.
-  options = new PoolOptions();
   // Worker APIs
   factory: WorkerFactory = {};
+  // A pool sizing policy can be designated via {@link SIZING_POLICY_PARAMETER}
+  // only when the worker pool management is active, otherwise undefined.
+  policy?: SizingPolicy;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -64,6 +70,12 @@ export const workerPool = new (class {
                 this.options[e] = true;
               }
             });
+
+        // Designates a sizing policy to manage pool sizing.
+        const p = urlParams.get(SIZING_POLICY_PARAMETER);
+        if (p && policies[p]) {
+          this.policy = policies[p];
+        }
       }
     }
   }
@@ -119,9 +131,8 @@ export const workerPool = new (class {
    * @param port the host port being used to talk to its associated worker
    */
   suspend(port: object) {
-    // Don't want to resurrect workers at all; instead, prefer spinning up
-    // new workers as possible. Hence suspend should be treated exactly as
-    // destroy when this option is supplied.
+    // Don't resurrect workers at all but spawn new workers as possible.
+    // The suspend should be treated exactly as a destroy.
     if (this.options.nosuspend) {
       this.destroy(port);
       return;

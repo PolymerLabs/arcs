@@ -25,7 +25,7 @@ interface SizeState {
 }
 
 /** Sizing policy apis and helpers */
-abstract class SizingPolicy {
+export abstract class SizingPolicy {
   /**
    * Shrinks or grows worker pool size by arbitrating the number of workers
    * to be spawned or terminated in accordance with the current state of worker
