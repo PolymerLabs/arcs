@@ -21,7 +21,7 @@ actual object Utils {
 
     actual fun assert(message: String, cond: Boolean): Unit = throw NotImplementedError()
 
-    actual fun utf8ToString(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
+    actual fun toUtf8String(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
 
-    actual fun stringToUtf8(str: String): ByteArray = str.toByteArray(Charsets.UTF_8)
+    actual fun toUtf8ByteArray(str: String): ByteArray = str.toByteArray(Charsets.UTF_8)
 }

@@ -11,7 +11,7 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.utf8ToString
+import arcs.sdk.toUtf8String
 
 class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
     ::SpecialSchemaFieldsTest_Errors,
@@ -44,7 +44,7 @@ class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
             internal_id = 0.0,
             internalId_ = 0.0
         )
-        val encoding = s.encodeEntity().bytes.utf8ToString()
+        val encoding = s.encodeEntity().bytes.toUtf8String()
         assertTrue("The encoding uses the language keyword", encoding.contains("|for:"))
     }
 
@@ -71,7 +71,7 @@ class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
             internal_id = 0.0,
             internalId_ = 10.0
         )
-        val encoding = s.encodeEntity().bytes.utf8ToString()
+        val encoding = s.encodeEntity().bytes.toUtf8String()
         assertTrue("The encoding uses the keyword 'internalId'", encoding.contains("|internalId:"))
     }
 }

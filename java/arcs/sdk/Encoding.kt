@@ -11,12 +11,15 @@
 
 package arcs.sdk
 
-// These classes are wasm-only, but need JVM implementations of utf8ToString/stringToUtf8 in
+// These classes are wasm-only, but need JVM implementations of toUtf8String/toUtf8ByteArray in
 // order for their tests to run on the JVM.
 // TODO: move as much code as possible into the wasm package.
 
-fun ByteArray.utf8ToString(): String = Utils.utf8ToString(this)
-fun String.stringToUtf8(): ByteArray = Utils.stringToUtf8(this)
+/** Converts a [ByteArray] into a [String]. */
+fun ByteArray.toUtf8String(): String = Utils.toUtf8String(this)
+
+/** Converts a [String] into a [ByteArray]. */
+fun String.toUtf8ByteArray(): ByteArray = Utils.toUtf8ByteArray(this)
 
 /** Wraps a ByteArray whose final byte is set to 0. */
 inline class NullTermByteArray(val bytes: ByteArray)
@@ -35,7 +38,7 @@ class StringDecoder(private var bytes: ByteArray) {
         return chunk
     }
 
-    fun getInt(sep: Char): Int = upTo(sep).utf8ToString().toInt()
+    fun getInt(sep: Char): Int = upTo(sep).toUtf8String().toInt()
 
     fun chomp(len: Int): ByteArray {
         // TODO: detect overrun
@@ -45,16 +48,16 @@ class StringDecoder(private var bytes: ByteArray) {
     }
 
     fun validate(token: String) {
-        if (chomp(token.length).utf8ToString() != token) {
+        if (chomp(token.length).toUtf8String() != token) {
             throw IllegalArgumentException("Packaged entity decoding failed in validate()")
         }
     }
 
-    fun decodeText(): String = chomp(getInt(':')).utf8ToString()
+    fun decodeText(): String = chomp(getInt(':')).toUtf8String()
 
-    fun decodeNum(): Double = upTo(':').utf8ToString().toDouble()
+    fun decodeNum(): Double = upTo(':').toUtf8String().toDouble()
 
-    fun decodeBool(): Boolean = chomp(1).utf8ToString() == "1"
+    fun decodeBool(): Boolean = chomp(1).toUtf8String() == "1"
 
     companion object {
         fun decodeDictionary(bytes: ByteArray): Map<String, String> {
@@ -64,10 +67,10 @@ class StringDecoder(private var bytes: ByteArray) {
             var num = decoder.getInt(':')
             while (num-- > 0) {
                 val klen = decoder.getInt(':')
-                val key = decoder.chomp(klen).utf8ToString()
+                val key = decoder.chomp(klen).toUtf8String()
 
                 val vlen = decoder.getInt(':')
-                val value = decoder.chomp(vlen).utf8ToString()
+                val value = decoder.chomp(vlen).toUtf8String()
 
                 dict[key] = value
             }
@@ -84,7 +87,7 @@ class StringEncoder(
     fun encodeDictionary(dict: Map<String, Any?>): StringEncoder {
         addStr("${dict.size}:")
         for ((key, value) in dict) {
-            addBytes("", key.stringToUtf8())
+            addBytes("", key.toUtf8ByteArray())
             encodeValue(value)
         }
         return this
@@ -98,7 +101,7 @@ class StringEncoder(
 
     fun encodeValue(value: Any?) {
         when (value) {
-            is String -> addBytes("T", value.stringToUtf8())
+            is String -> addBytes("T", value.toUtf8ByteArray())
             is Boolean -> addStr("B${if (value) 1 else 0}")
             is Double -> addStr("N$value:")
             is Map<*, *> -> {
@@ -116,7 +119,7 @@ class StringEncoder(
     }
 
     fun encode(prefix: String, str: String) {
-        addBytes(prefix, str.stringToUtf8())
+        addBytes(prefix, str.toUtf8ByteArray())
         addStr("|")
     }
 
@@ -129,7 +132,7 @@ class StringEncoder(
     }
 
     private fun addStr(str: String) {
-        str.stringToUtf8().also {
+        str.toUtf8ByteArray().also {
             buffers.add(it)
             size += it.size
         }

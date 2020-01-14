@@ -27,6 +27,6 @@ actual object Utils {
         abort()
     }
 
-    actual fun utf8ToString(bytes: ByteArray): String = bytes.decodeToString()
-    actual fun stringToUtf8(str: String): ByteArray = str.encodeToByteArray()
+    actual fun toUtf8String(bytes: ByteArray): String = bytes.decodeToString()
+    actual fun toUtf8ByteArray(str: String): ByteArray = str.encodeToByteArray()
 }

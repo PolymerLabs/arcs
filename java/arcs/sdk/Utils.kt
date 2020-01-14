@@ -21,7 +21,7 @@ expect object Utils {
 
     fun assert(message: String, cond: Boolean)
 
-    fun utf8ToString(bytes: ByteArray): String
+    fun toUtf8String(bytes: ByteArray): String
 
-    fun stringToUtf8(str: String): ByteArray
+    fun toUtf8ByteArray(str: String): ByteArray
 }

@@ -17,7 +17,7 @@ import arcs.sdk.StringDecoder
 import arcs.sdk.StringEncoder
 import arcs.sdk.WritableCollection
 import arcs.sdk.WritableSingleton
-import arcs.sdk.utf8ToString
+import arcs.sdk.toUtf8String
 import arcs.sdk.wasm.WasmCollection
 import arcs.sdk.wasm.WasmEntity
 import arcs.sdk.wasm.WasmEntitySpec
@@ -78,7 +78,7 @@ class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
             decoder.validate("|")
             var i = 0
             while (i < 1 && !decoder.done()) {
-                val name = decoder.upTo(':').utf8ToString()
+                val name = decoder.upTo(':').toUtf8String()
                 when (name) {
                     "val" -> {
                         decoder.validate("T")
@@ -86,7 +86,7 @@ class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
                     }
                     else -> {
                         // Ignore unknown fields until type slicing is fully implemented.
-                        when (decoder.chomp(1).utf8ToString()) {
+                        when (decoder.chomp(1).toUtf8String()) {
                             "T", "U" -> decoder.decodeText()
                             "N" -> decoder.decodeNum()
                             "B" -> decoder.decodeBool()
@@ -199,7 +199,7 @@ class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
             decoder.validate("|")
             var i = 0
             while (i < 5 && !decoder.done()) {
-                val name = decoder.upTo(':').utf8ToString()
+                val name = decoder.upTo(':').toUtf8String()
                 when (name) {
                     "num" -> {
                         decoder.validate("N")
@@ -219,7 +219,7 @@ class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
                     }
                     else -> {
                         // Ignore unknown fields until type slicing is fully implemented.
-                        when (decoder.chomp(1).utf8ToString()) {
+                        when (decoder.chomp(1).toUtf8String()) {
                             "T", "U" -> decoder.decodeText()
                             "N" -> decoder.decodeNum()
                             "B" -> decoder.decodeBool()

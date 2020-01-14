@@ -61,7 +61,7 @@ import arcs.sdk.StringDecoder
 import arcs.sdk.StringEncoder
 import arcs.sdk.WritableCollection
 import arcs.sdk.WritableSingleton
-import arcs.sdk.utf8ToString
+import arcs.sdk.toUtf8String
 import arcs.sdk.wasm.WasmCollection
 import arcs.sdk.wasm.WasmEntity
 import arcs.sdk.wasm.WasmEntitySpec
@@ -215,12 +215,12 @@ class ${name}_Spec() : WasmEntitySpec<${name}> {
             decoder.validate("|")
             ${withFields(`var i = 0
             while (i < ${fieldCount} && !decoder.done()) {
-                val name = decoder.upTo(':').utf8ToString()
+                val name = decoder.upTo(':').toUtf8String()
                 when (name) {
                     ${this.decode.join('\n                    ')}
                     else -> {
                         // Ignore unknown fields until type slicing is fully implemented.
-                        when (decoder.chomp(1).utf8ToString()) {
+                        when (decoder.chomp(1).toUtf8String()) {
                             "T", "U" -> decoder.decodeText()
                             "N" -> decoder.decodeNum()
                             "B" -> decoder.decodeBool()
