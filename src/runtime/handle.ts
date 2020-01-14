@@ -46,7 +46,9 @@ function restore(entry: SerializedEntity, entityClass: EntityClass) {
   const {id, rawData} = entry;
   const entity = new entityClass(cloneData(rawData));
   if (entry.id) {
-    Entity.identify(entity, entry.id);
+    // StorageKeys aren't plumbed into the handles of old storage, so we don't have them
+    // available as part of entity identity.
+    Entity.identify(entity, entry.id, null);
   }
 
   // TODO some relation magic, somewhere, at some point.

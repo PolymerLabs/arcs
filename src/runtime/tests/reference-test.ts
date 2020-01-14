@@ -123,7 +123,7 @@ describe.only('references', () => {
       const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
       const backingStore = await volatileEngine.baseStorageFor(refStore.type, volatileEngine.baseStorageKey(refStore.type));
       await backingStore.store({id: 'id1', rawData: {value: 'val1'}}, ['key1']);
-      await refStore.set({id: 'id1', storageKey: backingStore.storageKey});
+      await refStore.set({id: 'id1', entityStorageKey: backingStore.storageKey});
     }
     await arc.idle;
 
@@ -208,8 +208,8 @@ describe.only('references', () => {
       const backingStore = await volatileEngine.baseStorageFor(resType, volatileEngine.baseStorageKey(resType));
       await backingStore.store({id: 'id1', rawData: {value: 'val1'}}, ['key1']);
       await backingStore.store({id: 'id2', rawData: {value: 'val2'}}, ['key2']);
-      await refStore.store({id: 'id1', storageKey: backingStore.storageKey}, ['key1a']);
-      await refStore.store({id: 'id2', storageKey: backingStore.storageKey}, ['key2a']);
+      await refStore.store({id: 'id1', entityStorageKey: backingStore.storageKey}, ['key1a']);
+      await refStore.store({id: 'id2', entityStorageKey: backingStore.storageKey}, ['key2a']);
     }
     await arc.idle;
 
@@ -218,7 +218,7 @@ describe.only('references', () => {
     assert.deepStrictEqual(values, [{value: 'val1'}, {value: 'val2'}]);
   });
 
-  it.only('exposes a reference API to particles', async () => {
+  it('exposes a reference API to particles', async () => {
     const loader = new StubLoader({
       manifest: `
         schema Result
@@ -426,12 +426,12 @@ describe.only('references', () => {
 
     const inputStore = await collectionHandleForTest(arc, arc._stores[1]);
     assert.strictEqual((inputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
-    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'this is an a'}), 'id:a'));
-    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'this is a b'}), 'id:b'));
+    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'this is an a'}), 'id:a', null));
+    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'this is a b'}), 'id:b', null));
 
     const outputStore = await collectionHandleForTest(arc, arc._stores[2]);
     assert.strictEqual((outputStore.type.getContainedType() as EntityType).entitySchema.name, 'Foo');
-    await outputStore.add(Entity.identify(new outputStore.entityClass({result: null, shortForm: 'b'}), 'id:2'));
+    await outputStore.add(Entity.identify(new outputStore.entityClass({result: null, shortForm: 'b'}), 'id:2', null));
 
     await arc.idle;
     const values = await outputStore.toList();
@@ -576,8 +576,8 @@ describe.only('references', () => {
 
     const inputStore = await collectionHandleForTest(arc, arc._stores[0]);
     assert.strictEqual((inputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
-    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'what a result!'}), 'id:1'));
-    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'what another result!'}), 'id:2'));
+    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'what a result!'}), 'id:1', null));
+    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'what another result!'}), 'id:2', null));
 
     await arc.idle;
     const outputStore = await singletonHandleForTest(arc, arc._stores[1]);

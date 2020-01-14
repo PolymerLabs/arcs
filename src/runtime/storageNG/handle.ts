@@ -32,7 +32,7 @@ export interface HandleOptions {
 
 interface Serializer<T, Serialized> {
   serialize(value: T): Serialized;
-  deserialize(value: Serialized): T;
+  deserialize(value: Serialized, storageKey: string): T;
   ensureHasId(value: T);
 }
 
@@ -193,10 +193,10 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
     }
   }
 
-  deserialize(value: SerializedEntity): Entity {
+  deserialize(value: SerializedEntity, storageKey: string): Entity {
     const {id, rawData} = value;
     const entity = new this.entityClass(rawData);
-    Entity.identify(entity, id);
+    Entity.identify(entity, id, storageKey);
     return entity;
   }
 }
@@ -259,7 +259,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
       throw new Error('Handle not readable');
     }
     const values: Referenceable[] = await this.toCRDTList();
-    return this.serializer.deserialize(values.find(element => element.id === id)) as T;
+    return this.serializer.deserialize(values.find(element => element.id === id), this.storageProxy.storageKey) as T;
   }
 
   async add(entity: T): Promise<boolean> {
@@ -319,7 +319,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
       throw new Error('Handle not readable');
     }
     const list = await this.toCRDTList();
-    return list.map(entry => this.serializer.deserialize(entry) as T);
+    return list.map(entry => this.serializer.deserialize(entry, this.storageProxy.storageKey) as T);
   }
 
   private async toCRDTList(): Promise<Referenceable[]> {
@@ -339,10 +339,10 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
     // Pass the change up to the particle.
     const update: {added?: Entity, removed?: Entity, originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
     if (op.type === CollectionOpTypes.Add) {
-      update.added = this.serializer.deserialize(op.added);
+      update.added = this.serializer.deserialize(op.added, this.storageProxy.storageKey);
     }
     if (op.type === CollectionOpTypes.Remove) {
-      update.removed = this.serializer.deserialize(op.removed);
+      update.removed = this.serializer.deserialize(op.removed, this.storageProxy.storageKey);
     }
     if (this.particle) {
       await this.particle.callOnHandleUpdate(
@@ -407,7 +407,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     }
     const [value, versionMap] = await this.storageProxy.getParticleView();
     this.clock = versionMap;
-    return value == null ? null : this.serializer.deserialize(value) as T;
+    return value == null ? null : this.serializer.deserialize(value, this.storageProxy.storageKey) as T;
   }
 
   async onUpdate(op: SingletonOperation<Referenceable>, version: VersionMap): Promise<void> {
@@ -416,7 +416,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     // Pass the change up to the particle.
     const update: {data?: Entity, originator: boolean} = {originator: (this.key === op.actor)};
     if (op.type === SingletonOpTypes.Set) {
-      update.data = this.serializer.deserialize(op.value);
+      update.data = this.serializer.deserialize(op.value, this.storageProxy.storageKey);
     }
     // Nothing else to add (beyond oldData) for SingletonOpTypes.Clear.
     if (this.particle) {

@@ -58,6 +58,7 @@ class EntityInternals {
   private readonly context: ChannelConstructor;
 
   private id?: string;
+  private storageKey?: string;
   private userIDComponent?: string;
 
   // TODO: Only the Arc that "owns" this Entity should be allowed to mutate it.
@@ -79,6 +80,16 @@ class EntityInternals {
     return this.id;
   }
 
+  getStorageKey(): string {
+    if (this.id === undefined) {
+      throw new Error('entity has not yet been stored!');
+    }
+    if (this.storageKey === undefined) {
+      throw new Error('entity has been stored but storage key was not recorded against entity');
+    }
+    return this.storageKey;
+  }
+
   getEntityClass(): EntityClass {
     return this.entityClass;
   }
@@ -87,9 +98,10 @@ class EntityInternals {
     return this.id !== undefined;
   }
 
-  identify(identifier: string) {
+  identify(identifier: string, storageKey: string) {
     assert(!this.isIdentified(), 'identify() called on already identified entity');
     this.id = identifier;
+    this.storageKey = storageKey;
     const components = identifier.split(':');
     const uid = components.lastIndexOf('uid');
     this.userIDComponent = uid > 0 ? components.slice(uid+1).join(':') : '';
@@ -297,8 +309,8 @@ export abstract class Entity implements Storable {
     return getInternals(entity).isIdentified();
   }
 
-  static identify(entity: Entity, identifier: string) {
-    getInternals(entity).identify(identifier);
+  static identify(entity: Entity, identifier: string, storageKey: string) {
+    getInternals(entity).identify(identifier, storageKey);
     return entity;
   }
 

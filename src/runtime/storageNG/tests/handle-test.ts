@@ -32,7 +32,8 @@ async function getCollectionHandle(primitiveType: Type, particle?: MockParticle,
       new StorageProxy(
           'id',
           new MockStore<CRDTCollectionTypeRecord<SerializedEntity>>(),
-          new CollectionType(primitiveType)),
+          new CollectionType(primitiveType),
+          null),
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
@@ -54,7 +55,8 @@ async function getSingletonHandle(primitiveType: Type, particle?: MockParticle, 
       new StorageProxy(
           'id',
           new MockStore<CRDTSingletonTypeRecord<SerializedEntity>>(),
-          new SingletonType(primitiveType)),
+          new SingletonType(primitiveType),
+          null),
       IdGenerator.newSession(),
       fakeParticle,
       canRead,
@@ -74,7 +76,7 @@ let Bar: EntityClass;
 
 function newEntity(id: string) {
   const bar = new Bar({});
-  Entity.identify(bar, id);
+  Entity.identify(bar, id, null);
   return bar;
 }
 
@@ -344,4 +346,3 @@ describe('SingletonHandle', async () => {
     }
   });
 });
-

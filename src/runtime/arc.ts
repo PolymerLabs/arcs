@@ -501,7 +501,7 @@ export class Arc implements ArcInterface {
           particleClone.id = newStore.id;
 
           if (Flags.useNewStorageStack) {
-            const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type);
+            const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type, null);
             const handle = unifiedHandleFor({proxy, idGenerator: this.idGenerator, particleId: this.generateID().toString()});
             // tslint:disable-next-line: no-any
             await (handle as SingletonHandle<any>).set(particleClone);

@@ -418,7 +418,7 @@ class EntityDecoder extends StringDecoder {
     }
     const entity = new (Entity.createEntityClass(this.schema, null))(data);
     if (id !== '') {
-      Entity.identify(entity, id);
+      Entity.identify(entity, id, null);
     }
     return entity;
   }

@@ -63,9 +63,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
     this.apiPort = new class extends PECInnerPort {
 
-      onDefineHandle(identifier: string, type: Type, name: string) {
+      onDefineHandle(identifier: string, type: Type, name: string, storageKey: string) {
         if (Flags.useNewStorageStack) {
-          return new StorageProxyNG(identifier, pec, type);
+          return new StorageProxyNG(identifier, pec, type, storageKey);
         }
         return StorageProxy.newProxy(identifier, type, this, pec, pec.scheduler, name);
       }
@@ -78,7 +78,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           storageKey: string) {
         let proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>;
         if (Flags.useNewStorageStack) {
-          proxy = new StorageProxyNG(id, pec, type);
+          proxy = new StorageProxyNG(id, pec, type, storageKey);
         } else {
           proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
           proxy.storageKey = storageKey;
@@ -93,7 +93,8 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           id: string) {
         let proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>;
         if (Flags.useNewStorageStack) {
-          proxy = new StorageProxyNG(id, pec, type);
+          // TODO(shanestephens): plumb storageKey through to internally created handles too.
+          proxy = new StorageProxyNG(id, pec, type, null);
         } else {
           proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
         }
