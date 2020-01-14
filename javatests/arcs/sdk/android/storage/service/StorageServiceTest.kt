@@ -76,7 +76,7 @@ class StorageServiceTest {
         // Act:
         // Issue a proxy message to the binding context (and transitively: to the storage service)
         runBlocking {
-            service.loadJob.join()
+            service.loadJob?.join()
 
             val op = CrdtCount.Operation.Increment("foo", 0 to 1)
             val proxyMessage = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
