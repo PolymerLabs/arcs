@@ -26,4 +26,7 @@ actual object Utils {
         WasmRuntimeClient.log("AssertionError: $message")
         abort()
     }
+
+    actual fun utf8ToString(bytes: ByteArray): String = bytes.decodeToString()
+    actual fun stringToUtf8(str: String): ByteArray = str.encodeToByteArray()
 }

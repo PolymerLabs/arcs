@@ -15,11 +15,8 @@ package arcs.sdk
 // order for their tests to run on the JVM.
 // TODO: move as much code as possible into the wasm package.
 
-expect fun utf8ToStringImpl(bytes: ByteArray): String
-expect fun stringToUtf8Impl(str: String): ByteArray
-
-fun ByteArray.utf8ToString(): String = utf8ToStringImpl(this)
-fun String.stringToUtf8(): ByteArray = stringToUtf8Impl(this)
+fun ByteArray.utf8ToString(): String = Utils.utf8ToString(this)
+fun String.stringToUtf8(): ByteArray = Utils.stringToUtf8(this)
 
 /** Wraps a ByteArray whose final byte is set to 0. */
 inline class NullTermByteArray(val bytes: ByteArray)

@@ -16,6 +16,12 @@ package arcs.sdk
  */
 expect object Utils {
     fun log(msg: String)
+
     fun abort()
+
     fun assert(message: String, cond: Boolean)
+
+    fun utf8ToString(bytes: ByteArray): String
+
+    fun stringToUtf8(str: String): ByteArray
 }

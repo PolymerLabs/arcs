@@ -20,4 +20,8 @@ actual object Utils {
     actual fun abort(): Unit = throw NotImplementedError()
 
     actual fun assert(message: String, cond: Boolean): Unit = throw NotImplementedError()
+
+    actual fun utf8ToString(bytes: ByteArray): String = bytes.toString(Charsets.UTF_8)
+
+    actual fun stringToUtf8(str: String): ByteArray = str.toByteArray(Charsets.UTF_8)
 }
