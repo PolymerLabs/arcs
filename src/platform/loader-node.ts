@@ -16,7 +16,7 @@ import {LoaderBase} from './loader-base.js';
 
 export class Loader extends LoaderBase {
   clone(): Loader {
-    return new Loader(this.urlMap);
+    return new Loader(this.urlMap, this.staticMap);
   }
   async loadFile(path: string): Promise<string> {
     const data = await this.loadFileData(path, 'utf-8');
@@ -51,9 +51,7 @@ export class Loader extends LoaderBase {
     // resolve path
     const path = this.resolve(fileName);
     // get source code
-    console.warn('node:requireParticle:', blobUrl, path);
     const src = await this.loadResource(blobUrl || path);
-    console.warn('node:requireParticle:', src);
     // Note. This is not real isolation.
     const script = new vm.Script(src, {filename: fileName, displayErrors: true});
     const result = [];
