@@ -232,7 +232,7 @@ class TestEngine {
 
   newEntity(value): Entity {
     const entity = new (Entity.createEntityClass(this.schema, null))({value});
-    Entity.identify(entity, 'E' + this._idCounters[2]++);
+    Entity.identify(entity, 'E' + this._idCounters[2]++, null);
     return entity;
   }
 

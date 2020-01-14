@@ -54,7 +54,7 @@ class ResultInspector {
     await this._arc.idle;
     let handle;
     if (Flags.useNewStorageStack) {
-      const proxy = new StorageProxy('id', await this._store.activate(), this._store.type);
+      const proxy = new StorageProxy('id', await this._store.activate(), this._store.type, this._store.storageKey.toString());
       handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'pid'});
     } else {
       handle = this._store;

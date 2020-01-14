@@ -61,13 +61,13 @@ describe('Entity', () => {
     // Mutation APIs are tested below.
     const e = new entityClass({txt: 'abc', num: 56});
     assert.isFalse(Entity.isIdentified(e));
-    Entity.identify(e, 'id1');
+    Entity.identify(e, 'id1', null);
     assert.isTrue(Entity.isIdentified(e));
     assert.strictEqual(Entity.id(e), 'id1');
 
     const e2 = new entityClass({txt: 'abc'});
     assert.isFalse(Entity.isIdentified(e2));
-    Entity.createIdentity(e2, Id.fromString('id2'), IdGenerator.createWithSessionIdForTesting('s'));
+    Entity.createIdentity(e2, Id.fromString('id2'), IdGenerator.createWithSessionIdForTesting('s'), null);
     assert.isTrue(Entity.isIdentified(e2));
     assert.strictEqual(Entity.id(e2), '!s:id2:0');
 
@@ -98,7 +98,7 @@ describe('Entity', () => {
     const entityClass = Entity.createEntityClass(schema, null);
     const data = {id: 'schema-id', mutable: false, schema: 'url', type: 81, toLiteral: 23, makeImmutable: 'make'};
     const e = new entityClass(data);
-    Entity.identify(e, 'arcs-id');
+    Entity.identify(e, 'arcs-id', null);
 
     // Reading the schema fields should match the input data fields.
     assert.strictEqual(e.id, 'schema-id');
@@ -139,7 +139,7 @@ describe('Entity', () => {
       union: 'def',
       tuple: ['ghi', 12]
     });
-    Entity.identify(e, '!test:uid:u0');
+    Entity.identify(e, '!test:uid:u0', null);
     const fields = JSON.stringify(e);
     const internals = JSON.stringify(e[SYMBOL_INTERNALS]);
 

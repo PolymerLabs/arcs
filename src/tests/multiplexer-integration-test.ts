@@ -124,7 +124,7 @@ describe('Multiplexer', () => {
       renderRecipe: recipeOne,
       renderParticleSpec: showOneSpec
     });
-    const entity = Entity.identify(entityClass, '4');
+    const entity = Entity.identify(entityClass, '4', null);
     await postsStore.add(entity);
     await arc.idle;
 

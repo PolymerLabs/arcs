@@ -97,7 +97,7 @@ describe('common particles test', () => {
 
     if (Flags.useNewStorageStack) {
       const endpointProvider = await arc._stores[2].activate();
-      const storageProxy = new StorageProxy('aid', endpointProvider, arc._stores[2].type);
+      const storageProxy = new StorageProxy('aid', endpointProvider, arc._stores[2].type, null);
       const handle = await handleNGFor('crdt-key', storageProxy, arc.idGeneratorForTesting, null, true, true) as CollectionHandle<Referenceable>;
       assert.strictEqual((await handle.toList()).length, 5);
     } else {

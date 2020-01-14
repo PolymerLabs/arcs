@@ -96,11 +96,22 @@ export abstract class ClientReference extends Reference {
   /** Use the newClientReference factory method instead. */
   protected constructor(entity: Entity, context: ChannelConstructor) {
     // TODO(shans): start carrying storageKey information around on Entity objects
-    super({id: Entity.id(entity), entityStorageKey: null},
-          new ReferenceType(Entity.entityClass(entity).type), context);
+    super(
+      {
+        id: Entity.id(entity),
+        entityStorageKey: Flags.useNewStorageStack ? Entity.storageKey(entity) : null
+      },
+      new ReferenceType(Entity.entityClass(entity).type),
+      context
+    );
 
     this.entity = entity;
-    this.stored = this.storeReference(entity);
+    if (Flags.useNewStorageStack) {
+      this.stored = Promise.resolve();
+      this.mode = ReferenceMode.Stored;
+    } else {
+      this.stored = this.storeReference(entity);
+    }
   }
 
   private async storeReference(entity): Promise<void> {
@@ -117,6 +128,7 @@ export abstract class ClientReference extends Reference {
     if (this.mode === ReferenceMode.Unstored) {
       return null;
     }
+    await this.ensureStorageProxy();
     return super.dereference();
   }
 

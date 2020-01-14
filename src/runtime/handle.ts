@@ -138,7 +138,9 @@ export abstract class HandleOld {
   }
 
   createIdentityFor(entity: Entity) {
-    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
+    // StorageKeys aren't plumbed into the handles of old storage, so we don't have them
+    // available as part of entity identity.
+    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator, null);
   }
 
   get type() {
@@ -277,6 +279,16 @@ export class Collection extends HandleOld {
    */
   async add(entity: Storable) {
     return this.store(entity);
+  }
+
+  async addFromData(entityData) {
+    const entity = new this.entityClass(entityData);
+    await this.add(entity);
+    return entity;
+  }
+
+  async addMultipleFromData(entityData) {
+    return await Promise.all(entityData.map(e => this.addFromData(e)));
   }
 
   /**

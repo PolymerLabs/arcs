@@ -74,7 +74,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 
   createIdentityFor(entity: Entity) {
-    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
+    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator, this.storageProxy.storageKey);
   }
 
   toManifestString(): string {
@@ -118,9 +118,9 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     // TODO(shans): Be more principled about how to determine whether this is an
     // immediate mode handle or a standard handle.
     if (this.type instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type, (e) => this.createIdentityFor(e));
+      this.serializer = new PreEntityMutationSerializer(this.type, (e) => this.createIdentityFor(e), this.storageProxy.getChannelConstructor());
     } else if (this.type.getContainedType() instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => this.createIdentityFor(e));
+      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => this.createIdentityFor(e), this.storageProxy.getChannelConstructor());
     } else if (this.type.getContainedType() instanceof ReferenceType) {
       this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType, this.storageProxy.getChannelConstructor());
     } else {
@@ -173,9 +173,9 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
   entityClass: EntityClass;
   createIdentityFor: (entity: Entity) => void;
 
-  constructor(type: Type, createIdentityFor: (entity: Entity) => void) {
+  constructor(type: Type, createIdentityFor: (entity: Entity) => void, context: ChannelConstructor) {
     if (type instanceof EntityType) {
-      this.entityClass = Entity.createEntityClass(type.entitySchema, null);
+      this.entityClass = Entity.createEntityClass(type.entitySchema, context);
       this.createIdentityFor = createIdentityFor;
      } else {
        throw new Error(`can't construct handle for entity mutation if type is not an entity type`);
@@ -278,8 +278,18 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
     return this.storageProxy.applyOp(op);
   }
 
+  async addFromData(entityData: {}): Promise<T> {
+    const entity: T = new this.entityClass(entityData) as unknown as T;
+    const result = await this.add(entity);
+    return result ? entity : null;
+  }
+
   async addMultiple(entities: T[]): Promise<boolean> {
     return Promise.all(entities.map(e => this.add(e))).then(array => array.every(Boolean));
+  }
+
+  async addMultipleFromData(entityData: {}[]): Promise<T[]> {
+    return Promise.all(entityData.map(e => this.addFromData(e)));
   }
 
   async remove(entity: T): Promise<boolean> {

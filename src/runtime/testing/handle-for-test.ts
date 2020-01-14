@@ -111,7 +111,7 @@ async function createStorageProxyForTest<T extends CRDTTypeRecord>(
   if (!(activeStore instanceof ActiveStore)) {
     throw new Error('Expected an ActiveStore.');
   }
-  return new StorageProxy(arcOrManifest.generateID('test-proxy').toString(), activeStore, store.type);
+  return new StorageProxy(arcOrManifest.generateID('test-proxy').toString(), activeStore, store.type, store.storageKey.toString());
 }
 
 /**

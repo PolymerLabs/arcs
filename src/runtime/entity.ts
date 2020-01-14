@@ -107,7 +107,7 @@ class EntityInternals {
     this.userIDComponent = uid > 0 ? components.slice(uid+1).join(':') : '';
   }
 
-  createIdentity(parentId: Id, idGenerator: IdGenerator) {
+  createIdentity(parentId: Id, idGenerator: IdGenerator, storageKey: string) {
     assert(!this.isIdentified(), 'createIdentity() called on already identified entity');
     let id: string;
     if (this.userIDComponent) {
@@ -116,6 +116,7 @@ class EntityInternals {
     } else {
       id = idGenerator.newChildId(parentId).toString();
     }
+    this.storageKey = storageKey;
     this.id = id;
   }
 
@@ -301,6 +302,10 @@ export abstract class Entity implements Storable {
     return getInternals(entity).getId();
   }
 
+  static storageKey(entity: Entity): string {
+    return getInternals(entity).getStorageKey();
+  }
+
   static entityClass(entity: Entity): EntityClass {
     return getInternals(entity).getEntityClass();
   }
@@ -314,8 +319,8 @@ export abstract class Entity implements Storable {
     return entity;
   }
 
-  static createIdentity(entity: Entity, parentId: Id, idGenerator: IdGenerator) {
-    getInternals(entity).createIdentity(parentId, idGenerator);
+  static createIdentity(entity: Entity, parentId: Id, idGenerator: IdGenerator, storageKey: string) {
+    getInternals(entity).createIdentity(parentId, idGenerator, storageKey);
   }
 
   static isMutable(entity: Entity): boolean {
