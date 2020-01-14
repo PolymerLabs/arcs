@@ -1,5 +1,12 @@
 #include <cstring>
 
+// The following are required for handling exceptions in __cxa_throw.
+#include <future>
+#include <regex>
+#include <ios>
+#include <any>
+#include <variant>
+
 #include "src/wasm/cpp/arcs.h"
 
 namespace arcs {
@@ -113,12 +120,50 @@ void __cxa_free_exception(void* ptr) {
   free(ptr);
 }
 
-// No idea how to get at the exception contents (including any error message included).
-// Even emscripten doesn't seem to implement this in a useful way.
 EMSCRIPTEN_KEEPALIVE
 void __cxa_throw(void* thrown_exception, std::type_info* info, void (*dtor)(void*)) {
-  std::string msg = std::string("Exception: ") + info->name();
+  // You can't recover the typed exception directly from thrown_exception and info, and you can't
+  // detect inheritance from std::type_info objects. So, ugly workaround it is: check most of the
+  // standard C++ exception types and get the message where possible. This means custom exception
+  // classes won't work well in wasm particles and developers should use one of the standard
+  // exception classes instead.
+  #define CHECK_ERR(error)                                       \
+    if (*info == typeid(error)) {                                \
+      msg += reinterpret_cast<error*>(thrown_exception)->what(); \
+      break;                                                     \
+    }
+
+  std::string msg = std::string(info->name()) + ": ";
+  do {
+    // See https://en.cppreference.com/w/cpp/error/exception
+    CHECK_ERR(std::logic_error)
+    CHECK_ERR(std::invalid_argument)
+    CHECK_ERR(std::domain_error)
+    CHECK_ERR(std::length_error)
+    CHECK_ERR(std::out_of_range)
+    CHECK_ERR(std::future_error)
+    CHECK_ERR(std::bad_optional_access)
+    CHECK_ERR(std::runtime_error)
+    CHECK_ERR(std::range_error)
+    CHECK_ERR(std::overflow_error)
+    CHECK_ERR(std::underflow_error)
+    CHECK_ERR(std::regex_error)
+    CHECK_ERR(std::system_error)
+    CHECK_ERR(std::ios_base::failure)
+    CHECK_ERR(std::bad_typeid)
+    CHECK_ERR(std::bad_cast)
+    CHECK_ERR(std::bad_any_cast)
+    CHECK_ERR(std::bad_weak_ptr)
+    CHECK_ERR(std::bad_function_call)
+    CHECK_ERR(std::bad_alloc)
+    CHECK_ERR(std::bad_array_new_length)
+    CHECK_ERR(std::bad_exception)
+    CHECK_ERR(std::bad_variant_access)
+    msg += "(unknown exception type)";
+  } while (0);
   systemError(msg.c_str());
+
+  #undef CHECK_ERR
 }
 
 // Not sure what to do with this...
