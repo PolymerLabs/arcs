@@ -9,6 +9,8 @@
  */
 
 import {Dictionary, Producer, Predicate} from '../runtime/hot.js';
+import {now as nowMillis} from '../platform/date-web.js';
+import {pid} from '../platform/process-web.js';
 // tslint:disable: no-any
 
 export type TraceInfo = {
@@ -59,23 +61,11 @@ export interface TracingInterface {
 }
 
 const events: TraceEvent[] = [];
-let pid: number;
-let now: () => number;
-
-if (typeof document === 'object') {
-  pid = 42;
-  now = () => {
-    return performance.now() * 1000;
-  };
-} else {
-  pid = process.pid;
-  now = () => {
-    const t = process.hrtime();
-    return t[0] * 1000000 + t[1] / 1000;
-  };
-}
-
 let flowId = 0;
+
+function nowMicros() {
+  return nowMillis() * 1000;
+}
 
 function parseInfo(info?: any) {
   if (!info) {
@@ -172,7 +162,7 @@ function init(): void {
   function startSyncTrace(info: TraceInfo) {
     info = parseInfo(info);
     let args = info.args;
-    const begin = now();
+    const begin = nowMicros();
     return {
       addArgs(extraArgs: Dictionary<any>) {
         args = {...(args || {}), ...extraArgs};
@@ -183,7 +173,7 @@ function init(): void {
           args = {...(args || {}), ...endInfo.args};
         }
         endInfo = {...info, ...endInfo};
-        this.endTs = now();
+        this.endTs = nowMicros();
         pushEvent({
           ph: 'X',
           ts: begin,
@@ -254,7 +244,7 @@ function init(): void {
     let started = false;
     return {
       start(startInfo?: TraceInfo) {
-        const ts = (startInfo && startInfo.ts) || now();
+        const ts = (startInfo && startInfo.ts) || nowMicros();
         started = true;
         pushEvent({
           ph: 's',
@@ -270,7 +260,7 @@ function init(): void {
       },
       end(endInfo: TraceInfo) {
         if (!started) return this;
-        const ts = (endInfo && endInfo.ts) || now();
+        const ts = (endInfo && endInfo.ts) || nowMicros();
         endInfo = parseInfo(endInfo);
         pushEvent({
           ph: 'f',
@@ -287,7 +277,7 @@ function init(): void {
       },
       step(stepInfo?: TraceInfo) {
         if (!started) return this;
-        const ts = (stepInfo && stepInfo.ts) || now();
+        const ts = (stepInfo && stepInfo.ts) || nowMicros();
         stepInfo = parseInfo(stepInfo);
         pushEvent({
           ph: 't',
@@ -313,7 +303,7 @@ function init(): void {
     a.href = 'data:text/plain;base64,' + btoa(JSON.stringify(module_.exports.save()));
     a.click();
   };
-  module_.exports.now = now;
+  module_.exports.now = nowMicros;
   module_.exports.stream = (callback: (e: TraceEvent) => any, predicate: (e: TraceEvent) => boolean) => {
     // Once we start streaming we no longer keep events in memory.
     events.length = 0;
