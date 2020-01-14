@@ -31,7 +31,9 @@ export class SuggestionComposer {
     this.arc = arc;
   }
 
-  get modalityHandler(): PlanningModalityHandler { return this._slotComposer.modalityHandler as PlanningModalityHandler; }
+  get modalityHandler(): PlanningModalityHandler {
+    return this._slotComposer.modalityHandler as PlanningModalityHandler;
+  }
 
   clear(): void {
     if (this._container) {
@@ -89,20 +91,20 @@ export class SuggestionComposer {
       return;
     }
 
-    const suggestConsumer = new this.modalityHandler.suggestionConsumerClass(this.arc, this._slotComposer.containerKind, suggestion, (eventlet) => {
-      const suggestion = this._suggestions.find(s => s.hash === eventlet.data.key);
-      suggestConsumer.dispose();
-      if (suggestion) {
-        const index = this._suggestConsumers.findIndex(consumer => consumer === suggestConsumer);
-        if (index < 0) {
-          throw new Error('cannot find suggest slot context');
-        }
-        this._suggestConsumers.splice(index, 1);
+    // const suggestConsumer = new this.modalityHandler.suggestionConsumerClass(this.arc, this._slotComposer.containerKind, suggestion, (eventlet) => {
+    //   const suggestion = this._suggestions.find(s => s.hash === eventlet.data.key);
+    //   suggestConsumer.dispose();
+    //   if (suggestion) {
+    //     const index = this._suggestConsumers.findIndex(consumer => consumer === suggestConsumer);
+    //     if (index < 0) {
+    //       throw new Error('cannot find suggest slot context');
+    //     }
+    //     this._suggestConsumers.splice(index, 1);
 
-        suggestion.instantiate(this.arc).catch(e => console.error(e));
-      }
-    });
-    context.addSlotConsumer(suggestConsumer);
-    this._suggestConsumers.push(suggestConsumer);
+    //     suggestion.instantiate(this.arc).catch(e => console.error(e));
+    //   }
+    // });
+    // context.addSlotConsumer(suggestConsumer);
+    // this._suggestConsumers.push(suggestConsumer);
   }
 }

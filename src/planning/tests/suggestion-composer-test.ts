@@ -9,27 +9,22 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-//import {Arc} from '../../runtime/arc.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {SlotComposerOptions} from '../../runtime/slot-composer.js';
-import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {Loader} from '../../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
-import {PlanningModalityHandler} from '../planning-modality-handler.js';
 import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
-import {SuggestionComposer} from '../suggestion-composer.js';
-import {ConCap} from '../../testing/test-util.js';
+//import {SuggestionComposer} from '../suggestion-composer.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 
-class TestSuggestionComposer extends SuggestionComposer {
-  get suggestConsumers() {
-    return this._suggestConsumers;
-  }
-}
+// class TestSuggestionComposer extends SuggestionComposer {
+//   get suggestConsumers() {
+//     return this._suggestConsumers;
+//   }
+// }
 
 describe('suggestion composer', () => {
   it('singleton suggestion slots', async () => {
@@ -46,9 +41,9 @@ describe('suggestion composer', () => {
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);
 
-    const suggestionComposer = ConCap.silence(() => new TestSuggestionComposer(arc, slotComposer));
-    await suggestionComposer.setSuggestions(suggestions);
-    assert.isEmpty(suggestionComposer.suggestConsumers);
+    //const suggestionComposer = ConCap.silence(() => new TestSuggestionComposer(arc, slotComposer));
+    //await suggestionComposer.setSuggestions(suggestions);
+    //assert.isEmpty(suggestionComposer.suggestConsumers);
 
     observer.newExpectations()
       .expectRenderSlot('MakeCake', 'item')
@@ -61,8 +56,8 @@ describe('suggestion composer', () => {
     const suggestions1 = await StrategyTestHelper.planForArc(arc);
 
     assert.lengthOf(suggestions1, 1);
-    await suggestionComposer.setSuggestions(suggestions1);
-    assert.lengthOf(suggestionComposer.suggestConsumers, 1);
+    //await suggestionComposer.setSuggestions(suggestions1);
+    //assert.lengthOf(suggestionComposer.suggestConsumers, 1);
 
     observer.newExpectations()
       .expectRenderSlot('LightCandles', 'special')
@@ -74,8 +69,8 @@ describe('suggestion composer', () => {
 
     const suggestions2 = await StrategyTestHelper.planForArc(arc);
     assert.isEmpty(suggestions2);
-    await suggestionComposer.setSuggestions(suggestions);
-    assert.isEmpty(suggestionComposer.suggestConsumers);
+    //await suggestionComposer.setSuggestions(suggestions2);
+    //assert.isEmpty(suggestionComposer.suggestConsumers);
 
     await observer.expectationsCompleted();
   });
@@ -93,11 +88,11 @@ describe('suggestion composer', () => {
     slotComposer.observeSlots(observer);
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
-
-    const suggestionComposer = ConCap.silence(() => new TestSuggestionComposer(arc, slotComposer));
-    await suggestionComposer.setSuggestions(suggestions);
     assert.lengthOf(suggestions, 1);
-    assert.isEmpty(suggestionComposer.suggestConsumers);
+
+    //const suggestionComposer = ConCap.silence(() => new TestSuggestionComposer(arc, slotComposer));
+    //await suggestionComposer.setSuggestions(suggestions);
+    //assert.isEmpty(suggestionComposer.suggestConsumers);
 
     observer.newExpectations()
       .expectRenderSlot('List', 'root')
@@ -120,8 +115,8 @@ describe('suggestion composer', () => {
     }
     assert.lengthOf(suggestions1.filter(s => s.descriptionText === 'Light candles on Tiramisu cake.'), 1);
 
-    await suggestionComposer.setSuggestions(suggestions1);
-    assert.lengthOf(suggestionComposer.suggestConsumers, 1);
+    //await suggestionComposer.setSuggestions(suggestions1);
+    //assert.lengthOf(suggestionComposer.suggestConsumers, 1);
 
     // Instantiate inner arc's suggestion.
     const innerSuggestion = suggestions1.find(s => s.plan.particles.some(p => p.name === 'LightCandles'));
@@ -137,8 +132,8 @@ describe('suggestion composer', () => {
     const suggestions2 = await StrategyTestHelper.planForArc(arc);
     assert.isEmpty(suggestions2);
 
-    await suggestionComposer.setSuggestions(suggestions2);
-    assert.isEmpty(suggestionComposer.suggestConsumers);
+    //await suggestionComposer.setSuggestions(suggestions2);
+    //assert.isEmpty(suggestionComposer.suggestConsumers);
 
     await observer.expectationsCompleted();
   });
