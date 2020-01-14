@@ -31,8 +31,9 @@ interface WorkerFactory {
   create?: () => PoolEntry;
 }
 
-interface PoolOptions {
-  nosuspend?: boolean;
+class PoolOptions {
+  // Don't suspend workers but destroy them directly (no resurrecting workers)
+  nosuspend = false;
 }
 
 /** Arcs Worker Pool Management */
@@ -43,8 +44,8 @@ export const workerPool = new (class {
   readonly inUse = new Map<MessagePort, PoolEntry>();
   // Whether the worker pool management is ON.
   active = false;
-  // Additional options applied to the worker pool.
-  options: PoolOptions = {};
+  // The additional boolean options are applied to the worker pool.
+  options = new PoolOptions();
   // Worker APIs
   factory: WorkerFactory = {};
 
@@ -55,13 +56,14 @@ export const workerPool = new (class {
         this.active = true;
 
         // Resolves supplied boolean options.
-        const options =
-            (urlParams.get(USE_WORKER_POOL_PARAMETER) || '')
-                .split(',')
-                .filter(Boolean);
-        for (const option of options) {
-          this.options[option] = true;
-        }
+        (urlParams.get(USE_WORKER_POOL_PARAMETER) || '')
+            .split(',')
+            .filter(Boolean)
+            .forEach(e => {
+              if (this.options[e]) {
+                this.options[e] = true;
+              }
+            });
       }
     }
   }
