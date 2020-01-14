@@ -11,8 +11,6 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.toUtf8String
-
 class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
     ::SpecialSchemaFieldsTest_Errors,
     SpecialSchemaFieldsTest_Errors_Spec()

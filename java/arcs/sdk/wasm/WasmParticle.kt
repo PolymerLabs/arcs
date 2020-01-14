@@ -13,7 +13,6 @@ package arcs.sdk.wasm
 
 import arcs.sdk.Handle
 import arcs.sdk.Particle
-import arcs.sdk.StringEncoder
 
 /**
  * Base class for all wasm particles.

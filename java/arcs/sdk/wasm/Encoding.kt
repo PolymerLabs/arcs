@@ -9,11 +9,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk
+package arcs.sdk.wasm
 
-// These classes are wasm-only, but need JVM implementations of toUtf8String/toUtf8ByteArray in
-// order for their tests to run on the JVM.
-// TODO: move as much code as possible into the wasm package.
+import arcs.sdk.Utils
 
 /** Converts a [ByteArray] into a [String]. */
 fun ByteArray.toUtf8String(): String = Utils.toUtf8String(this)
