@@ -93,6 +93,7 @@ Consider using the [IDE file chooser](https://intellij-support.jetbrains.com/hc/
 
 - Try Invalidating Caches: File > Invalidate Caches > Invalidate and Restart
 - Try [this workaround](https://github.com/bazelbuild/intellij/issues/490#issuecomment-454030118) (1 should be sufficient).
+- Ensure that your Kotlin plugin is at version 1.3.61 or higher: Preferences > Plugins > Installed > Kotlin 
 
 ## References
 
