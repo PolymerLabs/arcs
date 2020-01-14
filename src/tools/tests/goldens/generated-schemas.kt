@@ -59,16 +59,26 @@ class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
         return create().apply {
             internalId = decoder.decodeText()
             decoder.validate("|")
-            for (_i in 0 until 1) {
-                if (decoder.done()) break
+            var i = 0
+            while (i < 1 && !decoder.done()) {
                 val name = decoder.upTo(':').utf8ToString()
                 when (name) {
                     "val" -> {
                         decoder.validate("T")
                         this.val_ = decoder.decodeText()
                     }
+                    else -> {
+                        // Ignore unknown fields until type slicing is fully implemented.
+                        when (decoder.chomp(1).utf8ToString()) {
+                            "T", "U" -> decoder.decodeText()
+                            "N" -> decoder.decodeNum()
+                            "B" -> decoder.decodeBool()
+                        }
+                        i--
+                    }
                 }
                 decoder.validate("|")
+                i++
             }
         }
     }
@@ -170,8 +180,8 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
         return create().apply {
             internalId = decoder.decodeText()
             decoder.validate("|")
-            for (_i in 0 until 5) {
-                if (decoder.done()) break
+            var i = 0
+            while (i < 5 && !decoder.done()) {
                 val name = decoder.upTo(':').utf8ToString()
                 when (name) {
                     "num" -> {
@@ -190,8 +200,18 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
                         decoder.validate("B")
                         this.flg = decoder.decodeBool()
                     }
+                    else -> {
+                        // Ignore unknown fields until type slicing is fully implemented.
+                        when (decoder.chomp(1).utf8ToString()) {
+                            "T", "U" -> decoder.decodeText()
+                            "N" -> decoder.decodeNum()
+                            "B" -> decoder.decodeBool()
+                        }
+                        i--
+                    }
                 }
                 decoder.validate("|")
+                i++
             }
         }
     }

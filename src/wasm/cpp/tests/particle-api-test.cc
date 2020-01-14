@@ -120,3 +120,48 @@ public:
 };
 
 DEFINE_PARTICLE(UnicodeTest)
+
+
+class EntitySlicingTest : public AbstractEntitySlicingTest {
+public:
+  void onHandleSync(const std::string& name, bool all_synced) override {
+    if (!all_synced) return;
+
+    store1("s1:", s1_.get());
+    store2("s2:", s2_.get());
+    store3("s3:", s3_.get());
+
+    for (const auto& e : c1_) {
+      store1("c1:", e);
+    }
+    for (const auto& e : c2_) {
+      store2("c2:", e);
+    }
+    for (const auto& e : c3_) {
+      store3("c3:", e);
+    }
+  }
+
+  template<typename T>
+  void store1(const std::string& s, const T& e) {
+    arcs::EntitySlicingTest_Res out;
+    out.set_val(s + arcs::num_to_str(e.num()));
+    res_.store(out);
+  }
+
+  template<typename T>
+  void store2(const std::string& s, const T& e) {
+    arcs::EntitySlicingTest_Res out;
+    out.set_val(s + arcs::num_to_str(e.num()) + "," + e.txt());
+    res_.store(out);
+  }
+
+  template<typename T>
+  void store3(const std::string& s, const T& e) {
+    arcs::EntitySlicingTest_Res out;
+    out.set_val(s + arcs::num_to_str(e.num()) + "," + e.txt() + "," + (e.flg() ? "true" : "false"));
+    res_.store(out);
+  }
+};
+
+DEFINE_PARTICLE(EntitySlicingTest)

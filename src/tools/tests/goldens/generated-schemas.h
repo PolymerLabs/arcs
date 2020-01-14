@@ -110,6 +110,20 @@ inline void internal::Accessor::decode_entity(GoldInternal1* entity, const char*
       decoder.validate("T");
       decoder.decode(entity->val_);
       entity->val_valid_ = true;
+    } else {
+      // Ignore unknown fields until type slicing is fully implemented.
+      std::string typeChar = decoder.chomp(1);
+      if (typeChar == "T" || typeChar == "U") {
+        std::string s;
+        decoder.decode(s);
+      } else if (typeChar == "N") {
+        double d;
+        decoder.decode(d);
+      } else if (typeChar == "B") {
+        bool b;
+        decoder.decode(b);
+      }
+      i--;
     }
     decoder.validate("|");
   }
@@ -313,6 +327,20 @@ inline void internal::Accessor::decode_entity(Gold_Data* entity, const char* str
       decoder.validate("R");
       decoder.decode(entity->ref_);
       entity->ref_valid_ = true;
+    } else {
+      // Ignore unknown fields until type slicing is fully implemented.
+      std::string typeChar = decoder.chomp(1);
+      if (typeChar == "T" || typeChar == "U") {
+        std::string s;
+        decoder.decode(s);
+      } else if (typeChar == "N") {
+        double d;
+        decoder.decode(d);
+      } else if (typeChar == "B") {
+        bool b;
+        decoder.decode(b);
+      }
+      i--;
     }
     decoder.validate("|");
   }

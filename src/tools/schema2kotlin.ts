@@ -148,7 +148,7 @@ class KotlinGenerator implements ClassGenerator {
 
 class ${name}() : Entity() {
 
-    ${ withFields(`${this.fieldVals.join('\n    ')}`) }
+    ${withFields(`${this.fieldVals.join('\n    ')}`)}
 
     ${withFields(`constructor(
         ${this.fields.join(',\n        ')}
@@ -191,13 +191,23 @@ class ${name}_Spec() : EntitySpec<${name}> {
         return create().apply {
             internalId = decoder.decodeText()
             decoder.validate("|")
-            ${withFields(`for (_i in 0 until ${fieldCount}) {
-                if (decoder.done()) break
+            ${withFields(`var i = 0
+            while (i < ${fieldCount} && !decoder.done()) {
                 val name = decoder.upTo(':').utf8ToString()
                 when (name) {
                     ${this.decode.join('\n                    ')}
+                    else -> {
+                        // Ignore unknown fields until type slicing is fully implemented.
+                        when (decoder.chomp(1).utf8ToString()) {
+                            "T", "U" -> decoder.decodeText()
+                            "N" -> decoder.decodeNum()
+                            "B" -> decoder.decodeBool()
+                        }
+                        i--
+                    }
                 }
                 decoder.validate("|")
+                i++
             }`)}
         }
     }
