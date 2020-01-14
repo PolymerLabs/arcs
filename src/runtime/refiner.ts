@@ -115,7 +115,7 @@ abstract class RefinementExpression {
 }
 
 export class BinaryExpression extends RefinementExpression {
-  evalType: Primitive.NUMBER | Primitive.BOOLEAN;
+  evalType: Primitive;
   leftExpr: RefinementExpression;
   rightExpr: RefinementExpression;
   operator: RefinementOperator;
@@ -220,7 +220,7 @@ export class BinaryExpression extends RefinementExpression {
 }
 
 export class UnaryExpression extends RefinementExpression {
-  evalType: Primitive.NUMBER | Primitive.BOOLEAN;
+  evalType: Primitive;
   expr: RefinementExpression;
   operator: RefinementOperator;
 
@@ -276,7 +276,7 @@ export class UnaryExpression extends RefinementExpression {
 }
 
 class FieldNamePrimitive extends RefinementExpression {
-  evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT;
+  evalType: Primitive;
   value: string;
 
   constructor(value: string, evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT) {
@@ -305,13 +305,12 @@ class FieldNamePrimitive extends RefinementExpression {
 }
 
 class NumberPrimitive extends RefinementExpression {
-  evalType: Primitive.NUMBER;
+  evalType = Primitive.NUMBER;
   value: number;
 
   constructor(value: number) {
     super();
     this.value = value;
-    this.evalType = Primitive.NUMBER;
   }
 
   static fromAst(expression: NumberNode): RefinementExpression {
@@ -328,13 +327,12 @@ class NumberPrimitive extends RefinementExpression {
 }
 
 class BooleanPrimitive extends RefinementExpression {
-  evalType: Primitive.BOOLEAN;
+  evalType = Primitive.BOOLEAN;
   value: boolean;
 
   constructor(value: boolean) {
     super();
     this.value = value;
-    this.evalType = Primitive.BOOLEAN;
   }
 
   static fromAst(expression: BooleanNode): RefinementExpression {
@@ -689,7 +687,7 @@ interface Boundary {
 interface OperatorInfo {
   nArgs: number;
   argType: string;
-  evalType: Primitive.BOOLEAN | Primitive.NUMBER;
+  evalType: Primitive;
   evalFn: (exprs: ExpressionPrimitives[]) => ExpressionPrimitives;
 }
 
@@ -731,7 +729,7 @@ class RefinementOperator {
     return this.opInfo.evalFn(exprs);
   }
 
-  evalType(): Primitive.NUMBER | Primitive.BOOLEAN {
+  evalType(): Primitive {
     return this.opInfo.evalType;
   }
 
