@@ -15,11 +15,12 @@ import arcs.sdk.Entity
 import arcs.sdk.EntitySpec
 import arcs.sdk.NullTermByteArray
 
-/** Wasm-specific extensions to the base [Entity] class. */
-abstract class WasmEntity : Entity() {
-    abstract fun encodeEntity(): NullTermByteArray
+/** Wasm-specific extensions to the base [Entity] interface. */
+interface WasmEntity : Entity {
+    fun encodeEntity(): NullTermByteArray
 }
 
+/** Wasm-specific extensions to the base [EntitySpec] interface. */
 interface WasmEntitySpec<T : Entity> : EntitySpec<T> {
     /** Decodes the given byte array into an instance of [T]. */
     fun decode(encoded: ByteArray): T?

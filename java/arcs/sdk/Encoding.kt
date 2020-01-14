@@ -24,6 +24,7 @@ fun String.toUtf8ByteArray(): ByteArray = Utils.toUtf8ByteArray(this)
 /** Wraps a ByteArray whose final byte is set to 0. */
 inline class NullTermByteArray(val bytes: ByteArray)
 
+/** Decodes bytes passed from JS into Kotlin types. */
 class StringDecoder(private var bytes: ByteArray) {
 
     fun done(): Boolean = bytes.isEmpty() || bytes[0] == 0.toByte()
@@ -80,6 +81,7 @@ class StringDecoder(private var bytes: ByteArray) {
     }
 }
 
+/** Encodes data to be passed over the WASM bridge to JS. */
 class StringEncoder(
     private val buffers: MutableList<ByteArray> = mutableListOf(),
     private var size: Int = 0
@@ -114,7 +116,7 @@ class StringEncoder(
                 val se = StringEncoder().encodeList(value as List<Any>)
                 addBytes("A", se.toByteArray())
             }
-            else -> throw IllegalArgumentException("Unknown expression.")
+            else -> throw IllegalArgumentException("Unknown value.")
         }
     }
 
@@ -145,12 +147,16 @@ class StringEncoder(
     }
 
     fun toByteArray(): ByteArray {
+        // TODO: accept an optional ByteArray argument to allow callers to reuse
+        // existing instances.
         val res = ByteArray(size)
         populate(res)
         return res
     }
 
     fun toNullTermByteArray(): NullTermByteArray {
+        // TODO: accept an optional NullTermByteArray argument to allow callers
+        // to reuse existing instances.
         val res = ByteArray(size + 1)
         var pos = populate(res)
         res[pos] = 0.toByte()

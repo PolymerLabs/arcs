@@ -14,6 +14,7 @@ package arcs.sdk.wasm
 import arcs.sdk.ReadWriteCollection
 import arcs.sdk.StringDecoder
 
+/** [ReadWriteCollection] implementation for WASM. */
 class WasmCollection<T : WasmEntity>(
     particle: WasmParticle,
     name: String,

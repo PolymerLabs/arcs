@@ -168,7 +168,9 @@ class KotlinGenerator implements ClassGenerator {
 
     return `\
 
-class ${name}() : WasmEntity() {
+class ${name}() : WasmEntity {
+
+    override var internalId = ""
 
     ${withFields(`${this.fieldVals.join('\n    ')}`)}
 

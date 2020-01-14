@@ -13,6 +13,7 @@ package arcs.sdk.wasm
 
 import arcs.sdk.Handle
 
+/** Base [Handle] implementation for WASM. */
 abstract class WasmHandle<T : WasmEntity>(
     override val name: String,
     val particle: WasmParticle

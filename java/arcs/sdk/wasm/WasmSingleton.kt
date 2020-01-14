@@ -13,6 +13,7 @@ package arcs.sdk.wasm
 
 import arcs.sdk.ReadWriteSingleton
 
+/** [ReadWriteSingleton] implementation for WASM. */
 open class WasmSingleton<T : WasmEntity>(
     particle: WasmParticle,
     name: String,

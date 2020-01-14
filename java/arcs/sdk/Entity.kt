@@ -11,11 +11,11 @@
 
 package arcs.sdk
 
-abstract class Entity {
-    var internalId = ""
-    abstract fun schemaHash(): String
-    abstract fun isSet(): Boolean
-    abstract fun getFieldsNotSet(): List<String>
+interface Entity {
+    var internalId: String
+    fun schemaHash(): String
+    fun isSet(): Boolean
+    fun getFieldsNotSet(): List<String>
 }
 
 /**
