@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {SizingPolicy, policies} from './worker-pool-sizing-policies.js';
+import {policies} from './worker-pool-sizing-policies.js';
 
 // Enables the worker pool management via this url parameter.
 // The value of parameter represents boolean options applied to a worker pool.
@@ -57,9 +57,9 @@ export const workerPool = new (class {
   active = false;
   // Worker APIs
   factory: WorkerFactory = {};
-  // A pool sizing policy can be designated via {@link SIZING_POLICY_PARAMETER}
-  // only when the worker pool management is active, otherwise undefined.
-  policy?: SizingPolicy;
+  // A pool sizing policy can be reassigned via {@link SIZING_POLICY_PARAMETER}
+  // only when the worker pool management is active.
+  policy = policies.default;
   // Tracks policy state
   policyState = PolicyState.NOT_DESIGNATED;
 
@@ -79,12 +79,12 @@ export const workerPool = new (class {
               }
             });
 
-        // Designates a sizing policy to manage pool sizing.
+        // Designates the requested sizing policy if any to manage pool sizing.
         const p = urlParams.get(SIZING_POLICY_PARAMETER);
         if (p && policies[p]) {
           this.policy = policies[p];
-          this.policyState = PolicyState.STANDBY;
         }
+        this.policyState = PolicyState.STANDBY;
       }
     }
   }

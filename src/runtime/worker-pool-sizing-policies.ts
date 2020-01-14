@@ -18,7 +18,7 @@
 const APPROVAL_SIZE_CAP = 16;
 
  /** Pool size state */
-interface SizeState {
+export interface SizeState {
   demand?: number;
   free?: number;
   inUse?: number;
@@ -175,4 +175,8 @@ export const policies = {
   aggressive,
   conservative,
   predictive,
+
+  // The default policy is taken when either no policy is specified or an
+  // unknown policy is specified via a corresponding url parameter.
+  default: predictive,
 };
