@@ -109,7 +109,8 @@ def arcs_kt_particles(
         deps = [],
         visibility = None,
         wasm = True,
-        jvm = True):
+        # TODO: Re-enable JVM particles.
+        jvm = False):
     """Performs final compilation of wasm and bundling if necessary.
 
     Args:

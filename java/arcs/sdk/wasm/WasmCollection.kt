@@ -19,7 +19,7 @@ class WasmCollection<T : WasmEntity>(
     particle: WasmParticle,
     name: String,
     private val entitySpec: WasmEntitySpec<T>
-) : WasmHandle<T>(name, particle), Iterable<T>, ReadWriteCollection<T> {
+) : WasmHandle<T>(name, particle), ReadWriteCollection<T> {
 
     private val entities: MutableMap<String, T> = mutableMapOf()
 

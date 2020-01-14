@@ -35,14 +35,12 @@ interface WritableSingleton<T : Entity> : Handle {
 interface ReadWriteSingleton<T : Entity> : ReadableSingleton<T>, WritableSingleton<T>
 
 /** A collection handle with read access. */
-interface ReadableCollection<T : Entity> : Handle {
+interface ReadableCollection<T : Entity> : Handle, Iterable<T> {
     /** The number of elements in the collection. */
     val size: Int
 
     /** Returns true if the collection is empty. */
     fun isEmpty(): Boolean
-
-    operator fun iterator(): Iterator<T>
 }
 
 /** A collection handle with write access. */
