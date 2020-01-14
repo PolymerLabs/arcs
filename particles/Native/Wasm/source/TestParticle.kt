@@ -10,8 +10,8 @@
 package arcs.test
 
 import arcs.sdk.Handle
-import arcs.sdk.abort
-import arcs.sdk.log
+import arcs.sdk.Utils.abort
+import arcs.sdk.Utils.log
 import kotlin.Exception
 
 /**
