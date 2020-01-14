@@ -200,17 +200,17 @@ export class BinaryExpression extends RefinementExpression {
       }
       case Op.EQ: {
         if (this.leftExpr instanceof BooleanPrimitive) {
-            return this.leftExpr.value ? this.rightExpr : new UnaryExpression(this.rightExpr, new RefinementOperator('not'));
+            return this.leftExpr.value ? this.rightExpr : new UnaryExpression(this.rightExpr, new RefinementOperator(Op.NOT));
         } else if (this.rightExpr instanceof BooleanPrimitive) {
-            return this.rightExpr.value ? this.leftExpr : new UnaryExpression(this.leftExpr, new RefinementOperator('not'));
+            return this.rightExpr.value ? this.leftExpr : new UnaryExpression(this.leftExpr, new RefinementOperator(Op.NOT));
         }
         return this;
       }
       case Op.NEQ: {
           if (this.leftExpr instanceof BooleanPrimitive) {
-              return this.leftExpr.value ? new UnaryExpression(this.rightExpr, new RefinementOperator('not')) : this.rightExpr;
+              return this.leftExpr.value ? new UnaryExpression(this.rightExpr, new RefinementOperator(Op.NOT)) : this.rightExpr;
           } else if (this.rightExpr instanceof BooleanPrimitive) {
-              return this.rightExpr.value ? new UnaryExpression(this.leftExpr, new RefinementOperator('not')) : this.leftExpr;
+              return this.rightExpr.value ? new UnaryExpression(this.leftExpr, new RefinementOperator(Op.NOT)) : this.leftExpr;
           }
           return this;
       }
@@ -235,7 +235,7 @@ export class UnaryExpression extends RefinementExpression {
   static fromAst(expression: UnaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
     return new UnaryExpression(
             RefinementExpression.fromAst(expression.expr, typeData),
-            new RefinementOperator((expression.operator === '-') ? 'neg' : expression.operator));
+            new RefinementOperator((expression.operator === Op.SUB) ? Op.NEG : expression.operator));
   }
 
   toString(): string {
@@ -352,20 +352,20 @@ class BooleanPrimitive extends RefinementExpression {
 
 export class Range {
   private segments: Segment[] = [];
-  private type: string;
+  private type: Primitive;
 
-  constructor(segs: Segment[] = [], type: string = Primitive.NUMBER) {
+  constructor(segs: Segment[] = [], type: Primitive = Primitive.NUMBER) {
     for (const seg of segs) {
       this.unionWithSeg(seg);
     }
     this.type = type;
   }
 
-  static infiniteRange(type: string = Primitive.NUMBER): Range {
+  static infiniteRange(type: Primitive = Primitive.NUMBER): Range {
     return new Range([Segment.openOpen(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)], type);
   }
 
-  static universal(type: string) {
+  static universal(type: Primitive) {
     if (type === Primitive.BOOLEAN) {
       return new Range([Segment.closedClosed(0, 0), Segment.closedClosed(1, 1)], type);
     }
@@ -500,7 +500,7 @@ export class Range {
   }
 
   // This function assumes that the expression is univariate
-  // and has been normalised (see above for definition).
+  // and has been normalised (see Refinement.normalise for definition).
   // TODO(ragdev): Currently only Number and Boolean types are supported. Add String support.
   static fromExpression(expr: RefinementExpression): Range {
     if (expr instanceof BinaryExpression) {
@@ -646,13 +646,13 @@ export class Segment {
     let right: Boundary;
     if (a.from.val === b.from.val) {
       left = {...a.from};
-      left.isOpen = a.from.isOpen === b.from.isOpen ? a.from.isOpen : false;
+      left.isOpen = a.from.isOpen && b.from.isOpen;
     } else {
       left = a.from.val < b.from.val ? {...a.from} : {...b.from};
     }
     if (a.to.val === b.to.val) {
       right = {...a.to};
-      right.isOpen = a.to.isOpen === b.to.isOpen ? a.to.isOpen : false;
+      right.isOpen = a.to.isOpen && b.to.isOpen;
     } else {
       right = a.to.val > b.to.val ? {...a.to} : {...b.to};
     }
@@ -667,13 +667,13 @@ export class Segment {
     let right: Boundary;
     if (a.from.val === b.from.val) {
       left = {...a.from};
-      left.isOpen = a.from.isOpen === b.from.isOpen ? a.from.isOpen : true;
+      left.isOpen = a.from.isOpen || b.from.isOpen;
     } else {
       left = a.from.val > b.from.val ? {...a.from} : {...b.from};
     }
     if (a.to.val === b.to.val) {
       right = {...a.to};
-      right.isOpen = a.to.isOpen === b.to.isOpen ? a.to.isOpen : true;
+      right.isOpen = a.to.isOpen || b.to.isOpen;
     } else {
       right = a.to.val < b.to.val ? {...a.to} : {...b.to};
     }
