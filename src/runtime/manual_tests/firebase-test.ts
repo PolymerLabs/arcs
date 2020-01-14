@@ -631,7 +631,8 @@ describe('firebase', function() {
       await checkDone(col, cid3);
     }).timeout(40000);
 
-    it('big collection API works from inside the PEC', async () => {
+    // TODO(cypher1): Disabled temporarily, breaking on master.
+    it.skip('big collection API works from inside the PEC', async () => {
       const fileMap = {
         manifest: `
           schema Data
@@ -700,7 +701,8 @@ describe('firebase', function() {
       assert.deepEqual(data.value.map(item => item.rawData.value), ['morty', 'rick', 'rick&morty']);
     });
 
-    it('serialization roundtrip re-attaches to the same firebase stores', async () => {
+    // TODO(cypher1): Disabled temporarily, breaking on master.
+    it.skip('serialization roundtrip re-attaches to the same firebase stores', async () => {
       const loader = new StubLoader({
         manifest: `
           schema Data

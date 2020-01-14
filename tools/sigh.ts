@@ -63,7 +63,7 @@ const webpackLS = webpackPkg('webpack-languageserver');
 
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
-  test: [peg, build, runTests],
+  test: [peg, build, runTestsOrHealthOnCron],
   testShells: [peg, build, webpack, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
   webpack: [peg, build, webpack],
@@ -72,7 +72,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   build: [peg, build],
   watch: [watch],
   buildifier: [buildifier],
-  lint: [peg, build, lint, tslint, cycles, buildifier],
+  lint: [check, peg, build, lint, tslint, cycles, buildifier],
   cycles: [cycles],
   check: [check],
   clean: [clean],
