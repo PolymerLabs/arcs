@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+case $(uname | tr '[:upper:]' '[:lower:]') in
+  linux*)
+    ./tools/bazelisk-linux-amd64 $@
+    ;;
+  darwin*)
+    ./tools/bazelisk-darwin-amd64 $@
+    ;;
+  msys*)
+    ./tools/bazelisk-windows-amd64.exe $@
+    ;;
+esac
+set -x

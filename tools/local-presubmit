@@ -12,10 +12,9 @@ cd $ROOT
 status "Testing all of the things."
 
 ./tools/sigh webpack
-bazel test //java/... //javatests/... //src/... //particles/...
+./bazelisk test //java/... //javatests/... //src/... //particles/...
 ./tools/sigh testShells
 ./tools/ktlint
 ./tools/sigh lint
 ./tools/sigh test
 
-# TODO(yuangu): Add Android testing when we start doing it in our CI.

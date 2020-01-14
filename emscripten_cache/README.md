@@ -12,7 +12,7 @@ To update the cache:
 1. Delete everything in `emscripten_cache/asmjs`.
 2. Update comment out the line that says `rm -rf "$EM_CACHE"` at the bottom of
    `build_defs/emscripten/emsdk_wrapper.sh`
-3. Build a C++ wasm binary via `bazel build`.
+3. Build a C++ wasm binary via `./bazelisk build`.
 4. Look at your bazel build output, and find a line that says something like
    `(this will be cached in "/tmp/emscripten-cache-UcBjY7Unpg/is_vanilla.txt`.
 5. Copy everything from that tmp folder (e.g.
