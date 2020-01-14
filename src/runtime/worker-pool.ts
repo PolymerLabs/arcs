@@ -8,8 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {policies} from './worker-pool-sizing-policies.js';
+
 // Enables the worker pool management via this url parameter.
-const URL_PARAMETER = 'use-worker-pool';
+// The value of parameter represents the options applied to a worker pool.
+// Options are separated by comma.
+const USE_WORKER_POOL_PARAMETER = 'use-worker-pool';
+// Chooses worker pool sizing policy via this url parameter.
+// @see {@link policies} for all available sizing policies.
+const SIZING_POLICY_PARAMETER = 'sizing-policy';
 
 // Wants to keep the pool size at least at this watermark.
 const POOL_SIZE_DEMAND = 3;
@@ -32,14 +39,21 @@ export const workerPool = new (class {
   readonly inUse = new Map<MessagePort, PoolEntry>();
   // Whether the worker pool management is ON.
   active = false;
+  // Optional options applied to the worker pool.
+  options: Set<string>;
   // Worker APIs
   factory: WorkerFactory = {};
 
   constructor() {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has(URL_PARAMETER)) {
+      if (urlParams.has(USE_WORKER_POOL_PARAMETER)) {
         this.active = true;
+        this.options = new Set(
+            (urlParams.get(USE_WORKER_POOL_PARAMETER) || '')
+                .split(',')
+                .filter(Boolean)
+        );
       }
     }
   }
