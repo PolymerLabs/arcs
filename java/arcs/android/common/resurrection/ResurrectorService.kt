@@ -47,7 +47,7 @@ abstract class ResurrectorService : Service() {
         by guardWith(mutex, setOf())
     private var registeredRequestsByNotifiers: Map<StorageKey?, Set<ResurrectionRequest>>
         by guardWith(mutex, mapOf())
-    @VisibleForTesting lateinit var loadJob: Job
+    @VisibleForTesting var loadJob: Job? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.action?.takeIf { it == ACTION_RESET_REGISTRATIONS }?.let {
@@ -85,7 +85,7 @@ abstract class ResurrectorService : Service() {
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     suspend fun resurrectClients(storageKeys: Collection<StorageKey>) {
-        loadJob.join()
+        loadJob?.join()
 
         val requests = mutableSetOf<ResurrectionRequest>()
         mutex.withLock {
@@ -105,7 +105,7 @@ abstract class ResurrectorService : Service() {
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     fun dumpRegistrations(writer: PrintWriter) {
         val registeredRequests = runBlocking {
-            loadJob.join()
+            loadJob?.join()
             mutex.withLock { this@ResurrectorService.registeredRequests.toList() }
         }
 

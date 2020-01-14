@@ -23,6 +23,7 @@ import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.driver.RamDiskDriverProvider
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
@@ -101,6 +102,11 @@ class StorageService : ResurrectorService() {
 
     companion object {
         private const val EXTRA_OPTIONS = "storeOptions"
+
+        init {
+            RamDiskDriverProvider()
+            // TODO: handle registration of volatile driver providers
+        }
 
         /**
          * Creates an [Intent] to use when binding to the [StorageService] from a [ServiceStore].

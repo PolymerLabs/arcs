@@ -120,7 +120,7 @@ class ResurrectorServiceTest {
                 it.get().apply {
                     val shadow = shadowOf(this)
                     // Wait for the loadJob to join to ensure the registration goes through.
-                    loadJob.join()
+                    loadJob?.join()
 
                     // Do the stuff while the service is alive
                     block(this, shadow)
