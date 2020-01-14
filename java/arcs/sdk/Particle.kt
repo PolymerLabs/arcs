@@ -12,4 +12,6 @@
 package arcs.sdk
 
 /** Base interface for all particles. */
-interface Particle
+interface Particle {
+    // TODO: Add methods common to wasm and jvm Particles here.
+}
