@@ -117,6 +117,13 @@ export const workerPool = new (class {
    * @param port the host port being used to talk to its associated worker
    */
   suspend(port: object) {
+    // Don't want to resurrect workers at all; instead, prefer spinning up
+    // new workers as possible. Hence suspend should be treated exactly as
+    // destroy when this option is supplied.
+    if (this.options.nosuspend) {
+      this.destroy(port);
+      return;
+    }
     const entry = this.inUse.get(port as MessagePort);
     if (entry) {
       this.inUse.delete(port as MessagePort);
