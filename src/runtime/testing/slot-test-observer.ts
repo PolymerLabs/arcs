@@ -9,14 +9,11 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-//import {Particle} from '../recipe/particle.js';
 import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 //import {InterfaceType} from '../type.js';
 //import {Arc} from '../arc.js';
 import {RenderPacket} from '../slot-observer.js';
 import {AbstractSlotObserver} from '../slot-observer.js';
-
-//import {FakeSlotComposer} from './fake-slot-composer.js';
 //import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 const logging = true;
@@ -28,7 +25,7 @@ type SlotTestObserverOptions = {
 };
 
 /**
- * A helper SlotComposer allowing expressing and asserting expectations on slot rendering.
+ * A helper SlotObserver allowing expressing and asserting expectations on slot rendering.
  * Usage example:
  *   observer
  *       .newExpectations()
@@ -57,21 +54,9 @@ export class SlotTestObserver extends AbstractSlotObserver {
     this.strict = options.strict != undefined ? options.strict : true;
     this.logging = Boolean(options.logging);
     this.debugMessages = [];
-
     // Clear all cached templates
     HeadlessSlotDomConsumer.clearCache();
   }
-
-   // Overriding this method to investigate AppVeyor failures.
-   // TODO: get rid of it once the problem is fixed.
-  // _addSlotConsumer(slot) {
-  //   super._addSlotConsumer(slot);
-  //   const startCallback = slot.startRenderCallback;
-  //   slot.startRenderCallback = ({particle, slotName, providedSlots, contentTypes}) => {
-  //     this._addDebugMessages(`  StartRender: ${slot.consumeConn.getQualifiedName()}`);
-  //     startCallback({particle, slotName, providedSlots, contentTypes});
-  //   };
-  // }
 
   /**
    * Reinitializes expectations queue.
@@ -201,9 +186,9 @@ export class SlotTestObserver extends AbstractSlotObserver {
   //       });
   // }
 
-  //renderSlot(particle, slotName, content) {
   observe(packet: RenderPacket) {
     const {particle, containerSlotName: slotName, content} = packet;
+
     log(`observe: ${particle.name}:${slotName}`);
     log('queue:', this.expectQueue.map(e => `${e.particleName}:${e.slotName}`).join(','));
 
@@ -214,12 +199,6 @@ export class SlotTestObserver extends AbstractSlotObserver {
 
     assert.isAbove(this.expectQueue.length, 0,
       `observed a render packet for ${particle.name}:${slotName}}), but not expecting anything further. Enable {strict: false, logging: true} to diagnose`);
-//      `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further. Enable {strict: false, logging: true} to diagnose`);
-
-    // renderSlot must happen before _verifyRenderContent, because the latter removes this call from expectations,
-    // and potentially making mock-slot-composer idle before the renderSlot has actualy complete.
-    // TODO: split _verifyRenderContent to separate method for checking and then resolving expectations.
-    //super.renderSlot(particle, slotName, content);
 
     const found = this.verifyRenderContent(particle, slotName, content);
     if (!found) {
@@ -256,20 +235,6 @@ export class SlotTestObserver extends AbstractSlotObserver {
       found = true;
       complete = expectation.verifyComplete(content);
     }
-    /*
-    else if (expectation.contentTypes) {
-      Object.keys(content).forEach(contentType => {
-        const contentIndex = expectation.contentTypes.indexOf(contentType);
-        found = found || (contentIndex >= 0);
-        if (contentIndex >= 0) {
-          expectation.contentTypes.splice(contentIndex, 1);
-        }
-      });
-      complete = expectation.contentTypes.length === 0;
-    } else {
-      assert(false, `Invalid expectation: ${JSON.stringify(expectation)}`);
-    }
-    */
     if (complete) {
       this.expectQueue.splice(index, 1);
     }
@@ -293,19 +258,7 @@ export class SlotTestObserver extends AbstractSlotObserver {
       if (!expect[e.particleName]) {
         expect[e.particleName] = {};
       }
-      // if (e.contentTypes) {
-      //   e.contentTypes.forEach(contentType => {
-      //     const key = `${e.isOptional ? 'opt_' : ''}${contentType}`;
-      //     if (!expectationsByParticle[e.particleName][key]) {
-      //       expectationsByParticle[e.particleName][key] = 0;
-      //     }
-      //     expectationsByParticle[e.particleName][key]++;
-      //   });
-      // }
     });
-    // const names = Object.keys(expect);
-    // const mapToString = name => names.map(key => `${key}=${expect[name][key]}`).join('; ')
-    // const things = p => `${p}: (${mapToString(p)})`;
     this.addDebugMessages(`${this.expectQueue.length} expectations : {${Object.keys(expect).map(p => {
       return `${p}: (${Object.keys(expect[p]).map(key => `${key}=${expect[p][key]}`).join('; ')})`;
     }).join(', ')}}`);
