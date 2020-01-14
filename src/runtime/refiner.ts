@@ -13,6 +13,12 @@ import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
 
+enum Primitive {
+  BOOLEAN = 'Boolean',
+  NUMBER = 'Number',
+  TEXT = 'Text',
+}
+
 enum Op {
   AND = 'and',
   OR  = 'or',
@@ -84,15 +90,15 @@ export class Refinement {
 }
 
 abstract class RefinementExpression {
-  evalType: 'Boolean' | 'Number' | 'Text';
+  evalType: Primitive.BOOLEAN | Primitive.NUMBER | Primitive.TEXT;
 
   static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
     switch (expr.kind) {
-      case 'binary-expression-node': return new BinaryExpression(expr, typeData);
-      case 'unary-expression-node': return new UnaryExpression(expr, typeData);
-      case 'field-name-node': return new FieldNamePrimitive(expr, typeData);
-      case 'number-node': return new NumberPrimitive(expr);
-      case 'boolean-node': return new BooleanPrimitive(expr);
+      case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
+      case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
+      case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
+      case 'number-node': return NumberPrimitive.fromAst(expr);
+      case 'boolean-node': return BooleanPrimitive.fromAst(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
         throw new Error('Unknown node type.');
@@ -109,18 +115,25 @@ abstract class RefinementExpression {
 }
 
 export class BinaryExpression extends RefinementExpression {
-  evalType: 'Number' | 'Boolean';
+  evalType: Primitive;
   leftExpr: RefinementExpression;
   rightExpr: RefinementExpression;
   operator: RefinementOperator;
 
-  constructor(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>) {
+  constructor(leftExpr: RefinementExpression, rightExpr: RefinementExpression, op: RefinementOperator) {
     super();
-    this.leftExpr = RefinementExpression.fromAst(expression.leftExpr, typeData);
-    this.rightExpr = RefinementExpression.fromAst(expression.rightExpr, typeData);
-    this.operator = new RefinementOperator(expression.operator);
+    this.leftExpr = leftExpr;
+    this.rightExpr = rightExpr;
+    this.operator = op;
     this.operator.validateOperandCompatibility([this.leftExpr.evalType, this.rightExpr.evalType]);
     this.evalType = this.operator.evalType();
+}
+
+  static fromAst(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+    return new BinaryExpression(
+            RefinementExpression.fromAst(expression.leftExpr, typeData),
+            RefinementExpression.fromAst(expression.rightExpr, typeData),
+            new RefinementOperator(expression.operator));
   }
 
   toString(): string {
@@ -148,12 +161,12 @@ export class BinaryExpression extends RefinementExpression {
 
   simplifyPrimitive() {
     if (this.leftExpr instanceof BooleanPrimitive && this.rightExpr instanceof BooleanPrimitive) {
-      return BooleanPrimitive.fromValue(this.applyOperator({}));
+      return new BooleanPrimitive(this.applyOperator({}));
     } else if (this.leftExpr instanceof NumberPrimitive && this.rightExpr instanceof NumberPrimitive) {
-      if (this.evalType === 'Boolean') {
-        return BooleanPrimitive.fromValue(this.applyOperator({}));
+      if (this.evalType === Primitive.BOOLEAN) {
+        return new BooleanPrimitive(this.applyOperator({}));
       }
-      return NumberPrimitive.fromValue(this.applyOperator({}));
+      return new NumberPrimitive(this.applyOperator({}));
     }
     return null;
   }
@@ -185,22 +198,44 @@ export class BinaryExpression extends RefinementExpression {
         }
         return this;
       }
+      case Op.EQ: {
+        if (this.leftExpr instanceof BooleanPrimitive) {
+            return this.leftExpr.value ? this.rightExpr : new UnaryExpression(this.rightExpr, new RefinementOperator(Op.NOT));
+        } else if (this.rightExpr instanceof BooleanPrimitive) {
+            return this.rightExpr.value ? this.leftExpr : new UnaryExpression(this.leftExpr, new RefinementOperator(Op.NOT));
+        }
+        return this;
+      }
+      case Op.NEQ: {
+          if (this.leftExpr instanceof BooleanPrimitive) {
+              return this.leftExpr.value ? new UnaryExpression(this.rightExpr, new RefinementOperator(Op.NOT)) : this.rightExpr;
+          } else if (this.rightExpr instanceof BooleanPrimitive) {
+              return this.rightExpr.value ? new UnaryExpression(this.leftExpr, new RefinementOperator(Op.NOT)) : this.leftExpr;
+          }
+          return this;
+      }
       default: return this;
     }
   }
 }
 
 export class UnaryExpression extends RefinementExpression {
-  evalType: 'Number' | 'Boolean';
+  evalType: Primitive;
   expr: RefinementExpression;
   operator: RefinementOperator;
 
-  constructor(expression: UnaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>) {
+  constructor(expr: RefinementExpression, op: RefinementOperator) {
     super();
-    this.expr = RefinementExpression.fromAst(expression.expr, typeData);
-    this.operator = new RefinementOperator((expression.operator === Op.SUB) ? Op.NEG : expression.operator);
+    this.expr = expr;
+    this.operator = op;
     this.operator.validateOperandCompatibility([this.expr.evalType]);
     this.evalType = this.operator.evalType();
+  }
+
+  static fromAst(expression: UnaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+    return new UnaryExpression(
+            RefinementExpression.fromAst(expression.expr, typeData),
+            new RefinementOperator((expression.operator === Op.SUB) ? Op.NEG : expression.operator));
   }
 
   toString(): string {
@@ -214,9 +249,9 @@ export class UnaryExpression extends RefinementExpression {
 
   simplifyPrimitive() {
     if (this.expr instanceof BooleanPrimitive && this.operator.op === Op.NOT) {
-      return BooleanPrimitive.fromValue(this.applyOperator({}));
+      return new BooleanPrimitive(this.applyOperator({}));
     } else if (this.expr instanceof NumberPrimitive && this.operator.op === Op.NEG) {
-      return NumberPrimitive.fromValue(this.applyOperator({}));
+      return new NumberPrimitive(this.applyOperator({}));
     }
     return null;
   }
@@ -241,20 +276,20 @@ export class UnaryExpression extends RefinementExpression {
 }
 
 class FieldNamePrimitive extends RefinementExpression {
-  evalType: 'Number' | 'Boolean' | 'Text';
+  evalType: Primitive;
   value: string;
 
-  constructor(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>) {
+  constructor(value: string, evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT) {
     super();
-    this.value = expression.value;
-    if (typeData[this.value] == undefined) {
-      throw new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
-    }
-    this.evalType = typeData[this.value];
+    this.value = value;
+    this.evalType = evalType;
   }
 
-  static fromValue(value: string, evalType: 'Number' | 'Boolean' | 'Text'): RefinementExpression {
-    return new FieldNamePrimitive({value} as FieldNode, {[value]: evalType});
+  static fromAst(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+    if (typeData[expression.value] == undefined) {
+      throw new Error(`Unresolved field name '${expression.value}' in the refinement expression.`);
+    }
+    return new FieldNamePrimitive(expression.value, typeData[expression.value]);
   }
 
   toString(): string {
@@ -270,18 +305,16 @@ class FieldNamePrimitive extends RefinementExpression {
 }
 
 class NumberPrimitive extends RefinementExpression {
-  evalType: 'Number';
+  evalType = Primitive.NUMBER;
   value: number;
 
-  constructor(expression: NumberNode) {
+  constructor(value: number) {
     super();
-    this.value = expression.value;
-    this.evalType = 'Number';
-    return this;
+    this.value = value;
   }
 
-  static fromValue(value: number): RefinementExpression {
-    return new NumberPrimitive({value} as NumberNode);
+  static fromAst(expression: NumberNode): RefinementExpression {
+    return new NumberPrimitive(expression.value);
   }
 
   toString(): string {
@@ -294,17 +327,16 @@ class NumberPrimitive extends RefinementExpression {
 }
 
 class BooleanPrimitive extends RefinementExpression {
-  evalType: 'Boolean';
+  evalType = Primitive.BOOLEAN;
   value: boolean;
 
-  constructor(expression: BooleanNode) {
+  constructor(value: boolean) {
     super();
-    this.value = expression.value;
-    this.evalType = 'Boolean';
+    this.value = value;
   }
 
-  static fromValue(value: boolean): RefinementExpression {
-    return new BooleanPrimitive({value} as BooleanNode);
+  static fromAst(expression: BooleanNode): RefinementExpression {
+    return new BooleanPrimitive(expression.value);
   }
 
   toString(): string {
@@ -317,50 +349,36 @@ class BooleanPrimitive extends RefinementExpression {
 }
 
 export class Range {
-  private _segments: Segment[] = [];
+  private segments: Segment[] = [];
+  private type: Primitive;
 
-  constructor(segs: Segment[] = []) {
+  constructor(segs: Segment[] = [], type: Primitive = Primitive.NUMBER) {
     for (const seg of segs) {
       this.unionWithSeg(seg);
     }
+    this.type = type;
   }
 
-  get segments() {
-    return this._segments;
+  static infiniteRange(type: Primitive = Primitive.NUMBER): Range {
+    return new Range([Segment.openOpen(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)], type);
   }
 
-  static validateSegments(segs: Segment[]): void {
-    for (let i = 1; i < segs.length; i++) {
-      if (!segs[i].isGreaterThan(segs[i-1], true)) {
-        throw new Error(`Invalid segments: ${JSON.stringify(segs[i-1])} must be strictly less than ${JSON.stringify(segs[i])}`);
-      }
+  static universal(type: Primitive) {
+    if (type === Primitive.BOOLEAN) {
+      return new Range([Segment.closedClosed(0, 0), Segment.closedClosed(1, 1)], type);
     }
+    return Range.infiniteRange(type);
   }
 
-  static infiniteRange(): Range {
-    return new Range([Segment.openOpen(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)]);
-  }
+  static booleanRange(val: number): Range {
+    if (val !== 0 && val !== 1) {
+        throw new Error('Invalid value for a boolean range.');
+    }
+    return new Range([Segment.closedClosed(val, val)], Primitive.BOOLEAN);
+}
 
   static copyOf(range: Range): Range {
-    return new Range(range.segments);
-  }
-
-  // This function assumes that the expression is univariate
-  // and has been normalised (see above for definition).
-  // TODO(ragdev): Currently only Number types are supported. Add Boolean and String support.
-  static fromExpression(expr: RefinementExpression): Range {
-    if (expr instanceof BinaryExpression) {
-      if (expr.leftExpr instanceof FieldNamePrimitive && expr.rightExpr instanceof NumberPrimitive) {
-        return Range.makeInitialGivenOp(expr.operator.op, expr.rightExpr.value);
-      }
-      const left = Range.fromExpression(expr.leftExpr);
-      const right = Range.fromExpression(expr.rightExpr);
-      return Range.updateGivenOp(expr.operator.op, [left, right]);
-    } else if (expr instanceof UnaryExpression) {
-      const rg = Range.fromExpression(expr.expr);
-      return Range.updateGivenOp(expr.operator.op, [rg]);
-    }
-    throw new Error(`Cannot resolve primitive nodes by themselves: ${expr.toString()}`);
+    return new Range(range.segments, range.type);
   }
 
   static unionOf(range1: Range, range2: Range): Range {
@@ -375,8 +393,8 @@ export class Range {
     return newRange;
   }
 
-  static complementOf(range: Range, from: Range = Range.infiniteRange()) {
-    return Range.difference(from, range);
+  static complementOf(range: Range) {
+    return Range.difference(Range.universal(range.type), range);
   }
 
   // difference(A,B) = A\B = A - B
@@ -388,12 +406,12 @@ export class Range {
       let from: Boundary = {...seg.from};
       for (const iseg of ntrsct.segments) {
         const to: Boundary = {...iseg.from};
-        to.kind = to.kind === 'open' ? 'closed' : 'open';
+        to.isOpen = !to.isOpen;
         if (Segment.isValid(from, to)) {
           newRange.segments.push(new Segment(from, to));
         }
         from = iseg.to;
-        from.kind = from.kind === 'open' ? 'closed' : 'open';
+        from.isOpen = !from.isOpen;
       }
       const to: Boundary = {...seg.to};
       if (Segment.isValid(from, to)) {
@@ -432,7 +450,7 @@ export class Range {
       dup.intersectWithSeg(seg);
       newRange.union(dup);
     }
-    this._segments = newRange.segments;
+    this.segments = newRange.segments;
   }
 
   unionWithSeg(seg: Segment): void {
@@ -476,7 +494,27 @@ export class Range {
         newRange.segments.push(Segment.overlap(seg, subRange));
       }
     }
-    this._segments = newRange.segments;
+    this.segments = newRange.segments;
+  }
+
+  // This function assumes that the expression is univariate
+  // and has been normalised (see Refinement.normalise for definition).
+  // TODO(ragdev): Currently only Number and Boolean types are supported. Add String support.
+  static fromExpression(expr: RefinementExpression): Range {
+    if (expr instanceof BinaryExpression) {
+      if (expr.leftExpr instanceof FieldNamePrimitive && expr.rightExpr instanceof NumberPrimitive) {
+        return Range.makeInitialGivenOp(expr.operator.op, expr.rightExpr.value);
+      }
+      const left = Range.fromExpression(expr.leftExpr);
+      const right = Range.fromExpression(expr.rightExpr);
+      return Range.updateGivenOp(expr.operator.op, [left, right]);
+    } else if (expr instanceof UnaryExpression) {
+      const rg = Range.fromExpression(expr.expr);
+      return Range.updateGivenOp(expr.operator.op, [rg]);
+    } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BOOLEAN) {
+      return Range.booleanRange(1);
+    }
+    throw new Error(`Cannot resolve primitive nodes by themselves: ${expr.toString()}`);
   }
 
   static makeInitialGivenOp(op: string, val: ExpressionPrimitives): Range {
@@ -537,32 +575,32 @@ export class Segment {
   static isValid(from: Boundary, to: Boundary): boolean {
     if (to.val < from.val) {
       return false;
-    } else if (from.val === to.val && (from.kind === 'open' || to.kind === 'open')) {
+    } else if (from.val === to.val && (from.isOpen || to.isOpen)) {
       return false;
     }
     return true;
   }
 
   static closedClosed(from: number, to: number): Segment {
-    return new Segment({val: from, kind: 'closed'}, {val: to, kind: 'closed'});
+    return new Segment({val: from, isOpen: false}, {val: to, isOpen: false});
   }
 
   static openOpen(from: number, to: number): Segment {
-    return new Segment({val: from, kind: 'open'}, {val: to, kind: 'open'});
+    return new Segment({val: from, isOpen: true}, {val: to, isOpen: true});
   }
 
   static closedOpen(from: number, to: number): Segment {
-    return new Segment({val: from, kind: 'closed'}, {val: to, kind: 'open'});
+    return new Segment({val: from, isOpen: false}, {val: to, isOpen: true});
   }
 
   static openClosed(from: number, to: number): Segment {
-    return new Segment({val: from, kind: 'open'}, {val: to, kind: 'closed'});
+    return new Segment({val: from, isOpen: true}, {val: to, isOpen: false});
   }
 
   equals(seg: Segment): boolean {
-    return this.from.kind === seg.from.kind &&
+    return this.from.isOpen === seg.from.isOpen &&
       this.from.val === seg.from.val &&
-      this.to.kind === seg.to.kind &&
+      this.to.isOpen === seg.to.isOpen &&
       this.to.val === seg.to.val;
   }
 
@@ -571,9 +609,9 @@ export class Segment {
   isLessThan(seg: Segment, strict: boolean): boolean {
     if (this.to.val === seg.from.val) {
       if (strict) {
-        return this.to.kind === 'open' || seg.from.kind === 'open';
+        return this.to.isOpen || seg.from.isOpen;
       }
-      return this.to.kind === 'open' && seg.from.kind === 'open';
+      return this.to.isOpen && seg.from.isOpen;
     }
     return this.to.val < seg.from.val;
   }
@@ -583,9 +621,9 @@ export class Segment {
   isGreaterThan(seg: Segment, strict: boolean): boolean {
     if (this.from.val === seg.to.val) {
       if (strict) {
-        return this.from.kind === 'open' || seg.to.kind === 'open';
+        return this.from.isOpen || seg.to.isOpen;
       }
-      return this.from.kind === 'open' && seg.to.kind === 'open';
+      return this.from.isOpen && seg.to.isOpen;
     }
     return this.from.val > seg.to.val;
   }
@@ -606,13 +644,13 @@ export class Segment {
     let right: Boundary;
     if (a.from.val === b.from.val) {
       left = {...a.from};
-      left.kind = a.from.kind === b.from.kind ? a.from.kind : 'closed';
+      left.isOpen = a.from.isOpen && b.from.isOpen;
     } else {
       left = a.from.val < b.from.val ? {...a.from} : {...b.from};
     }
     if (a.to.val === b.to.val) {
       right = {...a.to};
-      right.kind = a.to.kind === b.to.kind ? a.to.kind : 'closed';
+      right.isOpen = a.to.isOpen && b.to.isOpen;
     } else {
       right = a.to.val > b.to.val ? {...a.to} : {...b.to};
     }
@@ -627,13 +665,13 @@ export class Segment {
     let right: Boundary;
     if (a.from.val === b.from.val) {
       left = {...a.from};
-      left.kind = a.from.kind === b.from.kind ? a.from.kind : 'open';
+      left.isOpen = a.from.isOpen || b.from.isOpen;
     } else {
       left = a.from.val > b.from.val ? {...a.from} : {...b.from};
     }
     if (a.to.val === b.to.val) {
       right = {...a.to};
-      right.kind = a.to.kind === b.to.kind ? a.to.kind : 'open';
+      right.isOpen = a.to.isOpen || b.to.isOpen;
     } else {
       right = a.to.val < b.to.val ? {...a.to} : {...b.to};
     }
@@ -643,31 +681,31 @@ export class Segment {
 
 interface Boundary {
   val: number;
-  kind: 'open' | 'closed';
+  isOpen: boolean;
 }
 
 interface OperatorInfo {
   nArgs: number;
   argType: string;
-  evalType: 'Boolean' | 'Number';
+  evalType: Primitive;
   evalFn: (exprs: ExpressionPrimitives[]) => ExpressionPrimitives;
 }
 
 const operatorTable: Dictionary<OperatorInfo> = {
-  [Op.AND]: {nArgs: 2, argType: 'Boolean', evalType: 'Boolean', evalFn: e => e[0] && e[1]},
-  [Op.OR]: {nArgs: 2, argType: 'Boolean', evalType: 'Boolean', evalFn: e => e[0] || e[1]},
-  [Op.LT]: {nArgs: 2, argType: 'Number',  evalType: 'Boolean', evalFn: e => e[0] < e[1]},
-  [Op.GT]: {nArgs: 2, argType: 'Number',  evalType: 'Boolean', evalFn: e => e[0] > e[1]},
-  [Op.LTE]: {nArgs: 2, argType: 'Number',  evalType: 'Boolean', evalFn: e => e[0] <= e[1]},
-  [Op.GTE]: {nArgs: 2, argType: 'Number',  evalType: 'Boolean', evalFn: e => e[0] >= e[1]},
-  [Op.ADD]: {nArgs: 2, argType: 'Number',  evalType: 'Number', evalFn: e => e[0] + e[1]},
-  [Op.SUB]: {nArgs: 2, argType: 'Number',  evalType: 'Number', evalFn: e => e[0] - e[1]},
-  [Op.MUL]: {nArgs: 2, argType: 'Number',  evalType: 'Number', evalFn: e => e[0] * e[1]},
-  [Op.DIV]: {nArgs: 2, argType: 'Number',  evalType: 'Number', evalFn: e => e[0] / e[1]},
-  [Op.NOT]: {nArgs: 1, argType: 'Boolean',  evalType: 'Boolean', evalFn: e => !e[0]},
-  [Op.NEG]: {nArgs: 1, argType: 'Number',  evalType: 'Number', evalFn: e => -e[0]},
-  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: 'Boolean', evalFn: e => e[0] === e[1]},
-  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: 'Boolean', evalFn: e => e[0] !== e[1]},
+  [Op.AND]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, evalFn: e => e[0] && e[1]},
+  [Op.OR]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, evalFn: e => e[0] || e[1]},
+  [Op.LT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] < e[1]},
+  [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] > e[1]},
+  [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] <= e[1]},
+  [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] >= e[1]},
+  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] + e[1]},
+  [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] - e[1]},
+  [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] * e[1]},
+  [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] / e[1]},
+  [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN, evalFn: e => !e[0]},
+  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => -e[0]},
+  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] === e[1]},
+  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] !== e[1]},
 };
 
 class RefinementOperator {
@@ -691,7 +729,7 @@ class RefinementOperator {
     return this.opInfo.evalFn(exprs);
   }
 
-  evalType(): 'Number' | 'Boolean' {
+  evalType(): Primitive {
     return this.opInfo.evalType;
   }
 
