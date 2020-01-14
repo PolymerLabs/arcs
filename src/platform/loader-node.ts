@@ -51,7 +51,9 @@ export class Loader extends LoaderBase {
     // resolve path
     const path = this.resolve(fileName);
     // get source code
+    console.warn('node:requireParticle:', blobUrl, path);
     const src = await this.loadResource(blobUrl || path);
+    console.warn('node:requireParticle:', src);
     // Note. This is not real isolation.
     const script = new vm.Script(src, {filename: fileName, displayErrors: true});
     const result = [];

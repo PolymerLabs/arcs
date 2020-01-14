@@ -57,11 +57,12 @@ const isQualifiedUrl = (s: string) =>/^https?:\/\//.test(s);
 export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
-  protected readonly staticMap: {};
-  constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
-    this.urlMap = urlMap;
+  //protected
+  readonly staticMap: {};
+  constructor(urlMap: UrlMap = null, staticMap: {} = {}) {
+    this.urlMap = urlMap || {};
     this.staticMap = staticMap;
-    this.compileRegExp(urlMap);
+    this.compileRegExp(this.urlMap);
   }
   setParticleExecutionContext(pec: ParticleExecutionContext): void {
     this.pec = pec;
@@ -93,7 +94,10 @@ export abstract class LoaderBase {
     return this.loadBinaryFile(path);
   }
   protected loadStatic(path: string): string {
-    const content = this.staticMap[path];
+    if (this.staticMap['*']) {
+      console.log(`${path} is * is ${this.staticMap['*']}`);
+    }
+    const content = this.staticMap[path] || this.staticMap['*'];
     if (content && !isString(content)) {
       throw new Error('Cannot load static binary content as string');
     }
