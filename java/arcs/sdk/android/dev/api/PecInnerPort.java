@@ -1,5 +1,7 @@
 package arcs.sdk.android.dev.api;
 
+import arcs.core.common.Id;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -54,7 +56,7 @@ public class PecInnerPort {
   private final ThingMapper mapper;
   private final PortableJsonParser jsonParser;
   private final HandleFactory handleFactory;
-  private final IdGenerator idGenerator;
+  private final Id.Generator idGenerator;
 
   public PecInnerPort(
       String id,
@@ -68,7 +70,8 @@ public class PecInnerPort {
     this.jsonParser = jsonParser;
     this.handleFactory = handleFactory;
 
-    this.idGenerator = sessionId == null ? IdGenerator.newSession() : new IdGenerator(sessionId);
+    this.idGenerator = sessionId == null
+        ? Id.Generator.Companion.newSession() : new Id.Generator(sessionId, 0);
   }
 
   public String getId() {
@@ -224,7 +227,7 @@ public class PecInnerPort {
       Particle particle,
       ParticleSpec spec,
       Map<String, StorageProxy> proxies,
-      IdGenerator idGenerator) {
+      Id.Generator idGenerator) {
     Objects.requireNonNull(particle).setSpec(spec);
     particle.setJsonParser(jsonParser);
 

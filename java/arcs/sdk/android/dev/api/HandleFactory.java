@@ -1,5 +1,6 @@
 package arcs.sdk.android.dev.api;
 
+import arcs.core.common.Id;
 import javax.inject.Inject;
 
 @javax.inject.Singleton
@@ -10,7 +11,7 @@ public class HandleFactory {
 
   public Handle handleFor(
     StorageProxy storage,
-    IdGenerator idGenerator,
+    Id.Generator idGenerator,
     String name,
     String particleId,
     boolean isInput,
