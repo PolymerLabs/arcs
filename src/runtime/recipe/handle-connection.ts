@@ -18,7 +18,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Particle} from './particle.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker} from './type-checker.js';
-import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
+import {compareArrays, compareComparables, compareStrings, compareBools, Comparable} from './comparable.js';
 
 import {Direction} from '../manifest-ast-nodes.js';
 
@@ -28,6 +28,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
   private _tags: string[] = [];
   private resolvedType?: Type = undefined;
   private _direction: Direction = 'any';
+  private _relaxed = false;
   private _particle: Particle;
   _handle?: Handle = undefined;
 
@@ -50,6 +51,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
     // scope.
     handleConnection.resolvedType = this.resolvedType;
     handleConnection._direction = this._direction;
+    handleConnection._relaxed = this._relaxed;
     if (this._handle != undefined) {
       handleConnection._handle = cloneMap.get(this._handle) as Handle;
       assert(handleConnection._handle !== undefined);
@@ -78,9 +80,10 @@ export class HandleConnection implements Comparable<HandleConnection> {
     if ((cmp = compareStrings(this._name, other._name)) !== 0) return cmp;
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) !== 0) return cmp;
     if ((cmp = compareComparables(this._handle, other._handle)) !== 0) return cmp;
-    // TODO: add type comparison
+    // TODO(cypher1): add type comparison
     // if ((cmp = compareStrings(this._type, other._type)) != 0) return cmp;
     if ((cmp = compareStrings(this._direction, other._direction)) !== 0) return cmp;
+    if ((cmp = compareBools(this._relaxed, other._relaxed)) !== 0) return cmp;
     return 0;
   }
 
@@ -129,6 +132,10 @@ export class HandleConnection implements Comparable<HandleConnection> {
     }
     this._direction = direction;
     this._resetHandleType();
+  }
+
+  set relaxed(relaxed: boolean) {
+    this._relaxed = relaxed;
   }
 
   get spec(): HandleConnectionSpec {
@@ -275,7 +282,9 @@ export class HandleConnection implements Comparable<HandleConnection> {
   toString(nameMap: Map<RecipeComponent, string>, options: ToStringOptions): string {
     const result: string[] = [];
     result.push(`${this.name || '*'}:`);
-    result.push(this.direction); // TODO(jopra): support optionality.
+    // TODO(cypher1): support optionality.
+    result.push(this.direction);
+    result.push(this.relaxed ? 'someof' : '');
     if (this.handle) {
       if (this.handle.immediateValue) {
         result.push(this.handle.immediateValue.name);
@@ -291,7 +300,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
       }
     }
 
-    return result.join(' ');
+    return result.filter(s => s !== '').join(' ');
   }
 
   // TODO: the logic is wrong :)

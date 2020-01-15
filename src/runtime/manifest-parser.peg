@@ -895,16 +895,18 @@ RecipeParticleConnection
       kind: 'handle-connection',
       param: param || '*',
       direction,
+      relaxed: !!relaxed,
       target,
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });
   }
-  / param:NameWithColon? target:ParticleConnectionTargetComponents eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
+  / param:NameWithColon? relaxed:('someof' whiteSpace)? target:ParticleConnectionTargetComponents eolWhiteSpace dependentConnections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     return toAstNode<AstNode.RecipeParticleConnection>({
       kind: 'handle-connection',
       param: param || '*',
       direction: 'any',
+      relaxed: !!relaxed,
       target,
       dependentConnections: optional(dependentConnections, extractIndented, []),
     });

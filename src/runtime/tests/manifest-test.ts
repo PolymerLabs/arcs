@@ -637,15 +637,12 @@ schema NotAThing
 particle PA
   foo: writes Thing {}
   modality dom
-
 particle PB
   foo: writes NotAThing {}
   modality dom
-
 particle PC
   foo: reads Thing {}
   modality dom
-
 recipe SomeRecipe
   myFoo: ?
   PA as particle0

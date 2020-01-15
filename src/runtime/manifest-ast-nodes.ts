@@ -379,6 +379,7 @@ export interface RecipeParticleConnection extends BaseNode {
   kind: 'handle-connection';
   param: string;
   direction: Direction;
+  relaxed: boolean;
   target: ParticleConnectionTargetComponents;
   dependentConnections: RecipeParticleConnection[];
 }
