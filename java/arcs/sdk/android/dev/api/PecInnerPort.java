@@ -34,12 +34,9 @@ public class PecInnerPort {
   private static final String START_RENDER_MSG = "StartRender";
   private static final String PARTICLE_FIELD = "particle";
   private static final String SLOT_NAME_FIELD = "slotName";
-  private static final String PROVIDED_SLOTS_FIELD = "providedSlots";
-  private static final String CONTENT_TYPES_FIELD = "contentTypes";
   private static final String STOP_RENDER_MSG = "StopRender";
   private static final String STOP_MSG = "Stop";
   private static final String DEV_TOOLS_CONNECTED_MSG = "DevToolsConnected";
-  private static final String RENDER_MSG = "Render";
   private static final String OUTPUT_MSG = "Output";
   private static final String CONTENT_FIELD = "content";
   private static final String MESSAGE_PEC_MESSAGE_KEY = "message";
