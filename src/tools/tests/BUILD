@@ -14,7 +14,8 @@ filegroup(
     name = "generated_schemas",
     srcs = [
         ":golden.h",
-        ":golden_GeneratedSchemas.kt",
+        ":golden_GeneratedSchemas.jvm.kt",
+        ":golden_GeneratedSchemas.wasm.kt",
     ],
 )
 

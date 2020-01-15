@@ -39,6 +39,7 @@ arcs_kt_particles(
     name = "service_particle",
     srcs = ["source/ServiceParticle.kt"],
     package = "arcs.test",
+    jvm = False,
     deps = [":wasm_schemas"],
 )
 
@@ -46,6 +47,7 @@ arcs_kt_particles(
     name = "test_particle",
     srcs = ["source/TestParticle.kt"],
     package = "arcs.test",
+    jvm = False,
     deps = [":wasm_schemas"],
 )
 
