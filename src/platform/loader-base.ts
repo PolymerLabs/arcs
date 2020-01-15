@@ -58,7 +58,8 @@ export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
   protected readonly staticMap: {};
-  constructor(urlMap: UrlMap = null, staticMap: {} = {}) {
+  constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
+    // ensure urlMap is valued if user passed in something nullish
     this.urlMap = urlMap || {};
     this.staticMap = staticMap;
     this.compileRegExp(this.urlMap);
