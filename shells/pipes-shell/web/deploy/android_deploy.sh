@@ -7,10 +7,7 @@ OUT_DIR="$PWD/$1"
 cd "${0%/*}"
 
 # Webpack shell code.
-npx webpack --display=errors-only --output="$OUT_DIR/shell.js"
-
-# Copy over webpacked Arcs runtime.
-cp ../../../lib/build/worker.js "$OUT_DIR/worker.js"
+npx webpack --display=errors-only --output="$OUT_DIR/[name].js"
 
 # Copy over shell html.
 cp source/index.html "$OUT_DIR/index.html"

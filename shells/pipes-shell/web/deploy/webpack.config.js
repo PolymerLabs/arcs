@@ -13,22 +13,29 @@ const TerserPlugin = require('terser-webpack-plugin');
 //const Visualizer = require('webpack-visualizer-plugin');
 
 module.exports = {
-  mode: 'none',
+  mode: 'production',
+  //mode: 'none',
   //target: 'node',
   //devtool: 'source-map',
+  performance: {
+    hints: false
+  },
   optimization: {
-     minimize: false,
-     //minimize: true,
-     minimizer: [
-       new TerserPlugin({
-         terserOptions: {
-          mangle: false, // Note `mangle.properties` is `false` by default.
+    //minimize: false,
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        parallel: true,
+        extractComments: false,
+        terserOptions: {
+          //mangle: false, // Note `mangle.properties` is `false` by default.
         }
       })
     ]
   },
   entry: {
-    shell: `../web.js`
+    shell: `../web.js`,
+    worker: '../../../lib/source/worker.js'
   },
   output: {
     filename: '[name].js',

@@ -7,8 +7,6 @@ cp -f ../canonical.manifest dist/
 cp -f source/index.html dist/
 # particles
 ln -s $PWD/../../../../particles $PWD/dist/particles
-# worker build
-cp -fR ../../../lib/build/worker.js dist/
 # collate sources
 npx webpack --display=errors-only
 # Arcs cache manager and versioning
