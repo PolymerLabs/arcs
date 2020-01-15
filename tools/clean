@@ -12,7 +12,7 @@ cd $ROOT
 status "Cleaning all of the things."
 
 status "[1/4] Expunging the Bazel bits."
-bazel clean --expunge || fail "Unable to clean Bazel."
+./bazelisk clean --expunge || fail "Unable to clean Bazel."
 
 status "[2/4] Cleaning with sigh."
 ./tools/sigh clean || fail "Unable to clean sigh."

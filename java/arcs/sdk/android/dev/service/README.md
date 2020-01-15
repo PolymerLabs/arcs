@@ -28,7 +28,7 @@ Before this will actually work, you will need to build pipes-shell
 The Dev service depends on pipes-shell and the Arcs runtime, which need to be
 webpacked before they can be used by the Android app. Thankfully bazel will
 automatically re-run webpack for you whenever those sources change. All you need
-to do is run the usual bazel mobile-install command (or build in Android Studio)
+to do is run the usual ./bazelisk mobile-install command (or build in Android Studio)
 and everything that needs to be rebuilt should be.
 
 ## Troubleshooting
@@ -37,7 +37,7 @@ and everything that needs to be rebuilt should be.
   that your `ANDROID_HOME` environment variable is set correctly. You can also
   try running:
   ```bash
-  bazel clean --expunge
+  ./bazelisk clean --expunge
   ```
 
 ## Debugging and Inspection

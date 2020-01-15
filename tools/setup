@@ -64,17 +64,7 @@ status "4. Install dependencies"
 status "4.1. Install useful optional dependencies"
 (cd $ROOT && npm install --no-save chokidar) || fail 'Failed to install optional dependencies.'
 
-status "5. Install Bazel"
-
-status "5.1. Downloading and running install script"
-(cd $ROOT && ./tools/install_bazel.sh)
-
-status "5.2. Updating PATH"
-append_once 'export PATH="$PATH:$HOME/bin"' ~/.profile
-# Makes the updates visible at this subshell i.e. bazel
-source ~/.profile
-
-status "6. Install ktlint"
+status "5. Install ktlint"
 (cd $HOME/bin && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && cd -) || fail 'Failed to install ktlint'
 chmod a+x $HOME/bin/ktlint
 
@@ -83,8 +73,6 @@ echo "node --version"
 node --version
 echo "npm --version"
 npm --version
-echo "bazel --version"
-bazel --version
 echo "ktlint --version"
 ktlint --version
 echo "\nNext, try the following:\n"
