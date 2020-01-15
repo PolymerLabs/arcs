@@ -16,8 +16,7 @@ interface Particle {
     /**
      * React to handle updates.
      *
-     * Called for handles when change events are received from the backing store. Default action is to trigger
-     * rendering.
+     * Called for handles when change events are received from the backing store.
      *
      * @param handle Singleton or Collection handle
      */
@@ -28,7 +27,6 @@ interface Particle {
      *
      * Called for handles that are marked for synchronization at connection, when they are updated with the full model
      * of their data. This will occur once after setHandles() and any time thereafter if the handle is resynchronized.
-     * Default action is to trigger rendering.
      *
      * @param handle Singleton or Collection handle
      * @param allSynced flag indicating if all handles are synchronized

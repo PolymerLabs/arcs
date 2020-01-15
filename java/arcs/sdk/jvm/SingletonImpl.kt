@@ -11,7 +11,7 @@
 
 package arcs.sdk
 
-/** [ReadWriteSingleton] implementation for WASM. */
+/** [ReadWriteSingleton] implementation for the JVM. */
 @Suppress("UNUSED_PARAMETER")
 // TODO: Connect to storage.
 class SingletonImpl<T : Entity>(

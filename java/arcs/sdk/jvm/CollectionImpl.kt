@@ -11,7 +11,7 @@
 
 package arcs.sdk
 
-/** [ReadWriteCollection] implementation for WASM. */
+/** [ReadWriteCollection] implementation for the JVM. */
 @Suppress("UNUSED_PARAMETER")
 // TODO: Connect to storage.
 class CollectionImpl<T : Entity>(
