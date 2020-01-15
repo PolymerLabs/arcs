@@ -8,37 +8,18 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-@file:Suppress("PackageName", "TopLevelName")
 
-package arcs.sdk
+package arcs.sdk.wasm
 
-import arcs.sdk.wasm.WasmString
-import arcs.sdk.wasm._free
-import arcs.sdk.wasm.collectionClear
-import arcs.sdk.wasm.collectionRemove
-import arcs.sdk.wasm.collectionStore
-import arcs.sdk.wasm.onRenderOutput
-import arcs.sdk.wasm.resolveUrl
-import arcs.sdk.wasm.serviceRequest
-import arcs.sdk.wasm.singletonClear
-import arcs.sdk.wasm.singletonSet
-import arcs.sdk.wasm.toAddress
-import arcs.sdk.wasm.toKString
-import arcs.sdk.wasm.toNullableKString
-import arcs.sdk.wasm.toWasmAddress
-import arcs.sdk.wasm.toWasmNullableString
-import arcs.sdk.wasm.toWasmString
+import arcs.sdk.NullTermByteArray
 
-actual fun utf8ToStringImpl(bytes: ByteArray): String = bytes.decodeToString()
-actual fun stringToUtf8Impl(str: String): ByteArray = str.encodeToByteArray()
-
-actual object RuntimeClient {
-    actual fun <T : Entity> singletonClear(particle: Particle, singleton: Singleton<T>) =
+object WasmRuntimeClient {
+    fun <T : WasmEntity> singletonClear(particle: WasmParticle, singleton: WasmSingleton<T>) =
         singletonClear(particle.toAddress(), singleton.toAddress())
 
-    actual fun <T : Entity> singletonSet(
-        particle: Particle,
-        singleton: Singleton<T>,
+    fun <T : WasmEntity> singletonSet(
+        particle: WasmParticle,
+        singleton: WasmSingleton<T>,
         encoded: NullTermByteArray
     ) = singletonSet(
         particle.toAddress(),
@@ -46,9 +27,9 @@ actual object RuntimeClient {
         encoded.bytes.toWasmAddress()
     )
 
-    actual fun <T : Entity> collectionRemove(
-        particle: Particle,
-        collection: Collection<T>,
+    fun <T : WasmEntity> collectionRemove(
+        particle: WasmParticle,
+        collection: WasmCollection<T>,
         encoded: NullTermByteArray
     ) = collectionRemove(
         particle.toAddress(),
@@ -56,12 +37,12 @@ actual object RuntimeClient {
         encoded.bytes.toWasmAddress()
     )
 
-    actual fun <T : Entity> collectionClear(particle: Particle, collection: Collection<T>) =
+    fun <T : WasmEntity> collectionClear(particle: WasmParticle, collection: WasmCollection<T>) =
         collectionClear(particle.toAddress(), collection.toAddress())
 
-    actual fun <T : Entity> collectionStore(
-        particle: Particle,
-        collection: Collection<T>,
+    fun <T : WasmEntity> collectionStore(
+        particle: WasmParticle,
+        collection: WasmCollection<T>,
         encoded: NullTermByteArray
     ): String? {
         val wasmId = collectionStore(
@@ -72,17 +53,17 @@ actual object RuntimeClient {
         return wasmId.toNullableKString()?.let { _free(wasmId); it }
     }
 
-    actual fun log(msg: String) = arcs.sdk.wasm.log(msg)
+    fun log(msg: String) = arcs.sdk.wasm.log(msg)
 
-    actual fun onRenderOutput(particle: Particle, template: String?, model: NullTermByteArray?) =
+    fun onRenderOutput(particle: WasmParticle, template: String?, model: NullTermByteArray?) =
         onRenderOutput(
             particle.toAddress(),
             template.toWasmNullableString(),
             model?.bytes?.toWasmAddress() ?: 0
         )
 
-    actual fun serviceRequest(
-        particle: Particle,
+    fun serviceRequest(
+        particle: WasmParticle,
         call: String,
         encoded: NullTermByteArray,
         tag: String
@@ -93,18 +74,10 @@ actual object RuntimeClient {
         tag.toWasmString()
     )
 
-    actual fun resolveUrl(url: String): String {
+    fun resolveUrl(url: String): String {
         val r: WasmString = resolveUrl(url.toWasmString())
         val resolved = r.toKString()
         _free(r)
         return resolved
-    }
-
-    actual fun abort() = arcs.sdk.wasm.abort()
-
-    actual fun assert(message: String, cond: Boolean) {
-        if (cond) return
-        log("AssertionError: $message")
-        abort()
     }
 }

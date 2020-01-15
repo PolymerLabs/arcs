@@ -38,5 +38,8 @@ arcs_kt_library(
         "TestBase.kt",
     ],
     jvm = False,
-    deps = [":schemas"],
+    deps = [
+        ":schemas",
+        "//java/arcs/sdk:arcs",
+    ],
 )

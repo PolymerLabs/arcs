@@ -1,4 +1,6 @@
+/* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
+
 package arcs.sdk
 
 //
@@ -6,8 +8,25 @@ package arcs.sdk
 //
 // Current implementation doesn't support references or optional field detection
 
+import arcs.sdk.NullTermByteArray
+import arcs.sdk.ReadableCollection
+import arcs.sdk.ReadableSingleton
+import arcs.sdk.ReadWriteCollection
+import arcs.sdk.ReadWriteSingleton
+import arcs.sdk.StringDecoder
+import arcs.sdk.StringEncoder
+import arcs.sdk.WritableCollection
+import arcs.sdk.WritableSingleton
+import arcs.sdk.toUtf8String
+import arcs.sdk.wasm.WasmCollection
+import arcs.sdk.wasm.WasmEntity
+import arcs.sdk.wasm.WasmEntitySpec
+import arcs.sdk.wasm.WasmParticle
+import arcs.sdk.wasm.WasmSingleton
 
-class GoldInternal1() : Entity() {
+class GoldInternal1() : WasmEntity {
+
+    override var internalId = ""
 
     var _val_Set = false
     var val_ = ""
@@ -48,7 +67,7 @@ class GoldInternal1() : Entity() {
     }
 }
 
-class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
+class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
 
     override fun create() = GoldInternal1()
 
@@ -61,7 +80,7 @@ class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
             decoder.validate("|")
             var i = 0
             while (i < 1 && !decoder.done()) {
-                val name = decoder.upTo(':').utf8ToString()
+                val name = decoder.upTo(':').toUtf8String()
                 when (name) {
                     "val" -> {
                         decoder.validate("T")
@@ -69,7 +88,7 @@ class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
                     }
                     else -> {
                         // Ignore unknown fields until type slicing is fully implemented.
-                        when (decoder.chomp(1).utf8ToString()) {
+                        when (decoder.chomp(1).toUtf8String()) {
                             "T", "U" -> decoder.decodeText()
                             "N" -> decoder.decodeNum()
                             "B" -> decoder.decodeBool()
@@ -89,7 +108,9 @@ typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
 
-class Gold_Data() : Entity() {
+class Gold_Data() : WasmEntity {
+
+    override var internalId = ""
 
     var _numSet = false
     var num = 0.0
@@ -169,7 +190,7 @@ class Gold_Data() : Entity() {
     }
 }
 
-class Gold_Data_Spec() : EntitySpec<Gold_Data> {
+class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
 
     override fun create() = Gold_Data()
 
@@ -182,7 +203,7 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
             decoder.validate("|")
             var i = 0
             while (i < 5 && !decoder.done()) {
-                val name = decoder.upTo(':').utf8ToString()
+                val name = decoder.upTo(':').toUtf8String()
                 when (name) {
                     "num" -> {
                         decoder.validate("N")
@@ -202,7 +223,7 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
                     }
                     else -> {
                         // Ignore unknown fields until type slicing is fully implemented.
-                        when (decoder.chomp(1).utf8ToString()) {
+                        when (decoder.chomp(1).toUtf8String()) {
                             "T", "U" -> decoder.decodeText()
                             "N" -> decoder.decodeNum()
                             "B" -> decoder.decodeBool()
@@ -218,7 +239,7 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 }
 
 
-abstract class AbstractGold : Particle() {
-    protected val data = Singleton(this, "data", Gold_Data_Spec())
-    protected val alias = Singleton(this, "alias", Gold_Alias_Spec())
+abstract class AbstractGold : WasmParticle() {
+    protected val data: ReadableSingleton<Gold_Data> = WasmSingleton(this, "data", Gold_Data_Spec())
+    protected val alias: WritableSingleton<Gold_Alias> = WasmSingleton(this, "alias", Gold_Alias_Spec())
 }

@@ -84,4 +84,6 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
         name = name,
         srcs = outs,
         deps = [],
+        # TODO: Re-enable on JVM once code generator can handle it.
+        jvm = False,
     )

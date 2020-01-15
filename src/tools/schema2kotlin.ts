@@ -41,9 +41,10 @@ export class Schema2Kotlin extends Schema2Base {
   }
 
   fileHeader(outName: string): string {
-    const withCustomPackage = (populate: string) => this.scope !== 'arcs.sdk' ? populate : '';
     return `\
+/* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
+
 package ${this.scope}
 
 //
@@ -51,16 +52,22 @@ package ${this.scope}
 //
 // Current implementation doesn't support references or optional field detection
 
-${withCustomPackage(`import arcs.sdk.Collection
-import arcs.sdk.Entity
-import arcs.sdk.EntitySpec
 import arcs.sdk.NullTermByteArray
-import arcs.sdk.Particle
-import arcs.sdk.Singleton
+import arcs.sdk.ReadableCollection
+import arcs.sdk.ReadableSingleton
+import arcs.sdk.ReadWriteCollection
+import arcs.sdk.ReadWriteSingleton
 import arcs.sdk.StringDecoder
 import arcs.sdk.StringEncoder
-import arcs.sdk.utf8ToString
-`)}`;
+import arcs.sdk.WritableCollection
+import arcs.sdk.WritableSingleton
+import arcs.sdk.toUtf8String
+import arcs.sdk.wasm.WasmCollection
+import arcs.sdk.wasm.WasmEntity
+import arcs.sdk.wasm.WasmEntitySpec
+import arcs.sdk.wasm.WasmParticle
+import arcs.sdk.wasm.WasmSingleton
+`;
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
@@ -72,12 +79,27 @@ import arcs.sdk.utf8ToString
     const handleDecls: string[] = [];
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const handleType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
-      handleDecls.push(`protected val ${handleName} = ${handleType}(this, "${handleName}", ${entityType}_Spec())`);
+      let handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
+      let handleInterfaceType: string;
+      switch (connection.direction) {
+        case 'reads writes':
+          handleInterfaceType = `ReadWrite${handleConcreteType}<${entityType}>`;
+          break;
+        case 'writes':
+          handleInterfaceType = `Writable${handleConcreteType}<${entityType}>`;
+          break;
+        case 'reads':
+          handleInterfaceType = `Readable${handleConcreteType}<${entityType}>`;
+          break;
+        default:
+          throw new Error(`Unsupported handle direction: ${connection.direction}`);
+      }
+      handleConcreteType = `Wasm${handleConcreteType}`;
+      handleDecls.push(`protected val ${handleName}: ${handleInterfaceType} = ${handleConcreteType}(this, "${handleName}", ${entityType}_Spec())`);
     }
     return `
-abstract class Abstract${particleName} : Particle() {
+abstract class Abstract${particleName} : WasmParticle() {
     ${handleDecls.join('\n    ')}
 }
 `;
@@ -146,7 +168,9 @@ class KotlinGenerator implements ClassGenerator {
 
     return `\
 
-class ${name}() : Entity() {
+class ${name}() : WasmEntity {
+
+    override var internalId = ""
 
     ${withFields(`${this.fieldVals.join('\n    ')}`)}
 
@@ -180,7 +204,7 @@ class ${name}() : Entity() {
     }
 }
 
-class ${name}_Spec() : EntitySpec<${name}> {
+class ${name}_Spec() : WasmEntitySpec<${name}> {
 
     override fun create() = ${name}()
 
@@ -193,12 +217,12 @@ class ${name}_Spec() : EntitySpec<${name}> {
             decoder.validate("|")
             ${withFields(`var i = 0
             while (i < ${fieldCount} && !decoder.done()) {
-                val name = decoder.upTo(':').utf8ToString()
+                val name = decoder.upTo(':').toUtf8String()
                 when (name) {
                     ${this.decode.join('\n                    ')}
                     else -> {
                         // Ignore unknown fields until type slicing is fully implemented.
-                        when (decoder.chomp(1).utf8ToString()) {
+                        when (decoder.chomp(1).toUtf8String()) {
                             "T", "U" -> decoder.decodeText()
                             "N" -> decoder.decodeNum()
                             "B" -> decoder.decodeBool()

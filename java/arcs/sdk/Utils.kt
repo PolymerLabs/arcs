@@ -12,11 +12,16 @@
 package arcs.sdk
 
 /**
- * Utilities for ease-of-use
- *
- * Sugar to delegate function calls to methods on the current [RuntimeClient].
+ * Utilities for ease-of-use. Implemented for each platform.
  */
+expect object Utils {
+    fun log(msg: String)
 
-fun log(msg: String) = RuntimeClient.log(msg)
-fun abort() = RuntimeClient.abort()
-fun assert(message: String, cond: Boolean) = RuntimeClient.assert(message, cond)
+    fun abort()
+
+    fun assert(message: String, cond: Boolean)
+
+    fun toUtf8String(bytes: ByteArray): String
+
+    fun toUtf8ByteArray(str: String): ByteArray
+}
