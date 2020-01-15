@@ -1,8 +1,10 @@
 package arcs.sdk.android.dev.api;
 
+import arcs.core.common.Id;
+
 public abstract class Handle {
   public StorageProxy storage;
-  private final IdGenerator idGenerator;
+  private final Id.Generator idGenerator;
   public String name;
   public boolean canRead;
   public boolean canWrite;
@@ -20,7 +22,7 @@ public abstract class Handle {
 
   protected Handle(
       StorageProxy storage,
-      IdGenerator idGenerator,
+      Id.Generator idGenerator,
       String name,
       String particleId,
       boolean canRead,
@@ -36,7 +38,7 @@ public abstract class Handle {
   }
 
   public Id getId() {
-    return Id.fromString(this.storage.id);
+    return Id.Companion.fromString(this.storage.id);
   }
 
   protected String generateKey() {

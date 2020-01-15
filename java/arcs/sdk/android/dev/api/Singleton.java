@@ -1,9 +1,11 @@
 package arcs.sdk.android.dev.api;
 
+import arcs.core.common.Id;
+
 class Singleton extends Handle {
   public Singleton(
       StorageProxy storage,
-      IdGenerator idGenerator,
+      Id.Generator idGenerator,
       String name,
       String particleId,
       boolean canRead,

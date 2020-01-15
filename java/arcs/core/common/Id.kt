@@ -44,11 +44,13 @@ interface Id {
      * Only one [Generator] should be instantiated for each running Arc, and all of the [Id]s
      * created should be created using that same [Generator] instance.
      */
-    class Generator private constructor(
+    class Generator constructor(
         /** Unique identifier for the session associated with this [Generator]. */
         val currentSessionId: String,
         private var nextComponentId: Int = 0
     ) {
+        /** Returns the current session id. */
+        fun getSessionId(): String = currentSessionId
 
         /** Creates a new [ArcId] as a child of the current session. */
         fun newArcId(name: String): ArcId = ArcId(currentSessionId, listOf(name))
