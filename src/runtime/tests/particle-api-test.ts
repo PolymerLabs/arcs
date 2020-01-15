@@ -9,10 +9,9 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
-import {MockSlotComposer} from '../testing/mock-slot-composer.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Arc} from '../arc.js';
+import {SlotComposer} from '../slot-composer.js';
 import {Description} from '../description.js';
 import {IdGenerator} from '../id.js';
 import {Manifest} from '../manifest.js';
@@ -20,7 +19,6 @@ import {Schema} from '../schema.js';
 import {EntityType, CollectionType} from '../type.js';
 import {Entity} from '../entity.js';
 import {Runtime} from '../runtime.js';
-import {SingletonStore} from '../store.js';
 import {Speculator} from '../../planning/speculator.js';
 import {BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
@@ -99,8 +97,7 @@ class ResultInspector {
 
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
-  const runtime = new Runtime({
-      loader: new StubLoader(fileMap), composerClass: FakeSlotComposer, context: manifest});
+  const runtime = new Runtime({loader: new Loader(null, fileMap), context: manifest});
   return runtime.newArc('demo', Flags.useNewStorageStack ? null : 'volatile://');
 }
 
@@ -924,8 +921,8 @@ describe('particle-api', () => {
   });
 
   it('particles can indicate that they are busy in setHandles', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         particle CallsBusy in 'callsBusy.js'
           bar: reads * {}
           far: writes * {result: Text}
@@ -937,7 +934,7 @@ describe('particle-api', () => {
             bar: reads foo
             far: writes faz
       `,
-      'callsBusy.js': `
+      './callsBusy.js': `
         defineParticle(({Particle}) => {
           return class extends Particle {
             async setHandles(handles) {
@@ -958,7 +955,7 @@ describe('particle-api', () => {
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const context = new Manifest({id});
     const arc = new Arc({id, loader, context});
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
     const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'foo', 'test:1');
@@ -980,8 +977,8 @@ describe('particle-api', () => {
   });
 
   it('particles can indicate that they are busy in onHandleSync', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         particle CallsBusy in 'callsBusy.js'
           bar: reads * {}
           far: writes * {result: Text}
@@ -993,7 +990,7 @@ describe('particle-api', () => {
             bar: reads foo
             far: writes faz
       `,
-      'callsBusy.js': `
+      './callsBusy.js': `
         defineParticle(({Particle}) => {
           return class extends Particle {
             async setHandles(handles) {
@@ -1015,7 +1012,7 @@ describe('particle-api', () => {
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const context = new Manifest({id});
     const arc = new Arc({id, loader, context});
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
     const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'foo', 'test:1');
@@ -1037,8 +1034,8 @@ describe('particle-api', () => {
   });
 
   it('particles can indicate that they are busy in onHandleUpdate', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         particle CallsBusy in 'callsBusy.js'
           bar: reads * {}
           far: writes * {result: Text}
@@ -1050,7 +1047,7 @@ describe('particle-api', () => {
             bar: reads foo
             far: writes faz
       `,
-      'callsBusy.js': `
+      './callsBusy.js': `
         defineParticle(({Particle}) => {
           return class extends Particle {
             async setHandles(handles) {
@@ -1072,7 +1069,7 @@ describe('particle-api', () => {
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const context = new Manifest({id});
     const arc = new Arc({id, loader, context});
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
     const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'foo', 'test:1');
@@ -1093,8 +1090,8 @@ describe('particle-api', () => {
   });
 
   it('particles call startBusy in setHandles and set values in descriptions', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         particle CallsBusy in 'callsBusy.js'
           bar: reads * {}
           far: writes * {result: Text}
@@ -1106,7 +1103,7 @@ describe('particle-api', () => {
             bar: reads h0
             far: writes h1
       `,
-      'callsBusy.js': `
+      './callsBusy.js': `
         defineParticle(({Particle}) => {
           return class extends Particle {
             async setHandles(handles) {
@@ -1127,7 +1124,7 @@ describe('particle-api', () => {
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const context = new Manifest({id});
     const arc = new Arc({id, loader, context});
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
     const inStore = await arc.createStore(new EntityType(new Schema([], {})), 'h0', 'test:0');
@@ -1142,8 +1139,8 @@ describe('particle-api', () => {
   });
 
    it('particles call startBusy in setHandles with no value and set values in descriptions', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         particle SetBar in 'setBar.js'
           bar: writes * {}
         particle CallsBusy in 'callsBusy.js'
@@ -1159,7 +1156,7 @@ describe('particle-api', () => {
             bar: reads h0
             far: writes h1
       `,
-      'setBar.js': `
+      './setBar.js': `
         defineParticle(({Particle}) => {
           return class extends Particle {
             async setHandles(handles) {
@@ -1169,7 +1166,7 @@ describe('particle-api', () => {
           }
         });
       `,
-      'callsBusy.js': `
+      './callsBusy.js': `
         defineParticle(({Particle}) => {
           return class extends Particle {
             async setHandles(handles) {
@@ -1190,7 +1187,7 @@ describe('particle-api', () => {
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const context = new Manifest({id});
     const arc = new Arc({id, loader, context});
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
 
@@ -1209,7 +1206,7 @@ describe('particle-api', () => {
         TransformationParticle
           root: consumes slot0`);
 
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'TransformationParticle.js': `defineParticle(({UiParticle}) => {
         return class extends UiParticle {
           async setHandles(handles) {
@@ -1245,8 +1242,7 @@ describe('particle-api', () => {
       });`,
       '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
-    // TODO(lindner): add strict rendering
-    const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+    const slotComposer = new SlotComposer();
     const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
         storageKey: 'key', loader, slotComposer, context});
     const [recipe] = arc.context.recipes;
@@ -1284,7 +1280,7 @@ describe('particle-api', () => {
         TransformationParticle
           root: consumes slot0`);
 
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'TransformationParticle.js': `defineParticle(({UiParticle}) => {
         return class extends UiParticle {
           async setHandles(handles) {
@@ -1321,7 +1317,7 @@ describe('particle-api', () => {
       '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     // TODO(lindner): add strict rendering
-    const slotComposer = new MockSlotComposer({strict: false}).newExpectations('debug');
+    const slotComposer = new SlotComposer();
     const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
         storageKey: 'key', loader, slotComposer, context});
     const [recipe] = arc.context.recipes;

@@ -10,12 +10,9 @@
 
 import {assert} from '../platform/chai-web.js';
 import {Entity} from '../runtime/entity.js';
-//import {HostedSlotContext} from '../runtime/slot-context.js';
-//import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {SlotTestObserver} from '../runtime/testing/slot-test-observer.js';
-//import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
 //import {checkDefined} from '../runtime/testing/preconditions.js';
 import {Loader} from '../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';

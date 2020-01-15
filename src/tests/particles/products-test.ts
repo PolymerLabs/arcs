@@ -15,12 +15,11 @@ import {Flags} from '../../runtime/flags.js';
 import {IdGenerator} from '../../runtime/id.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {StorageProviderBase} from '../../runtime/storage/storage-provider-base.js';
+import {SlotComposer} from '../../runtime/slot-composer.js';
+import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js'
 import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
-import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
 import {collectionHandleForTest, storageKeyForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 
 describe('products test', () => {
@@ -48,7 +47,6 @@ describe('products test', () => {
     RamDiskStorageDriverProvider.register(memoryProvider);
     const runtime = new Runtime({
         loader,
-        composerClass: FakeSlotComposer,
         context: await Manifest.load(manifestFilename, loader, {memoryProvider}),
         memoryProvider
       });
@@ -64,7 +62,7 @@ describe('products test', () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
-    const slotComposer = new MockSlotComposer({strict: false});
+    const slotComposer = new SlotComposer();
     const id = IdGenerator.newSession().newArcId('demo');
     const arc = new Arc({
       id,
@@ -76,20 +74,14 @@ describe('products test', () => {
     const recipe = arc.context.recipes.find(r => r.name === 'FilterAndDisplayBooks');
     assert.isTrue(recipe.normalize() && recipe.isResolved());
 
-    slotComposer
+    const observer = new SlotTestObserver();
+    slotComposer.observeSlots(observer);
+    observer
         .newExpectations()
-          .expectRenderSlot('List', 'root', {contentTypes: ['template']})
-          .expectRenderSlot('List', 'root', {contentTypes: ['model'], verify: (content) => {
-            return content.model && content.model.hasItems
-                && content.model.items['$template'].length > 0
-                && 1 === content.model.items.models.length;
-          }})
-          .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model']})
-          .expectRenderSlot('ItemMultiplexer', 'item', {hostedParticle: 'ShowProduct', verify: (content) => {
-            return content.model
-                && 1 === content.model.items.length
-                && 'Harry Potter' === content.model.items[0].name;
-          }});
+        .expectRenderSlot('List', 'root')
+        .expectRenderSlot('List', 'root')
+        .expectRenderSlot('ShowProduct', 'item')
+        ;
     await arc.instantiate(recipe);
     await arc.idle;
     await arc.idle;

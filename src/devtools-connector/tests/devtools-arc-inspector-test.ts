@@ -11,8 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {DevtoolsForTests} from '../devtools-connection.js';
 import {devtoolsArcInspectorFactory} from '../devtools-arc-inspector.js';
-import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
-import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
@@ -23,7 +22,7 @@ describe('DevtoolsArcInspector', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
   it('produces PEC Log messages on devtools channel', async () => {
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'p.js': `defineParticle(({Particle}) => class P extends Particle {
         async setHandles(handles) {
           let foo = handles.get('foo');
@@ -40,8 +39,7 @@ describe('DevtoolsArcInspector', () => {
         foo: use *
         P
           foo: foo`);
-    const runtime = new Runtime({
-      loader, composerClass: MockSlotComposer, context});
+    const runtime = new Runtime({loader, context});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);

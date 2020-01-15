@@ -194,7 +194,7 @@ export class SlotTestObserver extends AbstractSlotObserver {
 
     //const names = this._getHostedParticleNames(particle);
     //const nameJoin = names.length > 0 ? `(${names.join(',')}) ` : '(no-names)';
-    const nameJoin = 'no names';
+    const nameJoin = '(names not available)';
     this.addDebugMessages(`    renderSlot ${particle.name} ${nameJoin}: ${slotName} - ${Object.keys(content).join(', ')}`);
 
     assert.isAbove(this.expectQueue.length, 0,
