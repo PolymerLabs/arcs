@@ -34,6 +34,7 @@ export const pecIndustry = (loader): PecFactory => {
     create: () => ({
       worker: new Worker(workerBlobUrl || workerUrl),
       channel: new MessageChannel(),
+      usage: 0,
     })
   };
   // return a pecfactory
@@ -46,13 +47,18 @@ export const pecIndustry = (loader): PecFactory => {
     // a new worker and its messaging channel are created.
     const shouldEmplace = workerPool.active && !poolEntry;
     // Transfers port only if the worker is newly spawned.
-    const shouldTransferPort = !workerPool.active || shouldEmplace;
+    const shouldTransferPort = !workerPool.active || shouldEmplace ||
+        (!!poolEntry && poolEntry.usage === 0);
     const worker =
         poolEntry ? poolEntry.worker : new Worker(workerBlobUrl || workerUrl);
     const channel =
         poolEntry ? poolEntry.channel : new MessageChannel();
     if (shouldEmplace) {
       workerPool.emplace(worker, channel);
+    }
+    if (poolEntry) {
+      // Reuses a worker from the pool (increase its usage by 1)
+      poolEntry.usage++;
     }
     worker.postMessage({
       id: `${id}:inner`,

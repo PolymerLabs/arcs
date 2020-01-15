@@ -25,6 +25,7 @@ const POOL_SIZE_DEMAND = 3;
 interface PoolEntry {
   worker: Worker;
   channel: MessageChannel;
+  usage: number;
 }
 
 interface WorkerFactory {
@@ -113,10 +114,10 @@ export const workerPool = new (class {
   emplace(worker: Worker, channel: MessageChannel, toInUse: boolean = true) {
     if (toInUse) {
       // The path is for resurrecting workers spun up by the PEC factory.
-      this.inUse.set(channel.port2, {worker, channel} as PoolEntry);
+      this.inUse.set(channel.port2, {worker, channel, usage: 1} as PoolEntry);
     } else {
       // The path is for spawning workers ahead-of-time.
-      this.suspended.push({worker, channel} as PoolEntry);
+      this.suspended.push({worker, channel, usage: 0} as PoolEntry);
     }
   }
 
@@ -187,46 +188,48 @@ export const workerPool = new (class {
    * @param demand a demand that wishes to keep the worker pool size
    *               at least at this value.
    */
-  async shrinkOrGrow(demand: number = POOL_SIZE_DEMAND) {
-    // Resizing pool must be done by a single executor at a time.
-    if (this.policyState !== PolicyState.STANDBY) {
-      return;
-    }
-    this.policyState = PolicyState.PROCESSING;
-
-    // The actual shrink/grow process can be hanged up to the end of event
-    // loop to yield more computing resources with higher parallelism to other
-    // Arcs runtime/shell routines via relaxed 'await <reason>' calls.
-    await 'relax_in_general';
-
-    let numShrinkOrGrow = this.policy.arbitrate({
-      demand: POOL_SIZE_DEMAND,
-      free: this.suspended.length,
-      inUse: this.inUse.size,
-    });
-
-    if (numShrinkOrGrow > 0 && !!this.factory.create) {
-      // Grows the number of suspended/free workers by numShrinkOrGrow
-      for (; numShrinkOrGrow > 0; numShrinkOrGrow--) {
-        const {worker, channel} = this.factory.create();
-        this.emplace(worker, channel, /*toInUse=*/false);
-        await 'relax_growth';
+  shrinkOrGrow(demand: number = POOL_SIZE_DEMAND) {
+    setTimeout(async () => {
+      // Resizing pool must be done by a single executor at a time.
+      if (this.policyState !== PolicyState.STANDBY) {
+        return;
       }
-    } else if (numShrinkOrGrow < 0) {
-      // Shrinks the number of suspended/free workers by numShrinkOrGrow
-      for (; numShrinkOrGrow < 0; numShrinkOrGrow++) {
-        if (this.suspended.length === 0) {
-          // There are no spare suspended/free workers to terminated.
-          break;
+      this.policyState = PolicyState.PROCESSING;
+
+      // The actual shrink/grow process can be hanged up to the end of event
+      // loop to yield more computing resources with higher parallelism to other
+      // Arcs runtime/shell routines via relaxed 'await <reason>' calls.
+      await 'relax_in_general';
+
+      let numShrinkOrGrow = this.policy.arbitrate({
+        demand: POOL_SIZE_DEMAND,
+        free: this.suspended.length,
+        inUse: this.inUse.size,
+      });
+
+      if (numShrinkOrGrow > 0 && !!this.factory.create) {
+        // Grows the number of suspended/free workers by numShrinkOrGrow
+        for (; numShrinkOrGrow > 0; numShrinkOrGrow--) {
+          const {worker, channel} = this.factory.create();
+          this.emplace(worker, channel, /*toInUse=*/false);
+          await 'relax_growth';
         }
-        const {worker, channel} = this.suspended.pop();
-        channel.port2.close();
-        worker.terminate();
-        await 'relax_shrink';
+      } else if (numShrinkOrGrow < 0) {
+        // Shrinks the number of suspended/free workers by numShrinkOrGrow
+        for (; numShrinkOrGrow < 0; numShrinkOrGrow++) {
+          if (this.suspended.length === 0) {
+            // There are no spare suspended/free workers to terminated.
+            break;
+          }
+          const {worker, channel} = this.suspended.pop();
+          channel.port2.close();
+          worker.terminate();
+          await 'relax_shrink';
+        }
       }
-    }
 
-    this.policyState = PolicyState.STANDBY;
+      this.policyState = PolicyState.STANDBY;
+    }, 100);
   }
 
   /**
