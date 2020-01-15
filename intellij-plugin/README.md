@@ -4,9 +4,11 @@ An IntelliJ plugin supporting Arcs manifests (*.arcs files).
 
 ## For Users
 
-1) Install the plugin from build/distributions/arcs_gradle_plugin-1.0.zip
+1) Either follow the _For Developers_ workflow below or run `./gradlew buildPlugin` in this directory.
 
-2) That's it! (You can stop reading now.)
+2) Install the plugin from build/distributions/arcs_gradle_plugin-1.0.zip
+
+3) That's it! (You can stop reading now.)
 
 ## For Developers
 
