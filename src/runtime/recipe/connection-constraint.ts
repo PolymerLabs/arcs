@@ -172,10 +172,15 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
   }
 
   toString(nameMap?: ReadonlyMap<RecipeComponent, string>, options?: ToStringOptions): string {
-    let unresolved = '';
+    const subresults = [
+      `${this.from.toString(nameMap)}:`,
+      this.direction !== 'any' ? this.direction : '',
+      this.relaxed ? RelaxationKeyword : '',
+      this.to.toString(nameMap)
+    ];
     if (options && options.showUnresolved === true && this.type === 'obligation') {
-      unresolved = ' // unresolved obligation';
+      subresults.push('// unresolved obligation');
     }
-    return `${this.from.toString(nameMap)}: ${this.direction} ${this.relaxed ? RelaxationKeyword : ''} ${this.to.toString(nameMap)}${unresolved}`;
+    return subresults.filter(s => s !== '').join(' ');
   }
 }
