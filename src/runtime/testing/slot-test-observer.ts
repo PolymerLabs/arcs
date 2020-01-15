@@ -104,7 +104,6 @@ export class SlotTestObserver extends AbstractSlotObserver {
       this.addRenderExpectation({
         particleName,
         slotName,
-        contentTypes: options.contentTypes,
         isOptional: options.isOptional,
         hostedParticle: options.hostedParticle,
         verifyComplete: options.verify,

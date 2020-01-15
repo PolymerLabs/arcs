@@ -46,8 +46,8 @@ describe('suggestion composer', () => {
     //assert.isEmpty(suggestionComposer.suggestConsumers);
 
     observer.newExpectations()
-      .expectRenderSlot('MakeCake', 'item')
-      ;
+        .expectRenderSlot('MakeCake', 'item')
+        ;
 
     // Accept suggestion and replan: a suggestion consumer is created, but its content is empty.
     assert.deepEqual(suggestions[0].plan.particles.map(p => p.name), ['MakeCake']);
@@ -60,8 +60,8 @@ describe('suggestion composer', () => {
     //assert.lengthOf(suggestionComposer.suggestConsumers, 1);
 
     observer.newExpectations()
-      .expectRenderSlot('LightCandles', 'special')
-      ;
+        .expectRenderSlot('LightCandles', 'special')
+        ;
 
     assert.deepEqual(suggestions1[0].plan.particles.map(p => p.name), ['LightCandles']);
     await suggestions1[0].instantiate(arc);
@@ -95,11 +95,11 @@ describe('suggestion composer', () => {
     //assert.isEmpty(suggestionComposer.suggestConsumers);
 
     observer.newExpectations()
-      .expectRenderSlot('List', 'root')
-      .expectRenderSlot('MakeCake', 'item')
-      .expectRenderSlot('MakeCake', 'item')
-      .expectRenderSlot('MakeCake', 'item')
-      ;
+        .expectRenderSlot('List', 'root')
+        .expectRenderSlot('MakeCake', 'item')
+        .expectRenderSlot('MakeCake', 'item')
+        .expectRenderSlot('MakeCake', 'item')
+        ;
 
     assert.deepEqual(suggestions[0].plan.particles.map(p => p.name).sort(), ['CakeMuxer', 'List']);
     await suggestions[0].instantiate(arc);
@@ -125,8 +125,8 @@ describe('suggestion composer', () => {
     await innerSuggestion.instantiate(innerArc);
 
     observer.newExpectations()
-      .expectRenderSlot('LightCandles', 'special')
-      ;
+        .expectRenderSlot('LightCandles', 'special')
+        ;
     await arc.idle;
 
     const suggestions2 = await StrategyTestHelper.planForArc(arc);

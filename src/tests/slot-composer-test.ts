@@ -11,6 +11,7 @@
 import {Planner} from '../planning/arcs-planning.js';
 import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
+import {Flags} from '../runtime/flags.js';
 import {Loader} from '../platform/loader.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {SlotTestObserver} from '../runtime/testing/slot-test-observer.js';
@@ -19,6 +20,8 @@ import {ArcId} from '../runtime/id.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
+import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
+import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
 
 async function initSlotComposer(recipeStr) {
   const manifest = await Manifest.parse(recipeStr);
@@ -94,22 +97,29 @@ recipe
     assert.strictEqual(arc.pec.slotComposer, slotComposer);
 
     observer.newExpectations()
-      .expectRenderSlot('A', 'root')
-      .expectRenderSlot('B', 'mySlot')
-      .expectRenderSlot('BB', 'mySlot')
-      .expectRenderSlot('C', 'otherSlot')
-      ;
+        .expectRenderSlot('A', 'root')
+        .expectRenderSlot('B', 'mySlot')
+        .expectRenderSlot('BB', 'mySlot')
+        .expectRenderSlot('C', 'otherSlot')
+        ;
 
     await arc.instantiate(plan);
     await arc.idle;
     await observer.expectationsCompleted();
   });
 
-  // TODO(sjmiles): missing info on why this is skipped
-  it.skip('initialize recipe and render hosted slots', async () => {
+  it('initialize recipe and render hosted slots', async () => {
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+
     const loader = new Loader();
-    const context = await Manifest.load('./src/tests/particles/artifacts/products-test.recipes', loader);
-    const runtime = new Runtime({loader, context});
+
+    const file = Flags.useNewStorageStack ? 'ProductsTestNg.arcs' : 'products-test.recipes';
+    const manifest = `./src/tests/particles/artifacts/${file}`;
+    const context = await Manifest.load(manifest, loader, {memoryProvider});
+
+    const runtime = new Runtime({loader, context, memoryProvider});
+
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
@@ -123,11 +133,11 @@ recipe
     const observer = new SlotTestObserver();
     slotComposer.observeSlots(observer);
     observer
-      .newExpectations()
-      .expectRenderSlot('List', 'root')
-      .expectRenderSlot('List', 'root')
-      .expectRenderSlot('ShowProduct', 'item')
-      ;
+        .newExpectations()
+        .expectRenderSlot('List', 'root')
+        .expectRenderSlot('List', 'root')
+        .expectRenderSlot('ShowProduct', 'item')
+        ;
 
     await suggestion.instantiate(arc);
     await arc.idle;
@@ -161,17 +171,19 @@ recipe
     assert.isTrue(plan.isResolved());
 
     observer.newExpectations()
-      .expectRenderSlot('A', 'root')
-      .expectRenderSlot('B', 'item')
-      .expectRenderSlot('C', 'item')
-      ;
+        .expectRenderSlot('A', 'root')
+        .expectRenderSlot('B', 'item')
+        .expectRenderSlot('C', 'item')
+        ;
 
     await arc.instantiate(plan);
     await observer.expectationsCompleted();
   });
 
-  // TODO(sjmiles): missing info on why this is skipped
-  it.skip('renders inner slots in transformations without intercepting', async () => {
+  it('renders inner slots in transformations without intercepting', async () => {
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+
     const loader = new Loader(null, {
         'TransformationParticle.js': `defineParticle(({UiParticle}) => {
           return class extends UiParticle {
@@ -198,23 +210,18 @@ recipe
                     detail: consumes detail
               \`);
             }
-
             renderHostedSlot(slotName, hostedSlotId, content) {
               this.setState(content);
             }
-
             shouldRender() {
               return Boolean(this.state.template);
             }
-
             getTemplate() {
               return '<div>intercepted-template' + this.state.template + '</div>';
             }
-
             getTemplateName() {
               return this.state.templateName + '/intercepted';
             }
-
             render() {
               return Object.assign({}, this.state.model, {a: this.state.model.a + '/intercepted-model'});
             }
@@ -240,30 +247,27 @@ recipe
             }
           };
         });`
-      });
-      const context = await Manifest.parse(`
+    });
+
+    const context = await Manifest.parse(`
       particle TransformationParticle in 'TransformationParticle.js'
         root: consumes
-
       recipe
         slot0: slot 'rootslotid-root'
         TransformationParticle
-          root: consumes slot0`, {loader, fileName: ''});
-    const runtime = new Runtime({loader, context});
+          root: consumes slot0`, {loader, fileName: '', memoryProvider}
+    );
+
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 
-    const slotComposer = arc.pec.slotComposer;
     const observer = new SlotTestObserver();
-    slotComposer.observeSlots(observer);
+    arc.pec.slotComposer.observeSlots(observer);
+
     observer.newExpectations()
         .expectRenderSlot('A', 'content')
-        .expectRenderSlot('TransformationParticle', 'root')
-        .expectRenderSlot('B', 'detail')
-        .expectRenderSlot('TransformationParticle', 'root')
-        .expectRenderSlot('A', 'content')
-        .expectRenderSlot('TransformationParticle', 'root')
         .expectRenderSlot('B', 'detail')
         ;
     await arc.instantiate(recipe);
