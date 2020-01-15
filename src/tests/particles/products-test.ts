@@ -16,7 +16,7 @@ import {IdGenerator} from '../../runtime/id.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
-import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js'
+import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
 import {collectionHandleForTest, storageKeyForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
