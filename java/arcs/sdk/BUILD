@@ -35,5 +35,5 @@ arcs_kt_jvm_library(
         "jvm/JvmUtils.kt",
     ],
     kotlincopts = KOTLINC_OPTS + ["-Xallow-kotlin-package"],
-    visibility = ["//javatests/arcs/sdk/wasm:__pkg__"],
+    visibility = ["//visibility:public"],
 )
