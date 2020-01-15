@@ -13,7 +13,6 @@ package arcs.sdk.wasm
 
 import arcs.sdk.Entity
 import arcs.sdk.EntitySpec
-import arcs.sdk.NullTermByteArray
 
 /** Wasm-specific extensions to the base [Entity] interface. */
 interface WasmEntity : Entity {

@@ -25,3 +25,15 @@ kt_native_library(
     kotlincopts = KOTLINC_OPTS + ["-Xinline-classes"],
     visibility = ["//visibility:public"],
 )
+
+# Special package containing wasm srcs for unit testing (on the JVM).
+arcs_kt_jvm_library(
+    name = "arcs-wasm-testing",
+    testonly = 1,
+    srcs = glob(["*.kt"]) + [
+        "wasm/Encoding.kt",
+        "jvm/JvmUtils.kt",
+    ],
+    kotlincopts = KOTLINC_OPTS + ["-Xallow-kotlin-package"],
+    visibility = ["//visibility:public"],
+)

@@ -8,21 +8,21 @@ package arcs.sdk
 //
 // Current implementation doesn't support references or optional field detection
 
-import arcs.sdk.NullTermByteArray
+import arcs.sdk.wasm.NullTermByteArray
 import arcs.sdk.ReadableCollection
 import arcs.sdk.ReadableSingleton
 import arcs.sdk.ReadWriteCollection
 import arcs.sdk.ReadWriteSingleton
-import arcs.sdk.StringDecoder
-import arcs.sdk.StringEncoder
+import arcs.sdk.wasm.StringDecoder
+import arcs.sdk.wasm.StringEncoder
 import arcs.sdk.WritableCollection
 import arcs.sdk.WritableSingleton
-import arcs.sdk.toUtf8String
 import arcs.sdk.wasm.WasmCollection
 import arcs.sdk.wasm.WasmEntity
 import arcs.sdk.wasm.WasmEntitySpec
 import arcs.sdk.wasm.WasmParticle
 import arcs.sdk.wasm.WasmSingleton
+import arcs.sdk.wasm.toUtf8String
 
 class GoldInternal1() : WasmEntity {
 

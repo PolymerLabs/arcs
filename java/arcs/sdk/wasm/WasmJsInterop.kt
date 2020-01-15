@@ -11,7 +11,6 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.StringDecoder
 import kotlin.native.Retain
 import kotlin.native.internal.ExportForCppRuntime
 import kotlinx.cinterop.ByteVar

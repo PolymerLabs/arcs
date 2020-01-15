@@ -11,8 +11,6 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.NullTermByteArray
-
 object WasmRuntimeClient {
     fun <T : WasmEntity> singletonClear(particle: WasmParticle, singleton: WasmSingleton<T>) =
         singletonClear(particle.toAddress(), singleton.toAddress())
