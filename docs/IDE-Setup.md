@@ -91,6 +91,13 @@ Consider using the [IDE file chooser](https://intellij-support.jetbrains.com/hc/
 
 #### IDE shows `Unresolved Reference` for generated entities
 
+- Ensure that your Kotlin plugin is at version 1.3.61 or higher: Preferences > Plugins > Installed > Kotlin 
+- Ensure that your IDE is at an recent enough version
+| IDE            | Version |
+| -------------- | ------- |
+| Android Studio | 3.6+    |
+| IntelliJ       | TBD     | 
+- Ensure that Bazel is version 1.2 (2.0 will cause problems)
 - Try Invalidating Caches: File > Invalidate Caches > Invalidate and Restart
 - Try [this workaround](https://github.com/bazelbuild/intellij/issues/490#issuecomment-454030118) (1 should be sufficient).
 
