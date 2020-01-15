@@ -11,9 +11,9 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 
-import {Direction} from '../manifest-ast-nodes.js';
+import {Direction, RelaxationKeyword} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
-import {Comparable, compareArrays, compareComparables, compareStrings} from './comparable.js';
+import {Comparable, compareArrays, compareComparables, compareStrings, compareBools} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
 import {Particle} from './particle.js';
 
@@ -135,14 +135,16 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
   from: EndPoint;
   to: EndPoint;
   direction: Direction;
+  relaxed: boolean;
   type: 'constraint' | 'obligation';
 
-  constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: Direction, type: 'constraint' | 'obligation') {
+  constructor(fromConnection: EndPoint, toConnection: EndPoint, direction: Direction, relaxed: boolean, type: 'constraint' | 'obligation') {
     assert(direction);
     assert(type);
     this.from = fromConnection;
     this.to = toConnection;
     this.direction = direction;
+    this.relaxed = relaxed;
     this.type = type;
     Object.freeze(this);
   }
@@ -153,11 +155,11 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
         assert(false, `Can't have connection constraints of type constraint with InstanceEndPoints`);
       } else {
         return recipe.newConnectionConstraint(
-            this.from._clone(), this.to._clone(), this.direction);
+            this.from._clone(), this.to._clone(), this.direction, this.relaxed);
       }
     }
 
-    return recipe.newObligation(this.from._clone(cloneMap), this.to._clone(cloneMap), this.direction);
+    return recipe.newObligation(this.from._clone(cloneMap), this.to._clone(cloneMap), this.direction, this.relaxed);
   }
 
   _compareTo(other: ConnectionConstraint): number {
@@ -165,6 +167,7 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     if ((cmp = this.from._compareTo(other.from)) !== 0) return cmp;
     if ((cmp = this.to._compareTo(other.to)) !== 0) return cmp;
     if ((cmp = compareStrings(this.direction, other.direction)) !== 0) return cmp;
+    if ((cmp = compareBools(this.relaxed, other.relaxed)) !== 0) return cmp;
     return 0;
   }
 
@@ -173,6 +176,6 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     if (options && options.showUnresolved === true && this.type === 'obligation') {
       unresolved = ' // unresolved obligation';
     }
-    return `${this.from.toString(nameMap)}: ${this.direction} ${this.to.toString(nameMap)}${unresolved}`;
+    return `${this.from.toString(nameMap)}: ${this.direction} ${this.relaxed ? RelaxationKeyword : ''} ${this.to.toString(nameMap)}${unresolved}`;
   }
 }

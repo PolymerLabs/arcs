@@ -947,7 +947,7 @@ SlotDirection
   = 'provides' / 'consumes'
 
 RecipeConnection
-  = from:ConnectionTargetWithColon? direction:(Direction whiteSpace)? to:ConnectionTarget eolWhiteSpace
+  = from:ConnectionTargetWithColon? direction:(Direction whiteSpace)? relaxed:('someof' whiteSpace)? to:ConnectionTarget eolWhiteSpace
   {
     const anyTarget = toAstNode<AstNode.NameConnectionTarget>({
       kind: 'connection-target',
@@ -959,6 +959,7 @@ RecipeConnection
     return toAstNode<AstNode.RecipeConnection>({
       kind: 'connection',
       direction: optional(direction, d => d[0], 'any'),
+      relaxed: !!relaxed,
       from: from || anyTarget,
       to,
     });

@@ -905,7 +905,7 @@ ${e.message}
     for (const connection of items.connections) {
       const from = prepareEndpoint(connection, connection.from);
       const to = prepareEndpoint(connection, connection.to);
-      recipe.newConnectionConstraint(from, to, connection.direction);
+      recipe.newConnectionConstraint(from, to, connection.direction, connection.relaxed);
     }
 
     if (items.search) {
@@ -1049,7 +1049,6 @@ ${e.message}
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         const direction = connectionItem.direction;
-        const relaxed = connectionItem.relaxed;
         if (!connectionMatchesHandleDirection(direction, connection.direction)) {
           throw new ManifestError(
               connectionItem.location,
@@ -1064,7 +1063,7 @@ ${e.message}
         }
         // TODO(cypher1): If particle handle connections are able to be relaxed this will need to be expanded to
         // perform relaxation matching.
-        connection.relaxed = relaxed;
+        connection.relaxed = connectionItem.relaxed;
 
         let targetHandle: Handle;
         let targetParticle: Particle;

@@ -11,6 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../particle-spec.js';
 import {Type} from '../type.js';
+import {RelaxationKeyword} from '../manifest-ast-nodes.js';
 
 import {acceptedDirections} from './direction-util.js';
 import {Handle} from './handle.js';
@@ -110,6 +111,12 @@ export class HandleConnection implements Comparable<HandleConnection> {
     const spec = this.spec;
     return spec ? spec.direction : 'any';
   }
+  get relaxed() {
+    return this._relaxed;
+  }
+  set relaxed(relaxed: boolean) {
+    this._relaxed = relaxed;
+  }
 
   get isInput(): boolean {
     return this.direction === 'reads' || this.direction === 'reads writes';
@@ -132,10 +139,6 @@ export class HandleConnection implements Comparable<HandleConnection> {
     }
     this._direction = direction;
     this._resetHandleType();
-  }
-
-  set relaxed(relaxed: boolean) {
-    this._relaxed = relaxed;
   }
 
   get spec(): HandleConnectionSpec {
@@ -284,7 +287,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
     result.push(`${this.name || '*'}:`);
     // TODO(cypher1): support optionality.
     result.push(this.direction);
-    result.push(this.relaxed ? 'someof' : '');
+    result.push(this.relaxed ? RelaxationKeyword : '');
     if (this.handle) {
       if (this.handle.immediateValue) {
         result.push(this.handle.immediateValue.name);

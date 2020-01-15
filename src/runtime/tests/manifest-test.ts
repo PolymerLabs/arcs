@@ -630,6 +630,11 @@ ${particleStr1}
       assert.lengthOf(recipe.particles, 3);
       assert.lengthOf(recipe.handles, 1);
       assert.lengthOf(recipe.handleConnections, 3);
+      const recipe_pc = recipe.particles[2];
+      assert.lengthOf(Object.keys(recipe_pc.connections), 1);
+      assert.include(Object.keys(recipe_pc.connections), 'foo');
+      const handle = recipe_pc.connections['foo'];
+      assert(handle.relaxed, 'handle should be relaxed');
     });
     it('can round trip a manifest containing relaxed reads', async () => {
       const manifestStr = `schema Thing
