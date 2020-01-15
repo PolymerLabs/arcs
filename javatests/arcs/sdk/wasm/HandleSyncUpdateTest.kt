@@ -16,17 +16,20 @@ import arcs.sdk.Handle
 class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
+        if (allSynced) {
+            val ptr = HandleSyncUpdateTest_Res()
+            ptr.txt = if (sng.get() != null) "sng:populated" else "sng:null"
+            res.store(ptr)
+        }
     }
 
     override fun onHandleUpdate(handle: Handle) {
         val out = HandleSyncUpdateTest_Res()
         out.txt = "update:${handle.name}"
         if (handle.name == "sng") {
-            val data = (handle as WasmSingletonImpl<*>).get() as HandleSyncUpdateTest_Sng
-            out.num = data.num
+            out.num = sng.get()?.num ?: -1.0
         } else if (handle.name == "col") {
-            val data = (handle as WasmCollectionImpl<*>).iterator().next() as HandleSyncUpdateTest_Col
-            out.num = data.num
+            out.num = if (col.size > 0) col.iterator().next().num else -1.0
         } else {
             out.txt = "unexpected handle name: ${handle.name}"
         }

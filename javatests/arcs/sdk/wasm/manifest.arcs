@@ -103,6 +103,7 @@ particle SingletonApiTest in '$module.wasm'
   inHandle: reads {num: Number, txt: Text}
   outHandle: writes {num: Number, txt: Text}
   ioHandle: reads writes {num: Number, txt: Text}
+  errors: writes [{msg: Text}]
 
 recipe SingletonApiTest
   s1: slot 'rootslotid-root'
@@ -111,6 +112,7 @@ recipe SingletonApiTest
     inHandle: reads h1
     outHandle: writes h2
     ioHandle: reads writes h3
+    errors: writes h4
 
 // -----------------------------------------------------------------------------------------------
 

@@ -15,8 +15,18 @@ class SingletonApiTest : AbstractSingletonApiTest() {
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
             "case1" -> {
+                if (ioHandle.get() == null) {
+                    errors.store(
+                        SingletonApiTest_Errors(msg = "case1: populated handle should not be null")
+                    )
+                }
                 outHandle.clear()
                 ioHandle.clear()
+                if (ioHandle.get() != null) {
+                    errors.store(
+                        SingletonApiTest_Errors(msg = "case1: cleared handle should be null")
+                    )
+                }
             }
             "case2" -> {
                 val input = inHandle.get()
@@ -35,6 +45,20 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                 )
                 d.num = d.num.times(3)
                 ioHandle.set(d)
+            }
+            "case4" -> {
+                if (ioHandle.get() != null) {
+                    errors.store(
+                        SingletonApiTest_Errors(msg = "case4: cleared handle should be null")
+                    )
+                }
+                outHandle.set(SingletonApiTest_OutHandle(txt = "out", num = 0.0))
+                ioHandle.set(SingletonApiTest_IoHandle(txt = "io", num = 0.0))
+                if (ioHandle.get() == null) {
+                    errors.store(
+                        SingletonApiTest_Errors(msg = "case4: populated handle should not be null")
+                    )
+                }
             }
         }
     }

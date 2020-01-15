@@ -92,19 +92,29 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // The order in which handles are synchronized isn't guaranteed, so allow for either result.
       const syncs = (await res.toList()).map(e => e.txt);
       if (syncs[0] === 'sync:sng:false') {
-        assert.deepStrictEqual(syncs, ['sync:sng:false', 'sync:col:true']);
+        assert.deepStrictEqual(syncs, ['sync:sng:false', 'sync:col:true', 'sng:null']);
       } else {
-        assert.deepStrictEqual(syncs, ['sync:col:false', 'sync:sng:true']);
+        assert.deepStrictEqual(syncs, ['sync:col:false', 'sync:sng:true', 'sng:null']);
       }
       await res.clear();
 
+      // onHandleUpdate: txt = 'update:<handle-name>'; num = data.num or -1 for null/empty
+      // The updates order should match the storage calls.
       await sng.set(new sng.entityClass({num: 3}));
-      await col.add(new col.entityClass({num: 7}));
+      const e = new col.entityClass({num: 7});
+      await col.add(e);
       await arc.idle;
 
-      // onHandleUpdate: txt = 'update:<handle-name>'; num = data.num
-      // The updates order should match the set() calls above.
-      assert.deepStrictEqual(await res.toList(), [{txt: 'update:sng', num: 3}, {txt: 'update:col', num: 7}]);
+      await sng.clear();
+      await col.remove(e);
+      await arc.idle;
+
+      assert.deepStrictEqual(await res.toList(), [
+        {txt: 'update:sng', num: 3},
+        {txt: 'update:col', num: 7},
+        {txt: 'update:sng', num: -1},
+        {txt: 'update:col', num: -1},
+      ]);
     });
 
     it('getTemplate / populateModel / renderSlot', async () => {
@@ -228,6 +238,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const inHandle = await singletonHandleForTest(arc, stores.get('inHandle'));
       const outHandle = await singletonHandleForTest(arc, stores.get('outHandle'));
       const ioHandle = await singletonHandleForTest(arc, stores.get('ioHandle'));
+      const errors = await collectionHandleForTest(arc, stores.get('errors'));
 
       const sendEvent = async handler => {
         await arc.idle;
@@ -251,6 +262,16 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await ioHandle.set(new ioHandle.entityClass({num: 4}));
       await sendEvent('case3');
       assert.deepStrictEqual(await ioHandle.get(), {num: 12, txt: ''});
+
+      // set() on out/io with pre-cleared stores
+      await outHandle.clear();
+      await ioHandle.clear();
+      await sendEvent('case4');
+      assert.deepStrictEqual(await outHandle.get(), {num: 0, txt: 'out'});
+      assert.deepStrictEqual(await ioHandle.get(), {num: 0, txt: 'io'});
+
+      // Check that the null/non-null state of handles was correct.
+      assert.deepStrictEqual((await errors.toList()).map(e => e.msg), []);
     });
 
     it('collection storage API', async () => {
@@ -322,7 +343,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       // onHandleSync tests uninitialised reference handles.
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        's::empty <> !{}',  // no id or entity data; dereference is a no-op
+        's::null',  // handle should just be null
       ]);
       await res.clear();
 
@@ -373,13 +394,16 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const output = stores.get('output') as VolatileSingleton;
       const res = stores.get('res') as VolatileCollection;
 
-      // onHandleSync tests uninitialised reference fields.
+      // Uninitialised reference fields.
+      await input.set({id: 'i0', rawData: {num: 5}});
+      await arc.idle;
+
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        'empty <> !{}',  // no id or entity data; dereference is a no-op
+        'before <> !{}',  // no id or entity data; dereference is a no-op (no 'after' output)
       ]);
       await res.clear();
 
-      // onHandleUpdate tests populated reference fields.
+      // Populated reference fields.
       const refType = input.type.getEntitySchema().fields.ref.schema.model;  // yikes
       const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
       const backingStore = await volatileEngine.baseStorageFor(refType, volatileEngine.baseStorageKey(refType));

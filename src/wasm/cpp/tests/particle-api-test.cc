@@ -7,15 +7,21 @@ public:
     arcs::HandleSyncUpdateTest_Res out;
     out.set_txt("sync:" + name + (all_synced ? ":true" : ":false"));
     res_.store(out);
+    if (all_synced) {
+      arcs::HandleSyncUpdateTest_Res ptr;
+      ptr.set_txt(sng_.get() ? "sng:populated" : "sng:null");
+      res_.store(ptr);
+    }
   }
 
   void onHandleUpdate(const std::string& name) override {
     arcs::HandleSyncUpdateTest_Res out;
     out.set_txt("update:" + name);
     if (auto input = getSingleton<arcs::HandleSyncUpdateTest_Sng>(name)) {
-      out.set_num(input->get().num());
+      const arcs::HandleSyncUpdateTest_Sng* data = input->get();
+      out.set_num(data ? data->num() : -1);
     } else if (auto input = getCollection<arcs::HandleSyncUpdateTest_Col>(name)) {
-      out.set_num(input->begin()->num());
+      out.set_num(input->size() ? input->begin()->num() : -1);
     } else {
       out.set_txt("unexpected handle name: " + name);
     }
@@ -37,8 +43,8 @@ public:
   }
 
   void onHandleUpdate(const std::string& name) override {
-    const arcs::RenderTest_Flags& flags = flags_.get();
-    renderSlot("root", flags._template(), flags.model());
+    const arcs::RenderTest_Flags* flags = flags_.get();
+    renderSlot("root", flags->_template(), flags->model());
   }
 };
 
@@ -52,8 +58,7 @@ public:
   }
 
   std::string getTemplate(const std::string& slot_name) override {
-    const arcs::AutoRenderTest_Data& data = data_.get();
-    return data.txt();
+    return data_.get()->txt();
   }
 };
 
@@ -111,7 +116,7 @@ public:
     arcs::UnicodeTest_Res out;
     out.set_src("åŗċş 🌈");
     if (name == "sng") {
-      out.set_pass(sng_.get().pass());
+      out.set_pass(sng_.get()->pass());
     } else {
       out.set_pass(col_.begin()->pass());
     }
@@ -127,9 +132,9 @@ public:
   void onHandleSync(const std::string& name, bool all_synced) override {
     if (!all_synced) return;
 
-    store1("s1:", s1_.get());
-    store2("s2:", s2_.get());
-    store3("s3:", s3_.get());
+    store1("s1:", *s1_.get());
+    store2("s2:", *s2_.get());
+    store3("s3:", *s3_.get());
 
     for (const auto& e : c1_) {
       store1("c1:", e);

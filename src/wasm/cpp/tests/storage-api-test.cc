@@ -7,17 +7,45 @@ class SingletonApiTest : public AbstractSingletonApiTest {
 public:
   void fireEvent(const std::string& slot_name, const std::string& handler, const arcs::Dictionary& eventData) override {
     if (handler == "case1") {
+      if (ioHandle_.get() == nullptr) {
+        report("case1: populated handle should not be null");
+      }
       outHandle_.clear();
       ioHandle_.clear();
+      if (ioHandle_.get() != nullptr) {
+        report("case1: cleared handle should be null");
+      }
     } else if (handler == "case2") {
-      arcs::SingletonApiTest_OutHandle d = arcs::clone_entity(inHandle_.get());
+      arcs::SingletonApiTest_OutHandle d = arcs::clone_entity(*inHandle_.get());
       d.set_num(d.num() * 2);
       outHandle_.set(d);
     } else if (handler == "case3") {
-      arcs::SingletonApiTest_IoHandle d = arcs::clone_entity(ioHandle_.get());
+      arcs::SingletonApiTest_IoHandle d = arcs::clone_entity(*ioHandle_.get());
       d.set_num(d.num() * 3);
       ioHandle_.set(d);
+    } else if (handler == "case4") {
+      if (ioHandle_.get() != nullptr) {
+        report("case4: cleared handle should be null");
+      }
+
+      arcs::SingletonApiTest_OutHandle d1;
+      d1.set_txt("out");
+      outHandle_.set(d1);
+
+      arcs::SingletonApiTest_IoHandle d2;
+      d2.set_txt("io");
+      ioHandle_.set(d2);
+
+      if (ioHandle_.get() == nullptr) {
+        report("case4: populated handle should not be null");
+      }
     }
+  }
+
+  void report(const std::string& msg) {
+    arcs::SingletonApiTest_Errors e;
+    e.set_msg(msg);
+    errors_.store(e);
   }
 };
 
@@ -98,16 +126,16 @@ DEFINE_PARTICLE(CollectionApiTest)
 class ReferenceHandlesTest : public AbstractReferenceHandlesTest {
 public:
   void onHandleSync(const std::string& name, bool all_synced) override {
-    if (!all_synced) return;
-
-    const arcs::Ref<arcs::ReferenceHandlesTest_Sng>& ref = sng_.get();
-    report("s::empty", ref);
-    dereference(ref, [this, &ref] { report("should not be reached", ref); });
+    if (all_synced) {
+      arcs::ReferenceHandlesTest_Res ptr;
+      ptr.set_txt(sng_.get() ? "s::populated" : "s::null");
+      res_.store(ptr);
+    }
   }
 
   void onHandleUpdate(const std::string& name) override {
     if (name == "sng") {
-      const arcs::Ref<arcs::ReferenceHandlesTest_Sng>& ref = sng_.get();
+      const arcs::Ref<arcs::ReferenceHandlesTest_Sng>& ref = *sng_.get();
       report("s::before", ref);
       dereference(ref, [this, &ref] { report("s::after", ref); });
     } else if (name == "col") {
@@ -133,16 +161,8 @@ DEFINE_PARTICLE(ReferenceHandlesTest)
 
 class SchemaReferenceFieldsTest : public AbstractSchemaReferenceFieldsTest {
 public:
-  void onHandleSync(const std::string& name, bool all_synced) override {
-    if (!all_synced) return;
-
-    const arcs::Ref<arcs::SchemaReferenceFieldsTest_Input_Ref>& ref = input_.get().ref();
-    report("empty", ref);
-    dereference(ref, [this, &ref] { report("should not be reached", ref); });
-  }
-
   void onHandleUpdate(const std::string& name) override {
-    const arcs::Ref<arcs::SchemaReferenceFieldsTest_Input_Ref>& ref = input_.get().ref();
+    const arcs::Ref<arcs::SchemaReferenceFieldsTest_Input_Ref>& ref = input_.get()->ref();
     report("before", ref);
     dereference(ref, [this, &ref] {
       report("after", ref);
@@ -150,7 +170,7 @@ public:
       arcs::SchemaReferenceFieldsTest_Output_Ref foo;
       Accessor::set_id(&foo, "foo1");
 
-      arcs::SchemaReferenceFieldsTest_Output data = arcs::clone_entity(input_.get());
+      arcs::SchemaReferenceFieldsTest_Output data = arcs::clone_entity(*input_.get());
       data.set_txt("xyz");
       data.set_ref(foo);
 
