@@ -18,9 +18,9 @@ class UnicodeTest : AbstractUnicodeTest() {
         val out = UnicodeTest_Res(pass = "", src = "")
         out.src = "åŗċş 🌈"
         out.pass = if (handle.name == "sng") {
-            ((handle as WasmSingleton<*>).get() as UnicodeTest_Sng).pass
+            ((handle as WasmSingletonImpl<*>).get() as UnicodeTest_Sng).pass
         } else {
-            ((handle as WasmCollection<*>).iterator().next() as UnicodeTest_Col).pass
+            ((handle as WasmCollectionImpl<*>).iterator().next() as UnicodeTest_Col).pass
         }
         res.store(out)
     }

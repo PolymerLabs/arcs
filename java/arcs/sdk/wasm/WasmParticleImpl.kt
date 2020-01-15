@@ -17,7 +17,7 @@ import arcs.sdk.Particle
 /**
  * Base class for all wasm particles.
  */
-abstract class WasmParticle : Particle {
+abstract class WasmParticleImpl : Particle {
     private val handles: MutableMap<String, Handle> = mutableMapOf()
     private val toSync: MutableSet<Handle> = mutableSetOf()
     private val eventHandlers: MutableMap<String, (Map<String, String>) -> Unit> = mutableMapOf()

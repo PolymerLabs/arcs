@@ -16,7 +16,7 @@ import arcs.sdk.Handle
 /** Base [Handle] implementation for WASM. */
 abstract class WasmHandle<T : WasmEntity>(
     override val name: String,
-    val particle: WasmParticle
+    val particle: WasmParticleImpl
 ) : Handle {
     init {
         particle.registerHandle(this)
