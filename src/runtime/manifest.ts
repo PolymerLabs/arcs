@@ -604,8 +604,8 @@ ${e.message}
               fields[name] = type;
               if (fields[name].refinement) {
                 fields[name].refinement = Refinement.fromAst(fields[name].refinement, {[name]: type.type});
-                typeData[name] = type.type;
               }
+              typeData[name] = type.type;
             }
             const refinement = node.refinement && Refinement.fromAst(node.refinement, typeData);
             let schema = new Schema(names, fields, {refinement});
