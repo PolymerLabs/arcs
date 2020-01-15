@@ -94,30 +94,8 @@ abstract class WasmParticle : Particle {
         onHandleSync(handle, toSync.isEmpty())
     }
 
-    /**
-     * React to handle updates.
-     *
-     * Called for handles when change events are received from the backing store. Default action is to trigger
-     * rendering.
-     *
-     * @param handle Singleton or Collection handle
-     */
-    open fun onHandleUpdate(handle: Handle) = Unit
-
-    /**
-     * React to handle synchronization.
-     *
-     * Called for handles that are marked for synchronization at connection, when they are updated with the full model
-     * of their data. This will occur once after setHandles() and any time thereafter if the handle is resynchronized.
-     * Default action is to trigger rendering.
-     *
-     * @param handle Singleton or Collection handle
-     * @param allSynced flag indicating if all handles are synchronized
-     */
-    open fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
-
     /** Rendering through UiBroker */
-    fun renderOutput() {
+    override fun renderOutput() {
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let {
@@ -125,27 +103,6 @@ abstract class WasmParticle : Particle {
         }
         WasmRuntimeClient.onRenderOutput(this, template, model)
     }
-
-    /**
-     * Define template for rendering (optional)
-     *
-     * @param slotName name of slot where template is rendered.
-     * @see [renderOutput]
-     */
-    open fun getTemplate(slotName: String): String? = null
-
-    /**
-     * Populate model for rendering (UiBroker model)
-     *
-     * @param slotName name of slot where model data is populated
-     * @param model Starting model state; Default: empty map
-     * @return new model state
-     * @see [renderOutput]
-     */
-    open fun populateModel(
-        slotName: String,
-        model: Map<String, Any> = mapOf()
-    ): Map<String, Any>? = model
 
     /** @deprecated for contexts using UiBroker (e.g Kotlin) */
     @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()"))
