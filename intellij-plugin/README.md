@@ -6,9 +6,15 @@ An IntelliJ plugin supporting Arcs manifests (*.arcs files).
 
 1) Either follow the _For Developers_ workflow below or run `./gradlew buildPlugin` in this directory.
 
-2) Install the plugin from build/distributions/arcs_gradle_plugin-1.0.zip
+2) Open up Settings panel in Intellij or Android Studio.
 
-3) That's it! (You can stop reading now.)
+![File > Settings](images/settings.png)
+
+3) Select Plugin section, select "Install Plugin from Disk...".
+
+![Plugins > Install Plugin from Disk...](images/plugin_from_disk.png)
+
+4) Select `build/distributions/arcs_gradle_plugin-1.0.zip`.
 
 ## For Developers
 
