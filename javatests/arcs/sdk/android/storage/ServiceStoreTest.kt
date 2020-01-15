@@ -80,8 +80,7 @@ class ServiceStoreTest {
         assertThat(data.values).isEmpty()
 
         // Increment at the binding context directly.
-        val deferredResult =
-            DeferredResult(coroutineContext)
+        val deferredResult = DeferredResult(coroutineContext)
         service.sendProxyMessage(
             ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
                 listOf(CrdtCount.Operation.Increment("alice", 0 to 1)),

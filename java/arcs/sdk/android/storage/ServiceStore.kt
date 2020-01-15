@@ -124,8 +124,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
-        val result =
-            DeferredResult(coroutineContext)
+        val result = DeferredResult(coroutineContext)
         sendQueue.enqueue {
             service.sendProxyMessage(message.toParcelable(crdtType), result)
         }

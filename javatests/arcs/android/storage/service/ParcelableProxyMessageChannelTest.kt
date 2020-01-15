@@ -76,8 +76,7 @@ class ParcelableProxyMessageChannelTest {
         try {
             supervisorScope {
                 val channel = ParcelableProxyMessageChannel(coroutineContext)
-                val deferredResult =
-                    DeferredResult(coroutineContext)
+                val deferredResult = DeferredResult(coroutineContext)
                 channel.onProxyMessage(makeMessage(0), deferredResult)
                 channel.openSubscription().receive().result.complete(false)
                 deferredResult.await()

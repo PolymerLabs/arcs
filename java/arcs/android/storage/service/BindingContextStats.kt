@@ -32,8 +32,7 @@ interface BindingContextStatisticsSink {
  *
  * **Note:** This makes the assumption that the distribution of processing times is normal.
  */
-interface BindingContextStatistics :
-    BindingContextStatisticsSink {
+interface BindingContextStatistics : BindingContextStatisticsSink {
     val roundtripMean: Double
     val roundtripStdDev: Double
     val roundtripPercentiles: Percentiles
@@ -53,8 +52,7 @@ interface BindingContextStatistics :
 }
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-class BindingContextStatsImpl :
-    BindingContextStatistics {
+class BindingContextStatsImpl : BindingContextStatistics {
     private val runningStats = RunningStatistics()
     private val mutex = Mutex()
     override val roundtripMean: Double

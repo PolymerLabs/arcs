@@ -73,7 +73,7 @@ class StorageServiceTest {
 
         // Act:
         // Issue a proxy message to the binding context (and transitively: to the storage service)
-        runBlocking {
+        val success = runBlocking {
             // Wait to let the resurrection request propagate.
             while (service.loadJob == null) {
                 delay(100)
@@ -91,7 +91,8 @@ class StorageServiceTest {
             )
 
             deferredResult.await()
-        }.let(::assertThat).isTrue()
+        }
+        assertThat(success).isTrue()
 
         // Verify:
         // Pass the nextStartedService to the resurrectionHelper. If it was a resurrection intent,
