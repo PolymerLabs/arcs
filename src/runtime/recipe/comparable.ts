@@ -54,7 +54,7 @@ export function compareObjects<a>(o1: Dictionary<a> | null, o2: Dictionary<a> | 
 }
 
 export interface Comparable<T> {
-  _compareTo<T>(other: Comparable<T>): number;
+  _compareTo(other: Comparable<T>): number;
 }
 
 export function compareComparables<T>(o1: Comparable<T> | null, o2: Comparable<T> | null) {
