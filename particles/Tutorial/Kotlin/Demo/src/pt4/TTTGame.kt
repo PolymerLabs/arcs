@@ -38,13 +38,11 @@ class TTTGame : AbstractTTTGame() {
         }
         if (handle.name == "playerOne" && playerOne.get()?.id != 0.0) {
             val p1 = playerOne.get() ?: TTTGame_PlayerOne()
-            p1.id = 0.0
-            playerOne.set(p1)
+            playerOne.set(p1.apply { id = 0.0 })
         }
         if (handle.name == "playerTwo" && playerTwo.get()?.id != 1.0) {
             val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
-            p2.id = 1.0
-            playerTwo.set(p2)
+            playerTwo.set(p2.apply { id = 1.0 })
         }
     }
 
@@ -102,10 +100,8 @@ class TTTGame : AbstractTTTGame() {
                 gameOver = false,
                 winnerAvatar = ""
             ))
-            mv1.move = -1.0
-            mv2.move = -1.0
-            playerOneMove.set(mv1)
-            playerTwoMove.set(mv2)
+            playerOneMove.set(mv1.apply{ move = -1.0 })
+            playerTwoMove.set(mv2.apply{ move = -1.0 })
             events.clear()
         }
         renderOutput()
