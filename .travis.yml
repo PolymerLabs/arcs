@@ -50,11 +50,14 @@ jobs:
         on:
           branch: master
 
-# Use travis to cache a Bazel disk-cache.
-# This connects to the docker container via a volume mount (`-v /home/travis/disk-cache:/disk-cache/`).
-# Bazel will store artifacts here due to the `--disk_cache=/disk-cache/` argument.
+# Disable NPM cache as it's caching node_modules (not ~/.npm) since we aren't using
+# `npm ci`, and caching node_modules can mask errors due to a fresh install missing
+# modules that were previously present.
+# TODO(wkorman): Look at cleaning up disk-cache items in tools/* as they may have related to
+# the npm cache, and we're not sure we're still using the bazel cache they were intended for
+# either.
 cache:
-  npm: true
+  npm: false
 
 # Pulling container from https://hub.docker.com/repository/docker/arcproject/travis-build
 before_install:
