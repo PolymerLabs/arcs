@@ -261,14 +261,13 @@ export class APIPort {
   }
 
   close(): void {
-    if (!workerPool.exist(this._port)) {
-      this._port.close();
-    } else {
+    if (workerPool.exist(this._port)) {
       // The worker associated with this port is put into the suspended list
       // rather than being destroyed immediately when this PEH/PEC APIPort
       // is closed.
       workerPool.suspend(this._port);
     }
+    this._port.close();
   }
 
   @NoTraceWithReason('Chatty')
