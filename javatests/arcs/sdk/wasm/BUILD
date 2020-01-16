@@ -47,7 +47,7 @@ arcs_kt_library(
     jvm = False,
     deps = [
         ":schemas",
-        "//java/arcs/sdk:arcs",
+        "//java/arcs/sdk",
     ],
 )
 
@@ -56,7 +56,7 @@ arcs_kt_jvm_test_suite(
     srcs = WASM_UNIT_TEST_SRCS,
     package = "arcs.sdk.wasm",
     deps = [
-        "//java/arcs/sdk:arcs-wasm-testing",
+        "//java/arcs/sdk:sdk-wasm-testing",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
     ],

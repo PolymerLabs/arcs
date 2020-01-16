@@ -3,8 +3,8 @@
 ## Build the SDK
 
 - Android: TBD
-- Jvm: `./bazelisk build //java/arcs/sdk:arcs`
-- Wasm: `./bazelisk build //java/arcs/sdk:arcs-wasm`
+- Jvm: `./bazelisk build //java/arcs/sdk`
+- Wasm: `./bazelisk build //java/arcs/sdk:sdk-wasm`
 
 ## Test the SDK
 
