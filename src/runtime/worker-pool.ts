@@ -163,21 +163,21 @@ export const workerPool = new (class {
     if (entry) {
       // Assigns a new message channel to avoid wrong handle updates passed
       // to this worker (the updated handles belong to the particles in the
-      // previous PEC).
+      // previous PEC, this shouldn't have happened!).
       //
       // TODO(ianchang):
-      // Reuses the old channel as possible after fixing the issue:
+      // Reuses the old channel after fixing the Arcs PEH/PEC issue:
       // PEC StorageProxy registers with PEH to listen to updates on handles.
-      // Even though PEH and PEC are closed, the registered listeners are still
-      // in play i.e. long-running handles for data ingestion.
+      // Even after PEH and PEC are closed, the registered listeners are still
+      // in play (not unregistered) i.e. handles for data ingestion.
       // If a message channel is reused, the registered listeners would keep
-      // forwarding the updates to this worker even though no PEC/particles are
-      // breathing in this worker turns out unexpected behavior or even crash.
+      // forwarding the updates to this worker even though this workers has
+      // been suspended turns out unexpected behavior or exception.
       if (entry.usage > 0) {
         entry.channel = new MessageChannel();
       }
 
-      // Keeps tracking this worker usage and stats.
+      // Keeps tracking this worker's usage and stats.
       entry.usage++;
 
       this.inUse.set(entry.channel.port2, entry);
@@ -206,7 +206,7 @@ export const workerPool = new (class {
    */
   shrinkOrGrow(demand: number = POOL_SIZE_DEMAND) {
     setTimeout(async () => {
-      // Resizing pool must be done by a single executor at a time.
+      // Only allows single executor at a time.
       if (this.policyState !== PolicyState.STANDBY) {
         return;
       }
@@ -224,17 +224,17 @@ export const workerPool = new (class {
       });
 
       if (numShrinkOrGrow > 0 && !!this.factory.create) {
-        // Grows the number of suspended/free workers by numShrinkOrGrow
+        // Grows the number of free workers by numShrinkOrGrow
         for (; numShrinkOrGrow > 0; numShrinkOrGrow--) {
           const {worker, channel} = this.factory.create();
           this.emplace(worker, channel, /*toInUse=*/false);
           await 'relax_growth';
         }
       } else if (numShrinkOrGrow < 0) {
-        // Shrinks the number of suspended/free workers by numShrinkOrGrow
+        // Shrinks the number of free workers by numShrinkOrGrow
         for (; numShrinkOrGrow < 0; numShrinkOrGrow++) {
           if (this.suspended.length === 0) {
-            // There are no spare suspended/free workers to terminated.
+            // There are no spare free workers to terminate.
             break;
           }
           const {worker, channel} = this.suspended.pop();
