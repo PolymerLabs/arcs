@@ -6,4 +6,9 @@ cd $ROOT
 
 # TODO(wkorman): Consider moving ktlint to a sigh or blaze task.
 status "Running ktlint on any Kotlin files modified w.r.t. upstream/master..."
-git diff --name-only --relative upstream/master | grep '\.kt[s\"]\?$' | xargs ktlint --android --relative --verbose .
+BASE=$(git merge-base HEAD upstream/master)
+if [[ $BASE ]]; then
+  git diff --name-only --relative $BASE | grep '\.kt[s\"]\?$' | xargs ktlint --android --relative --verbose
+else
+  fail "Could not determine the common ancestor for HEAD and upstream/master"
+fi
