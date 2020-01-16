@@ -43,22 +43,14 @@ export const pecIndustry = (loader): PecFactory => {
       console.warn('workerBlob not available, falling back to network URL');
     }
     const poolEntry = workerPool.resume();
-    // Should emplace if the worker pool management is ON and
-    // a new worker and its messaging channel are created.
-    const shouldEmplace = workerPool.active && !poolEntry;
-    // Transfers port only if the worker is newly spawned.
-    const shouldTransferPort = !workerPool.active || shouldEmplace ||
-        (!!poolEntry && poolEntry.usage === 0);
     const worker =
         poolEntry ? poolEntry.worker : new Worker(workerBlobUrl || workerUrl);
     const channel =
         poolEntry ? poolEntry.channel : new MessageChannel();
-    if (shouldEmplace) {
+    // Should emplace if the worker pool management is ON and
+    // a new worker and its messaging channel are created.
+    if (workerPool.active && !poolEntry) {
       workerPool.emplace(worker, channel);
-    }
-    if (poolEntry) {
-      // Reuses a worker from the pool (increase its usage by 1)
-      poolEntry.usage++;
     }
     worker.postMessage({
       id: `${id}:inner`,
@@ -66,7 +58,7 @@ export const pecIndustry = (loader): PecFactory => {
       logLevel: window['logLevel'],
       traceChannel: systemTraceChannel,
       inWorkerPool: workerPool.exist(channel.port2),
-    }, shouldTransferPort ? [channel.port1] : []);
+    }, [channel.port1]);
     return channel.port2;
   };
   // TODO(sjmiles): PecFactory type is defined against custom `MessageChannel` and `MessagePort` objects, not the

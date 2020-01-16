@@ -173,7 +173,12 @@ export const workerPool = new (class {
       // If a message channel is reused, the registered listeners would keep
       // forwarding the updates to this worker even though no PEC/particles are
       // breathing in this worker turns out unexpected behavior or even crash.
-      entry.channel = new MessageChannel();
+      if (entry.usage > 0) {
+        entry.channel = new MessageChannel();
+      }
+
+      // Keeps tracking this worker usage and stats.
+      entry.usage++;
 
       this.inUse.set(entry.channel.port2, entry);
     }
