@@ -24,7 +24,7 @@ import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Type, SingletonType} from './type.js';
+import {Type, SingletonType, CollectionType} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
@@ -263,7 +263,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
   getStorageProxy(storageKey: string, type: Type) {
     if (Flags.useNewStorageStack) {
-      type = new SingletonType(type);
+      type = new CollectionType(type);
     }
     if (!this.keyedProxies[storageKey]) {
       this.keyedProxies[storageKey] = new Promise((resolve, reject) => {
