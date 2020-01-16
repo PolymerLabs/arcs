@@ -41,27 +41,53 @@ IS_BAZEL = not (hasattr(native, "genmpm"))
 
 # Kotlin Compiler Options
 KOTLINC_OPTS = [
+    "-Xallow-kotlin-package",
+    "-Xinline-classes",
     "-Xmulti-platform",
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
 ]
 
-def arcs_kt_jvm_library(**kwargs):
-    """Declares arbitrary kotlin library targets for the JVM.
+DISABLED_LINT_CHECKS = [
+    "PackageName",
+    "TopLevelName",
+]
 
-    TODO(cromwellian): Add a proper doc string. This is just to pass buildifier checks.
+def _merge_lists(*lists):
+    result = {}
+    for l in lists:
+        for elem in l:
+            result[elem] = 1
+    return result.keys()
+
+def arcs_kt_jvm_library(**kwargs):
+    """Wrapper around kt_jvm_library for Arcs.
+
+    Provides a bunch of default arguments.
+
     Args:
-      **kwargs: Set of arguments
+      **kwargs: Set of args to forward to kt_jvm_library
     """
-    disable_lint_checks = kwargs.pop("disable_lint_checks", [])
     constraints = kwargs.pop("constraints", ["android"])
+    disable_lint_checks = kwargs.pop("disable_lint_checks", [])
+    kotlincopts = kwargs.pop("kotlincopts", [])
+    kwargs["kotlincopts"] = _merge_lists(kotlincopts, KOTLINC_OPTS)
     if not IS_BAZEL:
-        kwargs["disable_lint_checks"] = [
-            "PackageName",
-            "TopLevelName",
-        ] + disable_lint_checks
         kwargs["constraints"] = constraints
+        kwargs["disable_lint_checks"] = _merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
 
     kt_jvm_library(**kwargs)
+
+def arcs_kt_native_library(**kwargs):
+    """Wrapper around kt_native_library for Arcs.
+
+    Provides a bunch of default arguments.
+
+    Args:
+      **kwargs: Set of args to forward to kt_native_library
+    """
+    kotlincopts = kwargs.pop("kotlincopts", [])
+    kwargs["kotlincopts"] = _merge_lists(kotlincopts, KOTLINC_OPTS)
+    kt_native_library(**kwargs)
 
 def arcs_kt_library(
         name,
@@ -96,7 +122,7 @@ def arcs_kt_library(
         )
 
     if wasm:
-        kt_native_library(
+        arcs_kt_native_library(
             name = name + _WASM_SUFFIX,
             srcs = srcs,
             deps = [_to_wasm_dep(dep) for dep in deps],
@@ -157,7 +183,7 @@ def arcs_kt_particles(
                 package = package,
                 out = wasm_annotations_file,
             )
-            kt_native_library(
+            arcs_kt_native_library(
                 name = wasm_lib,
                 srcs = [
                     src,
