@@ -52,21 +52,8 @@ package ${this.scope}
 //
 // Current implementation doesn't support references or optional field detection
 
-import arcs.sdk.wasm.NullTermByteArray
-import arcs.sdk.ReadableCollection
-import arcs.sdk.ReadableSingleton
-import arcs.sdk.ReadWriteCollection
-import arcs.sdk.ReadWriteSingleton
-import arcs.sdk.wasm.StringDecoder
-import arcs.sdk.wasm.StringEncoder
-import arcs.sdk.WritableCollection
-import arcs.sdk.WritableSingleton
-import arcs.sdk.wasm.WasmCollection
-import arcs.sdk.wasm.WasmEntity
-import arcs.sdk.wasm.WasmEntitySpec
-import arcs.sdk.wasm.WasmParticle
-import arcs.sdk.wasm.WasmSingleton
-import arcs.sdk.wasm.toUtf8String
+import arcs.sdk.*
+import arcs.sdk.wasm.*
 `;
   }
 
@@ -95,11 +82,11 @@ import arcs.sdk.wasm.toUtf8String
         default:
           throw new Error(`Unsupported handle direction: ${connection.direction}`);
       }
-      handleConcreteType = `Wasm${handleConcreteType}`;
+      handleConcreteType = `Wasm${handleConcreteType}Impl`;
       handleDecls.push(`protected val ${handleName}: ${handleInterfaceType} = ${handleConcreteType}(this, "${handleName}", ${entityType}_Spec())`);
     }
     return `
-abstract class Abstract${particleName} : WasmParticle() {
+abstract class Abstract${particleName} : WasmParticleImpl() {
     ${handleDecls.join('\n    ')}
 }
 `;

@@ -15,8 +15,8 @@ class EntityClassApiTest : TestBase<EntityClassApiTest_Errors>(
     ::EntityClassApiTest_Errors,
     EntityClassApiTest_Errors_Spec()
 ) {
-    private val unused1 = WasmSingleton(this, "data", EntityClassApiTest_Data_Spec())
-    private val unused2 = WasmSingleton(this, "empty", EntityClassApiTest_Empty_Spec())
+    private val unused1 = WasmSingletonImpl(this, "data", EntityClassApiTest_Data_Spec())
+    private val unused2 = WasmSingletonImpl(this, "empty", EntityClassApiTest_Empty_Spec())
 
     /** Run tests on particle initialization */
     override fun init() {

@@ -120,7 +120,7 @@ fun connectHandle(
     canWrite: Boolean
 ): WasmAddress {
     return particlePtr
-        .toObject<WasmParticle>()
+        .toObject<WasmParticleImpl>()
         ?.connectHandle(handleName.toKString(), canRead, canWrite)
         ?.toAddress() ?: 0
 }
@@ -128,7 +128,7 @@ fun connectHandle(
 @Retain
 @ExportForCppRuntime("_init")
 fun init(particlePtr: WasmAddress) {
-    particlePtr.toObject<WasmParticle>()?.init()
+    particlePtr.toObject<WasmParticleImpl>()?.init()
 }
 
 @Retain
@@ -137,7 +137,7 @@ fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNu
     val handle = handlePtr.toObject<WasmHandle<*>>()
     handle?.let {
         it.sync(encoded.toByteArray())
-        particlePtr.toObject<WasmParticle>()?.sync(it)
+        particlePtr.toObject<WasmParticleImpl>()?.sync(it)
     }
 }
 
@@ -152,7 +152,7 @@ fun updateHandle(
     val handle = handlePtr.toObject<WasmHandle<*>>()
     handle?.let {
         it.update(encoded1Ptr.toByteArray(), encoded2Ptr.toByteArray())
-        particlePtr.toObject<WasmParticle>()?.onHandleUpdate(it)
+        particlePtr.toObject<WasmParticleImpl>()?.onHandleUpdate(it)
     }
 }
 
@@ -165,7 +165,7 @@ fun renderSlot(
     sendModel: Boolean
 ) {
     @Suppress("DEPRECATION")
-    particlePtr.toObject<WasmParticle>()?.renderSlot(
+    particlePtr.toObject<WasmParticleImpl>()?.renderSlot(
         slotNamePtr.toKString(),
         sendTemplate,
         sendModel
@@ -180,7 +180,7 @@ fun fireEvent(
     handlerNamePtr: WasmString,
     eventData: WasmString
 ) {
-    particlePtr.toObject<WasmParticle>()?.fireEvent(
+    particlePtr.toObject<WasmParticleImpl>()?.fireEvent(
         slotNamePtr.toKString(),
         handlerNamePtr.toKString(),
         StringDecoder.decodeDictionary(eventData.toByteArray())
@@ -196,7 +196,7 @@ fun serviceResponse(
     tagPtr: WasmString
 ) {
     val dict = StringDecoder.decodeDictionary(responsePtr.toByteArray())
-    particlePtr.toObject<WasmParticle>()?.serviceResponse(
+    particlePtr.toObject<WasmParticleImpl>()?.serviceResponse(
         callPtr.toKString(),
         dict,
         tagPtr.toKString()
@@ -206,7 +206,7 @@ fun serviceResponse(
 @Retain
 @ExportForCppRuntime("_renderOutput")
 fun renderOutput(particlePtr: WasmAddress) {
-    particlePtr.toObject<WasmParticle>()
+    particlePtr.toObject<WasmParticleImpl>()
         ?.renderOutput()
 }
 

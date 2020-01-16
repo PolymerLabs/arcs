@@ -22,10 +22,10 @@ class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
         val out = HandleSyncUpdateTest_Res()
         out.txt = "update:${handle.name}"
         if (handle.name == "sng") {
-            val data = (handle as WasmSingleton<*>).get() as HandleSyncUpdateTest_Sng
+            val data = (handle as WasmSingletonImpl<*>).get() as HandleSyncUpdateTest_Sng
             out.num = data.num
         } else if (handle.name == "col") {
-            val data = (handle as WasmCollection<*>).iterator().next() as HandleSyncUpdateTest_Col
+            val data = (handle as WasmCollectionImpl<*>).iterator().next() as HandleSyncUpdateTest_Col
             out.num = data.num
         } else {
             out.txt = "unexpected handle name: ${handle.name}"

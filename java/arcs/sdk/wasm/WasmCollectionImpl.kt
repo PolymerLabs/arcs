@@ -14,8 +14,8 @@ package arcs.sdk.wasm
 import arcs.sdk.ReadWriteCollection
 
 /** [ReadWriteCollection] implementation for WASM. */
-class WasmCollection<T : WasmEntity>(
-    particle: WasmParticle,
+class WasmCollectionImpl<T : WasmEntity>(
+    particle: WasmParticleImpl,
     name: String,
     private val entitySpec: WasmEntitySpec<T>
 ) : WasmHandle<T>(name, particle), ReadWriteCollection<T> {
