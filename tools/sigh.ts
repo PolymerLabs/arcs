@@ -489,7 +489,7 @@ function lint(args: string[]): boolean {
   const formatter = cli.getFormatter(options.format || 'stylish');
   const output = formatter(report.results);
   if (output) {
-    sighLog(formatter(report.results));
+    sighLog(output);
   }
 
   if (options.fix) {
