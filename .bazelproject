@@ -16,6 +16,8 @@ targets:
 test_sources:
   javatests/
 
+bazel_binary: bazelisk
+
 additional_languages:
   kotlin
   android
