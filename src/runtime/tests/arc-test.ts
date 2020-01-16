@@ -1079,11 +1079,11 @@ describe('Arc', () => {
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
   });
 
-  it('registers and deregisters its own volatile storage', async () => {
+  it('registers and deregisters its own volatile storage', Flags.withNewStorageStack(async () => {
     const id1 = ArcId.newForTest('test1');
     const id2 = ArcId.newForTest('test2');
-    const storageKey1 = 'volatile://' + id1.toString();
-    const storageKey2 = 'volatile://' + id2.toString();
+    const storageKey1 = new VolatileStorageKey(id1, '');
+    const storageKey2 = new VolatileStorageKey(id2, '');
 
     DriverFactory.clearRegistrationsForTesting();
     assert.isEmpty(DriverFactory.providers);
@@ -1099,7 +1099,7 @@ describe('Arc', () => {
 
     arc2.dispose();
     assert.isEmpty(DriverFactory.providers);
-  });
+  }));
 });
 
 describe('Arc storage migration', () => {
@@ -1123,10 +1123,9 @@ describe('Arc storage migration', () => {
     });
 
     it('rejects old string storage keys', async () => {
-      const {arc, Foo} = await setup('volatile://');
       await assertThrowsAsync(async () => {
-        await arc.createStore(Foo.type, undefined, 'test:1');
-      }, `Can't use string storage keys with the new storage stack.`);
+        await setup('volatile://');
+      }, `Can't use string storage keys with new storage stack.`);
     });
   });
 

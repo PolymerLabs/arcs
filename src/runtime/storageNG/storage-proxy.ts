@@ -256,6 +256,10 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
     return new Promise(resolve => {});
   }
 
+  getChannelConstructor(): ChannelConstructor {
+    return null;
+  }
+
   reportExceptionInHost(exception: PropagatedException): void {}
 
   registerHandle(handle: Handle<T>): VersionMap {

@@ -216,7 +216,7 @@ describe('references', () => {
     assert.deepStrictEqual(values, [{value: 'val1'}, {value: 'val2'}]);
   });
 
-  it('exposes a reference API to particles', async () => {
+  it.only('exposes a reference API to particles', async () => {
     const loader = new StubLoader({
       manifest: `
         schema Result
@@ -277,6 +277,7 @@ describe('references', () => {
       const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
       const baseStoreType = new EntityType(manifest.schemas.Result);
       const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType)) as CollectionStorageProvider;
+      console.log(reference);
       assert.equal(reference.entityStorageKey, backingStore.storageKey);
     }
   });

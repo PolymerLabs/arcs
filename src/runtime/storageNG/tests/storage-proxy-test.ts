@@ -9,9 +9,8 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
-import {Particle} from '../../particle.js';
-import {StorageProxy, StorageProxyScheduler, NoOpStorageProxy} from '../storage-proxy.js';
+import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
+import {StorageProxy, NoOpStorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyMessageType} from '../store.js';
 import {MockHandle, MockStore} from '../testing/test-storage.js';
 import {EntityType, SingletonType} from '../../type.js';

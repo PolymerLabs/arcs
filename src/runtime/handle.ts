@@ -128,13 +128,16 @@ export abstract class HandleOld {
   }
 
   _serialize(entity: Storable) {
+    console.log('serializing', entity);
     assert(entity, `can't serialize a null entity`);
     if (entity instanceof Entity) {
       if (!Entity.isIdentified(entity)) {
         this.createIdentityFor(entity);
       }
     }
-    return entity[SYMBOL_INTERNALS].serialize();
+    const ser = entity[SYMBOL_INTERNALS].serialize();
+    console.log(ser);
+    return ser;
   }
 
   createIdentityFor(entity: Entity) {

@@ -47,21 +47,21 @@ describe('Multiplexer', () => {
             renderRecipe: recipeOne,
             renderParticleSpec: showOneSpec
           }),
-          '1'));
+          '1', null));
       await postsHandle.add(Entity.identify(
           new postsHandle.entityClass({
             message: 'y',
             renderRecipe: recipeTwo,
             renderParticleSpec: showTwoSpec
           }),
-          '2'));
+          '2', null));
       await postsHandle.add(Entity.identify(
           new postsHandle.entityClass({
             message: 'z',
             renderRecipe: recipeOne,
             renderParticleSpec: showOneSpec
           }),
-          '3'));
+          '3', null));
     } else {
       const postsStub = context.stores[0].castToStorageStub();
       postsStub.model.push({

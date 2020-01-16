@@ -136,6 +136,10 @@ export class Arc implements ArcInterface {
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
     this.pec = new ParticleExecutionHost({slotComposer, arc: this, ports});
     if (Flags.useNewStorageStack) {
+      if (typeof storageKey == 'string') {
+        throw new Error(`Can't use string storage keys with new storage stack. Provide a StorageKey subclass to Arc constructor.`);
+      }
+
       this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
       DriverFactory.register(this.volatileStorageDriverProvider);
     } else {
