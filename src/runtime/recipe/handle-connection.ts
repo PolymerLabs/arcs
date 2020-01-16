@@ -41,6 +41,53 @@ export class HandleConnection implements Comparable<HandleConnection> {
     this._particle = particle;
   }
 
+  get name(): string { return this._name; } // Parameter name?
+  get recipe(): Recipe { return this._recipe; }
+  get isOptional(): boolean { return this.spec !== null && this.spec.isOptional; }
+  get spec(): HandleConnectionSpec {
+    return this.particle.spec && this.particle.spec.handleConnectionMap.get(this.name);
+  }
+  get isInput(): boolean { return this.direction === 'reads' || this.direction === 'reads writes'; }
+  get isOutput(): boolean { return this.direction === 'writes' || this.direction === 'reads writes'; }
+  get handle(): Handle|undefined { return this._handle; } // Handle?
+  get particle() { return this._particle; } // never null
+
+  get relaxed() { return this._relaxed; }
+  set relaxed(relaxed: boolean) { this._relaxed = relaxed; }
+
+  get tags(): string[] { return this._tags; }
+  set tags(tags: string[]) { this._tags = tags; }
+
+  get type(): Type|undefined|null {
+    if (this.resolvedType) {
+      return this.resolvedType;
+    }
+    const spec = this.spec;
+    // TODO: We need a global way to generate variables so that everything can
+    // have proper type bounds.
+    return spec ? spec.type : undefined;
+  }
+  set type(type: Type|undefined|null) {
+    this.resolvedType = type;
+    this._resetHandleType();
+  }
+
+  get direction(): Direction {
+    // TODO: Should take the most strict of the direction and the spec direction.
+    if (this._direction !== 'any') {
+      return this._direction;
+    }
+    const spec = this.spec;
+    return spec ? spec.direction : 'any';
+  }
+  set direction(direction: Direction) {
+    if (direction === null) {
+      throw new Error(`Invalid direction '${direction}' for handle connection '${this.getQualifiedName()}'`);
+    }
+    this._direction = direction;
+    this._resetHandleType();
+  }
+
   _clone(particle: Particle, cloneMap: CloneMap): HandleConnection {
     if (cloneMap.has(this)) {
       return cloneMap.get(this) as HandleConnection;
@@ -88,65 +135,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
     return 0;
   }
 
-  get recipe(): Recipe { return this._recipe; }
-  get name(): string { return this._name; } // Parameter name?
   getQualifiedName(): string { return `${this.particle.name}::${this.name}`; }
-  get tags(): string[] { return this._tags; }
-
-  get type(): Type|undefined|null {
-    if (this.resolvedType) {
-      return this.resolvedType;
-    }
-    const spec = this.spec;
-    // TODO: We need a global way to generate variables so that everything can
-    // have proper type bounds.
-    return spec ? spec.type : undefined;
-  }
-
-  get direction(): Direction {
-    // TODO: Should take the most strict of the direction and the spec direction.
-    if (this._direction !== 'any') {
-      return this._direction;
-    }
-    const spec = this.spec;
-    return spec ? spec.direction : 'any';
-  }
-  get relaxed() {
-    return this._relaxed;
-  }
-  set relaxed(relaxed: boolean) {
-    this._relaxed = relaxed;
-  }
-
-  get isInput(): boolean {
-    return this.direction === 'reads' || this.direction === 'reads writes';
-  }
-  get isOutput(): boolean {
-    return this.direction === 'writes' || this.direction === 'reads writes';
-  }
-  get handle(): Handle|undefined { return this._handle; } // Handle?
-  get particle() { return this._particle; } // never null
-
-  set tags(tags: string[]) { this._tags = tags; }
-  set type(type: Type|undefined|null) {
-    this.resolvedType = type;
-    this._resetHandleType();
-  }
-
-  set direction(direction: Direction) {
-    if (direction === null) {
-      throw new Error(`Invalid direction '${direction}' for handle connection '${this.getQualifiedName()}'`);
-    }
-    this._direction = direction;
-    this._resetHandleType();
-  }
-
-  get spec(): HandleConnectionSpec {
-    if (this.particle.spec == null) {
-      return null;
-    }
-    return this.particle.spec.handleConnectionMap.get(this.name);
-  }
 
   toSlotConnection(): SlotConnection {
     // TODO: Remove in SLANDLESv2
@@ -168,13 +157,6 @@ export class HandleConnection implements Comparable<HandleConnection> {
       });
     }
     return slandle;
-  }
-
-  get isOptional(): boolean {
-    if (this.spec == null) {
-      return false;
-    }
-    return this.spec.isOptional;
   }
 
   _isValid(options: IsValidOptions): boolean {
