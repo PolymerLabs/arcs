@@ -30,7 +30,13 @@ export class TypeChecker {
   //
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
-  static processTypeList(baseType: Type, list: TypeListInfo[]) {
+  static processTypeList(baseType: Type, list: TypeListInfo[], options: {typeErrors?: string[]} = {}) {
+    const error = (msg: string) => {
+      if (options && options.typeErrors) {
+        options.typeErrors.push(msg);
+      }
+      return null;
+    };
     const newBaseType = TypeVariable.make('', null, null);
     if (baseType) {
       newBaseType.variable.resolution = baseType;
@@ -48,7 +54,7 @@ export class TypeChecker {
     // of all the other connected variables at the same time.
     for (const item of list) {
       if (item.type.resolvedType().hasVariable) {
-        baseType = TypeChecker._tryMergeTypeVariable(baseType, item.type);
+        baseType = TypeChecker._tryMergeTypeVariable(baseType, item.type, options);
         if (baseType == null) {
           return null;
         }
@@ -58,7 +64,7 @@ export class TypeChecker {
     }
 
     for (const item of concreteTypes) {
-      if (!TypeChecker._tryMergeConstraints(baseType, item)) {
+      if (!TypeChecker._tryMergeConstraints(baseType, item, options)) {
         return null;
       }
     }
@@ -76,7 +82,7 @@ export class TypeChecker {
         }
         return candidate;
       }
-      return null;
+      return error(`could not guarantee variable ${candidate} meets read requirements ${candidate.canReadSubset} with write guarantees ${candidate.canWriteSuperset}`);
     };
 
     const candidate = baseType.resolvedType();
@@ -93,7 +99,7 @@ export class TypeChecker {
     return getResolution(candidate);
   }
 
-  static _tryMergeTypeVariable(base: Type, onto: Type): Type {
+  static _tryMergeTypeVariable(base: Type, onto: Type, options: {typeErrors?: string[]} = {}): Type {
     const [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
     if (primitiveBase instanceof TypeVariable) {
@@ -133,7 +139,13 @@ export class TypeChecker {
     throw new Error('tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
   }
 
-  static _tryMergeConstraints(handleType: Type, {type, direction}: TypeListInfo) {
+  static _tryMergeConstraints(handleType: Type, {type, direction}: TypeListInfo, options: {typeErrors?: string[]} = {}): boolean {
+    const error = (msg: string) => {
+      if (options && options.typeErrors) {
+        options.typeErrors.push(msg);
+      }
+      return false;
+    };
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
     if (primitiveHandleType instanceof TypeVariable) {
       while (primitiveConnectionType.isTypeContainer()) {
