@@ -198,7 +198,7 @@ export class Arc implements ArcInterface {
   // - in DomMultiplexer
   // - in the idleness detection code.
   get idle(): Promise<void> {
-    return this._idle.then(() => this._idle);
+    return this._idle.then(async () => this._idle);
   }
 
   get _idle(): Promise<void> {
