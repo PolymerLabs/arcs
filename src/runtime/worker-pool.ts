@@ -75,7 +75,7 @@ export const workerPool = new (class {
             .split(',')
             .filter(Boolean)
             .forEach(e => {
-              if (this.options[e]) {
+              if (e in this.options) {
                 this.options[e] = true;
               }
             });
