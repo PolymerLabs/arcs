@@ -50,10 +50,14 @@ RUN mkdir -p $ANDROID_HOME/licenses/ && \
 ADD ./tools/android-sdk-packages.txt /sdk
 RUN mkdir -p /root/.android && \
   touch /root/.android/repositories.cfg && \
-  ${ANDROID_HOME}/tools/bin/sdkmanager --update 
+  ${ANDROID_HOME}/tools/bin/sdkmanager --update
 RUN while read -r package; do PACKAGES="${PACKAGES}${package} "; done < /sdk/android-sdk-packages.txt && \
     ${ANDROID_HOME}/tools/bin/sdkmanager ${PACKAGES}
 RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses
+
+# Allows running script with privileged permission
+# i.e. scripts {...} at package.json
+RUN npm set unsafe-perm true
 
 # Install Project
 COPY package.json $WORKSPACE/package.json
