@@ -397,11 +397,14 @@ export interface ParticleConnectionTargetComponents extends BaseNode {
 
 export type RecipeHandleFate = string;
 
+export type RecipeHandleCapability = string;
+
 export interface RecipeHandle extends BaseNode {
   kind: 'handle';
   name: string|null;
   ref: HandleRef;
   fate: Fate;
+  capabilities: RecipeHandleCapability[];
   annotation: ParameterizedAnnotation|null;
 }
 

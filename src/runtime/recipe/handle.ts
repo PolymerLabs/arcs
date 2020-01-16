@@ -37,6 +37,7 @@ export class Handle implements Comparable<Handle> {
   private _connections: HandleConnection[] = [];
   private _mappedType: Type | undefined = undefined;
   private _storageKey: string | StorageKey | undefined = undefined;
+  private _capabilities: Set<string> = new Set();
   private _pattern: string | undefined = undefined;
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
@@ -172,6 +173,8 @@ export class Handle implements Comparable<Handle> {
     }
     this._fate = fate;
   }
+  get capabilities() { return this._capabilities; }
+  set capabilities(capabilities: Set<string>) { this._capabilities = capabilities; }
   get originalFate() { return this._originalFate || '?'; }
   get originalId(): string | null { return this._originalId; }
   get recipe(): Recipe { return this._recipe; }
@@ -328,6 +331,9 @@ export class Handle implements Comparable<Handle> {
       result.push(`${name}:`);
     }
     result.push(this.fate);
+    if (this.capabilities.size > 0) {
+      result.push([...this.capabilities].sort().join(' '));
+    }
     if (this.id) {
       result.push(`'${this.id}'`);
     }
