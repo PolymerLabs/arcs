@@ -16,7 +16,7 @@ import {RenderPacket} from '../slot-observer.js';
 import {AbstractSlotObserver} from '../slot-observer.js';
 //import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
-const logging = true;
+const logging = false;
 const log = !logging ? (...args) => {} : console.log.bind(console, 'SlotTestObserver::');
 
 type SlotTestObserverOptions = {
