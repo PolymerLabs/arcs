@@ -16,32 +16,30 @@ import {Type} from './type.js';
 
 export class UiMultiplexerParticle extends UiTransformationParticle {
 
-  // TODO(sjmiles): needs proper typing
+  // TODO(sjmiles): needs proper typing, better name
   plexeds; //: any[];
 
-  async update({list}, state: {
-    arc: InnerArcHandle,
-    type: Type,
-    hostedParticle: ParticleSpec,
-    otherMappedHandles: string[],
-    otherConnections: string[]
-  }, oldProps, oldState) {
+  update({list}, state, oldProps, oldState) {
     //log(`[${this.spec.name}]::update`, list, arc);
-    if (!list) {
+    if (!list || !list.length) {
       return;
     }
-    // TODO(sjmiles): should use state
     if (!this.plexeds) {
-      // TODO(sjmiles): maybe have a version that binds `this` (avoid `p`)
-      this.await(async p => p.updateConnections());
+      this.busyWork(async () => this.updateConnections());
+      return;
     }
     if (!state.arc || (oldProps.list === list && oldState.arc === state.arc)) {
       return;
     }
-    if (list.length > 0) {
-      this.relevance = 0.1;
-    }
-    this.await(async p => p.updateEntries({list}, state));
+    this.relevance = 0.1;
+    // TODO(sjmiles): needs protection from re-entrant update
+    this.busyWork(async () => this.updateEntries({list}, state));
+  }
+
+  busyWork(task) {
+    // ensure `busy` flag while processing async `task`
+    // tslint:disable-next-line no-floating-promises
+    this.invokeSafely(task, this.onError);
   }
 
   async updateConnections() {
@@ -71,7 +69,6 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
   }
 
   async updateEntries({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}) {
-    // TODO(sjmiles): needs safety for re-entrant update
     const entries = this.getListEntries(list);
     for (const [index, item] of entries) {
       await this.updateEntry(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles});
@@ -171,6 +168,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     return {otherMappedHandles, otherConnections};
   }
 
+  // TODO(sjmiles): fix name
   async createInnards(item, {arc, handle, hosting: {hostedParticle, otherMappedHandles, otherConnections}}) {
     const hostedSlotName = [...hostedParticle.slotConnections.keys()][0];
     const slotName = [...this.spec.slotConnections.values()][0].name;
