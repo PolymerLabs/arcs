@@ -531,11 +531,11 @@ class CrdtSetTest {
 
     /** Pseudo-constructor for [CrdtSet.Operation.Add]. */
     private fun Add(actor: Actor, versions: VersionMap, id: ReferenceId) =
-        CrdtSet.Operation.Add(versions, actor, Reference(id))
+        CrdtSet.Operation.Add(actor, versions, Reference(id))
 
     /** Pseudo-constructor for [CrdtSet.Operation.Remove]. */
     private fun Remove(actor: Actor, versions: VersionMap, id: ReferenceId) =
-        CrdtSet.Operation.Remove(versions, actor, Reference(id))
+        CrdtSet.Operation.Remove(actor, versions, Reference(id))
 
     private fun CrdtSet<Reference>.add(
         actor: Actor,

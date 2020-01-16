@@ -123,11 +123,11 @@ fun RefModeStoreOp.toBridgingOp(storageKey: StorageKey): BridgingOperation = whe
     }
     is RefModeStoreOp.SetAdd -> {
         val reference = added.toReference(storageKey, clock)
-        AddToSet(added, reference, CrdtSet.Operation.Add(clock, actor, reference), this)
+        AddToSet(added, reference, CrdtSet.Operation.Add(actor, clock, reference), this)
     }
     is RefModeStoreOp.SetRemove -> {
         val reference = removed.toReference(storageKey, clock)
-        RemoveFromSet(removed, reference, CrdtSet.Operation.Remove(clock, actor, reference), this)
+        RemoveFromSet(removed, reference, CrdtSet.Operation.Remove(actor, clock, reference), this)
     }
     else -> throw CrdtException("Unsupported operation: $this")
 }

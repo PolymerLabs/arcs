@@ -323,7 +323,7 @@ class CrdtEntity(
             /**
              * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSet.Operation].
              */
-            fun toSetOp(): SetOp.Add<Reference> = CrdtSet.Operation.Add(clock, actor, added)
+            fun toSetOp(): SetOp.Add<Reference> = CrdtSet.Operation.Add(actor, clock, added)
         }
 
         /**
@@ -339,7 +339,7 @@ class CrdtEntity(
             /**
              * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSet.Operation].
              */
-            fun toSetOp(): SetOp.Remove<Reference> = CrdtSet.Operation.Remove(clock, actor, removed)
+            fun toSetOp(): SetOp.Remove<Reference> = CrdtSet.Operation.Remove(actor, clock, removed)
         }
     }
 }
