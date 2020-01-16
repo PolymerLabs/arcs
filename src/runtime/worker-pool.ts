@@ -130,7 +130,6 @@ export const workerPool = new (class {
     const entry = this.inUse.get(port as MessagePort);
     if (entry) {
       this.inUse.delete(port as MessagePort);
-      entry.channel.port2.close();
       entry.worker.terminate();
     }
   }
@@ -162,21 +161,33 @@ export const workerPool = new (class {
   resume(): PoolEntry | undefined {
     const entry = this.suspended.pop();
     if (entry) {
+      // Assigns a new message channel to avoid wrong handle updates passed
+      // to this worker (the updated handles belong to the particles in the
+      // previous PEC).
+      //
+      // TODO(ianchang):
+      // Reuses the old channel as possible after fixing the issue:
+      // PEC StorageProxy registers with PEH to listen to updates on handles.
+      // Even though PEH and PEC are closed, the registered listeners are still
+      // in play i.e. long-running handles for data ingestion.
+      // If a message channel is reused, the registered listeners would keep
+      // forwarding the updates to this worker even though no PEC/particles are
+      // breathing in this worker turns out unexpected behavior or even crash.
+      entry.channel = new MessageChannel();
+
       this.inUse.set(entry.channel.port2, entry);
     }
     return entry;
   }
 
-  /** Cleans up (destroy & close) all managed workers and their channels. */
+  /** Cleans up all managed workers. */
   clear() {
     this.inUse.forEach(entry => {
-      entry.channel.port2.close();
       entry.worker.terminate();
     });
     this.inUse.clear();
 
     this.suspended.forEach(entry => {
-      entry.channel.port2.close();
       entry.worker.terminate();
     });
     this.suspended.length = 0;
@@ -222,7 +233,6 @@ export const workerPool = new (class {
             break;
           }
           const {worker, channel} = this.suspended.pop();
-          channel.port2.close();
           worker.terminate();
           await 'relax_shrink';
         }
