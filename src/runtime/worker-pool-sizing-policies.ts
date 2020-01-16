@@ -178,5 +178,5 @@ export const policies = {
 
   // The default policy is taken when either no policy is specified or an
   // unknown policy is specified via a corresponding url parameter.
-  default: predictive,
+  default: conservative,
 };
