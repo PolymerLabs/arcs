@@ -772,13 +772,6 @@ describe('Arc', () => {
     store = newArc.findStoreById(store.id);
     const handle = await collectionHandleForTest(newArc, store);
     await handle.add(new handle.entityClass({value: 'one'}));
-
-    // There appears to be a bug in the way we track idleness. It could be:
-    // - in the new storage stack
-    // - in DomMultiplexer
-    // - in the idleness detection code.
-    // TODO(shans): Find and fix the bug.
-    await newArc.idle;
     await newArc.idle;
 
     //assert.strictEqual(slotComposer.slotsCreated, 1);

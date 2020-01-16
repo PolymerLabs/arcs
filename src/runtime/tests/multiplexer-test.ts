@@ -51,9 +51,6 @@ describe('Multiplexer', () => {
     await barHandle.add(new barHandle.entityClass({value: 'three'}));
 
     await arc.idle;
-    // TODO(shans): awaiting idle isn't quite working with the new storage stack; some storage events aren't
-    // causing idle to be delayed properly. Figure out why and fix it!
-    await arc.idle;
 
     assert.strictEqual(slotComposer.slotsCreated, 3);
   });

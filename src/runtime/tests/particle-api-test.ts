@@ -249,7 +249,6 @@ describe('particle-api', () => {
     recipe.normalize();
     await arc.instantiate(recipe);
     await arc.idle;
-    await arc.idle;
     const values = await resultHandle.toList();
     assert.deepStrictEqual(values, [{value: 'two'}]);
   });
@@ -1083,7 +1082,6 @@ describe('particle-api', () => {
     await arc.idle;
     const inHandle = await singletonHandleForTest(arc, inStore);
     await inHandle.set(new inHandle.entityClass({}));
-    await arc.idle;
     await arc.idle;
     const outHandle = await singletonHandleForTest(arc, outStore);
     assert.deepStrictEqual(await outHandle.get(), {result: 'hi'});
