@@ -50,11 +50,8 @@ jobs:
         on:
           branch: master
 
-# Use travis to cache a Bazel disk-cache.
-# This connects to the docker container via a volume mount (`-v /home/travis/disk-cache:/disk-cache/`).
-# Bazel will store artifacts here due to the `--disk_cache=/disk-cache/` argument.
 cache:
-  npm: true
+  npm: false
 
 # Pulling container from https://hub.docker.com/repository/docker/arcproject/travis-build
 before_install:
