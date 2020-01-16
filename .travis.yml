@@ -62,5 +62,4 @@ before_install:
   - mkdir -p ./disk-cache/
 
 install:
-  - tools/run_in_docker "npm install"
-
+  - tools/run_in_docker "tools/npm-install-all"

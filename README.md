@@ -65,13 +65,13 @@ requiring an upgrade to our current version.
 ### Installing within the Arcs project:
 
 ```
-$ npm install
+$ ./tools/npm-install-all
 $ ./tools/sigh
 ```
 
-`npm install` is required on a fresh checkout. After that it only needs to be
-re-run infrequently as new dependencies are included, and usually a build
-failure will be the signal for that.
+`./tools/npm-install-all` is required on a fresh checkout. After that it only
+needs to be re-run infrequently as new dependencies are included, and usually a
+build failure will be the signal for that.
 
 ## Git Setup
 
@@ -110,7 +110,7 @@ $ git config core.hooksPath tools/hooks
 
 ## Starting Arcs
 
-After the full build (`npm install && tools/sigh`) run:
+After the full build (`./tools/npm-install-all && tools/sigh`) run:
 
 ```
 $ tools/sigh devServer
