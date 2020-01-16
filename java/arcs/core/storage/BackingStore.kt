@@ -30,30 +30,30 @@ import kotlinx.coroutines.withContext
  *
  * This is what *backs* Entities.
  */
-class BackingStore(
-    private val options: StoreOptions<CrdtData, CrdtOperation, Any?>
-) : ActiveStore<CrdtData, CrdtOperation, Any?>(options) {
+class BackingStore<Data : CrdtData, Op: CrdtOperation, T>(
+    private val options: StoreOptions<Data, Op, T>
+) : ActiveStore<Data, Op, T>(options) {
     private val storeMutex = Mutex()
-    /* internal */ val stores = mutableMapOf<String, StoreRecord>()
-    private val callbacks = ProxyCallbackManager<CrdtData, CrdtOperation, Any?>()
+    /* internal */ val stores = mutableMapOf<String, StoreRecord<Data, Op, T>>()
+    private val callbacks = ProxyCallbackManager<Data, Op, T>()
 
     @Deprecated(
         "Use getLocalData(muxId) instead",
         replaceWith = ReplaceWith("getLocalData(muxId)")
     )
-    override suspend fun getLocalData(): CrdtData =
+    override suspend fun getLocalData(): Data =
         throw UnsupportedOperationException("Use getLocalData(muxId) instead.")
 
     /**
      * Gets data from the store corresponding to the given [muxId].
      */
-    suspend fun getLocalData(muxId: String): CrdtData {
+    suspend fun getLocalData(muxId: String): Data {
         val record = storeMutex.withLock { stores[muxId] }
             ?: return setupStore(muxId).store.getLocalData()
         return record.store.getLocalData()
     }
 
-    override fun on(callback: ProxyCallback<CrdtData, CrdtOperation, Any?>): Int =
+    override fun on(callback: ProxyCallback<Data, Op, T>): Int =
         callbacks.register(callback)
 
     override fun off(callbackToken: Int) {
@@ -68,15 +68,15 @@ class BackingStore(
         }.joinAll()
     }
 
-    override suspend fun onProxyMessage(message: ProxyMessage<CrdtData, CrdtOperation, Any?>) =
+    override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, T>) =
         throw UnsupportedOperationException("Use onProxyMessage(message, muxId) instead.")
 
     suspend fun onProxyMessage(
-        message: ProxyMessage<CrdtData, CrdtOperation, Any?>,
+        message: ProxyMessage<Data, Op, T>,
         muxId: String
     ): Boolean {
         val (id, store) = storeMutex.withLock { stores[muxId] } ?: setupStore(muxId)
-        val deMuxedMessage: ProxyMessage<CrdtData, CrdtOperation, Any?> = when (message) {
+        val deMuxedMessage: ProxyMessage<Data, Op, T> = when (message) {
             is SyncRequest -> SyncRequest(id)
             is ModelUpdate -> ModelUpdate(message.model, id)
             is Operations -> if (message.operations.isNotEmpty()) {
@@ -87,11 +87,11 @@ class BackingStore(
     }
 
     @Suppress("UNCHECKED_CAST") // TODO: See if we can clean up this generics situation.
-    /* internal */ suspend fun setupStore(muxId: String): StoreRecord {
+    /* internal */ suspend fun setupStore(muxId: String): StoreRecord<Data, Op, T> {
         val store = DirectStore.CONSTRUCTOR(
             // Copy of our options, but with a child storage key using the muxId.
             options.copy(options.storageKey.childKeyWithComponent(muxId))
-        ) as DirectStore
+        ) as DirectStore<Data, Op, T>
 
         val id = store.on(ProxyCallback { processStoreCallback(muxId, it) })
 
@@ -102,10 +102,10 @@ class BackingStore(
 
     private suspend fun processStoreCallback(
         muxId: String,
-        message: ProxyMessage<CrdtData, CrdtOperation, Any?>
+        message: ProxyMessage<Data, Op, T>
     ) = callbacks.sendMultiplexed(message, muxId)
 
-    data class StoreRecord(val id: Int, val store: DirectStore)
+    data class StoreRecord<Data : CrdtData, Op : CrdtOperation, T>(val id: Int, val store: DirectStore<Data, Op, T>)
 
     companion object {
         @Suppress("UNCHECKED_CAST")

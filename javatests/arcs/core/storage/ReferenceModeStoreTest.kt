@@ -13,8 +13,10 @@ package arcs.core.storage
 
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.CollectionType
@@ -580,7 +582,7 @@ class ReferenceModeStoreTest {
 
     // region Helpers
 
-    private fun BackingStore.getEntityDriver(id: ReferenceId): MockDriver<CrdtEntity.Data> =
+    private fun BackingStore<CrdtData, CrdtOperation, Any?>.getEntityDriver(id: ReferenceId): MockDriver<CrdtEntity.Data> =
         requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>
 
     private suspend fun createReferenceModeStore(): ReferenceModeStore {

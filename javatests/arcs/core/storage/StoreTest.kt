@@ -74,7 +74,7 @@ class StoreTest {
         val (driver, _) = setupMocks()
 
         val store = createStore()
-        val activeStore = store.activate() as DirectStore
+        val activeStore = store.activate() as DirectStore<CrdtData, CrdtOperation, Any?>
 
         val modelCaptor = argumentCaptor<CrdtCount.Data>()
         whenever(driver.send(modelCaptor.capture(), any())).thenReturn(true)
@@ -93,7 +93,7 @@ class StoreTest {
         val (driver, _) = setupMocks()
 
         val store = createStore()
-        val activeStore = store.activate() as DirectStore
+        val activeStore = store.activate() as DirectStore<CrdtData, CrdtOperation, Any?>
 
         val modelCaptor = argumentCaptor<CrdtCount.Data>()
         whenever(driver.send(modelCaptor.capture(), any())).thenReturn(true)
@@ -113,7 +113,7 @@ class StoreTest {
         val (driver, _) = setupMocks()
 
         val store = createStore()
-        val activeStore = store.activate() as DirectStore
+        val activeStore = store.activate() as DirectStore<CrdtData, CrdtOperation, Any?>
 
         whenever(driver.send(any(), any())).thenReturn(true)
 
@@ -302,7 +302,7 @@ class StoreTest {
         whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
         whenever(driver.send(driverModelCaptor.capture(), any())).thenReturn(true)
 
-        val activeStore = createStore().activate() as DirectStore
+        val activeStore = createStore().activate() as DirectStore<CrdtData, CrdtOperation, Any?>
 
         activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 0 to 1)), id = 1))
         activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 1 to 2)), id = 1))
