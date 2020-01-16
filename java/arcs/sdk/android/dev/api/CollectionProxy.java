@@ -174,8 +174,8 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
       ModelEntry entry = vv.getValue();
       if (model.applyOperation(
           new CrdtSet.Operation.Remove<>(
-            item.getObject("keys").getString(0),
-            vv.getVersionMap(),
+              item.getObject("keys").getString(0),
+              vv.getVersionMap(),
               entry))) {
         removedItems.put(
             removedItems.getLength(), item.put("rawData", entry.value.value.getObject("rawData")));
