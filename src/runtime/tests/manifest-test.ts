@@ -602,7 +602,7 @@ ${particleStr1}
     verify(await parseManifest(manifest.toString()));
   });
 
-  describe('relaxed reads and writes', async() => {
+  describe('relaxed reads and writes', async () => {
     it('can parse a manifest containing relaxed reads', async () => {
       const manifest = await parseManifest(`
         schema Thing
@@ -618,11 +618,11 @@ ${particleStr1}
           foo: reads Thing
 
         recipe SomeRecipe
-          myFoo: ?
+          myFoo: create *
           PA
-            foo: writes myFoo
+            foo: writes someof myFoo
           PB
-            foo: writes myFoo
+            foo: writes someof myFoo
           PC
             foo: reads someof myFoo
       `);
@@ -630,11 +630,18 @@ ${particleStr1}
       assert.lengthOf(recipe.particles, 3);
       assert.lengthOf(recipe.handles, 1);
       assert.lengthOf(recipe.handleConnections, 3);
-      const recipe_pc = recipe.particles[2];
-      assert.lengthOf(Object.keys(recipe_pc.connections), 1);
-      assert.include(Object.keys(recipe_pc.connections), 'foo');
-      const handle = recipe_pc.connections['foo'];
-      assert(handle.relaxed, 'handle should be relaxed');
+      const particleA = recipe.particles[0];
+      assert.sameMembers(Object.keys(particleA.connections), ['foo']);
+      const handleA = particleA.connections['foo'];
+      assert(handleA.relaxed, 'handle PA.foo should be relaxed');
+      const particleB = recipe.particles[1];
+      assert.sameMembers(Object.keys(particleB.connections), ['foo']);
+      const handleB = particleB.connections['foo'];
+      assert(handleB.relaxed, 'handle PB.foo should be relaxed');
+      const particleC = recipe.particles[2];
+      assert.sameMembers(Object.keys(particleC.connections), ['foo']);
+      const handleC = particleC.connections['foo'];
+      assert(handleC.relaxed, 'handle PC.foo should be relaxed');
     });
     it('can round trip a manifest containing relaxed reads', async () => {
       const manifestStr = `schema Thing

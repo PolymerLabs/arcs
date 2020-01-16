@@ -414,7 +414,7 @@ export class ParticleSpec {
       const subresults = [
         `${connection.name}:`,
         dir,
-        connection.relaxed ? AstNode.RelaxationKeyword : '',
+        connection.relaxed ? AstNode.RELAXATION_KEYWORD : '',
         connection.type.toString(),
         ref ? ref.toString() : '',
         ...connection.tags.map((tag: string) => `#${tag}`)

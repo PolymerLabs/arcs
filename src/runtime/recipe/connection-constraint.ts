@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 
-import {Direction, RelaxationKeyword} from '../manifest-ast-nodes.js';
+import {Direction, RELAXATION_KEYWORD} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings, compareBools} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';
@@ -175,7 +175,7 @@ export class ConnectionConstraint implements Comparable<ConnectionConstraint> {
     const subresults = [
       `${this.from.toString(nameMap)}:`,
       this.direction !== 'any' ? this.direction : '',
-      this.relaxed ? RelaxationKeyword : '',
+      this.relaxed ? RELAXATION_KEYWORD : '',
       this.to.toString(nameMap)
     ];
     if (options && options.showUnresolved === true && this.type === 'obligation') {

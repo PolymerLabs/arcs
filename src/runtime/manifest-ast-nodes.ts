@@ -375,7 +375,7 @@ export interface RecipeRequire extends BaseNode {
 
 export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
 
-export const RelaxationKeyword = 'someof'
+export const RELAXATION_KEYWORD = 'someof';
 
 export interface RecipeParticleConnection extends BaseNode {
   kind: 'handle-connection';

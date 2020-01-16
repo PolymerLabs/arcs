@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../particle-spec.js';
 import {Type} from '../type.js';
-import {RelaxationKeyword} from '../manifest-ast-nodes.js';
+import {RELAXATION_KEYWORD} from '../manifest-ast-nodes.js';
 
 import {acceptedDirections} from './direction-util.js';
 import {Handle} from './handle.js';
@@ -287,7 +287,7 @@ export class HandleConnection implements Comparable<HandleConnection> {
     result.push(`${this.name || '*'}:`);
     // TODO(cypher1): support optionality.
     result.push(this.direction);
-    result.push(this.relaxed ? RelaxationKeyword : '');
+    result.push(this.relaxed ? RELAXATION_KEYWORD : '');
     if (this.handle) {
       if (this.handle.immediateValue) {
         result.push(this.handle.immediateValue.name);
