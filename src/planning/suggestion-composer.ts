@@ -31,7 +31,9 @@ export class SuggestionComposer {
     this.arc = arc;
   }
 
-  get modalityHandler(): PlanningModalityHandler { return this._slotComposer.modalityHandler as PlanningModalityHandler; }
+  get modalityHandler(): PlanningModalityHandler {
+    return this._slotComposer.modalityHandler as PlanningModalityHandler;
+  }
 
   clear(): void {
     if (this._container) {

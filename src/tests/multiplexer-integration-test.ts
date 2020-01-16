@@ -10,13 +10,11 @@
 
 import {assert} from '../platform/chai-web.js';
 import {Entity} from '../runtime/entity.js';
-//import {HostedSlotContext} from '../runtime/slot-context.js';
-//import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
-import {MockSlotComposer} from '../runtime/testing/mock-slot-composer.js';
+import {SlotTestObserver} from '../runtime/testing/slot-test-observer.js';
 //import {checkDefined} from '../runtime/testing/preconditions.js';
-import {StubLoader} from '../runtime/testing/stub-loader.js';
+import {Loader} from '../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
@@ -26,18 +24,20 @@ import {DriverFactory} from '../runtime/storageNG/drivers/driver-factory.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
-    const loader = new StubLoader({});
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
-    const context = await Manifest.load(
-        './src/tests/particles/artifacts/polymorphic-muxing.recipes', loader, {memoryProvider});
+    const loader = new Loader();
+    const manifest = './src/tests/particles/artifacts/polymorphic-muxing.recipes';
+    const context = await Manifest.load(manifest, loader, {memoryProvider});
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
-    const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
-    const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
     const recipeOne = `${showOneParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowOne\n    post: reads v1\n    item: consumes s1`;
+
+    const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
+    const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
     const recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowTwo\n    post: reads v1\n    item: consumes s1`;
+
     if (Flags.useNewStorageStack) {
       const postsHandle =
           await collectionHandleForTest(context, context.stores[0]);
@@ -91,70 +91,42 @@ describe('Multiplexer', () => {
       postsStub['referenceMode'] = false;
     }
     // version could be set here, but doesn't matter for tests.
-    const runtime = new Runtime({
-        loader, composerClass: MockSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
+
+    const observer = new SlotTestObserver();
+    arc.pec.slotComposer.observeSlots(observer);
+
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);
 
     // Render 3 posts
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    // slotComposer
-    //     .newExpectations()
-    //     .expectRenderSlot('List', 'root', {contentTypes: ['template', 'model']})
-    //     .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['template', 'templateName', 'model']})
-    //     .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2, isOptional: true})
-    //     .expectRenderSlot('ShowOne', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2})
-    //     .expectRenderSlot('ShowTwo', 'item', {contentTypes: ['template', 'templateName', 'model']});
+    observer
+      .newExpectations()
+      .expectRenderSlot('List', 'root')
+      .expectRenderSlot('ShowOne', 'item', {times: 2})
+      .expectRenderSlot('ShowTwo', 'item')
+      ;
 
     await suggestions[0].instantiate(arc);
     await arc.idle;
 
     // Add and render one more post
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    // slotComposer
-    //     .newExpectations()
-    //     .expectRenderSlot('List', 'root', {contentTypes: ['templateName', 'model']})
-    //     .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
-    //     .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
-    //     .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
+    observer
+      .newExpectations()
+      .expectRenderSlot('List', 'root')
+      .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
+      ;
 
     const postsStore = await collectionHandleForTest(arc, arc.findStoreById(arc.activeRecipe.handles[0].id));
-    await postsStore.add(
-        Entity.identify(new postsStore.entityClass({message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}), '4'));
+    const entityClass = new postsStore.entityClass({
+      message: 'w',
+      renderRecipe: recipeOne,
+      renderParticleSpec: showOneSpec
+    });
+    const entity = Entity.identify(entityClass, '4');
+    await postsStore.add(entity);
     await arc.idle;
-
-    // TODO(sjmiles): slotContext is deprecated
-    //assert.lengthOf(slotComposer.contexts.filter(ctx => ctx instanceof HostedSlotContext), 4);
-    assert.lengthOf(slotComposer.consumers, 6);
-
-    // TODO(sjmiles): content no longer captured this way
-    //const itemSlot = checkDefined(slotComposer.consumers.find(s => s.consumeConn.name === 'item'));
-    //const items = itemSlot.renderings.map(([subId, item]) => item);
-    // verify model
-    // assert.lengthOf(items, 4);
-    // [{subId: '1', message: 'x'}, {subId: '2', message: 'y'}, {subId: '3', message: 'z'}, {subId: '4', message: 'w'}].forEach(expected => {
-    //     assert(items.find(item => item.model.subId === expected.subId && item.model.message === expected.message),
-    //           `Cannot find item {subId: '${expected.subId}', message: '${expected.message}'`);
-    // });
-
-    // TODO(sjmiles): content no longer captured this way
-    // verify template names
-    // for (const item of items) {
-    //   if (item.model.subId === '2') {
-    //     assert.strictEqual('PostMuxer::item::ShowTwo::item::default', item.templateName);
-    //   } else {
-    //     assert.strictEqual('PostMuxer::item::ShowOne::item::default', item.templateName);
-    //   }
-    // }
-
-    // TODO(sjmiles): content no longer captured this way
-    // verify template cache
-    // HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowOne::item::default');
-    // HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::ShowTwo::item::default');
-    // HeadlessSlotDomConsumer.hasTemplate('PostMuxer::item::default');
-    // HeadlessSlotDomConsumer.hasTemplate('Root::item::ShowOne::item::default');
 
     DriverFactory.clearRegistrationsForTesting();
   });

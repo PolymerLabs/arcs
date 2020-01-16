@@ -158,7 +158,7 @@ export class Runtime {
     SlotDomConsumer.setCacheService(this.cacheService);
     this.loader = loader;
     this.pecFactory = pecFactory;
-    this.composerClass = composerClass;
+    this.composerClass = composerClass || SlotComposer;
     this.context = context || new Manifest({id: 'manifest:default'});
     this.memoryProvider = memoryProvider || new SimpleVolatileMemoryProvider();
     runtime = this;

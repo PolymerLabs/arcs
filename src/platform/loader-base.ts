@@ -59,9 +59,10 @@ export abstract class LoaderBase {
   protected readonly urlMap: UrlMap;
   protected readonly staticMap: {};
   constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
-    this.urlMap = urlMap;
+    // ensure urlMap is valued if user passed in something nullish
+    this.urlMap = urlMap || {};
     this.staticMap = staticMap;
-    this.compileRegExp(urlMap);
+    this.compileRegExp(this.urlMap);
   }
   setParticleExecutionContext(pec: ParticleExecutionContext): void {
     this.pec = pec;
@@ -93,7 +94,7 @@ export abstract class LoaderBase {
     return this.loadBinaryFile(path);
   }
   protected loadStatic(path: string): string {
-    const content = this.staticMap[path];
+    const content = this.staticMap[path] || this.staticMap['*'];
     if (content && !isString(content)) {
       throw new Error('Cannot load static binary content as string');
     }

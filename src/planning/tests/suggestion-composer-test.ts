@@ -9,59 +9,45 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../../runtime/arc.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {SlotComposerOptions} from '../../runtime/slot-composer.js';
-import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
+import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {Loader} from '../../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
-import {HeadlessSuggestDomConsumer} from '../headless-suggest-dom-consumer.js';
-import {PlanningModalityHandler} from '../planning-modality-handler.js';
 import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
-import {SuggestionComposer} from '../suggestion-composer.js';
-import {ConCap} from '../../testing/test-util.js';
+//import {SuggestionComposer} from '../suggestion-composer.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 
-class TestSuggestionComposer extends SuggestionComposer {
-  get suggestConsumers() {
-    return this._suggestConsumers;
-  }
-}
-
-class TestSlotComposer extends MockSlotComposer {
-  constructor(options: SlotComposerOptions = {}) {
-    super({
-        strict: false,
-        modalityHandler: PlanningModalityHandler.createHeadlessHandler(), ...options
-    });
-  }
-}
+// class TestSuggestionComposer extends SuggestionComposer {
+//   get suggestConsumers() {
+//     return this._suggestConsumers;
+//   }
+// }
 
 describe('suggestion composer', () => {
   it('singleton suggestion slots', async () => {
-    const loader = new StubLoader({});
+    const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     const context = await Manifest.load('./src/runtime/tests/artifacts/suggestions/Cake.recipes', loader, {memoryProvider});
-    const runtime = new Runtime({
-        loader, composerClass: TestSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
-    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
-    slotComposer.newExpectations('debug');
+    const slotComposer = arc.pec.slotComposer;
+    const observer = new SlotTestObserver();
+    slotComposer.observeSlots(observer);
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
-
-    const suggestionComposer = ConCap.silence(() => new TestSuggestionComposer(arc, slotComposer));
-    await suggestionComposer.setSuggestions(suggestions);
     assert.lengthOf(suggestions, 1);
-    assert.isEmpty(suggestionComposer.suggestConsumers);
 
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    //slotComposer.newExpectations()
-    //    .expectRenderSlot('MakeCake', 'item', {'contentTypes': ['template', 'model', 'templateName']});
+    //const suggestionComposer = ConCap.silence(() => new TestSuggestionComposer(arc, slotComposer));
+    //await suggestionComposer.setSuggestions(suggestions);
+    //assert.isEmpty(suggestionComposer.suggestConsumers);
+
+    observer.newExpectations()
+        .expectRenderSlot('MakeCake', 'item')
+        ;
 
     // Accept suggestion and replan: a suggestion consumer is created, but its content is empty.
     assert.deepEqual(suggestions[0].plan.particles.map(p => p.name), ['MakeCake']);
@@ -70,16 +56,12 @@ describe('suggestion composer', () => {
     const suggestions1 = await StrategyTestHelper.planForArc(arc);
 
     assert.lengthOf(suggestions1, 1);
-    await suggestionComposer.setSuggestions(suggestions1);
-    assert.lengthOf(suggestionComposer.suggestConsumers, 1);
+    //await suggestionComposer.setSuggestions(suggestions1);
+    //assert.lengthOf(suggestionComposer.suggestConsumers, 1);
 
-    // TODO(sjmiles): uses old render data
-    //const suggestConsumer = suggestionComposer.suggestConsumers[0] as HeadlessSuggestDomConsumer;
-    //assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
-
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    //slotComposer.newExpectations()
-    //    .expectRenderSlot('LightCandles', 'candles', {'contentTypes': ['template', 'model', 'templateName']});
+    observer.newExpectations()
+        .expectRenderSlot('LightCandles', 'special')
+        ;
 
     assert.deepEqual(suggestions1[0].plan.particles.map(p => p.name), ['LightCandles']);
     await suggestions1[0].instantiate(arc);
@@ -87,37 +69,37 @@ describe('suggestion composer', () => {
 
     const suggestions2 = await StrategyTestHelper.planForArc(arc);
     assert.isEmpty(suggestions2);
-    await suggestionComposer.setSuggestions(suggestions);
-    assert.isEmpty(suggestionComposer.suggestConsumers);
+    //await suggestionComposer.setSuggestions(suggestions2);
+    //assert.isEmpty(suggestionComposer.suggestConsumers);
 
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    //await slotComposer.expectationsCompleted();
+    await observer.expectationsCompleted();
   });
 
   it('suggestion set-slots', async () => {
-    const loader = new StubLoader({});
+    const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
-    const context = await Manifest.load('./src/runtime/tests/artifacts/suggestions/Cakes.recipes', loader, {memoryProvider});
-    const runtime = new Runtime({
-        loader, composerClass: TestSlotComposer, context, memoryProvider});
+    const manifestFile = './src/runtime/tests/artifacts/suggestions/Cakes.recipes';
+    const context = await Manifest.load(manifestFile, loader, {memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
-    slotComposer.newExpectations('debug');
+
+    const slotComposer = arc.pec.slotComposer;
+    const observer = new SlotTestObserver();
+    slotComposer.observeSlots(observer);
+
     const suggestions = await StrategyTestHelper.planForArc(arc);
-
-    const suggestionComposer = ConCap.silence(() => new TestSuggestionComposer(arc, slotComposer));
-    await suggestionComposer.setSuggestions(suggestions);
     assert.lengthOf(suggestions, 1);
-    assert.isEmpty(suggestionComposer.suggestConsumers);
 
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    // slotComposer.newExpectations()
-    //   .expectRenderSlot('List', 'root', {'contentTypes': ['template', 'model', 'templateName']})
-    //   .expectRenderSlot('MakeCake', 'item', {'contentTypes': ['template', 'model', 'templateName']})
-    //   .expectRenderSlot('MakeCake', 'item', {'contentTypes': ['template', 'model', 'templateName']})
-    //   .expectRenderSlot('MakeCake', 'item', {'contentTypes': ['template', 'model', 'templateName']})
-    //   .expectRenderSlot('CakeMuxer', 'item', {'contentTypes': ['template', 'model', 'templateName']})
-    //   ;
+    //const suggestionComposer = ConCap.silence(() => new TestSuggestionComposer(arc, slotComposer));
+    //await suggestionComposer.setSuggestions(suggestions);
+    //assert.isEmpty(suggestionComposer.suggestConsumers);
+
+    observer.newExpectations()
+        .expectRenderSlot('List', 'root')
+        .expectRenderSlot('MakeCake', 'item')
+        .expectRenderSlot('MakeCake', 'item')
+        .expectRenderSlot('MakeCake', 'item')
+        ;
 
     assert.deepEqual(suggestions[0].plan.particles.map(p => p.name).sort(), ['CakeMuxer', 'List']);
     await suggestions[0].instantiate(arc);
@@ -133,12 +115,8 @@ describe('suggestion composer', () => {
     }
     assert.lengthOf(suggestions1.filter(s => s.descriptionText === 'Light candles on Tiramisu cake.'), 1);
 
-    await suggestionComposer.setSuggestions(suggestions1);
-    assert.lengthOf(suggestionComposer.suggestConsumers, 1);
-
-    // TODO(sjmiles): consumers no longer capture content
-    //const suggestConsumer = suggestionComposer.suggestConsumers[0] as HeadlessSuggestDomConsumer;
-    //assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
+    //await suggestionComposer.setSuggestions(suggestions1);
+    //assert.lengthOf(suggestionComposer.suggestConsumers, 1);
 
     // Instantiate inner arc's suggestion.
     const innerSuggestion = suggestions1.find(s => s.plan.particles.some(p => p.name === 'LightCandles'));
@@ -146,17 +124,17 @@ describe('suggestion composer', () => {
 
     await innerSuggestion.instantiate(innerArc);
 
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    //slotComposer.newExpectations()
-    //  .expectRenderSlot('LightCandles', 'candles', {'contentTypes': ['template', 'model', 'templateName']});
+    observer.newExpectations()
+        .expectRenderSlot('LightCandles', 'special')
+        ;
     await arc.idle;
 
     const suggestions2 = await StrategyTestHelper.planForArc(arc);
     assert.isEmpty(suggestions2);
 
-    await suggestionComposer.setSuggestions(suggestions2);
-    assert.isEmpty(suggestionComposer.suggestConsumers);
+    //await suggestionComposer.setSuggestions(suggestions2);
+    //assert.isEmpty(suggestionComposer.suggestConsumers);
 
-    //await slotComposer.expectationsCompleted();
+    await observer.expectationsCompleted();
   });
 });

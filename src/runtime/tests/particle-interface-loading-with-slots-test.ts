@@ -15,24 +15,19 @@ import {ArcId} from '../id.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 //import {HostedSlotContext, ProvidedSlotContext} from '../slot-context.js';
-import {MockSlotComposer} from '../testing/mock-slot-composer.js';
+import {SlotComposer} from '../slot-composer.js';
+import {SlotTestObserver} from '../testing/slot-test-observer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
 import {CollectionHandle} from '../storageNG/handle.js';
 import {Entity} from '../entity.js';
 
 describe('particle interface loading with slots', () => {
-  async function initializeManifestAndArc(contextContainer?): Promise<{manifest: Manifest, recipe: Recipe, slotComposer: MockSlotComposer, arc: Arc}> {
+  async function initializeManifestAndArc(contextContainer?):
+    Promise<{manifest: Manifest, recipe: Recipe, observer: SlotTestObserver, arc: Arc}> {
     const loader = new Loader();
-    const slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
-
-    // TODO(sjmiles): contexts no longer used
-    //const slotContext = slotComposer.getAvailableContexts()[0] as ProvidedSlotContext;
-    //slotContext.spec.isSet = true; // MultiplexSlotsParticle expects a Set Slot root.
-
-    const manifest = await Manifest.parse(`
+    const manifestText = `
       import './src/runtime/tests/artifacts/transformations/test-slots-particles.manifest'
-
       recipe
         handle0: create *
         slot0: slot 'rootslotid-set-slotid-0'
@@ -40,15 +35,19 @@ describe('particle interface loading with slots', () => {
           particle0: SingleSlotParticle
           foos: reads handle0
           annotationsSet: consumes slot0
-      `, {loader, fileName: ''});
+    `;
+    const manifest = await Manifest.parse(manifestText, {loader, fileName: ''});
     const recipe = manifest.recipes[0];
-
-    const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest, loader});
-
     assert(recipe.normalize(), `can't normalize recipe`);
     assert(recipe.isResolved(), `recipe isn't resolved`);
 
-    return {manifest, recipe, slotComposer, arc};
+    const slotComposer = new SlotComposer();
+    const observer = new SlotTestObserver();
+    slotComposer.observeSlots(observer);
+
+    const arc = new Arc({id: ArcId.newForTest('test'), slotComposer, context: manifest, loader});
+
+    return {manifest, recipe, observer, arc};
   }
 
   // tslint:disable-next-line: no-any
@@ -61,119 +60,51 @@ describe('particle interface loading with slots', () => {
     return inHandle;
   }
 
-  // TODO(sjmiles): render data no longer captured by slot objects
-  //const expectedTemplateName = 'MultiplexSlotsParticle::annotationsSet::SingleSlotParticle::annotation::default';
-
-  // TODO(sjmiles): render data no longer captured by slot objects
-  // function verifyFooItems(slotConsumer, expectedValues) {
-  //   const renderings = slotConsumer.renderings.filter(([subId, {model}]) => Boolean(model));
-  //   assert.strictEqual(renderings.length, Object.keys(expectedValues).length);
-  //   for (const [subId, {model, templateName}] of renderings) {
-  //     assert.strictEqual(expectedValues[subId], model.value);
-  //     assert.strictEqual(expectedTemplateName, templateName);
-  //     assert.isTrue(!!HeadlessSlotDomConsumer.hasTemplate(expectedTemplateName));
-  //   }
-  // }
-
   it('multiplex recipe with slots - immediate', async () => {
-    const {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc({
+    const {manifest, recipe, observer, arc} = await initializeManifestAndArc({
       'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'
     });
 
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    // slotComposer
-    //   .newExpectations()
-    //   .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
-
+    observer
+      .newExpectations()
+      .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2})
+      ;
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
     await arc.pec.idle;
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    // await slotComposer.expectationsCompleted();
-
-    // TODO(sjmiles): slotContext is deprecated
-    // Verify slot template and models.
-    // assert.lengthOf(slotComposer.consumers, 3);
-    // assert.isTrue(slotComposer.consumers[0].slotContext instanceof ProvidedSlotContext);
-    // assert.isTrue(slotComposer.consumers[1].slotContext instanceof HostedSlotContext);
-    // assert.isTrue(slotComposer.consumers[2].slotContext instanceof HostedSlotContext);
-    // const slot = slotComposer.consumers[0];
-    // TODO(sjmiles): render data no longer captured by slot objects
-    // verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
+    await observer.expectationsCompleted();
 
     // Add one more element.
     await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3'));
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    // slotComposer
-    //   .newExpectations()
-    //   .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model']})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
+    observer
+       .newExpectations()
+       .expectRenderSlot('SingleSlotParticle', 'annotation')
+       ;
     await arc.pec.idle;
-    //await slotComposer.expectationsCompleted();
-
-    // TODO(sjmiles): render data no longer captured by slot objects
-    //verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
+    await observer.expectationsCompleted();
   });
 
   it('multiplex recipe with slots - init context later', async () => {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
-    const {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc();
+    const {manifest, recipe, observer, arc} = await initializeManifestAndArc();
 
-    // TODO(sjmiles): contexts deprecated
-    //(slotComposer.getAvailableContexts()[0] as ProvidedSlotContext).container = null;
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
 
-    // Wait for the hosted slots to be initialized in slot-composer.
-    await new Promise((resolve, reject) => {
-      const myInterval = setInterval(() => {
-        if (slotComposer.consumers.length === 3) { // last 2 are hosted slots
-          resolve();
-          clearInterval(myInterval);
-        }
-      }, 10);
-    });
-
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    // slotComposer
-    //   .newExpectations()
-    //   .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
-
-    // TODO(sjmiles): contexts/containers/consumers deprecated
-    // tslint:disable-next-line: no-any
-    //(slotComposer.getAvailableContexts()[0] as ProvidedSlotContext).container = {'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'} as any;
-    //slotComposer.consumers[0].onContainerUpdate({}, undefined);
-
+    observer
+      .newExpectations()
+      .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2})
+      ;
     await arc.pec.idle;
-
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    //await slotComposer.expectationsCompleted();
-
-    // Verify slot template and models.
-    assert.lengthOf(slotComposer.consumers, 3);
-    // TODO(sjmiles): render data no longer captured by slot objects
-    //const slot = slotComposer.consumers[0];
-    //verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
+    await observer.expectationsCompleted();
 
     // Add one more element.
+    observer
+       .newExpectations()
+       .expectRenderSlot('SingleSlotParticle', 'annotation')
+       ;
     await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3'));
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    // slotComposer
-    //   .newExpectations()
-    //   .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model']})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
     await arc.pec.idle;
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    //await slotComposer.expectationsCompleted();
-
-    // TODO(sjmiles): render data no longer captured by slot objects
-    // Verify slot template and models.
-    //verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
+    await observer.expectationsCompleted();
   });
 });

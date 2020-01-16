@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
+import {SlotComposer} from '../../runtime/slot-composer.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
@@ -29,7 +29,7 @@ describe('RecipeIndex', () => {
       id: ArcId.newForTest('test-plan-arc'),
       context: manifest,
       loader,
-      slotComposer: new MockSlotComposer()
+      slotComposer: new SlotComposer()
     });
     const recipeIndex = RecipeIndex.create(arc);
     await recipeIndex.ready;

@@ -12,39 +12,36 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-import {MockSlotComposer} from '../../runtime/testing/mock-slot-composer.js';
-import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
+import {Loader} from '../../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
 
 describe('transformation slots', () => {
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {
-    const loader = new StubLoader({});
+    const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.load(
         './src/tests/particles/artifacts/provide-hosted-particle-slots.manifest', loader, {memoryProvider});
     const runtime = new Runtime({
-        loader, composerClass: MockSlotComposer, context, memoryProvider});
+        loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const slotComposer = arc.pec.slotComposer as MockSlotComposer;
+    const slotComposer = arc.pec.slotComposer;
 
-    slotComposer
+    const observer = new SlotTestObserver();
+    slotComposer.observeSlots(observer);
+
+    observer
       .newExpectations()
-        .expectRenderSlot('FooList', 'root', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('ShowFoo', 'item', {contentTypes: ['template']})
-        .expectRenderSlot('ShowFoo', 'item', {contentTypes: ['model'], times: 2})
-        .expectRenderSlot('Fooxer', 'item', {contentTypes: ['template']})
-        .expectRenderSlot('Fooxer', 'item', {verify: (content) => {
-          return content.model && content.model.items && content.model.items.length === 2;
-        }})
-        .expectRenderSlot('ShowFooAnnotation', 'annotation', {contentTypes: ['template']})
-        .expectRenderSlot('ShowFooAnnotation', 'annotation', {contentTypes: ['model'], times: 2})
-        .expectRenderSlot('FooAnnotationMuxer', 'annotation', {contentTypes: ['template']})
-        .expectRenderSlot('FooAnnotationMuxer', 'annotation', {verify: (content) => {
-          return content.model && content.model.items && content.model.items.length === 2;
-        }});
+        .expectRenderSlot('FooList', 'root')
+        .expectRenderSlot('ShowFoo', 'item')
+        .expectRenderSlot('ShowFoo', 'item', {times: 2})
+        .expectRenderSlot('Fooxer', 'item')
+        .expectRenderSlot('ShowFooAnnotation', 'annotation')
+        .expectRenderSlot('ShowFooAnnotation', 'annotation', {times: 2})
+        ;
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);

@@ -49,7 +49,7 @@ resource ProductList
       "values": {
         "eid1": {"value": {"id": "eid1", "rawData": {"name": "apple"}}, "version": {"u": 1}},
         "eid2": {"value": {"id": "eid2", "rawData": {"name": "Harry Potter", "category": "book"}}, "version": {"u": 1}}
-        },
+      },
       "version": {"u": 1}
     },
     "locations": {}

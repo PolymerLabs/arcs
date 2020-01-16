@@ -16,7 +16,7 @@ import {LoaderBase} from './loader-base.js';
 
 export class Loader extends LoaderBase {
   clone(): Loader {
-    return new Loader(this.urlMap);
+    return new Loader(this.urlMap, this.staticMap);
   }
   async loadFile(path: string): Promise<string> {
     const data = await this.loadFileData(path, 'utf-8');
