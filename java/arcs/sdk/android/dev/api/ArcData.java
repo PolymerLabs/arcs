@@ -1,7 +1,6 @@
 package arcs.sdk.android.dev.api;
 
 import arcs.core.common.Id;
-import arcs.core.common.Id.Generator;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
