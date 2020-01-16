@@ -16,10 +16,37 @@ import {Type} from './type.js';
 
 export class UiMultiplexerParticle extends UiTransformationParticle {
 
+  // TODO(sjmiles): needs proper typing
   plexeds; //: any[];
 
-  async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
+  async update({list}, state: {
+    arc: InnerArcHandle,
+    type: Type,
+    hostedParticle: ParticleSpec,
+    otherMappedHandles: string[],
+    otherConnections: string[]
+  }, oldProps, oldState) {
+    //log(`[${this.spec.name}]::update`, list, arc);
+    if (!list) {
+      return;
+    }
+    // TODO(sjmiles): should use state
+    if (!this.plexeds) {
+      // TODO(sjmiles): maybe have a version that binds `this` (avoid `p`)
+      this.await(async p => p.updateConnections());
+    }
+    if (!state.arc || (oldProps.list === list && oldState.arc === state.arc)) {
+      return;
+    }
+    if (list.length > 0) {
+      this.relevance = 0.1;
+    }
+    this.await(async p => p.updateEntries({list}, state));
+  }
+
+  async updateConnections() {
     this.plexeds = [];
+    const handles = this.handles;
     const arc = await this.constructInnerArc();
     const listHandleName = 'list';
     const particleHandleName = 'hostedParticle';
@@ -41,34 +68,14 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
       otherMappedHandles,
       otherConnections
     });
-    await super.setHandles(handles);
   }
 
-  async update({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}: {
-    arc: InnerArcHandle,
-    type: Type,
-    hostedParticle: ParticleSpec,
-    otherMappedHandles: string[],
-    otherConnections: string[]
-  }, oldProps, oldState) {
-    //console.warn(`[${this.spec.name}]::update`, list, arc);
-    if (!list || !arc) {
-      return;
-    }
-    if (oldProps.list === list && oldState.arc === arc) {
-      return;
-    }
-    if (list.length > 0) {
-      this.relevance = 0.1;
-    }
+  async updateEntries({list}, {arc, type, hostedParticle, otherMappedHandles, otherConnections}) {
     // TODO(sjmiles): needs safety for re-entrant update
-    //const slotIds = [];
-    for (const [index, item] of this.getListEntries(list)) {
-      //const id = await this.updateEntry(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles});
-      //slotIds.push(id);
+    const entries = this.getListEntries(list);
+    for (const [index, item] of entries) {
       await this.updateEntry(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles});
     }
-    //console.warn('m-d-p', slotIds);
     // clear data from unused particles/handles
     for (let i=list.length, plexed; (plexed=this.plexeds[i]); i++) {
       plexed.then(plexed => plexed.handle['clear']());
@@ -82,7 +89,6 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
       // just skip this item.
       return;
     }
-    //console.log(`RenderEx:updateEntry: %c[${index}]`, 'color: #A00; font-weight: bold;');
     // Map innerArc/slot by index. Index maps closely to rendering contexts.
     // Rendering contexts are expensive, we want maximal coherence.
     const plexed = await this.requirePlexed(index, item,
@@ -140,7 +146,6 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     const otherConnections: string[] = [];
     let index = 2;
     const skipConnectionNames = [listHandleName, particleHandleName];
-
     for (const [connectionName, otherHandle] of handles) {
       if (!skipConnectionNames.includes(connectionName)) {
         // TODO(wkorman): For items with embedded recipes we may need a map
