@@ -262,12 +262,15 @@ export class Particle {
         let bitStr: string;
         if (typeof bits[i] === 'string') {
           bitStr = bits[i];
-        } else if (!bits[i].toManifestString) {
-          throw new Error(`${bits[i]} doesn't have toManifestString implementation`);
+        } else if (!bits[i]) {
+          bitStr = '';
         } else {
+          if (!bits[i].toManifestString) {
+            throw new Error(`${bits[i]} doesn't have toManifestString implementation`);
+          }
           bitStr = bits[i].toManifestString();
         }
-        bitStr = bitStr.replace(/(\n)/g, '$1' + indent);
+        bitStr = bitStr.replace(/(\n)/g, `$1${indent}`);
         output.push(str);
         output.push(bitStr);
     }
