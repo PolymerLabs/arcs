@@ -53,12 +53,13 @@ def arcs_kt_jvm_library(**kwargs):
       **kwargs: Set of arguments
     """
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
+    constraints = kwargs.pop("constraints", ["android"])
     if not IS_BAZEL:
         kwargs["disable_lint_checks"] = [
             "PackageName",
             "TopLevelName",
         ] + disable_lint_checks
-        kwargs["constraints"] = ["android"]
+        kwargs["constraints"] = constraints
 
     kt_jvm_library(**kwargs)
 
@@ -317,6 +318,8 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
     arcs_kt_jvm_library(
         name = name,
         srcs = srcs,
+        # We don't need this to be Android compatible.
+        constraints = [],
         testonly = True,
         deps = deps,
     )
