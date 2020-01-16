@@ -17,7 +17,7 @@ public class ArcsFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getName() {
-    return "Arcs manifest";
+    return "Arcs";
   }
 
   @NotNull
