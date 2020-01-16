@@ -370,8 +370,7 @@ class BooleanPrimitive extends RefinementExpression {
   }
 
   toSQLExpression(): string {
-    // This should never be called. The expression is assumed to be normalised.
-    return this.value ? '1' : '0';
+    throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalised.');
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -789,11 +788,15 @@ class RefinementOperator {
 
 export class SQLExtracter {
   static fromSchema(schema: Schema, table: string): string {
-    let schemaFilter: string = schema.refinement && schema.refinement.toSQLExpression();
-    for (const fieldName of Object.keys(schema.fields)) {
-      const fieldFilter = schema.fields[fieldName].refinement && schema.fields[fieldName].refinement.toSQLExpression();
-      schemaFilter = schemaFilter ? schemaFilter + (fieldFilter ? (' AND ' + fieldFilter) : '') : fieldFilter;
+    const filterTerms = [];
+    if (schema.refinement) {
+      filterTerms.push(schema.refinement.toSQLExpression());
     }
-    return `SELECT * FROM ${table}` + (schemaFilter ? ` WHERE ${schemaFilter}` : '') + ';';
+    for (const field of Object.values(schema.fields)) {
+      if (field.refinement) {
+        filterTerms.push(field.refinement.toSQLExpression());
+      }
+    }
+    return `SELECT * FROM ${table}` + (filterTerms.length ? ` WHERE ${filterTerms.join(' AND ')}` : '') + ';';
   }
 }
