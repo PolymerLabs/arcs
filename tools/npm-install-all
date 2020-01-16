@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# A basic script to install all required npm packages in all subfolders. We have
+# lots of package.json files scattered around the place, and we want to ensure
+# all of them get installed.
+
+# Use find to look for all package.json files. Exclude node_modules and deps
+# folders.
+for f in $(find \( -name deps -o -name node_modules \) -prune \
+           -o -type f -name package.json -print); do
+  (cd $(dirname "$f") && npm install)
+done
