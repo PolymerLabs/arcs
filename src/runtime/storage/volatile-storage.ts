@@ -366,6 +366,10 @@ export class VolatileCollection extends VolatileStorageProvider implements Colle
     }
   }
 
+  async clear() {
+    this._model = new CrdtCollectionModel();
+  }
+
   clearItemsForTesting() {
     this._model = new CrdtCollectionModel();
   }

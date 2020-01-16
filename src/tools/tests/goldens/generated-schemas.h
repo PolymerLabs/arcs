@@ -90,9 +90,11 @@ inline bool GoldInternal1::operator==(const GoldInternal1& other) const {
 }
 
 template<>
-inline std::string internal::Accessor::entity_to_str(const GoldInternal1& entity, const char* join) {
+inline std::string internal::Accessor::entity_to_str(const GoldInternal1& entity, const char* join, bool with_id) {
   internal::StringPrinter printer;
-  printer.addId(entity._internal_id_);
+  if (with_id) {
+    printer.addId(entity._internal_id_);
+  }
   if (entity.val_valid_) printer.add("val: ", entity.val_);
   return printer.result(join);
 }
@@ -287,9 +289,11 @@ inline bool Gold_Data::operator==(const Gold_Data& other) const {
 }
 
 template<>
-inline std::string internal::Accessor::entity_to_str(const Gold_Data& entity, const char* join) {
+inline std::string internal::Accessor::entity_to_str(const Gold_Data& entity, const char* join, bool with_id) {
   internal::StringPrinter printer;
-  printer.addId(entity._internal_id_);
+  if (with_id) {
+    printer.addId(entity._internal_id_);
+  }
   if (entity.num_valid_) printer.add("num: ", entity.num_);
   if (entity.txt_valid_) printer.add("txt: ", entity.txt_);
   if (entity.lnk_valid_) printer.add("lnk: ", entity.lnk_);

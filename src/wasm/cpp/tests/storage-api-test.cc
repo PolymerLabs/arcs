@@ -42,18 +42,18 @@ public:
 
       // Test begin()/end() and WrappedIter operators
       auto i1 = inHandle_.begin();
-      d1.set_txt(arcs::entity_to_str(*i1));  // op*
-      d1.set_num(i1->num() * 2);             // op->
-      d1.set_flg(i1 != inHandle_.end());           // op!=
+      d1.set_txt(arcs::entity_to_str(*i1, "", false));  // op*
+      d1.set_num(i1->num() * 2);                        // op->
+      d1.set_flg(i1 != inHandle_.end());                // op!=
       outHandle_.store(d1);
 
       auto i2 = inHandle_.begin();
-      d2.set_txt((i2 == i1) ? "eq" : "ne");  // op==
-      d2.set_flg(i1++ == inHandle_.end());         // postfix op++
+      d2.set_txt((i2 == i1) ? "eq" : "ne");             // op==
+      d2.set_flg(i1++ == inHandle_.end());              // postfix op++
       outHandle_.store(d2);
 
       d3.set_txt((i2 != i1) ? "ne" : "eq");
-      d3.set_flg(++i2 == inHandle_.end());         // prefix op++
+      d3.set_flg(++i2 == inHandle_.end());              // prefix op++
       outHandle_.store(d3);
     } else if (handler == "case5") {
       arcs::CollectionApiTest_OutHandle d1, d2, d3;
@@ -78,7 +78,7 @@ public:
       for (size_t i = 0; i < 3; i++) {
         arcs::CollectionApiTest_OutHandle d;
         d.set_num(i);
-        d.set_txt(Accessor::get_id(*sorted[i]));
+        d.set_txt(sorted[i]->txt());
         outHandle_.store(d);
       }
 
