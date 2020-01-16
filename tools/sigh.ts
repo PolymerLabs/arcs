@@ -487,7 +487,10 @@ function lint(args: string[]): boolean {
   });
   const report = cli.executeOnFiles(jsSources);
   const formatter = cli.getFormatter(options.format || 'stylish');
-  sighLog(formatter(report.results));
+  const output = formatter(report.results);
+  if (output) {
+    sighLog(formatter(report.results));
+  }
 
   if (options.fix) {
     CLIEngine.outputFixes(report);

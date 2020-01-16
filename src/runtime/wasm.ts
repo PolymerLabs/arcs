@@ -677,6 +677,7 @@ export class WasmContainer {
       _collectionClear: (p, h) => this.getParticle(p).collectionClear(h),
       _onRenderOutput: (p, template, model) => this.getParticle(p).onRenderOutput(template, model),
       _dereference: (p, id, key, hash, cid) => this.getParticle(p).dereference(id, key, hash, cid),
+      // tslint:disable-next-line: deprecation
       _render: (p, slot, template, model) => this.getParticle(p).renderImpl(slot, template, model),
       _serviceRequest: (p, call, args, tag) => this.getParticle(p).serviceRequest(call, args, tag),
       _resolveUrl: (url) => this.resolve(url),
