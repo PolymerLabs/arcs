@@ -11,14 +11,14 @@ END="\033[0m"
 CMD="$BLD$YLW"
 
 warn() {
-    echo -e "$RED$BLD$1$END"
+  echo -e "$RED$BLD$1$END"
 }
 
 fail() {
-    warn $1
-    exit 1
+  warn "$*"
+  exit 1
 }
 
 status() {
-    echo -e "$MAG$1$END"
+  echo -e "$MAG$1$END"
 }
