@@ -143,9 +143,12 @@ export class Schema {
   }
 
   isMoreSpecificThan(otherSchema: Schema): boolean {
+    console.log(this)
+    console.log(otherSchema);
     const names = new Set(this.names);
     for (const name of otherSchema.names) {
       if (!names.has(name)) {
+        console.log('returning false1');
         return false;
       }
     }
@@ -155,12 +158,15 @@ export class Schema {
     }
     for (const [name, type] of Object.entries(otherSchema.fields)) {
       if (fields[name] == undefined) {
+        console.log('returning false2');
         return false;
       }
       if (!Schema.typesEqual(fields[name], type)) {
+        console.log('returning false3');
         return false;
       }
     }
+    console.log('returning true');
     return true;
   }
 

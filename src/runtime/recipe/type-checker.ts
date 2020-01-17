@@ -237,7 +237,9 @@ export class TypeChecker {
     const resolvedLeft = left.type.resolvedType();
     const resolvedRight = right.type.resolvedType();
     const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
-
+    console.log(leftType);
+    console.log('\n\n\n');
+    console.log(rightType);
     // a variable is compatible with a set only if it is unconstrained.
     if (leftType instanceof TypeVariable && rightType.isTypeContainer()) {
       return !(leftType.variable.canReadSubset || leftType.variable.canWriteSuperset);
@@ -245,6 +247,8 @@ export class TypeChecker {
     if (rightType instanceof TypeVariable && leftType.isTypeContainer()) {
       return !(rightType.variable.canReadSubset || rightType.variable.canWriteSuperset);
     }
+
+    console.log('Flow reached here');
 
     if (leftType instanceof TypeVariable || rightType instanceof TypeVariable) {
       // TODO: everything should use this, eventually. Need to implement the
