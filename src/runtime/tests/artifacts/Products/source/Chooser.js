@@ -97,7 +97,7 @@ defineParticle(({UiParticle, html, resolver, log}) => {
       <div col0>
         <div name title="{{name}}">{{name}}</div>
         <div> <span price>{{price}}</span><span seller>{{seller}}</span></div>
-        <div><button events key="{{index}}" on-click="_onChooseValue">Add</button></div>
+        <div><button events key="{{index}}" on-click="onChooseValue">Add</button></div>
       </div>
       <div col1>
         <img src="{{image}}">
@@ -134,16 +134,18 @@ ${productStyles}
       }
       state.values = result;
       return {
-        items: result.map(({rawData, id}, index) => {
-          return Object.assign({}, rawData, {
-            subId: id,
-            image: resolver ? resolver(rawData.image) : rawData.image,
-            index
-          });
-        })
+        items: result.map((entity, index) => this.dataToModel(entity, index))
       };
     }
-    _onChooseValue(e, state) {
+    dataToModel(entity, index) {
+      return Object.assign(this.dataClone(entity), {
+        id: this.idFor(entity),
+        subId: this.idFor(entity),
+        image: resolver ? resolver(entity.image) : entity.image,
+        index
+      });
+    }
+    onChooseValue(e, state) {
       this.handles.get('resultList').store(state.values[e.data.key]);
     }
   };
