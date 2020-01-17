@@ -36,5 +36,17 @@ interface ArcHost {
      */
     val registeredParticles: List<KClass<out Particle>>
 
-    // TODO: Implement startArc/stopArc/handleMessage
+    /**
+     * Requests this arc host to start or restart an Arc associated with this [PlanPartition]. This
+     * may include creating handles and storage proxies, registering for updates from the storage
+     * system, instantiating particles, and registering for resurrection.
+     */
+    fun startArc(partition: PlanPartition)
+
+    /**
+     * Shuts down an existing arc. This may include unregistering for updates from storage,
+     * resurrection, and notifying particles they are at the end of their lifecycle.
+     */
+    fun stopArc(partition: PlanPartition)
+    // TODO: HandleMessage
 }

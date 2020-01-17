@@ -9,6 +9,8 @@ arcs_kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/sdk",
+        "//java/arcs/core/storage",
+        "//java/arcs/core/storage/driver",
         "//third_party/java/auto:auto_service",
     ],
 )

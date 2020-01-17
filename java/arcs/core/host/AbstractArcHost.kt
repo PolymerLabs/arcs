@@ -30,4 +30,13 @@ abstract class AbstractArcHost : ArcHost {
 
     override val registeredParticles: List<KClass<out Particle>>
         get() = particles
+
+    override fun startArc(partition: PlanPartition) {
+
+        // TODO(cromwellian): implement
+    }
+
+    override fun stopArc(partition: PlanPartition) {
+        // TODO(cromwellian): implement
+    }
 }
