@@ -20,13 +20,16 @@ An IntelliJ plugin supporting Arcs manifests (*.arcs files).
 
 1) Install IntelliJ
 
-2) From IntelliJ, import this directory as a Gradle Project.
+2) Install plugin: Grammar-Kit
 
-3) Start developing with the instructions from https://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support.html.
+3) From IntelliJ, import this directory as a Gradle Project.
+
+4) Run Tools->Generate Parser Code on Arcs.bnf.
+
+5) Run Tools->Run JFlex Generator on Arcs.flex.
+
+6) Start developing with the instructions from https://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support.html.
 
 - Use :runIde to start another IntelliJ instance to test the plugin.
-- Use :buildPlugin to build the shippable version of the plugin which will be 
+- Use :buildPlugin to build the shippable version of the plugin which will be
   located under build/distributions.
-
-
-
