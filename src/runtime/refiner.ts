@@ -80,6 +80,11 @@ export class Refinement {
     return '[' + this.expression.toString() + ']';
   }
 
+  toSQLExpression(): string {
+    this.normalise();
+    return this.expression.toSQLExpression();
+  }
+
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.applyOperator(data);
     if (typeof res !== 'boolean') {
@@ -111,6 +116,8 @@ abstract class RefinementExpression {
 
   abstract toString(): string;
 
+  abstract toSQLExpression(): string;
+
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>);
 }
 
@@ -138,6 +145,10 @@ export class BinaryExpression extends RefinementExpression {
 
   toString(): string {
     return `(${this.leftExpr.toString()} ${this.operator.op} ${this.rightExpr.toString()})`;
+  }
+
+  toSQLExpression(): string {
+    return `(${this.leftExpr.toSQLExpression()} ${this.operator.toSQLOp()} ${this.rightExpr.toSQLExpression()})`;
   }
 
   applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
@@ -239,7 +250,11 @@ export class UnaryExpression extends RefinementExpression {
   }
 
   toString(): string {
-    return this.operator.op + '(' + this.expr.toString() + ')';
+    return `(${this.operator.op} ${this.expr.toString()})`;
+  }
+
+  toSQLExpression(): string {
+    return `(${this.operator.toSQLOp()} ${this.expr.toSQLExpression()})`;
   }
 
   applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
@@ -296,6 +311,13 @@ class FieldNamePrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
+  toSQLExpression(): string {
+    if (this.evalType === Primitive.BOOLEAN) {
+      return `(${this.value.toString()} = 1)`;
+    }
+    return this.value.toString();
+  }
+
   applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
     if (data[this.value] != undefined) {
       return data[this.value];
@@ -321,6 +343,10 @@ class NumberPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
+  toSQLExpression(): string {
+    return this.value.toString();
+  }
+
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
@@ -341,6 +367,10 @@ class BooleanPrimitive extends RefinementExpression {
 
   toString(): string {
     return this.value.toString();
+  }
+
+  toSQLExpression(): string {
+    throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalised.');
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -689,23 +719,24 @@ interface OperatorInfo {
   argType: string;
   evalType: Primitive;
   evalFn: (exprs: ExpressionPrimitives[]) => ExpressionPrimitives;
+  sqlOp: string;
 }
 
 const operatorTable: Dictionary<OperatorInfo> = {
-  [Op.AND]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, evalFn: e => e[0] && e[1]},
-  [Op.OR]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, evalFn: e => e[0] || e[1]},
-  [Op.LT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] < e[1]},
-  [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] > e[1]},
-  [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] <= e[1]},
-  [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] >= e[1]},
-  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] + e[1]},
-  [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] - e[1]},
-  [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] * e[1]},
-  [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] / e[1]},
-  [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN, evalFn: e => !e[0]},
-  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => -e[0]},
-  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] === e[1]},
-  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] !== e[1]},
+  [Op.AND]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, evalFn: e => e[0] && e[1], sqlOp: 'AND'},
+  [Op.OR]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, evalFn: e => e[0] || e[1], sqlOp: 'OR'},
+  [Op.LT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] < e[1], sqlOp: '<'},
+  [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] > e[1], sqlOp: '>'},
+  [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] <= e[1], sqlOp: '<='},
+  [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] >= e[1], sqlOp: '>='},
+  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] + e[1], sqlOp: '+'},
+  [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] - e[1], sqlOp: '-'},
+  [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] * e[1], sqlOp: '*'},
+  [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] / e[1], sqlOp: '/'},
+  [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN, evalFn: e => !e[0], sqlOp: 'NOT'},
+  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => -e[0], sqlOp: '-'},
+  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] === e[1], sqlOp: '='},
+  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] !== e[1], sqlOp: '<>'},
 };
 
 class RefinementOperator {
@@ -715,6 +746,10 @@ class RefinementOperator {
   constructor(operator: string) {
     this.op = operator;
     this.updateOp(operator);
+  }
+
+  toSQLOp(): string {
+    return this.opInfo.sqlOp;
   }
 
   updateOp(operator: string) {
@@ -748,5 +783,20 @@ class RefinementOperator {
         }
       }
     }
+  }
+}
+
+export class SQLExtracter {
+  static fromSchema(schema: Schema, table: string): string {
+    const filterTerms = [];
+    if (schema.refinement) {
+      filterTerms.push(schema.refinement.toSQLExpression());
+    }
+    for (const field of Object.values(schema.fields)) {
+      if (field.refinement) {
+        filterTerms.push(field.refinement.toSQLExpression());
+      }
+    }
+    return `SELECT * FROM ${table}` + (filterTerms.length ? ` WHERE ${filterTerms.join(' AND ')}` : '') + ';';
   }
 }
