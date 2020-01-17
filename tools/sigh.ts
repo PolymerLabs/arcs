@@ -417,9 +417,9 @@ function makeLink(src: string, dest: string): boolean {
   } catch (lerr) {
     // In case of racing builds.
     if (lerr.message.startsWith('EEXIST:')) {
-      console.warn(`Warn linking ${src} to ${dest} ${lerr.message}`);
+      console.warn(`Warning when linking ${src} to ${dest}: ${lerr.message}`);
     } else {
-      console.error(`Error linking ${src} to ${dest} ${lerr.message}`);
+      console.error(`Error when linking ${src} to ${dest}: ${lerr.message}`);
       return false;
     }
   }
