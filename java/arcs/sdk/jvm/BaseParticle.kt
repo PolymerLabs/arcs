@@ -12,4 +12,4 @@
 package arcs.sdk
 
 /** Implementation of [Particle] for the JVM. */
-abstract class ParticleImpl : Particle
+abstract class BaseParticle : Particle

@@ -139,7 +139,7 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 }
 
 
-abstract class AbstractGold : ParticleImpl() {
+abstract class AbstractGold : BaseParticle() {
     protected val data: ReadableSingleton<Gold_Data> = SingletonImpl(this, "data", Gold_Data_Spec())
     protected val alias: WritableSingleton<Gold_Alias> = SingletonImpl(this, "alias", Gold_Alias_Spec())
 }
