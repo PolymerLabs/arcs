@@ -8,7 +8,7 @@ cd $ROOT
 status "Running ktlint on any Kotlin files modified w.r.t. upstream/master..."
 BASE=$(git merge-base HEAD upstream/master)
 if [[ $BASE ]]; then
-  git diff --name-only --relative $BASE | grep '\.kt[s\"]\?$' | xargs ktlint --android --relative --verbose
+  git diff --name-only --relative $BASE | grep '\.kt[s\"]\?$' | xargs -r ktlint --android --relative --verbose
 else
   fail "Could not determine the common ancestor for HEAD and upstream/master"
 fi
