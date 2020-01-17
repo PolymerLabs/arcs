@@ -3,6 +3,7 @@
 # the entire node_modules folder, because we need it for our bazel builds.
 node_modules/@tensorflow/tfjs-core/src
 server/node_modules
+cloud/node_modules
 
 # Shell deploy scripts create symlinks to directories which include BUILD files.
 # These fail to resolve, so we need to ignore them too.
