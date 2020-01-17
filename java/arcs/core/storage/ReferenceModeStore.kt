@@ -74,9 +74,9 @@ import kotlinx.coroutines.Job
 class ReferenceModeStore private constructor(
     options: StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
     /* internal */
-    val backingStore: BackingStore,
+    val backingStore: BackingStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
-    val containerStore: DirectStore
+    val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     /**
      * A queue of incoming updates from the backing store, container store, and connected proxies.
@@ -605,7 +605,7 @@ class ReferenceModeStore private constructor(
                     mode = StorageMode.Backing,
                     baseStore = options.baseStore
                 )
-            ) as BackingStore
+            ) as BackingStore<CrdtData, CrdtOperation, Any?>
             val containerStore = DirectStore.CONSTRUCTOR(
                 StoreOptions(
                     storageKey = storageKey.storageKey,
@@ -614,7 +614,7 @@ class ReferenceModeStore private constructor(
                     baseStore = options.baseStore,
                     versionToken = options.versionToken
                 )
-            ) as DirectStore
+            ) as DirectStore<CrdtData, CrdtOperation, Any?>
 
             ReferenceModeStore(refableOptions, backingStore, containerStore).apply {
                 registerStoreCallbacks()

@@ -60,7 +60,7 @@ class RamDiskBackingStoreIntegrationTest {
                 storageKey, ExistenceCriteria.ShouldCreate, CountType(), StorageMode.Backing
             )
         )
-        val store = baseStore.activate() as BackingStore
+        val store = baseStore.activate() as BackingStore<CrdtData, CrdtOperation, Any?>
 
         val count1 = CrdtCount()
         count1.applyOperation(Increment("me", version = 0 to 1))

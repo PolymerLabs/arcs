@@ -14,6 +14,8 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.CrdtCount.Operation.Increment
 import arcs.core.crdt.CrdtCount.Operation.MultiIncrement
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
@@ -58,7 +60,7 @@ class RamDiskStoreIntegrationTest {
     fun stores_sequenceOfModelAndOperationUpdates_asModels() = runBlockingTest {
         val storageKey = RamDiskStorageKey("unique")
         val store = createStore(storageKey, ExistenceCriteria.ShouldCreate)
-        val activeStore = store.activate() as DirectStore
+        val activeStore = store.activate()
 
         val count = CrdtCount()
         count.applyOperation(MultiIncrement(actor = "me", version = 0 to 27, delta = 42))
@@ -97,9 +99,9 @@ class RamDiskStoreIntegrationTest {
     fun stores_operationUpdates_fromMultipleSources() = runBlockingTest {
         val storageKey = RamDiskStorageKey("unique")
         val store1 = createStore(storageKey, ExistenceCriteria.ShouldCreate)
-        val activeStore1 = store1.activate() as DirectStore
+        val activeStore1 = store1.activate()
         val store2 = createStore(storageKey, ExistenceCriteria.ShouldExist)
-        val activeStore2 = store2.activate() as DirectStore
+        val activeStore2 = store2.activate()
 
         val count1 = CrdtCount()
         count1.applyOperation(MultiIncrement("me", version = 0 to 27, delta = 42))
@@ -170,12 +172,13 @@ class RamDiskStoreIntegrationTest {
     }
 
     @Test
+    @Suppress("UNCHECKED_CAST")
     fun store_operationUpdates_fromMultipleSources_withTimingDelays() = runBlockingTest {
         val storageKey = RamDiskStorageKey("unique")
         val store1 = createStore(storageKey, ExistenceCriteria.ShouldCreate)
-        val activeStore1 = store1.activate() as DirectStore
+        val activeStore1 = store1.activate() as DirectStore<CrdtData, CrdtOperation, Any>
         val store2 = createStore(storageKey, ExistenceCriteria.ShouldExist)
-        val activeStore2 = store2.activate() as DirectStore
+        val activeStore2 = store2.activate() as DirectStore<CrdtData, CrdtOperation, Any>
 
         assertThat(
             activeStore1.onProxyMessage(Operations(listOf(Increment("me", 0 to 1)), 1))
