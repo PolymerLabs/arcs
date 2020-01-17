@@ -171,15 +171,16 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     if (hostedSlotName) {
       const slotName = [...this.spec.slotConnections.values()][0].name;
       const slotId = await arc.createSlot(this, slotName, handle._id);
+      const recipe = this.constructInnerRecipe(
+        hostedParticle, item, handle,
+        {name: hostedSlotName, id: slotId},
+        {connections: otherConnections, handles: otherMappedHandles}
+      );
       try {
-        const recipe = this.constructInnerRecipe(
-          hostedParticle, item, handle,
-          {name: hostedSlotName, id: slotId},
-          {connections: otherConnections, handles: otherMappedHandles}
-        );
         await arc.loadRecipe(recipe);
       }
       catch (e) {
+        console.warn('ui-multiplexer-particle: exception parsing constructed recipe:', recipe);
         console.warn(e);
       }
     }
