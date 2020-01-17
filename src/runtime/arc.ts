@@ -193,7 +193,15 @@ export class Arc implements ArcInterface {
     }
   }
 
+  // Work around a bug in the way we track idleness. It could be:
+  // - in the new storage stack
+  // - in DomMultiplexer
+  // - in the idleness detection code.
   get idle(): Promise<void> {
+    return this._idle.then(async () => this._idle);
+  }
+
+  get _idle(): Promise<void> {
     if (this.waitForIdlePromise) {
       return this.waitForIdlePromise;
     }

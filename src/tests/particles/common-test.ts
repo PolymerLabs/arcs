@@ -94,7 +94,6 @@ describe('common particles test', () => {
 
     await suggestion.instantiate(arc);
     await arc.idle;
-    await arc.idle;
 
     if (Flags.useNewStorageStack) {
       const endpointProvider = await arc._stores[2].activate();

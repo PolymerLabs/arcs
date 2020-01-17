@@ -70,7 +70,7 @@ describe('particle interface loading with slots', () => {
       .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2})
       ;
     const inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
-    await arc.pec.idle;
+    await arc.idle;
     await observer.expectationsCompleted();
 
     // Add one more element.
@@ -79,7 +79,7 @@ describe('particle interface loading with slots', () => {
        .newExpectations()
        .expectRenderSlot('SingleSlotParticle', 'annotation')
        ;
-    await arc.pec.idle;
+    await arc.idle;
     await observer.expectationsCompleted();
   });
 
@@ -95,7 +95,7 @@ describe('particle interface loading with slots', () => {
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {times: 2})
       ;
-    await arc.pec.idle;
+    await arc.idle;
     await observer.expectationsCompleted();
 
     // Add one more element.
@@ -104,7 +104,7 @@ describe('particle interface loading with slots', () => {
        .expectRenderSlot('SingleSlotParticle', 'annotation')
        ;
     await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3'));
-    await arc.pec.idle;
+    await arc.idle;
     await observer.expectationsCompleted();
   });
 });
