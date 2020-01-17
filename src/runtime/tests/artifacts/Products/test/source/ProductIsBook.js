@@ -16,10 +16,13 @@ defineParticle(({Particle}) => {
       this._handles = handles;
     }
     onHandleSync(handle, model) {
+      const saysBook = s => s && (s.toLowerCase().indexOf('book') >= 0);
       if (handle.name === 'product') {
-        const isBook = handle.type.getEntitySchema().name.toLowerCase().indexOf('book') >= 0 ||
-                     model.category && model.category.toLowerCase().indexOf('book') >= 0 ||
-                     model.name && model.name.toLowerCase().indexOf('book') >= 0;
+        const isBook =
+          saysBook(handle.type.getEntitySchema().name)
+          || saysBook(model.category)
+          || saysBook(model.name)
+          ;
         if (isBook) {
           this._handles.get('book').set(model);
           this.relevance = 5;
