@@ -144,6 +144,21 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
     return settings.systemTraceChannel();
   }
 
+  @Override
+  public boolean useWorkerPool() {
+    return false;
+  }
+
+  @Override
+  public String workerPoolOptions() {
+    return "";
+  }
+
+  @Override
+  public String sizingPolicy() {
+    return "";
+  }
+
   /**
    * This API reads the specified <var>property</var>, converts the content to
    * the type of <var>T</var> via the <var>converter</var>, then returns the

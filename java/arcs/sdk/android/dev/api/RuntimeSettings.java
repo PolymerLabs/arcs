@@ -39,4 +39,26 @@ public interface RuntimeSettings {
   // Options not listed above would be skipped, namely trace messages are
   // neither generated nor bridged.
   String systemTraceChannel();
+
+  // Used only by Javascript-based Arcs runtime to create a worker pool which
+  // spins up workers ahead of time and also supports to suspend workers then
+  // resumes later (aka resurrecting workers) to prevent spin-up overhead.
+  boolean useWorkerPool();
+
+  // Used together with the setting {@link #useWorkerPool()} to supply additional
+  // worker pool configurations. Options are separated by commas.
+  // Available options:
+  //   'nosuspend': only create new workers ahead of time (no resurrecting workers)
+  String workerPoolOptions();
+
+  // Used only by Javascript-based Arcs runtime to determine and adjust size of
+  // worker pool dynamically. The option is effective when {@link #useWorkerPool()}
+  // is enabled.
+  // Available policies:
+  //   'conservative': keep as small-and-constant pool size as possible
+  //   'aggressive': maintain bigger spare room, eager to fulfill worker demands
+  //                 anytime if possible
+  //   'predictive': foresee worker demands in accordance of current demand and
+  //                 historical stats
+  String sizingPolicy();
 }
