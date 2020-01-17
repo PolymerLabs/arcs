@@ -128,7 +128,6 @@ export abstract class HandleOld {
   }
 
   _serialize(entity: Storable) {
-    console.log('serializing', entity);
     assert(entity, `can't serialize a null entity`);
     if (entity instanceof Entity) {
       if (!Entity.isIdentified(entity)) {
@@ -136,7 +135,6 @@ export abstract class HandleOld {
       }
     }
     const ser = entity[SYMBOL_INTERNALS].serialize();
-    console.log(ser);
     return ser;
   }
 
@@ -258,7 +256,7 @@ export class Collection extends HandleOld {
       return list.map(e => restore(e, this.entityClass));
     }
     if (containedType instanceof ReferenceType) {
-      return list.map(r => HandleOld.makeReference(r, containedType, this.storage.pec));
+      return list.map(r => HandleOld.makeReference(r.rawData, containedType, this.storage.pec));
     }
     throw new Error(`Don't know how to deliver handle data of type ${this.type}`);
   }
@@ -381,7 +379,7 @@ export class Singleton extends HandleOld {
       return ParticleSpec.fromLiteral(model);
     }
     if (this.type instanceof ReferenceType) {
-      return HandleOld.makeReference(model, this.type, this.storage.pec);
+      return HandleOld.makeReference(model.rawData, this.type, this.storage.pec);
     }
     throw new Error(`Don't know how to deliver handle data of type ${this.type}`);
   }

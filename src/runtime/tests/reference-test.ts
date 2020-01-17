@@ -104,11 +104,6 @@ describe('references', () => {
     const refStore = arc._stores[0] as SingletonStorageProvider;
     if (Flags.useNewStorageStack) {
       assert.isTrue(refStore.type.getContainedType() instanceof ReferenceType);
-    } else {
-      assert.isTrue(refStore.type instanceof ReferenceType);
-    }
-
-    if (Flags.useNewStorageStack) {
       const backingKey = new VolatileStorageKey(arc.id, '', 'id1');
       const baseType = refStore.type.getContainedType().getContainedType();
       const backingStore = new Store({id: 'backing', storageKey: backingKey, type: new SingletonType(baseType), exists: Exists.ShouldCreate});
@@ -118,10 +113,11 @@ describe('references', () => {
       const refHandle = await singletonHandleForTest(arc, refStore);
       await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: backingKey.toString()}, refStore.type.getContainedType() as ReferenceType, null));
     } else {
+      assert.isTrue(refStore.type instanceof ReferenceType);
       const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
       const backingStore = await volatileEngine.baseStorageFor(refStore.type, volatileEngine.baseStorageKey(refStore.type));
       await backingStore.store({id: 'id1', rawData: {value: 'val1'}}, ['key1']);
-      await refStore.set({id: 'id1', entityStorageKey: backingStore.storageKey});
+      await refStore.set({id: 'id1', rawData: {id: 'id1', entityStorageKey: backingStore.storageKey}});
     }
     await arc.idle;
 
@@ -206,8 +202,8 @@ describe('references', () => {
       const backingStore = await volatileEngine.baseStorageFor(resType, volatileEngine.baseStorageKey(resType));
       await backingStore.store({id: 'id1', rawData: {value: 'val1'}}, ['key1']);
       await backingStore.store({id: 'id2', rawData: {value: 'val2'}}, ['key2']);
-      await refStore.store({id: 'id1', entityStorageKey: backingStore.storageKey}, ['key1a']);
-      await refStore.store({id: 'id2', entityStorageKey: backingStore.storageKey}, ['key2a']);
+      await refStore.store({id: 'id1', rawData: {id: 'id1', entityStorageKey: backingStore.storageKey}}, ['key1a']);
+      await refStore.store({id: 'id2', rawData: {id: 'id2', entityStorageKey: backingStore.storageKey}}, ['key2a']);
     }
     await arc.idle;
 
@@ -216,7 +212,7 @@ describe('references', () => {
     assert.deepStrictEqual(values, [{value: 'val1'}, {value: 'val2'}]);
   });
 
-  it.only('exposes a reference API to particles', async () => {
+  it('exposes a reference API to particles', async () => {
     const loader = new StubLoader({
       manifest: `
         schema Result
@@ -277,7 +273,6 @@ describe('references', () => {
       const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
       const baseStoreType = new EntityType(manifest.schemas.Result);
       const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType)) as CollectionStorageProvider;
-      console.log(reference);
       assert.equal(reference.entityStorageKey, backingStore.storageKey);
     }
   });
@@ -638,7 +633,11 @@ describe('references', () => {
 
     await arc.idle;
     const outputStore = await singletonHandleForTest(arc, arc._stores[1]);
-    assert.strictEqual(outputStore.type.getContainedType().getEntitySchema().name, 'Foo');
+    if (Flags.useNewStorageStack) {
+      assert.strictEqual(outputStore.type.getContainedType().getEntitySchema().name, 'Foo');
+    } else {
+      assert.strictEqual(outputStore.type.getEntitySchema().name, 'Foo');
+    }
     const outputRefs = await outputStore.get();
     const ids = [...outputRefs.result].map(ref => ref.id);
     assert.sameMembers(ids, ['id:1', 'id:2']);
