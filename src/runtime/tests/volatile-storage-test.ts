@@ -17,6 +17,7 @@ import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {resetVolatileStorageForTesting} from '../storage/volatile-storage.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Id, ArcId} from '../id.js';
+import {Flags} from '../flags.js';
 
 // Resolves when the two stores are synchronzied with each other:
 // * same version
@@ -52,6 +53,12 @@ describe('volatile', () => {
    };
 
   describe('variable', () => {
+    before(function() {
+      if (Flags.useNewStorageStack) {
+        this.skip();
+      }
+    });
+
     it('supports basic construct and mutate', async () => {
       const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
@@ -104,6 +111,12 @@ describe('volatile', () => {
 
 
   describe('collection', () => {
+    before(function() {
+      if (Flags.useNewStorageStack) {
+        this.skip();
+      }
+    });
+
     it('supports basic construct and mutate', async () => {
       const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);

@@ -1024,7 +1024,7 @@ describe('Arc', () => {
             root: consumes root
     `);
     const id = IdGenerator.newSession().newArcId('arcid');
-    const arc = new Arc({id, storageKey: 'key', loader, slotComposer, context});
+    const arc = new Arc({id, loader, slotComposer, context});
 
     const [recipe] = arc.context.recipes;
     recipe.normalize();

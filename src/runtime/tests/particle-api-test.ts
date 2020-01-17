@@ -1242,7 +1242,7 @@ describe('particle-api', () => {
     });
     const slotComposer = new SlotComposer();
     const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
-        storageKey: 'key', loader, slotComposer, context});
+        loader, slotComposer, context});
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 

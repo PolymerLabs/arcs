@@ -20,7 +20,10 @@ import {Flags} from '../flags.js';
 
 describe('synthetic storage ', () => {
 
-  before(() => {
+  before(function() {
+    if (Flags.useNewStorageStack) {
+      this.skip();
+    }
     // TODO: perhaps we should do this after the test, and use a unique path for each run instead?
     resetVolatileStorageForTesting();
   });
