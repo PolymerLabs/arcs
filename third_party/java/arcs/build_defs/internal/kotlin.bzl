@@ -54,8 +54,8 @@ DISABLED_LINT_CHECKS = [
 
 def _merge_lists(*lists):
     result = {}
-    for l in lists:
-        for elem in l:
+    for x in lists:
+        for elem in x:
             result[elem] = 1
     return result.keys()
 
