@@ -81,7 +81,7 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
         boolean effective = remove.getBool("effective");
         if ((apply
                 && model.applyOperation(
-                    new CrdtSet.Operation.Remove<>(vv.getVersionMap(), actor, entry)))
+                    new CrdtSet.Operation.Remove<>(actor, vv.getVersionMap(), entry)))
             || (!apply && effective)) {
           removed.put(removed.getLength(), entry.value.value);
         }
@@ -174,8 +174,8 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
       ModelEntry entry = vv.getValue();
       if (model.applyOperation(
           new CrdtSet.Operation.Remove<>(
-              vv.getVersionMap(),
               item.getObject("keys").getString(0),
+              vv.getVersionMap(),
               entry))) {
         removedItems.put(
             removedItems.getLength(), item.put("rawData", entry.value.value.getObject("rawData")));
@@ -216,7 +216,7 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
     port.handleRemove(this, (unused) -> {}, data, particleId);
 
     if (!model.applyOperation(
-        new CrdtSet.Operation.Remove<>(vv.getVersionMap(), /* actor= */"", entry))) {
+        new CrdtSet.Operation.Remove<>(/* actor = */ "", vv.getVersionMap(), entry))) {
       return;
     }
     PortableJson update =
@@ -244,8 +244,8 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
     int itemVersion = modelVersion.get(keys.get(0)) + 1;
     //noinspection unchecked
     return new CrdtSet.Operation.Add<>(
-        new VersionMap(keys.get(0), itemVersion),
         keys.get(0),
+        new VersionMap(keys.get(0), itemVersion),
         new ModelEntry(value.getString("id"), value, keys));
   }
 

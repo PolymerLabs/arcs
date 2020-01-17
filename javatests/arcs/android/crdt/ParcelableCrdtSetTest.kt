@@ -66,7 +66,7 @@ class ParcelableCrdtSetTest {
 
     @Test
     fun operationAdd_parcelableRoundTrip_works() {
-        val op = CrdtSet.Operation.Add(versionMap, "alice", entity1)
+        val op = CrdtSet.Operation.Add("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(op.toParcelable(), 0)
@@ -83,7 +83,7 @@ class ParcelableCrdtSetTest {
 
     @Test
     fun operationRemove_parcelableRoundTrip_works() {
-        val op = CrdtSet.Operation.Remove(versionMap, "alice", entity1)
+        val op = CrdtSet.Operation.Remove("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(op.toParcelable(), 0)

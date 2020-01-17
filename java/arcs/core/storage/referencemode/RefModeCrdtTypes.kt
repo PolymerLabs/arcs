@@ -96,14 +96,14 @@ interface RefModeStoreOp : CrdtOperationAtTime {
     class SetAdd(actor: Actor, clock: VersionMap, added: RawEntity) :
         Set,
         RefModeSet,
-        CrdtSet.Operation.Add<RawEntity>(clock, actor, added) {
+        CrdtSet.Operation.Add<RawEntity>(actor, clock, added) {
         constructor(setOp: Add<RawEntity>) : this(setOp.actor, setOp.clock, setOp.added)
     }
 
     class SetRemove(actor: Actor, clock: VersionMap, removed: RawEntity) :
         Set,
         RefModeSet,
-        CrdtSet.Operation.Remove<RawEntity>(clock, actor, removed) {
+        CrdtSet.Operation.Remove<RawEntity>(actor, clock, removed) {
         constructor(setOp: Remove<RawEntity>) : this(setOp.actor, setOp.clock, setOp.removed)
     }
 }

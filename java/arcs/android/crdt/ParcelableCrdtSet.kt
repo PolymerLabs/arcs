@@ -120,7 +120,7 @@ object ParcelableCrdtSet {
                         }
                     val actor = requireNotNull(parcel.readString())
                     val added = requireNotNull(parcel.readReferencable())
-                    return Add(CrdtSet.Operation.Add(clock, actor, added))
+                    return Add(CrdtSet.Operation.Add(actor, clock, added))
                 }
 
                 override fun newArray(size: Int): Array<Add?> = arrayOfNulls(size)
@@ -149,7 +149,7 @@ object ParcelableCrdtSet {
                         }
                     val actor = requireNotNull(parcel.readString())
                     val removed = requireNotNull(parcel.readReferencable())
-                    return Remove(CrdtSet.Operation.Remove(clock, actor, removed))
+                    return Remove(CrdtSet.Operation.Remove(actor, clock, removed))
                 }
 
                 override fun newArray(size: Int): Array<Remove?> = arrayOfNulls(size)

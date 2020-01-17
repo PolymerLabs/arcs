@@ -325,7 +325,7 @@ class ArcsSet<T, StoreData, StoreOp>(
      */
     private fun makeAddOp(element: T): Add<T> {
         cachedVersion[actor]++
-        return Add(cachedVersion.copy(), actor, element)
+        return Add(actor, cachedVersion.copy(), element)
     }
 
     /**
@@ -334,7 +334,7 @@ class ArcsSet<T, StoreData, StoreOp>(
      * **Note:** Must be called from within a lock of [crdtMutex].
      */
     private fun makeRemoveOp(element: T): Remove<T> {
-        return Remove(cachedVersion.copy(), actor, element)
+        return Remove(actor, cachedVersion.copy(), element)
     }
 
     private suspend fun applyOperationToStore(op: CrdtSet.Operation<T>): Boolean =

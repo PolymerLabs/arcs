@@ -117,7 +117,7 @@ class ReferenceModeStoreTest {
         val collection = CrdtSet<RawEntity>()
         val entity = createPersonEntity("an-id", "bob", 42)
         collection.applyOperation(
-            CrdtSet.Operation.Add(VersionMap("me" to 1), "me", entity)
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
         )
 
         assertThat(
@@ -166,7 +166,7 @@ class ReferenceModeStoreTest {
         val collection = CrdtSet<RawEntity>()
         val entity = createPersonEntity("an-id", "bob", 42)
         collection.applyOperation(
-            CrdtSet.Operation.Add(VersionMap("me" to 1), "me", entity)
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
         )
         activeStore.onProxyMessage(
             ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
@@ -189,7 +189,7 @@ class ReferenceModeStoreTest {
 
         val personCollection = CrdtSet<RawEntity>()
         val bob = createPersonEntity("an-id", "bob", 42)
-        val operation = CrdtSet.Operation.Add(VersionMap("me" to 1), "me", bob)
+        val operation = CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob)
 
         val referenceCollection = CrdtSet<Reference>()
         val bobRef = Reference(
@@ -197,7 +197,7 @@ class ReferenceModeStoreTest {
             activeStore.backingStore.storageKey,
             VersionMap(actor to 1)
         )
-        val refOperation = CrdtSet.Operation.Add(VersionMap(actor to 1), actor, bobRef)
+        val refOperation = CrdtSet.Operation.Add(actor, VersionMap(actor to 1), bobRef)
 
         val bobEntity = createPersonEntityCrdt()
 
@@ -260,7 +260,7 @@ class ReferenceModeStoreTest {
 
         val entityCollection = CrdtSet<RawEntity>()
         val bob = createPersonEntity("an-id", "bob", 42)
-        entityCollection.applyOperation(CrdtSet.Operation.Add(VersionMap("me" to 1), "me", bob))
+        entityCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
 
         var sentSyncRequest = false
         val job = Job(coroutineContext[Job.Key])
@@ -327,12 +327,12 @@ class ReferenceModeStoreTest {
 
         val bobCollection = CrdtSet<RawEntity>()
         val bob = createPersonEntity("an-id", "bob", 42)
-        bobCollection.applyOperation(CrdtSet.Operation.Add(VersionMap("me" to 1), "me", bob))
+        bobCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
 
         val referenceCollection = CrdtSet<Reference>()
         val bobRef = bob.toReference(activeStore.backingStore.storageKey, VersionMap("me" to 1))
         referenceCollection.applyOperation(
-            CrdtSet.Operation.Add(VersionMap("me" to 1), "me", bobRef)
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), bobRef)
         )
 
         val bobCrdt = createPersonEntityCrdt()
@@ -384,7 +384,7 @@ class ReferenceModeStoreTest {
         val referenceCollection = CrdtSet<Reference>()
         val reference = Reference("an-id", MockHierarchicalStorageKey(), VersionMap("me" to 1))
         referenceCollection.applyOperation(
-            CrdtSet.Operation.Add(VersionMap("me" to 1), "me", reference)
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), reference)
         )
 
         val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
@@ -403,14 +403,14 @@ class ReferenceModeStoreTest {
         // local model from proxy.
         val bobCollection = CrdtSet<RawEntity>()
         val bob = createPersonEntity("an-id", "bob", 42)
-        bobCollection.applyOperation(CrdtSet.Operation.Add(VersionMap("me" to 1), "me", bob))
+        bobCollection.applyOperation( CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
 
         // conflicting remote count from store
         val remoteCollection = CrdtSet<Reference>()
         val reference =
             Reference("another-id", MockHierarchicalStorageKey(), VersionMap("them" to 1))
         remoteCollection.applyOperation(
-            CrdtSet.Operation.Add(VersionMap("them" to 1), "them", reference)
+            CrdtSet.Operation.Add("them", VersionMap("them" to 1), reference)
         )
 
         // Ensure remote entity is stored in backing store.
@@ -436,7 +436,7 @@ class ReferenceModeStoreTest {
 
         val actor = activeStore.crdtKey
         val ref2 = Reference("an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1))
-        remoteCollection.applyOperation(CrdtSet.Operation.Add(VersionMap("me" to 1), "me", ref2))
+        remoteCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref2))
         assertThat(driver.sentData.last()).isEqualTo(remoteCollection.data)
     }
 
@@ -521,7 +521,7 @@ class ReferenceModeStoreTest {
 
         val referenceCollection = CrdtSet<Reference>()
         val ref = Reference("an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1))
-        referenceCollection.applyOperation(CrdtSet.Operation.Add(VersionMap("me" to 1), "me", ref))
+        referenceCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref))
 
         val job = Job(coroutineContext[Job.Key])
         var backingStoreSent = false

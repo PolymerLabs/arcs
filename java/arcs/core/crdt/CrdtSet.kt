@@ -160,8 +160,8 @@ class CrdtSet<T : Referencable>(
          * operation could be applied.
          */
         open class Add<T : Referencable>(
-            override val clock: VersionMap,
             val actor: Actor,
+            override val clock: VersionMap,
             val added: T
         ) : Operation<T>() {
             override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
@@ -190,8 +190,8 @@ class CrdtSet<T : Referencable>(
 
         /** Represents the removal of an item from a [CrdtSet]. */
         open class Remove<T : Referencable>(
-            override val clock: VersionMap,
             val actor: Actor,
+            override val clock: VersionMap,
             val removed: T
         ) : Operation<T>() {
             override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
@@ -302,7 +302,7 @@ class CrdtSet<T : Referencable>(
                 // for the actor, we can't simplify.
                 if (expectedClock != newClock) return listOf(this)
 
-                return added.map { Add(it.versionMap, actor, it.value) }
+                return added.map { Add(actor, it.versionMap, it.value) }
             }
         }
     }

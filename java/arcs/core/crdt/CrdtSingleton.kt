@@ -133,7 +133,7 @@ class CrdtSingleton<T : Referencable>(
                 if (!Clear<T>(actor, removeClock).applyTo(set)) return false
 
                 // After removal of all existing values, we simply need to add the new value.
-                return set.applyOperation(Add(clock, actor, value))
+                return set.applyOperation(Add(actor, clock, value))
             }
 
             override fun equals(other: Any?): Boolean =
@@ -156,7 +156,7 @@ class CrdtSingleton<T : Referencable>(
                 // Clear all existing values if our clock allows it.
 
                 val removeOps = set.data.values
-                    .map { (_, value) -> Remove(clock, actor, value.value) }
+                    .map { (_, value) -> Remove(actor, clock, value.value) }
 
                 removeOps.forEach { set.applyOperation(it) }
                 return true
