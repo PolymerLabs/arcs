@@ -584,6 +584,7 @@ describe('references', () => {
             setHandles(handles) {
               this.output = handles.get('referenceOut');
               this.results = [];
+              this.generated = false;
             }
 
             async onHandleSync(handle, model) {
@@ -603,7 +604,8 @@ describe('references', () => {
             }
 
             async maybeGenerateOutput() {
-              if (this.results.length == 2) {
+              if (this.results.length == 2 && !this.generated) {
+                this.generated = true;
                 const data = {result: new Set()};
                 for (const result of this.results) {
                   const ref = new Reference(result);

@@ -74,28 +74,13 @@ describe('particle interface loading with slots', () => {
     await observer.expectationsCompleted();
 
     // Add one more element.
-<<<<<<< HEAD
-    await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3'));
+    await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3', null));
     observer
        .newExpectations()
        .expectRenderSlot('SingleSlotParticle', 'annotation')
        ;
     await arc.idle;
     await observer.expectationsCompleted();
-=======
-    await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3', null));
-    // TODO(sjmiles): uses old render data, will be repaired in subsequent PR
-    // slotComposer
-    //   .newExpectations()
-    //   .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model']})
-    //   .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
-    await arc.pec.idle;
-    //await slotComposer.expectationsCompleted();
-
-    // TODO(sjmiles): render data no longer captured by slot objects
-    //verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
->>>>>>> further plumbing and more tests passing
   });
 
   it('multiplex recipe with slots - init context later', async () => {
