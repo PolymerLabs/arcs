@@ -228,7 +228,7 @@ export class Handle implements Comparable<Handle> {
       connection => connection.type != null
     ).map(
     connection => (
-      {type: connection.type, direction: connection.direction, relaxed: connection.relaxed}
+      {type: connection.type, direction: connection.direction}
     ));
     return TypeChecker.processTypeList(handleType, typeSet, options);
   }
