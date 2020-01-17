@@ -62,8 +62,6 @@ def _merge_lists(*lists):
 def arcs_kt_jvm_library(**kwargs):
     """Wrapper around kt_jvm_library for Arcs.
 
-    Provides a bunch of default arguments.
-
     Args:
       **kwargs: Set of args to forward to kt_jvm_library
     """
@@ -79,8 +77,6 @@ def arcs_kt_jvm_library(**kwargs):
 
 def arcs_kt_native_library(**kwargs):
     """Wrapper around kt_native_library for Arcs.
-
-    Provides a bunch of default arguments.
 
     Args:
       **kwargs: Set of args to forward to kt_native_library
