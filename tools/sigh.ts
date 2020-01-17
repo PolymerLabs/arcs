@@ -415,8 +415,13 @@ function makeLink(src: string, dest: string): boolean {
     }
     fs.linkSync(src, dest);
   } catch (lerr) {
-    console.error(`Error linking ${src} to ${dest} ${lerr.message}`);
-    return false;
+    // In case of racing builds.
+    if (lerr.message.startsWith('EEXIST:')) {
+      console.warn(`Warning when linking ${src} to ${dest}: ${lerr.message}`);
+    } else {
+      console.error(`Error when linking ${src} to ${dest}: ${lerr.message}`);
+      return false;
+    }
   }
   return true;
 }
