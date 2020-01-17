@@ -91,7 +91,6 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
       {hostedParticle, arc, type, otherConnections, otherMappedHandles});
     // TODO(sjmiles): work out a proper cast (and conditional), or fix upstream type
     plexed.handle['set'](item);
-    return plexed.slotId;
   }
 
   async requirePlexed(index, item, {arc, type, hostedParticle, otherConnections, otherMappedHandles}) {
@@ -101,8 +100,8 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
       promise = new Promise(async resolve => {
         const handle = await this.acquireItemHandle(index, {arc, item, type});
         const hosting = await this.resolveHosting(item, {arc, hostedParticle, otherConnections, otherMappedHandles});
-        const result = {arc, handle, hosting, slotId: null};
-        result.slotId = await this.createInnards(item, result);
+        const result = {arc, handle, hosting};
+        await this.populateArc(item, result);
         resolve(result);
       });
       this.plexeds[index] = promise;
@@ -167,12 +166,11 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     return {otherMappedHandles, otherConnections};
   }
 
-  // TODO(sjmiles): fix name
-  async createInnards(item, {arc, handle, hosting: {hostedParticle, otherMappedHandles, otherConnections}}) {
+  async populateArc(item, {arc, handle, hosting: {hostedParticle, otherMappedHandles, otherConnections}}) {
     const hostedSlotName = [...hostedParticle.slotConnections.keys()][0];
-    const slotName = [...this.spec.slotConnections.values()][0].name;
-    const slotId = await arc.createSlot(this, slotName, handle._id);
-    if (slotId) {
+    if (hostedSlotName) {
+      const slotName = [...this.spec.slotConnections.values()][0].name;
+      const slotId = await arc.createSlot(this, slotName, handle._id);
       try {
         const recipe = this.constructInnerRecipe(
           hostedParticle, item, handle,
@@ -185,7 +183,6 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
         console.warn(e);
       }
     }
-    return slotId;
   }
 
   // Called with the list of items and by default returns the direct result of
