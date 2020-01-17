@@ -29,7 +29,7 @@ import {Store} from '../storageNG/store.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {DirectStore} from '../storageNG/direct-store.js';
 import {VolatileStorageProvider, VolatileSingleton} from '../storage/volatile-storage.js';
-import {singletonHandleForTest, collectionHandleForTest, ramDiskStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
+import {singletonHandleForTest, collectionHandleForTest, ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {handleNGFor, SingletonHandle, CollectionHandle} from '../storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
 import {Entity} from '../entity.js';
@@ -1158,6 +1158,62 @@ describe('Arc storage migration', () => {
       await assertThrowsAsync(async () => {
         await setup('volatile://');
       }, `Can't use string storage keys with new storage stack.`);
+    });
+
+    it('sets ttl on create entities', async () => {
+      const id = ArcId.newForTest('test');
+      const loader = new Loader(null, {
+        '*': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            setHandles(handles) {
+              super.setHandles(handles);
+              const things0Handle = this.handles.get('things0');
+              things0Handle.add(new things0Handle.entityClass({name: 'hello'}));
+              const things1Handle = this.handles.get('things1');
+              things1Handle.add(new things1Handle.entityClass({name: 'world'}));
+            }
+          }
+        });
+      `});
+      // TODO: add `copy` handle to recipe.
+      const manifest = await Manifest.parse(`
+          schema Thing
+            name: Text
+          particle ThingAdder in './ThingAdder.js'
+            things0: reads writes [Thing]
+            things1: reads writes [Thing]
+          recipe
+            h0: create @ttl(3m)
+            h1: create @ttl(12h)
+            ThingAdder
+              things0: h0
+              things1: h1
+          `, {loader, fileName: process.cwd() + '/input.manifest'});
+      const recipe = manifest.recipes[0];
+      assert.isTrue(recipe.normalize() && recipe.isResolved());
+
+      const runtime = new Runtime({loader, context: manifest});
+      const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest());
+      await arc.instantiate(recipe);
+      await arc.idle;
+
+      const verifyStoreTtl = async (connectionName, expectedValue, expectedTtl) => {
+        const store = arc.findStoreById(
+            arc.activeRecipe.particles[0].connections[connectionName].handle.id);
+        // tslint:disable-next-line: no-any
+        assert.equal((store as Store<any>).ttl.toString(), expectedTtl);
+        const activeStore = await store.activate();
+        const contents = await activeStore.serializeContents();
+        assert.lengthOf(Object.keys(contents['values']), 1);
+        const value = Object.values(contents['values'])[0]['value'];
+        assert.isTrue(value.id.length > 0);
+        assert.equal(value.rawData['name'], expectedValue);
+        // TODO(mmandlis): assert entities have expiration timestamp
+        // assert.isNotNull(value.expirationTimestamp);
+      };
+      await verifyStoreTtl('things0', 'hello', '3m');
+      await verifyStoreTtl('things1', 'world', '12h');
     });
   });
 

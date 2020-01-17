@@ -231,6 +231,9 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
         return true;
       case ProxyMessageType.Operations: {
         for (const operation of message.operations) {
+          // TODO(mmandlis): For `add` operations:
+          //    if this.baseStore.ttl is not null
+          //        set expirationTimestamp
           if (!this.localModel.applyOperation(operation)) {
             await this.callbacks.get(message.id)({type: ProxyMessageType.SyncRequest, id: message.id});
             return false;

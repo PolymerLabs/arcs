@@ -97,7 +97,7 @@ export class Handle implements Comparable<Handle> {
       handle._storageKey = this._storageKey;
       handle._immediateValue = this._immediateValue;
       handle.capabilities = this.capabilities ? this.capabilities.clone() : undefined;
-
+      handle._ttl = this._ttl;
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
       handle._connections = [];
