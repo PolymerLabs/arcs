@@ -13,7 +13,7 @@ import {Schema2Kotlin} from './schema2kotlin.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile', 'package'],
-  boolean: ['cpp', 'kotlin', 'update', 'help'],
+  boolean: ['cpp', 'kotlin', 'update', 'wasm', 'help'],
   alias: {c: 'cpp', k: 'kotlin', d: 'outdir', f: 'outfile', u: 'update', p: 'package'},
   default: {outdir: '.', package: 'arcs'}
 });
@@ -29,6 +29,7 @@ Description
 Options
   --cpp, -c      generate C++ code
   --kotlin, -k   generate Kotlin code
+  --wasm         whether to output wasm-specific code (applies to Kotlin only)
   --outdir, -d   output directory; defaults to '.'
   --outfile, -f  output filename; if omitted, generated from the manifest name
   --package, -p  scope generated code to the specified package or namespace

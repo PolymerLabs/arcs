@@ -112,7 +112,8 @@ def arcs_kt_library(
     if jvm:
         arcs_kt_jvm_library(
             name = name,
-            srcs = srcs,
+            # Exclude any wasm-specific srcs.
+            srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
             deps = [_to_jvm_dep(dep) for dep in deps],
             visibility = visibility,
         )
@@ -120,7 +121,8 @@ def arcs_kt_library(
     if wasm:
         arcs_kt_native_library(
             name = name + _WASM_SUFFIX,
-            srcs = srcs,
+            # Exclude any jvm-specific srcs.
+            srcs = [src for src in srcs if not src.endswith(".jvm.kt")],
             deps = [_to_wasm_dep(dep) for dep in deps],
             visibility = visibility,
         )
@@ -132,8 +134,7 @@ def arcs_kt_particles(
         deps = [],
         visibility = None,
         wasm = True,
-        # TODO: Re-enable JVM particles.
-        jvm = False):
+        jvm = True):
     """Performs final compilation of wasm and bundling if necessary.
 
     Args:

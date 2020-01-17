@@ -10,6 +10,7 @@
 import {Schema2Base, ClassGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
+import minimist from 'minimist';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -53,12 +54,12 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-import arcs.sdk.wasm.*
+${this.opts.wasm ? 'import arcs.sdk.wasm.*' : ''}
 `;
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
-    return new KotlinGenerator(node);
+    return new KotlinGenerator(node, this.opts);
   }
 
   generateParticleClass(particle: ParticleSpec): string {
@@ -67,7 +68,7 @@ import arcs.sdk.wasm.*
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
-      let handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
+      const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       let handleInterfaceType: string;
       switch (connection.direction) {
         case 'reads writes':
@@ -82,14 +83,17 @@ import arcs.sdk.wasm.*
         default:
           throw new Error(`Unsupported handle direction: ${connection.direction}`);
       }
-      handleConcreteType = `Wasm${handleConcreteType}Impl`;
-      handleDecls.push(`protected val ${handleName}: ${handleInterfaceType} = ${handleConcreteType}(this, "${handleName}", ${entityType}_Spec())`);
+      handleDecls.push(`protected val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(this, "${handleName}", ${entityType}_Spec())`);
     }
     return `
-abstract class Abstract${particleName} : WasmParticleImpl() {
+abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${handleDecls.join('\n    ')}
 }
 `;
+  }
+
+  private getType(type: string): string {
+    return this.opts.wasm ? `Wasm${type}` : type;
   }
 }
 
@@ -103,7 +107,7 @@ class KotlinGenerator implements ClassGenerator {
   fieldsReset: string[] = [];
   getUnsetFields: string[] = [];
 
-  constructor(readonly node: SchemaNode) {}
+  constructor(readonly node: SchemaNode, private opts: minimist.ParsedArgs) {}
 
   // TODO: allow optional fields in kotlin
   addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
@@ -155,7 +159,7 @@ class KotlinGenerator implements ClassGenerator {
 
     return `\
 
-class ${name}() : WasmEntity {
+class ${name}() : ${this.getType('Entity')} {
 
     override var internalId = ""
 
@@ -182,19 +186,19 @@ class ${name}() : WasmEntity {
     }
 
     override fun schemaHash() = "${schemaHash}"
-
+${this.opts.wasm ? `
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
         encoder.encode("", internalId)
         ${this.encode.join('\n        ')}
         return encoder.toNullTermByteArray()
-    }
+    }` : ''}
 }
 
-class ${name}_Spec() : WasmEntitySpec<${name}> {
+class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 
     override fun create() = ${name}()
-
+${this.opts.wasm ? `
     override fun decode(encoded: ByteArray): ${name}? {
         if (encoded.isEmpty()) return null
 
@@ -221,9 +225,13 @@ class ${name}_Spec() : WasmEntitySpec<${name}> {
                 i++
             }`)}
         }
-    }
+    }` : ''}
 }
 
 ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
+  }
+
+  private getType(type: string): string {
+    return this.opts.wasm ? `Wasm${type}` : type;
   }
 }

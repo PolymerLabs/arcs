@@ -18,9 +18,14 @@ const testData = [
     golden: 'src/tools/tests/goldens/generated-schemas.h',
   },
   {
-    label: 'Kotlin',
-    generated: 'src/tools/tests/golden_GeneratedSchemas.kt',
-    golden: 'src/tools/tests/goldens/generated-schemas.kt',
+    label: 'Kotlin (JVM)',
+    generated: 'src/tools/tests/golden_GeneratedSchemas.jvm.kt',
+    golden: 'src/tools/tests/goldens/generated-schemas.jvm.kt',
+  },
+  {
+    label: 'Kotlin (wasm)',
+    generated: 'src/tools/tests/golden_GeneratedSchemas.wasm.kt',
+    golden: 'src/tools/tests/goldens/generated-schemas.wasm.kt',
   },
 ];
 

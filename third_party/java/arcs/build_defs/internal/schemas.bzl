@@ -15,7 +15,15 @@ def _output_name(src, suffix = ""):
         src = src.split(":")[1]
     return src.replace(".arcs", "").replace("_", "-").replace(".", "-") + suffix
 
-def _run_schema2wasm(name, src, deps, out, language_name, language_flag, package):
+def _run_schema2wasm(
+        name,
+        src,
+        deps,
+        out,
+        language_name,
+        language_flag,
+        package,
+        wasm):
     """Generates source code for the given .arcs schema file.
 
     Runs sigh schema2wasm to generate the output.
@@ -38,6 +46,7 @@ def _run_schema2wasm(name, src, deps, out, language_name, language_flag, package
         # path to file.
         sigh_cmd = "schema2wasm " +
                    language_flag + " " +
+                   ("--wasm " if wasm else "") +
                    "--outdir $(dirname {OUT}) " +
                    "--outfile $(basename {OUT}) " +
                    "--package " + package + " " +
@@ -54,6 +63,7 @@ def arcs_cc_schema(name, src, deps = [], out = None, package = "arcs"):
         out = out or _output_name(src, ".h"),
         language_flag = "--cpp",
         language_name = "C++",
+        wasm = False,
         package = package,
     )
 
@@ -68,22 +78,24 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
     """
     outs = []
     for src in srcs:
-        out = _output_name(src, "_GeneratedSchemas.kt")
-        outs.append(out)
-        _run_schema2wasm(
-            name = _output_name(src, "_genrule"),
-            src = src,
-            out = out,
-            deps = deps,
-            language_flag = "--kotlin",
-            language_name = "Kotlin",
-            package = package,
-        )
+        for wasm in [True, False]:
+            ext = "wasm" if wasm else "jvm"
+            genrule_name = _output_name(src, "_genrule_" + ext)
+            out = _output_name(src, "_GeneratedSchemas.%s.kt" % ext)
+            outs.append(out)
+            _run_schema2wasm(
+                name = genrule_name,
+                src = src,
+                out = out,
+                deps = deps,
+                wasm = wasm,
+                language_flag = "--kotlin",
+                language_name = "Kotlin",
+                package = package,
+            )
 
     arcs_kt_library(
         name = name,
         srcs = outs,
         deps = [],
-        # TODO: Re-enable on JVM once code generator can handle it.
-        jvm = False,
     )
