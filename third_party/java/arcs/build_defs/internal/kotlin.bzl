@@ -32,7 +32,7 @@ load(
     "kt_jvm_library",
 )
 
-ARCS_SDK_DEPS = ["//java/arcs/sdk"]
+ARCS_SDK_DEPS = ["//third_party/java/arcs"]
 _WASM_SUFFIX = "-wasm"
 _JS_SUFFIX = "-js"
 _KT_SUFFIX = "-kt"

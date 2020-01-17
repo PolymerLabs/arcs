@@ -23,7 +23,7 @@ cc_wasm_binary(
     name = "example_particle",
     srcs = ["source/example.cc"],
     hdrs = ["example.h"],
-    deps = ["//third_party/java/arcs/sdk/cpp"],
+    deps = ["//src/wasm/cpp:arcs"],
 )
 
 arcs_kt_schema(
