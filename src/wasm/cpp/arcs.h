@@ -285,17 +285,23 @@ public:
 
   void sync(const char* model) override {
     failForDirection(Out);
-    entity_ = T();
-    internal::Accessor::decode_entity(&entity_, model);
+    if (model) {
+      entity_.reset(new T());
+      internal::Accessor::decode_entity(entity_.get(), model);
+    } else {
+      entity_.reset();
+    }
   }
 
   void update(const char* model, const char* ignored) override {
     sync(model);
   }
 
-  const T& get() const {
+  // Do not store the raw pointer; when the handle is updated, the underlying object
+  // is replaced and old pointers are therefore invalid.
+  const T* get() const {
     failForDirection(Out);
-    return entity_;
+    return entity_.get();
   }
 
   // For new entities created by a particle, this method will generate a new internal ID and update
@@ -310,7 +316,7 @@ public:
     }
     // Write-only handles do not keep entity data locally.
     if (dir_ == InOut) {
-      entity_ = entity;
+      entity_.reset(new T(entity));
     }
   }
 
@@ -318,12 +324,12 @@ public:
     failForDirection(In);
     internal::singletonClear(particle_, this);
     if (dir_ == InOut) {
-      entity_ = T();
+      entity_.reset();
     }
   }
 
 private:
-  T entity_;
+  std::unique_ptr<T> entity_;
 };
 
 // Minimal iterator for Collections; allows iterating directly over const T& values.

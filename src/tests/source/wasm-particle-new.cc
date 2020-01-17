@@ -23,8 +23,8 @@ public:
   void onHandleUpdate(const std::string& name) override {
     arcs::ReloadHandleTest_PersonOut out;
     if (auto input = getSingleton<arcs::ReloadHandleTest_PersonIn>(name)) {
-      out.set_name(input->get().name());
-      out.set_age(input->get().age() - 2);
+      out.set_name(input->get()->name());
+      out.set_age(input->get()->age() - 2);
     } else {
       out.set_name("unexpected handle name: " + name);
     }

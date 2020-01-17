@@ -23,7 +23,7 @@ class WasmSingletonImpl<T : WasmEntity>(
     private var entity: T? = null
 
     override fun sync(encoded: ByteArray) {
-        entity = entitySpec.decode(encoded)
+        entity = if (encoded.size > 0) entitySpec.decode(encoded) else null
     }
 
     override fun update(added: ByteArray, removed: ByteArray) = sync(added)
@@ -42,7 +42,7 @@ class WasmSingletonImpl<T : WasmEntity>(
     }
 
     override fun clear() {
-        entity = entitySpec.create()
+        entity = null
         WasmRuntimeClient.singletonClear(particle, this)
     }
 }

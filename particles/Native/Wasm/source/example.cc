@@ -26,24 +26,27 @@ public:
   }
 
   void populateModel(const std::string& slot_name, arcs::Dictionary* model) override {
-    const arcs::BasicParticle_Foo& product = foo_.get();
-    model->emplace("name", product.name());
-    model->emplace("sku", arcs::num_to_str(product.sku()));
-    model->emplace("num", arcs::num_to_str(num_clicks_));
+    if (const arcs::BasicParticle_Foo* product = foo_.get()) {
+      model->emplace("name", product->name());
+      model->emplace("sku", arcs::num_to_str(product->sku()));
+      model->emplace("num", arcs::num_to_str(num_clicks_));
+    }
   }
 
   // Responding to UI events
   void fireEvent(const std::string& slot_name, const std::string& handler,
                  const arcs::Dictionary& eventData) override {
-    if (handler == "clicky") {
-      arcs::BasicParticle_Foo copy = arcs::clone_entity(foo_.get());  // does not copy internal id
-      bar_.store(copy);    // 'copy' will be updated with a new internal id
+    if (handler != "clicky") {
+      if (const arcs::BasicParticle_Foo* product = foo_.get()) {
+        arcs::BasicParticle_Foo copy = arcs::clone_entity(*product);  // does not copy internal id
+        bar_.store(copy);    // 'copy' will be updated with a new internal id
 
-      // Basic printf-style logging; note the c_str() for std::string variables
-      console("Product copied; new id is %s\n", arcs::entity_to_str(copy).c_str());
+        // Basic printf-style logging; note the c_str() for std::string variables
+        console("Product copied; new id is %s\n", arcs::entity_to_str(copy).c_str());
 
-      num_clicks_++;
-      renderSlot("root", false, true);  // update display
+        num_clicks_++;
+        renderSlot("root", false, true);  // update display
+      }
     }
   }
 
