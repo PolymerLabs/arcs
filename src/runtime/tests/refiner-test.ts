@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter} from '../refiner.js';
+import {Range, Segment, Refinement, BinaryExpression, UnaryExpression} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -289,52 +289,4 @@ describe('Range', () => {
       // complement = [1,1]
       assert.isTrue(complement.equals(Range.booleanRange(1)));
     });
-});
-
-describe('SQLExtracter', () => {
-  it('tests can create queries from refinement expressions involving math expressions', async () => {
-      const manifest = await Manifest.parse(`
-        particle Foo
-          input: reads Something {a: Number [ a > 3 and a != 100 ], b: Number [b > 20 and b < 100] } [a + b/3 > 100]
-      `);
-      const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
-      const query: string = SQLExtracter.fromSchema(schema, 'table');
-      assert.strictEqual(query, 'SELECT * FROM table WHERE ((a + (b / 3)) > 100) AND ((a > 3) AND (a <> 100)) AND ((b > 20) AND (b < 100));');
-  });
-  it('tests can create queries from refinement expressions involving boolean expressions', async () => {
-    const manifest = await Manifest.parse(`
-      particle Foo
-        input: reads Something {a: Boolean [ not (a == true) ], b: Boolean [not not b != false] } [a or b]
-    `);
-    const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
-    const query = SQLExtracter.fromSchema(schema, 'table');
-    assert.strictEqual(query, 'SELECT * FROM table WHERE ((b = 1) OR (a = 1)) AND (NOT (a = 1)) AND (b = 1);');
-  });
-  it('tests can create queries where field refinement is null', async () => {
-    const manifest = await Manifest.parse(`
-      particle Foo
-        input: reads Something {a: Boolean, b: Boolean} [a and b]
-    `);
-    const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
-    const query = SQLExtracter.fromSchema(schema, 'table');
-    assert.strictEqual(query, 'SELECT * FROM table WHERE ((b = 1) AND (a = 1));');
-  });
-  it('tests can create queries where schema refinement is null', async () => {
-    const manifest = await Manifest.parse(`
-      particle Foo
-        input: reads Something {a: Boolean [not a], b: Boolean [b]}
-    `);
-    const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
-    const query = SQLExtracter.fromSchema(schema, 'table');
-    assert.strictEqual(query, 'SELECT * FROM table WHERE (NOT (a = 1)) AND (b = 1);');
-  });
-  it('tests can create queries where there is no refinement', async () => {
-    const manifest = await Manifest.parse(`
-      particle Foo
-        input: reads Something {a: Boolean, b: Boolean}
-    `);
-    const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
-    const query = SQLExtracter.fromSchema(schema, 'table');
-    assert.strictEqual(query, 'SELECT * FROM table;');
-  });
 });
