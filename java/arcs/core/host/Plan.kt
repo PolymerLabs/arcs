@@ -15,5 +15,6 @@ package arcs.core.host
  * of a set of specs for handles, particles used in a recipe, and mappings between them.
  */
 open class Plan(
+    // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val handleConnectionSpecs: List<HandleConnectionSpec>
 )
