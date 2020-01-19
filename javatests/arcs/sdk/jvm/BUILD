@@ -14,7 +14,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.sdk.jvm",
     deps = [
         ":fakes",
-        "//java/arcs/sdk:arcs",
+        "//java/arcs/sdk",
         "//third_party/java/junit",
         "//third_party/java/mockito",
         "//third_party/java/truth",
@@ -28,6 +28,6 @@ arcs_kt_jvm_library(
         exclude = TEST_SRCS,
     ),
     deps = [
-        "//java/arcs/sdk:arcs",
+        "//java/arcs/sdk",
     ],
 )

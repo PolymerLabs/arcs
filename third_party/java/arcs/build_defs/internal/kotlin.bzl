@@ -32,7 +32,7 @@ load(
     "kt_jvm_library",
 )
 
-_ARCS_KOTLIN_LIBS = ["//third_party/java/arcs/sdk/kotlin:kotlin"]
+ARCS_SDK_DEPS = ["//third_party/java/arcs"]
 _WASM_SUFFIX = "-wasm"
 _JS_SUFFIX = "-js"
 _KT_SUFFIX = "-kt"
@@ -107,8 +107,6 @@ def arcs_kt_library(
     if not jvm and not wasm:
         fail("At least one of wasm or jvm must be built.")
 
-    deps = _ARCS_KOTLIN_LIBS + deps
-
     if jvm:
         arcs_kt_jvm_library(
             name = name,
@@ -151,7 +149,7 @@ def arcs_kt_particles(
     if not jvm and not wasm:
         fail("At least one of wasm or jvm must be built.")
 
-    deps = _ARCS_KOTLIN_LIBS + deps
+    deps = ARCS_SDK_DEPS + deps
 
     if jvm:
         # Create a jvm library just as a build test.

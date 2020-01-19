@@ -18,12 +18,12 @@ cc_wasm_binary(
     name = "wasm-particle-old",
     srcs = ["wasm-particle-old.cc"],
     hdrs = ["entities.h"],
-    deps = ["//third_party/java/arcs/sdk/cpp"],
+    deps = ["//src/wasm/cpp:arcs"],
 )
 
 cc_wasm_binary(
     name = "wasm-particle-new",
     srcs = ["wasm-particle-new.cc"],
     hdrs = ["entities.h"],
-    deps = ["//third_party/java/arcs/sdk/cpp"],
+    deps = ["//src/wasm/cpp:arcs"],
 )

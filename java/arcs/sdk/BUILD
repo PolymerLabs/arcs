@@ -9,7 +9,7 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_library(
-    name = "arcs",
+    name = "sdk",
     srcs = glob([
         "*.kt",
         "jvm/*.kt",
@@ -17,7 +17,7 @@ arcs_kt_jvm_library(
 )
 
 arcs_kt_native_library(
-    name = "arcs-wasm",
+    name = "sdk-wasm",
     srcs = glob([
         "*.kt",
         "wasm/*.kt",
@@ -26,7 +26,7 @@ arcs_kt_native_library(
 
 # Special package containing wasm srcs for unit testing (on the JVM).
 arcs_kt_jvm_library(
-    name = "arcs-wasm-testing",
+    name = "sdk-wasm-testing",
     testonly = 1,
     srcs = glob(["*.kt"]) + [
         "wasm/Encoding.kt",
