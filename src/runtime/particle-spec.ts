@@ -350,6 +350,7 @@ export class ParticleSpec {
   }
 
   static fromLiteral(literal: SerializedParticleSpec): ParticleSpec {
+    console.log(literal);
     let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks} = literal;
     const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections}) =>
       ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});

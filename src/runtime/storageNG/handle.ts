@@ -125,7 +125,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     } else if (this.type.getContainedType() instanceof ReferenceType) {
       this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType, this.storageProxy.getChannelConstructor());
     } else {
-      this.serializer = new ImmediateSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
+      this.serializer = new ParticleSpecSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
   }
 
@@ -225,17 +225,17 @@ class ReferenceSerializer implements Serializer<ReferenceInt, ReferenceSer> {
 
 /* Pass through the object to the storage stack, checking that it has an ID. */
 // tslint:disable-next-line no-any
-class ImmediateSerializer implements Serializer<ParticleSpec, Referenceable> {
+class ParticleSpecSerializer implements Serializer<ParticleSpec, Referenceable> {
   createIdentityFor: () => string;
 
   constructor(createIdentityFor: () => string) {
     this.createIdentityFor = createIdentityFor;
   }
 
-  serialize(value) {
+  serialize(value: ParticleSpec) {
     // TODO(shanestephens): There should be IDs for particleSpecs that we use here at some point.
-    const id = value.id? value.id : this.createIdentityFor();
-    return {id, rawData: value};
+    const id = this.createIdentityFor();
+    return {id, rawData: value.toLiteral()};
   }
 
   ensureHasId(entity) {
