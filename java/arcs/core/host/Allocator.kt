@@ -78,7 +78,8 @@ class Allocator(val hostRegistry: HostRegistry) {
      * attaches generated keys.
      */
     private fun createStorageKeysIfNecessary(arcId: ArcId, idGenerator: Id.Generator, plan: Plan) =
-        plan.handleSpecs
+        plan.handleConnectionSpecs
+            .map { it -> it.handleSpec }
             .filter { spec -> spec.storageKey == null }
             .forEach { spec ->
                 spec.storageKey = createStorageKey(arcId, spec, idGenerator)
@@ -109,21 +110,20 @@ class Allocator(val hostRegistry: HostRegistry) {
      * that lists [HandleSpec], [ParticleSpec], and [HandleConnectionSpec] needed for that host.
      */
     private fun computePartitions(arcId: ArcId, plan: Plan): List<PlanPartition> =
-        plan.particleSpecs
-            .map {
-                    spec -> findArcHostBySpec(spec) to spec }
-            .groupBy({ it.first }, { it.second })
+        plan.handleConnectionSpecs
+            .map { spec -> findArcHostBySpec(spec.particleSpec) to spec }
+            .groupBy({ it.first }, { it.second.particleSpec })
             // map ArcHost -> List<ParticleSpec> into List<PlanPartition>
             .map {
                 // find all HandleConnectionSpecs for the given List<ParticleSpec>
                 val handleConnectionSpecs =
                     plan.handleConnectionSpecs.filter { spec ->
-                        it.value.contains(spec.usingParticle)
+                        it.value.contains(spec.particleSpec)
                     }
                 PlanPartition(
                     arcId.toString(),
                     it.key /* ArcHost */,
-                    handleConnectionSpecs.map { it.usedHandle },
+                    handleConnectionSpecs.map { it.handleSpec },
                     it.value /* List<ParticleSpec> */,
                     handleConnectionSpecs
                 )

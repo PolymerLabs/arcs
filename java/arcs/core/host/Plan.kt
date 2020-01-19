@@ -15,7 +15,5 @@ package arcs.core.host
  * of a set of specs for handles, particles used in a recipe, and mappings between them.
  */
 open class Plan(
-    val handleSpecs: List<HandleSpec>,
-    val particleSpecs: List<ParticleSpec>,
     val handleConnectionSpecs: List<HandleConnectionSpec>
 )

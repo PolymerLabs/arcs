@@ -109,14 +109,14 @@ class AllocatorTest {
             HandleConnectionSpec("person", personHandleSpec, readPersonParticleSpec)
 
         writeAndReadPersonPlan = Plan(
-            listOf(personHandleSpec), listOf(writePersonParticleSpec, readPersonParticleSpec),
             listOf(writePersonHandleConnectionSpec, readPersonHandleConnectionSpec)
         )
 
         ServiceLoaderHostRegistry.availableArcHosts.forEach {
             when (it) {
                 is TestingHost -> it.setup()
-                else -> {}
+                else -> {
+                }
             }
         }
     }
@@ -158,8 +158,8 @@ class AllocatorTest {
 
     @Test
     fun allocator_verifyStorageKeysCreated() {
-        writeAndReadPersonPlan.handleSpecs.forEach { it ->
-            assertThat(it.storageKey).isNull()
+        writeAndReadPersonPlan.handleConnectionSpecs.forEach { it ->
+            assertThat(it.handleSpec.storageKey).isNull()
         }
         val allocator = Allocator(ServiceLoaderHostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
@@ -174,8 +174,8 @@ class AllocatorTest {
         val testArcId = idGenerator.newArcId("Test")
         val testKey = VolatileStorageKey(testArcId, "test")
 
-        writeAndReadPersonPlan.handleSpecs.forEach { it ->
-            it.storageKey = testKey
+        writeAndReadPersonPlan.handleConnectionSpecs.forEach { it ->
+            it.handleSpec.storageKey = testKey
         }
 
         val allocator = Allocator(ServiceLoaderHostRegistry)
@@ -194,7 +194,8 @@ class AllocatorTest {
             when (it.arcHost) {
                 is TestingHost ->
                     assertThat((it.arcHost as TestingHost).started).containsExactly(it)
-                else -> {}
+                else -> {
+                }
             }
         }
     }

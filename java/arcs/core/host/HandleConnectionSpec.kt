@@ -5,6 +5,6 @@ package arcs.core.host
  */
 data class HandleConnectionSpec(
     val connectionName: String,
-    val usedHandle: HandleSpec,
-    val usingParticle: ParticleSpec
+    val handleSpec: HandleSpec,
+    val particleSpec: ParticleSpec
 )
