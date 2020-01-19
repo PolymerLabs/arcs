@@ -550,8 +550,6 @@ describe('references', () => {
       await (refStore as SingletonStorageProvider).set({id: 'id:a', rawData: {result: [{id: 'id:1', entityStorageKey: backingStore.storageKey}, {id: 'id:2', entityStorageKey: backingStore.storageKey}]}});
     }
 
-
-
     await arc.idle;
     const outputStore = await collectionHandleForTest(arc, arc._stores[0]);
     assert.strictEqual((outputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');

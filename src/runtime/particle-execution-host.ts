@@ -294,7 +294,7 @@ class PECOuterPortImpl extends PECOuterPort {
       const key = StorageKeyParser.parse(storageKey);
       // TODO(shanestephens): We could probably register the active store here, but at the moment onRegister and onProxyMessage both
       // expect to be able to do activation
-      const storeBase = new Store({id: storageKey, exists: Exists.MayExist, storageKey: key , type})
+      const storeBase = new Store({id: storageKey, exists: Exists.MayExist, storageKey: key, type});
       this.GetBackingStoreCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
     } else {
       if (!storageKey) {
