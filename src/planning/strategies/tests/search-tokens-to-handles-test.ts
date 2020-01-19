@@ -15,6 +15,7 @@ import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/r
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {SearchTokensToHandles} from '../../strategies/search-tokens-to-handles.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+import {Flags} from '../../../runtime/flags.js';
 
 describe('SearchTokensToHandles', () => {
   let memoryProvider;
@@ -23,6 +24,8 @@ describe('SearchTokensToHandles', () => {
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
   it('finds local handle by tags', async () => {
+    const typeString = Flags.useNewStorageStack ? '![Thing]' : 'Thing';
+    const dataString = Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[{}]';
     const manifest = (await Manifest.parse(`
       schema Thing
       particle ShowThing &show in 'A.js'
@@ -33,10 +36,10 @@ describe('SearchTokensToHandles', () => {
         h0: ?
         ShowThing
           inThing: reads h0
-      store Things of Thing #mything in ThingsJson
+      store Things of ${typeString} #mything in ThingsJson
       resource ThingsJson
         start
-        [{}]
+        ${dataString}
     `, {memoryProvider}));
 
     const arc = StrategyTestHelper.createTestArc(manifest);

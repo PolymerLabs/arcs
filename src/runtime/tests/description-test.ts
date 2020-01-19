@@ -23,6 +23,7 @@ import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
 import {ConCap} from '../../testing/test-util.js';
+import {Flags} from '../flags.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
@@ -194,7 +195,10 @@ ${recipeManifest}
   });
 
   tests.forEach((test) => {
-    it('one particle with BigCollection descriptions ' + test.name, async () => {
+    it('one particle with BigCollection descriptions ' + test.name, async function() {
+      if (Flags.useNewStorageStack) {
+        this.skip();
+      }
       const manifest = await Manifest.parse(`
         schema Foo
           name: Text
