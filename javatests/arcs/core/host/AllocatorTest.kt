@@ -135,12 +135,12 @@ class AllocatorTest {
         planPartitions.forEach {
             assertThat(it.arcId).isEqualTo(arcId.toString())
             when (it.arcHost) {
-                is ReadingHost -> {
+                ReadingHost::class.java.canonicalName -> {
                     assertThat(it.handleConnectionSpecs).containsExactly(
                         readPersonHandleConnectionSpec
                     )
                 }
-                is WritingHost -> {
+                WritingHost::class.java.canonicalName -> {
                     assertThat(it.handleConnectionSpecs).containsExactly(
                         writePersonHandleConnectionSpec
                     )
@@ -187,10 +187,14 @@ class AllocatorTest {
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.forEach {
-            when (it.arcHost) {
+            val host = allocator.lookupArcHost(it.arcHost)
+            when (host) {
                 is TestingHost ->
-                    assertThat((it.arcHost as TestingHost).started).containsExactly(it)
+                    assertThat(
+                        (allocator.lookupArcHost(it.arcHost) as TestingHost).started
+                    ).containsExactly(it)
                 else -> {
+                    assert(false)
                 }
             }
         }

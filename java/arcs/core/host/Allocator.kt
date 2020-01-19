@@ -63,7 +63,14 @@ class Allocator(val hostRegistry: HostRegistry) {
      * Asks each [ArcHost] to start an Arc given a [PlanPartition].
      */
     private fun startPlanPartitionsOnHosts(partitions: List<PlanPartition>) =
-        partitions.forEach { partition -> partition.arcHost.startArc(partition) }
+        partitions.forEach { partition -> lookupArcHost(partition.arcHost).startArc(partition) }
+
+    // VisibleForTesting
+    fun lookupArcHost(arcHost: String) =
+        hostRegistry.availableArcHosts.filter { it ->
+            it::class.java.canonicalName == arcHost
+        }.firstOrNull() ?: defaultHost
+
 
     /**
      * Persists [ArcId] and associoated [PlatPartition]s.
@@ -122,7 +129,7 @@ class Allocator(val hostRegistry: HostRegistry) {
                     }
                 PlanPartition(
                     arcId.toString(),
-                    it.key /* ArcHost */,
+                    it.key::class.java.canonicalName!! /* ArcHost */,
                     handleConnectionSpecs
                 )
             }
