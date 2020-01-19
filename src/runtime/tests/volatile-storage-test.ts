@@ -214,6 +214,12 @@ describe('volatile', () => {
   });
 
   describe('big collection', () => {
+    before(function() {
+      if (Flags.useNewStorageStack) {
+        this.skip();
+      }
+    });
+
     it('supports get, store and remove (including concurrently)', async () => {
       const {manifest, arc, storage} = await newArc();
       const barType = new EntityType(manifest.schemas.Bar);
