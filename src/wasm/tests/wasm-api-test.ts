@@ -331,10 +331,10 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const backingStore = await volatileEngine.baseStorageFor(sng.type, volatileEngine.baseStorageKey(sng.type));
       await backingStore.store({id: 'id1', rawData: {num: 6, txt: 'ok'}}, ['key1']);
       await backingStore.store({id: 'id2', rawData: {num: 7, txt: 'ko'}}, ['key2']);
-      const storageKey = backingStore.storageKey;
+      const entityStorageKey = backingStore.storageKey;
 
       // Singleton
-      await sng.set({id: 'id1', storageKey});
+      await sng.set({id: 'id1', rawData: {id: 'id1', entityStorageKey}});
       await arc.idle;
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
         's::before <id1> !{}',                      // before dereferencing: contained entity is empty
@@ -343,7 +343,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await res.clear();
 
       // Collection
-      await col.store({id: 'id1', storageKey}, ['key1a']);
+      await col.store({id: 'id1', rawData: {id: 'id1', entityStorageKey}}, ['key1a']);
       await arc.idle;
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
         'c::before <id1> !{}',                      // ref to same entity as singleton; still empty in this handle
@@ -351,7 +351,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       ]);
       await res.clear();
 
-      await col.store({id: 'id2', storageKey}, ['key2a']);
+      await col.store({id: 'id2', rawData: {id: 'id2', entityStorageKey}}, ['key2a']);
       await arc.idle;
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
         'c::before <id1> {id1}, num: 6, txt: ok',   // already populated by the previous deref
@@ -385,7 +385,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const backingStore = await volatileEngine.baseStorageFor(refType, volatileEngine.baseStorageKey(refType));
       await backingStore.store({id: 'id1', rawData: {val: 'v1'}}, ['k1']);
 
-      await input.set({id: 'i1', rawData: {num: 12, ref: {id: 'id1', storageKey: backingStore.storageKey}}});
+      await input.set({id: 'i1', rawData: {num: 12, ref: {id: 'id1', entityStorageKey: backingStore.storageKey}}});
       await arc.idle;
 
       assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
@@ -397,8 +397,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // The ref field should have a storage key, but since this isn't deterministic we need to
       // check for its presence then discard it.
       const data = JSON.parse(JSON.stringify((await output.get()).rawData));
-      assert.isNotEmpty(data.ref.storageKey);
-      delete data.ref.storageKey;
+      assert.isNotEmpty(data.ref.entityStorageKey);
+      delete data.ref.entityStorageKey;
       assert.deepStrictEqual(data, {num: 12, txt: 'xyz', ref: {id: 'foo1'}});
     });
 
