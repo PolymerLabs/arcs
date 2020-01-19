@@ -515,4 +515,80 @@ describe('schema', () => {
     assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref&[Bar/inner&[/val:Boolean|]str:Text|]');
     assert.strictEqual(getHash('refCollection'), '/rc@[Wiz/str:Text|]z:Number|');
   });
+  it('tests univariate schema level refinements are propogated to field level', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a < 0], b: Number, c: Number} [a < 10]
+        schema2: reads Y {a: Number [a < 0 and a < 10], b: Number, c: Number}
+    `);
+    const schema1 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema());
+    const schema2 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema());
+
+    assert.deepEqual(schema1.fields, schema2.fields);
+    assert.deepEqual(schema1.refinement, schema2.refinement);
+  });
+  it('tests schema intersection', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a < 0], b: Number, c: Number} [a + b > 10]
+        schema2: reads Y {a: Number [a > 10], b: Number [b < 10]} [a + b > 20]
+        schema3: reads Z {a: Number [a < 0 or a > 10], b: Number} [a + b > 10 or a + b > 20]
+    `);
+    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
+    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+
+    // intersection of schema1 and schema2 should be the same as schema3
+    const intersection = deleteLocations(Schema.intersect(schema1, schema2));
+    const schema3 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema3').type.getEntitySchema());
+    assert.deepEqual(intersection.fields, schema3.fields);
+    assert.deepEqual(intersection.refinement, schema3.refinement);
+  });
+  it('tests schema intersection', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a < 0], b: Number, c: Number} [a + b > 10]
+        schema2: reads Y {a: Number [a > 10], b: Number [b < 10]}
+        schema3: reads Z {a: Number [a < 0 or a > 10], b: Number}
+    `);
+    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
+    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+
+    // intersection of schema1 and schema2 should be the same as schema3
+    const intersection = deleteLocations(Schema.intersect(schema1, schema2));
+    const schema3 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema3').type.getEntitySchema());
+    assert.deepEqual(intersection.fields, schema3.fields);
+    assert.deepEqual(intersection.refinement, schema3.refinement);
+  });
+  it('tests schema intersection', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a < 0], b: Number, c: Number} [a + c > 10]
+        schema2: reads Y {a: Number [a > 10], b: Number [b < 10]} [a + b > 10]
+        schema3: reads Z {a: Number [a < 0 or a > 10], b: Number}
+    `);
+    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
+    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+
+    // intersection of schema1 and schema2 should be the same as schema3
+    const intersection = deleteLocations(Schema.intersect(schema1, schema2));
+    const schema3 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema3').type.getEntitySchema());
+    assert.deepEqual(intersection.fields, schema3.fields);
+    assert.deepEqual(intersection.refinement, schema3.refinement);
+  });
+  it('tests schema union', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a > 20], b: Number, c: Number} [a + c > 10]
+        schema2: reads Y {a: Number [a > 10], b: Number [b < 10]} [a + b > 10]
+        schema3: reads Z {a: Number [a > 20 and a > 10], b: Number [b < 10], c: Number} [a + c > 10 and a + b > 10]
+    `);
+    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
+    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+
+    // union of schema1 and schema2 should be the same as schema3
+    const intersection = deleteLocations(Schema.union(schema1, schema2));
+    const schema3 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema3').type.getEntitySchema());
+    assert.deepEqual(intersection.fields, schema3.fields);
+    assert.deepEqual(intersection.refinement, schema3.refinement);
+  });
 });

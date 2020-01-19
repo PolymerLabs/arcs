@@ -19,7 +19,7 @@ enum Primitive {
   TEXT = 'Text',
 }
 
-enum Op {
+export enum Op {
   AND = 'and',
   OR  = 'or',
   LT  = '<',
@@ -44,10 +44,14 @@ export class Refinement {
   kind = 'refinement';
   expression: RefinementExpression = null;
 
+  constructor(expr: RefinementExpression) {
+    // TODO(ragdev): Should be a copy?
+    // TODO(ragdev): ensure that the refinement contains at least 1 fieldName
+    this.expression = expr;
+  }
+
   static fromAst(ref: RefinementNode, typeData: Dictionary<ExpressionPrimitives>): Refinement {
-    const refinement = new Refinement();
-    refinement.expression = RefinementExpression.fromAst(ref.expression, typeData);
-    return refinement;
+    return new Refinement(RefinementExpression.fromAst(ref.expression, typeData));
   }
 
   static refineData(entity: Entity, schema: Schema): void {
@@ -61,6 +65,56 @@ export class Refinement {
     const ref = schema.refinement;
     if (ref && !ref.validateData(entity)) {
       throw new Error('Entity data does not conform to the refinement.');
+    }
+  }
+
+  static unionOf(ref1: Refinement, ref2: Refinement): Refinement {
+    const expr1 = ref1 && ref1.expression;
+    const expr2 = ref2 && ref2.expression;
+    let refinement = null;
+    if (expr1 && expr2) {
+      const bothExpr = new BinaryExpression(expr1, expr2, new RefinementOperator(Op.OR));
+      refinement = new Refinement(bothExpr);
+    }
+    return refinement;
+  }
+
+  static intersectionOf(ref1: Refinement, ref2: Refinement): Refinement {
+    const expr1 = ref1 && ref1.expression;
+    const expr2 = ref2 && ref2.expression;
+    let refinement = null;
+    if (expr1 && expr2) {
+      const bothExpr = new BinaryExpression(expr1, expr2, new RefinementOperator(Op.AND));
+      refinement = new Refinement(bothExpr);
+    } else if(expr1 || expr2) {
+      refinement = new Refinement(expr1 || expr2);
+    }
+    return refinement;
+  }
+
+  containsField(fieldName: string): boolean {
+    return this.expression.containsField(fieldName);
+  }
+
+  fieldNameIfUnivariate(): string {
+    return this.expression.fieldNameIfUnivariate();
+  }
+
+  // checks if a is more specific than b, returns null if can't be determined
+  static isMoreSpecific(a: Refinement, b: Refinement): boolean {
+    if (!a && b) {
+      return false;
+    } else if (a && !b) {
+      return true;
+    }
+    try {
+      a.normalise();
+      b.normalise();
+      const rangeA = Range.fromExpression(a.expression);
+      const rangeB = Range.fromExpression(b.expression);
+      return rangeA.isSubsetOf(rangeB);
+    } catch (e) {
+      return null;
     }
   }
 
@@ -119,6 +173,10 @@ abstract class RefinementExpression {
   abstract toSQLExpression(): string;
 
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>);
+
+  abstract containsField(fieldName: string): boolean;
+
+  abstract fieldNameIfUnivariate(): string;
 }
 
 export class BinaryExpression extends RefinementExpression {
@@ -228,6 +286,22 @@ export class BinaryExpression extends RefinementExpression {
       default: return this;
     }
   }
+
+  containsField(fieldName: string): boolean {
+    return this.leftExpr.containsField(fieldName) || this.rightExpr.containsField(fieldName);
+  }
+
+  fieldNameIfUnivariate(): string {
+    const fn1 = this.leftExpr.fieldNameIfUnivariate();
+    const fn2 = this.rightExpr.fieldNameIfUnivariate();
+    if (fn1 && fn2) {
+      return fn1 === fn2 ? fn1 : null;
+    } else if ((fn1 && !fn2) || (!fn1 && fn2)) {
+      return fn1 || fn2;
+    }
+    return null;
+  }
+
 }
 
 export class UnaryExpression extends RefinementExpression {
@@ -288,6 +362,14 @@ export class UnaryExpression extends RefinementExpression {
         return this;
     }
   }
+
+  containsField(fieldName: string): boolean {
+    return this.expr.containsField(fieldName);
+  }
+
+  fieldNameIfUnivariate(): string {
+    return this.expr.fieldNameIfUnivariate();
+  }
 }
 
 class FieldNamePrimitive extends RefinementExpression {
@@ -324,6 +406,14 @@ class FieldNamePrimitive extends RefinementExpression {
     }
     throw new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
   }
+
+  containsField(fieldName: string): boolean {
+    return this.value === fieldName;
+  }
+
+  fieldNameIfUnivariate(): string {
+    return this.value;
+  }
 }
 
 class NumberPrimitive extends RefinementExpression {
@@ -350,6 +440,14 @@ class NumberPrimitive extends RefinementExpression {
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
+
+  containsField(): boolean {
+    return false;
+  }
+
+  fieldNameIfUnivariate(): string {
+    return null;
+  }
 }
 
 class BooleanPrimitive extends RefinementExpression {
@@ -375,6 +473,14 @@ class BooleanPrimitive extends RefinementExpression {
 
   applyOperator(): ExpressionPrimitives {
     return this.value;
+  }
+
+  containsField(): boolean {
+    return false;
+  }
+
+  fieldNameIfUnivariate(): string {
+    return null;
   }
 }
 
@@ -739,7 +845,7 @@ const operatorTable: Dictionary<OperatorInfo> = {
   [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] !== e[1], sqlOp: '<>'},
 };
 
-class RefinementOperator {
+export class RefinementOperator {
   opInfo: OperatorInfo;
   op: string;
 

@@ -145,7 +145,7 @@ describe('TypeChecker', () => {
     }
   });
 
-  it.only('resolves a pair of in [~a] (is Thing), out [Product]', async () => {
+  it('resolves a pair of in [~a] (is Thing), out [Product]', async () => {
     const a = TypeVariable.make('a').collectionOf();
     a.collectionType.variable.resolution = EntityType.make(['Thing'], {});
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
