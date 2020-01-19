@@ -110,6 +110,7 @@ recipe
   // other tests. It passes, though, if "expectationsCompleted" is commented
   // out. If any individual expectation is skipped, the test complains because
   // it receives an expectation it doesn't expect.
+  // TODO(sjmiles): really an integration test for ui-multiplexer-particle.ts and Multiplexer.js
   it('initialize recipe and render hosted slots', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
@@ -131,7 +132,6 @@ recipe
     const slotComposer = arc.pec.slotComposer;
     const observer = new SlotTestObserver();
     slotComposer.observeSlots(observer);
-
     observer
         .newExpectations()
         .expectRenderSlot('List', 'root')
