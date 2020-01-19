@@ -19,7 +19,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
   plexeds; //: any[];
 
   update({list}, state, oldProps, oldState) {
-    //log(`[${this.spec.name}]::update`, list, arc);
+    //log(`[${this.spec.name}]::update`, list);
     if (!list || !list.length) {
       return;
     }
@@ -167,22 +167,21 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
   }
 
   async populateArc(item, {arc, handle, hosting: {hostedParticle, otherMappedHandles, otherConnections}}) {
+    let slot = null;
     const hostedSlotName = [...hostedParticle.slotConnections.keys()][0];
     if (hostedSlotName) {
-      const slotName = [...this.spec.slotConnections.values()][0].name;
-      const slotId = await arc.createSlot(this, slotName, handle._id);
-      const recipe = this.constructInnerRecipe(
-        hostedParticle, item, handle,
-        {name: hostedSlotName, id: slotId},
-        {connections: otherConnections, handles: otherMappedHandles}
-      );
-      try {
-        await arc.loadRecipe(recipe);
-      }
-      catch (e) {
-        console.warn('ui-multiplexer-particle: exception parsing constructed recipe:', recipe);
-        console.warn(e);
-      }
+      const name = [...this.spec.slotConnections.values()][0].name;
+      const id = await arc.createSlot(this, name, handle._id);
+      slot = {name, id};
+    }
+    const other = {connections: otherConnections, handles: otherMappedHandles};
+    const recipe = this.constructInnerRecipe(hostedParticle, item, handle, slot, other);
+    try {
+      await arc.loadRecipe(recipe);
+    }
+    catch (e) {
+      console.warn('ui-multiplexer-particle: exception parsing constructed recipe:', recipe);
+      console.warn(e);
     }
   }
 
