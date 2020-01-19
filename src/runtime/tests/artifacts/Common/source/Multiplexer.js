@@ -19,10 +19,10 @@ defineParticle(({Particle, UiMultiplexerParticle, log}) => {
     return Particle.buildManifest`
 ${hostedParticle}
 recipe
-  handle1: use '${itemHandle._id}'${otherHandles}${slot.name ? `
+  handle1: use '${itemHandle._id}'${otherHandles}${slot ? `
   slot1: slot '${slot.id}'` : ''}
   ${hostedParticle.name}
-    ${hostedParticle.handleConnections[0].name}: reads handle1${otherConnections}${slot.name ? `
+    ${hostedParticle.handleConnections[0].name}: reads handle1${otherConnections}${slot ? `
     ${slot.name}: consumes slot1` : ''}`;
   };
 
