@@ -375,10 +375,13 @@ export interface RecipeRequire extends BaseNode {
 
 export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
 
+export const RELAXATION_KEYWORD = 'someof';
+
 export interface RecipeParticleConnection extends BaseNode {
   kind: 'handle-connection';
   param: string;
   direction: Direction;
+  relaxed: boolean;
   target: ParticleConnectionTargetComponents;
   dependentConnections: RecipeParticleConnection[];
 }
@@ -419,6 +422,7 @@ export interface RecipeSlotConnectionRef extends BaseNode {
 export interface RecipeConnection extends BaseNode {
   kind: 'connection';
   direction: Direction;
+  relaxed: boolean;
   from: ConnectionTarget;
   to: ConnectionTarget;
 }

@@ -905,7 +905,7 @@ ${e.message}
     for (const connection of items.connections) {
       const from = prepareEndpoint(connection, connection.from);
       const to = prepareEndpoint(connection, connection.to);
-      recipe.newConnectionConstraint(from, to, connection.direction);
+      recipe.newConnectionConstraint(from, to, connection.direction, connection.relaxed);
     }
 
     if (items.search) {
@@ -1036,7 +1036,7 @@ ${e.message}
     }
 
     const newConnection = (particle: Particle, connectionItem: AstNode.RecipeParticleConnection) => {
-        let connection;
+        let connection: HandleConnection;
         // Find or create the connection.
         if (connectionItem.param === '*') {
           connection = particle.addUnnamedConnection();
@@ -1061,6 +1061,9 @@ ${e.message}
           }
           connection.direction = direction;
         }
+        // TODO(cypher1): If particle handle connections are able to be relaxed this will need to be expanded to
+        // perform relaxation matching.
+        connection.relaxed = connectionItem.relaxed;
 
         let targetHandle: Handle;
         let targetParticle: Particle;

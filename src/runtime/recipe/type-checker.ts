@@ -14,6 +14,7 @@ import {Direction} from '../manifest-ast-nodes.js';
 export interface TypeListInfo {
   type: Type;
   direction?: Direction;
+  relaxed?: boolean;
   connection?: {direction: Direction};
 }
 

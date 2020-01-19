@@ -19,7 +19,7 @@ import {Descendant} from '../../runtime/recipe/walker.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 import {Dictionary} from '../../runtime/hot.js';
 
-type Obligation = {from: EndPoint, to: EndPoint, direction: Direction};
+type Obligation = {from: EndPoint, to: EndPoint, direction: Direction, relaxed: boolean};
 
 export class ConvertConstraintsToConnections extends Strategy {
   async generate(inputParams: StrategyParams): Promise<Descendant<Recipe>[]> {
@@ -131,7 +131,8 @@ export class ConvertConstraintsToConnections extends Strategy {
             obligations.push({
               from: from._clone(),
               to: to._clone(),
-              direction: constraint.direction
+              direction: constraint.direction,
+              relaxed: constraint.relaxed
             });
           }
 
@@ -241,7 +242,7 @@ export class ConvertConstraintsToConnections extends Strategy {
               if ((obligation.from instanceof ParticleEndPoint) && (obligation.to instanceof ParticleEndPoint)) {
                 const from = new InstanceEndPoint(recipeMap[obligation.from.particle.name], obligation.from.connection);
                 const to = new InstanceEndPoint(recipeMap[obligation.to.particle.name], obligation.to.connection);
-                recipe.newObligation(from, to, obligation.direction);
+                recipe.newObligation(from, to, obligation.direction, obligation.relaxed);
               } else {
                 throw new Error('constraints with a particle endpoint at one end but not at the other are not supported');
               }

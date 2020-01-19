@@ -52,7 +52,7 @@ export class Recipe implements Cloneable<Recipe> {
   // with a type. Strategies should register the record types they
   // can handle. ConnectionConstraints should be a different record
   // type to particles/handles.
-  private readonly _connectionConstraints = <ConnectionConstraint[]>[];
+  private readonly _connectionConstraints: ConnectionConstraint[] = [];
 
   // Obligations are like connection constraints in that they describe
   // required connections between particles/verbs. However, where
@@ -71,14 +71,14 @@ export class Recipe implements Cloneable<Recipe> {
     this._name = name;
   }
 
-  newConnectionConstraint(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
-    const result = new ConnectionConstraint(from, to, direction, 'constraint');
+  newConnectionConstraint(from: EndPoint, to: EndPoint, direction: Direction, relaxed: boolean): ConnectionConstraint {
+    const result = new ConnectionConstraint(from, to, direction, relaxed, 'constraint');
     this._connectionConstraints.push(result);
     return result;
   }
 
-  newObligation(from: EndPoint, to: EndPoint, direction: Direction): ConnectionConstraint {
-    const result = new ConnectionConstraint(from, to, direction, 'obligation');
+  newObligation(from: EndPoint, to: EndPoint, direction: Direction, relaxed: boolean): ConnectionConstraint {
+    const result = new ConnectionConstraint(from, to, direction, relaxed, 'obligation');
     this._obligations.push(result);
     return result;
   }

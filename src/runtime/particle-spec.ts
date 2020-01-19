@@ -13,17 +13,17 @@ import {Modality} from './modality.js';
 import {Direction, SlotDirection, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
-import {InterfaceType, CollectionType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
+import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
 import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
-import {Flags} from './flags.js';
 import * as AstNode from './manifest-ast-nodes.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
 type SerializedHandleConnectionSpec = {
   direction: Direction,
+  relaxed: boolean,
   name: string,
   type: Type | TypeLiteral,
   isOptional: boolean,
@@ -67,6 +67,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   private rawData: SerializedHandleConnectionSpec;
   discriminator: 'HCS';
   direction: Direction;
+  relaxed: boolean;
   name: string;
   type: Type;
   isOptional: boolean;
@@ -81,6 +82,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this.discriminator = 'HCS';
     this.rawData = rawData;
     this.direction = rawData.direction;
+    this.relaxed = rawData.relaxed;
     this.name = rawData.name;
     this.type = asType(rawData.type).mergeTypeVariablesByName(typeVarMap);
     this.isOptional = rawData.isOptional;
@@ -342,15 +344,15 @@ export class ParticleSpec {
   toLiteral(): SerializedParticleSpec {
     const {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks} = this.model;
     const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
-      ({type, direction, name, isOptional, dependentConnections}) => ({type: asTypeLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
+      ({type, direction, relaxed, name, isOptional, dependentConnections}) => ({type: asTypeLiteral(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
     const argsLiteral = args.map(a => connectionToLiteral(a));
     return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks};
   }
 
   static fromLiteral(literal: SerializedParticleSpec): ParticleSpec {
     let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks} = literal;
-    const connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
-      ({type: asType(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
+    const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections}) =>
+      ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
     args = args.map(connectionFromLiteral);
     return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks});
   }
@@ -404,12 +406,21 @@ export class ParticleSpec {
     results.push(line);
     const indent = '  ';
 
-    const writeConnection = (connection, indent) => {
-      const tags = connection.tags.map((tag) => ` #${tag}`).join('');
-      const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)} `;
+    const writeConnection = (connection: HandleConnectionSpec, indent: string) => {
+      const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)}`;
       const entitySchema = connection.type.getEntitySchema();
       const ref = entitySchema && entitySchema.refinement;
-      results.push(`${indent}${connection.name}: ${dir}${connection.type.toString()}${ref ? ref.toString() : ''}${tags}`);
+
+      const subresults = [
+        `${connection.name}:`,
+        dir,
+        connection.relaxed ? AstNode.RELAXATION_KEYWORD : '',
+        connection.type.toString(),
+        ref ? ref.toString() : '',
+        ...connection.tags.map((tag: string) => `#${tag}`)
+      ];
+
+      results.push(indent+subresults.filter(s => s !== '').join(' '));
       for (const dependent of connection.dependentConnections) {
         writeConnection(dependent, indent + '  ');
       }
