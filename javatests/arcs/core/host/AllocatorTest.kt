@@ -199,4 +199,15 @@ class AllocatorTest {
             }
         }
     }
+
+    @Test(expected = ParticleNotFoundException::class)
+    fun allocator_verifyUnknownParticleThrows() {
+        val allocator = Allocator(ServiceLoaderHostRegistry)
+        val handleConnectionSpec = HandleConnectionSpec(
+            "unknown", personHandleSpec,
+            ParticleSpec("UnknownParticle", "Unknown")
+        )
+        val plan = Plan(listOf(handleConnectionSpec))
+        allocator.startArcForPlan("unknown", plan)
+    }
 }

@@ -17,9 +17,6 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.driver.VolatileStorageKey
 
-// TODO(cromwellian): This should be based off some configuration
-typealias DefaultHost = ProdHost
-
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
  * set of [ArcHost] implementations. It accomplishes this by being given a [Plan]
@@ -31,10 +28,6 @@ typealias DefaultHost = ProdHost
  * [HandleSpec] and [Particle].
  */
 class Allocator(val hostRegistry: HostRegistry) {
-
-    /** [ArcHost] used for unannotated Particles */
-    private val defaultHost =
-        hostRegistry.availableArcHosts.find { it.javaClass == DefaultHost::class.java }!!
 
     /** Currently active Arcs and their associated [PlanPartition]s. */
     private val partitionMap: MutableMap<ArcId, List<PlanPartition>> = mutableMapOf()
@@ -69,7 +62,7 @@ class Allocator(val hostRegistry: HostRegistry) {
     fun lookupArcHost(arcHost: String) =
         hostRegistry.availableArcHosts.filter { it ->
             it::class.java.canonicalName == arcHost
-        }.firstOrNull() ?: defaultHost
+        }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
 
 
     /**
@@ -144,5 +137,5 @@ class Allocator(val hostRegistry: HostRegistry) {
             .filter { host ->
                 host.registeredParticles.map { clazz -> clazz.java.getCanonicalName() }
                     .contains(spec.location)
-            }.firstOrNull() ?: defaultHost
+            }.firstOrNull() ?: throw ParticleNotFoundException(spec)
 }
