@@ -136,18 +136,14 @@ class AllocatorTest {
             assertThat(it.arcId).isEqualTo(arcId.toString())
             when (it.arcHost) {
                 is ReadingHost -> {
-                    assertThat(it.handleSpecs).containsExactly(personHandleSpec)
                     assertThat(it.handleConnectionSpecs).containsExactly(
                         readPersonHandleConnectionSpec
                     )
-                    assertThat(it.particleSpecs).containsExactly(readPersonParticleSpec)
                 }
                 is WritingHost -> {
-                    assertThat(it.handleSpecs).containsExactly(personHandleSpec)
                     assertThat(it.handleConnectionSpecs).containsExactly(
                         writePersonHandleConnectionSpec
                     )
-                    assertThat(it.particleSpecs).containsExactly(writePersonParticleSpec)
                 }
                 else -> {
                     assert(false)
@@ -164,8 +160,8 @@ class AllocatorTest {
         val allocator = Allocator(ServiceLoaderHostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
-        planPartitions.flatMap { it -> it.handleSpecs }
-            .forEach { assertThat(it.storageKey).isNotNull() }
+        planPartitions.flatMap { it -> it.handleConnectionSpecs }
+            .forEach { assertThat(it.handleSpec.storageKey).isNotNull() }
     }
 
     @Test
@@ -181,8 +177,8 @@ class AllocatorTest {
         val allocator = Allocator(ServiceLoaderHostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
-        planPartitions.flatMap { it -> it.handleSpecs }
-            .forEach { assertThat(it.storageKey).isEqualTo(testKey) }
+        planPartitions.flatMap { it -> it.handleConnectionSpecs }
+            .forEach { assertThat(it.handleSpec.storageKey).isEqualTo(testKey) }
     }
 
     @Test

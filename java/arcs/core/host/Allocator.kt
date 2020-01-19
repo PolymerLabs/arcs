@@ -123,8 +123,6 @@ class Allocator(val hostRegistry: HostRegistry) {
                 PlanPartition(
                     arcId.toString(),
                     it.key /* ArcHost */,
-                    handleConnectionSpecs.map { it.handleSpec },
-                    it.value /* List<ParticleSpec> */,
                     handleConnectionSpecs
                 )
             }

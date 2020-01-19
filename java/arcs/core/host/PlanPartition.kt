@@ -17,7 +17,5 @@ package arcs.core.host
 data class PlanPartition(
     val arcId: String,
     val arcHost: ArcHost,
-    val handleSpecs: List<HandleSpec>,
-    val particleSpecs: List<ParticleSpec>,
     val handleConnectionSpecs: List<HandleConnectionSpec>
 )
