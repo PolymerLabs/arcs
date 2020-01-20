@@ -1051,14 +1051,20 @@ RecipeHandleFate
   / 'copy'
   / '`slot'
 
+RecipeHandleCapability
+ = 'persistent'
+ / 'tied-to-runtime'
+ / 'tied-to-arc'
+
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotation:(whiteSpace ParameterizedAnnotation)? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotation:(whiteSpace ParameterizedAnnotation)? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate,
+      capabilities: capabilities.map(c => c[1]),
       annotation: optional(annotation, s => s[1], null),
     });
   }

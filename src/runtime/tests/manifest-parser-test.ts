@@ -56,6 +56,13 @@ describe('manifest parser', () => {
         h1: create 'my-id' #anotherTag @ttl(1h)
         h2: create @ttl ( 30m )`);
   });
+  it('parses recipe handles with capabilities', () => {
+    parse(`
+      recipe Thing
+        h0: create persistent
+        h1: create tied-to-runtime 'my-id'
+        h2: create tied-to-arc #mytag`);
+  });
   it('parses recipes with particles', () => {
     parse(`
       recipe Recipe

@@ -856,6 +856,9 @@ ${e.message}
         items.byName.set(item.name, {item, handle});
       }
       handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
+      if (item.kind === 'handle' && item.capabilities) {
+        handle.capabilities = new Set(item.capabilities);
+      }
       if (item.kind === 'handle' && item.annotation) {
         assert(item.annotation.simpleAnnotation === 'ttl',
                `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
