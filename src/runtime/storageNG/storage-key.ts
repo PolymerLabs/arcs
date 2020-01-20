@@ -38,4 +38,12 @@ export abstract class StorageKey {
   childKeyForHandle(id: string) {
     return this.subKeyWithComponent(`handle/${id}`);
   }
+
+  childKeyForSuggestions(id: string) {
+    return this.subKeyWithComponent(`suggestion/${id}`);
+  }
+
+  childKeyForSearch(id: string) {
+    return this.subKeyWithComponent(`search/${id}`);
+  }
 }

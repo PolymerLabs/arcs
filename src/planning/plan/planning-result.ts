@@ -15,6 +15,13 @@ import {Runnable} from '../../runtime/hot.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
+import {UnifiedActiveStore} from '../../runtime/storageNG/unified-store.js';
+import {unifiedHandleFor} from '../../runtime/handle.js';
+import {StorageProxy} from '../../runtime/storageNG/storage-proxy.js';
+import {SingletonHandle} from '../../runtime/storageNG/handle.js';
+import {Flags} from '../../runtime/flags.js';
+import {Entity} from '../../runtime/entity.js';
+import {EntityType} from '../../runtime/type.js';
 
 const {error} = logsFactory('PlanningResult', '#ff0090');
 
@@ -31,21 +38,36 @@ export type SerializableGeneration = {
 };
 
 export class PlanningResult {
+  // Hack: we use an entity with a single text field to store the json representation of a suggestion.
+  static suggestionEntityType = EntityType.make(['Suggestions'], {current: 'Text'});
+
   suggestions: Suggestion[] = [];
   lastUpdated: Date = new Date();
   generations: SerializableGeneration[] = [];
   contextual = true;
-  store?: SingletonStorageProvider;
+  store?: UnifiedActiveStore;
+  handle?: SingletonHandle<Entity>|SingletonStorageProvider;
   private storeCallbackId: number;
   private changeCallbacks: Runnable[] = [];
   private envOptions: EnvOptions;
 
-  constructor(envOptions: EnvOptions, store?: SingletonStorageProvider) {
+  constructor(envOptions: EnvOptions, store?: UnifiedActiveStore) {
     this.envOptions = envOptions;
     assert(envOptions.context, `context cannot be null`);
     assert(envOptions.loader, `loader cannot be null`);
     this.store = store;
     if (this.store) {
+      this.handle = Flags.useNewStorageStack ?
+          unifiedHandleFor({
+            proxy: new StorageProxy(
+                envOptions.context.generateID().toString(),
+                this.store,
+                this.store.baseStore.type,
+                this.store.baseStore.storageKey.toString()),
+            idGenerator: envOptions.context._idGenerator,
+            particleId: envOptions.context.generateID().toString()
+          }) as SingletonHandle<Entity>:
+          this.store.baseStore as SingletonStorageProvider;
       this.storeCallbackId = this.store.on(() => this.load());
     }
   }
@@ -61,7 +83,16 @@ export class PlanningResult {
   }
 
   async load(): Promise<boolean> {
-    const value = await this.store.get() || {};
+    let value;
+    if (Flags.useNewStorageStack) {
+      const handleValue = await this.handle.get();
+      if (!handleValue) {
+        return false;
+      }
+      value = JSON.parse(handleValue.current);
+    } else {
+      value = await this.handle.get() || {};
+    }
     if (value.suggestions) {
       if (await this.fromLiteral(value)) {
         return true;
@@ -72,7 +103,13 @@ export class PlanningResult {
 
   async flush() {
     try {
-      await this.store.set(this.toLiteral());
+      if (Flags.useNewStorageStack) {
+        const entityClass = Entity.createEntityClass(PlanningResult.suggestionEntityType.entitySchema, null);
+        await this.handle.set(new entityClass({current: JSON.stringify(this.toLiteral())}));
+      } else {
+        await (this.store as SingletonStorageProvider).set(this.toLiteral());
+      }
+
     } catch (e) {
       error('Failed storing suggestions: ', e);
       throw e;
@@ -80,13 +117,15 @@ export class PlanningResult {
   }
 
   async clear() {
-    return this.store.clear();
+    return this.handle.clear();
   }
 
   dispose() {
     this.changeCallbacks = [];
     this.store.off(this.storeCallbackId);
-    this.store.dispose();
+    if (!Flags.useNewStorageStack) {
+      (this.store as SingletonStorageProvider).dispose();
+    }
   }
 
   static formatSerializableGenerations(generations): SerializableGeneration[] {
@@ -214,11 +253,11 @@ export class PlanningResult {
     return true;
   }
 
-  isEquivalent(suggestions) {
+  isEquivalent(suggestions: Suggestion[]) {
     return PlanningResult.isEquivalent(this.suggestions, suggestions);
   }
 
-  static isEquivalent(oldSuggestions, newSuggestions) {
+  static isEquivalent(oldSuggestions: Suggestion[], newSuggestions: Suggestion[]): boolean {
     assert(newSuggestions, `New suggestions cannot be null.`);
     return oldSuggestions &&
            oldSuggestions.length === newSuggestions.length &&

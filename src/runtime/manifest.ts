@@ -155,7 +155,7 @@ export class Manifest {
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
-  private readonly _idGenerator: IdGenerator = IdGenerator.newSession();
+  readonly _idGenerator: IdGenerator = IdGenerator.newSession();
   private _storageProviderFactory: StorageProviderFactory | undefined = undefined;
   private _meta = new ManifestMeta();
   private _resources = {};
@@ -1232,7 +1232,7 @@ ${e.message}
     const name = item.name;
     let id = item.id;
     const originalId = item.originalId;
-    const type = item.type['model'];  // Model added in _augmentAstWithTypes.
+    let type = item.type['model'];  // Model added in _augmentAstWithTypes.
     if (id == null) {
       id = `${manifest._id}store${manifest._stores.length}`;
     }
@@ -1300,6 +1300,9 @@ ${e.message}
       if (!item.id) {
         const entityHash = await digest(json);
         id = `${id}:${entityHash}`;
+      }
+      if (!type.isSingleton && !type.isCollectionType()) {
+        type = new SingletonType(type);
       }
       return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
         description: item.description, version: item.version || null, source: item.source,

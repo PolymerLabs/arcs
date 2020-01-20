@@ -305,6 +305,14 @@ export class SingletonType<T extends Type> extends Type {
   toString(options = undefined): string {
     return `![${this.innerType.toString(options)}]`;
   }
+
+  get canWriteSuperset(): Type {
+    return this.innerType.canWriteSuperset;
+  }
+
+  get canReadSubset() {
+    return this.innerType.canReadSubset;
+  }
 }
 
 export class EntityType extends Type {

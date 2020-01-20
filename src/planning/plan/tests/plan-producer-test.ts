@@ -14,7 +14,7 @@ import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
-import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
+import {storageKeyPrefixForTest, singletonHandleForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {StubLoader} from '../../../runtime/testing/stub-loader.js';
@@ -23,9 +23,10 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-// database providers are optional, these tests use these provider(s)
-import '../../../runtime/storage/firebase/firebase-provider.js';
-import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
+import {UnifiedActiveStore} from '../../../runtime/storageNG/unified-store.js';
+import {Flags} from '../../../runtime/flags.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
+import {Entity} from '../../../runtime/entity.js';
 
 class TestPlanProducer extends PlanProducer {
   options;
@@ -84,27 +85,26 @@ class TestPlanProducer extends PlanProducer {
 }
 
 // Run test suite for each storageKeyBase
-['volatile', 'pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach(storageKeyBase => {
-  describe('plan producer for ' + storageKeyBase, () => {
-    async function createProducer(manifestFilename) {
-      const loader = new StubLoader({});
-      const memoryProvider = new TestVolatileMemoryProvider();
-      const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
-      const runtime = new Runtime({
-          loader, composerClass: FakeSlotComposer, context, memoryProvider});
-      const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-      const suggestions = await StrategyTestHelper.planForArc(
-          runtime.newArc('demo', storageKeyPrefixForTest())
-      );
-      const store = await Planificator['_initSuggestStore'](arc, storageKeyBase);
-      assert.isNotNull(store);
-      const producer = new TestPlanProducer(arc, store);
-      return {suggestions, producer};
-    }
+describe('plan producer', () => {
+  async function createProducer() {
+    const loader = new StubLoader({});
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+    const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
+    const runtime = new Runtime({
+        loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const suggestions = await StrategyTestHelper.planForArc(
+        runtime.newArc('demo', storageKeyPrefixForTest())
+    );
+    const store = await Planificator['_initSuggestStore'](arc, storageKeyForTest(arc.id));
+    assert.isNotNull(store);
+    const producer = new TestPlanProducer(arc, store);
+    return {suggestions, producer};
+  }
 
   it('produces suggestions', async () => {
-    const {suggestions, producer} =
-        await createProducer('./src/runtime/tests/artifacts/Products/Products.recipes');
+    const {suggestions, producer} = await createProducer();
     assert.lengthOf(producer.result.suggestions, 0);
 
     await producer.produceSuggestions();
@@ -119,7 +119,7 @@ class TestPlanProducer extends PlanProducer {
   });
 
   it('throttles requests to produce suggestions', async () => {
-    const {suggestions, producer} = await createProducer('./src/runtime/tests/artifacts/Products/Products.recipes');
+    const {suggestions, producer} = await createProducer();
     assert.lengthOf(producer.result.suggestions, 0);
 
     for (let i = 0; i < 10; ++i) {
@@ -137,7 +137,7 @@ class TestPlanProducer extends PlanProducer {
   });
 
   it('cancels planning', async () => {
-    const {suggestions, producer} = await createProducer('./src/runtime/tests/artifacts/Products/Products.recipes');
+    const {suggestions, producer} = await createProducer();
     assert.lengthOf(producer.result.suggestions, 0);
 
     await producer.produceSuggestions();
@@ -156,7 +156,7 @@ describe('plan producer - search', () => {
     options;
     produceSuggestionsCalled = 0;
 
-    constructor(arc: Arc, searchStore: SingletonStorageProvider) {
+    constructor(arc: Arc, searchStore: UnifiedActiveStore) {
       super(arc, new PlanningResult({context: arc.context, loader: arc.loader}, searchStore), searchStore);
     }
 
@@ -166,7 +166,16 @@ describe('plan producer - search', () => {
     }
 
     async setNextSearch(search: string) {
-      await this.searchStore.set([{arc: this.arc.id.idTreeAsString(), search}]);
+      if (Flags.useNewStorageStack) {
+        const entityClass = Entity.createEntityClass(Planificator.searchEntityType.getEntitySchema(), null);
+        const entity = new entityClass({current: JSON.stringify([{arc: this.arc.id.idTreeAsString(), search}])});
+        const handle = await singletonHandleForTest(this.arc, this.searchStore.baseStore);
+        await handle.set(entity);
+      } else {
+        await (this.searchStore as SingletonStorageProvider).set([
+          {arc: this.arc.id.idTreeAsString(), search}
+        ]);
+      }
       return this.onSearchChanged();
     }
   }
@@ -178,8 +187,9 @@ describe('plan producer - search', () => {
       schema Bar
         value: Text
     `, {memoryProvider});
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id: ArcId.newForTest('test'),
-                         storageKey: 'volatile://test^^123'});
+    const id= ArcId.newForTest('test');
+    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id,
+                         storageKey: storageKeyForTest(id)});
     const searchStore = await Planificator['_initSearchStore'](arc);
 
     const producer = new TestSearchPlanProducer(arc, searchStore);
@@ -232,5 +242,4 @@ describe('plan producer - search', () => {
     assert.strictEqual(search, producer.options.search);
     assert.isTrue(producer.options.strategies.map(s => s.name).includes('InitSearch'));
   });
-  }); // end describe
-}); // end forEach
+});
