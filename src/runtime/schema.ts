@@ -16,7 +16,7 @@ import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
 import {RefinementNode, SchemaType, SchemaPrimitiveType} from './manifest-ast-nodes.js';
-import {Refinement} from './refiner.js';
+import {Refinement, BinaryExpression, RefinementOperator, Op, AtleastAsSpecific} from './refiner.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -43,6 +43,13 @@ export class Schema {
     this.names = names;
     this.fields = {};
     this.refinement = options.refinement || null;
+    const fNs = this.refinement && this.refinement.getFieldNames();
+    // if the schema level refinement is univariate, propogate it to the appropriate field
+    if (fNs && fNs.size === 1) {
+      const fN = fNs.values().next().value;
+      fields[fN].refinement = Refinement.intersectionOf(fields[fN].refinement, this.refinement);
+      this.refinement = null;
+    }
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
         this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field};
@@ -113,12 +120,12 @@ export class Schema {
         if (!Schema.typesEqual(fields[field], type)) {
           return null;
         }
+        fields[field].refinement = Refinement.intersectionOf(fields[field].refinement, type.refinement);
       } else {
-        fields[field] = type;
+        fields[field] = {...type};
       }
     }
-
-    return new Schema(names, fields);
+    return new Schema(names, fields, {refinement: Refinement.intersectionOf(schema1.refinement, schema2.refinement)});
   }
 
   static intersect(schema1: Schema, schema2: Schema): Schema {
@@ -128,21 +135,24 @@ export class Schema {
     for (const [field, type] of Object.entries(schema1.fields)) {
       const otherType = schema2.fields[field];
       if (otherType && Schema.typesEqual(type, otherType)) {
-        fields[field] = type;
+        fields[field] = {...type};
+        fields[field].refinement = Refinement.unionOf(type.refinement, otherType.refinement);
       }
     }
-
-    return new Schema(names, fields);
+    // if schema level refinement contains fields not present in the intersection, discard it
+    const ref1 = !schema1.refinementHasFieldsNotIn(fields) ? schema1.refinement : null;
+    const ref2 = !schema2.refinementHasFieldsNotIn(fields) ? schema2.refinement : null;
+    return new Schema(names, fields, {refinement: Refinement.unionOf(ref1, ref2)});
   }
 
   equals(otherSchema: Schema): boolean {
     // TODO(cypher1): Check equality without calling contains.
     return this === otherSchema || (this.name === otherSchema.name
-       && this.isMoreSpecificThan(otherSchema)
-       && otherSchema.isMoreSpecificThan(this));
+       && this.isAtleastAsSpecificAs(otherSchema)
+       && otherSchema.isAtleastAsSpecificAs(this));
   }
 
-  isMoreSpecificThan(otherSchema: Schema): boolean {
+  isAtleastAsSpecificAs(otherSchema: Schema): boolean {
     const names = new Set(this.names);
     for (const name of otherSchema.names) {
       if (!names.has(name)) {
@@ -160,8 +170,22 @@ export class Schema {
       if (!Schema.typesEqual(fields[name], type)) {
         return false;
       }
+      if (Refinement.isAtleastAsSpecificAs(fields[name].refinement, type.refinement) === AtleastAsSpecific.NO) {
+        return false;
+      }
     }
     return true;
+  }
+
+  // Returns true if there are fields in this.refinement, that are not in fields
+  refinementHasFieldsNotIn(fields): boolean {
+    const amb = Object.keys(this.fields).filter(k => !(k in fields));
+    for (const field of amb) {
+      if (this.refinement && this.refinement.containsField(field)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   crdtConstructor<S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>>() {

@@ -70,8 +70,8 @@ export class TypeChecker {
       if (candidate.canReadSubset == null || candidate.canWriteSuperset == null) {
         return candidate;
       }
-      if (candidate.canReadSubset.isMoreSpecificThan(candidate.canWriteSuperset)) {
-        if (candidate.canWriteSuperset.isMoreSpecificThan(candidate.canReadSubset)) {
+      if (candidate.canReadSubset.isAtleastAsSpecificAs(candidate.canWriteSuperset)) {
+        if (candidate.canWriteSuperset.isAtleastAsSpecificAs(candidate.canReadSubset)) {
           candidate.variable.resolution = candidate.canReadSubset;
         }
         return candidate;
@@ -206,7 +206,7 @@ export class TypeChecker {
     if (writtenType == null || handleType.canReadSubset == null) {
       return true;
     }
-    if (writtenType.isMoreSpecificThan(handleType.canReadSubset)) {
+    if (writtenType.isAtleastAsSpecificAs(handleType.canReadSubset)) {
       return true;
     }
     return false;
@@ -220,7 +220,7 @@ export class TypeChecker {
     if (readType == null || handleType.canWriteSuperset == null) {
       return true;
     }
-    if (handleType.canWriteSuperset.isMoreSpecificThan(readType)) {
+    if (handleType.canWriteSuperset.isAtleastAsSpecificAs(readType)) {
       return true;
     }
     return false;
@@ -279,8 +279,8 @@ export class TypeChecker {
       return false;
     }
 
-    const leftIsSub = leftType.entitySchema.isMoreSpecificThan(rightType.entitySchema);
-    const leftIsSuper = rightType.entitySchema.isMoreSpecificThan(leftType.entitySchema);
+    const leftIsSub = leftType.entitySchema.isAtleastAsSpecificAs(rightType.entitySchema);
+    const leftIsSuper = rightType.entitySchema.isAtleastAsSpecificAs(leftType.entitySchema);
 
     if (leftIsSuper && leftIsSub) {
        return true;

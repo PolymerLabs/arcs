@@ -194,12 +194,12 @@ export abstract class Type {
     throw new Error(`canReadSubset not implemented for ${this}`);
   }
 
-  isMoreSpecificThan(type: Type): boolean {
-    return this.tag === type.tag && this._isMoreSpecificThan(type);
+  isAtleastAsSpecificAs(type: Type): boolean {
+    return this.tag === type.tag && this._isAtleastAsSpecificAs(type);
   }
 
-  protected _isMoreSpecificThan(type: Type): boolean {
-    throw new Error(`isMoreSpecificThan not implemented for ${this}`);
+  protected _isAtleastAsSpecificAs(type: Type): boolean {
+    throw new Error(`isAtleastAsSpecificAs not implemented for ${this}`);
   }
 
   /**
@@ -336,8 +336,8 @@ export class EntityType extends Type {
     return this;
   }
 
-  _isMoreSpecificThan(type: EntityType): boolean {
-    return this.entitySchema.isMoreSpecificThan(type.entitySchema);
+  _isAtleastAsSpecificAs(type: EntityType): boolean {
+    return this.entitySchema.isAtleastAsSpecificAs(type.entitySchema);
   }
 
   toLiteral(): TypeLiteral {
@@ -754,8 +754,8 @@ export class InterfaceType extends Type {
     return new InterfaceType(this.interfaceInfo.canReadSubset);
   }
 
-  _isMoreSpecificThan(type: InterfaceType) {
-    return this.interfaceInfo.isMoreSpecificThan(type.interfaceInfo);
+  _isAtleastAsSpecificAs(type: InterfaceType) {
+    return this.interfaceInfo.isAtleastAsSpecificAs(type.interfaceInfo);
   }
 
   _clone(variableMap: Map<string, Type>) {
@@ -805,7 +805,7 @@ export class SlotType extends Type {
     return this;
   }
 
-  _isMoreSpecificThan(type: SlotType) {
+  _isAtleastAsSpecificAs(type: SlotType) {
     // TODO: formFactor checking, etc.
     return true;
   }
@@ -1054,7 +1054,7 @@ export class TypeVariableInfo {
     if (!(constraint instanceof EntityType) || !(type instanceof EntityType)) {
       throw new Error(`constraint checking not implemented for ${this} and ${type}`);
     }
-    return type.getEntitySchema().isMoreSpecificThan(constraint.getEntitySchema());
+    return type.getEntitySchema().isAtleastAsSpecificAs(constraint.getEntitySchema());
   }
 
   get resolution(): Type|null {
@@ -1242,7 +1242,7 @@ export abstract class InterfaceInfo {
 
   abstract readonly  canWriteSuperset : InterfaceInfo;
 
-  abstract isMoreSpecificThan(other: InterfaceInfo) : boolean;
+  abstract isAtleastAsSpecificAs(other: InterfaceInfo) : boolean;
 
   abstract _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean;
 

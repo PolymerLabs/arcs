@@ -19,7 +19,7 @@ enum Primitive {
   TEXT = 'Text',
 }
 
-enum Op {
+export enum Op {
   AND = 'and',
   OR  = 'or',
   LT  = '<',
@@ -36,6 +36,12 @@ enum Op {
   NEQ = '!=',
 }
 
+export enum AtleastAsSpecific {
+  YES,
+  NO,
+  UNKNOWN
+}
+
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
 type ExpressionPrimitives = any;
@@ -44,10 +50,14 @@ export class Refinement {
   kind = 'refinement';
   expression: RefinementExpression = null;
 
+  constructor(expr: RefinementExpression) {
+    // TODO(ragdev): Should be a copy?
+    // TODO(ragdev): ensure that the refinement contains at least 1 fieldName
+    this.expression = expr;
+  }
+
   static fromAst(ref: RefinementNode, typeData: Dictionary<ExpressionPrimitives>): Refinement {
-    const refinement = new Refinement();
-    refinement.expression = RefinementExpression.fromAst(ref.expression, typeData);
-    return refinement;
+    return new Refinement(RefinementExpression.fromAst(ref.expression, typeData));
   }
 
   static refineData(entity: Entity, schema: Schema): void {
@@ -61,6 +71,58 @@ export class Refinement {
     const ref = schema.refinement;
     if (ref && !ref.validateData(entity)) {
       throw new Error('Entity data does not conform to the refinement.');
+    }
+  }
+
+  static unionOf(ref1: Refinement, ref2: Refinement): Refinement {
+    const expr1 = ref1 && ref1.expression;
+    const expr2 = ref2 && ref2.expression;
+    let refinement = null;
+    if (expr1 && expr2) {
+      const bothExpr = new BinaryExpression(expr1, expr2, new RefinementOperator(Op.OR));
+      refinement = new Refinement(bothExpr);
+    }
+    return refinement;
+  }
+
+  static intersectionOf(ref1: Refinement, ref2: Refinement): Refinement {
+    const expr1 = ref1 && ref1.expression;
+    const expr2 = ref2 && ref2.expression;
+    let refinement = null;
+    if (expr1 && expr2) {
+      const bothExpr = new BinaryExpression(expr1, expr2, new RefinementOperator(Op.AND));
+      refinement = new Refinement(bothExpr);
+    } else if (expr1 || expr2) {
+      refinement = new Refinement(expr1 || expr2);
+    }
+    return refinement;
+  }
+
+  containsField(fieldName: string): boolean {
+    return this.getFieldNames().has(fieldName);
+  }
+
+  getFieldNames(): Set<string> {
+    return this.expression.getFieldNames();
+  }
+
+  // checks if a is more specific than b, returns null if can't be determined
+  static isAtleastAsSpecificAs(a: Refinement, b: Refinement): AtleastAsSpecific {
+    if (!a && b) {
+      return AtleastAsSpecific.NO;
+    } else if (a && !b) {
+      return AtleastAsSpecific.YES;
+    } else if (!a && !b) {
+      return AtleastAsSpecific.YES;
+    }
+    try {
+      a.normalise();
+      b.normalise();
+      const rangeA = Range.fromExpression(a.expression);
+      const rangeB = Range.fromExpression(b.expression);
+      return rangeA.isSubsetOf(rangeB) ? AtleastAsSpecific.YES : AtleastAsSpecific.NO;
+    } catch (e) {
+      return AtleastAsSpecific.UNKNOWN;
     }
   }
 
@@ -119,6 +181,8 @@ abstract class RefinementExpression {
   abstract toSQLExpression(): string;
 
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>);
+
+  abstract getFieldNames(): Set<string>;
 }
 
 export class BinaryExpression extends RefinementExpression {
@@ -228,6 +292,13 @@ export class BinaryExpression extends RefinementExpression {
       default: return this;
     }
   }
+
+  getFieldNames(): Set<string> {
+    const fn1 = this.leftExpr.getFieldNames();
+    const fn2 = this.rightExpr.getFieldNames();
+    return new Set<string>([...fn1, ...fn2]);
+  }
+
 }
 
 export class UnaryExpression extends RefinementExpression {
@@ -288,6 +359,10 @@ export class UnaryExpression extends RefinementExpression {
         return this;
     }
   }
+
+  getFieldNames(): Set<string> {
+    return this.expr.getFieldNames();
+  }
 }
 
 class FieldNamePrimitive extends RefinementExpression {
@@ -324,6 +399,10 @@ class FieldNamePrimitive extends RefinementExpression {
     }
     throw new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
   }
+
+  getFieldNames(): Set<string> {
+    return new Set<string>([this.value]);
+  }
 }
 
 class NumberPrimitive extends RefinementExpression {
@@ -350,6 +429,10 @@ class NumberPrimitive extends RefinementExpression {
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
+
+  getFieldNames(): Set<string> {
+    return new Set<string>();
+  }
 }
 
 class BooleanPrimitive extends RefinementExpression {
@@ -375,6 +458,10 @@ class BooleanPrimitive extends RefinementExpression {
 
   applyOperator(): ExpressionPrimitives {
     return this.value;
+  }
+
+  getFieldNames(): Set<string> {
+    return new Set<string>();
   }
 }
 
@@ -739,7 +826,7 @@ const operatorTable: Dictionary<OperatorInfo> = {
   [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] !== e[1], sqlOp: '<>'},
 };
 
-class RefinementOperator {
+export class RefinementOperator {
   opInfo: OperatorInfo;
   op: string;
 

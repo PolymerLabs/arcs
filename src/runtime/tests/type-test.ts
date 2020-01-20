@@ -13,6 +13,7 @@ import {Manifest} from '../manifest.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
         ReferenceType, RelationType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Entity} from '../entity.js';
+import {Refinement} from '../refiner.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -48,8 +49,8 @@ describe('types', () => {
         kind: 'refinement',
         expression: {
           kind: 'binary-expression-node',
-          leftExpr: 'a',
-          rightExpr: 'b',
+          leftExpr: {kind: 'field-name-node', value: 'a'},
+          rightExpr: {kind: 'field-name-node', value: 'b'},
           operator: 'and'
         }
       // tslint:disable-next-line: no-any
@@ -67,7 +68,7 @@ describe('types', () => {
           },
           type: 'Text'
         }},
-        {refinement: ref}
+        {refinement: Refinement.fromAst(ref, {'a': 'Boolean', 'b': 'Boolean'})}
       );
       deepEqual(entity.toLiteral(), {
         tag: 'Entity',
@@ -76,10 +77,24 @@ describe('types', () => {
           refinement: {
             kind: 'refinement',
             expression: {
-              kind: 'binary-expression-node',
-              leftExpr: 'a',
-              rightExpr: 'b',
-              operator: 'and'
+              evalType: 'Boolean',
+              leftExpr: {
+                evalType: 'Boolean',
+                value: 'a'
+             },
+              operator: {
+                op: 'and',
+                opInfo: {
+                  argType: 'Boolean',
+                  evalType: 'Boolean',
+                  nArgs: 2,
+                  sqlOp: 'AND'
+                }
+              },
+              rightExpr: {
+                evalType: 'Boolean',
+                value: 'b'
+             }
             }
           },
           fields: {
