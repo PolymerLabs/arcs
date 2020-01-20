@@ -57,6 +57,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   readonly name: string;
   // tslint:disable-next-line no-any
   protected serializer: Serializer<any, Referenceable>;
+  // This function is set from reference.ts, to avoid creating a compile-time import cycle.
   static makeReference: ReferenceMaker;
 
   //TODO: this is used by multiplexer-dom-particle.ts, it probably won't work with this kind of store.

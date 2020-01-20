@@ -53,8 +53,7 @@ export class Reference implements Storable {
       this.storageProxy = await this.context.getStorageProxy(this.entityStorageKey, this.type.referredType);
       // tslint:disable-next-line: no-any
       this.handle = unifiedHandleFor({proxy: this.storageProxy, idGenerator: this.context.idGenerator, particleId: this.context.generateID()}) as CollectionHandle<any>;
-      if (this.entityStorageKey && !Flags.useNewStorageStack) {
-        // StorageProxies don't record their storageKeys in the new storage stack. Should they?
+      if (this.entityStorageKey) {
         assert(this.entityStorageKey === this.storageProxy.storageKey, `reference's storageKey differs from the storageKey of established channel.`);
       } else {
         this.entityStorageKey = this.storageProxy.storageKey;

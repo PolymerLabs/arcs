@@ -13,6 +13,10 @@ import {Producer} from './hot.js';
 import {Type} from './type.js';
 import {StorageKey} from './storageNG/storage-key.js';
 
+/**
+ * ChannelConstructor provides the subset of the particle-execution-context/host API
+ * that allows new storage stacks to be established.
+ */
 export interface ChannelConstructor {
   getStorageProxy(storageKey: string | StorageKey, type: Type);
   idGenerator: IdGenerator;

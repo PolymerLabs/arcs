@@ -261,14 +261,22 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     };
   }
 
-  getStorageProxy(storageKey: string, type: Type) {
+  /**
+   * Establishes a storage proxy that's connected to the provided storage key.
+   */
+  async getStorageProxy(storageKey: string, type: Type): Promise<StorageProxy> {
     if (Flags.useNewStorageStack) {
       type = new CollectionType(type);
     }
     if (!this.keyedProxies[storageKey]) {
       this.keyedProxies[storageKey] = new Promise((resolve, reject) => {
-        this.apiPort.GetBackingStore((proxy, newStorageKeyThingFromHostWhatTheFuckIsThis) => {
-          this.keyedProxies[newStorageKeyThingFromHostWhatTheFuckIsThis] = proxy;
+        this.apiPort.GetBackingStore((proxy, newStorageKey) => {
+          if (Flags.useNewStorageStack) {
+            if (storageKey !== newStorageKey) {
+              throw new Error('returned storage key should always match provided storage key for new storage stack');
+            }
+          }
+          this.keyedProxies[newStorageKey] = proxy;
           resolve(proxy);
         }, storageKey, type);
       });
