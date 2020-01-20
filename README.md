@@ -75,9 +75,8 @@ build failure will be the signal for that.
 
 ## Git Setup
 
-You may also find it helpful to have sigh lint and type check your work locally
-before you commit it. To do this, you can setup git to run presubmit checks
-using:
+You may also find it helpful to have run our presubmit checks locally before
+you push your commits. To do this, you can setup git to run these checks using:
 
 ```
 $ git config core.hooksPath tools/hooks
