@@ -148,7 +148,7 @@ export class Description {
         const descStore = arc.findStoreById(descriptionConn.handle.id);
         if (descStore) {
           const descProxy = new StorageProxy('', await descStore.activate(), descStore.type, descStore.storageKey.toString());
-          const descHandle = handleNGFor('', descProxy, null, null, true, false) as CollectionHandle<any>;
+          const descHandle = handleNGFor('', descProxy, null, null, true, false) as CollectionHandle<{key: string, value: string}>;
 
           const descByName: Dictionary<string> = {};
           for (const d of await descHandle.toList()) {
