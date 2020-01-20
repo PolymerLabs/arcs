@@ -13,7 +13,7 @@ import {Manifest} from '../manifest.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
         ReferenceType, RelationType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Entity} from '../entity.js';
-import {Refinement} from '../refiner.js'
+import {Refinement} from '../refiner.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -77,23 +77,23 @@ describe('types', () => {
           refinement: {
             kind: 'refinement',
             expression: {
-              evalType: "Boolean",
+              evalType: 'Boolean',
               leftExpr: {
-                evalType: "Boolean",
-                value: "a"
+                evalType: 'Boolean',
+                value: 'a'
              },
               operator: {
-                op: "and",
+                op: 'and',
                 opInfo: {
-                  argType: "Boolean",
-                  evalType: "Boolean",
+                  argType: 'Boolean',
+                  evalType: 'Boolean',
                   nArgs: 2,
-                  sqlOp: "AND"
+                  sqlOp: 'AND'
                 }
               },
               rightExpr: {
-                evalType: "Boolean",
-                value: "b"
+                evalType: 'Boolean',
+                value: 'b'
              }
             }
           },

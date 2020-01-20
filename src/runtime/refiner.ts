@@ -86,7 +86,7 @@ export class Refinement {
     if (expr1 && expr2) {
       const bothExpr = new BinaryExpression(expr1, expr2, new RefinementOperator(Op.AND));
       refinement = new Refinement(bothExpr);
-    } else if(expr1 || expr2) {
+    } else if (expr1 || expr2) {
       refinement = new Refinement(expr1 || expr2);
     }
     return refinement;

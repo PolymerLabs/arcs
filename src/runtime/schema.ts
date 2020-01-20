@@ -169,7 +169,7 @@ export class Schema {
         return false;
       }
       // this can return null (in the case where we don't know), hence equality with false
-      if (Refinement.isMoreSpecific(fields[name].refinement, type.refinement) == false) {
+      if (Refinement.isMoreSpecific(fields[name].refinement, type.refinement) === false) {
         return false;
       }
     }

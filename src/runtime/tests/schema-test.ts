@@ -591,4 +591,44 @@ describe('schema', () => {
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   });
+  it('tests schema.isMoreSpecificThan', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a > 20], b: Number, c: Number} [a + c > 10]
+        schema2: reads X {a: Number [a > 10], b: Number} [a + b > 10]
+    `);
+    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
+    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+    assert.isTrue(schema1.isMoreSpecificThan(schema2));
+  });
+  it('tests schema.isMoreSpecificThan', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a > 20], b: Number, c: Number}
+        schema2: reads X {a: Number [a > 10], b: Number [b > 10]}
+    `);
+    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
+    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+    assert.isFalse(schema1.isMoreSpecificThan(schema2));
+  });
+  it('tests schema.isMoreSpecificThan', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a > 20], b: Boolean [not b]} [a < 100]
+        schema2: reads X {a: Number [a > 10 and a < 100], b: Boolean}
+    `);
+    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
+    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+    assert.isTrue(schema1.isMoreSpecificThan(schema2));
+  });
+  it('tests schema.isMoreSpecificThan', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a > 20], b: Boolean [not b]} [a < 100]
+        schema2: reads X {a: Number [a > 10 and a < 100], b: Boolean, c: Number}
+    `);
+    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
+    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+    assert.isFalse(schema1.isMoreSpecificThan(schema2));
+  });
 });
