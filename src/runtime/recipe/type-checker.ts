@@ -237,6 +237,7 @@ export class TypeChecker {
     const resolvedLeft = left.type.resolvedType();
     const resolvedRight = right.type.resolvedType();
     const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
+
     // a variable is compatible with a set only if it is unconstrained.
     if (leftType instanceof TypeVariable && rightType.isTypeContainer()) {
       return !(leftType.variable.canReadSubset || leftType.variable.canWriteSuperset);
