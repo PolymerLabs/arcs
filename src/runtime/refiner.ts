@@ -729,7 +729,7 @@ const operatorTable: Dictionary<OperatorInfo> = {
   [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] > e[1], sqlOp: '>'},
   [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] <= e[1], sqlOp: '<='},
   [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] >= e[1], sqlOp: '>='},
-  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] + e[1], sqlOp: '+'},
+  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: (e: number[]) => e[0] + e[1], sqlOp: '+'},
   [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] - e[1], sqlOp: '-'},
   [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] * e[1], sqlOp: '*'},
   [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] / e[1], sqlOp: '/'},

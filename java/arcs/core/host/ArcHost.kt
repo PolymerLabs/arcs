@@ -24,16 +24,17 @@ interface ArcHost {
     /**
      * Registers a [Particle] class with this host.
      */
-    fun registerParticle(particles: KClass<out Particle>): Unit
+    fun registerParticle(particle: KClass<out Particle>)
 
     /**
      * Unregisters a [Particle] class.
      */
-    fun unregisterParticle(particle: KClass<out Particle>): Unit
+    fun unregisterParticle(particle: KClass<out Particle>)
 
     /**
      * Returns a list of Particles registered to run in this host.
      */
     val registeredParticles: List<KClass<out Particle>>
+
     // TODO: Implement startArc/stopArc/handleMessage
 }

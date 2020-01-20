@@ -107,7 +107,7 @@ class KotlinGenerator implements ClassGenerator {
   fieldsReset: string[] = [];
   getUnsetFields: string[] = [];
 
-  constructor(readonly node: SchemaNode, private opts: minimist.ParsedArgs) {}
+  constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
   // TODO: allow optional fields in kotlin
   addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
