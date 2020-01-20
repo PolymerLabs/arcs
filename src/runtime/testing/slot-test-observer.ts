@@ -150,7 +150,9 @@ export class SlotTestObserver extends AbstractSlotObserver {
     if (this.onlyOptionalExpectations()) {
       return Promise.resolve();
     }
-    return new Promise((resolve, reject) => this.onExpectationsComplete = resolve);
+    return new Promise((resolve, reject) => {
+      this.onExpectationsComplete = resolve;
+    });
   }
 
   assertExpectationsCompleted() {

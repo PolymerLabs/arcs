@@ -19,8 +19,8 @@ import java.util.Locale
 /** Initializes [Log] for tests on the JVM. */
 fun initLogForAndroid(level: Log.Level) {
     Log.level = level
-    Log.writer = { level, renderedMessage ->
-        when (level) {
+    Log.writer = { lvl, renderedMessage ->
+        when (lvl) {
             Log.Level.Debug -> android.util.Log.d("Arcs", renderedMessage)
             Log.Level.Info -> android.util.Log.i("Arcs", renderedMessage)
             Log.Level.Warning -> android.util.Log.w("Arcs", renderedMessage)
