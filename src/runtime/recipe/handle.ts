@@ -37,14 +37,13 @@ export class Handle implements Comparable<Handle> {
   private _connections: HandleConnection[] = [];
   private _mappedType: Type | undefined = undefined;
   private _storageKey: string | StorageKey | undefined = undefined;
-  private _capabilities: Set<string> = new Set();
+  capabilities: Set<string> = new Set();
   private _pattern: string | undefined = undefined;
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
   claims: Claim[] | undefined = undefined;
   private _ttl: Ttl | undefined = undefined;
-
 
   constructor(recipe: Recipe) {
     assert(recipe);
@@ -173,8 +172,6 @@ export class Handle implements Comparable<Handle> {
     }
     this._fate = fate;
   }
-  get capabilities() { return this._capabilities; }
-  set capabilities(capabilities: Set<string>) { this._capabilities = capabilities; }
   get originalFate() { return this._originalFate || '?'; }
   get originalId(): string | null { return this._originalId; }
   get recipe(): Recipe { return this._recipe; }

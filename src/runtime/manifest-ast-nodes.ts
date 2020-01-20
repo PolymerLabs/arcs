@@ -397,7 +397,7 @@ export interface ParticleConnectionTargetComponents extends BaseNode {
 
 export type RecipeHandleFate = string;
 
-export type RecipeHandleCapability = string;
+export type RecipeHandleCapability = 'persistent' | 'tied-to-runtime' | 'tied-to-arc';
 
 export interface RecipeHandle extends BaseNode {
   kind: 'handle';

@@ -803,13 +803,13 @@ describe('recipe', () => {
       recipe Thing
         h0: create persistent
         h1: create tied-to-runtime 'my-id'
-        h2: create tied-to-arc #myTag
+        h2: create persistent tied-to-arc #myTag
         h3: create #otherTag`)).recipes[0];
     const verifyRecipeHandleCapabilities = (recipe) => {
       assert.lengthOf(recipe.handles, 4);
-      assert.deepEqual([...recipe.handles[0].capabilities], ['persistent']);
-      assert.deepEqual([...recipe.handles[1].capabilities], ['tied-to-runtime']);
-      assert.deepEqual([...recipe.handles[2].capabilities], ['tied-to-arc']);
+      assert.sameMembers([...recipe.handles[0].capabilities], ['persistent']);
+      assert.sameMembers([...recipe.handles[1].capabilities], ['tied-to-runtime']);
+      assert.sameMembers([...recipe.handles[2].capabilities], ['persistent', 'tied-to-arc']);
       assert.equal(recipe.handles[3].capabilities.size, 0);
     };
     verifyRecipeHandleCapabilities(recipe);
