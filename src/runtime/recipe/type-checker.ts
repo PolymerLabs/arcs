@@ -140,12 +140,6 @@ export class TypeChecker {
   }
 
   static _tryMergeConstraints(handleType: Type, {type, direction}: TypeListInfo, options: {typeErrors?: string[]} = {}): boolean {
-    const error = (msg: string) => {
-      if (options && options.typeErrors) {
-        options.typeErrors.push(msg);
-      }
-      return false;
-    };
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
     if (primitiveHandleType instanceof TypeVariable) {
       while (primitiveConnectionType.isTypeContainer()) {
