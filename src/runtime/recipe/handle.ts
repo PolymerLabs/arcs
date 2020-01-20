@@ -224,12 +224,9 @@ export class Handle implements Comparable<Handle> {
   }
 
   static resolveEffectiveType(handleType: Type, connections: HandleConnection[], options: IsValidOptions): Type {
-    const typeSet: TypeListInfo[] = connections.filter(
-      connection => connection.type != null
-    ).map(
-    connection => (
-      {type: connection.type, direction: connection.direction}
-    ));
+    const typeSet: TypeListInfo[] = connections
+      .filter(connection => connection.type != null)
+      .map(connection => ({type: connection.type, direction: connection.direction}));
     return TypeChecker.processTypeList(handleType, typeSet, options);
   }
 
