@@ -46,7 +46,9 @@ function restore(entry: SerializedEntity, entityClass: EntityClass) {
   const {id, rawData} = entry;
   const entity = new entityClass(cloneData(rawData));
   if (entry.id) {
-    Entity.identify(entity, entry.id);
+    // StorageKeys aren't plumbed into the handles of old storage, so we don't have them
+    // available as part of entity identity.
+    Entity.identify(entity, entry.id, null);
   }
 
   // TODO some relation magic, somewhere, at some point.
@@ -60,7 +62,7 @@ type NoOpStorageAllocator = (id: string, type: Type) => Store;
 // The following must return a Reference, but we are trying to break the cyclic
 // dependency between this file and reference.ts, so we lose a little bit of type safety
 // to do that.
-type ReferenceMaker = (data: {id: string, storageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext) => {};
+type ReferenceMaker = (data: {id: string, entityStorageKey: string | null}, type: ReferenceType, context: ParticleExecutionContext) => {};
 
 /**
  * Base class for Collections and Singletons.
@@ -132,11 +134,14 @@ export abstract class HandleOld {
         this.createIdentityFor(entity);
       }
     }
-    return entity[SYMBOL_INTERNALS].serialize();
+    const ser = entity[SYMBOL_INTERNALS].serialize();
+    return ser;
   }
 
   createIdentityFor(entity: Entity) {
-    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
+    // StorageKeys aren't plumbed into the handles of old storage, so we don't have them
+    // available as part of entity identity.
+    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator, null);
   }
 
   get type() {
@@ -251,7 +256,7 @@ export class Collection extends HandleOld {
       return list.map(e => restore(e, this.entityClass));
     }
     if (containedType instanceof ReferenceType) {
-      return list.map(r => HandleOld.makeReference(r, containedType, this.storage.pec));
+      return list.map(r => HandleOld.makeReference(r.rawData, containedType, this.storage.pec));
     }
     throw new Error(`Don't know how to deliver handle data of type ${this.type}`);
   }
@@ -275,6 +280,16 @@ export class Collection extends HandleOld {
    */
   async add(entity: Storable) {
     return this.store(entity);
+  }
+
+  async addFromData(entityData) {
+    const entity = new this.entityClass(entityData);
+    await this.add(entity);
+    return entity;
+  }
+
+  async addMultipleFromData(entityData) {
+    return await Promise.all(entityData.map(e => this.addFromData(e)));
   }
 
   /**
@@ -364,7 +379,7 @@ export class Singleton extends HandleOld {
       return ParticleSpec.fromLiteral(model);
     }
     if (this.type instanceof ReferenceType) {
-      return HandleOld.makeReference(model, this.type, this.storage.pec);
+      return HandleOld.makeReference(model.rawData, this.type, this.storage.pec);
     }
     throw new Error(`Don't know how to deliver handle data of type ${this.type}`);
   }
@@ -385,6 +400,12 @@ export class Singleton extends HandleOld {
       this.reportSystemExceptionInHost(e, 'Handle::set');
       throw e;
     }
+  }
+
+  async setFromData(entityData) {
+    const entity = new this.entityClass(entityData);
+    await this.set(entity);
+    return entity;
   }
 
   /**

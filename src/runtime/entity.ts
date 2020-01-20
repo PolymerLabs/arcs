@@ -10,15 +10,14 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
-import {Type, ReferenceType, EntityType} from './type.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
-import {TypeChecker} from './recipe/type-checker.js';
+import {Type, EntityType} from './type.js';
 import {Storable} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary, Consumer} from './hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {Refinement} from './refiner.js';
 import {Flags} from './flags.js';
+import {ChannelConstructor} from './channel-constructor.js';
 
 export type EntityRawData = {};
 
@@ -56,16 +55,17 @@ class EntityInternals {
   private readonly entity: Entity;
   private readonly entityClass: EntityClass;
   private readonly schema: Schema;
-  private readonly context: ParticleExecutionContext;
+  private readonly context: ChannelConstructor;
 
   private id?: string;
+  private storageKey?: string;
   private userIDComponent?: string;
 
   // TODO: Only the Arc that "owns" this Entity should be allowed to mutate it.
   private mutable = true;
 
   constructor(entity: Entity, entityClass: EntityClass, schema: Schema,
-              context: ParticleExecutionContext, userIDComponent?: string) {
+              context: ChannelConstructor, userIDComponent?: string) {
     this.entity = entity;
     this.entityClass = entityClass;
     this.schema = schema;
@@ -80,6 +80,16 @@ class EntityInternals {
     return this.id;
   }
 
+  getStorageKey(): string {
+    if (this.id === undefined) {
+      throw new Error('entity has not yet been stored!');
+    }
+    if (this.storageKey === undefined) {
+      throw new Error('entity has been stored but storage key was not recorded against entity');
+    }
+    return this.storageKey;
+  }
+
   getEntityClass(): EntityClass {
     return this.entityClass;
   }
@@ -88,15 +98,16 @@ class EntityInternals {
     return this.id !== undefined;
   }
 
-  identify(identifier: string) {
+  identify(identifier: string, storageKey: string) {
     assert(!this.isIdentified(), 'identify() called on already identified entity');
     this.id = identifier;
+    this.storageKey = storageKey;
     const components = identifier.split(':');
     const uid = components.lastIndexOf('uid');
     this.userIDComponent = uid > 0 ? components.slice(uid+1).join(':') : '';
   }
 
-  createIdentity(parentId: Id, idGenerator: IdGenerator) {
+  createIdentity(parentId: Id, idGenerator: IdGenerator, storageKey: string) {
     assert(!this.isIdentified(), 'createIdentity() called on already identified entity');
     let id: string;
     if (this.userIDComponent) {
@@ -105,6 +116,7 @@ class EntityInternals {
     } else {
       id = idGenerator.newChildId(parentId).toString();
     }
+    this.storageKey = storageKey;
     this.id = id;
   }
 
@@ -191,7 +203,7 @@ class EntityInternals {
     // Force '.entity' to show as '[Circular]'.
     copy.entity = copy;
 
-    // We don't want to log the ParticleExecutionContext object but showing '.context' as null
+    // We don't want to log the ChannelConstructor object but showing '.context' as null
     // could be confusing, so omit it altogether.
     delete copy.context;
 
@@ -214,7 +226,7 @@ class EntityInternals {
 }
 
 // tslint:disable-next-line: no-any
-type EntrySanitizer = (type: Type, value: any, name: string, context: ParticleExecutionContext) => any;
+type EntrySanitizer = (type: Type, value: any, name: string, context: ChannelConstructor) => any;
 // tslint:disable-next-line: no-any
 type Validator = (name: string, value: any, schema: Schema, fieldType?: any) => void;
 
@@ -235,7 +247,7 @@ export abstract class Entity implements Storable {
   // Dynamically constructs a new JS class for the entity type represented by the given schema.
   // This creates a new class which extends the Entity base class and implements the required
   // static properties, then returns a Proxy wrapping that to guard against incorrect field writes.
-  static createEntityClass(schema: Schema, context: ParticleExecutionContext): EntityClass {
+  static createEntityClass(schema: Schema, context: ChannelConstructor): EntityClass {
     const clazz = class extends Entity {
       constructor(data: EntityRawData, userIDComponent?: string) {
         super();
@@ -290,6 +302,10 @@ export abstract class Entity implements Storable {
     return getInternals(entity).getId();
   }
 
+  static storageKey(entity: Entity): string {
+    return getInternals(entity).getStorageKey();
+  }
+
   static entityClass(entity: Entity): EntityClass {
     return getInternals(entity).getEntityClass();
   }
@@ -298,13 +314,13 @@ export abstract class Entity implements Storable {
     return getInternals(entity).isIdentified();
   }
 
-  static identify(entity: Entity, identifier: string) {
-    getInternals(entity).identify(identifier);
+  static identify(entity: Entity, identifier: string, storageKey: string) {
+    getInternals(entity).identify(identifier, storageKey);
     return entity;
   }
 
-  static createIdentity(entity: Entity, parentId: Id, idGenerator: IdGenerator) {
-    getInternals(entity).createIdentity(parentId, idGenerator);
+  static createIdentity(entity: Entity, parentId: Id, idGenerator: IdGenerator, storageKey: string) {
+    getInternals(entity).createIdentity(parentId, idGenerator, storageKey);
   }
 
   static isMutable(entity: Entity): boolean {
@@ -351,7 +367,7 @@ function getInternals(entity): EntityInternals {
   return internals;
 }
 
-function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, context: ParticleExecutionContext) {
+function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, context: ChannelConstructor) {
   for (const [name, value] of Object.entries(data)) {
     const sanitizedValue = Entity.sanitizeEntry(schema.fields[name], value, name, context);
     Entity.validateFieldAndTypes(name, sanitizedValue, schema);

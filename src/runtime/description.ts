@@ -163,7 +163,7 @@ export class Description {
       return undefined;
     }
     if (Flags.useNewStorageStack) {
-      const proxy = new StorageProxy('id', await store.activate(), store.type);
+      const proxy = new StorageProxy('id', await store.activate(), store.type, store.storageKey.toString());
       const handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'dummy'});
       if (handle instanceof SingletonHandle) {
         const entityValue = await handle.get();

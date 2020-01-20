@@ -21,6 +21,7 @@ import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk
 import {Flags} from '../runtime/flags.js';
 import {VolatileStorageKey} from '../runtime/storageNG/drivers/volatile.js';
 import {ArcId} from '../runtime/id.js';
+import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
@@ -299,7 +300,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           description \`cannot show duplicate \${ShowFoo.foo}\`
       `, {loader, fileName: '', memoryProvider});
     const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
-    const arc = runtime.newArc('demo', 'volatile://');
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     await StrategyTestHelper.planForArc(arc).then(() => assert('expected exception for duplicate particles'))
       .catch((err) => assert.strictEqual(

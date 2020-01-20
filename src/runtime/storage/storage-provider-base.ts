@@ -19,6 +19,7 @@ import {Dictionary, Consumer} from '../hot.js';
 import {UnifiedStore, UnifiedActiveStore, StoreInfo} from '../storageNG/unified-store.js';
 import {ProxyCallback, StorageCommunicationEndpoint} from '../storageNG/store.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {Flags} from '../flags.js';
 
 // tslint:disable-next-line: no-any
 type Callback = Consumer<Dictionary<any>>;
@@ -60,6 +61,9 @@ export abstract class StorageBase {
 
   protected constructor(protected readonly arcId: Id) {
     assert(arcId !== undefined, 'Arcs with storage must have ids');
+    if (Flags.useNewStorageStack) {
+      throw new Error('should not be constructing old-style stores when new storage flag is set');
+    }
   }
 
   abstract construct(id: string, type: Type, keyFragment: string) : Promise<StorageProviderBase>;

@@ -20,6 +20,7 @@ import {StorageProviderFactory} from '../../../storage/storage-provider-factory.
 import {CallbackTracker} from '../../../testing/callback-tracker.js';
 import {EntityType, ReferenceType} from '../../../type.js';
 import {Id, ArcId} from '../../../id.js';
+import {Flags} from '../../../flags.js';
 
 // TODO(lindner): run tests for remote and local variants
 ['pouchdb://memory/user-test/', 'pouchdb://local/user-test/'].forEach((testUrl) => {
@@ -61,6 +62,12 @@ describe('pouchdb for ' + testUrl, () => {
   });
 
   describe('variable', () => {
+    before(function() {
+      if (Flags.useNewStorageStack) {
+        this.skip();
+      }
+    });
+
     it('supports basic construct and mutate', async () => {
       const manifest = await Manifest.parse(`
         schema Bar
@@ -156,6 +163,12 @@ describe('pouchdb for ' + testUrl, () => {
   });
 
   describe('collection', () => {
+    before(function() {
+      if (Flags.useNewStorageStack) {
+        this.skip();
+      }
+    });
+
     it('supports basic construct and mutate', async () => {
       const manifest = await Manifest.parse(`
         schema Bar

@@ -14,6 +14,7 @@ import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '.
 import {Runnable, Predicate} from '../hot.js';
 import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
+import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../type.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
@@ -33,16 +34,23 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private synchronized = false;
   private readonly scheduler: StorageProxyScheduler<T>;
   private modelHasSynced: Runnable = () => undefined;
+  readonly storageKey: string;
 
   constructor(
       apiChannelId: string,
       storeProvider: StorageCommunicationEndpointProvider<T>,
-      type: Type) {
+      type: Type,
+      storageKey: string) {
     this.apiChannelId = apiChannelId;
     this.store = storeProvider.getStorageEndpoint(this);
     this.crdt = new (type.crdtInstanceConstructor<T>())();
     this.type = type;
+    this.storageKey = storageKey;
     this.scheduler = new StorageProxyScheduler<T>();
+  }
+
+  getChannelConstructor(): ChannelConstructor {
+    return this.store.getChannelConstructor();
   }
 
   // TODO: remove this after migration.
@@ -242,10 +250,14 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
 export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> {
   constructor() {
-    super(null, {getStorageEndpoint() {}} as ActiveStore<T>, EntityType.make([], {}));
+    super(null, {getStorageEndpoint() {}} as ActiveStore<T>, EntityType.make([], {}), null);
   }
   async idle(): Promise<void> {
     return new Promise(resolve => {});
+  }
+
+  getChannelConstructor(): ChannelConstructor {
+    return null;
   }
 
   reportExceptionInHost(exception: PropagatedException): void {}

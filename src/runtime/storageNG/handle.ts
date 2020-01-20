@@ -16,10 +16,12 @@ import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../
 import {Particle} from '../particle.js';
 import {Entity, EntityClass, SerializedEntity} from '../entity.js';
 import {IdGenerator, Id} from '../id.js';
-import {EntityType, Type} from '../type.js';
+import {EntityType, Type, ReferenceType} from '../type.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../particle-spec.js';
+import {ChannelConstructor} from '../channel-constructor.js';
+import {Producer} from '../hot.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -30,9 +32,14 @@ export interface HandleOptions {
 
 interface Serializer<T, Serialized> {
   serialize(value: T): Serialized;
-  deserialize(value: Serialized): T;
+  deserialize(value: Serialized, storageKey: string): T;
   ensureHasId(value: T);
 }
+
+// The following must return a Reference, but we are trying to break the cyclic
+// dependency between this file and reference.ts, so we lose a little bit of type safety
+// to do that.
+type ReferenceMaker = (data: {id: string, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor) => ReferenceInt;
 
 /**
  * Base class for Handles.
@@ -50,6 +57,8 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   readonly name: string;
   // tslint:disable-next-line no-any
   protected serializer: Serializer<any, Referenceable>;
+  // This function is set from reference.ts, to avoid creating a compile-time import cycle.
+  static makeReference: ReferenceMaker;
 
   //TODO: this is used by multiplexer-dom-particle.ts, it probably won't work with this kind of store.
   get storage() {
@@ -66,7 +75,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 
   createIdentityFor(entity: Entity) {
-    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator);
+    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator, this.storageProxy.storageKey);
   }
 
   toManifestString(): string {
@@ -75,11 +84,11 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
 
   get entityClass(): EntityClass {
     if (this.type instanceof EntityType) {
-      return Entity.createEntityClass(this.type.entitySchema, null);
+      return Entity.createEntityClass(this.type.entitySchema, this.storageProxy.getChannelConstructor());
     }
     const containedType = this.type.getContainedType();
     if (containedType instanceof EntityType) {
-      return Entity.createEntityClass(containedType.entitySchema, null);
+      return Entity.createEntityClass(containedType.entitySchema, this.storageProxy.getChannelConstructor());
     }
     return null;
   }
@@ -110,9 +119,11 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     // TODO(shans): Be more principled about how to determine whether this is an
     // immediate mode handle or a standard handle.
     if (this.type instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type, (e) => this.createIdentityFor(e));
+      this.serializer = new PreEntityMutationSerializer(this.type, (e) => this.createIdentityFor(e), this.storageProxy.getChannelConstructor());
     } else if (this.type.getContainedType() instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => this.createIdentityFor(e));
+      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => this.createIdentityFor(e), this.storageProxy.getChannelConstructor());
+    } else if (this.type.getContainedType() instanceof ReferenceType) {
+      this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType, this.storageProxy.getChannelConstructor());
     } else {
       this.serializer = new ImmediateSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
@@ -163,9 +174,9 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
   entityClass: EntityClass;
   createIdentityFor: (entity: Entity) => void;
 
-  constructor(type: Type, createIdentityFor: (entity: Entity) => void) {
+  constructor(type: Type, createIdentityFor: (entity: Entity) => void, context: ChannelConstructor) {
     if (type instanceof EntityType) {
-      this.entityClass = Entity.createEntityClass(type.entitySchema, null);
+      this.entityClass = Entity.createEntityClass(type.entitySchema, context);
       this.createIdentityFor = createIdentityFor;
      } else {
        throw new Error(`can't construct handle for entity mutation if type is not an entity type`);
@@ -183,11 +194,32 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
     }
   }
 
-  deserialize(value: SerializedEntity): Entity {
+  deserialize(value: SerializedEntity, storageKey: string): Entity {
     const {id, rawData} = value;
     const entity = new this.entityClass(rawData);
-    Entity.identify(entity, id);
+    Entity.identify(entity, id, storageKey);
     return entity;
+  }
+}
+
+type ReferenceSer = {id: string, entityStorageKey: string};
+interface ReferenceInt {
+  dataClone: Producer<ReferenceSer>;
+}
+
+class ReferenceSerializer implements Serializer<ReferenceInt, ReferenceSer> {
+  constructor(private type: ReferenceType, private context: ChannelConstructor) {}
+
+  serialize(reference: ReferenceInt): ReferenceSer {
+    return reference.dataClone();
+  }
+
+  deserialize(value: ReferenceSer): ReferenceInt {
+    return Handle.makeReference(value, this.type, this.context);
+  }
+
+  ensureHasId(reference: ReferenceInt) {
+    // references must always have IDs
   }
 }
 
@@ -228,7 +260,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
       throw new Error('Handle not readable');
     }
     const values: Referenceable[] = await this.toCRDTList();
-    return this.serializer.deserialize(values.find(element => element.id === id)) as T;
+    return this.serializer.deserialize(values.find(element => element.id === id), this.storageProxy.storageKey) as T;
   }
 
   async add(entity: T): Promise<boolean> {
@@ -247,8 +279,18 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
     return this.storageProxy.applyOp(op);
   }
 
+  async addFromData(entityData: {}): Promise<T> {
+    const entity: T = new this.entityClass(entityData) as unknown as T;
+    const result = await this.add(entity);
+    return result ? entity : null;
+  }
+
   async addMultiple(entities: T[]): Promise<boolean> {
     return Promise.all(entities.map(e => this.add(e))).then(array => array.every(Boolean));
+  }
+
+  async addMultipleFromData(entityData: {}[]): Promise<T[]> {
+    return Promise.all(entityData.map(e => this.addFromData(e)));
   }
 
   async remove(entity: T): Promise<boolean> {
@@ -288,7 +330,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
       throw new Error('Handle not readable');
     }
     const list = await this.toCRDTList();
-    return list.map(entry => this.serializer.deserialize(entry) as T);
+    return list.map(entry => this.serializer.deserialize(entry, this.storageProxy.storageKey) as T);
   }
 
   private async toCRDTList(): Promise<Referenceable[]> {
@@ -308,10 +350,10 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
     // Pass the change up to the particle.
     const update: {added?: Entity, removed?: Entity, originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
     if (op.type === CollectionOpTypes.Add) {
-      update.added = this.serializer.deserialize(op.added);
+      update.added = this.serializer.deserialize(op.added, this.storageProxy.storageKey);
     }
     if (op.type === CollectionOpTypes.Remove) {
-      update.removed = this.serializer.deserialize(op.removed);
+      update.removed = this.serializer.deserialize(op.removed, this.storageProxy.storageKey);
     }
     if (this.particle) {
       await this.particle.callOnHandleUpdate(
@@ -352,6 +394,12 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     return this.storageProxy.applyOp(op);
   }
 
+  async setFromData(entityData: {}): Promise<T> {
+    const entity: T = new this.entityClass(entityData) as unknown as T;
+    const result = await this.set(entity);
+    return result ? entity : null;
+  }
+
   async clear(): Promise<boolean> {
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
@@ -370,7 +418,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     }
     const [value, versionMap] = await this.storageProxy.getParticleView();
     this.clock = versionMap;
-    return value == null ? null : this.serializer.deserialize(value) as T;
+    return value == null ? null : this.serializer.deserialize(value, this.storageProxy.storageKey) as T;
   }
 
   async onUpdate(op: SingletonOperation<Referenceable>, version: VersionMap): Promise<void> {
@@ -379,7 +427,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     // Pass the change up to the particle.
     const update: {data?: Entity, originator: boolean} = {originator: (this.key === op.actor)};
     if (op.type === SingletonOpTypes.Set) {
-      update.data = this.serializer.deserialize(op.value);
+      update.data = this.serializer.deserialize(op.value, this.storageProxy.storageKey);
     }
     // Nothing else to add (beyond oldData) for SingletonOpTypes.Clear.
     if (this.particle) {

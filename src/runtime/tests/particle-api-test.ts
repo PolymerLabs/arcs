@@ -54,7 +54,7 @@ class ResultInspector {
     await this._arc.idle;
     let handle;
     if (Flags.useNewStorageStack) {
-      const proxy = new StorageProxy('id', await this._store.activate(), this._store.type);
+      const proxy = new StorageProxy('id', await this._store.activate(), this._store.type, this._store.storageKey.toString());
       handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'pid'});
     } else {
       handle = this._store;
@@ -1242,7 +1242,7 @@ describe('particle-api', () => {
     });
     const slotComposer = new SlotComposer();
     const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
-        storageKey: 'key', loader, slotComposer, context});
+        loader, slotComposer, context});
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 

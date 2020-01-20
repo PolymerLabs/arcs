@@ -20,12 +20,11 @@ import {Particle, Capabilities} from './particle.js';
 import {SlotProxy} from './slot-proxy.js';
 import {Content} from './slot-consumer.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
-import {Handle as HandleNG} from './storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Type} from './type.js';
+import {Type, SingletonType, CollectionType} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
@@ -34,6 +33,7 @@ import {Store} from './store.js';
 import {Flags} from './flags.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
+import {ChannelConstructor} from './channel-constructor.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 type UnifiedStorageProxy = Store|StorageProxyNG<CRDTTypeRecord>;
@@ -63,9 +63,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
     this.apiPort = new class extends PECInnerPort {
 
-      onDefineHandle(identifier: string, type: Type, name: string) {
+      onDefineHandle(identifier: string, type: Type, name: string, storageKey: string) {
         if (Flags.useNewStorageStack) {
-          return new StorageProxyNG(identifier, pec, type);
+          return new StorageProxyNG(identifier, pec, type, storageKey);
         }
         return StorageProxy.newProxy(identifier, type, this, pec, pec.scheduler, name);
       }
@@ -78,7 +78,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           storageKey: string) {
         let proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>;
         if (Flags.useNewStorageStack) {
-          proxy = new StorageProxyNG(id, pec, type);
+          proxy = new StorageProxyNG(id, pec, type, storageKey);
         } else {
           proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
           proxy.storageKey = storageKey;
@@ -93,7 +93,8 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           id: string) {
         let proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>;
         if (Flags.useNewStorageStack) {
-          proxy = new StorageProxyNG(id, pec, type);
+          // TODO(shanestephens): plumb storageKey through to internally created handles too.
+          proxy = new StorageProxyNG(id, pec, type, null);
         } else {
           proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
         }
@@ -211,6 +212,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       },
       reportExceptionInHost(exception: PropagatedException): void {
         pec.apiPort.ReportExceptionInHost(exception);
+      },
+      getChannelConstructor(): ChannelConstructor {
+        return pec;
       }
     };
   }
@@ -257,11 +261,22 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     };
   }
 
-  getStorageProxy(storageKey, type) {
+  /**
+   * Establishes a storage proxy that's connected to the provided storage key.
+   */
+  async getStorageProxy(storageKey: string, type: Type): Promise<StorageProxy> {
+    if (Flags.useNewStorageStack) {
+      type = new CollectionType(type);
+    }
     if (!this.keyedProxies[storageKey]) {
       this.keyedProxies[storageKey] = new Promise((resolve, reject) => {
-        this.apiPort.GetBackingStore((proxy, storageKey) => {
-          this.keyedProxies[storageKey] = proxy;
+        this.apiPort.GetBackingStore((proxy, newStorageKey) => {
+          if (Flags.useNewStorageStack) {
+            if (storageKey !== newStorageKey) {
+              throw new Error('returned storage key should always match provided storage key for new storage stack');
+            }
+          }
+          this.keyedProxies[newStorageKey] = proxy;
           resolve(proxy);
         }, storageKey, type);
       });

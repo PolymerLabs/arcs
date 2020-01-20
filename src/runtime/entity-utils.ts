@@ -9,11 +9,11 @@
  */
 
 import {Entity} from './entity.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Reference} from './reference.js';
 import {ReferenceType} from './type.js';
 import {Schema} from './schema.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {ChannelConstructor} from './channel-constructor.js';
 
 function convertToJsType(primitiveType, schemaName: string) {
   switch (primitiveType.type) {
@@ -102,7 +102,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
   }
 }
 
-function sanitizeEntry(type, value, name, context: ParticleExecutionContext) {
+function sanitizeEntry(type, value, name, context: ChannelConstructor) {
   if (!type) {
     // If there isn't a field type for this, the proxy will pick up
     // that fact and report a meaningful error.
@@ -113,11 +113,11 @@ function sanitizeEntry(type, value, name, context: ParticleExecutionContext) {
       // Setting value as Reference (Particle side). This will enforce that the type provided for
       // the handle matches the type of the reference.
       return value;
-    } else if ((value as {id}).id && (value as {storageKey}).storageKey) {
+    } else if ((value as {id}).id && (value as {entityStorageKey}).entityStorageKey) {
       // Setting value from raw data (Channel side).
       // TODO(shans): This can't enforce type safety here as there isn't any type data available.
       // Maybe this is OK because there's type checking on the other side of the channel?
-      return new Reference(value as {id, storageKey}, new ReferenceType(type.schema.model), context);
+      return new Reference(value as {id, entityStorageKey}, new ReferenceType(type.schema.model), context);
     } else {
       throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
     }

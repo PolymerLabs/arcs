@@ -38,9 +38,9 @@ async function setup() {
 describe('wasm', () => {
   it('entity packaging supports primitive field types and references', async () => {
     const {fooClass, barType, encoder, decoder, typeMap} = await setup();
-    const ref = new Reference({id: 'i', storageKey: 'k'}, new ReferenceType(barType), null);
+    const ref = new Reference({id: 'i', entityStorageKey: 'k'}, new ReferenceType(barType), null);
     const foo = new fooClass({txt: 'abc', lnk: 'http://def', num: 37, flg: true, ref});
-    Entity.identify(foo, 'test');
+    Entity.identify(foo, 'test', null);
 
     typeMap.set(await barType.getEntitySchema().hash(), barType);
 
@@ -52,7 +52,7 @@ describe('wasm', () => {
   it('entity packaging supports partially assigned entity', async () => {
     const {fooClass, encoder, decoder} = await setup();
     const foo = new fooClass({txt: 'abc', num: -5.1});
-    Entity.identify(foo, '!test:foo:bar|');
+    Entity.identify(foo, '!test:foo:bar|', null);
 
     const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
@@ -62,7 +62,7 @@ describe('wasm', () => {
   it('entity packaging supports zero and empty values', async () => {
     const {fooClass, encoder, decoder} = await setup();
     const foo = new fooClass({txt: '', lnk: '', num: 0, flg: false});
-    Entity.identify(foo, 'te|st');
+    Entity.identify(foo, 'te|st', null);
 
     const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
@@ -72,7 +72,7 @@ describe('wasm', () => {
   it('entity packaging supports empty entity', async () => {
     const {fooClass, encoder, decoder} = await setup();
     const foo = new fooClass({});
-    Entity.identify(foo, 'te st');
+    Entity.identify(foo, 'te st', null);
 
     const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
@@ -83,10 +83,10 @@ describe('wasm', () => {
     const {fooClass, barType, encoder, decoder, typeMap} = await setup();
     const make = (id, data) => {
       const foo = new fooClass(data);
-      Entity.identify(foo, id);
+      Entity.identify(foo, id, null);
       return foo;
     };
-    const ref = new Reference({id: 'r1', storageKey: 'k1'}, new ReferenceType(barType), null);
+    const ref = new Reference({id: 'r1', entityStorageKey: 'k1'}, new ReferenceType(barType), null);
     const f1 = make('id1', {txt: 'abc', lnk: 'http://def', num: 9.2, flg: true, ref});
     const f2 = make('id2|two', {});
     const f3 = make('!id:3!', {txt: 'def', num: -7});
@@ -115,7 +115,7 @@ describe('wasm', () => {
     const verify = (schema, value) => {
       const entityClass = Entity.createEntityClass(schema, null);
       const e = new entityClass({value});
-      Entity.identify(e, 'test');
+      Entity.identify(e, 'test', null);
       assertThrowsAsync(async () => {
         await StringEncoder.create(entityClass.type).encodeSingleton(e);
       }, 'not yet supported');
