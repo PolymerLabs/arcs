@@ -296,10 +296,8 @@ export class BinaryExpression extends RefinementExpression {
     const fn2 = this.rightExpr.fieldNameIfUnivariate();
     if (fn1 && fn2) {
       return fn1 === fn2 ? fn1 : null;
-    } else if ((fn1 && !fn2) || (!fn1 && fn2)) {
-      return fn1 || fn2;
     }
-    return null;
+    return fn1 || fn2;
   }
 
 }
