@@ -16,7 +16,7 @@ import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
 import {RefinementNode, SchemaType, SchemaPrimitiveType} from './manifest-ast-nodes.js';
-import {Refinement, BinaryExpression, RefinementOperator, Op} from './refiner.js';
+import {Refinement, BinaryExpression, RefinementOperator, Op, AtleastAsSpecific} from './refiner.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -148,11 +148,11 @@ export class Schema {
   equals(otherSchema: Schema): boolean {
     // TODO(cypher1): Check equality without calling contains.
     return this === otherSchema || (this.name === otherSchema.name
-       && this.isMoreSpecificThan(otherSchema)
-       && otherSchema.isMoreSpecificThan(this));
+       && this.isAtleastAsSpecificAs(otherSchema)
+       && otherSchema.isAtleastAsSpecificAs(this));
   }
 
-  isMoreSpecificThan(otherSchema: Schema): boolean {
+  isAtleastAsSpecificAs(otherSchema: Schema): boolean {
     const names = new Set(this.names);
     for (const name of otherSchema.names) {
       if (!names.has(name)) {
@@ -170,8 +170,7 @@ export class Schema {
       if (!Schema.typesEqual(fields[name], type)) {
         return false;
       }
-      // this can return null (in the case where we don't know), hence equality with false
-      if (Refinement.isMoreSpecific(fields[name].refinement, type.refinement) === false) {
+      if (Refinement.isAtleastAsSpecificAs(fields[name].refinement, type.refinement) === AtleastAsSpecific.NO) {
         return false;
       }
     }

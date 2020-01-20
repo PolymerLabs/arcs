@@ -28,6 +28,10 @@ function deleteLocations(schema: Schema): Schema {
   return schema;
 }
 
+function getSchemaFromManifest(manifest: Manifest, handleName: string, particleIndex: number = 0): Schema {
+  return manifest.particles[particleIndex].handleConnectionMap.get(handleName).type.getEntitySchema();
+}
+
 describe('schema', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
   // these tests are not going to be executed (i.e. another test file uses 'only').
@@ -515,63 +519,63 @@ describe('schema', () => {
     assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref&[Bar/inner&[/val:Boolean|]str:Text|]');
     assert.strictEqual(getHash('refCollection'), '/rc@[Wiz/str:Text|]z:Number|');
   });
-  it('tests univariate schema level refinements are propogated to field level', async () => {
+  it('tests univariate schema level refinements are propagated to field level', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a < 0], b: Number, c: Number} [a < 10]
         schema2: reads Y {a: Number [a < 0 and a < 10], b: Number, c: Number}
     `);
-    const schema1 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema());
-    const schema2 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema());
+    const schema1 = deleteLocations(getSchemaFromManifest(manifest, 'schema1'));
+    const schema2 = deleteLocations(getSchemaFromManifest(manifest, 'schema2'));
 
     assert.deepEqual(schema1.fields, schema2.fields);
     assert.deepEqual(schema1.refinement, schema2.refinement);
   });
-  it('tests schema intersection', async () => {
+  it('tests schema intersection, case 1', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a < 0], b: Number, c: Number} [a + b > 10]
         schema2: reads Y {a: Number [a > 10], b: Number [b < 10]} [a + b > 20]
         schema3: reads Z {a: Number [a < 0 or a > 10], b: Number} [a + b > 10 or a + b > 20]
     `);
-    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
-    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
 
     // intersection of schema1 and schema2 should be the same as schema3
     const intersection = deleteLocations(Schema.intersect(schema1, schema2));
-    const schema3 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema3').type.getEntitySchema());
+    const schema3 = deleteLocations(getSchemaFromManifest(manifest, 'schema3'));
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   });
-  it('tests schema intersection', async () => {
+  it('tests schema intersection, case 2', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a < 0], b: Number, c: Number} [a + b > 10]
         schema2: reads Y {a: Number [a > 10], b: Number [b < 10]}
         schema3: reads Z {a: Number [a < 0 or a > 10], b: Number}
     `);
-    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
-    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
 
     // intersection of schema1 and schema2 should be the same as schema3
     const intersection = deleteLocations(Schema.intersect(schema1, schema2));
-    const schema3 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema3').type.getEntitySchema());
+    const schema3 = deleteLocations(getSchemaFromManifest(manifest, 'schema3'));
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   });
-  it('tests schema intersection', async () => {
+  it('tests schema intersection, case 3', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a < 0], b: Number, c: Number} [a + c > 10]
         schema2: reads Y {a: Number [a > 10], b: Number [b < 10]} [a + b > 10]
         schema3: reads Z {a: Number [a < 0 or a > 10], b: Number}
     `);
-    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
-    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
 
     // intersection of schema1 and schema2 should be the same as schema3
     const intersection = deleteLocations(Schema.intersect(schema1, schema2));
-    const schema3 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema3').type.getEntitySchema());
+    const schema3 = deleteLocations(getSchemaFromManifest(manifest, 'schema3'));
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   });
@@ -582,53 +586,53 @@ describe('schema', () => {
         schema2: reads Y {a: Number [a > 10], b: Number [b < 10]} [a + b > 10]
         schema3: reads Z {a: Number [a > 20 and a > 10], b: Number [b < 10], c: Number} [a + c > 10 and a + b > 10]
     `);
-    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
-    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
 
     // union of schema1 and schema2 should be the same as schema3
     const intersection = deleteLocations(Schema.union(schema1, schema2));
-    const schema3 = deleteLocations(manifest.particles[0].handleConnectionMap.get('schema3').type.getEntitySchema());
+    const schema3 = deleteLocations(getSchemaFromManifest(manifest, 'schema3'));
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   });
-  it('tests schema.isMoreSpecificThan', async () => {
+  it('tests schema.isAtleastAsSpecificAs, case 1', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Number, c: Number} [a + c > 10]
         schema2: reads X {a: Number [a > 10], b: Number} [a + b > 10]
     `);
-    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
-    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
-    assert.isTrue(schema1.isMoreSpecificThan(schema2));
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
   });
-  it('tests schema.isMoreSpecificThan', async () => {
+  it('tests schema.isAtleastAsSpecificAs, case 2', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Number, c: Number}
         schema2: reads X {a: Number [a > 10], b: Number [b > 10]}
     `);
-    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
-    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
-    assert.isFalse(schema1.isMoreSpecificThan(schema2));
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
   });
-  it('tests schema.isMoreSpecificThan', async () => {
+  it('tests schema.isAtleastAsSpecificAs, case 3', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Boolean [not b]} [a < 100]
         schema2: reads X {a: Number [a > 10 and a < 100], b: Boolean}
     `);
-    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
-    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
-    assert.isTrue(schema1.isMoreSpecificThan(schema2));
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
   });
-  it('tests schema.isMoreSpecificThan', async () => {
+  it('tests schema.isAtleastAsSpecificAs, case 4', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Boolean [not b]} [a < 100]
         schema2: reads X {a: Number [a > 10 and a < 100], b: Boolean, c: Number}
     `);
-    const schema1 = manifest.particles[0].handleConnectionMap.get('schema1').type.getEntitySchema();
-    const schema2 = manifest.particles[0].handleConnectionMap.get('schema2').type.getEntitySchema();
-    assert.isFalse(schema1.isMoreSpecificThan(schema2));
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
   });
 });

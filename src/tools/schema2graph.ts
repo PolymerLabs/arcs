@@ -80,7 +80,7 @@ export class SchemaGraph {
       node = new SchemaNode(schema, name);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
-          if (b.schema.isMoreSpecificThan(a.schema)) {
+          if (b.schema.isAtleastAsSpecificAs(a.schema)) {
             a.descendants.add(b);  // b can be sliced to a
             b.parents = [];        // non-null to indicate this has parents; will be filled later
           }

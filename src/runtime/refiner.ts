@@ -36,6 +36,12 @@ export enum Op {
   NEQ = '!=',
 }
 
+export enum AtleastAsSpecific {
+  YES,
+  NO,
+  UNKNOWN
+}
+
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
 type ExpressionPrimitives = any;
@@ -93,7 +99,7 @@ export class Refinement {
   }
 
   containsField(fieldName: string): boolean {
-    return this.expression.containsField(fieldName);
+    return this.getFieldNames().has(fieldName);
   }
 
   getFieldNames(): Set<string> {
@@ -101,20 +107,22 @@ export class Refinement {
   }
 
   // checks if a is more specific than b, returns null if can't be determined
-  static isMoreSpecific(a: Refinement, b: Refinement): boolean {
+  static isAtleastAsSpecificAs(a: Refinement, b: Refinement): AtleastAsSpecific {
     if (!a && b) {
-      return false;
+      return AtleastAsSpecific.NO;
     } else if (a && !b) {
-      return true;
+      return AtleastAsSpecific.YES;
+    } else if (!a && !b) {
+      return AtleastAsSpecific.YES;
     }
     try {
       a.normalise();
       b.normalise();
       const rangeA = Range.fromExpression(a.expression);
       const rangeB = Range.fromExpression(b.expression);
-      return rangeA.isSubsetOf(rangeB);
+      return rangeA.isSubsetOf(rangeB) ? AtleastAsSpecific.YES : AtleastAsSpecific.NO;
     } catch (e) {
-      return null;
+      return AtleastAsSpecific.UNKNOWN;
     }
   }
 

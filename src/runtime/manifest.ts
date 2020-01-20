@@ -365,7 +365,7 @@ export class Manifest {
       if (subtype) {
         const [left, right] = Type.unwrapPair(store.type, resolvedType);
         if (left instanceof EntityType && right instanceof EntityType) {
-          return left.entitySchema.isMoreSpecificThan(right.entitySchema);
+          return left.entitySchema.isAtleastAsSpecificAs(right.entitySchema);
         }
         return false;
       }
