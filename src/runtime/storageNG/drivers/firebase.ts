@@ -11,12 +11,21 @@
 import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {Driver, ReceiveMethod, Exists} from './driver.js';
 import {StorageKey} from '../storage-key.js';
+import {ArcId} from '../../id.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
 import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
+import {StorageKeyFactory} from '../storage-key-factory.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
+import {Capabilities} from '../../capabilities.js';
 
 export {firebase};
+
+export type FirebaseStorageKeyOptions = {
+  projectId: string;
+  domain: string;
+  apiKey: string;
+};
 
 export class FirebaseStorageKey extends StorageKey {
   public readonly databaseURL: string;
@@ -37,6 +46,10 @@ export class FirebaseStorageKey extends StorageKey {
   toString() {
     return `${this.protocol}://${this.databaseURL}:${this.apiKey}/${this.location}`;
   }
+
+  getUnique(): string { return this.location; }
+
+  getPath(): string { return ''; }
 
   childWithComponent(component: string) {
     return new FirebaseStorageKey(this.projectId, this.domain, this.apiKey, `${this.location}/${component}`);
@@ -220,9 +233,16 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     return driver;
   }
 
-  static register(cacheService: RuntimeCacheService) {
+  static register(cacheService: RuntimeCacheService, options?: FirebaseStorageKeyOptions) {
     DriverFactory.register(new FirebaseStorageDriverProvider(cacheService));
     StorageKeyParser.addParser('firebase', FirebaseStorageKey.fromString);
+    if (options) {
+      const {projectId, domain, apiKey} = options;
+      StorageKeyFactory.registerKeyCreator(
+          Capabilities.persistent,
+          (arcId: ArcId, unique: string, path: string) => new FirebaseStorageKey(
+              projectId, domain, apiKey, `${unique}${path ? `/${path}` : ''}`));
+    }
   }
 }
 

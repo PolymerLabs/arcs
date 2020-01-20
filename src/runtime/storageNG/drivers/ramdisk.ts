@@ -13,6 +13,9 @@ import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {VolatileDriver, VolatileMemoryProvider} from './volatile.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Exists} from './driver.js';
+import {StorageKeyFactory} from '../storage-key-factory.js';
+import {ArcId} from '../../id.js';
+import {Capabilities} from '../../capabilities.js';
 
 export class RamDiskStorageKey extends StorageKey {
   readonly unique: string;
@@ -25,6 +28,10 @@ export class RamDiskStorageKey extends StorageKey {
   toString() {
     return `${this.protocol}://${this.unique}`;
   }
+
+  getUnique(): string { return this.unique; }
+
+  getPath(): string { return ''; }
 
   childWithComponent(component: string) {
     return new RamDiskStorageKey(`${this.unique}/${component}`);
@@ -70,5 +77,9 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
   static register(memoryProvider: VolatileMemoryProvider) {
     DriverFactory.register(new RamDiskStorageDriverProvider(memoryProvider));
     StorageKeyParser.addParser('ramdisk', RamDiskStorageKey.fromString);
+    StorageKeyFactory.registerKeyCreator(
+        Capabilities.tiedToRuntime,
+        (arcId: ArcId, unique: string, path: string) =>
+            new RamDiskStorageKey(`${unique}${path ? `/${path}` : ''}`));
   }
 }

@@ -101,6 +101,10 @@ export class MockStorageKey extends StorageKey {
     return `${this.protocol}://`;
   }
 
+  getUnique(): string { return ''; }
+
+  getPath(): string { return ''; }
+
   childWithComponent(component: string): StorageKey {
     throw new Error('Method not implemented.');
   }
@@ -117,6 +121,10 @@ export class MockHierarchicalStorageKey extends StorageKey {
   toString() {
     return `${this.protocol}://${this.value}`;
   }
+
+  getUnique(): string { return ''; }
+
+  getPath(): string { return ''; }
 
   childWithComponent(component: string) {
     return new MockHierarchicalStorageKey(this.value + component);

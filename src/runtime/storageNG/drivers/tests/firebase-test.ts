@@ -12,8 +12,14 @@ import {StorageKey} from '../../storage-key.js';
 import {assert} from '../../../../platform/chai-web.js';
 import {RuntimeCacheService} from '../../../runtime-cache.js';
 import {Exists} from '../driver.js';
+import {FirebaseStorageDriverProvider, FirebaseStorageKey} from '../firebase.js';
+import {StorageKeyFactory} from '../../storage-key-factory.js';
+import {RecipeHandleCapability} from '../../../manifest-ast-nodes.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../../testing/mock-firebase.js';
 import {assertThrowsAsync} from '../../../../testing/test-util.js';
+import {VolatileStorageKey} from '../volatile.js';
+import {ArcId} from '../../../id.js';
+import {Capabilities} from '../../../capabilities.js';
 
 describe('Firebase Driver', async () => {
   let cacheService;
@@ -103,5 +109,34 @@ describe('Firebase Driver', async () => {
     assert.deepEqual(results, [true, false]);
     assert.strictEqual(recvQueue1.length, 0);
     assert.deepEqual(recvQueue2, [{model: 3, version: 1}]);
+  });
+  it('creates persistent firebase storage key by factory', () => {
+    const arcId = ArcId.newForTest('test');
+    const baseKey = new MockFirebaseStorageKey('test-location');
+    // Can't create persistent key without registered creator.
+    assert.throws(() => StorageKeyFactory.createStorageKey(Capabilities.persistent, baseKey, arcId));
+
+    const options = {projectId: 'test-project', domain: 'test.domain', apiKey: 'testKey'};
+    FirebaseStorageDriverProvider.register(cacheService, options);
+    // Can't register creator again.
+    assert.throws(() => FirebaseStorageDriverProvider.register(cacheService, options));
+
+    const firebaseKey = StorageKeyFactory.createStorageKey(
+        Capabilities.persistent, baseKey.subKeyWithComponent('component'), arcId);
+    assert.instanceOf(firebaseKey, FirebaseStorageKey);
+    assert.equal(FirebaseStorageKey.fromString(firebaseKey.toString()).toString(),
+                 firebaseKey.toString());
+    assert.equal(
+        StorageKeyFactory.createStorageKey(
+            Capabilities.persistent, firebaseKey, arcId).toString(),
+        firebaseKey.toString());
+
+    const volatileKey = StorageKeyFactory.createStorageKey(
+        Capabilities.tiedToArc, firebaseKey, arcId);
+    assert.instanceOf(volatileKey, VolatileStorageKey);
+    const newFirebaseKey = StorageKeyFactory.createStorageKey(
+        Capabilities.persistent, volatileKey, arcId);
+    assert.instanceOf(newFirebaseKey, FirebaseStorageKey);
+    assert(newFirebaseKey.toString(), firebaseKey.toString());
   });
 });

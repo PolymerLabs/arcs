@@ -17,6 +17,9 @@ export abstract class StorageKey {
 
   abstract toString(): string;
 
+  abstract getUnique(): string;
+  abstract getPath(): string;
+
   // Where there's a distinction, childWithComponent produces
   // a new key inside the serialization root of the parent
   // key, while subKeyWithComponent produces a new serialization

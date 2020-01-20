@@ -14,6 +14,7 @@ import {ArcInspector, ArcInspectorFactory} from './arc-inspector.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator, ArcId} from './id.js';
 import {Loader} from '../platform/loader.js';
+import {Capabilities} from './capabilities.js';
 import {Runnable} from './hot.js';
 import {Manifest, ManifestHandleRetriever} from './manifest.js';
 import {MessagePort} from './message-channel.js';
@@ -38,6 +39,7 @@ import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from 
 import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKey} from './storageNG/storage-key.js';
+import {StorageKeyFactory} from './storageNG/storage-key-factory.js';
 import {Store} from './storageNG/store.js';
 import {KeyBase} from './storage/key-base.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
@@ -104,7 +106,6 @@ export class Arc implements ArcInterface {
   public readonly inspector?: ArcInspector;
   private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
   private readonly instantiateMutex = new Mutex();
-
 
   readonly id: Id;
   private readonly idGenerator: IdGenerator = IdGenerator.newSession();
@@ -496,7 +497,7 @@ export class Arc implements ArcInterface {
         ) : undefined;
 
         const newStore = await this.createStoreInternal(type, /* name= */ null, storeId,
-            recipeHandle.tags, volatileKey);
+            recipeHandle.tags, volatileKey, recipeHandle.capabilities);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
@@ -602,7 +603,7 @@ export class Arc implements ArcInterface {
     return store;
   }
 
-  private async createStoreInternal(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey): Promise<UnifiedStore> {
+  private async createStoreInternal(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey, capabilities?: Capabilities): Promise<UnifiedStore> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (Flags.useNewStorageStack) {
@@ -623,7 +624,13 @@ export class Arc implements ArcInterface {
       if (typeof this.storageKey === 'string') {
         storageKey = this.storageProviderFactory.parseStringAsKey(this.storageKey).childKeyForHandle(id).toString();
       } else if (this.storageKey) {
-        storageKey = this.storageKey.childKeyForHandle(id);
+        if (capabilities && !capabilities.isEmpty()) {
+          storageKey =
+              StorageKeyFactory.createStorageKey(capabilities, this.storageKey, this.id)
+                  .childKeyForHandle(id);
+        } else {
+          storageKey = this.storageKey.childKeyForHandle(id);
+        }
       }
     }
 

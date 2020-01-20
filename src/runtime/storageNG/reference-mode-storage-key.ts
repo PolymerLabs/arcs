@@ -27,6 +27,14 @@ export class ReferenceModeStorageKey extends StorageKey {
     return `${this.protocol}://{${this.embedKey(this.backingKey)}}{${this.embedKey(this.storageKey)}}`;
   }
 
+  getUnique(): string {
+    throw new Error('storage key factory not yet supported for reference mode key');
+  }
+
+  getPath(): string {
+    throw new Error('storage key factory not yet supported for reference mode key');
+  }
+
   childWithComponent(component: string): StorageKey {
     return new ReferenceModeStorageKey(this.backingKey, this.storageKey.childWithComponent(component));
   }

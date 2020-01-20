@@ -13,7 +13,10 @@ import {VolatileDriver, VolatileStorageKey, VolatileMemory, VolatileStorageDrive
 import {Exists} from '../driver.js';
 import {Runtime} from '../../../runtime.js';
 import {ArcId} from '../../../id.js';
+import {Capabilities} from '../../../capabilities.js';
+import {RecipeHandleCapability} from '../../../manifest-ast-nodes.js';
 import {RamDiskStorageKey} from '../ramdisk.js';
+import {StorageKeyFactory} from '../../storage-key-factory.js';
 import {assertThrowsAsync} from '../../../../testing/test-util.js';
 
 describe('Volatile Driver', async () => {
@@ -137,5 +140,13 @@ describe('VolatileStorageDriverProvider', () => {
     await provider2.driver(storageKey2, Exists.ShouldCreate);
     await assertThrowsAsync(async () => await provider1.driver(storageKey1, Exists.ShouldCreate));
     await assertThrowsAsync(async () => await provider2.driver(storageKey2, Exists.ShouldCreate));
+  });
+
+  it('creates volatile storage key by factory', () => {
+    const arcId = ArcId.newForTest('some-other-arc');
+    const storageKey = new VolatileStorageKey(arcId, 'unique');
+    const result = StorageKeyFactory.createStorageKey(
+        Capabilities.tiedToArc, storageKey, arcId);
+    assert.equal(result.toString(), storageKey.toString());
   });
 });

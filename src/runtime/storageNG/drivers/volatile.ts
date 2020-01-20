@@ -13,9 +13,11 @@ import {Driver, ReceiveMethod, Exists} from './driver.js';
 import {StorageKey} from '../storage-key.js';
 import {Arc} from '../../arc.js';
 import {ArcId} from '../../id.js';
+import {Capabilities} from '../../capabilities.js';
 import {RamDiskStorageKey} from './ramdisk.js';
 import {Dictionary} from '../../hot.js';
 import {assert} from '../../../platform/assert-web.js';
+import {StorageKeyFactory} from '../storage-key-factory.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
@@ -36,6 +38,10 @@ export class VolatileStorageKey extends StorageKey {
   toString() {
     return `${this.protocol}://${this.arcId}/${this.unique}@${this.path}`;
   }
+
+  getUnique(): string { return this.unique; }
+
+  getPath(): string { return this.path; }
 
   childWithComponent(component: string) {
     return new VolatileStorageKey(this.arcId, this.unique, `${this.path}/${component}`);
@@ -251,3 +257,7 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
 }
 
 StorageKeyParser.addDefaultParser('volatile', VolatileStorageKey.fromString);
+StorageKeyFactory.registerDefaultKeyCreator(
+    Capabilities.tiedToArc,
+    (arcId: ArcId, unique: string, path: string) =>
+        new VolatileStorageKey(arcId, unique, path));
