@@ -22,6 +22,7 @@ import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {Producer} from '../hot.js';
+import {Identified, logWithIdentity, setLogFilterById} from '../testing/identity.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -377,6 +378,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
 /**
  * A handle on a single entity.
  */
+@Identified
 export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Referenceable>> {
   async set(entity: T): Promise<boolean> {
     if (!this.canWrite) {
@@ -421,7 +423,24 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     return value == null ? null : this.serializer.deserialize(value, this.storageProxy.storageKey) as T;
   }
 
-  async onUpdate(op: SingletonOperation<Referenceable>, version: VersionMap): Promise<void> {
+  private getAssumingSynchronized(): T {
+    if (!this.canRead) {
+      throw new Error('Handle not readable');
+    }
+    const [value, versionMap] = this.storageProxy.getParticleViewAssumingSynchronized();
+    this.clock = versionMap;
+    return value == null ? null : this.serializer.deserialize(value, this.storageProxy.storageKey) as T;
+  }
+
+  /**
+   * onUpdate, onSync and onDesync *are async functions*, because they invoke callOnHandleUpdate,
+   * which is async.
+   *
+   * However, they *must not introduce await points* before invoking callOnHandleUpdate, as
+   * if they do there is a risk that they will be reordered.
+   */
+
+   async onUpdate(op: SingletonOperation<Referenceable>, version: VersionMap): Promise<void> {
     assert(this.canRead, 'onUpdate should not be called for non-readable handles');
     this.clock = version;
     // Pass the change up to the particle.
@@ -439,15 +458,18 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
   }
 
   async onSync(): Promise<void> {
+    logWithIdentity(this, this.name, 'onSync');
     assert(this.canRead, 'onSync should not be called for non-readable handles');
     if (this.particle) {
       await this.particle.callOnHandleSync(
           this /*handle*/,
-          await this.get() /*model*/,
+          this.getAssumingSynchronized() /*model*/,
           e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
     }
   }
 }
+
+setLogFilterById('SingletonHandle', 1);
 
 export function handleNGFor<T extends CRDTTypeRecord>(key: string,
       storageProxy: StorageProxy<T>,

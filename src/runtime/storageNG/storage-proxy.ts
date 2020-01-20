@@ -18,11 +18,13 @@ import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../type.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
+import {Identified, logWithIdentity} from '../testing/identity.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
  * directly connected to the StorageProxy.
  */
+@Identified
 export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
   private crdt: CRDTModel<T>;
@@ -102,6 +104,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
       // If a handle configured for sync notifications registers after we've received the full
       // model, notify it immediately.
       if (handle.options.notifySync && this.synchronized) {
+        logWithIdentity(this, 'initial registration sync');
         handle.onSync();
       }
     }
@@ -135,7 +138,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   async getParticleView(): Promise<[T['consumerType'], VersionMap]> {
     if (this.synchronized) {
-      return [this.crdt.getParticleView()!, this.versionCopy()];
+      return this.getParticleViewAssumingSynchronized();
     } else {
       const promise: Promise<[T['consumerType'], VersionMap]> =
           new Promise((resolve) => {
@@ -150,8 +153,16 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
+  getParticleViewAssumingSynchronized(): [T['consumerType'], VersionMap] {
+    if (!this.synchronized) {
+      throw new Error('AssumingSynchronized variant called but proxy is not synchronized')
+    }
+    return [this.crdt.getParticleView()!, this.versionCopy()];
+  }
+
   private setSynchronized() {
     if (!this.synchronized) {
+      logWithIdentity(this, 'explicit setSync');
       this.synchronized = true;
       this.notifySync();
     }
@@ -159,6 +170,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   private clearSynchronized() {
     if (this.synchronized) {
+      logWithIdentity(this, 'explicit clearSync');
       this.synchronized = false;
       this.notifyDesync();
     }
@@ -168,6 +180,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
         this.crdt.merge(message.model);
+        console.log('new model!');
         this.setSynchronized();
         // NOTE: this.modelHasSynced used to run after this.synchronized
         // was set to true but before notifySync() was called. Is that a problem?
@@ -191,6 +204,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
           if (!this.synchronized) {
             // If we didn't think we were synchronized but the operation applied cleanly,
             // then actually we were synchronized after all. Tell the handle that.
+            console.log('did not think we were synced but we were!');
             this.setSynchronized();
           }
           // Notify handles configured with keepSynced.
@@ -370,6 +384,7 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
       const byHandle = this._queues.get(particle);
       this._queues.delete(particle);
       for (const [handle, queue] of byHandle.entries()) {
+        logWithIdentity(handle, queue);
         for (const update of queue) {
           this._dispatchUpdate(handle, update).catch(e =>
             handle.storageProxy.reportExceptionInHost(new SystemException(

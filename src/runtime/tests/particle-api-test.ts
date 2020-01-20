@@ -60,6 +60,7 @@ class ResultInspector {
       handle = this._store;
     }
     let received = await handle.toList();
+    console.log(received, expectations);
     const misses = [];
     if (!Flags.useNewStorageStack) {
       received = received.map(r => r.rawData);
@@ -102,7 +103,7 @@ async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: s
 }
 
 describe('particle-api', () => {
-  it('StorageProxy integration test', async () => {
+  it.only('StorageProxy integration test', async () => {
     const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
@@ -131,14 +132,17 @@ describe('particle-api', () => {
             }
 
             onHandleSync(handle, model) {
+              console.log(handle.name, 'sync');
               this.addResult('sync:' + JSON.stringify(model));
             }
 
             onHandleUpdate(handle, update) {
+              console.log(handle.name, 'update');
               this.addResult('update:' + JSON.stringify(update));
             }
 
             onHandleDesync(handle) {
+              console.log(handle.name, 'desync');
               this.addResult('desync');
             }
 
