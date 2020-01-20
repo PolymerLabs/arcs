@@ -23,8 +23,8 @@ object ExplicitHostRegistry : AnnotationBasedHostRegistry() {
     /**
      * Explicitly register all particles used.
      */
-    fun registerParticles(allParticles: List<KClass<out Particle>>) {
-        availableArcHosts.forEach { host ->
+    suspend fun registerParticles(allParticles: List<KClass<out Particle>>) {
+        availableArcHosts().forEach { host ->
             registerParticles(findParticlesForHost(allParticles, host), host)
         }
     }

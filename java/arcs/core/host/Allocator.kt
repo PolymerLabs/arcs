@@ -35,7 +35,7 @@ class Allocator(val hostRegistry: HostRegistry) {
     /**
      * Start a new Arc given a [Plan] and return the generated [ArcId].
      */
-    fun startArcForPlan(arcName: String, plan: Plan): ArcId {
+    suspend fun startArcForPlan(arcName: String, plan: Plan): ArcId {
         val idGenerator = Id.Generator.newSession()
         val arcId = idGenerator.newArcId(arcName)
         // Any unresolved handles ('create' fate) need storage keys
@@ -55,15 +55,14 @@ class Allocator(val hostRegistry: HostRegistry) {
     /**
      * Asks each [ArcHost] to start an Arc given a [PlanPartition].
      */
-    private fun startPlanPartitionsOnHosts(partitions: List<PlanPartition>) =
+    private suspend fun startPlanPartitionsOnHosts(partitions: List<PlanPartition>) =
         partitions.forEach { partition -> lookupArcHost(partition.arcHost).startArc(partition) }
 
     // VisibleForTesting
-    fun lookupArcHost(arcHost: String) =
-        hostRegistry.availableArcHosts.filter { it ->
+    suspend fun lookupArcHost(arcHost: String) =
+        hostRegistry.availableArcHosts().filter { it ->
             it::class.java.canonicalName == arcHost
         }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
-
 
     /**
      * Persists [ArcId] and associoated [PlatPartition]s.
@@ -109,7 +108,7 @@ class Allocator(val hostRegistry: HostRegistry) {
      * Slice plan into pieces grouped by [ArcHost], each group consisting of a [PlanPartition]
      * that lists [HandleSpec], [ParticleSpec], and [HandleConnectionSpec] needed for that host.
      */
-    private fun computePartitions(arcId: ArcId, plan: Plan): List<PlanPartition> =
+    private suspend fun computePartitions(arcId: ArcId, plan: Plan): List<PlanPartition> =
         plan.handleConnectionSpecs
             .map { spec -> findArcHostBySpec(spec.particleSpec) to spec }
             .groupBy({ it.first }, { it.second.particleSpec })
@@ -132,10 +131,10 @@ class Allocator(val hostRegistry: HostRegistry) {
      * mapping them to fully qualified Java classnames, and comparing them with the
      * [ParticleSpec.location].
      */
-    private fun findArcHostBySpec(spec: ParticleSpec): ArcHost =
-        hostRegistry.availableArcHosts
+    private suspend fun findArcHostBySpec(spec: ParticleSpec): ArcHost =
+        hostRegistry.availableArcHosts()
             .filter { host ->
-                host.registeredParticles.map { clazz -> clazz.java.getCanonicalName() }
+                host.registeredParticles().map { clazz -> clazz.java.getCanonicalName() }
                     .contains(spec.location)
             }.firstOrNull() ?: throw ParticleNotFoundException(spec)
 }

@@ -7,15 +7,20 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.sdk.Particle
 import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.host.ServiceLoaderHostRegistry
 import com.google.auto.service.AutoService
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
+@UseExperimental(ExperimentalCoroutinesApi::class)
 class AllocatorTest {
     /**
      * A test recipe, two particles
@@ -67,7 +72,7 @@ class AllocatorTest {
     open class TestingHost : AbstractArcHost() {
         var started = mutableListOf<PlanPartition>()
 
-        override fun startArc(partition: PlanPartition) {
+        override suspend fun startArc(partition: PlanPartition) {
             super.startArc(partition)
             started.add(partition)
         }
@@ -92,30 +97,32 @@ class AllocatorTest {
 
     @Before
     fun setUp() {
-        personHandleSpec =
-            HandleSpec(
-                null, "recipePerson", null, mutableSetOf("volatile"),
-                personSchema
+        runBlocking {
+            personHandleSpec =
+                HandleSpec(
+                    null, "recipePerson", null, mutableSetOf("volatile"),
+                    personSchema
+                )
+
+            writePersonParticleSpec =
+                ParticleSpec("WritePerson", WritePerson::class.java.getCanonicalName()!!)
+            writePersonHandleConnectionSpec =
+                HandleConnectionSpec("person", personHandleSpec, writePersonParticleSpec)
+
+            readPersonParticleSpec =
+                ParticleSpec("ReadPerson", ReadPerson::class.java.getCanonicalName()!!)
+            readPersonHandleConnectionSpec =
+                HandleConnectionSpec("person", personHandleSpec, readPersonParticleSpec)
+
+            writeAndReadPersonPlan = Plan(
+                listOf(writePersonHandleConnectionSpec, readPersonHandleConnectionSpec)
             )
 
-        writePersonParticleSpec =
-            ParticleSpec("WritePerson", WritePerson::class.java.getCanonicalName()!!)
-        writePersonHandleConnectionSpec =
-            HandleConnectionSpec("person", personHandleSpec, writePersonParticleSpec)
-
-        readPersonParticleSpec =
-            ParticleSpec("ReadPerson", ReadPerson::class.java.getCanonicalName()!!)
-        readPersonHandleConnectionSpec =
-            HandleConnectionSpec("person", personHandleSpec, readPersonParticleSpec)
-
-        writeAndReadPersonPlan = Plan(
-            listOf(writePersonHandleConnectionSpec, readPersonHandleConnectionSpec)
-        )
-
-        ServiceLoaderHostRegistry.availableArcHosts.forEach {
-            when (it) {
-                is TestingHost -> it.setup()
-                else -> {
+            ServiceLoaderHostRegistry.availableArcHosts().forEach {
+                when (it) {
+                    is TestingHost -> it.setup()
+                    else -> {
+                    }
                 }
             }
         }
@@ -127,7 +134,7 @@ class AllocatorTest {
      * [WritePerson] with associated handles and connections.
      */
     @Test
-    fun allocator_computePartitions() {
+    fun allocator_computePartitions() = runBlockingTest {
         val allocator = Allocator(ServiceLoaderHostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
@@ -153,7 +160,7 @@ class AllocatorTest {
     }
 
     @Test
-    fun allocator_verifyStorageKeysCreated() {
+    fun allocator_verifyStorageKeysCreated() = runBlockingTest {
         writeAndReadPersonPlan.handleConnectionSpecs.forEach { it ->
             assertThat(it.handleSpec.storageKey).isNull()
         }
@@ -165,7 +172,7 @@ class AllocatorTest {
     }
 
     @Test
-    fun allocator_verifyStorageKeysNotOverwritten() {
+    fun allocator_verifyStorageKeysNotOverwritten() = runBlockingTest {
         val idGenerator = Id.Generator.newSession()
         val testArcId = idGenerator.newArcId("Test")
         val testKey = VolatileStorageKey(testArcId, "test")
@@ -182,7 +189,7 @@ class AllocatorTest {
     }
 
     @Test
-    fun allocator_verifyArcHostStartCalled() {
+    fun allocator_verifyArcHostStartCalled() = runBlockingTest {
         val allocator = Allocator(ServiceLoaderHostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
@@ -200,14 +207,16 @@ class AllocatorTest {
         }
     }
 
-    @Test(expected = ParticleNotFoundException::class)
-    fun allocator_verifyUnknownParticleThrows() {
+    @Test
+    fun allocator_verifyUnknownParticleThrows() = runBlockingTest {
         val allocator = Allocator(ServiceLoaderHostRegistry)
         val handleConnectionSpec = HandleConnectionSpec(
             "unknown", personHandleSpec,
             ParticleSpec("UnknownParticle", "Unknown")
         )
         val plan = Plan(listOf(handleConnectionSpec))
-        allocator.startArcForPlan("unknown", plan)
+        assertSuspendingThrows(ParticleNotFoundException::class) {
+            allocator.startArcForPlan("unknown", plan)
+        }
     }
 }

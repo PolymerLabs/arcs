@@ -17,15 +17,15 @@ interface HostRegistry {
     /**
      * Returns a list of all current [ArcHost] implementations in the system.
      */
-    val availableArcHosts: List<ArcHost>
+    suspend fun availableArcHosts(): List<ArcHost>
 
     /**
      * Register a new [ArcHost].
      */
-    fun registerHost(host: ArcHost): Unit
+    suspend fun registerHost(host: ArcHost): Unit
 
     /**
      * Remove an [ArcHost] from the list of those available.
      */
-    fun unregisterHost(host: ArcHost): Unit
+    suspend fun unregisterHost(host: ArcHost): Unit
 }

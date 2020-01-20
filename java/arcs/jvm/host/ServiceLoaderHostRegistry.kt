@@ -14,7 +14,7 @@ import arcs.core.host.AnnotationBasedHostRegistry
 import arcs.core.host.ArcHost
 import arcs.core.sdk.Particle
 import java.util.ServiceLoader
-import kotlin.sequences.asSequence
+import kotlinx.coroutines.runBlocking
 
 /**
  * A [HostRegistry] that discovers the available [ArcHost]s available on this platform by using
@@ -23,18 +23,26 @@ import kotlin.sequences.asSequence
 object ServiceLoaderHostRegistry : AnnotationBasedHostRegistry() {
 
     init {
-        loadAndRegisterHostsAndParticles()
-            .forEach(::registerHost)
+        runBlocking {
+            loadAndRegisterHostsAndParticles()
+                .forEach { host -> registerHost(host) }
+        }
     }
 
-    private fun loadAndRegisterHostsAndParticles(): List<ArcHost> {
+    private suspend fun loadAndRegisterHostsAndParticles(): List<ArcHost> {
         // Load all @AutoService(Particle.class) types
         val allParticles = ServiceLoader.load(Particle::class.java).iterator().asSequence()
             .map { p -> p.javaClass.kotlin }.toList()
 
         // Load @AutoService(ArcsHost) types and construct them, handing each a list of particles
         return ServiceLoader.load(ArcHost::class.java).iterator().asSequence()
-            .map { host -> registerParticles(findParticlesForHost(allParticles, host), host) }
+            .map { host ->
+                runBlocking {
+                    registerParticles(
+                        findParticlesForHost(allParticles, host), host
+                    )
+                }
+            }
             .toList()
     }
 }

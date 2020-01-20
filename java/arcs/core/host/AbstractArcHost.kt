@@ -11,32 +11,37 @@
 package arcs.core.host
 
 import arcs.core.sdk.Particle
+import arcs.core.util.guardWith
 import kotlin.reflect.KClass
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Base helper class for [ArcHost] implementations to provide implementation of
  * registration.
  */
 abstract class AbstractArcHost : ArcHost {
-    private var particles: MutableList<KClass<out Particle>> = mutableListOf()
+    private val hostMutex = Mutex()
+    private var particles: MutableList<KClass<out Particle>> by
+    guardWith(hostMutex, mutableListOf())
 
-    override fun registerParticle(particle: KClass<out Particle>) {
-        particles.add(particle)
+    override suspend fun registerParticle(particle: KClass<out Particle>) {
+        hostMutex.withLock { particles.add(particle) }
     }
 
-    override fun unregisterParticle(particle: KClass<out Particle>) {
-        particles.remove(particle)
+    override suspend fun unregisterParticle(particle: KClass<out Particle>) {
+        hostMutex.withLock { particles.remove(particle) }
     }
 
-    override val registeredParticles: List<KClass<out Particle>>
-        get() = particles
+    override suspend fun registeredParticles(): List<KClass<out Particle>> =
+        hostMutex.withLock { particles }
 
-    override fun startArc(partition: PlanPartition) {
+    override suspend fun startArc(partition: PlanPartition) {
 
         // TODO(cromwellian): implement
     }
 
-    override fun stopArc(partition: PlanPartition) {
+    override suspend fun stopArc(partition: PlanPartition) {
         // TODO(cromwellian): implement
     }
 }

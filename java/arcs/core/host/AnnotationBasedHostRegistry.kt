@@ -11,19 +11,22 @@
 package arcs.core.host
 
 import arcs.core.sdk.Particle
+import arcs.core.util.guardWith
 import kotlin.reflect.KClass
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * A HostRegistry that automatically registers particles with hosts by matching [TargetHost]
  * annotated annotations on [Particle] classes with [ArcHost]s.
  */
 abstract class AnnotationBasedHostRegistry : HostRegistry {
-    private val hosts: MutableList<ArcHost> = mutableListOf()
+    private val registryMutex = Mutex()
+    private val hosts: MutableList<ArcHost> by guardWith(registryMutex, mutableListOf())
 
-    override val availableArcHosts: List<ArcHost>
-        get() = hosts
+    override suspend fun availableArcHosts(): List<ArcHost> = registryMutex.withLock { hosts }
 
-    protected fun registerParticles(
+    protected suspend fun registerParticles(
         particles: List<KClass<out Particle>>,
         host: ArcHost
     ): ArcHost {
@@ -31,12 +34,12 @@ abstract class AnnotationBasedHostRegistry : HostRegistry {
         return host
     }
 
-    override fun registerHost(host: ArcHost) {
-        hosts.add(host)
+    override suspend fun registerHost(host: ArcHost) {
+        registryMutex.withLock { hosts.add(host) }
     }
 
-    override fun unregisterHost(host: ArcHost) {
-        hosts.remove(host)
+    override suspend fun unregisterHost(host: ArcHost) {
+        registryMutex.withLock { hosts.remove(host) }
     }
 
     protected fun findParticlesForHost(
