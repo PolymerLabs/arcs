@@ -43,8 +43,10 @@ export class Schema {
     this.names = names;
     this.fields = {};
     this.refinement = options.refinement || null;
-    const fN = this.refinement && this.refinement.fieldNameIfUnivariate();
-    if (fN) {
+    const fNs = this.refinement && this.refinement.getFieldNames();
+    // if the schema level refinement is univariate, propogate it to the appropriate field
+    if (fNs && fNs.size === 1) {
+      const fN = fNs.values().next().value;
       fields[fN].refinement = Refinement.intersectionOf(fields[fN].refinement, this.refinement);
       this.refinement = null;
     }

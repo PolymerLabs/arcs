@@ -96,8 +96,8 @@ export class Refinement {
     return this.expression.containsField(fieldName);
   }
 
-  fieldNameIfUnivariate(): string {
-    return this.expression.fieldNameIfUnivariate();
+  getFieldNames(): Set<string> {
+    return this.expression.getFieldNames();
   }
 
   // checks if a is more specific than b, returns null if can't be determined
@@ -176,7 +176,7 @@ abstract class RefinementExpression {
 
   abstract containsField(fieldName: string): boolean;
 
-  abstract fieldNameIfUnivariate(): string;
+  abstract getFieldNames(): Set<string>;
 }
 
 export class BinaryExpression extends RefinementExpression {
@@ -291,11 +291,11 @@ export class BinaryExpression extends RefinementExpression {
     return this.leftExpr.containsField(fieldName) || this.rightExpr.containsField(fieldName);
   }
 
-  fieldNameIfUnivariate(): string {
-    const fn1 = this.leftExpr.fieldNameIfUnivariate();
-    const fn2 = this.rightExpr.fieldNameIfUnivariate();
+  getFieldNames(): Set<string> {
+    const fn1 = this.leftExpr.getFieldNames();
+    const fn2 = this.rightExpr.getFieldNames();
     if (fn1 && fn2) {
-      return fn1 === fn2 ? fn1 : null;
+      return new Set<string>([...fn1, ...fn2]);
     }
     return fn1 || fn2;
   }
@@ -365,8 +365,8 @@ export class UnaryExpression extends RefinementExpression {
     return this.expr.containsField(fieldName);
   }
 
-  fieldNameIfUnivariate(): string {
-    return this.expr.fieldNameIfUnivariate();
+  getFieldNames(): Set<string> {
+    return this.expr.getFieldNames();
   }
 }
 
@@ -409,8 +409,8 @@ class FieldNamePrimitive extends RefinementExpression {
     return this.value === fieldName;
   }
 
-  fieldNameIfUnivariate(): string {
-    return this.value;
+  getFieldNames(): Set<string> {
+    return new Set<string>([this.value]);
   }
 }
 
@@ -443,7 +443,7 @@ class NumberPrimitive extends RefinementExpression {
     return false;
   }
 
-  fieldNameIfUnivariate(): string {
+  getFieldNames(): Set<string> {
     return null;
   }
 }
@@ -477,7 +477,7 @@ class BooleanPrimitive extends RefinementExpression {
     return false;
   }
 
-  fieldNameIfUnivariate(): string {
+  getFieldNames(): Set<string> {
     return null;
   }
 }
