@@ -182,8 +182,6 @@ abstract class RefinementExpression {
 
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>);
 
-  abstract containsField(fieldName: string): boolean;
-
   abstract getFieldNames(): Set<string>;
 }
 
@@ -295,17 +293,10 @@ export class BinaryExpression extends RefinementExpression {
     }
   }
 
-  containsField(fieldName: string): boolean {
-    return this.leftExpr.containsField(fieldName) || this.rightExpr.containsField(fieldName);
-  }
-
   getFieldNames(): Set<string> {
     const fn1 = this.leftExpr.getFieldNames();
     const fn2 = this.rightExpr.getFieldNames();
-    if (fn1 && fn2) {
-      return new Set<string>([...fn1, ...fn2]);
-    }
-    return fn1 || fn2;
+    return new Set<string>([...fn1, ...fn2]);
   }
 
 }
@@ -369,10 +360,6 @@ export class UnaryExpression extends RefinementExpression {
     }
   }
 
-  containsField(fieldName: string): boolean {
-    return this.expr.containsField(fieldName);
-  }
-
   getFieldNames(): Set<string> {
     return this.expr.getFieldNames();
   }
@@ -413,10 +400,6 @@ class FieldNamePrimitive extends RefinementExpression {
     throw new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
   }
 
-  containsField(fieldName: string): boolean {
-    return this.value === fieldName;
-  }
-
   getFieldNames(): Set<string> {
     return new Set<string>([this.value]);
   }
@@ -447,12 +430,8 @@ class NumberPrimitive extends RefinementExpression {
     return this.value;
   }
 
-  containsField(): boolean {
-    return false;
-  }
-
   getFieldNames(): Set<string> {
-    return null;
+    return new Set<string>();
   }
 }
 
@@ -481,12 +460,8 @@ class BooleanPrimitive extends RefinementExpression {
     return this.value;
   }
 
-  containsField(): boolean {
-    return false;
-  }
-
   getFieldNames(): Set<string> {
-    return null;
+    return new Set<string>();
   }
 }
 
