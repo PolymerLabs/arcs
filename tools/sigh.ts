@@ -406,7 +406,7 @@ function tsc(path: string): boolean {
   return result.success;
 }
 
-function makeLink(src: string, dest: string, options: {existing: [string, string, string][]}): boolean {
+function makeLink(src: string, dest: string, options: {existing: {src: string, dest: string, message: string}[]}): boolean {
   try {
     // First we have to ensure the entire path is there.
     const dir = path.dirname(dest);
@@ -417,7 +417,7 @@ function makeLink(src: string, dest: string, options: {existing: [string, string
   } catch (lerr) {
     // In case of racing builds.
     if (lerr.message.startsWith('EEXIST:')) {
-      options.existing.push([src, dest, lerr.message]);
+      options.existing.push({src, dest, message: lerr.message});
     } else {
       console.error(`Error when linking ${src} to ${dest}: ${lerr.message}`);
       return false;
