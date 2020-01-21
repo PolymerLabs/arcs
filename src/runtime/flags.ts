@@ -31,7 +31,9 @@ export class Flags extends FlagDefaults {
     // Use the defaults
     Object.assign(Flags, FlagDefaults);
     // Overwrite the defaults with the testFlags.
-    Object.assign(Flags, global['testFlags']);
+    if (typeof global !== 'undefined') {
+      Object.assign(Flags, global['testFlags']);
+    }
   }
 
   // tslint:disable-next-line: no-any
