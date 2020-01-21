@@ -18,7 +18,31 @@ export interface TypeListInfo {
   connection?: {direction: Direction};
 }
 
+type TypeCheckOptions = {typeErrors?: string[]};
+
 export class TypeChecker {
+
+  // NOTE: you almost definitely don't want to call this function, if you think
+  // you do, talk to shans@.
+  private static getResolution(candidate: Type, options: TypeCheckOptions) {
+    if (!(candidate instanceof TypeVariable)) {
+      return candidate;
+    }
+    if (candidate.canReadSubset == null || candidate.canWriteSuperset == null) {
+      return candidate;
+    }
+    if (candidate.canReadSubset.isAtleastAsSpecificAs(candidate.canWriteSuperset)) {
+      if (candidate.canWriteSuperset.isAtleastAsSpecificAs(candidate.canReadSubset)) {
+        candidate.variable.resolution = candidate.canReadSubset;
+      }
+      return candidate;
+    }
+    if (options && options.typeErrors) {
+      const msg = `could not guarantee variable ${candidate} meets read requirements ${candidate.canReadSubset} with write guarantees ${candidate.canWriteSuperset}`;
+      options.typeErrors.push(msg);
+    }
+    return null;
+  };
 
   // resolve a list of handleConnection types against a handle
   // base type. This is the core type resolution mechanism, but should only
@@ -30,7 +54,7 @@ export class TypeChecker {
   //
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
-  static processTypeList(baseType: Type, list: TypeListInfo[], options: {typeErrors?: string[]} = {}) {
+  static processTypeList(baseType: Type, list: TypeListInfo[], options: TypeCheckOptions = {}) {
     const newBaseType = TypeVariable.make('', null, null);
     if (baseType) {
       newBaseType.variable.resolution = baseType;
@@ -63,38 +87,18 @@ export class TypeChecker {
       }
     }
 
-    const getResolution = (candidate: Type) => {
-      if (!(candidate instanceof TypeVariable)) {
-        return candidate;
-      }
-      if (candidate.canReadSubset == null || candidate.canWriteSuperset == null) {
-        return candidate;
-      }
-      if (candidate.canReadSubset.isAtleastAsSpecificAs(candidate.canWriteSuperset)) {
-        if (candidate.canWriteSuperset.isAtleastAsSpecificAs(candidate.canReadSubset)) {
-          candidate.variable.resolution = candidate.canReadSubset;
-        }
-        return candidate;
-      }
-      if (options && options.typeErrors) {
-        const msg = `could not guarantee variable ${candidate} meets read requirements ${candidate.canReadSubset} with write guarantees ${candidate.canWriteSuperset}`;
-        options.typeErrors.push(msg);
-      }
-      return null;
-    };
-
     const candidate = baseType.resolvedType();
 
     if (candidate.isCollectionType()) {
-      const resolution = getResolution(candidate.collectionType);
+      const resolution = TypeChecker.getResolution(candidate.collectionType, options);
       return (resolution !== null) ? resolution.collectionOf() : null;
     }
     if (candidate.isBigCollectionType()) {
-      const resolution = getResolution(candidate.bigCollectionType);
+      const resolution = TypeChecker.getResolution(candidate.bigCollectionType, options);
       return (resolution !== null) ? resolution.bigCollectionOf() : null;
     }
 
-    return getResolution(candidate);
+    return TypeChecker.getResolution(candidate, options);
   }
 
   static _tryMergeTypeVariable(base: Type, onto: Type, options: {typeErrors?: string[]} = {}): Type {
