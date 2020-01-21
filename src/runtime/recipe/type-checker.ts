@@ -42,7 +42,7 @@ export class TypeChecker {
     }
     // The candidate's requirements are no longer valid, it is uninhabitable / unsatisfiable.
     if (options && options.typeErrors) {
-      const msg = `could not show variable ${candidate} meets read requirements ${candidate.canReadSubset} with write guarantees ${candidate.canWriteSuperset}`;
+      const msg = `could not guarantee variable ${candidate} meets read requirements ${candidate.canReadSubset} with write guarantees ${candidate.canWriteSuperset}`;
       options.typeErrors.push(msg);
     }
     return null;
