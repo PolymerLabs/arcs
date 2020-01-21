@@ -158,7 +158,7 @@ export class TypeChecker {
         // If this is an undifferentiated variable then we need to create structure to match against. That's
         // allowed because this variable could represent anything, and it needs to represent this structure
         // in order for type resolution to succeed.
-        const newVar = TypeVariable.make('a', null, null);
+        const newVar = TypeVariable.make('a');
         if (primitiveConnectionType instanceof CollectionType) {
           primitiveHandleType.variable.resolution = new CollectionType(newVar);
         } else if (primitiveConnectionType instanceof BigCollectionType) {
