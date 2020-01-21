@@ -60,5 +60,6 @@ public interface RuntimeSettings {
   //                 anytime if possible
   //   'predictive': foresee worker demands in accordance of current demand and
   //                 historical stats
+  // Default: conservative
   String sizingPolicy();
 }
