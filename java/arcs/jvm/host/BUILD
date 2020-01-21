@@ -11,6 +11,6 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/host",
         "//java/arcs/core/sdk",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

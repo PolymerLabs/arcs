@@ -14,13 +14,12 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.host",
     deps = [
         ":particle",
-
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/core/sdk",
-        "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/driver",
         "//java/arcs/core/testutil",
         "//java/arcs/jvm/host",
         "//third_party/java/auto:auto_service",
