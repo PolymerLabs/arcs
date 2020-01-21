@@ -161,7 +161,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   getParticleViewAssumingSynchronized(): [T['consumerType'], VersionMap] {
     if (!this.synchronized) {
-      throw new Error('AssumingSynchronized variant called but proxy is not synchronized')
+      throw new Error('AssumingSynchronized variant called but proxy is not synchronized');
     }
     return [this.crdt.getParticleView()!, this.versionCopy()];
   }
@@ -404,8 +404,9 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
   }
 
   _dispatch(): void {
-    if (this.paused)
+    if (this.paused) {
       return;
+    }
     // TODO: should we process just one particle per task?
     while (this._queues.size > 0) {
       const particle = [...this._queues.keys()][0];
