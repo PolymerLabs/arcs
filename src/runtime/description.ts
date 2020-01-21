@@ -180,17 +180,18 @@ export class Description {
       const proxy = new StorageProxy('id', await store.activate(), store.type, store.storageKey.toString());
       const handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'dummy'});
       if (handle instanceof SingletonHandle) {
-        if (store.type.getContainedType().isInterface ) {
+        if (handle.type.getContainedType() instanceof EntityType) {
+          const entityValue = await handle.get();
+          if (entityValue) {
+            const schema = store.type.getEntitySchema();
+            const valueDescription = schema ? schema.description.value : undefined;
+            return {entityValue, valueDescription};
+          }
+        } else if (handle.type.getContainedType() instanceof InterfaceType) {
           const interfaceValue = await handle.get();
           if (interfaceValue) {
             return {interfaceValue};
           }
-        }
-        const entityValue = await handle.get();
-        if (entityValue) {
-          const schema = store.type.getEntitySchema();
-          const valueDescription = schema ? schema.description.value : undefined;
-          return {entityValue, valueDescription};
         }
       } else if (handle instanceof CollectionHandle) {
         const values = await handle.toList();
