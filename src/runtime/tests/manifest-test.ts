@@ -584,7 +584,7 @@ ${particleStr1}
       const options = {errors: new Map()};
       assert.isFalse(recipe.normalize(options), 'expected type error');
       const errors = [...options.errors.values()];
-      assert.sameMembers(errors, [`Type validations failed for handle 'val: create': could not guarantee variable ~ meets read requirements * {name: Text, age: Number} with write guarantees * {first_name: Text, age: Number}`], 'expected type error');
+      assert.sameMembers(errors, [`Type validations failed for handle 'val: create': could not guarantee variable ~ meets read requirements * {first_name: Text, age: Number} with write guarantees * {name: Text, age: Number}`], 'expected type error');
     };
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
