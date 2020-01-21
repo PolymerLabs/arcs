@@ -22,7 +22,7 @@ import {Dictionary} from './hot.js';
 import {Flags} from './flags.js';
 import {StorageProxy} from './storageNG/storage-proxy.js';
 import {unifiedHandleFor} from './handle.js';
-import {SingletonHandle, CollectionHandle} from './storageNG/handle.js';
+import {SingletonHandle, CollectionHandle, handleNGFor} from './storageNG/handle.js';
 
 export class Description {
   private constructor(
@@ -144,15 +144,29 @@ export class Description {
   private static async _getPatternByNameFromDescriptionHandle(particle: Particle, arc: Arc): Promise<Dictionary<string>> {
     const descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
-      const descHandle = arc.findStoreById(descriptionConn.handle.id) as CollectionStorageProvider;
+      if (Flags.useNewStorageStack) {
+        const descStore = arc.findStoreById(descriptionConn.handle.id);
+        if (descStore) {
+          const descProxy = new StorageProxy('', await descStore.activate(), descStore.type, descStore.storageKey.toString());
+          const descHandle = handleNGFor('', descProxy, null, null, true, false) as CollectionHandle<{key: string, value: string}>;
 
-      if (descHandle) {
-        // TODO(shans): fix this mess when there's a unified Collection class or interface.
-        const descByName: Dictionary<string> = {};
-        for (const d of await descHandle.toList()) {
-          descByName[d.rawData.key] = d.rawData.value;
+          const descByName: Dictionary<string> = {};
+          for (const d of await descHandle.toList()) {
+            descByName[d.key] = d.value;
+          }
+          return descByName;
         }
-        return descByName;
+      } else {
+        const descHandle = arc.findStoreById(descriptionConn.handle.id) as CollectionStorageProvider;
+
+        if (descHandle) {
+          // TODO(shans): fix this mess when there's a unified Collection class or interface.
+          const descByName: Dictionary<string> = {};
+          for (const d of await descHandle.toList()) {
+            descByName[d.rawData.key] = d.rawData.value;
+          }
+          return descByName;
+        }
       }
     }
     return {};

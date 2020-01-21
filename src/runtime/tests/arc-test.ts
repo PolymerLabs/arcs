@@ -269,9 +269,10 @@ describe('Arc', () => {
   });
 
   it('instantiates recipes only if fate is correct', async () => {
-    const data = Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[]';
+    const data = Flags.useNewStorageStack ? '{"root": {"values": {}, "version": {}}, "locations": {}}' : '[]';
     const type = Flags.useNewStorageStack ? '![Thing]' : 'Thing';
     const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
 
     const manifest = await Manifest.parse(`
       schema Thing

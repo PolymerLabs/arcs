@@ -502,8 +502,8 @@ export class Arc implements ArcInterface {
           const type = recipeHandle.type;
 
           assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
-          const particleClone = particleSpec.clone().toLiteral();
-          particleClone.id = newStore.id;
+          const particleClone = particleSpec.clone();
+
 
           if (Flags.useNewStorageStack) {
             const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type, null);
@@ -511,7 +511,9 @@ export class Arc implements ArcInterface {
             // tslint:disable-next-line: no-any
             await (handle as SingletonHandle<any>).set(particleClone);
           } else {
-            await (newStore as SingletonStorageProvider).set(particleClone);
+            const particleLiteral = particleClone.toLiteral();
+            particleLiteral.id = newStore.id;
+            await (newStore as SingletonStorageProvider).set(particleLiteral);
           }
         } else if (['copy', 'map'].includes(recipeHandle.fate)) {
           const copiedStoreRef = this.context.findStoreById(recipeHandle.id);

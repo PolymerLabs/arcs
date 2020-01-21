@@ -23,6 +23,7 @@ import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
 import {ConCap} from '../../testing/test-util.js';
+import {Flags} from '../flags.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new FakeSlotComposer();
@@ -194,7 +195,10 @@ ${recipeManifest}
   });
 
   tests.forEach((test) => {
-    it('one particle with BigCollection descriptions ' + test.name, async () => {
+    it('one particle with BigCollection descriptions ' + test.name, async function() {
+      if (Flags.useNewStorageStack) {
+        this.skip();
+      }
       const manifest = await Manifest.parse(`
         schema Foo
           name: Text
@@ -703,8 +707,19 @@ recipe
       const arc = createTestArc(recipe, manifest);
       const hostedParticle = manifest.findParticleByName('NoDescription');
       const hostedType = manifest.findParticleByName('NoDescMuxer').handleConnections[0].type;
-      const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle') as SingletonStorageProvider;
-      await newStore.set(hostedParticle.clone().toLiteral());
+
+      /**
+       * Can't use singletonHandleForTest to store particle specs for old stack as serialization isn't
+       * implementated.
+       */
+      if (Flags.useNewStorageStack) {
+        const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle');
+        const newHandle = await singletonHandleForTest(arc, newStore);
+        await newHandle.set(hostedParticle.clone());
+      } else {
+        const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle') as SingletonStorageProvider;
+        await newStore.set(hostedParticle.clone().toLiteral());
+      }
 
       await test.verifySuggestion({arc}, 'Start with capital letter.');
     });

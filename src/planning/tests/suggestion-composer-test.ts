@@ -19,6 +19,8 @@ import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
 //import {SuggestionComposer} from '../suggestion-composer.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {Flags} from '../../runtime/flags.js';
 
 // class TestSuggestionComposer extends SuggestionComposer {
 //   get suggestConsumers() {
@@ -27,9 +29,16 @@ import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 // }
 
 describe('suggestion composer', () => {
-  it('singleton suggestion slots', async () => {
+  it('singleton suggestion slots', async function() {
+    if (Flags.withNewStorageStack) {
+      // TODO(shanestephens): Unskip this test once we've switched to the new storage stack and
+      // can replace the data in /src/runtime/tests/artifacts/suggestions/cake.json with the new
+      // data format.
+      this.skip();
+    }
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.load('./src/runtime/tests/artifacts/suggestions/Cake.recipes', loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
@@ -58,6 +67,7 @@ describe('suggestion composer', () => {
     assert.lengthOf(suggestions1, 1);
     //await suggestionComposer.setSuggestions(suggestions1);
     //assert.lengthOf(suggestionComposer.suggestConsumers, 1);
+    await observer.expectationsCompleted();
 
     observer.newExpectations()
         .expectRenderSlot('LightCandles', 'special')
@@ -75,9 +85,16 @@ describe('suggestion composer', () => {
     await observer.expectationsCompleted();
   });
 
-  it('suggestion set-slots', async () => {
+  it('suggestion set-slots', async function() {
+    if (Flags.withNewStorageStack) {
+      // TODO(shanestephens): Unskip this test once we've switched to the new storage stack and
+      // can replace the data in /src/runtime/tests/artifacts/suggestions/cake.json with the new
+      // data format.
+      this.skip();
+    }
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
     const manifestFile = './src/runtime/tests/artifacts/suggestions/Cakes.recipes';
     const context = await Manifest.load(manifestFile, loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
