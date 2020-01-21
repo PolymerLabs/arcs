@@ -163,6 +163,10 @@ final class AndroidArcsEnvironment {
       url += "&use-cache";
     }
     url += "&systrace=" + settings.systemTraceChannel();
+    if (settings.useWorkerPool()) {
+      url += "&use-worker-pool=" + settings.workerPoolOptions();
+      url += "&sizing-policy=" + settings.sizingPolicy();
+    }
 
     Log.i("Arcs", "runtime url: " + url);
     webView.loadUrl(url);
