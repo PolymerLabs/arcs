@@ -18,13 +18,11 @@ import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../type.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
-import {Identified, logWithIdentity} from '../testing/identity.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
  * directly connected to the StorageProxy.
  */
-@Identified
 export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
   private crdt: CRDTModel<T>;
@@ -49,6 +47,14 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     this.type = type;
     this.storageKey = storageKey;
     this.scheduler = new StorageProxyScheduler<T>();
+  }
+
+  async pause() {
+    await this.scheduler.pause();
+  }
+
+  unpause() {
+    this.scheduler.unpause();
   }
 
   getChannelConstructor(): ChannelConstructor {
@@ -104,14 +110,14 @@ export class StorageProxy<T extends CRDTTypeRecord> {
       // If a handle configured for sync notifications registers after we've received the full
       // model, notify it immediately.
       if (handle.options.notifySync && this.synchronized) {
-        logWithIdentity(this, 'initial registration sync');
-        handle.onSync();
+        this.notifySync();
       }
     }
     return this.versionCopy();
   }
 
   deregisterHandle(handleIn: Handle<T>) {
+    this.scheduler.dropMessages(handleIn);
     this.handles = this.handles.filter(handle => handle !== handleIn);
   }
 
@@ -162,7 +168,6 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   private setSynchronized() {
     if (!this.synchronized) {
-      logWithIdentity(this, 'explicit setSync');
       this.synchronized = true;
       this.notifySync();
     }
@@ -170,7 +175,6 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
   private clearSynchronized() {
     if (this.synchronized) {
-      logWithIdentity(this, 'explicit clearSync');
       this.synchronized = false;
       this.notifyDesync();
     }
@@ -180,7 +184,6 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
         this.crdt.merge(message.model);
-        console.log('new model!');
         this.setSynchronized();
         // NOTE: this.modelHasSynced used to run after this.synchronized
         // was set to true but before notifySync() was called. Is that a problem?
@@ -230,11 +233,6 @@ export class StorageProxy<T extends CRDTTypeRecord> {
             handle.particle,
             handle,
             {type: HandleMessageType.Update, op: operation, version});
-      } else if (handle.options.keepSynced) {
-        // keepSynced but not notifyUpdate, notify of the new model.
-        // TODO(shans): Is this correct? Why do we send a Sync message here?
-        this.scheduler.enqueue(
-            handle.particle, handle, {type: HandleMessageType.Sync});
       }
     }
   }
@@ -291,6 +289,11 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
   async getParticleView(): Promise<[T['consumerType'], VersionMap]> {
     return new Promise(resolve => {});
   }
+
+  getParticleViewAssumingSynchronized(): [T['consumerType'], VersionMap] {
+    return [null, {}];
+  }
+
   async getData(): Promise<T['data']> {
     return new Promise(resolve => {});
   }
@@ -302,6 +305,10 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
   protected notifySync() {}
 
   protected notifyDesync() {}
+
+  async pause() {}
+
+  unpause() {}
 
   protected async requestSynchronization(): Promise<boolean> {
     return new Promise(resolve => {});
@@ -325,6 +332,7 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
   private _queues = new Map<Particle, Map<Handle<T>, Event[]>>();
   private _idleResolver: Runnable|null = null;
   private _idle: Promise<void>|null = null;
+  private paused = false;
   constructor() {
     this._scheduled = false;
     // Particle -> {Handle -> [Queue of events]}
@@ -356,6 +364,24 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
     }
   }
 
+  async pause(): Promise<void> {
+    await this.idle;
+    this.paused = true;
+  }
+
+  unpause(): void {
+    this.paused = false;
+    this._schedule();
+  }
+
+  dropMessages(handle: Handle<T>) {
+    for (const byHandle of this._queues.values()) {
+      if (byHandle.has(handle)) {
+        byHandle.delete(handle);
+      }
+    }
+  }
+
   get idle(): Promise<void> {
     if (!this.busy) {
       return Promise.resolve();
@@ -378,13 +404,14 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
   }
 
   _dispatch(): void {
+    if (this.paused)
+      return;
     // TODO: should we process just one particle per task?
     while (this._queues.size > 0) {
       const particle = [...this._queues.keys()][0];
       const byHandle = this._queues.get(particle);
       this._queues.delete(particle);
       for (const [handle, queue] of byHandle.entries()) {
-        logWithIdentity(handle, queue);
         for (const update of queue) {
           this._dispatchUpdate(handle, update).catch(e =>
             handle.storageProxy.reportExceptionInHost(new SystemException(

@@ -22,7 +22,6 @@ import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {Producer} from '../hot.js';
-import {Identified, logWithIdentity, setLogFilterById} from '../testing/identity.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -116,7 +115,6 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     this.canRead = canRead;
     this.canWrite = canWrite;
 
-    this.clock = this.storageProxy.registerHandle(this);
     // TODO(shans): Be more principled about how to determine whether this is an
     // immediate mode handle or a standard handle.
     if (this.type instanceof EntityType) {
@@ -128,6 +126,8 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     } else {
       this.serializer = new ParticleSpecSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
+
+    this.clock = this.storageProxy.registerHandle(this);
   }
 
   // `options` may contain any of:
@@ -378,7 +378,6 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
 /**
  * A handle on a single entity.
  */
-@Identified
 export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Referenceable>> {
   async set(entity: T): Promise<boolean> {
     if (!this.canWrite) {
@@ -458,7 +457,6 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
   }
 
   async onSync(): Promise<void> {
-    logWithIdentity(this, this.name, 'onSync');
     assert(this.canRead, 'onSync should not be called for non-readable handles');
     if (this.particle) {
       await this.particle.callOnHandleSync(
@@ -468,8 +466,6 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     }
   }
 }
-
-setLogFilterById('SingletonHandle', 1);
 
 export function handleNGFor<T extends CRDTTypeRecord>(key: string,
       storageProxy: StorageProxy<T>,
