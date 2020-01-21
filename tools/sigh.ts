@@ -1032,6 +1032,10 @@ function testWdioShells(args: string[]) : boolean {
       //fixPathForWindows(path.resolve('shells/tests/wdio.conf.js'))*/,
       path.resolve('shells/tests/wdio.conf.js'),
       ...args,
+      // WebdriverIO reads the spec data from stdin which pipes in the changed
+      // git object within a git hook. Redirects stdin to the null device to
+      // avoid reading from stdin but from the wdio.conf.js directly.
+      // Also see {@link https://github.com/webdriverio/webdriverio/issues/4957}
       '< /dev/null',
   ]);
 }
