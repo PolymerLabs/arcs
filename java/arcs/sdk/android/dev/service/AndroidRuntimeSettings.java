@@ -27,6 +27,16 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   private static final String USE_CACHE_MANAGER_PROPERTY = "debug.arcs.runtime.use_cache_mgr";
   // Equivalent to &systrace parameter
   private static final String SYSTEM_TRACE_CHANNEL_PROPERTY = "debug.arcs.runtime.systrace";
+  // Whether to use worker pool to expedite Arcs execution.
+  private static final String USE_WORKER_POOL_PROPERTY = "debug.arcs.runtime.use_worker_pool";
+  // Supplies additional worker pool configurations.
+  // Sees {@link RuntimeSettings#workerPoolOptions()} for all available options.
+  private static final String WORKER_POOL_OPTIONS_PROPERTY =
+      "debug.arcs.runtime.worker_pool_options";
+  // Guides how to shrink or grow worker pool dynamically.
+  // Sees {@link RuntimeSettings#sizingPolicy()} for all available policies and
+  // the default policy.
+  private static final String SIZING_POLICY_PROPERTY = "debug.arcs.runtime.sizing_policy";
 
   // Default settings:
   // Logs the most information
@@ -48,6 +58,12 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   private static final boolean DEFAULT_USE_CACHE_MANAGER = true;
   // Disables system trace
   private static final String DEFAULT_SYSTEM_TRACE_CHANNEL = "";
+  // Disables worker pool
+  private static final boolean DEFAULT_USE_WORKER_POOL = false;
+  // Uses the default configuration
+  private static final String DEFAULT_WORKER_POOL_OPTIONS = "";
+  // Uses the default sizing policy
+  private static final String DEFAULT_SIZING_POLICY = "";
 
   private static final Logger logger = Logger.getLogger(
       AndroidRuntimeSettings.class.getName());
@@ -61,6 +77,9 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
     abstract int devServerPort();
     abstract boolean useCacheManager();
     abstract String systemTraceChannel();
+    abstract boolean useWorkerPool();
+    abstract String workerPoolOptions();
+    abstract String sizingPolicy();
 
     static Builder builder() {
       return new AutoValue_AndroidRuntimeSettings_Settings.Builder();
@@ -75,6 +94,9 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
       abstract Builder setDevServerPort(int devServerPort);
       abstract Builder setUseCacheManager(boolean useCacheManager);
       abstract Builder setSystemTraceChannel(String systemTraceChannel);
+      abstract Builder setUseWorkerPool(boolean useWorkerPool);
+      abstract Builder setWorkerPoolOptions(String workerPoolOptions);
+      abstract Builder setSizingPolicy(String sizingPolicy);
       abstract Settings build();
     }
   }
@@ -106,6 +128,15 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
                 SYSTEM_TRACE_CHANNEL_PROPERTY,
                 String::valueOf,
                 DEFAULT_SYSTEM_TRACE_CHANNEL))
+        .setUseWorkerPool(
+            getProperty(USE_WORKER_POOL_PROPERTY, Boolean::valueOf, DEFAULT_USE_WORKER_POOL))
+        .setWorkerPoolOptions(
+            getProperty(
+                WORKER_POOL_OPTIONS_PROPERTY,
+                String::valueOf,
+                DEFAULT_WORKER_POOL_OPTIONS))
+        .setSizingPolicy(
+            getProperty(SIZING_POLICY_PROPERTY, String::valueOf, DEFAULT_SIZING_POLICY))
         .build();
   }
 
@@ -146,17 +177,17 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
 
   @Override
   public boolean useWorkerPool() {
-    return false;
+    return settings.useWorkerPool();
   }
 
   @Override
   public String workerPoolOptions() {
-    return "";
+    return settings.workerPoolOptions();
   }
 
   @Override
   public String sizingPolicy() {
-    return "";
+    return settings.sizingPolicy();
   }
 
   /**
