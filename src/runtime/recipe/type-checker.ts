@@ -31,12 +31,6 @@ export class TypeChecker {
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
   static processTypeList(baseType: Type, list: TypeListInfo[], options: {typeErrors?: string[]} = {}) {
-    const error = (msg: string) => {
-      if (options && options.typeErrors) {
-        options.typeErrors.push(msg);
-      }
-      return null;
-    };
     const newBaseType = TypeVariable.make('', null, null);
     if (baseType) {
       newBaseType.variable.resolution = baseType;
@@ -82,7 +76,11 @@ export class TypeChecker {
         }
         return candidate;
       }
-      return error(`could not guarantee variable ${candidate} meets read requirements ${candidate.canReadSubset} with write guarantees ${candidate.canWriteSuperset}`);
+      if (options && options.typeErrors) {
+        const msg = `could not guarantee variable ${candidate} meets read requirements ${candidate.canReadSubset} with write guarantees ${candidate.canWriteSuperset}`;
+        options.typeErrors.push(msg);
+      }
+      return null;
     };
 
     const candidate = baseType.resolvedType();
