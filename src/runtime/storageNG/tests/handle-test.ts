@@ -179,7 +179,7 @@ describe('CollectionHandle', async () => {
   it('notifies particle on sync event', async () => {
     const particle: MockParticle = new MockParticle();
     const handle = await getCollectionHandle(barType, particle);
-    await handle.onSync();
+    await handle.onSync(new Set());
     assert.isTrue(particle.onSyncCalled);
   });
 
@@ -273,7 +273,7 @@ describe('SingletonHandle', async () => {
   it('notifies particle on sync event', async () => {
     const particle: MockParticle = new MockParticle();
     const handle = await getSingletonHandle(barType, particle);
-    await handle.onSync();
+    await handle.onSync(null);
     assert.isTrue(particle.onSyncCalled);
   });
 
