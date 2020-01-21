@@ -12,23 +12,54 @@ const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 //const Visualizer = require('webpack-visualizer-plugin');
 
-module.exports = {
+const debugSettings = {
+  // debug settings
   mode: 'none',
-  //target: 'node',
-  //devtool: 'source-map',
   optimization: {
-     minimize: false,
-     //minimize: true,
-     minimizer: [
-       new TerserPlugin({
-         terserOptions: {
-          mangle: false, // Note `mangle.properties` is `false` by default.
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        sourceMap: true,
+        parallel: true,
+        extractComments: true,
+        terserOptions: {
+          mangle: false
         }
       })
     ]
+  }
+};
+
+const performanceSettings = {
+  mode: 'production',
+  performance: {
+    hints: false
   },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        sourceMap: true,
+        parallel: true,
+        extractComments: true,
+        terserOptions: {
+          mangle: false
+        }
+      })
+    ]
+  }
+};
+
+const settings = performanceSettings;
+//const settings = debugSettings;
+
+module.exports = {
+  ...settings,
+  // all-purpose settings
+  devtool: 'source-map',
   entry: {
-    shell: `../web.js`
+    shell: `../web.js`,
+    worker: '../../../lib/source/worker.js'
   },
   output: {
     filename: '[name].js',
@@ -41,10 +72,7 @@ module.exports = {
     }]
   },
   stats: {
-    modulesSort: '!size',
-    //maxModules: 300,
-    //exclude: false,
-    //excludeModules: false
+    excludeModules: true
   },
   plugins: [
     // new Visualizer({
@@ -54,6 +82,11 @@ module.exports = {
       // use deployment configuration
       /paths.js/,
       resource =>  resource.request = './deploy/source/paths.js'
+    ),
+    new webpack.NormalModuleReplacementPlugin(
+      // worker.js needs the node version of this file
+      /sourcemapped-stacktrace-web.js/,
+      resource =>  resource.request = resource.request.replace(/web/, `node`)
     )
   ]
 };

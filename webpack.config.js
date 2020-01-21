@@ -9,6 +9,7 @@
  */
 const path = require('path');
 const webpack = require('webpack');
+const TerserPlugin = require('terser-webpack-plugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
 
 const lib = './shells/lib';
@@ -17,11 +18,50 @@ const lib = './shells/lib';
 const MAX_CYCLES = 0;
 let numCyclesDetected = 0;
 
-module.exports = {
+const debugSettings = {
+  // debug settings
   mode: 'none',
   optimization: {
-    minimize: false
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        sourceMap: true,
+        parallel: true,
+        extractComments: true,
+        terserOptions: {
+          mangle: false
+        }
+      })
+    ]
+  }
+};
+
+const performanceSettings = {
+  mode: 'production',
+  performance: {
+    hints: false
   },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        sourceMap: true,
+        parallel: true,
+        extractComments: true,
+        terserOptions: {
+          mangle: false
+        }
+      })
+    ]
+  }
+};
+
+//const settings = performanceSettings;
+const settings = debugSettings;
+
+module.exports = {
+  ...settings,
+  // all-purpose settings
   devtool: 'source-map',
   entry: {
     worker: `${lib}/source/worker.js`
