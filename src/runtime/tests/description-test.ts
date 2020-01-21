@@ -721,7 +721,7 @@ recipe
         await newStore.set(hostedParticle.clone().toLiteral());
       }
 
-      // await test.verifySuggestion({arc}, 'Start with capital letter.');
+      await test.verifySuggestion({arc}, 'Start with capital letter.');
     });
   });
 
