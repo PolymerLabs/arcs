@@ -43,7 +43,7 @@ See [here](../../../particles/Native/Wasm) for a working example.
       deps = ["//src/wasm/cpp:arcs"],
   )
   ```
-- Build your particle using Bazel: `./bazelisk build //particles/Native/Wasm:example_particle`.
+- Build your particle using Bazel: `./tools/bazelisk build //particles/Native/Wasm:example_particle`.
 
 
 ## Execute
@@ -54,4 +54,4 @@ See [here](../../../particles/Native/Wasm) for a working example.
   
 # Test
 
-`./bazelisk test //src/wasm:wasm-api-test`
+`./tools/bazelisk test //src/wasm:wasm-api-test`

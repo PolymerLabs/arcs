@@ -3,14 +3,14 @@
 ## Build the SDK
 
 - Android: TBD
-- Jvm: `./bazelisk build //java/arcs/sdk`
-- Wasm: `./bazelisk build //java/arcs/sdk:sdk-wasm`
+- Jvm: `./tools/bazelisk build //java/arcs/sdk`
+- Wasm: `./tools/bazelisk build //java/arcs/sdk:sdk-wasm`
 
 ## Test the SDK
 
 - Android: TBD
-- Jvm: `./bazelisk test //javatests/arcs/sdk/...`
-- Wasm: `./bazelisk test //src/wasm:wasm-api-test`
+- Jvm: `./tools/bazelisk test //javatests/arcs/sdk/...`
+- Wasm: `./tools/bazelisk test //src/wasm:wasm-api-test`
 
 ## Creating Kotlin Particles
 
@@ -53,7 +53,7 @@ See [this](../../../particles/Native/Wasm) or [this](../../../particles/Tutorial
       deps = [":example_lib"],
   )
   ```
-- Build your particle using Bazel: `./bazelisk build //particles/path/to/BUILD/file:example_particle`.
+- Build your particle using Bazel: `./tools/bazelisk build //particles/path/to/BUILD/file:example_particle`.
 
 
 ## Execute

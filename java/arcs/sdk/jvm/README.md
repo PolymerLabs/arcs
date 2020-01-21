@@ -3,12 +3,12 @@
 ## Build
 
 ```
-./bazelisk build //java/arc/sdk/jvm:arcs
+./tools/bazelisk build //java/arc/sdk/jvm:arcs
 ```
 
 ## Test
 
 ```
-./bazelisk build //javatests/arcs/sdk/...
+./tools/bazelisk build //javatests/arcs/sdk/...
 ```
 
