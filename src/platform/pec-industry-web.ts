@@ -37,6 +37,9 @@ export const pecIndustry = (loader): PecFactory => {
       usage: 0,
     })
   };
+  // spawn workers ahead of time at runtime initialization
+  // effective only when the use-worker-pool url parameter is supplied
+  workerPool.shrinkOrGrow();
   // return a pecfactory
   const factory = (id: Id, idGenerator?: IdGenerator) => {
     if (!workerBlobUrl && !useCache) {
@@ -59,6 +62,9 @@ export const pecIndustry = (loader): PecFactory => {
       traceChannel: systemTraceChannel,
       inWorkerPool: workerPool.exist(channel.port2),
     }, [channel.port1]);
+    // shrink or grow workers at run-time overlapping with new PEC execution
+    // effective only when the use-worker-pool url parameter is supplied
+    workerPool.shrinkOrGrow();
     return channel.port2;
   };
   // TODO(sjmiles): PecFactory type is defined against custom `MessageChannel` and `MessagePort` objects, not the
