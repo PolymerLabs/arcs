@@ -161,18 +161,12 @@ export const workerPool = new (class {
   resume(): PoolEntry | undefined {
     const entry = this.suspended.pop();
     if (entry) {
-      // Assigns a new message channel to avoid wrong handle updates passed
-      // to this worker (the updated handles belong to the particles in the
-      // previous PEC, this shouldn't have happened!).
+      // Assigns a new message channel to avoid wrong messages being passed to
+      // this worker unexpectedly i.e. [#4475 unregister zombie handle listeners]
+      // {@link https://github.com/PolymerLabs/arcs/issues/4475}
       //
-      // TODO(ianchang):
-      // Reuses the old channel after fixing the Arcs PEH/PEC issue:
-      // PEC StorageProxy registers with PEH to listen to updates on handles.
-      // Even after PEH and PEC are closed, the registered listeners are still
-      // in play (not unregistered) i.e. handles for data ingestion.
-      // If a message channel is reused, the registered listeners would keep
-      // forwarding the updates to this worker even though this workers has
-      // been suspended turns out unexpected behavior or exception.
+      // {@link PoolEntry#usage} counts how many times this worker is reused.
+      // Thus a zero value represents this worker was just spun up ahead of time.
       if (entry.usage > 0) {
         entry.channel = new MessageChannel();
       }
