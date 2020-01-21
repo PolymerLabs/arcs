@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.android.storage.service;
+package arcs.android.storage.service;
 
 import arcs.android.crdt.ParcelableCrdtException;
 

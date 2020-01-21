@@ -18,6 +18,9 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.android.storage.service.BindingContext
+import arcs.android.storage.service.BindingContextStatsImpl
+import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
@@ -28,10 +31,7 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.sdk.android.storage.service.BindingContext
-import arcs.sdk.android.storage.service.BindingContextStatsImpl
 import arcs.sdk.android.storage.service.ConnectionFactory
-import arcs.sdk.android.storage.service.DeferredResult
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import com.google.common.truth.Truth.assertThat

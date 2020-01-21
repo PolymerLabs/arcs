@@ -47,7 +47,7 @@ abstract class ResurrectorService : Service() {
         by guardWith(mutex, setOf())
     private var registeredRequestsByNotifiers: Map<StorageKey?, Set<ResurrectionRequest>>
         by guardWith(mutex, mapOf())
-    @VisibleForTesting lateinit var loadJob: Job
+    @VisibleForTesting var loadJob: Job? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.action?.takeIf { it == ACTION_RESET_REGISTRATIONS }?.let {
@@ -76,25 +76,26 @@ abstract class ResurrectorService : Service() {
      * registered for the specified [events] (or are registered for *all* events).
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    suspend fun resurrectClients(vararg events: StorageKey) = resurrectClients(events.toList())
+    suspend fun resurrectClients(vararg storageKeys: StorageKey) =
+        resurrectClients(storageKeys.toList())
 
     /**
      * Makes [Context.startService] or [Context.startActivity] calls to all clients who are
      * registered for the specified [events] (or are registered for *all* events).
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    suspend fun resurrectClients(events: Collection<StorageKey>) {
-        loadJob.join()
+    suspend fun resurrectClients(storageKeys: Collection<StorageKey>) {
+        loadJob?.join()
 
         val requests = mutableSetOf<ResurrectionRequest>()
         mutex.withLock {
-            events.forEach { event ->
+            storageKeys.forEach { event ->
                 registeredRequestsByNotifiers[event]?.let { requests.addAll(it) }
             }
             registeredRequestsByNotifiers[null]?.let { requests.addAll(it) }
         }
 
-        requests.forEach { it.issueResurrection(events) }
+        requests.forEach { it.issueResurrection(storageKeys) }
     }
 
     /**
@@ -104,7 +105,7 @@ abstract class ResurrectorService : Service() {
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     fun dumpRegistrations(writer: PrintWriter) {
         val registeredRequests = runBlocking {
-            loadJob.join()
+            loadJob?.join()
             mutex.withLock { this@ResurrectorService.registeredRequests.toList() }
         }
 

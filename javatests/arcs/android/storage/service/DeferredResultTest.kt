@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.android.storage.service
+package arcs.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.toParcelable

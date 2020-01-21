@@ -1,4 +1,3 @@
-load("//tools/build_defs/android:rules.bzl", "android_library")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
@@ -10,27 +9,15 @@ kt_android_library(
     srcs = glob(["*.kt"]),
     manifest = "AndroidManifest.xml",
     deps = [
-        ":aidl",
         "//java/arcs/android/common/resurrection",
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
-        "//java/arcs/core/crdt",
+        "//java/arcs/android/storage/service",
+        "//java/arcs/android/storage/service:aidl",
         "//java/arcs/core/storage",
-        "//java/arcs/core/storage/util",
-        "//java/arcs/core/util",
+        "//java/arcs/core/storage/driver",
         "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
-    ],
-)
-
-android_library(
-    name = "aidl",
-    idl_import_root = ".",
-    idl_srcs = glob(["*.aidl"]),
-    manifest = "//java/arcs/android/common:AndroidManifest.xml",
-    deps = [
-        "//java/arcs/android/crdt",
-        "//java/arcs/android/storage",
     ],
 )

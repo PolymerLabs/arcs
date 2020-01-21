@@ -18,8 +18,12 @@ import android.os.IBinder
 import android.text.format.DateUtils
 import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.android.storage.service.BindingContext
+import arcs.android.storage.service.BindingContextStatsImpl
+import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.driver.RamDiskDriverProvider
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
@@ -54,7 +58,13 @@ class StorageService : ResurrectorService() {
             parcelableOptions.crdtType,
             coroutineContext,
             stats
-        )
+        ) { storageKey, message ->
+            when (message) {
+                is ProxyMessage.ModelUpdate<*, *, *>,
+                is ProxyMessage.Operations<*, *, *> -> resurrectClients(storageKey)
+                is ProxyMessage.SyncRequest<*, *, *> -> Unit
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -92,6 +102,11 @@ class StorageService : ResurrectorService() {
 
     companion object {
         private const val EXTRA_OPTIONS = "storeOptions"
+
+        init {
+            RamDiskDriverProvider()
+            // TODO: handle registration of volatile driver providers
+        }
 
         /**
          * Creates an [Intent] to use when binding to the [StorageService] from a [ServiceStore].
