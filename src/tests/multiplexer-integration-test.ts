@@ -185,13 +185,6 @@ describe('Multiplexer', () => {
     await arc.instantiate(plan);
     await arc.idle;
     //
-    // for (const store of arc._stores) {
-    //   const collection = store as VolatileCollection;
-    //   if (collection.toList) {
-    //     const data = await collection.toList();
-    //     console.log(data);
-    //   }
-    // }
     const store = arc._stores[1] as VolatileCollection;
     const data = await store.toList();
     console.log(data);
