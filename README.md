@@ -178,7 +178,7 @@ To verify ANDROID_HOME has been set properly, you can run
 Once your Android environment has been setup, you can run the tests
 using bazel:
 ```
-./bazelisk test javatests/...
+./tools/bazelisk test javatests/...
 ```
 
 ### Debugging tests

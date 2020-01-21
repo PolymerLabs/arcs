@@ -12,7 +12,7 @@ cd $ROOT
 status "Testing all of the things."
 
 ./tools/sigh webpack
-./bazelisk test //java/... //javatests/... //src/... //particles/...
+./tools/bazelisk test //java/... //javatests/... //src/... //particles/...
 ./tools/sigh testShells
 ./tools/ktlint
 ./tools/sigh lint
