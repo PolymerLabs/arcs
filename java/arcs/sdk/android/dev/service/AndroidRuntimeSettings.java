@@ -60,10 +60,10 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   private static final String DEFAULT_SYSTEM_TRACE_CHANNEL = "";
   // Disables worker pool
   private static final boolean DEFAULT_USE_WORKER_POOL = false;
-  // Uses the default configuration
+  // Uses the default settings (no additional configurations)
   private static final String DEFAULT_WORKER_POOL_OPTIONS = "";
-  // Uses the default sizing policy
-  private static final String DEFAULT_SIZING_POLICY = "";
+  // Uses the default sizing policy auto-selected by Arcs runtime
+  private static final String DEFAULT_SIZING_POLICY = "default";
 
   private static final Logger logger = Logger.getLogger(
       AndroidRuntimeSettings.class.getName());

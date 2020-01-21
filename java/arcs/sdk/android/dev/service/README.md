@@ -119,4 +119,4 @@ Android properties are used to change and tweak Arcs settings at run-time.
 | debug.arcs.runtime.systrace | Specify system tracing channel (options: [android,console]) | n/a (trace off)
 | debug.arcs.runtime.use_worker_pool | Whether to use the Arcs Worker Pool | false
 | debug.arcs.runtime.worker_pool_options| Provide additional worker pool configurations | ""
-| debug.arcs.runtime.sizing_policy | Select worker pool dynamic sizing (shrink/grow) policy | conservative
+| debug.arcs.runtime.sizing_policy | Select worker pool dynamic sizing (shrink/grow) policy | default

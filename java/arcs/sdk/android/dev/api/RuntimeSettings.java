@@ -60,6 +60,8 @@ public interface RuntimeSettings {
   //                 anytime if possible
   //   'predictive': foresee worker demands in accordance of current demand and
   //                 historical stats
-  // Default: conservative
+  //   'default': the default policy auto-selected by Arcs runtime which is
+  //              'conservative'.
+  // If none or an unknown policy is specified, go with 'default'.
   String sizingPolicy();
 }
