@@ -13,7 +13,8 @@ import {Manifest} from '../manifest.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
         ReferenceType, RelationType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Entity} from '../entity.js';
-import {Refinement} from '../refiner.js';
+import { Refinement } from '../refiner.js';
+import { UnaryExpressionNode, BooleanNode, FieldNode } from '../manifest-ast-nodes.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -45,30 +46,45 @@ describe('types', () => {
     });
 
     it('Entity', async () => {
-      const ref = {
+      const ref = Refinement.fromAst({
         kind: 'refinement',
+        location: null,
         expression: {
           kind: 'binary-expression-node',
-          leftExpr: {kind: 'field-name-node', value: 'a'},
-          rightExpr: {kind: 'field-name-node', value: 'b'},
+          location: null,
+          leftExpr: {
+            kind: 'field-name-node',
+            value: 'a',
+            location: null,
+          } as FieldNode,
+          rightExpr: {
+            kind: 'field-name-node',
+            value: 'b',
+            location: null,
+          } as FieldNode,
           operator: 'and'
-        }
+        }}, {'a': 'Boolean', 'b': 'Boolean'});
       // tslint:disable-next-line: no-any
-      } as any;
       const entity = EntityType.make(['Foo'], {
         value: {
           kind: 'schema-primitive',
-          refinement: {
+          refinement: Refinement.fromAst({
             kind: 'refinement',
             expression: {
               kind: 'unary-expression-node',
-              expr: 'value',
-              operator: 'not'
-            }
-          },
+              expr: {
+                kind: 'field-name-node',
+                value: 'value',
+                location: null,
+              } as FieldNode,
+              operator: 'not',
+              location: null,
+            } as UnaryExpressionNode,
+            location: null
+          }, {'value': 'Boolean'}),
           type: 'Text'
         }},
-        {refinement: Refinement.fromAst(ref, {'a': 'Boolean', 'b': 'Boolean'})}
+        {refinement: ref}
       );
       deepEqual(entity.toLiteral(), {
         tag: 'Entity',
@@ -77,24 +93,27 @@ describe('types', () => {
           refinement: {
             kind: 'refinement',
             expression: {
-              evalType: 'Boolean',
+              kind: 'BinaryExpressionNode',
               leftExpr: {
-                evalType: 'Boolean',
-                value: 'a'
-             },
-              operator: {
-                op: 'and',
-                opInfo: {
-                  argType: 'Boolean',
-                  evalType: 'Boolean',
-                  nArgs: 2,
-                  sqlOp: 'AND'
-                }
+                kind: 'FieldNamePrimitiveNode',
+                value: 'a',
+                evalType: 'Boolean'
               },
               rightExpr: {
-                evalType: 'Boolean',
-                value: 'b'
-             }
+                kind: 'FieldNamePrimitiveNode',
+                value: 'b',
+                evalType: 'Boolean'
+              },
+              operator: {
+                op: "and",
+                opInfo: {
+                  argType: "Boolean",
+                  evalType: "Boolean",
+                  nArgs: 2,
+                  sqlOp: "AND",
+                }
+              },
+              evalType: 'Boolean'
             }
           },
           fields: {
@@ -103,9 +122,22 @@ describe('types', () => {
               refinement: {
                 kind: 'refinement',
                 expression: {
-                  kind: 'unary-expression-node',
-                  expr: 'value',
-                  operator: 'not'
+                  kind: 'UnaryExpressionNode',
+                  expr: {
+                    kind: 'FieldNamePrimitiveNode',
+                    value: 'value',
+                    evalType: 'Boolean'
+                  },
+                  operator: {
+                    op: "not",
+                    opInfo: {
+                      argType: "Boolean",
+                      evalType: "Boolean",
+                      nArgs: 1,
+                      sqlOp: "NOT",
+                    }
+                  },
+                  evalType: 'Boolean'
                 }
               },
               type: 'Text'

@@ -53,11 +53,21 @@ export class Refinement {
   constructor(expr: RefinementExpression) {
     // TODO(ragdev): Should be a copy?
     // TODO(ragdev): ensure that the refinement contains at least 1 fieldName
+    if (!expr) {
+      return null;
+    }
     this.expression = expr;
   }
 
   static fromAst(ref: RefinementNode, typeData: Dictionary<ExpressionPrimitives>): Refinement {
     return new Refinement(RefinementExpression.fromAst(ref.expression, typeData));
+  }
+
+  static fromLiteral(ref): Refinement {
+    if (!ref) {
+      return null;
+    }
+    return new Refinement(RefinementExpression.fromLiteral(ref.expression));
   }
 
   static refineData(entity: Entity, schema: Schema): void {
@@ -159,6 +169,7 @@ export class Refinement {
 abstract class RefinementExpression {
   evalType: Primitive.BOOLEAN | Primitive.NUMBER | Primitive.TEXT;
 
+  constructor(readonly kind: 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode') {}
   static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
     switch (expr.kind) {
       case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
@@ -166,6 +177,22 @@ abstract class RefinementExpression {
       case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
       case 'number-node': return NumberPrimitive.fromAst(expr);
       case 'boolean-node': return BooleanPrimitive.fromAst(expr);
+      default:
+        // Should never happen; all known kinds are handled above, but the linter wants a default.
+        throw new Error('Unknown node type.');
+    }
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    if(!expr) {
+      return null;
+    }
+    switch (expr.kind) {
+      case 'BinaryExpressionNode': return BinaryExpression.fromLiteral(expr);
+      case 'UnaryExpressionNode': return UnaryExpression.fromLiteral(expr);
+      case 'FieldNamePrimitiveNode': return FieldNamePrimitive.fromLiteral(expr);
+      case 'NumberPrimitiveNode': return NumberPrimitive.fromLiteral(expr);
+      case 'BooleanPrimitiveNode': return BooleanPrimitive.fromLiteral(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
         throw new Error('Unknown node type.');
@@ -192,7 +219,7 @@ export class BinaryExpression extends RefinementExpression {
   operator: RefinementOperator;
 
   constructor(leftExpr: RefinementExpression, rightExpr: RefinementExpression, op: RefinementOperator) {
-    super();
+    super('BinaryExpressionNode');
     this.leftExpr = leftExpr;
     this.rightExpr = rightExpr;
     this.operator = op;
@@ -205,6 +232,13 @@ export class BinaryExpression extends RefinementExpression {
             RefinementExpression.fromAst(expression.leftExpr, typeData),
             RefinementExpression.fromAst(expression.rightExpr, typeData),
             new RefinementOperator(expression.operator));
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    return new BinaryExpression(
+            RefinementExpression.fromLiteral(expr.leftExpr),
+            RefinementExpression.fromLiteral(expr.rightExpr),
+            RefinementOperator.fromLiteral(expr.operator));
   }
 
   toString(): string {
@@ -307,7 +341,7 @@ export class UnaryExpression extends RefinementExpression {
   operator: RefinementOperator;
 
   constructor(expr: RefinementExpression, op: RefinementOperator) {
-    super();
+    super('UnaryExpressionNode');
     this.expr = expr;
     this.operator = op;
     this.operator.validateOperandCompatibility([this.expr.evalType]);
@@ -318,6 +352,12 @@ export class UnaryExpression extends RefinementExpression {
     return new UnaryExpression(
             RefinementExpression.fromAst(expression.expr, typeData),
             new RefinementOperator((expression.operator === Op.SUB) ? Op.NEG : expression.operator));
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    return new UnaryExpression(
+            RefinementExpression.fromLiteral(expr.expr),
+            RefinementOperator.fromLiteral(expr.operator));
   }
 
   toString(): string {
@@ -370,7 +410,7 @@ class FieldNamePrimitive extends RefinementExpression {
   value: string;
 
   constructor(value: string, evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT) {
-    super();
+    super('FieldNamePrimitiveNode');
     this.value = value;
     this.evalType = evalType;
   }
@@ -380,6 +420,10 @@ class FieldNamePrimitive extends RefinementExpression {
       throw new Error(`Unresolved field name '${expression.value}' in the refinement expression.`);
     }
     return new FieldNamePrimitive(expression.value, typeData[expression.value]);
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    return new FieldNamePrimitive(expr.value, expr.evalType);
   }
 
   toString(): string {
@@ -410,12 +454,16 @@ class NumberPrimitive extends RefinementExpression {
   value: number;
 
   constructor(value: number) {
-    super();
+    super('NumberPrimitiveNode');
     this.value = value;
   }
 
   static fromAst(expression: NumberNode): RefinementExpression {
     return new NumberPrimitive(expression.value);
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    return new NumberPrimitive(expr.value);
   }
 
   toString(): string {
@@ -440,12 +488,16 @@ class BooleanPrimitive extends RefinementExpression {
   value: boolean;
 
   constructor(value: boolean) {
-    super();
+    super('BooleanPrimitiveNode');
     this.value = value;
   }
 
   static fromAst(expression: BooleanNode): RefinementExpression {
     return new BooleanPrimitive(expression.value);
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    return new BooleanPrimitive(expr.value);
   }
 
   toString(): string {
@@ -805,26 +857,42 @@ interface OperatorInfo {
   nArgs: number;
   argType: string;
   evalType: Primitive;
-  evalFn: (exprs: ExpressionPrimitives[]) => ExpressionPrimitives;
   sqlOp: string;
 }
 
 const operatorTable: Dictionary<OperatorInfo> = {
-  [Op.AND]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, evalFn: e => e[0] && e[1], sqlOp: 'AND'},
-  [Op.OR]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, evalFn: e => e[0] || e[1], sqlOp: 'OR'},
-  [Op.LT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] < e[1], sqlOp: '<'},
-  [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] > e[1], sqlOp: '>'},
-  [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] <= e[1], sqlOp: '<='},
-  [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, evalFn: e => e[0] >= e[1], sqlOp: '>='},
-  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: (e: number[]) => e[0] + e[1], sqlOp: '+'},
-  [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] - e[1], sqlOp: '-'},
-  [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] * e[1], sqlOp: '*'},
-  [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => e[0] / e[1], sqlOp: '/'},
-  [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN, evalFn: e => !e[0], sqlOp: 'NOT'},
-  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, evalFn: e => -e[0], sqlOp: '-'},
-  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] === e[1], sqlOp: '='},
-  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, evalFn: e => e[0] !== e[1], sqlOp: '<>'},
+  [Op.AND]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, sqlOp: 'AND'},
+  [Op.OR]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, sqlOp: 'OR'},
+  [Op.LT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '<'},
+  [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '>'},
+  [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '<='},
+  [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '>='},
+  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '+'},
+  [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '-'},
+  [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '*'},
+  [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '/'},
+  [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN, sqlOp: 'NOT'},
+  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER,sqlOp: '-'},
+  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '='},
+  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '<>'},
 };
+
+const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimitives> = {
+  [Op.AND]: e => e[0] && e[1],
+  [Op.OR]: e => e[0] || e[1],
+  [Op.LT]: e => e[0] < e[1],
+  [Op.GT]: e => e[0] > e[1],
+  [Op.LTE]: e => e[0] <= e[1],
+  [Op.GTE]: e => e[0] >= e[1],
+  [Op.ADD]: e => e[0] + e[1],
+  [Op.SUB]: e => e[0] - e[1],
+  [Op.MUL]: e => e[0] * e[1],
+  [Op.DIV]: e => e[0] / e[1],
+  [Op.NOT]: e => !e[0],
+  [Op.NEG]: e => -e[0],
+  [Op.EQ]: e => e[0] === e[1],
+  [Op.NEQ]: e => e[0] !== e[1],
+}
 
 export class RefinementOperator {
   opInfo: OperatorInfo;
@@ -833,6 +901,10 @@ export class RefinementOperator {
   constructor(operator: string) {
     this.op = operator;
     this.updateOp(operator);
+  }
+
+  static fromLiteral(refOpr): RefinementOperator {
+    return new RefinementOperator(refOpr.op);
   }
 
   toSQLOp(): string {
@@ -848,7 +920,7 @@ export class RefinementOperator {
   }
 
   eval(exprs: ExpressionPrimitives[]): ExpressionPrimitives {
-    return this.opInfo.evalFn(exprs);
+    return evalTable[this.op](exprs);
   }
 
   evalType(): Primitive {

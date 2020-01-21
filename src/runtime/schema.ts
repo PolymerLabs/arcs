@@ -26,7 +26,7 @@ export class Schema {
   // tslint:disable-next-line: no-any
   readonly fields: Dictionary<any>;
   // tslint:disable-next-line: no-any
-  refinement?: any;
+  refinement?: Refinement;
   description: Dictionary<string> = {};
   isAlias: boolean;
   hashStr: string = null;
