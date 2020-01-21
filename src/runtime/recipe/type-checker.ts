@@ -29,16 +29,20 @@ export class TypeChecker {
       return candidate;
     }
     if (candidate.canReadSubset == null || candidate.canWriteSuperset == null) {
+      // This variable cannot be concretized without losing information.
       return candidate;
     }
     if (candidate.canReadSubset.isAtleastAsSpecificAs(candidate.canWriteSuperset)) {
+      // The resolution is still possible, but we may not have more information then the current candidate.
       if (candidate.canWriteSuperset.isAtleastAsSpecificAs(candidate.canReadSubset)) {
+        // The type bounds have 'met', they are equivalent and are the resolution.
         candidate.variable.resolution = candidate.canReadSubset;
       }
       return candidate;
     }
+    // The candidate's requirements are no longer valid, it is uninhabitable / unsatisfiable.
     if (options && options.typeErrors) {
-      const msg = `could not guarantee variable ${candidate} meets read requirements ${candidate.canReadSubset} with write guarantees ${candidate.canWriteSuperset}`;
+      const msg = `could not show variable ${candidate} meets read requirements ${candidate.canReadSubset} with write guarantees ${candidate.canWriteSuperset}`;
       options.typeErrors.push(msg);
     }
     return null;
