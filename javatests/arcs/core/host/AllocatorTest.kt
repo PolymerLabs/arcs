@@ -119,10 +119,8 @@ class AllocatorTest {
             )
 
             ServiceLoaderHostRegistry.availableArcHosts().forEach {
-                when (it) {
-                    is TestingHost -> it.setup()
-                    else -> {
-                    }
+                if (it is TestingHost) {
+                    it.setup()
                 }
             }
         }
@@ -138,25 +136,18 @@ class AllocatorTest {
         val allocator = Allocator(ServiceLoaderHostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
-        assertThat(planPartitions.size).isEqualTo(2)
-        planPartitions.forEach {
-            assertThat(it.arcId).isEqualTo(arcId.toString())
-            when (it.arcHost) {
-                ReadingHost::class.java.canonicalName -> {
-                    assertThat(it.handleConnectionSpecs).containsExactly(
-                        readPersonHandleConnectionSpec
-                    )
-                }
-                WritingHost::class.java.canonicalName -> {
-                    assertThat(it.handleConnectionSpecs).containsExactly(
-                        writePersonHandleConnectionSpec
-                    )
-                }
-                else -> {
-                    assert(false)
-                }
-            }
-        }
+        assertThat(planPartitions).containsExactly(
+            PlanPartition(
+                arcId.toString(),
+                ReadingHost::class.java.canonicalName,
+                listOf(readPersonHandleConnectionSpec)
+            ),
+            PlanPartition(
+                arcId.toString(),
+                WritingHost::class.java.canonicalName,
+                listOf(writePersonHandleConnectionSpec)
+            )
+        )
     }
 
     @Test
