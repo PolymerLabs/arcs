@@ -107,7 +107,7 @@ export class Arc implements ArcInterface {
 
 
   readonly id: Id;
-  private readonly idGenerator: IdGenerator = IdGenerator.newSession();
+  readonly idGenerator: IdGenerator = IdGenerator.newSession();
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, UnifiedStore>}>();
   readonly pec: ParticleExecutionHost;
 

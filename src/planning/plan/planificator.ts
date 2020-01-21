@@ -9,33 +9,53 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {Arc} from '../../runtime/arc.js';
+import {Entity} from '../../runtime/entity.js';
+import {Flags} from '../../runtime/flags.js';
+import {unifiedHandleFor} from '../../runtime/handle.js';
 import {Runnable} from '../../runtime/hot.js';
 import {KeyBase} from '../../runtime/storage/key-base.js';
 import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
-import {EntityType} from '../../runtime/type.js';
+import {Exists} from '../../runtime/storageNG/drivers/driver.js';
+import {SingletonHandle} from '../../runtime/storageNG/handle.js';
+import {StorageKey} from '../../runtime/storageNG/storage-key.js';
+import {StorageProxy} from '../../runtime/storageNG/storage-proxy.js';
+import {Store} from '../../runtime/storageNG/store.js';
+import {UnifiedActiveStore, UnifiedStore} from '../../runtime/storageNG/unified-store.js';
+import {checkDefined} from '../../runtime/testing/preconditions.js';
+import {EntityType, SingletonType, Type} from '../../runtime/type.js';
+import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
 import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
-import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
 
 const planificatorId = 'plans';
 
 export type PlanificatorOptions = {
-  storageKeyBase?: string;
+  storageKeyBase?: string|StorageKey;
   debug?: boolean;
   onlyConsumer?: boolean;
   inspectorFactory?: PlannerInspectorFactory;
   noSpecEx?: boolean;
 };
 
+function isVolatile(key: string|StorageKey): boolean {
+  if (typeof key === 'string') {
+    return key.startsWith('volatile');
+  }
+  if (key instanceof StorageKey) {
+    return key.protocol === 'volatile';
+  }
+  return false;
+}
+
 export class Planificator {
+  // Hack: we use an entity with a single text field to store the json representation of a search.
+  static searchEntityType = EntityType.make(['Search'], {current: 'Text'});
   static async create(arc: Arc, {storageKeyBase, onlyConsumer, debug = false, inspectorFactory, noSpecEx}: PlanificatorOptions) {
-    debug = debug || (Boolean(storageKeyBase) && storageKeyBase.startsWith('volatile'));
-    const store = await Planificator._initSuggestStore(arc, storageKeyBase) as SingletonStorageProvider;
+    debug = debug || (Boolean(storageKeyBase) && isVolatile(storageKeyBase));
+    const store = await Planificator._initSuggestStore(arc, storageKeyBase);
     const searchStore = await Planificator._initSearchStore(arc);
     const result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
     await result.load();
@@ -53,11 +73,11 @@ export class Planificator {
   dataChangeCallback: Runnable;
   storeCallbackIds: Map<UnifiedStore, number>;
   search: string|null = null;
-  searchStore: SingletonStorageProvider;
+  searchStore: UnifiedActiveStore;
   inspector: PlannerInspector|undefined;
   noSpecEx: boolean;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore: SingletonStorageProvider, onlyConsumer: boolean = false, debug: boolean = false, inspectorFactory?: PlannerInspectorFactory, noSpecEx: boolean = false) {
+  constructor(arc: Arc, result: PlanningResult, searchStore: UnifiedActiveStore, onlyConsumer: boolean = false, debug: boolean = false, inspectorFactory?: PlannerInspectorFactory, noSpecEx: boolean = false) {
     this.arc = arc;
     this.searchStore = searchStore;
     this.noSpecEx = noSpecEx;
@@ -154,45 +174,82 @@ export class Planificator {
     });
   }
 
-  static constructSuggestionKey(arc: Arc, storageKeyBase?: string): KeyBase {
-    if (typeof arc.storageKey !== 'string') {
-      throw new Error(`Planner doesn't work with new-style storage yet!`);
+  static constructSuggestionKey(arc: Arc, storageKeyBase?: string|StorageKey): KeyBase|StorageKey {
+    if (typeof arc.storageKey === 'string') {
+      if (storageKeyBase) {
+        assert(typeof storageKeyBase === 'string');
+      }
+      const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
+      const keybase = arc.storageProviderFactory.parseStringAsKey(
+          storageKeyBase as string || arcStorageKey.base());
+      return keybase.childKeyForSuggestions(planificatorId, arcStorageKey.arcId);
     }
-    const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
-    const keybase = arc.storageProviderFactory.parseStringAsKey(storageKeyBase || arcStorageKey.base());
-    return keybase.childKeyForSuggestions(planificatorId, arcStorageKey.arcId);
+    if (storageKeyBase) {
+      assert(storageKeyBase instanceof StorageKey);
+    }
+    const keybase = (storageKeyBase || arc.storageKey) as StorageKey;
+    return keybase.childKeyForSuggestions(planificatorId);
   }
 
-  static constructSearchKey(arc: Arc): KeyBase {
-    if (typeof arc.storageKey !== 'string') {
-      throw new Error(`Planner doesn't work with new-style storage yet!`);
+  static constructSearchKey(arc: Arc): KeyBase|StorageKey {
+    if (typeof arc.storageKey === 'string') {
+      const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
+      const keybase = arc.storageProviderFactory.parseStringAsKey(arcStorageKey.base());
+      return keybase.childKeyForSearch(planificatorId);
     }
-    const arcStorageKey = arc.storageProviderFactory.parseStringAsKey(arc.storageKey);
-    const keybase = arc.storageProviderFactory.parseStringAsKey(arcStorageKey.base());
-    return keybase.childKeyForSearch(planificatorId);
-}
+    return arc.storageKey.childKeyForSearch(planificatorId);
+  }
 
-  private static async _initSuggestStore(arc: Arc, storageKeyBase?: string): Promise<SingletonStorageProvider> {
+  private static async _initSuggestStore(arc: Arc, storageKeyBase?: string|StorageKey): Promise<UnifiedActiveStore> {
     const storageKey = Planificator.constructSuggestionKey(arc, storageKeyBase);
-    return Planificator._initStore(
-        arc, 'suggestions-id', EntityType.make(['Suggestions'], {current: 'Object'}), storageKey);
+    return Planificator._initStore(arc, 'suggestions-id', PlanningResult.suggestionEntityType, storageKey);
   }
 
-  private static async _initSearchStore(arc: Arc): Promise<SingletonStorageProvider> {
+  private static async _initSearchStore(arc: Arc): Promise<UnifiedActiveStore> {
     const storageKey = Planificator.constructSearchKey(arc);
-    return Planificator._initStore(
-        arc, 'search-id', EntityType.make(['Search'], {current: 'Object'}), storageKey);
+    return Planificator._initStore(arc, 'search-id', PlanningResult.suggestionEntityType, storageKey);
   }
 
-  private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: KeyBase) : Promise<SingletonStorageProvider> {
-    const store = await arc.storageProviderFactory.connectOrConstruct(id, type, storageKey.toString());
-    assert(store, `Failed initializing '${storageKey.toString()}' store.`);
-    store.referenceMode = false;
-    return store as SingletonStorageProvider;
+  private static async _initStore(arc: Arc, id: string, type: Type, storageKey: KeyBase|StorageKey): Promise<UnifiedActiveStore> {
+    if (Flags.useNewStorageStack) {
+      if (storageKey instanceof KeyBase) {
+        throw new Error(`Can't use string storage keys with the new storage stack.`);
+      }
+      const store = await new Store({storageKey, exists: Exists.MayExist, type: new SingletonType(type), id}).activate();
+      return store;
+    } else {
+      if (!(storageKey instanceof KeyBase)) {
+        throw new Error(`Can't use new-style storage keys with the old storage stack.`);
+      }
+      const store = await arc.storageProviderFactory.connectOrConstruct(id, type, storageKey.toString());
+      assert(store, `Failed initializing '${storageKey.toString()}' store.`);
+      store.referenceMode = false;
+      return store as SingletonStorageProvider;
+    }
   }
 
   async _storeSearch(): Promise<void> {
-    const values = await this.searchStore.get() || [];
+    let values = [];
+    let handleNG;
+    if (Flags.useNewStorageStack) {
+      const proxy = new StorageProxy(
+          this.arc.generateID().toString(),
+          this.searchStore,
+          this.searchStore.baseStore.type,
+          this.searchStore.baseStore.storageKey.toString());
+      handleNG = unifiedHandleFor({
+                   proxy,
+                   idGenerator: this.arc.idGenerator,
+                   particleId: this.arc.generateID().toString()
+                 }) as SingletonHandle<Entity>;
+      const handleValue = await handleNG.get();
+      if (handleValue) {
+        values = JSON.parse(handleValue.current);
+      }
+    } else {
+      values = await (this.searchStore as SingletonStorageProvider).get() || [];
+    }
+
     const arcKey = this.arc.id.idTreeAsString();
     const newValues: {arc: string, search: string}[] = [];
     for (const {arc, search} of values) {
@@ -207,6 +264,11 @@ export class Planificator {
     if (this.search) {
       newValues.push({search: this.search, arc: arcKey});
     }
-    return this.searchStore.set(newValues);
+    if (Flags.useNewStorageStack) {
+      const entityClass = Entity.createEntityClass(Planificator.searchEntityType.entitySchema, null);
+      await handleNG.set(new entityClass({current: JSON.stringify(newValues)}));
+    } else {
+      return (this.searchStore as SingletonStorageProvider).set(newValues);
+    }
   }
 }
