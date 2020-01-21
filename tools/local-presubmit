@@ -13,8 +13,6 @@ status "Testing all of the things."
 
 ./tools/sigh webpack
 ./bazelisk test //java/... //javatests/... //src/... //particles/...
-echo generate changes
-echo $@
 ./tools/sigh testShells
 ./tools/ktlint
 ./tools/sigh lint

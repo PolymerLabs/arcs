@@ -1031,7 +1031,8 @@ function testWdioShells(args: string[]) : boolean {
       // windows machine (`e:/path/` becomes `e:/e:/path/`)
       //fixPathForWindows(path.resolve('shells/tests/wdio.conf.js'))*/,
       path.resolve('shells/tests/wdio.conf.js'),
-      ...args
+      ...args,
+      '< /dev/null',
   ]);
 }
 
