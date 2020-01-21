@@ -8,9 +8,12 @@ arcs_kt_jvm_library(
     name = "host",
     srcs = glob(["*.kt"]),
     deps = [
+        "//java/arcs/core/common",
+        "//java/arcs/core/data",
         "//java/arcs/core/sdk",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/util",
         "//third_party/java/auto:auto_service",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
