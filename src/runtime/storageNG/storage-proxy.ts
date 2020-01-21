@@ -110,7 +110,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
       // If a handle configured for sync notifications registers after we've received the full
       // model, notify it immediately.
       if (handle.options.notifySync && this.synchronized) {
-        this.notifySync();
+        this.notifySyncForHandle(handle);
       }
     }
     return this.versionCopy();
@@ -247,6 +247,11 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
+  protected notifySyncForHandle(handle: Handle<T>) {
+    const model = this.crdt.getParticleView();
+    this.scheduler.enqueue(handle.particle, handle, {type: HandleMessageType.Sync, model});
+  }
+
   protected notifyDesync() {
     for (const handle of this.handles) {
       if (handle.options.notifyDesync) {
@@ -304,6 +309,8 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
   protected notifyUpdate(operation: CRDTOperation, predicate: Predicate<HandleOptions>) {}
 
   protected notifySync() {}
+
+  protected notifySyncForHandle(handle: Handle<T>) {}
 
   protected notifyDesync() {}
 
