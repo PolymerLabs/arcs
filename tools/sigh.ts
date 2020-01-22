@@ -402,7 +402,7 @@ function tsc(path: string): boolean {
   return result.success;
 }
 
-function makeLink(src: string, dest: string): boolean {
+function makeLink(src: string, dest: string, options: {existing: {src: string, dest: string, message: string}[]}): boolean {
   try {
     // First we have to ensure the entire path is there.
     const dir = path.dirname(dest);
@@ -413,7 +413,7 @@ function makeLink(src: string, dest: string): boolean {
   } catch (lerr) {
     // In case of racing builds.
     if (lerr.message.startsWith('EEXIST:')) {
-      console.warn(`Warning when linking ${src} to ${dest}: ${lerr.message}`);
+      options.existing.push({src, dest, message: lerr.message});
     } else {
       console.error(`Error when linking ${src} to ${dest}: ${lerr.message}`);
       return false;
@@ -424,6 +424,7 @@ function makeLink(src: string, dest: string): boolean {
 
 function link(srcFiles: Iterable<string>): boolean {
   let success = true;
+  const linkOptions = {existing: []};
   for (const src of srcFiles) {
     const srcStats = fs.statSync(src);
     const dest = src.replace('src', 'build');
@@ -434,14 +435,14 @@ function link(srcFiles: Iterable<string>): boolean {
         // They aren't the same. This is likely due to switching branches.
         // Just remove the destination and make the link.
         fs.unlinkSync(dest);
-        if (!makeLink(src, dest)) {
+        if (!makeLink(src, dest, linkOptions)) {
           success = false;
         }
       }
     } catch (err) {
       // If the error was that the dest does not exist, we make the link.
       if (err.code === 'ENOENT') {
-        if (!makeLink(src, dest)) {
+        if (!makeLink(src, dest, linkOptions)) {
           success = false;
         }
       } else {
@@ -449,6 +450,9 @@ function link(srcFiles: Iterable<string>): boolean {
         success = false;
       }
     }
+  }
+  if (linkOptions.existing !== []) {
+    console.warn(`Warning when linking ${linkOptions.existing.length} file(s) already existed.`);
   }
   return success;
 }
