@@ -24,6 +24,7 @@ data class ParcelableSchema(val actual: Schema) : Parcelable {
         )
         parcel.writeSchemaFields(actual.fields, flags)
         parcel.writeSchemaDescription(actual.description, flags)
+        parcel.writeString(actual.hash)
     }
 
     override fun describeContents(): Int = 0
@@ -42,7 +43,11 @@ data class ParcelableSchema(val actual: Schema) : Parcelable {
                 "No SchemaDescription found in Parcel"
             }
 
-            return ParcelableSchema(Schema(names, fields, description))
+            val hash = requireNotNull(parcel.readString()) {
+                "No schema hash found in Parcel"
+            }
+
+            return ParcelableSchema(Schema(names, fields, description, hash))
         }
 
         override fun newArray(size: Int): Array<ParcelableSchema?> = arrayOfNulls(size)

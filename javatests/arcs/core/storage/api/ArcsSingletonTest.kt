@@ -31,7 +31,8 @@ class ArcsSingletonTest {
         Schema(
             listOf(SchemaName("person")),
             SchemaFields(setOf("name", "age"), emptySet()),
-            SchemaDescription()
+            SchemaDescription(),
+            "hash"
         )
 
     init {
