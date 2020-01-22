@@ -1,22 +1,28 @@
 // Demo: Person-Msg
 
-schema PersonDetails
+schema Person
   name: Text
   age: Number
 
 // This data store contains a collection of entities rather than a single
 // entity, and is backed by the PeopleData resource defined above.
-store PeopleToDisplayStore of [PersonDetails] in 'people.json'
+//store PeopleToDisplayStore of [Person] in 'people.json'
+
+particle GetPeople in 'GetPeople.js'
+  people: writes [Person]
 
 particle DisplayParticle in 'PersonMsg.js'
-  // The input is a collection of PersonDetails entities.
-  displayData: reads [PersonDetails]
+  // The input is a collection of Person entities.
+  displayData: reads [Person]
   root: consumes
 
 recipe CollectionRecipe
-  data: map PeopleToDisplayStore
+  //data: map PeopleToDisplayStore
 
   DisplayParticle
-    displayData: reads data
+    displayData: reads recipePeople
+  
+  GetPeople
+    people: writes recipePeople
 
   description `Person Msg`
