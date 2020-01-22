@@ -9,10 +9,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage
+package arcs.core.storage.database
 
 import arcs.core.data.Entity
 import arcs.core.data.FieldName
+import arcs.core.storage.StorageKey
 
 /**
  * Exposes an API for interacting with a database. Actual database implementations are platform
