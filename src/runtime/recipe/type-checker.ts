@@ -46,7 +46,7 @@ export class TypeChecker {
       options.typeErrors.push(msg);
     }
     return null;
-  };
+  }
 
   // resolve a list of handleConnection types against a handle
   // base type. This is the core type resolution mechanism, but should only
