@@ -90,7 +90,7 @@ describe('particle interface loading', () => {
     const inStore = await arc.createStore(fooType) as SingletonStorageProvider;
     if (Flags.useNewStorageStack) {
       const ifaceHandle = await singletonHandleForTest(arc, ifaceStore);
-      await ifaceHandle.set(manifest.particles[0].toLiteral());
+      await ifaceHandle.set(manifest.particles[0]);
       const inHandle = await singletonHandleForTest(arc, inStore);
       await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
     } else {

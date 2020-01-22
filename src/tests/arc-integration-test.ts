@@ -16,6 +16,7 @@ import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk
 import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
+import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 
 describe('Arc integration', () => {
   it('copies store tags', async () => {
@@ -46,7 +47,7 @@ describe('Arc integration', () => {
         loader, composerClass: FakeSlotComposer, context: manifest, memoryProvider});
     RamDiskStorageDriverProvider.register(memoryProvider);
 
-    const arc = runtime.newArc('demo', 'volatile://');
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     assert.lengthOf(arc._stores, 0);
     assert.isEmpty(arc.storeTags);
 
