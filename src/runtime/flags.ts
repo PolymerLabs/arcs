@@ -8,8 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-/** Arcs runtime flags. */
-
+/* Arcs runtime flags.
+ * These can be set via command line arguments and are generally for
+ * incrementally introducing potentially breaking changes (e.g. adding/removing
+ * features).
+ *
+ * Example:
+ * To run all test, but use the new storage stack, use the following command:
+ * sigh test --useNewStorageStack=true
+ *
+ * Note: This does not override flag values set explicitly for a test.
+ */
 class FlagDefaults {
   static useNewStorageStack = false;
   static enforceRefinements = false;
@@ -19,7 +28,12 @@ class FlagDefaults {
 export class Flags extends FlagDefaults {
   /** Resets flags. To be called in test teardown methods. */
   static reset() {
+    // Use the defaults
     Object.assign(Flags, FlagDefaults);
+    // Overwrite the defaults with the testFlags.
+    if (typeof global !== 'undefined') {
+      Object.assign(Flags, global['testFlags']);
+    }
   }
 
   // tslint:disable-next-line: no-any
@@ -37,7 +51,7 @@ export class Flags extends FlagDefaults {
   static withFlags<T, Args extends any[]>(flagsSettings: Partial<typeof FlagDefaults>, f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return async (...args) => {
       Object.assign(Flags, flagsSettings);
-      let res;
+      let res: T;
       try {
         res = await f(...args);
       } finally {

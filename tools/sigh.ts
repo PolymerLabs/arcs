@@ -25,9 +25,13 @@ const _DO_NOT_USE_spawn = require('child_process').spawn;
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
 
+// Flags for sigh and unit tests; use `global['testFlags'].foo` to access them.
 let globalOptions = {
   install: false,
+  /** If true, runs tests with some warning messages suppressed. */
   quiet: false,
+  /** If true, runs tests flagged as bazel tests. */
+  bazel: false,
 };
 
 const sources = {
@@ -128,14 +132,6 @@ const nodeFlags = [
 
 // The 'cron' env type indicates the daily build in Travis.
 const isTravisDaily = (process.env.TRAVIS_EVENT_TYPE === 'cron');
-
-// Flags for unit tests; use `global['testFlags'].foo` to access them.
-const testFlags = {
-  /** If true, runs tests flagged as bazel tests. */
-  bazel: false,
-  /** If true, runs tests with some warning messages suppressed. */
-  quiet: false,
-};
 
 /** Logs to console.log, unless suppressed by the global --quiet flag. */
 function sighLog(message, ...optionalParams) {
@@ -668,9 +664,8 @@ function runTests(args: string[]): boolean {
     // Enables unit tests that are marked as requiring bazel. These tests are
     // usually skipped; they should generally only be supplied by bazel when it
     // invokes sigh directly.
-    testFlags.bazel = true;
+    globalOptions.bazel = true;
   }
-  testFlags.quiet = globalOptions.quiet;
 
   const testsInDir = dir => findProjectFiles(dir, buildExclude, fullPath => {
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
@@ -753,7 +748,7 @@ function runTests(args: string[]): boolean {
       (async () => {
         ${options.explore ? 'await DevtoolsConnection.onceConnected;' : ''}
         // Mocha doesn't have any way to pass custom flags into tests.
-        global.testFlags = ${JSON.stringify(testFlags)};
+        global.testFlags = ${JSON.stringify(globalOptions)};
         let runner = mocha
             .grep(${JSON.stringify(options.grep || '')})
             .run(function(failures) {
@@ -1078,6 +1073,19 @@ async function runSteps(command: string, args: string[]): Promise<boolean> {
   globalOptions = {...globalOptions, ...minimist(args, {
     boolean: ['install'],
   })};
+  for (const key in globalOptions) {
+    // This converts command line arguments that should be interpreted as booleans.
+    // This is to avoid accidentally interpreting 'false' as a truthy value.
+    if (globalOptions.hasOwnProperty(key)) {
+      let value = globalOptions[key];
+      if (value === 'true') {
+        value = true;
+      } else if (value === 'false') {
+        value = false;
+      }
+      globalOptions[key] = value;
+    }
+  }
 
   sighLog(`😌 ${command}`);
   let result = false;
