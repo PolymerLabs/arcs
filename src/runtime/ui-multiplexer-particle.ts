@@ -150,12 +150,12 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
         // TODO(lindner): type erasure to avoid mismatch of Store vs Handle in arc.mapHandle
         // tslint:disable-next-line: no-any
         const otherHandleStore = otherHandle.storage as any;
-        otherMappedHandles.push(`v${index}: use '${await arc.mapHandle(otherHandleStore)}'`);
+        otherMappedHandles.push(`h${index}: use '${await arc.mapHandle(otherHandleStore)}'`);
         //
         const hostedOtherConnection =
           hostedParticle.handleConnections.find(conn => conn.isCompatibleType(otherHandle.type));
         if (hostedOtherConnection) {
-          otherConnections.push(`${hostedOtherConnection.name}: v${index++}`);
+          otherConnections.push(`${hostedOtherConnection.name}: h${index++}`);
           // TODO(wkorman): For items with embedded recipes where we may have a
           // different particle rendering each item, we need to track
           // |connByHostedConn| keyed on the particle type.
