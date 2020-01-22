@@ -115,7 +115,6 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     this.canRead = canRead;
     this.canWrite = canWrite;
 
-    this.clock = this.storageProxy.registerHandle(this);
     // TODO(shans): Be more principled about how to determine whether this is an
     // immediate mode handle or a standard handle.
     if (this.type instanceof EntityType) {
@@ -127,6 +126,8 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     } else {
       this.serializer = new ParticleSpecSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
+
+    this.clock = this.storageProxy.registerHandle(this);
   }
 
   // `options` may contain any of:
@@ -146,7 +147,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 
   abstract onUpdate(update: StorageType['operation'], version: VersionMap): void;
-  abstract onSync(): void;
+  abstract onSync(model: StorageType['consumerType']): void;
 
   async onDesync(): Promise<void> {
     assert(this.canRead, 'onSync should not be called for non-readable handles');
@@ -339,13 +340,22 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
     return [...set];
   }
 
+  /**
+   * onUpdate, onSync and onDesync *are async functions*, because they invoke callOnHandleUpdate,
+   * which is async.
+   *
+   * However, they *must not introduce await points* before invoking callOnHandleUpdate, as
+   * if they do there is a risk that they will be reordered.
+   */
+
   async onUpdate(op: CollectionOperation<Referenceable>, version: VersionMap): Promise<void> {
     assert(this.canRead, 'onUpdate should not be called for non-readable handles');
     this.clock = version;
     // FastForward cannot be expressed in terms of ordered added/removed, so pass a full model to
     // the particle.
     if (op.type === CollectionOpTypes.FastForward) {
-      return this.onSync();
+      const [set, versionMap] = this.storageProxy.getParticleViewAssumingSynchronized();
+      return this.onSync(set);
     }
     // Pass the change up to the particle.
     const update: {added?: Entity, removed?: Entity, originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
@@ -363,12 +373,12 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
     }
   }
 
-  async onSync(): Promise<void> {
+  async onSync(model: CRDTCollectionTypeRecord<Referenceable>['consumerType']): Promise<void> {
     assert(this.canRead, 'onSync should not be called for non-readable handles');
     if (this.particle) {
       await this.particle.callOnHandleSync(
           this /*handle*/,
-          await this.toList() /*model*/,
+          [...model].map(entry => this.serializer.deserialize(entry, this.storageProxy.storageKey)),
           e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
     }
   }
@@ -421,7 +431,15 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     return value == null ? null : this.serializer.deserialize(value, this.storageProxy.storageKey) as T;
   }
 
-  async onUpdate(op: SingletonOperation<Referenceable>, version: VersionMap): Promise<void> {
+  /**
+   * onUpdate, onSync and onDesync *are async functions*, because they invoke callOnHandleUpdate,
+   * which is async.
+   *
+   * However, they *must not introduce await points* before invoking callOnHandleUpdate, as
+   * if they do there is a risk that they will be reordered.
+   */
+
+   async onUpdate(op: SingletonOperation<Referenceable>, version: VersionMap): Promise<void> {
     assert(this.canRead, 'onUpdate should not be called for non-readable handles');
     this.clock = version;
     // Pass the change up to the particle.
@@ -438,12 +456,12 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     }
   }
 
-  async onSync(): Promise<void> {
+  async onSync(model: CRDTSingletonTypeRecord<Referenceable>['consumerType']): Promise<void> {
     assert(this.canRead, 'onSync should not be called for non-readable handles');
     if (this.particle) {
       await this.particle.callOnHandleSync(
           this /*handle*/,
-          await this.get() /*model*/,
+          model == null ? model : this.serializer.deserialize(model, this.storageProxy.storageKey),
           e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
     }
   }

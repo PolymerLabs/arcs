@@ -275,10 +275,7 @@ export class DescriptionFormatter {
             return undefined;
           }
           assert(token.value.interfaceValue, `Missing interface type value for '${token._handleConn.type}'.`);
-          if (token.value.interfaceValue instanceof ParticleSpec) {
-            return token.value.interfaceValue.pattern;
-          }
-          const particleSpec = ParticleSpec.fromLiteral(token.value.interfaceValue);
+          const particleSpec = Flags.useNewStorageStack ? token.value.interfaceValue : ParticleSpec.fromLiteral(token.value.interfaceValue);
           // TODO: call this.patternToSuggestion(...) to resolved expressions in the pattern template.
           return particleSpec.pattern;
         }

@@ -37,11 +37,15 @@ export function Identified<T extends {new(...args:any[]):{}}>(constructor:T) {
 
 // Log (potentially filtered) messages to the console, including the unique identity of the first argument.
 export function logWithIdentity(item, ...args) {
-  const allowed = filter[item[originalConstructor]];
-  if (allowed && !allowed.includes(getId(item))) {
+  const id = getId(item);
+  if (id == undefined) {
     return;
   }
-  console.log(getId(item), ...args);
+  const allowed = filter[item[originalConstructor]];
+  if (allowed && !allowed.includes(id)) {
+    return;
+  }
+  console.log(id, ...args);
 }
 
 export function getId(item) {

@@ -352,6 +352,17 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
       const handleMap = new Map();
       const registerList: {proxy: UnifiedStorageProxy, particle: Particle, handle: Handle}[] = [];
+
+      const storageList: StorageProxyNG<CRDTTypeRecord>[] = [];
+
+      if (Flags.useNewStorageStack) {
+        for (const oldHandle of oldParticle.handles.values()) {
+          const storage = oldHandle.storage as StorageProxyNG<CRDTTypeRecord>;
+          storageList.push(storage);
+          await storage.pause();
+        }
+      }
+
       // Create new handles and disable the handles of the old particles
       oldParticle.handles.forEach((oldHandle) => {
         this.createHandle(particle, oldParticle.spec, id, oldHandle.name, oldHandle.storage, handleMap, registerList);
@@ -361,6 +372,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       result.push([particle, async () => {
         // Set the new handles to the new particle
         await this.assignHandle(particle, oldParticle.spec, id, handleMap, registerList, p);
+        storageList.forEach(storage => storage.unpause());
         resolve();
         // Transfer the slot proxies from the old particle to the new one
         for (const name of oldParticle.getSlotNames()) {
