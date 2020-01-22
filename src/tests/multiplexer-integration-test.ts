@@ -32,11 +32,25 @@ describe('Multiplexer', () => {
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
-    const recipeOne = `${showOneParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowOne\n    post: reads v1\n    item: consumes s1`;
+    const recipeOne =
+`${showOneParticle.toString()}
+  recipe
+    h1: use '{{item_id}}'
+    s1: slot '{{slot_id}}'
+    ShowOne
+      post: reads h1
+      item: consumes s1`;
 
     const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
     const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
-    const recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowTwo\n    post: reads v1\n    item: consumes s1`;
+    const recipeTwo =
+`${showTwoParticle.toString()}
+  recipe
+    v1: use '{{item_id}}'
+    s1: slot '{{slot_id}}'
+    ShowTwo
+      post: reads v1
+      item: consumes s1`;
 
     if (Flags.useNewStorageStack) {
       const postsHandle =
@@ -132,7 +146,8 @@ describe('Multiplexer', () => {
   });
 
   // TODO(sjmiles): probably should be in particles/tests/* because of Multiplexer.js
-  // TODO(sjmiles): skipped because I cannot figure out how to access the output data
+  // TODO(sjmiles): skipped because (in summary) plumbing data from the hostedParticle to the outer
+  // arc is not this simple ... research is afoot
   it.skip('multiplexer can host non-slot-using particle FOOB', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
@@ -143,7 +158,7 @@ describe('Multiplexer', () => {
         name: Text
       interface HostedFooParticle
         foo: reads Foo {name}
-        outFoos: writes [Foo {name}]
+        //outFoos: writes [Foo {name}]
       particle FooMultiplexer in '${canonMultiplexer}'
         list: reads [Foo {name}]
         outFoos: writes [Foo {name}]
