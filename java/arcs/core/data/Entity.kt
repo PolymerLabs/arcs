@@ -15,7 +15,7 @@ package arcs.core.data
 /** Bare-bones entity data for usage in core/storage code. */
 // TODO: Rename, or consolidate with the Entity class in the sdk package.
 data class Entity(
-    val type: EntityType,
+    val schema: Schema,
     val data: MutableMap<FieldName, Any?>
 ) : AbstractMutableMap<FieldName, Any?>() {
     @Suppress("UNCHECKED_CAST")
@@ -24,7 +24,7 @@ data class Entity(
 
     override fun put(key: FieldName, value: Any?): Any? {
         require(key !in data) {
-            "Illegal field $key, not part of ${type.entitySchema.name}'s schema."
+            "Illegal field $key, not part of ${schema.name}'s schema."
         }
         return data.put(key, value)
     }
