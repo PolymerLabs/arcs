@@ -21,7 +21,7 @@ import arcs.core.storage.StorageKeyParser
 /** Protocol to be used with the ramdisk driver. */
 const val DATABASE_DRIVER_PROTOCOL = "db"
 
-/** [StorageKey] implementation for a piece of data managed by the [DbDriver]. */
+/** [StorageKey] implementation for a piece of data managed by the [DatabaseDriver]. */
 data class DatabaseStorageKey(
     val unique: String,
     val persistent: Boolean = true,
