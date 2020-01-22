@@ -148,7 +148,7 @@ export abstract class LoaderBase {
     if (path[0] === '/' || path[1] === ':') {
       return path;
     }
-    prefix = this.path(prefix);
+    prefix = prefix ? this.path(prefix) : '';
     path = this.normalizeDots(`${prefix}${path}`);
     return path;
   }

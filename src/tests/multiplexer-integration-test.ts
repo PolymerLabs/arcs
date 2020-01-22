@@ -13,7 +13,6 @@ import {Entity} from '../runtime/entity.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {SlotTestObserver} from '../runtime/testing/slot-test-observer.js';
-//import {checkDefined} from '../runtime/testing/preconditions.js';
 import {Loader} from '../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
@@ -21,6 +20,7 @@ import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
 import {Flags} from '../runtime/flags.js';
 import {DriverFactory} from '../runtime/storageNG/drivers/driver-factory.js';
+import {VolatileCollection} from '../runtime/storage/volatile-storage.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
@@ -32,11 +32,25 @@ describe('Multiplexer', () => {
 
     const showOneParticle = context.particles.find(p => p.name === 'ShowOne');
     const showOneSpec = JSON.stringify(showOneParticle.toLiteral());
-    const recipeOne = `${showOneParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowOne\n    post: reads v1\n    item: consumes s1`;
+    const recipeOne =
+`${showOneParticle.toString()}
+  recipe
+    h1: use '{{item_id}}'
+    s1: slot '{{slot_id}}'
+    ShowOne
+      post: reads h1
+      item: consumes s1`;
 
     const showTwoParticle = context.particles.find(p => p.name === 'ShowTwo');
     const showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
-    const recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  v1: use '{{item_id}}'\n  s1: slot '{{slot_id}}'\n  ShowTwo\n    post: reads v1\n    item: consumes s1`;
+    const recipeTwo =
+`${showTwoParticle.toString()}
+  recipe
+    v1: use '{{item_id}}'
+    s1: slot '{{slot_id}}'
+    ShowTwo
+      post: reads v1
+      item: consumes s1`;
 
     if (Flags.useNewStorageStack) {
       const postsHandle =
@@ -130,4 +144,66 @@ describe('Multiplexer', () => {
 
     DriverFactory.clearRegistrationsForTesting();
   });
+
+  // TODO(sjmiles): probably should be in particles/tests/* because of Multiplexer.js
+  // TODO(sjmiles): skipped because (in summary) plumbing data from the hostedParticle to the outer
+  // arc is not this simple ... research is afoot
+  it.skip('multiplexer can host non-slot-using particle FOOB', async () => {
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+    //
+    const canonMultiplexer = `./particles/List/source/Multiplexer.js`;
+    const manifest = `
+      schema Foo
+        name: Text
+      interface HostedFooParticle
+        foo: reads Foo {name}
+        //outFoos: writes [Foo {name}]
+      particle FooMultiplexer in '${canonMultiplexer}'
+        list: reads [Foo {name}]
+        outFoos: writes [Foo {name}]
+        hostedParticle: hosts HostedFooParticle
+      particle FooNoop in './foo.js'
+        foo: reads Foo {name}
+        outFoos: writes [Foo {name}]
+      store FooList of [Foo] #foos in './foo.json'
+      recipe MultiFoo
+        foos: map #foos
+        outFoos: create
+        FooMultiplexer
+          list: foos
+          outFoos: outFoos
+          hostedParticle: FooNoop
+    `;
+    //
+    const fooData = [{name: 'Alpha'}, {name: 'Beta'}, {name: 'Gamma'}];
+    const statics = {
+      './foo.json': JSON.stringify(fooData),
+      './foo.js': `
+        defineParticle(({UiParticle}) => {
+          return class extends UiParticle {
+            update({foo}) {
+              console.log(\`adding [\${foo.name}] Foo to outFoos\`);
+              this.add('outFoos', {name: foo.name});
+            }
+          };
+        });`
+    };
+    //
+    const loader = new Loader(null, statics);
+    const context = await Manifest.parse(manifest, {fileName: './', loader, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
+    const arc = runtime.newArc('fooTest', storageKeyPrefixForTest());
+    //
+    const recipe = context.recipes[0];
+    const plan = await runtime.resolveRecipe(arc, recipe);
+    await arc.instantiate(plan);
+    await arc.idle;
+    //
+    const store = arc._stores[1] as VolatileCollection;
+    const data = await store.toList();
+    console.log(data);
+    assert.equal(JSON.stringify(data), JSON.stringify(fooData), 'unexpected output data');
+  });
+
 });

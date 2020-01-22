@@ -102,9 +102,7 @@ recipe
         .expectRenderSlot('BB', 'mySlot')
         .expectRenderSlot('C', 'otherSlot')
         ;
-
     await arc.instantiate(plan);
-    await arc.idle;
     await observer.expectationsCompleted();
   });
 
@@ -112,21 +110,19 @@ recipe
   // other tests. It passes, though, if "expectationsCompleted" is commented
   // out. If any individual expectation is skipped, the test complains because
   // it receives an expectation it doesn't expect.
-  it.skip('initialize recipe and render hosted slots', async () => {
+  // TODO(sjmiles): really an integration test for ui-multiplexer-particle.ts and Multiplexer.js
+  it('initialize recipe and render hosted slots', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
-
     const loader = new Loader();
-
     const file = Flags.useNewStorageStack ? 'ProductsTestNg.arcs' : 'products-test.recipes';
     const manifest = `./src/tests/particles/artifacts/${file}`;
     const context = await Manifest.load(manifest, loader, {memoryProvider});
-
     const runtime = new Runtime({loader, context, memoryProvider});
 
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-
     const suggestions = await StrategyTestHelper.planForArc(arc);
+
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
     assert.deepEqual(
       suggestion.plan.particles.map(p => p.name).sort(),
@@ -142,9 +138,7 @@ recipe
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('ShowProduct', 'item')
         ;
-
-    await suggestion.instantiate(arc);
-    await arc.idle;
+    await arc.instantiate(suggestion.plan);
     await observer.expectationsCompleted();
   });
 
@@ -179,7 +173,6 @@ recipe
         .expectRenderSlot('B', 'item')
         .expectRenderSlot('C', 'item')
         ;
-
     await arc.instantiate(plan);
     await observer.expectationsCompleted();
   });
