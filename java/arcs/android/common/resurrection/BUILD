@@ -9,6 +9,7 @@ kt_android_library(
     srcs = glob(["*.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
+        "//java/arcs/android/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/referencemode",

@@ -16,29 +16,36 @@ import kotlin.reflect.KClass
 import org.junit.Assert.fail
 
 /** Utility to assert that a lambda throws a specific exception type. */
-fun assertThrows(expected: KClass<out Exception>, thrower: () -> Unit) {
+@Suppress("UNCHECKED_CAST")
+fun <T : Exception> assertThrows(expected: KClass<T>, thrower: () -> Unit): T {
     try {
         thrower()
     } catch (e: Exception) {
         assert(expected.java.isInstance(e)) {
             "Expected exception of type $expected, but was ${e.javaClass}"
         }
-        return
+        return e as T
     }
     fail("Expected exception of type $expected, but none was thrown.")
+    return AssertionError("Impossible") as T
 }
 
 /** Utility to assert that a suspending lambda throws a specific exception type. */
-suspend fun assertSuspendingThrows(expected: KClass<out Exception>, thrower: suspend () -> Unit) {
+@Suppress("UNCHECKED_CAST")
+suspend fun <T : Exception> assertSuspendingThrows(
+    expected: KClass<T>,
+    thrower: suspend () -> Unit
+): T {
     try {
         thrower()
     } catch (e: Exception) {
         if (!expected.java.isInstance(e)) {
             throw AssertionError("Expected exception of type $expected, but was ${e.javaClass}", e)
         }
-        return
+        return e as T
     }
     fail("Expected exception of type $expected, but none was thrown.")
+    return AssertionError("Impossible") as T
 }
 
 /** Implementation of `fail` which returns [Nothing], and thus will work in elvis-situations. */

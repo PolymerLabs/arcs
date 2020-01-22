@@ -5,16 +5,14 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 kt_android_library(
-    name = "storage",
+    name = "database",
     srcs = glob(["*.kt"]),
-    idl_parcelables = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
-        "//java/arcs/android/crdt",
-        "//java/arcs/android/type",
-        "//java/arcs/core/crdt",
+        "//java/arcs/android/storage",
+        "//java/arcs/core/data",
         "//java/arcs/core/storage",
-        "//java/arcs/core/type",
+        "//java/arcs/core/storage/database",
         "//third_party/java/androidx/annotation",
     ],
 )

@@ -19,6 +19,8 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.os.Parcel
 import android.os.PersistableBundle
 import androidx.annotation.VisibleForTesting
+import arcs.android.storage.transaction
+import arcs.android.storage.useTransaction
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.driver.RamDiskStorageKey
@@ -191,20 +193,6 @@ class DbHelper(
         writableDatabase.useTransaction {
             execSQL("DELETE FROM requested_notifiers")
             execSQL("DELETE FROM resurrection_requests")
-        }
-    }
-
-    private inline fun <T : Any?> SQLiteDatabase.useTransaction(block: SQLiteDatabase.() -> T): T =
-        use { transaction(block) }
-
-    private inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T): T {
-        beginTransaction()
-        return try {
-            block().also {
-                setTransactionSuccessful()
-            }
-        } finally {
-            endTransaction()
         }
     }
 

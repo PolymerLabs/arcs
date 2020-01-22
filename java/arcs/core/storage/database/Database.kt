@@ -26,4 +26,3 @@ interface Database {
     /** Removes everything associated with the given [storageKey] from the database. */
     suspend fun delete(storageKey: StorageKey)
 }
-
