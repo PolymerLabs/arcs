@@ -428,7 +428,7 @@ function makeLink(src: string, dest: string, options: {existing: {src: string, d
 
 function link(srcFiles: Iterable<string>): boolean {
   let success = true;
-  let linkOptions = {existing: []};
+  const linkOptions = {existing: []};
   for (const src of srcFiles) {
     const srcStats = fs.statSync(src);
     const dest = src.replace('src', 'build');
