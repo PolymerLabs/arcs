@@ -18,14 +18,14 @@
 const APPROVAL_SIZE_CAP = 16;
 
  /** Pool size state */
-interface SizeState {
+export interface SizeState {
   demand?: number;
   free?: number;
   inUse?: number;
 }
 
 /** Sizing policy apis and helpers */
-abstract class SizingPolicy {
+export abstract class SizingPolicy {
   /**
    * Shrinks or grows worker pool size by arbitrating the number of workers
    * to be spawned or terminated in accordance with the current state of worker
@@ -175,4 +175,8 @@ export const policies = {
   aggressive,
   conservative,
   predictive,
+
+  // The default policy is taken when either no policy is specified or an
+  // unknown policy is specified via a corresponding url parameter.
+  default: conservative,
 };

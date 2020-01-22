@@ -34,24 +34,25 @@ export const pecIndustry = (loader): PecFactory => {
     create: () => ({
       worker: new Worker(workerBlobUrl || workerUrl),
       channel: new MessageChannel(),
+      usage: 0,
     })
   };
+  // spawn workers ahead of time at runtime initialization
+  // effective only when the use-worker-pool url parameter is supplied
+  workerPool.shrinkOrGrow();
   // return a pecfactory
   const factory = (id: Id, idGenerator?: IdGenerator) => {
     if (!workerBlobUrl && !useCache) {
       console.warn('workerBlob not available, falling back to network URL');
     }
     const poolEntry = workerPool.resume();
-    // Should emplace if the worker pool management is ON and
-    // a new worker and its messaging channel are created.
-    const shouldEmplace = workerPool.active && !poolEntry;
-    // Transfers port only if the worker is newly spawned.
-    const shouldTransferPort = !workerPool.active || shouldEmplace;
     const worker =
         poolEntry ? poolEntry.worker : new Worker(workerBlobUrl || workerUrl);
     const channel =
         poolEntry ? poolEntry.channel : new MessageChannel();
-    if (shouldEmplace) {
+    // Should emplace if the worker pool management is ON and
+    // a new worker and its messaging channel are created.
+    if (workerPool.active && !poolEntry) {
       workerPool.emplace(worker, channel);
     }
     worker.postMessage({
@@ -60,7 +61,10 @@ export const pecIndustry = (loader): PecFactory => {
       logLevel: window['logLevel'],
       traceChannel: systemTraceChannel,
       inWorkerPool: workerPool.exist(channel.port2),
-    }, shouldTransferPort ? [channel.port1] : []);
+    }, [channel.port1]);
+    // shrink or grow workers at run-time overlapping with new PEC execution
+    // effective only when the use-worker-pool url parameter is supplied
+    workerPool.shrinkOrGrow();
     return channel.port2;
   };
   // TODO(sjmiles): PecFactory type is defined against custom `MessageChannel` and `MessagePort` objects, not the
