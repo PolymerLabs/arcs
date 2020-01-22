@@ -164,7 +164,7 @@ def arcs_kt_particles(
         wasm_deps = [_to_wasm_dep(dep) for dep in deps]
 
         # Create a wasm library for each particle.
-        wasm_particle_libs = []
+        wasm_srcs = []
         for src in srcs:
             if not src.endswith(".kt"):
                 fail("%s is not a Kotlin file (must end in .kt)" % src)
@@ -178,22 +178,20 @@ def arcs_kt_particles(
                 package = package,
                 out = wasm_annotations_file,
             )
-            arcs_kt_native_library(
-                name = wasm_lib,
-                srcs = [
-                    src,
-                    wasm_annotations_file,
-                ],
-                deps = wasm_deps,
-            )
-            wasm_particle_libs.append(wasm_lib)
+            wasm_srcs.extend([src, wasm_annotations_file])
 
-        # Create a kt_native_binary that groups everything together.
+        wasm_particle_lib = name + "-lib" + _WASM_SUFFIX
+        arcs_kt_native_library(
+	    name = wasm_particle_lib,
+	    srcs = wasm_srcs,
+	    deps = wasm_deps,
+	 )
+         # Create a kt_native_binary that groups everything together.
         native_binary_name = name + _WASM_SUFFIX
         kt_native_binary(
             name = native_binary_name,
             entry_point = "arcs.sdk.main",
-            deps = wasm_particle_libs,
+            deps = [wasm_particle_lib],
             # Don't build this manually. Build the wasm_kt_binary rule below
             # instead; otherwise this rule will build a non-wasm binary.
             tags = ["manual", "notap"],
