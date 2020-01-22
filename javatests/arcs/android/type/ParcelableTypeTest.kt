@@ -125,6 +125,7 @@ class ParcelableTypeTest {
             singletons = setOf("name", "age"),
             collections = setOf("friends")
         ),
-        description = SchemaDescription()
+        description = SchemaDescription(),
+        hash = "hash"
     )
 }

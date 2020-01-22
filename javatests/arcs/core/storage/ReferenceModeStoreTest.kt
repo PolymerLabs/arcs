@@ -68,7 +68,8 @@ class ReferenceModeStoreTest {
         schema = Schema(
             listOf(SchemaName("person")),
             SchemaFields(setOf("age", "name"), emptySet()),
-            SchemaDescription()
+            SchemaDescription(),
+            "hash"
         )
 
         DriverFactory.clearRegistrationsForTesting()

@@ -32,7 +32,8 @@ class ParcelableSchemaTest {
                 singletons = setOf("name", "age"),
                 collections = setOf("friends")
             ),
-            description = SchemaDescription("MySchemaPattern")
+            description = SchemaDescription("MySchemaPattern"),
+            hash = "hash"
         )
 
         val marshalled = with(Parcel.obtain()) {
@@ -54,7 +55,8 @@ class ParcelableSchemaTest {
         val schema = Schema(
             names = emptyList(),
             fields = SchemaFields(singletons = emptySet(), collections = emptySet()),
-            description = SchemaDescription()
+            description = SchemaDescription(),
+            hash = "hash"
         )
 
         val marshalled = with(Parcel.obtain()) {

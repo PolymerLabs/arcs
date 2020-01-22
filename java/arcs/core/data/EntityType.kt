@@ -27,9 +27,6 @@ data class EntityType(override val entitySchema: Schema) :
 
     override val tag = Tag.Entity
 
-    constructor(names: List<SchemaName>, fields: SchemaFields, description: SchemaDescription) :
-        this(Schema(names, fields, description))
-
     override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
         variableMap[entitySchema] as? Type
             ?: EntityType(entitySchema).also { variableMap[entitySchema] = it }

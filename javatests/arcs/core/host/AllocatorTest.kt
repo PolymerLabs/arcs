@@ -48,7 +48,8 @@ class AllocatorTest {
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
         SchemaFields(setOf("name"), emptySet()),
-        SchemaDescription()
+        SchemaDescription(),
+        "hash"
     )
 
     @Target(AnnotationTarget.CLASS)
