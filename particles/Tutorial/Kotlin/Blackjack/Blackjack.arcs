@@ -1,0 +1,21 @@
+// Encodes the cards in the deck.
+// Represents the available cards as a string.
+schema CardDeck
+  cards: Text
+
+particle DealingShoe in 'Blackjack.wasm'
+  decks: reads writes CardDeck
+  nextCardSlot: consumes
+
+particle BlackjackTable in 'Blackjack.wasm'
+  root: consumes
+    nextCardSlot: provides
+
+recipe Game
+  BlackjackTable
+    root: consumes
+      nextCardSlot: provides nextCard
+  DealingShoe
+    decks: reads writes d
+    nextCardSlot: consumes nextCard
+  description `Blackjack: hit, stand, or bust!`
