@@ -59,7 +59,7 @@ data class DatabaseStorageKey(
             StorageKeyParser.addParser(DATABASE_DRIVER_PROTOCOL, ::fromString)
         }
 
-        private fun fromString(rawKeyString: String): DatabaseStorageKey {
+        /* internal */ fun fromString(rawKeyString: String): DatabaseStorageKey {
             val match = requireNotNull(DB_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
                 "Not a valid DatabaseStorageKey: $rawKeyString"
             }
@@ -82,7 +82,12 @@ class DatabaseDriverProvider : DriverProvider {
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
         existenceCriteria: ExistenceCriteria
-    ): Driver<Data> = DatabaseDriver(storageKey, existenceCriteria)
+    ): Driver<Data> {
+        require(storageKey is DatabaseStorageKey) {
+            "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
+        }
+        return DatabaseDriver(storageKey, existenceCriteria)
+    }
 }
 
 /** [Driver] implementation capable of managing data stored in a SQL database. */
