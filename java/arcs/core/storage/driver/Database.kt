@@ -54,7 +54,7 @@ data class DatabaseStorageKey(
             "^($DATABASE_NAME_PATTERN):($VARIANT_PERSISTENT|$VARIANT_IN_MEMORY)/(.+)\$".toRegex()
 
         init {
-            // When VolatileStorageKey is imported, this will register its parser with the storage
+            // When DatabaseStorageKey is imported, this will register its parser with the storage
             // key parsers.
             StorageKeyParser.addParser(DATABASE_DRIVER_PROTOCOL, ::fromString)
         }
