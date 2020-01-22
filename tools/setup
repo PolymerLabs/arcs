@@ -69,19 +69,18 @@ status "5. Install ktlint"
 chmod a+x $HOME/bin/ktlint
 append_once 'export PATH="$HOME/bin:$PATH"' $HOME/.bashrc
 
-echo "$GRN$BLD\n\nSETUP COMPLETE\n$END"
-echo "node --version"
+echo -e "$GRN$BLD\n\nSETUP COMPLETE\n$END"
+echo -e "node --version"
 node --version
-echo "npm --version"
+echo -e "npm --version"
 npm --version
-echo "ktlint --version"
+echo -e "ktlint --version"
 ktlint --version
-echo "\nNext, try the following:\n"
-echo "- Setup git hooks: $CMD\`git config core.hooksPath tools/hooks\`$END"
-echo "- Serve the project: $CMD\`./tools/sigh devServer\`$END"
-echo "- Run tests:"
-echo "  - $CMD\`./tools/sigh test\`$END"
-echo "  - $CMD\`./tools/local-presubmit\`$END"
-
-echo "\nPlease source the updated environment variables:"
-echo "  - $CMD\`source ~/.profile\`$END"
+echo -e "\nNext, try the following:\n"
+echo -e "- Setup git hooks: $CMD\`git config core.hooksPath tools/hooks\`$END"
+echo -e "- Serve the project: $CMD\`./tools/sigh devServer\`$END"
+echo -e "- Run tests:"
+echo -e "  - $CMD\`./tools/sigh test\`$END"
+echo -e "  - $CMD\`./tools/local-presubmit\`$END"
+echo -e "\nPlease source the updated environment variables:"
+echo -e "  - $CMD\`source ~/.profile\`$END"
