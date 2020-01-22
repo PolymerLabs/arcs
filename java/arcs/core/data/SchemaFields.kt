@@ -11,8 +11,40 @@
 
 package arcs.core.data
 
+/** The possible types for a field in a [Schema]. */
+sealed class FieldType(
+    val tag: Tag
+) {
+    /** An Arcs primitive type. */
+    data class Primitive(val primitiveType: PrimitiveType): FieldType(Tag.Primitive)
+
+    /** A reference to an entity. */
+    data class EntityRef(val schemaHash: String) : FieldType(Tag.EntityRef)
+
+    // TODO: Collections of References in fields are not supported in Kotlin at all yet.
+
+    enum class Tag {
+        Primitive,
+        EntityRef
+    }
+
+    // Convenient aliases for all of the primitive field types.
+    companion object {
+        val Boolean = Primitive(PrimitiveType.Boolean)
+        val Number = Primitive(PrimitiveType.Number)
+        val Text = Primitive(PrimitiveType.Text)
+    }
+}
+
+/** Arcs primitive types. */
+enum class PrimitiveType {
+    Boolean,
+    Number,
+    Text,
+}
+
 /** TODO: This is super minimal for now. */
 data class SchemaFields(
-    val singletons: Set<FieldName>,
-    val collections: Set<FieldName>
+    val singletons: Map<FieldName, FieldType>,
+    val collections: Map<FieldName, FieldType>
 )

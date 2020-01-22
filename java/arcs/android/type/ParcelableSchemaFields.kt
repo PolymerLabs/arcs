@@ -14,28 +14,55 @@ package arcs.android.type
 import android.os.Parcel
 import android.os.Parcelable
 import arcs.core.data.FieldName
+import arcs.core.data.FieldType
+import arcs.core.data.PrimitiveType
 import arcs.core.data.SchemaFields
 
 data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeStringList(actual.singletons.toMutableList())
-        parcel.writeStringList(actual.collections.toMutableList())
+        parcel.writeInt(actual.singletons.size)
+        actual.singletons.forEach { (name, type) ->
+            parcel.writeString(name)
+            parcel.writeFieldType(type)
+        }
+        parcel.writeInt(actual.collections.size)
+        actual.collections.forEach { (name, type) ->
+            parcel.writeString(name)
+            parcel.writeFieldType(type)
+        }
     }
 
     override fun describeContents(): Int = 0
 
     companion object CREATOR : Parcelable.Creator<ParcelableSchemaFields> {
         override fun createFromParcel(parcel: Parcel): ParcelableSchemaFields {
-            val singletons = mutableListOf<FieldName>()
-                .also { parcel.readStringList(it) }
-                .toSet()
-            val collections = mutableListOf<FieldName>()
-                .also { parcel.readStringList(it) }
-                .toSet()
+            val singletons = mutableMapOf<FieldName, FieldType>()
+            repeat(parcel.readInt()) {
+                singletons[requireNotNull(parcel.readString())] = parcel.readFieldType()
+            }
+            val collections = mutableMapOf<FieldName, FieldType>()
+            repeat(parcel.readInt()) {
+                collections[requireNotNull(parcel.readString())] = parcel.readFieldType()
+            }
             return ParcelableSchemaFields(SchemaFields(singletons, collections))
         }
 
         override fun newArray(size: Int): Array<ParcelableSchemaFields?> = arrayOfNulls(size)
+
+        private fun Parcel.readFieldType(): FieldType =
+            when (FieldType.Tag.values()[readInt()]) {
+                FieldType.Tag.Primitive -> FieldType.Primitive(PrimitiveType.values()[readInt()])
+                FieldType.Tag.EntityRef -> FieldType.EntityRef(requireNotNull(readString()))
+            }
+    }
+
+    private fun Parcel.writeFieldType(type: FieldType) {
+        writeInt(type.tag.ordinal)
+        // Return Unit to force match to be exhaustive.
+        return when (type) {
+            is FieldType.Primitive -> writeInt(type.primitiveType.ordinal)
+            is FieldType.EntityRef -> writeString(type.schemaHash)
+        }
     }
 }
 

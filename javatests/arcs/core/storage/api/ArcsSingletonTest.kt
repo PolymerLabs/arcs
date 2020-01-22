@@ -1,5 +1,6 @@
 package arcs.core.storage.api
 
+import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
@@ -30,7 +31,10 @@ class ArcsSingletonTest {
     private val personSchema =
         Schema(
             listOf(SchemaName("person")),
-            SchemaFields(setOf("name", "age"), emptySet()),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+                collections = emptyMap()
+            ),
             SchemaDescription(),
             "hash"
         )

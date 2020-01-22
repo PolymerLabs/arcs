@@ -30,8 +30,8 @@ data class Schema(
 
     private val emptyRawEntity: RawEntity
         get() = RawEntity(
-            singletonFields = fields.singletons,
-            collectionFields = fields.collections
+            singletonFields = fields.singletons.keys,
+            collectionFields = fields.collections.keys
         )
 
     fun toLiteral(): Literal = Literal(names, fields, description, hash)

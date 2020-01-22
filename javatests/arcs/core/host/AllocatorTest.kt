@@ -1,6 +1,7 @@
 package arcs.core.host
 
 import arcs.core.common.Id
+import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
@@ -47,7 +48,7 @@ class AllocatorTest {
      */
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
-        SchemaFields(setOf("name"), emptySet()),
+        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
         SchemaDescription(),
         "hash"
     )
