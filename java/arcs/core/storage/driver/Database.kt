@@ -18,14 +18,19 @@ import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 
-/** Protocol to be used with the ramdisk driver. */
+/** Protocol to be used with the database driver. */
 const val DATABASE_DRIVER_PROTOCOL = "db"
+
+/**
+ * Default database name for [DatabaseDriver] usage, and referencing using [DatabaseStorageKey]s.
+ */
+const val DATABASE_NAME_DEFAULT = "arcs"
 
 /** [StorageKey] implementation for a piece of data managed by the [DatabaseDriver]. */
 data class DatabaseStorageKey(
     val unique: String,
     val persistent: Boolean = true,
-    val dbName: String = "arcs"
+    val dbName: String = DATABASE_NAME_DEFAULT
 ) : StorageKey(DATABASE_DRIVER_PROTOCOL) {
     init {
         require(DATABASE_NAME_PATTERN.matches(dbName)) {
