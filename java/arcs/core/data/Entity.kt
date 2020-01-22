@@ -11,14 +11,11 @@
 
 package arcs.core.data
 
-/** The name of a field within an entity. */
-typealias FieldName = String
 
-/**
- * TODO: needs implementation
- */
-class Entity(
-    val name: String,
+/** Bare-bones entity data for usage in core/storage code. */
+// TODO: Rename, or consolidate with the Entity class in the sdk package.
+data class Entity(
+    val type: EntityType,
     val data: MutableMap<FieldName, Any?>
 ) : AbstractMutableMap<FieldName, Any?>() {
     @Suppress("UNCHECKED_CAST")
@@ -26,7 +23,9 @@ class Entity(
         get() = data.entries
 
     override fun put(key: FieldName, value: Any?): Any? {
-        require(key !in data) { "Illegal field $key, not part of $name's schema." }
+        require(key !in data) {
+            "Illegal field $key, not part of ${type.entitySchema.name}'s schema."
+        }
         return data.put(key, value)
     }
 }
