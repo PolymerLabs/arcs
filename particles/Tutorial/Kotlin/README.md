@@ -58,9 +58,9 @@ arcs_kt_particles(
     srcs = ["HelloWorld.kt"],
 )
 ```
-run the build file by running `./tools/bazelisk build particles/HelloWorld:all` from the root arcs folder.
+run the build file by running `./tools/bazelisk build particles/Tutorial/Kotlin/1_HelloWorld:all` from the root arcs folder.
 
-Once you have Arcs on your computer, run `tools/sigh devServer` in command line, then navigate to [http://localhost:8786/shells/dev-shell/?m=https://$particles/HelloWorld/HelloWorld.arcs](http://localhost:8786/shells/dev-shell/?m=https://$particles/HelloWorld/HelloWorld.arcs)
+Once you have Arcs on your computer, run `tools/sigh devServer` in command line, then navigate to [http://localhost:8786/shells/dev-shell/?m=https://$particles/Tutorial/Kotlin/1\_HelloWorld/HelloWorld.arcs](http://localhost:8786/shells/dev-shell/?m=https://$particles/Tutorial/Kotlin/1_HelloWorld/HelloWorld.arcs)
 
 And that’s it! Congratulations, you have written your first program in Arcs!
 
