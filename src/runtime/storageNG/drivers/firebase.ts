@@ -15,7 +15,7 @@ import {ArcId} from '../../id.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
 import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
-import {StorageKeyFactory} from '../storage-key-factory.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 
 export {firebase};
@@ -236,7 +236,7 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
       const {projectId, domain, apiKey} = options;
       StorageKeyFactory.registerKeyCreator(
           FirebaseStorageKey.protocol,
-          (arcId: ArcId) => new FirebaseStorageKey(projectId, domain, apiKey, arcId.toString()));
+          ({arcId}: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, arcId.toString()));
     }
   }
 }

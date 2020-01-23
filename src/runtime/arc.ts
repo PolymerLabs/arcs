@@ -66,7 +66,8 @@ export type ArcOptions = Readonly<{
   innerArc?: boolean;
   stub?: boolean
   inspectorFactory?: ArcInspectorFactory,
-  ports?: MessagePort[]
+  ports?: MessagePort[],
+  storageKeyFactory?: StorageKeyFactory
 }>;
 
 type DeserializeArcOptions = Readonly<{
@@ -118,7 +119,7 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, inspectorFactory} : ArcOptions) {
+  constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, storageKeyFactory, inspectorFactory} : ArcOptions) {
     this._context = context;
     // TODO: pecFactories should not be optional. update all callers and fix here.
     this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
@@ -149,7 +150,7 @@ export class Arc implements ArcInterface {
       this.storageProviderFactory = storageProviderFactory ||
           new StorageProviderFactory(this.id, new ManifestHandleRetriever());
     }
-    this.storageKeyFactory = new StorageKeyFactory(this.id);
+    this.storageKeyFactory = storageKeyFactory || new StorageKeyFactory({arcId: this.id});
   }
 
   get loader(): Loader {

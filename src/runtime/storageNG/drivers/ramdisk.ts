@@ -13,7 +13,7 @@ import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {VolatileDriver, VolatileMemoryProvider} from './volatile.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Exists} from './driver.js';
-import {StorageKeyFactory} from '../storage-key-factory.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 import {ArcId} from '../../id.js';
 
 export class RamDiskStorageKey extends StorageKey {
@@ -75,6 +75,6 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
     StorageKeyParser.addParser('ramdisk', RamDiskStorageKey.fromString);
     StorageKeyFactory.registerKeyCreator(
         RamDiskStorageKey.protocol,
-        (arcId: ArcId) => new RamDiskStorageKey(arcId.toString()));
+        ({arcId}: StorageKeyOptions) => new RamDiskStorageKey(arcId.toString()));
     }
 }

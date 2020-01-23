@@ -11,40 +11,53 @@
 import {StorageKey} from './storage-key.js';
 import {ArcId} from '../id.js';
 
-export type KeyCreator = (arcId: ArcId) => StorageKey;
+export type StorageKeyOptions = Readonly<{
+  arcId: ArcId;
+}>;
+
+export type StorageKeyCreator = (options: StorageKeyOptions) => StorageKey;
 
 export class StorageKeyFactory {
-  private static defaultCreators = new Map<string, KeyCreator>();
-  private static creators = StorageKeyFactory.getDefaultCreators();
+  private static defaultCreators = new Map<string, StorageKeyCreator>();
+  private static registeredCreators = new Map<string, StorageKeyCreator>();
 
-  constructor(public readonly arcId: ArcId) {}
+  private creators: Map<string, StorageKeyCreator>;
 
-  static getDefaultCreators(): Map<string, KeyCreator> {
+  constructor(public readonly options: StorageKeyOptions,
+              creators?: Map<string, StorageKeyCreator>) {
+    if (creators) {
+      this.creators = new Map(creators);
+    } else {
+      this.creators = StorageKeyFactory.getDefaultCreators();
+      for (const [protocol, create] of Object.entries(StorageKeyFactory.registeredCreators)) {
+        this.creators.set(protocol, create);
+      }
+    }
+  }
+
+  static getDefaultCreators(): Map<string, StorageKeyCreator> {
     return new Map(StorageKeyFactory.defaultCreators);
   }
 
-  static registerDefaultKeyCreator(protocol: string, create: KeyCreator) {
+  static registerDefaultKeyCreator(protocol: string, create: StorageKeyCreator): void {
     StorageKeyFactory.defaultCreators.set(protocol, create);
-    if (!StorageKeyFactory.creators.has(protocol)) {
-      StorageKeyFactory.registerKeyCreator(protocol, create);
-    }
   }
 
-  static registerKeyCreator(protocol: string, create: KeyCreator) {
-    if (StorageKeyFactory.creators.get(protocol)) {
+  static registerKeyCreator(protocol: string, create: StorageKeyCreator): void {
+    if (StorageKeyFactory.registeredCreators.get(protocol)) {
       throw new Error(`Key creator for protocol ${protocol} already registered.`);
     }
-    StorageKeyFactory.creators.set(protocol, create);
+    StorageKeyFactory.registeredCreators.set(protocol, create);
   }
 
   static reset() {
-    StorageKeyFactory.creators = StorageKeyFactory.getDefaultCreators();
+    StorageKeyFactory.registeredCreators = new Map<string, StorageKeyCreator>();
   }
 
-  createStorageKey(protocol: string): StorageKey|null {
-    if (StorageKeyFactory.creators.has(protocol)) {
-      return StorageKeyFactory.creators.get(protocol)(this.arcId);
+  createStorageKey(protocol: string): StorageKey {
+    if (this.creators.has(protocol)) {
+      return this.creators.get(protocol)(this.options);
     }
-    return null;
+    throw new Error(`No key creator was found for protocol ${protocol}`);
   }
 }

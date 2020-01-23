@@ -16,7 +16,7 @@ import {ArcId} from '../../id.js';
 import {RamDiskStorageKey} from './ramdisk.js';
 import {Dictionary} from '../../hot.js';
 import {assert} from '../../../platform/assert-web.js';
-import {StorageKeyFactory} from '../storage-key-factory.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
@@ -256,4 +256,4 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
 StorageKeyParser.addDefaultParser('volatile', VolatileStorageKey.fromString);
 StorageKeyFactory.registerDefaultKeyCreator(
     VolatileStorageKey.protocol,
-    (arcId: ArcId) => new VolatileStorageKey(arcId, '', ''));
+    ({arcId}: StorageKeyOptions) => new VolatileStorageKey(arcId, '', ''));
