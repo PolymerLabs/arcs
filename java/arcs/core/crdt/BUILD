@@ -16,6 +16,6 @@ kt_jvm_and_js_library(
         "//java/arcs/core/data/util",
         "//java/arcs/core/type",
         # This may get unwieldy with avoiding circular deps as entity is implemented. We'll see.
-        "//java/arcs/core/data:entity",
+        "//java/arcs/core/data:rawentity",
     ],
 )
