@@ -25,8 +25,8 @@ class CollectionImplTest {
     private lateinit var collection: CollectionImpl<MockDataItem>
 
     private val HANDLE_NAME = "HANDLE_NAME"
-    private val DUMMY_VALUE1 = MockDataItem( "111")
-    private val DUMMY_VALUE2 = MockDataItem( "222")
+    private val DUMMY_VALUE1 = MockDataItem("111")
+    private val DUMMY_VALUE2 = MockDataItem("222")
 
     @Before
     fun setUp() {

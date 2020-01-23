@@ -15,8 +15,10 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
 
 /** These typealiases are defined to clean up the class declaration below. */
-private typealias SingletonProxy<T> = StorageProxy<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
-private typealias SingletonHandle<T> = Handle<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
+private typealias SingletonProxy<T> =
+    StorageProxy<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
+private typealias SingletonHandle<T> =
+    Handle<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
 
 /**
  * Singleton [Handle] implementation for the JVM.

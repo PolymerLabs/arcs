@@ -15,7 +15,6 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.internal.VersionMap
 
-
 /**
  * The [Callbacks] interface is a simple stand-in for the callbacks that a [Handle] might want
  * to use* to signal information back to the runtime.
@@ -23,7 +22,7 @@ import arcs.core.crdt.internal.VersionMap
  * This is mostly a place-holder at the moment.
  */
 interface Callbacks {
-    fun onUpdate(handle: Handle<*,*,*>)
+    fun onUpdate(handle: Handle<*, *, *>)
 }
 
 /**
