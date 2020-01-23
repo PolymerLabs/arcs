@@ -14,7 +14,7 @@ kt_jvm_and_js_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/internal",
-        "//java/arcs/core/data:entity",
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/util",

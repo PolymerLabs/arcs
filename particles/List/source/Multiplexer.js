@@ -11,24 +11,27 @@
 
 /* global defineParticle */
 
-defineParticle(({Particle, UiMultiplexerParticle}) => {
+defineParticle(({Particle, UiMultiplexerParticle, log}) => {
 
-  const composeRecipeManifest = (hostedParticle, itemHandle, slot, other) => Particle.buildManifest`
-
+  const composeRecipeManifest = (hostedParticle, itemHandle, slot, other) => {
+    const otherHandles = other.handles.length ? `\n  ${other.handles.join('\n  ')}` : '';
+    const otherConnections = other.connections.length ? `\n    ${other.connections.join('\n    ')}` : '';
+    return Particle.buildManifest`
 ${hostedParticle}
 recipe
-  handle1: use '${itemHandle._id}'
-  ${other.handles.join('\n')}
-  slot1: slot '${slot.id}'
+  handle1: use '${itemHandle._id}'${otherHandles}${slot ? `
+  slot1: slot '${slot.id}'` : ''}
   ${hostedParticle.name}
-    ${hostedParticle.handleConnections[0].name}: reads handle1
-    ${other.connections.join('\n')}
-    ${slot.name}: consumes slot1
-`;
+    ${hostedParticle.handleConnections[0].name}: reads handle1${otherConnections}${slot ? `
+    ${slot.name}: consumes slot1` : ''}`;
+  };
 
   return class Multiplexer extends UiMultiplexerParticle {
     constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
-      return composeRecipeManifest(hostedParticle, itemHandle, slot, other);
+      const manifest = composeRecipeManifest(hostedParticle, itemHandle, slot, other);
+      //log(`constructInnerRecipe for [${hostedParticle.name}]:\n`, manifest);
+      return manifest;
     }
   };
+
 });

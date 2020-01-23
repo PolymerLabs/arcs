@@ -22,6 +22,7 @@ import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.CollectionType
 import arcs.core.data.CountType
 import arcs.core.data.EntityType
+import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
@@ -67,7 +68,10 @@ class ReferenceModeStoreTest {
         baseStore = Store(StoreOptions(testKey, ExistenceCriteria.ShouldCreate, CountType()))
         schema = Schema(
             listOf(SchemaName("person")),
-            SchemaFields(setOf("age", "name"), emptySet()),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+                collections = emptyMap()
+            ),
             SchemaDescription(),
             "hash"
         )

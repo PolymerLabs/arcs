@@ -11,10 +11,10 @@ kt_jvm_and_js_library(
     name = "data",
     srcs = glob(["*.kt"]),
     exports = [
-        ":entity",
+        ":rawentity",
     ],
     deps = [
-        ":entity",
+        ":rawentity",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/internal",
@@ -23,9 +23,9 @@ kt_jvm_and_js_library(
 )
 
 kt_jvm_and_js_library(
-    name = "entity",
+    name = "rawentity",
     srcs = [
-        "Entity.kt",
+        "FieldName.kt",
         "RawEntity.kt",
     ],
     deps = [

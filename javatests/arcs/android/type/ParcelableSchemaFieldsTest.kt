@@ -13,6 +13,7 @@ package arcs.android.type
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.core.data.FieldType
 import arcs.core.data.SchemaFields
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -24,8 +25,11 @@ class ParcelableSchemaFieldsTest {
     @Test
     fun parcelableRoundtrip_works() {
         val fields = SchemaFields(
-            singletons = setOf("foo", "bar"),
-            collections = setOf("fooCollection", "barCollection")
+            singletons = mapOf("foo" to FieldType.Text, "bar" to FieldType.Number),
+            collections = mapOf(
+                "fooCollection" to FieldType.Text,
+                "barCollection" to FieldType.Number
+            )
         )
 
         val marshalled = with(Parcel.obtain()) {
@@ -45,8 +49,8 @@ class ParcelableSchemaFieldsTest {
     @Test
     fun parcelableRoundtrip_works_emptySets() {
         val fields = SchemaFields(
-            singletons = emptySet(),
-            collections = emptySet()
+            singletons = emptyMap(),
+            collections = emptyMap()
         )
 
         val marshalled = with(Parcel.obtain()) {

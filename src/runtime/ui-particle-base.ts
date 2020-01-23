@@ -133,7 +133,10 @@ export class UiParticleBase extends Particle {
       if (handle instanceof CollectionHandle) {
         await handle.addMultiple(data);
       } else {
-        await Promise.all(data.map(value => handle.store(this._requireEntity(value, entityClass))));
+        //console.log('handle.store(entity): handle', handleName, ' data ', data);
+        const entities = data.map(value => this._requireEntity(value, entityClass));
+        const tasks = entities.map(entity => handle.store(entity));
+        await Promise.all(tasks);
       }
     });
   }
