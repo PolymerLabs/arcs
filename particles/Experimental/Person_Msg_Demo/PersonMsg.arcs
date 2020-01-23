@@ -2,27 +2,68 @@
 
 schema Person
   name: Text
-  age: Number
+  id: Text
+  age: Number [age > 0]
 
-// This data store contains a collection of entities rather than a single
-// entity, and is backed by the PeopleData resource defined above.
-//store PeopleToDisplayStore of [Person] in 'people.json'
+schema Message
+  toID: Text
+  fromID: Text
+  content: Text
+  sentTime: Number [sentTime > 0]
+
+schema Ordered
+  index: Number [index >= 0] 
+
+particle GetMessages in 'GetMessages.js'
+  messages: writes [Message]
+  messagesInputSlot: consumes
+
+particle FilterMessages in 'FilterMessages.js'
+  allMessages: reads [Message]
+  filteredMessages: writes [Message {toID, fromID, sentTime: Number [sentTime < 24]}]
 
 particle GetPeople in 'GetPeople.js'
   people: writes [Person]
+  peopleInputSlot: consumes
 
-particle DisplayParticle in 'PersonMsg.js'
-  // The input is a collection of Person entities.
-  displayData: reads [Person]
+particle OrderPeople in 'OrderPeople.js'
+  unorderedPeople: reads [Person]
+  messages: reads [Message {toID, fromID, sentTime: Number [sentTime < 24]}]
+  orderedPeople: writes [Ordered Person {name, id, index}]
+  forSlot: consumes
+
+particle DisplayParticle in 'Display.js'
+  displayData: reads [Ordered Person {name, id, index}]
   root: consumes
+    messagesInputSlot: provides
+    peopleInputSlot: provides
+    forSlot: provides
 
 recipe CollectionRecipe
-  //data: map PeopleToDisplayStore
 
   DisplayParticle
-    displayData: reads recipePeople
+    displayData: reads rOrderedPeople
+    root: consumes
+      messagesInputSlot: provides rMessagesInputSlot
+      peopleInputSlot: provides rPeopleInputSlot
+      forSlot: provides rForSlot
   
-  GetPeople
-    people: writes recipePeople
+  GetMessages
+    messages: writes rAllMessages
+    messagesInputSlot: consumes rMessagesInputSlot
 
+  GetPeople
+    people: writes rUnorderedPeople
+    peopleInputSlot: consumes rPeopleInputSlot
+  
+  FilterMessages
+    allMessages: reads rAllMessages
+    filteredMessages: writes rFilteredMessages
+  
+  OrderPeople
+    unorderedPeople: reads rUnorderedPeople
+    messages: reads rFilteredMessages
+    orderedPeople: writes rOrderedPeople
+    forSlot: consumes rForSlot
+  
   description `Person Msg`

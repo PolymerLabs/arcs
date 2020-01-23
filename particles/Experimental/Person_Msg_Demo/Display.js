@@ -13,6 +13,9 @@ defineParticle(({SimpleParticle, html}) => {
       // This template defines a subtemplate called "person". By filling in the "people" placeholder with a special construction given below in
       // the render() method, we can apply the "person" template on every element in our input list (which here turns it into an <li> element).
       return html`
+      <div slotid="messagesInputSlot"></div>
+      <div slotid="peopleInputSlot"></div>
+      <div slotid="forSlot"></div>
         Hello to everyone:
         <ul>{{people}}</ul>
 
