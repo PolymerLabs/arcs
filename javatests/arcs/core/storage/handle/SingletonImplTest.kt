@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage
+package arcs.core.storage.handle
 
 import arcs.core.crdt.CrdtSingleton
 import com.google.common.truth.Truth.assertThat

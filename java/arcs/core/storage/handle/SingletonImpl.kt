@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage
+package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
@@ -21,7 +21,7 @@ private typealias SingletonHandle<T> =
     Handle<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
 
 /**
- * Singleton [Handle] implementation for the JVM.
+ * Singleton [Handle] implementation for the runtime.
  *
  * It provides methods that can generate the appropriate operations to send to a
  * backing [StorageProxy].
@@ -29,7 +29,7 @@ private typealias SingletonHandle<T> =
 class SingletonImpl<T : Referencable>(
     name: String,
     storageProxy: SingletonProxy<T>
-) : SingletonHandle<T> (name, storageProxy) {
+) : SingletonHandle<T>(name, storageProxy) {
     /** Get the current value from the backing [StorageProxy]. */
     fun get() = value
 

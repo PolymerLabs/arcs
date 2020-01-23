@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage
+package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
@@ -19,7 +19,7 @@ private typealias SetProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation
 private typealias SetHandle<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 
 /**
- * Collection Handle implementation for the JVM.
+ * Collection Handle implementation for the runtime.
  *
  * It provides methods that can generate the appropriate operations to send to a
  * backing storage proxy.

@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage
+package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId

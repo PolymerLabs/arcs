@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage
+package arcs.core.storage.handle
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
@@ -22,14 +22,30 @@ data class ValueAndVersion<T>(val value: T, val versionMap: VersionMap)
 /**
  * StorageProxy is an intermediary between a [Handle] and the [Store] that the [Handle] wants to
  * communicate with. It also maintains a local copy of the backing [CrdtModel].
+ *
+ * The current implementation doesn't communicate with a storage backend, it's just a basic wrapper
+ * around a CRDT to move [Handle] implementation forward.
+ *
+ * TODO: Connect to storage
+ * TODO: Bridge to SDK Handles
+ *
+ * @param T the consumer data type for the model behind this proxy
+ * @property model a concrete instance of the [CrdtModel] the proxy will use to keep a local copy.
+ * @constructor creates a new storage proxy using the provided model instance
  */
-// TODO: Connect to storage.
 class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
-    val model: CrdtModel<Data, Op, T>
+    private val model: CrdtModel<Data, Op, T>
 ) {
-    val versionMap = VersionMap()
+    private val versionMap = VersionMap()
 
+    /**
+     * Return the current local version of the model, as well as the current associated version
+     * map for the data.
+     */
     fun getParticleView() = ValueAndVersion(model.consumerView, versionMap.copy())
 
+    /**
+     * Apply a CRDT operation to the [CrdtModel] that this [StorageProxy] manages.
+     */
     fun applyOp(op: Op) = model.applyOperation(op)
 }

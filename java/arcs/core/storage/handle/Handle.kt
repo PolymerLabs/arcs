@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage
+package arcs.core.storage.handle
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
@@ -26,7 +26,7 @@ interface Callbacks {
 }
 
 /**
- * Base implementation of Arcs handles on the JVM runtime.
+ * Base implementation of Arcs handles on the runtime.
  *
  * A handle is in charge of translating SDK data operations into the appropriate CRDT operation,
  * and then forwarding them to a [StorageProxy].
@@ -39,7 +39,7 @@ interface Callbacks {
  *
  * Note: A possible eventual goal is that this becomes the single runtime [Handle] implementation,
  * targetting any runtime platform that Kotlin targets. For the moment, though, this is just
- * used by JVM hosts.
+ * used by JVM/Android hosts.
  *
  * Implementations using this base are assumed to be based on a [CrdtModel] type. Concrete
  * subclasses should select a [CrdtData] and [CrdtOperation] type for the [Handle] when
@@ -71,10 +71,9 @@ abstract class Handle<Data : CrdtData, Op : CrdtOperation, T>(
 
     /** Read value from the backing [StorageProxy], updating the internal clock copy. */
     protected val value: T
-        get() = storageProxy.getParticleView().let { (value, versionMap) ->
+        get() = storageProxy.getParticleView().also { (_, versionMap) ->
             this.versionMap = versionMap
-            value
-        }
+        }.value
 
     /** Helper that subclasses can use to increment their version in the [VersionMap]. */
     protected fun VersionMap.increment() {
