@@ -61,7 +61,7 @@ abstract class Handle<Data : CrdtData, Op : CrdtOperation, T>(
 
     /** Read value from the backing [StorageProxy], updating the internal clock copy. */
     protected val value: T
-        get() = storageProxy.getParticleView().let { (value, version) ->
+        get() = storageProxy.getParticleView().let { (value, versionMap) ->
             this.versionMap = versionMap
             value
         }

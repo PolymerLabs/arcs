@@ -32,7 +32,7 @@ class CollectionImpl<T : Referencable>(
     val size: Int
         get() = value.size
 
-    /** Returns true if the current storage proxy view of the collection is empty*/
+    /** Returns true if the current storage proxy view of the collection is empty. */
     fun isEmpty(): Boolean = value.isEmpty()
 
     /** Return in iterator over them items in then storage proxy view of the collection. */
