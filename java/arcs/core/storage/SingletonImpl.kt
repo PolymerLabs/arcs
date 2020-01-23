@@ -15,10 +15,10 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
 
 /**
- * Collection Handle implementation for the JVM.
+ * Singleton [Handle] implementation for the JVM.
  *
  * It provides methods that can generate the appropriate operations to send to a
- * backing storage proxy.
+ * backing [StorageProxy].
  */
 class SingletonImpl<T : Referencable>(
     name: String,
@@ -26,18 +26,21 @@ class SingletonImpl<T : Referencable>(
 ) : Handle<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>(
     name, storageProxy
 ) {
+    /** Get the current value from the backing [StorageProxy]. */
     fun get(): T? {
         val (value, versionMap) = storageProxy.getParticleView()
         this.versionMap = versionMap
         return value
     }
 
+    /** Send a new value to the backing [StorageProxy]. */
     fun set(entity: T) {
         versionMap.increment()
         storageProxy.applyOp(CrdtSingleton.Operation.Update(name, versionMap, entity))
         notifyListeners()
     }
 
+    /** Clear the value from the backing [StorageProxy]. */
     fun clear() {
         storageProxy.applyOp(CrdtSingleton.Operation.Clear(name, versionMap))
         notifyListeners()

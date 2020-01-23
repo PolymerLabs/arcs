@@ -25,7 +25,6 @@ class CollectionImpl<T : Referencable>(
     storageProxy: StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 ) : Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>(name, storageProxy),
     Iterable<T> {
-
     /** Return the number of items in the storage proxy view of the collection. */
     val size: Int
         get() = value.size
@@ -36,7 +35,8 @@ class CollectionImpl<T : Referencable>(
     /** Return in iterator over them items in then storage proxy view of the collection. */
     override fun iterator(): Iterator<T> = value.iterator()
 
-    /** Store a new entity in the collection.
+    /**
+     * Store a new entity in the collection.
      *
      * It will be passed to the storage proxy in an add operation, with an incremented version
      * for this Handle in the version map.
@@ -47,7 +47,8 @@ class CollectionImpl<T : Referencable>(
         notifyListeners()
     }
 
-    /** Clear all items from the collection.
+    /**
+     * Clear all items from the collection.
      *
      * This currently works by iterating over all items in the storage proxy view of the
      * collection, and sending a Remove command for each one.
@@ -59,7 +60,8 @@ class CollectionImpl<T : Referencable>(
         notifyListeners()
     }
 
-    /** Remove a given entity from the collection.
+    /**
+     * Remove a given entity from the collection.
      *
      * The specified entity will be passed to the storage proxy in a remove operation.
      */
