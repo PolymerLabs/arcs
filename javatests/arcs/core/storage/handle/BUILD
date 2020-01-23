@@ -18,6 +18,7 @@ arcs_kt_android_test_suite(
     deps = [
         ":fakes",
         "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
         "//java/arcs/core/storage/handle",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
