@@ -157,7 +157,7 @@ export class Runtime {
     // TODO(wkorman): UI Broker refactor is underway and will change the
     // Slot related infrastructure, so the below is only temporary.
     SlotDomConsumer.setCacheService(this.cacheService);
-    this.loader = loader;
+    this.loader = loader || new Loader();
     this.pecFactory = pecFactory;
     this.composerClass = composerClass || SlotComposer;
     this.context = context || new Manifest({id: 'manifest:default'});

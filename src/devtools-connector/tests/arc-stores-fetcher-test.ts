@@ -9,10 +9,9 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
+import {Loader} from '../../platform/loader.js';
 import {DevtoolsForTests} from '../devtools-connection.js';
 import {devtoolsArcInspectorFactory} from '../devtools-arc-inspector.js';
-import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
-import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {SingletonType} from '../../runtime/type.js';
@@ -29,11 +28,7 @@ describe('ArcStoresFetcher', () => {
     const context = await Manifest.parse(`
       schema Foo
         value: Text`);
-    const runtime = new Runtime({
-        loader: new StubLoader({}),
-        composerClass: FakeSlotComposer,
-        context
-      });
+    const runtime = new Runtime({context});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
@@ -98,7 +93,7 @@ describe('ArcStoresFetcher', () => {
   });
 
   it('sends updates on value changes', async () => {
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'p.js': `defineParticle(({Particle}) => class P extends Particle {
         async setHandles(handles) {
           let foo = handles.get('foo');
@@ -115,12 +110,10 @@ describe('ArcStoresFetcher', () => {
         foo: create *
         P
           foo: foo`);
-    const runtime = new Runtime({
-        loader,
-        composerClass: FakeSlotComposer,
-        context
-      });
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
+    const runtime = new Runtime({loader, context});
+    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {
+      inspectorFactory: devtoolsArcInspectorFactory
+    });
 
     const recipe = arc.context.recipes[0];
     recipe.normalize();

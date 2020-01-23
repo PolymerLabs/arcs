@@ -16,10 +16,9 @@ import {Runtime} from '../../../runtime/runtime.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
-import {StubLoader} from '../../../runtime/testing/stub-loader.js';
+import {Loader} from '../../../platform/loader.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 describe('planning result', () => {
@@ -30,10 +29,9 @@ describe('planning result', () => {
   });
 
   async function testResultSerialization(manifestFilename) {
-    const loader = new StubLoader({});
+    const loader = new Loader();
     const context = await Manifest.load(manifestFilename, loader, {memoryProvider});
-    const runtime = new Runtime({
-        loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -53,10 +51,9 @@ describe('planning result', () => {
   });
 
   it('appends search suggestions', async () => {
-    const loader = new StubLoader({});
+    const loader = new Loader();
     const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
-    const runtime = new Runtime({
-        loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -126,8 +123,8 @@ recipe R3
     thing: reads thingHandle
         `;
   async function prepareMerge(manifestStr1, manifestStr2) {
-    const loader = new StubLoader({});
-    const runtime = new Runtime({loader, composerClass: FakeSlotComposer});
+    const loader = new Loader();
+    const runtime = new Runtime({loader});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const planToSuggestion = async (plan: Recipe): Promise<Suggestion> => {
