@@ -16,6 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.data.CollectionType
 import arcs.core.data.CountType
 import arcs.core.data.EntityType
+import arcs.core.data.FieldType
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
@@ -122,8 +123,8 @@ class ParcelableTypeTest {
     private val entitySchema = Schema(
         names = listOf(SchemaName("Person")),
         fields = SchemaFields(
-            singletons = setOf("name", "age"),
-            collections = setOf("friends")
+            singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+            collections = mapOf("friends" to FieldType.EntityRef("hash"))
         ),
         description = SchemaDescription(),
         hash = "hash"

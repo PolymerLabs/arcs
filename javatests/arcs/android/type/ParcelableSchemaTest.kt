@@ -13,6 +13,7 @@ package arcs.android.type
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
@@ -29,8 +30,8 @@ class ParcelableSchemaTest {
         val schema = Schema(
             names = listOf(SchemaName("MySchema"), SchemaName("AlsoMySchema")),
             fields = SchemaFields(
-                singletons = setOf("name", "age"),
-                collections = setOf("friends")
+                singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+                collections = mapOf("friends" to FieldType.EntityRef("hash"))
             ),
             description = SchemaDescription("MySchemaPattern"),
             hash = "hash"
@@ -54,7 +55,7 @@ class ParcelableSchemaTest {
     fun parcelableRoundtrip_works_empty() {
         val schema = Schema(
             names = emptyList(),
-            fields = SchemaFields(singletons = emptySet(), collections = emptySet()),
+            fields = SchemaFields(singletons = emptyMap(), collections = emptyMap()),
             description = SchemaDescription(),
             hash = "hash"
         )
