@@ -17,8 +17,8 @@ arcs_kt_particles(
     srcs = [
         "BlackjackTable.kt",
         "Card.kt",
-        "DealingShoe.kt",
-    ],
+        "Dealer.kt",
+        "DealingShoe.kt"],
     jvm = False,
     package = "arcs.tutorials.blackjack",
     deps = [":blackjack_schemas"],

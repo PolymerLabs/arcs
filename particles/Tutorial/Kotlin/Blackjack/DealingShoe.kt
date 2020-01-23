@@ -11,18 +11,24 @@ class DealingShoe : AbstractDealingShoe() {
     val numDecks = 1
     val totalCards = numDecks * 52
     val emptyDeck = cardAbsent.repeat(totalCards)
-    var nextCard: Card? = null
 
     override fun getTemplate(slotName: String) = """
         Card is <span>{{nextCard}}</span>
-        <button type="button" on-click="onClick"> Next Card </button> 
      """.trimIndent()
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        return model + mapOf("nextCard" to (nextCard?.toString() ?: "No card"))
+        return model + mapOf("nextCard" to nextCard.toString())
     }
 
     override fun onHandleUpdate(handle: Handle) {
+        if (handle.name != "cardRequest") { return }
+        val request = cardRequest.get()
+        if (request == null) { return }
+        val card: Card? = pickACard()
+        if (card == null) { return }
+        nextCard.set(DealingShoe_NextCard(
+                player = request.name,
+                card = card.value.toDouble()))
         this.renderOutput()
     }
 
@@ -38,7 +44,7 @@ class DealingShoe : AbstractDealingShoe() {
     fun pickACard(): Card? {
         var localDecks = decks.get() ?: initializedDecks()
         var choice = Random.nextInt(totalCards)
-        var cards:String = localDecks.cards
+        var cards = localDecks.cards
         if (cards.equals(emptyDeck)) return null
         // This could be done more efficiently, but should suffice for now.
         var readCards = 0
@@ -48,12 +54,6 @@ class DealingShoe : AbstractDealingShoe() {
         }
         localDecks.cards = cards.replaceRange(choice, choice + 1, cardAbsent)
         decks.set(localDecks)
-        return Card(choice)
-    }
-
-    init {
-        eventHandler("onClick") {
-            nextCard = pickACard()
-        }
+        return Card(choice % 52)
     }
 }
