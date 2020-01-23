@@ -170,10 +170,10 @@ If you don't know the path to the Android SDK, you can find it using
 Android Studio by going to the SDK Manager tool.
 ```
 export PATH=$PATH:$ANDROID_HOME/platform-tools
-source ~/.bash_profile
 ```
+To update the path in your terminal, either restart terminal or run `source ~/.bash_profile` on Mac or `source ~/.bashrc` on Linux.
 To verify ANDROID_HOME has been set properly, you can run
-`echo ANDROID_HOME`.
+`echo $ANDROID_HOME`.
 
 Once your Android environment has been setup, you can run the tests
 using bazel:
