@@ -27,11 +27,7 @@ class SingletonImpl<T : Referencable>(
     name, storageProxy
 ) {
     /** Get the current value from the backing [StorageProxy]. */
-    fun get(): T? {
-        val (value, versionMap) = storageProxy.getParticleView()
-        this.versionMap = versionMap
-        return value
-    }
+    fun get() = value
 
     /** Send a new value to the backing [StorageProxy]. */
     fun set(entity: T) {

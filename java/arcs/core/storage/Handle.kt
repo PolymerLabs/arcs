@@ -40,34 +40,33 @@ abstract class Handle<Data : CrdtData, Op : CrdtOperation, T>(
     val storageProxy: StorageProxy<Data, Op, T>
 ) {
 
-    /** A list of current registered callbacks */
+    /** A list of current registered [Callbacks] instances */
     private val callbacks = mutableListOf<Callbacks>()
 
-    /** Add a new callback to the list. */
+    /** Local copy of the [VersionMap] for the backing CRDT. */
+    var versionMap = VersionMap()
+        protected set
+
+    /** Add a new [Callback] to the list. */
     fun addCallbacks(callbacks: Callbacks) {
         this.callbacks.add(callbacks)
     }
 
-    /** Notify all listeners that an update has occurred. */
+    /** Notify all registered [Callbacks] instances that an update has occurred. */
     protected fun notifyListeners() {
         callbacks.forEach {
             it.onUpdate(this)
         }
     }
 
-    /** Local copy of the version map for the backing CRDT. */
-    var versionMap = VersionMap()
-        protected set
-
     /** Read value from the backing [StorageProxy], updating the internal clock copy. */
     protected val value: T
-        get() {
-            val (value, versionMap) = storageProxy.getParticleView()
+        get() = storageProxy.getParticleView().let { (value, version) ->
             this.versionMap = versionMap
-            return value
+            value
         }
 
-    /** Helper that subclasses can use to increment their version in the map. */
+    /** Helper that subclasses can use to increment their version in the [VersionMap]. */
     protected fun VersionMap.increment() {
         this[name]++
     }
