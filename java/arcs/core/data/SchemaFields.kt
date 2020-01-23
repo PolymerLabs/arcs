@@ -21,8 +21,6 @@ sealed class FieldType(
     /** A reference to an entity. */
     data class EntityRef(val schemaHash: String) : FieldType(Tag.EntityRef)
 
-    // TODO: Collections of References in fields are not supported in Kotlin at all yet.
-
     enum class Tag {
         Primitive,
         EntityRef
