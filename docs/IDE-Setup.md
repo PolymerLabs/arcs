@@ -91,6 +91,8 @@ Consider using the [IDE file chooser](https://intellij-support.jetbrains.com/hc/
 
 #### IDE shows `Unresolved Reference` for generated entities
 
+- Right click the directory with the BUILD file > Partially Sync <directory-name>/...
+- Non-incrementally sync the project: Bazel > Sync > Non-incrementally sync project with BUILD file
 - Ensure that your Kotlin plugin is at version 1.3.61 or higher: Preferences > Plugins > Installed > Kotlin 
 - Ensure that your IDE is at an recent enough version
 | IDE            | Version |
