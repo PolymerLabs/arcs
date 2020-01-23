@@ -27,7 +27,7 @@ class DealingShoe : AbstractDealingShoe() {
         val card: Card? = pickACard()
         if (card == null) { return }
         nextCard.set(DealingShoe_NextCard(
-                player = request.name,
+                player = request.player,
                 card = card.value.toDouble()))
         this.renderOutput()
     }

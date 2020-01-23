@@ -31,7 +31,7 @@ class Dealer : AbstractDealer() {
 
     init {
         eventHandler("onHit") {
-            cardRequest.set(Dealer_CardRequest(name = name))
+            cardRequest.set(Dealer_CardRequest(player = name))
             log("Hit.")
         }
         eventHandler("onStand") {

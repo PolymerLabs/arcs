@@ -7,6 +7,7 @@ class BlackjackTable : AbstractBlackjackTable() {
         return """
            <b>Welcome to the Arcs Casino!</b> <p>
            <div slotId="dealerHandSlot"></div>
+           <div slotId="playerHandSlot"></div>
         """.trimIndent()
 
     }
