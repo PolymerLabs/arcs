@@ -30,7 +30,7 @@
         if (messageData.sentTime < 24) {
           delete messageData['content'];
           messagesHandle.store(new messagesHandle.entityClass(messageData));
-        }  
+        }
       }
     }
 

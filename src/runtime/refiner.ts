@@ -57,7 +57,7 @@ export class Refinement {
   }
 
   static fromAst(ref: RefinementNode, typeData: Dictionary<ExpressionPrimitives>): Refinement {
-    if(!ref) {
+    if (!ref) {
       return null;
     }
     return new Refinement(RefinementExpression.fromAst(ref.expression, typeData));
@@ -168,7 +168,7 @@ abstract class RefinementExpression {
 
   constructor(readonly kind: 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode') {}
   static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-    if(!expr) {
+    if (!expr) {
       return null;
     }
     switch (expr.kind) {
@@ -179,6 +179,7 @@ abstract class RefinementExpression {
       case 'boolean-node': return BooleanPrimitive.fromAst(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
+        // tslint:disable-next-line: no-any
         throw new Error(`RefinementExpression.fromAst: Unknown node type ${(expr as any).kind}`);
     }
   }
@@ -192,6 +193,7 @@ abstract class RefinementExpression {
       case 'BooleanPrimitiveNode': return BooleanPrimitive.fromLiteral(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
+        // tslint:disable-next-line: no-any
         throw new Error(`RefinementExpression.fromLiteral: Unknown node type ${(expr as any).kind}`);
     }
   }
@@ -402,7 +404,7 @@ export class UnaryExpression extends RefinementExpression {
   }
 }
 
-class FieldNamePrimitive extends RefinementExpression {
+export class FieldNamePrimitive extends RefinementExpression {
   evalType: Primitive;
   value: string;
 
@@ -446,7 +448,7 @@ class FieldNamePrimitive extends RefinementExpression {
   }
 }
 
-class NumberPrimitive extends RefinementExpression {
+export class NumberPrimitive extends RefinementExpression {
   evalType = Primitive.NUMBER;
   value: number;
 

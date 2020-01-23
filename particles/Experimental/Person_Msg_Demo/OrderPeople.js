@@ -11,10 +11,10 @@
  /* global defineParticle */
 
 function filter(messages, to, unorderedPeople) {
-  var frequency = {};
+  const frequency = {};
   messages.forEach(function(value) { frequency[value.fromID] = 0; });
   messages.forEach(function(value) { frequency[value.fromID]++; });
-  var peopleData = unorderedPeople.filter(function(value) {
+  const peopleData = unorderedPeople.filter(function(value) {
     return frequency[value.id] > 0;
   });
   return peopleData.sort(function(a, b) {
@@ -22,7 +22,7 @@ function filter(messages, to, unorderedPeople) {
   });
 }
 
-const to = "1";
+let to = '1';
 
  defineParticle(({SimpleParticle, html}) => {
 

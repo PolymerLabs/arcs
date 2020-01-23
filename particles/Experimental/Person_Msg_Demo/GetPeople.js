@@ -17,15 +17,15 @@
 }
 
 let peopleData = [
-  {'name': "Jill", "age": 70, "id": "1"},
-  {'name': "Jack", "age": 25, "id": "2"},
-  {'name': "Jen", "age": 50, "id": "3"},
+  {'name': 'Jill', 'age': 70, 'id': '1'},
+  {'name': 'Jack', 'age': 25, 'id': '2'},
+  {'name': 'Jen', 'age': 50, 'id': '3'},
 ];
 
  defineParticle(({SimpleParticle, html}) => {
 
   const template = html`
-    <textarea spellcheck="false" on-change="onPeopleDataChange">${JSON.stringify(peopleData)}</textarea>
+    <textarea rows="5" cols="50" spellcheck="false" on-change="onPeopleDataChange">${JSON.stringify(peopleData)}</textarea>
   `;
 
   return class extends SimpleParticle {
@@ -38,7 +38,7 @@ let peopleData = [
       this.clear('people');
       const peopleHandle = this.handles.get('people');
       for (const personData of peopleData) {
-        peopleHandle.store(new peopleHandle.entityClass(personData)); 
+        peopleHandle.store(new peopleHandle.entityClass(personData));
       }
     }
 

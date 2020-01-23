@@ -16,12 +16,12 @@ defineParticle(({SimpleParticle, html}) => {
       <div slotid="messagesInputSlot"></div>
       <div slotid="peopleInputSlot"></div>
       <div slotid="forSlot"></div>
-        Hello to everyone:
-        <ul>{{people}}</ul>
+        Top messeger senders:
+        <ol>{{people}}</ol>
 
         <template person>
           <!-- This template is given a model object. It can access the properties on that model via the usual placeholder syntax. -->
-          <li>Hello <span>{{name}}</span>, age <span>{{age}}</span>!</li>
+          <li><span>{{name}}</span></li>
         </template>
       `;
     }

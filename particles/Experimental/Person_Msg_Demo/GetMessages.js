@@ -12,35 +12,35 @@
 
  let messagesData = [
   {
-    "toID": "1",
-    "fromID": "2",
-    "content": "Text",
-    "sentTime": 12,
+    'toID': '1',
+    'fromID': '2',
+    'content': 'Text',
+    'sentTime': 12,
   },
   {
-    "toID": "1",
-    "fromID": "3",
-    "content": "Text",
-    "sentTime": 11,
+    'toID': '1',
+    'fromID': '3',
+    'content': 'Text',
+    'sentTime': 11,
   },
   {
-    "toID": "1",
-    "fromID": "3",
-    "content": "Text2",
-    "sentTime": 10,
+    'toID': '1',
+    'fromID': '3',
+    'content': 'Text2',
+    'sentTime': 10,
   },
   {
-    "toID": "1",
-    "fromID": "1",
-    "content": "Text",
-    "sentTime": 25,
+    'toID': '1',
+    'fromID': '1',
+    'content': 'Text',
+    'sentTime': 25,
   }
 ];
 
  defineParticle(({SimpleParticle, html}) => {
 
   const template = html`
-<textarea spellcheck="false" on-change="onMessagesDataChange">${JSON.stringify(messagesData)}</textarea>
+<textarea rows="5" cols="70" spellcheck="false" on-change="onMessagesDataChange">${JSON.stringify(messagesData)}</textarea>
 <button id="myButton" on-click="triggerDataFlow">Go!</button>
   `;
 
