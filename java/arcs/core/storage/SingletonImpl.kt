@@ -14,6 +14,10 @@ package arcs.core.storage
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
 
+/** These typealiases are defined to clean up the class declaration below. */
+private typealias SingletonProxy<T> = StorageProxy<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
+private typealias SingletonHandle<T> = Handle<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
+
 /**
  * Singleton [Handle] implementation for the JVM.
  *
@@ -22,10 +26,8 @@ import arcs.core.crdt.CrdtSingleton
  */
 class SingletonImpl<T : Referencable>(
     name: String,
-    storageProxy: StorageProxy<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
-) : Handle<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>(
-    name, storageProxy
-) {
+    storageProxy: SingletonProxy<T>
+) : SingletonHandle<T> (name, storageProxy) {
     /** Get the current value from the backing [StorageProxy]. */
     fun get() = value
 

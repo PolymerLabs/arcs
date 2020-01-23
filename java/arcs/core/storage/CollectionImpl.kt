@@ -14,6 +14,10 @@ package arcs.core.storage
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
 
+/** These typealiases are defined to clean up the class declaration below. */
+private typealias SetProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+private typealias SetHandle<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+
 /**
  * Collection Handle implementation for the JVM.
  *
@@ -22,9 +26,8 @@ import arcs.core.crdt.CrdtSet
  */
 class CollectionImpl<T : Referencable>(
     name: String,
-    storageProxy: StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
-) : Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>(name, storageProxy),
-    Iterable<T> {
+    storageProxy: SetProxy<T>
+) : SetHandle<T>(name, storageProxy), Iterable<T> {
     /** Return the number of items in the storage proxy view of the collection. */
     val size: Int
         get() = value.size
