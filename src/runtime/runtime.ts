@@ -138,6 +138,7 @@ export class Runtime {
       'https://$build/': `${root}/shells/lib/build/`,
       // these are optional (?)
       'https://$arcs/': `${root}/`,
+      'https://$shells': `${root}/shells`,
       'https://$particles/': {
         root,
         path: '/particles/',
