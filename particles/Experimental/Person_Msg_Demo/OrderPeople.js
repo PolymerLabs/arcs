@@ -27,7 +27,10 @@ let to = '1';
  defineParticle(({SimpleParticle, html}) => {
 
   const template = html`
-<textarea spellcheck="false" on-change="onFromDataChange">${JSON.stringify(to)}</textarea>
+  <div style="display:flex;flex-direction:column;align-items:left;padding:1em;">
+    Receiver:
+    <textarea spellcheck="false" on-change="onFromDataChange">${JSON.stringify(to)}</textarea>
+  </div>
   `;
 
   return class extends SimpleParticle {

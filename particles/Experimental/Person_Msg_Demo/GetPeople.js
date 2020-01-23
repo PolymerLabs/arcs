@@ -25,7 +25,10 @@ let peopleData = [
  defineParticle(({SimpleParticle, html}) => {
 
   const template = html`
-    <textarea rows="5" cols="50" spellcheck="false" on-change="onPeopleDataChange">${JSON.stringify(peopleData)}</textarea>
+    <div style="display:flex;flex-direction:column;align-items:left;padding:1em;">
+    People:
+    <textarea rows="10" cols="50" spellcheck="false" on-change="onPeopleDataChange">${JSON.stringify(peopleData, undefined, 2)}</textarea>
+    </div>
   `;
 
   return class extends SimpleParticle {

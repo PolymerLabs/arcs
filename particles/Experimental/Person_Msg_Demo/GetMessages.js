@@ -40,8 +40,11 @@
  defineParticle(({SimpleParticle, html}) => {
 
   const template = html`
-<textarea rows="5" cols="70" spellcheck="false" on-change="onMessagesDataChange">${JSON.stringify(messagesData)}</textarea>
-<button id="myButton" on-click="triggerDataFlow">Go!</button>
+  <div style="display:flex;flex-direction:column;align-items:left;padding:1em;">
+    Messages:
+    <textarea rows="10" cols="70" spellcheck="false" on-change="onMessagesDataChange">${JSON.stringify(messagesData, undefined, 2)}</textarea>
+    <button id="myButton" on-click="triggerDataFlow">Go!</button>
+  </div>
   `;
 
   return class extends SimpleParticle {
