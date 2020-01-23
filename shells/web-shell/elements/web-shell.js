@@ -128,10 +128,11 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     }
     // poll for arcs-store
     if (!state.store && state.launcherArc) {
-      this.waitForStore(500);
+      // TODO(sjmiles): defeat sharing while onboarding StorageNG
+      //this.waitForStore(500);
     }
     // spin up nullArc
-    if (!state.nullConfig && state.context && state.store) {
+    if (!state.nullConfig && state.context /*&& state.store*/) {
       this.configureNullArc();
     }
     // consume a suggestion
@@ -296,7 +297,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
     if (this.state.store) {
       await this.state.store.store({id: meta.key, rawData: meta}, [generateId()]);
     } else {
-      log('failed to record arc metadata: no store');
+      //log('failed to record arc metadata: no store');
     }
   }
   openLauncher() {
