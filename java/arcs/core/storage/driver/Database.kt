@@ -11,6 +11,7 @@
 
 package arcs.core.storage.driver
 
+import arcs.core.data.Schema
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
@@ -29,6 +30,7 @@ const val DATABASE_NAME_DEFAULT = "arcs"
 /** [StorageKey] implementation for a piece of data managed by the [DatabaseDriver]. */
 data class DatabaseStorageKey(
     val unique: String,
+    val entitySchemaHash: String,
     val persistent: Boolean = true,
     val dbName: String = DATABASE_NAME_DEFAULT
 ) : StorageKey(DATABASE_DRIVER_PROTOCOL) {
@@ -36,10 +38,16 @@ data class DatabaseStorageKey(
         require(DATABASE_NAME_PATTERN.matches(dbName)) {
             "$dbName is an invalid database name, must match the pattern: $DATABASE_NAME_PATTERN"
         }
+        require(ENTITY_SCHEMA_HASH_PATTERN.matches(entitySchemaHash)) {
+            "$entitySchemaHash is an invalid entity schema hash, must match the pattern: " +
+                ENTITY_SCHEMA_HASH_PATTERN
+        }
     }
 
-    override fun toKeyString() =
-        "$dbName:${if (persistent) VARIANT_PERSISTENT else VARIANT_IN_MEMORY}/$unique"
+    override fun toKeyString(): String {
+        val persistenceVariant = if (persistent) VARIANT_PERSISTENT else VARIANT_IN_MEMORY
+        return "$entitySchemaHash@$dbName:$persistenceVariant/$unique"
+    }
 
     override fun childKeyWithComponent(component: String): StorageKey =
         copy(unique = "$unique/$component")
@@ -48,10 +56,13 @@ data class DatabaseStorageKey(
 
     companion object {
         private val DATABASE_NAME_PATTERN = "[a-zA-Z][a-zA-Z0-1_-]*".toRegex()
+        private val ENTITY_SCHEMA_HASH_PATTERN = "[a-fA-F0-9]+".toRegex()
         private const val VARIANT_PERSISTENT = "persistent"
         private const val VARIANT_IN_MEMORY = "in-memory"
+        // ktlint-disable max-line-length
         private val DB_STORAGE_KEY_PATTERN =
-            "^($DATABASE_NAME_PATTERN):($VARIANT_PERSISTENT|$VARIANT_IN_MEMORY)/(.+)\$".toRegex()
+            "^($ENTITY_SCHEMA_HASH_PATTERN)@($DATABASE_NAME_PATTERN):($VARIANT_PERSISTENT|$VARIANT_IN_MEMORY)/(.+)\$".toRegex()
+        // ktlint-enable max-line-length
 
         init {
             // When DatabaseStorageKey is imported, this will register its parser with the storage
@@ -69,36 +80,72 @@ data class DatabaseStorageKey(
                 "Not a valid DatabaseStorageKey: $rawKeyString"
             }
 
-            val persistent = match.groupValues[2] == "persistent"
-            return DatabaseStorageKey(match.groupValues[3], persistent, match.groupValues[1])
+            val entitySchemaHash = match.groupValues[1]
+            val dbName = match.groupValues[2]
+            val persistent = match.groupValues[3] == "persistent"
+            val unique = match.groupValues[4]
+            return DatabaseStorageKey(unique, entitySchemaHash, persistent, dbName)
         }
     }
 }
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
-class DatabaseDriverProvider : DriverProvider {
+class DatabaseDriverProvider(
+    /**
+     * Function which will be used to determine, at runtime, which [Schema] to associate with its
+     * hash value embedded in a [DatabaseStorageKey].
+     */
+    private val schemaLookup: (String) -> Schema?
+) : DriverProvider {
     init {
         DriverFactory.register(this)
     }
 
     override fun willSupport(storageKey: StorageKey): Boolean =
-        storageKey is DatabaseStorageKey
+        storageKey is DatabaseStorageKey && schemaLookup(storageKey.entitySchemaHash) != null
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
         existenceCriteria: ExistenceCriteria
     ): Driver<Data> {
-        require(storageKey is DatabaseStorageKey) {
+        val databaseKey = requireNotNull(storageKey as? DatabaseStorageKey) {
             "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
         }
-        return DatabaseDriver(storageKey, existenceCriteria)
+        requireNotNull(schemaLookup(databaseKey.entitySchemaHash)) {
+            "Unsupported DatabaseStorageKey: No Schema found with hash: " +
+                databaseKey.entitySchemaHash
+        }
+        return DatabaseDriver(storageKey, existenceCriteria, schemaLookup)
+    }
+
+    // Both equals(other) and hashCode() should treat all instances of DatabaseDriverProvider as
+    // equivalent, so that the DriverFactory keeps one instance, even if the class is instantiated
+    // more than once.
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        return other is DatabaseDriverProvider
+    }
+
+    override fun hashCode(): Int = DatabaseDriverProvider::class.hashCode()
+
+    companion object {
+        /**
+         * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
+         * with the [DriverFactory].
+         */
+        fun configure(schemaLookup: (String) -> Schema?) {
+            // The `init` block will register the driver provider with the driver factory.
+            DatabaseDriverProvider(schemaLookup)
+        }
     }
 }
 
 /** [Driver] implementation capable of managing data stored in a SQL database. */
 class DatabaseDriver<Data : Any>(
     override val storageKey: StorageKey,
-    override val existenceCriteria: ExistenceCriteria
+    override val existenceCriteria: ExistenceCriteria,
+    private val schemaLookup: (String) -> Schema?
 ) : Driver<Data> {
     override suspend fun registerReceiver(
         token: String?,

@@ -12,9 +12,15 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
+import arcs.core.data.FieldType
+import arcs.core.data.Schema
+import arcs.core.data.SchemaDescription
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
+import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -25,26 +31,36 @@ import org.junit.runners.JUnit4
 /** Tests for [RamDiskDriverProvider]. */
 @RunWith(JUnit4::class)
 class DatabaseDriverProviderTest {
+    private val schemaHashLookup = mutableMapOf<String, Schema>()
+
     @After
-    fun teardown() = DriverFactory.clearRegistrationsForTesting()
-
-    @Test
-    fun registersSelfWithDriverFactory() {
-        DatabaseDriverProvider() // Constructor registers self.
-
-        assertThat(DriverFactory.willSupport(DatabaseStorageKey("foo"))).isTrue()
+    fun teardown() {
+        DriverFactory.clearRegistrationsForTesting()
+        schemaHashLookup.clear()
     }
 
     @Test
-    fun willSupport_returnsTrue_whenDatabaseKey() {
-        val provider = DatabaseDriverProvider()
-        val key = DatabaseStorageKey("foo")
+    fun registersSelfWithDriverFactory() {
+        DatabaseDriverProvider(schemaHashLookup::get) // Constructor registers self.
+        schemaHashLookup["1234a"] = DUMMY_SCHEMA
+
+        assertThat(
+            DriverFactory.willSupport(DatabaseStorageKey("foo", "1234a"))
+        ).isTrue()
+    }
+
+    @Test
+    fun willSupport_returnsTrue_whenDatabaseKey_andSchemaFound() {
+        val provider = DatabaseDriverProvider(schemaHashLookup::get)
+        schemaHashLookup["1234a"] = DUMMY_SCHEMA
+
+        val key = DatabaseStorageKey("foo", "1234a")
         assertThat(provider.willSupport(key)).isTrue()
     }
 
     @Test
     fun willSupport_returnsFalse_whenNotDatabaseKey() {
-        val provider = DatabaseDriverProvider()
+        val provider = DatabaseDriverProvider(schemaHashLookup::get)
         val ramdisk = RamDiskStorageKey("foo")
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
         val other = object : StorageKey("outofnowhere") {
@@ -57,12 +73,66 @@ class DatabaseDriverProviderTest {
         assertThat(provider.willSupport(other)).isFalse()
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun getDriver_throwsOnInvalidKey() = runBlocking {
-        val provider = DatabaseDriverProvider()
+    @Test
+    fun willSupport_returnsFalse_whenSchemaNotFound() {
+        val provider = DatabaseDriverProvider(schemaHashLookup::get)
+
+        val key = DatabaseStorageKey("foo", "1234a")
+        assertThat(provider.willSupport(key)).isFalse()
+    }
+
+    @Test
+    fun getDriver_throwsOnInvalidKey_wrongType() = runBlocking {
+        val provider = DatabaseDriverProvider(schemaHashLookup::get)
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
-        provider.getDriver<Int>(volatile, ExistenceCriteria.ShouldCreate)
+        assertSuspendingThrows(IllegalArgumentException::class) {
+            provider.getDriver<Int>(volatile, ExistenceCriteria.ShouldCreate)
+        }
         Unit
+    }
+
+    @Test
+    fun getDriver_throwsOnInvalidKey_schemaNotFound() = runBlocking {
+        val provider = DatabaseDriverProvider(schemaHashLookup::get)
+        val key = DatabaseStorageKey("foo", "1234a")
+
+        assertSuspendingThrows(IllegalArgumentException::class) {
+            provider.getDriver<Int>(key, ExistenceCriteria.ShouldCreate)
+        }
+        Unit
+    }
+
+    @Test
+    fun equals_returnsTrue_evenIfLookupMethodsDiffer() {
+        val providerA = DatabaseDriverProvider { null }
+        val providerB = DatabaseDriverProvider { DUMMY_SCHEMA }
+        assertThat(providerA.equals(providerB)).isTrue()
+    }
+
+    @Test
+    fun equals_returnsFalse_ifOtherIsNotDatabaseDriverProvider() {
+        val providerA = DatabaseDriverProvider { null }
+        val providerB = RamDiskDriverProvider()
+        assertThat(providerA.equals(providerB)).isFalse()
+    }
+
+    @Test
+    fun hashCodes_match_evenIfLookupMethodsDiffer() {
+        val providerA = DatabaseDriverProvider { null }
+        val providerB = DatabaseDriverProvider { DUMMY_SCHEMA }
+        assertThat(providerA.hashCode() == providerB.hashCode()).isTrue()
+    }
+
+    companion object {
+        private val DUMMY_SCHEMA = Schema(
+            listOf(SchemaName("mySchema")),
+            SchemaFields(
+                mapOf("name" to FieldType.Text),
+                mapOf("cities_lived_in" to FieldType.Text)
+            ),
+            SchemaDescription(),
+            "1234a"
+        )
     }
 }
