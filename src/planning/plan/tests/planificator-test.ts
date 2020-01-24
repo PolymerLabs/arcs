@@ -62,10 +62,11 @@ describe('planificator', () => {
 
 describe('remote planificator', () => {
   // TODO: support arc storage key be in PouchDB as well.
-  const arcStorageKey = storageKeyPrefixForTest();
+  let arcStorageKey;
 
   let memoryProvider;
   beforeEach(() => {
+    arcStorageKey = storageKeyPrefixForTest();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
