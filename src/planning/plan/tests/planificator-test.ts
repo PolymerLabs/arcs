@@ -66,6 +66,7 @@ describe('remote planificator', () => {
 
   let memoryProvider;
   beforeEach(() => {
+    Flags.reset();
     arcStorageKey = storageKeyPrefixForTest();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
