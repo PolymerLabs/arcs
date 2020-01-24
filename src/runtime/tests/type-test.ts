@@ -105,10 +105,10 @@ describe('types', () => {
                 evalType: 'Boolean'
               },
               operator: {
-                op: "and",
+                op: 'and',
                 opInfo: {
-                  argType: "Boolean",
-                  evalType: "Boolean",
+                  argType: 'Boolean',
+                  evalType: 'Boolean',
                   nArgs: 2,
                   sqlOp: 'AND',
                 }
