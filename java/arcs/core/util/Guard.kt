@@ -8,7 +8,9 @@ import kotlinx.coroutines.sync.Mutex
  * Builds a [Guard] property delegate where all access/mutation to the delegated property must be
  * done within a lock on the provided [mutex].
  *
- * [initialValue] is a function which returns the starting value of the property.
+ * [initialValue] is a function which returns the starting value of the property, it will be
+ * lazily-called when the property is first accessed (assuming it was not set as the first action on
+ * the property).
  *
  * Example:
  *
@@ -29,7 +31,7 @@ import kotlinx.coroutines.sync.Mutex
  * }
  * ```
  */
-fun <T> guardWith(mutex: Mutex, initialValue: () -> T) = Guard(mutex, initialValue())
+fun <T> guardWith(mutex: Mutex, initialValue: () -> T) = Guard(mutex, initialValue)
 
 /**
  * Builds a [Guard] property delegate where all access/mutation to the delegated property must be
@@ -56,10 +58,10 @@ fun <T> guardWith(mutex: Mutex, initialValue: () -> T) = Guard(mutex, initialVal
  * }
  * ```
  */
-fun <T> guardWith(mutex: Mutex, initialValue: T) = Guard(mutex, initialValue)
+fun <T> guardWith(mutex: Mutex, initialValue: T) = Guard(mutex) { initialValue }
 
 /** Provider of the [GuardDelegate] property delegate. */
-class Guard<T>(private val mutex: Mutex, private val initialValue: T) {
+class Guard<T>(private val mutex: Mutex, private val initialValue: () -> T) {
     operator fun provideDelegate(thisRef: Any, prop: KProperty<*>): ReadWriteProperty<Any, T> =
         GuardDelegate(mutex, initialValue)
 }
@@ -70,15 +72,20 @@ class Guard<T>(private val mutex: Mutex, private val initialValue: T) {
  */
 private class GuardDelegate<T>(
     private val mutex: Mutex,
-    private var value: T
+    private val initialValue: () -> T
 ) : ReadWriteProperty<Any, T> {
+    private var valueHolder: ValueHolder<T>? = null
+
     override fun getValue(thisRef: Any, property: KProperty<*>): T {
         check(mutex.isLocked) { "Access to ${property.name} must be done within a mutex lock." }
-        return value
+        return valueHolder?.value
+            ?: initialValue().also { this.valueHolder = ValueHolder(it) }
     }
 
     override fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
         check(mutex.isLocked) { "Changes to ${property.name} must be done within a mutex lock." }
-        this.value = value
+        this.valueHolder?.let { it.value = value } ?: { this.valueHolder = ValueHolder(value) }()
     }
+
+    private class ValueHolder<T : Any?>(var value: T)
 }
