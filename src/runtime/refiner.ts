@@ -53,9 +53,6 @@ export class Refinement {
   constructor(expr: RefinementExpression) {
     // TODO(ragdev): Should be a copy?
     // TODO(ragdev): ensure that the refinement contains at least 1 fieldName
-    if (!expr) {
-      return null;
-    }
     this.expression = expr;
   }
 
