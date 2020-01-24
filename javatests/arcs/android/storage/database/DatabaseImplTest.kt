@@ -14,7 +14,6 @@ package arcs.android.storage.database
 import android.database.Cursor
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.android.storage.database.DatabaseImpl
 import arcs.core.data.*
 import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
@@ -59,42 +58,42 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getOrCreateSchemaTypeId_newSchema() {
+    fun getSchemaTypeId_newSchema() {
         val schema = newSchema("abc")
 
-        assertThat(database.getOrCreateSchemaTypeId(schema)).isEqualTo(FIRST_ENTITY_TYPE_ID)
+        assertThat(database.getSchemaTypeId(schema)).isEqualTo(FIRST_ENTITY_TYPE_ID)
 
         // Repeating should give the same result.
-        assertThat(database.getOrCreateSchemaTypeId(schema)).isEqualTo(FIRST_ENTITY_TYPE_ID)
+        assertThat(database.getSchemaTypeId(schema)).isEqualTo(FIRST_ENTITY_TYPE_ID)
 
         assertThat(database.getTypeId(FieldType.EntityRef("abc")))
             .isEqualTo(FIRST_ENTITY_TYPE_ID)
     }
 
     @Test
-    fun getOrCreateSchemaTypeId_multipleNewSchemas() {
+    fun getSchemaTypeId_multipleNewSchemas() {
         val schema1 = newSchema("first")
         val schema2 = newSchema("second")
         val expectedTypeId1 = FIRST_ENTITY_TYPE_ID
         val expectedTypeId2 = FIRST_ENTITY_TYPE_ID + 1
 
-        assertThat(database.getOrCreateSchemaTypeId(schema1)).isEqualTo(expectedTypeId1)
+        assertThat(database.getSchemaTypeId(schema1)).isEqualTo(expectedTypeId1)
         assertThat(database.getTypeId(FieldType.EntityRef("first")))
             .isEqualTo(expectedTypeId1)
 
-        assertThat(database.getOrCreateSchemaTypeId(schema2)).isEqualTo(expectedTypeId2)
+        assertThat(database.getSchemaTypeId(schema2)).isEqualTo(expectedTypeId2)
         assertThat(database.getTypeId(FieldType.EntityRef("second")))
             .isEqualTo(expectedTypeId2)
     }
 
     @Test
-    fun getOrCreateSchemaTypeId_withPrimitiveFields() {
+    fun getSchemaTypeId_withPrimitiveFields() {
         val schema = newSchema("abc", SchemaFields(
             singletons = mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean),
             collections = mapOf("num" to FieldType.Number)
         ))
 
-        val typeId = database.getOrCreateSchemaTypeId(schema)
+        val typeId = database.getSchemaTypeId(schema)
 
         assertThat(typeId).isEqualTo(FIRST_ENTITY_TYPE_ID)
         assertThat(readFieldsTable()).containsExactly(

@@ -19,8 +19,8 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.os.Parcel
 import android.os.PersistableBundle
 import androidx.annotation.VisibleForTesting
-import arcs.android.storage.transaction
-import arcs.android.storage.useTransaction
+import arcs.android.common.transaction
+import arcs.android.common.useTransaction
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.driver.RamDiskStorageKey

@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.storage
+package arcs.android.common
 
 import android.database.sqlite.SQLiteDatabase
 

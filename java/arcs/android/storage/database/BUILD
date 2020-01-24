@@ -9,10 +9,11 @@ kt_android_library(
     srcs = glob(["*.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
-        "//java/arcs/android/storage",
+        "//java/arcs/android/common",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/database",
         "//third_party/java/androidx/annotation",
+        "//third_party/java/jsr305_annotations",
     ],
 )
