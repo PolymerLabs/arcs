@@ -1087,7 +1087,11 @@ async function runSteps(command: string, args: string[]): Promise<boolean> {
     // This is to avoid accidentally interpreting 'false' as a truthy value.
     if (globalOptions.hasOwnProperty(key)) {
       let value = globalOptions[key];
-      if (value === 'true') {
+      // if the flag hasn't been set (e.g. --flag)
+      // or it if has been set to 'true' (e.g. --flag==true), set it to true.
+      // if has been set to 'false' (e.g. --flag==false), set it to false.
+      // Otherwise, keep the string type value.
+      if (value === undefined || value === 'true') {
         value = true;
       } else if (value === 'false') {
         value = false;
