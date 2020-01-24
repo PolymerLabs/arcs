@@ -8,13 +8,15 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
+package arcs.jvm.host
+
+import arcs.core.host.ArcHost
+import arcs.core.host.ProdHost
+import com.google.auto.service.AutoService
 
 /**
- * A particle marked as [ProdParticle] will be automatically registered to run in a [ProdHost] in
- * the Arcs runtime.
+ * An [ArcHost] that runs isolatable particles that are expected to have no platform
+ * dependencies directly on Android APIs.
  */
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-@TargetHost(ProdHost::class)
-annotation class ProdParticle
+@AutoService(ArcHost::class)
+class JvmProdHost : ProdHost()

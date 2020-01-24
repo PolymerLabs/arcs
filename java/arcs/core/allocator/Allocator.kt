@@ -8,14 +8,21 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
+package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.common.Id
-import arcs.core.sdk.Particle
+import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.ParticleSpec
+import arcs.core.data.Plan
+import arcs.core.data.PlanPartition
+import arcs.core.host.ArcHost
+import arcs.core.host.ArcHostNotFoundException
+import arcs.core.host.HostRegistry
+import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.driver.VolatileStorageKey
+import arcs.sdk.Particle
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -77,11 +84,10 @@ class Allocator(val hostRegistry: HostRegistry) {
      * attaches generated keys.
      */
     private fun createStorageKeysIfNecessary(arcId: ArcId, idGenerator: Id.Generator, plan: Plan) =
-        plan.handleConnectionSpecs
-            .map { it -> it.handleSpec }
-            .filter { spec -> spec.storageKey == null }
-            .forEach { spec ->
-                spec.storageKey = createStorageKey(arcId, spec, idGenerator)
+        plan.particles
+            .forEach {
+                it.handles.values.forEach { spec ->
+                    spec.storageKey = spec.storageKey ?: createStorageKey(arcId, idGenerator) }
             }
 
     /**
@@ -90,17 +96,11 @@ class Allocator(val hostRegistry: HostRegistry) {
      */
     private fun createStorageKey(
         arcId: ArcId,
-        spec: HandleSpec,
         idGenerator: Id.Generator
-    ): StorageKey = when {
-        !isVolatileHandle(spec.tags) -> RamDiskStorageKey(
-            idGenerator.newChildId(arcId, "").toString()
-        )
-        else -> VolatileStorageKey(
+    ): StorageKey = VolatileStorageKey(
             arcId,
             idGenerator.newChildId(arcId, "").toString()
         )
-    }
 
     private fun isVolatileHandle(tags: Set<String>) = tags.contains("volatile")
 
@@ -109,20 +109,14 @@ class Allocator(val hostRegistry: HostRegistry) {
      * that lists [HandleSpec], [ParticleSpec], and [HandleConnectionSpec] needed for that host.
      */
     private suspend fun computePartitions(arcId: ArcId, plan: Plan): List<PlanPartition> =
-        plan.handleConnectionSpecs
-            .map { spec -> findArcHostBySpec(spec.particleSpec) to spec }
-            .groupBy({ it.first }, { it.second.particleSpec })
-            // map ArcHost -> List<ParticleSpec> into List<PlanPartition>
-            .map {
-                // find all HandleConnectionSpecs for the given List<ParticleSpec>
-                val handleConnectionSpecs =
-                    plan.handleConnectionSpecs.filter { spec ->
-                        it.value.contains(spec.particleSpec)
-                    }
+        plan.particles
+            .map { spec -> findArcHostBySpec(spec) to spec }
+            .groupBy({ it.first }, { it.second })
+            .map { (host, particles) ->
                 PlanPartition(
                     arcId.toString(),
-                    it.key::class.java.canonicalName!! /* ArcHost */,
-                    handleConnectionSpecs
+                    host::class.java.canonicalName!!,
+                    particles
                 )
             }
 

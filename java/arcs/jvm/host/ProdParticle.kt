@@ -8,14 +8,13 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
-
-import arcs.jvm.host.TargetHost
+package arcs.jvm.host
 
 /**
- * Annotation to test partitioning for two hosts.
+ * A particle marked as [ProdParticle] will be automatically registered to run in a [JvmProdHost] in
+ * the Arcs runtime.
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-@TargetHost(TestHost::class)
-annotation class RunInTestHost
+@TargetHost(JvmProdHost::class)
+annotation class ProdParticle

@@ -8,10 +8,14 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.sdk
+package arcs.jvm.host
+
+import arcs.core.host.ArcHost
+import kotlin.reflect.KClass
 
 /**
- * Base type for all particles. This is a placeholder for testing host functionality and will
- * be replaced with the real API soon.
+ * [TargetHost] is used on other annotations to associate an [ArcHost] with a [Particle]
  */
-interface Particle
+@Target(AnnotationTarget.ANNOTATION_CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class TargetHost(val value: KClass<out ArcHost>)

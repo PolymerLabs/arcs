@@ -10,9 +10,8 @@
  */
 package arcs.jvm.host
 
-import arcs.core.host.AnnotationBasedHostRegistry
 import arcs.core.host.ArcHost
-import arcs.core.sdk.Particle
+import arcs.sdk.Particle
 import java.util.ServiceLoader
 import kotlinx.coroutines.runBlocking
 

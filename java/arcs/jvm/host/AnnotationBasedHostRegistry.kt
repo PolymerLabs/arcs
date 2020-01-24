@@ -8,10 +8,12 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
+package arcs.jvm.host
 
-import arcs.core.sdk.Particle
+import arcs.core.host.ArcHost
+import arcs.core.host.HostRegistry
 import arcs.core.util.guardWith
+import arcs.sdk.Particle
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

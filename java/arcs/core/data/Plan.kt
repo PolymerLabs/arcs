@@ -8,7 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
+package arcs.core.data
 
 /**
  * A [Plan] is usually produced by running the build time Particle Accelerator tool, it consists
@@ -16,5 +16,5 @@ package arcs.core.host
  */
 open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
-    val handleConnectionSpecs: List<HandleConnectionSpec>
+    val particles: List<ParticleSpec>
 )

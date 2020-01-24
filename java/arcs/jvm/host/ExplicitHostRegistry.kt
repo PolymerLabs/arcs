@@ -8,9 +8,9 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
+package arcs.jvm.host
 
-import arcs.core.sdk.Particle
+import arcs.sdk.Particle
 import kotlin.reflect.KClass
 
 /**

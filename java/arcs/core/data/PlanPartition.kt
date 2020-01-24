@@ -8,13 +8,14 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
-
-import kotlin.reflect.KClass
+package arcs.core.data
 
 /**
- * [TargetHost] is used on other annotations to associate an [ArcHost] with a [Particle]
+ * A [PlanPartition] is a part of a [Plan] that runs on an [ArcHost]. Since [Plan]s may span
+ * multiple [ArcHost]s, an [Allocator] must partition a plan by [ArcHost].
  */
-@Target(AnnotationTarget.ANNOTATION_CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class TargetHost(val value: KClass<out ArcHost>)
+data class PlanPartition(
+    val arcId: String,
+    val arcHost: String,
+    val particles: List<ParticleSpec>
+)
