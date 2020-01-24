@@ -126,11 +126,24 @@ describe('Multiplexer', () => {
     await arc.idle;
 
     // Add and render one more post
-    observer
-      .newExpectations()
-      .expectRenderSlot('List', 'root')
-      .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
-      ;
+    if (Flags.useNewStorageStack) {
+      // new storage doesn't swallow duplicate writes to Singletons, so the multiplexer's behavior of always
+      // updating all generated handles when the collection changes is reflected in the rendering pattern.f
+      observer
+        .newExpectations()
+        .expectRenderSlot('List', 'root')
+        .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
+        .expectRenderSlot('ShowOne', 'item', {times: 2})
+        .expectRenderSlot('ShowTwo', 'item')
+        ;
+
+    } else {
+      observer
+        .newExpectations()
+        .expectRenderSlot('List', 'root')
+        .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
+        ;
+    }
 
     const postsStore = await collectionHandleForTest(arc, arc.findStoreById(arc.activeRecipe.handles[0].id));
     const entityClass = new postsStore.entityClass({
