@@ -78,8 +78,10 @@ private class GuardDelegate<T>(
 
     override fun getValue(thisRef: Any, property: KProperty<*>): T {
         check(mutex.isLocked) { "Access to ${property.name} must be done within a mutex lock." }
-        return valueHolder?.value
-            ?: initialValue().also { this.valueHolder = ValueHolder(it) }
+        val valueHolder = this.valueHolder
+        return if (valueHolder == null) {
+            initialValue().also { this.valueHolder = ValueHolder(it) }
+        } else valueHolder.value
     }
 
     override fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
