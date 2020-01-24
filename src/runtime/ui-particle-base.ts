@@ -113,7 +113,7 @@ export class UiParticleBase extends Particle {
     if (Array.isArray(value)) {
       throw new Error(`Cannot set an Array to Singleton handle [${handleName}]`);
     }
-    return this.await(async p => await handle.set(this._requireEntity(value, handle.entityClass)));
+    return this.await(async p => await handle.set(this.requireEntity(value, handle.entityClass)));
   }
 
   /**
@@ -134,14 +134,14 @@ export class UiParticleBase extends Particle {
         await handle.addMultiple(data);
       } else {
         //console.log('handle.store(entity): handle', handleName, ' data ', data);
-        const entities = data.map(value => this._requireEntity(value, entityClass));
+        const entities = data.map(value => this.requireEntity(value, entityClass));
         const tasks = entities.map(entity => handle.store(entity));
         await Promise.all(tasks);
       }
     });
   }
 
-  private _requireEntity(value: Entity | {}, entityClass: EntityClass, id?: string): Entity {
+  private requireEntity(value: Entity | {}, entityClass: EntityClass, id?: string): Entity {
     return (value instanceof Entity) ? value : new (entityClass)(value);
   }
 
