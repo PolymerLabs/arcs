@@ -128,7 +128,7 @@ describe('Multiplexer', () => {
     // Add and render one more post
     if (Flags.useNewStorageStack) {
       // new storage doesn't swallow duplicate writes to Singletons, so the multiplexer's behavior of always
-      // updating all generated handles when the collection changes is reflected in the rendering pattern.f
+      // updating all generated handles when the collection changes is reflected in the rendering pattern.
       observer
         .newExpectations()
         .expectRenderSlot('List', 'root')
