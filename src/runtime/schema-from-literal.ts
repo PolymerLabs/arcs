@@ -10,7 +10,7 @@
 
 import {Schema} from './schema.js';
 import {Type} from './type.js';
-import { Refinement } from './refiner.js';
+import {Refinement} from './refiner.js';
 
 function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
   const fields = {};
@@ -26,7 +26,7 @@ function fromLiteral(data = {fields: {}, names: [], description: {}, refinement:
   };
   for (const key of Object.keys(data.fields)) {
     fields[key] = updateField(data.fields[key]);
-    if(fields[key].refinement) {
+    if (fields[key].refinement) {
       fields[key].refinement = Refinement.fromLiteral(fields[key].refinement);
     }
   }

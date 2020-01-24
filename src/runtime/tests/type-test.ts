@@ -13,8 +13,8 @@ import {Manifest} from '../manifest.js';
 import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
         ReferenceType, RelationType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Entity} from '../entity.js';
-import { Refinement } from '../refiner.js';
-import { UnaryExpressionNode, BooleanNode, FieldNode } from '../manifest-ast-nodes.js';
+import {Refinement} from '../refiner.js';
+import {UnaryExpressionNode, BooleanNode, FieldNode} from '../manifest-ast-nodes.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -105,12 +105,12 @@ describe('types', () => {
                 evalType: 'Boolean'
               },
               operator: {
-                op: "and",
+                op: 'and',
                 opInfo: {
-                  argType: "Boolean",
-                  evalType: "Boolean",
+                  argType: 'Boolean',
+                  evalType: 'Boolean',
                   nArgs: 2,
-                  sqlOp: "AND",
+                  sqlOp: 'AND',
                 }
               },
               evalType: 'Boolean'
@@ -129,12 +129,12 @@ describe('types', () => {
                     evalType: 'Boolean'
                   },
                   operator: {
-                    op: "not",
+                    op: 'not',
                     opInfo: {
-                      argType: "Boolean",
-                      evalType: "Boolean",
+                      argType: 'Boolean',
+                      evalType: 'Boolean',
                       nArgs: 1,
-                      sqlOp: "NOT",
+                      sqlOp: 'NOT',
                     }
                   },
                   evalType: 'Boolean'

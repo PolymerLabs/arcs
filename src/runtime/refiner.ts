@@ -863,7 +863,7 @@ const operatorTable: Dictionary<OperatorInfo> = {
   [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '*'},
   [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '/'},
   [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN, sqlOp: 'NOT'},
-  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER,sqlOp: '-'},
+  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '-'},
   [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '='},
   [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '<>'},
 };
@@ -883,7 +883,7 @@ const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimiti
   [Op.NEG]: e => -e[0],
   [Op.EQ]: e => e[0] === e[1],
   [Op.NEQ]: e => e[0] !== e[1],
-}
+};
 
 export class RefinementOperator {
   opInfo: OperatorInfo;
