@@ -16,7 +16,7 @@ targets:
 test_sources:
   javatests/
 
-bazel_binary: ./tools/bazelisk
+bazel_binary: tools/bazelisk
 
 additional_languages:
   kotlin
