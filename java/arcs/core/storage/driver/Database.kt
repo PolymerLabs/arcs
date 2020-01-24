@@ -59,10 +59,10 @@ data class DatabaseStorageKey(
         private val ENTITY_SCHEMA_HASH_PATTERN = "[a-fA-F0-9]+".toRegex()
         private const val VARIANT_PERSISTENT = "persistent"
         private const val VARIANT_IN_MEMORY = "in-memory"
-        // ktlint-disable max-line-length
+        /* ktlint-disable max-line-length */
         private val DB_STORAGE_KEY_PATTERN =
             "^($ENTITY_SCHEMA_HASH_PATTERN)@($DATABASE_NAME_PATTERN):($VARIANT_PERSISTENT|$VARIANT_IN_MEMORY)/(.+)\$".toRegex()
-        // ktlint-enable max-line-length
+        /* ktlint-enable max-line-length */
 
         init {
             // When DatabaseStorageKey is imported, this will register its parser with the storage
