@@ -155,7 +155,6 @@ ${recipeManifest}
 
   // TODO(sjmiles): skipping because concept of local vs remote slots has changed
   it.skip('prefers local slots if available', async () => {
-    debugger;
     // Arc has both a 'root' and an 'action' slot.
     const arc = new Arc({
       id: ArcId.newForTest('test-plan-arc'),
