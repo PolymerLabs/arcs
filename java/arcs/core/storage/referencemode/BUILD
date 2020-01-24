@@ -18,7 +18,6 @@ kt_jvm_and_js_library(
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/util",
-        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
