@@ -34,14 +34,14 @@ class DatabaseDriverProviderTest {
     private val schemaHashLookup = mutableMapOf<String, Schema>()
 
     @After
-    fun teardown() {
+    fun tearDown() {
         DriverFactory.clearRegistrationsForTesting()
         schemaHashLookup.clear()
     }
 
     @Test
     fun registersSelfWithDriverFactory() {
-        DatabaseDriverProvider(schemaHashLookup::get) // Constructor registers self.
+        DatabaseDriverProvider.configure(schemaHashLookup::get) // Constructor registers self.
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         assertThat(
@@ -51,7 +51,7 @@ class DatabaseDriverProviderTest {
 
     @Test
     fun willSupport_returnsTrue_whenDatabaseKey_andSchemaFound() {
-        val provider = DatabaseDriverProvider(schemaHashLookup::get)
+        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         val key = DatabaseStorageKey("foo", "1234a")
@@ -60,7 +60,7 @@ class DatabaseDriverProviderTest {
 
     @Test
     fun willSupport_returnsFalse_whenNotDatabaseKey() {
-        val provider = DatabaseDriverProvider(schemaHashLookup::get)
+        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
         val ramdisk = RamDiskStorageKey("foo")
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
         val other = object : StorageKey("outofnowhere") {
@@ -75,7 +75,7 @@ class DatabaseDriverProviderTest {
 
     @Test
     fun willSupport_returnsFalse_whenSchemaNotFound() {
-        val provider = DatabaseDriverProvider(schemaHashLookup::get)
+        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
 
         val key = DatabaseStorageKey("foo", "1234a")
         assertThat(provider.willSupport(key)).isFalse()
@@ -83,7 +83,7 @@ class DatabaseDriverProviderTest {
 
     @Test
     fun getDriver_throwsOnInvalidKey_wrongType() = runBlocking {
-        val provider = DatabaseDriverProvider(schemaHashLookup::get)
+        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
@@ -94,34 +94,13 @@ class DatabaseDriverProviderTest {
 
     @Test
     fun getDriver_throwsOnInvalidKey_schemaNotFound() = runBlocking {
-        val provider = DatabaseDriverProvider(schemaHashLookup::get)
+        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
         val key = DatabaseStorageKey("foo", "1234a")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
             provider.getDriver<Int>(key, ExistenceCriteria.ShouldCreate)
         }
         Unit
-    }
-
-    @Test
-    fun equals_returnsTrue_evenIfLookupMethodsDiffer() {
-        val providerA = DatabaseDriverProvider { null }
-        val providerB = DatabaseDriverProvider { DUMMY_SCHEMA }
-        assertThat(providerA.equals(providerB)).isTrue()
-    }
-
-    @Test
-    fun equals_returnsFalse_ifOtherIsNotDatabaseDriverProvider() {
-        val providerA = DatabaseDriverProvider { null }
-        val providerB = RamDiskDriverProvider()
-        assertThat(providerA.equals(providerB)).isFalse()
-    }
-
-    @Test
-    fun hashCodes_match_evenIfLookupMethodsDiffer() {
-        val providerA = DatabaseDriverProvider { null }
-        val providerB = DatabaseDriverProvider { DUMMY_SCHEMA }
-        assertThat(providerA.hashCode() == providerB.hashCode()).isTrue()
     }
 
     companion object {

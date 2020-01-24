@@ -90,15 +90,15 @@ data class DatabaseStorageKey(
 }
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
-class DatabaseDriverProvider(
+object DatabaseDriverProvider : DriverProvider {
     /**
      * Function which will be used to determine, at runtime, which [Schema] to associate with its
      * hash value embedded in a [DatabaseStorageKey].
      */
-    private val schemaLookup: (String) -> Schema?
-) : DriverProvider {
-    init {
-        DriverFactory.register(this)
+    private var schemaLookup: (String) -> Schema? = {
+        throw IllegalStateException(
+            "DatabaseDriverProvider.configure(schemaLookup) has not been called"
+        )
     }
 
     override fun willSupport(storageKey: StorageKey): Boolean =
@@ -118,26 +118,14 @@ class DatabaseDriverProvider(
         return DatabaseDriver(storageKey, existenceCriteria, schemaLookup)
     }
 
-    // Both equals(other) and hashCode() should treat all instances of DatabaseDriverProvider as
-    // equivalent, so that the DriverFactory keeps one instance, even if the class is instantiated
-    // more than once.
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return other is DatabaseDriverProvider
-    }
-
-    override fun hashCode(): Int = DatabaseDriverProvider::class.hashCode()
-
-    companion object {
-        /**
-         * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
-         * with the [DriverFactory].
-         */
-        fun configure(schemaLookup: (String) -> Schema?) {
-            // The `init` block will register the driver provider with the driver factory.
-            DatabaseDriverProvider(schemaLookup)
-        }
+    /**
+     * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
+     * with the [DriverFactory].
+     */
+    fun configure(schemaLookup: (String) -> Schema?) = apply {
+        // The `init` block will register the driver provider with the driver factory.
+        this.schemaLookup = schemaLookup
+        DriverFactory.register(this)
     }
 }
 
