@@ -13,9 +13,9 @@ import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {SlotComposer} from '../slot-composer.js';
 import {StubLoader} from '../testing/stub-loader.js';
-import {Id, ArcId} from '../id.js';
+import {ArcId} from '../id.js';
 
 describe('RecipeResolver', () => {
   const buildManifest = async (content) => {
@@ -24,7 +24,7 @@ describe('RecipeResolver', () => {
     return await Manifest.load('manifest', loader, {registry});
   };
 
-  const createArc = (manifest) => new Arc({id: ArcId.newForTest('test'), slotComposer: new FakeSlotComposer(), loader: new Loader(), context: manifest});
+  const createArc = (manifest) => new Arc({id: ArcId.newForTest('test'), slotComposer: new SlotComposer(), loader: new Loader(), context: manifest});
 
   it('resolves a recipe', async () => {
     const manifest = await buildManifest({

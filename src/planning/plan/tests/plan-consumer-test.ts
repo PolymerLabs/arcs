@@ -29,8 +29,8 @@ import {Arc} from '../../../runtime/arc.js';
 async function createPlanConsumer(arc: Arc) {
   const store: UnifiedActiveStore = await Planificator['_initSuggestStore'](arc);
   assert.isNotNull(store);
-  const result = new PlanningResult({context: arc.context, loader: arc.loader});
-  return new PlanConsumer(arc, result, store);
+  const result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
+  return new PlanConsumer(arc, result);
 }
 
 async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {

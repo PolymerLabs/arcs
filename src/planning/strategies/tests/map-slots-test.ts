@@ -13,7 +13,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {MapSlots} from '../../strategies/map-slots.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 
@@ -51,7 +51,6 @@ ${recipeManifest}
     if (results.length === 1) {
       recipe = results[0];
     }
-
     results = await StrategyTestHelper.theResults(arc, ResolveRecipe, recipe);
     assert.lengthOf(results, 1);
     return results[0];
@@ -154,13 +153,15 @@ ${recipeManifest}
     }
   });
 
-  it('prefers local slots if available', async () => {
+  // TODO(sjmiles): skipping because concept of local vs remote slots has changed
+  it.skip('prefers local slots if available', async () => {
+    debugger;
     // Arc has both a 'root' and an 'action' slot.
     const arc = new Arc({
       id: ArcId.newForTest('test-plan-arc'),
       loader: new Loader(),
       context: new Manifest({id: ArcId.newForTest('test')}),
-      slotComposer: new FakeSlotComposer({containers: {root: {}, action: {}}})
+      slotComposer: new SlotComposer()
     });
 
     const particles = `

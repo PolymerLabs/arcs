@@ -18,7 +18,6 @@ import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
-import {FakeSlotComposer} from './testing/fake-slot-composer.js';
 import {RamDiskStorageDriverProvider} from './storageNG/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
@@ -100,10 +99,7 @@ export class Runtime {
   }
 
   static newForNodeTesting(context?: Manifest) {
-    return new Runtime({
-        loader: new Loader(),
-        composerClass: FakeSlotComposer,
-        context});
+    return new Runtime({context});
   }
 
   /**

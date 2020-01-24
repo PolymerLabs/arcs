@@ -12,7 +12,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Loader} from '../../../platform/loader.js';
 import {Arc} from '../../../runtime/arc.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
+import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {ArcId} from '../../../runtime/id.js';
 import {singletonHandleForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 
@@ -38,7 +38,7 @@ describe('TicTacToe MoveApplier tests', () => {
     assert.isTrue(recipe.isResolved(), recipe.toString({showUnresolved: true}));
     const id = ArcId.newForTest('test');
     const arc = new Arc({
-      slotComposer: new FakeSlotComposer(),
+      slotComposer: new SlotComposer(),
       loader,
       context: manifest,
       id,
@@ -69,7 +69,7 @@ describe('TicTacToe MoveApplier tests', () => {
     assert.isTrue(recipe.isResolved(), recipe.toString({showUnresolved: true}));
     const id = ArcId.newForTest('test');
     const arc = new Arc({
-      slotComposer: new FakeSlotComposer(),
+      slotComposer: new SlotComposer(),
       loader,
       context: manifest,
       id,

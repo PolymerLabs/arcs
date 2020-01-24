@@ -14,7 +14,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {Arc} from '../runtime/arc.js';
 import {ArcId} from '../runtime/id.js';
 import {Loader} from '../platform/loader.js';
-import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
+import {SlotComposer} from '../runtime/slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
 import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {singletonHandleForTest} from '../runtime/testing/handle-for-test.js';
@@ -70,7 +70,7 @@ describe('Hot Code Reload for JS Particle', async () => {
 
     const id = ArcId.newForTest('HotReload');
     const pecFactories = [FakePecFactory(loader).bind(null)];
-    const slotComposer = new FakeSlotComposer();
+    const slotComposer = new SlotComposer();
     const arc = new Arc({id, pecFactories, slotComposer, loader, context});
 
     const [recipe] = arc.context.recipes;
@@ -196,7 +196,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
 
     const id = ArcId.newForTest('HotReload');
     const pecFactories = [FakePecFactory(loader).bind(null)];
-    const slotComposer = new FakeSlotComposer();
+    const slotComposer = new SlotComposer();
     const arc = new Arc({id, pecFactories, slotComposer, loader, context});
 
     const recipe = context.recipes.filter(r => r.name === 'HotReloadRecipe')[0];
