@@ -53,9 +53,6 @@ export class Refinement {
   constructor(expr: RefinementExpression) {
     // TODO(ragdev): Should be a copy?
     // TODO(ragdev): ensure that the refinement contains at least 1 fieldName
-    if (!expr) {
-      return null;
-    }
     this.expression = expr;
   }
 
@@ -64,9 +61,6 @@ export class Refinement {
   }
 
   static fromLiteral(ref): Refinement {
-    if (!ref) {
-      return null;
-    }
     return new Refinement(RefinementExpression.fromLiteral(ref.expression));
   }
 
@@ -184,9 +178,6 @@ abstract class RefinementExpression {
   }
 
   static fromLiteral(expr): RefinementExpression {
-    if(!expr) {
-      return null;
-    }
     switch (expr.kind) {
       case 'BinaryExpressionNode': return BinaryExpression.fromLiteral(expr);
       case 'UnaryExpressionNode': return UnaryExpression.fromLiteral(expr);

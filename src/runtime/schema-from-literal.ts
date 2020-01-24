@@ -12,7 +12,7 @@ import {Schema} from './schema.js';
 import {Type} from './type.js';
 import { Refinement } from './refiner.js';
 
-function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: {}}) {
+function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
   const fields = {};
   const updateField = field => {
     if (field.kind === 'schema-reference') {
@@ -32,7 +32,9 @@ function fromLiteral(data = {fields: {}, names: [], description: {}, refinement:
   }
   const result = new Schema(data.names, fields);
   result.description = data.description || {};
-  result.refinement = Refinement.fromLiteral(data.refinement);
+  if (data.refinement) {
+    result.refinement = Refinement.fromLiteral(data.refinement);
+  }
   return result;
 }
 
