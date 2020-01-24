@@ -11,14 +11,14 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {StubLoader} from '../../../runtime/testing/stub-loader.js';
+import {Loader} from '../../../platform/loader.js';
 import {FindRequiredParticle} from '../../strategies/find-required-particle.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 
 describe('FindRequiredParticles', () => {
   it('find single required particle that provides a slot', async () => {
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       '*': `defineParticle(({Particle}) => class Noop extends Particle {});`
     });
     const manifest = (await Manifest.parse(`
@@ -57,7 +57,7 @@ describe('FindRequiredParticles', () => {
   });
 
   it('find single required particle that consumes slot', async () => {
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       '*': `defineParticle(({Particle}) => class Noop extends Particle {});`
     });
     const manifest = (await Manifest.parse(`
@@ -94,7 +94,7 @@ describe('FindRequiredParticles', () => {
   });
 
   it('find two required particles', async () => {
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       '*': `defineParticle(({Particle}) => class Noop extends Particle {});`
     });
     const manifest = (await Manifest.parse(`
@@ -149,7 +149,7 @@ describe('FindRequiredParticles', () => {
     assert.isTrue(arc.activeRecipe.normalize());
   });
   it('required particle can not provide a slot that\'s provided by the shell', async () => {
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       '*': `defineParticle(({Particle}) => class Noop extends Particle {});`
     });
     const manifest = (await Manifest.parse(`
@@ -200,7 +200,7 @@ describe('FindRequiredParticles', () => {
     assert.isFalse(recipe.isResolved(), 'recipe is resolved when it shouldn\'t be');
   });
   it('find two required particles that doesn\'t match the require section', async () => {
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       '*': `defineParticle(({Particle}) => class Noop extends Particle {});`
     });
     // The require section expects A and B to consume the same slot. The active recipe has A and B consume different slots.

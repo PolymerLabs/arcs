@@ -13,7 +13,6 @@ import {Arc} from '../../runtime/arc.js';
 import {Particle} from '../../runtime/particle.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {StubLoader} from '../../runtime/testing/stub-loader.js';
 import {Planner} from '../planner.js';
 import {Speculator} from '../speculator.js';
 
@@ -57,9 +56,9 @@ const assertRecipeResolved = recipe => {
   assert.isTrue(recipe.isResolved());
 };
 
-class NullLoader extends StubLoader {
+class NullLoader extends Loader {
   constructor() {
-    super({});
+    super(null, {});
   }
   join(prefix: string) {
     return '';
@@ -69,11 +68,11 @@ class NullLoader extends StubLoader {
   }
 }
 
-class MyLoader extends StubLoader {
+class MyLoader extends Loader {
   private manifest;
 
   constructor(manifest) {
-    super({manifest});
+    super(null, {manifest});
     this.manifest = manifest;
   }
 
@@ -332,28 +331,28 @@ describe('Planner', () => {
 
   it('can speculate in parallel', async () => {
     const manifest = `
-          schema Thing
-            name: Text
+      schema Thing
+        name: Text
 
-          particle A in 'A.js'
-            thing: writes Thing
-            root: consumes Slot
-            description \`Make \${thing}\`
+      particle A in 'A.js'
+        thing: writes Thing
+        root: consumes Slot
+        description \`Make \${thing}\`
 
-          recipe
-            handle1: create *
-            slot0: slot 'root-slot'
-            A
-              thing: writes handle1
-              root: consumes slot0
+      recipe
+        handle1: create *
+        slot0: slot 'root-slot'
+        A
+          thing: writes handle1
+          root: consumes slot0
 
-          recipe
-            handle2: create *
-            slot1: slot 'root-slot2'
-            A
-              thing: writes handle2
-              root: consumes slot1
-          `;
+      recipe
+        handle2: create *
+        slot1: slot 'root-slot2'
+        A
+          thing: writes handle2
+          root: consumes slot1
+    `;
     const {plans} = await loadTestArcAndRunSpeculation(manifest,
       manifest => {
         assertRecipeResolved(manifest.recipes[0]);

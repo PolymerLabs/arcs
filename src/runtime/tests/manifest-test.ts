@@ -14,7 +14,7 @@ import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
 import {Manifest, ManifestParseOptions, ErrorSeverity} from '../manifest.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {Loader} from '../../platform/loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
@@ -460,14 +460,14 @@ ${particleStr1}
     verify(await parseManifest(manifest.toString()));
   });
   it('treats a failed import as non-fatal', async () => { // TODO(cypher1): Review this.
-    const loader = new StubLoader({
-      'a': `import 'b'`,
-      'b': `lol what is this`,
+    const loader = new Loader(null, {
+      './a': `import 'b'`,
+      './b': `lol what is this`,
     });
-    const cc = await ConCap.capture(() => Manifest.load('a', loader, {memoryProvider}));
+    const cc = await ConCap.capture(() => Manifest.load('./a', loader, {memoryProvider}));
     assert.lengthOf(cc.warn, 2);
-    assert.match(cc.warn[0], /Parse error in 'b' line 1/);
-    assert.match(cc.warn[1], /Error importing 'b'/);
+    assert.match(cc.warn[0], /Parse error in '\.\/b' line 1/);
+    assert.match(cc.warn[1], /Error importing '\.\/b'/);
   });
   it('throws an error when a particle has invalid description', async () => {
     try {
@@ -485,61 +485,64 @@ ${particleStr1}
   it('can load a manifest via a loader', async () => {
     const registry: Dictionary<Promise<Manifest>> = {};
 
-    const loader = new StubLoader({'*': 'recipe'});
+    const loader = new Loader(null, {
+      '*': 'recipe'});
     const manifest = await Manifest.load('some-path', loader, {registry, memoryProvider});
     assert(manifest.recipes[0]);
     assert.strictEqual(manifest, await registry['some-path']);
   });
   it('can load a manifest with imports', async () => {
     const registry: Dictionary<Promise<Manifest>> = {};
-    const loader = new StubLoader({
-      a: `import 'b'`,
-      b: `recipe`,
+    const loader = new Loader(null, {
+      './a': `import 'b'`,
+      './b': `recipe`,
     });
-    const manifest = await Manifest.load('a', loader, {registry, memoryProvider});
-    assert.strictEqual(await registry.a, manifest);
-    assert.strictEqual(manifest.imports[0], await registry.b);
+    const manifest = await Manifest.load('./a', loader, {registry, memoryProvider});
+    assert.strictEqual(await registry['./a'], manifest);
+    assert.strictEqual(manifest.imports[0], await registry['./b']);
   });
   it('can resolve recipe particles imported from another manifest', async () => {
     const registry: Dictionary<Promise<Manifest>> = {};
-    const loader = new StubLoader({
-      a: `
+    const loader = new Loader(null, {
+      './a': `
         import 'b'
         recipe
           ParticleB`,
-      b: `
+      './b': `
         schema Thing
         particle ParticleB in 'b.js'
           thing: reads Thing`
     });
-    const manifest = await Manifest.load('a', loader, {registry, memoryProvider});
-    assert.isTrue(manifest.recipes[0].particles[0].spec.equals((await registry.b).findParticleByName('ParticleB')));
+    const manifest = await Manifest.load('./a', loader, {registry, memoryProvider});
+    assert.isTrue(manifest.recipes[0].particles[0].spec.equals(
+      (await registry['./b']).findParticleByName('ParticleB'))
+    );
   });
   it('can parse a schema extending a schema in another manifest', async () => {
-    const registry = {};
-    const loader = new StubLoader({
-      a: `
+    const loader = new Loader(null, {
+      './a': `
           import 'b'
           schema Bar extends Foo`,
-      b: `
+      './b': `
           schema Foo
             value: Text`
     });
-    const manifest = await Manifest.load('a', loader, {registry, memoryProvider});
+    const registry = {};
+    const manifest = await Manifest.load('./a', loader, {registry, memoryProvider});
     verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
   });
   it('can find all imported recipes', async () => {
-    const loader = new StubLoader({
-      a: `
+    const loader = new Loader(null, {
+      './a': `
           import 'b'
           import 'c'
           recipe`,
-      b: `
+      './b': `
           import 'c'
           recipe`,
-      c: `recipe`,
+      './c': `recipe`,
     });
-    const manifest = await Manifest.load('a', loader, {memoryProvider});
+    const manifest = await Manifest.load('./a', loader, {memoryProvider});
     assert.lengthOf(manifest.allRecipes, 3);
   });
   it('can parse a schema with union typing', async () => {
@@ -1452,11 +1455,11 @@ recipe SomeRecipe
   });
   it('relies on the loader to combine paths', async () => {
     const registry = {};
-    const loader = new class extends StubLoader {
+    const loader = new class extends Loader {
       constructor() {
-        super({
-      'somewhere/a': `import 'path/b'`,
-      'somewhere/a path/b': `recipe`
+        super(null, {
+          './somewhere/a': `import 'path/b'`,
+          './somewhere/a path/b': `recipe`
         });
       }
       path(fileName: string): string {
@@ -1467,8 +1470,8 @@ recipe SomeRecipe
       }
     }();
 
-    const manifest = await Manifest.load('somewhere/a', loader, {registry, memoryProvider});
-    assert(registry['somewhere/a path/b']);
+    await Manifest.load('./somewhere/a', loader, {registry, memoryProvider});
+    assert(registry['./somewhere/a path/b']);
   });
   it('parses all particles manifests', async () => {
     let broken = false;
@@ -1523,12 +1526,12 @@ recipe SomeRecipe
           'entity-id': {value: {id: 'entity-id', rawData: {someProp: 'someValue2'}}, version: {u: 1}}
         }, version: {u: 1}
       }, locations: {}});
-    const loader = new StubLoader({
-      'the.manifest': manifestSource,
-      'entities.json': entitySource,
-      'new-entities.json': newEntitySource
+    const loader = new Loader(null, {
+      './the.manifest': manifestSource,
+      './entities.json': entitySource,
+      './new-entities.json': newEntitySource
     });
-    const manifest = await Manifest.load('the.manifest', loader, {memoryProvider});
+    const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider});
     const storageStub = manifest.findStoreByName('Store0');
     assert(storageStub);
     const store = await storageStub.activate();
@@ -1538,7 +1541,7 @@ recipe SomeRecipe
     const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
-        id: Flags.useNewStorageStack ? 'e1' : `!${sessionId}:the.manifest::0`,
+        id: Flags.useNewStorageStack ? 'e1' : `!${sessionId}:./the.manifest::0`,
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
@@ -1589,7 +1592,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       assert(store);
       const handle = await collectionHandleForTest(manifest, store.baseStore);
 
-      const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
+      //const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
 
       // TODO(shans): address as part of storage refactor
       assert.deepEqual((await handle.toList()).map(Entity.serialize), [
@@ -1641,16 +1644,16 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         recipe
           myStore: map Store0`;
     const entitySource = JSON.stringify(Flags.useNewStorageStack ? {root: {}, locations: {}} : []);
-    const loader = new StubLoader({
-      'the.manifest': manifestSource,
-      'entities.json': entitySource,
+    const loader = new Loader(null, {
+      './the.manifest': manifestSource,
+      './entities.json': entitySource,
     });
-    const manifest = await Manifest.load('the.manifest', loader, {memoryProvider});
+    const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider});
     const recipe = manifest.recipes[0];
     if (Flags.useNewStorageStack) {
-      assert.deepEqual(recipe.toString(), `recipe\n  myStore: map '!manifest:the.manifest:store0:${await digest(entitySource)}'`);
+      assert.deepEqual(recipe.toString(), `recipe\n  myStore: map '!manifest:./the.manifest:store0:${await digest(entitySource)}'`);
     } else {
-      assert.deepEqual(recipe.toString(), 'recipe\n  myStore: map \'!manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\'');
+      assert.deepEqual(recipe.toString(), 'recipe\n  myStore: map \'!manifest:./the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\'');
     }
   });
 
@@ -1880,7 +1883,9 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     assert.deepEqual(['good'], search.resolvedTokens);
   });
   it('can parse a manifest containing stores', async () => {
-    const loader = new StubLoader({'*': Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[]'});
+    const loader = new Loader(null, {
+      '*': Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[]'
+    });
     const parseOptions = {loader, memoryProvider};
     const manifest = await parseManifest(`
   schema Product
@@ -2925,8 +2930,7 @@ resource SomeName
   describe('all schemas', () => {
     describe('handles manifests with no schemas', () => {
       it('handles an empty manifest', async () => {
-        const emptyManifest = await parseManifest(`
-        `);
+        const emptyManifest = await parseManifest(``);
         const emptyResult = emptyManifest.allSchemas;
         assert.isEmpty(emptyResult);
       });
@@ -3061,11 +3065,11 @@ resource SomeName
               "age": 7
           }
         ]`;
-        const loader = new StubLoader({
-            'a': manifestStr,
-            'b': jsonStr,
+        const loader = new Loader(null, {
+          './a': manifestStr,
+          './b': jsonStr,
         });
-        const manifest = await Manifest.load('a', loader, {memoryProvider});
+        const manifest = await Manifest.load('./a', loader, {memoryProvider});
         const result = manifest.allSchemas;
         assert.lengthOf(result, 1);
         assert.lengthOf(result[0].names, 1);
@@ -3145,11 +3149,11 @@ resource SomeName
             {"val": 107},
             {"for": "yy"}
         ]`;
-        const loader = new StubLoader({
-            'a': manifestStr,
-            'b': jsonStr,
+        const loader = new Loader(null, {
+          './a': manifestStr,
+          './b': jsonStr,
         });
-        const manifest = await Manifest.load('a', loader, {memoryProvider});
+        const manifest = await Manifest.load('./a', loader, {memoryProvider});
         const result = manifest.allSchemas;
         assert.equal(result.length, 2);
 

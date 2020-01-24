@@ -9,9 +9,8 @@
  */
 
 import {Loader} from '../platform/loader.js';
-import {MessageChannel, MessagePort} from './message-channel.js';
+import {MessageChannel} from './message-channel.js';
 import {ParticleExecutionContext, PecFactory} from './particle-execution-context.js';
-import {StubLoader} from './testing/stub-loader.js';
 import {Id, IdGenerator} from './id.js';
 
 // TODO: Make this generic so that it can also be used in-browser, or add a
@@ -20,7 +19,7 @@ export function FakePecFactory(loader: Loader): PecFactory {
   return (pecId: Id, idGenerator: IdGenerator) => {
     const channel = new MessageChannel();
     // Each PEC should get its own loader.
-    const pec = new ParticleExecutionContext(channel.port1, pecId, idGenerator, loader.clone());
+    new ParticleExecutionContext(channel.port1, pecId, idGenerator, loader.clone());
     return channel.port2;
   };
 }

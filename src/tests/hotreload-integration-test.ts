@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../platform/chai-web.js';
-import {StubLoader} from '../runtime/testing/stub-loader.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Arc} from '../runtime/arc.js';
 import {ArcId} from '../runtime/id.js';
@@ -56,7 +55,7 @@ describe('Hot Code Reload for JS Particle', async () => {
         slot0: slot 'rootslotid-root'
         A
           root: consumes slot0`);
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'A.js': `defineParticle(({UiParticle}) => {
         return class extends UiParticle {
           get template() { return 'Hello <span>{{name}}</span>, old age: <span>{{age}}</span>'; }
@@ -83,7 +82,7 @@ describe('Hot Code Reload for JS Particle', async () => {
     //assert.deepStrictEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '10'});
     //assert.deepStrictEqual(slotConsumer._content.template, `Hello <span>{{name}}</span>, old age: <span>{{age}}</span>`);
 
-    loader._fileMap['A.js'] = `defineParticle(({UiParticle}) => {
+    loader.staticMap['A.js'] = `defineParticle(({UiParticle}) => {
       return class extends UiParticle {
         get template() { return 'Hello <span>{{name}}</span>, new age: <span>{{age}}</span>'; }
 
@@ -118,7 +117,7 @@ describe('Hot Code Reload for JS Particle', async () => {
           personOut: writes personOut
     `);
 
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'A.js': `defineParticle(({Particle}) => {
         return class extends Particle {
           async setHandles(handles) {
@@ -155,7 +154,7 @@ describe('Hot Code Reload for JS Particle', async () => {
     await arc.idle;
     assert.deepStrictEqual(await personHandleOut.get(), {name: 'Jack', age: 30});
 
-    loader._fileMap['A.js'] = `defineParticle(({Particle}) => {
+    loader.staticMap['A.js'] = `defineParticle(({Particle}) => {
       return class extends Particle {
         async setHandles(handles) {
           this.handleOut = handles.get('personOut');

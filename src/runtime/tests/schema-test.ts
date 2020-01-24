@@ -16,7 +16,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Reference} from '../reference.js';
 import {Schema} from '../schema.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {Loader} from '../../platform/loader.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Entity} from '../entity.js';
 
@@ -35,10 +35,10 @@ function getSchemaFromManifest(manifest: Manifest, handleName: string, particleI
 describe('schema', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
   // these tests are not going to be executed (i.e. another test file uses 'only').
-  let loader: StubLoader;
+  let loader: Loader;
   before(() => {
-    loader = new StubLoader({
-      'Product.schema': `
+    loader = new Loader(null, {
+      './Product.schema': `
           import './src/runtime/tests/artifacts/Things/Thing.schema'
           schema Product extends Thing
             category: Text
@@ -62,7 +62,7 @@ describe('schema', () => {
   });
 
   it('schemas load recursively', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const schema = manifest.findSchemaByName('Product');
     assert.strictEqual(schema.name, 'Product');
     assert.include(schema.names, 'Thing');
@@ -84,7 +84,7 @@ describe('schema', () => {
   });
 
   it('constructs an appropriate entity subclass', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
     assert.strictEqual(Product.name, 'Product');
     const product = new Product({name: 'Pickled Chicken Sandwich',
@@ -104,7 +104,7 @@ describe('schema', () => {
   });
 
   it('stores a copy of the constructor arguments', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
     const data: {name: string, category: string, description?: string} = {name: 'Seafood Ice Cream', category: 'Terrible Food'};
     const product = new Product(data);
@@ -116,7 +116,7 @@ describe('schema', () => {
   });
 
   it('has getters for all schema fields', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
 
     const product = new Product({
@@ -143,7 +143,7 @@ describe('schema', () => {
   });
 
   it('has setters for schema fields only', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
     assert.throws(() => { new Product({sku: 'sku'}); }, 'not in schema');
 
@@ -153,7 +153,7 @@ describe('schema', () => {
   });
 
   it('performs type checking', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
     assert.throws(() => { new Product({name: 6}); }, TypeError, 'Type mismatch setting field name');
     assert.throws(() => { new Product({url: 7}); }, TypeError, 'Type mismatch setting field url');
@@ -176,7 +176,7 @@ describe('schema', () => {
   });
 
   it('makes a copy of the data when cloning', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Product = Entity.createEntityClass(manifest.findSchemaByName('Product'), null);
 
     const product = new Product({name: 'Tomato Soup',
@@ -340,7 +340,7 @@ describe('schema', () => {
   });
 
   it('handles schema unions', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Person = manifest.findSchemaByName('Person');
     const Animal = manifest.findSchemaByName('Animal');
 
@@ -351,7 +351,7 @@ describe('schema', () => {
   });
 
   it('handles field type conflict in schema unions', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Person = manifest.findSchemaByName('Person');
     const Product = manifest.findSchemaByName('Product');
 
@@ -360,7 +360,7 @@ describe('schema', () => {
   });
 
   it('handles schema intersection of subtypes', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Thing = manifest.findSchemaByName('Thing');
     const Product = manifest.findSchemaByName('Product');
 
@@ -369,7 +369,7 @@ describe('schema', () => {
   });
 
   it('handles schema intersection for shared supertypes', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Thing = manifest.findSchemaByName('Thing');
     const Product = manifest.findSchemaByName('Product');
     const Animal = manifest.findSchemaByName('Animal');
@@ -381,7 +381,7 @@ describe('schema', () => {
   });
 
   it('handles schema intersection if no shared supertype and a conflicting field', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Product = manifest.findSchemaByName('Product');
     const Person = manifest.findSchemaByName('Person');
     const intersection = Schema.intersect(Person, Product);
@@ -397,7 +397,7 @@ describe('schema', () => {
   });
 
   it('handles empty schema intersection as empty object', async () => {
-    const manifest = await Manifest.load('Product.schema', loader);
+    const manifest = await Manifest.load('./Product.schema', loader);
     const Person = manifest.findSchemaByName('Person');
     const AlienLife = manifest.findSchemaByName('AlienLife');
     assert.deepEqual(Schema.intersect(Person, AlienLife), new Schema([], {}));

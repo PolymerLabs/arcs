@@ -17,7 +17,6 @@ import {Manifest} from '../manifest.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from '../storage/storage-provider-base.js';
 import {CallbackTracker} from '../testing/callback-tracker.js';
 import {SlotComposer} from '../slot-composer.js';
-import {StubLoader} from '../testing/stub-loader.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ArcType, SingletonType} from '../type.js';
 import {Runtime} from '../runtime.js';
@@ -79,8 +78,8 @@ describe('Arc new storage', () => {
     // be used when serializing arcs. Once that is working then the following registration should be removed.
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         schema Data
           value: Text
           size: Number
@@ -99,11 +98,11 @@ describe('Arc new storage', () => {
             col: writes handle1
             refVar: reads handle2
       `,
-      'a.js': `
+      './a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const manifest = await Manifest.load('manifest', loader, {memoryProvider});
+    const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = ArcId.fromString('test');
     const storageKey = new VolatileStorageKey(id, 'unique');
@@ -304,7 +303,7 @@ describe('Arc', () => {
     assert.isTrue(manifest.recipes[0].isResolved());
     assert.isTrue(manifest.recipes[1].isResolved());
 
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
@@ -782,8 +781,8 @@ describe('Arc', () => {
     if (Flags.useNewStorageStack) {
       this.skip();
     }
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         schema Data
           value: Text
           size: Number
@@ -802,11 +801,11 @@ describe('Arc', () => {
             col: writes handle1
             big: handle2
       `,
-      'a.js': `
+      './a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = Id.fromString('test');
     const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
@@ -873,8 +872,8 @@ describe('Arc', () => {
   });
 
   it('serializes immediate value handles correctly', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         interface HostedInterface
           reads ~a
 
@@ -891,7 +890,7 @@ describe('Arc', () => {
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
 
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const id = Id.fromString('test');
     const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
     const arc = new Arc({id, storageKey, loader, context: manifest});
@@ -1016,13 +1015,13 @@ describe('Arc', () => {
       });`,
     });
     const context = await Manifest.parse(`
-        particle A in 'A.js'
-          root: consumes Slot
+      particle A in 'A.js'
+        root: consumes Slot
 
-        recipe
-          root: slot 'rootslotid-root'
-          A
-            root: consumes root
+      recipe
+        root: slot 'rootslotid-root'
+        A
+          root: consumes root
     `);
     const id = IdGenerator.newSession().newArcId('arcid');
     const arc = new Arc({id, loader, slotComposer, context});

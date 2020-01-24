@@ -12,7 +12,6 @@ import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
-import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType} from '../type.js';
 import {ParticleSpec} from '../particle-spec.js';
@@ -24,7 +23,7 @@ import {Flags} from '../flags.js';
 describe('particle interface loading', () => {
 
   it('loads interfaces into particles', async () => {
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'outer-particle.js': `
           'use strict';
 
@@ -182,7 +181,7 @@ describe('particle interface loading', () => {
     `);
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'monitoring-particle.js': `
         'use strict';
         defineParticle(({Particle}) => {
