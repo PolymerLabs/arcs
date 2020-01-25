@@ -22,21 +22,25 @@ import kotlin.reflect.KClass
  * particles, and connecting them to storage keys.
  */
 interface ArcHost {
+    /**
+     * Return a unique identifier for this host instance.
+     */
+    suspend fun hostId(): String
 
     /**
      * Registers a [Particle] class with this host.
      */
-    suspend fun registerParticle(particle: KClass<out Particle>): Unit
+    suspend fun registerParticle(particle: ParticleIdentifier): Unit
 
     /**
      * Unregisters a [Particle] class.
      */
-    suspend fun unregisterParticle(particle: KClass<out Particle>): Unit
+    suspend fun unregisterParticle(particle: ParticleIdentifier): Unit
 
     /**
      * Returns a list of Particles registered to run in this host.
      */
-    suspend fun registeredParticles(): List<KClass<out Particle>>
+    suspend fun registeredParticles(): List<ParticleIdentifier>
 
     /**
      * Requests this arc host to start or restart an Arc associated with this [PlanPartition]. This

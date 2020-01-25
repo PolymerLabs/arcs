@@ -32,7 +32,7 @@ abstract class AnnotationBasedHostRegistry : HostRegistry {
         particles: List<KClass<out Particle>>,
         host: ArcHost
     ): ArcHost {
-        particles.forEach { particle -> host.registerParticle(particle) }
+        particles.forEach { particle -> host.registerParticle(ParticleIdentifier.from(particle)) }
         return host
     }
 

@@ -23,18 +23,20 @@ import kotlinx.coroutines.sync.withLock
  */
 abstract class AbstractArcHost : ArcHost {
     private val hostMutex = Mutex()
-    private var particles: MutableList<KClass<out Particle>> by
+    private var particles: MutableList<ParticleIdentifier> by
         guardWith(hostMutex, mutableListOf())
 
-    override suspend fun registerParticle(particle: KClass<out Particle>) {
+    override suspend fun hostId() = this::class.java.canonicalName!!
+
+    override suspend fun registerParticle(particle: ParticleIdentifier) {
         hostMutex.withLock { particles.add(particle) }
     }
 
-    override suspend fun unregisterParticle(particle: KClass<out Particle>) {
+    override suspend fun unregisterParticle(particle: ParticleIdentifier) {
         hostMutex.withLock { particles.remove(particle) }
     }
 
-    override suspend fun registeredParticles(): List<KClass<out Particle>> =
+    override suspend fun registeredParticles(): List<ParticleIdentifier> =
         hostMutex.withLock { particles }
 
     override suspend fun startArc(partition: PlanPartition) {
