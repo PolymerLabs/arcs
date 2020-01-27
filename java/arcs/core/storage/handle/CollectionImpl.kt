@@ -44,7 +44,7 @@ class CollectionImpl<T : Referencable>(
      * It will be passed to the storage proxy in an add operation, with an incremented version
      * for this Handle in the version map.
      */
-    fun store(entity: T) {
+    suspend fun store(entity: T) {
         versionMap.increment()
         storageProxy.applyOp(CrdtSet.Operation.Add(name, versionMap, entity))
         notifyListeners()
@@ -56,7 +56,7 @@ class CollectionImpl<T : Referencable>(
      * This currently works by iterating over all items in the storage proxy view of the
      * collection, and sending a Remove command for each one.
      */
-    fun clear() {
+    suspend fun clear() {
         storageProxy.getParticleView().value.forEach {
             storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, it))
         }
@@ -68,7 +68,7 @@ class CollectionImpl<T : Referencable>(
      *
      * The specified entity will be passed to the storage proxy in a remove operation.
      */
-    fun remove(entity: T) {
+    suspend fun remove(entity: T) {
         storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, entity))
         notifyListeners()
     }

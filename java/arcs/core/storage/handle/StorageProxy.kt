@@ -15,6 +15,8 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.internal.VersionMap
+import arcs.core.storage.ProxyMessage
+import arcs.core.storage.StorageCommunicationEndpoint
 
 /** ValueAndVersion is a tuple of a value of some type and a [VersionMap] provided from its [StorageProxy]. */
 data class ValueAndVersion<T>(val value: T, val versionMap: VersionMap)
@@ -34,7 +36,8 @@ data class ValueAndVersion<T>(val value: T, val versionMap: VersionMap)
  * @constructor creates a new storage proxy using the provided model instance
  */
 class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
-    private val model: CrdtModel<Data, Op, T>
+    private val model: CrdtModel<Data, Op, T>,
+    private val store: StorageCommunicationEndpoint<Data, Op, T>
 ) {
     private val versionMap = VersionMap()
 
@@ -47,5 +50,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     /**
      * Apply a CRDT operation to the [CrdtModel] that this [StorageProxy] manages.
      */
-    fun applyOp(op: Op) = model.applyOperation(op)
+    suspend fun applyOp(op: Op) {
+        model.applyOperation(op)
+        store.onProxyMessage(ProxyMessage.Operations(operations = listOf(op)))
+    }
 }

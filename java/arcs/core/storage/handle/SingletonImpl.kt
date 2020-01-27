@@ -34,14 +34,14 @@ class SingletonImpl<T : Referencable>(
     fun get() = value
 
     /** Send a new value to the backing [StorageProxy]. */
-    fun set(entity: T) {
+    suspend fun set(entity: T) {
         versionMap.increment()
         storageProxy.applyOp(CrdtSingleton.Operation.Update(name, versionMap, entity))
         notifyListeners()
     }
 
     /** Clear the value from the backing [StorageProxy]. */
-    fun clear() {
+    suspend fun clear() {
         storageProxy.applyOp(CrdtSingleton.Operation.Clear(name, versionMap))
         notifyListeners()
     }

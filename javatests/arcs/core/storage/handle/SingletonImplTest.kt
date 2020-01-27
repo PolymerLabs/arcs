@@ -13,15 +13,19 @@ package arcs.core.storage.handle
 
 import arcs.core.crdt.CrdtSingleton
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.MockitoAnnotations
+import com.nhaarman.mockitokotlin2.mock
+
 
 @RunWith(JUnit4::class)
+@ExperimentalCoroutinesApi
 class SingletonImplTest {
-
     private lateinit var singleton: SingletonImpl<MockDataItem>
 
     private val HANDLE_NAME = "HANDLE_NAME"
@@ -30,7 +34,7 @@ class SingletonImplTest {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        val storageProxy = StorageProxy(CrdtSingleton<MockDataItem>())
+        val storageProxy = StorageProxy(CrdtSingleton<MockDataItem>(), mock())
         singleton = SingletonImpl(HANDLE_NAME, storageProxy)
     }
 
@@ -41,13 +45,13 @@ class SingletonImplTest {
     }
 
     @Test
-    fun set_changesValue() {
+    fun set_changesValue() = runBlockingTest {
         singleton.set(DUMMY_VALUE)
         assertThat(singleton.get()).isEqualTo(DUMMY_VALUE)
     }
 
     @Test
-    fun clear_changesValue() {
+    fun clear_changesValue() = runBlockingTest {
         singleton.set(DUMMY_VALUE)
         singleton.clear()
         assertThat(singleton.get()).isNull()

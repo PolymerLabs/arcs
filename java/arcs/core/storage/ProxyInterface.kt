@@ -43,7 +43,7 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     data class Operations<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         /** Operations required to update the backing data. */
         val operations: List<Op>,
-        override val id: Int?,
+        override val id: Int? = null,
         override val type: Type = Type.Operations
     ) : ProxyMessage<Data, Op, ConsumerData>(id, type)
 

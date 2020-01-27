@@ -13,15 +13,18 @@ package arcs.core.storage.handle
 
 import arcs.core.crdt.CrdtSet
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.MockitoAnnotations
+import com.nhaarman.mockitokotlin2.mock
 
 @RunWith(JUnit4::class)
+@ExperimentalCoroutinesApi
 class CollectionImplTest {
-
     private lateinit var collection: CollectionImpl<MockDataItem>
 
     private val HANDLE_NAME = "HANDLE_NAME"
@@ -31,7 +34,7 @@ class CollectionImplTest {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        val storageProxy = StorageProxy(CrdtSet<MockDataItem>())
+        val storageProxy = StorageProxy(CrdtSet<MockDataItem>(), mock())
         collection = CollectionImpl(HANDLE_NAME, storageProxy)
     }
 
@@ -44,7 +47,7 @@ class CollectionImplTest {
     }
 
     @Test
-    fun store_addsElement() {
+    fun store_addsElement() = runBlockingTest {
         collection.store(DUMMY_VALUE1)
 
         assertThat(collection.size).isEqualTo(1)
@@ -53,7 +56,7 @@ class CollectionImplTest {
     }
 
     @Test
-    fun store_canAddMultipleValues() {
+    fun store_canAddMultipleValues() = runBlockingTest {
         collection.store(DUMMY_VALUE1)
         collection.store(DUMMY_VALUE2)
 
@@ -63,7 +66,7 @@ class CollectionImplTest {
     }
 
     @Test
-    fun remove_removesSingleValue() {
+    fun remove_removesSingleValue() = runBlockingTest {
         collection.store(DUMMY_VALUE1)
         collection.store(DUMMY_VALUE2)
 
@@ -75,7 +78,7 @@ class CollectionImplTest {
     }
 
     @Test
-    fun clear_removesMultipleValues() {
+    fun clear_removesMultipleValues() = runBlockingTest {
         collection.store(DUMMY_VALUE1)
         collection.store(DUMMY_VALUE2)
 
