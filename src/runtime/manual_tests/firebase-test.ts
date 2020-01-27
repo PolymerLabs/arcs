@@ -19,8 +19,7 @@ import {EntityType, ReferenceType} from '../type.js';
 import {resetStorageForTesting} from '../storage/firebase/firebase-storage.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {SlotComposer} from '../slot-composer.js';
 
 // Console is https://firebase.corp.google.com/project/arcs-storage-test/database/arcs-storage-test/data/firebase-storage-test
 const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test';
@@ -683,9 +682,9 @@ describe('firebase', function() {
           });
         `
       };
-      const loader = new StubLoader(fileMap);
+      const loader = new Loader(null, fileMap);
       const manifest = await Manifest.parse(fileMap.manifest);
-      const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context: manifest});
+      const runtime = new Runtime({loader, context: manifest});
       const arc = runtime.newArc('demo', 'volatile://');
       const storage = createStorage(arc.id);
       const dataType = new EntityType(manifest.schemas.Data);
@@ -703,7 +702,7 @@ describe('firebase', function() {
 
     // TODO(cypher1): Disabled temporarily, breaking on master.
     it.skip('serialization roundtrip re-attaches to the same firebase stores', async () => {
-      const loader = new StubLoader({
+      const loader = new Loader(null, {
         manifest: `
           schema Data
             value: Text

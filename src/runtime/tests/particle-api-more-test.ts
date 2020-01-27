@@ -9,8 +9,8 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {SlotComposer} from '../slot-composer.js';
+import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {Arc} from '../arc.js';
@@ -39,9 +39,9 @@ const getCollectionData = async (arc: Arc, index: number) => {
 };
 
 const spawnTestArc = async (loader) => {
-  const runtime = new Runtime({loader, composerClass: FakeSlotComposer});
+  const runtime = new Runtime({loader});
   const arc = runtime.runArc('test-arc', storageKeyPrefixForTest());
-  const manifest = await Manifest.load('manifest', loader);
+  const manifest = await Manifest.load('./manifest', loader);
   const [recipe] = manifest.recipes;
   recipe.normalize();
   await arc.instantiate(recipe);
@@ -54,8 +54,8 @@ describe('ui-particle-api', () => {
   describe('high-level handle operations', () => {
 
     it('traps bad handle names', async () => {
-      const loader = new StubLoader({
-        manifest: `
+      const loader = new Loader(null, {
+        './manifest': `
           particle TestParticle in 'test-particle.js'
             result: writes Result {ok: Boolean}
           recipe
@@ -63,7 +63,7 @@ describe('ui-particle-api', () => {
             TestParticle
               result: result
         `,
-        'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
+        './test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async
           async update() {
             try {
@@ -95,8 +95,8 @@ describe('ui-particle-api', () => {
     });
 
     it('can `set` things', async () => {
-      const loader = new StubLoader({
-        manifest: `
+      const loader = new Loader(null, {
+        './manifest': `
           particle TestParticle in 'test-particle.js'
             // TODO(sjmiles): file issue: bad syntax below results in an error suggesting
             // that "in" is a bad token, which is misleading (the type decl is bad)
@@ -121,7 +121,7 @@ describe('ui-particle-api', () => {
               result: result
               result2: result2
         `,
-        'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
+        './test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async
           async update() {
             // set a Singleton with a POJO
@@ -160,8 +160,8 @@ describe('ui-particle-api', () => {
     });
 
     it('can `add` things', async () => {
-      const loader = new StubLoader({
-        manifest: `
+      const loader = new Loader(null, {
+        './manifest': `
           particle TestParticle in 'test-particle.js'
             stuff: writes [Stuff {value: Text}]
             thing: writes Thing {value: Text}
@@ -175,7 +175,7 @@ describe('ui-particle-api', () => {
               stuff: stuff
               thing: thing
         `,
-        'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
+        './test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async
           async update() {
             // add an Entity to a Collection
@@ -211,8 +211,8 @@ describe('ui-particle-api', () => {
     });
 
     it('can `remove` things', async () => {
-      const loader = new StubLoader({
-        manifest: `
+      const loader = new Loader(null, {
+        './manifest': `
           particle TestParticle in 'test-particle.js'
             stuff: reads writes [Stuff {value: Text}]
             thing: writes Thing {value: Text}
@@ -226,7 +226,7 @@ describe('ui-particle-api', () => {
               stuff: stuff
               thing: thing
         `,
-        'test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
+        './test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
           // TODO(sjmiles): normally update should never be async
           async update(inputs, state) {
             if (!state.tested) {

@@ -57,7 +57,8 @@ const isQualifiedUrl = (s: string) =>/^https?:\/\//.test(s);
 export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
-  protected readonly staticMap: {};
+  // TODO(sjmiles): fix needed in hotreload-integration-test to restore specifiers
+  /*protected readonly*/ staticMap: {};
   constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
     // ensure urlMap is valued if user passed in something nullish
     this.urlMap = urlMap || {};

@@ -13,8 +13,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Modality} from '../../runtime/modality.js';
-import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {SlotComposer} from '../../runtime/slot-composer.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
 import {Planner} from '../planner.js';
@@ -26,7 +25,7 @@ export class StrategyTestHelper {
       id: options.arcId || ArcId.newForTest('test-arc'),
       loader: options.loader || new Loader(),
       context,
-      slotComposer: new FakeSlotComposer(options)
+      slotComposer: new SlotComposer()
     });
   }
   static createTestStrategyArgs(arc: Arc, args?) {

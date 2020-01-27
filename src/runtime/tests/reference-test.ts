@@ -13,7 +13,7 @@ import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {VolatileStorage} from '../storage/volatile-storage.js';
-import {StubLoader} from '../testing/stub-loader.js';
+import {Loader} from '../../platform/loader.js';
 import {EntityType, ReferenceType, CollectionType, SingletonType} from '../type.js';
 import {Id} from '../id.js';
 import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
@@ -59,8 +59,8 @@ describe('references', () => {
   });
 
   it('exposes a dereference API to particles for singleton handles', async () => {
-    const loader = new StubLoader({
-      'manifest': `
+    const loader = new Loader(null, {
+      './manifest': `
         schema Result
           value: Text
 
@@ -75,7 +75,7 @@ describe('references', () => {
             inResult: reads handle0
             outResult: writes handle1
       `,
-      'dereferencer.js': `
+      './dereferencer.js': `
         defineParticle(({Particle}) => {
           return class Dereferencer extends Particle {
             setHandles(handles) {
@@ -93,7 +93,7 @@ describe('references', () => {
       `
     });
 
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -128,8 +128,8 @@ describe('references', () => {
   });
 
   it('exposes a dereference API to particles for collection handles', async () => {
-    const loader = new StubLoader({
-      'manifest': `
+    const loader = new Loader(null, {
+      './manifest': `
         schema Result
           value: Text
 
@@ -144,7 +144,7 @@ describe('references', () => {
             inResult: reads handle0
             outResult: writes handle1
       `,
-      'dereferencer.js': `
+      './dereferencer.js': `
         defineParticle(({Particle}) => {
           return class Dereferencer extends Particle {
             setHandles(handles) {
@@ -169,7 +169,7 @@ describe('references', () => {
       `
     });
 
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -213,8 +213,8 @@ describe('references', () => {
   });
 
   it('exposes a reference API to particles', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         schema Result
           value: Text
 
@@ -229,7 +229,7 @@ describe('references', () => {
             inResult: reads handle0
             outResult: writes handle1
       `,
-      'referencer.js': `
+      './referencer.js': `
         defineParticle(({Particle, Reference}) => {
           return class Referencer extends Particle {
             setHandles(handles) {
@@ -249,7 +249,7 @@ describe('references', () => {
       `
     });
 
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
 
     const recipe = manifest.recipes[0];
@@ -278,8 +278,8 @@ describe('references', () => {
   });
 
   it('can deal with references in schemas', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         schema Result
           value: Text
 
@@ -294,7 +294,7 @@ describe('references', () => {
             referenceIn: reads handle0
             rawOut: writes handle1
         `,
-      'extractReference.js': `
+      './extractReference.js': `
         defineParticle(({Particle}) => {
           return class Dereferencer extends Particle {
             setHandles(handles) {
@@ -316,7 +316,7 @@ describe('references', () => {
       `
     });
 
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -358,8 +358,8 @@ describe('references', () => {
     // * reads a collction of Results from 'inResult'.
     // * puts a Result into each of the Foos retrieved from 'out' and 'inFoo'
     // * writes the Foos back to 'out'.
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         schema Result
           value: Text
 
@@ -377,7 +377,7 @@ describe('references', () => {
             inFoo: reads handle1
             outResult: handle2
       `,
-      'referencer.js': `
+      './referencer.js': `
         defineParticle(({Particle, Reference}) => {
           return class Referencer extends Particle {
             setHandles(handles) {
@@ -437,7 +437,7 @@ describe('references', () => {
       `
     });
 
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -477,8 +477,8 @@ describe('references', () => {
   });
 
   it('can deal with collections of references in schemas', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         schema Result
           value: Text
 
@@ -493,7 +493,7 @@ describe('references', () => {
             referenceIn: reads handle0
             rawOut: writes handle1
         `,
-      'extractReferences.js': `
+      './extractReferences.js': `
         defineParticle(({Particle}) => {
           return class Dereferencer extends Particle {
             setHandles(handles) {
@@ -516,7 +516,7 @@ describe('references', () => {
       `
     });
 
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -560,8 +560,8 @@ describe('references', () => {
   });
 
   it('can construct collections of references in schemas', async () => {
-    const loader = new StubLoader({
-      manifest: `
+    const loader = new Loader(null, {
+      './manifest': `
         schema Result
           value: Text
 
@@ -576,7 +576,7 @@ describe('references', () => {
             referenceOut: writes handle0
             rawIn: reads handle1
         `,
-      'constructReferenceCollection.js': `
+      './constructReferenceCollection.js': `
         defineParticle(({Particle, Reference}) => {
           return class Dereferencer extends Particle {
             setHandles(handles) {
@@ -619,7 +619,7 @@ describe('references', () => {
       `
     });
 
-    const manifest = await Manifest.load('manifest', loader);
+    const manifest = await Manifest.load('./manifest', loader);
     const arc = new Arc({id: Id.fromString('test:0'), loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());

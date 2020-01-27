@@ -12,16 +12,13 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
-import {SlotComposerOptions} from '../../../runtime/slot-composer.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
-import {StubLoader} from '../../../runtime/testing/stub-loader.js';
+import {Loader} from '../../../platform/loader.js';
 import {PlanConsumer} from '../../plan/plan-consumer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
-import {PlanningModalityHandler} from '../../planning-modality-handler.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
@@ -32,8 +29,8 @@ import {Arc} from '../../../runtime/arc.js';
 async function createPlanConsumer(arc: Arc) {
   const store: UnifiedActiveStore = await Planificator['_initSuggestStore'](arc);
   assert.isNotNull(store);
-  return new PlanConsumer(
-      arc, new PlanningResult({context: arc.context, loader: arc.loader}, store));
+  const result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
+  return new PlanConsumer(arc, result);
 }
 
 async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
@@ -44,7 +41,7 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 
 describe('plan consumer', () => {
   it('consumes', async () => {
-    const loader = new StubLoader({});
+    const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const context =  await Manifest.parse(`
@@ -67,8 +64,7 @@ describe('plan consumer', () => {
           other: consumes other
         description \`Test Recipe\`
     `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({
-        loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     let suggestions = await StrategyTestHelper.planForArc(arc);
 
@@ -137,7 +133,7 @@ describe('plan consumer', () => {
     `).join('')}
         `;
       };
-      const loader = new StubLoader({});
+      const loader = new Loader();
       const memoryProvider = new TestVolatileMemoryProvider();
       RamDiskStorageDriverProvider.register(memoryProvider);
       const context =  await Manifest.parse(`
@@ -155,17 +151,7 @@ ${addRecipe(['ParticleTouch'])}
 ${addRecipe(['ParticleDom', 'ParticleBoth'])}
 ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
         `, {loader, fileName: '', memoryProvider});
-      class ModalitySlotComposer extends FakeSlotComposer {
-        prototype: {};
-        constructor(options?: SlotComposerOptions) {
-          super({
-            modalityName,
-            modalityHandler: PlanningModalityHandler.createHeadlessHandler()
-          });
-        }
-      }
-      const runtime = new Runtime({
-          loader, composerClass: ModalitySlotComposer, context, memoryProvider});
+      const runtime = new Runtime({loader, context, memoryProvider});
       const arc = runtime.newArc('demo', storageKeyPrefixForTest());
       assert.lengthOf(arc.context.allRecipes, 4);
       const consumer = await createPlanConsumer(arc);
@@ -182,7 +168,7 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
     };
 
     const consumerDom = await initConsumer(Modality.Name.Dom);
-    const domSuggestions = consumerDom.getCurrentSuggestions();
+    //const domSuggestions = consumerDom.getCurrentSuggestions();
     // TODO(sjmiles): modality detection has changed, this will be restored in a follow-up PR
     //assert.lengthOf(domSuggestions, 2);
     //assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),
@@ -190,14 +176,14 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
 
     DriverFactory.clearRegistrationsForTesting();
 
-    const consumerVr = await initConsumer(Modality.Name.Vr);
+    //const consumerVr = await initConsumer(Modality.Name.Vr);
     // TODO(sjmiles): modality detection has changed, this will be restored in a follow-up PR
     //assert.isEmpty(consumerVr.getCurrentSuggestions());
 
     DriverFactory.clearRegistrationsForTesting();
 
-    const consumerTouch = await initConsumer(Modality.Name.DomTouch);
-    const touchSuggestions = consumerTouch.getCurrentSuggestions();
+    //const consumerTouch = await initConsumer(Modality.Name.DomTouch);
+    //const touchSuggestions = consumerTouch.getCurrentSuggestions();
     // TODO(sjmiles): modality detection has changed, this will be restored in a follow-up PR
     //assert.lengthOf(touchSuggestions, 2);
     //assert.deepEqual(touchSuggestions.map(s => s.plan.particles.map(p => p.name)),

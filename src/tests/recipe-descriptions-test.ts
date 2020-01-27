@@ -11,11 +11,11 @@
 import {assert} from '../platform/chai-web.js';
 import {DescriptionDomFormatter} from '../runtime/description-dom-formatter.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
-import {StubLoader} from '../runtime/testing/stub-loader.js';
+import {Loader} from '../platform/loader.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
-import {FakeSlotComposer} from '../runtime/testing/fake-slot-composer.js';
+import {SlotComposer} from '../runtime/slot-composer.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
 import {Flags} from '../runtime/flags.js';
@@ -29,7 +29,7 @@ describe('recipe descriptions test', () => {
   let loader;
   let memoryProvider;
   beforeEach(() => {
-    loader = new StubLoader({
+    loader = new Loader(null, {
       'test.js': `defineParticle(({Particle}) => {
         return class P extends Particle {
           constructor() { super(); this.relevance = 1; }
@@ -136,7 +136,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const context =  await Manifest.parse(
         options.manifestString || createManifestString(options),
         {loader, memoryProvider, fileName: 'foo.js'});
-    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
     const arc = runtime.newArc('demo', key);
     arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
@@ -299,7 +299,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
             foo: writes fooHandle
           description \`cannot show duplicate \${ShowFoo.foo}\`
       `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     await StrategyTestHelper.planForArc(arc).then(() => assert('expected exception for duplicate particles'))
@@ -351,7 +351,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
     `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
     const arc = runtime.newArc('demo', key);
     // Plan for arc
@@ -384,7 +384,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         C
         description \`do C\`
     `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
     const arc = runtime.newArc('demo', key);
 

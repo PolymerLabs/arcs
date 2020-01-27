@@ -12,7 +12,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {StubLoader} from '../../../runtime/testing/stub-loader.js';
+import {Loader} from '../../../platform/loader.js';
 import {InitPopulation} from '../../strategies/init-population.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
@@ -32,7 +32,7 @@ describe('InitPopulation', () => {
         handle1: create *
         A
           product: reads handle1`);
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
     });
     const recipe = manifest.recipes[0];
@@ -60,7 +60,7 @@ describe('InitPopulation', () => {
     const [recipe] = manifest.recipes;
     assert(recipe.normalize());
 
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
     });
     const arc = new Arc({

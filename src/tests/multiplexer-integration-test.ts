@@ -161,7 +161,7 @@ describe('Multiplexer', () => {
   // TODO(sjmiles): probably should be in particles/tests/* because of Multiplexer.js
   // TODO(sjmiles): skipped because (in summary) plumbing data from the hostedParticle to the outer
   // arc is not this simple ... research is afoot
-  it.skip('multiplexer can host non-slot-using particle FOOB', async () => {
+  it.skip('multiplexer can host non-slot-using particle', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     //

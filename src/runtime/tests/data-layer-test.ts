@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {SlotComposer} from '../slot-composer.js';
 import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {Entity} from '../entity.js';
@@ -25,7 +25,7 @@ describe('entity', () => {
 
     const id = ArcId.newForTest('test');
     const context = new Manifest({id});
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id, context, loader: new Loader()});
+    const arc = new Arc({slotComposer: new SlotComposer(), id, context, loader: new Loader()});
     const entity = new (Entity.createEntityClass(schema, null))({value: 'hello world'});
     assert.isDefined(entity);
 

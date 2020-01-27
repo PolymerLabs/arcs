@@ -12,9 +12,9 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {VolatileCollection} from '../../runtime/storage/volatile-storage.js';
-import {FakeSlotComposer} from '../../runtime/testing/fake-slot-composer.js';
+import {SlotComposer} from '../../runtime/slot-composer.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
-import {StubLoader} from '../../runtime/testing/stub-loader.js';
+import {Loader} from '../../platform/loader.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
@@ -96,12 +96,11 @@ describe('common particles test', () => {
     if (Flags.useNewStorageStack) {
       this.skip();
     }
-    const loader = new StubLoader({});
+    const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader, {memoryProvider});
-    const runtime = new Runtime({
-        loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const suggestions = await StrategyTestHelper.planForArc(arc);

@@ -14,10 +14,9 @@ import {Description} from '../description.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {SlotComposer} from '../slot-composer.js';
 import {ArcId} from '../id.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
-import {StubLoader} from '../testing/stub-loader.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 
@@ -35,8 +34,12 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
 
 describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), id: ArcId.newForTest('test'), loader: new Loader(),
-                         context: new Manifest({id: ArcId.newForTest('test')})});
+    const arc = new Arc({
+      slotComposer: new SlotComposer(),
+      id: ArcId.newForTest('test'),
+      loader: new Loader(),
+      context: new Manifest({id: ArcId.newForTest('test')})
+    });
     const description = await Description.create(arc);
     const expected = await description.getArcDescription();
     const actual = await Runtime.getArcDescription(arc);
@@ -80,7 +83,7 @@ describe('Runtime', () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.parse(``, {memoryProvider});
-    const loader = new StubLoader({
+    const loader = new Loader(null, {
       manifest: `
         schema Thing
         particle MyParticle in './my-particle.js'
@@ -104,7 +107,7 @@ describe('Runtime', () => {
       `,
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
-    const runtime = new Runtime({loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const manifest = await Manifest.load('manifest', loader, {memoryProvider});
     manifest.recipes[0].normalize();
     const volatileArc = runtime.runArc('test-arc-1', volatileStorageKeyPrefixForTest());

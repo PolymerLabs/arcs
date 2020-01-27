@@ -13,11 +13,10 @@ import {ArcId} from '../../../runtime/id.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
+import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import {storageKeyPrefixForTest, singletonHandleForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
-import {FakeSlotComposer} from '../../../runtime/testing/fake-slot-composer.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
-import {StubLoader} from '../../../runtime/testing/stub-loader.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
@@ -87,12 +86,11 @@ class TestPlanProducer extends PlanProducer {
 // Run test suite for each storageKeyBase
 describe('plan producer', () => {
   async function createProducer() {
-    const loader = new StubLoader({});
+    const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
-    const runtime = new Runtime({
-        loader, composerClass: FakeSlotComposer, context, memoryProvider});
+    const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const suggestions = await StrategyTestHelper.planForArc(
         runtime.newArc('demo', storageKeyPrefixForTest())
@@ -188,8 +186,13 @@ describe('plan producer - search', () => {
         value: Text
     `, {memoryProvider});
     const id= ArcId.newForTest('test');
-    const arc = new Arc({slotComposer: new FakeSlotComposer(), loader, context: manifest, id,
-                         storageKey: storageKeyForTest(id)});
+    const arc = new Arc({
+      id,
+      storageKey: storageKeyForTest(id),
+      slotComposer: new SlotComposer(),
+      loader,
+      context: manifest
+    });
     const searchStore = await Planificator['_initSearchStore'](arc);
 
     const producer = new TestSearchPlanProducer(arc, searchStore);

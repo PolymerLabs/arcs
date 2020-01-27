@@ -17,7 +17,7 @@ import {Manifest} from '../manifest.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Relevance} from '../relevance.js';
 import {SingletonStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
-import {FakeSlotComposer} from '../testing/fake-slot-composer.js';
+import {SlotComposer} from '../slot-composer.js';
 import {EntityType} from '../type.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
@@ -26,7 +26,7 @@ import {ConCap} from '../../testing/test-util.js';
 import {Flags} from '../flags.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
-  const slotComposer = new FakeSlotComposer();
+  const slotComposer = new SlotComposer();
   const arc = new Arc({slotComposer, id: ArcId.newForTest('test'), context: manifest, loader: new Loader()});
   // TODO(lindner) stop messing with arc internal state, or provide a way to supply in constructor..
   arc['_activeRecipe'] = recipe;
