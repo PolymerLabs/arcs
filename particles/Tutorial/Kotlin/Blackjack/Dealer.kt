@@ -15,11 +15,12 @@ class Dealer : AbstractDealer() {
             log("Stand to be implemented.")
         }
     }
+
     override fun getTemplate(slotName: String) = """
-        ${name}: <button type="button" on-click="onHit"> Hit </button> 
-        <button type="button" on-click="onStand"> Stand </button>
-        <span>{{hand}}</span> 
-     """.trimIndent()
+            ${name}: <button type="button" on-click="onHit"> Hit </button>
+            <button type="button" on-click="onStand"> Stand </button>
+            <span>{{hand}}</span>
+        """.trimIndent()
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val desc = hand.joinToString(separator = ":") { Card.cardDesc(it.value.toInt()) }

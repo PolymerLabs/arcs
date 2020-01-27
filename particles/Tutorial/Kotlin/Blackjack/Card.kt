@@ -5,7 +5,7 @@ class Card (inputValue: Int = -1) {
     val value = inputValue
 
     init  {
-      require(inputValue in -1 until 52)
+        require(inputValue in -1 until 52)
     }
 
     override fun toString() = Card.cardDesc(value)
