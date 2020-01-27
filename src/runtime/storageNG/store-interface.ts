@@ -19,6 +19,7 @@ import {UnifiedActiveStore} from './unified-store.js';
 import {Store} from './store.js';
 import {Producer} from '../hot.js';
 import {ChannelConstructor} from '../channel-constructor.js';
+import {TtlEnforcer} from './ttl-enforcer.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -78,6 +79,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   readonly mode: StorageMode;
   readonly baseStore: Store<T>;
   readonly versionToken: string;
+  readonly ttlEnforcer?: TtlEnforcer<T>;
 
   // TODO: Lots of these params can be pulled from baseStore.
   constructor(options: StoreConstructorOptions<T>) {
@@ -86,6 +88,9 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
     this.type = options.type;
     this.mode = options.mode;
     this.baseStore = options.baseStore;
+    if (this.baseStore && this.baseStore.ttl) {
+      this.ttlEnforcer = new TtlEnforcer(this.baseStore.ttl);
+    }
   }
 
   async idle() {

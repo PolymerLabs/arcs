@@ -162,7 +162,9 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     }
     this.model.version[key] = version[key];
     const previousVersion = this.model.values[value.id] ? this.model.values[value.id].version : {};
-    this.model.values[value.id] = {value, version: mergeVersions(version, previousVersion)};
+    this.model.values[value.id] = {
+        value: this.mergeValues(value.id, value),
+        version: mergeVersions(version, previousVersion)};
     return true;
   }
 
@@ -220,6 +222,11 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
 
   private checkValue(value: T) {
     assert(value.id && value.id.length, `CRDT value must have an ID.`);
+  }
+
+  private mergeValues(id: string, value: T) {
+    const originalValue = this.model.values[value.id] ? this.model.values[value.id].value : {};
+    return {...originalValue, ...value};
   }
 }
 
