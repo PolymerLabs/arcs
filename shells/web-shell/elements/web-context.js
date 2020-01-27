@@ -9,8 +9,8 @@
  */
 
 import {Xen} from '../../lib/components/xen.js';
-import {UserContext} from '../../lib/components/user-context.js';
-import {initShares} from '../../lib/shares.js';
+//import {UserContext} from '../../lib/components/user-context.js';
+//import {initShares} from '../../lib/shares.js';
 import {logsFactory} from '../../../build/platform/logs-factory.js';
 
 const {log} = logsFactory('UserContext', '#4f0433');
@@ -26,11 +26,12 @@ class WebContext extends Xen.Debug(Xen.Async, log) {
     }
   }
   async updateContext({context, storage}) {
-    await initShares(context);
-    //await this.disposeUserContext(userContext);
-    const userContext = new UserContext(context, storage);
-    this.state = {userContext};
-    await userContext.ready;
+    // TODO(sjmiles): defeat sharing while onboarding StorageNG
+    // await initShares(context);
+    // //await this.disposeUserContext(userContext);
+    // const userContext = new UserContext(context, storage);
+    // this.state = {userContext};
+    // await userContext.ready;
     this.fire('context', context);
   }
   async disposeUserContext(userContext) {
