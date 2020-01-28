@@ -13,7 +13,9 @@ kt_android_library(
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/database",
+        "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",
         "//third_party/java/jsr305_annotations",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
