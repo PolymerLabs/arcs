@@ -5,17 +5,15 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 kt_android_library(
-    name = "resurrection",
+    name = "database",
     srcs = glob(["*.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/common",
-        "//java/arcs/core/storage:storage_key",
-        "//java/arcs/core/storage/driver",
-        "//java/arcs/core/storage/referencemode",
-        "//java/arcs/core/util",
+        "//java/arcs/core/data",
+        "//java/arcs/core/storage",
+        "//java/arcs/core/storage/database",
         "//third_party/java/androidx/annotation",
-        "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_android",
+        "//third_party/java/jsr305_annotations",
     ],
 )
