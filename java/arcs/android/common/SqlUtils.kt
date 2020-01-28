@@ -31,6 +31,8 @@ inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T):
 /**
  * Helper function for iterating over each row in the results of a query.
  *
+ * Closes the [Cursor] after execution.
+ *
  * Usage:
  *
  * ```kotlin
@@ -47,6 +49,8 @@ inline fun Cursor.forEach(block: (Cursor) -> Unit) = use {
 
 /**
  * Helper function for mapping each row in the results of a query.
+ *
+ * Closes the [Cursor] after execution.
  *
  * Usage:
  *
