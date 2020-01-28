@@ -30,10 +30,11 @@ typealias TypeId = Long
 
 /** Implementation of [Database] for Android using SQLite. */
 class DatabaseImpl(
-    context: Context
+    context: Context,
+    databaseName: String
 ) : Database, SQLiteOpenHelper(
     context,
-    DB_NAME,
+    databaseName,
     /* cursorFactory = */ null,
     DB_VERSION
 ) {
@@ -141,7 +142,6 @@ class DatabaseImpl(
     }
 
     companion object {
-        internal const val DB_NAME = "arcs.sqlite3"
         private const val DB_VERSION = 1
 
         private val CREATE =

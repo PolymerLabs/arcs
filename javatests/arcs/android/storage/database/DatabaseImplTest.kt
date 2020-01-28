@@ -36,7 +36,7 @@ class DatabaseImplTest {
 
     @Before
     fun setUp() {
-        database = DatabaseImpl(ApplicationProvider.getApplicationContext())
+        database = DatabaseImpl(ApplicationProvider.getApplicationContext(), "test.sqlite3")
     }
 
     @After
