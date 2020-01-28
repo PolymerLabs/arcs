@@ -10,8 +10,9 @@
 
 import {Schema} from './schema.js';
 import {Type} from './type.js';
+import {Refinement} from './refiner.js';
 
-function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: {}}) {
+function fromLiteral(data = {fields: {}, names: [], description: {}, refinement: null}) {
   const fields = {};
   const updateField = field => {
     if (field.kind === 'schema-reference') {
@@ -25,10 +26,15 @@ function fromLiteral(data = {fields: {}, names: [], description: {}, refinement:
   };
   for (const key of Object.keys(data.fields)) {
     fields[key] = updateField(data.fields[key]);
+    if (fields[key].refinement) {
+      fields[key].refinement = Refinement.fromLiteral(fields[key].refinement);
+    }
   }
   const result = new Schema(data.names, fields);
   result.description = data.description || {};
-  result.refinement = data.refinement;
+  if (data.refinement) {
+    result.refinement = Refinement.fromLiteral(data.refinement);
+  }
   return result;
 }
 
