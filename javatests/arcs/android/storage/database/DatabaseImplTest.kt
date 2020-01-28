@@ -19,14 +19,18 @@ import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
+import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.lang.IllegalArgumentException
 
+@ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
 class DatabaseImplTest {
     private lateinit var database: DatabaseImpl
@@ -45,15 +49,15 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getTypeId_primitiveTypeIds() {
+    fun getTypeId_primitiveTypeIds() = runBlockingTest {
         assertThat(database.getTypeId(FieldType.Boolean)).isEqualTo(PrimitiveType.Boolean.ordinal)
         assertThat(database.getTypeId(FieldType.Number)).isEqualTo(PrimitiveType.Number.ordinal)
         assertThat(database.getTypeId(FieldType.Text)).isEqualTo(PrimitiveType.Text.ordinal)
     }
 
     @Test
-    fun getTypeId_entity_throwsWhenMissing() {
-        val exception = assertThrows(IllegalArgumentException::class) {
+    fun getTypeId_entity_throwsWhenMissing() = runBlockingTest {
+        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
             database.getTypeId(FieldType.EntityRef("abc"))
         }
         assertThat(exception)
@@ -62,7 +66,7 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getSchemaTypeId_newSchema() {
+    fun getSchemaTypeId_newSchema() = runBlockingTest {
         val schema = newSchema("abc")
 
         assertThat(database.getSchemaTypeId(schema)).isEqualTo(FIRST_ENTITY_TYPE_ID)
@@ -75,7 +79,7 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getSchemaTypeId_multipleNewSchemas() {
+    fun getSchemaTypeId_multipleNewSchemas() = runBlockingTest {
         val schema1 = newSchema("first")
         val schema2 = newSchema("second")
         val expectedTypeId1 = FIRST_ENTITY_TYPE_ID
@@ -91,7 +95,7 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getSchemaTypeId_withPrimitiveFields() {
+    fun getSchemaTypeId_withPrimitiveFields() = runBlockingTest {
         val schema = newSchema("abc", SchemaFields(
             singletons = mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean),
             collections = mapOf("num" to FieldType.Number)
