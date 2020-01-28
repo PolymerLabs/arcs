@@ -15,7 +15,9 @@ import {Description} from './description.js';
 import {Modality} from './modality.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConsumer} from './slot-consumer.js';
-import {ProvidedSlotContext, SlotContext} from './slot-context.js';
+//import {ProvidedSlotContext} from './slot-context.js';
+import {ProvideSlotConnectionSpec} from './particle-spec.js';
+//import {SlotContext} from './slot-context.js';
 import {logsFactory} from '../platform/logs-factory.js';
 
 const {log, warn} = logsFactory('SlotComposer', 'brown');
@@ -35,7 +37,8 @@ export class SlotComposer {
   readonly modality: Modality;
   //readonly modalityHandler: ModalityHandler;
   private readonly _consumers: SlotConsumer[] = [];
-  protected _contexts: SlotContext[] = [];
+  //protected _contexts: SlotContext[] = [];
+  protected _contexts = [];
 
   /**
    * |options| must contain:
@@ -78,12 +81,23 @@ export class SlotComposer {
       //containerByName['root'] = opts.rootContainer;
     //}
 
-    const containers = opts.containers;
-    Object.keys(containers).forEach(slotName => {
-      this._contexts.push(ProvidedSlotContext.createContextForContainer(
-        `rootslotid-${slotName}`, slotName, 'xxx', [`${slotName}`]));
+    Object.keys(opts.containers).forEach(slotName => {
+      const context = this.createContextForContainer(slotName);
+      //const context = ProvidedSlotContext.createContextForContainer(
+        //`rootslotid-${slotName}`, slotName, 'xxx', [`${slotName}`]));
         //`rootslotid-${slotName}`, slotName, containers[slotName], [`${slotName}`]));
+        this._contexts.push(context);
     });
+  }
+
+  createContextForContainer(name) {
+    return {
+      id: `rootslotid-${name}`,
+      name,
+      tags: [`${name}`],
+      spec: new ProvideSlotConnectionSpec({name}),
+      handles: []
+    };
   }
 
   // findRootContainers(rootContainer) {
@@ -98,7 +112,7 @@ export class SlotComposer {
   //   return this._containerKind;
   // }
 
-  getAvailableContexts(): SlotContext[] {
+  getAvailableContexts() {
     return this._contexts;
   }
 

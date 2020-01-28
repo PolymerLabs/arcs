@@ -21,7 +21,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
-import {Content} from './slot-consumer.js';
+//import {Content} from './slot-consumer.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
@@ -37,17 +37,17 @@ import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 
-export type StartRenderOptions = {
-  particle: Particle;
-  slotName: string;
-  providedSlots: Map<string, string>;
-  contentTypes: string[];
-};
+// export type StartRenderOptions = {
+//   particle: Particle;
+//   slotName: string;
+//   providedSlots: Map<string, string>;
+//   contentTypes: string[];
+// };
 
-export type StopRenderOptions = {
-  particle: Particle;
-  slotName: string;
-};
+// export type StopRenderOptions = {
+//   particle: Particle;
+//   slotName: string;
+// };
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
@@ -156,19 +156,19 @@ export class ParticleExecutionHost {
     });
   }
 
-  startRender({particle, slotName, providedSlots, contentTypes}: StartRenderOptions): void {
-    this.getPort(particle).StartRender(particle, slotName, providedSlots, contentTypes);
-  }
+  // startRender({particle, slotName, providedSlots, contentTypes}: StartRenderOptions): void {
+  //   this.getPort(particle).StartRender(particle, slotName, providedSlots, contentTypes);
+  // }
 
-  stopRender({particle, slotName}: StopRenderOptions): void {
-    this.getPort(particle).StopRender(particle, slotName);
-  }
+  // stopRender({particle, slotName}: StopRenderOptions): void {
+  //   this.getPort(particle).StopRender(particle, slotName);
+  // }
 
-  innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content): void {
-    // Note: Transformations are not supported in Java PEC.
-    this.getPort(transformationParticle).InnerArcRender(
-        transformationParticle, transformationSlotName, hostedSlotId, content);
-  }
+  // innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content): void {
+  //   // Note: Transformations are not supported in Java PEC.
+  //   this.getPort(transformationParticle).InnerArcRender(
+  //       transformationParticle, transformationSlotName, hostedSlotId, content);
+  // }
 
   resolveIfIdle(version: number, relevance: Map<Particle, number[]>) {
     if (version === this.idleVersion) {
@@ -192,11 +192,11 @@ class PECOuterPortImpl extends PECOuterPort {
     }
   }
 
-  onRender(particle: Particle, slotName: string, content: Content) {
-    if (this.arc.pec.slotComposer) {
-      this.arc.pec.slotComposer.renderSlot(particle, slotName, content);
-    }
-  }
+  // onRender(particle: Particle, slotName: string, content: Content) {
+  //   if (this.arc.pec.slotComposer) {
+  //     this.arc.pec.slotComposer.renderSlot(particle, slotName, content);
+  //   }
+  // }
 
   onInitializeProxy(handle: StorageProviderBase, callback: number) {
     const target = {};

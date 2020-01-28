@@ -10,10 +10,20 @@
 
 //import {ModalityHandler} from '../modality-handler.js';
 import {SlotComposer, SlotComposerOptions} from '../slot-composer.js';
-import {SlotContext} from '../slot-context.js';
+//import {SlotContext} from '../slot-context.js';
 import {Particle} from '../recipe/particle.js';
-import {Content} from '../slot-consumer.js';
+//import {Content} from '../slot-consumer.js';
+import {Dictionary} from '../hot.js';
+import {Description} from '../description.js';
 import {Arc} from '../arc.js';
+
+export interface Content {
+  templateName?: string | Map<string, string>;
+  // tslint:disable-next-line: no-any
+  model?: Dictionary<any>;
+  descriptions?: Map<string, Description>;
+  template?: string | Dictionary<string>;
+}
 
 /**
  * A helper class for NodeJS tests that mimics SlotComposer without relying on DOM APIs.
@@ -34,19 +44,19 @@ export class FakeSlotComposer extends SlotComposer {
     return super.createHostedSlot(innerArc, transformationParticle, transformationSlotName, storeId);
   }
 
-  renderSlot(particle: Particle, slotName: string, content: Content) {
-    super.renderSlot(particle, slotName, content);
+  // renderSlot(particle: Particle, slotName: string, content: Content) {
+  //   super.renderSlot(particle, slotName, content);
 
-    // In production updateProvidedContexts() is done in DOM Mutation Observer.
-    // We don't have it in tests, so we do it here.
-    const slotConsumer = this.getSlotConsumer(particle, slotName);
-    if (slotConsumer) slotConsumer.updateProvidedContexts();
-  }
+  //   // In production updateProvidedContexts() is done in DOM Mutation Observer.
+  //   // We don't have it in tests, so we do it here.
+  //   const slotConsumer = this.getSlotConsumer(particle, slotName);
+  //   if (slotConsumer) slotConsumer.updateProvidedContexts();
+  // }
 
-  // Accessors for testing.
-  get contexts(): SlotContext[] {
-    return this._contexts;
-  }
+  // // Accessors for testing.
+  // get contexts(): SlotContext[] {
+  //   return this._contexts;
+  // }
 }
 
 /**

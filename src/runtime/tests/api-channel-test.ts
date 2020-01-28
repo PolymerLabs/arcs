@@ -113,9 +113,9 @@ describe('API channel', function() {
       onReloadParticles() {}
       onMapHandleCallback() {}
       onSimpleCallback() {}
-      onStartRender() {}
+      //onStartRender() {}
       onStop() {}
-      onStopRender() {}
+      //onStopRender() {}
       onUIEvent() {}
 
       constructor() {
