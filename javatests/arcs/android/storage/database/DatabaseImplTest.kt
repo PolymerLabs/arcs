@@ -14,7 +14,11 @@ package arcs.android.storage.database
 import android.database.Cursor
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.data.*
+import arcs.core.data.FieldType
+import arcs.core.data.PrimitiveType
+import arcs.core.data.Schema
+import arcs.core.data.SchemaDescription
+import arcs.core.data.SchemaFields
 import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
