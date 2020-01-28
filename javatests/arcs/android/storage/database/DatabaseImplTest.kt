@@ -14,6 +14,7 @@ package arcs.android.storage.database
 import android.database.Cursor
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.common.map
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
@@ -123,17 +124,7 @@ class DatabaseImplTest {
 
     /** Returns a list of all the rows in the 'fields' table. */
     private fun readFieldsTable() =
-        database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray())
-            .use { mapAllRows(it, ::FieldRow) }
-
-    /** Converts all rows via the given [block]. */
-    private fun <T> mapAllRows(cursor: Cursor, block: (cursor: Cursor) -> T): List<T> {
-        val results = mutableListOf<T>()
-        while (cursor.moveToNext()) {
-            results.add(block(cursor))
-        }
-        return results
-    }
+        database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
 }
 
 /** Helper class for reading results from the fields table. */

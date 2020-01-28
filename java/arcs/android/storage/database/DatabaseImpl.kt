@@ -16,6 +16,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.forEach
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
 import arcs.core.data.Entity
@@ -139,12 +140,10 @@ class DatabaseImpl(
         readableDatabase.rawQuery(
             "SELECT name, id FROM types WHERE is_primitive = 0",
             emptyArray()
-        ).use {
-            while (it.moveToNext()) {
-                val hash = it.getString(0)
-                val id = it.getLong(1)
-                typeMap[hash] = id
-            }
+        ).forEach {
+            val hash = it.getString(0)
+            val id = it.getLong(1)
+            typeMap[hash] = id
         }
         return typeMap
     }
@@ -173,7 +172,7 @@ class DatabaseImpl(
                     storage_key_id INTEGER NOT NULL PRIMARY KEY,
                     type_id INTEGER NOT NULL
                 );
-                
+
                 CREATE TABLE singletons (
                     storage_key_id INTEGER NOT NULL PRIMARY KEY,
                     type_id INTEGER NOT NULL,
