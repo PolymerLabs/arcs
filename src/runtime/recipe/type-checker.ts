@@ -59,7 +59,7 @@ export class TypeChecker {
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
   static processTypeList(baseType: Type, list: TypeListInfo[], options: TypeCheckOptions = {}) {
-    const newBaseType = TypeVariable.make('', null, null);
+    const newBaseType = TypeVariable.make('');
     if (baseType) {
       newBaseType.variable.resolution = baseType;
     }
@@ -86,6 +86,10 @@ export class TypeChecker {
     }
 
     for (const item of concreteTypes) {
+      if (item.relaxed) {
+        // Skip relaxed handles, as they do not constrain the type.
+        continue;
+      }
       if (!TypeChecker._tryMergeConstraints(baseType, item, options)) {
         return null;
       }
@@ -145,7 +149,7 @@ export class TypeChecker {
     throw new Error('tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
   }
 
-  static _tryMergeConstraints(handleType: Type, {type, direction}: TypeListInfo, options: {typeErrors?: string[]} = {}): boolean {
+  static _tryMergeConstraints(handleType: Type, {type, relaxed, direction}: TypeListInfo, options: {typeErrors?: string[]} = {}): boolean {
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
     if (primitiveHandleType instanceof TypeVariable) {
       while (primitiveConnectionType.isTypeContainer()) {
@@ -183,11 +187,14 @@ export class TypeChecker {
           return false;
         }
       }
-      if (direction === 'reads' || direction === 'reads writes' || direction === '`consumes') {
-        // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
-        // so we need to union it with the type that wants to be read here.
-        if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset)) {
-          return false;
+      if (!relaxed) {
+        // Requirements for relaxed handle connections are not currently enforced.
+        if (direction === 'reads' || direction === 'reads writes' || direction === '`consumes') {
+          // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
+          // so we need to union it with the type that wants to be read here.
+          if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset)) {
+            return false;
+          }
         }
       }
     } else {
@@ -200,9 +207,12 @@ export class TypeChecker {
           return false;
         }
       }
-      if (direction === 'reads' || direction === 'reads writes') {
-        if (!TypeChecker._readConstraintsApply(primitiveHandleType, primitiveConnectionType)) {
-          return false;
+      if (!relaxed) {
+        // Requirements for relaxed handle connections are not currently enforced.
+        if (direction === 'reads' || direction === 'reads writes') {
+          if (!TypeChecker._readConstraintsApply(primitiveHandleType, primitiveConnectionType)) {
+            return false;
+          }
         }
       }
     }
