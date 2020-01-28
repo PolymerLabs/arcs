@@ -26,7 +26,7 @@ import {Descendant} from '../runtime/recipe/walker.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
 
-import {PlanningModalityHandler} from './planning-modality-handler.js';
+//import {PlanningModalityHandler} from './planning-modality-handler.js';
 import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
@@ -106,7 +106,7 @@ export class RecipeIndex {
       context: new Manifest({id: idGenerator.newArcId('empty-context')}),
       loader: arc.loader,
       slotComposer: new SlotComposer({
-        modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
+        //modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
         noRoot: true
       }),
       stub: true

@@ -109,6 +109,7 @@ export class WebShell extends Xen.Debug(Xen.Async, log) {
       if (config) {
         state.storage = config.storage;
         state.arckey = config.arc;
+        state.search = config.search;
         state.ready = true;
       }
     }

@@ -31,7 +31,7 @@ export type SlotComposerOptions = {
 };
 
 export class SlotComposer {
-  private readonly _containerKind: string;
+  // private readonly _containerKind: string;
   readonly modality: Modality;
   readonly modalityHandler: ModalityHandler;
   private readonly _consumers: SlotConsumer[] = [];
@@ -68,19 +68,21 @@ export class SlotComposer {
     //  return;
     //}
 
-    const containerByName =
-        opts.containers
+    //const containerByName =
+        //opts.containers
         //|| this.findRootContainers(options.rootContainer)
         //|| {}
-        ;
+        //;
     //if (Object.keys(containerByName).length === 0) {
       // fallback to single 'root' slot using the rootContainer.
       //containerByName['root'] = opts.rootContainer;
     //}
 
-    Object.keys(containerByName).forEach(slotName => {
+    const containers = opts.containers;
+    Object.keys(containers).forEach(slotName => {
       this._contexts.push(ProvidedSlotContext.createContextForContainer(
-        `rootslotid-${slotName}`, slotName, containerByName[slotName], [`${slotName}`]));
+        `rootslotid-${slotName}`, slotName, 'xxx', [`${slotName}`]));
+        //`rootslotid-${slotName}`, slotName, containers[slotName], [`${slotName}`]));
     });
   }
 
@@ -91,8 +93,13 @@ export class SlotComposer {
   get consumers(): SlotConsumer[] {
     return this._consumers;
   }
-  get containerKind(): string {
-    return this._containerKind;
+
+  // get containerKind(): string {
+  //   return this._containerKind;
+  // }
+
+  getAvailableContexts(): SlotContext[] {
+    return this._contexts;
   }
 
   getSlotConsumer(particle: Particle, slotName: string): SlotConsumer {
@@ -112,14 +119,14 @@ export class SlotComposer {
   }
 
   // TODO(sjmiles): only returns ProvidedSlotContexts, why is it called 'findContexts'?
-  findContextsByName(name: string): ProvidedSlotContext[] {
-    const filter = ctx => (ctx instanceof ProvidedSlotContext) && (ctx.name === name);
-    return this._contexts.filter(filter) as ProvidedSlotContext[];
-  }
+  // findContextsByName(name: string): ProvidedSlotContext[] {
+  //   const filter = ctx => (ctx instanceof ProvidedSlotContext) && (ctx.name === name);
+  //   return this._contexts.filter(filter) as ProvidedSlotContext[];
+  // }
 
-  findContextById(slotId: string) {
-    return this._contexts.find(({id}) => id === slotId) || {};
-  }
+  // findContextById(slotId: string) {
+  //   return this._contexts.find(({id}) => id === slotId) || {};
+  // }
 
   createHostedSlot(innerArc: Arc, particle: Particle, slotName: string, storeId: string): string {
     // TODO(sjmiles): rationalize this
@@ -132,9 +139,9 @@ export class SlotComposer {
   }
 
   _addSlotConsumer(slot: SlotConsumer) {
-    const pec = slot.arc.pec;
-    slot.startRenderCallback = pec.startRender.bind(pec);
-    slot.stopRenderCallback = pec.stopRender.bind(pec);
+    //const pec = slot.arc.pec;
+    //slot.startRenderCallback = pec.startRender.bind(pec);
+    //slot.stopRenderCallback = pec.stopRender.bind(pec);
     this._consumers.push(slot);
   }
 
@@ -147,23 +154,23 @@ export class SlotComposer {
           assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
           return;
         }
-        const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, this._containerKind);
-        const providedContexts = slotConsumer.createProvidedContexts();
-        this._contexts = this._contexts.concat(providedContexts);
+        const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, null); //this._containerKind);
+        //const providedContexts = slotConsumer.createProvidedContexts();
+        //this._contexts = this._contexts.concat(providedContexts);
         newConsumers.push(slotConsumer);
       });
     });
     // Set context for each of the slots.
     newConsumers.forEach(consumer => {
       this._addSlotConsumer(consumer);
-      const context = this.findContextById(consumer.consumeConn.targetSlot.id);
+      //const context = this.findContextById(consumer.consumeConn.targetSlot.id);
       // TODO(sjmiles): disabling this assert for now because rendering to unregistered slots
       // is allowed under new rendering factorisation. Maybe we bring this back as a validity
       // test in the future, but it's not a requirement atm.
       //assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
-      if (context && context['addSlotConsumer']) {
-        context['addSlotConsumer'](consumer);
-      }
+      //if (context && context['addSlotConsumer']) {
+      //  context['addSlotConsumer'](consumer);
+      //}
     });
     // Calculate the Descriptions only once per-Arc
     const allArcs = this.consumers.map(consumer => consumer.arc);
@@ -180,10 +187,6 @@ export class SlotComposer {
 
   renderSlot(particle: Particle, slotName: string, content) {
     warn('[unsupported] renderSlot', particle.spec.name);
-  }
-
-  getAvailableContexts(): SlotContext[] {
-    return this._contexts;
   }
 
   dispose(): void {

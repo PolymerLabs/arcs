@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
+//import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
 //import {InterfaceType} from '../type.js';
 //import {Arc} from '../arc.js';
 import {RenderPacket} from '../slot-observer.js';
@@ -55,7 +55,7 @@ export class SlotTestObserver extends AbstractSlotObserver {
     this.logging = Boolean(options.logging);
     this.debugMessages = [];
     // Clear all cached templates
-    HeadlessSlotDomConsumer.clearCache();
+    //HeadlessSlotDomConsumer.clearCache();
   }
 
   /**

@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {Consumer} from '../../runtime/hot.js';
-import {SuggestionComposer} from '../suggestion-composer.js';
+//import {SuggestionComposer} from '../suggestion-composer.js';
 
 import {PlanningResult} from './planning-result.js';
 import {Suggestion, SuggestionVisibilityOptions} from './suggestion.js';
@@ -28,7 +28,7 @@ export class PlanConsumer {
   private suggestionsChangeCallbacks: Consumer<{suggestions: Suggestion[]}>[] = [];
   // Callback is triggered when suggestions visible to the user have changed.
   private visibleSuggestionsChangeCallbacks: Consumer<Suggestion[]>[] = [];
-  suggestionComposer: SuggestionComposer|null = null;
+  //suggestionComposer: SuggestionComposer|null = null;
   currentSuggestions: Suggestion[] = [];
   readonly inspector?: PlannerInspector;
 
@@ -40,7 +40,7 @@ export class PlanConsumer {
     this.suggestionsChangeCallbacks = [];
     this.visibleSuggestionsChangeCallbacks = [];
     this.inspector = inspector;
-    this._initSuggestionComposer();
+    //this._initSuggestionComposer();
     this.result.registerChangeCallback(() => this.onSuggestionsChanged());
     this._maybeUpdateStrategyExplorer();
   }
@@ -84,9 +84,9 @@ export class PlanConsumer {
   dispose(): void {
     this.suggestionsChangeCallbacks = [];
     this.visibleSuggestionsChangeCallbacks = [];
-    if (this.suggestionComposer) {
-      this.suggestionComposer.clear();
-    }
+    // if (this.suggestionComposer) {
+    //   this.suggestionComposer.clear();
+    // }
   }
 
   private _onSuggestionsChanged(): void {
@@ -109,14 +109,14 @@ export class PlanConsumer {
     }
   }
 
-  private _initSuggestionComposer(): void {
-    const composer = this.arc.pec.slotComposer;
-    if (composer && composer.findContextById('rootslotid-suggestions')) {
-      this.suggestionComposer = new SuggestionComposer(this.arc, composer);
-      this.registerVisibleSuggestionsChangedCallback(
-        (suggestions: Suggestion[]) => this.suggestionComposer.setSuggestions(suggestions));
-    }
-  }
+  // private _initSuggestionComposer(): void {
+  //   const composer = this.arc.pec.slotComposer;
+  //   if (composer && composer.findContextById('rootslotid-suggestions')) {
+  //     this.suggestionComposer = new SuggestionComposer(this.arc, composer);
+  //     this.registerVisibleSuggestionsChangedCallback(
+  //       (suggestions: Suggestion[]) => this.suggestionComposer.setSuggestions(suggestions));
+  //   }
+  // }
 
   private _maybeUpdateStrategyExplorer(): void {
     if (this.result.generations.length && this.inspector) {

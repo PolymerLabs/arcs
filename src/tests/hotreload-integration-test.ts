@@ -15,7 +15,7 @@ import {ArcId} from '../runtime/id.js';
 import {Loader} from '../platform/loader.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
-import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
+//import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {singletonHandleForTest} from '../runtime/testing/handle-for-test.js';
 import {RuntimeCacheService} from '../runtime/runtime-cache.js';
 import {VolatileStorage} from '../runtime/storage/volatile-storage.js';
@@ -42,7 +42,7 @@ class StubWasmLoader extends Loader {
 describe('Hot Code Reload for JS Particle', async () => {
   beforeEach(() => {
     const cacheService = new RuntimeCacheService();
-    HeadlessSlotDomConsumer.setCacheService(cacheService);
+    //HeadlessSlotDomConsumer.setCacheService(cacheService);
     VolatileStorage.setStorageCache(cacheService);
   });
 
@@ -202,7 +202,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
     assert.isTrue(recipe.normalize() && recipe.isResolved());
     await arc.instantiate(recipe);
     await arc.idle;
-    const slotConsumer = slotComposer.consumers[0] as HeadlessSlotDomConsumer;
+
+    //const slotConsumer = slotComposer.consumers[0] as HeadlessSlotDomConsumer;
 
     // TODO(sjmiles): render data no longer captured by slot objects
     // assert.deepStrictEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '10'});

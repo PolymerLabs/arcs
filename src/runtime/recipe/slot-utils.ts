@@ -71,6 +71,8 @@ export class SlotUtils {
   }
 
   // Returns the given slot candidates, sorted by "quality".
+  // TODO(sjmiles): `slots` is either Slot[] or ProvidedSlotContext[] ... these types do not obviously match,
+  // seems like it's using only `[thing].spec`
   private static _findSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, slots) {
     const possibleSlots = slots.filter(s => this.slotMatches(particle, slotSpec, s));
     possibleSlots.sort((slot1, slot2) => {
