@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
 import {Description} from './description.js';
-import {ModalityHandler} from './modality-handler.js';
+//import {ModalityHandler} from './modality-handler.js';
 import {Modality} from './modality.js';
 import {Particle} from './recipe/particle.js';
 import {SlotConsumer} from './slot-consumer.js';
@@ -22,7 +22,7 @@ const {log, warn} = logsFactory('SlotComposer', 'brown');
 
 export type SlotComposerOptions = {
   modalityName?: string;
-  modalityHandler?: ModalityHandler;
+  //modalityHandler?: ModalityHandler;
   noRoot?: boolean;
   rootContainer?;
   rootContext?;
@@ -33,7 +33,7 @@ export type SlotComposerOptions = {
 export class SlotComposer {
   // private readonly _containerKind: string;
   readonly modality: Modality;
-  readonly modalityHandler: ModalityHandler;
+  //readonly modalityHandler: ModalityHandler;
   private readonly _consumers: SlotConsumer[] = [];
   protected _contexts: SlotContext[] = [];
 
@@ -48,7 +48,7 @@ export class SlotComposer {
   constructor(options?: SlotComposerOptions) {
     const opts = {
       containers: {'root': 'root-context'},
-      modalityHandler: ModalityHandler.basicHandler,
+      //modalityHandler: ModalityHandler.basicHandler,
       ...options
     };
 
@@ -62,7 +62,7 @@ export class SlotComposer {
     // if (options.modalityName) {
     //   this.modality = Modality.create([options.modalityName]);
     // }
-    this.modalityHandler = opts.modalityHandler;
+    //this.modalityHandler = opts.modalityHandler;
 
     //if (opts.noRoot) {
     //  return;
@@ -154,10 +154,10 @@ export class SlotComposer {
           assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
           return;
         }
-        const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, null); //this._containerKind);
+        //const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, null); //this._containerKind);
         //const providedContexts = slotConsumer.createProvidedContexts();
         //this._contexts = this._contexts.concat(providedContexts);
-        newConsumers.push(slotConsumer);
+        //newConsumers.push(slotConsumer);
       });
     });
     // Set context for each of the slots.
@@ -191,7 +191,7 @@ export class SlotComposer {
 
   dispose(): void {
     this.disposeConsumers();
-    this.disposeContexts();
+    // this.disposeContexts();
     this.disposeObserver();
   }
 
@@ -200,15 +200,15 @@ export class SlotComposer {
     this._consumers.length = 0;
   }
 
-  disposeContexts() {
-    this._contexts.forEach(context => {
-      context.clearSlotConsumers();
-      if (context instanceof ProvidedSlotContext && context.container) {
-        this.modalityHandler.slotConsumerClass.clear(context.container);
-      }
-    });
-    this._contexts = this._contexts.filter(c => !c.sourceSlotConsumer);
-  }
+  // disposeContexts() {
+  //   this._contexts.forEach(context => {
+  //     context.clearSlotConsumers();
+  //     if (context instanceof ProvidedSlotContext && context.container) {
+  //       this.modalityHandler.slotConsumerClass.clear(context.container);
+  //     }
+  //   });
+  //   this._contexts = this._contexts.filter(c => !c.sourceSlotConsumer);
+  // }
 
   // TODO(sjmiles): experimental slotObserver stuff below here
 

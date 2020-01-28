@@ -139,7 +139,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     const runtime = new Runtime({loader, context, memoryProvider});
     const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
     const arc = runtime.newArc('demo', key);
-    arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
+    //arc.pec.slotComposer.modalityHandler.descriptionFormatter = options.formatter;
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ModalityHandler} from '../modality-handler.js';
+//import {ModalityHandler} from '../modality-handler.js';
 import {SlotComposer, SlotComposerOptions} from '../slot-composer.js';
 import {SlotContext} from '../slot-context.js';
 import {Particle} from '../recipe/particle.js';
@@ -22,9 +22,9 @@ export class FakeSlotComposer extends SlotComposer {
   slotsCreated: number;
 
   constructor(options: SlotComposerOptions = {}) {
-    if (options.modalityHandler === undefined) {
-      options.modalityHandler = ModalityHandler.createHeadlessHandler();
-    }
+    // if (options.modalityHandler === undefined) {
+    //   options.modalityHandler = ModalityHandler.createHeadlessHandler();
+    // }
     super({rootContainer: {'root': 'root-context'}, ...options});
     this.slotsCreated = 0;
   }
