@@ -677,8 +677,6 @@ export class WasmContainer {
       _collectionClear: (p, h) => this.getParticle(p).collectionClear(h),
       _onRenderOutput: (p, template, model) => this.getParticle(p).onRenderOutput(template, model),
       _dereference: (p, id, key, hash, cid) => this.getParticle(p).dereference(id, key, hash, cid),
-      // tslint:disable-next-line: deprecation
-      _render: (p, slot, template, model) => this.getParticle(p).renderImpl(slot, template, model),
       _serviceRequest: (p, call, args, tag) => this.getParticle(p).serviceRequest(call, args, tag),
       _resolveUrl: (url) => this.resolve(url),
     };
@@ -993,48 +991,6 @@ export class WasmParticle extends Particle {
       content.model = StringDecoder.decodeDictionary(this.container.readBytes(modelPtr));
     }
     this.output(content);
-  }
-
-  /**
-   * @deprecated for contexts using UiBroker (e.g Kotlin)
-   */
-  // Called by the shell to initiate rendering; the particle will call env._render in response.
-  renderSlot(slotName: string, contentTypes: string[]) {
-    const p = this.container.storeStr(slotName);
-    const sendTemplate = contentTypes.includes('template');
-    const sendModel = contentTypes.includes('model');
-    this.exports._renderSlot(this.innerParticle, p, sendTemplate, sendModel);
-    this.container.free(p);
-  }
-
-  /**
-   * @deprecated for systems using UiBroker (e.g Kotlin)
-   */
-  // TODO
-  renderHostedSlot(slotName: string, hostedSlotId: string, content: Content) {
-    throw this.reportedError('renderHostedSlot not implemented for wasm particles');
-  }
-
-  /**
-   * @deprecated for systems using UiBroker (e.g Kotlin)
-   */
-  // Actually renders the slot. May be invoked due to an external request via renderSlot(),
-  // or directly from the wasm particle itself (e.g. in response to a data update).
-  // template is a string provided by the particle. model is an encoded Dictionary.
-  renderImpl(slotNamePtr: WasmAddress, templatePtr: WasmAddress, modelPtr: WasmAddress) {
-    const slot = this.slotProxiesByName.get(this.container.readStr(slotNamePtr));
-    if (slot) {
-      const content: Content = {templateName: 'default'};
-      if (templatePtr) {
-        content.template = this.container.readStr(templatePtr);
-        slot.requestedContentTypes.add('template');
-      }
-      if (modelPtr) {
-        content.model = StringDecoder.decodeDictionary(this.container.readBytes(modelPtr));
-        slot.requestedContentTypes.add('model');
-      }
-      slot.render(content);
-    }
   }
 
   // Wasm particles can request service calls with a Dictionary of arguments and an optional string
