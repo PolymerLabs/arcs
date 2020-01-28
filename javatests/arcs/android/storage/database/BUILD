@@ -12,6 +12,7 @@ arcs_kt_android_test_suite(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage.database",
     deps = [
+        "//java/arcs/android/common",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/data",
         "//java/arcs/core/testutil",
