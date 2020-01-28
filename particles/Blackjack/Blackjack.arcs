@@ -1,0 +1,64 @@
+// Encodes a card from 0 to 51. -1 indicates an invalid (or joker).
+schema Card
+  value: Number
+
+// Encodes the cards in the deck as a string. The cards are assumed to be ordered and the
+// character at an index encodes whether the card is still present in the deck or not.
+schema CardDeck
+  cards: Text
+
+// Card request message.
+schema CardRequest
+  player: Text
+
+// Result of a card request from the player
+schema CardRequestResult
+  player: Text
+  card: Number
+
+// A dealing shoe in the game.
+particle DealingShoe in 'Blackjack.wasm'
+  decks: reads writes CardDeck
+  cardRequest: reads CardRequest
+  nextCard: reads writes CardRequestResult
+
+// A dealer.
+particle Dealer in 'Blackjack.wasm'
+  hand: reads writes [Card]
+  cardRequest: writes CardRequest
+  nextCard: reads CardRequestResult
+  dealerHandSlot: consumes
+
+// A player.
+particle Player in 'Blackjack.wasm'
+  hand: reads writes [Card]
+  cardRequest: writes CardRequest
+  nextCard: reads CardRequestResult
+  playerHandSlot: consumes
+
+// A blackjack table.
+particle BlackjackTable in 'Blackjack.wasm'
+  root: consumes
+    dealerHandSlot: provides
+    playerHandSlot: provides
+
+recipe Game
+  BlackjackTable
+    root: consumes
+      dealerHandSlot: provides dealerHand
+      playerHandSlot: provides playerHand
+  DealingShoe
+    decks: reads writes d
+    nextCard: reads writes nextCard
+    cardRequest: reads request
+  Dealer
+    hand: reads writes dh
+    cardRequest: writes request
+    nextCard: reads nextCard
+    dealerHandSlot: consumes dealerHand
+  Player
+    hand: reads writes ph
+    cardRequest: writes request
+    nextCard: reads nextCard
+    playerHandSlot: consumes playerHand
+  description `Blackjack: hit, stand, or bust!`
