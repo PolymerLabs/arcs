@@ -103,13 +103,6 @@ abstract class WasmParticleImpl : Particle {
         WasmRuntimeClient.onRenderOutput(this, template, model)
     }
 
-    /** @deprecated for contexts using UiBroker (e.g Kotlin) */
-    @Deprecated("Rendering refactored to use UiBroker.", ReplaceWith("renderOutput()"))
-    @Suppress("UNUSED_PARAMETER")
-    fun renderSlot(slotName: String, sendTemplate: Boolean = true, sendModel: Boolean = true) {
-        log("ignoring renderSlot")
-    }
-
     /**
      * Request response from Service
      *
