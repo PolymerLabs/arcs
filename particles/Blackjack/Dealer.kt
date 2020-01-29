@@ -17,7 +17,7 @@ class Dealer : AbstractDealer() {
     }
 
     override fun getTemplate(slotName: String) = """
-            ${name}: <button type="button" on-click="onHit"> Hit </button>
+            $name: <button type="button" on-click="onHit"> Hit </button>
             <button type="button" on-click="onStand"> Stand </button>
             <span>{{hand}}</span>
         """.trimIndent()
@@ -34,6 +34,4 @@ class Dealer : AbstractDealer() {
         hand.store(Dealer_Hand(value = nc.card))
         renderOutput()
     }
-
-
 }

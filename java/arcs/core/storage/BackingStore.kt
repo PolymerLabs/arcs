@@ -30,7 +30,7 @@ import kotlinx.coroutines.withContext
  *
  * This is what *backs* Entities.
  */
-class BackingStore<Data : CrdtData, Op: CrdtOperation, T>(
+class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
     private val options: StoreOptions<Data, Op, T>
 ) : ActiveStore<Data, Op, T>(options) {
     private val storeMutex = Mutex()
@@ -105,7 +105,10 @@ class BackingStore<Data : CrdtData, Op: CrdtOperation, T>(
         message: ProxyMessage<Data, Op, T>
     ) = callbacks.sendMultiplexed(message, muxId)
 
-    data class StoreRecord<Data : CrdtData, Op : CrdtOperation, T>(val id: Int, val store: DirectStore<Data, Op, T>)
+    data class StoreRecord<Data : CrdtData, Op : CrdtOperation, T>(
+        val id: Int,
+        val store: DirectStore<Data, Op, T>
+    )
 
     companion object {
         @Suppress("UNCHECKED_CAST")

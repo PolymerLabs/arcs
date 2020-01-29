@@ -1,10 +1,10 @@
 package arcs.tutorials.blackjack
 
 // Describes a card in a deck.
-class Card (inputValue: Int = -1) {
+class Card(inputValue: Int = -1) {
     val value = inputValue
 
-    init  {
+    init {
         require(inputValue in -1 until 52)
     }
 

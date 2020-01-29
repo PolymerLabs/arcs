@@ -104,6 +104,3 @@ class CaptionParticle :
 fun main() {
     Platform.installParticle(CaptionParticle::class, ::CaptionParticle)
 }
-
-
-

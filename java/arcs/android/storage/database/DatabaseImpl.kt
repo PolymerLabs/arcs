@@ -23,8 +23,8 @@ import arcs.core.data.Entity
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
-import arcs.core.storage.database.Database
 import arcs.core.storage.StorageKey
+import arcs.core.storage.database.Database
 import arcs.core.util.guardWith
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

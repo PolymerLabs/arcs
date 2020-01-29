@@ -11,7 +11,6 @@
 
 package arcs.core.data
 
-
 /** Bare-bones entity data for usage in core/storage code. */
 // TODO: Rename, or consolidate with the Entity class in the sdk package.
 data class Entity(

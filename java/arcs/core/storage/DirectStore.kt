@@ -414,14 +414,13 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
          */
         private const val MAX_UPDATE_SPINS = 1000
 
-        suspend fun <Data : CrdtData, Op : CrdtOperation, T>create(
+        suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
             options: StoreOptions<Data, Op, T>,
             type: CrdtModelType<Data, Op, T>
         ): DirectStore<Data, Op, T> {
             val driver = CrdtException.requireNotNull(
                 DriverFactory.getDriver<Data>(options.storageKey, options.existenceCriteria)
             ) { "No driver exists to support storage key ${options.storageKey}" }
-
 
             return DirectStore(options.copy(type = type), type.createCrdtModel(), driver)
         }

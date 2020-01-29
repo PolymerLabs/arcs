@@ -1,9 +1,7 @@
 package arcs.tutorials.blackjack
 
-import kotlin.random.Random
 import arcs.sdk.Handle
-
-import arcs.sdk.Utils.log
+import kotlin.random.Random
 
 class DealingShoe : AbstractDealingShoe() {
     val cardPresent = "x"
@@ -33,7 +31,7 @@ class DealingShoe : AbstractDealingShoe() {
     /**
      * Returns an initialized set of decks.
      */
-    fun initializedDecks(): DealingShoe_Decks{
+    fun initializedDecks(): DealingShoe_Decks {
         var d = DealingShoe_Decks()
         d.cards = cardPresent.repeat(totalCards)
         return d
