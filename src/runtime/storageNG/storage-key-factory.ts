@@ -17,6 +17,12 @@ export type StorageKeyOptions = Readonly<{
 
 export type StorageKeyCreator = (options: StorageKeyOptions) => StorageKey;
 
+/**
+ * StorageKeyFactory is a per-arc registry of StorageKey creators supported in
+ * the current Runtime environment. A StorageKeyCreator requires an `arcId` to
+ * provide a specific location inside the shared storage for the given Arc,
+ * when laying arcs into a shared storage.
+ */
 export class StorageKeyFactory {
   private static defaultCreators = new Map<string, StorageKeyCreator>();
   private static registeredCreators = new Map<string, StorageKeyCreator>();

@@ -229,7 +229,7 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     return driver;
   }
 
-  static register(cacheService: RuntimeCacheService, options?: FirebaseStorageKeyOptions) {
+  static register(cacheService: RuntimeCacheService, options: FirebaseStorageKeyOptions) {
     DriverFactory.register(new FirebaseStorageDriverProvider(cacheService));
     StorageKeyParser.addParser('firebase', FirebaseStorageKey.fromString);
     if (options) {

@@ -21,11 +21,13 @@ export class CapabilitiesResolver {
   static createStorageKey(capabilities: Capabilities, factory: StorageKeyFactory): StorageKey {
     const protocol = null;
     let storageKey = null;
+    // TODO: This is a temporary solution for picking the appropriate storage
+    // key creator for the given capabilities. As more capabilities are added
+    // the heuristics is to become more robust.
     if (capabilities.isTiedToArc) {
       storageKey = factory.createStorageKey(VolatileStorageKey.protocol);
       if (storageKey) return storageKey;
     }
-    // TODO: Decide whether should fallback to next possible storage key, or fail?
     if (capabilities.isTiedToRuntime) {
       storageKey = factory.createStorageKey(RamDiskStorageKey.protocol);
       if (storageKey) return storageKey;
