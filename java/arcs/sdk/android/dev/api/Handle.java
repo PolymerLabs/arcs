@@ -47,7 +47,7 @@ public abstract class Handle {
 
   protected void createIdForEntity(PortableJson entity) {
     if (!entity.hasKey("id")) {
-      entity.put("id", idGenerator.newChildId(getId(), /* subcomponent= */ "").toString());
+      entity.put("id", idGenerator.newChildId(getId(), /* subComponent= */ "").toString());
     }
   }
 

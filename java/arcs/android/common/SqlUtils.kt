@@ -41,10 +41,11 @@ inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T):
  * }
  * ```
  */
-inline fun Cursor.forEach(block: (Cursor) -> Unit) = use {
+inline fun Cursor.forEach(block: (Cursor) -> Unit) {
     while (moveToNext()) {
         block(this)
     }
+    close()
 }
 
 /**
@@ -62,5 +63,7 @@ inline fun Cursor.forEach(block: (Cursor) -> Unit) = use {
 inline fun <T> Cursor.map(block: (Cursor) -> T): List<T> {
     val result = mutableListOf<T>()
     forEach { result.add(block(it)) }
+    // forEach will close it for us, but our static analyser doesn't realise that...
+    close()
     return result
 }
