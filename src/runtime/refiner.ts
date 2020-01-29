@@ -179,7 +179,6 @@ abstract class RefinementExpression {
       case 'boolean-node': return BooleanPrimitive.fromAst(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
-        // tslint:disable-next-line: no-any
         throw new Error(`RefinementExpression.fromAst: Unknown node type ${expr['kind']}`);
     }
   }
@@ -193,8 +192,7 @@ abstract class RefinementExpression {
       case 'BooleanPrimitiveNode': return BooleanPrimitive.fromLiteral(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
-        // tslint:disable-next-line: no-any
-        throw new Error(`RefinementExpression.fromLiteral: Unknown node type ${(expr as any).kind}`);
+        throw new Error(`RefinementExpression.fromLiteral: Unknown node type ${expr['kind']}`);
     }
   }
 
