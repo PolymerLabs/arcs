@@ -12,6 +12,7 @@ import {RefinementNode, RefinementExpressionNode, BinaryExpressionNode, UnaryExp
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
+import {exp} from '@tensorflow/tfjs';
 
 enum Primitive {
   BOOLEAN = 'Boolean',
@@ -954,5 +955,104 @@ export class SQLExtracter {
       }
     }
     return `SELECT * FROM ${table}` + (filterTerms.length ? ` WHERE ${filterTerms.join(' AND ')}` : '') + ';';
+  }
+}
+
+export class Polynomial {
+  _coeffs: number[];
+
+  constructor(coeffs?: number[]) {
+    if (coeffs) {
+      this.coeffs = coeffs;
+    } else {
+      this.coeffs = [0];
+    }
+  }
+
+  get coeffs(): number[] {
+    for (let i = this._coeffs.length - 1; i > 0; i -= 1) {
+      if (this._coeffs[i] === 0) {
+        this._coeffs.splice(i, 1);
+      } else {
+        break;
+      }
+  }
+    if (this._coeffs.length === 0) {
+      this._coeffs.push(0);
+    }
+    return this._coeffs;
+  }
+
+  set coeffs(cfs: number[]) {
+    this._coeffs = [];
+    for (const coeff of cfs) {
+      this._coeffs.push(coeff);
+    }
+  }
+
+  degree(): number {
+    return this.coeffs.length - 1;
+  }
+
+  static add(a: Polynomial, b: Polynomial): Polynomial {
+    const sum = a.degree() > b.degree() ? new Polynomial(a.coeffs) : new Polynomial(b.coeffs);
+    const other = a.degree() > b.degree() ? b : a;
+    for (const [i, coeff] of other.coeffs.entries()) {
+      sum.coeffs[i] += coeff;
+    }
+    return sum;
+  }
+
+  static subtract(a: Polynomial, b: Polynomial): Polynomial {
+    return Polynomial.add(a, Polynomial.negate(b));
+  }
+
+  static negate(a: Polynomial): Polynomial {
+    const neg = new Polynomial(a.coeffs);
+    for (const [i, coeff] of neg.coeffs.entries()) {
+      neg.coeffs[i] = -coeff;
+    }
+    return neg;
+  }
+
+  static multiply(a: Polynomial, b: Polynomial): Polynomial {
+    const deg = a.degree() + b.degree();
+    const coeffs = new Array(deg+1).fill(0);
+    for (let i = 0; i < coeffs.length; i += 1) {
+      for (let j = 0; j <= i; j += 1) {
+        if (j <= a.degree() && (i-j) <= b.degree()) {
+          coeffs[i] += a.coeffs[j]*b.coeffs[i-j];
+        }
+      }
+    }
+    return new Polynomial(coeffs);
+  }
+
+  // assumes the expression received has an evalType of Primitive.NUMBER
+  static fromExpression(expr: RefinementExpression): Polynomial {
+    if (expr instanceof BinaryExpression) {
+      const left = Polynomial.fromExpression(expr.leftExpr);
+      const right = Polynomial.fromExpression(expr.rightExpr);
+      return Polynomial.updateGivenOp(expr.operator.op, [left, right]);
+    } else if (expr instanceof UnaryExpression) {
+      const pn = Polynomial.fromExpression(expr.expr);
+      return Polynomial.updateGivenOp(expr.operator.op, [pn]);
+    } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.NUMBER) {
+      return new Polynomial([0, 1]);
+    } else if (expr instanceof NumberPrimitive) {
+      return new Polynomial([expr.value]);
+    }
+    throw new Error(`Cannot resolve expression: ${expr.toString()}`);
+  }
+
+  static updateGivenOp(op: string, polynomials: Polynomial[]): Polynomial {
+    switch (op) {
+      case Op.ADD: return Polynomial.add(polynomials[0], polynomials[1]);
+      case Op.MUL: return Polynomial.multiply(polynomials[0], polynomials[1]);
+      case Op.SUB: return Polynomial.subtract(polynomials[0], polynomials[1]);
+      case Op.NEG: return Polynomial.negate(polynomials[0]);
+      default:
+        throw new Error(`Unsupported operator: cannot update polynomial`);
+    }
   }
 }
