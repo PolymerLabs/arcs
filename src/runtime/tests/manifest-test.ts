@@ -33,6 +33,7 @@ import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provid
 import {FirebaseStorageDriverProvider} from '../storageNG/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
+import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -2265,7 +2266,9 @@ resource SomeName
   });
 
   it('can parse a manifest with storage key handle definitions', async () => {
-    FirebaseStorageDriverProvider.register(Runtime.getRuntime().getCacheService());
+    FirebaseStorageDriverProvider.register(
+        Runtime.getRuntime().getCacheService(),
+        mockFirebaseStorageKeyOptions);
     const manifest = await parseManifest(`
       schema Bar
         value: Text

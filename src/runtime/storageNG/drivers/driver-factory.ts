@@ -11,6 +11,7 @@
 import {StorageKey} from '../storage-key.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Exists, Driver} from './driver.js';
+import {StorageKeyFactory} from '../storage-key-factory.js';
 
 export interface StorageDriverProvider {
   // information on the StorageDriver and characteristics
@@ -23,6 +24,7 @@ export class DriverFactory {
   static clearRegistrationsForTesting() {
     this.providers = new Set();
     StorageKeyParser.reset();
+    StorageKeyFactory.reset();
   }
   static providers: Set<StorageDriverProvider> = new Set();
   static async driverInstance<Data>(storageKey: StorageKey, exists: Exists) {

@@ -9,7 +9,7 @@
  */
 
 
-import {firebase, FirebaseStorageKey, FirebaseStorageDriverProvider, FirebaseDriver, FirebaseAppCache} from '../drivers/firebase.js';
+import {firebase, FirebaseStorageKey, FirebaseStorageDriverProvider, FirebaseDriver, FirebaseAppCache, FirebaseStorageKeyOptions} from '../drivers/firebase.js';
 import {StorageKey} from '../storage-key.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
@@ -362,3 +362,9 @@ export class MockFirebaseStorageKey extends FirebaseStorageKey {
     super('test-project', 'test.domain', 'testKey', location);
   }
 }
+
+export const mockFirebaseStorageKeyOptions: FirebaseStorageKeyOptions = {
+  projectId: 'test-project',
+  domain: 'test.domain',
+  apiKey: 'testKey'
+};

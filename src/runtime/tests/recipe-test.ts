@@ -13,11 +13,10 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
 import {Type} from '../type.js';
-
+import {Capabilities} from '../capabilities.js';
 import {Flags} from '../flags.js';
 import {Entity} from '../entity.js';
 import {TtlUnits} from '../recipe/ttl.js';
-
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 
@@ -807,10 +806,13 @@ describe('recipe', () => {
         h3: create #otherTag`)).recipes[0];
     const verifyRecipeHandleCapabilities = (recipe) => {
       assert.lengthOf(recipe.handles, 4);
-      assert.sameMembers([...recipe.handles[0].capabilities], ['persistent']);
-      assert.sameMembers([...recipe.handles[1].capabilities], ['tied-to-runtime']);
-      assert.sameMembers([...recipe.handles[2].capabilities], ['persistent', 'tied-to-arc']);
-      assert.equal(recipe.handles[3].capabilities.size, 0);
+      assert.isTrue(
+          recipe.handles[0].capabilities.isSame(new Capabilities(['persistent'])));
+      assert.isTrue(
+          recipe.handles[1].capabilities.isSame(new Capabilities(['tied-to-runtime'])));
+      assert.isTrue(
+          recipe.handles[2].capabilities.isSame(new Capabilities(['persistent', 'tied-to-arc'])));
+      assert.isTrue(recipe.handles[3].capabilities.isEmpty());
     };
     verifyRecipeHandleCapabilities(recipe);
     verifyRecipeHandleCapabilities((await Manifest.parse(recipe.toString())).recipes[0]);

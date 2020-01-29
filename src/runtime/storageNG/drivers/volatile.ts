@@ -16,12 +16,14 @@ import {ArcId} from '../../id.js';
 import {RamDiskStorageKey} from './ramdisk.js';
 import {Dictionary} from '../../hot.js';
 import {assert} from '../../../platform/assert-web.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
 type VolatileEntryCollection<Data> = {root: VolatileEntry<Data>, locations: Dictionary<VolatileEntry<Data>>};
 
 export class VolatileStorageKey extends StorageKey {
+  public static readonly protocol = 'volatile'; // TODO: use everywhere
   readonly arcId: ArcId;
   readonly unique: string;
   readonly path: string;
@@ -245,9 +247,13 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
     return new VolatileDriver<Data>(storageKey as VolatileStorageKey, exists, this.arc.volatileMemory);
   }
 
+  // QUESTION: This method is never being called, is it needed?
   static register(arc: Arc) {
     DriverFactory.register(new VolatileStorageDriverProvider(arc));
   }
 }
 
 StorageKeyParser.addDefaultParser('volatile', VolatileStorageKey.fromString);
+StorageKeyFactory.registerDefaultKeyCreator(
+    VolatileStorageKey.protocol,
+    ({arcId}: StorageKeyOptions) => new VolatileStorageKey(arcId, '', ''));

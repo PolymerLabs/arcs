@@ -29,11 +29,11 @@ import {Store} from '../storageNG/store.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {DirectStore} from '../storageNG/direct-store.js';
 import {VolatileStorageProvider, VolatileSingleton} from '../storage/volatile-storage.js';
-import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
+import {singletonHandleForTest, collectionHandleForTest, ramDiskStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {handleNGFor, SingletonHandle, CollectionHandle} from '../storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
 import {Entity} from '../entity.js';
-import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 // database providers are optional, these tests use these provider(s)
@@ -170,6 +170,38 @@ describe('Arc new storage', () => {
 
     const refVarData = await refVarHandle2.get();
     assert.deepEqual(refVarData, d4);
+  }));
+
+  it('supports capabilities - storage protocol', Flags.withNewStorageStack(async () => {
+    DriverFactory.clearRegistrationsForTesting();
+    const loader = new Loader(null, {
+      '*': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {}
+        });
+    `});
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+    const manifest = await Manifest.parse(`
+      schema Thing
+      particle MyParticle in 'MyParticle.js'
+        thing: writes Thing
+      recipe
+        handle0: create tied-to-arc
+        MyParticle
+          thing: handle0
+      `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test', ramDiskStorageKeyPrefixForTest());
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    assert.lengthOf(arc.activeRecipe.handles, 1);
+    assert.instanceOf(arc.activeRecipe.handles[0].storageKey, VolatileStorageKey);
+    assert.isTrue(
+        arc.activeRecipe.handles[0].storageKey.toString().includes(arc.id.toString()));
   }));
 });
 
