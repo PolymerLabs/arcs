@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter} from '../refiner.js';
+import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter, Polynomial} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -336,5 +336,72 @@ describe('SQLExtracter', () => {
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = SQLExtracter.fromSchema(schema, 'table');
     assert.strictEqual(query, 'SELECT * FROM table;');
+  });
+});
+
+describe('Polynomial', () => {
+  it('tests coeffs getters, setters and degree works', () => {
+      let pn = new Polynomial([0, 1, 2]);
+      assert.deepEqual(pn.coeffs, [0, 1, 2]);
+      assert.strictEqual(pn.degree(), 2);
+      pn = new Polynomial([0, 1, 2, 0, 0, 0]);
+      assert.strictEqual(pn.degree(), 2);
+      pn = new Polynomial([0, 0, 0, 0]);
+      assert.deepEqual(pn.coeffs, [0]);
+      assert.strictEqual(pn.degree(), 0);
+      pn = new Polynomial([]);
+      assert.deepEqual(pn.coeffs, [0]);
+      assert.strictEqual(pn.degree(), 0);
+      pn = new Polynomial();
+      assert.deepEqual(pn.coeffs, [0]);
+      assert.strictEqual(pn.degree(), 0);
+  });
+  it('tests polynomial addition works', () => {
+    let pn1 = new Polynomial([0, 1, 2]);
+    let pn2 = new Polynomial();
+    let sum = Polynomial.add(pn1, pn2);
+    assert.deepEqual(sum.coeffs, [0, 1, 2]);
+    assert.strictEqual(sum.degree(), 2);
+    pn1 = new Polynomial([0, 1, 2]);
+    pn2 = new Polynomial([3, 2, 1]);
+    sum = Polynomial.add(pn1, pn2);
+    assert.deepEqual(sum.coeffs, [3, 3, 3]);
+    assert.strictEqual(sum.degree(), 2);
+    pn1 = new Polynomial([0, 1, 2]);
+    pn2 = new Polynomial([3, 0, 0, 0, 0]);
+    sum = Polynomial.add(pn1, pn2);
+    assert.deepEqual(sum.coeffs, [3, 1, 2]);
+    assert.strictEqual(sum.degree(), 2);
+  });
+  it('tests polynomial negation works', () => {
+    const pn1 = new Polynomial([0, 1, 2]);
+    const neg = Polynomial.negate(pn1);
+    // TODO(ragdev): Why does 0 fail in the assertion below but -0 works?
+    assert.deepEqual(neg.coeffs, [-0, -1, -2]);
+    assert.strictEqual(neg.degree(), 2);
+  });
+  it('tests polynomial subtraction works', () => {
+    const pn1 = new Polynomial([0, 1]);
+    const pn2 = new Polynomial([2, 2, 2]);
+    const sub = Polynomial.subtract(pn1, pn2);
+    assert.deepEqual(sub.coeffs, [-2, -1, -2]);
+    assert.strictEqual(sub.degree(), 2);
+  });
+  it('tests polynomial multiplication works', () => {
+    let pn1 = new Polynomial([0, 1, 2]);
+    let pn2 = new Polynomial();
+    let prod = Polynomial.multiply(pn1, pn2);
+    assert.deepEqual(prod.coeffs, [0]);
+    assert.strictEqual(prod.degree(), 0);
+    pn1 = new Polynomial([9, 2]);
+    pn2 = new Polynomial([3, -2]);
+    prod = Polynomial.multiply(pn1, pn2);
+    assert.deepEqual(prod.coeffs, [27, -12, -4]);
+    assert.strictEqual(prod.degree(), 2);
+    pn1 = new Polynomial([3, -2]);
+    pn2 = new Polynomial([9, 2, 7, 11]);
+    prod = Polynomial.multiply(pn1, pn2);
+    assert.deepEqual(prod.coeffs, [27, -12, 17, 19, -22]);
+    assert.strictEqual(prod.degree(), 4);
   });
 });
