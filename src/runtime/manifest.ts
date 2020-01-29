@@ -52,7 +52,6 @@ import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
 import {Entity, SerializedEntity} from './entity.js';
 import {Refinement} from './refiner.js';
-import {Capabilities} from './capabilities.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -858,7 +857,7 @@ ${e.message}
       }
       handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
       if (item.kind === 'handle' && item.capabilities) {
-        handle.capabilities = new Capabilities(item.capabilities);
+        handle.capabilities = new Set(item.capabilities);
       }
       if (item.kind === 'handle' && item.annotation) {
         assert(item.annotation.simpleAnnotation === 'ttl',

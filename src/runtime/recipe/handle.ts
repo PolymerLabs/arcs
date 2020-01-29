@@ -22,7 +22,6 @@ import {compareArrays, compareComparables, compareStrings, Comparable} from './c
 import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
-import {Capabilities} from '../capabilities.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -38,7 +37,7 @@ export class Handle implements Comparable<Handle> {
   private _connections: HandleConnection[] = [];
   private _mappedType: Type | undefined = undefined;
   private _storageKey: string | StorageKey | undefined = undefined;
-  capabilities: Capabilities;
+  capabilities: Set<string> = new Set();
   private _pattern: string | undefined = undefined;
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
@@ -96,7 +95,6 @@ export class Handle implements Comparable<Handle> {
       handle._mappedType = this._mappedType;
       handle._storageKey = this._storageKey;
       handle._immediateValue = this._immediateValue;
-      handle.capabilities = this.capabilities ? this.capabilities.clone() : undefined;
 
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
@@ -330,8 +328,8 @@ export class Handle implements Comparable<Handle> {
       result.push(`${name}:`);
     }
     result.push(this.fate);
-    if (this.capabilities && !this.capabilities.isEmpty()) {
-      result.push(this.capabilities.toString());
+    if (this.capabilities.size > 0) {
+      result.push([...this.capabilities].sort().join(' '));
     }
     if (this.id) {
       result.push(`'${this.id}'`);

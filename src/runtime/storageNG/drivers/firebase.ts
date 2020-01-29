@@ -11,23 +11,14 @@
 import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {Driver, ReceiveMethod, Exists} from './driver.js';
 import {StorageKey} from '../storage-key.js';
-import {ArcId} from '../../id.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
 import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
-import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 
 export {firebase};
 
-export type FirebaseStorageKeyOptions = {
-  projectId: string;
-  domain: string;
-  apiKey: string;
-};
-
 export class FirebaseStorageKey extends StorageKey {
-  public static readonly protocol = 'firebase'; // TODO: use everywhere
   public readonly databaseURL: string;
   public readonly projectId: string;
   public readonly apiKey: string;
@@ -229,15 +220,9 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     return driver;
   }
 
-  static register(cacheService: RuntimeCacheService, options: FirebaseStorageKeyOptions) {
+  static register(cacheService: RuntimeCacheService) {
     DriverFactory.register(new FirebaseStorageDriverProvider(cacheService));
     StorageKeyParser.addParser('firebase', FirebaseStorageKey.fromString);
-    if (options) {
-      const {projectId, domain, apiKey} = options;
-      StorageKeyFactory.registerKeyCreator(
-          FirebaseStorageKey.protocol,
-          ({arcId}: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, arcId.toString()));
-    }
   }
 }
 

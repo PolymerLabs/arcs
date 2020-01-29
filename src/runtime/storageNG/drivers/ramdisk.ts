@@ -13,11 +13,8 @@ import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {VolatileDriver, VolatileMemoryProvider} from './volatile.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Exists} from './driver.js';
-import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
-import {ArcId} from '../../id.js';
 
 export class RamDiskStorageKey extends StorageKey {
-  public static readonly protocol = 'ramdisk'; // TODO: use everywhere
   readonly unique: string;
 
   constructor(unique: string) {
@@ -73,8 +70,5 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
   static register(memoryProvider: VolatileMemoryProvider) {
     DriverFactory.register(new RamDiskStorageDriverProvider(memoryProvider));
     StorageKeyParser.addParser('ramdisk', RamDiskStorageKey.fromString);
-    StorageKeyFactory.registerKeyCreator(
-        RamDiskStorageKey.protocol,
-        ({arcId}: StorageKeyOptions) => new RamDiskStorageKey(arcId.toString()));
-    }
+  }
 }
