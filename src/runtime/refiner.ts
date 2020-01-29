@@ -12,7 +12,6 @@ import {RefinementNode, RefinementExpressionNode, BinaryExpressionNode, UnaryExp
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
-import {exp} from '@tensorflow/tfjs';
 
 enum Primitive {
   BOOLEAN = 'Boolean',
@@ -977,7 +976,7 @@ export class Polynomial {
         break;
       }
   }
-    if (this._coeffs.length === 0) {
+    if(this._coeffs.length === 0) {
       this._coeffs.push(0);
     }
     return this._coeffs;
