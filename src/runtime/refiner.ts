@@ -180,7 +180,7 @@ abstract class RefinementExpression {
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
         // tslint:disable-next-line: no-any
-        throw new Error(`RefinementExpression.fromAst: Unknown node type ${(expr as any).kind}`);
+        throw new Error(`RefinementExpression.fromAst: Unknown node type ${expr['kind']}`);
     }
   }
 
@@ -883,7 +883,7 @@ const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimiti
   [Op.GT]: e => e[0] > e[1],
   [Op.LTE]: e => e[0] <= e[1],
   [Op.GTE]: e => e[0] >= e[1],
-  [Op.ADD]: e => e[0] + e[1],
+  [Op.ADD]: (e: number[]) => e[0] + e[1],
   [Op.SUB]: e => e[0] - e[1],
   [Op.MUL]: e => e[0] * e[1],
   [Op.DIV]: e => e[0] / e[1],
