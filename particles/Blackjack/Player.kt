@@ -17,7 +17,7 @@ class Player : AbstractPlayer() {
     }
 
     override fun getTemplate(slotName: String) = """
-            ${name}: <button type="button" on-click="onHit"> Hit </button>
+            $name: <button type="button" on-click="onHit"> Hit </button>
             <button type="button" on-click="onStand"> Stand </button>
             <span>{{hand}}</span>
          """.trimIndent()
@@ -36,5 +36,4 @@ class Player : AbstractPlayer() {
         hand.store(Player_Hand(value = nc.card))
         this.renderOutput()
     }
-
 }

@@ -12,7 +12,6 @@
 package arcs.core.storage.database
 
 import arcs.core.data.Entity
-import arcs.core.data.FieldName
 import arcs.core.storage.StorageKey
 
 /**

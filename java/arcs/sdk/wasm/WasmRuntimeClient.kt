@@ -12,8 +12,10 @@
 package arcs.sdk.wasm
 
 object WasmRuntimeClient {
-    fun <T : WasmEntity> singletonClear(particle: WasmParticleImpl, singleton: WasmSingletonImpl<T>) =
-        singletonClear(particle.toAddress(), singleton.toAddress())
+    fun <T : WasmEntity> singletonClear(
+        particle: WasmParticleImpl,
+        singleton: WasmSingletonImpl<T>
+    ) = singletonClear(particle.toAddress(), singleton.toAddress())
 
     fun <T : WasmEntity> singletonSet(
         particle: WasmParticleImpl,
@@ -35,7 +37,10 @@ object WasmRuntimeClient {
         encoded.bytes.toWasmAddress()
     )
 
-    fun <T : WasmEntity> collectionClear(particle: WasmParticleImpl, collection: WasmCollectionImpl<T>) =
+    fun <T : WasmEntity> collectionClear(
+        particle: WasmParticleImpl,
+        collection: WasmCollectionImpl<T>
+    ) =
         collectionClear(particle.toAddress(), collection.toAddress())
 
     fun <T : WasmEntity> collectionStore(

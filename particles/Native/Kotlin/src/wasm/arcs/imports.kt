@@ -1,6 +1,6 @@
 package arcs
 
-import kotlinx.wasm.jsinterop.*
+import kotlinx.wasm.jsinterop.* // ktlint-disable no-wildcard-imports
 
 /**
  * These are the method declarations for calling in WasmParticle.js
@@ -24,23 +24,32 @@ external fun getExternalState(arena: Int, index: Int): JsValue
 
 @SymbolName("arcs_WasmParticle_updateVariable")
 external fun updateVariableExternal(
-    arena: Int, index: Int,
-    propNamePtr: Int, propNameLen: Int,
-    stateStrPtr: Int, stateStrLen: Int
+    arena: Int,
+    index: Int,
+    propNamePtr: Int,
+    propNameLen: Int,
+    stateStrPtr: Int,
+    stateStrLen: Int
 )
 
 @SymbolName("arcs_WasmParticle_getInstance")
 external fun getWasmParticleInstance(resultArena: Int): Int
 
 @SymbolName("arcs_WasmParticle_service")
-external fun invokeService(objArena: Int, objIndex: Int, resultArena: Int, stringPtr: Int, strLen:
-Int): Int
+external fun invokeService(
+    objArena: Int,
+    objIndex: Int,
+    resultArena: Int,
+    stringPtr: Int,
+    strLen:
+    Int
+): Int
 
 @SymbolName("arcs_WasmParticle_setEventHandler")
 external fun setEventHandler(arena: Int, index: Int, handlerPtr: Int, handlerLen: Int, func: Int)
 
 @SymbolName("knjs__Promise_then")
-external public fun knjs__Promise_then(
+public external fun knjs__Promise_then(
     arena: Int,
     index: Int,
     lambdaIndex: Int,
@@ -49,7 +58,7 @@ external public fun knjs__Promise_then(
 ): Int
 
 fun setEventHandler(obj: JsValue, property: String, lambda: KtFunction<Unit>) {
-    val pointer = wrapFunction(lambda);
+    val pointer = wrapFunction(lambda)
     setEventHandler(obj.arena, obj.index, stringPointer(property),
         stringLengthBytes(property), pointer)
 }
@@ -92,5 +101,3 @@ val JsValue.asString: String
         }
         return ""
     }
-
-

@@ -19,12 +19,12 @@ data class ClassifyRequest(val call: String = "textclassifier.classifyText", val
  * returns any recognized entities.
  */
 interface ClassifyService {
-    /*suspend*/ fun classify(particle: DomParticleBase<*, *>, text: String, block:
-        (ClassifyResult) -> Unit)/*:
-            ClassifyResult*/ {
-        /*return */particle.serviceCallAsync(
-            // TODO: can we eliminate the need to pass these?
-            ClassifyRequest.serializer(), ClassifyResult.serializer(),
-            ClassifyRequest(text = text)).then(block)
-    }
+    fun classify(
+        particle: DomParticleBase<*, *>,
+        text: String,
+        block: (ClassifyResult) -> Unit
+    ) = particle.serviceCallAsync(
+        // TODO: can we eliminate the need to pass these?
+        ClassifyRequest.serializer(), ClassifyResult.serializer(),
+        ClassifyRequest(text = text)).then(block)
 }

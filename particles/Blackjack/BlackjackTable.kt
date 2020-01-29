@@ -1,7 +1,5 @@
 package arcs.tutorials.blackjack
 
-import arcs.sdk.Handle
-
 class BlackjackTable : AbstractBlackjackTable() {
     override fun getTemplate(slotName: String) =
         """

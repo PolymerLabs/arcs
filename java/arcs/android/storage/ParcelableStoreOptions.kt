@@ -13,17 +13,17 @@ package arcs.android.storage
 
 import android.os.Parcel
 import android.os.Parcelable
+import arcs.android.crdt.ParcelableCrdtType
+import arcs.android.crdt.readModelData
+import arcs.android.crdt.writeModelData
+import arcs.android.type.readType
+import arcs.android.type.writeType
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreOptions
-import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.crdt.readModelData
-import arcs.android.crdt.writeModelData
-import arcs.android.type.readType
-import arcs.android.type.writeType
 
 /** [Parcelable] variant for [StoreOptions]. */
 data class ParcelableStoreOptions(

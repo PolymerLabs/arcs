@@ -1,12 +1,12 @@
 package arcs
 
-import kotlinx.cinterop.uncheckedCast
-import kotlinx.coroutines.*
-import kotlinx.serialization.KSerializer
-import kotlinx.wasm.jsinterop.*
 import kotlin.coroutines.resume
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction0
+import kotlinx.cinterop.uncheckedCast
+import kotlinx.coroutines.* // ktlint-disable no-wildcard-imports
+import kotlinx.serialization.KSerializer
+import kotlinx.wasm.jsinterop.* // ktlint-disable no-wildcard-imports
 
 /**
  * Implementations of Platform APIs for WASM. Note, some of these duplicate the JS versions.
@@ -147,7 +147,8 @@ actual open class DomParticleBase<Props, State> actual constructor(
     }
 
     actual fun <U, V> serviceCallAsync(
-        serializer: KSerializer<U>, resultSerializer: KSerializer<V>,
+        serializer: KSerializer<U>,
+        resultSerializer: KSerializer<V>,
         request: U
     ): PromiseLike<V> {
         val args = kotlinx.serialization.json.Json.stringify(
@@ -169,7 +170,6 @@ actual open class DomParticleBase<Props, State> actual constructor(
                     )
                 }
             }
-
         }
     }
 
@@ -235,4 +235,3 @@ suspend fun <T> PromiseLike<T>.await(): T =
         this@await.then(
             result = { cont.resume(it) })
     }
-

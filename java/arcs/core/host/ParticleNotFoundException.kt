@@ -12,7 +12,6 @@
 package arcs.core.host
 
 import arcs.core.sdk.Particle
-import kotlin.reflect.KClass
 
 /**
  * An [ParticleNotFoundException] is thrown if a [Particle] cannot be located in
@@ -20,4 +19,3 @@ import kotlin.reflect.KClass
  */
 class ParticleNotFoundException(spec: ParticleSpec) :
     Exception("""${spec.particleName} with location ${spec.location} cannot be found.""")
-

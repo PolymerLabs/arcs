@@ -1,8 +1,8 @@
 package arcs
 
-import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction0
+import kotlinx.serialization.KSerializer
 
 /**
  * Base class for all Kotlin particles. Different implementations of this exist for JS, WASM, and JVM in
@@ -54,14 +54,21 @@ expect open class DomParticleBase<Props, State> constructor(
      * Coroutine for executing service() call, serializing the request to appropriate wire format,
      * and deserializing the result.
      */
-    suspend fun <U, V> serviceCall(serializer: KSerializer<U>, resultSerializer: KSerializer<V>, request: U): V
+    suspend fun <U, V> serviceCall(
+        serializer: KSerializer<U>,
+        resultSerializer: KSerializer<V>,
+        request: U
+    ): V
 
     /**
      * Promise version of service call to support (workaround for current WASM
      * coroutines not re-entrant while runBlocking is called)
      */
-    fun <U, V> serviceCallAsync(serializer: KSerializer<U>, resultSerializer: KSerializer<V>,
-                               request: U): PromiseLike<V>
+    fun <U, V> serviceCallAsync(
+        serializer: KSerializer<U>,
+        resultSerializer: KSerializer<V>,
+        request: U
+    ): PromiseLike<V>
 
     /**
      * Gets the current state as a deserialized State class.
@@ -108,7 +115,6 @@ expect interface EventData<T> {
     val value: T
 }
 
-
 /**
  * All platform specific utility functionality lives here.
  */
@@ -126,4 +132,3 @@ expect object Platform {
      */
     fun <T> async(block: suspend () -> T): Any
 }
-
