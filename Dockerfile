@@ -54,6 +54,9 @@ RUN npm set unsafe-perm true
 COPY concrete-storage/package.json concrete-storage/package.json
 RUN (cd concrete-storage && npm install)
 COPY package.json package.json
+COPY tools tools
+COPY config config
+COPY devtools devtools
 RUN npm install
 
 # Fetch external Bazel artifacts.
