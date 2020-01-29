@@ -17,7 +17,6 @@ import {Type, EntityType, CollectionType, ReferenceType} from './type.js';
 import {Storable} from './handle.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
-//import {Content} from './slot-consumer.js';
 import {Dictionary} from './hot.js';
 import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';

@@ -26,7 +26,6 @@ import {StorageKey} from './storageNG/storage-key.js';
 import {StorageKeyFactory, StorageKeyCreator, StorageKeyCreatorsMap} from './storageNG/storage-key-factory.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
-//import {SlotDomConsumer} from './slot-dom-consumer.js';
 import {Loader} from '../platform/loader.js';
 import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';

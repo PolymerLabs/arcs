@@ -15,7 +15,6 @@ import {ArcId} from '../runtime/id.js';
 import {Loader} from '../platform/loader.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
-//import {HeadlessSlotDomConsumer} from '../runtime/headless-slot-dom-consumer.js';
 import {singletonHandleForTest} from '../runtime/testing/handle-for-test.js';
 import {RuntimeCacheService} from '../runtime/runtime-cache.js';
 import {VolatileStorage} from '../runtime/storage/volatile-storage.js';

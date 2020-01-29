@@ -8,37 +8,31 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
-import {Description} from './description.js';
-//import {ModalityHandler} from './modality-handler.js';
 import {Modality} from './modality.js';
 import {Particle} from './recipe/particle.js';
-import {SlotConsumer} from './slot-consumer.js';
-//import {ProvidedSlotContext} from './slot-context.js';
 import {ProvideSlotConnectionSpec} from './particle-spec.js';
-//import {SlotContext} from './slot-context.js';
 import {logsFactory} from '../platform/logs-factory.js';
 
 const {log, warn} = logsFactory('SlotComposer', 'brown');
 
 export type SlotComposerOptions = {
   modalityName?: string;
-  //modalityHandler?: ModalityHandler;
   noRoot?: boolean;
-  rootContainer?;
-  rootContext?;
-  containerKind?: string;
-  containers?;
+  //rootContainer?;
+  //rootContext?;
+  //containerKind?: string;
+  //containers?;
 };
 
 export class SlotComposer {
   // private readonly _containerKind: string;
   readonly modality: Modality;
   //readonly modalityHandler: ModalityHandler;
-  private readonly _consumers: SlotConsumer[] = [];
+  //private readonly _consumers: SlotConsumer[] = [];
   //protected _contexts: SlotContext[] = [];
   protected _contexts = [];
+  arc?;
 
   /**
    * |options| must contain:
@@ -104,9 +98,9 @@ export class SlotComposer {
   //   return this.modalityHandler.slotConsumerClass.findRootContainers(rootContainer)
   // }
 
-  get consumers(): SlotConsumer[] {
-    return this._consumers;
-  }
+  // get consumers(): SlotConsumer[] {
+  //   return this._consumers;
+  // }
 
   // get containerKind(): string {
   //   return this._containerKind;
@@ -116,11 +110,11 @@ export class SlotComposer {
     return this._contexts;
   }
 
-  getSlotConsumer(particle: Particle, slotName: string): SlotConsumer {
-    return this.consumers.find(s => s.consumeConn.particle === particle && s.consumeConn.name === slotName);
-  }
+  // getSlotConsumer(particle: Particle, slotName: string): SlotConsumer {
+  //   return this.consumers.find(s => s.consumeConn.particle === particle && s.consumeConn.name === slotName);
+  // }
 
-  findContainerByName(name: string): HTMLElement | undefined  {
+  //findContainerByName(name: string): HTMLElement | undefined  {
     // const contexts = this.findContextsByName(name);
     // if (contexts.length === 0) {
     //   // TODO this is a no-op, but throwing here breaks tests
@@ -129,8 +123,8 @@ export class SlotComposer {
     //   return contexts[0].container;
     // }
     // console.warn(`Ambiguous containers for '${name}'`);
-    return undefined;
-  }
+    //return undefined;
+  //}
 
   // TODO(sjmiles): only returns ProvidedSlotContexts, why is it called 'findContexts'?
   // findContextsByName(name: string): ProvidedSlotContext[] {
@@ -152,67 +146,67 @@ export class SlotComposer {
     return `${connection.targetSlot.id}___${innerArc.generateID('slot')}`;
   }
 
-  _addSlotConsumer(slot: SlotConsumer) {
-    //const pec = slot.arc.pec;
-    //slot.startRenderCallback = pec.startRender.bind(pec);
-    //slot.stopRenderCallback = pec.stopRender.bind(pec);
-    this._consumers.push(slot);
-  }
+  // _addSlotConsumer(slot: SlotConsumer) {
+  //   //const pec = slot.arc.pec;
+  //   //slot.startRenderCallback = pec.startRender.bind(pec);
+  //   //slot.stopRenderCallback = pec.stopRender.bind(pec);
+  //   this._consumers.push(slot);
+  // }
 
-  async initializeRecipe(arc: Arc, recipeParticles: Particle[]) {
-    const newConsumers = <SlotConsumer[]>[];
-    // Create slots for each of the recipe's particles slot connections.
-    recipeParticles.forEach(p => {
-      p.getSlandleConnections().forEach(cs => {
-        if (!cs.targetSlot) {
-          assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
-          return;
-        }
-        //const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, null); //this._containerKind);
-        //const providedContexts = slotConsumer.createProvidedContexts();
-        //this._contexts = this._contexts.concat(providedContexts);
-        //newConsumers.push(slotConsumer);
-      });
-    });
-    // Set context for each of the slots.
-    newConsumers.forEach(consumer => {
-      this._addSlotConsumer(consumer);
-      //const context = this.findContextById(consumer.consumeConn.targetSlot.id);
-      // TODO(sjmiles): disabling this assert for now because rendering to unregistered slots
-      // is allowed under new rendering factorisation. Maybe we bring this back as a validity
-      // test in the future, but it's not a requirement atm.
-      //assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
-      //if (context && context['addSlotConsumer']) {
-      //  context['addSlotConsumer'](consumer);
-      //}
-    });
-    // Calculate the Descriptions only once per-Arc
-    const allArcs = this.consumers.map(consumer => consumer.arc);
-    const uniqueArcs = [...new Set(allArcs).values()];
-    // get arc -> description
-    const descriptions = await Promise.all(uniqueArcs.map(arc => Description.create(arc)));
-    // create a mapping from the zipped uniqueArcs and descriptions
-    const consumerByArc = new Map(descriptions.map((description, index) => [uniqueArcs[index], description]));
-    // ... and apply to each consumer
-    for (const consumer of this.consumers) {
-      consumer.description = consumerByArc.get(consumer.arc);
-    }
-  }
+  //async initializeRecipe(arc: Arc, recipeParticles: Particle[]) {
+    // const newConsumers = <SlotConsumer[]>[];
+    // // Create slots for each of the recipe's particles slot connections.
+    // recipeParticles.forEach(p => {
+    //   p.getSlandleConnections().forEach(cs => {
+    //     if (!cs.targetSlot) {
+    //       assert(!cs.getSlotSpec().isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
+    //       return;
+    //     }
+    //     //const slotConsumer = new this.modalityHandler.slotConsumerClass(arc, cs, null); //this._containerKind);
+    //     //const providedContexts = slotConsumer.createProvidedContexts();
+    //     //this._contexts = this._contexts.concat(providedContexts);
+    //     //newConsumers.push(slotConsumer);
+    //   });
+    // });
+    // // Set context for each of the slots.
+    // newConsumers.forEach(consumer => {
+    //   this._addSlotConsumer(consumer);
+    //   //const context = this.findContextById(consumer.consumeConn.targetSlot.id);
+    //   // TODO(sjmiles): disabling this assert for now because rendering to unregistered slots
+    //   // is allowed under new rendering factorisation. Maybe we bring this back as a validity
+    //   // test in the future, but it's not a requirement atm.
+    //   //assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
+    //   //if (context && context['addSlotConsumer']) {
+    //   //  context['addSlotConsumer'](consumer);
+    //   //}
+    // });
+    // // Calculate the Descriptions only once per-Arc
+    // const allArcs = this.consumers.map(consumer => consumer.arc);
+    // const uniqueArcs = [...new Set(allArcs).values()];
+    // // get arc -> description
+    // const descriptions = await Promise.all(uniqueArcs.map(arc => Description.create(arc)));
+    // // create a mapping from the zipped uniqueArcs and descriptions
+    // const consumerByArc = new Map(descriptions.map((description, index) => [uniqueArcs[index], description]));
+    // // ... and apply to each consumer
+    // for (const consumer of this.consumers) {
+    //   consumer.description = consumerByArc.get(consumer.arc);
+    // }
+  //}
 
-  renderSlot(particle: Particle, slotName: string, content) {
-    warn('[unsupported] renderSlot', particle.spec.name);
-  }
+  // renderSlot(particle: Particle, slotName: string, content) {
+  //   warn('[unsupported] renderSlot', particle.spec.name);
+  // }
 
   dispose(): void {
-    this.disposeConsumers();
+    //this.disposeConsumers();
     // this.disposeContexts();
     this.disposeObserver();
   }
 
-  disposeConsumers() {
-    this._consumers.forEach(consumer => consumer.dispose());
-    this._consumers.length = 0;
-  }
+  // disposeConsumers() {
+  //   this._consumers.forEach(consumer => consumer.dispose());
+  //   this._consumers.length = 0;
+  // }
 
   // disposeContexts() {
   //   this._contexts.forEach(context => {
@@ -246,25 +240,30 @@ export class SlotComposer {
 
   sendEvent(particleId: string, eventlet) {
     log('sendEvent:', particleId, eventlet);
-    const consumer = this._findConsumer(particleId);
-    if (consumer) {
-      const particle = consumer.consumeConn.particle;
-      const arc = consumer.arc;
-      if (arc) {
-        //log('firing PEC event for', particle.name);
-        // TODO(sjmiles): we need `arc` and `particle` here even though
-        // the two are bound together, simplify
-        log('... found consumer, particle, and arc to delegate sendEvent');
-        arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
-      }
-    } else {
-      warn('...found no consumer!');
+    const arc = this.arc;
+    if (arc && arc.activeRecipe) {
+      const particle = arc.activeRecipe.findParticle(particleId);
+      arc.pec.sendEvent(particle, '', eventlet);
     }
+    // const consumer = this._findConsumer(particleId);
+    // if (consumer) {
+    //   const particle = consumer.consumeConn.particle;
+    //   const arc = consumer.arc;
+    //   if (arc) {
+    //     //log('firing PEC event for', particle.name);
+    //     // TODO(sjmiles): we need `arc` and `particle` here even though
+    //     // the two are bound together, simplify
+    //     log('... found consumer, particle, and arc to delegate sendEvent');
+    //     arc.pec.sendEvent(particle, /*slotName*/'', eventlet);
+    //   }
+    // } else {
+    //   warn('...found no consumer!');
+    // }
   }
 
-  _findConsumer(id) {
-    return this.consumers.find(consumer => consumer.consumeConn.particle.id.toString() === id);
-  }
+  // _findConsumer(id) {
+  //   return this.consumers.find(consumer => consumer.consumeConn.particle.id.toString() === id);
+  // }
 
   // TODO(sjmiles): needs factoring
   delegateOutput(arc: Arc, particle: Particle, content) {

@@ -179,7 +179,7 @@ export class Arc implements ArcInterface {
     if (!this.isInnerArc && this.pec.slotComposer) {
       // Just a sanity check that we're not disposing a SlotComposer used by some other arc.
       const allArcs = this.allDescendingArcs;
-      this.pec.slotComposer.consumers.forEach(consumer => assert(allArcs.includes(consumer.arc)));
+      //this.pec.slotComposer.consumers.forEach(consumer => assert(allArcs.includes(consumer.arc)));
       this.pec.slotComposer.dispose();
     }
 
@@ -583,10 +583,10 @@ export class Arc implements ArcInterface {
 
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 
-    if (this.pec.slotComposer) {
-      // TODO: pass slot-connections instead
-      await this.pec.slotComposer.initializeRecipe(this, particles);
-    }
+    // if (this.pec.slotComposer) {
+    //   // TODO: pass slot-connections instead
+    //   await this.pec.slotComposer.initializeRecipe(this, particles);
+    // }
 
     if (this.inspector) {
       await this.inspector.recipeInstantiated(particles, this.activeRecipe.toString());

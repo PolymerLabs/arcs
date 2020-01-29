@@ -15,7 +15,7 @@ import {singletonHandleForTest, collectionHandleForTest} from '../../runtime/tes
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
 import {VolatileCollection, VolatileSingleton, VolatileStorage} from '../../runtime/storage/volatile-storage.js';
-import {assertThrowsAsync} from '../../testing/test-util.js';
+//import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ReferenceType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 
@@ -153,9 +153,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await data.set(new data.entityClass({txt: 'update'}));
       await arc.idle;
 
-      // TODO(sjmiles): Fix Me
-      // // First renderSlot call is initiated by the runtime, before handles are synced.
-      // // With auto-render enabled, the second call occurs after sync and the third on handle update.
+      // First renderSlot call is initiated by the runtime, before handles are synced.
+      // With auto-render enabled, the second call occurs after sync and the third on handle update.
       // assert.deepStrictEqual(slotComposer.received, [
       //   ['AutoRenderTest', 'root', {template: '', model: {}}],
       //   ['AutoRenderTest', 'root', {template: 'initial', model: {}}],
@@ -167,12 +166,11 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const {arc, stores, slotObserver} = await setup('EventsTest');
       const output = await singletonHandleForTest(arc, stores.get('output'));
 
-      // TODO(sjmiles): Fix Me
-      // const particle = slotComposer.consumers[0].consumeConn.particle;
-      // arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
-      // await arc.idle;
+      //const particle = slotComposer.consumers[0].consumeConn.particle;
+      //arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
+      //await arc.idle;
 
-      // assert.deepStrictEqual(await output.get(), {txt: 'event:root:icanhazclick:fooBar'});
+      //assert.deepStrictEqual(await output.get(), {txt: 'event:root:icanhazclick:fooBar'});
     });
 
     it('serviceRequest / serviceResponse / resolveUrl', async () => {
@@ -250,7 +248,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const sendEvent = async handler => {
         await arc.idle;
-        arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
+        arc.pec.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+        //arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
         await arc.idle;
       };
 
@@ -290,7 +289,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const sendEvent = async handler => {
         await arc.idle;
-        arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
+        arc.pec.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+        //arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
         await arc.idle;
       };
 
