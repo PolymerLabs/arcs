@@ -29,6 +29,7 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.util.guardWith
 import kotlin.reflect.KClass
+import java.lang.IllegalArgumentException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -40,6 +41,9 @@ typealias FieldId = Long
 
 /** The ID for a storage key. */
 typealias StorageKeyId = Long
+
+/** The ID of a field value, referring to either a row in a primitive table, or an entity ID. */
+typealias FieldValueId = Long
 
 /** Implementation of [Database] for Android using SQLite. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -100,6 +104,30 @@ class DatabaseImpl(
     ): Int {
         TODO("not implemented")
     }
+    override suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) {
+        writableDatabase.useTransaction {
+            val schemaTypeId = getSchemaTypeId(entity.schema)
+            val storageKeyId = getStorageKeyId(storageKey)
+            val fields = getSchemaFields(schemaTypeId)
+            val content = ContentValues().apply {
+                put("entity_storage_key_id", storageKeyId)
+            }
+            entity.data.forEach { (fieldName, fieldValue) ->
+                content.apply {
+                    val field = fields.getValue(fieldName)
+                    put("field_id", field.fieldId)
+                    // TODO: Handle non-primitive field values and collections.
+                    put("primitive_value_id", getPrimitiveValueId(fieldValue, field.typeId))
+                }
+                insertWithOnConflict(
+                    "field_values",
+                    null,
+                    content,
+                    SQLiteDatabase.CONFLICT_REPLACE
+                )
+            }
+        }
+    }
 
     override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) {
         TODO("not implemented")
@@ -120,10 +148,11 @@ class DatabaseImpl(
         }
     }
 
+    @VisibleForTesting
     suspend fun getSchemaTypeId(schema: Schema): TypeId = mutex.withLock {
         schemaTypeMap[schema.hash]?.let { return it }
 
-        return writableDatabase.useTransaction {
+        return writableDatabase.transaction {
             val content = ContentValues().apply {
                 put("name", schema.hash)
                 put("is_primitive", false)
@@ -170,21 +199,78 @@ class DatabaseImpl(
     }
 
     /**
-     * Returns a map of field name to ID for each field in the given schema [TypeId].
+     * Returns a map of field name to field ID and type ID, for each field in the given schema
+     * [TypeId].
      *
      * Call [getSchemaTypeId] first to get the [TypeId].
      */
     @VisibleForTesting
-    fun getSchemaFieldIds(schemaTypeId: TypeId): Map<FieldName, FieldId> {
+    fun getSchemaFields(schemaTypeId: TypeId): Map<FieldName, SchemaField> {
         // TODO: Use an LRU cache.
-        val fieldIds = mutableMapOf<FieldName, FieldId>()
+        val fields = mutableMapOf<FieldName, SchemaField>()
         readableDatabase.rawQuery(
-            "SELECT name, id FROM fields WHERE parent_type_id = ?",
+            "SELECT name, id, type_id FROM fields WHERE parent_type_id = ?",
             arrayOf(schemaTypeId.toString())
         ).forEach {
-            fieldIds[it.getString(0)] = it.getLong(1)
+            fields[it.getString(0)] = SchemaField(
+                fieldName = it.getString(0),
+                fieldId = it.getLong(1),
+                typeId = it.getLong(2)
+            )
         }
-        return fieldIds
+        return fields
+    }
+
+    /**
+     * Returns the ID of the given value from the appropriate primitive table.
+     *
+     * Booleans don't have a primitive table, they will just be returned as either 0 or 1.
+     */
+    @VisibleForTesting
+    fun getPrimitiveValueId(value: Any?, fieldId: FieldId): FieldValueId {
+        if (fieldId.toInt() == PrimitiveType.Boolean.ordinal) {
+            return when (value) {
+                true -> 1
+                false -> 0
+                else -> throw IllegalArgumentException("Expected value to be a Boolean.")
+            }
+        }
+        return writableDatabase.transaction {
+            val tableName: String
+            val valueStr: String
+            when (fieldId.toInt()) {
+                PrimitiveType.Text.ordinal -> {
+                    if (value is String) {
+                        tableName = "text_primitive_values"
+                        valueStr = value
+                    } else {
+                        throw IllegalArgumentException("Expected value to be a String.")
+                    }
+                }
+                PrimitiveType.Number.ordinal -> {
+                    if (value is Double) {
+                        tableName = "number_primitive_values"
+                        valueStr = value.toString()
+                    } else {
+                        throw IllegalArgumentException("Expected value to be a Double.")
+                    }
+                }
+                else -> throw IllegalArgumentException("Not a primitive type ID: $fieldId")
+            }
+            val fieldValueId = rawQuery(
+                "SELECT id FROM $tableName WHERE value = ?", arrayOf(valueStr)
+            ).use {
+                if (it.moveToFirst()) it.getLong(0) else null
+            }
+            if (fieldValueId != null) {
+                fieldValueId
+            } else {
+                val content = ContentValues().apply {
+                    put("value", valueStr)
+                }
+                insert(tableName, null, content)
+            }
+        }
     }
 
     /** Returns the type ID for the given [fieldType] if known, otherwise throws. */
@@ -201,7 +287,6 @@ class DatabaseImpl(
     /** Loads all schema type IDs from the 'types' table into memory. */
     private fun loadTypes(): MutableMap<String, TypeId> {
         val typeMap = mutableMapOf<String, TypeId>()
-        // TODO: Factor out a generic forEach method on Cursor.
         readableDatabase.rawQuery(
             "SELECT name, id FROM types WHERE is_primitive = 0",
             emptyArray()
@@ -212,6 +297,13 @@ class DatabaseImpl(
         }
         return typeMap
     }
+
+    @VisibleForTesting
+    data class SchemaField(
+        val fieldName: String,
+        val fieldId: FieldId,
+        val typeId: TypeId
+    )
 
     companion object {
         private const val DB_VERSION = 1
