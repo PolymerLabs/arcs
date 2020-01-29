@@ -586,6 +586,9 @@ ${e.message}
             const fields: Dictionary<any> = {};
             const typeData = {};
             for (let {name, type} of node.fields) {
+              if (type && type.refinement) {
+                type.refinement = Refinement.fromAst(type.refinement, {[name]: type.type});
+              }
               for (const schema of schemas) {
                 if (!type) {
                   // If we don't have a type, try to infer one from the schema.
@@ -602,9 +605,6 @@ ${e.message}
                 throw new ManifestError(node.location, `Could not infer type of '${name}' field`);
               }
               fields[name] = type;
-              if (fields[name].refinement) {
-                fields[name].refinement = Refinement.fromAst(fields[name].refinement, {[name]: type.type});
-              }
               typeData[name] = type.type;
             }
             const refinement = node.refinement && Refinement.fromAst(node.refinement, typeData);
