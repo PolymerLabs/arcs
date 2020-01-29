@@ -393,8 +393,7 @@ export class Arc implements ArcInterface {
             storageKey: new VolatileStorageKey(this.id, store.id),
             exists: Exists.MayExist,
             type: store.type,
-            id: store.id,
-            ttl: null
+            id: store.id
           }) :
           await arc.storageProviderFactory.construct(
               store.id, store.type, 'volatile');
@@ -510,7 +509,7 @@ export class Arc implements ArcInterface {
 
 
           if (Flags.useNewStorageStack) {
-            const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type, null);
+            const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type, null, recipeHandle.ttl);
             const handle = unifiedHandleFor({proxy, idGenerator: this.idGenerator, particleId: this.generateID().toString()});
             // tslint:disable-next-line: no-any
             await (handle as SingletonHandle<any>).set(particleClone);
@@ -645,7 +644,7 @@ export class Arc implements ArcInterface {
         // TODO: Once recipes can handle singleton types this conversion can be removed.
         type = new SingletonType(type);
       }
-      store = new Store({storageKey, exists: Exists.MayExist, type, id, name, ttl});
+      store = new Store({storageKey, exists: Exists.MayExist, type, id, name});
     } else {
       if (typeof storageKey !== 'string') {
         throw new Error(`Can't use new-style storage keys with the old storage stack.`);

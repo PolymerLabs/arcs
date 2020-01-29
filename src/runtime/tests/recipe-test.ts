@@ -16,7 +16,7 @@ import {Type} from '../type.js';
 import {Capabilities} from '../capabilities.js';
 import {Flags} from '../flags.js';
 import {Entity} from '../entity.js';
-import {TtlUnits} from '../recipe/ttl.js';
+import {TtlUnits, Ttl} from '../recipe/ttl.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 
@@ -795,7 +795,7 @@ describe('recipe', () => {
     assert.equal(recipe.handles[0].ttl.units, TtlUnits.Day);
     assert.equal(recipe.handles[1].ttl.count, 5);
     assert.equal(recipe.handles[1].ttl.units, TtlUnits.Minute);
-    assert.isUndefined(recipe.handles[2].ttl);
+    assert.equal(Ttl.infinite, recipe.handles[2].ttl);
   });
   it('parses recipe handle capabilities', async () => {
     const recipe = (await Manifest.parse(`

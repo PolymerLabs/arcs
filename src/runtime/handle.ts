@@ -139,9 +139,9 @@ export abstract class HandleOld {
   }
 
   createIdentityFor(entity: Entity) {
-    // StorageKeys aren't plumbed into the handles of old storage, so we don't have them
+    // StorageKeys and Ttls aren't plumbed into the handles of old storage, so we don't have them
     // available as part of entity identity.
-    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator, null);
+    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator, null, null);
   }
 
   get type() {

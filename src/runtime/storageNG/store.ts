@@ -14,7 +14,6 @@ import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
 import {UnifiedStore, StoreInfo} from './unified-store.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
-import {Ttl} from '../recipe/ttl.js';
 
 export {
   ActiveStore,
@@ -36,7 +35,6 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
 
   readonly storageKey: StorageKey;
   exists: Exists;
-  readonly ttl: Ttl;
   readonly mode: StorageMode;
 
   // The last known version of this store that was stored in the serialized
@@ -54,11 +52,10 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
   // instead of being defined here.
   static constructors : Map<StorageMode, StoreConstructor> = null;
 
-  constructor(opts: StoreInfo & {storageKey: StorageKey, exists: Exists, ttl?: Ttl}) {
+  constructor(opts: StoreInfo & {storageKey: StorageKey, exists: Exists}) {
     super(opts);
     this.storageKey = opts.storageKey;
     this.exists = opts.exists;
-    this.ttl = opts.ttl || null;
     this.mode = opts.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;
     this.parsedVersionToken = opts.versionToken;
     this.model = opts.model as T['data'];

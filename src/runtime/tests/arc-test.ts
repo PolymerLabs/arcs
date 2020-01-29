@@ -1214,10 +1214,6 @@ describe('Arc storage migration', () => {
           arc.activeRecipe.particles[0].connections[connectionName].handle.id);
         return await store.activate();
       };
-      const verifyStoreTtl = (store, expectedTtl) => {
-        // tslint:disable-next-line: no-any
-        assert.equal((store.baseStore as Store<any>).ttl.toString(), expectedTtl);
-      };
       const getStoreValue = (storeContents, index, expectedLength) => {
         assert.lengthOf(Object.keys(storeContents['values']), expectedLength);
         const value = Object.values(storeContents['values'])[index]['value'];
@@ -1227,7 +1223,6 @@ describe('Arc storage migration', () => {
       };
 
       const things0Store = await getStoreByConnectionName('things0');
-      verifyStoreTtl(things0Store, '3m');
       const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
       assert.equal(helloThing0.rawData.name, 'hello');
       const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
@@ -1237,12 +1232,10 @@ describe('Arc storage migration', () => {
       assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp > 1000);
 
       const things1Store = await getStoreByConnectionName('things1');
-      verifyStoreTtl(things1Store, '23h');
       const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
       assert.equal(fooThing1.rawData.name, 'foo');
 
       const things2Store = await getStoreByConnectionName('things2');
-      verifyStoreTtl(things2Store, '2d');
       const things2Contents = await things2Store.serializeContents();
       const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
       assert.equal(barThing2.rawData.name, 'bar');

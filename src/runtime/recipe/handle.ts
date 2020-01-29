@@ -44,7 +44,7 @@ export class Handle implements Comparable<Handle> {
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
   claims: Claim[] | undefined = undefined;
-  private _ttl: Ttl | undefined = undefined;
+  private _ttl = Ttl.infinite;
 
   constructor(recipe: Recipe) {
     assert(recipe);

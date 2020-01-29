@@ -150,10 +150,6 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
           // when within a switch statement.
           this.state = DirectStoreState.AwaitingResponse;
           this.version = ++version;
-          const data = this.localModel.getData();
-          if (this.ttlEnforcer) {
-            this.ttlEnforcer.enforceTtl(this.localModel.getData());
-          }
           const response = await this.driver.send(this.localModel.getData(), version);
           if (response) {
             if (this.state === DirectStoreState.AwaitingResponse) {
