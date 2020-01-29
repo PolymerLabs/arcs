@@ -14,7 +14,6 @@ status "Testing all of the things."
 ./tools/sigh webpack
 ./tools/bazelisk test //java/... //javatests/... //src/... //particles/...
 ./tools/sigh testShells
-./tools/ktlint
 ./tools/sigh lint
 ./tools/sigh test
 
