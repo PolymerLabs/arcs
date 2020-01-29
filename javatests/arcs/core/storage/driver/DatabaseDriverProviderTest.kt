@@ -87,7 +87,7 @@ class DatabaseDriverProviderTest {
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver<Int>(volatile, ExistenceCriteria.ShouldCreate)
+            provider.getDriver(volatile, ExistenceCriteria.ShouldCreate, Int::class)
         }
         Unit
     }
@@ -98,7 +98,7 @@ class DatabaseDriverProviderTest {
         val key = DatabaseStorageKey("foo", "1234a")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver<Int>(key, ExistenceCriteria.ShouldCreate)
+            provider.getDriver(key, ExistenceCriteria.ShouldCreate, Int::class)
         }
         Unit
     }

@@ -11,6 +11,9 @@
 
 package arcs.core.storage.driver
 
+import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.Schema
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
@@ -18,6 +21,7 @@ import arcs.core.storage.DriverProvider
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
+import kotlin.reflect.KClass
 
 /** Protocol to be used with the database driver. */
 const val DATABASE_DRIVER_PROTOCOL = "db"
@@ -106,7 +110,8 @@ object DatabaseDriverProvider : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria
+        existenceCriteria: ExistenceCriteria,
+        dataClass: KClass<Data>
     ): Driver<Data> {
         val databaseKey = requireNotNull(storageKey as? DatabaseStorageKey) {
             "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
@@ -114,6 +119,14 @@ object DatabaseDriverProvider : DriverProvider {
         requireNotNull(schemaLookup(databaseKey.entitySchemaHash)) {
             "Unsupported DatabaseStorageKey: No Schema found with hash: " +
                 databaseKey.entitySchemaHash
+        }
+        require(
+            dataClass == CrdtEntity.Data::class ||
+                dataClass == CrdtSet.DataImpl::class ||
+                dataClass == CrdtSingleton.DataImpl::class
+        ) {
+            "Unsupported data type: $dataClass, must be one of: CrdtEntity.Data, " +
+                "CrdtSet.DataImpl, or CrdtSingleton.DataImpl"
         }
         return DatabaseDriver(storageKey, existenceCriteria, schemaLookup)
     }

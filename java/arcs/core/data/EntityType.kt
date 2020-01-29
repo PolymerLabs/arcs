@@ -18,6 +18,7 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
 import arcs.core.type.TypeLiteral
+import kotlin.reflect.KClass
 
 /** [Type] representation of an entity. */
 data class EntityType(override val entitySchema: Schema) :
@@ -26,6 +27,8 @@ data class EntityType(override val entitySchema: Schema) :
     CrdtModelType<CrdtEntity.Data, CrdtEntity.Operation, RawEntity> {
 
     override val tag = Tag.Entity
+
+    override val crdtModelDataClass: KClass<*> = CrdtEntity.Data::class
 
     override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
         variableMap[entitySchema] as? Type

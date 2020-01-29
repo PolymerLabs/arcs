@@ -36,14 +36,15 @@ data class StoreConstructor(
     val opClass: KClass<out CrdtOperation>,
     /* internal */
     val consumerDataClass: KClass<*>,
-    private val constructor: suspend (StoreOptions<*, *, *>) -> ActiveStore<*, *, *>
+    private val constructor: suspend (StoreOptions<*, *, *>, KClass<*>) -> ActiveStore<*, *, *>
 ) {
     val typeParamString: String
         get() = "<$dataClass, $opClass, $consumerDataClass>"
 
     /* internal */ suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
-        options: StoreOptions<Data, Op, ConsumerData>
-    ) = constructor(options)
+        options: StoreOptions<Data, Op, ConsumerData>,
+        dataClass: KClass<*>
+    ) = constructor(options, dataClass)
 }
 
 /**
@@ -51,7 +52,7 @@ data class StoreConstructor(
  * [ActiveStore] instance as a [StoreConstructor].
  */
 inline fun <reified Data, reified Op, reified ConsumerData> StoreConstructor(
-    noinline constructor: suspend (StoreOptions<*, *, *>) -> ActiveStore<*, *, *>
+    noinline constructor: suspend (StoreOptions<*, *, *>, KClass<*>) -> ActiveStore<*, *, *>
 ): StoreConstructor where Data : CrdtData, Op : CrdtOperation =
     StoreConstructor(Data::class, Op::class, ConsumerData::class, constructor)
 

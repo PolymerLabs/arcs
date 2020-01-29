@@ -17,11 +17,14 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
 import arcs.core.type.TypeLiteral
+import kotlin.reflect.KClass
 
 /** [Type] representation for a counter. */
 data class CountType(
     override val tag: Tag = Tag.Count
 ) : Type, CrdtModelType<CrdtCount.Data, CrdtCount.Operation, Int> {
+    override val crdtModelDataClass: KClass<*> = CrdtCount.Data::class
+
     override fun toLiteral() = Literal(tag)
 
     override fun createCrdtModel() = CrdtCount()
