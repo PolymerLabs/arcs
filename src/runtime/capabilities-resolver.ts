@@ -12,7 +12,6 @@ import {assert} from '../platform/assert-web.js';
 import {Capabilities} from './capabilities.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {DriverFactory} from './storageNG/drivers/driver-factory.js';
-import {FirebaseStorageKey} from './storageNG/drivers/firebase.js';
 import {StorageKeyFactory} from './storageNG/storage-key-factory.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
@@ -33,7 +32,9 @@ export class CapabilitiesResolver {
       if (storageKey) return storageKey;
     }
     if (capabilities.isPersistent) {
-      storageKey = factory.createStorageKey(FirebaseStorageKey.protocol);
+      // TODO(mmandlis): better fix in progress where factory registers
+      // creators with supported capabilities.
+      storageKey = factory.createStorageKey('firebase');
       if (storageKey) return storageKey;
     }
     throw new Error(`Cannot create a suitable storage key for ${capabilities.toString()}`);
