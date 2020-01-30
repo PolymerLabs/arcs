@@ -12,6 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
+import {Capabilities} from './capabilities.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -22,7 +23,7 @@ import {RamDiskStorageDriverProvider} from './storageNG/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {StorageKeyFactory, StorageKeyCreator} from './storageNG/storage-key-factory.js';
+import {StorageKeyFactory, StorageKeyCreator, StorageKeyCreatorsMap} from './storageNG/storage-key-factory.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotDomConsumer} from './slot-dom-consumer.js';
@@ -50,7 +51,7 @@ export type RuntimeArcOptions = Readonly<{
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
-  storageKeyCreators?: Map<string, StorageKeyCreator>;
+  storageKeyCreators?: StorageKeyCreatorsMap;
 }>;
 
 type SpawnArgs = {
