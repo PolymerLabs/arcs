@@ -406,12 +406,12 @@ describe('Polynomial', () => {
   });
 });
 
-describe.only('Fractions', () => {
+describe('Fractions', () => {
   it('tests fraction addition works', () => {
     let num1 = new Polynomial([9, 1, 1]);
-    let den1 = new Polynomial([0,2]);
+    const den1 = new Polynomial([0, 2]);
     let frac1 = new Fraction(num1, den1);       // (a^2+a+9)/2a
-    let num2 = new Polynomial([5,1]);
+    let num2 = new Polynomial([5, 1]);
     let den2 = new Polynomial([3]);
     let frac2 = new Fraction(num2, den2);       // (a+5)/3
     let sum = Fraction.add(frac1, frac2);       // (5a^2+13a+27)/6a
@@ -427,30 +427,30 @@ describe.only('Fractions', () => {
     assert.deepEqual(sum.den.coeffs, [1]);
   });
   it('tests fraction subtraction works', () => {
-    let num1 = new Polynomial([9, 1, 1]);
-    let den1 = new Polynomial([0,2]);
-    let frac1 = new Fraction(num1, den1);             // (a^2+a+9)/2a
-    let num2 = new Polynomial([5,1]);
-    let den2 = new Polynomial([3]);
-    let frac2 = new Fraction(num2, den2);            // (a+5)/3
-    let sum = Fraction.subtract(frac1, frac2);       // (a^2-7a+27)/6a
+    const num1 = new Polynomial([9, 1, 1]);
+    const den1 = new Polynomial([0, 2]);
+    const frac1 = new Fraction(num1, den1);             // (a^2+a+9)/2a
+    const num2 = new Polynomial([5, 1]);
+    const den2 = new Polynomial([3]);
+    const frac2 = new Fraction(num2, den2);            // (a+5)/3
+    const sum = Fraction.subtract(frac1, frac2);       // (a^2-7a+27)/6a
     assert.deepEqual(sum.num.coeffs, [27, -7, 1]);
     assert.deepEqual(sum.den.coeffs, [0, 6]);
   });
   it('tests fraction negation works', () => {
-    let num1 = new Polynomial([9, 1, 1]);
-    let den1 = new Polynomial([0,2]);
-    let frac1 = new Fraction(num1, den1);   // (a^2+a+9)/2a
-    let sum = Fraction.negate(frac1);       // (-a^2-a+-9)/2a
+    const num1 = new Polynomial([9, 1, 1]);
+    const den1 = new Polynomial([0, 2]);
+    const frac1 = new Fraction(num1, den1);   // (a^2+a+9)/2a
+    const sum = Fraction.negate(frac1);       // (-a^2-a+-9)/2a
     assert.deepEqual(sum.num.coeffs, [-9, -1, -1]);
     assert.deepEqual(sum.den.coeffs, [0, 2]);
   });
   it('tests fraction multiplication works', () => {
     let num1 = new Polynomial([9, 1]);
-    let den1 = new Polynomial([0,2]);
+    const den1 = new Polynomial([0, 2]);
     let frac1 = new Fraction(num1, den1);             // (a+9)/2a
-    let num2 = new Polynomial([5,1]);
-    let den2 = new Polynomial([3]);
+    const num2 = new Polynomial([5, 1]);
+    const den2 = new Polynomial([3]);
     let frac2 = new Fraction(num2, den2);            // (a+5)/3
     let sum = Fraction.multiply(frac1, frac2);       // (a^2+14a+45)/6a
     assert.deepEqual(sum.num.coeffs, [45, 14, 1]);

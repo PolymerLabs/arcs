@@ -959,7 +959,7 @@ export class SQLExtracter {
 
 export class Fraction {
   num: Polynomial;
-  den: Polynomial; 
+  den: Polynomial;
 
   constructor(n?: Polynomial, d?: Polynomial) {
     this.num = n ? Polynomial.copyOf(n) : new Polynomial();
@@ -997,7 +997,7 @@ export class Fraction {
     if (this.num.isConstant() && this.den.isConstant()) {
       this.num = new Polynomial([this.num.coeffs[0]/this.den.coeffs[0]]);
       this.den = new Polynomial([1]);
-      return
+      return;
     }
     // TODO(ragdev): Fractions can be reduced further by factoring out the gcd of
     // the coeffs in num and den, and then dividing the two. However, since the numbers are floating
@@ -1030,7 +1030,7 @@ export class Polynomial {
         break;
       }
   }
-    if(this._coeffs.length === 0) {
+    if (this._coeffs.length === 0) {
       this._coeffs.push(0);
     }
     return this._coeffs;
