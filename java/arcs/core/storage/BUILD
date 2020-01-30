@@ -34,6 +34,7 @@ kt_jvm_and_js_library(
         # TODO: should we move VersionMap to the top-level crdt package if it's being used here?
         "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/type",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/util",
