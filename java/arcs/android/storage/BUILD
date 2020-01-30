@@ -15,6 +15,7 @@ kt_android_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/type",
+        "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",
     ],
 )

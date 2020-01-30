@@ -12,6 +12,7 @@ kt_android_library(
         "//java/arcs/android/common",  # unuseddeps: keep
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",
