@@ -218,14 +218,18 @@ export class Planner implements InspectablePlanner {
       const result = [];
       gen.generated.forEach(g => {
         if (g.result /*&& g.result.name*/) {
-          const errors = new Map();
-          const resolved = g.result.isResolved({errors});
+          const options = {
+            errors: new Map(),
+            showUnresolved: true
+          };
+          const resolved = g.result.isResolved(options);
           const data = {
             name: g.result.name || g.result.toString().slice(0, 80),
             resolved
           };
           if (!resolved) {
-            data["errors"] = [...errors].map(([n, v]) => `${n} => ${v}`);
+            data["errors"] = [...options.errors].map(([n, v]) => `${n} => ${v}`);
+            data["unresolved"] = options["details"];
           }
           result.push(data);
         }
