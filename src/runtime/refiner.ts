@@ -989,6 +989,11 @@ export class Fraction {
     return new Fraction(Polynomial.multiply(a.num, b.num), Polynomial.multiply(a.den, b.den));
   }
 
+  static divide(a: Fraction, b: Fraction): Fraction {
+    const invB = new Fraction(b.den, b.num);
+    return Fraction.multiply(a, invB);
+  }
+
   reduce() {
     if (this.num.isZero()) {
       this.den = new Polynomial([1]);
