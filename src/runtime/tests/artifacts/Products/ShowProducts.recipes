@@ -23,7 +23,7 @@ recipe ProductList &showShopList
   description `show ${List.items}`
 
 // Show [person]'s wishlist
-recipe
+recipe PersonWishlist
   person: use #claire
   wishlist: map #wishlist
   &showShopList

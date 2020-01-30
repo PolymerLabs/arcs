@@ -40,7 +40,7 @@ async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
 }
 
 describe('plan consumer', () => {
-  it('consumes', async () => {
+  it('consumes FOOB', async () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);

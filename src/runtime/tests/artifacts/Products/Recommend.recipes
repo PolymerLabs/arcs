@@ -32,7 +32,7 @@ particle AlsoOn in 'source/AlsoOn.js'
   choices: reads [Thing]
   annotation: consumes Slot
 
-recipe &addFromWishlist
+recipe AddFromWishList &addFromWishlist
   shoplist: use *
   person: use #claire
   wishlist: map #wishlist
