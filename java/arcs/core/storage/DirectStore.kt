@@ -395,8 +395,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             version: Int,
             messageFromDriver: Boolean,
             localModel: Data
-        ): Pair<Int, State<Data>> =
-            version to this
+        ): Pair<Int, State<Data>> = version to this
 
         /**
          * Returns whether or not, given the machine being in this state, we should apply any

@@ -13,7 +13,7 @@ package arcs.core.storage.util
 
 import arcs.core.crdt.internal.VersionMap
 import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.core.storage.referencemode.Reference
+import arcs.core.storage.Reference
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
@@ -124,8 +124,12 @@ class SendQueueTest {
         }
 
         val references = listOf(
-            Reference("foo", RamDiskStorageKey("foo"), VersionMap("me" to 1)),
-            Reference("bar", RamDiskStorageKey("bar"), VersionMap("me" to 1))
+            Reference(
+                "foo", RamDiskStorageKey("foo"), VersionMap("me" to 1)
+            ),
+            Reference(
+                "bar", RamDiskStorageKey("bar"), VersionMap("me" to 1)
+            )
         )
 
         sendQueue.enqueueBlocking(references, ::blockingSend)

@@ -33,9 +33,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
-import arcs.core.storage.referencemode.Reference
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.referencemode.toReference
 import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
@@ -147,7 +145,9 @@ class ReferenceModeStoreTest {
                 "an-id",
                 CrdtSet.DataValue(
                     VersionMap("me" to 1),
-                    Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
+                    Reference(
+                        "an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1)
+                    )
                 )
             )
 
@@ -390,7 +390,9 @@ class ReferenceModeStoreTest {
         val activeStore = createReferenceModeStore()
 
         val referenceCollection = CrdtSet<Reference>()
-        val reference = Reference("an-id", MockHierarchicalStorageKey(), VersionMap("me" to 1))
+        val reference = Reference(
+            "an-id", MockHierarchicalStorageKey(), VersionMap("me" to 1)
+        )
         referenceCollection.applyOperation(
             CrdtSet.Operation.Add("me", VersionMap("me" to 1), reference)
         )
@@ -416,7 +418,9 @@ class ReferenceModeStoreTest {
         // conflicting remote count from store
         val remoteCollection = CrdtSet<Reference>()
         val reference =
-            Reference("another-id", MockHierarchicalStorageKey(), VersionMap("them" to 1))
+            Reference(
+                "another-id", MockHierarchicalStorageKey(), VersionMap("them" to 1)
+            )
         remoteCollection.applyOperation(
             CrdtSet.Operation.Add("them", VersionMap("them" to 1), reference)
         )
@@ -443,7 +447,9 @@ class ReferenceModeStoreTest {
         assertThat(driver.sentData).hasSize(2) // send should've been called again
 
         val actor = activeStore.crdtKey
-        val ref2 = Reference("an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1))
+        val ref2 = Reference(
+            "an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1)
+        )
         remoteCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref2))
         assertThat(driver.sentData.last()).isEqualTo(remoteCollection.data)
     }
@@ -481,15 +487,21 @@ class ReferenceModeStoreTest {
 
         val e1Ref = CrdtSet.DataValue(
             VersionMap("me" to 1),
-            Reference("e1", MockHierarchicalStorageKey(), VersionMap())
+            Reference(
+                "e1", MockHierarchicalStorageKey(), VersionMap()
+            )
         )
         val t1Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 1),
-            Reference("t1", MockHierarchicalStorageKey(), VersionMap())
+            Reference(
+                "t1", MockHierarchicalStorageKey(), VersionMap()
+            )
         )
         val t2Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 2),
-            Reference("t2", MockHierarchicalStorageKey(), VersionMap())
+            Reference(
+                "t2", MockHierarchicalStorageKey(), VersionMap()
+            )
         )
 
         driver.receiver!!(
@@ -528,7 +540,9 @@ class ReferenceModeStoreTest {
         val actor = activeStore.crdtKey
 
         val referenceCollection = CrdtSet<Reference>()
-        val ref = Reference("an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1))
+        val ref = Reference(
+            "an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1)
+        )
         referenceCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref))
 
         val job = Job(coroutineContext[Job.Key])

@@ -19,14 +19,17 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.common.forEach
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
-import arcs.core.data.Entity
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
+import arcs.core.storage.database.DatabaseClient
+import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.DatabaseFactory
 import arcs.core.util.guardWith
+import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -39,13 +42,31 @@ typealias FieldId = Long
 /** The ID for a storage key. */
 typealias StorageKeyId = Long
 
+/**
+ * [DatabaseFactory] implementation which constructs [DatabaseImpl] instances for use on Android
+ * with SQLite.
+ */
+class AndroidSqliteDatabaseFactory(context: Context) : DatabaseFactory {
+    private val context = context.applicationContext
+    private val mutex = Mutex()
+    private val dbCache by guardWith(mutex, mutableMapOf<Pair<String, Boolean>, Database>())
+
+    override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
+        dbCache[name to persistent]
+            ?: DatabaseImpl(context, name, persistent).also { dbCache[name to persistent] = it }
+    }
+}
+
 /** Implementation of [Database] for Android using SQLite. */
+@VisibleForTesting
 class DatabaseImpl(
     context: Context,
-    databaseName: String
+    databaseName: String,
+    persistent: Boolean = true
 ) : Database, SQLiteOpenHelper(
     context,
-    databaseName,
+    // Using `null` with SQLiteOpenHelper's database name makes it an in-memory database.
+    if (persistent) databaseName else null,
     /* cursorFactory = */ null,
     DB_VERSION
 ) {
@@ -73,11 +94,30 @@ class DatabaseImpl(
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
-    override suspend fun delete(storageKey: StorageKey) {
+    override fun <Data : DatabaseData> addClient(client: DatabaseClient<Data>): Int {
         TODO("not implemented")
     }
 
-    override suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) {
+    override fun removeClient(identifier: Int) {
+        TODO("not implemented")
+    }
+
+    override suspend fun <Data : DatabaseData> get(
+        storageKey: StorageKey,
+        dataType: KClass<Data>
+    ): Data? {
+        TODO("not implemented")
+    }
+
+    override suspend fun insertOrUpdate(
+        storageKey: StorageKey,
+        data: DatabaseData,
+        originatingClientId: Int?
+    ): Int {
+        TODO("not implemented")
+    }
+
+    override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) {
         TODO("not implemented")
     }
 

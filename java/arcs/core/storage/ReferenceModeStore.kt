@@ -37,7 +37,6 @@ import arcs.core.storage.referencemode.MessageQueue
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
-import arcs.core.storage.referencemode.Reference
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.referencemode.toBridgingData
 import arcs.core.storage.referencemode.toBridgingOp
@@ -445,7 +444,9 @@ class ReferenceModeStore private constructor(
                 // If the version that was requested is newer than what the backing store has,
                 // consider it pending.
                 if (version dominates backingModel.versionMap) {
-                    pendingIds += Reference(refId, backingStore.storageKey, version)
+                    pendingIds += Reference(
+                        refId, backingStore.storageKey, version
+                    )
                 }
             }
         }
@@ -478,7 +479,9 @@ class ReferenceModeStore private constructor(
                 val version = value.versionMap
                 outgoing[refId] = CrdtSet.DataValue(
                     version.copy(),
-                    Reference(refId, backingStore.storageKey, version.copy())
+                    Reference(
+                        refId, backingStore.storageKey, version.copy()
+                    )
                 )
             }
             return outgoing
@@ -582,7 +585,7 @@ class ReferenceModeStore private constructor(
     companion object {
         @Suppress("UNCHECKED_CAST")
         val CONSTRUCTOR =
-            StoreConstructor<CrdtData, CrdtOperationAtTime, Referencable> { options, dataClass ->
+            StoreConstructor<CrdtData, CrdtOperationAtTime, Referencable> { options, _ ->
                 val refableOptions =
                     requireNotNull(
                         /* ktlint-disable max-line-length */
