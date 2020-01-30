@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 
@@ -28,13 +29,23 @@ object DriverFactory {
     /**
      * Fetches a [Driver] of type [Data] given its [storageKey] with specified [existenceCriteria].
      */
-    suspend fun <Data : Any> getDriver(
+    suspend inline fun <reified Data : Any> getDriver(
         storageKey: StorageKey,
         existenceCriteria: ExistenceCriteria
+    ): Driver<Data>? = getDriver(storageKey, existenceCriteria, Data::class)
+
+    /**
+     * Fetches a [Driver] of type [Data] (declared by [dataClass]) given its [storageKey] with
+     * specified [existenceCriteria].
+     */
+    suspend fun <Data : Any> getDriver(
+        storageKey: StorageKey,
+        existenceCriteria: ExistenceCriteria,
+        dataClass: KClass<Data>
     ): Driver<Data>? {
         return providers.value
             .find { it.willSupport(storageKey) }
-            ?.getDriver(storageKey, existenceCriteria)
+            ?.getDriver(storageKey, existenceCriteria, dataClass)
     }
 
     /** Registers a new [DriverProvider]. */
@@ -55,6 +66,7 @@ interface DriverProvider {
     /** Gets a [Driver] for the given [storageKey] with the specified [existenceCriteria]. */
     suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria
+        existenceCriteria: ExistenceCriteria,
+        dataClass: KClass<Data>
     ): Driver<Data>
 }

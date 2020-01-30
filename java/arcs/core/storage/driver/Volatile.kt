@@ -21,6 +21,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
+import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 
 /** Protocol to be used with the volatile driver. */
@@ -77,7 +78,8 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria
+        existenceCriteria: ExistenceCriteria,
+        dataClass: KClass<Data>
     ): Driver<Data> {
         require(
             willSupport(storageKey)

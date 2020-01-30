@@ -74,9 +74,10 @@ class VolatileDriverProviderTest {
     @Test
     fun getDriver_getsDriverForExistenceCriteria() = runBlocking {
         val driver =
-            fooProvider.getDriver<Int>(
+            fooProvider.getDriver(
                 VolatileStorageKey(arcIdFoo, "myfoo"),
-                ExistenceCriteria.ShouldCreate
+                ExistenceCriteria.ShouldCreate,
+                Int::class
             )
 
         assertThat(driver).isNotNull()

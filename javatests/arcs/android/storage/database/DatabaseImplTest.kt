@@ -23,13 +23,13 @@ import arcs.core.data.SchemaFields
 import arcs.core.storage.StorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
+import java.lang.IllegalArgumentException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.IllegalArgumentException
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)

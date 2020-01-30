@@ -12,6 +12,7 @@ kt_jvm_and_js_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:proxy",
