@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter, Polynomial} from '../refiner.js';
+import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter, Polynomial, Fraction} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -341,67 +341,125 @@ describe('SQLExtracter', () => {
 
 describe('Polynomial', () => {
   it('tests coeffs getters, setters and degree works', () => {
-      let pn = new Polynomial([0, 1, 2]);
+      let pn = new Polynomial([0, 1, 2]);       // 2a^2 + a
       assert.deepEqual(pn.coeffs, [0, 1, 2]);
       assert.strictEqual(pn.degree(), 2);
-      pn = new Polynomial([0, 1, 2, 0, 0, 0]);
+      pn = new Polynomial([0, 1, 2, 0, 0, 0]);  // 2a^2 + a
       assert.strictEqual(pn.degree(), 2);
-      pn = new Polynomial([0, 0, 0, 0]);
+      pn = new Polynomial([0, 0, 0, 0]);        // 0
       assert.deepEqual(pn.coeffs, [0]);
       assert.strictEqual(pn.degree(), 0);
-      pn = new Polynomial([]);
+      pn = new Polynomial([]);                  // 0
       assert.deepEqual(pn.coeffs, [0]);
       assert.strictEqual(pn.degree(), 0);
-      pn = new Polynomial();
+      pn = new Polynomial();                    // 0
       assert.deepEqual(pn.coeffs, [0]);
       assert.strictEqual(pn.degree(), 0);
   });
   it('tests polynomial addition works', () => {
-    let pn1 = new Polynomial([0, 1, 2]);
-    let pn2 = new Polynomial();
-    let sum = Polynomial.add(pn1, pn2);
+    let pn1 = new Polynomial([0, 1, 2]);        // 2a^2 + a
+    let pn2 = new Polynomial();                 // 0
+    let sum = Polynomial.add(pn1, pn2);         // 2a^2 + a
     assert.deepEqual(sum.coeffs, [0, 1, 2]);
     assert.strictEqual(sum.degree(), 2);
-    pn1 = new Polynomial([0, 1, 2]);
-    pn2 = new Polynomial([3, 2, 1]);
-    sum = Polynomial.add(pn1, pn2);
+    pn1 = new Polynomial([0, 1, 2]);            // 2a^2 + a
+    pn2 = new Polynomial([3, 2, 1]);            // a^2 + 2a + 3
+    sum = Polynomial.add(pn1, pn2);             // 3a^2 + 3a + 3
     assert.deepEqual(sum.coeffs, [3, 3, 3]);
     assert.strictEqual(sum.degree(), 2);
-    pn1 = new Polynomial([0, 1, 2]);
-    pn2 = new Polynomial([3, 0, 0, 0, 0]);
-    sum = Polynomial.add(pn1, pn2);
+    pn1 = new Polynomial([0, 1, 2]);            // 2a^2 + a
+    pn2 = new Polynomial([3, 0, 0, 0, 0]);      // 3
+    sum = Polynomial.add(pn1, pn2);             // 2a^2 + a + 3
     assert.deepEqual(sum.coeffs, [3, 1, 2]);
     assert.strictEqual(sum.degree(), 2);
   });
   it('tests polynomial negation works', () => {
-    const pn1 = new Polynomial([0, 1, 2]);
-    const neg = Polynomial.negate(pn1);
+    const pn1 = new Polynomial([0, 1, 2]);      // 2a^2 + a
+    const neg = Polynomial.negate(pn1);         // -2a^2 -a
     // TODO(ragdev): Why does 0 fail in the assertion below but -0 works?
     assert.deepEqual(neg.coeffs, [-0, -1, -2]);
     assert.strictEqual(neg.degree(), 2);
   });
   it('tests polynomial subtraction works', () => {
-    const pn1 = new Polynomial([0, 1]);
-    const pn2 = new Polynomial([2, 2, 2]);
-    const sub = Polynomial.subtract(pn1, pn2);
+    const pn1 = new Polynomial([0, 1]);         // a
+    const pn2 = new Polynomial([2, 2, 2]);      // 2a^2 + 2a + 2
+    const sub = Polynomial.subtract(pn1, pn2);  // -2a^2 -a -2
     assert.deepEqual(sub.coeffs, [-2, -1, -2]);
     assert.strictEqual(sub.degree(), 2);
   });
   it('tests polynomial multiplication works', () => {
-    let pn1 = new Polynomial([0, 1, 2]);
-    let pn2 = new Polynomial();
-    let prod = Polynomial.multiply(pn1, pn2);
+    let pn1 = new Polynomial([0, 1, 2]);        // 2a^2 + a
+    let pn2 = new Polynomial();                 // 0
+    let prod = Polynomial.multiply(pn1, pn2);   // 0
     assert.deepEqual(prod.coeffs, [0]);
     assert.strictEqual(prod.degree(), 0);
-    pn1 = new Polynomial([9, 2]);
-    pn2 = new Polynomial([3, -2]);
-    prod = Polynomial.multiply(pn1, pn2);
+    pn1 = new Polynomial([9, 2]);               // 2a + 9
+    pn2 = new Polynomial([3, -2]);              // -2a + 3
+    prod = Polynomial.multiply(pn1, pn2);       // -4a^2 -12a + 27
     assert.deepEqual(prod.coeffs, [27, -12, -4]);
     assert.strictEqual(prod.degree(), 2);
-    pn1 = new Polynomial([3, -2]);
-    pn2 = new Polynomial([9, 2, 7, 11]);
-    prod = Polynomial.multiply(pn1, pn2);
+    pn1 = new Polynomial([3, -2]);              // -2a + 3
+    pn2 = new Polynomial([9, 2, 7, 11]);        // 11a^3 + 7a^2 + 2a + 9
+    prod = Polynomial.multiply(pn1, pn2);       // -22a^4 + 19a^3 + 17a^2 - 12a + 27
     assert.deepEqual(prod.coeffs, [27, -12, 17, 19, -22]);
     assert.strictEqual(prod.degree(), 4);
+  });
+});
+
+describe.only('Fractions', () => {
+  it('tests fraction addition works', () => {
+    let num1 = new Polynomial([9, 1, 1]);
+    let den1 = new Polynomial([0,2]);
+    let frac1 = new Fraction(num1, den1);       // (a^2+a+9)/2a
+    let num2 = new Polynomial([5,1]);
+    let den2 = new Polynomial([3]);
+    let frac2 = new Fraction(num2, den2);       // (a+5)/3
+    let sum = Fraction.add(frac1, frac2);       // (5a^2+13a+27)/6a
+    assert.deepEqual(sum.num.coeffs, [27, 13, 5]);
+    assert.deepEqual(sum.den.coeffs, [0, 6]);
+    num1 = new Polynomial([0, 1]);
+    frac1 = new Fraction(num1);                 // a/1
+    num2 = new Polynomial([5]);
+    den2 = new Polynomial([9]);
+    frac2 = new Fraction(num2, den2);           // 0.55/1
+    sum = Fraction.add(frac1, frac2);           // (a+0.55)/1
+    assert.deepEqual(sum.num.coeffs, [5/9, 1]);
+    assert.deepEqual(sum.den.coeffs, [1]);
+  });
+  it('tests fraction subtraction works', () => {
+    let num1 = new Polynomial([9, 1, 1]);
+    let den1 = new Polynomial([0,2]);
+    let frac1 = new Fraction(num1, den1);             // (a^2+a+9)/2a
+    let num2 = new Polynomial([5,1]);
+    let den2 = new Polynomial([3]);
+    let frac2 = new Fraction(num2, den2);            // (a+5)/3
+    let sum = Fraction.subtract(frac1, frac2);       // (a^2-7a+27)/6a
+    assert.deepEqual(sum.num.coeffs, [27, -7, 1]);
+    assert.deepEqual(sum.den.coeffs, [0, 6]);
+  });
+  it('tests fraction negation works', () => {
+    let num1 = new Polynomial([9, 1, 1]);
+    let den1 = new Polynomial([0,2]);
+    let frac1 = new Fraction(num1, den1);   // (a^2+a+9)/2a
+    let sum = Fraction.negate(frac1);       // (-a^2-a+-9)/2a
+    assert.deepEqual(sum.num.coeffs, [-9, -1, -1]);
+    assert.deepEqual(sum.den.coeffs, [0, 2]);
+  });
+  it('tests fraction multiplication works', () => {
+    let num1 = new Polynomial([9, 1]);
+    let den1 = new Polynomial([0,2]);
+    let frac1 = new Fraction(num1, den1);             // (a+9)/2a
+    let num2 = new Polynomial([5,1]);
+    let den2 = new Polynomial([3]);
+    let frac2 = new Fraction(num2, den2);            // (a+5)/3
+    let sum = Fraction.multiply(frac1, frac2);       // (a^2+14a+45)/6a
+    assert.deepEqual(sum.num.coeffs, [45, 14, 1]);
+    assert.deepEqual(sum.den.coeffs, [0, 6]);
+    num1 = new Polynomial([0, 1, 1]);
+    frac1 = new Fraction(num1);                     // (a^2+a)/1
+    frac2 = new Fraction();                         // 0 / 1
+    sum = Fraction.multiply(frac1, frac2);          // 0/1
+    assert.deepEqual(sum.num.coeffs, [0]);
+    assert.deepEqual(sum.den.coeffs, [1]);
   });
 });
