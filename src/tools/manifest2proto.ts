@@ -31,6 +31,11 @@ Options
   process.exit(0);
 }
 
+if (opts._.some((file) => !file.endsWith('.arcs'))) {
+  console.error(`Only Arcs manifests ('*.arcs') allowed.`);
+  process.exit(1);
+}
+
 async function go() {
   try {
     console.log('do nothing');
