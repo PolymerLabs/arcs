@@ -1,3 +1,5 @@
+# This is a fork of the tools/Dockerfile.CI with changes necessary for Google Cloud Build.
+
 FROM ubuntu:xenial
 
 # Install programs for runtime use (e.g. by Bazel, Node-GYP)
@@ -32,12 +34,17 @@ RUN mkdir -p $WORKSPACE
 WORKDIR $WORKSPACE
 
 # Install ktlint
-RUN (cd /usr/bin/ && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && cd -)
-RUN chmod +x /usr/bin/ktlint
+RUN (cd /usr/bin/ && \
+    curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && \
+    cd - && \
+    chmod +x /usr/bin/ktlint)
 
 # Install Nodejs & npm
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
-RUN apt-get install -y nodejs
+# Also, allows running script with privileged permission
+# i.e. scripts {...} at package.json. See unsafe-perm below.
+RUN (curl -sL https://deb.nodesource.com/setup_10.x | bash -  && \
+     apt-get install -y nodejs && \
+     npm set unsafe-perm true)
 
 # Install Android SDK
 ENV ANDROID_HOME "/sdk"
@@ -46,9 +53,6 @@ COPY tools/install-android-sdk tools/install-android-sdk
 COPY tools/logging.sh tools/logging.sh
 RUN tools/install-android-sdk ${ANDROID_HOME}
 
-# Allows running script with privileged permission
-# i.e. scripts {...} at package.json
-RUN npm set unsafe-perm true
 
 # Install npm packages
 COPY concrete-storage/package.json concrete-storage/package.json
