@@ -25,13 +25,13 @@ import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
+import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.data.util.toReferencable
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
@@ -63,8 +63,9 @@ class MainActivity : AppCompatActivity() {
     private val scope = CoroutineScope(coroutineContext)
     private val personSchema = Schema(
         listOf(SchemaName("person")),
-        SchemaFields(setOf("name"), emptySet()),
-        SchemaDescription()
+        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+        SchemaDescription(),
+        "hashy mchashface"
     )
     val store: Store<CrdtSet.Data<RawEntity>, CrdtSet.Operation<RawEntity>, Set<RawEntity>> =
         Store(

@@ -25,8 +25,8 @@ import arcs.core.data.RawEntity
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
-import arcs.core.storage.StorageKey
 import arcs.core.storage.ReferenceModeStore
+import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp

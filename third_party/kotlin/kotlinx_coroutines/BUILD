@@ -1,8 +1,8 @@
+package(default_visibility = ["//visibility:public"])
+
 load("//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl", kt_js_import = "kt_js_import_fixed")
 
 licenses(["notice"])
-
-package(default_visibility = ["//visibility:public"])
 
 alias(
     name = "kotlinx_coroutines",
@@ -26,9 +26,4 @@ kt_js_import(
 alias(
     name = "kotlinx_coroutines_test",
     actual = "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
-)
-
-alias(
-    name = "kotlinx_coroutines_android",
-    actual = "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_android",
 )
