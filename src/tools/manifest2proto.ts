@@ -8,6 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import minimist from 'minimist';
+import fs from 'fs';
+import path from 'path';
+import {Runtime} from '../runtime/runtime.js';
+import {Manifest} from '../runtime/manifest.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile'],
@@ -36,9 +40,34 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
   process.exit(1);
 }
 
+function outputName(baseName: string): string {
+  // TODO(alxr): Replace with .proto
+  return baseName.replace(/\.arcs$/, '.json');
+}
+
+async function processFile(src: string) {
+  if (!fs.existsSync(src)) {
+    throw new Error(`File not found: ${src}`);
+  }
+
+  const outName = opts.outfile || outputName(path.basename(src));
+  const outPath = path.join(opts.outdir, outName);
+  console.log(outPath);
+
+  const manifest: Manifest = await Runtime.parse(`import '${src}'`);
+  if (manifest.errors.length) {
+    return;
+  }
+  const outFile = fs.openSync(outPath, 'w');
+  fs.writeSync(outFile, '{"TODO": "manifest goes here"}');
+  fs.closeSync(outFile);
+}
+
 async function go() {
   try {
-    console.log('do nothing');
+    Runtime.init('../..');
+    fs.mkdirSync(opts.outdir, {recursive: true});
+    opts._.forEach(await processFile);
   } catch (e) {
     console.error(e);
     process.exit(1);
