@@ -42,3 +42,28 @@ message Schema {
     SchemaDescription = 4;
 }
 
+message Recipe {
+
+}
+
+message Particle {
+
+}
+
+message Id {
+
+}
+
+message ManifestError {
+
+}
+
+message Manifest {
+    Id id = 1;
+    string filename = 2;
+    repeated Manifest import = 3;
+    repeated Schema schema = 4;
+    repeated Particle particle = 5;
+    repeated Recipe recipe = 6;
+    repeated ManifestError error = 7;
+}
