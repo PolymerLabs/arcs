@@ -55,8 +55,28 @@ message Id {
     repeated string id_tree = 2;
 }
 
-message ManifestError {
+message SourcePosition {
+    int32 offset = 1;
+    int32 line = 2;
+    int32 column = 3;
+}
 
+message SourceLocation {
+    string filename = 1;
+    SourcePosition start = 2;
+    SourcePosition end = 3;
+}
+
+enum ErrorSeverity {
+    UNKNOWN = 0;
+    ERROR = 1;
+    WARNING = 2;
+}
+
+message ManifestError {
+    SourceLocation location = 1;
+    string key = 2;
+    ErrorSeverity severity = 3;
 }
 
 message Manifest {
