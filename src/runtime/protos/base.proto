@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+enum Primitive {
+    UNKNOWN = 0;
+    TEXT = 1;
+    URL = 2;
+    NUMBER = 3;
+    BOOLEAN = 4;
+    BYTES = 5;
+    OBJECT = 6;
+}
+
+enum HandleType {
+    UNKNOWN = 0;
+    SINGLETON = 1;
+    COLLECTION = 2;
+    BIG_COLLECTION = 3;
+}
+
+message EntityReference {
+
+}
+
+message Field {
+    oneof type {
+        Primitive primitive_type = 1;
+        EntityReference reference = 2;
+    }
+    HandleType handle_type = 3;
+}
+
+message SchemaDescription {
+    string pattern = 1;
+    string plural = 2;
+    string value = 3;
+}
+
+message Schema {
+    repeated string name = 1;
+    string hash = 2;
+    map<string, Field> field_map = 3;
+    SchemaDescription = 4;
+}
+
