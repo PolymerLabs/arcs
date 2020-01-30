@@ -13,9 +13,9 @@ arcs_kt_android_test_suite(
     package = "arcs.android.storage.database",
     deps = [
         "//java/arcs/android/common",  # unuseddeps: keep
-        "//java/arcs/core/storage:storage_key",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/data",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/testutil",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
