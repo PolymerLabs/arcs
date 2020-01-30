@@ -462,4 +462,15 @@ describe('Fractions', () => {
     assert.deepEqual(sum.num.coeffs, [0]);
     assert.deepEqual(sum.den.coeffs, [1]);
   });
+  it('tests fraction division works', () => {
+    const num1 = new Polynomial([9, 1]);
+    const den1 = new Polynomial([0, 2]);
+    const frac1 = new Fraction(num1, den1);            // (a+9)/2a
+    const num2 = new Polynomial([5, 1]);
+    const den2 = new Polynomial([3]);
+    const frac2 = new Fraction(num2, den2);            // (a+5)/3
+    const sum = Fraction.divide(frac1, frac2);         // (3a+9)/(2a^2+10a)
+    assert.deepEqual(sum.num.coeffs, [27, 3]);
+    assert.deepEqual(sum.den.coeffs, [0, 10, 2]);
+  });
 });
