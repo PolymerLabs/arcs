@@ -1,6 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "kt_jvm_and_js_library",
+    "arcs_kt_library",
 )
 
 licenses(["notice"])
@@ -20,7 +20,7 @@ REFERENCE_SRCS = [
     "Reference.kt",
 ]
 
-kt_jvm_and_js_library(
+arcs_kt_library(
     name = "storage",
     srcs = glob(
         ["*.kt"],
@@ -50,12 +50,12 @@ kt_jvm_and_js_library(
     ],
 )
 
-kt_jvm_and_js_library(
+arcs_kt_library(
     name = "storage_key",
     srcs = STORAGE_KEY_SRCS,
 )
 
-kt_jvm_and_js_library(
+arcs_kt_library(
     name = "reference",
     srcs = REFERENCE_SRCS,
     deps = [
@@ -65,7 +65,7 @@ kt_jvm_and_js_library(
     ],
 )
 
-kt_jvm_and_js_library(
+arcs_kt_library(
     name = "proxy",
     srcs = PROXY_SRCS,
     deps = [

@@ -1,6 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "kt_jvm_and_js_library",
+    "arcs_kt_library",
 )
 
 licenses(["notice"])
@@ -12,7 +12,7 @@ ENTITY_SRCS = [
     "RawEntity.kt",
 ]
 
-kt_jvm_and_js_library(
+arcs_kt_library(
     name = "data",
     srcs = glob(
         ["*.kt"],
@@ -30,7 +30,7 @@ kt_jvm_and_js_library(
     ],
 )
 
-kt_jvm_and_js_library(
+arcs_kt_library(
     name = "rawentity",
     srcs = ENTITY_SRCS,
     deps = [
