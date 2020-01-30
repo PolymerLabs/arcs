@@ -1,6 +1,10 @@
 """Arcs BUILD rules."""
 
 load(
+    "//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl",
+    _kt_js_library = "kt_js_library",
+)
+load(
     "//third_party/java/arcs/build_defs/internal:kotlin.bzl",
     _arcs_kt_android_test_suite = "arcs_kt_android_test_suite",
     _arcs_kt_jvm_library = "arcs_kt_jvm_library",
@@ -43,6 +47,8 @@ arcs_manifest = _arcs_manifest
 arcs_manifest_bundle = _arcs_manifest_bundle
 
 kt_jvm_and_js_library = _kt_jvm_and_js_library
+
+kt_js_library = _kt_js_library
 
 arcs_kt_jvm_library = _arcs_kt_jvm_library
 
