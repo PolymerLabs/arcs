@@ -18,7 +18,6 @@ import 'Arcs/schemas/ArcMeta.arcs'
 import 'Tutorial/Javascript/Tutorial.arcs'
 import 'Blackjack/Blackjack.arcs'
 import 'Tutorial/Kotlin/Tutorial.arcs'
-import 'TicTacToe/TicTacToe.arcs'
 import 'Experimental/Person_Msg_Demo/PersonMsg.arcs'
 // Other
 import 'Native/native.arcs'
