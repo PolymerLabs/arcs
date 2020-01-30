@@ -957,6 +957,54 @@ export class SQLExtracter {
   }
 }
 
+export class Fraction {
+  num: Polynomial;
+  den: Polynomial; 
+
+  constructor(n?: Polynomial, d?: Polynomial) {
+    this.num = n ? Polynomial.copyOf(n) : new Polynomial();
+    this.den = d ? Polynomial.copyOf(d) : new Polynomial([1]);
+    if (this.den.isZero()) {
+      throw new Error('Division by zero.');
+    }
+    this.reduce();
+  }
+
+  static add(a: Fraction, b: Fraction): Fraction {
+    const den = Polynomial.multiply(a.den, b.den);
+    const num = Polynomial.add(Polynomial.multiply(a.num, b.den), Polynomial.multiply(b.num, a.den));
+    return new Fraction(num, den);
+  }
+
+  static negate(a: Fraction): Fraction {
+    return new Fraction(Polynomial.negate(a.num), a.den);
+  }
+
+  static subtract(a: Fraction, b: Fraction): Fraction {
+    const negB = Fraction.negate(b);
+    return Fraction.add(a, negB);
+  }
+
+  static multiply(a: Fraction, b: Fraction): Fraction {
+    return new Fraction(Polynomial.multiply(a.num, b.num), Polynomial.multiply(a.den, b.den));
+  }
+
+  reduce() {
+    if (this.num.isZero()) {
+      this.den = new Polynomial([1]);
+      return;
+    }
+    if (this.num.isConstant() && this.den.isConstant()) {
+      this.num = new Polynomial([this.num.coeffs[0]/this.den.coeffs[0]]);
+      this.den = new Polynomial([1]);
+      return
+    }
+    // TODO(ragdev): Fractions can be reduced further by factoring out the gcd of
+    // the coeffs in num and den, and then dividing the two. However, since the numbers are floating
+    // points, the precision and computation cost of gcd function will be a trade-off to consider.
+  }
+}
+
 export class Polynomial {
   _coeffs: number[];
 
@@ -966,6 +1014,12 @@ export class Polynomial {
     } else {
       this.coeffs = [0];
     }
+  }
+
+  static copyOf(pn: Polynomial): Polynomial {
+    const copy = new Polynomial();
+    copy.coeffs = pn.coeffs;
+    return copy;
   }
 
   get coeffs(): number[] {
@@ -983,10 +1037,7 @@ export class Polynomial {
   }
 
   set coeffs(cfs: number[]) {
-    this._coeffs = [];
-    for (const coeff of cfs) {
-      this._coeffs.push(coeff);
-    }
+    this._coeffs = [...cfs];
   }
 
   degree(): number {
@@ -1027,31 +1078,11 @@ export class Polynomial {
     return new Polynomial(coeffs);
   }
 
-  // assumes the expression received has an evalType of Primitive.NUMBER
-  static fromExpression(expr: RefinementExpression): Polynomial {
-    if (expr instanceof BinaryExpression) {
-      const left = Polynomial.fromExpression(expr.leftExpr);
-      const right = Polynomial.fromExpression(expr.rightExpr);
-      return Polynomial.updateGivenOp(expr.operator.op, [left, right]);
-    } else if (expr instanceof UnaryExpression) {
-      const pn = Polynomial.fromExpression(expr.expr);
-      return Polynomial.updateGivenOp(expr.operator.op, [pn]);
-    } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.NUMBER) {
-      return new Polynomial([0, 1]);
-    } else if (expr instanceof NumberPrimitive) {
-      return new Polynomial([expr.value]);
-    }
-    throw new Error(`Cannot resolve expression: ${expr.toString()}`);
+  isZero(): boolean {
+    return this.isConstant() && this.coeffs[0] === 0;
   }
 
-  static updateGivenOp(op: string, polynomials: Polynomial[]): Polynomial {
-    switch (op) {
-      case Op.ADD: return Polynomial.add(polynomials[0], polynomials[1]);
-      case Op.MUL: return Polynomial.multiply(polynomials[0], polynomials[1]);
-      case Op.SUB: return Polynomial.subtract(polynomials[0], polynomials[1]);
-      case Op.NEG: return Polynomial.negate(polynomials[0]);
-      default:
-        throw new Error(`Unsupported operator: cannot update polynomial`);
-    }
+  isConstant(): boolean {
+    return this.degree() === 0;
   }
 }
