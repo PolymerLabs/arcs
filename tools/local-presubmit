@@ -11,8 +11,10 @@ source $(dirname $0)/logging.sh
 cd $ROOT
 status "Testing all of the things."
 
+set -x
+
 ./tools/sigh webpack
-./tools/bazelisk test //java/... //javatests/... //src/... //particles/...
+./tools/bazelisk --bazelrc=tools/travis.bazelrc test //java/... //javatests/... //src/... //particles/...
 ./tools/sigh testShells
 ./tools/sigh lint
 ./tools/sigh test
