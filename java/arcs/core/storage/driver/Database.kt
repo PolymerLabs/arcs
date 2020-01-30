@@ -14,16 +14,30 @@ package arcs.core.storage.driver
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.crdt.extension.toCrdtEntityData
+import arcs.core.crdt.extension.toEntity
 import arcs.core.data.Schema
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.ExistenceCriteria
+import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.Database
+import arcs.core.storage.database.DatabaseClient
+import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseFactory
+import arcs.core.storage.referencemode.toCrdtSetData
+import arcs.core.storage.referencemode.toCrdtSingletonData
+import arcs.core.storage.referencemode.toReferenceSet
+import arcs.core.storage.referencemode.toReferenceSingleton
+import arcs.core.util.Random
+import arcs.core.util.TaggedLog
+import arcs.core.util.guardWith
 import kotlin.reflect.KClass
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Protocol to be used with the database driver. */
 const val DATABASE_DRIVER_PROTOCOL = "db"
@@ -151,27 +165,153 @@ object DatabaseDriverProvider : DriverProvider {
 }
 
 /** [Driver] implementation capable of managing data stored in a SQL database. */
-@Suppress("unused")
+@Suppress("RemoveExplicitTypeArguments")
 class DatabaseDriver<Data : Any>(
     override val storageKey: DatabaseStorageKey,
     override val existenceCriteria: ExistenceCriteria,
     private val dataClass: KClass<Data>,
     private val schemaLookup: (String) -> Schema?,
     private val database: Database
-) : Driver<Data> {
+) : Driver<Data>, DatabaseClient<DatabaseData> {
+    /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
+    private val clientId: Int = database.addClient(this)
+    private val localDataMutex = Mutex()
+    private var localData: Data? by guardWith<Data?>(localDataMutex, null)
+    private var localVersion: Int? by guardWith<Int?>(localDataMutex, null)
+    private val schema: Schema
+        get() = requireNotNull(schemaLookup(storageKey.entitySchemaHash))
+    private val log = TaggedLog { this.toString() }
+    override var token: String? = null
+        private set
 
+    init {
+        if (
+            existenceCriteria == ExistenceCriteria.ShouldCreate ||
+            existenceCriteria == ExistenceCriteria.ShouldExist
+        ) {
+            log.warning {
+                "DatabaseDriver should be used with ExistenceCriteria.MayExist, but " +
+                    "$existenceCriteria was specified."
+            }
+        }
+
+        log.debug { "Created" }
+    }
+
+    @Suppress("UNCHECKED_CAST")
     override suspend fun registerReceiver(
         token: String?,
         receiver: suspend (data: Data, version: Int) -> Unit
     ) {
-        TODO("not implemented")
+        this.receiver = receiver
+        val (pendingReceiverData, pendingReceiverVersion) = localDataMutex.withLock {
+            var res = localData?.takeIf { this.token != token } to localVersion
+
+            // If we didn't have any data, try and fetch it from the database.
+            if (res.first == null || res.second == null) {
+                database.get(
+                    storageKey,
+                    when (dataClass) {
+                        CrdtEntity.Data::class -> DatabaseData.Entity::class
+                        CrdtSet.Data::class -> DatabaseData.Collection::class
+                        CrdtSingleton.DataImpl::class -> DatabaseData.Singleton::class
+                        else -> throw IllegalStateException("Illegal dataClass: $dataClass")
+                    }
+                )?.also {
+                    res = when (it) {
+                        is DatabaseData.Entity ->
+                            it.entity.toCrdtEntityData(it.versionMap)
+                        is DatabaseData.Singleton ->
+                            it.reference.toCrdtSingletonData(it.versionMap)
+                        is DatabaseData.Collection ->
+                            it.values.toCrdtSetData(it.versionMap)
+                    } as Data to it.databaseVersion
+                }
+            }
+            res
+        }
+
+        if (pendingReceiverData == null || pendingReceiverVersion == null) return
+
+        receiver(pendingReceiverData, pendingReceiverVersion)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun send(data: Data, version: Int): Boolean {
-        TODO("not implemented")
+        log.debug { "send($data, $version)" }
+
+        // Prep the data for storage.
+        val databaseData = when (data) {
+            is CrdtEntity.Data -> DatabaseData.Entity(
+                data.toEntity(schema),
+                version,
+                data.versionMap
+            )
+            is CrdtSet.Data<*> -> {
+                val referenceData = requireNotNull(data as? CrdtSet.Data<Reference>)
+                DatabaseData.Collection(
+                    referenceData.toReferenceSet(),
+                    version,
+                    referenceData.versionMap
+                )
+            }
+            is CrdtSingleton.Data<*> -> {
+                val referenceData = requireNotNull(data as? CrdtSingleton.Data<Reference>)
+                DatabaseData.Singleton(
+                    referenceData.toReferenceSingleton(),
+                    version,
+                    referenceData.versionMap
+                )
+            }
+            else -> throw UnsupportedOperationException(
+                "Unsupported type for DatabaseDriver: ${data::class}"
+            )
+        }
+
+        // Store the prepped data.
+        return database.insertOrUpdate(storageKey, databaseData, clientId) == version
     }
 
-    override val token: String? = null
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun onDatabaseUpdate(
+        data: DatabaseData,
+        version: Int,
+        originatingClientId: Int?
+    ) {
+        if (originatingClientId == clientId) return
 
-    override fun toString(): String = "DatabaseDriver($storageKey)"
+        log.debug {
+            "onDatabaseUpdate($data, version: $version, originatingClientId: $originatingClientId)"
+        }
+
+        // Convert the raw DatabaseData into the appropriate CRDT data model
+        val actualData = when (data) {
+            is DatabaseData.Singleton -> data.reference.toCrdtSingletonData(data.versionMap)
+            is DatabaseData.Collection -> data.values.toCrdtSetData(data.versionMap)
+            is DatabaseData.Entity -> data.entity.toCrdtEntityData(data.versionMap)
+        } as Data
+
+        // Stash it locally.
+        localDataMutex.withLock {
+            localData = actualData
+            localVersion = version
+        }
+
+        // Let the receiver know about it.
+        bumpToken()
+        receiver?.invoke(actualData, version)
+    }
+
+    override suspend fun onDatabaseDelete(originatingClientId: Int?) {
+        if (originatingClientId == clientId) return
+
+        log.debug { "onDatabaseDelete(originatingClientId: $originatingClientId)" }
+        bumpToken()
+    }
+
+    override fun toString(): String = "DatabaseDriver($storageKey, $clientId)"
+
+    private fun bumpToken() {
+        token = Random.nextInt().toString()
+    }
 }
