@@ -98,10 +98,10 @@ class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
                 is ReferenceType<*> -> when (val contained = type.containedType) {
                     is CrdtModelType<*, *, *> -> contained.crdtModelDataClass
                     else -> throw UnsupportedOperationException(
-                        "Unsupported contained type: ${options.type}"
+                        "Unsupported contained type: $contained"
                     )
                 }
-                else -> throw UnsupportedOperationException("Unsupported type: ${options.type}")
+                else -> throw UnsupportedOperationException("Unsupported type: $type")
             }
         ) as DirectStore<Data, Op, T>
 
