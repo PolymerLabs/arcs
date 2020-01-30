@@ -42,8 +42,21 @@ message Schema {
     SchemaDescription = 4;
 }
 
-message Recipe {
+message Handle {
 
+}
+
+message RequireSection {
+    Recipe parent = 1;
+}
+
+message Recipe {
+    string name = 1;
+    string localName = 2;
+    repeated RequireSection require = 3;
+    repeated Particle particle = 4;
+    repeated Handle handle = 5;
+    // repeated Slot slot = 6;
 }
 
 message Particle {
