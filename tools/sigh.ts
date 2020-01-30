@@ -83,6 +83,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   health: [health],
   bundle: runNodeScriptSteps('bundle'),
   schema2wasm: runNodeScriptSteps('schema2wasm'),
+  manifest2proto: runNodeScriptSteps('manifest2proto'),
   flowcheck: runNodeScriptSteps('flowcheck'),
   devServer: [peg, build, webpack, devServer],
   languageServer: [peg, build, buildLS, webpackLS],
@@ -110,6 +111,9 @@ const scripts: {[index: string]: string} = {
   schema2wasm: 'build/tools/schema2wasm.js',
 
   manifestChecker: 'build/tools/manifest-checker.js',
+
+  /** Generates protobuf serialization of manifests. */
+  manifest2proto: 'build/tools/manifest2proto.js',
 };
 
 const eslintCache = '.eslint_sigh_cache';
