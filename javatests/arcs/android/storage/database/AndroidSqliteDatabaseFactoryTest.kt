@@ -49,11 +49,13 @@ class AndroidSqliteDatabaseFactoryTest {
 
         val databaseBar = factory.getDatabase("bar", true)
         assertThat(databaseBar).isInstanceOf(DatabaseImpl::class.java)
-        assertThat(databaseFoo !== databaseBar).isTrue()
+        assertThat(databaseFoo).isNotEqualTo(databaseBar)
+        assertThat(databaseFoo).isNotSameInstanceAs(databaseBar)
 
         val databaseFooMemory = factory.getDatabase("foo", false)
         assertThat(databaseFooMemory).isInstanceOf(DatabaseImpl::class.java)
-        assertThat(databaseFoo !== databaseBar).isTrue()
+        assertThat(databaseFoo).isNotEqualTo(databaseBar)
+        assertThat(databaseFoo).isNotSameInstanceAs(databaseBar)
     }
 
     @Test
@@ -63,7 +65,7 @@ class AndroidSqliteDatabaseFactoryTest {
 
         assertThat(firstFoo).isInstanceOf(DatabaseImpl::class.java)
         assertThat(secondFoo).isInstanceOf(DatabaseImpl::class.java)
-        assertThat(firstFoo === secondFoo).isTrue()
+        assertThat(firstFoo).isSameInstanceAs(secondFoo)
     }
 
     @Test
@@ -77,6 +79,6 @@ class AndroidSqliteDatabaseFactoryTest {
             factory.getDatabase("foo", true)
         }
 
-        assertThat(firstFoo.await() === secondFoo.await()).isTrue()
+        assertThat(firstFoo.await()).isSameInstanceAs(secondFoo.await())
     }
 }

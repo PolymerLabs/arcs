@@ -9,9 +9,6 @@ kt_jvm_library(
     testonly = True,
     srcs = ["MockDatabaseFactory.kt"],
     deps = [
-        "//java/arcs/core/crdt/internal",
-        "//java/arcs/core/storage:storage_key",
-        "//java/arcs/core/storage/database",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/mockito_kotlin",

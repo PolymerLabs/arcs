@@ -11,24 +11,17 @@
 
 package arcs.core.storage.database
 
-import arcs.core.crdt.internal.VersionMap
-import arcs.core.storage.StorageKey
 import arcs.core.util.guardWith
-import com.nhaarman.mockitokotlin2.argumentCaptor
 import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.nullableArgumentCaptor
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.CoroutineContext
-import kotlin.reflect.KClass
 
 /** [DatabaseFactory] which generates mockito mocks of [Database] objects. */
 class MockDatabaseFactory(coroutineContext: CoroutineContext) : DatabaseFactory {
+    @Suppress("unused")
     private val job = Job() + coroutineContext + CoroutineName("Mock Database Factory")
     private val mutex = Mutex()
     private val cache: MutableMap<Pair<String, Boolean>, Database>
@@ -40,6 +33,9 @@ class MockDatabaseFactory(coroutineContext: CoroutineContext) : DatabaseFactory 
     }
 
     private fun createMockDatabase(): Database {
+        return mock()
+        /*
+        TODO: Delete this, or figure out how to make it work internally.
         val clientMutex = Mutex()
         var nextClientId = 1
         val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient<DatabaseData>>>()
@@ -138,6 +134,7 @@ class MockDatabaseFactory(coroutineContext: CoroutineContext) : DatabaseFactory 
                 runBlocking { clientMutex.withLock { clients.remove(clientId) } }
             }
         }
+         */
     }
 }
 
