@@ -27,7 +27,6 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
-import arcs.core.storage.database.DatabaseFactory
 import arcs.core.util.guardWith
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
@@ -42,23 +41,8 @@ typealias FieldId = Long
 /** The ID for a storage key. */
 typealias StorageKeyId = Long
 
-/**
- * [DatabaseFactory] implementation which constructs [DatabaseImpl] instances for use on Android
- * with SQLite.
- */
-class AndroidSqliteDatabaseFactory(context: Context) : DatabaseFactory {
-    private val context = context.applicationContext
-    private val mutex = Mutex()
-    private val dbCache by guardWith(mutex, mutableMapOf<Pair<String, Boolean>, Database>())
-
-    override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
-        dbCache[name to persistent]
-            ?: DatabaseImpl(context, name, persistent).also { dbCache[name to persistent] = it }
-    }
-}
-
 /** Implementation of [Database] for Android using SQLite. */
-@VisibleForTesting
+@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class DatabaseImpl(
     context: Context,
     databaseName: String,
