@@ -203,10 +203,9 @@ describe.skip('remote planificator', () => {
     // TODO: There is a redundant `MuxedProductItem.` suggestion, get rid of it.
     // TODO(sjmiles): doesn't work after slot-consumer changes, probably because of handle
     // attachment changes and SlotUtils::slotMatches
-    //await verifyReplanningAndConsuming(3, ['Check shipping', 'Check manufacturer information']);
+    await verifyReplanningAndConsuming(3, ['Check shipping', 'Check manufacturer information']);
 
     assert.notStrictEqual(producePlanificator.producer.result, consumePlanificator.consumer.result);
-    debugger;
     assert.isTrue(producePlanificator.producer.result.isEquivalent(consumePlanificator.consumer.result.suggestions));
 
     // TODO: This doesn't behave as expected in neither old nor new storage stack.

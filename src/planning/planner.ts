@@ -229,12 +229,12 @@ export class Planner implements InspectablePlanner {
               resolved
             };
             if (!resolved) {
-              data["errors"] = [...options.errors].map(([n, v]) => `${n} => ${v}`);
-              data["unresolved"] = options["details"];
+              data['errors'] = [...options.errors].map(([n, v]) => `${n} => ${v}`);
+              data['unresolved'] = options['details'];
             }
             result.push(data);
           }
-        })
+        });
         if (result.length) {
           dump.push(result);
         }
