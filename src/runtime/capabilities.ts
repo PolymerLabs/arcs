@@ -33,7 +33,15 @@ export class Capabilities {
     return false;
   }
 
+  contains(other: Capabilities): boolean {
+    return [...other.capabilities].every(c => this.capabilities.has(c));
+  }
+
   toString(): string {
     return [...this.capabilities].sort().join(' ');
   }
+
+  static readonly tiedToArc = new Capabilities(['tied-to-arc']);
+  static readonly tiedToRuntime = new Capabilities(['tied-to-runtime']);
+  static readonly persistent = new Capabilities(['persistent']);
 }

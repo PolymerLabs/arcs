@@ -12,31 +12,21 @@ import {assert} from '../platform/assert-web.js';
 import {Capabilities} from './capabilities.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {DriverFactory} from './storageNG/drivers/driver-factory.js';
-import {StorageKeyFactory} from './storageNG/storage-key-factory.js';
-import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
-import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {StorageKeyFactory, StorageKeyCreator} from './storageNG/storage-key-factory.js';
 
 export class CapabilitiesResolver {
   static createStorageKey(capabilities: Capabilities, factory: StorageKeyFactory): StorageKey {
-    const protocol = null;
-    let storageKey = null;
-    // TODO: This is a temporary solution for picking the appropriate storage
-    // key creator for the given capabilities. As more capabilities are added
-    // the heuristics is to become more robust.
-    if (capabilities.isTiedToArc) {
-      storageKey = factory.createStorageKey(VolatileStorageKey.protocol);
-      if (storageKey) return storageKey;
+    // TODO: This is a naive and basic solution for picking the appropriate
+    // storage key creator for the given capabilities. As more capabilities are
+    // added the heuristics is to become more robust.
+    const protocols = factory.findStorageKeyProtocols(capabilities);
+
+    if (protocols.size === 0) {
+      throw new Error(`Cannot create a suitable storage key for ${capabilities.toString()}`);
+    } else if (protocols.size > 1) {
+      console.warn(`Multiple storage key creators for ${capabilities.toString()}`);
     }
-    if (capabilities.isTiedToRuntime) {
-      storageKey = factory.createStorageKey(RamDiskStorageKey.protocol);
-      if (storageKey) return storageKey;
-    }
-    if (capabilities.isPersistent) {
-      // TODO(mmandlis): better fix in progress where factory registers
-      // creators with supported capabilities.
-      storageKey = factory.createStorageKey('firebase');
-      if (storageKey) return storageKey;
-    }
-    throw new Error(`Cannot create a suitable storage key for ${capabilities.toString()}`);
+
+    return factory.createStorageKey([...protocols][0]);
   }
 }
