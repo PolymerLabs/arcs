@@ -22,7 +22,6 @@ recipe Products
 recipe CreateShoppingList
   products: copy *
   Items
-    //root: consumes rootSlot
     list: products
   ItemMultiplexer
     list: products
