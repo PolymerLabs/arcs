@@ -25,7 +25,7 @@ Usage
   $ tools/sigh manifest2proto [options] [file ...]
 
 Description
-  Generates protobuf serialization of manifests.
+  Generates serialization of manifests.
 
 Options
   --outdir, -d  output directory; defaults to '.'

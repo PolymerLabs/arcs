@@ -112,7 +112,7 @@ const scripts: {[index: string]: string} = {
 
   manifestChecker: 'build/tools/manifest-checker.js',
 
-  /** Generates protobuf serialization of manifests. */
+  /** Generates serialization of manifests. */
   manifest2proto: 'build/tools/manifest2proto.js',
 };
 
