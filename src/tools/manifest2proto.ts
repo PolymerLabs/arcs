@@ -25,7 +25,7 @@ Usage
   $ tools/sigh manifest2proto [options] [file ...]
 
 Description
-  Generates serialization of manifests.
+  Serializes manifests.
 
 Options
   --outdir, -d  output directory; defaults to '.'
@@ -48,8 +48,8 @@ function outputName(baseName: string): string {
 /** Extract JSON serializations from manifest */
 function toLiteral(manifest: Manifest): object {
   const lit = {};
-  lit['particles'] = manifest.allParticles.map(p => p.toLiteral());
-  lit['schemas'] = manifest.allSchemas.map(s => s.toLiteral());
+  lit['particles'] = manifest.particles.map(p => p.toLiteral());
+  lit['schemas'] = Object.values(manifest.schemas).map(s => s.toLiteral());
   return lit;
 }
 
@@ -63,7 +63,7 @@ async function processFile(src: string) {
   const outPath = path.join(opts.outdir, outName);
   console.log(outPath);
 
-  const manifest: Manifest = await Runtime.parse(`import '${src}'`);
+  const manifest: Manifest = await Runtime.parseFile(src);
   if (manifest.errors.length) {
     return;
   }
