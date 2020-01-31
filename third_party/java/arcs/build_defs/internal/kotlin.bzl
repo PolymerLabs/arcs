@@ -69,13 +69,14 @@ def arcs_kt_jvm_library(**kwargs):
     """
     constraints = kwargs.pop("constraints", ["android"])
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
+    exports = kwargs.pop("exports", [])
     kotlincopts = kwargs.pop("kotlincopts", [])
     kwargs["kotlincopts"] = _merge_lists(kotlincopts, KOTLINC_OPTS)
     if not IS_BAZEL:
         kwargs["constraints"] = constraints
         kwargs["disable_lint_checks"] = _merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
 
-    if kwargs.get("exports"):
+    if exports:
         # kt_jvm_library doesn't support the "exports" property. Instead, we
         # will wrap it in a java_library rule and export everything that is
         # needed from there.
@@ -83,7 +84,7 @@ def arcs_kt_jvm_library(**kwargs):
         kt_name = name + _KT_SUFFIX
         kwargs["name"] = kt_name
 
-        exports = kwargs.pop("exports") + [kt_name]
+        exports += [kt_name]
 
         if not IS_BAZEL:
             java_kwargs = {"constraints": constraints}
