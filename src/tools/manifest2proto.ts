@@ -29,7 +29,7 @@ Description
 
 Options
   --outdir, -d  output directory; defaults to '.'
-  --outfile, -f output filename; if ommitted, generated from the manifest name
+  --outfile, -f output filename; if omitted, generated from the manifest name
   --help        usage info
 `);
   process.exit(0);
