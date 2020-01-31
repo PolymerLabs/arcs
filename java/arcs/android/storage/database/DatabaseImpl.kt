@@ -19,26 +19,38 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.common.forEach
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
-import arcs.core.data.Entity
+import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
+import arcs.core.storage.database.DatabaseClient
+import arcs.core.storage.database.DatabaseData
 import arcs.core.util.guardWith
+import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long
 
+/** The ID for a field in a schema. */
+typealias FieldId = Long
+
+/** The ID for a storage key. */
+typealias StorageKeyId = Long
+
 /** Implementation of [Database] for Android using SQLite. */
+@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class DatabaseImpl(
     context: Context,
-    databaseName: String
+    databaseName: String,
+    persistent: Boolean = true
 ) : Database, SQLiteOpenHelper(
     context,
-    databaseName,
+    // Using `null` with SQLiteOpenHelper's database name makes it an in-memory database.
+    if (persistent) databaseName else null,
     /* cursorFactory = */ null,
     DB_VERSION
 ) {
@@ -66,11 +78,30 @@ class DatabaseImpl(
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
-    override suspend fun delete(storageKey: StorageKey) {
+    override fun <Data : DatabaseData> addClient(client: DatabaseClient<Data>): Int {
         TODO("not implemented")
     }
 
-    override suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) {
+    override fun removeClient(identifier: Int) {
+        TODO("not implemented")
+    }
+
+    override suspend fun <Data : DatabaseData> get(
+        storageKey: StorageKey,
+        dataType: KClass<Data>
+    ): Data? {
+        TODO("not implemented")
+    }
+
+    override suspend fun insertOrUpdate(
+        storageKey: StorageKey,
+        data: DatabaseData,
+        originatingClientId: Int?
+    ): Int {
+        TODO("not implemented")
+    }
+
+    override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) {
         TODO("not implemented")
     }
 
@@ -104,6 +135,7 @@ class DatabaseImpl(
             val insertFieldStatement = compileStatement(
                 "INSERT INTO fields (type_id, parent_type_id, name) VALUES (?, ?, ?)"
             )
+
             suspend fun insertFieldBlock(fieldName: String, fieldType: FieldType) {
                 insertFieldStatement.apply {
                     bindLong(1, getTypeId(fieldType))
@@ -120,6 +152,39 @@ class DatabaseImpl(
             }
             schemaTypeId
         }
+    }
+
+    /**
+     * Returns the ID for the given [StorageKey] if one already exists, otherwise creates a new one
+     * for it.
+     */
+    @VisibleForTesting
+    fun getStorageKeyId(storageKey: StorageKey): StorageKeyId {
+        // TODO: Use an LRU cache.
+        val content = ContentValues().apply {
+            put("storage_key", storageKey.toString())
+        }
+        return writableDatabase.insertWithOnConflict(
+            "storage_keys", null, content, SQLiteDatabase.CONFLICT_IGNORE
+        )
+    }
+
+    /**
+     * Returns a map of field name to ID for each field in the given schema [TypeId].
+     *
+     * Call [getSchemaTypeId] first to get the [TypeId].
+     */
+    @VisibleForTesting
+    fun getSchemaFieldIds(schemaTypeId: TypeId): Map<FieldName, FieldId> {
+        // TODO: Use an LRU cache.
+        val fieldIds = mutableMapOf<FieldName, FieldId>()
+        readableDatabase.rawQuery(
+            "SELECT name, id FROM fields WHERE parent_type_id = ?",
+            arrayOf(schemaTypeId.toString())
+        ).forEach {
+            fieldIds[it.getString(0)] = it.getLong(1)
+        }
+        return fieldIds
     }
 
     /** Returns the type ID for the given [fieldType] if known, otherwise throws. */

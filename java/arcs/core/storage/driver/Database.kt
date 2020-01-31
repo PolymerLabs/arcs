@@ -11,6 +11,9 @@
 
 package arcs.core.storage.driver
 
+import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.Schema
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
@@ -18,6 +21,9 @@ import arcs.core.storage.DriverProvider
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.database.Database
+import arcs.core.storage.database.DatabaseFactory
+import kotlin.reflect.KClass
 
 /** Protocol to be used with the database driver. */
 const val DATABASE_DRIVER_PROTOCOL = "db"
@@ -70,11 +76,6 @@ data class DatabaseStorageKey(
             StorageKeyParser.addParser(DATABASE_DRIVER_PROTOCOL, ::fromString)
         }
 
-        /** Registers a parser with the [StorageKeyParser] for the [DatabaseStorageKey]. */
-        fun registerParser() {
-            StorageKeyParser.addParser(DATABASE_DRIVER_PROTOCOL, ::fromString)
-        }
-
         /* internal */ fun fromString(rawKeyString: String): DatabaseStorageKey {
             val match = requireNotNull(DB_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
                 "Not a valid DatabaseStorageKey: $rawKeyString"
@@ -91,14 +92,16 @@ data class DatabaseStorageKey(
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
 object DatabaseDriverProvider : DriverProvider {
+    private var _factory: DatabaseFactory? = null
+    private val factory: DatabaseFactory
+        get() = requireNotNull(_factory) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
+
     /**
      * Function which will be used to determine, at runtime, which [Schema] to associate with its
      * hash value embedded in a [DatabaseStorageKey].
      */
     private var schemaLookup: (String) -> Schema? = {
-        throw IllegalStateException(
-            "DatabaseDriverProvider.configure(schemaLookup) has not been called"
-        )
+        throw IllegalStateException(ERROR_MESSAGE_CONFIGURE_NOT_CALLED)
     }
 
     override fun willSupport(storageKey: StorageKey): Boolean =
@@ -106,7 +109,8 @@ object DatabaseDriverProvider : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria
+        existenceCriteria: ExistenceCriteria,
+        dataClass: KClass<Data>
     ): Driver<Data> {
         val databaseKey = requireNotNull(storageKey as? DatabaseStorageKey) {
             "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
@@ -115,26 +119,47 @@ object DatabaseDriverProvider : DriverProvider {
             "Unsupported DatabaseStorageKey: No Schema found with hash: " +
                 databaseKey.entitySchemaHash
         }
-        return DatabaseDriver(storageKey, existenceCriteria, schemaLookup)
+        require(
+            dataClass == CrdtEntity.Data::class ||
+                dataClass == CrdtSet.DataImpl::class ||
+                dataClass == CrdtSingleton.DataImpl::class
+        ) {
+            "Unsupported data type: $dataClass, must be one of: CrdtEntity.Data, " +
+                "CrdtSet.DataImpl, or CrdtSingleton.DataImpl"
+        }
+        return DatabaseDriver(
+            databaseKey,
+            existenceCriteria,
+            dataClass,
+            schemaLookup,
+            factory.getDatabase(databaseKey.dbName, databaseKey.persistent)
+        )
     }
 
     /**
      * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
      * with the [DriverFactory].
      */
-    fun configure(schemaLookup: (String) -> Schema?) = apply {
-        // The `init` block will register the driver provider with the driver factory.
+    fun configure(databaseFactory: DatabaseFactory, schemaLookup: (String) -> Schema?) = apply {
+        this._factory = databaseFactory
         this.schemaLookup = schemaLookup
         DriverFactory.register(this)
     }
+
+    private const val ERROR_MESSAGE_CONFIGURE_NOT_CALLED =
+        "DatabaseDriverProvider.configure(databaseFactory, schemaLookup) has not been called"
 }
 
 /** [Driver] implementation capable of managing data stored in a SQL database. */
+@Suppress("unused")
 class DatabaseDriver<Data : Any>(
-    override val storageKey: StorageKey,
+    override val storageKey: DatabaseStorageKey,
     override val existenceCriteria: ExistenceCriteria,
-    private val schemaLookup: (String) -> Schema?
+    private val dataClass: KClass<Data>,
+    private val schemaLookup: (String) -> Schema?,
+    private val database: Database
 ) : Driver<Data> {
+
     override suspend fun registerReceiver(
         token: String?,
         receiver: suspend (data: Data, version: Int) -> Unit
@@ -147,4 +172,6 @@ class DatabaseDriver<Data : Any>(
     }
 
     override val token: String? = null
+
+    override fun toString(): String = "DatabaseDriver($storageKey)"
 }

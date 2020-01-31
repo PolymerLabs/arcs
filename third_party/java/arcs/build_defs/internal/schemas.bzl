@@ -4,7 +4,12 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library")
+load(
+    ":kotlin.bzl",
+    "ARCS_SDK_DEPS",
+    "DEFAULT_PARTICLE_PLATFORMS",
+    "arcs_kt_library",
+)
 
 def output_name(src, suffix = ""):
     """Cleans up the given file name, and replaces the .arcs extension."""
@@ -97,5 +102,6 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
     arcs_kt_library(
         name = name,
         srcs = outs,
+        platforms = DEFAULT_PARTICLE_PLATFORMS,
         deps = ARCS_SDK_DEPS,
     )

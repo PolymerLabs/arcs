@@ -13,6 +13,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.type.Type
@@ -90,8 +91,13 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
                 "No constructor registered for mode ${options.mode}"
             }
 
+            val dataClass = when (val type = options.type) {
+                is CrdtModelType<*, *, *> -> type.crdtModelDataClass
+                else -> throw CrdtException("Unsupported type for storage: $type")
+            }
+
             return CrdtException.requireNotNull(
-                constructor(options) as? ActiveStore<Data, Op, ConsumerData>
+                constructor(options, dataClass) as? ActiveStore<Data, Op, ConsumerData>
             ) { "Could not cast constructed store to ActiveStore${constructor.typeParamString}" }
         }
     }

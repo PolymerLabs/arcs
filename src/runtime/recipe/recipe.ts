@@ -33,7 +33,7 @@ export type CloneMap = Map<RecipeComponent, RecipeComponent>;
 export type VariableMap = Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>;
 
 export type IsResolvedOptions = {showUnresolved?: boolean, details?: string[]}; // TODO(lindner): standardize details
-export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>};
+export type IsValidOptions = {errors?: Map<Recipe | RecipeComponent, string>, typeErrors?: string[]};
 export type ToStringOptions = {showUnresolved?: boolean, hideFields?: boolean, details?: string[]};
 
 export class Recipe implements Cloneable<Recipe> {

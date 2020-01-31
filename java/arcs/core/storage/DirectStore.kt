@@ -22,6 +22,7 @@ import arcs.core.storage.DirectStore.State.Name.AwaitingResponse
 import arcs.core.storage.DirectStore.State.Name.Idle
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
+import kotlin.reflect.KClass
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
@@ -394,8 +395,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             version: Int,
             messageFromDriver: Boolean,
             localModel: Data
-        ): Pair<Int, State<Data>> =
-            version to this
+        ): Pair<Int, State<Data>> = version to this
 
         /**
          * Returns whether or not, given the machine being in this state, we should apply any
@@ -414,7 +414,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
          */
         private const val MAX_UPDATE_SPINS = 1000
 
-        suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
+        suspend inline fun <reified Data : CrdtData, Op : CrdtOperation, T> create(
             options: StoreOptions<Data, Op, T>,
             type: CrdtModelType<Data, Op, T>
         ): DirectStore<Data, Op, T> {
@@ -427,7 +427,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
         @Suppress("UNCHECKED_CAST")
         // TODO: generics here are sub-optimal, can we make this constructor generic itself?
-        val CONSTRUCTOR = StoreConstructor<CrdtData, CrdtOperation, Any?> { options ->
+        val CONSTRUCTOR = StoreConstructor<CrdtData, CrdtOperation, Any?> { options, dataClass ->
             val localModel =
                 requireNotNull(options.type as? CrdtModelType<CrdtData, CrdtOperation, Any?>) {
                     "Specified type ${options.type} does not implement CrdtModelType"
@@ -437,13 +437,17 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
             val driver =
                 CrdtException.requireNotNull(
-                    DriverFactory.getDriver<CrdtData>(options.storageKey, options.existenceCriteria)
+                    DriverFactory.getDriver(
+                        options.storageKey,
+                        options.existenceCriteria,
+                        dataClass as KClass<out CrdtData>
+                    )
                 ) { "No driver exists to support storage key ${options.storageKey}" }
 
             return@StoreConstructor DirectStore(
                 options as StoreOptions<CrdtData, CrdtOperation, Any?>,
                 localModel = localModel,
-                driver = driver
+                driver = driver as Driver<CrdtData>
             ).also { store ->
                 driver.registerReceiver(options.versionToken) { data, version ->
                     store.onReceive(data, version)

@@ -22,6 +22,7 @@ import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.anyOrNull
 import com.nhaarman.mockitokotlin2.argumentCaptor
+import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import kotlinx.atomicfu.atomic
@@ -338,7 +339,7 @@ class StoreTest {
         val provider = mock<DriverProvider> {
             on { willSupport(testKey) }.thenReturn(true)
         }
-        whenever(provider.getDriver<CrdtCount.Data>(any(), any())).thenReturn(driver)
+        whenever(provider.getDriver(any(), any(), eq(CrdtCount.Data::class))).thenReturn(driver)
 
         DriverFactory.register(provider)
 

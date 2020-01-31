@@ -52,12 +52,14 @@ DISABLED_LINT_CHECKS = [
     "TopLevelName",
 ]
 
-def _merge_lists(*lists):
-    result = {}
-    for x in lists:
-        for elem in x:
-            result[elem] = 1
-    return result.keys()
+# All supported Kotlin platforms.
+ALL_PLATFORMS = ["jvm", "js", "wasm"]
+
+# Default set of platforms for Kotlin libraries.
+DEFAULT_LIBRARY_PLATFORMS = ["jvm", "js"]
+
+# Default set of platforms for Kotlin particles.
+DEFAULT_PARTICLE_PLATFORMS = ["jvm", "wasm"]
 
 def arcs_kt_jvm_library(**kwargs):
     """Wrapper around kt_jvm_library for Arcs.
@@ -67,11 +69,34 @@ def arcs_kt_jvm_library(**kwargs):
     """
     constraints = kwargs.pop("constraints", ["android"])
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
+    exports = kwargs.pop("exports", [])
     kotlincopts = kwargs.pop("kotlincopts", [])
     kwargs["kotlincopts"] = _merge_lists(kotlincopts, KOTLINC_OPTS)
     if not IS_BAZEL:
         kwargs["constraints"] = constraints
         kwargs["disable_lint_checks"] = _merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
+
+    if exports:
+        # kt_jvm_library doesn't support the "exports" property. Instead, we
+        # will wrap it in a java_library rule and export everything that is
+        # needed from there.
+        name = kwargs["name"]
+        kt_name = name + _KT_SUFFIX
+        kwargs["name"] = kt_name
+
+        exports.append(kt_name)
+
+        if not IS_BAZEL:
+            java_kwargs = {"constraints": constraints}
+        else:
+            java_kwargs = {}
+
+        java_library(
+            name = name,
+            exports = exports,
+            visibility = kwargs["visibility"],
+            **java_kwargs
+        )
 
     kt_jvm_library(**kwargs)
 
@@ -85,38 +110,62 @@ def arcs_kt_native_library(**kwargs):
     kwargs["kotlincopts"] = _merge_lists(kotlincopts, KOTLINC_OPTS)
     kt_native_library(**kwargs)
 
+def arcs_kt_js_library(**kwargs):
+    """Wrapper around kt_js_library for Arcs.
+
+    Args:
+      **kwargs: Set of args to forward to kt_js_library
+    """
+
+    # Don't produce JS libs for blaze.
+    if not IS_BAZEL:
+        return
+
+    kotlincopts = kwargs.pop("kotlincopts", [])
+    kwargs["kotlincopts"] = _merge_lists(kotlincopts, KOTLINC_OPTS)
+    kt_js_library(**kwargs)
+
 def arcs_kt_library(
         name,
         srcs = [],
         deps = [],
-        visibility = None,
-        wasm = True,
-        jvm = True):
-    """Declares kotlin library targets for Kotlin particle sources.
-
-    Defines both jvm and wasm Kotlin libraries.
+        platforms = DEFAULT_LIBRARY_PLATFORMS,
+        exports = None,
+        visibility = None):
+    """Declares Kotlin library targets for multiple platforms.
 
     Args:
       name: String; Name of the library
       srcs: List; List of sources
       deps: List; List of dependencies
+      platforms: List; List of platforms for which to compile. Valid options
+          are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
+      exports: List; Optional list of deps to export from this build rule.
       visibility: List; List of visibilities
-      wasm: whether to build a wasm library
-      jvm: whether to build a jvm library
     """
-    if not jvm and not wasm:
-        fail("At least one of wasm or jvm must be built.")
+    _check_platforms(platforms)
 
-    if jvm:
+    if "jvm" in platforms:
         arcs_kt_jvm_library(
             name = name,
             # Exclude any wasm-specific srcs.
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
             deps = [_to_jvm_dep(dep) for dep in deps],
+            exports = exports,
             visibility = visibility,
         )
 
-    if wasm:
+    if "js" in platforms:
+        arcs_kt_js_library(
+            name = name + _JS_SUFFIX,
+            # Exclude any wasm-specific srcs.
+            # TODO: jvm srcs will be included here. That is not what we want.
+            srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
+            deps = [_to_js_dep(dep) for dep in deps],
+            visibility = visibility,
+        )
+
+    if "wasm" in platforms:
         arcs_kt_native_library(
             name = name + _WASM_SUFFIX,
             # Exclude any jvm-specific srcs.
@@ -130,9 +179,8 @@ def arcs_kt_particles(
         package,
         srcs = [],
         deps = [],
-        visibility = None,
-        wasm = True,
-        jvm = True):
+        platforms = DEFAULT_PARTICLE_PLATFORMS,
+        visibility = None):
     """Performs final compilation of wasm and bundling if necessary.
 
     Args:
@@ -142,17 +190,15 @@ def arcs_kt_particles(
         class of the same name, which must match the name of a particle defined
         in a .arcs file.
       deps: list of dependencies
+      platforms: List of platforms for which to compile. Valid options
+          are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
       visibility: list of visibilities
-      wasm: whether to build wasm libraries
-      jvm: whether to build a jvm library
     """
-    if not jvm and not wasm:
-        fail("At least one of wasm or jvm must be built.")
+    _check_platforms(platforms)
 
     deps = ARCS_SDK_DEPS + deps
 
-    if jvm:
-        # Create a jvm library just as a build test.
+    if "jvm" in platforms:
         arcs_kt_jvm_library(
             name = name + "-jvm",
             srcs = srcs,
@@ -160,7 +206,15 @@ def arcs_kt_particles(
             visibility = visibility,
         )
 
-    if wasm:
+    if "js" in platforms:
+        arcs_kt_js_library(
+            name = name + _JS_SUFFIX,
+            srcs = srcs,
+            deps = [_to_js_dep(dep) for dep in deps],
+            visibility = visibility,
+        )
+
+    if "wasm" in platforms:
         wasm_deps = [_to_wasm_dep(dep) for dep in deps]
 
         # Collect all the sources and annotation files in `wasm_srcs`.
@@ -205,76 +259,6 @@ def arcs_kt_particles(
             kt_target = ":" + native_binary_name,
             visibility = visibility,
         )
-
-def kt_jvm_and_js_library(
-        name,
-        srcs = [],
-        deps = [],
-        visibility = None,
-        exports = [],
-        **kwargs):
-    """Simultaneously defines JVM and JS kotlin libraries.
-
-    Args:
-      name: String; Name of the library
-      srcs: List; List of sources
-      deps: List; List of dependencies
-      exports: List; List of exported dependencies
-      visibility: List; List of visibilities
-      **kwargs: other arguments to forward to the kt_jvm_library and
-        kt_js_library rules
-    """
-
-    kt_name = name
-    js_name = "%s%s" % (name, _JS_SUFFIX)
-
-    if exports:
-        # kt_jvm_library doesn't support the "exports" property. Instead, we
-        # will wrap it in a java_library rule and export everything that is
-        # needed from there.
-        #
-        # Also, 'constraints' doesn't exist for java_library in Bazel, so we have to fork based on
-        # that as well.
-        kt_name = name + _KT_SUFFIX
-        if IS_BAZEL:
-            java_library(
-                name = name,
-                exports = exports + [kt_name],
-                visibility = visibility,
-            )
-        else:
-            java_library(
-                name = name,
-                exports = exports + [kt_name],
-                visibility = visibility,
-                constraints = ["android"],
-            )
-
-    arcs_kt_jvm_library(
-        name = kt_name,
-        srcs = srcs,
-        deps = [_to_jvm_dep(dep) for dep in deps],
-        visibility = visibility,
-        **kwargs
-    )
-
-    if IS_BAZEL:
-        js_kwargs = dict(**kwargs)
-        kt_js_library(
-            name = js_name,
-            srcs = srcs,
-            deps = [_to_js_dep(dep) for dep in deps],
-            **js_kwargs
-        )
-
-def _to_wasm_dep(dep):
-    last_part = dep.split("/")[-1]
-
-    index_of_colon = dep.find(":")
-    if (index_of_colon == -1):
-        return dep + (":%s%s" % (last_part, _WASM_SUFFIX))
-    else:
-        return dep + _WASM_SUFFIX
 
 def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = []):
     """Defines Kotlin Android test targets for a directory.
@@ -355,14 +339,40 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
             tags = tags,
         )
 
+def _check_platforms(platforms):
+    if len(platforms) == 0:
+        fail("You must specify at least one platform from: %s" %
+             ", ".join(ALL_PLATFORMS))
+
+    for platform in platforms:
+        if platform not in ALL_PLATFORMS:
+            fail(
+                "Unknown platform %s. Expected one of: %s.",
+                platform,
+                ", ".join(ALL_PLATFORMS),
+            )
+
+def _merge_lists(*lists):
+    result = {}
+    for x in lists:
+        for elem in x:
+            result[elem] = 1
+    return result.keys()
+
 def _to_jvm_dep(dep):
     return dep
 
 def _to_js_dep(dep):
+    return _to_dep_with_suffix(dep, _JS_SUFFIX)
+
+def _to_wasm_dep(dep):
+    return _to_dep_with_suffix(dep, _WASM_SUFFIX)
+
+def _to_dep_with_suffix(dep, suffix):
     last_part = dep.split("/")[-1]
 
     index_of_colon = dep.find(":")
     if (index_of_colon == -1):
-        return dep + (":%s%s" % (last_part, _JS_SUFFIX))
+        return dep + (":%s%s" % (last_part, suffix))
     else:
-        return dep + _JS_SUFFIX
+        return dep + suffix

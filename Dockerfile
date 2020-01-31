@@ -1,4 +1,4 @@
-# This file is used for the travis CI.
+# This is a fork of the tools/Dockerfile.CI with changes necessary for Google Cloud Build.
 
 FROM ubuntu:xenial
 
@@ -34,31 +34,48 @@ RUN mkdir -p $WORKSPACE
 WORKDIR $WORKSPACE
 
 # Install ktlint
-RUN (cd /usr/bin/ && curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && cd -)
-RUN chmod +x /usr/bin/ktlint
+RUN (cd /usr/bin/ && \
+    curl -L -s -O https://github.com/pinterest/ktlint/releases/download/0.35.0/ktlint && \
+    cd - && \
+    chmod +x /usr/bin/ktlint)
 
 # Install Nodejs & npm
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
-RUN apt-get install -y nodejs
+# Also, allows running script with privileged permission
+# i.e. scripts {...} at package.json. See unsafe-perm below.
+RUN (curl -sL https://deb.nodesource.com/setup_10.x | bash -  && \
+     apt-get install -y nodejs && \
+     npm set unsafe-perm true)
 
 # Install Android SDK
 ENV ANDROID_HOME "/sdk"
 COPY tools/android-sdk-packages.txt tools/android-sdk-packages.txt
 COPY tools/install-android-sdk tools/install-android-sdk
+COPY tools/logging.sh tools/logging.sh
 RUN tools/install-android-sdk ${ANDROID_HOME}
 
-# Allows running script with privileged permission
-# i.e. scripts {...} at package.json
-RUN npm set unsafe-perm true
 
-# Install Project
-COPY package.json $WORKSPACE/package.json
+# Install npm packages
+COPY concrete-storage/package.json concrete-storage/package.json
+RUN (cd concrete-storage && npm install)
+COPY package.json package.json
+COPY tools tools
+COPY config config
+COPY devtools devtools
 RUN npm install
 
-# Create bazel cache directory
-RUN mkdir -p /disk-cache/
+# Fetch external Bazel artifacts.
+# Copy over the WORKSPACE file, everything it imports, and bazelisk.
+COPY tools/bazelisk* tools/
+COPY build_defs/emscripten build_defs/emscripten
+COPY build_defs/kotlin_native build_defs/kotlin_native
+COPY emscripten_cache emscripten_cache
+COPY .bazelignore \
+     .bazelversion \
+     WORKSPACE \
+     BUILD.bazel \
+     ./
+RUN ./tools/bazelisk sync
 
-
-########
-
+# Copy the contents of the working dir. After this the image should be ready for
+# use.
 COPY . .

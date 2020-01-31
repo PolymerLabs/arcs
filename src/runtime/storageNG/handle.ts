@@ -118,9 +118,9 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     // TODO(shans): Be more principled about how to determine whether this is an
     // immediate mode handle or a standard handle.
     if (this.type instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type, (e) => this.createIdentityFor(e), this.storageProxy.getChannelConstructor());
+      this.serializer = new PreEntityMutationSerializer(this.type, (e) => {this.createIdentityFor(e);}, this.storageProxy.getChannelConstructor());
     } else if (this.type.getContainedType() instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => this.createIdentityFor(e), this.storageProxy.getChannelConstructor());
+      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => {this.createIdentityFor(e);}, this.storageProxy.getChannelConstructor());
     } else if (this.type.getContainedType() instanceof ReferenceType) {
       this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType, this.storageProxy.getChannelConstructor());
     } else {
@@ -209,7 +209,7 @@ interface ReferenceInt {
 }
 
 class ReferenceSerializer implements Serializer<ReferenceInt, ReferenceSer> {
-  constructor(private type: ReferenceType, private context: ChannelConstructor) {}
+  constructor(private readonly type: ReferenceType, private readonly context: ChannelConstructor) {}
 
   serialize(reference: ReferenceInt): ReferenceSer {
     return reference.dataClone();

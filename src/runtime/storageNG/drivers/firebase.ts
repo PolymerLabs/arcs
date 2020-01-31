@@ -17,6 +17,7 @@ import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
+import {Capabilities} from '../../capabilities.js';
 
 export {firebase};
 
@@ -27,7 +28,7 @@ export type FirebaseStorageKeyOptions = {
 };
 
 export class FirebaseStorageKey extends StorageKey {
-  public static readonly protocol = 'firebase'; // TODO: use everywhere
+  public static readonly protocol = 'firebase';
   public readonly databaseURL: string;
   public readonly projectId: string;
   public readonly apiKey: string;
@@ -35,7 +36,7 @@ export class FirebaseStorageKey extends StorageKey {
   public readonly domain: string;
 
   constructor(projectId: string, domain: string, apiKey: string, location: string) {
-    super('firebase');
+    super(FirebaseStorageKey.protocol);
     this.databaseURL = `${projectId}.${domain}`;
     this.domain = domain;
     this.projectId = projectId;
@@ -216,7 +217,7 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
   }
 
   willSupport(storageKey: StorageKey): boolean {
-    return storageKey.protocol === 'firebase';
+    return storageKey.protocol === FirebaseStorageKey.protocol;
   }
 
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
@@ -231,13 +232,12 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
 
   static register(cacheService: RuntimeCacheService, options: FirebaseStorageKeyOptions) {
     DriverFactory.register(new FirebaseStorageDriverProvider(cacheService));
-    StorageKeyParser.addParser('firebase', FirebaseStorageKey.fromString);
-    if (options) {
-      const {projectId, domain, apiKey} = options;
-      StorageKeyFactory.registerKeyCreator(
-          FirebaseStorageKey.protocol,
-          ({arcId}: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, arcId.toString()));
-    }
+    StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
+    const {projectId, domain, apiKey} = options;
+    StorageKeyFactory.registerKeyCreator(
+        FirebaseStorageKey.protocol,
+        Capabilities.persistent,
+        ({arcId}: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, arcId.toString()));
   }
 }
 

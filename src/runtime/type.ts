@@ -404,7 +404,7 @@ export class TypeVariable extends Type {
     this.variable = variable;
   }
 
-  static make(name: string, canWriteSuperset?: Type, canReadSubset?: Type): TypeVariable {
+  static make(name: string, canWriteSuperset: Type = null, canReadSubset: Type = null): TypeVariable {
     return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset));
   }
 
