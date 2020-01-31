@@ -9,6 +9,8 @@ arcs_kt_jvm_library(
     testonly = True,
     srcs = glob(["*.kt"]),
     deps = [
+        "//java/arcs/core/crdt/internal",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_coroutines",

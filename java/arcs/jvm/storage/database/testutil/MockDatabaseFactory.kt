@@ -45,15 +45,16 @@ class MockDatabaseFactory : DatabaseFactory {
     }
 }
 
+@Suppress("EXPERIMENTAL_API_USAGE")
 class MockDatabase : Database {
     private val clientMutex = Mutex()
     private var nextClientId = 1
-    private val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient>>()
+    val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient>>()
 
     private val clientFlow: Flow<DatabaseClient> =
         flow { clientMutex.withLock { clients.values }.forEach { emit(it.second) } }
 
-    val dataMutex = Mutex()
+    private val dataMutex = Mutex()
     val data = mutableMapOf<StorageKey, DatabaseData>()
 
     override suspend fun insertOrUpdate(
@@ -61,18 +62,20 @@ class MockDatabase : Database {
         data: DatabaseData,
         originatingClientId: Int?
     ): Int {
-        val version = dataMutex.withLock {
+        val (version, isNew) = dataMutex.withLock {
             val oldData = this.data[storageKey]
             if (oldData?.databaseVersion != data.databaseVersion) {
                 this.data[storageKey] = data
-                data.databaseVersion
+                data.databaseVersion to true
             } else {
-                oldData.databaseVersion
+                oldData.databaseVersion to false
             }
         }
 
-        clientFlow.onEach { it.onDatabaseUpdate(data, version, originatingClientId) }
-            .launchIn(CoroutineScope(coroutineContext))
+        if (isNew) {
+            clientFlow.onEach { it.onDatabaseUpdate(data, version, originatingClientId) }
+                .launchIn(CoroutineScope(coroutineContext))
+        }
 
         return version
     }

@@ -174,7 +174,7 @@ class DatabaseDriver<Data : Any>(
     private val database: Database
 ) : Driver<Data>, DatabaseClient {
     /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
-    private val clientId: Int = database.addClient(this)
+    /* internal */ val clientId: Int = database.addClient(this)
     private val localDataMutex = Mutex()
     private var localData: Data? by guardWith<Data?>(localDataMutex, null)
     private var localVersion: Int? by guardWith<Int?>(localDataMutex, null)
