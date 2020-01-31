@@ -15,6 +15,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.storage.database.DatabaseFactory
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runBlockingTest
@@ -23,6 +24,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Random
 
+@ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
 class AndroidSqliteDatabaseFactoryTest {
     private lateinit var factory: DatabaseFactory
