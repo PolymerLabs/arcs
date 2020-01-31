@@ -46,21 +46,32 @@ message Handle {
 
 }
 
+message HandleConnection {
+
+}
+
 message RequireSection {
     Recipe parent = 1;
 }
 
 message Recipe {
     string name = 1;
-    string localName = 2;
+    string local_name = 2;
     repeated RequireSection require = 3;
     repeated Particle particle = 4;
     repeated Handle handle = 5;
     // repeated Slot slot = 6;
 }
 
+// TODO(alxr) finish. This is a work-in-progress
 message Particle {
-
+    string name = 1;
+    string id = 2;
+    repeated string verb = 3;
+    repeated HandleConnection args = 4;
+    string pattern = 5;
+    bool is_external = 6;
+    string impl_file = 7;
 }
 
 message Id {
@@ -68,29 +79,29 @@ message Id {
     repeated string id_tree = 2;
 }
 
-message SourcePosition {
-    int32 offset = 1;
-    int32 line = 2;
-    int32 column = 3;
-}
-
-message SourceLocation {
-    string filename = 1;
-    SourcePosition start = 2;
-    SourcePosition end = 3;
-}
-
-enum ErrorSeverity {
-    UNKNOWN = 0;
-    ERROR = 1;
-    WARNING = 2;
-}
-
-message ManifestError {
-    SourceLocation location = 1;
-    string key = 2;
-    ErrorSeverity severity = 3;
-}
+//message SourcePosition {
+//    int32 offset = 1;
+//    int32 line = 2;
+//    int32 column = 3;
+//}
+//
+//message SourceLocation {
+//    string filename = 1;
+//    SourcePosition start = 2;
+//    SourcePosition end = 3;
+//}
+//
+//enum ErrorSeverity {
+//    UNKNOWN = 0;
+//    ERROR = 1;
+//    WARNING = 2;
+//}
+//
+//message ManifestError {
+//    SourceLocation location = 1;
+//    string key = 2;
+//    ErrorSeverity severity = 3;
+//}
 
 message Manifest {
     Id id = 1;
@@ -99,5 +110,5 @@ message Manifest {
     repeated Schema schema = 4;
     repeated Particle particle = 5;
     repeated Recipe recipe = 6;
-    repeated ManifestError error = 7;
+//    repeated ManifestError error = 7;
 }
