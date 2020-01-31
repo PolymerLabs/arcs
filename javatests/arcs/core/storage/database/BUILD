@@ -6,6 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 kt_jvm_library(
     name = "mock-database",
+    testonly = True,
     srcs = ["MockDatabaseFactory.kt"],
     deps = [
         "//java/arcs/core/crdt/internal",
