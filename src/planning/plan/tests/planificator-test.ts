@@ -163,7 +163,7 @@ describe('remote planificator', () => {
     return {consumePlanificator, producePlanificator};
   }
 
-  it(`consumes remotely produced gifts demo from FOOB`, async () => {
+  it(`consumes remotely produced gifts demo from`, async () => {
     let {consumePlanificator, producePlanificator} = await init(
         './src/runtime/tests/artifacts/Products/Products.recipes');
     let consumerUpdateCount = 0;
