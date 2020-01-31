@@ -37,7 +37,6 @@ import arcs.core.storage.referencemode.MessageQueue
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
-import arcs.core.storage.referencemode.Reference
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.referencemode.toBridgingData
 import arcs.core.storage.referencemode.toBridgingOp
@@ -582,7 +581,7 @@ class ReferenceModeStore private constructor(
     companion object {
         @Suppress("UNCHECKED_CAST")
         val CONSTRUCTOR =
-            StoreConstructor<CrdtData, CrdtOperationAtTime, Referencable> { options, dataClass ->
+            StoreConstructor<CrdtData, CrdtOperationAtTime, Referencable> { options, _ ->
                 val refableOptions =
                     requireNotNull(
                         /* ktlint-disable max-line-length */

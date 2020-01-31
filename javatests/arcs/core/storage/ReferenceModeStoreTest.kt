@@ -33,9 +33,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
-import arcs.core.storage.referencemode.Reference
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.referencemode.toReference
 import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass

@@ -16,18 +16,24 @@ STORAGE_KEY_SRCS = [
     "StorageKeyParser.kt",
 ]
 
+REFERENCE_SRCS = [
+    "Reference.kt",
+]
+
 kt_jvm_and_js_library(
     name = "storage",
     srcs = glob(
         ["*.kt"],
-        exclude = PROXY_SRCS + STORAGE_KEY_SRCS,
+        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS,
     ),
     exports = [
         ":proxy",
+        ":reference",
         ":storage_key",
     ],
     deps = [
         ":proxy",
+        ":reference",
         ":storage_key",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
@@ -47,6 +53,16 @@ kt_jvm_and_js_library(
 kt_jvm_and_js_library(
     name = "storage_key",
     srcs = STORAGE_KEY_SRCS,
+)
+
+kt_jvm_and_js_library(
+    name = "reference",
+    srcs = REFERENCE_SRCS,
+    deps = [
+        ":storage_key",
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt/internal",
+    ],
 )
 
 kt_jvm_and_js_library(

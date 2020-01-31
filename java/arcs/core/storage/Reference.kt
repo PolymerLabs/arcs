@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -9,15 +9,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage.referencemode
+package arcs.core.storage
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.internal.VersionMap
-import arcs.core.storage.StorageKey
 
 /**
- * [arcs.store.ReferenceModeStore] uses an expanded notion of Reference that also includes a
+ * [arcs.core.storage.ReferenceModeStore] uses an expanded notion of Reference that also includes a
  * [version] and a [storageKey].
  *
  * This allows stores to block on receiving an update to contained Entities, which keeps remote

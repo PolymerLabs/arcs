@@ -16,6 +16,7 @@ kt_jvm_and_js_library(
         # TODO: should we move VersionMap to the top-level crdt package if it's being used here?
         "//java/arcs/core/crdt/internal",
         "//java/arcs/core/storage:proxy",
+        "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage/referencemode",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",

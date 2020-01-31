@@ -12,10 +12,13 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.storage.driver",
     deps = [
         "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/testutil",
+        "//javatests/arcs/core/storage/database:mock-database",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",

@@ -18,11 +18,13 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.RawEntity
+import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.referencemode.BridgingOperation.AddToSet
 import arcs.core.storage.referencemode.BridgingOperation.ClearSingleton
 import arcs.core.storage.referencemode.BridgingOperation.RemoveFromSet
 import arcs.core.storage.referencemode.BridgingOperation.UpdateSingleton
+import arcs.core.storage.toReference
 
 /**
  * Represents a bridge between the [CrdtSet]/[CrdtSingleton]'s operations from the

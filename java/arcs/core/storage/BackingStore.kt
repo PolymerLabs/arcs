@@ -124,7 +124,7 @@ class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
 
     companion object {
         @Suppress("UNCHECKED_CAST")
-        val CONSTRUCTOR = StoreConstructor<CrdtData, CrdtOperation, Any?> { options, dataClass ->
+        val CONSTRUCTOR = StoreConstructor<CrdtData, CrdtOperation, Any?> { options, _ ->
             BackingStore(options as StoreOptions<CrdtData, CrdtOperation, Any?>)
         }
     }
