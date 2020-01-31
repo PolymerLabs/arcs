@@ -21,7 +21,7 @@ arcs_kt_particles(
         "DealingShoe.kt",
         "Player.kt",
     ],
-    jvm = False,
     package = "arcs.tutorials.blackjack",
+    platforms = ["wasm"],
     deps = [":blackjack_schemas"],
 )

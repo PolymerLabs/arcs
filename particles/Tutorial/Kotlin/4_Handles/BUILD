@@ -22,7 +22,7 @@ arcs_kt_schema(
 arcs_kt_particles(
     name = "Handles",
     srcs = glob(["*.kt"]),
-    jvm = False,
     package = "arcs.tutorials",
+    platforms = ["wasm"],
     deps = [":handles_schemas"],
 )

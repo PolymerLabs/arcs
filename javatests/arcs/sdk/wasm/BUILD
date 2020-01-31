@@ -32,8 +32,8 @@ arcs_kt_schema(
 arcs_kt_particles(
     name = "test-module",
     srcs = PARTICLE_TEST_SRCS,
-    jvm = False,
     package = "arcs.sdk.wasm",
+    platforms = ["wasm"],
     visibility = ["//visibility:public"],
     deps = [
         ":TestBase",
@@ -44,7 +44,7 @@ arcs_kt_particles(
 arcs_kt_library(
     name = "TestBase",
     srcs = PARTICLE_TEST_BASE_SRCS,
-    jvm = False,
+    platforms = ["wasm"],
     deps = [
         ":schemas",
         "//java/arcs/sdk",
