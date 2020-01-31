@@ -10,6 +10,6 @@ arcs_kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/util",
-        "//third_party/java/junit",
+        "//third_party/java/junit:junit-android",
     ],
 )
