@@ -84,7 +84,7 @@ def arcs_kt_jvm_library(**kwargs):
         kt_name = name + _KT_SUFFIX
         kwargs["name"] = kt_name
 
-        exports += [kt_name]
+        exports.append(kt_name)
 
         if not IS_BAZEL:
             java_kwargs = {"constraints": constraints}
