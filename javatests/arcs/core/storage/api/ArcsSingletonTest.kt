@@ -12,11 +12,12 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Log
-import arcs.core.util.testutil.initLogForTest
+import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -25,6 +26,9 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class ArcsSingletonTest {
+    @get:Rule
+    val logRule = LogRule()
+
     private val primitiveKey = RamDiskStorageKey("myThinger")
     private val entityKey =
         ReferenceModeStorageKey(RamDiskStorageKey("singleton"), RamDiskStorageKey("entity"))
@@ -40,7 +44,6 @@ class ArcsSingletonTest {
         )
 
     init {
-        initLogForTest()
         RamDiskDriverProvider()
     }
 
