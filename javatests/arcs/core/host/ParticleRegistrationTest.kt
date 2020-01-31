@@ -1,5 +1,6 @@
 package arcs.core.host
 
+import arcs.core.data.ParticleSpec
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmProdHost
 import arcs.sdk.Particle
@@ -38,6 +39,11 @@ class ParticleRegistrationTest {
 
     class DummyParticle : Particle
     class DummyHost : AbstractArcHost() {
+        override val hostName = this::class.java.canonicalName!!
+        override suspend fun isHostForSpec(spec: ParticleSpec): Boolean {
+            return this.registeredParticles().map { it.java.getCanonicalName() }
+                .contains(spec.location)
+        }
         init {
             runBlocking { registerParticle(DummyParticle::class) }
         }

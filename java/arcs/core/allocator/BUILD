@@ -9,8 +9,10 @@ kt_jvm_and_js_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/common",
+        "//java/arcs/core/data",
         "//java/arcs/core/host",
-        "//java/arcs/core/storage",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/sdk",
     ],
 )

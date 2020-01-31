@@ -80,6 +80,12 @@ class AllocatorTest {
     class ReadPerson : Particle
 
     open class TestingHost : AbstractArcHost() {
+        override val hostName = this::class.java.canonicalName!!
+        override suspend fun isHostForSpec(spec: ParticleSpec): Boolean {
+            return this.registeredParticles().map { it.java.getCanonicalName() }
+                .contains(spec.location)
+        }
+
         var started = mutableListOf<PlanPartition>()
 
         override suspend fun startArc(partition: PlanPartition) {

@@ -11,6 +11,7 @@
 
 package arcs.core.host
 
+import arcs.core.data.ParticleSpec
 import arcs.core.data.PlanPartition
 import arcs.sdk.Particle
 import kotlin.reflect.KClass
@@ -50,4 +51,12 @@ interface ArcHost {
      */
     suspend fun stopArc(partition: PlanPartition)
     // TODO: HandleMessage
+
+    /** A canonical identifying ID for this host. */
+    val hostName: String
+
+    /**
+     * Returns true if the provided [ParticleSpec] can be loaded by this [ArcHost].
+     */
+    suspend fun isHostForSpec(spec: ParticleSpec): Boolean
 }

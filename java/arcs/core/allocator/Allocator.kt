@@ -12,7 +12,6 @@ package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.common.Id
-import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Plan
 import arcs.core.data.PlanPartition
@@ -68,7 +67,7 @@ class Allocator(val hostRegistry: HostRegistry) {
     // VisibleForTesting
     suspend fun lookupArcHost(arcHost: String) =
         hostRegistry.availableArcHosts().filter { it ->
-            it::class.java.canonicalName == arcHost
+            it.hostName == arcHost
         }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
 
     /**
@@ -106,7 +105,7 @@ class Allocator(val hostRegistry: HostRegistry) {
 
     /**
      * Slice plan into pieces grouped by [ArcHost], each group consisting of a [PlanPartition]
-     * that lists [HandleSpec], [ParticleSpec], and [HandleConnectionSpec] needed for that host.
+     * that lists [ParticleSpec] needed for that host.
      */
     private suspend fun computePartitions(arcId: ArcId, plan: Plan): List<PlanPartition> =
         plan.particles
@@ -115,7 +114,7 @@ class Allocator(val hostRegistry: HostRegistry) {
             .map { (host, particles) ->
                 PlanPartition(
                     arcId.toString(),
-                    host::class.java.canonicalName!!,
+                    host.hostName,
                     particles
                 )
             }
@@ -127,8 +126,6 @@ class Allocator(val hostRegistry: HostRegistry) {
      */
     private suspend fun findArcHostBySpec(spec: ParticleSpec): ArcHost =
         hostRegistry.availableArcHosts()
-            .filter { host ->
-                host.registeredParticles().map { clazz -> clazz.java.getCanonicalName() }
-                    .contains(spec.location)
-            }.firstOrNull() ?: throw ParticleNotFoundException(spec)
+            .firstOrNull { host -> host.isHostForSpec(spec) }
+            ?: throw ParticleNotFoundException(spec)
 }
