@@ -579,15 +579,8 @@ export class Arc implements ArcInterface {
 
   // Critical section for instantiate,
   private async _doInstantiate(recipe: Recipe): Promise<void> {
-    const {handles, particles, slots} = await this.mergeIntoActiveRecipe(recipe);
-
+    const {particles} = await this.mergeIntoActiveRecipe(recipe);
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
-
-    // if (this.pec.slotComposer) {
-    //   // TODO: pass slot-connections instead
-    //   await this.pec.slotComposer.initializeRecipe(this, particles);
-    // }
-
     if (this.inspector) {
       await this.inspector.recipeInstantiated(particles, this.activeRecipe.toString());
     }

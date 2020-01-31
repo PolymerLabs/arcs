@@ -287,6 +287,8 @@ export class Suggestion {
       return false;
     }
     const usesRemoteNonRootSlots = this.plan.slots.some(slot => {
+      // TODO(sjmiles): `contexts` no longer exist, but slot information is elsewhere.
+      // Plan is to collate slot information directly into slot-composer; revisit after that.
       return !isRoot(slot); // && Boolean(arc.pec.slotComposer.findContextById(slot.id));
     });
     if (!usesRemoteNonRootSlots) {

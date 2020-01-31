@@ -26,7 +26,6 @@ import {Descendant} from '../runtime/recipe/walker.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {Tracing} from '../tracelib/trace.js';
 
-//import {PlanningModalityHandler} from './planning-modality-handler.js';
 import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
@@ -55,7 +54,6 @@ class RelevantContextRecipes extends Strategy {
       if (!recipe.isCompatible(modality)) {
         continue;
       }
-
       recipe = recipe.clone();
       const options = {errors: new Map()};
       if (recipe.normalize(options)) {
@@ -70,7 +68,6 @@ class RelevantContextRecipes extends Strategy {
     if (generation !== 0) {
       return [];
     }
-
     return this._recipes.map(recipe => ({
       result: recipe,
       score: 1,
@@ -105,10 +102,7 @@ export class RecipeIndex {
       id: idGenerator.newArcId('index-stub'),
       context: new Manifest({id: idGenerator.newArcId('empty-context')}),
       loader: arc.loader,
-      slotComposer: new SlotComposer({
-        //modalityHandler: PlanningModalityHandler.createHeadlessHandler(),
-        noRoot: true
-      }),
+      slotComposer: new SlotComposer({noRoot: true}),
       stub: true
     });
     const strategizer = new Strategizer(

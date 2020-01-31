@@ -42,6 +42,7 @@ const configOptions = {
   },
   arc: {
     aliases: ['arckey'],
+    // TODO(sjmiles): disable for now as persistence is defeated for StorageNG
     //persistToUrl: true
   },
   search: {

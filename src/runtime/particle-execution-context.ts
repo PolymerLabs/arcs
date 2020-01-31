@@ -107,10 +107,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return [hostedSlotId, () => callback(hostedSlotId)];
       }
 
-      // onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content) {
-      //   transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
-      // }
-
       onStop(): void {
         if (global['close'] && !global['inWorkerPool']) {
           global['close']();
@@ -139,7 +135,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
       onAwaitIdle(version: number) {
         pec.idle.then(a => {
-          // TODO: dom-particles update is async, this is a workaround to allow dom-particles to
+          // TODO: ui-particle's update is async, this is a workaround to allow ui-particles to
           // update relevance, after handles are updated. Needs better idle signal.
           setTimeout(() => this.Idle(version, pec.relevance), 0);
         });
@@ -149,15 +145,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         particle.fireEvent(slotName, event);
       }
 
-      // onStartRender(particle: Particle, slotName: string, providedSlots: ReadonlyMap<string, string>, contentTypes: string[]) {
-      //   particle.addSlotProxy(new SlotProxy(this, particle, slotName, providedSlots));
-      //   particle.renderSlot(slotName, contentTypes);
-      // }
-
-      // onStopRender(particle: Particle, slotName: string) {
-      //   assert(particle.hasSlotProxy(slotName), `Stop render called for particle ${particle.spec.name} slot ${slotName} without start render being called.`);
-      //   particle.removeSlotProxy(slotName);
-      // }
     }(port);
 
     this.pecId = pecId;
@@ -372,10 +359,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         await this.assignHandle(particle, oldParticle.spec, id, handleMap, registerList, p);
         storageList.forEach(storage => storage.unpause());
         resolve();
-        // Transfer the slot proxies from the old particle to the new one
-        // for (const name of oldParticle.getSlotNames()) {
-        //   oldParticle.getSlot(name).rewire(particle);
-        // }
       }]);
     }
     return result;

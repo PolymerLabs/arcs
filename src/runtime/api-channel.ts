@@ -26,7 +26,7 @@ import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ActiveStore, ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
+import {ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
 import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
@@ -530,10 +530,6 @@ export abstract class PECOuterPort extends APIPort {
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
   AwaitIdle(@Direct version: number) {}
-  //StartRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @ObjectMap(MappingType.Direct, MappingType.Direct) providedSlots: Map<string, string>, @List(MappingType.Direct) contentTypes: string[]) {}
-  //StopRender(@Mapped particle: recipeParticle.Particle, @Direct slotName: string) {}
-
-  //abstract onRender(particle: recipeParticle.Particle, slotName: string, content: Content);
 
   // TODO: Delete these when the old storage code is deleted. They won't be
   // needed anymore.
@@ -568,12 +564,10 @@ export abstract class PECOuterPort extends APIPort {
 
   abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: recipeParticle.Particle, transformationSlotName: string, handleId: string);
   CreateSlotCallback(@RemoteIgnore @Initializer slot: {}, @RemoteMapped callback: number, @Direct hostedSlotId: string) {}
-  //InnerArcRender(@Mapped transformationParticle: recipeParticle.Particle, @Direct transformationSlotName: string, @Direct hostedSlotId: string, @Direct content: Content) {}
 
   abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
   abstract onReportExceptionInHost(exception: PropagatedException);
 
-  // TODO(sjmiles): experimental `services` impl
   abstract onServiceRequest(particle: recipeParticle.Particle, request: {}, callback: number);
 
   abstract onSystemTraceBegin(tag: string, cookie: number);
@@ -606,11 +600,7 @@ export abstract class PECInnerPort extends APIPort {
   abstract onUIEvent(particle: Particle, slotName: string, event: {});
   abstract onSimpleCallback(callback: Consumer<{}>, data: {});
   abstract onAwaitIdle(version: number);
-  //abstract onStartRender(particle: Particle, slotName: string, providedSlots: Map<string, string>, contentTypes: string[]);
-  //abstract onStopRender(particle: Particle, slotName: string);
 
-  //Render(@Mapped particle: Particle, @Direct slotName: string, @Direct content: Content) {}
-  // TODO(sjmiles): alternate render path for slotObserver (UiBroker)
   Output(@Mapped particle: Particle, @Direct content: {}) {}
 
   InitializeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{version: number}>) {}
@@ -645,7 +635,6 @@ export abstract class PECInnerPort extends APIPort {
   ArcMapHandle(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
   abstract onMapHandleCallback(callback: Consumer<string>, id: string);
 
-  // TODO(sjmiles): experimental `services` impl
   ServiceRequest(@Mapped particle: Particle, @Direct content: {}, @LocalMapped callback: Function) {}
 
   SystemTraceBegin(@Direct tag: string, @Direct cookie: number) {}
@@ -653,7 +642,6 @@ export abstract class PECInnerPort extends APIPort {
 
   ArcCreateSlot(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped transformationParticle: Particle, @Direct transformationSlotName: string, @Direct handleId: string) {}
   abstract onCreateSlotCallback(callback: Consumer<string>, hostedSlotId: string);
-  //abstract onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotID: string, content: Content);
 
   ArcLoadRecipe(@RemoteMapped arc: {}, @Direct recipe: string, @LocalMapped callback: Consumer<{error?: string}>) {}
 

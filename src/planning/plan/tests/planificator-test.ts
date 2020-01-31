@@ -60,7 +60,7 @@ describe('planificator', () => {
   });
 });
 
-describe.skip('remote planificator', () => {
+describe('remote planificator', () => {
   // TODO: support arc storage key be in PouchDB as well.
   let arcStorageKey;
 
@@ -163,7 +163,7 @@ describe.skip('remote planificator', () => {
     return {consumePlanificator, producePlanificator};
   }
 
-  it(`consumes remotely produced gifts demo from FOOB`, async () => {
+  it(`consumes remotely produced gifts demo from`, async () => {
     let {consumePlanificator, producePlanificator} = await init(
         './src/runtime/tests/artifacts/Products/Products.recipes');
     let consumerUpdateCount = 0;
@@ -200,9 +200,6 @@ describe.skip('remote planificator', () => {
 
     // Accept suggestion.
     producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
-    // TODO: There is a redundant `MuxedProductItem.` suggestion, get rid of it.
-    // TODO(sjmiles): doesn't work after slot-consumer changes, probably because of handle
-    // attachment changes and SlotUtils::slotMatches
     await verifyReplanningAndConsuming(3, ['Check shipping', 'Check manufacturer information']);
 
     assert.notStrictEqual(producePlanificator.producer.result, consumePlanificator.consumer.result);
@@ -215,6 +212,7 @@ describe.skip('remote planificator', () => {
     // await verifyConsumerResults(5);
   });
 
+  // TODO(sjmiles): missing information about skip decision
   it.skip(`merges remotely produced suggestions`, async () => {
     // Planning with products manifest.
     const productsManifestString = `

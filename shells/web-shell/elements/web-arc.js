@@ -81,10 +81,7 @@ export class WebArc extends Xen.Debug(Xen.Async, log) {
   }
   createHost() {
     log('creating host');
-    let {context, storage, composer, config} = this.props;
-    // if (config.suggestionContainer) {
-    //   this.containers.suggestions = config.suggestionContainer;
-    // }
+    let {context, storage, composer} = this.props;
     if (!composer) {
       composer = new SlotComposer();
     }
