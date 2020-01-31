@@ -565,6 +565,30 @@ ${particleStr1}
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
   });
+  it('generates helpful type errors in recipes', async () => {
+    const manifest = await parseManifest(`
+      particle P in 'a.js'
+        outV: writes * {name: Text, age: Number}
+
+      particle Q in 'a.js'
+        inV: reads * {first_name: Text, age: Number}
+
+      recipe
+        val: create *
+        P
+          outV: writes val
+        Q
+          inV: reads val`);
+    const verify = (manifest: Manifest) => {
+      const recipe = manifest.recipes[0];
+      const options = {errors: new Map()};
+      assert.isFalse(recipe.normalize(options), 'expected type error');
+      const errors = [...options.errors.values()];
+      assert.sameMembers(errors, [`Type validations failed for handle 'val: create': could not guarantee variable ~ meets read requirements * {first_name: Text, age: Number} with write guarantees * {name: Text, age: Number}`], 'expected type error');
+    };
+    verify(manifest);
+    verify(await parseManifest(manifest.toString()));
+  });
   it('can construct manifest containing schema with refinement types', async () => {
     const manifest = await parseManifest(`
       schema Foo
