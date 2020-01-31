@@ -45,6 +45,13 @@ function outputName(baseName: string): string {
   return baseName.replace(/\.arcs$/, '.json');
 }
 
+function toLiteral(manifest: Manifest): object {
+  const lit = {};
+  lit['particles'] = manifest.allParticles.map(p => p.toLiteral());
+  lit['schemas'] = manifest.allSchemas.map(s => s.toLiteral());
+  return lit;
+}
+
 async function processFile(src: string) {
   if (!fs.existsSync(src)) {
     throw new Error(`File not found: ${src}`);
@@ -58,8 +65,9 @@ async function processFile(src: string) {
   if (manifest.errors.length) {
     return;
   }
+
   const outFile = fs.openSync(outPath, 'w');
-  fs.writeSync(outFile, '{"TODO": "manifest goes here"}');
+  fs.writeSync(outFile, JSON.stringify(toLiteral(manifest)));
   fs.closeSync(outFile);
 }
 
