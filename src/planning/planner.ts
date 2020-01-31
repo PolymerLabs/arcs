@@ -212,33 +212,35 @@ export class Planner implements InspectablePlanner {
     })));
     const suggestionResults = ([] as Suggestion[]).concat(...results);
 
-    debugger;
-    const dump = [];
-    generations.forEach(gen => {
-      const result = [];
-      gen.generated.forEach(g => {
-        if (g.result /*&& g.result.name*/) {
-          const options = {
-            errors: new Map(),
-            showUnresolved: true
-          };
-          const resolved = g.result.isResolved(options);
-          const data = {
-            name: g.result.name || g.result.toString().slice(0, 80),
-            resolved
-          };
-          if (!resolved) {
-            data["errors"] = [...options.errors].map(([n, v]) => `${n} => ${v}`);
-            data["unresolved"] = options["details"];
+    const logStrategyResults = false;
+    if (logStrategyResults) {
+      const dump = [];
+      generations.forEach(gen => {
+        const result = [];
+        gen.generated.forEach(g => {
+          if (g.result /*&& g.result.name*/) {
+            const options = {
+              errors: new Map(),
+              showUnresolved: true
+            };
+            const resolved = g.result.isResolved(options);
+            const data = {
+              name: g.result.name || g.result.toString().slice(0, 80),
+              resolved
+            };
+            if (!resolved) {
+              data["errors"] = [...options.errors].map(([n, v]) => `${n} => ${v}`);
+              data["unresolved"] = options["details"];
+            }
+            result.push(data);
           }
-          result.push(data);
+        })
+        if (result.length) {
+          dump.push(result);
         }
-      })
-      if (result.length) {
-        dump.push(result);
-      }
-    });
-    console.log(JSON.stringify(dump, null, '  '));
+      });
+      console.log(JSON.stringify(dump, null, '  '));
+    }
 
     return trace.endWith(suggestionResults);
   }

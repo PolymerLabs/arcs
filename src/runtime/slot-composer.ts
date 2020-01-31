@@ -75,6 +75,10 @@ export class SlotComposer {
       //containerByName['root'] = opts.rootContainer;
     //}
 
+    // TODO(sjmiles): IIUC, contexts are used to track root slots
+    // *and* slots in the current activeRecipe, these are both
+    // considered _remote_ slots, _local_ slots belong only
+    // to a candidate recipe. See SlotUtils::findAllSlotCandidates
     Object.keys(opts.containers).forEach(slotName => {
       const context = this.createContextForContainer(slotName);
       //const context = ProvidedSlotContext.createContextForContainer(
@@ -107,7 +111,9 @@ export class SlotComposer {
   // }
 
   getAvailableContexts() {
-    return this._contexts;
+    return this._contexts.concat(this.arc.activeRecipe.slots);
+    //console.log('getAvailableContexts:', this.arc.activeRecipe.slots);
+    //return this._contexts;
   }
 
   // getSlotConsumer(particle: Particle, slotName: string): SlotConsumer {

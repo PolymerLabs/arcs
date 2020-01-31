@@ -93,10 +93,12 @@ export class SlotUtils {
       return false;
     }
 
+    // TODO(sjmiles): semantic loss (iiuc) from removing SlotConsumer/SlotContext machinery (but it's the only one)
     // Match handles of the provided slot with the slot-connection particle's handles.
     if (!SlotUtils.handlesMatch(particle, slot)) {
       return false;
     }
+
     return true;
   }
 
