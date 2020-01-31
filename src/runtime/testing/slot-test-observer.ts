@@ -50,8 +50,6 @@ export class SlotTestObserver extends AbstractSlotObserver {
     this.strict = options.strict != undefined ? options.strict : true;
     this.logging = Boolean(options.logging);
     this.debugMessages = [];
-    // Clear all cached templates
-    //HeadlessSlotDomConsumer.clearCache();
   }
 
   /**
