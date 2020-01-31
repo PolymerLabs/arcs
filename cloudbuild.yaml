@@ -28,6 +28,7 @@ steps:
   args: [
     'run', '--rm', 'arcs-base',
     'tools/local-presubmit',
+    '--bazelrc=tools/travis.bazelrc',
   ]
   waitFor: ['build-image']
 
