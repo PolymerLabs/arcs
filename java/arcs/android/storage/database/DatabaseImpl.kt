@@ -78,7 +78,7 @@ class DatabaseImpl(
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
-    override fun <Data : DatabaseData> addClient(client: DatabaseClient<Data>): Int {
+    override fun addClient(client: DatabaseClient): Int {
         TODO("not implemented")
     }
 
@@ -86,10 +86,10 @@ class DatabaseImpl(
         TODO("not implemented")
     }
 
-    override suspend fun <Data : DatabaseData> get(
+    override suspend fun get(
         storageKey: StorageKey,
-        dataType: KClass<Data>
-    ): Data? {
+        dataType: KClass<out DatabaseData>
+    ): DatabaseData? {
         TODO("not implemented")
     }
 

@@ -172,7 +172,7 @@ class DatabaseDriver<Data : Any>(
     private val dataClass: KClass<Data>,
     private val schemaLookup: (String) -> Schema?,
     private val database: Database
-) : Driver<Data>, DatabaseClient<DatabaseData> {
+) : Driver<Data>, DatabaseClient {
     /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
     private val clientId: Int = database.addClient(this)
     private val localDataMutex = Mutex()

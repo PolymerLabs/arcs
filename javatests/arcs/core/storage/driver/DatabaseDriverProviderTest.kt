@@ -24,15 +24,15 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.DatabaseFactory
-import arcs.core.storage.database.MockDatabaseFactory
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.jvm.storage.database.testutil.MockDatabaseFactory
 import com.google.common.truth.Truth.assertThat
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.coroutines.coroutineContext
 
 /** Tests for [RamDiskDriverProvider]. */
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -152,8 +152,8 @@ class DatabaseDriverProviderTest {
         assertThat(singletonDriver.storageKey).isEqualTo(key)
     }
 
-    private suspend fun databaseFactory(): DatabaseFactory =
-        databaseFactory ?: MockDatabaseFactory(coroutineContext).also { databaseFactory = it}
+    private fun databaseFactory(): DatabaseFactory =
+        databaseFactory ?: MockDatabaseFactory().also { databaseFactory = it}
 
     companion object {
         private val DUMMY_SCHEMA = Schema(
