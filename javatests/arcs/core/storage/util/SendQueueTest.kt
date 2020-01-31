@@ -124,12 +124,8 @@ class SendQueueTest {
         }
 
         val references = listOf(
-            Reference(
-                "foo", RamDiskStorageKey("foo"), VersionMap("me" to 1)
-            ),
-            Reference(
-                "bar", RamDiskStorageKey("bar"), VersionMap("me" to 1)
-            )
+            Reference("foo", RamDiskStorageKey("foo"), VersionMap("me" to 1)),
+            Reference("bar", RamDiskStorageKey("bar"), VersionMap("me" to 1))
         )
 
         sendQueue.enqueueBlocking(references, ::blockingSend)

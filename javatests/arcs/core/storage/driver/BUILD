@@ -15,6 +15,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/testutil",
         "//javatests/arcs/core/storage/database:mock-database",

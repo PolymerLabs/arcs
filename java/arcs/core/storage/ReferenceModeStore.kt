@@ -444,9 +444,7 @@ class ReferenceModeStore private constructor(
                 // If the version that was requested is newer than what the backing store has,
                 // consider it pending.
                 if (version dominates backingModel.versionMap) {
-                    pendingIds += Reference(
-                        refId, backingStore.storageKey, version
-                    )
+                    pendingIds += Reference(refId, backingStore.storageKey, version)
                 }
             }
         }
@@ -479,9 +477,7 @@ class ReferenceModeStore private constructor(
                 val version = value.versionMap
                 outgoing[refId] = CrdtSet.DataValue(
                     version.copy(),
-                    Reference(
-                        refId, backingStore.storageKey, version.copy()
-                    )
+                    Reference(refId, backingStore.storageKey, version.copy())
                 )
             }
             return outgoing
