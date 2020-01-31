@@ -87,18 +87,14 @@ export class SlotUtils {
     if (!SlotUtils.specMatch(slotSpec, slot.spec)) {
       return false;
     }
-
     const potentialSlotConn = particle.getSlandleConnectionBySpec(slotSpec);
     if (!SlotUtils.tagsOrNameMatch(slotSpec, slot.spec, potentialSlotConn, slot)) {
       return false;
     }
-
-    // TODO(sjmiles): semantic loss (iiuc) from removing SlotConsumer/SlotContext machinery (but it's the only one)
     // Match handles of the provided slot with the slot-connection particle's handles.
     if (!SlotUtils.handlesMatch(particle, slot)) {
       return false;
     }
-
     return true;
   }
 

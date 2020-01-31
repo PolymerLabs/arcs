@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
 import {APIPort, PECOuterPort, PECInnerPort} from '../api-channel.js';
 
 class Registrar {
@@ -85,7 +84,6 @@ describe('API channel', function() {
       onHandleToList() {}
       onIdle() {}
       onIntializeProxy() {}
-      onRender() {}
       onReportExceptionInHost() {}
       onServiceRequest() {}
       onStreamCursorClose() {}
@@ -113,9 +111,7 @@ describe('API channel', function() {
       onReloadParticles() {}
       onMapHandleCallback() {}
       onSimpleCallback() {}
-      //onStartRender() {}
       onStop() {}
-      //onStopRender() {}
       onUIEvent() {}
 
       constructor() {

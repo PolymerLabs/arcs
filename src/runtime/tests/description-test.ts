@@ -10,7 +10,6 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-//import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {Description} from '../description.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
@@ -47,25 +46,7 @@ const tests = [
       assert.strictEqual(description.getArcDescription(), expectedSuggestion);
       return description;
     }
-  },
-  // {
-  //   name: 'dom',
-  //   verifySuggestion: async ({arc, relevance}: VerifySuggestionOptions, expectedSuggestion) => {
-  //     const description = await Description.create(arc, relevance);
-
-  //     // Use an any variable to override the default string return type
-  //     // tslint:disable-next-line: no-any
-  //     const suggestion = description.getArcDescription(DescriptionDomFormatter) as any;
-  //     let result = suggestion.template.replace(/<[/]?span>/g, '').replace(/<[/]?b>/g, '');
-  //     Object.keys(suggestion.model).forEach(m => {
-  //       assert.isTrue(result.indexOf(`{{${m}}}`) >= 0);
-  //       result = result.replace(new RegExp(`{{${m}}}`, 'g'), suggestion.model[m]);
-  //       assert.isFalse(result.indexOf(`{{${m}}}`) >= 0);
-  //     });
-  //     assert.strictEqual(result, expectedSuggestion);
-  //     return description;
-  //   }
-  // },
+  }
 ];
 
 describe('Description', () => {
@@ -736,8 +717,6 @@ recipe
 
       const recipeDescription = description.getRecipeSuggestion();
       assert.strictEqual(recipeDescription, expectedDescription);
-      // const recipeDescriptionWithFormatter = description.getRecipeSuggestion(DescriptionDomFormatter);
-      // assert.deepEqual(recipeDescriptionWithFormatter, expectedDescription);
     };
 
     await verify(`recipe`, undefined);

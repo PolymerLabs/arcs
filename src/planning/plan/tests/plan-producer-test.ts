@@ -90,13 +90,11 @@ describe('plan producer', () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.load('./src/runtime/tests/artifacts/Products/Products.recipes', loader, {memoryProvider});
-    //const context = await Manifest.load('./particles/Products/Products.arcs', loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
     const suggestions = await StrategyTestHelper.planForArc(
         runtime.newArc('demo', storageKeyPrefixForTest())
     );
-    //console.log(suggestions.map(s => s.descriptionText));
     const store = await Planificator['_initSuggestStore'](arc, storageKeyForTest(arc.id));
     assert.isNotNull(store);
     const producer = new TestPlanProducer(arc, store);

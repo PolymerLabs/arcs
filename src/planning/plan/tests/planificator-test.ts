@@ -102,7 +102,6 @@ describe('remote planificator', () => {
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex) {
     const suggestion = consumePlanificator.consumer.result.suggestions[suggestionIndex];
     await consumePlanificator.arc.instantiate(suggestion.plan);
-    //await consumePlanificator.consumer.result.suggestions[suggestionIndex].instantiate(consumePlanificator.arc);
     const serialization = await consumePlanificator.arc.serialize();
     //
     producePlanificator.arc.dispose();

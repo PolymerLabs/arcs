@@ -23,16 +23,13 @@ const manifestFile = 'src/tests/source/schemas.arcs';
 
 class StubWasmLoader extends Loader {
   public reloaded = false;
-
   resolve(path: string) {
     return (path[0] === '$') ? `RESOLVED(${path})`: path;
   }
-
   async loadBinaryResource(path: string): Promise<ArrayBuffer> {
     const file = this.reloaded ? 'wasm-particle-new.wasm' : 'wasm-particle-old.wasm';
     return super.loadBinaryResource(`src/tests/source/${file}`);
   }
-
   clone(): StubWasmLoader {
     return this;
   }
@@ -41,7 +38,6 @@ class StubWasmLoader extends Loader {
 describe('Hot Code Reload for JS Particle', async () => {
   beforeEach(() => {
     const cacheService = new RuntimeCacheService();
-    //HeadlessSlotDomConsumer.setCacheService(cacheService);
     VolatileStorage.setStorageCache(cacheService);
   });
 
@@ -202,9 +198,8 @@ describe('Hot Code Reload for WASM Particle', async () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    //const slotConsumer = slotComposer.consumers[0] as HeadlessSlotDomConsumer;
-
     // TODO(sjmiles): render data no longer captured by slot objects
+    //const slotConsumer = slotComposer.consumers[0] as HeadlessSlotDomConsumer;
     // assert.deepStrictEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '10'});
     // assert.deepStrictEqual(slotConsumer._content.template, `<div>Hello <span>{{name}}</span>, old age: <span>{{age}}</span></div>`);
 

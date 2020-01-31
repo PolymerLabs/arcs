@@ -152,9 +152,6 @@ export class Runtime {
     // a Runtime instance and forge ahead. This is only temporary until we move
     // to the new storage stack.
     VolatileStorage.setStorageCache(this.cacheService);
-    // TODO(wkorman): UI Broker refactor is underway and will change the
-    // Slot related infrastructure, so the below is only temporary.
-    //SlotDomConsumer.setCacheService(this.cacheService);
     this.loader = loader || new Loader();
     this.pecFactory = pecFactory;
     this.composerClass = composerClass || SlotComposer;

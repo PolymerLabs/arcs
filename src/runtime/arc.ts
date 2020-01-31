@@ -177,9 +177,6 @@ export class Arc implements ArcInterface {
     // Slot contexts and consumers from inner and outer arcs can be interwoven. Slot composer
     // is therefore disposed in its entirety with an outer Arc's disposal.
     if (!this.isInnerArc && this.pec.slotComposer) {
-      // Just a sanity check that we're not disposing a SlotComposer used by some other arc.
-      const allArcs = this.allDescendingArcs;
-      //this.pec.slotComposer.consumers.forEach(consumer => assert(allArcs.includes(consumer.arc)));
       this.pec.slotComposer.dispose();
     }
 

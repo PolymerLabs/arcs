@@ -135,9 +135,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await flags.set(new flags.entityClass({template: true, model: true}));
       await arc.idle;
 
-      // TODO(sjmiles) Fix Me
-      // // First renderSlot call is initiated by the runtime; remaining ones are triggered by writing
-      // // to the 'flags' handle.
+      // TODO(sjmiles): modify slotTestObserver to capture similar information
+      // First renderSlot call is initiated by the runtime; remaining ones are triggered by writing
+      // to the 'flags' handle.
       // assert.deepStrictEqual(slotComposer.received, [
       //   ['RenderTest', 'root', {template: 'abc', model: {foo: 'bar'}}],
       //   ['RenderTest', 'root', {model: {foo: 'bar'}}],
@@ -153,6 +153,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await data.set(new data.entityClass({txt: 'update'}));
       await arc.idle;
 
+      // TODO(sjmiles): modify slotTestObserver to capture similar information
       // First renderSlot call is initiated by the runtime, before handles are synced.
       // With auto-render enabled, the second call occurs after sync and the third on handle update.
       // assert.deepStrictEqual(slotComposer.received, [
@@ -163,14 +164,14 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     it('fireEvent', async () => {
-      const {arc, stores, slotObserver} = await setup('EventsTest');
+      const {arc, stores} = await setup('EventsTest');
       const output = await singletonHandleForTest(arc, stores.get('output'));
 
-      //const particle = slotComposer.consumers[0].consumeConn.particle;
-      //arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
-      //await arc.idle;
+      const particle = arc.activeRecipe.particles[0];
+      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
+      await arc.idle;
 
-      //assert.deepStrictEqual(await output.get(), {txt: 'event:root:icanhazclick:fooBar'});
+      assert.deepStrictEqual(await output.get(), {txt: 'event:root:icanhazclick:fooBar'});
     });
 
     it('serviceRequest / serviceResponse / resolveUrl', async () => {
@@ -249,7 +250,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const sendEvent = async handler => {
         await arc.idle;
         arc.pec.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
-        //arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
         await arc.idle;
       };
 
@@ -290,7 +290,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const sendEvent = async handler => {
         await arc.idle;
         arc.pec.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
-        //arc.pec.sendEvent(arc.pec.slotComposer.consumers[0].consumeConn.particle, 'root', {handler});
         await arc.idle;
       };
 

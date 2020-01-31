@@ -9,12 +9,8 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-//import {HeadlessSlotDomConsumer} from '../headless-slot-dom-consumer.js';
-//import {InterfaceType} from '../type.js';
-//import {Arc} from '../arc.js';
 import {RenderPacket} from '../slot-observer.js';
 import {AbstractSlotObserver} from '../slot-observer.js';
-//import {StorageProviderBase} from '../storage/storage-provider-base.js';
 
 const logging = false;
 const log = !logging ? (...args) => {} : console.log.bind(console, 'SlotTestObserver::');
