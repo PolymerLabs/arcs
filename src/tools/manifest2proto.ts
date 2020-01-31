@@ -41,7 +41,6 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
 }
 
 function outputName(baseName: string): string {
-  // TODO(alxr): Replace with .proto
   return baseName.replace(/\.arcs$/, '.json');
 }
 
