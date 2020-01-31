@@ -133,16 +133,15 @@ export class Refinement {
     }
   }
 
-  // This function assumes the following:
-  // ~ The expression is univariate i.e. has exactly one fieldName
-  // ~ The expression is valid i.e. no expressions like (num < 3) < (num > 5)
   // This function does the following:
-  // ~ Simplifies mathematical and boolean expressions e.g. '(num + (1 + 3) < 4) and True' => '(num + 4) < 4'
+  // ~ Simplifies mathematical and boolean expressions e.g. '(2*num + (1 + 3) < 4 + num) and True' => 'num < 0'
   // ~ Converts a binary node to {leftExpr: fieldName, rightExpr: val} (where applicable).
   // ~ Converts a unary node {op: '-', val: x} into a number node {val: -x}
   // ~ Removes redundant info like expression && false => false
   normalise() {
-    this.expression = this.expression.rearrange();
+    try {
+      this.expression = this.expression.rearrange();
+    } catch (e) {console.log(e);}
     this.expression = this.expression.normalise();
   }
 
@@ -1049,7 +1048,7 @@ export class Fraction {
       const fn = Fraction.fromExpression(expr.expr);
       return Fraction.updateGivenOp(expr.operator.op, [fn]);
     } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.NUMBER) {
-      return new Fraction(new Polynomial([0,1], expr.value));
+      return new Fraction(new Polynomial([0, 1], expr.value));
     } else if (expr instanceof NumberPrimitive) {
       return new Fraction(new Polynomial([expr.value]));
     }
@@ -1111,7 +1110,14 @@ export class Polynomial {
     return this.coeffs.length - 1;
   }
 
+  static assertCompatibility(a: Polynomial, b: Polynomial) {
+    if (a.indeterminate && b.indeterminate && a.indeterminate !== b.indeterminate) {
+      throw new Error('Incompatible polynomials');
+    }
+  }
+
   static add(a: Polynomial, b: Polynomial): Polynomial {
+    Polynomial.assertCompatibility(a, b);
     const sum = a.degree() > b.degree() ? Polynomial.copyOf(a) : Polynomial.copyOf(b);
     const other = a.degree() > b.degree() ? b : a;
     for (const [i, coeff] of other.coeffs.entries()) {
@@ -1121,6 +1127,7 @@ export class Polynomial {
   }
 
   static subtract(a: Polynomial, b: Polynomial): Polynomial {
+    Polynomial.assertCompatibility(a, b);
     return Polynomial.add(a, Polynomial.negate(b));
   }
 
@@ -1133,6 +1140,7 @@ export class Polynomial {
   }
 
   static multiply(a: Polynomial, b: Polynomial): Polynomial {
+    Polynomial.assertCompatibility(a, b);
     const deg = a.degree() + b.degree();
     const coeffs = new Array(deg+1).fill(0);
     for (let i = 0; i < coeffs.length; i += 1) {
@@ -1188,7 +1196,7 @@ export class Polynomial {
       return new BinaryExpression(
         new FieldNamePrimitive(this.indeterminate, Primitive.NUMBER),
         new NumberPrimitive(-this.coeffs[0]/this.coeffs[1]),
-        operator); 
+        operator);
     }
     let expr = null;
     for (let i = this.coeffs.length - 1; i >= 0; i -= 1) {
@@ -1220,7 +1228,7 @@ export class Normaliser {
     const lF = Fraction.fromExpression(expr.leftExpr);
     const rF = Fraction.fromExpression(expr.rightExpr);
     const frac = Fraction.subtract(lF, rF);
-    switch(expr.operator.op) {
+    switch (expr.operator.op) {
       case Op.LT: return Normaliser.fracLessThanZero(frac);
       case Op.GT: return Normaliser.fracGreaterThanZero(frac);
       case Op.EQ: return Normaliser.fracEqualsToZero(frac);
