@@ -139,9 +139,8 @@ def arcs_kt_library(
       deps: List; List of dependencies
       platforms: List; List of platforms for which to compile. Valid options
           are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
+      exports: List; Optional list of deps to export from this build rule.
       visibility: List; List of visibilities
-      wasm: whether to build a wasm library
-      jvm: whether to build a jvm library
     """
     _check_platforms(platforms)
 
