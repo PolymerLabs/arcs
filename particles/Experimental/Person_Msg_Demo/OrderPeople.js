@@ -40,7 +40,6 @@ let to = '1';
 
     // Because we have some logic to implement, we use update instead of render.
     update({messages, unorderedPeople}) {
-      //debugger;
       this.clear('orderedPeople');
       const res = filter(messages, to, unorderedPeople);
       const peopleHandle = this.handles.get('orderedPeople');

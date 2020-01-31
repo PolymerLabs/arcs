@@ -100,8 +100,8 @@ describe('remote planificator', () => {
   }
 
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex) {
-    const plan = consumePlanificator.consumer.result.suggestions[suggestionIndex];
-    await consumePlanificator.arc.instantiate(plan);
+    const suggestion = consumePlanificator.consumer.result.suggestions[suggestionIndex];
+    await consumePlanificator.arc.instantiate(suggestion.plan);
     //await consumePlanificator.consumer.result.suggestions[suggestionIndex].instantiate(consumePlanificator.arc);
     const serialization = await consumePlanificator.arc.serialize();
     //
@@ -163,7 +163,7 @@ describe('remote planificator', () => {
     return {consumePlanificator, producePlanificator};
   }
 
-  it(`consumes remotely produced gifts demo from`, async () => {
+  it(`consumes remotely produced gifts demo from FOOB`, async () => {
     let {consumePlanificator, producePlanificator} = await init(
         './src/runtime/tests/artifacts/Products/Products.recipes');
     let consumerUpdateCount = 0;
