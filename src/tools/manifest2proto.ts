@@ -36,14 +36,16 @@ Options
 }
 
 if (opts._.some((file) => !file.endsWith('.arcs'))) {
-  console.error(`Only Arcs manifests ('*.arcs') allowed.`);
+  console.error(`Only Arcs manifests ('*.arcs') are allowed.`);
   process.exit(1);
 }
 
+/** Format the name of the output file */
 function outputName(baseName: string): string {
   return baseName.replace(/\.arcs$/, '.json');
 }
 
+/** Extract JSON serializations from manifest */
 function toLiteral(manifest: Manifest): object {
   const lit = {};
   lit['particles'] = manifest.allParticles.map(p => p.toLiteral());
@@ -51,6 +53,7 @@ function toLiteral(manifest: Manifest): object {
   return lit;
 }
 
+/** Write file serializations for each input file */
 async function processFile(src: string) {
   if (!fs.existsSync(src)) {
     throw new Error(`File not found: ${src}`);
