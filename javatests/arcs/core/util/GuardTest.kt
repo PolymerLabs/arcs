@@ -79,7 +79,8 @@ class GuardTest {
         assertThat(initializerCalled).isFalse()
         obj.mutex.withLock {
             obj.value = null
-            assertThat(obj.value as Int?).isNull()
+            @Suppress("USELESS_CAST")
+            assertThat(obj.value as? Int).isNull()
         }
         assertThat(initializerCalled).isFalse()
     }

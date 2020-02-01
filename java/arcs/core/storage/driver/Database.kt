@@ -179,7 +179,9 @@ class DatabaseDriver<Data : Any>(
     private var localData: Data? by guardWith<Data?>(localDataMutex, null)
     private var localVersion: Int? by guardWith<Int?>(localDataMutex, null)
     private val schema: Schema
-        get() = requireNotNull(schemaLookup(storageKey.entitySchemaHash))
+        get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
+            "Schema not found for hash: ${storageKey.entitySchemaHash}"
+        }
     private val log = TaggedLog { this.toString() }
     override var token: String? = null
         private set
@@ -195,7 +197,7 @@ class DatabaseDriver<Data : Any>(
             }
         }
 
-        log.debug { "Created" }
+        log.debug { "Created with clientId = $clientId" }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -209,12 +211,13 @@ class DatabaseDriver<Data : Any>(
 
             // If we didn't have any data, try and fetch it from the database.
             if (res.first == null || res.second == null) {
+                log.debug { "registerReceiver($token) - no local data, fetching from database" }
                 database.get(
                     storageKey,
                     when (dataClass) {
                         CrdtEntity.Data::class -> DatabaseData.Entity::class
-                        CrdtSet.Data::class -> DatabaseData.Collection::class
                         CrdtSingleton.DataImpl::class -> DatabaseData.Singleton::class
+                        CrdtSet.DataImpl::class -> DatabaseData.Collection::class
                         else -> throw IllegalStateException("Illegal dataClass: $dataClass")
                     }
                 )?.also {
@@ -233,12 +236,27 @@ class DatabaseDriver<Data : Any>(
 
         if (pendingReceiverData == null || pendingReceiverVersion == null) return
 
+        log.debug {
+            """
+                registerReceiver($token) - calling receiver(
+                    $pendingReceiverData, 
+                    $pendingReceiverVersion
+                )
+            """.trimIndent()
+        }
         receiver(pendingReceiverData, pendingReceiverVersion)
     }
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun send(data: Data, version: Int): Boolean {
-        log.debug { "send($data, $version)" }
+        log.debug {
+            """
+                send(
+                    $data, 
+                    $version
+                )
+            """.trimIndent()
+        }
 
         // Prep the data for storage.
         val databaseData = when (data) {
@@ -247,18 +265,22 @@ class DatabaseDriver<Data : Any>(
                 version,
                 data.versionMap
             )
-            is CrdtSet.Data<*> -> {
-                val referenceData = requireNotNull(data as? CrdtSet.Data<Reference>)
-                DatabaseData.Collection(
-                    referenceData.toReferenceSet(),
+            is CrdtSingleton.Data<*> -> {
+                val referenceData = requireNotNull(data as? CrdtSingleton.Data<Reference>) {
+                    "Data must be CrdtSingleton.Data<Reference>"
+                }
+                DatabaseData.Singleton(
+                    referenceData.toReferenceSingleton(),
                     version,
                     referenceData.versionMap
                 )
             }
-            is CrdtSingleton.Data<*> -> {
-                val referenceData = requireNotNull(data as? CrdtSingleton.Data<Reference>)
-                DatabaseData.Singleton(
-                    referenceData.toReferenceSingleton(),
+            is CrdtSet.Data<*> -> {
+                val referenceData = requireNotNull(data as? CrdtSet.Data<Reference>) {
+                    "Data must be CrdtSet.Data<Reference>"
+                }
+                DatabaseData.Collection(
+                    referenceData.toReferenceSet(),
                     version,
                     referenceData.versionMap
                 )
@@ -269,7 +291,13 @@ class DatabaseDriver<Data : Any>(
         }
 
         // Store the prepped data.
-        return database.insertOrUpdate(storageKey, databaseData, clientId) == version
+        return (database.insertOrUpdate(storageKey, databaseData, clientId) == version).also {
+            // If the update was successful, update our local data/version.
+            if (it) localDataMutex.withLock {
+                localData = data
+                localVersion = version
+            }
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -278,12 +306,6 @@ class DatabaseDriver<Data : Any>(
         version: Int,
         originatingClientId: Int?
     ) {
-        if (originatingClientId == clientId) return
-
-        log.debug {
-            "onDatabaseUpdate($data, version: $version, originatingClientId: $originatingClientId)"
-        }
-
         // Convert the raw DatabaseData into the appropriate CRDT data model
         val actualData = when (data) {
             is DatabaseData.Singleton -> data.reference.toCrdtSingletonData(data.versionMap)
@@ -297,12 +319,29 @@ class DatabaseDriver<Data : Any>(
             localVersion = version
         }
 
+        if (originatingClientId == clientId) return
+
+        log.debug {
+            """
+                onDatabaseUpdate(
+                    $data, 
+                    version: $version, 
+                    originatingClientId: $originatingClientId
+                )
+            """.trimIndent()
+        }
+
         // Let the receiver know about it.
         bumpToken()
         receiver?.invoke(actualData, version)
     }
 
     override suspend fun onDatabaseDelete(originatingClientId: Int?) {
+        localDataMutex.withLock {
+            localData = null
+            localVersion = null
+        }
+
         if (originatingClientId == clientId) return
 
         log.debug { "onDatabaseDelete(originatingClientId: $originatingClientId)" }
@@ -310,6 +349,8 @@ class DatabaseDriver<Data : Any>(
     }
 
     override fun toString(): String = "DatabaseDriver($storageKey, $clientId)"
+
+    /* internal */ suspend fun getLocalData(): Data? = localDataMutex.withLock { localData }
 
     private fun bumpToken() {
         token = Random.nextInt().toString()

@@ -17,7 +17,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data:rawentity",
-        "//java/arcs/core/data/util",
+        "//java/arcs/core/data/util:data-util",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
         "//third_party/java/robolectric",

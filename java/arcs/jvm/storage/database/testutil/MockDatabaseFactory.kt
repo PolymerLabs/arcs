@@ -21,14 +21,11 @@ import arcs.core.util.guardWith
 import com.nhaarman.mockitokotlin2.spy
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -46,16 +43,16 @@ class MockDatabaseFactory : DatabaseFactory {
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-class MockDatabase : Database {
+open class MockDatabase : Database {
     private val clientMutex = Mutex()
     private var nextClientId = 1
-    val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient>>()
+    open val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient>>()
 
     private val clientFlow: Flow<DatabaseClient> =
         flow { clientMutex.withLock { clients.values }.forEach { emit(it.second) } }
 
     private val dataMutex = Mutex()
-    val data = mutableMapOf<StorageKey, DatabaseData>()
+    open val data = mutableMapOf<StorageKey, DatabaseData>()
 
     override suspend fun insertOrUpdate(
         storageKey: StorageKey,

@@ -16,7 +16,7 @@ arcs_kt_library(
         "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
-        "//java/arcs/core/data/util",
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:storage_key",

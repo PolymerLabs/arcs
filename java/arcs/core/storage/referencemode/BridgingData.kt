@@ -95,7 +95,7 @@ private suspend fun CrdtSet.DataValue<RawEntity>.toReferenceDataValue(
 
 /** Converts a [CrdtSet.Data] of [Reference]s into a [Set] of those [Reference]s. */
 inline fun <reified T : Referencable> CrdtSet.Data<T>.toReferenceSet(): Set<Reference> {
-    require(T::class != Reference::class) { "CrdtSet.Data<Reference> is required" }
+    require(T::class == Reference::class) { "CrdtSet.Data<Reference> is required" }
     return values.values.map { it.value as Reference }.toSet()
 }
 
@@ -111,7 +111,7 @@ fun Set<Reference>.toCrdtSetData(versionMap: VersionMap): CrdtSet.Data<Reference
 
 /** Converts a [CrdtSingleton.Data] into a nullable [Reference]. */
 inline fun <reified T : Referencable> CrdtSingleton.Data<T>.toReferenceSingleton(): Reference? {
-    require(T::class != Reference::class) { "CrdtSingleton.Data<Reference> is required" }
+    require(T::class == Reference::class) { "CrdtSingleton.Data<Reference> is required" }
     // Eerily-similar to the implementation of CrdtSingleton.consumerView.
     return values.values.maxBy { it.value.id }?.value as? Reference
 }
