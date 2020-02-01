@@ -50,10 +50,6 @@ arcs_manifest_bundle = _arcs_manifest_bundle
 
 arcs_serialize_manifest = _arcs_serialize_manifst
 
-kt_jvm_and_js_library = _kt_jvm_and_js_library
-
-arcs_kt_jvm_library = _arcs_kt_jvm_library
-
 kt_js_library = _kt_js_library
 
 def arcs_ts_test(name, src, deps):
