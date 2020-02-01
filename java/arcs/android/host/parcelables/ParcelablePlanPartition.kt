@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.host
+package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
@@ -17,7 +17,8 @@ import arcs.core.host.HandleConnectionSpec
 import arcs.core.host.PlanPartition
 
 /** [Parcelable] variant of [PlanPartition]. */
-data class ParcelablePlanPartition(val actual: PlanPartition) : Parcelable {
+data class ParcelablePlanPartition(override val actual: PlanPartition) :
+    ActualParcelable<PlanPartition> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.arcId)
         parcel.writeString(actual.arcHost)

@@ -9,14 +9,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.host
+package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
 import arcs.core.host.HandleConnectionSpec
 
 /** [Parcelable] variant of [HandleConnectionSpec]. */
-data class ParcelableHandleConnectionSpec(val actual: HandleConnectionSpec) : Parcelable {
+data class ParcelableHandleConnectionSpec(override val actual: HandleConnectionSpec) :
+    ActualParcelable<HandleConnectionSpec> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.connectionName)
         parcel.writeHandleSpec(actual.handleSpec, 0)
@@ -27,7 +28,6 @@ data class ParcelableHandleConnectionSpec(val actual: HandleConnectionSpec) : Pa
 
     companion object CREATOR : Parcelable.Creator<ParcelableHandleConnectionSpec> {
         override fun createFromParcel(parcel: Parcel): ParcelableHandleConnectionSpec {
-
             val connectionName = requireNotNull(parcel.readString()) {
                 "No connectionName found in Parcel"
             }

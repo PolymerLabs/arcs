@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.host
+package arcs.android.host.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4

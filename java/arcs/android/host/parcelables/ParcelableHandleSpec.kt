@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.host
+package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
@@ -19,7 +19,7 @@ import arcs.core.host.HandleSpec
 import arcs.core.storage.StorageKeyParser
 
 /** [Parcelable] variant of [HandleSpec]. */
-data class ParcelableHandleSpec(val actual: HandleSpec) : Parcelable {
+data class ParcelableHandleSpec(override val actual: HandleSpec) : ActualParcelable<HandleSpec> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.id)
         parcel.writeString(actual.name)

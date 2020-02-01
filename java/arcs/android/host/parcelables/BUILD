@@ -5,17 +5,14 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 kt_android_library(
-    name = "host",
+    name = "parcelables",
     srcs = glob(["*.kt"]),
     idl_parcelables = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/type",
-        "//java/arcs/core/common",
         "//java/arcs/core/host",
-        "//java/arcs/jvm/host",
-        "//java/arcs/android/host/parcelables",
-        "//java/arcs/android/sdk/host",
+        "//java/arcs/core/common",
         "//third_party/java/jsr305_annotations",
     ],
 )

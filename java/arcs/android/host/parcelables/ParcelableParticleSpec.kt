@@ -9,14 +9,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.host
+package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
 import arcs.core.host.ParticleSpec
 
 /** [Parcelable] variant of [ParticleSpec]. */
-data class ParcelableParticleSpec(val actual: ParticleSpec) : Parcelable {
+data class ParcelableParticleSpec(override val actual: ParticleSpec) :
+    ActualParcelable<ParticleSpec> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.particleName)
         parcel.writeString(actual.location)

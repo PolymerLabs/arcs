@@ -18,6 +18,13 @@ import android.os.Handler
 import android.os.ResultReceiver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import arcs.android.sdk.host.ArcHostHelper
+import arcs.android.sdk.host.createGetRegisteredParticlesIntent
+import arcs.android.sdk.host.createRegisterParticleIntent
+import arcs.android.sdk.host.createStartArcHostIntent
+import arcs.android.sdk.host.createStopArcHostIntent
+import arcs.android.sdk.host.createUnregisterParticleIntent
+import arcs.android.sdk.host.toComponentName
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
@@ -61,7 +68,7 @@ class ArcHostHelperTest {
         suspend fun stopCalls() = hostMutex.withLock { stopArcCalls }
         suspend fun particles() = hostMutex.withLock { registeredParticles }
 
-        override suspend fun hostId() = this::class.java.canonicalName!!
+        override fun hostId() = this::class.java.canonicalName!!
 
         override suspend fun registerParticle(particle: ParticleIdentifier): Unit =
             hostMutex.withLock {
@@ -131,13 +138,11 @@ class ArcHostHelperTest {
         val connectionSpec = HandleConnectionSpec("foo", handleSpec, particleSpec)
 
         val planPartition = PlanPartition("id", "FooHost", listOf(connectionSpec))
-        val startIntent = ArcHostHelper.createStartArcHostIntent(
-            TestAndroidArcHostService::class.toComponentName(context),
-            planPartition
+        val startIntent = planPartition.createStartArcHostIntent(
+            TestAndroidArcHostService::class.toComponentName(context)
         )
-        val stopIntent = ArcHostHelper.createStopArcHostIntent(
-            TestAndroidArcHostService::class.toComponentName(context),
-            planPartition
+        val stopIntent = planPartition.createStopArcHostIntent(
+            TestAndroidArcHostService::class.toComponentName(context)
         )
         helper.onStartCommandSuspendable(startIntent)
         assertThat(arcHost.startCalls()).containsExactly(planPartition)
@@ -151,21 +156,17 @@ class ArcHostHelperTest {
         val particleIdentifier = ParticleIdentifier("foo.bar", "Baz")
         val particleIdentifier2 = ParticleIdentifier("foo.bar", "Baz2")
 
-        val registerIntent = ArcHostHelper.createRegisterParticleIntent(
-            TestAndroidArcHostService::class.toComponentName(context),
-            particleIdentifier
+        val registerIntent = particleIdentifier.createRegisterParticleIntent(
+            TestAndroidArcHostService::class.toComponentName(context)
         )
-        val registerIntent2 = ArcHostHelper.createRegisterParticleIntent(
-            TestAndroidArcHostService::class.toComponentName(context),
-            particleIdentifier2
+        val registerIntent2 = particleIdentifier2.createRegisterParticleIntent(
+            TestAndroidArcHostService::class.toComponentName(context)
         )
-        val unregisterIntent = ArcHostHelper.createUnregisterParticleIntent(
-            TestAndroidArcHostService::class.toComponentName(context),
-            particleIdentifier
+        val unregisterIntent = particleIdentifier.createUnregisterParticleIntent(
+            TestAndroidArcHostService::class.toComponentName(context)
         )
-        val unregisterIntent2 = ArcHostHelper.createUnregisterParticleIntent(
-            TestAndroidArcHostService::class.toComponentName(context),
-            particleIdentifier2
+        val unregisterIntent2 = particleIdentifier2.createUnregisterParticleIntent(
+            TestAndroidArcHostService::class.toComponentName(context)
         )
 
         helper.onStartCommandSuspendable(registerIntent)
@@ -174,22 +175,22 @@ class ArcHostHelperTest {
             particleIdentifier, particleIdentifier2
         )
 
-        val getParticlesIntent = ArcHostHelper.createGetRegisteredParticlesIntent(
-            TestAndroidArcHostService::class.toComponentName(context)
-        )
+        val getParticlesIntent = TestAndroidArcHostService::class.toComponentName(context)
+            .createGetRegisteredParticlesIntent()
 
         // Wait for async result
         suspendCancellableCoroutine<List<ParticleIdentifier>?> { coroutine ->
-            ArcHostHelper.onResult(getParticlesIntent, object : ResultReceiver(Handler()) {
-                override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
-                    val particles =
-                        resultData?.getParcelableArrayList<ParcelableParticleIdentifier>(
-                            ArcHostHelper.OPERATION_RESULT
-                        )?.map { it -> it.actual }
-                    assertThat(particles).containsExactly(particleIdentifier, particleIdentifier2)
-                    coroutine.resume(particles, { throwable -> throw throwable })
-                }
-            })
+            ArcHostHelper
+                .onResult(getParticlesIntent, object : ResultReceiver(Handler()) {
+                    override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+                        val particles = ArcHostHelper.getParticleIdentifierListResult(resultData)
+
+                        assertThat(particles).containsExactly(
+                            particleIdentifier, particleIdentifier2
+                        )
+                        coroutine.resume(particles, { throwable -> throw throwable })
+                    }
+                })
             helper.onStartCommand(getParticlesIntent)
         }
 

@@ -12,8 +12,10 @@
 package arcs.android.host
 
 import android.content.Context
+import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import arcs.android.sdk.host.toArcHost
 import arcs.core.host.ParticleIdentifier
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,19 +32,23 @@ class AndroidHostRegistryTest {
     private lateinit var context: Context
     private lateinit var service: TestReadingExternalHostService
     private lateinit var hostRegistry: AndroidManifestHostRegistry
+    private lateinit var sender: (Intent) -> Unit
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlocking {
         context = InstrumentationRegistry.getInstrumentation().targetContext
         service = Robolectric.setupService(TestReadingExternalHostService::class.java)
+        sender = { intent -> service.onStartCommand(intent, 0, 0) }
         hostRegistry =
-            AndroidManifestHostRegistry(context, { intent -> service.onStartCommand(intent, 0, 0) })
+            AndroidManifestHostRegistry.createForTest(
+                context, sender
+            )
     }
 
     @Test
     fun hostRegistry_availableArcHosts_containsTestArcHost() = runBlockingTest {
         assertThat(hostRegistry.availableArcHosts()).contains(
-            hostRegistry.adapterFor(TestReadingExternalHostService())
+            TestReadingExternalHostService().toArcHost(context, sender)
         )
     }
 
@@ -52,7 +58,9 @@ class AndroidHostRegistryTest {
             val particle = ParticleIdentifier("foo.bar", "Baz")
             val arcHost = hostRegistry.availableArcHosts()
                 .filter {
-                    it.equals(hostRegistry.adapterFor(TestReadingExternalHostService()))
+                    it.hostId().equals(
+                        TestReadingExternalHostService().toArcHost(context, sender).hostId()
+                    )
                 }
                 .first()
             arcHost.registerParticle(particle)

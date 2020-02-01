@@ -14,6 +14,7 @@ package arcs.android.host
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import arcs.android.sdk.host.toComponentName
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
@@ -35,8 +36,8 @@ import org.robolectric.Robolectric
 @UseExperimental(ExperimentalCoroutinesApi::class)
 class AndroidAllocatorTest {
     private lateinit var context: Context
-    private lateinit var service: TestReadingExternalHostService
-    private lateinit var service2: TestWritingExternalHostService
+    private lateinit var readingService: TestReadingExternalHostService
+    private lateinit var writingService: TestWritingExternalHostService
     private lateinit var allocator: Allocator
     private lateinit var hostRegistry: AndroidManifestHostRegistry
     private lateinit var personHandleSpec: HandleSpec
@@ -52,25 +53,23 @@ class AndroidAllocatorTest {
     )
 
     @Before
-    fun setUp() {
-        service = Robolectric.setupService(TestReadingExternalHostService::class.java)
-        service2 = Robolectric.setupService(TestWritingExternalHostService::class.java)
+    fun setUp() = runBlocking {
+        readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
+        writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
 
         context = InstrumentationRegistry.getInstrumentation().targetContext
         hostRegistry =
-            AndroidManifestHostRegistry(context) {
-                if (it.component
-                        ?.equals(
-                            TestReadingExternalHostService::class.toComponentName(context)
-                        ) == true
-                ) {
-                    service.onStartCommand(it, 0, 0)
-                } else if (it.component
-                        ?.equals(
-                            TestWritingExternalHostService::class.toComponentName(context)
-                        ) == true
-                ) {
-                    service2.onStartCommand(it, 0, 0)
+            AndroidManifestHostRegistry.createForTest(context) {
+                val readingComponentName =
+                    TestReadingExternalHostService::class.toComponentName(context)
+                if (it.component?.equals(readingComponentName) == true) {
+                    readingService.onStartCommand(it, 0, 0)
+                } else {
+                    val writingComponentName =
+                        TestWritingExternalHostService::class.toComponentName(context)
+                    if (it.component?.equals(writingComponentName) == true) {
+                        writingService.onStartCommand(it, 0, 0)
+                    }
                 }
             }
         allocator = Allocator(hostRegistry)

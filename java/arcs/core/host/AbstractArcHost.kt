@@ -26,7 +26,7 @@ abstract class AbstractArcHost : ArcHost {
     private var particles: MutableList<ParticleIdentifier> by
         guardWith(hostMutex, mutableListOf())
 
-    override suspend fun hostId() = this::class.java.canonicalName!!
+    override fun hostId() = this::class.java.canonicalName!!
 
     override suspend fun registerParticle(particle: ParticleIdentifier) {
         hostMutex.withLock { particles.add(particle) }

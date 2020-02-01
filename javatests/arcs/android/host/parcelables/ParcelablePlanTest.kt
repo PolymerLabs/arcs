@@ -9,10 +9,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.host
+package arcs.android.host.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.host.parcelables.ParcelablePlan
+import arcs.android.host.parcelables.toParcelable
 import arcs.core.common.ArcId
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
@@ -21,14 +23,15 @@ import arcs.core.data.SchemaName
 import arcs.core.host.HandleConnectionSpec
 import arcs.core.host.HandleSpec
 import arcs.core.host.ParticleSpec
+import arcs.core.host.Plan
 import arcs.core.storage.driver.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Tests for [ParcelableHandleConnectionSpec]'s classes. */
+/** Tests for [ParcelablePlan]'s classes. */
 @RunWith(AndroidJUnit4::class)
-class ParcelableHandleConnectionSpecTest {
+class ParcelablePlanTest {
 
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
@@ -37,8 +40,10 @@ class ParcelableHandleConnectionSpecTest {
     )
 
     @Test
-    fun handleConnectionSpec_parcelableRoundTrip_works() {
+    fun plan_parcelableRoundTrip_works() {
         val particleSpec = ParticleSpec("Foobar", "foo.bar.Foobar")
+        val particleSpec2 = ParticleSpec("Foobar2", "foo.bar.Foobar2")
+
         val handleSpec = HandleSpec(
             "foo", "bar", VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
             mutableSetOf("volatile"),
@@ -46,18 +51,21 @@ class ParcelableHandleConnectionSpecTest {
         )
 
         val handleConnectionSpec = HandleConnectionSpec("blah", handleSpec, particleSpec)
+        val handleConnectionSpec2 = HandleConnectionSpec("blah2", handleSpec, particleSpec2)
+
+        val plan = Plan(listOf(handleConnectionSpec, handleConnectionSpec2))
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(handleConnectionSpec.toParcelable(), 0)
+            writeTypedObject(plan.toParcelable(), 0)
             marshall()
         }
 
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableHandleConnectionSpec.CREATOR))
+            readTypedObject(requireNotNull(ParcelablePlan.CREATOR))
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(handleConnectionSpec)
+        assertThat(unmarshalled?.actual).isEqualTo(plan)
     }
 }

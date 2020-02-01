@@ -14,6 +14,7 @@ arcs_kt_library(
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/util",
         "//java/arcs/sdk",
+        "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],

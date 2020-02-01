@@ -14,9 +14,7 @@ import kotlin.reflect.KClass
  */
 data class ParticleIdentifier constructor(val pkg: String, val cls: String) {
     companion object {
-        /**
-         * Converts from JVM canonical class name format.
-         */
+        /** Converts from JVM canonical class name format. */
         fun from(location: String): ParticleIdentifier {
             val parts = location.splitToSequence('.')
             return ParticleIdentifier(

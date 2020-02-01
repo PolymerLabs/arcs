@@ -3,6 +3,7 @@ package arcs.android.host
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import arcs.android.sdk.host.ArcHostHelper
 import arcs.core.host.ExternalHost
 import arcs.core.host.PlanPartition
 import arcs.core.sdk.Particle
@@ -32,7 +33,5 @@ class TestWritingExternalHostService : Service() {
         return result
     }
 
-    override fun onBind(p0: Intent?): IBinder? {
-        TODO("Not yet implemented")
-    }
+    override fun onBind(p0: Intent?): IBinder? = null
 }

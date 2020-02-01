@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.host
+package arcs.android.host.parcelables
 
 import android.content.ComponentName
 import android.os.Parcel
@@ -17,7 +17,8 @@ import android.os.Parcelable
 import arcs.core.host.ParticleIdentifier
 
 /** [Parcelable] variant of [ParticleIdentifier]. */
-data class ParcelableParticleIdentifier(val actual: ParticleIdentifier) : Parcelable {
+data class ParcelableParticleIdentifier(override val actual: ParticleIdentifier) :
+    ActualParcelable<ParticleIdentifier> {
     override fun writeToParcel(parcel: Parcel, flags: Int) =
         actual.toComponentName().writeToParcel(parcel, flags)
 

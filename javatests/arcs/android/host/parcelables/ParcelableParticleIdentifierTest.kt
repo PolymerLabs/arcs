@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.host
+package arcs.android.host.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -26,7 +26,8 @@ class ParcelableParticleIdentifierTest {
 
     @Test
     fun data_parcelableRoundTrip_works() {
-        val id = ParticleIdentifier.from(TestParticle::class)
+        val id = ParticleIdentifier.from(
+            TestParticle::class)
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(id.toParcelable(), 0)
