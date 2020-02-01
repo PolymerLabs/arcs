@@ -11,20 +11,20 @@
 
 package arcs.core.data
 
-enum class TtlUnits {
-  Minute,
-  Hour,
-  Day
-}
-
+/**  A class containing retention policy information. */
 data class Ttl(
     val count: Int?,
-    val units: TtlUnits?
+    val units: Units?
 ) {
+    enum class Units {
+        Minute,
+        Hour,
+        Day
+    }
 
-  fun isInfinite(): Boolean = this == Ttl.Infinite
+    fun isInfinite(): Boolean = this == Ttl.Infinite
 
-  companion object {
-    val Infinite = Ttl(-1, null)
-  }
+    companion object {
+        val Infinite = Ttl(-1, null)
+    }
 }
