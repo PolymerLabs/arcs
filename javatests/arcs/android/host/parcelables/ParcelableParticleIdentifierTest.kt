@@ -27,7 +27,8 @@ class ParcelableParticleIdentifierTest {
     @Test
     fun data_parcelableRoundTrip_works() {
         val id = ParticleIdentifier.from(
-            TestParticle::class)
+            TestParticle::class
+        )
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(id.toParcelable(), 0)

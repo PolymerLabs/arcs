@@ -13,8 +13,6 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.android.host.parcelables.ParcelablePlan
-import arcs.android.host.parcelables.toParcelable
 import arcs.core.common.ArcId
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription

@@ -11,8 +11,8 @@ kt_android_library(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/type",
-        "//java/arcs/core/host",
         "//java/arcs/core/common",
+        "//java/arcs/core/host",
         "//third_party/java/jsr305_annotations",
     ],
 )

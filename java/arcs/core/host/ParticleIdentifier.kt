@@ -23,9 +23,8 @@ data class ParticleIdentifier constructor(val pkg: String, val cls: String) {
             )
         }
 
-        fun from(kclass: KClass<out Particle>): ParticleIdentifier =  from(kclass.java.canonicalName)
+        fun from(kclass: KClass<out Particle>): ParticleIdentifier = from(kclass.java.canonicalName)
     }
 }
 
 fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(this)
-

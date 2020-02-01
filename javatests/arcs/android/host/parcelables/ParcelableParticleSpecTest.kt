@@ -13,8 +13,6 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.android.host.parcelables.ParcelableParticleSpec
-import arcs.android.host.parcelables.toParcelable
 import arcs.core.host.ParticleSpec
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
