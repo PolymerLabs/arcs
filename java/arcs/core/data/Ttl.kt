@@ -11,34 +11,45 @@
 
 package arcs.core.data
 
-/**  A class containing retention policy information. */
+/** A class containing retention policy information. */
 data class Ttl(
     val count: Int,
     val units: Units?
 ) {
+    init {
+        require((count >= 0 && units != null) || (count == -1 && units == null)) {
+            "count must be non-negative when units are provided, or -1 if units is null"
+        }
+    }
+
     enum class Units {
         Minute,
         Hour,
         Day
     }
 
-    fun isInfinite(): Boolean = this == Ttl.Infinite
+    val isInfinite: Boolean
+        get() = this.count == -1 && this.units == null
 
     override fun equals(other: Any?): Boolean =
-        other is Ttl && this.toMinutes() == other.toMinutes()
+        other is Ttl && this.minutes == other.minutes
 
-    override fun hashCode(): Int = this.toMinutes().hashCode()
+    override fun hashCode(): Int = this.minutes.hashCode()
 
-    fun toMinutes(): Int {
-        when (this.units) {
-            Units.Minute -> return this.count
-            Units.Hour -> return this.count * 60
-            Units.Day -> return this.count * 60 * 24
-            else -> { // Note the block
-                throw IllegalArgumentException("Unsupported TTL units: ${this.units}")
+    val minutes: Int
+        get() {
+            if (this.isInfinite) {
+                return -1
+            }
+            return count * when (this.units) {
+                Units.Minute -> 1
+                Units.Hour -> 60
+                Units.Day -> 60 * 24
+                null -> {
+                    throw UnsupportedOperationException("Units not available")
+                }
             }
         }
-    }
 
     companion object {
         val Infinite = Ttl(-1, null)
