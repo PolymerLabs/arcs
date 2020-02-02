@@ -38,6 +38,7 @@ arcs_kt_jvm_library(
         exclude = ["*Test.kt"],
     ),
     deps = [
+        "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/jvm/host",
         "//java/arcs/sdk",
