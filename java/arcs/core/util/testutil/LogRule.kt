@@ -12,15 +12,18 @@
 package arcs.core.util.testutil
 
 import arcs.core.util.Log
-import java.io.PrintWriter
-import java.io.StringWriter
-import java.util.Locale
+import arcs.core.util.TaggedLog
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.util.Locale
 
 /** JUnit [TestRule] which prints wrappers around the log output from each test. */
 class LogRule : TestRule {
+    private val taggedLog = TaggedLog { "TEST" }
+
     override fun apply(base: Statement, desc: Description): Statement = object : Statement() {
         override fun evaluate() {
             println()
@@ -34,6 +37,8 @@ class LogRule : TestRule {
             println()
         }
     }
+
+    operator fun invoke(message: String) = taggedLog.info { message }
 
     private val Description.testName: String
         get() = "${testClass.simpleName}.$methodName()"

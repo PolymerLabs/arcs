@@ -37,18 +37,18 @@ data class BridgingData(
  * [CrdtData] object for use with the container store.
  */
 suspend fun RefModeStoreData.toBridgingData(
-    storageKey: StorageKey,
+    backingStorageKey: StorageKey,
     // Callback which returns the version of the data being referenced from the backing store.
     itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): arcs.core.util.Result<BridgingData> = resultOfSuspend {
     when (this) {
         is RefModeStoreData.Set -> BridgingData(
             this.values.values.map { it.value }, // So many values.
-            CrdtSet.createWithData(this.toReferenceData(storageKey, itemVersionGetter))
+            CrdtSet.createWithData(this.toReferenceData(backingStorageKey, itemVersionGetter))
         )
         is RefModeStoreData.Singleton -> BridgingData(
             this.values.values.map { it.value }, // So many values.
-            CrdtSingleton.createWithData(this.toReferenceData(storageKey, itemVersionGetter))
+            CrdtSingleton.createWithData(this.toReferenceData(backingStorageKey, itemVersionGetter))
         )
     }
 }

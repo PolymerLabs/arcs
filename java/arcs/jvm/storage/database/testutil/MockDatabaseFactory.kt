@@ -22,6 +22,7 @@ import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -69,7 +70,8 @@ open class MockDatabase : Database {
         }
 
         if (isNew) {
-            clientFlow.onEach { it.onDatabaseUpdate(data, version, originatingClientId) }
+            clientFlow.filter { it.storageKey == storageKey }
+                .onEach { it.onDatabaseUpdate(data, version, originatingClientId) }
                 .launchIn(CoroutineScope(coroutineContext))
         }
 

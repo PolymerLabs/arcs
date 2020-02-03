@@ -56,18 +56,22 @@ data class ReferencablePrimitive<T>(
             val className = match.groups[1]?.value ?: return null
             val value = match.groups[2]?.value ?: return null
 
-            return when (className) {
-                Int::class.toString() ->
+            return when {
+                className == Int::class.toString() ||
+                className.contains("java.lang.Int") ->
                     ReferencablePrimitive(Int::class, value.toDouble())
-                Float::class.toString() ->
+                className == Float::class.toString() ||
+                className.contains("java.lang.Float") ->
                     ReferencablePrimitive(Float::class, value.toDouble())
-                Double::class.toString() ->
+                className == Double::class.toString() ||
+                className.contains("java.lang.Double") ->
                     ReferencablePrimitive(Double::class, value.toDouble())
-                String::class.toString() ->
+                className == String::class.toString() ->
                     ReferencablePrimitive(String::class, value)
-                Boolean::class.toString() ->
+                className == Boolean::class.toString() ||
+                className.contains("java.lang.Boolean") ->
                     ReferencablePrimitive(Boolean::class, value.toBoolean())
-                ByteArray::class.toString() ->
+                className == ByteArray::class.toString() ->
                     ReferencablePrimitive(ByteArray::class, value.toBase64Bytes(), value)
                 else -> null
             }
