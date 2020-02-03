@@ -128,8 +128,7 @@ describe('refiner', () => {
   });
 });
 
-
-describe('refiner', () => {
+describe('refiner enforcement', () => {
     let schema: Schema;
     let entityClass: EntityClass;
     before(async () => {
@@ -150,6 +149,22 @@ describe('refiner', () => {
     it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
         assert.doesNotThrow(() => { const e = new entityClass({txt: 'abc', num: 8}); });
       }));
+});
+
+describe('dynamic refinements', () => {
+    it('Parses a particle with dynamic refinements.', () => {
+        const manifestAst = parse(`
+            particle AddressBook
+                contacts: reads [Contact {name: Text [ name == ? ] }]
+        `);
+        const typeData = {'name': 'Text'};
+        const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+        const data = {
+            num: 'Ghost Busters'
+        };
+        const res = ref.validateData(data);
+        assert.strictEqual(res, data.name === '' || data.name === 'Ghost Busters');
+    });
 });
 
 describe('normalisation', () => {
