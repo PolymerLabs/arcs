@@ -1167,6 +1167,7 @@ export class Polynomial {
       new RefinementOperator(Op.MUL));
   }
 
+  // returns ax^n + bx^n-1 + ... c  <op> 0
   toExpression(op: Op): RefinementExpression {
     if (this.degree() === 0) {
       return new BinaryExpression(
@@ -1221,50 +1222,43 @@ export class Normaliser {
     const frac = Fraction.subtract(lF, rF);
     let rearranged = null;
     switch (expr.operator.op) {
-      case Op.LT: rearranged = Normaliser.fracLessThanZero(frac); break;
-      case Op.GT: rearranged = Normaliser.fracGreaterThanZero(frac); break;
-      case Op.EQ: rearranged = Normaliser.fracEqualsToZero(frac); break;
-      case Op.NEQ: rearranged = Normaliser.fracNotEqualsToZero(frac); break;
+      case Op.LT: case Op.GT: rearranged = Normaliser.fracLTorGTzero(expr.operator.op, frac); break;
+      case Op.LTE: case Op.GTE: rearranged = Normaliser.fracLTEorGTEzero(expr.operator.op, frac); break;
+      case Op.EQ: case Op.NEQ: rearranged = Normaliser.fracEQorNEQzero(expr.operator.op, frac); break;
       default:
           throw new Error(`Unsupported operator ${expr.operator.op}: cannot rearrange numerical expression.`);
     }
     expr.update(rearranged);
   }
 
-  static fracLessThanZero(frac: Fraction): BinaryExpression {
+  static fracLTorGTzero(op: Op, frac: Fraction): BinaryExpression {
     const ngt0 = frac.num.toExpression(Op.GT);
     const nlt0 = frac.num.toExpression(Op.LT);
     const dgt0 = frac.den.toExpression(Op.GT);
     const dlt0 = frac.den.toExpression(Op.LT);
     return new BinaryExpression(
-      new BinaryExpression(ngt0, dlt0, new RefinementOperator(Op.AND)),
-      new BinaryExpression(nlt0, dgt0, new RefinementOperator(Op.AND)),
+      new BinaryExpression(ngt0, op === Op.LT ? dlt0 : dgt0, new RefinementOperator(Op.AND)),
+      new BinaryExpression(nlt0, op === Op.LT ? dgt0 : dlt0, new RefinementOperator(Op.AND)),
       new RefinementOperator(Op.OR)
     );
   }
 
-  static fracGreaterThanZero(frac: Fraction): BinaryExpression {
-    const ngt0 = frac.num.toExpression(Op.GT);
-    const nlt0 = frac.num.toExpression(Op.LT);
+  static fracLTEorGTEzero(op: Op, frac: Fraction): BinaryExpression {
+    const ngte0 = frac.num.toExpression(Op.GTE);
+    const nlte0 = frac.num.toExpression(Op.LTE);
     const dgt0 = frac.den.toExpression(Op.GT);
     const dlt0 = frac.den.toExpression(Op.LT);
     return new BinaryExpression(
-      new BinaryExpression(ngt0, dgt0, new RefinementOperator(Op.AND)),
-      new BinaryExpression(nlt0, dlt0, new RefinementOperator(Op.AND)),
+      new BinaryExpression(ngte0, op === Op.LTE ? dlt0 : dgt0, new RefinementOperator(Op.AND)),
+      new BinaryExpression(nlte0, op === Op.LTE ? dgt0 : dlt0, new RefinementOperator(Op.AND)),
       new RefinementOperator(Op.OR)
     );
   }
 
-  static fracEqualsToZero(frac: Fraction): BinaryExpression {
-    const neq0 = frac.num.toExpression(Op.EQ);
+  static fracEQorNEQzero(op: Op, frac: Fraction): BinaryExpression {
+    const n0 = frac.num.toExpression(op);
     const dneq0 = frac.den.toExpression(Op.NEQ);
-    return new BinaryExpression(neq0, dneq0, new RefinementOperator(Op.AND));
-  }
-
-  static fracNotEqualsToZero(frac: Fraction): BinaryExpression {
-    const nneq0 = frac.num.toExpression(Op.NEQ);
-    const dneq0 = frac.den.toExpression(Op.NEQ);
-    return new BinaryExpression(nneq0, dneq0, new RefinementOperator(Op.AND));
+    return new BinaryExpression(n0, dneq0, new RefinementOperator(Op.AND));
   }
 
 }

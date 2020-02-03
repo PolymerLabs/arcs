@@ -140,7 +140,7 @@ describe('refiner', () => {
       }));
 });
 
-describe('normalisation', () => {
+describe.only('normalisation', () => {
     it('tests if field name is rearranged to left in a binary node.', () => {
         const manifestAst1 = parse(`
             particle Foo
@@ -205,23 +205,39 @@ describe('normalisation', () => {
         // normalised version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
-    it(`tests if expressions are rearranged. `, () => {
+    it(`tests if expressions are rearranged 1`, () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ (num + 5) < (2*num - 11) ] }
+              input: reads Something {num: Number [ (num + 5) <= (2*num - 11) ] }
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
       ref1.normalise();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {num: Number [ num > 16 ] }
+              input: reads Something {num: Number [ num >= 16 ] }
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
       // normalised version of ref1 should be the same as ref2
       assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
   });
-  it(`tests if expressions are rearranged. `, () => {
+  it(`tests if expressions are rearranged 2`, () => {
+    const manifestAst1 = parse(`
+        particle Foo
+            input: reads Something {num: Number [ (num - 5)/(num - 2) <= 0 ] }
+    `);
+    const typeData = {'num': 'Number'};
+    const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
+    ref1.normalise();
+    const manifestAst2 = parse(`
+        particle Foo
+            input: reads Something {num: Number [ (num >= 5 and num < 2) or (num <= 5 and num > 2) ] }
+    `);
+    const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
+    // normalised version of ref1 should be the same as ref2
+    assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+});
+  it(`tests if expressions are rearranged 3`, () => {
     const manifestAst1 = parse(`
         particle Foo
             input: reads Something {num: Number [ (num+2)*(num+1)+3 > 4 ] }
@@ -237,7 +253,7 @@ describe('normalisation', () => {
     // normalised version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
   });
-  it(`tests if expressions are rearranged. `, () => {
+  it(`tests if expressions are rearranged 4`, () => {
     const manifestAst1 = parse(`
         particle Foo
             input: reads Something {num: Number [ ((num+2)/(2*num-1))+3 == 4 ] }
