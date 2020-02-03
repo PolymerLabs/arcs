@@ -222,7 +222,7 @@ class DatabaseImplTest {
 
     @Test
     fun insertOrUpdate_newEmptyEntity() = runBlockingTest {
-        val entity = Entity(newSchema("hash"), mutableMapOf())
+        val entity = Entity("entity", newSchema("hash"), mutableMapOf())
         database.insertOrUpdate(DummyKey("key"), entity)
 
         // TODO: Get entity back out of DB and check it's equivalent.
@@ -231,6 +231,7 @@ class DatabaseImplTest {
     @Test
     fun insertOrUpdate_newEntityWithFields() = runBlockingTest {
         val entity = Entity(
+            "entity",
             newSchema("hash", SchemaFields(
                 singletons = mapOf(
                     "text" to FieldType.Text,

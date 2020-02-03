@@ -19,6 +19,7 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.common.forEach
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
+import arcs.core.data.Entity
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
@@ -102,9 +103,16 @@ class DatabaseImpl(
         data: DatabaseData,
         originatingClientId: Int?
     ): Int {
-        TODO("not implemented")
+        when (data) {
+            is DatabaseData.Entity -> insertOrUpdate(storageKey, data.entity)
+            else -> TODO("Support Singletons and Collections")
+        }
+        // TODO: Return a proper database version number.
+        return 1
     }
-    override suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) {
+
+    @VisibleForTesting
+    suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) {
         writableDatabase.useTransaction {
             val schemaTypeId = getSchemaTypeId(entity.schema)
             val storageKeyId = getStorageKeyId(storageKey)
