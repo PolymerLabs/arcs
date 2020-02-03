@@ -12,14 +12,14 @@ import kotlin.reflect.KClass
  * @property package the Java package the [Particle] implementation resides in.
  * @property cls the Java classname (simple class name)
  */
-data class ParticleIdentifier constructor(val pkg: String, val cls: String) {
+data class ParticleIdentifier(val pkg: String, val cls: String) {
     companion object {
         /** Converts from JVM canonical class name format. */
         fun from(location: String): ParticleIdentifier {
             val parts = location.splitToSequence('.')
             return ParticleIdentifier(
-                parts.filter { x -> x[0].isLowerCase() }.joinToString("."),
-                parts.filter { x -> x[0].isUpperCase() }.joinToString(".")
+                parts.filter { x -> x.isNotEmpty() && x[0].isLowerCase() }.joinToString("."),
+                parts.filter { x -> x.isNotEmpty() && x[0].isUpperCase() }.joinToString(".")
             )
         }
 
@@ -27,4 +27,7 @@ data class ParticleIdentifier constructor(val pkg: String, val cls: String) {
     }
 }
 
+/**
+ * Creates a [ParticleIdenfifier] from a [KClass].
+ */
 fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(this)

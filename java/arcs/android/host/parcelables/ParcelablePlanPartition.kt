@@ -17,8 +17,9 @@ import arcs.core.host.HandleConnectionSpec
 import arcs.core.host.PlanPartition
 
 /** [Parcelable] variant of [PlanPartition]. */
-data class ParcelablePlanPartition(override val actual: PlanPartition) :
-    ActualParcelable<PlanPartition> {
+data class ParcelablePlanPartition(
+    override val actual: PlanPartition
+) : ActualParcelable<PlanPartition> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.arcId)
         parcel.writeString(actual.arcHost)
@@ -32,25 +33,23 @@ data class ParcelablePlanPartition(override val actual: PlanPartition) :
 
     companion object CREATOR : Parcelable.Creator<ParcelablePlanPartition> {
         override fun createFromParcel(parcel: Parcel): ParcelablePlanPartition {
-
             val arcId = requireNotNull(parcel.readString()) {
                 "No ArcId found in Parcel"
             }
-
             val arcHost = requireNotNull(parcel.readString()) {
                 "No ArcHost found in Parcel"
             }
-
             val size = requireNotNull(parcel.readInt()) {
                 "No size of handleConnectionSpecs found in Parcel"
             }
-
             val handleConnectionSpecs = mutableListOf<HandleConnectionSpec>()
 
             repeat(size) {
-                handleConnectionSpecs.add(requireNotNull(parcel.readHandleConnectionSpec()) {
-                    "No HandleConnectionSpec found in parcel when reading PlanPartition"
-                })
+                handleConnectionSpecs.add(
+                    requireNotNull(parcel.readHandleConnectionSpec()) {
+                        "No HandleConnectionSpec found in parcel when reading PlanPartition"
+                    }
+                )
             }
 
             return ParcelablePlanPartition(PlanPartition(arcId, arcHost, handleConnectionSpecs))

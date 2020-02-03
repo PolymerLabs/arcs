@@ -33,12 +33,11 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
             val size = requireNotNull(parcel.readInt()) {
                 "No size of handleConnectionSpecs found in Parcel"
             }
-
             val handleConnectionSpecs = mutableListOf<HandleConnectionSpec>()
 
             repeat(size) {
                 handleConnectionSpecs.add(requireNotNull(parcel.readHandleConnectionSpec()) {
-                    "No HandleConnectionSpec found in parcel when reading Plan"
+                    "No HandleConnectionSpec found in list position $it of parcel when reading Plan"
                 })
             }
 

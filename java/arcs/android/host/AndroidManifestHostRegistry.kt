@@ -61,10 +61,11 @@ class AndroidManifestHostRegistry private constructor(
             AndroidManifestHostRegistry(ctx, sender).initialize()
     }
 
-    fun initialize(): AndroidManifestHostRegistry {
-        // Discover all Android services which handle ArcHost operations
+    /**
+     * Discover all Android services which handle ArcHost operations.
+     */
+    fun initialize(): AndroidManifestHostRegistry = apply {
         arcHosts.addAll(findHostsByManifest())
-        return this
     }
 
     /**
@@ -83,9 +84,7 @@ class AndroidManifestHostRegistry private constructor(
                 Intent(ARC_HOST_INTENT),
                 PackageManager.MATCH_ALL
             )
-            .filter {
-                it.serviceInfo != null
-            }
+            .filter { it.serviceInfo != null }
             .map { it.serviceInfo.toArcHost(sender) }
 
     override suspend fun availableArcHosts(): List<ArcHost> = arcHosts

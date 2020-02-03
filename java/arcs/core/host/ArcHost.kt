@@ -23,13 +23,7 @@ import kotlin.reflect.KClass
  */
 interface ArcHost {
     /** Return a unique identifier for this host instance. */
-    fun hostId(): String
-
-    /** Registers a [Particle] class with this host. */
-    suspend fun registerParticle(particle: ParticleIdentifier): Unit
-
-    /** Unregisters a [Particle] class. */
-    suspend fun unregisterParticle(particle: ParticleIdentifier): Unit
+    val hostId: String
 
     /** Returns a list of Particles registered to run in this host. */
     suspend fun registeredParticles(): List<ParticleIdentifier>

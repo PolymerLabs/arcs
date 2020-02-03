@@ -16,8 +16,9 @@ import android.os.Parcelable
 import arcs.core.host.HandleConnectionSpec
 
 /** [Parcelable] variant of [HandleConnectionSpec]. */
-data class ParcelableHandleConnectionSpec(override val actual: HandleConnectionSpec) :
-    ActualParcelable<HandleConnectionSpec> {
+data class ParcelableHandleConnectionSpec(
+    override val actual: HandleConnectionSpec
+) : ActualParcelable<HandleConnectionSpec> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.connectionName)
         parcel.writeHandleSpec(actual.handleSpec, 0)
@@ -31,19 +32,15 @@ data class ParcelableHandleConnectionSpec(override val actual: HandleConnectionS
             val connectionName = requireNotNull(parcel.readString()) {
                 "No connectionName found in Parcel"
             }
-
             val handleSpec = requireNotNull(parcel.readHandleSpec()) {
                 "No name found in Parcel"
             }
-
             val particleSpec = requireNotNull(parcel.readParticleSpec()) {
                 "No storageKey found in Parcel"
             }
 
             return ParcelableHandleConnectionSpec(
-                HandleConnectionSpec(
-                    connectionName, handleSpec, particleSpec
-                )
+                HandleConnectionSpec(connectionName, handleSpec, particleSpec)
             )
         }
 

@@ -34,16 +34,11 @@ data class ParcelableHandleSpec(override val actual: HandleSpec) : ActualParcela
         override fun createFromParcel(parcel: Parcel): ParcelableHandleSpec {
 
             val id = parcel.readString()
-
             val name = parcel.readString()
-
             val storageKey = parcel.readString()
 
             val tags: MutableList<String> = mutableListOf()
             parcel.readStringList(tags)
-            requireNotNull(tags) {
-                "No tags found in Parcel"
-            }
 
             val schema = requireNotNull(parcel.readSchema()) {
                 "No schema found in Parcel"
@@ -51,8 +46,11 @@ data class ParcelableHandleSpec(override val actual: HandleSpec) : ActualParcela
 
             return ParcelableHandleSpec(
                 HandleSpec(
-                    id, name, storageKey?.let { StorageKeyParser.parse(storageKey) },
-                    tags.toSet(), schema
+                    id,
+                    name,
+                    storageKey?.let { StorageKeyParser.parse(storageKey) },
+                    tags.toSet(),
+                    schema
                 )
             )
         }

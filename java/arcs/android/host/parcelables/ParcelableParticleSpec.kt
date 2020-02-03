@@ -16,8 +16,9 @@ import android.os.Parcelable
 import arcs.core.host.ParticleSpec
 
 /** [Parcelable] variant of [ParticleSpec]. */
-data class ParcelableParticleSpec(override val actual: ParticleSpec) :
-    ActualParcelable<ParticleSpec> {
+data class ParcelableParticleSpec(
+    override val actual: ParticleSpec
+) : ActualParcelable<ParticleSpec> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.particleName)
         parcel.writeString(actual.location)
@@ -27,11 +28,9 @@ data class ParcelableParticleSpec(override val actual: ParticleSpec) :
 
     companion object CREATOR : Parcelable.Creator<ParcelableParticleSpec> {
         override fun createFromParcel(parcel: Parcel): ParcelableParticleSpec {
-
             val particleName = requireNotNull(parcel.readString()) {
                 "No ParticleName found in Parcel"
             }
-
             val location = requireNotNull(parcel.readString()) {
                 "No Location found in Parcel"
             }

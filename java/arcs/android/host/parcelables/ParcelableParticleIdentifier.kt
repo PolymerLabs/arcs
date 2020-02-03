@@ -17,8 +17,9 @@ import android.os.Parcelable
 import arcs.core.host.ParticleIdentifier
 
 /** [Parcelable] variant of [ParticleIdentifier]. */
-data class ParcelableParticleIdentifier(override val actual: ParticleIdentifier) :
-    ActualParcelable<ParticleIdentifier> {
+data class ParcelableParticleIdentifier(
+    override val actual: ParticleIdentifier
+) : ActualParcelable<ParticleIdentifier> {
     override fun writeToParcel(parcel: Parcel, flags: Int) =
         actual.toComponentName().writeToParcel(parcel, flags)
 
@@ -26,9 +27,7 @@ data class ParcelableParticleIdentifier(override val actual: ParticleIdentifier)
 
     companion object CREATOR : Parcelable.Creator<ParcelableParticleIdentifier> {
         override fun createFromParcel(parcel: Parcel): ParcelableParticleIdentifier {
-
             val componentName = ComponentName(parcel)
-
             return ParcelableParticleIdentifier(componentName.toParticleIdentifier())
         }
 
