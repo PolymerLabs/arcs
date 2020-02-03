@@ -19,6 +19,7 @@ import arcs.core.crdt.CrdtChange.Operations
 import arcs.core.crdt.CrdtSet.Data
 import arcs.core.crdt.internal.Actor
 import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.util.ReferencablePrimitive
 
 /** A [CrdtModel] capable of managing a set of items [T]. */
 class CrdtSet<T : Referencable>(
@@ -121,6 +122,22 @@ class CrdtSet<T : Referencable>(
         dataBuilder
     )
 
+    override fun toString(): String = "CrdtSet($_data)"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null) return false
+        if (this::class != other::class) return false
+
+        other as CrdtSet<*>
+
+        if (_data != other._data) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int = _data.hashCode()
+
     /** Abstract representation of the data managed by [CrdtSet]. */
     interface Data<T : Referencable> : CrdtData {
         val values: MutableMap<ReferenceId, DataValue<T>>
@@ -137,6 +154,14 @@ class CrdtSet<T : Referencable>(
     ) : Data<T> {
         override fun copy(): Data<T> =
             DataImpl(versionMap = VersionMap(versionMap), values = HashMap(values))
+
+        override fun toString(): String =
+            "Data(versionMap=$versionMap, values=${values.toStringRepr()})"
+
+        private fun <T : Referencable> Map<ReferenceId, DataValue<T>>.toStringRepr(): String =
+            entries.joinToString(prefix = "{", postfix = "}") { (id, value) ->
+                "${ReferencablePrimitive.tryDereference(id) ?: id}=$value"
+            }
     }
 
     /** A particular datum within a [CrdtSet]. */
@@ -145,7 +170,9 @@ class CrdtSet<T : Referencable>(
         val versionMap: VersionMap,
         /** The actual value of the datum. */
         val value: T
-    )
+    ) {
+        override fun toString(): String = "$value@Version$versionMap"
+    }
 
     /** Generic Operation applicable to [CrdtSet]. */
     interface IOperation<T : Referencable> : CrdtOperationAtTime {

@@ -33,7 +33,7 @@ data class ReferencablePrimitive<T>(
     // TODO: consider other 'serialization' mechanisms.
     override val id: ReferenceId = "Primitive<$klass>($valueRepr)"
 
-    override fun toString(): String = id
+    override fun toString(): String = "Primitive($valueRepr)"
 
     companion object {
         private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()

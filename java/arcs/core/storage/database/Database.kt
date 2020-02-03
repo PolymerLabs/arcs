@@ -35,7 +35,7 @@ interface Database {
     ): Int
 
     /** Fetches the data at [storageKey] from the database. */
-    suspend fun <Data : DatabaseData> get(storageKey: StorageKey, dataType: KClass<Data>): Data?
+    suspend fun get(storageKey: StorageKey, dataType: KClass<out DatabaseData>): DatabaseData?
 
     /** Removes everything associated with the given [storageKey] from the database. */
     suspend fun delete(storageKey: StorageKey, originatingClientId: Int? = null)
@@ -45,7 +45,7 @@ interface Database {
      * [DatabaseClient.storageKey] is created, updated, or deleted. Returns a unique identifier for
      * the listener, which can be used to unregister it later, with [removeClient].
      */
-    fun <Data : DatabaseData> addClient(client: DatabaseClient<Data>): Int
+    fun addClient(client: DatabaseClient): Int
 
     /**
      * Unregisters a [DatabaseClient] by the unique [identifier] received via the return value of
@@ -55,18 +55,18 @@ interface Database {
 }
 
 /** A client interested in changes to a specific [StorageKey] in the database. */
-interface DatabaseClient<Data : DatabaseData> {
+interface DatabaseClient {
     /** The [StorageKey] this listener is interested in. */
     val storageKey: StorageKey
 
     /**
-     * Notifies the listener of an update to the [Data] in the [Database], when initially
+     * Notifies the listener of an update to the data in the [Database], when initially
      * registered - this method will be called by the [Database] with the latest current value in
      * the database, if there is one.
      */
-    suspend fun onDatabaseUpdate(data: Data, version: Int, originatingClientId: Int?)
+    suspend fun onDatabaseUpdate(data: DatabaseData, version: Int, originatingClientId: Int?)
 
-    /** Notifies the listener when the [Data] identified by the [StorageKey] has been deleted. */
+    /** Notifies the listener when the data identified by the [StorageKey] has been deleted. */
     suspend fun onDatabaseDelete(originatingClientId: Int?)
 }
 
