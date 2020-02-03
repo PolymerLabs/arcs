@@ -73,7 +73,7 @@ async function processFile(src: string) {
   fs.closeSync(outFile);
 }
 
-async function go() {
+async function main() {
   try {
     Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
@@ -85,5 +85,5 @@ async function go() {
 
 }
 
-void go();
+void main();
 

@@ -47,7 +47,7 @@ if (opts.outdir === '') {
   process.exit(1);
 }
 
-async function go() {
+async function main() {
   try {
     if (opts.cpp) {
       await new Schema2Cpp(opts).call();
@@ -61,4 +61,4 @@ async function go() {
   }
 }
 
-void go();
+void main();
