@@ -30,9 +30,9 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.util.guardWith
+import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.reflect.KClass
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long
@@ -103,6 +103,7 @@ class DatabaseImpl(
     @VisibleForTesting
     fun getEntity(storageKey: StorageKey, schema: Schema): DatabaseData.Entity =
         readableDatabase.useTransaction {
+            // Fetch the entity's type by storage key.
             val (storageKeyId, schemaTypeId) = rawQuery(
                 """
                     SELECT storage_keys.id, entities.type_id
@@ -116,8 +117,10 @@ class DatabaseImpl(
                 require(it.moveToFirst()) { "Entity at storage key $storageKey does not exist." }
                 it.getLong(0) to it.getLong(1)
             }
+            // Fetch the entity's fields.
             val fieldsByName = getSchemaFields(schemaTypeId)
             val fieldsById = fieldsByName.mapKeys { it.value.fieldId }
+            // Populate the entity's field data from the database.
             val data = mutableMapOf<FieldName, Any?>()
             rawQuery(
                 """
@@ -160,9 +163,10 @@ class DatabaseImpl(
     @VisibleForTesting
     suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) =
         writableDatabase.useTransaction {
+            // Fetch/create the entity's type ID.
             val schemaTypeId = getSchemaTypeId(entity.schema)
-            val storageKeyId = getStorageKeyId(storageKey)
             // Set the type ID for this storage key.
+            val storageKeyId = getStorageKeyId(storageKey)
             insertWithOnConflict(
                 TABLE_ENTITIES,
                 null,
@@ -172,6 +176,7 @@ class DatabaseImpl(
                 },
                 SQLiteDatabase.CONFLICT_REPLACE
             )
+            // Insert/update the entity's field types.
             val fields = getSchemaFields(schemaTypeId)
             val content = ContentValues().apply {
                 put("entity_storage_key_id", storageKeyId)

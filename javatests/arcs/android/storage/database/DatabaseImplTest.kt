@@ -322,7 +322,6 @@ class DatabaseImplTest {
         private val TEXT_TYPE_ID = PrimitiveType.Text.ordinal.toLong()
         private val BOOLEAN_TYPE_ID = PrimitiveType.Boolean.ordinal.toLong()
         private val NUMBER_TYPE_ID = PrimitiveType.Number.ordinal.toLong()
-
     }
 }
 
