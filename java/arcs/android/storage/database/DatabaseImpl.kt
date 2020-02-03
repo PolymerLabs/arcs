@@ -29,8 +29,8 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.util.guardWith
-import kotlin.reflect.KClass
 import java.lang.IllegalArgumentException
+import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -77,7 +77,7 @@ class DatabaseImpl(
                 put("id", it.ordinal)
                 put("name", it.name)
             }
-            db.insert("types", null, content)
+            db.insert(TABLE_TYPES, null, content)
         }
     }
 
@@ -112,7 +112,7 @@ class DatabaseImpl(
     }
 
     @VisibleForTesting
-    suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) {
+    suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) =
         writableDatabase.useTransaction {
             val schemaTypeId = getSchemaTypeId(entity.schema)
             val storageKeyId = getStorageKeyId(storageKey)
@@ -135,7 +135,6 @@ class DatabaseImpl(
                 )
             }
         }
-    }
 
     override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) {
         TODO("not implemented")
@@ -165,7 +164,7 @@ class DatabaseImpl(
                 put("name", schema.hash)
                 put("is_primitive", false)
             }
-            val schemaTypeId = insert("types", null, content)
+            val schemaTypeId = insert(TABLE_TYPES, null, content)
 
             schemaTypeMap[schema.hash] = schemaTypeId
 
@@ -236,6 +235,7 @@ class DatabaseImpl(
      */
     @VisibleForTesting
     fun getPrimitiveValueId(value: Any?, fieldId: FieldId): FieldValueId {
+        // TODO: Cache the most frequent values somehow.
         if (fieldId.toInt() == PrimitiveType.Boolean.ordinal) {
             return when (value) {
                 true -> 1
@@ -244,24 +244,14 @@ class DatabaseImpl(
             }
         }
         return writableDatabase.transaction {
-            val tableName: String
-            val valueStr: String
-            when (fieldId.toInt()) {
+            val (tableName, valueStr) = when (fieldId.toInt()) {
                 PrimitiveType.Text.ordinal -> {
-                    if (value is String) {
-                        tableName = "text_primitive_values"
-                        valueStr = value
-                    } else {
-                        throw IllegalArgumentException("Expected value to be a String.")
-                    }
+                    require(value is String) { "Expected value to be a String." }
+                    TABLE_TEXT_PRIMITIVES to value
                 }
                 PrimitiveType.Number.ordinal -> {
-                    if (value is Double) {
-                        tableName = "number_primitive_values"
-                        valueStr = value.toString()
-                    } else {
-                        throw IllegalArgumentException("Expected value to be a Double.")
-                    }
+                    require(value is Double) { "Expected value to be a Double." }
+                    TABLE_NUMBER_PRIMITIVES to value.toString()
                 }
                 else -> throw IllegalArgumentException("Not a primitive type ID: $fieldId")
             }
@@ -315,6 +305,10 @@ class DatabaseImpl(
 
     companion object {
         private const val DB_VERSION = 1
+
+        private val TABLE_TYPES = "types"
+        private val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
+        private val TABLE_NUMBER_PRIMITIVES = "number_primitive_values"
 
         private val CREATE =
             """
