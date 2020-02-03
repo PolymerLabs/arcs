@@ -1,10 +1,13 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_jvm_library")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-arcs_kt_jvm_library(
+# Note: this needs to be kt_android_library because internally, the `kt_jvm_library` doesn't
+# appreciate mockito_kotlin-android being used, and we need the android variant here because the
+# junit test suite macro builds kt_android_libraries
+kt_android_library(
     name = "testutil",
     testonly = True,
     srcs = glob(["*.kt"]),
