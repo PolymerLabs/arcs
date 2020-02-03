@@ -47,6 +47,7 @@ def arcs_manifest_json(name, src, deps = [], out = None, visibility = None):
       name: the name of the target to create
       src: an Arcs manifest files to serialize
       deps: list of dependencies (other manifests)
+      out: the name of the output artifact (a JSON file).
       visibility: list of visibilities
     """
     if not src.endswith(".arcs"):
