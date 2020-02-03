@@ -12,6 +12,7 @@
 package arcs.core.storage.database
 
 import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.Schema
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import kotlin.reflect.KClass
@@ -35,7 +36,11 @@ interface Database {
     ): Int
 
     /** Fetches the data at [storageKey] from the database. */
-    suspend fun get(storageKey: StorageKey, dataType: KClass<out DatabaseData>): DatabaseData?
+    suspend fun get(
+        storageKey: StorageKey,
+        dataType: KClass<out DatabaseData>,
+        schema: Schema
+    ): DatabaseData?
 
     /** Removes everything associated with the given [storageKey] from the database. */
     suspend fun delete(storageKey: StorageKey, originatingClientId: Int? = null)

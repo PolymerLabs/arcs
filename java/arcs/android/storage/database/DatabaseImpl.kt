@@ -19,6 +19,7 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.common.forEach
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
+import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.Entity
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
@@ -29,10 +30,9 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.util.guardWith
-import java.lang.IllegalArgumentException
-import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long
@@ -93,10 +93,56 @@ class DatabaseImpl(
 
     override suspend fun get(
         storageKey: StorageKey,
-        dataType: KClass<out DatabaseData>
-    ): DatabaseData? {
-        TODO("not implemented")
+        dataType: KClass<out DatabaseData>,
+        schema: Schema
+    ) = when (dataType) {
+        DatabaseData.Entity::class -> getEntity(storageKey, schema)
+        else -> TODO("Support Singletons and Collections")
     }
+
+    @VisibleForTesting
+    fun getEntity(storageKey: StorageKey, schema: Schema): DatabaseData.Entity =
+        readableDatabase.useTransaction {
+            val (storageKeyId, schemaTypeId) = rawQuery(
+                """
+                    SELECT storage_keys.id, entities.type_id
+                    FROM storage_keys
+                    JOIN entities
+                      ON entities.storage_key_id = storage_keys.id
+                    WHERE storage_keys.storage_key = ?
+                """.trimIndent(),
+                arrayOf(storageKey.toString())
+            ).use {
+                require(it.moveToFirst()) { "Entity at storage key $storageKey does not exist." }
+                it.getLong(0) to it.getLong(1)
+            }
+            val fieldsByName = getSchemaFields(schemaTypeId)
+            val fieldsById = fieldsByName.mapKeys { it.value.fieldId }
+            val data = mutableMapOf<FieldName, Any?>()
+            rawQuery(
+                """
+                    SELECT field_id, primitive_value_id
+                    FROM field_values
+                    WHERE entity_storage_key_id = ?
+                """.trimIndent(),
+                arrayOf(storageKeyId.toString())
+            ).forEach {
+                val fieldId = it.getLong(0)
+                val fieldValueId = it.getLong(1)
+                val field = fieldsById.getValue(fieldId)
+                // TODO: Handle non-primitive and collection field values.
+                data[field.fieldName] = getPrimitiveValue(fieldValueId, field.typeId)
+            }
+            DatabaseData.Entity(
+                Entity(
+                    id = "TODO", // TODO: Store Entity ID in database.
+                    schema = schema,
+                    data = data
+                ),
+                1, // TODO: Set correct database version
+                VersionMap() // TODO: Fill in VersionMap
+            )
+        }
 
     override suspend fun insertOrUpdate(
         storageKey: StorageKey,
@@ -116,6 +162,16 @@ class DatabaseImpl(
         writableDatabase.useTransaction {
             val schemaTypeId = getSchemaTypeId(entity.schema)
             val storageKeyId = getStorageKeyId(storageKey)
+            // Set the type ID for this storage key.
+            insertWithOnConflict(
+                TABLE_ENTITIES,
+                null,
+                ContentValues().apply {
+                    put("storage_key_id", storageKeyId)
+                    put("type_id", schemaTypeId)
+                },
+                SQLiteDatabase.CONFLICT_REPLACE
+            )
             val fields = getSchemaFields(schemaTypeId)
             val content = ContentValues().apply {
                 put("entity_storage_key_id", storageKeyId)
@@ -128,7 +184,7 @@ class DatabaseImpl(
                     put("primitive_value_id", getPrimitiveValueId(fieldValue, field.typeId))
                 }
                 insertWithOnConflict(
-                    "field_values",
+                    TABLE_FIELD_VALUES,
                     null,
                     content,
                     SQLiteDatabase.CONFLICT_REPLACE
@@ -234,9 +290,9 @@ class DatabaseImpl(
      * Booleans don't have a primitive table, they will just be returned as either 0 or 1.
      */
     @VisibleForTesting
-    fun getPrimitiveValueId(value: Any?, fieldId: FieldId): FieldValueId {
+    fun getPrimitiveValueId(value: Any?, typeId: TypeId): FieldValueId {
         // TODO: Cache the most frequent values somehow.
-        if (fieldId.toInt() == PrimitiveType.Boolean.ordinal) {
+        if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
             return when (value) {
                 true -> 1
                 false -> 0
@@ -244,7 +300,7 @@ class DatabaseImpl(
             }
         }
         return writableDatabase.transaction {
-            val (tableName, valueStr) = when (fieldId.toInt()) {
+            val (tableName, valueStr) = when (typeId.toInt()) {
                 PrimitiveType.Text.ordinal -> {
                     require(value is String) { "Expected value to be a String." }
                     TABLE_TEXT_PRIMITIVES to value
@@ -253,7 +309,7 @@ class DatabaseImpl(
                     require(value is Double) { "Expected value to be a Double." }
                     TABLE_NUMBER_PRIMITIVES to value.toString()
                 }
-                else -> throw IllegalArgumentException("Not a primitive type ID: $fieldId")
+                else -> throw IllegalArgumentException("Not a primitive type ID: $typeId")
             }
             val fieldValueId = rawQuery(
                 "SELECT id FROM $tableName WHERE value = ?", arrayOf(valueStr)
@@ -268,6 +324,29 @@ class DatabaseImpl(
                 }
                 insert(tableName, null, content)
             }
+        }
+    }
+
+    fun getPrimitiveValue(valueId: FieldValueId, typeId: TypeId): Any {
+        // TODO: Cache the most frequent values somehow.
+        fun runSelectQuery(tableName: String) = readableDatabase.rawQuery(
+            "SELECT value FROM $tableName WHERE id = ?",
+            arrayOf(valueId.toString())
+        ).use {
+            require(it.moveToFirst()) { "Unknown primitive with ID $valueId." }
+            it.getString(0)
+        }
+        return when (typeId.toInt()) {
+            PrimitiveType.Boolean.ordinal -> when (valueId) {
+                1L -> true
+                0L -> false
+                else -> throw IllegalArgumentException(
+                    "Expected $valueId to be a Boolean (0 or 1)."
+                )
+            }
+            PrimitiveType.Text.ordinal -> runSelectQuery(TABLE_TEXT_PRIMITIVES)
+            PrimitiveType.Number.ordinal -> runSelectQuery(TABLE_NUMBER_PRIMITIVES).toDouble()
+            else -> throw IllegalArgumentException("Not a primitive type ID: $typeId")
         }
     }
 
@@ -306,6 +385,8 @@ class DatabaseImpl(
     companion object {
         private const val DB_VERSION = 1
 
+        private val TABLE_ENTITIES = "entities"
+        private val TABLE_FIELD_VALUES = "field_values"
         private val TABLE_TYPES = "types"
         private val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
         private val TABLE_NUMBER_PRIMITIVES = "number_primitive_values"
