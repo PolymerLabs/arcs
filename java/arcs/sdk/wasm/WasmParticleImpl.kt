@@ -68,7 +68,7 @@ abstract class WasmParticleImpl : Particle {
      * @param name The name of the triggered event
      * @param handler A callback (consumer) in reaction to the event
      */
-    fun eventHandler(name: String, handler: (Map<String, String>) -> Unit) {
+    override fun eventHandler(name: String, handler: (Map<String, String>) -> Unit) {
         eventHandlers[name] = handler
     }
 
