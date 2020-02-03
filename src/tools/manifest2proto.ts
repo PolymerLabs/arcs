@@ -22,7 +22,7 @@ const opts = minimist(process.argv.slice(2), {
 if (opts.help || opts._.length === 0) {
   console.log(`
 Usage
-  $ tools/sigh manifest2proto [options] [file ...]
+  $ tools/sigh manifest2json [options] [file ...]
 
 Description
   Serializes manifests.

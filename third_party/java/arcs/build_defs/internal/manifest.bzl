@@ -41,7 +41,7 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
 def arcs_serialize_manifest(name, src, deps = [], out = None, visibility = None):
     """Serialize a manifest file.
 
-    This converts a '.arcs' file into a JSON representation, using manifest2proto.
+    This converts a '.arcs' file into a JSON representation, using manifest2json.
 
     Args:
       name: the name of the target to create
@@ -66,7 +66,7 @@ def arcs_serialize_manifest(name, src, deps = [], out = None, visibility = None)
         outs = [out],
         deps = deps,
         progress_message = "Serializing manifest",
-        sigh_cmd = "manifest2proto --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+        sigh_cmd = "manifest2json --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
     )
 
 def _generate_root_manifest_content(label, input_files):
