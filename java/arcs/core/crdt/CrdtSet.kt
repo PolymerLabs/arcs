@@ -122,6 +122,22 @@ class CrdtSet<T : Referencable>(
         dataBuilder
     )
 
+    override fun toString(): String = "CrdtSet($_data)"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null) return false
+        if (this::class != other::class) return false
+
+        other as CrdtSet<*>
+
+        if (_data != other._data) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int = _data.hashCode()
+
     /** Abstract representation of the data managed by [CrdtSet]. */
     interface Data<T : Referencable> : CrdtData {
         val values: MutableMap<ReferenceId, DataValue<T>>
@@ -316,24 +332,6 @@ class CrdtSet<T : Referencable>(
                 return added.map { Add(actor, it.versionMap, it.value) }
             }
         }
-    }
-
-    override fun toString(): String = "CrdtSet($_data)"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null) return false
-        if (this::class != other::class) return false
-
-        other as CrdtSet<*>
-
-        if (_data != other._data) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return _data.hashCode()
     }
 
     companion object {

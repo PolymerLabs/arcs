@@ -207,10 +207,10 @@ class DatabaseDriver<Data : Any>(
     ) {
         this.receiver = receiver
         val (pendingReceiverData, pendingReceiverVersion) = localDataMutex.withLock {
-            var res = localData?.takeIf { this.token != token } to localVersion
+            var dataAndVersion = localData?.takeIf { this.token != token } to localVersion
 
             // If we didn't have any data, try and fetch it from the database.
-            if (res.first == null || res.second == null) {
+            if (dataAndVersion.first == null || dataAndVersion.second == null) {
                 log.debug { "registerReceiver($token) - no local data, fetching from database" }
                 database.get(
                     storageKey,
@@ -221,7 +221,7 @@ class DatabaseDriver<Data : Any>(
                         else -> throw IllegalStateException("Illegal dataClass: $dataClass")
                     }
                 )?.also {
-                    res = when (it) {
+                    dataAndVersion = when (it) {
                         is DatabaseData.Entity ->
                             it.entity.toCrdtEntityData(it.versionMap)
                         is DatabaseData.Singleton ->
@@ -231,7 +231,7 @@ class DatabaseDriver<Data : Any>(
                     } as Data to it.databaseVersion
                 }
             }
-            res
+            dataAndVersion
         }
 
         if (pendingReceiverData == null || pendingReceiverVersion == null) return
