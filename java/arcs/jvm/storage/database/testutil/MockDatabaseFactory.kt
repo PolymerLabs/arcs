@@ -18,7 +18,6 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseFactory
 import arcs.core.util.guardWith
-import com.nhaarman.mockitokotlin2.spy
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +37,7 @@ class MockDatabaseFactory : DatabaseFactory {
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
         cache[name to persistent]
-            ?: spy(MockDatabase()).also { cache[name to persistent] = it }
+            ?: MockDatabase().also { cache[name to persistent] = it }
     }
 }
 
