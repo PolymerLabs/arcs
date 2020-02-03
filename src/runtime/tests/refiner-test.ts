@@ -424,7 +424,6 @@ describe('Polynomial', () => {
   it('tests polynomial negation works', () => {
     const pn1 = new Polynomial([0, 1, 2]);      // 2a^2 + a
     const neg = Polynomial.negate(pn1);         // -2a^2 -a
-    // TODO(ragdev): Why does 0 fail in the assertion below but -0 works?
     assert.deepEqual(neg.coeffs, [-0, -1, -2]);
     assert.strictEqual(neg.degree(), 2);
   });

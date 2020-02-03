@@ -140,8 +140,12 @@ export class Refinement {
   // ~ Removes redundant info like expression && false => false
   normalise() {
     try {
+      // Rearrange doesn't handle multivariate case yet.
+      // Therefore, we TRY to rearrange, if possible.
       this.expression = this.expression.rearrange();
-    } catch (e) {console.log(e);}
+    } catch (e) {
+      console.log(e);
+    }
     this.expression = this.expression.normalise();
   }
 
@@ -242,10 +246,11 @@ export class BinaryExpression extends RefinementExpression {
             RefinementOperator.fromLiteral(expr.operator));
   }
 
-  updateSelf(expr: BinaryExpression) {
+  update(expr: BinaryExpression): void {
     this.leftExpr = expr.leftExpr;
     this.rightExpr = expr.rightExpr;
     this.operator = expr.operator;
+    this.evalType = expr.evalType;
   }
 
   toString(): string {
@@ -256,42 +261,42 @@ export class BinaryExpression extends RefinementExpression {
     return `(${this.leftExpr.toSQLExpression()} ${this.operator.toSQLOp()} ${this.rightExpr.toSQLExpression()})`;
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const left = this.leftExpr.applyOperator(data);
     const right = this.rightExpr.applyOperator(data);
     return this.operator.eval([left, right]);
   }
 
-  swapChildren() {
+  swapChildren(): void {
     const temp = this.rightExpr;
     this.rightExpr = this.leftExpr;
     this.leftExpr = temp;
     this.operator.flip();
   }
 
-  simplifyPrimitive() {
+  simplifyPrimitive(): RefinementExpression {
     if (this.leftExpr instanceof BooleanPrimitive && this.rightExpr instanceof BooleanPrimitive) {
-      return new BooleanPrimitive(this.applyOperator({}));
+      return new BooleanPrimitive(this.applyOperator());
     } else if (this.leftExpr instanceof NumberPrimitive && this.rightExpr instanceof NumberPrimitive) {
       if (this.evalType === Primitive.BOOLEAN) {
-        return new BooleanPrimitive(this.applyOperator({}));
+        return new BooleanPrimitive(this.applyOperator());
       }
-      return new NumberPrimitive(this.applyOperator({}));
+      return new NumberPrimitive(this.applyOperator());
     }
     return null;
   }
 
-  rearrange() {
+  rearrange(): RefinementExpression {
     if (this.evalType === Primitive.BOOLEAN && this.leftExpr.evalType === Primitive.NUMBER && this.rightExpr.evalType === Primitive.NUMBER) {
-      this.updateSelf(Normaliser.rearrangeNumericalExpression(this));
+      Normaliser.rearrangeNumericalExpression(this);
     } else {
-      this.leftExpr.rearrange();
-      this.rightExpr.rearrange();
+      this.leftExpr = this.leftExpr.rearrange();
+      this.rightExpr = this.rightExpr.rearrange();
     }
     return this;
   }
 
-  normalise() {
+  normalise(): RefinementExpression {
     this.leftExpr = this.leftExpr.normalise();
     this.rightExpr = this.rightExpr.normalise();
     const sp = this.simplifyPrimitive();
@@ -379,16 +384,16 @@ export class UnaryExpression extends RefinementExpression {
     return `(${this.operator.toSQLOp()} ${this.expr.toSQLExpression()})`;
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const expression = this.expr.applyOperator(data);
     return this.operator.eval([expression]);
   }
 
-  simplifyPrimitive() {
+  simplifyPrimitive(): RefinementExpression  {
     if (this.expr instanceof BooleanPrimitive && this.operator.op === Op.NOT) {
-      return new BooleanPrimitive(this.applyOperator({}));
+      return new BooleanPrimitive(this.applyOperator());
     } else if (this.expr instanceof NumberPrimitive && this.operator.op === Op.NEG) {
-      return new NumberPrimitive(this.applyOperator({}));
+      return new NumberPrimitive(this.applyOperator());
     }
     return null;
   }
@@ -411,8 +416,8 @@ export class UnaryExpression extends RefinementExpression {
     }
   }
 
-  rearrange() {
-    this.expr.rearrange();
+  rearrange(): RefinementExpression {
+    this.expr = this.expr.rearrange();
     return this;
   }
 
@@ -453,7 +458,7 @@ export class FieldNamePrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     if (data[this.value] != undefined) {
       return data[this.value];
     }
@@ -923,7 +928,7 @@ export class RefinementOperator {
     return new RefinementOperator(refOpr.op);
   }
 
-  flip() {
+  flip(): void {
     switch (this.op) {
       case Op.LT: this.updateOp(Op.GT); break;
       case Op.GT: this.updateOp(Op.LT); break;
@@ -1069,33 +1074,22 @@ export class Fraction {
 }
 
 export class Polynomial {
-  _coeffs: number[];
+  private _coeffs: number[];
   indeterminate?: string;
 
-  constructor(coeffs?: number[], variable?: string) {
-    if (coeffs) {
-      this.coeffs = coeffs;
-    } else {
-      this.coeffs = [0];
-    }
+  constructor(coeffs: number[] = [0], variable?: string) {
+    this.coeffs = coeffs;
     this.indeterminate = variable;
   }
 
   static copyOf(pn: Polynomial): Polynomial {
-    const copy = new Polynomial();
-    copy.coeffs = pn.coeffs;
-    copy.indeterminate = pn.indeterminate;
-    return copy;
+    return new Polynomial(pn.coeffs, pn.indeterminate);
   }
 
   get coeffs(): number[] {
-    for (let i = this._coeffs.length - 1; i > 0; i -= 1) {
-      if (this._coeffs[i] === 0) {
-        this._coeffs.splice(i, 1);
-      } else {
-        break;
-      }
-  }
+    while (this._coeffs.length >= 1 && this._coeffs[this._coeffs.length - 1] === 0) {
+      this._coeffs.pop();
+    }
     if (this._coeffs.length === 0) {
       this._coeffs.push(0);
     }
@@ -1132,11 +1126,7 @@ export class Polynomial {
   }
 
   static negate(a: Polynomial): Polynomial {
-    const neg = Polynomial.copyOf(a);
-    for (const [i, coeff] of neg.coeffs.entries()) {
-      neg.coeffs[i] = -coeff;
-    }
-    return neg;
+    return new Polynomial(a.coeffs.map(co => -co), a.indeterminate);
   }
 
   static multiply(a: Polynomial, b: Polynomial): Polynomial {
@@ -1206,7 +1196,7 @@ export class Polynomial {
       let termExpr = null;
       if (i > 0) {
         termExpr = Polynomial.inderminateToExpression(i, this.indeterminate);
-        if (Math.abs(this.coeffs[i]) > 1) {
+        if (Math.abs(this.coeffs[i]) !== 1) {
           termExpr = new BinaryExpression(
             new NumberPrimitive(this.coeffs[i]),
             termExpr,
@@ -1224,18 +1214,21 @@ export class Polynomial {
 
 export class Normaliser {
 
-  static rearrangeNumericalExpression(expr: BinaryExpression): BinaryExpression {
+  // Updates 'expr' after rearrangement.
+  static rearrangeNumericalExpression(expr: BinaryExpression): void {
     const lF = Fraction.fromExpression(expr.leftExpr);
     const rF = Fraction.fromExpression(expr.rightExpr);
     const frac = Fraction.subtract(lF, rF);
+    let rearranged = null;
     switch (expr.operator.op) {
-      case Op.LT: return Normaliser.fracLessThanZero(frac);
-      case Op.GT: return Normaliser.fracGreaterThanZero(frac);
-      case Op.EQ: return Normaliser.fracEqualsToZero(frac);
-      case Op.NEQ: return Normaliser.fracNotEqualsToZero(frac);
+      case Op.LT: rearranged = Normaliser.fracLessThanZero(frac); break;
+      case Op.GT: rearranged = Normaliser.fracGreaterThanZero(frac); break;
+      case Op.EQ: rearranged = Normaliser.fracEqualsToZero(frac); break;
+      case Op.NEQ: rearranged = Normaliser.fracNotEqualsToZero(frac); break;
       default:
           throw new Error(`Unsupported operator ${expr.operator.op}: cannot rearrange numerical expression.`);
     }
+    expr.update(rearranged);
   }
 
   static fracLessThanZero(frac: Fraction): BinaryExpression {
