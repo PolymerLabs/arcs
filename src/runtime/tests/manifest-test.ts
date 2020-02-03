@@ -659,6 +659,31 @@ ${particleStr1}
       verify(manifest);
       verify(await parseManifest(manifest.toString()));
     });
+    it('can construct manifest containing a particle with refinement types', async () => {
+      const manifest = await parseManifest(`
+      particle Foo
+        input: reads Something {value: Number [value > 0], price: Number [price > 0]} [value > 10 and price < 2]`);
+      const verify = (manifest: Manifest) => {
+        const entity = manifest.particles[0].handleConnectionMap.get('input').type;
+        assert.strictEqual(entity.tag, 'Entity');
+        // tslint:disable-next-line: no-any
+        const ref = (entity as any).getEntitySchema().refinement;
+        assert.exists(ref);
+        assert.strictEqual(ref.kind, 'refinement');
+        assert.isTrue(ref.expression instanceof BinaryExpression);
+        assert.strictEqual(ref.expression.operator.op, 'and');
+        assert.isTrue(ref.expression.leftExpr instanceof BinaryExpression);
+        assert.strictEqual(ref.expression.leftExpr.operator.op, '>');
+        assert.strictEqual(ref.expression.leftExpr.leftExpr.value, 'value');
+        assert.strictEqual(ref.expression.leftExpr.rightExpr.value, 10);
+        assert.isTrue(ref.expression.rightExpr instanceof BinaryExpression);
+        assert.strictEqual(ref.expression.rightExpr.operator.op, '<');
+        assert.strictEqual(ref.expression.rightExpr.leftExpr.value, 'price');
+        assert.strictEqual(ref.expression.rightExpr.rightExpr.value, 2);
+      };
+      verify(manifest);
+      verify(await parseManifest(manifest.toString()));
+    });
   });
 
   describe('relaxed reads and writes', async () => {
