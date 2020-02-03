@@ -12,6 +12,7 @@
 package arcs.android.storage.database
 
 import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
@@ -37,10 +38,12 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class DatabaseImplTest {
     private lateinit var database: DatabaseImpl
+    private lateinit var db: SQLiteDatabase
 
     @Before
     fun setUp() {
         database = DatabaseImpl(ApplicationProvider.getApplicationContext(), "test.sqlite3")
+        db = database.writableDatabase
     }
 
     @After
@@ -70,10 +73,10 @@ class DatabaseImplTest {
     fun getSchemaTypeId_newSchema() = runBlockingTest {
         val schema = newSchema("abc")
 
-        assertThat(database.getSchemaTypeId(schema)).isEqualTo(FIRST_ENTITY_TYPE_ID)
+        assertThat(database.getSchemaTypeId(schema, db)).isEqualTo(FIRST_ENTITY_TYPE_ID)
 
         // Repeating should give the same result.
-        assertThat(database.getSchemaTypeId(schema)).isEqualTo(FIRST_ENTITY_TYPE_ID)
+        assertThat(database.getSchemaTypeId(schema, db)).isEqualTo(FIRST_ENTITY_TYPE_ID)
 
         assertThat(database.getTypeId(FieldType.EntityRef("abc")))
             .isEqualTo(FIRST_ENTITY_TYPE_ID)
@@ -86,11 +89,11 @@ class DatabaseImplTest {
         val expectedTypeId1 = FIRST_ENTITY_TYPE_ID
         val expectedTypeId2 = FIRST_ENTITY_TYPE_ID + 1
 
-        assertThat(database.getSchemaTypeId(schema1)).isEqualTo(expectedTypeId1)
+        assertThat(database.getSchemaTypeId(schema1, db)).isEqualTo(expectedTypeId1)
         assertThat(database.getTypeId(FieldType.EntityRef("first")))
             .isEqualTo(expectedTypeId1)
 
-        assertThat(database.getSchemaTypeId(schema2)).isEqualTo(expectedTypeId2)
+        assertThat(database.getSchemaTypeId(schema2, db)).isEqualTo(expectedTypeId2)
         assertThat(database.getTypeId(FieldType.EntityRef("second")))
             .isEqualTo(expectedTypeId2)
     }
@@ -102,7 +105,7 @@ class DatabaseImplTest {
             collections = mapOf("num" to FieldType.Number)
         ))
 
-        val typeId = database.getSchemaTypeId(schema)
+        val typeId = database.getSchemaTypeId(schema, db)
 
         assertThat(typeId).isEqualTo(FIRST_ENTITY_TYPE_ID)
         assertThat(readFieldsTable()).containsExactly(
@@ -118,10 +121,10 @@ class DatabaseImplTest {
             singletons = mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean),
             collections = mapOf("num" to FieldType.Number)
         ))
-        val schemaTypeId1 = database.getSchemaTypeId(schema1)
+        val schemaTypeId1 = database.getSchemaTypeId(schema1, db)
 
         // Creates new IDs for each field.
-        val fields1 = database.getSchemaFields(schemaTypeId1)
+        val fields1 = database.getSchemaFields(schemaTypeId1, db)
         assertThat(fields1).containsExactly(
             "text", DatabaseImpl.SchemaField("text", 1L, TEXT_TYPE_ID),
             "bool", DatabaseImpl.SchemaField("bool", 2L, BOOLEAN_TYPE_ID),
@@ -129,12 +132,12 @@ class DatabaseImplTest {
         )
 
         // Re-running with the same schema doesn't create new field IDs
-        assertThat(database.getSchemaFields(schemaTypeId1)).isEqualTo(fields1)
+        assertThat(database.getSchemaFields(schemaTypeId1, db)).isEqualTo(fields1)
 
         // Running on a different schema creates new field IDs.
         val schema2 = schema1.copy(hash = "xyz")
-        val schemaTypeId2 = database.getSchemaTypeId(schema2)
-        val fields2 = database.getSchemaFields(schemaTypeId2)
+        val schemaTypeId2 = database.getSchemaTypeId(schema2, db)
+        val fields2 = database.getSchemaFields(schemaTypeId2, db)
         assertThat(fields2).containsExactly(
             "text", DatabaseImpl.SchemaField("text", 4L, TEXT_TYPE_ID),
             "bool", DatabaseImpl.SchemaField("bool", 5L, BOOLEAN_TYPE_ID),
@@ -145,46 +148,46 @@ class DatabaseImplTest {
     @Test
     fun getSchemaFieldIds_emptySchema() = runBlockingTest {
         val schema = newSchema("abc")
-        val schemaTypeId = database.getSchemaTypeId(schema)
-        assertThat(database.getSchemaFields(schemaTypeId)).isEmpty()
+        val schemaTypeId = database.getSchemaTypeId(schema, db)
+        assertThat(database.getSchemaFields(schemaTypeId, db)).isEmpty()
     }
 
     @Test
     fun getSchemaFieldIds_unknownSchemaId() = runBlockingTest {
-        val fieldIds = database.getSchemaFields(987654L)
+        val fieldIds = database.getSchemaFields(987654L, db)
         assertThat(fieldIds).isEmpty()
     }
 
     @Test
     fun getStorageKeyId_newKeys() = runBlockingTest {
-        assertThat(database.getStorageKeyId(DummyKey("key1"))).isEqualTo(1L)
-        assertThat(database.getStorageKeyId(DummyKey("key2"))).isEqualTo(2L)
-        assertThat(database.getStorageKeyId(DummyKey("key3"))).isEqualTo(3L)
+        assertThat(database.getStorageKeyId(DummyKey("key1"), db)).isEqualTo(1L)
+        assertThat(database.getStorageKeyId(DummyKey("key2"), db)).isEqualTo(2L)
+        assertThat(database.getStorageKeyId(DummyKey("key3"), db)).isEqualTo(3L)
     }
 
     @Test
     fun getStorageKeyId_existingKey() = runBlockingTest {
-        assertThat(database.getStorageKeyId(DummyKey("key"))).isEqualTo(1L)
-        assertThat(database.getStorageKeyId(DummyKey("key"))).isEqualTo(1L)
+        assertThat(database.getStorageKeyId(DummyKey("key"), db)).isEqualTo(1L)
+        assertThat(database.getStorageKeyId(DummyKey("key"), db)).isEqualTo(1L)
     }
 
     @Test
     fun getPrimitiveValue_boolean() = runBlockingTest {
         // Test value -> ID.
-        assertThat(database.getPrimitiveValueId(true, BOOLEAN_TYPE_ID)).isEqualTo(1)
-        assertThat(database.getPrimitiveValueId(false, BOOLEAN_TYPE_ID)).isEqualTo(0)
+        assertThat(database.getPrimitiveValueId(true, BOOLEAN_TYPE_ID, db)).isEqualTo(1)
+        assertThat(database.getPrimitiveValueId(false, BOOLEAN_TYPE_ID, db)).isEqualTo(0)
 
         val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId("not a bool", BOOLEAN_TYPE_ID)
+            database.getPrimitiveValueId("not a bool", BOOLEAN_TYPE_ID, db)
         }
         assertThat(exception1).hasMessageThat().isEqualTo("Expected value to be a Boolean.")
 
         // Test ID -> value.
-        assertThat(database.getPrimitiveValue(1, BOOLEAN_TYPE_ID)).isEqualTo(true)
-        assertThat(database.getPrimitiveValue(0, BOOLEAN_TYPE_ID)).isEqualTo(false)
+        assertThat(database.getPrimitiveValue(1, BOOLEAN_TYPE_ID, db)).isEqualTo(true)
+        assertThat(database.getPrimitiveValue(0, BOOLEAN_TYPE_ID, db)).isEqualTo(false)
 
         val exception2 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValue(2, BOOLEAN_TYPE_ID)
+            database.getPrimitiveValue(2, BOOLEAN_TYPE_ID, db)
         }
         assertThat(exception2).hasMessageThat().isEqualTo("Expected 2 to be a Boolean (0 or 1).")
     }
@@ -192,23 +195,23 @@ class DatabaseImplTest {
     @Test
     fun getPrimitiveValue_text() = runBlockingTest {
         // Test value -> ID.
-        assertThat(database.getPrimitiveValueId("aaa", TEXT_TYPE_ID)).isEqualTo(1)
-        assertThat(database.getPrimitiveValueId("bbb", TEXT_TYPE_ID)).isEqualTo(2)
-        assertThat(database.getPrimitiveValueId("ccc", TEXT_TYPE_ID)).isEqualTo(3)
-        assertThat(database.getPrimitiveValueId("aaa", TEXT_TYPE_ID)).isEqualTo(1)
+        assertThat(database.getPrimitiveValueId("aaa", TEXT_TYPE_ID, db)).isEqualTo(1)
+        assertThat(database.getPrimitiveValueId("bbb", TEXT_TYPE_ID, db)).isEqualTo(2)
+        assertThat(database.getPrimitiveValueId("ccc", TEXT_TYPE_ID, db)).isEqualTo(3)
+        assertThat(database.getPrimitiveValueId("aaa", TEXT_TYPE_ID, db)).isEqualTo(1)
 
         val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId(123.0, TEXT_TYPE_ID)
+            database.getPrimitiveValueId(123.0, TEXT_TYPE_ID, db)
         }
         assertThat(exception1).hasMessageThat().isEqualTo("Expected value to be a String.")
 
         // Test ID -> value.
-        assertThat(database.getPrimitiveValue(1, TEXT_TYPE_ID)).isEqualTo("aaa")
-        assertThat(database.getPrimitiveValue(2, TEXT_TYPE_ID)).isEqualTo("bbb")
-        assertThat(database.getPrimitiveValue(3, TEXT_TYPE_ID)).isEqualTo("ccc")
+        assertThat(database.getPrimitiveValue(1, TEXT_TYPE_ID, db)).isEqualTo("aaa")
+        assertThat(database.getPrimitiveValue(2, TEXT_TYPE_ID, db)).isEqualTo("bbb")
+        assertThat(database.getPrimitiveValue(3, TEXT_TYPE_ID, db)).isEqualTo("ccc")
 
         val exception2 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValue(4, TEXT_TYPE_ID)
+            database.getPrimitiveValue(4, TEXT_TYPE_ID, db)
         }
         assertThat(exception2).hasMessageThat().isEqualTo("Unknown primitive with ID 4.")
     }
@@ -216,23 +219,23 @@ class DatabaseImplTest {
     @Test
     fun getPrimitiveValue_number() = runBlockingTest {
         // Test value -> ID.
-        assertThat(database.getPrimitiveValueId(111.0, NUMBER_TYPE_ID)).isEqualTo(1)
-        assertThat(database.getPrimitiveValueId(222.0, NUMBER_TYPE_ID)).isEqualTo(2)
-        assertThat(database.getPrimitiveValueId(333.0, NUMBER_TYPE_ID)).isEqualTo(3)
-        assertThat(database.getPrimitiveValueId(111.0, NUMBER_TYPE_ID)).isEqualTo(1)
+        assertThat(database.getPrimitiveValueId(111.0, NUMBER_TYPE_ID, db)).isEqualTo(1)
+        assertThat(database.getPrimitiveValueId(222.0, NUMBER_TYPE_ID, db)).isEqualTo(2)
+        assertThat(database.getPrimitiveValueId(333.0, NUMBER_TYPE_ID, db)).isEqualTo(3)
+        assertThat(database.getPrimitiveValueId(111.0, NUMBER_TYPE_ID, db)).isEqualTo(1)
 
         val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId("not a number", NUMBER_TYPE_ID)
+            database.getPrimitiveValueId("not a number", NUMBER_TYPE_ID, db)
         }
         assertThat(exception1).hasMessageThat().isEqualTo("Expected value to be a Double.")
 
         // Test ID -> value.
-        assertThat(database.getPrimitiveValue(1, NUMBER_TYPE_ID)).isEqualTo(111.0)
-        assertThat(database.getPrimitiveValue(2, NUMBER_TYPE_ID)).isEqualTo(222.0)
-        assertThat(database.getPrimitiveValue(3, NUMBER_TYPE_ID)).isEqualTo(333.0)
+        assertThat(database.getPrimitiveValue(1, NUMBER_TYPE_ID, db)).isEqualTo(111.0)
+        assertThat(database.getPrimitiveValue(2, NUMBER_TYPE_ID, db)).isEqualTo(222.0)
+        assertThat(database.getPrimitiveValue(3, NUMBER_TYPE_ID, db)).isEqualTo(333.0)
 
         val exception2 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValue(4, NUMBER_TYPE_ID)
+            database.getPrimitiveValue(4, NUMBER_TYPE_ID, db)
         }
         assertThat(exception2).hasMessageThat().isEqualTo("Unknown primitive with ID 4.")
     }
@@ -241,13 +244,13 @@ class DatabaseImplTest {
     fun getPrimitiveValue_unknownTypeId() = runBlockingTest {
         // Test value -> ID.
         val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId("aaa", 987654L)
+            database.getPrimitiveValueId("aaa", 987654L, db)
         }
         assertThat(exception1).hasMessageThat().isEqualTo("Not a primitive type ID: 987654")
 
         // Test ID -> value.
         val exception2 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValue(1, 987654L)
+            database.getPrimitiveValue(1, 987654L, db)
         }
         assertThat(exception2).hasMessageThat().isEqualTo("Not a primitive type ID: 987654")
     }
@@ -267,14 +270,17 @@ class DatabaseImplTest {
     @Test
     fun insertAndGet_entity_newEntityWithPrimitiveFields() = runBlockingTest {
         val key = DummyKey("key")
-        val schema = newSchema("hash", SchemaFields(
-            singletons = mapOf(
-                "text" to FieldType.Text,
-                "bool" to FieldType.Boolean,
-                "num" to FieldType.Number
-            ),
-            collections = emptyMap()
-        ))
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text,
+                    "bool" to FieldType.Boolean,
+                    "num" to FieldType.Number
+                ),
+                collections = emptyMap()
+            )
+        )
         val entity = Entity(
             "entity",
             schema,

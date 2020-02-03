@@ -103,6 +103,7 @@ class DatabaseImpl(
     @VisibleForTesting
     fun getEntity(storageKey: StorageKey, schema: Schema): DatabaseData.Entity =
         readableDatabase.useTransaction {
+            val db = this
             // Fetch the entity's type by storage key.
             val (storageKeyId, schemaTypeId) = rawQuery(
                 """
@@ -118,7 +119,7 @@ class DatabaseImpl(
                 it.getLong(0) to it.getLong(1)
             }
             // Fetch the entity's fields.
-            val fieldsByName = getSchemaFields(schemaTypeId)
+            val fieldsByName = getSchemaFields(schemaTypeId, db)
             val fieldsById = fieldsByName.mapKeys { it.value.fieldId }
             // Populate the entity's field data from the database.
             val data = mutableMapOf<FieldName, Any?>()
@@ -134,7 +135,8 @@ class DatabaseImpl(
                 val fieldValueId = it.getLong(1)
                 val field = fieldsById.getValue(fieldId)
                 // TODO: Handle non-primitive and collection field values.
-                data[field.fieldName] = getPrimitiveValue(fieldValueId, field.typeId)
+                // TODO: Don't do a separate query for every field.
+                data[field.fieldName] = getPrimitiveValue(fieldValueId, field.typeId, db)
             }
             DatabaseData.Entity(
                 Entity(
@@ -163,10 +165,11 @@ class DatabaseImpl(
     @VisibleForTesting
     suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) =
         writableDatabase.useTransaction {
+            val db = this
             // Fetch/create the entity's type ID.
-            val schemaTypeId = getSchemaTypeId(entity.schema)
+            val schemaTypeId = getSchemaTypeId(entity.schema, db)
             // Set the type ID for this storage key.
-            val storageKeyId = getStorageKeyId(storageKey)
+            val storageKeyId = getStorageKeyId(storageKey, db)
             insertWithOnConflict(
                 TABLE_ENTITIES,
                 null,
@@ -177,7 +180,7 @@ class DatabaseImpl(
                 SQLiteDatabase.CONFLICT_REPLACE
             )
             // Insert/update the entity's field types.
-            val fields = getSchemaFields(schemaTypeId)
+            val fields = getSchemaFields(schemaTypeId, db)
             val content = ContentValues().apply {
                 put("entity_storage_key_id", storageKeyId)
             }
@@ -186,7 +189,7 @@ class DatabaseImpl(
                     val field = fields.getValue(fieldName)
                     put("field_id", field.fieldId)
                     // TODO: Handle non-primitive field values and collections.
-                    put("primitive_value_id", getPrimitiveValueId(fieldValue, field.typeId))
+                    put("primitive_value_id", getPrimitiveValueId(fieldValue, field.typeId, db))
                 }
                 insertWithOnConflict(
                     TABLE_FIELD_VALUES,
@@ -217,10 +220,10 @@ class DatabaseImpl(
     }
 
     @VisibleForTesting
-    suspend fun getSchemaTypeId(schema: Schema): TypeId = mutex.withLock {
+    suspend fun getSchemaTypeId(schema: Schema, db: SQLiteDatabase): TypeId = mutex.withLock {
         schemaTypeMap[schema.hash]?.let { return it }
 
-        return writableDatabase.transaction {
+        return db.transaction {
             val content = ContentValues().apply {
                 put("name", schema.hash)
                 put("is_primitive", false)
@@ -256,12 +259,12 @@ class DatabaseImpl(
      * for it.
      */
     @VisibleForTesting
-    fun getStorageKeyId(storageKey: StorageKey): StorageKeyId {
+    fun getStorageKeyId(storageKey: StorageKey, db: SQLiteDatabase): StorageKeyId {
         // TODO: Use an LRU cache.
         val content = ContentValues().apply {
             put("storage_key", storageKey.toString())
         }
-        return writableDatabase.insertWithOnConflict(
+        return db.insertWithOnConflict(
             "storage_keys", null, content, SQLiteDatabase.CONFLICT_IGNORE
         )
     }
@@ -273,10 +276,10 @@ class DatabaseImpl(
      * Call [getSchemaTypeId] first to get the [TypeId].
      */
     @VisibleForTesting
-    fun getSchemaFields(schemaTypeId: TypeId): Map<FieldName, SchemaField> {
+    fun getSchemaFields(schemaTypeId: TypeId, db: SQLiteDatabase): Map<FieldName, SchemaField> {
         // TODO: Use an LRU cache.
         val fields = mutableMapOf<FieldName, SchemaField>()
-        readableDatabase.rawQuery(
+        db.rawQuery(
             "SELECT name, id, type_id FROM fields WHERE parent_type_id = ?",
             arrayOf(schemaTypeId.toString())
         ).forEach {
@@ -295,7 +298,7 @@ class DatabaseImpl(
      * Booleans don't have a primitive table, they will just be returned as either 0 or 1.
      */
     @VisibleForTesting
-    fun getPrimitiveValueId(value: Any?, typeId: TypeId): FieldValueId {
+    fun getPrimitiveValueId(value: Any?, typeId: TypeId, db: SQLiteDatabase): FieldValueId {
         // TODO: Cache the most frequent values somehow.
         if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
             return when (value) {
@@ -304,7 +307,7 @@ class DatabaseImpl(
                 else -> throw IllegalArgumentException("Expected value to be a Boolean.")
             }
         }
-        return writableDatabase.transaction {
+        return db.transaction {
             val (tableName, valueStr) = when (typeId.toInt()) {
                 PrimitiveType.Text.ordinal -> {
                     require(value is String) { "Expected value to be a String." }
@@ -332,9 +335,10 @@ class DatabaseImpl(
         }
     }
 
-    fun getPrimitiveValue(valueId: FieldValueId, typeId: TypeId): Any {
+    @VisibleForTesting
+    fun getPrimitiveValue(valueId: FieldValueId, typeId: TypeId, db: SQLiteDatabase): Any {
         // TODO: Cache the most frequent values somehow.
-        fun runSelectQuery(tableName: String) = readableDatabase.rawQuery(
+        fun runSelectQuery(tableName: String) = db.rawQuery(
             "SELECT value FROM $tableName WHERE id = ?",
             arrayOf(valueId.toString())
         ).use {
@@ -390,6 +394,7 @@ class DatabaseImpl(
     companion object {
         private const val DB_VERSION = 1
 
+        // TODO: Add constants for column names?
         private val TABLE_ENTITIES = "entities"
         private val TABLE_FIELD_VALUES = "field_values"
         private val TABLE_TYPES = "types"
