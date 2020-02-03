@@ -148,7 +148,7 @@ class ArcHostHelper(
     }
 
     companion object {
-        private const val ACTION_HOST_INTENT = "arcs.android.host.ARC_HOST"
+        const val ACTION_HOST_INTENT = "arcs.android.host.ARC_HOST"
         private const val EXTRA_OPERATION = "OPERATION"
         private const val EXTRA_OPERATION_ARG = "EXTRA_OPERATION_ARG"
         private const val EXTRA_OPERATION_RECEIVER = "EXTRA_OPERATION_RECEIVER"

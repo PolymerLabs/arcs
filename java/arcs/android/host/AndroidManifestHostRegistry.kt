@@ -15,7 +15,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.annotation.VisibleForTesting
-import arcs.android.sdk.host.ArcHostHelper.Companion.ARC_HOST_INTENT
+import arcs.android.sdk.host.ArcHostHelper
+import arcs.android.sdk.host.ArcHostHelper.Companion.ACTION_HOST_INTENT
 import arcs.android.sdk.host.toArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.HostRegistry
@@ -81,7 +82,7 @@ class AndroidManifestHostRegistry private constructor(
      */
     private fun findHostsByManifest(): List<ArcHost> =
         context.packageManager.queryIntentServices(
-                Intent(ARC_HOST_INTENT),
+                Intent(ArcHostHelper.Companion.ACTION_HOST_INTENT),
                 PackageManager.MATCH_ALL
             )
             .filter { it.serviceInfo != null }

@@ -23,25 +23,20 @@ object ServiceLoaderHostRegistry : AnnotationBasedHostRegistry() {
 
     init {
         runBlocking {
-            loadAndRegisterHostsAndParticles()
-                .forEach { host -> registerHost(host) }
+            loadAndRegisterHostsAndParticles().forEach { host -> registerHost(host) }
         }
     }
 
-    private suspend fun loadAndRegisterHostsAndParticles(): List<ArcHost> {
+    private fun loadAndRegisterHostsAndParticles(): List<ArcHost> {
         // Load all @AutoService(Particle.class) types
         val allParticles = ServiceLoader.load(Particle::class.java).iterator().asSequence()
             .map { p -> p.javaClass.kotlin }.toList()
 
         // Load @AutoService(ArcsHost) types and construct them, handing each a list of particles
-        return ServiceLoader.load(ArcHost::class.java).iterator().asSequence()
-            .map { host ->
-                runBlocking {
-                    registerParticles(
-                        findParticlesForHost(allParticles, host), host
-                    )
-                }
-            }
-            .toList()
+        return ServiceLoader.load(ArcHost::class.java).iterator().asSequence().map { host ->
+            registerParticles(
+                findParticlesForHost(allParticles, host), host
+            )
+        }.toList()
     }
 }

@@ -28,11 +28,11 @@ abstract class AnnotationBasedHostRegistry : HostRegistry {
 
     override suspend fun availableArcHosts(): List<ArcHost> = registryMutex.withLock { hosts }
 
-    protected suspend fun registerParticles(
+    protected fun registerParticles(
         particles: List<KClass<out Particle>>,
         host: ArcHost
     ): ArcHost {
-        particles.forEach { particle -> host.registerParticle(ParticleIdentifier.from(particle)) }
+//        particles.forEach { particle -> host.registerParticle(ParticleIdentifier.from(particle)) }
         return host
     }
 

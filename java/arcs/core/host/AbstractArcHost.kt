@@ -35,4 +35,12 @@ abstract class AbstractArcHost : ArcHost {
     }
 
     override suspend fun registeredParticles(): List<ParticleIdentifier> = particles
+
+    override suspend fun startArc(partition: PlanPartition) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun stopArc(partition: PlanPartition) {
+        TODO("Not yet implemented")
+    }
 }
