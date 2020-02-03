@@ -16,13 +16,14 @@ import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdis
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
+import {mockFirebaseStorageKeyOptions} from '../testing/mock-firebase.js';
 
 describe('StorageKey', () => {
 
   beforeEach(() => {
     const runtime = Runtime.getRuntime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
-    FirebaseStorageDriverProvider.register(runtime.getCacheService());
+    FirebaseStorageDriverProvider.register(runtime.getCacheService(), mockFirebaseStorageKeyOptions);
   });
 
   afterEach(() => {

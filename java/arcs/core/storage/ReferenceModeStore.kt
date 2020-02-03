@@ -37,7 +37,6 @@ import arcs.core.storage.referencemode.MessageQueue
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
-import arcs.core.storage.referencemode.Reference
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.referencemode.toBridgingData
 import arcs.core.storage.referencemode.toBridgingOp
@@ -108,7 +107,7 @@ class ReferenceModeStore private constructor(
      * When entity updates are received by instances of [ReferenceModeStore], they're non-CRDT blobs
      * of data. The [ReferenceModeStore] needs to convert them to tracked CRDTs, which means it
      * needs to synthesize updates. This key is used as the unique write key and
-     * [arcs.crdt.internal.Actor] for those updates.
+     * [arcs.core.crdt.internal.Actor] for those updates.
      */
     /* internal */ val crdtKey = Random.nextSafeRandomLong().toString()
     /**
@@ -572,53 +571,66 @@ class ReferenceModeStore private constructor(
             maxVersion = maxOf(maxVersion, fieldVersion)
         }
 
-        return CrdtEntity.Data(entity, VersionMap(crdtKey to maxVersion), fieldVersionProvider) {
-            CrdtEntity.ReferenceImpl(it.id)
-        }
+        return CrdtEntity.Data(
+            entity,
+            VersionMap(crdtKey to maxVersion),
+            fieldVersionProvider
+        ) { CrdtEntity.ReferenceImpl(it.id) }
     }
 
     companion object {
         @Suppress("UNCHECKED_CAST")
-        val CONSTRUCTOR = StoreConstructor<CrdtData, CrdtOperationAtTime, Referencable> { options ->
-            val refableOptions =
-                requireNotNull(
-                    options as? StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
-                ) { "ReferenceMode stores only manage singletons/collections of Entities." }
+        val CONSTRUCTOR =
+            StoreConstructor<CrdtData, CrdtOperationAtTime, Referencable> { options, _ ->
+                val refableOptions =
+                    requireNotNull(
+                        /* ktlint-disable max-line-length */
+                        options as? StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
+                        /* ktlint-enable max-line-length */
+                    ) { "ReferenceMode stores only manage singletons/collections of Entities." }
 
-            val type = requireNotNull(options.type as? Type.TypeContainer<*>) {
-                "Type ${options.type} does not implement TypeContainer"
-            }
-            val storageKey = requireNotNull(options.storageKey as? ReferenceModeStorageKey) {
-                "StorageKey ${options.storageKey} is not a ReferenceModeStorageKey"
-            }
-            val refType = if (options.type is CollectionType<*>) {
-                CollectionType(ReferenceType(type.containedType))
-            } else {
-                SingletonType(ReferenceType(type.containedType))
-            }
+                val (type, containedTypeClass) = requireNotNull(
+                    options.type as? Type.TypeContainer<*>
+                ) { "Type ${options.type} does not implement TypeContainer" }.let {
+                    /* ktlint-disable max-line-length */
+                    it to requireNotNull(it.containedType as? CrdtModelType<*, *, *>).crdtModelDataClass
+                    /* ktlint-enable max-line-length */
+                }
+                val storageKey = requireNotNull(options.storageKey as? ReferenceModeStorageKey) {
+                    "StorageKey ${options.storageKey} is not a ReferenceModeStorageKey"
+                }
+                val (refType, refTypeDataClass) = if (options.type is CollectionType<*>) {
+                    CollectionType(ReferenceType(type.containedType)) to
+                        CrdtSet.DataImpl::class
+                } else {
+                    SingletonType(ReferenceType(type.containedType)) to
+                        CrdtSingleton.DataImpl::class
+                }
 
-            val backingStore = BackingStore.CONSTRUCTOR(
-                StoreOptions(
-                    storageKey = storageKey.backingKey,
-                    existenceCriteria = options.existenceCriteria,
-                    type = type.containedType,
-                    mode = StorageMode.Backing,
-                    baseStore = options.baseStore
-                )
-            ) as BackingStore<CrdtData, CrdtOperation, Any?>
-            val containerStore = DirectStore.CONSTRUCTOR(
-                StoreOptions(
-                    storageKey = storageKey.storageKey,
-                    existenceCriteria = options.existenceCriteria,
-                    type = refType,
-                    baseStore = options.baseStore,
-                    versionToken = options.versionToken
-                )
-            ) as DirectStore<CrdtData, CrdtOperation, Any?>
+                val backingStore = BackingStore.CONSTRUCTOR(
+                    StoreOptions(
+                        storageKey = storageKey.backingKey,
+                        existenceCriteria = options.existenceCriteria,
+                        type = type.containedType,
+                        mode = StorageMode.Backing,
+                        baseStore = options.baseStore
+                    ),
+                    containedTypeClass
+                ) as BackingStore<CrdtData, CrdtOperation, Any?>
+                val containerStore = DirectStore.CONSTRUCTOR(
+                    StoreOptions(
+                        storageKey = storageKey.storageKey,
+                        existenceCriteria = options.existenceCriteria,
+                        type = refType,
+                        baseStore = options.baseStore,
+                        versionToken = options.versionToken
+                    ),
+                    refTypeDataClass
+                ) as DirectStore<CrdtData, CrdtOperation, Any?>
 
-            ReferenceModeStore(refableOptions, backingStore, containerStore).apply {
-                registerStoreCallbacks()
+                ReferenceModeStore(refableOptions, backingStore, containerStore).apply {
+                    registerStoreCallbacks()
+                }
             }
-        }
     }
 }

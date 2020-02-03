@@ -13,13 +13,14 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
-import arcs.core.util.testutil.initLogForTest
+import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -29,6 +30,9 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class ArcsSetTest {
+    @get:Rule
+    val logRule = LogRule()
+
     private val log = TaggedLog { "ArcsSetTest" }
     private val backingStorageKey = RamDiskStorageKey("myBacking")
     private val directStorageKey = RamDiskStorageKey("myDirect")
@@ -42,7 +46,6 @@ class ArcsSetTest {
     )
 
     init {
-        initLogForTest()
         // Ensure the RamDiskDriver is registered.
         RamDiskDriverProvider()
     }

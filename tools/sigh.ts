@@ -76,7 +76,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   build: [peg, build],
   watch: [watch],
   buildifier: [buildifier],
-  lint: [check, peg, build, lint, tslint, cycles, buildifier],
+  lint: [check, peg, build, lint, tslint, ktlint, cycles, buildifier],
   cycles: [peg, build, cycles],
   check: [check],
   clean: [clean],
@@ -88,7 +88,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
   default: [
-    check, peg, railroad, build, lint, tslint, buildifier, cycles, runTestsOrHealthOnCron,
+    check, peg, railroad, build, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
     webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
   ]
 };
@@ -472,6 +472,19 @@ function tslint(args: string[]): boolean {
     success = success && result.success;
   }
   return success;
+}
+
+function ktlint(args: string[]): boolean {
+  const options = minimist(args, {
+    boolean: ['fix'],
+  });
+
+  const fixArgs = options.fix ? ['-F'] : [];
+  const result = saneSpawnSyncWithOutput('ktlint', [...fixArgs, 'java/**/*.kt', 'javatests/**/*.kt', 'particles/**/*.kt']);
+  if (result.stdout) {
+    sighLog(result.stdout);
+  }
+  return result.success;
 }
 
 function lint(args: string[]): boolean {

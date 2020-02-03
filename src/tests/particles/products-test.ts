@@ -24,13 +24,17 @@ import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-me
 
 describe('products test', () => {
 
+  beforeEach(() => {
+    manifestFilename = Flags.useNewStorageStack ?
+      './src/tests/particles/artifacts/ProductsTestNg.arcs' :
+      './src/tests/particles/artifacts/products-test.recipes';
+  });
+
   afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
-  const manifestFilename = Flags.useNewStorageStack ?
-      './src/tests/particles/artifacts/ProductsTestNg.arcs' :
-      './src/tests/particles/artifacts/products-test.recipes';
+  let manifestFilename: string;
 
   const verifyFilteredBook = async (arc: Arc) => {
     const booksHandle = arc.activeRecipe.handleConnections.find(hc => hc.isOutput).handle;

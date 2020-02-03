@@ -16,32 +16,48 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.forEach
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
-import arcs.core.data.Entity
+import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
-import arcs.core.storage.database.Database
 import arcs.core.storage.StorageKey
+import arcs.core.storage.database.Database
+import arcs.core.storage.database.DatabaseClient
+import arcs.core.storage.database.DatabaseData
+import arcs.core.util.guardWith
+import kotlin.reflect.KClass
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long
 
+/** The ID for a field in a schema. */
+typealias FieldId = Long
+
+/** The ID for a storage key. */
+typealias StorageKeyId = Long
+
 /** Implementation of [Database] for Android using SQLite. */
+@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class DatabaseImpl(
     context: Context,
-    databaseName: String
+    databaseName: String,
+    persistent: Boolean = true
 ) : Database, SQLiteOpenHelper(
     context,
-    databaseName,
+    // Using `null` with SQLiteOpenHelper's database name makes it an in-memory database.
+    if (persistent) databaseName else null,
     /* cursorFactory = */ null,
     DB_VERSION
 ) {
+    private val mutex = Mutex()
+
     /** Maps from schema hash to type ID (local copy of the 'types' table). */
-    // TODO: Protect with a mutex.
-    @VisibleForTesting
-    private val schemaTypeMap = lazy { loadTypes() }
+    private val schemaTypeMap by guardWith(mutex, ::loadTypes)
 
     override fun onCreate(db: SQLiteDatabase) = db.transaction {
         CREATE.forEach(db::execSQL)
@@ -62,11 +78,30 @@ class DatabaseImpl(
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
-    override suspend fun delete(storageKey: StorageKey) {
+    override fun <Data : DatabaseData> addClient(client: DatabaseClient<Data>): Int {
         TODO("not implemented")
     }
 
-    override suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity) {
+    override fun removeClient(identifier: Int) {
+        TODO("not implemented")
+    }
+
+    override suspend fun <Data : DatabaseData> get(
+        storageKey: StorageKey,
+        dataType: KClass<Data>
+    ): Data? {
+        TODO("not implemented")
+    }
+
+    override suspend fun insertOrUpdate(
+        storageKey: StorageKey,
+        data: DatabaseData,
+        originatingClientId: Int?
+    ): Int {
+        TODO("not implemented")
+    }
+
+    override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) {
         TODO("not implemented")
     }
 
@@ -85,8 +120,8 @@ class DatabaseImpl(
         }
     }
 
-    fun getSchemaTypeId(schema: Schema): TypeId {
-        schemaTypeMap.value[schema.hash]?.let { return it }
+    suspend fun getSchemaTypeId(schema: Schema): TypeId = mutex.withLock {
+        schemaTypeMap[schema.hash]?.let { return it }
 
         return writableDatabase.useTransaction {
             val content = ContentValues().apply {
@@ -95,50 +130,87 @@ class DatabaseImpl(
             }
             val schemaTypeId = insert("types", null, content)
 
-            schemaTypeMap.value[schema.hash] = schemaTypeId
+            schemaTypeMap[schema.hash] = schemaTypeId
 
             val insertFieldStatement = compileStatement(
                 "INSERT INTO fields (type_id, parent_type_id, name) VALUES (?, ?, ?)"
             )
-            val insertFieldBlock = { fieldName: String, fieldType: FieldType ->
+
+            suspend fun insertFieldBlock(fieldName: String, fieldType: FieldType) {
                 insertFieldStatement.apply {
                     bindLong(1, getTypeId(fieldType))
                     bindLong(2, schemaTypeId)
                     bindString(3, fieldName)
                     executeInsert()
                 }
-                Unit
             }
-            schema.fields.singletons.forEach(insertFieldBlock)
-            schema.fields.collections.forEach(insertFieldBlock)
+            schema.fields.singletons.forEach { (fieldName, fieldType) ->
+                insertFieldBlock(fieldName, fieldType)
+            }
+            schema.fields.collections.forEach { (fieldName, fieldType) ->
+                insertFieldBlock(fieldName, fieldType)
+            }
             schemaTypeId
         }
     }
 
+    /**
+     * Returns the ID for the given [StorageKey] if one already exists, otherwise creates a new one
+     * for it.
+     */
+    @VisibleForTesting
+    fun getStorageKeyId(storageKey: StorageKey): StorageKeyId {
+        // TODO: Use an LRU cache.
+        val content = ContentValues().apply {
+            put("storage_key", storageKey.toString())
+        }
+        return writableDatabase.insertWithOnConflict(
+            "storage_keys", null, content, SQLiteDatabase.CONFLICT_IGNORE
+        )
+    }
+
+    /**
+     * Returns a map of field name to ID for each field in the given schema [TypeId].
+     *
+     * Call [getSchemaTypeId] first to get the [TypeId].
+     */
+    @VisibleForTesting
+    fun getSchemaFieldIds(schemaTypeId: TypeId): Map<FieldName, FieldId> {
+        // TODO: Use an LRU cache.
+        val fieldIds = mutableMapOf<FieldName, FieldId>()
+        readableDatabase.rawQuery(
+            "SELECT name, id FROM fields WHERE parent_type_id = ?",
+            arrayOf(schemaTypeId.toString())
+        ).forEach {
+            fieldIds[it.getString(0)] = it.getLong(1)
+        }
+        return fieldIds
+    }
+
     /** Returns the type ID for the given [fieldType] if known, otherwise throws. */
     @VisibleForTesting
-    fun getTypeId(fieldType: FieldType): TypeId = when (fieldType) {
+    suspend fun getTypeId(fieldType: FieldType): TypeId = when (fieldType) {
         is FieldType.Primitive -> fieldType.primitiveType.ordinal.toLong()
-        is FieldType.EntityRef -> requireNotNull(schemaTypeMap.value[fieldType.schemaHash]) {
-            "Unknown type ID for schema with hash ${fieldType.schemaHash}"
+        is FieldType.EntityRef -> mutex.withLock {
+            requireNotNull(schemaTypeMap[fieldType.schemaHash]) {
+                "Unknown type ID for schema with hash ${fieldType.schemaHash}"
+            }
         }
     }
 
     /** Loads all schema type IDs from the 'types' table into memory. */
     private fun loadTypes(): MutableMap<String, TypeId> {
-        val schemaTypeMap = mutableMapOf<String, TypeId>()
+        val typeMap = mutableMapOf<String, TypeId>()
         // TODO: Factor out a generic forEach method on Cursor.
         readableDatabase.rawQuery(
             "SELECT name, id FROM types WHERE is_primitive = 0",
             emptyArray()
-        ).use {
-            while (it.moveToNext()) {
-                val hash = it.getString(0)
-                val id = it.getLong(1)
-                schemaTypeMap[hash] = id
-            }
+        ).forEach {
+            val hash = it.getString(0)
+            val id = it.getLong(1)
+            typeMap[hash] = id
         }
-        return schemaTypeMap
+        return typeMap
     }
 
     companion object {
@@ -165,7 +237,7 @@ class DatabaseImpl(
                     storage_key_id INTEGER NOT NULL PRIMARY KEY,
                     type_id INTEGER NOT NULL
                 );
-                
+
                 CREATE TABLE singletons (
                     storage_key_id INTEGER NOT NULL PRIMARY KEY,
                     type_id INTEGER NOT NULL,

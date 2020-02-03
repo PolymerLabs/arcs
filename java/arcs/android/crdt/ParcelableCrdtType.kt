@@ -12,12 +12,6 @@
 package arcs.android.crdt
 
 import android.os.Parcelable
-import arcs.android.crdt.ParcelableCrdtCount
-import arcs.android.crdt.ParcelableCrdtData
-import arcs.android.crdt.ParcelableCrdtEntity
-import arcs.android.crdt.ParcelableCrdtOperation
-import arcs.android.crdt.ParcelableCrdtSet
-import arcs.android.crdt.ParcelableCrdtSingleton
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation

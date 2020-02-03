@@ -12,8 +12,11 @@ import {StorageKey} from '../../storage-key.js';
 import {assert} from '../../../../platform/chai-web.js';
 import {RuntimeCacheService} from '../../../runtime-cache.js';
 import {Exists} from '../driver.js';
+import {FirebaseStorageDriverProvider, FirebaseStorageKey} from '../firebase.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../../testing/mock-firebase.js';
 import {assertThrowsAsync} from '../../../../testing/test-util.js';
+import {VolatileStorageKey} from '../volatile.js';
+import {ArcId} from '../../../id.js';
 
 describe('Firebase Driver', async () => {
   let cacheService;

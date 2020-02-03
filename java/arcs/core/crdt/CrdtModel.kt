@@ -14,6 +14,7 @@ package arcs.core.crdt
 import arcs.core.crdt.CrdtChange.Data
 import arcs.core.crdt.internal.VersionMap
 import arcs.core.type.Type
+import kotlin.reflect.KClass
 
 /**
  * A [CrdtModel] can:
@@ -141,6 +142,9 @@ sealed class CrdtChange<Data : CrdtData, Op : CrdtOperation> {
 
 /** Defines a [Type] that's capable of generating a [CrdtModel]. */
 interface CrdtModelType<Data : CrdtData, Op : CrdtOperation, ConsumerData> : Type {
+    /** The [KClass] of the [Data] this type works with. */
+    val crdtModelDataClass: KClass<*>
+
     /** Creates a new instance of a [CrdtModel]. */
     fun createCrdtModel(): CrdtModel<Data, Op, ConsumerData>
 }

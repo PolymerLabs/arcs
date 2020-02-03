@@ -16,18 +16,21 @@ import {ArcId} from '../../id.js';
 import {RamDiskStorageKey} from './ramdisk.js';
 import {Dictionary} from '../../hot.js';
 import {assert} from '../../../platform/assert-web.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
+import {Capabilities} from '../../capabilities.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
 type VolatileEntryCollection<Data> = {root: VolatileEntry<Data>, locations: Dictionary<VolatileEntry<Data>>};
 
 export class VolatileStorageKey extends StorageKey {
+  public static readonly protocol = 'volatile';
   readonly arcId: ArcId;
   readonly unique: string;
   readonly path: string;
 
   constructor(arcId: ArcId, unique: string, path: string='') {
-    super('volatile');
+    super(VolatileStorageKey.protocol);
     this.arcId = arcId;
     this.unique = unique;
     this.path = path;
@@ -234,7 +237,8 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
   }
 
   willSupport(storageKey: StorageKey): boolean {
-    return storageKey.protocol === 'volatile' && (storageKey as VolatileStorageKey).arcId.equal(this.arc.id);
+    return storageKey.protocol === VolatileStorageKey.protocol
+        && (storageKey as VolatileStorageKey).arcId.equal(this.arc.id);
   }
 
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
@@ -245,9 +249,14 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
     return new VolatileDriver<Data>(storageKey as VolatileStorageKey, exists, this.arc.volatileMemory);
   }
 
+  // QUESTION: This method is never being called, is it needed?
   static register(arc: Arc) {
     DriverFactory.register(new VolatileStorageDriverProvider(arc));
   }
 }
 
-StorageKeyParser.addDefaultParser('volatile', VolatileStorageKey.fromString);
+StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);
+StorageKeyFactory.registerDefaultKeyCreator(
+    VolatileStorageKey.protocol,
+    Capabilities.tiedToArc,
+    ({arcId}: StorageKeyOptions) => new VolatileStorageKey(arcId, '', ''));

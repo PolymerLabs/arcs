@@ -18,6 +18,7 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
 import arcs.core.type.TypeLiteral
+import kotlin.reflect.KClass
 
 /** [Type] representation for a singleton. */
 data class SingletonType<T : Type>(override val containedType: T) :
@@ -28,6 +29,8 @@ data class SingletonType<T : Type>(override val containedType: T) :
         CrdtSingleton.IOperation<Referencable>,
         Referencable?> {
     override val tag = Tag.Singleton
+
+    override val crdtModelDataClass: KClass<*> = CrdtSingleton.DataImpl::class
 
     override fun toLiteral() = Literal(tag, containedType.toLiteral())
 

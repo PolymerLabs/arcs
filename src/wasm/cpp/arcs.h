@@ -32,7 +32,7 @@ extern const char* collectionStore(Particle* p, Handle* h, const char* encoded);
 extern void collectionRemove(Particle* p, Handle* h, const char* encoded);
 extern void collectionClear(Particle* p, Handle* h);
 extern void dereference(Particle* p, const char* id, const char* key, const char* schema_hash, int continuation_id);
-extern void render(Particle* p, const char* slotName, const char* template_str, const char* model);
+extern void onRenderOutput(Particle* p, const char* template_str, const char* model);
 extern void serviceRequest(Particle* p, const char* call, const char* args, const char* tag);
 
 // Returns allocated memory that the Particle base class will free.

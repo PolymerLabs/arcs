@@ -33,11 +33,10 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
-import arcs.core.storage.referencemode.Reference
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.referencemode.toReference
 import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
+import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -410,7 +409,7 @@ class ReferenceModeStoreTest {
         // local model from proxy.
         val bobCollection = CrdtSet<RawEntity>()
         val bob = createPersonEntity("an-id", "bob", 42)
-        bobCollection.applyOperation( CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
+        bobCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
 
         // conflicting remote count from store
         val remoteCollection = CrdtSet<Reference>()
@@ -587,7 +586,9 @@ class ReferenceModeStoreTest {
 
     // region Helpers
 
-    private fun BackingStore<CrdtData, CrdtOperation, Any?>.getEntityDriver(id: ReferenceId): MockDriver<CrdtEntity.Data> =
+    private fun BackingStore<CrdtData, CrdtOperation, Any?>.getEntityDriver(
+        id: ReferenceId
+    ): MockDriver<CrdtEntity.Data> =
         requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>
 
     private suspend fun createReferenceModeStore(): ReferenceModeStore {
@@ -597,7 +598,8 @@ class ReferenceModeStoreTest {
                 ExistenceCriteria.ShouldCreate,
                 CollectionType(EntityType(schema)),
                 StorageMode.ReferenceMode
-            )
+            ),
+            CrdtSet.Data::class
         ) as ReferenceModeStore
     }
 
@@ -661,8 +663,9 @@ class ReferenceModeStoreTest {
 
         override suspend fun <Data : Any> getDriver(
             storageKey: StorageKey,
-            existenceCriteria: ExistenceCriteria
-        ): Driver<Data> = MockDriver<Data>(storageKey, existenceCriteria)
+            existenceCriteria: ExistenceCriteria,
+            dataClass: KClass<Data>
+        ): Driver<Data> = MockDriver(storageKey, existenceCriteria)
     }
 
     private class MockDriver<T : Any>(

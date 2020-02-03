@@ -17,6 +17,7 @@ import arcs.core.storage.DriverProvider
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
+import kotlin.reflect.KClass
 
 /** Protocol to be used with the ramdisk driver. */
 const val RAMDISK_DRIVER_PROTOCOL = "ramdisk"
@@ -72,7 +73,8 @@ class RamDiskDriverProvider : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria
+        existenceCriteria: ExistenceCriteria,
+        dataClass: KClass<Data>
     ): Driver<Data> {
         require(willSupport(storageKey)) {
             "This provider does not support StorageKey: $storageKey"

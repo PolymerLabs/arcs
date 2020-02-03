@@ -1,6 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "kt_jvm_and_js_library",
+    "arcs_kt_library",
 )
 
 licenses(["notice"])
@@ -16,24 +16,31 @@ STORAGE_KEY_SRCS = [
     "StorageKeyParser.kt",
 ]
 
-kt_jvm_and_js_library(
+REFERENCE_SRCS = [
+    "Reference.kt",
+]
+
+arcs_kt_library(
     name = "storage",
     srcs = glob(
         ["*.kt"],
-        exclude = PROXY_SRCS + STORAGE_KEY_SRCS,
+        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS,
     ),
     exports = [
         ":proxy",
+        ":reference",
         ":storage_key",
     ],
     deps = [
         ":proxy",
+        ":reference",
         ":storage_key",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         # TODO: should we move VersionMap to the top-level crdt package if it's being used here?
         "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/type",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/util",
@@ -43,12 +50,22 @@ kt_jvm_and_js_library(
     ],
 )
 
-kt_jvm_and_js_library(
+arcs_kt_library(
     name = "storage_key",
     srcs = STORAGE_KEY_SRCS,
 )
 
-kt_jvm_and_js_library(
+arcs_kt_library(
+    name = "reference",
+    srcs = REFERENCE_SRCS,
+    deps = [
+        ":storage_key",
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt/internal",
+    ],
+)
+
+arcs_kt_library(
     name = "proxy",
     srcs = PROXY_SRCS,
     deps = [

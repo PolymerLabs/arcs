@@ -13,12 +13,16 @@ import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {VolatileDriver, VolatileMemoryProvider} from './volatile.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Exists} from './driver.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
+import {ArcId} from '../../id.js';
+import {Capabilities} from '../../capabilities.js';
 
 export class RamDiskStorageKey extends StorageKey {
+  public static readonly protocol = 'ramdisk';
   readonly unique: string;
 
   constructor(unique: string) {
-    super('ramdisk');
+    super(RamDiskStorageKey.protocol);
     this.unique = unique;
   }
 
@@ -55,7 +59,7 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
   }
 
   willSupport(storageKey: StorageKey): boolean {
-    return storageKey.protocol === 'ramdisk';
+    return storageKey.protocol === RamDiskStorageKey.protocol;
   }
 
   async driver<Data>(storageKey: StorageKey, exists: Exists) {
@@ -69,6 +73,10 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
 
   static register(memoryProvider: VolatileMemoryProvider) {
     DriverFactory.register(new RamDiskStorageDriverProvider(memoryProvider));
-    StorageKeyParser.addParser('ramdisk', RamDiskStorageKey.fromString);
-  }
+    StorageKeyParser.addParser(RamDiskStorageKey.protocol, RamDiskStorageKey.fromString);
+    StorageKeyFactory.registerKeyCreator(
+        RamDiskStorageKey.protocol,
+        Capabilities.tiedToRuntime,
+        ({arcId}: StorageKeyOptions) => new RamDiskStorageKey(arcId.toString()));
+    }
 }

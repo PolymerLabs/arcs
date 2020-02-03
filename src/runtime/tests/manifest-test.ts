@@ -32,7 +32,8 @@ import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {FirebaseStorageDriverProvider} from '../storageNG/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
-import {BinaryExpression} from '../refiner.js';
+import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
+import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -602,6 +603,35 @@ ${particleStr1}
     };
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
+  });
+  it('can construct manifest with particles using already defined schema (with refinements)', async () => {
+    const manifest = await parseManifest(`
+    schema Person
+      name: Text
+      id: Text
+      age: Number [age > 0]
+    schema Ordered
+      index: Number [index >= 0]
+    particle OrderPeople in 'OrderPeople.js'
+      orderedPeople: writes [Ordered Person {name, id, index}]`);
+    const verify = (manifest: Manifest) => {
+      const entity = manifest.particles[0].handleConnectionMap.get('orderedPeople').type['collectionType'];
+      assert.strictEqual(entity.tag, 'Entity');
+      // tslint:disable-next-line: no-any
+      const ref = (entity as any).getEntitySchema().refinement;
+      assert.isNull(ref);
+      // tslint:disable-next-line: no-any
+      const refIndex = (entity as any).getEntitySchema().fields['index'].refinement;
+      assert.exists(refIndex);
+      assert.strictEqual(refIndex.kind, 'refinement');
+      assert.isTrue(refIndex.expression instanceof BinaryExpression);
+      assert.strictEqual(refIndex.expression.operator.op, '>=');
+      assert.isTrue(refIndex.expression.leftExpr instanceof FieldNamePrimitive);
+      assert.strictEqual(refIndex.expression.leftExpr.value, 'index');
+      assert.isTrue(refIndex.expression.rightExpr instanceof NumberPrimitive);
+      assert.strictEqual(refIndex.expression.rightExpr.value, 0);
+    };
+    verify(manifest);
   });
   it('can construct manifest containing a particle with refinement types', async () => {
     const manifest = await parseManifest(`
@@ -2262,7 +2292,9 @@ resource SomeName
   });
 
   it('can parse a manifest with storage key handle definitions', async () => {
-    FirebaseStorageDriverProvider.register(Runtime.getRuntime().getCacheService());
+    FirebaseStorageDriverProvider.register(
+        Runtime.getRuntime().getCacheService(),
+        mockFirebaseStorageKeyOptions);
     const manifest = await parseManifest(`
       schema Bar
         value: Text

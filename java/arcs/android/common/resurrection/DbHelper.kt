@@ -19,6 +19,8 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.os.Parcel
 import android.os.PersistableBundle
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.forEach
+import arcs.android.common.map
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
 import arcs.core.storage.StorageKey
@@ -127,9 +129,7 @@ class DbHelper(
      */
     fun getRegistrations(): List<ResurrectionRequest> {
         val notifiersByComponentName = mutableMapOf<ComponentName, MutableList<StorageKey>>()
-        val result = mutableListOf<ResurrectionRequest>()
-
-        readableDatabase.useTransaction {
+        return readableDatabase.useTransaction {
             rawQuery(
                 """
                     SELECT 
@@ -137,15 +137,13 @@ class DbHelper(
                     FROM requested_notifiers
                 """.trimIndent(),
                 null
-            ).use {
-                while (it.moveToNext()) {
-                    val componentName = ComponentName(it.getString(0), it.getString(1))
-                    val key = it.getString(2)
+            ).forEach {
+                val componentName = ComponentName(it.getString(0), it.getString(1))
+                val key = it.getString(2)
 
-                    val notifiers = notifiersByComponentName[componentName] ?: mutableListOf()
-                    notifiers.add(StorageKeyParser.parse(key))
-                    notifiersByComponentName[componentName] = notifiers
-                }
+                val notifiers = notifiersByComponentName[componentName] ?: mutableListOf()
+                notifiers.add(StorageKeyParser.parse(key))
+                notifiersByComponentName[componentName] = notifiers
             }
 
             rawQuery(
@@ -159,33 +157,28 @@ class DbHelper(
                     FROM resurrection_requests
                 """.trimIndent(),
                 null
-            ).use {
-                while (it.moveToNext()) {
-                    val componentName = ComponentName(it.getString(0), it.getString(1))
-                    val type = ResurrectionRequest.ComponentType.valueOf(it.getString(2))
-                    val action = if (it.isNull(3)) null else it.getString(3)
-                    val extras = if (it.isNull(4)) null else {
-                        with(Parcel.obtain()) {
-                            val bytes = it.getBlob(4)
-                            unmarshall(bytes, 0, bytes.size)
-                            setDataPosition(0)
-                            readTypedObject(PersistableBundle.CREATOR)
-                        }
+            ).map {
+                val componentName = ComponentName(it.getString(0), it.getString(1))
+                val type = ResurrectionRequest.ComponentType.valueOf(it.getString(2))
+                val action = if (it.isNull(3)) null else it.getString(3)
+                val extras = if (it.isNull(4)) null else {
+                    with(Parcel.obtain()) {
+                        val bytes = it.getBlob(4)
+                        unmarshall(bytes, 0, bytes.size)
+                        setDataPosition(0)
+                        readTypedObject(PersistableBundle.CREATOR)
                     }
-
-                    result.add(
-                        ResurrectionRequest(
-                            componentName,
-                            type,
-                            action,
-                            extras?.deepCopy(),
-                            notifiersByComponentName[componentName] ?: emptyList()
-                        )
-                    )
                 }
+
+                ResurrectionRequest(
+                    componentName,
+                    type,
+                    action,
+                    extras?.deepCopy(),
+                    notifiersByComponentName[componentName] ?: emptyList()
+                )
             }
         }
-        return result
     }
 
     /** Resets the registrations by deleting everything from the database. */

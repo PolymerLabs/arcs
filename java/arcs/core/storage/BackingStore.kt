@@ -12,7 +12,9 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtOperation
+import arcs.core.data.ReferenceType
 import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
 import arcs.core.storage.ProxyMessage.SyncRequest
@@ -30,7 +32,7 @@ import kotlinx.coroutines.withContext
  *
  * This is what *backs* Entities.
  */
-class BackingStore<Data : CrdtData, Op: CrdtOperation, T>(
+class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
     private val options: StoreOptions<Data, Op, T>
 ) : ActiveStore<Data, Op, T>(options) {
     private val storeMutex = Mutex()
@@ -90,7 +92,17 @@ class BackingStore<Data : CrdtData, Op: CrdtOperation, T>(
     /* internal */ suspend fun setupStore(muxId: String): StoreRecord<Data, Op, T> {
         val store = DirectStore.CONSTRUCTOR(
             // Copy of our options, but with a child storage key using the muxId.
-            options.copy(options.storageKey.childKeyWithComponent(muxId))
+            options.copy(options.storageKey.childKeyWithComponent(muxId)),
+            dataClass = when (val type = options.type) {
+                is CrdtModelType<*, *, *> -> type.crdtModelDataClass
+                is ReferenceType<*> -> when (val contained = type.containedType) {
+                    is CrdtModelType<*, *, *> -> contained.crdtModelDataClass
+                    else -> throw UnsupportedOperationException(
+                        "Unsupported contained type: $contained"
+                    )
+                }
+                else -> throw UnsupportedOperationException("Unsupported type: $type")
+            }
         ) as DirectStore<Data, Op, T>
 
         val id = store.on(ProxyCallback { processStoreCallback(muxId, it) })
@@ -105,12 +117,15 @@ class BackingStore<Data : CrdtData, Op: CrdtOperation, T>(
         message: ProxyMessage<Data, Op, T>
     ) = callbacks.sendMultiplexed(message, muxId)
 
-    data class StoreRecord<Data : CrdtData, Op : CrdtOperation, T>(val id: Int, val store: DirectStore<Data, Op, T>)
+    data class StoreRecord<Data : CrdtData, Op : CrdtOperation, T>(
+        val id: Int,
+        val store: DirectStore<Data, Op, T>
+    )
 
     companion object {
         @Suppress("UNCHECKED_CAST")
-        val CONSTRUCTOR = StoreConstructor<CrdtData, CrdtOperation, Any?> {
-            BackingStore(it as StoreOptions<CrdtData, CrdtOperation, Any?>)
+        val CONSTRUCTOR = StoreConstructor<CrdtData, CrdtOperation, Any?> { options, _ ->
+            BackingStore(options as StoreOptions<CrdtData, CrdtOperation, Any?>)
         }
     }
 }

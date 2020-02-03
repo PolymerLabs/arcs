@@ -100,8 +100,8 @@ class TTTGame : AbstractTTTGame() {
                 gameOver = false,
                 winnerAvatar = ""
             ))
-            playerOneMove.set(mv1.apply{ move = -1.0 })
-            playerTwoMove.set(mv2.apply{ move = -1.0 })
+            playerOneMove.set(mv1.apply { move = -1.0 })
+            playerTwoMove.set(mv2.apply { move = -1.0 })
             events.clear()
         }
         renderOutput()

@@ -9,13 +9,12 @@ kt_android_library(
     srcs = glob(["*.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
-        "//java/arcs/android/common",
+        "//java/arcs/android/common",  # unuseddeps: keep
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_android",
     ],
 )

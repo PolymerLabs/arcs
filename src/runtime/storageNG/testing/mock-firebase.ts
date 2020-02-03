@@ -9,12 +9,15 @@
  */
 
 
-import {firebase, FirebaseStorageKey, FirebaseStorageDriverProvider, FirebaseDriver, FirebaseAppCache} from '../drivers/firebase.js';
+import {firebase, FirebaseStorageKey, FirebaseStorageDriverProvider, FirebaseDriver, FirebaseAppCache, FirebaseStorageKeyOptions} from '../drivers/firebase.js';
 import {StorageKey} from '../storage-key.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {assert} from '../../../platform/chai-web.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
+import {StorageKeyParser} from '../storage-key-parser.js';
+import {Capabilities} from '../../capabilities.js';
 
 /**
  * These classes are intended to mimic firebase behaviour, including asynchrony.
@@ -348,6 +351,13 @@ export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
 
   static register(cacheService: RuntimeCacheService) {
     DriverFactory.register(new MockFirebaseStorageDriverProvider(cacheService));
+    StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
+    const {projectId, domain, apiKey} = mockFirebaseStorageKeyOptions;
+    StorageKeyFactory.registerKeyCreator(
+        'firebase',
+        Capabilities.persistent,
+        ({arcId}: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, arcId.toString()));
+
   }
 
   static getValueForTesting(cacheService: RuntimeCacheService, storageKey: MockFirebaseStorageKey) {
@@ -362,3 +372,9 @@ export class MockFirebaseStorageKey extends FirebaseStorageKey {
     super('test-project', 'test.domain', 'testKey', location);
   }
 }
+
+export const mockFirebaseStorageKeyOptions: FirebaseStorageKeyOptions = {
+  projectId: 'test-project',
+  domain: 'test.domain',
+  apiKey: 'testKey'
+};

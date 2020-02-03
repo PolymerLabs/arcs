@@ -57,6 +57,9 @@ export class Refinement {
   }
 
   static fromAst(ref: RefinementNode, typeData: Dictionary<ExpressionPrimitives>): Refinement {
+    if (!ref) {
+      return null;
+    }
     return new Refinement(RefinementExpression.fromAst(ref.expression, typeData));
   }
 
@@ -165,6 +168,9 @@ abstract class RefinementExpression {
 
   constructor(readonly kind: 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode') {}
   static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+    if (!expr) {
+      return null;
+    }
     switch (expr.kind) {
       case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
       case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
@@ -173,7 +179,7 @@ abstract class RefinementExpression {
       case 'boolean-node': return BooleanPrimitive.fromAst(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
-        throw new Error('Unknown node type.');
+        throw new Error(`RefinementExpression.fromAst: Unknown node type ${expr['kind']}`);
     }
   }
 
@@ -186,7 +192,7 @@ abstract class RefinementExpression {
       case 'BooleanPrimitiveNode': return BooleanPrimitive.fromLiteral(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
-        throw new Error('Unknown node type.');
+        throw new Error(`RefinementExpression.fromLiteral: Unknown node type ${expr['kind']}`);
     }
   }
 
@@ -396,7 +402,7 @@ export class UnaryExpression extends RefinementExpression {
   }
 }
 
-class FieldNamePrimitive extends RefinementExpression {
+export class FieldNamePrimitive extends RefinementExpression {
   evalType: Primitive;
   value: string;
 
@@ -440,7 +446,7 @@ class FieldNamePrimitive extends RefinementExpression {
   }
 }
 
-class NumberPrimitive extends RefinementExpression {
+export class NumberPrimitive extends RefinementExpression {
   evalType = Primitive.NUMBER;
   value: number;
 
@@ -875,7 +881,7 @@ const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimiti
   [Op.GT]: e => e[0] > e[1],
   [Op.LTE]: e => e[0] <= e[1],
   [Op.GTE]: e => e[0] >= e[1],
-  [Op.ADD]: e => e[0] + e[1],
+  [Op.ADD]: (e: number[]) => e[0] + e[1],
   [Op.SUB]: e => e[0] - e[1],
   [Op.MUL]: e => e[0] * e[1],
   [Op.DIV]: e => e[0] / e[1],

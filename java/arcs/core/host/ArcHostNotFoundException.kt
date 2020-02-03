@@ -12,11 +12,9 @@
 package arcs.core.host
 
 import arcs.core.sdk.Particle
-import kotlin.reflect.KClass
 
 /**
  * An [ArcHostNotFoundException] is thrown if a [Particle] has an annotation with
  * [TargetHost] that requests an [ArcHost] that is not registered with a [HostRegistry].
  */
 class ArcHostNotFoundException(msg: String) : Exception(msg)
-

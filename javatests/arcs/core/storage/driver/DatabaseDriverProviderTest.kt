@@ -12,6 +12,9 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
+import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
@@ -20,28 +23,34 @@ import arcs.core.data.SchemaName
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
+import arcs.core.storage.database.DatabaseFactory
+import arcs.core.storage.database.MockDatabaseFactory
 import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.coroutines.coroutineContext
 
 /** Tests for [RamDiskDriverProvider]. */
+@Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class DatabaseDriverProviderTest {
+    private var databaseFactory: DatabaseFactory? = null
     private val schemaHashLookup = mutableMapOf<String, Schema>()
 
     @After
     fun tearDown() {
+        databaseFactory = null
         DriverFactory.clearRegistrationsForTesting()
         schemaHashLookup.clear()
     }
 
     @Test
-    fun registersSelfWithDriverFactory() {
-        DatabaseDriverProvider.configure(schemaHashLookup::get) // Constructor registers self.
+    fun registersSelfWithDriverFactory() = runBlockingTest {
+        DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get) // Constructor registers self.
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         assertThat(
@@ -50,8 +59,8 @@ class DatabaseDriverProviderTest {
     }
 
     @Test
-    fun willSupport_returnsTrue_whenDatabaseKey_andSchemaFound() {
-        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
+    fun willSupport_returnsTrue_whenDatabaseKey_andSchemaFound() = runBlockingTest {
+        val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         val key = DatabaseStorageKey("foo", "1234a")
@@ -59,8 +68,8 @@ class DatabaseDriverProviderTest {
     }
 
     @Test
-    fun willSupport_returnsFalse_whenNotDatabaseKey() {
-        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
+    fun willSupport_returnsFalse_whenNotDatabaseKey() = runBlockingTest {
+        val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
         val ramdisk = RamDiskStorageKey("foo")
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
         val other = object : StorageKey("outofnowhere") {
@@ -74,34 +83,77 @@ class DatabaseDriverProviderTest {
     }
 
     @Test
-    fun willSupport_returnsFalse_whenSchemaNotFound() {
-        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
+    fun willSupport_returnsFalse_whenSchemaNotFound() = runBlockingTest {
+        val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
 
         val key = DatabaseStorageKey("foo", "1234a")
         assertThat(provider.willSupport(key)).isFalse()
     }
 
     @Test
-    fun getDriver_throwsOnInvalidKey_wrongType() = runBlocking {
-        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
+    fun getDriver_throwsOnInvalidKey_wrongType() = runBlockingTest {
+        val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver<Int>(volatile, ExistenceCriteria.ShouldCreate)
+            provider.getDriver(volatile, ExistenceCriteria.ShouldCreate, CrdtEntity.Data::class)
         }
-        Unit
     }
 
     @Test
-    fun getDriver_throwsOnInvalidKey_schemaNotFound() = runBlocking {
-        val provider = DatabaseDriverProvider.configure(schemaHashLookup::get)
+    fun getDriver_throwsOnInvalidKey_schemaNotFound() = runBlockingTest {
+        val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
         val key = DatabaseStorageKey("foo", "1234a")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver<Int>(key, ExistenceCriteria.ShouldCreate)
+            provider.getDriver(key, ExistenceCriteria.ShouldCreate, CrdtEntity.Data::class)
         }
-        Unit
     }
+
+    @Test
+    fun getDriver_throwsOnInvalidDataClass() = runBlockingTest {
+        val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
+        val key = DatabaseStorageKey("foo", "1234a")
+        schemaHashLookup["1234a"] = DUMMY_SCHEMA
+
+        assertSuspendingThrows(IllegalArgumentException::class) {
+            provider.getDriver(key, ExistenceCriteria.ShouldExist, Int::class)
+        }
+    }
+
+    @Test
+    fun getDriver() = runBlockingTest {
+        val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
+        val key = DatabaseStorageKey("foo", "1234a")
+        schemaHashLookup["1234a"] = DUMMY_SCHEMA
+
+        val entityDriver = provider.getDriver(
+            key,
+            ExistenceCriteria.ShouldExist,
+            CrdtEntity.Data::class
+        )
+        assertThat(entityDriver).isInstanceOf(DatabaseDriver::class.java)
+        assertThat(entityDriver.storageKey).isEqualTo(key)
+
+        val setDriver = provider.getDriver(
+            key,
+            ExistenceCriteria.ShouldExist,
+            CrdtSet.DataImpl::class
+        )
+        assertThat(setDriver).isInstanceOf(DatabaseDriver::class.java)
+        assertThat(setDriver.storageKey).isEqualTo(key)
+
+        val singletonDriver = provider.getDriver(
+            key,
+            ExistenceCriteria.ShouldExist,
+            CrdtSingleton.DataImpl::class
+        )
+        assertThat(singletonDriver).isInstanceOf(DatabaseDriver::class.java)
+        assertThat(singletonDriver.storageKey).isEqualTo(key)
+    }
+
+    private suspend fun databaseFactory(): DatabaseFactory =
+        databaseFactory ?: MockDatabaseFactory(coroutineContext).also { databaseFactory = it}
 
     companion object {
         private val DUMMY_SCHEMA = Schema(

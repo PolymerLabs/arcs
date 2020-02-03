@@ -21,6 +21,7 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
 import arcs.core.type.TypeLiteral
+import kotlin.reflect.KClass
 
 /** Extension function to wrap any type in a collection type. */
 fun <T : Type> T?.collectionOf(): CollectionType<T>? =
@@ -49,6 +50,8 @@ data class CollectionType<T : Type>(
                 collectionResolvedType.collectionOf()
             } else this
         }
+
+    override val crdtModelDataClass: KClass<*> = CrdtSet.DataImpl::class
 
     override fun maybeEnsureResolved(): Boolean = collectionType.maybeEnsureResolved()
 

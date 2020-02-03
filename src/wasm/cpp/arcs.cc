@@ -21,7 +21,7 @@ EM_JS(const char*, collectionStore, (Particle* p, Handle* h, const char* encoded
 EM_JS(void, collectionRemove, (Particle* p, Handle* h, const char* encoded), {})
 EM_JS(void, collectionClear, (Particle* p, Handle* h), {})
 EM_JS(void, dereference, (Particle* p, const char* id, const char* key, const char* schema_hash, int continuation_id), {})
-EM_JS(void, render, (Particle* p, const char* slotName, const char* template_str, const char* model), {})
+EM_JS(void, onRenderOutput, (Particle* p, const char* template_str, const char* model), {})
 EM_JS(void, serviceRequest, (Particle* p, const char* call, const char* args, const char* tag), {})
 EM_JS(const char*, resolveUrl, (const char* url), {})
 EM_JS(void, setLogInfo, (const char* file, int line), {})
@@ -421,7 +421,7 @@ void Particle::renderSlot(const std::string& slot_name, bool send_template, bool
     model_ptr = model.c_str();
   }
 
-  internal::render(this, slot_name.c_str(), template_ptr, model_ptr);
+  internal::onRenderOutput(this, template_ptr, model_ptr);
 }
 
 std::string Particle::resolveUrl(const std::string& url) {

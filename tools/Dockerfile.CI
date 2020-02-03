@@ -1,3 +1,5 @@
+# This file is used for the travis CI.
+
 FROM ubuntu:xenial
 
 # Install programs for runtime use (e.g. by Bazel, Node-GYP)

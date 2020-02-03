@@ -14,7 +14,7 @@ package arcs.sdk
 /**
  * Utilities for ease-of-use. Implemented for each platform.
  */
-expect object Utils {
+interface UtilsInterface {
     fun log(msg: String)
 
     fun abort()

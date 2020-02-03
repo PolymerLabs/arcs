@@ -1,15 +1,14 @@
 package arcs
 
+import kotlin.coroutines.resume
+import kotlin.js.* // ktlint-disable no-wildcard-imports
+import kotlin.reflect.KClass
+import kotlin.reflect.KFunction0
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.await
 import kotlinx.serialization.KSerializer
-import kotlin.coroutines.resume
-import kotlin.js.*
-import kotlin.reflect.KClass
-import kotlin.reflect.KFunction0
-
 
 /**
  * Anything marked external in this file means the implementation lives in JS.
@@ -20,7 +19,7 @@ actual object Platform {
         particleConstructor: KFunction0<T>
     ) {
         // Actually invokes defineParticle() in global JS scope
-        defineParticle({ api -> inherit(particle.js, api.UiParticle, api) });
+        defineParticle({ api -> inherit(particle.js, api.UiParticle, api) })
     }
 
     actual fun <T> async(block: suspend () -> T): Any {
@@ -49,8 +48,9 @@ external interface ParticleApi {
 }
 
 /**
- * This class actually represents a pure baseclass, but extending it will cause DomParticleBase to put it in
- * its prototype chain. We don't want that, so we tell the Kotlin compiler that it's JS name is "Object"
+ * This class actually represents a pure baseclass, but extending it will cause DomParticleBase to
+ * put it in its prototype chain. We don't want that, so we tell the Kotlin compiler that it's JS
+ * name is "Object".
  */
 @JsName("Object")
 actual abstract external class UiParticle {
@@ -65,7 +65,6 @@ actual abstract external class UiParticle {
     }
 
     actual fun <U, T> service(args: U): PromiseLike<T>
-
 }
 
 actual external interface PromiseLike<T> {
@@ -99,10 +98,9 @@ actual open class DomParticleBase<Props, State> actual constructor(
         }
     }
 
-
     /**
-     * For JS, this could be optimized to avoid all of the serialization and parsing, but leaving this
-     * implementation for now since it validates the WASM/JVM version.
+     * For JS, this could be optimized to avoid all of the serialization and parsing, but leaving
+     * this implementation for now since it validates the WASM/JVM version.
      */
     actual suspend fun <U, V> serviceCall(
         serializer: KSerializer<U>,
@@ -117,7 +115,8 @@ actual open class DomParticleBase<Props, State> actual constructor(
      * through kotlinx.serialization to obtain typed data class objects, returned via promise.
      */
     actual fun <U, V> serviceCallAsync(
-        serializer: KSerializer<U>, resultSerializer: KSerializer<V>,
+        serializer: KSerializer<U>,
+        resultSerializer: KSerializer<V>,
         request: U
     ): PromiseLike<V> {
         val promise = (this.service<U, V>(
@@ -139,7 +138,6 @@ actual open class DomParticleBase<Props, State> actual constructor(
                     )
                 }
             }
-
         }
     }
 
@@ -171,15 +169,15 @@ actual open class DomParticleBase<Props, State> actual constructor(
         return JSON.parse(
             kotlinx.serialization.json.Json.stringify(
                 stateStrategy, renderState(
-                    kotlinx.serialization.json.Json.nonstrict.parse(
-                        propsStrategy,
-                        JSON.stringify(props)
-                    ),
-                    kotlinx.serialization.json.Json.nonstrict.parse(
-                        stateStrategy,
-                        JSON.stringify(state)
-                    )
+                kotlinx.serialization.json.Json.nonstrict.parse(
+                    propsStrategy,
+                    JSON.stringify(props)
+                ),
+                kotlinx.serialization.json.Json.nonstrict.parse(
+                    stateStrategy,
+                    JSON.stringify(state)
                 )
+            )
             )
         )
     }
@@ -229,7 +227,7 @@ actual open class DomParticleBase<Props, State> actual constructor(
 
 // HERE BY DRAGONS
 
-external fun defineParticle(callback: (ParticleApi) -> UiParticle);
+external fun defineParticle(callback: (ParticleApi) -> UiParticle)
 
 external object Reflect {
     fun setPrototypeOf(a: dynamic, b: dynamic)
@@ -250,8 +248,7 @@ external object Object {
     fun <T, P> defineProperty(o: T, p: String, attributes: PropertyDescriptor<P>): T
 }
 
-external class Proxy(obj: dynamic, handler: dynamic) {
-}
+external class Proxy(obj: dynamic, handler: dynamic)
 
 /**
  * The purpose of this bizarre method is to reparent 'child' to extend 'parent.
@@ -262,18 +259,21 @@ external class Proxy(obj: dynamic, handler: dynamic) {
  * child ES5 constructor, and return the resulting object. Ugly, but it works.
  */
 fun inherit(
-    child: JsClass<out UiParticle>, parent: dynamic,
+    child: JsClass<out UiParticle>,
+    parent: dynamic,
     api: ParticleApi
 ): UiParticle {
-    var childProto = js("child.prototype");
-    while (childProto != null && childProto.constructor != null && childProto.constructor != DomParticleBase::class.js) {
+    var childProto = js("child.prototype")
+    while (childProto != null &&
+        childProto.constructor != null &&
+        childProto.constructor != DomParticleBase::class.js) {
         childProto = Reflect.getPrototypeOf(childProto)
     }
 
-    Reflect.setPrototypeOf(childProto, parent.prototype);
-    Reflect.setPrototypeOf(childProto.constructor, parent);
+    Reflect.setPrototypeOf(childProto, parent.prototype)
+    Reflect.setPrototypeOf(childProto.constructor, parent)
     val descriptor: PropertyDescriptor<Proxy> =
-        Object.getOwnPropertyDescriptor(js("child.prototype"), "constructor");
+        Object.getOwnPropertyDescriptor(js("child.prototype"), "constructor")
     val handler = js(
         """Object.create({
           construct: function(target, args) {
@@ -283,14 +283,14 @@ fun inherit(
               return obj;
           }
       });"""
-    );
+    )
 
-    val proxy = Proxy(child, handler);
-    descriptor.value = proxy;
-    Object.defineProperty(child, "constructor", descriptor);
+    val proxy = Proxy(child, handler)
+    descriptor.value = proxy
+    Object.defineProperty(child, "constructor", descriptor)
     val particle = proxy as UiParticle
-    DomParticleBase.api = api;
-    return particle;
+    DomParticleBase.api = api
+    return particle
 }
 
 suspend fun <T> PromiseLike<T>.await(): T =

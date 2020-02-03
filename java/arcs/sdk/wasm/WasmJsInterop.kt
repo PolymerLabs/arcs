@@ -157,22 +157,6 @@ fun updateHandle(
 }
 
 @Retain
-@ExportForCppRuntime("_renderSlot")
-fun renderSlot(
-    particlePtr: WasmAddress,
-    slotNamePtr: WasmString,
-    sendTemplate: Boolean,
-    sendModel: Boolean
-) {
-    @Suppress("DEPRECATION")
-    particlePtr.toObject<WasmParticleImpl>()?.renderSlot(
-        slotNamePtr.toKString(),
-        sendTemplate,
-        sendModel
-    )
-}
-
-@Retain
 @ExportForCppRuntime("_fireEvent")
 fun fireEvent(
     particlePtr: WasmAddress,
@@ -232,14 +216,6 @@ external fun collectionRemove(
 
 @SymbolName("_collectionClear")
 external fun collectionClear(particlePtr: WasmAddress, handlePtr: WasmAddress)
-
-@SymbolName("_render")
-external fun render(
-    particlePtr: WasmAddress,
-    slotNamePtr: WasmString,
-    templatePtr: WasmString,
-    modelPtr: WasmString
-)
 
 @SymbolName("_onRenderOutput")
 external fun onRenderOutput(
