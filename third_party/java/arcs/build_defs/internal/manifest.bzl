@@ -52,12 +52,6 @@ def arcs_manifest_json(name, src, deps = [], out = None, visibility = None):
     if not src.endswith(".arcs"):
         fail("src must be a .arcs file")
 
-    if type(deps) == str:
-        fail("deps must be a list")
-
-    if type(out) != str:
-        fail("out must be a filename (a string), or None")
-
     out = out or output_name(src, ".json")
 
     sigh_command(
