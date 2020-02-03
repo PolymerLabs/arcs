@@ -1,6 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_serialize_manifest",
+    "arcs_manifest_json",
     "arcs_ts_test",
 )
 
@@ -21,7 +21,7 @@ arcs_ts_test(
     ],
 )
 
-arcs_serialize_manifest(
-    name = "manifest_proto",
+arcs_manifest_json(
+    name = "manifest_data",
     src = "manifest.arcs",
 )
