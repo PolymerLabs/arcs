@@ -686,11 +686,11 @@ ${particleStr1}
     });
 
     describe('refinement type checking', async () => {
-      const verify = (manifest, norms, expected_errors) => {
+      const verify = (manifest, norms, expectedErrors) => {
           const recipe = manifest.recipes[0];
           const options = {errors: new Map()};
           assert.deepEqual(recipe.normalize(options), norms, `normalizes: ${norms}`);
-          assert.sameMembers([...options.errors.values()], expected_errors);
+          assert.sameMembers([...options.errors.values()], expectedErrors);
           if (norms) {
             assert(recipe.isResolved());
           }
