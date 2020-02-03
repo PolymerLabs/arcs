@@ -109,7 +109,7 @@ describe('refiner', () => {
 
     });
     it('regression test for parse failure on operator ordering.', () => {
-      const _ = parse(`
+      parse(`
       particle Foo
           input: reads Something {num: Number [num <= 20] }
       `);
