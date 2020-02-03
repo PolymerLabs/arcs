@@ -10,6 +10,8 @@
  */
 package arcs.core.host
 
+import arcs.jvm.host.TargetHost
+
 /**
  * Annotation to test partitioning for two hosts.
  */

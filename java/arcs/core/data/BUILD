@@ -26,6 +26,7 @@ arcs_kt_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/internal",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
     ],
 )

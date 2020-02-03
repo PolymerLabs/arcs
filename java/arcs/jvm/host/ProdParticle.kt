@@ -8,13 +8,13 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
+package arcs.jvm.host
 
 /**
- * A particle marked as [ProdParticle] will be automatically registered to run in a [ProdHost] in
+ * A particle marked as [ProdParticle] will be automatically registered to run in a [JvmProdHost] in
  * the Arcs runtime.
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-@TargetHost(ProdHost::class)
+@TargetHost(JvmProdHost::class)
 annotation class ProdParticle

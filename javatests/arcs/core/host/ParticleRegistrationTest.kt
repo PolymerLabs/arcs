@@ -1,6 +1,9 @@
 package arcs.core.host
 
-import arcs.core.sdk.Particle
+import arcs.core.data.ParticleSpec
+import arcs.jvm.host.ExplicitHostRegistry
+import arcs.jvm.host.JvmProdHost
+import arcs.sdk.Particle
 import arcs.jvm.host.ServiceLoaderHostRegistry
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,7 +23,7 @@ class ParticleRegistrationTest {
 
         ServiceLoaderHostRegistry.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
-                is ProdHost -> {
+                is JvmProdHost -> {
                     assertThat(host.registeredParticles()).contains(TestProdParticle::class)
                     foundProdHost = true
                 }
@@ -36,6 +39,11 @@ class ParticleRegistrationTest {
 
     class DummyParticle : Particle
     class DummyHost : AbstractArcHost() {
+        override val hostName = this::class.java.canonicalName!!
+        override suspend fun isHostForSpec(spec: ParticleSpec): Boolean {
+            return this.registeredParticles().map { it.java.getCanonicalName() }
+                .contains(spec.location)
+        }
         init {
             runBlocking { registerParticle(DummyParticle::class) }
         }
@@ -61,7 +69,7 @@ class ParticleRegistrationTest {
         var foundProdHost = false
         var foundTestHost = false
 
-        ExplicitHostRegistry.registerHost(ProdHost())
+        ExplicitHostRegistry.registerHost(JvmProdHost())
         ExplicitHostRegistry.registerHost(TestHost())
         ExplicitHostRegistry.registerParticles(
             listOf(TestProdParticle::class, TestHostParticle::class)

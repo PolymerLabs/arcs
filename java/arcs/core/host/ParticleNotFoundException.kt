@@ -11,7 +11,7 @@
 
 package arcs.core.host
 
-import arcs.core.sdk.Particle
+import arcs.core.data.ParticleSpec
 
 /**
  * An [ParticleNotFoundException] is thrown if a [Particle] cannot be located in

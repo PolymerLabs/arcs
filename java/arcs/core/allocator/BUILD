@@ -5,16 +5,14 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_library(
-    name = "host",
+    name = "allocator",
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/data",
-        "//java/arcs/core/storage",
+        "//java/arcs/core/host",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver",
-        "//java/arcs/core/util",
         "//java/arcs/sdk",
-        "//third_party/kotlin/kotlinx_atomicfu",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
