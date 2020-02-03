@@ -12,46 +12,27 @@
 package arcs.core.data
 
 /** A class containing retention policy information. */
-data class Ttl(
-    val count: Int,
-    val units: Units?
-) {
+sealed class Ttl(count: Int, val isInfinite: Boolean = false) {
+    val minutes: Int = count * when (this) {
+        is Minutes -> 1
+        is Hours -> 60
+        is Days -> 60 * 24
+        is Infinite -> 1
+    }
     init {
-        require((count >= 0 && units != null) || (count == -1 && units == null)) {
-            "count must be non-negative when units are provided, or -1 if units is null"
+        require(count > 0 || isInfinite) {
+            "must be either positive count on infinite, " +
+                "but got count=$count and isInfinite=$isInfinite"
         }
     }
-
-    enum class Units {
-        Minute,
-        Hour,
-        Day
-    }
-
-    val isInfinite: Boolean
-        get() = this.count == -1 && this.units == null
 
     override fun equals(other: Any?): Boolean =
-        other is Ttl && this.minutes == other.minutes
+        other is Ttl && minutes == other.minutes
 
-    override fun hashCode(): Int = this.minutes.hashCode()
+    override fun hashCode(): Int = minutes.hashCode()
 
-    val minutes: Int
-        get() {
-            if (this.isInfinite) {
-                return -1
-            }
-            return count * when (this.units) {
-                Units.Minute -> 1
-                Units.Hour -> 60
-                Units.Day -> 60 * 24
-                null -> {
-                    throw UnsupportedOperationException("Units not available")
-                }
-            }
-        }
-
-    companion object {
-        val Infinite = Ttl(-1, null)
-    }
+    data class Minutes(val count: Int) : Ttl(count)
+    data class Hours(val count: Int) : Ttl(count)
+    data class Days(val count: Int) : Ttl(count)
+    object Infinite : Ttl(-1, true)
 }

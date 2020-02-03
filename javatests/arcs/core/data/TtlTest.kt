@@ -24,33 +24,25 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class TtlTest {
     @Test
-    fun ttl_init() {
-      assertThrows(IllegalArgumentException::class) {
-        Ttl(-1, Ttl.Units.Day)
-        Ttl(-10, null)
-        Ttl(10, null)
-      }
-    }
-
-    @Test
     fun ttl_minutes() {
-      assertThat(Ttl.Infinite.minutes).isEqualTo(-1)
-      assertThat(Ttl(4, Ttl.Units.Minute).minutes).isEqualTo(4)
-      assertThat(Ttl(3, Ttl.Units.Hour).minutes).isEqualTo(180)
-      assertThat(Ttl(2, Ttl.Units.Day).minutes).isEqualTo(2880)
+        assertThat(Ttl.Infinite.minutes).isEqualTo(-1)
+        assertThat(Ttl.Minutes(4).minutes).isEqualTo(4)
+        assertThat(Ttl.Hours(3).minutes).isEqualTo(180)
+        assertThat(Ttl.Days(2).minutes).isEqualTo(2880)
     }
 
     @Test
     fun ttl_equals() {
-      assertThat(Ttl(5, Ttl.Units.Day).equals(Ttl(2, Ttl.Units.Day)))
-      assertThat(Ttl.Infinite.equals(Ttl.Infinite))
-      assertThat(Ttl(60, Ttl.Units.Minute).equals(Ttl(2, Ttl.Units.Hour)))
-      assertThat(!Ttl(5, Ttl.Units.Minute).equals(Ttl(5, Ttl.Units.Hour)))
+        assertThat(Ttl.Infinite.equals(Ttl.Infinite))
+        assertThat(Ttl.Days(2).equals(Ttl.Days(2)))
+        assertThat(Ttl.Minutes(60).equals(Ttl.Hours(2)))
+        assertThat(Ttl.Days(2).equals(Ttl.Hours(48)))
+        assertThat(!Ttl.Minutes(5).equals(Ttl.Hours(5)))
     }
 
     @Test
     fun ttl_isInfinite() {
-      assertFalse(Ttl(60, Ttl.Units.Minute).isInfinite)
-      assertTrue(Ttl.Infinite.isInfinite)
+        assertFalse(Ttl.Minutes(60).isInfinite)
+        assertTrue(Ttl.Infinite.isInfinite)
     }
 }
