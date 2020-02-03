@@ -66,7 +66,6 @@ interface Particle {
     ): Map<String, Any>? = model
 
 
-
     /**
      * Register a reaction to an event (optional).
      *
