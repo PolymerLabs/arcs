@@ -14,6 +14,6 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/database",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/mockito_kotlin",
+        "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],
 )
