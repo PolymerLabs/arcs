@@ -59,6 +59,10 @@ export class Particle {
   protected ready(): void {
   }
 
+  onCreate(): void {
+    console.log(`I made it!`)
+  }
+
   /**
    * This sets the capabilities for this particle.  This can only
    * be called once.

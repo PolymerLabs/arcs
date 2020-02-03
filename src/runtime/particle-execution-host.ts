@@ -103,6 +103,7 @@ export class ParticleExecutionHost {
   instantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
+    console.log(`I'm instantiating ${particle.name}`)
     stores.forEach((store, name) => {
       apiPort.DefineHandle(
           store,

@@ -115,6 +115,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       }
 
       async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, UnifiedStorageProxy>) {
+        console.log(`I found a second place!`)
         return pec.instantiateParticle(id, spec, proxies);
       }
 
@@ -297,6 +298,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
   // tslint:disable-next-line: no-any
   private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, UnifiedStorageProxy>): Promise<[any, () => Promise<void>]> {
+    console.log(`here's another one`)
     let resolve: Runnable;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
@@ -313,6 +315,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     return [particle, async () => {
       await this.assignHandle(particle, spec, id, handleMap, registerList, p);
       resolve();
+      particle.onCreate()
     }];
   }
 

@@ -445,6 +445,7 @@ export class Arc implements ArcInterface {
    * Waits for completion of an existing Instantiate before returning.
    */
   async instantiate(recipe: Recipe): Promise<void> {
+    console.log(`let's kick off this party!`)
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     assert(recipe.isCompatible(this.modality),
       `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
