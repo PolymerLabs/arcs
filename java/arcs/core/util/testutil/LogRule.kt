@@ -13,12 +13,12 @@ package arcs.core.util.testutil
 
 import arcs.core.util.Log
 import arcs.core.util.TaggedLog
-import org.junit.rules.TestRule
-import org.junit.runner.Description
-import org.junit.runners.model.Statement
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.Locale
+import org.junit.rules.TestRule
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 
 /** JUnit [TestRule] which prints wrappers around the log output from each test. */
 class LogRule : TestRule {
