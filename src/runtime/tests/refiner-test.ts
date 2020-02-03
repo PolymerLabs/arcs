@@ -140,7 +140,7 @@ describe('refiner', () => {
       }));
 });
 
-describe.only('normalisation', () => {
+describe('normalisation', () => {
     it('tests if field name is rearranged to left in a binary node.', () => {
         const manifestAst1 = parse(`
             particle Foo
