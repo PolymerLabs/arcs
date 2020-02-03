@@ -112,7 +112,7 @@ const scripts: {[index: string]: string} = {
 
   manifestChecker: 'build/tools/manifest-checker.js',
 
-  /** Serializes manifests. */
+  /** Serializes manifests to JSON. */
   manifest2json: 'build/tools/manifest2json.js',
 };
 

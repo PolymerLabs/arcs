@@ -25,7 +25,7 @@ Usage
   $ tools/sigh manifest2json [options] [file ...]
 
 Description
-  Serializes manifests.
+  Serializes manifests to JSON. 
 
 Options
   --outdir, -d  output directory; defaults to '.'
@@ -40,12 +40,12 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
   process.exit(1);
 }
 
-/** Format the name of the output file */
+/** Format the name of the output file. */
 function outputName(baseName: string): string {
   return baseName.replace(/\.arcs$/, '.json');
 }
 
-/** Extract JSON serializations from manifest */
+/** Extract JSON serializations from manifest. */
 function toLiteral(manifest: Manifest): object {
   const lit = {};
   lit['particles'] = manifest.particles.map(p => p.toLiteral());
@@ -53,7 +53,7 @@ function toLiteral(manifest: Manifest): object {
   return lit;
 }
 
-/** Write file serializations for each input file */
+/** Write file serializations for each input file. */
 async function processFile(src: string) {
   if (!fs.existsSync(src)) {
     throw new Error(`File not found: ${src}`);
