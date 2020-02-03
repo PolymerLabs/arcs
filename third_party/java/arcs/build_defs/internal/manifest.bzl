@@ -38,7 +38,7 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
         execute = False,
     )
 
-def arcs_serialize_manifest(name, src, deps = [], out = None, visibility = None):
+def arcs_manifest_json(name, src, deps = [], out = None, visibility = None):
     """Serialize a manifest file.
 
     This converts a '.arcs' file into a JSON representation, using manifest2json.

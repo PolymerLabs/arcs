@@ -17,7 +17,7 @@ load(
     "//third_party/java/arcs/build_defs/internal:manifest.bzl",
     _arcs_manifest = "arcs_manifest",
     _arcs_manifest_bundle = "arcs_manifest_bundle",
-    _arcs_serialize_manifst = "arcs_serialize_manifest",
+    _arcs_serialize_manifst = "arcs_manifest_json",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:schemas.bzl",
