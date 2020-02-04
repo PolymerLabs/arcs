@@ -36,6 +36,8 @@ export class ArcHost {
     const context = this.context || await Runtime.parse(``);
     const storage = config.storage || this.storage;
     this.serialization = await this.computeSerialization(config, storage);
+    // TODO(sjmiles): weird consequence of re-using composer, which we probably should not do anymore
+    this.composer.arc = null;
     this.arc = await this._spawn(context, this.composer, storage, config.id, this.serialization, this.portFactories);
     if (config.manifest && !this.serialization) {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);

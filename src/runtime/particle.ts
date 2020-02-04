@@ -15,8 +15,6 @@ import {Runnable, Consumer} from './hot.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
-import {SlotProxy} from './slot-proxy.js';
-import {Content} from './slot-consumer.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
 
 export interface Capabilities {
@@ -43,7 +41,6 @@ export class Particle {
 
   protected _handlesToSync: number;
 
-  protected slotProxiesByName: Map<string, SlotProxy> = new Map();
   private capabilities: Capabilities;
   protected onError: Consumer<Error>;
 
@@ -217,22 +214,9 @@ export class Particle {
     return this.spec.outputs;
   }
 
-  hasSlotProxy(name: string): boolean {
-    return this.slotProxiesByName.has(name);
-  }
-
-  addSlotProxy(slotlet: SlotProxy): void {
-    this.slotProxiesByName.set(slotlet.slotName, slotlet);
-  }
-
-  removeSlotProxy(name: string): void {
-    this.slotProxiesByName.delete(name);
-  }
-
   /**
    * Request (outerPEC) service invocations.
    */
-  // TODO(sjmiles): experimental services impl
   async service(request) {
     if (!this.capabilities.serviceRequest) {
       console.warn(`${this.spec.name} has no service support.`);
@@ -241,17 +225,6 @@ export class Particle {
     return new Promise(resolve => {
       this.capabilities.serviceRequest(this, request, response => resolve(response));
     });
-  }
-
-  /**
-   * Returns the slot with provided name.
-   */
-  getSlot(name: string): SlotProxy {
-    return this.slotProxiesByName.get(name);
-  }
-
-  getSlotNames(): string[] {
-    return [...this.slotProxiesByName.keys()];
   }
 
   static buildManifest(strings: string[], ...bits): string {
@@ -309,7 +282,7 @@ export class Particle {
     Entity.mutate(entity, mutation);
   }
 
-  // TODO(sjmiles): alternate render path for UiBroker
+  // render path
   output(content) {
     const {output} = this.capabilities;
     if (output) {
@@ -318,7 +291,5 @@ export class Particle {
   }
 
   // abstract
-  renderSlot(slotName: string, contentTypes: string[]): void {}
-  renderHostedSlot(slotName: string, hostedSlotId: string, content: Content): void {}
   fireEvent(slotName: string, event: {}): void {}
 }

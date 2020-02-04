@@ -100,21 +100,25 @@ describe('remote planificator', () => {
   }
 
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex) {
-    await consumePlanificator.consumer.result.suggestions[suggestionIndex].instantiate(
-        consumePlanificator.arc);
+    const suggestion = consumePlanificator.consumer.result.suggestions[suggestionIndex];
+    await consumePlanificator.arc.instantiate(suggestion.plan);
     const serialization = await consumePlanificator.arc.serialize();
+    //
     producePlanificator.arc.dispose();
     producePlanificator.dispose();
     producePlanificator = null;
+    //
     await consumePlanificator.setSearch(null);
     await consumePlanificator.consumer.result.clear();
-
+    //
     const deserializedArc = await Arc.deserialize({serialization,
       slotComposer: new SlotComposer(),
       loader: new Loader(),
       fileName: '',
       pecFactories: undefined,
-      context: consumePlanificator.arc.context});
+      context: consumePlanificator.arc.context
+    });
+    //
     producePlanificator = new Planificator(
       deserializedArc,
       createPlanningResult(consumePlanificator.arc, consumePlanificator.result.store),
@@ -195,11 +199,11 @@ describe('remote planificator', () => {
 
     // Accept suggestion.
     producePlanificator = await instantiateAndReplan(consumePlanificator, producePlanificator, 0);
-    // TODO: There is a redundant `MuxedProductItem.` suggestion, get rid of it.
     await verifyReplanningAndConsuming(3, ['Check shipping', 'Check manufacturer information']);
 
     assert.notStrictEqual(producePlanificator.producer.result, consumePlanificator.consumer.result);
     assert.isTrue(producePlanificator.producer.result.isEquivalent(consumePlanificator.consumer.result.suggestions));
+
     // TODO: This doesn't behave as expected in neither old nor new storage stack.
     // The instantiated plan is being suggested still being suggested in both cases,
     // but `&addFromWishlist` does not.
@@ -207,6 +211,7 @@ describe('remote planificator', () => {
     // await verifyConsumerResults(5);
   });
 
+  // TODO(sjmiles): missing information about skip decision
   it.skip(`merges remotely produced suggestions`, async () => {
     // Planning with products manifest.
     const productsManifestString = `

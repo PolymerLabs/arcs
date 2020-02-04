@@ -57,9 +57,7 @@ export const ArcComponentMixin = Base => class extends Base {
         containers.suggestions = config.suggestionContainer;
       }
       composer = new SlotComposer(/*{containers}*/);
-      // TODO(sjmiles): slotObserver could be late attached or we could attach
-      // a thunk that dispatches to an actual broker configured elsewhere.
-      composer.slotObserver = config.broker || this.createBroker();
+      composer.observeSlots(config.broker || this.createBroker());
     }
     return new ArcHost(context, storage, composer);
   }
