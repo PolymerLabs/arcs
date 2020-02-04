@@ -1438,6 +1438,11 @@ PrimaryExpression
   {
     return toAstNode<AstNode.FieldNode>({kind: 'field-name-node', value: fn});
   }
+  / fn: '?'
+  {
+    // TODO(cypher1): Add support for named query arguments
+    return toAstNode<AstNode.QueryNode>({kind: 'query-argument-node', value: fn});
+  }
   / "'" txt:[^'\n]* "'"
   {
     return toAstNode<AstNode.TextNode>({kind: 'text-node', value: txt.join('')});

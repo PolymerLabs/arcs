@@ -152,18 +152,21 @@ describe('refiner enforcement', () => {
 });
 
 describe('dynamic refinements', () => {
-    it('Parses a particle with dynamic refinements.', () => {
+    it('Parses and type checks a particle with dynamic refinements.', () => {
         const manifestAst = parse(`
             particle AddressBook
                 contacts: reads [Contact {name: Text [ name == ? ] }]
         `);
         const typeData = {'name': 'Text'};
-        const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
-        const data = {
-            num: 'Ghost Busters'
-        };
-        const res = ref.validateData(data);
-        assert.strictEqual(res, data.name === '' || data.name === 'Ghost Busters');
+        const contacts = manifestAst[0].args[0];
+        const nameType = contacts.type.type.fields[0].type;
+        const ref = Refinement.fromAst(nameType.refinement, typeData);
+
+        assert.sameMembers([...ref.expression.getFieldNames()], ['name', '?'], 'should infer indexes from refinement');
+
+        assert.strictEqual(ref.toString(), '[(name == ?)]');
+        const dyn = (ref.expression as BinaryExpression).rightExpr;
+        assert.equal(dyn.evalType, 'Text', 'the algorithm discovers the type');
     });
 });
 
