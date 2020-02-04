@@ -20,6 +20,8 @@ interface Handle {
 interface ReadableSingleton<T : Entity> : Handle {
     /** Returns the value of the singleton. */
     fun get(): T?
+
+    fun onUpdate(action: (T?) -> Unit)
 }
 
 /** A singleton handle with write access. */

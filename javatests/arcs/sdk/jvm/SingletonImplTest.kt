@@ -18,6 +18,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
@@ -27,6 +28,7 @@ class SingletonImplTest {
 
     private lateinit var singleton: SingletonImpl<DummyEntity>
     @Mock private lateinit var particle: Particle
+    @Mock private lateinit var action: (DummyEntity?) -> Unit
 
     private val HANDLE_NAME = "HANDLE_NAME"
     private val DUMMY_VALUE = DummyEntity("123")
@@ -35,6 +37,7 @@ class SingletonImplTest {
     fun setUp() {
         MockitoAnnotations.initMocks(this)
         singleton = SingletonImpl(particle, HANDLE_NAME, DummyEntity.Spec())
+        singleton.onUpdate(action)
     }
 
     @Test
@@ -67,4 +70,17 @@ class SingletonImplTest {
         singleton.clear()
         verify(particle).onHandleUpdate(singleton)
     }
+
+    @Test
+    fun set_updatesHandle() {
+        singleton.set(DUMMY_VALUE)
+        verify(action).invoke(DUMMY_VALUE)
+    }
+
+    @Test
+    fun clear_updatesHandle() {
+        singleton.clear()
+        verify(action).invoke(null)
+    }
+
 }
