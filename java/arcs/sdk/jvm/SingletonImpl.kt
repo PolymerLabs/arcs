@@ -20,23 +20,16 @@ class SingletonImpl<T : Entity>(
     entitySpec: EntitySpec<T>
 ) : ReadWriteSingleton<T> {
     private var entity: T? = null
-    private var onUpdateAction: (T?) -> Unit = {}
 
     override fun get(): T? = entity
 
     override fun set(entity: T) {
         this.entity = entity
         particle.onHandleUpdate(this)
-        onUpdateAction(entity)
     }
 
     override fun clear() {
         this.entity = null
         particle.onHandleUpdate(this)
-        onUpdateAction(entity)
-    }
-
-    override fun onUpdate(action: (T?) -> Unit) {
-        onUpdateAction = action
     }
 }
