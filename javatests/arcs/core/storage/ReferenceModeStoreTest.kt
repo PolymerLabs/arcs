@@ -183,7 +183,7 @@ class ReferenceModeStoreTest {
         activeStore2.cloneFrom(activeStore)
 
         assertThat(activeStore2.getLocalData()).isEqualTo(activeStore.getLocalData())
-        assertThat(activeStore2.getLocalData() === activeStore.getLocalData()).isFalse()
+        assertThat(activeStore2.getLocalData()).isNotSameInstanceAs(activeStore.getLocalData())
     }
 
     @Test

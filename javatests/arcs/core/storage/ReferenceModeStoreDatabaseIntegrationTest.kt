@@ -133,8 +133,10 @@ class ReferenceModeStoreDatabaseIntegrationTest {
             database.get(bobKey, DatabaseData.Entity::class) as? DatabaseData.Entity
         )
 
-        assertThat(capturedBob.entity.data["name"]).isEqualTo("bob")
-        assertThat(capturedBob.entity.data["age"]).isEqualTo(42)
+        assertThat(capturedBob.entity).containsExactly(
+            "name", "bob",
+            "age", 42.0
+        )
     }
 
     @Test
@@ -156,7 +158,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         activeStore2.cloneFrom(activeStore)
 
         assertThat(activeStore2.getLocalData()).isEqualTo(activeStore.getLocalData())
-        assertThat(activeStore2.getLocalData() === activeStore.getLocalData()).isFalse()
+        assertThat(activeStore2.getLocalData()).isNotSameInstanceAs(activeStore.getLocalData())
     }
 
     @Test
@@ -222,12 +224,10 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         assertThat(capturedPeople.values).isEqualTo(referenceCollection.consumerView)
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
-        assertThat(storedBob.singletons.mapValues { it.value.data })
-            .isEqualTo(bobEntity.data.singletons.mapValues { it.value.data })
+        assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
         // Check that the stored bob's collection data is equal to the expected bob's collection
         // data (empty)
-        assertThat(storedBob.collections.mapValues { it.value.data })
-            .isEqualTo(bobEntity.data.collections.mapValues { it.value.data })
+        assertThat(storedBob.collections).isEqualTo(bobEntity.data.collections)
     }
 
     @Test
