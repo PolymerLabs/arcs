@@ -48,6 +48,7 @@ typealias FieldValueId = Long
 
 /** Implementation of [Database] for Android using SQLite. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+@Suppress("Recycle") // Our helper extension methods close Cursors correctly.
 class DatabaseImpl(
     context: Context,
     databaseName: String,
