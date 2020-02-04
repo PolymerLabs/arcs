@@ -19,6 +19,7 @@ import {Schema} from '../schema.js';
 import {Loader} from '../../platform/loader.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Entity} from '../entity.js';
+import {ConCap} from '../../testing/test-util.js';
 
 // Modifies the schema in-place.
 function deleteLocations(schema: Schema): Schema {
@@ -634,5 +635,16 @@ describe('schema', () => {
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
+  });
+  it.only('tests warning when refinement specificity is unknown', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number [a*a+a > 20]}
+        schema2: reads X {a: Number [a > 10]}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtleastAsSpecificAs(schema2)));
+    assert.match(refWarning.warn[0], /Unable to ascertain if/);
   });
 });

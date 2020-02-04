@@ -129,6 +129,7 @@ export class Refinement {
       const rangeB = Range.fromExpression(b.expression);
       return rangeA.isSubsetOf(rangeB) ? AtleastAsSpecific.YES : AtleastAsSpecific.NO;
     } catch (e) {
+      console.warn(`Unable to ascertain if ${a} is at least as specific as ${b}.`);
       return AtleastAsSpecific.UNKNOWN;
     }
   }
