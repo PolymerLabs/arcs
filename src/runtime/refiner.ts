@@ -1107,7 +1107,7 @@ export class RefinementOperator {
     return this.opInfo.evalType;
   }
 
-  validateOperandCompatibility(operandTypes: {evalType: String}[]): void {
+  validateOperandCompatibility(operandTypes: {evalType: string}[]): void {
     if (operandTypes.length !== this.opInfo.nArgs) {
       throw new Error(`Expected ${this.opInfo.nArgs} operands. Got ${operandTypes.length}.`);
     }
