@@ -139,6 +139,7 @@ export class Refinement {
   // ~ Converts a unary node {op: '-', val: x} into a number node {val: -x}
   // ~ Removes redundant info like expression && false => false
   normalise() {
+    this.expression = this.expression.normaliseOperators();
     try {
       // Rearrange doesn't handle multivariate case yet.
       // Therefore, we TRY to rearrange, if possible.
@@ -205,6 +206,10 @@ abstract class RefinementExpression {
   }
 
   rearrange(): RefinementExpression {
+    return this;
+  }
+
+  normaliseOperators(): RefinementExpression {
     return this;
   }
 
@@ -339,6 +344,28 @@ export class BinaryExpression extends RefinementExpression {
           }
           return this;
       }
+      default: return this;
+    }
+  }
+
+  normaliseOperators(): RefinementExpression {
+    this.leftExpr = this.leftExpr.normaliseOperators();
+    this.rightExpr = this.rightExpr.normaliseOperators();
+    switch (this.operator.op) {
+      case Op.GTE: return new BinaryExpression(
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.GT)),
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.EQ)),
+        new RefinementOperator(Op.OR)
+      );
+      case Op.LTE: return new BinaryExpression(
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.LT)),
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.EQ)),
+        new RefinementOperator(Op.OR)
+      );
+      case Op.NEQ: return new UnaryExpression(
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.EQ)),
+        new RefinementOperator(Op.NOT)
+      );
       default: return this;
     }
   }
@@ -1167,6 +1194,7 @@ export class Polynomial {
       new RefinementOperator(Op.MUL));
   }
 
+  // returns ax^n + bx^n-1 + ... c  <op> 0
   toExpression(op: Op): RefinementExpression {
     if (this.degree() === 0) {
       return new BinaryExpression(
@@ -1224,7 +1252,6 @@ export class Normaliser {
       case Op.LT: rearranged = Normaliser.fracLessThanZero(frac); break;
       case Op.GT: rearranged = Normaliser.fracGreaterThanZero(frac); break;
       case Op.EQ: rearranged = Normaliser.fracEqualsToZero(frac); break;
-      case Op.NEQ: rearranged = Normaliser.fracNotEqualsToZero(frac); break;
       default:
           throw new Error(`Unsupported operator ${expr.operator.op}: cannot rearrange numerical expression.`);
     }
@@ -1259,12 +1286,6 @@ export class Normaliser {
     const neq0 = frac.num.toExpression(Op.EQ);
     const dneq0 = frac.den.toExpression(Op.NEQ);
     return new BinaryExpression(neq0, dneq0, new RefinementOperator(Op.AND));
-  }
-
-  static fracNotEqualsToZero(frac: Fraction): BinaryExpression {
-    const nneq0 = frac.num.toExpression(Op.NEQ);
-    const dneq0 = frac.den.toExpression(Op.NEQ);
-    return new BinaryExpression(nneq0, dneq0, new RefinementOperator(Op.AND));
   }
 
 }
