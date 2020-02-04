@@ -126,9 +126,9 @@ class DatabaseImplTest {
         // Creates new IDs for each field.
         val fields1 = database.getSchemaFields(schemaTypeId1, db)
         assertThat(fields1).containsExactly(
-            "text", DatabaseImpl.SchemaField("text", 1L, TEXT_TYPE_ID),
-            "bool", DatabaseImpl.SchemaField("bool", 2L, BOOLEAN_TYPE_ID),
-            "num", DatabaseImpl.SchemaField("num", 3L, NUMBER_TYPE_ID)
+            "text", DatabaseImpl.SchemaField("text", 1L, TEXT_TYPE_ID, isCollection = false),
+            "bool", DatabaseImpl.SchemaField("bool", 2L, BOOLEAN_TYPE_ID, isCollection = false),
+            "num", DatabaseImpl.SchemaField("num", 3L, NUMBER_TYPE_ID, isCollection = true)
         )
 
         // Re-running with the same schema doesn't create new field IDs
@@ -139,9 +139,9 @@ class DatabaseImplTest {
         val schemaTypeId2 = database.getSchemaTypeId(schema2, db)
         val fields2 = database.getSchemaFields(schemaTypeId2, db)
         assertThat(fields2).containsExactly(
-            "text", DatabaseImpl.SchemaField("text", 4L, TEXT_TYPE_ID),
-            "bool", DatabaseImpl.SchemaField("bool", 5L, BOOLEAN_TYPE_ID),
-            "num", DatabaseImpl.SchemaField("num", 6L, NUMBER_TYPE_ID)
+            "text", DatabaseImpl.SchemaField("text", 4L, TEXT_TYPE_ID, isCollection = false),
+            "bool", DatabaseImpl.SchemaField("bool", 5L, BOOLEAN_TYPE_ID, isCollection = false),
+            "num", DatabaseImpl.SchemaField("num", 6L, NUMBER_TYPE_ID, isCollection = true)
         )
     }
 
@@ -160,15 +160,15 @@ class DatabaseImplTest {
 
     @Test
     fun getStorageKeyId_newKeys() = runBlockingTest {
-        assertThat(database.getStorageKeyId(DummyKey("key1"), db)).isEqualTo(1L)
-        assertThat(database.getStorageKeyId(DummyKey("key2"), db)).isEqualTo(2L)
-        assertThat(database.getStorageKeyId(DummyKey("key3"), db)).isEqualTo(3L)
+        assertThat(database.getEntityStorageKeyId(DummyKey("key1"), 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyKey("key2"), 123L, db)).isEqualTo(2L)
+        assertThat(database.getEntityStorageKeyId(DummyKey("key3"), 123L, db)).isEqualTo(3L)
     }
 
     @Test
     fun getStorageKeyId_existingKey() = runBlockingTest {
-        assertThat(database.getStorageKeyId(DummyKey("key"), db)).isEqualTo(1L)
-        assertThat(database.getStorageKeyId(DummyKey("key"), db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyKey("key"), 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyKey("key"), 123L, db)).isEqualTo(1L)
     }
 
     @Test
