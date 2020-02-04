@@ -174,7 +174,7 @@ export class Refinement {
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.applyOperator(data);
     if (typeof res !== 'boolean') {
-      throw new Error('Refinement expression evaluated to a non-boolean type.');
+      throw new Error(`Refinement expression ${this.expression} evaluated to a non-boolean type.`);
     }
     return res;
   }
@@ -1122,12 +1122,12 @@ export class RefinementOperator {
         return;
       }
       if (operandTypes[0].evalType !== operandTypes[1].evalType) {
-        throw new Error(`Expected ${operandTypes[0].evalType} and ${operandTypes[1].evalType} to be the same.`);
+        throw new Error(`Expected refinement expression ${operandTypes[0]} and ${operandTypes[1]} to have the same type. But found types ${operandTypes[0].evalType} and ${operandTypes[1].evalType}.`);
       }
     } else {
       for (const type of operandTypes) {
         if (type.evalType !== this.opInfo.argType) {
-          throw new Error(`Got type ${type.evalType}. Expected ${this.opInfo.argType}.`);
+          throw new Error(`Refinement expression ${type} has type ${type.evalType}. Expected ${this.opInfo.argType}.`);
         }
       }
     }
