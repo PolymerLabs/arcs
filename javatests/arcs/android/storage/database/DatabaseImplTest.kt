@@ -16,13 +16,16 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
+import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.Entity
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
-import arcs.core.storage.StorageKey
+import arcs.core.storage.Reference
+import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.assertThrows
@@ -45,12 +48,14 @@ class DatabaseImplTest {
     fun setUp() {
         database = DatabaseImpl(ApplicationProvider.getApplicationContext(), "test.sqlite3")
         db = database.writableDatabase
+        DummyStorageKey.registerParser()
     }
 
     @After
     fun tearDown() {
         database.reset()
         database.close()
+        StorageKeyParser.reset()
     }
 
     @Test
@@ -309,6 +314,89 @@ class DatabaseImplTest {
         }
         assertThat(exception).hasMessageThat().isEqualTo(
             "Entity at storage key dummy://nope does not exist."
+        )
+    }
+
+    @Test
+    fun insertAndGet_collection_newEmptyCollection() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val schema = newSchema("hash")
+        val inputCollection = DatabaseData.Collection(
+            values = emptySet(),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+
+        database.insertOrUpdate(key, inputCollection)
+        val outputCollection = database.getCollection(key, schema)
+
+        assertThat(outputCollection).isEqualTo(inputCollection)
+    }
+
+    @Test
+    fun insertAndGet_collection_newCollectionOfEntities() = runBlockingTest {
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val inputCollection = DatabaseData.Collection(
+            values = setOf(
+                Reference("ref1", backingKey, VersionMap()),
+                Reference("ref2", backingKey, VersionMap())
+            ),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+
+        database.insertOrUpdate(collectionKey, inputCollection)
+        val outputCollection = database.getCollection(collectionKey, schema)
+
+        assertThat(outputCollection).isEqualTo(inputCollection)
+    }
+
+    @Test
+    fun insertAndGet_collection_canChangeElements() = runBlockingTest {
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val values = mutableSetOf(
+            Reference("ref", backingKey, VersionMap()),
+            Reference("ref-to-remove", backingKey, VersionMap())
+        )
+        val inputCollection1 = DatabaseData.Collection(
+            values = values,
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+
+        // Test removal of old elements.
+        values.removeIf { it.id == "ref-to-remove" }
+        val inputCollection2 = inputCollection1.copy(values = values)
+        database.insertOrUpdate(collectionKey, inputCollection2)
+        assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection2)
+
+        // Test addition of new elements.
+        values.add(Reference("new-ref", backingKey, VersionMap()))
+        val inputCollection3 = inputCollection2.copy(values = values)
+        database.insertOrUpdate(collectionKey, inputCollection3)
+        assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection3)
+
+        // Test clearing all elements.
+        values.clear()
+        val inputCollection4 = inputCollection3.copy(values = values)
+        database.insertOrUpdate(collectionKey, inputCollection4)
+        assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection4)
+    }
+
+    @Test
+    fun get_collection_unknownStorageKey() = runBlockingTest {
+        val exception = assertThrows(IllegalArgumentException::class) {
+            database.getCollection(DummyStorageKey("key"), newSchema("hash"))
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Collection at storage key dummy://key does not exist."
         )
     }
 

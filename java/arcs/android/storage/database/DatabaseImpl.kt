@@ -18,6 +18,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import androidx.annotation.VisibleForTesting
 import arcs.android.common.bindBoolean
 import arcs.android.common.forEach
+import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
@@ -27,7 +28,9 @@ import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
+import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
@@ -47,6 +50,12 @@ typealias StorageKeyId = Long
 
 /** The ID of a field value, referring to either a row in a primitive table, or an entity ID. */
 typealias FieldValueId = Long
+
+/** The ID of a collection (or a singleton). */
+typealias CollectionId = Long
+
+/** The ID of an entity reference. */
+typealias ReferenceId = Long
 
 /** Implementation of [Database] for Android using SQLite. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -100,7 +109,8 @@ class DatabaseImpl(
         schema: Schema
     ) = when (dataType) {
         DatabaseData.Entity::class -> getEntity(storageKey, schema)
-        else -> TODO("Support Singletons and Collections")
+        DatabaseData.Collection::class -> getCollection(storageKey, schema)
+        else -> TODO("Support Singletons")
     }
 
     @VisibleForTesting
@@ -111,10 +121,10 @@ class DatabaseImpl(
             val (storageKeyId, schemaTypeId) = rawQuery(
                 "SELECT id, value_id FROM storage_keys WHERE storage_key = ?",
                 arrayOf(storageKey.toString())
-            ).use {
-                require(it.moveToFirst()) { "Entity at storage key $storageKey does not exist." }
-                it.getLong(0) to it.getLong(1)
-            }
+            ).forSingleResult { it.getLong(0) to it.getLong(1) }
+                ?: throw IllegalArgumentException(
+                    "Entity at storage key $storageKey does not exist."
+                )
             // Fetch the entity's fields.
             val fieldsByName = getSchemaFields(schemaTypeId, db)
             val fieldsById = fieldsByName.mapKeys { it.value.fieldId }
@@ -142,6 +152,39 @@ class DatabaseImpl(
             )
         }
 
+    @VisibleForTesting
+    fun getCollection(storageKey: StorageKey, schema: Schema): DatabaseData.Collection =
+        readableDatabase.useTransaction {
+            val db = this
+            val collectionId = requireNotNull(getCollectionId(storageKey, db)) {
+                "Collection at storage key $storageKey does not exist."
+            }
+
+            val values = mutableSetOf<Reference>()
+            rawQuery(
+                """
+                    SELECT entity_refs.entity_id, entity_refs.backing_storage_key
+                    FROM collection_entries
+                    JOIN entity_refs ON collection_entries.value_id = entity_refs.id
+                    WHERE collection_entries.collection_id = ?
+                """.trimIndent(),
+                arrayOf(collectionId.toString())
+            ).forEach {
+                values.add(Reference(
+                    id = it.getString(0),
+                    storageKey = StorageKeyParser.parse(it.getString(1)),
+                    version = VersionMap() // TODO: VersionMap
+                ))
+            }
+
+            DatabaseData.Collection(
+                values,
+                schema,
+                1, // TODO: Set correct database version
+                VersionMap() // TODO: Fill in VersionMap
+            )
+        }
+
     override suspend fun insertOrUpdate(
         storageKey: StorageKey,
         data: DatabaseData,
@@ -149,7 +192,8 @@ class DatabaseImpl(
     ): Int {
         when (data) {
             is DatabaseData.Entity -> insertOrUpdate(storageKey, data.entity)
-            else -> TODO("Support Singletons and Collections")
+            is DatabaseData.Collection -> insertOrUpdate(storageKey, data)
+            else -> TODO("Support Singletons")
         }
         // TODO: Return a proper database version number.
         return 1
@@ -184,6 +228,51 @@ class DatabaseImpl(
             }
         }
 
+    @VisibleForTesting
+    suspend fun insertOrUpdate(storageKey: StorageKey, data: DatabaseData.Collection) =
+        writableDatabase.useTransaction {
+            val db = this
+
+            // Fetch/create the entity's type ID.
+            val schemaTypeId = getSchemaTypeId(data.schema, db)
+
+            // Retrieve existing collection ID for this storage key, if one exists.
+            var collectionId = getCollectionId(storageKey, db)
+
+            if (collectionId == null) {
+                // Create a new collection ID and storage key ID.
+                collectionId = insert(TABLE_COLLECTIONS, null, ContentValues().apply {
+                    put("type_id", schemaTypeId)
+                })
+                insert(TABLE_STORAGE_KEYS, null, ContentValues().apply {
+                    put("storage_key", storageKey.toString())
+                    put("data_type", DataType.Collection.ordinal)
+                    put("value_id", collectionId)
+                })
+            } else {
+                // Collection already exists; delete all existing entries.
+                // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
+                delete(
+                    TABLE_COLLECTION_ENTRIES,
+                    "collection_id = ?",
+                    arrayOf(collectionId.toString())
+                )
+            }
+
+            // Insert all elements into the collection.
+            val content = ContentValues().apply {
+                put("collection_id", collectionId)
+            }
+            // TODO: Don't do this one-by-one.
+            data.values
+                .map { getEntityReferenceId(it, db) }
+                .forEach { referenceId ->
+                    insert(TABLE_COLLECTION_ENTRIES, null, content.apply {
+                        put("value_id", referenceId)
+                    })
+                }
+        }
+
     override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) {
         TODO("not implemented")
     }
@@ -193,6 +282,7 @@ class DatabaseImpl(
         writableDatabase.useTransaction {
             execSQL("DELETE FROM collection_entries")
             execSQL("DELETE FROM collections")
+            execSQL("DELETE FROM entity_refs")
             execSQL("DELETE FROM field_values")
             execSQL("DELETE FROM fields")
             execSQL("DELETE FROM number_primitive_values")
@@ -246,8 +336,8 @@ class DatabaseImpl(
     }
 
     /**
-     * Returns the ID for the given [StorageKey] if one already exists, otherwise creates a new one
-     * for it.
+     * Returns the ID for the given entity [StorageKey] if one already exists, otherwise creates a
+     * new one for it.
      */
     @VisibleForTesting
     fun getEntityStorageKeyId(
@@ -256,29 +346,57 @@ class DatabaseImpl(
         db: SQLiteDatabase
     ): StorageKeyId = db.transaction {
         // TODO: Use an LRU cache.
-        rawQuery(
+        val storageKeyId = rawQuery(
             "SELECT id, data_type FROM storage_keys WHERE storage_key = ?",
             arrayOf(storageKey.toString())
-        ).use {
-            if (it.moveToFirst()) {
-                // Return existing storage key id.
-                val storageKeyId = it.getLong(0)
-                val dataType = DataType.values()[it.getInt(1)]
-                require(dataType == DataType.Entity) {
-                    "Expected storage key $storageKey to be an Entity, instead was $dataType."
-                }
-                storageKeyId
-            } else {
-                // Insert storage key.
-                val content = ContentValues().apply {
-                    put("storage_key", storageKey.toString())
-                    put("data_type", DataType.Entity.ordinal)
-                    put("value_id", typeId)
-                }
-                insert(TABLE_STORAGE_KEYS, null, content)
+        ).forSingleResult {
+            // Return existing storage key id.
+            val storageKeyId = it.getLong(0)
+            val dataType = DataType.values()[it.getInt(1)]
+            require(dataType == DataType.Entity) {
+                "Expected storage key $storageKey to be an Entity, instead was $dataType."
             }
+            storageKeyId
+        }
+        storageKeyId ?: run {
+            // Insert storage key.
+            val content = ContentValues().apply {
+                put("storage_key", storageKey.toString())
+                put("data_type", DataType.Entity.ordinal)
+                put("value_id", typeId)
+            }
+            insert(TABLE_STORAGE_KEYS, null, content)
         }
     }
+
+    @VisibleForTesting
+    fun getEntityReferenceId(reference: Reference, db: SQLiteDatabase): ReferenceId =
+        db.transaction {
+            val refId = rawQuery(
+                "SELECT id FROM entity_refs WHERE entity_id = ? AND backing_storage_key = ?",
+                arrayOf(reference.id, reference.storageKey.toString())
+            ).forSingleResult { it.getLong(0) }
+            refId ?: run {
+                insert(TABLE_ENTITY_REFS, null, ContentValues().apply {
+                    put("entity_id", reference.id)
+                    put("backing_storage_key", reference.storageKey.toString())
+                })
+            }
+        }
+
+    @VisibleForTesting
+    fun getCollectionId(storageKey: StorageKey, db: SQLiteDatabase): CollectionId? =
+        db.rawQuery(
+            "SELECT data_type, value_id FROM storage_keys WHERE storage_key = ?",
+            arrayOf(storageKey.toString())
+        ).forSingleResult {
+            val dataType = DataType.values()[it.getInt(0)]
+            val collectionId = it.getLong(1)
+            require(dataType == DataType.Collection) {
+                "Expected storage key $storageKey to be a collection but was a $dataType"
+            }
+            collectionId
+        }
 
     /**
      * Returns a map of field name to field ID and type ID, for each field in the given schema
@@ -333,16 +451,11 @@ class DatabaseImpl(
             }
             val fieldValueId = rawQuery(
                 "SELECT id FROM $tableName WHERE value = ?", arrayOf(valueStr)
-            ).use {
-                if (it.moveToFirst()) it.getLong(0) else null
-            }
-            if (fieldValueId != null) {
-                fieldValueId
-            } else {
-                val content = ContentValues().apply {
+            ).forSingleResult { it.getLong(0) }
+            fieldValueId ?: run {
+                insert(tableName, null, ContentValues().apply {
                     put("value", valueStr)
-                }
-                insert(tableName, null, content)
+                })
             }
         }
     }
@@ -353,10 +466,9 @@ class DatabaseImpl(
         fun runSelectQuery(tableName: String) = db.rawQuery(
             "SELECT value FROM $tableName WHERE id = ?",
             arrayOf(valueId.toString())
-        ).use {
-            require(it.moveToFirst()) { "Unknown primitive with ID $valueId." }
-            it.getString(0)
-        }
+        ).forSingleResult { it.getString(0) }
+            ?: throw IllegalArgumentException("Unknown primitive with ID $valueId.")
+
         return when (typeId.toInt()) {
             PrimitiveType.Boolean.ordinal -> when (valueId) {
                 1L -> true
@@ -417,6 +529,9 @@ class DatabaseImpl(
 
         // TODO: Add constants for column names?
         private val TABLE_STORAGE_KEYS = "storage_keys"
+        private val TABLE_COLLECTION_ENTRIES = "collection_entries"
+        private val TABLE_COLLECTIONS = "collections"
+        private val TABLE_ENTITY_REFS = "entity_refs"
         private val TABLE_FIELD_VALUES = "field_values"
         private val TABLE_TYPES = "types"
         private val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
@@ -443,6 +558,16 @@ class DatabaseImpl(
                 );
 
                 CREATE INDEX storage_key_index ON storage_keys (storage_key, id);
+                
+                -- Stores references to entities.
+                CREATE TABLE entity_refs (
+                    -- Unique ID in this table.
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    -- The ID for the entity (Arcs string ID, not a row ID).
+                    entity_id TEXT NOT NULL,
+                    -- The storage key for the backing store for this entity.
+                    backing_storage_key TEXT NOT NULL
+                );
 
                 -- Name is a bit of a misnomer. Defines both collections and singletons. 
                 CREATE TABLE collections (
@@ -456,7 +581,7 @@ class DatabaseImpl(
                     collection_id INTEGER NOT NULL,
                     
                     -- For collections of primitives: value_id for primitive in collection.
-                    -- For collections of entities: storage_key_id of entity in collection.
+                    -- For collections of entities: id of reference in entity_refs table.
                     -- For singletons: storage_key_id of entity.
                     value_id INTEGER NOT NULL
                 );

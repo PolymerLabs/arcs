@@ -42,11 +42,10 @@ inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T):
  * }
  * ```
  */
-inline fun Cursor.forEach(block: (Cursor) -> Unit) {
+inline fun Cursor.forEach(block: (Cursor) -> Unit) = use {
     while (moveToNext()) {
         block(this)
     }
-    close()
 }
 
 /**
@@ -61,12 +60,28 @@ inline fun Cursor.forEach(block: (Cursor) -> Unit) {
  *     .map { it.getString(0) }
  * ```
  */
-inline fun <T> Cursor.map(block: (Cursor) -> T): List<T> {
+inline fun <T> Cursor.map(block: (Cursor) -> T): List<T> = use {
     val result = mutableListOf<T>()
     forEach { result.add(block(it)) }
-    // forEach will close it for us, but our static analyser doesn't realise that...
-    close()
-    return result
+    result
+}
+
+/**
+ * Helper function for retrieving a single optional row from a query. Fails if there is more than
+ * one result.
+ *
+ * Closes the [Cursor] after execution.
+ *
+ * Usage:
+ *
+ * ```kotlin
+ * val name: String? = database.rawQuery("SELECT name FROM users WHERE id = ?", emptyArray(123))
+ *     .forSingleResult { it.getString(0) }
+ * ```
+ */
+inline fun <T> Cursor.forSingleResult(block: (Cursor) -> T?): T? = use {
+    require(count == 0 || count == 1) { "Expected 0 or 1 results, found $count." }
+    if (moveToFirst()) block(it) else null
 }
 
 /**
