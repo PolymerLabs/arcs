@@ -13,6 +13,7 @@ package arcs.android.common
 
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteProgram
 
 inline fun <T : Any?> SQLiteDatabase.useTransaction(block: SQLiteDatabase.() -> T): T =
     use { transaction(block) }
@@ -66,4 +67,30 @@ inline fun <T> Cursor.map(block: (Cursor) -> T): List<T> {
     // forEach will close it for us, but our static analyser doesn't realise that...
     close()
     return result
+}
+
+/**
+ * Returns the value of the requested column as a boolean. The column data must be a long with value
+ * either 0 or 1.
+ */
+fun Cursor.getBoolean(columnIndex: Int) = getLong(columnIndex).toBoolean()
+
+/**
+ * Bind a boolean value to this statement. The value will be converted to a long with value either 0
+ * or 1.
+ */
+fun SQLiteProgram.bindBoolean(columnIndex: Int, value: Boolean) =
+    bindLong(columnIndex, value.toLong())
+
+private fun Long.toBoolean() = when (this) {
+    0L -> false
+    1L -> true
+    else -> throw IllegalArgumentException(
+        "Could not convert $this to Boolean, expected 0 or 1."
+    )
+}
+
+private fun Boolean.toLong() = when (this) {
+    false -> 0L
+    true -> 1L
 }

@@ -13,13 +13,12 @@ package arcs.android.storage.database
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.database.sqlite.SQLiteProgram
-import android.renderscript.Element
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.bindBoolean
 import arcs.android.common.forEach
+import arcs.android.common.getBoolean
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
 import arcs.core.crdt.internal.VersionMap
@@ -259,7 +258,7 @@ class DatabaseImpl(
         // TODO: Use an LRU cache.
         val content = ContentValues().apply {
             put("storage_key", storageKey.toString())
-            put("data_type", DataType.ENTITY.ordinal)
+            put("data_type", DataType.Entity.ordinal)
             put("value_id", typeId)
         }
         return db.insertWithOnConflict(
@@ -383,29 +382,12 @@ class DatabaseImpl(
         return typeMap
     }
 
-    private fun Long.toBoolean() = when (this) {
-        0L -> false
-        1L -> true
-        else -> throw IllegalArgumentException(
-            "Could not convert $this to Boolean, expected 0 or 1."
-        )
-    }
-
-    private fun Boolean.toLong() = when (this) {
-        false -> 0L
-        true -> 1L
-    }
-
-    private fun Cursor.getBoolean(i: Int) = getLong(i).toBoolean()
-
-    private fun SQLiteProgram.bindBoolean(i: Int, value: Boolean) = bindLong(i, value.toLong())
-
     /** The type of the data stored at a storage key. */
     @VisibleForTesting
     enum class DataType {
-        ENTITY,
-        SINGLETON,
-        COLLECTION
+        Entity,
+        Singleton,
+        Collection
     }
 
     @VisibleForTesting
