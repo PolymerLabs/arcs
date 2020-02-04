@@ -10,6 +10,7 @@ kt_android_library(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/common",  # unuseddeps: keep
+        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
