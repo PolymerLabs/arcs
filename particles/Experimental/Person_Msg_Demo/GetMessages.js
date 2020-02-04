@@ -71,13 +71,11 @@
     }
 
     triggerDataFlow() {
-      console.log('yoo');
       this.clear('messages');
       const messagesHandle = this.handles.get('messages');
       for (const messageData of messagesData) {
         messagesHandle.store(new messagesHandle.entityClass(messageData));
       }
     }
-
   };
 });

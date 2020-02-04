@@ -12,7 +12,7 @@
 
 function filter(messages, to, unorderedPeople) {
   const frequency = {};
-  messages = messages.filter(function(value) { console.log(value.toID); console.log(to); return value.toID == to; });
+  messages = messages.filter(function(value) { return value.toID == to; });
   messages.forEach(function(value) { frequency[value.fromID] = 0; });
   messages.forEach(function(value) { frequency[value.fromID]++; });
   const peopleData = unorderedPeople.filter(function(value) {
