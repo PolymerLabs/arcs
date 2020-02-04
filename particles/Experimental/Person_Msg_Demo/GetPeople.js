@@ -10,12 +10,6 @@
 
  /* global defineParticle */
 
- function compare(a, b) {
-  if (a.sentTime > b.sentTime) return 1;
-  if (b.sentTime > a.sentTime) return -1;
-  return 0;
-}
-
 let peopleData = [
   {'name': 'Jill', 'age': 70, 'id': '1'},
   {'name': 'Jack', 'age': 25, 'id': '2'},
