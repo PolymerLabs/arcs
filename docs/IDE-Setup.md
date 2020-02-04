@@ -152,7 +152,7 @@ Hail-Mary Fixes:
 | Windows | TBD                                                      |
 | MacOS   | `/Applications/Android Studio.app/Contents/MacOS/studio` |
 
-- Create a `~/.xsesssionrc` file with the following contents:
+- Create a `~/.xsessionrc` file with the following contents:
   ```
   if [ -f ~/.profile ]; then
        . ~/.profile
