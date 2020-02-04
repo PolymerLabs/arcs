@@ -12,6 +12,7 @@
 
 function filter(messages, to, unorderedPeople) {
   const frequency = {};
+  messages = messages.filter(function(value) { console.log(value.toID); console.log(to); return value.toID == to; });
   messages.forEach(function(value) { frequency[value.fromID] = 0; });
   messages.forEach(function(value) { frequency[value.fromID]++; });
   const peopleData = unorderedPeople.filter(function(value) {
@@ -29,7 +30,7 @@ let to = '1';
   const template = html`
   <div style="display:flex;flex-direction:column;align-items:left;padding:1em;">
     Receiver:
-    <textarea spellcheck="false" on-change="onFromDataChange">${JSON.stringify(to)}</textarea>
+    <textarea spellcheck="false" on-change="onFromDataChange">${to}</textarea>
   </div>
   `;
 
@@ -40,7 +41,6 @@ let to = '1';
 
     // Because we have some logic to implement, we use update instead of render.
     update({messages, unorderedPeople}) {
-      //debugger;
       this.clear('orderedPeople');
       const res = filter(messages, to, unorderedPeople);
       const peopleHandle = this.handles.get('orderedPeople');

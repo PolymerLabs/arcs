@@ -54,7 +54,6 @@
 
     // Because we have some logic to implement, we use update instead of render.
     update() {
-      //debugger;
       this.clear('messages');
       const messagesHandle = this.handles.get('messages');
       for (const messageData of messagesData) {
@@ -64,9 +63,15 @@
 
     onMessagesDataChange(e) {
       messagesData = JSON.parse(e.data.value);
+      this.clear('messages');
+      const messagesHandle = this.handles.get('messages');
+      for (const messageData of messagesData) {
+        messagesHandle.store(new messagesHandle.entityClass(messageData));
+      }
     }
 
     triggerDataFlow() {
+      console.log('yoo');
       this.clear('messages');
       const messagesHandle = this.handles.get('messages');
       for (const messageData of messagesData) {

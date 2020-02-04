@@ -41,6 +41,11 @@ let peopleData = [
 
     onPeopleDataChange(e) {
       peopleData = JSON.parse(e.data.value);
+      this.clear('people');
+      const peopleHandle = this.handles.get('people');
+      for (const personData of peopleData) {
+        peopleHandle.store(new peopleHandle.entityClass(personData));
+      }
     }
   };
 });
