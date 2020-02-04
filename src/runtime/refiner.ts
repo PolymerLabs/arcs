@@ -123,8 +123,8 @@ export class Refinement {
       return AtleastAsSpecific.YES;
     }
     try {
-      a.normalise();
-      b.normalise();
+      a.normalize();
+      b.normalize();
       const rangeA = Range.fromExpression(a.expression);
       const rangeB = Range.fromExpression(b.expression);
       return rangeA.isSubsetOf(rangeB) ? AtleastAsSpecific.YES : AtleastAsSpecific.NO;
@@ -138,8 +138,8 @@ export class Refinement {
   // ~ Converts a binary node to {leftExpr: fieldName, rightExpr: val} (where applicable).
   // ~ Converts a unary node {op: '-', val: x} into a number node {val: -x}
   // ~ Removes redundant info like expression && false => false
-  normalise() {
-    this.expression = this.expression.normaliseOperators();
+  normalize() {
+    this.expression = this.expression.normalizeOperators();
     try {
       // Rearrange doesn't handle multivariate case yet.
       // Therefore, we TRY to rearrange, if possible.
@@ -147,7 +147,7 @@ export class Refinement {
     } catch (e) {
       console.log(e);
     }
-    this.expression = this.expression.normalise();
+    this.expression = this.expression.normalize();
   }
 
   toString(): string {
@@ -155,7 +155,7 @@ export class Refinement {
   }
 
   toSQLExpression(): string {
-    this.normalise();
+    this.normalize();
     return this.expression.toSQLExpression();
   }
 
@@ -201,7 +201,7 @@ abstract class RefinementExpression {
     }
   }
 
-  normalise(): RefinementExpression {
+  normalize(): RefinementExpression {
     return this;
   }
 
@@ -209,7 +209,7 @@ abstract class RefinementExpression {
     return this;
   }
 
-  normaliseOperators(): RefinementExpression {
+  normalizeOperators(): RefinementExpression {
     return this;
   }
 
@@ -293,7 +293,7 @@ export class BinaryExpression extends RefinementExpression {
 
   rearrange(): RefinementExpression {
     if (this.evalType === Primitive.BOOLEAN && this.leftExpr.evalType === Primitive.NUMBER && this.rightExpr.evalType === Primitive.NUMBER) {
-      Normaliser.rearrangeNumericalExpression(this);
+      Normalizer.rearrangeNumericalExpression(this);
     } else {
       this.leftExpr = this.leftExpr.rearrange();
       this.rightExpr = this.rightExpr.rearrange();
@@ -301,9 +301,9 @@ export class BinaryExpression extends RefinementExpression {
     return this;
   }
 
-  normalise(): RefinementExpression {
-    this.leftExpr = this.leftExpr.normalise();
-    this.rightExpr = this.rightExpr.normalise();
+  normalize(): RefinementExpression {
+    this.leftExpr = this.leftExpr.normalize();
+    this.rightExpr = this.rightExpr.normalize();
     const sp = this.simplifyPrimitive();
     if (sp) {
       return sp;
@@ -348,9 +348,9 @@ export class BinaryExpression extends RefinementExpression {
     }
   }
 
-  normaliseOperators(): RefinementExpression {
-    this.leftExpr = this.leftExpr.normaliseOperators();
-    this.rightExpr = this.rightExpr.normaliseOperators();
+  normalizeOperators(): RefinementExpression {
+    this.leftExpr = this.leftExpr.normalizeOperators();
+    this.rightExpr = this.rightExpr.normalizeOperators();
     switch (this.operator.op) {
       case Op.GTE: return new BinaryExpression(
         new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.GT)),
@@ -425,8 +425,8 @@ export class UnaryExpression extends RefinementExpression {
     return null;
   }
 
-  normalise(): RefinementExpression {
-    this.expr = this.expr.normalise();
+  normalize(): RefinementExpression {
+    this.expr = this.expr.normalize();
     const sp = this.simplifyPrimitive();
     if (sp) {
       return sp;
@@ -553,7 +553,7 @@ class BooleanPrimitive extends RefinementExpression {
   }
 
   toSQLExpression(): string {
-    throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalised.');
+    throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalized.');
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -715,7 +715,7 @@ export class Range {
   }
 
   // This function assumes that the expression is univariate
-  // and has been normalised (see Refinement.normalise for definition).
+  // and has been normalized (see Refinement.normalize for definition).
   // TODO(ragdev): Currently only Number and Boolean types are supported. Add String support.
   static fromExpression(expr: RefinementExpression): Range {
     if (expr instanceof BinaryExpression) {
@@ -1240,7 +1240,7 @@ export class Polynomial {
   }
 }
 
-export class Normaliser {
+export class Normalizer {
 
   // Updates 'expr' after rearrangement.
   static rearrangeNumericalExpression(expr: BinaryExpression): void {
@@ -1249,9 +1249,9 @@ export class Normaliser {
     const frac = Fraction.subtract(lF, rF);
     let rearranged = null;
     switch (expr.operator.op) {
-      case Op.LT: rearranged = Normaliser.fracLessThanZero(frac); break;
-      case Op.GT: rearranged = Normaliser.fracGreaterThanZero(frac); break;
-      case Op.EQ: rearranged = Normaliser.fracEqualsToZero(frac); break;
+      case Op.LT: rearranged = Normalizer.fracLessThanZero(frac); break;
+      case Op.GT: rearranged = Normalizer.fracGreaterThanZero(frac); break;
+      case Op.EQ: rearranged = Normalizer.fracEqualsToZero(frac); break;
       default:
           throw new Error(`Unsupported operator ${expr.operator.op}: cannot rearrange numerical expression.`);
     }
