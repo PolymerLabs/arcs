@@ -215,7 +215,7 @@ describe('normalisation', () => {
       ref1.normalise();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {num: Number [ num >= 16 ] }
+              input: reads Something {num: Number [ num > 16 or num == 16] }
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
       // normalised version of ref1 should be the same as ref2
@@ -231,7 +231,7 @@ describe('normalisation', () => {
     ref1.normalise();
     const manifestAst2 = parse(`
         particle Foo
-            input: reads Something {num: Number [ (num >= 5 and num < 2) or (num <= 5 and num > 2) ] }
+            input: reads Something {num: Number [ ((num > 5 and num < 2) or (num < 5 and num > 2)) or (num == 5 and num != 2) ] }
     `);
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
     // normalised version of ref1 should be the same as ref2
@@ -363,7 +363,7 @@ describe('SQLExtracter', () => {
       `);
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = SQLExtracter.fromSchema(schema, 'table');
-      assert.strictEqual(query, 'SELECT * FROM table WHERE ((a + (b / 3)) > 100) AND ((a > 3) AND (a <> 100)) AND ((b > 20) AND (b < 100));');
+      assert.strictEqual(query, 'SELECT * FROM table WHERE ((a + (b / 3)) > 100) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));');
   });
   it('tests can create queries from refinement expressions involving boolean expressions', async () => {
     const manifest = await Manifest.parse(`
