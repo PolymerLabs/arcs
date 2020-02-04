@@ -186,7 +186,10 @@ class CrdtEntity(
         override fun tryDereference(): Referencable =
             ReferencablePrimitive.tryDereference(id) ?: this
 
-        override fun toString(): String = "Reference(${tryDereference()})"
+        override fun toString(): String = when (val deref = tryDereference()) {
+            this -> "Reference($id)"
+            else -> "Reference($deref)"
+        }
     }
 
     /** Data contained within a [CrdtEntity]. */

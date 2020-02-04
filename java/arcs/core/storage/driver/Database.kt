@@ -171,7 +171,8 @@ class DatabaseDriver<Data : Any>(
     override val existenceCriteria: ExistenceCriteria,
     private val dataClass: KClass<Data>,
     private val schemaLookup: (String) -> Schema?,
-    private val database: Database
+    /* internal */
+    val database: Database
 ) : Driver<Data>, DatabaseClient {
     /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
     /* internal */ val clientId: Int = database.addClient(this)

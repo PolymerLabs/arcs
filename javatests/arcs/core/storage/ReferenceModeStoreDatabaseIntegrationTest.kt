@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -29,14 +29,22 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.driver.DatabaseDriver
+import arcs.core.storage.driver.DatabaseDriverProvider
+import arcs.core.storage.driver.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.testutil.LogRule
+import arcs.jvm.storage.database.testutil.MockDatabase
+import arcs.jvm.storage.database.testutil.MockDatabaseFactory
+import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
-import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -45,26 +53,28 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.reflect.KClass
 
-/** Tests for the [ReferenceModeStore]. */
 @Suppress("UNCHECKED_CAST")
+@UseExperimental(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
-@ExperimentalCoroutinesApi
-class ReferenceModeStoreTest {
+class ReferenceModeStoreDatabaseIntegrationTest {
+    @get:Rule
+    val logRule = LogRule()
+
+    private lateinit var hash: String
     private lateinit var testKey: ReferenceModeStorageKey
-    private lateinit var baseStore: Store<CrdtCount.Data, CrdtCount.Operation, Int>
+    private lateinit var databaseFactory: MockDatabaseFactory
     private lateinit var schema: Schema
 
     @Before
     fun setup() = runBlockingTest {
-        testKey = ReferenceModeStorageKey(
-            MockHierarchicalStorageKey(),
-            MockHierarchicalStorageKey()
-        )
-        baseStore = Store(StoreOptions(testKey, ExistenceCriteria.ShouldCreate, CountType()))
+        hash = "123456abcdef"
+
         schema = Schema(
             listOf(SchemaName("person")),
             SchemaFields(
@@ -72,52 +82,21 @@ class ReferenceModeStoreTest {
                 collections = emptyMap()
             ),
             SchemaDescription(),
-            "hash"
+            hash
+        )
+
+        testKey = ReferenceModeStorageKey(
+            DatabaseStorageKey("entities", hash),
+            DatabaseStorageKey("set", hash)
         )
 
         DriverFactory.clearRegistrationsForTesting()
-    }
-
-    @After
-    fun teardown() {
-        DriverFactory.clearRegistrationsForTesting()
-    }
-
-    @Test
-    fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
-        val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
-            StoreOptions(
-                testKey,
-                ExistenceCriteria.ShouldCreate,
-                SingletonType(EntityType(schema)),
-                StorageMode.ReferenceMode
-            )
-        )
-        assertSuspendingThrows(CrdtException::class) { store.activate() }
-    }
-
-    @Test
-    fun constructsReferenceModeStores_whenRequired() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
-        val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
-            StoreOptions(
-                testKey,
-                ExistenceCriteria.ShouldCreate,
-                CollectionType(EntityType(schema)),
-                mode = StorageMode.ReferenceMode
-            )
-        )
-        val activeStore = store.activate()
-
-        assertThat(activeStore).isInstanceOf(ReferenceModeStore::class.java)
+        databaseFactory = MockDatabaseFactory()
+        DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 
     @Test
     fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
-        val driverProvider = MockDriverProvider()
-        DriverFactory.register(driverProvider)
-
         val activeStore = createReferenceModeStore()
 
         val collection = CrdtSet<RawEntity>()
@@ -126,46 +105,42 @@ class ReferenceModeStoreTest {
             CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
         )
 
+        logRule("Sending ModelUpdate")
+
         assertThat(
             activeStore.onProxyMessage(
                 ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
             )
         ).isTrue()
 
+        logRule("ModelUpdate sent")
+
         val actor = activeStore.crdtKey
+        val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
+        val database = databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
 
-        val containerStoreDriver = requireNotNull(
-            activeStore.containerStore.driver as? MockDriver<CrdtSet.Data<Reference>>
-        ) { "ContainerStore Driver is not of expected type: CrdtSet.Data<Reference>" }
-
-        val capturedCollection = containerStoreDriver.sentData.first()
+        val capturedCollection = requireNotNull(
+            database.get(containerKey, DatabaseData.Collection::class)
+        ) as DatabaseData.Collection
 
         assertThat(capturedCollection.values)
             .containsExactly(
-                "an-id",
-                CrdtSet.DataValue(
-                    VersionMap("me" to 1),
-                    Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
-                )
+                Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
             )
 
-        val bobDriver = activeStore.backingStore.getEntityDriver("an-id")
-        val capturedBob = bobDriver.sentData.first()
-        assertThat(capturedBob.singletons["name"]?.data?.versionMap)
-            .isEqualTo(VersionMap(actor to 1))
-        assertThat(capturedBob.singletons["age"]?.data?.versionMap)
-            .isEqualTo(VersionMap(actor to 1))
-        assertThat(capturedBob.toRawEntity().singletons)
-            .containsExactly(
-                "name", "bob".toReferencable(),
-                "age", 42.toReferencable()
-            )
+        val bobKey = activeStore.backingStore.storageKey.childKeyWithComponent("an-id")
+        val capturedBob = requireNotNull(
+            database.get(bobKey, DatabaseData.Entity::class) as? DatabaseData.Entity
+        )
+
+        assertThat(capturedBob.entity).containsExactly(
+            "name", "bob",
+            "age", 42.0
+        )
     }
 
     @Test
     fun canCloneData_fromAnotherStore() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
         val activeStore = createReferenceModeStore()
 
         // Add some data.
@@ -188,8 +163,6 @@ class ReferenceModeStoreTest {
 
     @Test
     fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
         val activeStore = createReferenceModeStore()
         val actor = activeStore.crdtKey
 
@@ -243,25 +216,22 @@ class ReferenceModeStoreTest {
             )
         ).isTrue()
 
-        val containerDriver =
-            activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
+        val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
+        val capturedPeople =
+            databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
+                .get(containerKey, DatabaseData.Collection::class) as DatabaseData.Collection
 
-        val capturedPeople = containerDriver.sentData.first()
-        assertThat(capturedPeople).isEqualTo(referenceCollection.data)
+        assertThat(capturedPeople.values).isEqualTo(referenceCollection.consumerView)
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
-        assertThat(storedBob.singletons.mapValues { it.value.data })
-            .isEqualTo(bobEntity.data.singletons.mapValues { it.value.data })
+        assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
         // Check that the stored bob's collection data is equal to the expected bob's collection
         // data (empty)
-        assertThat(storedBob.collections.mapValues { it.value.data })
-            .isEqualTo(bobEntity.data.collections.mapValues { it.value.data })
+        assertThat(storedBob.collections).isEqualTo(bobEntity.data.collections)
     }
 
     @Test
     fun respondsToAModelRequest_fromProxy_withModel() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
         val activeStore = createReferenceModeStore()
 
         val entityCollection = CrdtSet<RawEntity>()
@@ -269,7 +239,7 @@ class ReferenceModeStoreTest {
         entityCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
 
         var sentSyncRequest = false
-        val job = Job(coroutineContext[Job.Key])
+        val job = Job(coroutineContext[Job])
         var id: Int = -1
         id = activeStore.on(ProxyCallback {
             if (it is ProxyMessage.Operations) {
@@ -301,11 +271,9 @@ class ReferenceModeStoreTest {
 
     @Test
     fun onlySendsModelResponse_toRequestingProxy() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
         val activeStore = createReferenceModeStore()
 
-        val job = Job(coroutineContext[Job.Key])
+        val job = Job(coroutineContext[Job])
         // requesting store
         val id1 = activeStore.on(ProxyCallback {
             assertThat(it is ProxyMessage.ModelUpdate).isTrue()
@@ -315,10 +283,12 @@ class ReferenceModeStoreTest {
 
         // another store
         var calledStore2 = false
-        activeStore.on(ProxyCallback {
-            calledStore2 = true
-            true
-        })
+        activeStore.on(
+            ProxyCallback {
+                calledStore2 = true
+                true
+            }
+        )
 
         activeStore.onProxyMessage(ProxyMessage.SyncRequest(id = id1))
         job.join()
@@ -327,8 +297,6 @@ class ReferenceModeStoreTest {
 
     @Test
     fun propagatesUpdates_fromDrivers_toProxies() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
         val activeStore = createReferenceModeStore()
 
         val bobCollection = CrdtSet<RawEntity>()
@@ -344,7 +312,7 @@ class ReferenceModeStoreTest {
         val bobCrdt = createPersonEntityCrdt()
         val actor = activeStore.crdtKey
         bobCrdt.applyOperation(
-                CrdtEntity.Operation.SetSingleton(
+            CrdtEntity.Operation.SetSingleton(
                 actor,
                 VersionMap(actor to 1),
                 "name",
@@ -364,95 +332,30 @@ class ReferenceModeStoreTest {
             .onProxyMessage(ProxyMessage.ModelUpdate(bobCrdt.data, id = 1), "an-id")
 
         var id = -1
-        val job = Job(coroutineContext[Job.Key])
-        id = activeStore.on(ProxyCallback {
-            if (it is ProxyMessage.ModelUpdate) {
-                assertThat(it.id).isEqualTo(id)
-                it.model.values.assertEquals(bobCollection.data.values)
-                job.complete()
-                return@ProxyCallback true
+        val job = Job(coroutineContext[Job])
+        id = activeStore.on(
+            ProxyCallback {
+                if (it is ProxyMessage.ModelUpdate) {
+                    assertThat(it.id).isEqualTo(id)
+                    it.model.values.assertEquals(bobCollection.data.values)
+                    job.complete()
+                    return@ProxyCallback true
+                }
+                job.completeExceptionally(AssertionError("Should have received model update."))
             }
-            job.completeExceptionally(AssertionError("Should have received model update."))
-        })
+        )
 
-        val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
+        val driver =
+            activeStore.containerStore.driver as DatabaseDriver<CrdtSet.Data<Reference>>
         driver.receiver!!(referenceCollection.data, 1)
         job.join()
     }
 
-    @Ignore("This test can be enabled when we output operations from collection model merges")
-    @Test
-    fun wontSendAnUpdate_toDriver_afterDriverOriginatedMessages() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
-        val activeStore = createReferenceModeStore()
-
-        val referenceCollection = CrdtSet<Reference>()
-        val reference = Reference("an-id", MockHierarchicalStorageKey(), VersionMap("me" to 1))
-        referenceCollection.applyOperation(
-            CrdtSet.Operation.Add("me", VersionMap("me" to 1), reference)
-        )
-
-        val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
-
-        driver.receiver!!(referenceCollection.data, 1)
-
-        assertThat(driver.sentData).isEmpty()
-    }
-
-    @Test
-    fun resendsFailedDriverUpdates_afterMerging() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
-        val activeStore = createReferenceModeStore()
-
-        // local model from proxy.
-        val bobCollection = CrdtSet<RawEntity>()
-        val bob = createPersonEntity("an-id", "bob", 42)
-        bobCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob))
-
-        // conflicting remote count from store
-        val remoteCollection = CrdtSet<Reference>()
-        val reference =
-            Reference("another-id", MockHierarchicalStorageKey(), VersionMap("them" to 1))
-        remoteCollection.applyOperation(
-            CrdtSet.Operation.Add("them", VersionMap("them" to 1), reference)
-        )
-
-        // Ensure remote entity is stored in backing store.
-        activeStore.backingStore.onProxyMessage(
-            ProxyMessage.ModelUpdate(createPersonEntityCrdt().data, id = 2),
-            "another-id"
-        )
-
-        val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
-        driver.fail = true // make sending return false
-
-        assertThat(
-            activeStore.onProxyMessage(
-                ProxyMessage.ModelUpdate(RefModeStoreData.Set(bobCollection.data), id = 1)
-            )
-        ).isTrue()
-        assertThat(driver.sentData).isNotEmpty() // send should've been called.
-
-        driver.fail = false // make sending work.
-
-        driver.receiver!!(remoteCollection.data, 1)
-        assertThat(driver.sentData).hasSize(2) // send should've been called again
-
-        val actor = activeStore.crdtKey
-        val ref2 = Reference("an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1))
-        remoteCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref2))
-        assertThat(driver.sentData.last()).isEqualTo(remoteCollection.data)
-    }
-
     @Test
     fun resolvesACombination_ofMessages_fromProxy_andDriver() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
         val activeStore = createReferenceModeStore()
 
-        val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>
+        val driver = activeStore.containerStore.driver as DatabaseDriver<CrdtSet.Data<Reference>>
 
         val e1 = createPersonEntity("e1", "e1", 1)
         val e2 = createPersonEntity("e2", "e2", 2)
@@ -479,15 +382,15 @@ class ReferenceModeStoreTest {
 
         val e1Ref = CrdtSet.DataValue(
             VersionMap("me" to 1),
-            Reference("e1", MockHierarchicalStorageKey(), VersionMap())
+            Reference("e1", activeStore.backingStore.storageKey, VersionMap())
         )
         val t1Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 1),
-            Reference("t1", MockHierarchicalStorageKey(), VersionMap())
+            Reference("t1", activeStore.backingStore.storageKey, VersionMap())
         )
         val t2Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 2),
-            Reference("t2", MockHierarchicalStorageKey(), VersionMap())
+            Reference("t2", activeStore.backingStore.storageKey, VersionMap())
         )
 
         driver.receiver!!(
@@ -515,40 +418,40 @@ class ReferenceModeStoreTest {
         activeStore.idle()
 
         assertThat(activeStore.containerStore.getLocalData())
-            .isEqualTo(driver.sentData.last())
+            .isEqualTo(driver.getLocalData())
     }
 
     @Test
     fun holdsOnto_containerUpdate_untilBackingDataArrives() = runBlocking {
-        DriverFactory.register(MockDriverProvider())
-
         val activeStore = createReferenceModeStore()
         val actor = activeStore.crdtKey
 
         val referenceCollection = CrdtSet<Reference>()
-        val ref = Reference("an-id", MockHierarchicalStorageKey(), VersionMap(actor to 1))
+        val ref = Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
         referenceCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref))
 
-        val job = Job(coroutineContext[Job.Key])
+        val job = Job(coroutineContext[Job])
         var backingStoreSent = false
-        val id = activeStore.on(ProxyCallback {
-            if (!backingStoreSent) {
-                job.completeExceptionally(
-                    AssertionError("Backing store data should've been sent first.")
-                )
+        val id = activeStore.on(
+            ProxyCallback {
+                if (!backingStoreSent) {
+                    job.completeExceptionally(
+                        AssertionError("Backing store data should've been sent first.")
+                    )
+                }
+                if (it is ProxyMessage.ModelUpdate) {
+                    val entityRecord = requireNotNull(it.model.values["an-id"]?.value)
+                    assertThat(entityRecord.singletons["name"]?.id)
+                        .isEqualTo("bob".toReferencable().id)
+                    val age = requireNotNull(entityRecord.singletons["age"])
+                    assertThat(age.tryDereference()).isEqualTo(42.0.toReferencable())
+                    job.complete()
+                } else {
+                    job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
+                }
+                true
             }
-            if (it is ProxyMessage.ModelUpdate) {
-                val entityRecord = requireNotNull(it.model.values["an-id"]?.value)
-                assertThat(entityRecord.singletons["name"]?.id)
-                    .isEqualTo("bob".toReferencable().id)
-                assertThat(entityRecord.singletons["age"]?.id)
-                    .isEqualTo(42.toReferencable().id)
-                job.complete()
-            } else {
-                job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
-            }
-            true
-        })
+        )
 
         val containerJob = launch {
             activeStore.containerStore.onReceive(referenceCollection.data, id + 1)
@@ -570,32 +473,28 @@ class ReferenceModeStoreTest {
                 actor,
                 VersionMap(actor to 1),
                 "age",
-                CrdtEntity.Reference.buildReference(42.toReferencable())
+                CrdtEntity.Reference.buildReference(42.0.toReferencable())
             )
         )
 
-        val backingStore = activeStore.backingStore.stores["an-id"]
-            ?: activeStore.backingStore.setupStore("an-id")
-        backingStore.store.onReceive(entityCrdt.data, id + 2)
+        val backingJob = launch {
+            val backingStore = activeStore.backingStore.stores["an-id"]
+                ?: activeStore.backingStore.setupStore("an-id")
+            backingStore.store.onReceive(entityCrdt.data, id + 2)
+        }
 
         activeStore.idle()
 
         job.join()
+        backingJob.join()
         containerJob.join()
     }
-
-    // region Helpers
-
-    private fun BackingStore<CrdtData, CrdtOperation, Any?>.getEntityDriver(
-        id: ReferenceId
-    ): MockDriver<CrdtEntity.Data> =
-        requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>
 
     private suspend fun createReferenceModeStore(): ReferenceModeStore {
         return ReferenceModeStore.CONSTRUCTOR(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                ExistenceCriteria.ShouldCreate,
+                ExistenceCriteria.MayExist,
                 CollectionType(EntityType(schema)),
                 StorageMode.ReferenceMode
             ),
@@ -644,52 +543,4 @@ class ReferenceModeStoreTest {
             }
         }
     }
-
-    // endregion
-
-    // region Mocks
-
-    private data class MockHierarchicalStorageKey(
-        private val segment: String = ""
-    ) : StorageKey("testing-hierarchy") {
-        override fun toKeyString(): String = segment
-
-        override fun childKeyWithComponent(component: String): StorageKey =
-            MockHierarchicalStorageKey("$segment$component")
-    }
-
-    private class MockDriverProvider : DriverProvider {
-        override fun willSupport(storageKey: StorageKey): Boolean = true
-
-        override suspend fun <Data : Any> getDriver(
-            storageKey: StorageKey,
-            existenceCriteria: ExistenceCriteria,
-            dataClass: KClass<Data>
-        ): Driver<Data> = MockDriver(storageKey, existenceCriteria)
-    }
-
-    private class MockDriver<T : Any>(
-        override val storageKey: StorageKey,
-        override val existenceCriteria: ExistenceCriteria
-    ) : Driver<T> {
-        override var token: String? = null
-        var receiver: (suspend (data: T, version: Int) -> Unit)? = null
-        var sentData = mutableListOf<T>()
-        var fail = false
-
-        override suspend fun registerReceiver(
-            token: String?,
-            receiver: suspend (data: T, version: Int) -> Unit
-        ) {
-            this.token = token
-            this.receiver = receiver
-        }
-
-        override suspend fun send(data: T, version: Int): Boolean {
-            sentData.add(data)
-            return !fail
-        }
-    }
-
-    // endregion
 }

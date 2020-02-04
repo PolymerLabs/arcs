@@ -232,7 +232,7 @@ class ReferenceModeStore private constructor(
 
         return@fn when (val proxyMessage = message.message) {
             is ProxyMessage.Operations -> {
-                proxyMessage.operations.toBridgingOps(containerStore.storageKey)
+                proxyMessage.operations.toBridgingOps(backingStore.storageKey)
                     .all { op ->
                         op.entityValue?.let { updateBackingStore(it) }
                         val response = containerStore.onProxyMessage(

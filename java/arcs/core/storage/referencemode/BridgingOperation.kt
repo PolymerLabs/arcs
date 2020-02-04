@@ -92,8 +92,8 @@ sealed class BridgingOperation : CrdtOperationAtTime {
  * types of [CrdtOperation]s.
  */
 fun List<RefModeStoreOp>.toBridgingOps(
-    storageKey: StorageKey
-): List<BridgingOperation> = map { it.toBridgingOp(storageKey) }
+    backingStorageKey: StorageKey
+): List<BridgingOperation> = map { it.toBridgingOp(backingStorageKey) }
 
 /**
  * Converts a [CrdtOperationAtTime] from some referencable-typed operation to [BridgingOperation]
@@ -113,9 +113,9 @@ fun CrdtOperationAtTime.toBridgingOp(value: RawEntity?): BridgingOperation =
  * Bridges the gap between a [RefModeStoreOp] and the appropriate [Reference]-based collection
  * operation.
  */
-fun RefModeStoreOp.toBridgingOp(storageKey: StorageKey): BridgingOperation = when (this) {
+fun RefModeStoreOp.toBridgingOp(backingStorageKey: StorageKey): BridgingOperation = when (this) {
     is RefModeStoreOp.SingletonUpdate -> {
-        val reference = value.toReference(storageKey, clock)
+        val reference = value.toReference(backingStorageKey, clock)
         UpdateSingleton(
             value, reference, CrdtSingleton.Operation.Update(actor, clock, reference), this
         )
@@ -124,11 +124,11 @@ fun RefModeStoreOp.toBridgingOp(storageKey: StorageKey): BridgingOperation = whe
         ClearSingleton(CrdtSingleton.Operation.Clear(actor, clock), this)
     }
     is RefModeStoreOp.SetAdd -> {
-        val reference = added.toReference(storageKey, clock)
+        val reference = added.toReference(backingStorageKey, clock)
         AddToSet(added, reference, CrdtSet.Operation.Add(actor, clock, reference), this)
     }
     is RefModeStoreOp.SetRemove -> {
-        val reference = removed.toReference(storageKey, clock)
+        val reference = removed.toReference(backingStorageKey, clock)
         RemoveFromSet(removed, reference, CrdtSet.Operation.Remove(actor, clock, reference), this)
     }
     else -> throw CrdtException("Unsupported operation: $this")
