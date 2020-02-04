@@ -63,6 +63,11 @@
 
     onMessagesDataChange(e) {
       messagesData = JSON.parse(e.data.value);
+      this.clear('messages');
+      const messagesHandle = this.handles.get('messages');
+      for (const messageData of messagesData) {
+        messagesHandle.store(new messagesHandle.entityClass(messageData));
+      }
     }
 
     triggerDataFlow() {
@@ -72,6 +77,5 @@
         messagesHandle.store(new messagesHandle.entityClass(messageData));
       }
     }
-
   };
 });

@@ -12,14 +12,7 @@
 
  defineParticle(({SimpleParticle}) => {
 
-//   const template = html`
-// <input placeholder="Enter your name" spellcheck="false" on-change="onNameInputChange">
-//   `;
-
   return class extends SimpleParticle {
-    // get template() {
-    //   return template;
-    // }
 
     // Because we have some logic to implement, we use update instead of render.
     update({allMessages}) {
@@ -32,10 +25,5 @@
         }
       }
     }
-
-    // onNameInputChange(e) {
-    //   // Update the value of person when the human enters a value.
-    //   this.set('person', {name: e.data.value});
-    // }
   };
 });
