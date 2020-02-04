@@ -21,6 +21,7 @@ class WasmSingletonImpl<T : WasmEntity>(
 ) : WasmHandle<T>(name, particle), ReadWriteSingleton<T> {
 
     private var entity: T? = null
+    private var onUpdateAction: (T?) -> Unit = {}
 
     override fun sync(encoded: ByteArray) {
         entity = if (encoded.size > 0) entitySpec.decode(encoded) else null
@@ -51,5 +52,6 @@ class WasmSingletonImpl<T : WasmEntity>(
     override fun clear() {
         entity = null
         WasmRuntimeClient.singletonClear(particle, this)
+        onUpdateAction(entity)
     }
 }
