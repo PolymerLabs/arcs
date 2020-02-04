@@ -12,6 +12,7 @@
 package arcs.jvm.storage.database.testutil
 
 import arcs.core.crdt.internal.VersionMap
+import arcs.core.data.Schema
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
@@ -81,7 +82,8 @@ open class MockDatabase : Database {
     @Suppress("UNCHECKED_CAST")
     override suspend fun get(
         storageKey: StorageKey,
-        dataType: KClass<out DatabaseData>
+        dataType: KClass<out DatabaseData>,
+        schema: Schema
     ): DatabaseData? {
         val dataVal = dataMutex.withLock { data[storageKey] }
 

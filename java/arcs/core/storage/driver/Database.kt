@@ -220,7 +220,8 @@ class DatabaseDriver<Data : Any>(
                         CrdtSingleton.DataImpl::class -> DatabaseData.Singleton::class
                         CrdtSet.DataImpl::class -> DatabaseData.Collection::class
                         else -> throw IllegalStateException("Illegal dataClass: $dataClass")
-                    }
+                    },
+                    schema
                 )?.also {
                     dataAndVersion = when (it) {
                         is DatabaseData.Entity ->
