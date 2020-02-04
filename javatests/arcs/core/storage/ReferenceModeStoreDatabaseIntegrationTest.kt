@@ -120,7 +120,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         val database = databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
 
         val capturedCollection = requireNotNull(
-            database.get(containerKey, DatabaseData.Collection::class)
+            database.get(containerKey, DatabaseData.Collection::class, schema)
         ) as DatabaseData.Collection
 
         assertThat(capturedCollection.values)
@@ -130,7 +130,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         val bobKey = activeStore.backingStore.storageKey.childKeyWithComponent("an-id")
         val capturedBob = requireNotNull(
-            database.get(bobKey, DatabaseData.Entity::class) as? DatabaseData.Entity
+            database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
         )
 
         assertThat(capturedBob.entity).containsExactly(
@@ -219,7 +219,11 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
         val capturedPeople =
             databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
-                .get(containerKey, DatabaseData.Collection::class) as DatabaseData.Collection
+                .get(
+                    containerKey,
+                    DatabaseData.Collection::class,
+                    schema
+                ) as DatabaseData.Collection
 
         assertThat(capturedPeople.values).isEqualTo(referenceCollection.consumerView)
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
