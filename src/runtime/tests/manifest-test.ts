@@ -677,11 +677,11 @@ ${particleStr1}
           foo: reads Thing
 
         recipe SomeRecipe
-          myFoo: create *
+          myFoo: create * // [NotAThing {} or Thing {}]
           PA
-            foo: writes someof myFoo
+            foo: writes myFoo
           PB
-            foo: writes someof myFoo
+            foo: writes myFoo
           PC
             foo: reads someof myFoo
       `);
@@ -692,15 +692,17 @@ ${particleStr1}
       const particleA = recipe.particles[0];
       assert.sameMembers(Object.keys(particleA.connections), ['foo']);
       const handleA = particleA.connections['foo'];
-      assert(handleA.relaxed, 'handle PA.foo should be relaxed');
+      assert(!handleA.relaxed, 'handle PA.foo should not be relaxed');
       const particleB = recipe.particles[1];
       assert.sameMembers(Object.keys(particleB.connections), ['foo']);
       const handleB = particleB.connections['foo'];
-      assert(handleB.relaxed, 'handle PB.foo should be relaxed');
+      assert(!handleB.relaxed, 'handle PB.foo should not be relaxed');
       const particleC = recipe.particles[2];
       assert.sameMembers(Object.keys(particleC.connections), ['foo']);
       const handleC = particleC.connections['foo'];
       assert(handleC.relaxed, 'handle PC.foo should be relaxed');
+      assert(recipe.normalize(), 'should be able to normalize recipe');
+      assert(recipe.isResolved(), 'should be able to resolve recipe');
     });
     it('can round trip a manifest containing relaxed reads', async () => {
       const manifestStr = `schema Thing

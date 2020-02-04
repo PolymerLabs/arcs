@@ -217,18 +217,18 @@ export class Handle implements Comparable<Handle> {
   get ttl() { return this._ttl; }
   set ttl(ttl: Ttl) { this._ttl = ttl; }
 
-  static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction}[]) {
+  static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction, relaxed?: boolean}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
     // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType
     // contain the full set of type variable information that needs to be maintained across the clone.
-    const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type._cloneWithResolutions(variableMap), direction: connection.direction}));
+    const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type._cloneWithResolutions(variableMap), direction: connection.direction, relaxed: connection.relaxed}));
     return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
   }
 
   static resolveEffectiveType(handleType: Type, connections: HandleConnection[], options: IsValidOptions): Type {
     const typeSet: TypeListInfo[] = connections
       .filter(connection => connection.type != null)
-      .map(connection => ({type: connection.type, direction: connection.direction}));
+      .map(connection => ({type: connection.type, direction: connection.direction, relaxed: connection.relaxed}));
     return TypeChecker.processTypeList(handleType, typeSet, options);
   }
 
