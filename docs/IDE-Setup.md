@@ -152,6 +152,18 @@ Hail-Mary Fixes:
 | Windows | TBD                                                      |
 | MacOS   | `/Applications/Android Studio.app/Contents/MacOS/studio` |
 
+- Create a `~/.xsessionrc` file with the following contents:
+  ```
+  if [ -f ~/.profile ]; then
+       . ~/.profile
+  fi
+  ```
+  Please subsitute `.profile` (or repeat) with either `.bash_profile` or `.bashrc` --
+  wherever you have vital environment variables.
+  After, log out and log back in to your system.
+
+- Otherwise, try one of these [workarounds](https://youtrack.jetbrains.com/issue/IDEABKL-7589).
+
 #### `.../arcs/WORKSPACE:33:1: //external:android/sdk depends on @androidsdk//:sdk in repository @androidsdk which failed to fetch. no such package '@androidsdk//': Either the path attribute of android_sdk_repository or the ANDROID_HOME environment variable must be set.`
 
 Follow [these steps](https://github.com/PolymerLabs/arcs/blob/master/docs/IDE-Setup.md#bazel-cannot-read-environment-variable).
