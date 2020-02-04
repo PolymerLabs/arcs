@@ -64,4 +64,17 @@ interface Particle {
         slotName: String,
         model: Map<String, Any> = mapOf()
     ): Map<String, Any>? = model
+
+    /**
+     * Register a reaction to an event (optional).
+     *
+     * Particle templates may emit events, usually from user actions.
+     *
+     * Only implemented for wasm, no-op on JVM.
+     *
+     * @param name The name of the triggered event
+     * @param handler A callback (consumer) in reaction to the event
+     * @see [renderOutput]
+     */
+    fun eventHandler(name: String, handler: (Map<String, String>) -> Unit) = Unit
 }
