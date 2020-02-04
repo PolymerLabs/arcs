@@ -33,7 +33,7 @@ class WasmSingletonImpl<T : WasmEntity>(
     }
 
     override fun onUpdate(action: (T?) -> Unit) {
-        onUpdateAction = action;
+        onUpdateAction = action
     }
 
     override fun get() = entity

@@ -12,12 +12,24 @@
 package arcs.sdk.wasm
 
 class SingletonApiTest : AbstractSingletonApiTest() {
+    var x = 0;
+    init{
+        inHandle.onUpdate{
+            x = 1;
+        }
+    }
+
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
             "case1" -> {
                 if (ioHandle.get() == null) {
                     errors.store(
                         SingletonApiTest_Errors(msg = "case1: populated handle should not be null")
+                    )
+                }
+                if(x == 1) {
+                    errors.store(
+                      SingletonApiTest_Errors(msg = "case1: handle.onUpdate should not have been called yet.")
                     )
                 }
                 outHandle.clear()
@@ -27,8 +39,14 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                         SingletonApiTest_Errors(msg = "case1: cleared handle should be null")
                     )
                 }
+
             }
             "case2" -> {
+                if(x == 0) {
+                    errors.store(
+                      SingletonApiTest_Errors(msg = "case1: handle.onUpdate should have been called.")
+                    )
+                }
                 val input = inHandle.get()
                 val d = SingletonApiTest_OutHandle(
                     num = input?.num ?: 0.0,
