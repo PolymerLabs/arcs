@@ -23,7 +23,6 @@
 
     // Because we have some logic to implement, we use update instead of render.
     update({allMessages}) {
-      //debugger;
       this.clear('filteredMessages');
       const messagesHandle = this.handles.get('filteredMessages');
       for (const messageData of allMessages) {
@@ -36,7 +35,6 @@
 
     // onNameInputChange(e) {
     //   // Update the value of person when the human enters a value.
-    //   //debugger;
     //   this.set('person', {name: e.data.value});
     // }
   };
