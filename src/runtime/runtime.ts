@@ -187,10 +187,9 @@ export class Runtime {
     const slotComposer = this.composerClass ? new this.composerClass() : null;
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id}, options ? options.storageKeyCreators : undefined);
     let storageKey : string | StorageKey;
-    // if (typeof storageKeyPrefix === 'string') {
-    //   storageKey = `${storageKeyPrefix}${id.toString()}`;
-    // } else if (storageKeyPrefix == null) {
-    if (typeof storageKeyPrefix === 'string' || storageKeyPrefix == null) {
+    if (typeof storageKeyPrefix === 'string') {
+      storageKey = `${storageKeyPrefix}${id.toString()}`;
+    } else if (storageKeyPrefix == null) {
       storageKey = new VolatileStorageKey(id, '');
     } else {
       storageKey = storageKeyPrefix(id);
