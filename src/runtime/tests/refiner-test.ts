@@ -85,7 +85,7 @@ describe('refiner', () => {
         assert.throws(() => {
           const manifestAst = parse(`
               particle Foo
-                  input: reads Something {name: Number [ name > 'Ragav' ] }
+                  input: reads Something {name: Text [ name > 'Ragav' ] }
           `);
           const typeData = {'name': 'Text'};
           const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);

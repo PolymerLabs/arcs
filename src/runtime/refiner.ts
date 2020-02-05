@@ -791,7 +791,7 @@ export class Range {
   // This function assumes that the expression is univariate
   // and has been normalized (see Refinement.normalize for definition).
   // TODO(ragdev): Currently only Number and Boolean types are supported. Add String support.
-  static fromExpression(expr: RefinementExpression, textToNum?: Dictionary<number>): Range {
+  static fromExpression(expr: RefinementExpression, textToNum: Dictionary<number> = {}): Range {
     if (expr instanceof BinaryExpression) {
       if (expr.leftExpr instanceof FieldNamePrimitive && expr.rightExpr instanceof NumberPrimitive) {
         return Range.makeInitialGivenOp(expr.operator.op, expr.rightExpr.value);
