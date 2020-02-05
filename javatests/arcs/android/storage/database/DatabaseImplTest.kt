@@ -167,9 +167,13 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getStorageKeyId_existingKey() = runBlockingTest {
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key"), 123L, db)).isEqualTo(1L)
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key"), 123L, db)).isEqualTo(1L)
+    fun getStorageKeyId_existingKeys() = runBlockingTest {
+        // Create new keys.
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), 123L, db)).isEqualTo(2L)
+        // Check existing keys.
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), 123L, db)).isEqualTo(2L)
     }
 
     @Test
