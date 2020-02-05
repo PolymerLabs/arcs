@@ -40,7 +40,6 @@ import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from 
 import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {StorageKeyFactory} from './storageNG/storage-key-factory.js';
 import {Store} from './storageNG/store.js';
 import {KeyBase} from './storage/key-base.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
@@ -68,7 +67,7 @@ export type ArcOptions = Readonly<{
   stub?: boolean
   inspectorFactory?: ArcInspectorFactory,
   ports?: MessagePort[],
-  storageKeyFactory?: StorageKeyFactory
+  capabilitiesResolver?: CapabilitiesResolver
 }>;
 
 type DeserializeArcOptions = Readonly<{
@@ -100,7 +99,7 @@ export class Arc implements ArcInterface {
   private storageKeys: Dictionary<string | StorageKey> = {};
   public readonly storageKey?: string | StorageKey;
   storageProviderFactory: StorageProviderFactory;
-  private readonly storageKeyFactory: StorageKeyFactory;
+  private readonly capabilitiesResolver: CapabilitiesResolver;
   // Map from each store to a set of tags. public for debug access
   public readonly storeTags = new Map<UnifiedStore, Set<string>>();
   // Map from each store to its description (originating in the manifest).
@@ -120,7 +119,7 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, storageKeyFactory, inspectorFactory} : ArcOptions) {
+  constructor({id, context, pecFactories, slotComposer, loader, storageKey, storageProviderFactory, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory} : ArcOptions) {
     this._context = context;
     // TODO: pecFactories should not be optional. update all callers and fix here.
     this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
@@ -151,7 +150,7 @@ export class Arc implements ArcInterface {
       this.storageProviderFactory = storageProviderFactory ||
           new StorageProviderFactory(this.id, new ManifestHandleRetriever());
     }
-    this.storageKeyFactory = storageKeyFactory || new StorageKeyFactory({arcId: this.id});
+    this.capabilitiesResolver = capabilitiesResolver || new CapabilitiesResolver({arcId: this.id});
   }
 
   get loader(): Loader {
@@ -619,9 +618,7 @@ export class Arc implements ArcInterface {
         storageKey = this.storageProviderFactory.parseStringAsKey(this.storageKey).childKeyForHandle(id).toString();
       } else {
         if (capabilities && !capabilities.isEmpty()) {
-          storageKey =
-              CapabilitiesResolver.createStorageKey(capabilities, this.storageKeyFactory)
-                  .childKeyForHandle(id);
+          storageKey = this.capabilitiesResolver.createStorageKey(capabilities).childKeyForHandle(id);
         } else if (this.storageKey) {
           storageKey = this.storageKey.childKeyForHandle(id);
         }
