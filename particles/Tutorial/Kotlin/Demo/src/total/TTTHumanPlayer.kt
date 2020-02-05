@@ -15,7 +15,7 @@ import arcs.sdk.Handle
 
 class TTTHumanPlayer : AbstractTTTHumanPlayer() {
     override fun onHandleUpdate(handle: Handle) {
-        if (events.size <= 0 || gameState.get()?.currentPlayer != player.get()?.id) return
+        if (events.size <= 0 || gameState.fetch()?.currentPlayer != player.fetch()?.id) return
 
         // Get the element with the largest time as this will be the most recent.
         val event = events.sortedBy { it.time }.last()

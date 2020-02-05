@@ -20,27 +20,27 @@ class TTTGame : AbstractTTTGame() {
     )
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.get()?.board == null) {
+        if (gameState.fetch()?.board == null) {
             gameState.set(defaultGame)
         }
-        if (handle.name == "playerOne" && playerOne.get()?.id != 0.0) {
-            val p1 = playerOne.get() ?: TTTGame_PlayerOne()
+        if (handle.name == "playerOne" && playerOne.fetch()?.id != 0.0) {
+            val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
             p1.id = 0.0
             playerOne.set(p1)
         }
-        if (handle.name == "playerTwo" && playerTwo.get()?.id != 1.0) {
-            val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
+        if (handle.name == "playerTwo" && playerTwo.fetch()?.id != 1.0) {
+            val p2 = playerTwo.fetch() ?: TTTGame_PlayerTwo()
             p2.id = 1.0
             playerTwo.set(p2)
         }
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val gs = gameState.get() ?: defaultGame
-        val p1 = playerOne.get() ?: TTTGame_PlayerOne()
-        val p2 = playerTwo.get() ?: TTTGame_PlayerTwo()
-        val mv1 = playerOneMove.get() ?: TTTGame_PlayerOneMove()
-        val mv2 = playerTwoMove.get() ?: TTTGame_PlayerTwoMove()
+        val gs = gameState.fetch() ?: defaultGame
+        val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
+        val p2 = playerTwo.fetch() ?: TTTGame_PlayerTwo()
+        val mv1 = playerOneMove.fetch() ?: TTTGame_PlayerOneMove()
+        val mv2 = playerTwoMove.fetch() ?: TTTGame_PlayerTwoMove()
 
         // Apply the moves
         val boardList = gs.board.split(",").toMutableList()

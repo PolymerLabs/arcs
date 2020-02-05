@@ -32,7 +32,7 @@ class TestParticle : AbstractTestParticle() {
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val dataCol = if (updated == 1) "color: blue;" else ""
-        val dataStr = "${data.get()}\n"
+        val dataStr = "${data.fetch()}\n"
 
         val infoCol = if (updated == 2) "color: blue;" else ""
         var infoStr = "Size: ${info.size}\n"
@@ -103,7 +103,7 @@ class TestParticle : AbstractTestParticle() {
 
     init {
         eventHandler("add") {
-            val newData = data.get() ?: TestParticle_Data(
+            val newData = data.fetch() ?: TestParticle_Data(
                 num = 0.0,
                 txt = "",
                 lnk = "",

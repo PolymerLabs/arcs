@@ -22,7 +22,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
             "case1" -> {
-                if (ioHandle.get() == null) {
+                if (ioHandle.fetch() == null) {
                     errors.store(
                         SingletonApiTest_Errors(msg = "case1: populated handle should not be null")
                     )
@@ -34,7 +34,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                 }
                 outHandle.clear()
                 ioHandle.clear()
-                if (ioHandle.get() != null) {
+                if (ioHandle.fetch() != null) {
                     errors.store(
                         SingletonApiTest_Errors(msg = "case1: cleared handle should be null")
                     )
@@ -47,7 +47,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                       SingletonApiTest_Errors(msg = "case1: handle.onUpdate should have been called.")
                     )
                 }
-                val input = inHandle.get()
+                val input = inHandle.fetch()
                 val d = SingletonApiTest_OutHandle(
                     num = input?.num ?: 0.0,
                     txt = input?.txt ?: ""
@@ -56,7 +56,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                 outHandle.set(d)
             }
             "case3" -> {
-                val input = inHandle.get()
+                val input = inHandle.fetch()
                 val d = SingletonApiTest_IoHandle(
                     num = input?.num ?: 0.0,
                     txt = input?.txt ?: ""
@@ -65,14 +65,14 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                 ioHandle.set(d)
             }
             "case4" -> {
-                if (ioHandle.get() != null) {
+                if (ioHandle.fetch() != null) {
                     errors.store(
                         SingletonApiTest_Errors(msg = "case4: cleared handle should be null")
                     )
                 }
                 outHandle.set(SingletonApiTest_OutHandle(txt = "out", num = 0.0))
                 ioHandle.set(SingletonApiTest_IoHandle(txt = "io", num = 0.0))
-                if (ioHandle.get() == null) {
+                if (ioHandle.fetch() == null) {
                     errors.store(
                         SingletonApiTest_Errors(msg = "case4: populated handle should not be null")
                     )

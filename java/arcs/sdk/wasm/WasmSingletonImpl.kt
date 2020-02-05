@@ -36,7 +36,7 @@ class WasmSingletonImpl<T : WasmEntity>(
         onUpdateAction = action
     }
 
-    override fun get() = entity
+    override fun fetch() = entity
 
     override fun set(entity: T) {
         this.entity = entity

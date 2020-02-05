@@ -17,7 +17,7 @@ class TTTGame : AbstractTTTGame() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.get() == null) {
+        if (gameState.fetch() == null) {
             gameState.set(defaultGame)
         }
     }

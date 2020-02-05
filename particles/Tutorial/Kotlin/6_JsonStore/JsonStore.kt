@@ -16,7 +16,7 @@ package arcs.tutorials
  */
 class JsonStore : AbstractJsonStore() {
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val person = inputData.get() ?: JsonStore_InputData()
+        val person = inputData.fetch() ?: JsonStore_InputData()
 
         return model + mapOf(
             "name" to person.name,

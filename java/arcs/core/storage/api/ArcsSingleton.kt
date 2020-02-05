@@ -177,7 +177,7 @@ class ArcsSingleton<T, StoreData, StoreOp>(
     }
 
     /** Gets the current value (if any). */
-    suspend fun get(): T? {
+    suspend fun fetch(): T? {
         activated.await()
         return crdtMutex.withLock {
             syncJob?.join() // If there's an ongoing sync, let it finish.

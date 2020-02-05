@@ -22,7 +22,7 @@ class SingletonImpl<T : Entity>(
     private var entity: T? = null
     private var onUpdateAction: (T?) -> Unit = {}
 
-    override fun get(): T? = entity
+    override fun fetch(): T? = entity
 
     override fun set(entity: T) {
         this.entity = entity
