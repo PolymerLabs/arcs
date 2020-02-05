@@ -114,6 +114,8 @@ ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
 
 ANDROIDX_TEST_VERSION = "1.2.0"
 
+ANDROIDX_WORK_VERSION = "2.3.1"
+
 AUTO_VALUE_VERSION = "1.7"
 
 AUTO_SERVICE_VERSION = "1.0-rc6"
@@ -132,6 +134,7 @@ maven_install(
         "androidx.lifecycle:lifecycle-common-java8:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-runtime:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.webkit:webkit:1.1.0-rc01",
+        "androidx.work:work-runtime:" + ANDROIDX_WORK_VERSION,
         "androidx.test:core:" + ANDROIDX_TEST_VERSION,
         "androidx.test.ext:junit:1.1.1",
         "androidx.test:monitor:" + ANDROIDX_TEST_VERSION,

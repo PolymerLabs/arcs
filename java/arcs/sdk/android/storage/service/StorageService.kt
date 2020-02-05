@@ -16,10 +16,14 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.text.format.DateUtils
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
 import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
+import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
@@ -27,6 +31,7 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +51,15 @@ class StorageService : ResurrectorService() {
     override fun onCreate() {
         super.onCreate()
         startTime = startTime ?: System.currentTimeMillis()
+
+        val periodicCleanupTask =
+                PeriodicWorkRequest.Builder(PeriodicCleanupTask::class.java, 1, TimeUnit.HOURS)
+                        .addTag(PeriodicCleanupTask.WORKER_TAG)
+                        .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                PeriodicCleanupTask.WORKER_TAG, ExistingPeriodicWorkPolicy.KEEP, periodicCleanupTask
+        )
     }
 
     override fun onBind(intent: Intent): IBinder? {
