@@ -21,14 +21,13 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
-import {Content} from './slot-consumer.js';
 import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ActiveStore, ProxyMessage, Store} from './storageNG/store.js';
+import {ProxyMessage, Store} from './storageNG/store.js';
 import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
@@ -36,18 +35,6 @@ import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-
-export type StartRenderOptions = {
-  particle: Particle;
-  slotName: string;
-  providedSlots: Map<string, string>;
-  contentTypes: string[];
-};
-
-export type StopRenderOptions = {
-  particle: Particle;
-  slotName: string;
-};
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
@@ -72,12 +59,8 @@ export class ParticleExecutionHost {
     this.close = () => {
       this._apiPorts.forEach(apiPort => apiPort.close());
     };
-
     this.arc = arc;
     this.slotComposer = slotComposer;
-
-    const pec = this;
-
     this._apiPorts = ports.map(port => new PECOuterPortImpl(port, arc));
   }
 
@@ -121,7 +104,12 @@ export class ParticleExecutionHost {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
     stores.forEach((store, name) => {
-      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString());
+      apiPort.DefineHandle(
+          store,
+          store.type.resolvedType(),
+          name,
+          store.storageKey.toString(),
+          particle.getConnectionByName(name).handle.ttl);
     });
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
   }
@@ -131,7 +119,7 @@ export class ParticleExecutionHost {
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
     const apiPort = this.getPort(particle);
     stores.forEach((store, name) => {
-      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString());
+      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.ttl);
     });
     apiPort.ReinstantiateParticle(particle.id.toString(), particle.spec, stores);
   }
@@ -156,20 +144,6 @@ export class ParticleExecutionHost {
     });
   }
 
-  startRender({particle, slotName, providedSlots, contentTypes}: StartRenderOptions): void {
-    this.getPort(particle).StartRender(particle, slotName, providedSlots, contentTypes);
-  }
-
-  stopRender({particle, slotName}: StopRenderOptions): void {
-    this.getPort(particle).StopRender(particle, slotName);
-  }
-
-  innerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content): void {
-    // Note: Transformations are not supported in Java PEC.
-    this.getPort(transformationParticle).InnerArcRender(
-        transformationParticle, transformationSlotName, hostedSlotId, content);
-  }
-
   resolveIfIdle(version: number, relevance: Map<Particle, number[]>) {
     if (version === this.idleVersion) {
       this.idlePromise = undefined;
@@ -189,12 +163,6 @@ class PECOuterPortImpl extends PECOuterPort {
     const clientClass = getClientClass();
     if (clientClass) {
       this.systemTraceClient = new clientClass();
-    }
-  }
-
-  onRender(particle: Particle, slotName: string, content: Content) {
-    if (this.arc.pec.slotComposer) {
-      this.arc.pec.slotComposer.renderSlot(particle, slotName, content);
     }
   }
 
@@ -302,13 +270,14 @@ class PECOuterPortImpl extends PECOuterPort {
         storageKey = this.arc.storageProviderFactory.baseStorageKey(type, this.arc.storageKey as string || 'volatile');
       }
       store = await this.arc.storageProviderFactory.baseStorageFor(type, storageKey);
-    // TODO(shans): THIS IS NOT SAFE!
-    //
-    // Without an auditor on the runtime side that inspects what is being fetched from
-    // this store, particles with a reference can access any data of that reference's type.
-    //
-    // TOODO(sjmiles): randomizing the id as a workaround for https://github.com/PolymerLabs/arcs/issues/2936
-      this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), `${store.id}:${`String(Math.random())`.slice(2, 9)}`, storageKey);
+      // TODO(shans): THIS IS NOT SAFE!
+      //
+      // Without an auditor on the runtime side that inspects what is being fetched from
+      // this store, particles with a reference can access any data of that reference's type.
+      //
+      // TOODO(sjmiles): randomizing the id as a workaround for https://github.com/PolymerLabs/arcs/issues/2936
+      const twiddledId = `${store.id}:${`String(Math.random())`.slice(2, 9)}`;
+      this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), twiddledId, storageKey);
     }
   }
 
@@ -439,7 +408,6 @@ class PECOuterPortImpl extends PECOuterPort {
     }
   }
 
-  // TODO(sjmiles): experimental `output` impl
   onOutput(particle: Particle, content: {}) {
     const composer = this.arc.pec.slotComposer;
     if (composer && composer['delegateOutput']) {
@@ -454,7 +422,6 @@ class PECOuterPortImpl extends PECOuterPort {
     reportSystemException(exception);
   }
 
-  // TODO(sjmiles): experimental `services` impl
   async onServiceRequest(particle: Particle, request: {}, callback: number): Promise<void> {
     const response = await Services.request(request);
     this.SimpleCallback(callback, response);

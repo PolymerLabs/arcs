@@ -1,14 +1,14 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "kt_jvm_and_js_library",
+    "arcs_kt_library",
 )
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-kt_jvm_and_js_library(
-    name = "util",
+arcs_kt_library(
+    name = "data-util",
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/common",

@@ -10,11 +10,8 @@
  */
 package arcs.core.host
 
-import com.google.auto.service.AutoService
-
 /**
  * An ArcsHost that runs isolatable particles that are expected to have no platform
  * dependencies directly on Android APIs.
  */
-@AutoService(ArcHost::class)
-class ProdHost : AbstractArcHost()
+abstract class ProdHost : AbstractArcHost()

@@ -168,23 +168,23 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
     };
 
     const consumerDom = await initConsumer(Modality.Name.Dom);
-    //const domSuggestions = consumerDom.getCurrentSuggestions();
     // TODO(sjmiles): modality detection has changed, this will be restored in a follow-up PR
+    //const domSuggestions = consumerDom.getCurrentSuggestions();
     //assert.lengthOf(domSuggestions, 2);
     //assert.deepEqual(domSuggestions.map(s => s.plan.particles.map(p => p.name)),
     //    [['ParticleDom'], ['ParticleDom', 'ParticleBoth']]);
 
     DriverFactory.clearRegistrationsForTesting();
 
-    //const consumerVr = await initConsumer(Modality.Name.Vr);
     // TODO(sjmiles): modality detection has changed, this will be restored in a follow-up PR
+    //const consumerVr = await initConsumer(Modality.Name.Vr);
     //assert.isEmpty(consumerVr.getCurrentSuggestions());
 
     DriverFactory.clearRegistrationsForTesting();
 
+    // TODO(sjmiles): modality detection has changed, this will be restored in a follow-up PR
     //const consumerTouch = await initConsumer(Modality.Name.DomTouch);
     //const touchSuggestions = consumerTouch.getCurrentSuggestions();
-    // TODO(sjmiles): modality detection has changed, this will be restored in a follow-up PR
     //assert.lengthOf(touchSuggestions, 2);
     //assert.deepEqual(touchSuggestions.map(s => s.plan.particles.map(p => p.name)),
     //    [['ParticleTouch'], ['ParticleTouch', 'ParticleBoth']]);

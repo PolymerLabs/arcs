@@ -17,7 +17,6 @@ import {Type, EntityType, CollectionType, ReferenceType} from './type.js';
 import {Storable} from './handle.js';
 import {Particle} from './particle.js';
 import {Handle, Singleton, Collection} from './handle.js';
-import {Content} from './slot-consumer.js';
 import {Dictionary} from './hot.js';
 import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
@@ -983,12 +982,12 @@ export class WasmParticle extends Particle {
 
   // render request call-back from wasm
   onRenderOutput(templatePtr: WasmAddress, modelPtr: WasmAddress) {
-    const content: Content = {};
+    const content = {};
     if (templatePtr) {
-      content.template = this.container.readStr(templatePtr);
+      content['template'] = this.container.readStr(templatePtr);
     }
     if (modelPtr) {
-      content.model = StringDecoder.decodeDictionary(this.container.readBytes(modelPtr));
+      content['model'] = StringDecoder.decodeDictionary(this.container.readBytes(modelPtr));
     }
     this.output(content);
   }

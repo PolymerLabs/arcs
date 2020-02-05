@@ -2,6 +2,7 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_library",
     "arcs_kt_native_library",
+    "kt_js_library",
 )
 
 licenses(["notice"])
@@ -13,6 +14,14 @@ arcs_kt_jvm_library(
     srcs = glob([
         "*.kt",
         "jvm/*.kt",
+    ]),
+)
+
+kt_js_library(
+    name = "sdk-js",
+    srcs = glob([
+        "*.kt",
+        "js/*.kt",
     ]),
 )
 
@@ -30,6 +39,6 @@ arcs_kt_jvm_library(
     testonly = 1,
     srcs = glob(["*.kt"]) + [
         "wasm/Encoding.kt",
-        "jvm/JvmUtils.kt",
+        "jvm/Utils.kt",
     ],
 )

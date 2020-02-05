@@ -9,10 +9,11 @@ schema Message
   toID: Text
   fromID: Text
   content: Text
+  // time since message was sent (in hours)
   sentTime: Number [sentTime > 0]
 
 schema Ordered
-  index: Number [index >= 0] 
+  index: Number [index > -1] 
 
 particle GetMessages in 'GetMessages.js'
   messages: writes [Message]

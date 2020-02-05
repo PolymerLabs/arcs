@@ -4,9 +4,14 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library")
+load(
+    ":kotlin.bzl",
+    "ARCS_SDK_DEPS",
+    "DEFAULT_PARTICLE_PLATFORMS",
+    "arcs_kt_library",
+)
 
-def _output_name(src, suffix = ""):
+def output_name(src, suffix = ""):
     """Cleans up the given file name, and replaces the .arcs extension."""
 
     # For references to files in other build targets, extract the filename:
@@ -60,7 +65,7 @@ def arcs_cc_schema(name, src, deps = [], out = None, package = "arcs"):
         name = name + "_genrule",
         src = src,
         deps = deps,
-        out = out or _output_name(src, ".h"),
+        out = out or output_name(src, ".h"),
         language_flag = "--cpp",
         language_name = "C++",
         wasm = False,
@@ -80,8 +85,8 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
     for src in srcs:
         for wasm in [True, False]:
             ext = "wasm" if wasm else "jvm"
-            genrule_name = _output_name(src, "_genrule_" + ext)
-            out = _output_name(src, "_GeneratedSchemas.%s.kt" % ext)
+            genrule_name = output_name(src, "_genrule_" + ext)
+            out = output_name(src, "_GeneratedSchemas.%s.kt" % ext)
             outs.append(out)
             _run_schema2wasm(
                 name = genrule_name,
@@ -97,5 +102,6 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
     arcs_kt_library(
         name = name,
         srcs = outs,
+        platforms = DEFAULT_PARTICLE_PLATFORMS,
         deps = ARCS_SDK_DEPS,
     )

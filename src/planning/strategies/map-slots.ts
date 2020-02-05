@@ -8,13 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../platform/assert-web.js';
-import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/particle-spec.js';
+import {ConsumeSlotConnectionSpec} from '../../runtime/particle-spec.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {SlotConnection} from '../../runtime/recipe/slot-connection.js';
 import {SlotUtils} from '../../runtime/recipe/slot-utils.js';
-import {Slot} from '../../runtime/recipe/slot.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class MapSlots extends Strategy {

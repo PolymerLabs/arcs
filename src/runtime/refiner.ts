@@ -123,26 +123,32 @@ export class Refinement {
       return AtleastAsSpecific.YES;
     }
     try {
-      a.normalise();
-      b.normalise();
+      a.normalize();
+      b.normalize();
       const rangeA = Range.fromExpression(a.expression);
       const rangeB = Range.fromExpression(b.expression);
       return rangeA.isSubsetOf(rangeB) ? AtleastAsSpecific.YES : AtleastAsSpecific.NO;
     } catch (e) {
+      console.warn(`Unable to ascertain if ${a} is at least as specific as ${b}.`);
       return AtleastAsSpecific.UNKNOWN;
     }
   }
 
-  // This function assumes the following:
-  // ~ The expression is univariate i.e. has exactly one fieldName
-  // ~ The expression is valid i.e. no expressions like (num < 3) < (num > 5)
   // This function does the following:
-  // ~ Simplifies mathematical and boolean expressions e.g. '(num + (1 + 3) < 4) and True' => '(num + 4) < 4'
+  // ~ Simplifies mathematical and boolean expressions e.g. '(2*num + (1 + 3) < 4 + num) and True' => 'num < 0'
   // ~ Converts a binary node to {leftExpr: fieldName, rightExpr: val} (where applicable).
   // ~ Converts a unary node {op: '-', val: x} into a number node {val: -x}
   // ~ Removes redundant info like expression && false => false
-  normalise() {
-    this.expression = this.expression.normalise();
+  normalize() {
+    this.expression = this.expression.normalizeOperators();
+    try {
+      // Rearrange doesn't handle multivariate case yet.
+      // Therefore, we TRY to rearrange, if possible.
+      this.expression = this.expression.rearrange();
+    } catch (e) {
+      console.log(e);
+    }
+    this.expression = this.expression.normalize();
   }
 
   toString(): string {
@@ -150,7 +156,7 @@ export class Refinement {
   }
 
   toSQLExpression(): string {
-    this.normalise();
+    this.normalize();
     return this.expression.toSQLExpression();
   }
 
@@ -196,7 +202,15 @@ abstract class RefinementExpression {
     }
   }
 
-  normalise(): RefinementExpression {
+  normalize(): RefinementExpression {
+    return this;
+  }
+
+  rearrange(): RefinementExpression {
+    return this;
+  }
+
+  normalizeOperators(): RefinementExpression {
     return this;
   }
 
@@ -238,6 +252,13 @@ export class BinaryExpression extends RefinementExpression {
             RefinementOperator.fromLiteral(expr.operator));
   }
 
+  update(expr: BinaryExpression): void {
+    this.leftExpr = expr.leftExpr;
+    this.rightExpr = expr.rightExpr;
+    this.operator = expr.operator;
+    this.evalType = expr.evalType;
+  }
+
   toString(): string {
     return `(${this.leftExpr.toString()} ${this.operator.op} ${this.rightExpr.toString()})`;
   }
@@ -246,40 +267,44 @@ export class BinaryExpression extends RefinementExpression {
     return `(${this.leftExpr.toSQLExpression()} ${this.operator.toSQLOp()} ${this.rightExpr.toSQLExpression()})`;
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const left = this.leftExpr.applyOperator(data);
     const right = this.rightExpr.applyOperator(data);
     return this.operator.eval([left, right]);
   }
 
-  swapChildren() {
+  swapChildren(): void {
     const temp = this.rightExpr;
     this.rightExpr = this.leftExpr;
     this.leftExpr = temp;
-    switch (this.operator.op) {
-      case Op.LT: this.operator.updateOp(Op.GT); break;
-      case Op.GT: this.operator.updateOp(Op.LT); break;
-      case Op.LTE: this.operator.updateOp(Op.GTE); break;
-      case Op.GTE: this.operator.updateOp(Op.LTE); break;
-      default: break;
-    }
+    this.operator.flip();
   }
 
-  simplifyPrimitive() {
+  simplifyPrimitive(): RefinementExpression {
     if (this.leftExpr instanceof BooleanPrimitive && this.rightExpr instanceof BooleanPrimitive) {
-      return new BooleanPrimitive(this.applyOperator({}));
+      return new BooleanPrimitive(this.applyOperator());
     } else if (this.leftExpr instanceof NumberPrimitive && this.rightExpr instanceof NumberPrimitive) {
       if (this.evalType === Primitive.BOOLEAN) {
-        return new BooleanPrimitive(this.applyOperator({}));
+        return new BooleanPrimitive(this.applyOperator());
       }
-      return new NumberPrimitive(this.applyOperator({}));
+      return new NumberPrimitive(this.applyOperator());
     }
     return null;
   }
 
-  normalise() {
-    this.leftExpr = this.leftExpr.normalise();
-    this.rightExpr = this.rightExpr.normalise();
+  rearrange(): RefinementExpression {
+    if (this.evalType === Primitive.BOOLEAN && this.leftExpr.evalType === Primitive.NUMBER && this.rightExpr.evalType === Primitive.NUMBER) {
+      Normalizer.rearrangeNumericalExpression(this);
+    } else {
+      this.leftExpr = this.leftExpr.rearrange();
+      this.rightExpr = this.rightExpr.rearrange();
+    }
+    return this;
+  }
+
+  normalize(): RefinementExpression {
+    this.leftExpr = this.leftExpr.normalize();
+    this.rightExpr = this.rightExpr.normalize();
     const sp = this.simplifyPrimitive();
     if (sp) {
       return sp;
@@ -324,6 +349,28 @@ export class BinaryExpression extends RefinementExpression {
     }
   }
 
+  normalizeOperators(): RefinementExpression {
+    this.leftExpr = this.leftExpr.normalizeOperators();
+    this.rightExpr = this.rightExpr.normalizeOperators();
+    switch (this.operator.op) {
+      case Op.GTE: return new BinaryExpression(
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.GT)),
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.EQ)),
+        new RefinementOperator(Op.OR)
+      );
+      case Op.LTE: return new BinaryExpression(
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.LT)),
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.EQ)),
+        new RefinementOperator(Op.OR)
+      );
+      case Op.NEQ: return new UnaryExpression(
+        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.EQ)),
+        new RefinementOperator(Op.NOT)
+      );
+      default: return this;
+    }
+  }
+
   getFieldNames(): Set<string> {
     const fn1 = this.leftExpr.getFieldNames();
     const fn2 = this.rightExpr.getFieldNames();
@@ -358,29 +405,29 @@ export class UnaryExpression extends RefinementExpression {
   }
 
   toString(): string {
-    return `(${this.operator.op} ${this.expr.toString()})`;
+    return `(${this.operator.op === Op.NEG ? '-' : this.operator.op} ${this.expr.toString()})`;
   }
 
   toSQLExpression(): string {
     return `(${this.operator.toSQLOp()} ${this.expr.toSQLExpression()})`;
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const expression = this.expr.applyOperator(data);
     return this.operator.eval([expression]);
   }
 
-  simplifyPrimitive() {
+  simplifyPrimitive(): RefinementExpression  {
     if (this.expr instanceof BooleanPrimitive && this.operator.op === Op.NOT) {
-      return new BooleanPrimitive(this.applyOperator({}));
+      return new BooleanPrimitive(this.applyOperator());
     } else if (this.expr instanceof NumberPrimitive && this.operator.op === Op.NEG) {
-      return new NumberPrimitive(this.applyOperator({}));
+      return new NumberPrimitive(this.applyOperator());
     }
     return null;
   }
 
-  normalise(): RefinementExpression {
-    this.expr = this.expr.normalise();
+  normalize(): RefinementExpression {
+    this.expr = this.expr.normalize();
     const sp = this.simplifyPrimitive();
     if (sp) {
       return sp;
@@ -395,6 +442,11 @@ export class UnaryExpression extends RefinementExpression {
       default:
         return this;
     }
+  }
+
+  rearrange(): RefinementExpression {
+    this.expr = this.expr.rearrange();
+    return this;
   }
 
   getFieldNames(): Set<string> {
@@ -434,7 +486,7 @@ export class FieldNamePrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives {
+  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     if (data[this.value] != undefined) {
       return data[this.value];
     }
@@ -502,7 +554,7 @@ class BooleanPrimitive extends RefinementExpression {
   }
 
   toSQLExpression(): string {
-    throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalised.');
+    throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalized.');
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -664,7 +716,7 @@ export class Range {
   }
 
   // This function assumes that the expression is univariate
-  // and has been normalised (see Refinement.normalise for definition).
+  // and has been normalized (see Refinement.normalize for definition).
   // TODO(ragdev): Currently only Number and Boolean types are supported. Add String support.
   static fromExpression(expr: RefinementExpression): Range {
     if (expr instanceof BinaryExpression) {
@@ -904,6 +956,16 @@ export class RefinementOperator {
     return new RefinementOperator(refOpr.op);
   }
 
+  flip(): void {
+    switch (this.op) {
+      case Op.LT: this.updateOp(Op.GT); break;
+      case Op.GT: this.updateOp(Op.LT); break;
+      case Op.LTE: this.updateOp(Op.GTE); break;
+      case Op.GTE: this.updateOp(Op.LTE); break;
+      default: break;
+    }
+  }
+
   toSQLOp(): string {
     return this.opInfo.sqlOp;
   }
@@ -955,4 +1017,276 @@ export class SQLExtracter {
     }
     return `SELECT * FROM ${table}` + (filterTerms.length ? ` WHERE ${filterTerms.join(' AND ')}` : '') + ';';
   }
+}
+
+export class Fraction {
+  num: Polynomial;
+  den: Polynomial;
+
+  constructor(n?: Polynomial, d?: Polynomial) {
+    this.num = n ? Polynomial.copyOf(n) : new Polynomial();
+    this.den = d ? Polynomial.copyOf(d) : new Polynomial([1]);
+    if (this.den.isZero()) {
+      throw new Error('Division by zero.');
+    }
+    this.reduce();
+  }
+
+  static add(a: Fraction, b: Fraction): Fraction {
+    const den = Polynomial.multiply(a.den, b.den);
+    const num = Polynomial.add(Polynomial.multiply(a.num, b.den), Polynomial.multiply(b.num, a.den));
+    return new Fraction(num, den);
+  }
+
+  static negate(a: Fraction): Fraction {
+    return new Fraction(Polynomial.negate(a.num), a.den);
+  }
+
+  static subtract(a: Fraction, b: Fraction): Fraction {
+    const negB = Fraction.negate(b);
+    return Fraction.add(a, negB);
+  }
+
+  static multiply(a: Fraction, b: Fraction): Fraction {
+    return new Fraction(Polynomial.multiply(a.num, b.num), Polynomial.multiply(a.den, b.den));
+  }
+
+  static divide(a: Fraction, b: Fraction): Fraction {
+    const invB = new Fraction(b.den, b.num);
+    return Fraction.multiply(a, invB);
+  }
+
+  reduce() {
+    if (this.num.isZero()) {
+      this.den = new Polynomial([1]);
+      return;
+    }
+    if (this.num.isConstant() && this.den.isConstant()) {
+      this.num = new Polynomial([this.num.coeffs[0]/this.den.coeffs[0]]);
+      this.den = new Polynomial([1]);
+      return;
+    }
+    // TODO(ragdev): Fractions can be reduced further by factoring out the gcd of
+    // the coeffs in num and den, and then dividing the two. However, since the numbers are floating
+    // points, the precision and computation cost of gcd function will be a trade-off to consider.
+  }
+
+  // assumes the expression received has an evalType of Primitive.NUMBER
+  static fromExpression(expr: RefinementExpression): Fraction {
+    if (expr instanceof BinaryExpression) {
+      const left = Fraction.fromExpression(expr.leftExpr);
+      const right = Fraction.fromExpression(expr.rightExpr);
+      return Fraction.updateGivenOp(expr.operator.op, [left, right]);
+    } else if (expr instanceof UnaryExpression) {
+      const fn = Fraction.fromExpression(expr.expr);
+      return Fraction.updateGivenOp(expr.operator.op, [fn]);
+    } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.NUMBER) {
+      return new Fraction(new Polynomial([0, 1], expr.value));
+    } else if (expr instanceof NumberPrimitive) {
+      return new Fraction(new Polynomial([expr.value]));
+    }
+    throw new Error(`Cannot resolve expression: ${expr.toString()}`);
+  }
+
+  static updateGivenOp(op: string, fractions: Fraction[]): Fraction {
+    switch (op) {
+      case Op.ADD: return Fraction.add(fractions[0], fractions[1]);
+      case Op.MUL: return Fraction.multiply(fractions[0], fractions[1]);
+      case Op.SUB: return Fraction.subtract(fractions[0], fractions[1]);
+      case Op.DIV: return Fraction.divide(fractions[0], fractions[1]);
+      case Op.NEG: return Fraction.negate(fractions[0]);
+      default:
+        throw new Error(`Unsupported operator: cannot update Fraction`);
+    }
+  }
+}
+
+export class Polynomial {
+  private _coeffs: number[];
+  indeterminate?: string;
+
+  constructor(coeffs: number[] = [0], variable?: string) {
+    this.coeffs = coeffs;
+    this.indeterminate = variable;
+  }
+
+  static copyOf(pn: Polynomial): Polynomial {
+    return new Polynomial(pn.coeffs, pn.indeterminate);
+  }
+
+  get coeffs(): number[] {
+    while (this._coeffs.length >= 1 && this._coeffs[this._coeffs.length - 1] === 0) {
+      this._coeffs.pop();
+    }
+    if (this._coeffs.length === 0) {
+      this._coeffs.push(0);
+    }
+    return this._coeffs;
+  }
+
+  set coeffs(cfs: number[]) {
+    this._coeffs = [...cfs];
+  }
+
+  degree(): number {
+    return this.coeffs.length - 1;
+  }
+
+  static assertCompatibility(a: Polynomial, b: Polynomial) {
+    if (a.indeterminate && b.indeterminate && a.indeterminate !== b.indeterminate) {
+      throw new Error('Incompatible polynomials');
+    }
+  }
+
+  static add(a: Polynomial, b: Polynomial): Polynomial {
+    Polynomial.assertCompatibility(a, b);
+    const sum = a.degree() > b.degree() ? Polynomial.copyOf(a) : Polynomial.copyOf(b);
+    const other = a.degree() > b.degree() ? b : a;
+    for (const [i, coeff] of other.coeffs.entries()) {
+      sum.coeffs[i] += coeff;
+    }
+    return sum;
+  }
+
+  static subtract(a: Polynomial, b: Polynomial): Polynomial {
+    Polynomial.assertCompatibility(a, b);
+    return Polynomial.add(a, Polynomial.negate(b));
+  }
+
+  static negate(a: Polynomial): Polynomial {
+    return new Polynomial(a.coeffs.map(co => -co), a.indeterminate);
+  }
+
+  static multiply(a: Polynomial, b: Polynomial): Polynomial {
+    Polynomial.assertCompatibility(a, b);
+    const deg = a.degree() + b.degree();
+    const coeffs = new Array(deg+1).fill(0);
+    for (let i = 0; i < coeffs.length; i += 1) {
+      for (let j = 0; j <= i; j += 1) {
+        if (j <= a.degree() && (i-j) <= b.degree()) {
+          coeffs[i] += a.coeffs[j]*b.coeffs[i-j];
+        }
+      }
+    }
+    return new Polynomial(coeffs, a.indeterminate || b.indeterminate);
+  }
+
+  isZero(): boolean {
+    return this.isConstant() && this.coeffs[0] === 0;
+  }
+
+  isConstant(): boolean {
+    return this.degree() === 0;
+  }
+
+  static inderminateToExpression(pow: number, fn: string): RefinementExpression {
+    if (pow < 0) {
+      throw new Error('Must have non-negative power.');
+    }
+    if (pow === 0) {
+      return new NumberPrimitive(1);
+    }
+    if (pow === 1) {
+      return new FieldNamePrimitive(fn, Primitive.NUMBER);
+    }
+    return new BinaryExpression(
+      Polynomial.inderminateToExpression(1, fn),
+      Polynomial.inderminateToExpression(pow-1, fn),
+      new RefinementOperator(Op.MUL));
+  }
+
+  // returns ax^n + bx^n-1 + ... c  <op> 0
+  toExpression(op: Op): RefinementExpression {
+    if (this.degree() === 0) {
+      return new BinaryExpression(
+        new NumberPrimitive(this.coeffs[0]),
+        new NumberPrimitive(0),
+        new RefinementOperator(op));
+    }
+    if (!this.indeterminate) {
+      throw new Error('FieldName not found!');
+    }
+    if (this.degree() === 1) {
+      // ax+b <op1> 0 => x <op2> -b/a
+      const operator = new RefinementOperator(op);
+      if (this.coeffs[1] < 0) {
+        operator.flip();
+      }
+      return new BinaryExpression(
+        new FieldNamePrimitive(this.indeterminate, Primitive.NUMBER),
+        new NumberPrimitive(-this.coeffs[0]/this.coeffs[1]),
+        operator);
+    }
+    let expr = null;
+    for (let i = this.coeffs.length - 1; i >= 0; i -= 1) {
+      if (this.coeffs[i] === 0) {
+        continue;
+      }
+      let termExpr = null;
+      if (i > 0) {
+        termExpr = Polynomial.inderminateToExpression(i, this.indeterminate);
+        if (Math.abs(this.coeffs[i]) !== 1) {
+          termExpr = new BinaryExpression(
+            new NumberPrimitive(this.coeffs[i]),
+            termExpr,
+            new RefinementOperator(Op.MUL)
+          );
+        }
+      } else {
+        termExpr = new NumberPrimitive(this.coeffs[0]);
+      }
+      expr = expr ? new BinaryExpression(expr, termExpr, new RefinementOperator(Op.ADD)) : termExpr;
+    }
+    return new BinaryExpression(expr, new NumberPrimitive(0), new RefinementOperator(op));
+  }
+}
+
+export class Normalizer {
+
+  // Updates 'expr' after rearrangement.
+  static rearrangeNumericalExpression(expr: BinaryExpression): void {
+    const lF = Fraction.fromExpression(expr.leftExpr);
+    const rF = Fraction.fromExpression(expr.rightExpr);
+    const frac = Fraction.subtract(lF, rF);
+    let rearranged = null;
+    switch (expr.operator.op) {
+      case Op.LT: rearranged = Normalizer.fracLessThanZero(frac); break;
+      case Op.GT: rearranged = Normalizer.fracGreaterThanZero(frac); break;
+      case Op.EQ: rearranged = Normalizer.fracEqualsToZero(frac); break;
+      default:
+          throw new Error(`Unsupported operator ${expr.operator.op}: cannot rearrange numerical expression.`);
+    }
+    expr.update(rearranged);
+  }
+
+  static fracLessThanZero(frac: Fraction): BinaryExpression {
+    const ngt0 = frac.num.toExpression(Op.GT);
+    const nlt0 = frac.num.toExpression(Op.LT);
+    const dgt0 = frac.den.toExpression(Op.GT);
+    const dlt0 = frac.den.toExpression(Op.LT);
+    return new BinaryExpression(
+      new BinaryExpression(ngt0, dlt0, new RefinementOperator(Op.AND)),
+      new BinaryExpression(nlt0, dgt0, new RefinementOperator(Op.AND)),
+      new RefinementOperator(Op.OR)
+    );
+  }
+
+  static fracGreaterThanZero(frac: Fraction): BinaryExpression {
+    const ngt0 = frac.num.toExpression(Op.GT);
+    const nlt0 = frac.num.toExpression(Op.LT);
+    const dgt0 = frac.den.toExpression(Op.GT);
+    const dlt0 = frac.den.toExpression(Op.LT);
+    return new BinaryExpression(
+      new BinaryExpression(ngt0, dgt0, new RefinementOperator(Op.AND)),
+      new BinaryExpression(nlt0, dlt0, new RefinementOperator(Op.AND)),
+      new RefinementOperator(Op.OR)
+    );
+  }
+
+  static fracEqualsToZero(frac: Fraction): BinaryExpression {
+    const neq0 = frac.num.toExpression(Op.EQ);
+    const dneq0 = frac.den.toExpression(Op.NEQ);
+    return new BinaryExpression(neq0, dneq0, new RefinementOperator(Op.AND));
+  }
+
 }

@@ -12,6 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
+import {Capabilities} from './capabilities.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -22,10 +23,9 @@ import {RamDiskStorageDriverProvider} from './storageNG/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {StorageKeyFactory, StorageKeyCreator} from './storageNG/storage-key-factory.js';
+import {StorageKeyFactory, StorageKeyCreator, StorageKeyCreatorsMap} from './storageNG/storage-key-factory.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
-import {SlotDomConsumer} from './slot-dom-consumer.js';
 import {Loader} from '../platform/loader.js';
 import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';
@@ -50,7 +50,7 @@ export type RuntimeArcOptions = Readonly<{
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
-  storageKeyCreators?: Map<string, StorageKeyCreator>;
+  storageKeyCreators?: StorageKeyCreatorsMap;
 }>;
 
 type SpawnArgs = {
@@ -152,9 +152,6 @@ export class Runtime {
     // a Runtime instance and forge ahead. This is only temporary until we move
     // to the new storage stack.
     VolatileStorage.setStorageCache(this.cacheService);
-    // TODO(wkorman): UI Broker refactor is underway and will change the
-    // Slot related infrastructure, so the below is only temporary.
-    SlotDomConsumer.setCacheService(this.cacheService);
     this.loader = loader || new Loader();
     this.pecFactory = pecFactory;
     this.composerClass = composerClass || SlotComposer;

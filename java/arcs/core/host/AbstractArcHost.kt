@@ -10,8 +10,9 @@
  */
 package arcs.core.host
 
-import arcs.core.sdk.Particle
+import arcs.core.data.PlanPartition
 import arcs.core.util.guardWith
+import arcs.sdk.Particle
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

@@ -17,7 +17,7 @@ import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';
 import {Ttl} from './ttl.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
-import {TypeChecker} from './type-checker.js';
+import {TypeChecker, TypeListInfo} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
@@ -44,7 +44,7 @@ export class Handle implements Comparable<Handle> {
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
   claims: Claim[] | undefined = undefined;
-  private _ttl: Ttl | undefined = undefined;
+  private _ttl = Ttl.infinite;
 
   constructor(recipe: Recipe) {
     assert(recipe);
@@ -97,7 +97,7 @@ export class Handle implements Comparable<Handle> {
       handle._storageKey = this._storageKey;
       handle._immediateValue = this._immediateValue;
       handle.capabilities = this.capabilities ? this.capabilities.clone() : undefined;
-
+      handle._ttl = this._ttl;
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
       handle._connections = [];
@@ -217,17 +217,19 @@ export class Handle implements Comparable<Handle> {
   get ttl() { return this._ttl; }
   set ttl(ttl: Ttl) { this._ttl = ttl; }
 
-  static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction}[]) {
+  static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction, relaxed?: boolean}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
     // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType
     // contain the full set of type variable information that needs to be maintained across the clone.
-    const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type._cloneWithResolutions(variableMap), direction: connection.direction}));
+    const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type._cloneWithResolutions(variableMap), direction: connection.direction, relaxed: connection.relaxed}));
     return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
   }
 
-  static resolveEffectiveType(handleType: Type, connections: HandleConnection[]): Type {
-    const typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
-    return TypeChecker.processTypeList(handleType, typeSet);
+  static resolveEffectiveType(handleType: Type, connections: HandleConnection[], options: IsValidOptions): Type {
+    const typeSet: TypeListInfo[] = connections
+      .filter(connection => connection.type != null)
+      .map(connection => ({type: connection.type, direction: connection.direction, relaxed: connection.relaxed}));
+    return TypeChecker.processTypeList(handleType, typeSet, options);
   }
 
   _isValid(options: IsValidOptions): boolean {
@@ -243,13 +245,20 @@ export class Handle implements Comparable<Handle> {
       connection.tags.forEach(tag => tags.add(tag));
     }
     if (!this.mappedType && this.fate === '`slot') {
-      this._mappedType = TypeVariable.make(this.id, null, null);
+      this._mappedType = TypeVariable.make(this.id);
     }
-    const type = Handle.resolveEffectiveType(this._mappedType, this._connections);
+    if (options && options.errors) {
+      options.typeErrors = [];
+    }
+    const type = Handle.resolveEffectiveType(this._mappedType, this._connections, options);
     if (!type) {
       if (options && options.errors) {
-        // TODO: pass options to TypeChecker.processTypeList for better error.
-        options.errors.set(this, `Type validations failed for handle '${this}' with type ${this._mappedType} and fate ${this.fate}`);
+        const errs = options.typeErrors;
+        if (errs && errs.length > 0) {
+          options.errors.set(this, `Type validations failed for handle '${this}': ${errs.join(', ')}`);
+        } else {
+          options.errors.set(this, `Type validations failed for handle '${this}' with type ${this._mappedType} and fate ${this.fate}`);
+        }
       }
       return false;
     }

@@ -10,10 +10,8 @@
 
 import {Planner} from './planner.js';
 import {Planificator} from './plan/planificator.js';
-import {PlanningModalityHandler} from './planning-modality-handler.js';
 
 export {
   Planner,
-  Planificator,
-  PlanningModalityHandler
+  Planificator
 };

@@ -17,14 +17,12 @@ import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
-import {SlotProxy} from './slot-proxy.js';
-import {Content} from './slot-consumer.js';
 import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Type, SingletonType, CollectionType} from './type.js';
+import {Type, CollectionType} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
@@ -34,6 +32,7 @@ import {Flags} from './flags.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
+import {Ttl} from './recipe/ttl.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 type UnifiedStorageProxy = Store|StorageProxyNG<CRDTTypeRecord>;
@@ -63,9 +62,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
     this.apiPort = new class extends PECInnerPort {
 
-      onDefineHandle(identifier: string, type: Type, name: string, storageKey: string) {
+      onDefineHandle(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl) {
         if (Flags.useNewStorageStack) {
-          return new StorageProxyNG(identifier, pec, type, storageKey);
+          return new StorageProxyNG(identifier, pec, type, storageKey, ttl);
         }
         return StorageProxy.newProxy(identifier, type, this, pec, pec.scheduler, name);
       }
@@ -109,10 +108,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return [hostedSlotId, () => callback(hostedSlotId)];
       }
 
-      onInnerArcRender(transformationParticle: Particle, transformationSlotName: string, hostedSlotId: string, content: Content) {
-        transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
-      }
-
       onStop(): void {
         if (global['close'] && !global['inWorkerPool']) {
           global['close']();
@@ -141,7 +136,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
       onAwaitIdle(version: number) {
         pec.idle.then(a => {
-          // TODO: dom-particles update is async, this is a workaround to allow dom-particles to
+          // TODO: ui-particle's update is async, this is a workaround to allow ui-particles to
           // update relevance, after handles are updated. Needs better idle signal.
           setTimeout(() => this.Idle(version, pec.relevance), 0);
         });
@@ -151,15 +146,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         particle.fireEvent(slotName, event);
       }
 
-      onStartRender(particle: Particle, slotName: string, providedSlots: ReadonlyMap<string, string>, contentTypes: string[]) {
-        particle.addSlotProxy(new SlotProxy(this, particle, slotName, providedSlots));
-        particle.renderSlot(slotName, contentTypes);
-      }
-
-      onStopRender(particle: Particle, slotName: string) {
-        assert(particle.hasSlotProxy(slotName), `Stop render called for particle ${particle.spec.name} slot ${slotName} without start render being called.`);
-        particle.removeSlotProxy(slotName);
-      }
     }(port);
 
     this.pecId = pecId;
@@ -374,10 +360,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         await this.assignHandle(particle, oldParticle.spec, id, handleMap, registerList, p);
         storageList.forEach(storage => storage.unpause());
         resolve();
-        // Transfer the slot proxies from the old particle to the new one
-        for (const name of oldParticle.getSlotNames()) {
-          oldParticle.getSlot(name).rewire(particle);
-        }
       }]);
     }
     return result;

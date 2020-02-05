@@ -212,7 +212,42 @@ export class Planner implements InspectablePlanner {
     })));
     const suggestionResults = ([] as Suggestion[]).concat(...results);
 
+    // TODO(sjmiles): debugging helper for diagnosing test failures
+    const shouldlogStrategyResults = false;
+    if (shouldlogStrategyResults) {
+      Planner.logStrategyResults(generations);
+    }
+
     return trace.endWith(suggestionResults);
+  }
+
+  static logStrategyResults(generations) {
+    const dump = [];
+    generations.forEach(gen => {
+      const result = [];
+      gen.generated.forEach(g => {
+        if (g.result) {
+          const options = {
+            errors: new Map(),
+            showUnresolved: true
+          };
+          const resolved = g.result.isResolved(options);
+          const data = {
+            name: g.result.name || g.result.toString().slice(0, 80),
+            resolved
+          };
+          if (!resolved) {
+            data['errors'] = [...options.errors].map(([n, v]) => `${n} => ${v}`);
+            data['unresolved'] = options['details'];
+          }
+          result.push(data);
+        }
+      });
+      if (result.length) {
+        dump.push(result);
+      }
+    });
+    console.log(JSON.stringify(dump, null, '  '));
   }
 
   static clearCache() {
@@ -243,13 +278,7 @@ export class Planner implements InspectablePlanner {
       description = await Description.create(speculativeArc, relevance);
     }
     const suggestion = Suggestion.create(plan, hash, relevance);
-    suggestion.setDescription(
-        description,
-        this.arc.modality,
-        this.arc.pec.slotComposer ?
-          this.arc.pec.slotComposer.modalityHandler.descriptionFormatter
-          : undefined
-    );
+    suggestion.setDescription(description, this.arc.modality);
     suggestionByHash().set(hash, suggestion);
     return suggestion;
   }

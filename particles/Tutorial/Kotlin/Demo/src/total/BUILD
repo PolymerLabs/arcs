@@ -15,7 +15,6 @@ arcs_kt_schema(
 arcs_kt_particles(
     name = "particles",
     srcs = glob(["*.kt"]),
-    jvm = False,
     package = "arcs.tutorials.tictactoe",
     deps = [":game_schemas"],
 )

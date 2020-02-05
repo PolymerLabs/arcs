@@ -91,6 +91,20 @@ class CrdtSingleton<T : Referencable>(
 
     override fun toString(): String = "CrdtSingleton(data=${set.data})"
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null) return false
+        if (this::class != other::class) return false
+
+        other as CrdtSingleton<*>
+
+        if (set != other.set) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int = set.hashCode()
+
     /** Abstract representation of the data stored by a [CrdtSingleton]. */
     interface Data<T : Referencable> : CrdtSet.Data<T> {
         override fun copy(): Data<T>

@@ -16,9 +16,8 @@ import 'Magenta/Visualizer.arcs'
 import 'Arcs/schemas/ArcMeta.arcs'
 // Tutorials
 import 'Tutorial/Javascript/Tutorial.arcs'
-import 'Tutorial/Kotlin/Blackjack/Blackjack.arcs'
+import 'Blackjack/Blackjack.arcs'
 import 'Tutorial/Kotlin/Tutorial.arcs'
-import 'TicTacToe/TicTacToe.arcs'
 import 'Experimental/Person_Msg_Demo/PersonMsg.arcs'
 // Other
 import 'Native/native.arcs'

@@ -69,7 +69,7 @@ class RamDiskDriverProviderTest {
         val provider = RamDiskDriverProvider()
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
-        provider.getDriver<Int>(volatile, ExistenceCriteria.ShouldCreate)
+        provider.getDriver(volatile, ExistenceCriteria.ShouldCreate, Int::class)
         Unit
     }
 
@@ -80,9 +80,9 @@ class RamDiskDriverProviderTest {
 
         val key = RamDiskStorageKey("foo")
 
-        val driver1 = provider1.getDriver<Int>(key, ExistenceCriteria.MayExist)
-        val driver2 = provider1.getDriver<Int>(key, ExistenceCriteria.MayExist)
-        val driver3 = provider2.getDriver<Int>(key, ExistenceCriteria.MayExist)
+        val driver1 = provider1.getDriver(key, ExistenceCriteria.MayExist, Int::class)
+        val driver2 = provider1.getDriver(key, ExistenceCriteria.MayExist, Int::class)
+        val driver3 = provider2.getDriver(key, ExistenceCriteria.MayExist, Int::class)
 
         var driver2Value: Int? = null
         var driver2Version: Int? = null

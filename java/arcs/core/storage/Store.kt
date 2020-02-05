@@ -13,6 +13,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtOperation
 import arcs.core.type.Type
 

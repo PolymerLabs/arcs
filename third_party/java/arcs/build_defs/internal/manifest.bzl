@@ -1,6 +1,7 @@
 """Arcs manifest bundling rules."""
 
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
+load("//third_party/java/arcs/build_defs/internal:schemas.bzl", "output_name")
 
 def arcs_manifest(name, srcs, deps = [], visibility = None):
     """Bundles .arcs manifest files with their particle implementations.
@@ -35,6 +36,32 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
         deps = [name],
         progress_message = "Checking Arcs manifest",
         execute = False,
+    )
+
+def arcs_manifest_json(name, src, deps = [], out = None, visibility = None):
+    """Serialize a manifest file.
+
+    This converts a '.arcs' file into a JSON representation, using manifest2json.
+
+    Args:
+      name: the name of the target to create
+      src: an Arcs manifest files to serialize
+      deps: list of dependencies (other manifests)
+      out: the name of the output artifact (a JSON file).
+      visibility: list of visibilities
+    """
+    if not src.endswith(".arcs"):
+        fail("src must be a .arcs file")
+
+    out = out or output_name(src, ".json")
+
+    sigh_command(
+        name = name,
+        srcs = [src],
+        outs = [out],
+        deps = deps,
+        progress_message = "Serializing manifest",
+        sigh_cmd = "manifest2json --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
     )
 
 def _generate_root_manifest_content(label, input_files):

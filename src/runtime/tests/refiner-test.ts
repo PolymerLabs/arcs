@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter} from '../refiner.js';
+import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter, Polynomial, Fraction} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -109,7 +109,7 @@ describe('refiner', () => {
 
     });
     it('regression test for parse failure on operator ordering.', () => {
-      const _ = parse(`
+      parse(`
       particle Foo
           input: reads Something {num: Number [num <= 20] }
       `);
@@ -148,13 +148,13 @@ describe('normalisation', () => {
         `);
         const typeData = {'num': 'Number'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-        ref1.normalise();
+        ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
                 input: reads Something {num: Number [ num < 12 ] }
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-        // normalised version of ref1 should be the same as ref2
+        // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
     it('tests if primitive boolean expressions are automatically evaluated', () => {
@@ -164,13 +164,13 @@ describe('normalisation', () => {
         `);
         const typeData = {'num': 'Boolean'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-        ref1.normalise();
+        ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
                 input: reads Something {num: Boolean [ not num ] }
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-        // normalised version of ref1 should be the same as ref2
+        // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
     it('tests if primitive math expressions are automatically evaluated', () => {
@@ -180,13 +180,13 @@ describe('normalisation', () => {
         `);
         const typeData = {'num': 'Number'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-        ref1.normalise();
+        ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
                 input: reads Something {num: Number [ num < 4 ] }
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-        // normalised version of ref1 should be the same as ref2
+        // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
     it(`tests if multiple 'not's are cancelled. `, () => {
@@ -196,15 +196,79 @@ describe('normalisation', () => {
         `);
         const typeData = {'num': 'Boolean'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-        ref1.normalise();
+        ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
                 input: reads Something {num: Boolean [ num ] }
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-        // normalised version of ref1 should be the same as ref2
+        // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
+    it(`tests if expressions are rearranged 1`, () => {
+      const manifestAst1 = parse(`
+          particle Foo
+              input: reads Something {num: Number [ (num + 5) <= (2*num - 11) ] }
+      `);
+      const typeData = {'num': 'Number'};
+      const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
+      ref1.normalize();
+      const manifestAst2 = parse(`
+          particle Foo
+              input: reads Something {num: Number [ num > 16 or num == 16] }
+      `);
+      const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
+      // normalized version of ref1 should be the same as ref2
+      assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+  });
+  it(`tests if expressions are rearranged 2`, () => {
+    const manifestAst1 = parse(`
+        particle Foo
+            input: reads Something {num: Number [ (num - 5)/(num - 2) <= 0 ] }
+    `);
+    const typeData = {'num': 'Number'};
+    const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
+    ref1.normalize();
+    const manifestAst2 = parse(`
+        particle Foo
+            input: reads Something {num: Number [ ((num > 5 and num < 2) or (num < 5 and num > 2)) or (num == 5 and num != 2) ] }
+    `);
+    const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
+    // normalized version of ref1 should be the same as ref2
+    assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+});
+  it(`tests if expressions are rearranged 3`, () => {
+    const manifestAst1 = parse(`
+        particle Foo
+            input: reads Something {num: Number [ (num+2)*(num+1)+3 > 4 ] }
+    `);
+    const typeData = {'num': 'Number'};
+    const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
+    ref1.normalize();
+    const manifestAst2 = parse(`
+        particle Foo
+            input: reads Something {num: Number [ num*num + num*3 + 1 > 0 ] }
+    `);
+    const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
+    // normalized version of ref1 should be the same as ref2
+    assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+  });
+  it(`tests if expressions are rearranged 4`, () => {
+    const manifestAst1 = parse(`
+        particle Foo
+            input: reads Something {num: Number [ ((num+2)/(2*num-1))+3 == 4 ] }
+    `);
+    const typeData = {'num': 'Number'};
+    const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
+    ref1.normalize();
+    const manifestAst2 = parse(`
+        particle Foo
+            input: reads Something {num: Number [ num == 3 and num != 0.5 ] }
+    `);
+    const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
+    // normalized version of ref1 should be the same as ref2
+    assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+  });
 });
 
 describe('Range', () => {
@@ -299,7 +363,7 @@ describe('SQLExtracter', () => {
       `);
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = SQLExtracter.fromSchema(schema, 'table');
-      assert.strictEqual(query, 'SELECT * FROM table WHERE ((a + (b / 3)) > 100) AND ((a > 3) AND (a <> 100)) AND ((b > 20) AND (b < 100));');
+      assert.strictEqual(query, 'SELECT * FROM table WHERE ((a + (b / 3)) > 100) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));');
   });
   it('tests can create queries from refinement expressions involving boolean expressions', async () => {
     const manifest = await Manifest.parse(`
@@ -336,5 +400,140 @@ describe('SQLExtracter', () => {
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = SQLExtracter.fromSchema(schema, 'table');
     assert.strictEqual(query, 'SELECT * FROM table;');
+  });
+});
+
+describe('Polynomial', () => {
+  it('tests coeffs getters, setters and degree works', () => {
+      let pn = new Polynomial([0, 1, 2]);       // 2a^2 + a
+      assert.deepEqual(pn.coeffs, [0, 1, 2]);
+      assert.strictEqual(pn.degree(), 2);
+      pn = new Polynomial([0, 1, 2, 0, 0, 0]);  // 2a^2 + a
+      assert.strictEqual(pn.degree(), 2);
+      pn = new Polynomial([0, 0, 0, 0]);        // 0
+      assert.deepEqual(pn.coeffs, [0]);
+      assert.strictEqual(pn.degree(), 0);
+      pn = new Polynomial([]);                  // 0
+      assert.deepEqual(pn.coeffs, [0]);
+      assert.strictEqual(pn.degree(), 0);
+      pn = new Polynomial();                    // 0
+      assert.deepEqual(pn.coeffs, [0]);
+      assert.strictEqual(pn.degree(), 0);
+  });
+  it('tests polynomial addition works', () => {
+    let pn1 = new Polynomial([0, 1, 2]);        // 2a^2 + a
+    let pn2 = new Polynomial();                 // 0
+    let sum = Polynomial.add(pn1, pn2);         // 2a^2 + a
+    assert.deepEqual(sum.coeffs, [0, 1, 2]);
+    assert.strictEqual(sum.degree(), 2);
+    pn1 = new Polynomial([0, 1, 2]);            // 2a^2 + a
+    pn2 = new Polynomial([3, 2, 1]);            // a^2 + 2a + 3
+    sum = Polynomial.add(pn1, pn2);             // 3a^2 + 3a + 3
+    assert.deepEqual(sum.coeffs, [3, 3, 3]);
+    assert.strictEqual(sum.degree(), 2);
+    pn1 = new Polynomial([0, 1, 2]);            // 2a^2 + a
+    pn2 = new Polynomial([3, 0, 0, 0, 0]);      // 3
+    sum = Polynomial.add(pn1, pn2);             // 2a^2 + a + 3
+    assert.deepEqual(sum.coeffs, [3, 1, 2]);
+    assert.strictEqual(sum.degree(), 2);
+  });
+  it('tests polynomial negation works', () => {
+    const pn1 = new Polynomial([0, 1, 2]);      // 2a^2 + a
+    const neg = Polynomial.negate(pn1);         // -2a^2 -a
+    assert.deepEqual(neg.coeffs, [-0, -1, -2]);
+    assert.strictEqual(neg.degree(), 2);
+  });
+  it('tests polynomial subtraction works', () => {
+    const pn1 = new Polynomial([0, 1]);         // a
+    const pn2 = new Polynomial([2, 2, 2]);      // 2a^2 + 2a + 2
+    const sub = Polynomial.subtract(pn1, pn2);  // -2a^2 -a -2
+    assert.deepEqual(sub.coeffs, [-2, -1, -2]);
+    assert.strictEqual(sub.degree(), 2);
+  });
+  it('tests polynomial multiplication works', () => {
+    let pn1 = new Polynomial([0, 1, 2]);        // 2a^2 + a
+    let pn2 = new Polynomial();                 // 0
+    let prod = Polynomial.multiply(pn1, pn2);   // 0
+    assert.deepEqual(prod.coeffs, [0]);
+    assert.strictEqual(prod.degree(), 0);
+    pn1 = new Polynomial([9, 2]);               // 2a + 9
+    pn2 = new Polynomial([3, -2]);              // -2a + 3
+    prod = Polynomial.multiply(pn1, pn2);       // -4a^2 -12a + 27
+    assert.deepEqual(prod.coeffs, [27, -12, -4]);
+    assert.strictEqual(prod.degree(), 2);
+    pn1 = new Polynomial([3, -2]);              // -2a + 3
+    pn2 = new Polynomial([9, 2, 7, 11]);        // 11a^3 + 7a^2 + 2a + 9
+    prod = Polynomial.multiply(pn1, pn2);       // -22a^4 + 19a^3 + 17a^2 - 12a + 27
+    assert.deepEqual(prod.coeffs, [27, -12, 17, 19, -22]);
+    assert.strictEqual(prod.degree(), 4);
+  });
+});
+
+describe('Fractions', () => {
+  it('tests fraction addition works', () => {
+    let num1 = new Polynomial([9, 1, 1]);
+    const den1 = new Polynomial([0, 2]);
+    let frac1 = new Fraction(num1, den1);       // (a^2+a+9)/2a
+    let num2 = new Polynomial([5, 1]);
+    let den2 = new Polynomial([3]);
+    let frac2 = new Fraction(num2, den2);       // (a+5)/3
+    let sum = Fraction.add(frac1, frac2);       // (5a^2+13a+27)/6a
+    assert.deepEqual(sum.num.coeffs, [27, 13, 5]);
+    assert.deepEqual(sum.den.coeffs, [0, 6]);
+    num1 = new Polynomial([0, 1]);
+    frac1 = new Fraction(num1);                 // a/1
+    num2 = new Polynomial([5]);
+    den2 = new Polynomial([9]);
+    frac2 = new Fraction(num2, den2);           // 0.55/1
+    sum = Fraction.add(frac1, frac2);           // (a+0.55)/1
+    assert.deepEqual(sum.num.coeffs, [5/9, 1]);
+    assert.deepEqual(sum.den.coeffs, [1]);
+  });
+  it('tests fraction subtraction works', () => {
+    const num1 = new Polynomial([9, 1, 1]);
+    const den1 = new Polynomial([0, 2]);
+    const frac1 = new Fraction(num1, den1);             // (a^2+a+9)/2a
+    const num2 = new Polynomial([5, 1]);
+    const den2 = new Polynomial([3]);
+    const frac2 = new Fraction(num2, den2);            // (a+5)/3
+    const sum = Fraction.subtract(frac1, frac2);       // (a^2-7a+27)/6a
+    assert.deepEqual(sum.num.coeffs, [27, -7, 1]);
+    assert.deepEqual(sum.den.coeffs, [0, 6]);
+  });
+  it('tests fraction negation works', () => {
+    const num1 = new Polynomial([9, 1, 1]);
+    const den1 = new Polynomial([0, 2]);
+    const frac1 = new Fraction(num1, den1);   // (a^2+a+9)/2a
+    const sum = Fraction.negate(frac1);       // (-a^2-a+-9)/2a
+    assert.deepEqual(sum.num.coeffs, [-9, -1, -1]);
+    assert.deepEqual(sum.den.coeffs, [0, 2]);
+  });
+  it('tests fraction multiplication works', () => {
+    let num1 = new Polynomial([9, 1]);
+    const den1 = new Polynomial([0, 2]);
+    let frac1 = new Fraction(num1, den1);             // (a+9)/2a
+    const num2 = new Polynomial([5, 1]);
+    const den2 = new Polynomial([3]);
+    let frac2 = new Fraction(num2, den2);            // (a+5)/3
+    let sum = Fraction.multiply(frac1, frac2);       // (a^2+14a+45)/6a
+    assert.deepEqual(sum.num.coeffs, [45, 14, 1]);
+    assert.deepEqual(sum.den.coeffs, [0, 6]);
+    num1 = new Polynomial([0, 1, 1]);
+    frac1 = new Fraction(num1);                     // (a^2+a)/1
+    frac2 = new Fraction();                         // 0 / 1
+    sum = Fraction.multiply(frac1, frac2);          // 0/1
+    assert.deepEqual(sum.num.coeffs, [0]);
+    assert.deepEqual(sum.den.coeffs, [1]);
+  });
+  it('tests fraction division works', () => {
+    const num1 = new Polynomial([9, 1]);
+    const den1 = new Polynomial([0, 2]);
+    const frac1 = new Fraction(num1, den1);            // (a+9)/2a
+    const num2 = new Polynomial([5, 1]);
+    const den2 = new Polynomial([3]);
+    const frac2 = new Fraction(num2, den2);            // (a+5)/3
+    const sum = Fraction.divide(frac1, frac2);         // (3a+9)/(2a^2+10a)
+    assert.deepEqual(sum.num.coeffs, [27, 3]);
+    assert.deepEqual(sum.den.coeffs, [0, 10, 2]);
   });
 });

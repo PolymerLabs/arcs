@@ -6,4 +6,4 @@ package arcs.core.host
  * in the future, and likely to house Android specific state, like application
  * context.
  */
-class ExternalHost : AbstractArcHost()
+abstract class ExternalHost : AbstractArcHost()

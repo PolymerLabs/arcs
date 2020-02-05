@@ -151,7 +151,7 @@ describe('types', () => {
     });
 
     it('TypeVariable', async () => {
-      const variable = TypeVariable.make('a', null, null);
+      const variable = TypeVariable.make('a');
       deepEqual(variable.toLiteral(), {
         tag: 'TypeVariable',
         data: {name: 'a', canWriteSuperset: null, canReadSubset: null}
@@ -169,7 +169,7 @@ describe('types', () => {
       deepEqual(col1, col1.clone(new Map()));
 
       // Collection of collection of variables
-      const variable = TypeVariable.make('a', null, null);
+      const variable = TypeVariable.make('a');
       const inner    = new CollectionType(variable);
       const col2     = new CollectionType(inner);
       deepEqual(col2.toLiteral(), {
@@ -197,7 +197,7 @@ describe('types', () => {
       deepEqual(big1, big1.clone(new Map()));
 
       // BigCollection of BigCollection of variables
-      const variable = TypeVariable.make('a', null, null);
+      const variable = TypeVariable.make('a');
       const inner    = new BigCollectionType(variable);
       const big2     = new BigCollectionType(inner);
       deepEqual(big2.toLiteral(), {
@@ -218,7 +218,7 @@ describe('types', () => {
 
     it('Relation', async () => {
       const entity   = EntityType.make(['Foo'], {value: 'Text'});
-      const variable = TypeVariable.make('a', null, null);
+      const variable = TypeVariable.make('a');
       const col      = new CollectionType(entity);
       const relation = new RelationType([entity, variable, col]);
       deepEqual(relation.toLiteral(), {
@@ -231,7 +231,7 @@ describe('types', () => {
 
     it('Interface', async () => {
       const entity   = EntityType.make(['Foo'], {value: 'Text'});
-      const variable = TypeVariable.make('a', null, null);
+      const variable = TypeVariable.make('a');
       const col      = new CollectionType(entity);
       const iface    = InterfaceType.make('i', [{type: entity, direction: 'any'}, {type: variable, direction: 'any'}, {type: col, direction: 'any'}], [{name: 'x'}]);
       deepEqual(iface.toLiteral(), {
@@ -262,7 +262,7 @@ describe('types', () => {
       deepEqual(ref1, ref1.clone(new Map()));
 
       // Reference to reference variable
-      const variable = TypeVariable.make('a', null, null);
+      const variable = TypeVariable.make('a');
       const inner    = new ReferenceType(variable);
       const ref2     = new ReferenceType(inner);
       deepEqual(ref2.toLiteral(), {
@@ -301,7 +301,7 @@ describe('types', () => {
       const reference  = new ReferenceType(bigCol);
 
       const entity     = EntityType.make(['Foo'], {value: 'Text'});
-      const variable   = TypeVariable.make('a', null, null);
+      const variable   = TypeVariable.make('a');
       const arcInfo    = new ArcType();
       const iface      = InterfaceType.make('i', [{type: entity, direction: 'any'}, {type: variable, direction: 'any'}, {type: arcInfo, direction: 'any'}], []);
 
@@ -404,7 +404,7 @@ describe('types', () => {
   describe('serialization', () => {
     it('serializes interfaces', async () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
-      const variable = TypeVariable.make('a', null, null);
+      const variable = TypeVariable.make('a');
       const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consumes'}]);
       assert.strictEqual(iface.interfaceInfo.toString(),
 `interface i
@@ -415,7 +415,7 @@ describe('types', () => {
 
     // Regression test for https://github.com/PolymerLabs/arcs/issues/2575
     it('disregards type variable resolutions in interfaces', async () => {
-      const variable = TypeVariable.make('a', null, null);
+      const variable = TypeVariable.make('a');
       variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
       const iface = InterfaceType.make('i', [{type: variable}], []);
       assert.strictEqual(iface.interfaceInfo.toString(),

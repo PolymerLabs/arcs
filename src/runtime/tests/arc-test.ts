@@ -29,7 +29,7 @@ import {Store} from '../storageNG/store.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {DirectStore} from '../storageNG/direct-store.js';
 import {VolatileStorageProvider, VolatileSingleton} from '../storage/volatile-storage.js';
-import {singletonHandleForTest, collectionHandleForTest, ramDiskStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
+import {singletonHandleForTest, collectionHandleForTest, ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {handleNGFor, SingletonHandle, CollectionHandle} from '../storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
 import {Entity} from '../entity.js';
@@ -356,7 +356,6 @@ describe('Arc', () => {
     const arc = await runtime.newArc('test2', Flags.useNewStorageStack ? null : 'volatile://');
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     await arc.createStore(thingClass.type, 'name', 'storeInArc');
-    console.log(arc.activeRecipe.toString());
     const resolver = new RecipeResolver(arc);
 
     // Fails resolving a recipe with 'copy' handle for store in the arc (not in context).
@@ -1158,6 +1157,91 @@ describe('Arc storage migration', () => {
       await assertThrowsAsync(async () => {
         await setup('volatile://');
       }, `Can't use string storage keys with new storage stack.`);
+    });
+
+    it('sets ttl on create entities', async () => {
+      const id = ArcId.newForTest('test');
+      const loader = new Loader(null, {
+        'ThingAdder.js': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async setHandles(handles) {
+              super.setHandles(handles);
+              // Add a single entity to each collection and a singleton.
+              const things0Handle = this.handles.get('things0');
+              const hello = new things0Handle.entityClass({name: 'hello'});
+              things0Handle.add(hello);
+              const things1Handle = this.handles.get('things1');
+              things1Handle.add(new things1Handle.entityClass({name: 'foo'}));
+              const things2Handle = this.handles.get('things2');
+              things2Handle.set(new things2Handle.entityClass({name: 'bar'}));
+
+              // wait 1s and add an additional item to things0.
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              things0Handle.add(new things0Handle.entityClass({name: 'world'}));
+              things0Handle.add(hello);
+            }
+          }
+        });
+      `});
+      // TODO: add `copy` handle to recipe.
+      const manifest = await Manifest.parse(`
+          schema Thing
+            name: Text
+          particle ThingAdder in 'ThingAdder.js'
+            things0: reads writes [Thing]
+            things1: reads writes [Thing]
+            things2: reads writes Thing
+          recipe
+            h0: create @ttl(3m)
+            h1: create @ttl(23h)
+            h2: create @ttl(2d)
+            ThingAdder
+              things0: h0
+              things1: h1
+              things2: h2
+          `);
+      const recipe = manifest.recipes[0];
+      assert.isTrue(recipe.normalize() && recipe.isResolved());
+
+      const runtime = new Runtime({loader, context: manifest});
+      const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest());
+      await arc.instantiate(recipe);
+      await arc.idle;
+
+      const getStoreByConnectionName = async (connectionName) => {
+        const store = arc.findStoreById(
+          arc.activeRecipe.particles[0].connections[connectionName].handle.id);
+        return await store.activate();
+      };
+      const getStoreValue = (storeContents, index, expectedLength) => {
+        assert.lengthOf(Object.keys(storeContents['values']), expectedLength);
+        const value = Object.values(storeContents['values'])[index]['value'];
+        assert.sameMembers(Object.keys(value), ['id', 'rawData', 'expirationTimestamp']);
+        assert.isTrue(value.id.length > 0);
+        return value;
+      };
+
+      const things0Store = await getStoreByConnectionName('things0');
+      const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
+      assert.equal(helloThing0.rawData.name, 'hello');
+      const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
+      assert.equal(worldThing0.rawData.name, 'world');
+      // `world` entity was added 1s after `hello`.
+      // This also verifies `hello` wasn't update when being re-added.
+      assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp > 1000);
+
+      const things1Store = await getStoreByConnectionName('things1');
+      const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
+      assert.equal(fooThing1.rawData.name, 'foo');
+
+      const things2Store = await getStoreByConnectionName('things2');
+      const things2Contents = await things2Store.serializeContents();
+      const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
+      assert.equal(barThing2.rawData.name, 'bar');
+      // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
+      assert.isTrue(barThing2.expirationTimestamp - fooThing1.expirationTimestamp >
+          24 * 60 * 60 * 1000);
     });
   });
 
