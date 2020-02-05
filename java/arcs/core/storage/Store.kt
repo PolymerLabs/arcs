@@ -19,6 +19,17 @@ import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.type.Type
 
 /**
+ * An interface defining a method that will create a particular [ActivateStore] instance
+ * based on provided [StoreOptions] of the same type.
+ *
+ * An implementation of this interface should be passed to the `activate` method
+ * of an inactive [Store].
+ */
+interface ActivationFactory<Data : CrdtData, Op : CrdtOperation, T> {
+    suspend fun create(options: StoreOptions<Data, Op, T>): ActiveStore<Data, Op, T>
+}
+
+/**
  * A representation of a store.
  *
  * **Note:** Initially a constructed store will be inactive - it will not connect to a driver, will
@@ -53,7 +64,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
      */
     suspend fun activate(
         /* ktlint-disable max-line-length */
-        activationFactory: (suspend (StoreOptions<Data, Op, ConsumerData>) -> ActiveStore<Data, Op, ConsumerData>)? = null
+        activationFactory: ActivationFactory<Data, Op, ConsumerData>? = null
         /* ktlint-enable max-line-length */
     ): ActiveStore<Data, Op, ConsumerData> {
         activeStore?.let { return it }
@@ -68,7 +79,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             model = model
         )
         // If we were given a specific factory to use, use it; otherwise use the default factory.
-        val activeStore = (activationFactory ?: Companion::defaultFactory)(options)
+        val  activeStore = (activationFactory ?: getDefaultFactory<Data, Op, ConsumerData>()).create(options)
 
         existenceCriteria = ExistenceCriteria.ShouldExist
         this.activeStore = activeStore
@@ -82,23 +93,32 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             StorageMode.ReferenceMode to ReferenceModeStore.CONSTRUCTOR
         )
 
+        /**
+         * This is a helper method to reduce the space of UNCHECKED_CAST suppression when accessing
+         * the [defaultFactory] instance.
+         */
         @Suppress("UNCHECKED_CAST")
-        private suspend fun <Data, Op, ConsumerData> defaultFactory(
-            options: StoreOptions<Data, Op, ConsumerData>
-        ): ActiveStore<Data, Op, ConsumerData> where Data : CrdtData,
-                                                     Op : CrdtOperation {
-            val constructor = CrdtException.requireNotNull(DEFAULT_CONSTRUCTORS[options.mode]) {
-                "No constructor registered for mode ${options.mode}"
-            }
+        private fun <Data : CrdtData, Op : CrdtOperation, T>getDefaultFactory(): ActivationFactory<Data, Op, T> {
+            return defaultFactory as ActivationFactory<Data, Op, T>
+        }
 
-            val dataClass = when (val type = options.type) {
-                is CrdtModelType<*, *, *> -> type.crdtModelDataClass
-                else -> throw CrdtException("Unsupported type for storage: $type")
-            }
+        private val defaultFactory = object : ActivationFactory<CrdtData, CrdtOperation, Any> {
+            override suspend fun create(
+                options: StoreOptions<CrdtData, CrdtOperation, Any>
+            ): ActiveStore<CrdtData, CrdtOperation, Any> {
+                val constructor = CrdtException.requireNotNull(DEFAULT_CONSTRUCTORS[options.mode]) {
+                    "No constructor registered for mode ${options.mode}"
+                }
 
-            return CrdtException.requireNotNull(
-                constructor(options, dataClass) as? ActiveStore<Data, Op, ConsumerData>
-            ) { "Could not cast constructed store to ActiveStore${constructor.typeParamString}" }
+                val dataClass = when (val type = options.type) {
+                    is CrdtModelType<*, *, *> -> type.crdtModelDataClass
+                    else -> throw CrdtException("Unsupported type for storage: $type")
+                }
+
+                return CrdtException.requireNotNull(
+                    constructor(options, dataClass) as? ActiveStore<CrdtData, CrdtOperation, Any>
+                ) { "Could not cast constructed store to ActiveStore${constructor.typeParamString}" }
+            }
         }
     }
 }
