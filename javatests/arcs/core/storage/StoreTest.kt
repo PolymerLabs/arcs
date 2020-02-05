@@ -18,6 +18,7 @@ import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.CountType
+import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.anyOrNull
@@ -42,7 +43,7 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class StoreTest {
-    val testKey: StorageKey = DummyKey()
+    val testKey: StorageKey = DummyStorageKey("key")
 
     @Before
     fun setup() {
@@ -348,9 +349,4 @@ class StoreTest {
 
     private fun createStore(): Store<CrdtData, CrdtOperation, Any?> =
         Store(StoreOptions(testKey, ExistenceCriteria.ShouldCreate, CountType()))
-
-    class DummyKey : StorageKey("dummy") {
-        override fun toKeyString(): String = "dummy"
-        override fun childKeyWithComponent(component: String): StorageKey = this
-    }
 }

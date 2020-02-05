@@ -21,6 +21,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/referencemode",
+        "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil",
         "//java/arcs/core/type",
         "//java/arcs/core/util/testutil",

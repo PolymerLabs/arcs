@@ -133,7 +133,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
             database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
         )
 
-        assertThat(capturedBob.entity).containsExactly(
+        assertThat(capturedBob.entity.data).containsExactly(
             "name", "bob",
             "age", 42.0
         )
