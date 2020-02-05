@@ -409,6 +409,10 @@ describe('manifest parser', () => {
     particle Foo
       input: reads Something {value: Number, price: Number} [value > 10 and price < 5]
     `);
+    parse(`
+    particle Foo
+      input: reads Something {value: Text [value == 'abc']}
+    `);
   });
   it('tests the refinement syntax tree', () => {
     const manifestAst = parse(`

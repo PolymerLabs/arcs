@@ -82,6 +82,18 @@ describe('refiner', () => {
             };
             const _ = ref.validateData(data);
         }, `Got type Number. Expected Boolean.`);
+        assert.throws(() => {
+          const manifestAst = parse(`
+              particle Foo
+                  input: reads Something {name: Number [ name > 'Ragav' ] }
+          `);
+          const typeData = {'name': 'Text'};
+          const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+          const data = {
+              name: 'Josh',
+          };
+          const _ = ref.validateData(data);
+      }, `Got type Text. Expected Number.`);
     });
     it('tests expression to range conversion.', () => {
         let manifestAst = parse(`

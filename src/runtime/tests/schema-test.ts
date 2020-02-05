@@ -636,6 +636,26 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
   });
+  it('tests schema.isAtleastAsSpecificAs, case 5', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Text [a == 'abc']}
+        schema2: reads X {a: Text [a == 'abc' or a == 'ragav']}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
+  });
+  it('tests schema.isAtleastAsSpecificAs, case 6', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Text [a == 'abc' or a == 'josh']}
+        schema2: reads X {a: Text [a == 'abc' or a == 'ragav']}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
+  });
   it('tests warning when refinement specificity is unknown', async () => {
     const manifest = await Manifest.parse(`
       particle Foo

@@ -537,7 +537,7 @@ export interface RefinementNode extends BaseNode {
   expression: RefinementExpressionNode;
 }
 
-export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | NumberNode | BooleanNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | NumberNode | BooleanNode | TextNode;
 
 export interface ExpressionNode extends BaseNode {
   operator: string;
@@ -567,6 +567,11 @@ export interface NumberNode extends BaseNode {
 export interface BooleanNode extends BaseNode {
   kind: 'boolean-node';
   value: boolean;
+}
+
+export interface TextNode extends BaseNode {
+  kind: 'text-node';
+  value: string;
 }
 
 export interface SchemaInline extends BaseNodeWithRefinement {

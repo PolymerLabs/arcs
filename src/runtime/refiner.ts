@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, NumberNode, BooleanNode} from './manifest-ast-nodes.js';
+import {RefinementNode, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
@@ -113,6 +113,10 @@ export class Refinement {
     return this.expression.getFieldNames();
   }
 
+  getTextPrimitives(): Set<string> {
+    return this.expression.getTextPrimitives();
+  }
+
   // checks if a is more specific than b, returns null if can't be determined
   static isAtleastAsSpecificAs(a: Refinement, b: Refinement): AtleastAsSpecific {
     if (!a && b) {
@@ -125,8 +129,15 @@ export class Refinement {
     try {
       a.normalize();
       b.normalize();
-      const rangeA = Range.fromExpression(a.expression);
-      const rangeB = Range.fromExpression(b.expression);
+      const texts = new Set<string>([...a.expression.getTextPrimitives(), ...b.expression.getTextPrimitives()]);
+      const textToNum: Dictionary<number> = {};
+      let idx = 0;
+      for (const text of texts) {
+         textToNum[text] = idx;
+         idx += 1;
+      }
+      const rangeA = Range.fromExpression(a.expression, textToNum);
+      const rangeB = Range.fromExpression(b.expression, textToNum);
       return rangeA.isSubsetOf(rangeB) ? AtleastAsSpecific.YES : AtleastAsSpecific.NO;
     } catch (e) {
       console.warn(`Unable to ascertain if ${a} is at least as specific as ${b}.`);
@@ -172,7 +183,7 @@ export class Refinement {
 abstract class RefinementExpression {
   evalType: Primitive.BOOLEAN | Primitive.NUMBER | Primitive.TEXT;
 
-  constructor(readonly kind: 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode') {}
+  constructor(readonly kind: 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode') {}
   static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
     if (!expr) {
       return null;
@@ -183,6 +194,7 @@ abstract class RefinementExpression {
       case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
       case 'number-node': return NumberPrimitive.fromAst(expr);
       case 'boolean-node': return BooleanPrimitive.fromAst(expr);
+      case 'text-node': return TextPrimitive.fromAst(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
         throw new Error(`RefinementExpression.fromAst: Unknown node type ${expr['kind']}`);
@@ -221,6 +233,8 @@ abstract class RefinementExpression {
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>);
 
   abstract getFieldNames(): Set<string>;
+
+  abstract getTextPrimitives(): Set<string>;
 }
 
 export class BinaryExpression extends RefinementExpression {
@@ -236,7 +250,7 @@ export class BinaryExpression extends RefinementExpression {
     this.operator = op;
     this.operator.validateOperandCompatibility([this.leftExpr.evalType, this.rightExpr.evalType]);
     this.evalType = this.operator.evalType();
-}
+  }
 
   static fromAst(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
     return new BinaryExpression(
@@ -377,6 +391,11 @@ export class BinaryExpression extends RefinementExpression {
     return new Set<string>([...fn1, ...fn2]);
   }
 
+  getTextPrimitives(): Set<string> {
+    const fn1 = this.leftExpr.getTextPrimitives();
+    const fn2 = this.rightExpr.getTextPrimitives();
+    return new Set<string>([...fn1, ...fn2]);
+  }
 }
 
 export class UnaryExpression extends RefinementExpression {
@@ -452,6 +471,10 @@ export class UnaryExpression extends RefinementExpression {
   getFieldNames(): Set<string> {
     return this.expr.getFieldNames();
   }
+
+  getTextPrimitives(): Set<string> {
+    return this.expr.getTextPrimitives();
+  }
 }
 
 export class FieldNamePrimitive extends RefinementExpression {
@@ -496,6 +519,10 @@ export class FieldNamePrimitive extends RefinementExpression {
   getFieldNames(): Set<string> {
     return new Set<string>([this.value]);
   }
+
+  getTextPrimitives(): Set<string> {
+    return new Set<string>();
+  }
 }
 
 export class NumberPrimitive extends RefinementExpression {
@@ -528,6 +555,10 @@ export class NumberPrimitive extends RefinementExpression {
   }
 
   getFieldNames(): Set<string> {
+    return new Set<string>();
+  }
+
+  getTextPrimitives(): Set<string> {
     return new Set<string>();
   }
 }
@@ -563,6 +594,48 @@ class BooleanPrimitive extends RefinementExpression {
 
   getFieldNames(): Set<string> {
     return new Set<string>();
+  }
+
+  getTextPrimitives(): Set<string> {
+    return new Set<string>();
+  }
+}
+
+class TextPrimitive extends RefinementExpression {
+  evalType = Primitive.TEXT;
+  value: string;
+
+  constructor(value: string) {
+    super('TextPrimitiveNode');
+    this.value = value;
+  }
+
+  static fromAst(expression: TextNode): RefinementExpression {
+    return new TextPrimitive(expression.value);
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    return new TextPrimitive(expr.value);
+  }
+
+  toString(): string {
+    return `'${this.value}'`;
+  }
+
+  toSQLExpression(): string {
+    throw new Error(`'${this.value}'`);
+  }
+
+  applyOperator(): ExpressionPrimitives {
+    return this.value;
+  }
+
+  getFieldNames(): Set<string> {
+    return new Set<string>();
+  }
+
+  getTextPrimitives(): Set<string> {
+    return new Set<string>([this.value]);
   }
 }
 
@@ -718,16 +791,19 @@ export class Range {
   // This function assumes that the expression is univariate
   // and has been normalized (see Refinement.normalize for definition).
   // TODO(ragdev): Currently only Number and Boolean types are supported. Add String support.
-  static fromExpression(expr: RefinementExpression): Range {
+  static fromExpression(expr: RefinementExpression, textToNum?: Dictionary<number>): Range {
     if (expr instanceof BinaryExpression) {
       if (expr.leftExpr instanceof FieldNamePrimitive && expr.rightExpr instanceof NumberPrimitive) {
         return Range.makeInitialGivenOp(expr.operator.op, expr.rightExpr.value);
       }
-      const left = Range.fromExpression(expr.leftExpr);
-      const right = Range.fromExpression(expr.rightExpr);
+      if (expr.leftExpr instanceof FieldNamePrimitive && expr.rightExpr instanceof TextPrimitive) {
+        return Range.makeInitialGivenOp(expr.operator.op, textToNum[expr.rightExpr.value]);
+      }
+      const left = Range.fromExpression(expr.leftExpr, textToNum);
+      const right = Range.fromExpression(expr.rightExpr, textToNum);
       return Range.updateGivenOp(expr.operator.op, [left, right]);
     } else if (expr instanceof UnaryExpression) {
-      const rg = Range.fromExpression(expr.expr);
+      const rg = Range.fromExpression(expr.expr, textToNum);
       return Range.updateGivenOp(expr.operator.op, [rg]);
     } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BOOLEAN) {
       return Range.booleanRange(1);
