@@ -636,7 +636,7 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
   });
-  it.only('tests warning when refinement specificity is unknown', async () => {
+  it('tests warning when refinement specificity is unknown', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a*a+a > 20]}
