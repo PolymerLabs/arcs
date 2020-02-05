@@ -12,8 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
-import {Capabilities} from './capabilities.js';
-import {CapabilitiesResolver, StorageKeyCreator, StorageKeyCreatorsMap} from './capabilities-resolver.js';
+import {CapabilitiesResolver, StorageKeyCreatorsMap} from './capabilities-resolver.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -188,9 +187,10 @@ export class Runtime {
     const slotComposer = this.composerClass ? new this.composerClass() : null;
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id}, options ? options.storageKeyCreators : undefined);
     let storageKey : string | StorageKey;
-    if (typeof storageKeyPrefix === 'string') {
-      storageKey = `${storageKeyPrefix}${id.toString()}`;
-    } else if (storageKeyPrefix == null) {
+    // if (typeof storageKeyPrefix === 'string') {
+    //   storageKey = `${storageKeyPrefix}${id.toString()}`;
+    // } else if (storageKeyPrefix == null) {
+    if (typeof storageKeyPrefix === 'string' || storageKeyPrefix == null) {
       storageKey = new VolatileStorageKey(id, '');
     } else {
       storageKey = storageKeyPrefix(id);
@@ -308,12 +308,14 @@ export class Runtime {
   // TODO(sjmiles): redundant vs. newArc, but has some impedance mismatch
   // strategy is to merge first, unify second
   async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory}: SpawnArgs): Promise<Arc> {
+    const arcid = IdGenerator.newSession().newArcId(id);
+    const storageKey = new VolatileStorageKey(arcid, '');
     const params = {
-      id: IdGenerator.newSession().newArcId(id),
+      id: arcid,
       fileName: './serialized.manifest',
       serialization,
       context,
-      storageKey: storage || 'volatile',
+      storageKey,
       slotComposer: composer,
       pecFactories: [this.pecFactory, ...(portFactories || [])],
       loader: this.loader,

@@ -113,21 +113,22 @@ export class ArcHost {
     await this.persistSerialization(arc);
   }
   async fetchSerialization(storage, arcid) {
-    const key = `${storage}/${arcid}/arc-info`;
-    const store = await SyntheticStores.providerFactory.connect('id', new ArcType(), key);
-    if (store) {
-      log('loading stored serialization');
-      const info = await store.get();
-      return info && info.serialization;
-    }
+    return null;
+    // const key = `${storage}/${arcid}/arc-info`;
+    // const store = await SyntheticStores.providerFactory.connect('id', new ArcType(), key);
+    // if (store) {
+    //   log('loading stored serialization');
+    //   const info = await store.get();
+    //   return info && info.serialization;
+    // }
   }
   async persistSerialization(arc) {
-    const {id, storageKey} = arc;
-    if (!storageKey.includes('volatile')) {
-      log(`compiling serialization for [${id}]...`);
-      const serialization = await arc.serialize();
-      log(`persisting serialization to [${id}/serialization]...`);
-      await arc.persistSerialization(serialization);
-    }
+    // const {id, storageKey} = arc;
+    // if (!storageKey.includes('volatile')) {
+    //   log(`compiling serialization for [${id}]...`);
+    //   const serialization = await arc.serialize();
+    //   log(`persisting serialization to [${id}/serialization]...`);
+    //   await arc.persistSerialization(serialization);
+    // }
   }
 }

@@ -20,7 +20,7 @@
  * Note: This does not override flag values set explicitly for a test.
  */
 class FlagDefaults {
-  static useNewStorageStack = false;
+  static useNewStorageStack = true;
   static enforceRefinements = false;
   static useSlandles = false;
   static fieldRefinementsAllowed = false;
