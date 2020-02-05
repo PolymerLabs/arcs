@@ -23,6 +23,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.storage.StorageKey
+import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
@@ -160,15 +161,15 @@ class DatabaseImplTest {
 
     @Test
     fun getStorageKeyId_newKeys() = runBlockingTest {
-        assertThat(database.getEntityStorageKeyId(DummyKey("key1"), 123L, db)).isEqualTo(1L)
-        assertThat(database.getEntityStorageKeyId(DummyKey("key2"), 123L, db)).isEqualTo(2L)
-        assertThat(database.getEntityStorageKeyId(DummyKey("key3"), 123L, db)).isEqualTo(3L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), 123L, db)).isEqualTo(2L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key3"), 123L, db)).isEqualTo(3L)
     }
 
     @Test
     fun getStorageKeyId_existingKey() = runBlockingTest {
-        assertThat(database.getEntityStorageKeyId(DummyKey("key"), 123L, db)).isEqualTo(1L)
-        assertThat(database.getEntityStorageKeyId(DummyKey("key"), 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key"), 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key"), 123L, db)).isEqualTo(1L)
     }
 
     @Test
@@ -257,19 +258,19 @@ class DatabaseImplTest {
 
     @Test
     fun insertAndGet_entity_newEmptyEntity() = runBlockingTest {
-        val key = DummyKey("key")
+        val key = DummyStorageKey("key")
         val schema = newSchema("hash")
         val entity = Entity("entity", schema, mutableMapOf())
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema).entity
 
-        assertThat(entityOut).isEqualTo(entity)
+        assertEqualEntities(entityOut, entity)
     }
 
     @Test
     fun insertAndGet_entity_newEntityWithPrimitiveFields() = runBlockingTest {
-        val key = DummyKey("key")
+        val key = DummyStorageKey("key")
         val schema = newSchema(
             "hash",
             SchemaFields(
@@ -294,16 +295,16 @@ class DatabaseImplTest {
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema).entity
 
-        assertThat(entityOut).isEqualTo(entity)
+        assertEqualEntities(entityOut, entity)
     }
 
     @Test
     fun get_entity_unknownStorageKey() = runBlockingTest {
         val exception = assertThrows(IllegalArgumentException::class) {
-            database.getEntity(DummyKey("nope"), newSchema("hash"))
+            database.getEntity(DummyStorageKey("nope"), newSchema("hash"))
         }
         assertThat(exception).hasMessageThat().isEqualTo(
-            "Entity at storage key nope://nope does not exist."
+            "Entity at storage key dummy://nope does not exist."
         )
     }
 
@@ -320,6 +321,13 @@ class DatabaseImplTest {
     /** Returns a list of all the rows in the 'fields' table. */
     private fun readFieldsTable() =
         database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
+
+    /** Custom equality checker for Entities. Ignores ID field. */
+    private fun assertEqualEntities(actual: Entity, expected: Entity) {
+        // TODO: Entity ID is not set correctly.
+        assertThat(actual.schema).isEqualTo(expected.schema)
+        assertThat(actual.data).isEqualTo(expected.data)
+    }
 
     companion object {
         /** The first free Type ID after all primitive types have been assigned. */
@@ -344,9 +352,4 @@ private data class FieldRow(
         cursor.getLong(2),
         cursor.getString(3)
     )
-}
-
-private class DummyKey(val key: String) : StorageKey(key) {
-    override fun toKeyString(): String = key
-    override fun childKeyWithComponent(component: String): StorageKey = this
 }

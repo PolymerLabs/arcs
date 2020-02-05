@@ -17,12 +17,12 @@ data class Entity(
     val id: String,
     val schema: Schema,
     val data: MutableMap<FieldName, Any?>
-) : AbstractMutableMap<FieldName, Any?>() {
+) {
     @Suppress("UNCHECKED_CAST")
-    override val entries: MutableSet<MutableMap.MutableEntry<FieldName, Any?>>
+    val entries: MutableSet<MutableMap.MutableEntry<FieldName, Any?>>
         get() = data.entries
 
-    override fun put(key: FieldName, value: Any?): Any? {
+    fun put(key: FieldName, value: Any?): Any? {
         require(key in schema.fields.collections || key in schema.fields.singletons) {
             "Illegal field $key, not part of ${schema.name}'s schema."
         }
