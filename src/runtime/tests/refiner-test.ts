@@ -148,13 +148,13 @@ describe('normalisation', () => {
         `);
         const typeData = {'num': 'Number'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-        ref1.normalise();
+        ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
                 input: reads Something {num: Number [ num < 12 ] }
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-        // normalised version of ref1 should be the same as ref2
+        // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
     it('tests if primitive boolean expressions are automatically evaluated', () => {
@@ -164,13 +164,13 @@ describe('normalisation', () => {
         `);
         const typeData = {'num': 'Boolean'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-        ref1.normalise();
+        ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
                 input: reads Something {num: Boolean [ not num ] }
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-        // normalised version of ref1 should be the same as ref2
+        // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
     it('tests if primitive math expressions are automatically evaluated', () => {
@@ -180,13 +180,13 @@ describe('normalisation', () => {
         `);
         const typeData = {'num': 'Number'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-        ref1.normalise();
+        ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
                 input: reads Something {num: Number [ num < 4 ] }
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-        // normalised version of ref1 should be the same as ref2
+        // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
     it(`tests if multiple 'not's are cancelled. `, () => {
@@ -196,13 +196,13 @@ describe('normalisation', () => {
         `);
         const typeData = {'num': 'Boolean'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-        ref1.normalise();
+        ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
                 input: reads Something {num: Boolean [ num ] }
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-        // normalised version of ref1 should be the same as ref2
+        // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
     });
     it(`tests if expressions are rearranged 1`, () => {
@@ -212,13 +212,13 @@ describe('normalisation', () => {
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-      ref1.normalise();
+      ref1.normalize();
       const manifestAst2 = parse(`
           particle Foo
               input: reads Something {num: Number [ num > 16 or num == 16] }
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-      // normalised version of ref1 should be the same as ref2
+      // normalized version of ref1 should be the same as ref2
       assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
   });
   it(`tests if expressions are rearranged 2`, () => {
@@ -228,13 +228,13 @@ describe('normalisation', () => {
     `);
     const typeData = {'num': 'Number'};
     const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-    ref1.normalise();
+    ref1.normalize();
     const manifestAst2 = parse(`
         particle Foo
             input: reads Something {num: Number [ ((num > 5 and num < 2) or (num < 5 and num > 2)) or (num == 5 and num != 2) ] }
     `);
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-    // normalised version of ref1 should be the same as ref2
+    // normalized version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
 });
   it(`tests if expressions are rearranged 3`, () => {
@@ -244,13 +244,13 @@ describe('normalisation', () => {
     `);
     const typeData = {'num': 'Number'};
     const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-    ref1.normalise();
+    ref1.normalize();
     const manifestAst2 = parse(`
         particle Foo
             input: reads Something {num: Number [ num*num + num*3 + 1 > 0 ] }
     `);
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-    // normalised version of ref1 should be the same as ref2
+    // normalized version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
   });
   it(`tests if expressions are rearranged 4`, () => {
@@ -260,13 +260,13 @@ describe('normalisation', () => {
     `);
     const typeData = {'num': 'Number'};
     const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
-    ref1.normalise();
+    ref1.normalize();
     const manifestAst2 = parse(`
         particle Foo
             input: reads Something {num: Number [ num == 3 and num != 0.5 ] }
     `);
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
-    // normalised version of ref1 should be the same as ref2
+    // normalized version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
   });
 });
