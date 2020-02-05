@@ -177,7 +177,7 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest<{store1: ActiveStore<CRDTCountTypeRecord>, store2: ActiveStore<CRDTCountTypeRecord>}>();
     sequenceTest.setTestConstructor(async () => {
       const runtime = Runtime.newForNodeTesting();
-      const arc = runtime.newArc('arc', 'volatile://');
+      const arc = runtime.newArc('arc', null); //, 'volatile://');
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
