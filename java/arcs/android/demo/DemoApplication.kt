@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk.android.demo
+package arcs.android.demo
 
 import android.app.Application
 import arcs.android.util.initLogForAndroid

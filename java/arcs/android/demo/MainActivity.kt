@@ -9,8 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
-package arcs.sdk.android.demo
+package arcs.android.demo
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

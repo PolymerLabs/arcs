@@ -10,15 +10,15 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="arcs.sdk.android.demo">
+        package="arcs.android.demo">
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
 
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:name="arcs.sdk.android.demo.DemoApplication">
+        android:name=".DemoApplication">
         <activity
-            android:name="arcs.sdk.android.demo.MainActivity"
+            android:name=".MainActivity"
             android:theme="@style/Theme.AppCompat.Light">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
