@@ -18,8 +18,7 @@ data class Entity(
     val schema: Schema,
     val data: MutableMap<FieldName, Any?>
 ) {
-    @Suppress("UNCHECKED_CAST")
-    val entries: MutableSet<MutableMap.MutableEntry<FieldName, Any?>>
+    val entries: Set<Map.Entry<FieldName, Any?>>
         get() = data.entries
 
     fun put(key: FieldName, value: Any?): Any? {
