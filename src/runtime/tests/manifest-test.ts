@@ -659,6 +659,63 @@ ${particleStr1}
       verify(manifest);
       verify(await parseManifest(manifest.toString()));
     });
+
+    describe('refinement type checking', async () => {
+      const verify = (manifest, norms, expectedErrors) => {
+        const recipe = manifest.recipes[0];
+        const options = {errors: new Map()};
+        assert.deepEqual(recipe.normalize(options), norms, `normalizes: ${norms}`);
+        assert.sameMembers([...options.errors.values()], expectedErrors);
+        if (norms) {
+          assert(recipe.isResolved());
+        }
+      };
+
+      it('checks refinement expressions', async () => {
+        const manifest = await parseManifest(`
+          particle Writer
+            output: writes Something {num: Number [ num > 5 ] }
+          particle Reader
+            input: reads Something {num: Number [ num > 3 ] }
+          recipe Foo
+            Writer
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, true, []);
+      });
+      it('checks for unsafe refinement expressions', async () => {
+        const manifest = await parseManifest(`
+          particle BadWriter
+            output: writes Something {num: Number [ num > 3 ] }
+          particle Reader
+            input: reads Something {num: Number [ num > 5 ] }
+          recipe Foo
+            BadWriter
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        const refinementError = `Type validations failed for handle 'data: create': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}`;
+        verify(manifest, false, [refinementError]);
+      });
+      it('ignores impossible refinement expressions', async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number [ (num < 3) and (num > 3) ] }
+          particle Reader
+            input: reads Something {num: Number [ num > 5 ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        // TODO(cypher1): check that a warning is thrown by Impossible.output
+        verify(manifest, true, []);
+      });
+    });
   });
 
   describe('relaxed reads and writes', async () => {
