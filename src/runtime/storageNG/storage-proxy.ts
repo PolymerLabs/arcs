@@ -18,6 +18,7 @@ import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../type.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
+import {Ttl} from '../recipe/ttl.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
@@ -35,17 +36,20 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private readonly scheduler: StorageProxyScheduler<T>;
   private modelHasSynced: Runnable = () => undefined;
   readonly storageKey: string;
+  readonly ttl: Ttl;
 
   constructor(
       apiChannelId: string,
       storeProvider: StorageCommunicationEndpointProvider<T>,
       type: Type,
-      storageKey: string) {
+      storageKey: string,
+      ttl = Ttl.infinite) {
     this.apiChannelId = apiChannelId;
     this.store = storeProvider.getStorageEndpoint(this);
     this.crdt = new (type.crdtInstanceConstructor<T>())();
     this.type = type;
     this.storageKey = storageKey;
+    this.ttl = ttl;
     this.scheduler = new StorageProxyScheduler<T>();
   }
 

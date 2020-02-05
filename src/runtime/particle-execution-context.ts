@@ -32,6 +32,7 @@ import {Flags} from './flags.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
+import {Ttl} from './recipe/ttl.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 type UnifiedStorageProxy = Store|StorageProxyNG<CRDTTypeRecord>;
@@ -61,9 +62,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
     this.apiPort = new class extends PECInnerPort {
 
-      onDefineHandle(identifier: string, type: Type, name: string, storageKey: string) {
+      onDefineHandle(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl) {
         if (Flags.useNewStorageStack) {
-          return new StorageProxyNG(identifier, pec, type, storageKey);
+          return new StorageProxyNG(identifier, pec, type, storageKey, ttl);
         }
         return StorageProxy.newProxy(identifier, type, this, pec, pec.scheduler, name);
       }

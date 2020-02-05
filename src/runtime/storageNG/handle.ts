@@ -75,7 +75,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 
   createIdentityFor(entity: Entity) {
-    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator, this.storageProxy.storageKey);
+    Entity.createIdentity(entity, Id.fromString(this._id), this.idGenerator, this.storageProxy.storageKey, this.storageProxy.ttl);
   }
 
   toManifestString(): string {
@@ -185,6 +185,7 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
   }
 
   serialize(entity: Entity): SerializedEntity {
+    this.ensureHasId(entity);
     const serialization = entity[SYMBOL_INTERNALS].serialize();
     return serialization;
   }

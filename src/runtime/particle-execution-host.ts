@@ -104,7 +104,12 @@ export class ParticleExecutionHost {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
     stores.forEach((store, name) => {
-      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString());
+      apiPort.DefineHandle(
+          store,
+          store.type.resolvedType(),
+          name,
+          store.storageKey.toString(),
+          particle.getConnectionByName(name).handle.ttl);
     });
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
   }
@@ -114,7 +119,7 @@ export class ParticleExecutionHost {
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
     const apiPort = this.getPort(particle);
     stores.forEach((store, name) => {
-      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString());
+      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.ttl);
     });
     apiPort.ReinstantiateParticle(particle.id.toString(), particle.spec, stores);
   }

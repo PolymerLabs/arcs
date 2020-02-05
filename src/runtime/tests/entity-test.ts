@@ -15,6 +15,7 @@ import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ConCap} from '../../testing/test-util.js';
+import {Ttl} from '../recipe/ttl.js';
 
 describe('Entity', () => {
 
@@ -67,7 +68,7 @@ describe('Entity', () => {
 
     const e2 = new entityClass({txt: 'abc'});
     assert.isFalse(Entity.isIdentified(e2));
-    Entity.createIdentity(e2, Id.fromString('id2'), IdGenerator.createWithSessionIdForTesting('s'), null);
+    Entity.createIdentity(e2, Id.fromString('id2'), IdGenerator.createWithSessionIdForTesting('s'), null, Ttl.infinite);
     assert.isTrue(Entity.isIdentified(e2));
     assert.strictEqual(Entity.id(e2), '!s:id2:0');
 
@@ -203,4 +204,6 @@ describe('Entity', () => {
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 56);
   });
+
+  // TODO(mmandlis): add tests with TTLs
 });

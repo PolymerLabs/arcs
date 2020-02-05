@@ -9,8 +9,14 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
+import {Literal} from '../hot.js';
 
 export enum TtlUnits {Minute = 'm', Hour = 'h', Day = 'd'}
+
+export interface TtlLiteral extends Literal {
+  count: number;
+  units: TtlUnits;
+}
 
 export class Ttl {
   constructor(
@@ -18,13 +24,27 @@ export class Ttl {
       public readonly units: TtlUnits) {}
 
   public toString(): string {
-    return `${this.count}${this.units}`;
+    return this.isInfinite ? `` : `${this.count}${this.units}`;
   }
 
   public static fromString(ttlStr: string): Ttl {
+    if (!ttlStr) {
+      return Ttl.infinite;
+    }
     const ttlTokens = ttlStr.match(/([0-9]+)([d|h|m])/);
     assert(ttlTokens.length === 3, `Invalid ttl: ${ttlStr}`);
     return new Ttl(Number(ttlTokens[1]), Ttl.ttlUnitsFromString(ttlTokens[2]));
+  }
+
+  static fromLiteral(data: TtlLiteral): Ttl {
+    if (!data.units) {
+      return Ttl.infinite;
+    }
+    return new Ttl(data.count, data.units);
+  }
+
+  toLiteral(): TtlLiteral {
+    return {count: this.count, units: this.units};
   }
 
   public static ttlUnitsFromString(units: string): TtlUnits|undefined {
@@ -39,6 +59,7 @@ export class Ttl {
   }
 
   calculateExpiration(start: Date = new Date()): Date {
+    if (this.isInfinite) return null;
     let ttlMillis = 1;
     switch (this.units) {
       case TtlUnits.Minute:
@@ -55,5 +76,8 @@ export class Ttl {
     }
     return new Date(start.getTime() + ttlMillis);
   }
-}
 
+  get isInfinite(): boolean { return this === Ttl.infinite; }
+
+  static readonly infinite: Ttl = new Ttl(null, null);
+}

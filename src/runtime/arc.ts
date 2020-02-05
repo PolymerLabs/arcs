@@ -53,6 +53,7 @@ import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
+import {Ttl} from './recipe/ttl.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -498,7 +499,7 @@ export class Arc implements ArcInterface {
         ) : undefined;
 
         const newStore = await this.createStoreInternal(type, /* name= */ null, storeId,
-            recipeHandle.tags, volatileKey, recipeHandle.capabilities);
+            recipeHandle.tags, volatileKey, recipeHandle.capabilities, recipeHandle.ttl);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
@@ -508,7 +509,7 @@ export class Arc implements ArcInterface {
 
 
           if (Flags.useNewStorageStack) {
-            const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type, null);
+            const proxy = new StorageProxy(this.generateID().toString(), await newStore.activate(), newStore.type, null, recipeHandle.ttl);
             const handle = unifiedHandleFor({proxy, idGenerator: this.idGenerator, particleId: this.generateID().toString()});
             // tslint:disable-next-line: no-any
             await (handle as SingletonHandle<any>).set(particleClone);
@@ -597,9 +598,8 @@ export class Arc implements ArcInterface {
     return store;
   }
 
-  private async createStoreInternal(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey, capabilities?: Capabilities): Promise<UnifiedStore> {
+  private async createStoreInternal(type: Type, name?: string, id?: string, tags?: string[], storageKey?: string | StorageKey, capabilities?: Capabilities, ttl?: Ttl): Promise<UnifiedStore> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
-
     if (Flags.useNewStorageStack) {
       if (this.storesByKey.has(storageKey)) {
         return this.storesByKey.get(storageKey);
