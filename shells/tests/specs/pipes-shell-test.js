@@ -20,7 +20,7 @@ describe(`pipes-shell (${persona})`, () => {
   // poll the server until it's up
   // TODO(sjmiles): this should not be a faux-test, there must
   // be a proper way to make mocha wait for a condition
-  it('waits for ALDS', async function() {
+  it.skip('waits for ALDS', async function() {
     console.log('waiting for ALDS to spin up...');
     await waitForServer();
     console.log('...done');
