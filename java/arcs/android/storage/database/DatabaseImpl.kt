@@ -16,7 +16,9 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.bindBoolean
 import arcs.android.common.forEach
+import arcs.android.common.getBoolean
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
 import arcs.core.crdt.internal.VersionMap
@@ -107,13 +109,7 @@ class DatabaseImpl(
             val db = this
             // Fetch the entity's type by storage key.
             val (storageKeyId, schemaTypeId) = rawQuery(
-                """
-                    SELECT storage_keys.id, entities.type_id
-                    FROM storage_keys
-                    JOIN entities
-                      ON entities.storage_key_id = storage_keys.id
-                    WHERE storage_keys.storage_key = ?
-                """.trimIndent(),
+                "SELECT id, value_id FROM storage_keys WHERE storage_key = ?",
                 arrayOf(storageKey.toString())
             ).use {
                 require(it.moveToFirst()) { "Entity at storage key $storageKey does not exist." }
@@ -125,11 +121,7 @@ class DatabaseImpl(
             // Populate the entity's field data from the database.
             val data = mutableMapOf<FieldName, Any?>()
             rawQuery(
-                """
-                    SELECT field_id, primitive_value_id
-                    FROM field_values
-                    WHERE entity_storage_key_id = ?
-                """.trimIndent(),
+                "SELECT field_id, value_id FROM field_values WHERE entity_storage_key_id = ?",
                 arrayOf(storageKeyId.toString())
             ).forEach {
                 val fieldId = it.getLong(0)
@@ -170,16 +162,7 @@ class DatabaseImpl(
             // Fetch/create the entity's type ID.
             val schemaTypeId = getSchemaTypeId(entity.schema, db)
             // Set the type ID for this storage key.
-            val storageKeyId = getStorageKeyId(storageKey, db)
-            insertWithOnConflict(
-                TABLE_ENTITIES,
-                null,
-                ContentValues().apply {
-                    put("storage_key_id", storageKeyId)
-                    put("type_id", schemaTypeId)
-                },
-                SQLiteDatabase.CONFLICT_REPLACE
-            )
+            val storageKeyId = getEntityStorageKeyId(storageKey, schemaTypeId, db)
             // Insert/update the entity's field types.
             val fields = getSchemaFields(schemaTypeId, db)
             val content = ContentValues().apply {
@@ -190,7 +173,7 @@ class DatabaseImpl(
                     val field = fields.getValue(fieldName)
                     put("field_id", field.fieldId)
                     // TODO: Handle non-primitive field values and collections.
-                    put("primitive_value_id", getPrimitiveValueId(fieldValue, field.typeId, db))
+                    put("value_id", getPrimitiveValueId(fieldValue, field.typeId, db))
                 }
                 insertWithOnConflict(
                     TABLE_FIELD_VALUES,
@@ -210,7 +193,6 @@ class DatabaseImpl(
         writableDatabase.useTransaction {
             execSQL("DELETE FROM collection_entries")
             execSQL("DELETE FROM collections")
-            execSQL("DELETE FROM entities")
             execSQL("DELETE FROM field_values")
             execSQL("DELETE FROM fields")
             execSQL("DELETE FROM number_primitive_values")
@@ -234,22 +216,30 @@ class DatabaseImpl(
             schemaTypeMap[schema.hash] = schemaTypeId
 
             val insertFieldStatement = compileStatement(
-                "INSERT INTO fields (type_id, parent_type_id, name) VALUES (?, ?, ?)"
+                """
+                    INSERT INTO fields (type_id, parent_type_id, name, is_collection)
+                    VALUES (?, ?, ?, ?)
+                """.trimIndent()
             )
 
-            suspend fun insertFieldBlock(fieldName: String, fieldType: FieldType) {
+            suspend fun insertFieldBlock(
+                fieldName: String,
+                fieldType: FieldType,
+                isCollection: Boolean
+            ) {
                 insertFieldStatement.apply {
                     bindLong(1, getTypeId(fieldType))
                     bindLong(2, schemaTypeId)
                     bindString(3, fieldName)
+                    bindBoolean(4, isCollection)
                     executeInsert()
                 }
             }
             schema.fields.singletons.forEach { (fieldName, fieldType) ->
-                insertFieldBlock(fieldName, fieldType)
+                insertFieldBlock(fieldName, fieldType, isCollection = false)
             }
             schema.fields.collections.forEach { (fieldName, fieldType) ->
-                insertFieldBlock(fieldName, fieldType)
+                insertFieldBlock(fieldName, fieldType, isCollection = true)
             }
             schemaTypeId
         }
@@ -260,10 +250,16 @@ class DatabaseImpl(
      * for it.
      */
     @VisibleForTesting
-    fun getStorageKeyId(storageKey: StorageKey, db: SQLiteDatabase): StorageKeyId {
+    fun getEntityStorageKeyId(
+        storageKey: StorageKey,
+        typeId: TypeId,
+        db: SQLiteDatabase
+    ): StorageKeyId {
         // TODO: Use an LRU cache.
         val content = ContentValues().apply {
             put("storage_key", storageKey.toString())
+            put("data_type", DataType.Entity.ordinal)
+            put("value_id", typeId)
         }
         return db.insertWithOnConflict(
             "storage_keys", null, content, SQLiteDatabase.CONFLICT_IGNORE
@@ -281,13 +277,14 @@ class DatabaseImpl(
         // TODO: Use an LRU cache.
         val fields = mutableMapOf<FieldName, SchemaField>()
         db.rawQuery(
-            "SELECT name, id, type_id FROM fields WHERE parent_type_id = ?",
+            "SELECT name, id, type_id, is_collection FROM fields WHERE parent_type_id = ?",
             arrayOf(schemaTypeId.toString())
         ).forEach {
             fields[it.getString(0)] = SchemaField(
                 fieldName = it.getString(0),
                 fieldId = it.getLong(1),
-                typeId = it.getLong(2)
+                typeId = it.getLong(2),
+                isCollection = it.getBoolean(3)
             )
         }
         return fields
@@ -385,18 +382,26 @@ class DatabaseImpl(
         return typeMap
     }
 
+    /** The type of the data stored at a storage key. */
+    @VisibleForTesting
+    enum class DataType {
+        Entity,
+        Singleton,
+        Collection
+    }
+
     @VisibleForTesting
     data class SchemaField(
         val fieldName: String,
         val fieldId: FieldId,
-        val typeId: TypeId
+        val typeId: TypeId,
+        val isCollection: Boolean
     )
 
     companion object {
         private const val DB_VERSION = 1
 
         // TODO: Add constants for column names?
-        private val TABLE_ENTITIES = "entities"
         private val TABLE_FIELD_VALUES = "field_values"
         private val TABLE_TYPES = "types"
         private val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
@@ -414,41 +419,43 @@ class DatabaseImpl(
 
                 CREATE TABLE storage_keys (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    storage_key TEXT UNIQUE NOT NULL
+                    storage_key TEXT UNIQUE NOT NULL,
+                    -- The kind of data stored at this storage key. See DataType enum for values.
+                    data_type INTEGER NOT NULL,
+                    -- For entities: points to type_id in types table.
+                    -- For singletons and collections: points to collection_id in collections table.
+                    value_id INTEGER NOT NULL
                 );
 
                 CREATE INDEX storage_key_index ON storage_keys (storage_key, id);
 
-                CREATE TABLE entities (
-                    storage_key_id INTEGER NOT NULL PRIMARY KEY,
-                    type_id INTEGER NOT NULL
-                );
-
-                CREATE TABLE singletons (
-                    storage_key_id INTEGER NOT NULL PRIMARY KEY,
-                    type_id INTEGER NOT NULL,
-                    value_id INTEGER -- Allow nulls. Either a primitive value id or an entity id.
-                )
-
+                -- Name is a bit of a misnomer. Defines both collections and singletons. 
                 CREATE TABLE collections (
-                    storage_key_id INTEGER NOT NULL PRIMARY KEY,
+                    id INTEGER NOT NULL PRIMARY KEY,
+                    -- Type of the elements stored in the collection/singleton.
                     type_id INTEGER NOT NULL
                 );
 
+                -- Entries in a collection/singleton. (Singletons will have only a single row.)
                 CREATE TABLE collection_entries (
-                    collection_storage_key_id INTEGER NOT NULL,
-                    entity_storage_key_id INTEGER NOT NULL
+                    collection_id INTEGER NOT NULL,
+                    
+                    -- For collections of primitives: value_id for primitive in collection.
+                    -- For collections of entities: storage_key_id of entity in collection.
+                    -- For singletons: storage_key_id of entity.
+                    value_id INTEGER NOT NULL
                 );
 
-                CREATE INDEX
-                    collection_entries_collection_storage_key_index
-                ON collection_entries (collection_storage_key_id);
+                CREATE INDEX collection_entries_collection_id_index
+                ON collection_entries (collection_id);
 
                 CREATE TABLE fields (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                     type_id INTEGER NOT NULL,
                     parent_type_id INTEGER NOT NULL,
-                    name TEXT NOT NULL
+                    name TEXT NOT NULL,
+                    -- Boolean indicating if the field is a collection or singleton.
+                    is_collection INTEGER NOT NULL 
                 );
 
                 CREATE INDEX field_names_by_parent_type ON fields (parent_type_id, name);
@@ -456,11 +463,14 @@ class DatabaseImpl(
                 CREATE TABLE field_values (
                     entity_storage_key_id INTEGER NOT NULL,
                     field_id INTEGER NOT NULL,
-                    primitive_value_id INTEGER
+                    -- For singleton primitive fields: id in primitive value table.
+                    -- For singleton entity references: storage_key_id of entity.
+                    -- For collections of anything: collection_id.
+                    value_id INTEGER
                 );
 
                 CREATE INDEX field_values_by_entity_storage_key
-                ON field_values (entity_storage_key_id, primitive_value_id);
+                ON field_values (entity_storage_key_id, value_id);
 
                 CREATE TABLE text_primitive_values (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
