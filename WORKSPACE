@@ -126,6 +126,7 @@ ROBOLECTRIC_VERSION = "4.1"
 
 maven_install(
     artifacts = [
+        "androidx.appcompat:appcompat:1.1.0",
         "androidx.annotation:annotation:1.1.0",
         "androidx.lifecycle:lifecycle-common:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-common-java8:" + ANDROIDX_LIFECYCLE_VERSION,
