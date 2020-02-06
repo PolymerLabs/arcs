@@ -715,6 +715,50 @@ ${particleStr1}
         // TODO(cypher1): check that a warning is thrown by Impossible.output
         verify(manifest, true, []);
       }));
+
+      it('ignores dynamic query refinement expressions', async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number [ (num > 3) ] }
+          particle Reader
+            input: reads Something {num: Number [ (num > ?) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, true, []);
+      });
+
+      it('applies refinements', async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number [ (num > 3) ] }
+          particle Reader
+            input: reads Something {num: Number [ (num > 5) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, false, ["Type validations failed for handle 'data: create': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}"]);
+      });
+      it('ignores dynamic query refinement expressions but applies refinements', async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number [ (num > 5) ] }
+          particle Reader
+            input: reads Something {num: Number [ (num > ?) and (num > 3) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, false, []);
+      });
     });
   });
 

@@ -9,14 +9,12 @@
  */
 
 import {digest} from '../platform/digest-web.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
 import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
-import {Flags} from './flags.js';
-import {RefinementNode, SchemaType, SchemaPrimitiveType} from './manifest-ast-nodes.js';
-import {Refinement, BinaryExpression, RefinementOperator, Op, AtleastAsSpecific} from './refiner.js';
+import {SchemaType} from './manifest-ast-nodes.js';
+import {Refinement, AtleastAsSpecific} from './refiner.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
