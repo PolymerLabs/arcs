@@ -455,7 +455,7 @@ function link(srcFiles: Iterable<string>): boolean {
       }
     }
   }
-  if (linkOptions.existing !== []) {
+  if (linkOptions.existing.length > 0) {
     console.warn(`Warning when linking ${linkOptions.existing.length} file(s) already existed.`);
   }
   return success;
