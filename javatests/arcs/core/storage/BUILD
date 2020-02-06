@@ -1,6 +1,7 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_android_test_suite",
+    "arcs_kt_jvm_library",
 )
 
 licenses(["notice"])
@@ -15,7 +16,7 @@ arcs_kt_android_test_suite(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.core.storage",
     deps = [
-        "//java/arcs/core/common",
+        ":fakes",
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
@@ -24,17 +25,28 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/referencemode",
-        "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/storage/testutil",  # unuseddeps: keep
         "//java/arcs/core/testutil",
-        "//java/arcs/core/type",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/storage/database/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/truth:truth-android",
-        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
         "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
+    ],
+)
+
+arcs_kt_jvm_library(
+    name = "fakes",
+    srcs = glob(
+        ["*.kt"],
+        exclude = TEST_SRCS,
+    ),
+    deps = [
+        "//java/arcs/core/crdt",
+        "//java/arcs/core/storage",
+        "//third_party/kotlin/kotlinx_atomicfu",
     ],
 )
