@@ -18,7 +18,7 @@ class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
         res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
         if (allSynced) {
             val ptr = HandleSyncUpdateTest_Res()
-            ptr.txt = if (sng.get() != null) "sng:populated" else "sng:null"
+            ptr.txt = if (sng.fetch() != null) "sng:populated" else "sng:null"
             res.store(ptr)
         }
     }
@@ -27,7 +27,7 @@ class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
         val out = HandleSyncUpdateTest_Res()
         out.txt = "update:${handle.name}"
         if (handle.name == "sng") {
-            out.num = sng.get()?.num ?: -1.0
+            out.num = sng.fetch()?.num ?: -1.0
         } else if (handle.name == "col") {
             out.num = if (col.size > 0) col.iterator().next().num else -1.0
         } else {

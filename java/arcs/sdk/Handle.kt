@@ -19,7 +19,7 @@ interface Handle {
 /** A singleton handle with read access. */
 interface ReadableSingleton<T : Entity> : Handle {
     /** Returns the value of the singleton. */
-    fun get(): T?
+    fun fetch(): T?
 
     fun onUpdate(action: (T?) -> Unit)
 }

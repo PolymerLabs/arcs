@@ -35,7 +35,7 @@ class TTTBoard : AbstractTTTBoard() {
     override fun onHandleUpdate(handle: Handle) = renderOutput()
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val gs = gameState.get() ?: TTTBoard_GameState()
+        val gs = gameState.fetch() ?: TTTBoard_GameState()
         val boardList = gs.board.split(",")
         val boardModel = mutableListOf<Map<String, String?>>()
         boardList.forEachIndexed { index, cell ->

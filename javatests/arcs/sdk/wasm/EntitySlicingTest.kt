@@ -19,9 +19,9 @@ class EntitySlicingTest : AbstractEntitySlicingTest() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (!allSynced) return;
 
-        s1.get()?.let { res.store(Res("s1:${it.num.toInt()}")) }
-        s2.get()?.let { res.store(Res("s2:${it.num.toInt()},${it.txt}")) }
-        s3.get()?.let { res.store(Res("s3:${it.num.toInt()},${it.txt},${it.flg}")) }
+        s1.fetch()?.let { res.store(Res("s1:${it.num.toInt()}")) }
+        s2.fetch()?.let { res.store(Res("s2:${it.num.toInt()},${it.txt}")) }
+        s3.fetch()?.let { res.store(Res("s3:${it.num.toInt()},${it.txt},${it.flg}")) }
 
         for (e in c1) {
             res.store(Res("c1:${e.num.toInt()}"))

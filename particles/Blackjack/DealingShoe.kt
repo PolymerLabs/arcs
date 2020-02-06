@@ -17,7 +17,7 @@ class DealingShoe : AbstractDealingShoe() {
 
     override fun onHandleUpdate(handle: Handle) {
         if (handle.name != "cardRequest") return
-        val request = cardRequest.get() ?: return
+        val request = cardRequest.fetch() ?: return
         val card = pickACard() ?: return
         nextCard.set(
             DealingShoe_NextCard(
@@ -38,7 +38,7 @@ class DealingShoe : AbstractDealingShoe() {
     }
 
     fun pickACard(): Card? {
-        val localDecks = decks.get() ?: initializedDecks()
+        val localDecks = decks.fetch() ?: initializedDecks()
         var choice = Random.nextInt(totalCards)
         val cards = localDecks.cards.takeIf { it != emptyDeck } ?: return null
         // This could be done more efficiently, but should suffice for now.

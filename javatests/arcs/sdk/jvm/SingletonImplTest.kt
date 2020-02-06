@@ -43,13 +43,13 @@ class SingletonImplTest {
     @Test
     fun initialState() {
         assertThat(singleton.name).isEqualTo(HANDLE_NAME)
-        assertThat(singleton.get()).isNull()
+        assertThat(singleton.fetch()).isNull()
     }
 
     @Test
     fun set_changesValue() {
         singleton.set(DUMMY_VALUE)
-        assertThat(singleton.get()).isEqualTo(DUMMY_VALUE)
+        assertThat(singleton.fetch()).isEqualTo(DUMMY_VALUE)
     }
 
     @Test
@@ -62,7 +62,7 @@ class SingletonImplTest {
     fun clear_changesValue() {
         singleton.set(DUMMY_VALUE)
         singleton.clear()
-        assertThat(singleton.get()).isNull()
+        assertThat(singleton.fetch()).isNull()
     }
 
     @Test

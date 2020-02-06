@@ -177,7 +177,7 @@ class ArcsSingleton<T, StoreData, StoreOp>(
     }
 
     /** Gets the current value (if any). */
-    suspend fun get(): T? {
+    suspend fun fetch(): T? {
         activated.await()
         return crdtMutex.withLock {
             syncJob?.join() // If there's an ongoing sync, let it finish.
@@ -191,7 +191,7 @@ class ArcsSingleton<T, StoreData, StoreOp>(
      */
     suspend fun getAsync(
         coroutineContext: CoroutineContext = scope.coroutineContext
-    ): Deferred<T?> = scope.async(coroutineContext) { get() }
+    ): Deferred<T?> = scope.async(coroutineContext) { fetch() }
 
     /**
      * Sets the value of the [ArcsSingleton] to the provided [value] and returns whether or not the

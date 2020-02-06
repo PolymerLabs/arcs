@@ -17,9 +17,9 @@ class TTTRandomComputer : AbstractTTTRandomComputer() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(gameState)
 
     override fun onHandleUpdate(handle: Handle) {
-        if (gameState.get()?.currentPlayer != player.get()?.id) return
+        if (gameState.fetch()?.currentPlayer != player.fetch()?.id) return
 
-        val gs = gameState.get() ?: TTTRandomComputer_GameState()
+        val gs = gameState.fetch() ?: TTTRandomComputer_GameState()
 
         val boardArr = gs.board.split(",")
         val emptyCells = mutableListOf<Double>()

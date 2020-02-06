@@ -30,7 +30,7 @@ class Dealer : AbstractDealer() {
     override fun onHandleUpdate(handle: Handle) {
         // We only respond to changes to nextCard.
         if (handle.name != "nextCard") return
-        val nc = nextCard.get()?.takeIf { it.player == name } ?: return
+        val nc = nextCard.fetch()?.takeIf { it.player == name } ?: return
         hand.store(Dealer_Hand(value = nc.card))
         renderOutput()
     }

@@ -53,31 +53,31 @@ class ArcsSingletonTest {
     @Test
     fun canCreate_singletonOfEntity() = runBlockingTest {
         val bestFriend = ArcsSingleton(entityKey, personSchema, coroutineContext = coroutineContext)
-        assertThat(bestFriend.get()).isNull()
+        assertThat(bestFriend.fetch()).isNull()
 
         assertThat(bestFriend.set(Person("Larry", 32))).isTrue()
-        assertThat(bestFriend.get()).isEqualTo(Person("Larry", 32))
+        assertThat(bestFriend.fetch()).isEqualTo(Person("Larry", 32))
 
         assertThat(bestFriend.set(Person("Sergey", 44))).isTrue()
-        assertThat(bestFriend.get()).isEqualTo(Person("Sergey", 44))
+        assertThat(bestFriend.fetch()).isEqualTo(Person("Sergey", 44))
 
         assertThat(bestFriend.clear()).isTrue()
-        assertThat(bestFriend.get()).isNull() // #foreveralone
+        assertThat(bestFriend.fetch()).isNull() // #foreveralone
     }
 
     @Test
     fun canCreate_singletonOfPrimitive() = runBlockingTest {
         val favoriteColor = ArcsSingleton<String>(primitiveKey, coroutineContext = coroutineContext)
-        assertThat(favoriteColor.get()).isNull()
+        assertThat(favoriteColor.fetch()).isNull()
 
         assertThat(favoriteColor.set("Blue".toReferencable())).isTrue()
-        assertThat(favoriteColor.get()).isEqualTo("Blue".toReferencable())
+        assertThat(favoriteColor.fetch()).isEqualTo("Blue".toReferencable())
 
         assertThat(favoriteColor.set("Red".toReferencable())).isTrue()
-        assertThat(favoriteColor.get()).isEqualTo("Red".toReferencable())
+        assertThat(favoriteColor.fetch()).isEqualTo("Red".toReferencable())
 
         assertThat(favoriteColor.clear()).isTrue()
-        assertThat(favoriteColor.get()).isNull()
+        assertThat(favoriteColor.fetch()).isNull()
     }
 
     @Test
@@ -93,16 +93,16 @@ class ArcsSingletonTest {
 
         // Setting bob's value should be reflected in otherBob.
         assertThat(bob.setAsync(Person("bob", 42)).await()).isTrue()
-        assertThat(otherBob.get()).isEqualTo(Person("bob", 42))
+        assertThat(otherBob.fetch()).isEqualTo(Person("bob", 42))
 
         // Updating otherBob should also be reflected in bob.
         assertThat(otherBob.setAsync(Person("notbob", 44)).await()).isTrue()
-        assertThat(bob.get()).isEqualTo(Person("notbob", 44))
+        assertThat(bob.fetch()).isEqualTo(Person("notbob", 44))
 
         // Clearing bob, should result in otherBob also being cleared.
         assertThat(bob.clearAsync().await()).isTrue()
 
-        assertThat(bob.get()).isNull()
+        assertThat(bob.fetch()).isNull()
         assertThat(otherBob.getAsync().await()).isNull()
     }
 
