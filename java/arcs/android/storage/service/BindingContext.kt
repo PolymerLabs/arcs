@@ -19,11 +19,17 @@ import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
+import arcs.core.data.RawEntity
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
+import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
+import arcs.core.storage.referencemode.RefModeStoreData
+import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.util.SendQueue
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
@@ -121,7 +127,7 @@ class BindingContext(
             val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
             val actualMessage = message.actual as ProxyMessage<CrdtData, CrdtOperation, Any?>
             try {
-                if (activeStore.onProxyMessage(actualMessage)) {
+                if (activeStore.onProxyMessage(activeStore.prepMessage(actualMessage))) {
                     resultCallback.onResult(null)
 
                     onProxyMessage(store.storageKey, actualMessage)
@@ -139,4 +145,72 @@ class BindingContext(
     companion object {
         private val nextId = atomic(0)
     }
+}
+
+/**
+ * Convert a CrdtData into the corresponding RefModeStoreOp by wrapping it.
+ */
+@Suppress("UNCHECKED_CAST")
+fun CrdtData.toRefModeData(): RefModeStoreData = when (this) {
+    is CrdtSingleton.Data<*> ->
+        RefModeStoreData.Singleton(this as CrdtSingleton.Data<RawEntity>)
+    is CrdtSet.Data<*> ->
+        RefModeStoreData.Set(this as CrdtSet.Data<RawEntity>)
+    else -> throw IllegalArgumentException(
+        "Unsupported model type for ReferenceModeStore"
+    )
+}
+
+/**
+ * Convert a CrdtOperation into the corresponding RefModeStoreOp by wrapping it.
+ */
+@Suppress("UNCHECKED_CAST")
+fun CrdtOperation.toRefModeOp(): RefModeStoreOp = when (this) {
+    is CrdtSingleton.Operation.Update<*> ->
+        RefModeStoreOp.SingletonUpdate(this as CrdtSingleton.Operation.Update<RawEntity>)
+    is CrdtSingleton.Operation.Clear<*> ->
+        RefModeStoreOp.SingletonClear(this as CrdtSingleton.Operation.Clear<RawEntity>)
+    is CrdtSet.Operation.Add<*> ->
+        RefModeStoreOp.SetAdd(this as CrdtSet.Operation.Add<RawEntity>)
+    is CrdtSet.Operation.Remove<*> ->
+        RefModeStoreOp.SetRemove(this as CrdtSet.Operation.Remove<RawEntity>)
+    else -> throw IllegalArgumentException("Unsupported operation type for ReferenceModeStore")
+}
+
+typealias CrdtProxyMessage = ProxyMessage<CrdtData, CrdtOperation, Any?>
+
+/**
+ * Converts a non-reference-mode [ProxyMessage] into a reference-mode [ProxyMessage]
+ *
+ * Note: nothing prevents you from calling this on a ProxyMessage that's already based on
+ * reference mode data, but most likely you don't want to do that.
+ */
+fun <Data : CrdtData, Op : CrdtOperation, T> ProxyMessage<Data, Op, T>
+    .toRefModeMessage(): CrdtProxyMessage = when (this) {
+        is ProxyMessage.SyncRequest ->
+            ProxyMessage.SyncRequest(this.id)
+        is ProxyMessage.ModelUpdate ->
+            ProxyMessage.ModelUpdate(
+                this.model.toRefModeData(),
+                this.id
+            )
+        is ProxyMessage.Operations ->
+            ProxyMessage.Operations(
+                this.operations.map { it.toRefModeOp() },
+                this.id
+            )
+    }
+
+/**
+ * prepMessage is used by BindingContext.sendProxyMessage to convert the client-side
+ * message type into the StorageService-side message type.
+ *
+ * Currently, this means converting non-reference CrdtData/CrdtOperation proxy messages into
+ * ReferenceMode proxy messages.
+ */
+fun <Data, Op, ConsumerData> ActiveStore<Data, Op, ConsumerData>.prepMessage(
+    message: CrdtProxyMessage
+) where Data : CrdtData, Op : CrdtOperation = when (this) {
+    is ReferenceModeStore -> message.toRefModeMessage()
+    else -> message
 }
