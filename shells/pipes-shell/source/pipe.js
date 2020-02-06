@@ -42,7 +42,7 @@ const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
   contextReady(bus, context);
 };
 
-export const requireContext = async manifest => {
+const requireContext = async manifest => {
   if (!requireContext.promise) {
     requireContext.promise = Runtime.parse(manifest);
     window.context = await requireContext.promise;
