@@ -47,8 +47,8 @@ export abstract class Schema2Base {
       return;
     }
 
-    const manifest = await Runtime.parse(`import '${src}'`);
-    if (manifest.errors.length) {
+    const manifest = await Runtime.parseFile(src);
+    if (manifest.errors.some(e => e.severity !== 'warning')) {
       return;
     }
     const classes = await this.processManifest(manifest);
@@ -69,9 +69,8 @@ export abstract class Schema2Base {
   async processManifest(manifest: Manifest): Promise<string[]> {
     // TODO: consider an option to generate one file per particle
     const classes: string[] = [];
-    for (const particle of manifest.allParticles) {
+    for (const particle of manifest.particles) {
       const graph = new SchemaGraph(particle);
-
       // Generate one class definition per node in the graph.
       for (const node of graph.walk()) {
         const generator = this.getClassGenerator(node);
