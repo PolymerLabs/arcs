@@ -398,6 +398,7 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
       return;
     }
   }
+  // update target after ensuring that the data conforms to the refinements (if enforced)
   for (const [name, value] of Object.entries(temp)) {
     target[name] = value;
   }

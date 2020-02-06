@@ -15,6 +15,7 @@ import {Manifest} from '../manifest.js';
 import {Entity, EntityClass} from '../entity.js';
 import {Schema} from '../schema.js';
 import {Flags} from '../flags.js';
+import {removeSystemExceptionHandler, registerSystemExceptionHandler, defaultSystemExceptionHandler} from '../arc-exceptions.js';
 describe('refiner', () => {
     it('Refines data given an expression.', () => {
         const manifestAst = parse(`
@@ -131,7 +132,9 @@ describe('refiner', () => {
 describe('refiner enforcement', () => {
     let schema: Schema;
     let entityClass: EntityClass;
+    let exceptions: Error[] = [];
     before(async () => {
+      exceptions = [];
       const manifest = await Manifest.parse(`
         schema Foo
           txt: Text
@@ -139,11 +142,19 @@ describe('refiner enforcement', () => {
           flg: Boolean
       `);
       schema = manifest.schemas.Foo;
-      entityClass = Entity.createEntityClass(schema, null);
+      const reportExceptionInHost = (error) => {exceptions.push(error);};
+      // tslint:disable-next-line: no-any
+      entityClass = Entity.createEntityClass(schema, {reportExceptionInHost} as any);
     });
-
+    it('data does not conform to the refinement', Flags.whileEnforcingRefinements(async () => {
+      const _ = new entityClass({txt: 'abc', num: 56});
+      assert.lengthOf(exceptions, 1);
+      exceptions.map(except => {
+         assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement:refineData on particle undefined: Entity schema field 'num' does not conform to the refinement [(num < 10)]`);
+      });
+    }));
     it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
-        assert.doesNotThrow(() => { const e = new entityClass({txt: 'abc', num: 8}); });
+        assert.doesNotThrow(() => { const _ = new entityClass({txt: 'abc', num: 8}); });
       }));
 });
 
