@@ -80,7 +80,7 @@ class DatabaseImpl(
                 put("id", it.ordinal)
                 put("name", it.name)
             }
-            db.insert(TABLE_TYPES, null, content)
+            insert(TABLE_TYPES, null, content)
         }
     }
 
@@ -254,16 +254,30 @@ class DatabaseImpl(
         storageKey: StorageKey,
         typeId: TypeId,
         db: SQLiteDatabase
-    ): StorageKeyId {
+    ): StorageKeyId = db.transaction {
         // TODO: Use an LRU cache.
-        val content = ContentValues().apply {
-            put("storage_key", storageKey.toString())
-            put("data_type", DataType.Entity.ordinal)
-            put("value_id", typeId)
+        rawQuery(
+            "SELECT id, data_type FROM storage_keys WHERE storage_key = ?",
+            arrayOf(storageKey.toString())
+        ).use {
+            if (it.moveToFirst()) {
+                // Return existing storage key id.
+                val storageKeyId = it.getLong(0)
+                val dataType = DataType.values()[it.getInt(1)]
+                require(dataType == DataType.Entity) {
+                    "Expected storage key $storageKey to be an Entity, instead was $dataType."
+                }
+                storageKeyId
+            } else {
+                // Insert storage key.
+                val content = ContentValues().apply {
+                    put("storage_key", storageKey.toString())
+                    put("data_type", DataType.Entity.ordinal)
+                    put("value_id", typeId)
+                }
+                insert(TABLE_STORAGE_KEYS, null, content)
+            }
         }
-        return db.insertWithOnConflict(
-            "storage_keys", null, content, SQLiteDatabase.CONFLICT_IGNORE
-        )
     }
 
     /**
@@ -402,6 +416,7 @@ class DatabaseImpl(
         private const val DB_VERSION = 1
 
         // TODO: Add constants for column names?
+        private val TABLE_STORAGE_KEYS = "storage_keys"
         private val TABLE_FIELD_VALUES = "field_values"
         private val TABLE_TYPES = "types"
         private val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
