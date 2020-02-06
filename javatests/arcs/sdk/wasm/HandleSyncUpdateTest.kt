@@ -17,23 +17,25 @@ class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
         if (allSynced) {
-            val ptr = HandleSyncUpdateTest_Res()
-            res.store(ptr.copy(
-                txt = if (sng.fetch() != null) "sng:populated" else "sng:null"
-            ))
+            var ptr = HandleSyncUpdateTest_Res()
+            res.store(ptr.copy(txt = if (sng.fetch() != null) "sng:populated" else "sng:null"))
         }
     }
 
     override fun onHandleUpdate(handle: Handle) {
         val out = HandleSyncUpdateTest_Res()
-        out.txt = "update:${handle.name}"
+        var txt = "update:${handle.name}"
+        var num = out.num
         if (handle.name == "sng") {
-            out.num = sng.fetch()?.num ?: -1.0
+            num = sng.fetch()?.num ?: -1.0
         } else if (handle.name == "col") {
-            out.num = if (col.size > 0) col.iterator().next().num else -1.0
+            num = if (col.size > 0) col.iterator().next().num else -1.0
         } else {
-            out.txt = "unexpected handle name: ${handle.name}"
+            txt = "unexpected handle name: ${handle.name}"
         }
-        res.store(out)
+        res.store(out.copy(
+            txt = txt,
+            num = num
+        ))
     }
 }

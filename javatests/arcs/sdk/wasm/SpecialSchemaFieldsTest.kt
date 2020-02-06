@@ -31,8 +31,8 @@ class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
     fun testLanguageKeywordField() {
         val s = SpecialSchemaFieldsTest_Fields()
         assertEquals("Keyword field `for_` should start as assigned Value", "", s.for_)
-        s.for_ = "for"
-        assertEquals("language keyword field gets is mutable", "for", s.for_)
+        val s2 = s.copy(for_ = "for")
+        assertEquals("language keyword field copy works", "for", s2.for_)
     }
 
     @Test
@@ -53,12 +53,12 @@ class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
             "Keyword field `internalId_` should start as assigned value",
             0.0,
             s.internalId_)
-        s.internalId_ = 10.0
-        assertEquals("language keyword field gets is mutable", 10.0, s.internalId_)
+        val s2 = s.copy(internalId_ = 10.0)
+        assertEquals("language keyword field copy works", 10.0, s2.internalId_)
         assertNotEquals(
             "The internalId field should be different from the internal identifier",
-            s.internalId_,
-            s.internalId
+            s2.internalId_,
+            s2.internalId
         )
     }
 

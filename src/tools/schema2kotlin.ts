@@ -125,7 +125,7 @@ class KotlinGenerator implements ClassGenerator {
       `var ${fixed} = ${defaultVal}\n` +
       `        get() = field\n` +
       `        private set(_value) {\n` +
-      `            ${fixed} = _value\n` +
+      `            field = _value\n` +
       `        }`
     );
     this.setFields.push(`this.${fixed} = ${fixed}`);

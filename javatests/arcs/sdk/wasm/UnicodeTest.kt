@@ -15,13 +15,12 @@ import arcs.sdk.Handle
 
 class UnicodeTest : AbstractUnicodeTest() {
     override fun onHandleUpdate(handle: Handle) {
-        val out = UnicodeTest_Res(pass = "", src = "")
-        out.src = "åŗċş 🌈"
-        out.pass = if (handle.name == "sng") {
+        val out = UnicodeTest_Res(pass = "", src = "åŗċş 🌈")
+        val pass = if (handle.name == "sng") {
             ((handle as WasmSingletonImpl<*>).fetch() as UnicodeTest_Sng).pass
         } else {
             ((handle as WasmCollectionImpl<*>).iterator().next() as UnicodeTest_Col).pass
         }
-        res.store(out)
+        res.store(out.copy(pass = pass))
     }
 }
