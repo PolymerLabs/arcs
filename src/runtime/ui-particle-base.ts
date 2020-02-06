@@ -120,7 +120,6 @@ export class UiParticleBase extends Particle {
    * Add to a collection. Value can be an Entity or a POJO (or an Array of such values).
    */
   async add(handleName: string, value: Entity | {} | [Entity] | [{}]): Promise<void> {
-    debugger;
     const handle = this._requireHandle(handleName);
     if (!(handle instanceof Collection) && !(handle instanceof CollectionHandle)) {
       throw new Error(`Cannot add to non-Collection handle [${handleName}]`);
@@ -130,13 +129,12 @@ export class UiParticleBase extends Particle {
     return this.await(async p => {
       // remove pre-existing Entities (we will then re-add them, which is the mutation cycle)
       await this._remove(handle, data);
-      // convert values to Entites as needed
-      const entities = data.map(value => this.requireEntity(value, entityClass));
-      // add or store Entities
+      // add (store) Entities, or Entities created from values
       if (handle instanceof CollectionHandle) {
-        await handle.addMultiple(entities);
+        await handle.addMultiple(data);
       } else {
         //console.log('handle.store(entity): handle', handleName, ' data ', data);
+        const entities = data.map(value => this.requireEntity(value, entityClass));
         const tasks = entities.map(entity => handle.store(entity));
         await Promise.all(tasks);
       }

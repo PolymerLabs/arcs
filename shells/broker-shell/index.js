@@ -30,12 +30,6 @@ const Application = {
     this.send({message: 'configure', config});
   },
   context() {
-    // testing ingestion
-    // this.send({message: 'enableIngestion'});
-    // this.send({message: 'ingest', entity: {type: 'person', jsonData: `{"name": "John Hancock"}`}});
-    // setTimeout(() => {
-    //   this.ingestTid = this.send({message: 'spawn', recipe: 'PersonAutofill'});
-    // }, 300);
     // upon ready, we right away ask for an Arc
     this.send({message: 'runArc', arcId: 'notification-arc', recipe: 'Notification'});
   },

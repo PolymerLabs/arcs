@@ -34,7 +34,6 @@ export const connectToPlatform = async Application => {
     receive(json) {
       const packet = JSON.parse(json);
       console.log('RECEIVED: ', packet);
-      //const delegate = dispatcher[packet.message] || Application.receive.bind(Application);
       const delegate = dispatcher[packet.message];
       if (delegate) {
         delegate(packet);
@@ -69,13 +68,9 @@ export const connectToPlatform = async Application => {
     // extract packet data
     const {data, tid} = packet;
     // attach an event dispatcher
-    //if (!tid) {
-    //  console.warn('slot packet missing `tid`: so events are not supported');
-    //} else {
-      renderer.dispatch = (pid, eventlet) => {
-        Application.send({message: 'event', tid, pid, eventlet});
-      };
-    //}
+    renderer.dispatch = (pid, eventlet) => {
+      Application.send({message: 'event', tid, pid, eventlet});
+    };
     console.log('renderer gets:', data);
     // send message to renderer
     renderer.render(data);

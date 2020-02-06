@@ -74,20 +74,6 @@ const smokeTest = async (bus) => {
     }
   };
   //
-  // const enableIngestion = () => {
-  //   // enable 'classic' ingestion
-  //   send({message: 'enableIngestion'});
-  // };
-  // //
-  // const ingestionTest = () => {
-  //   // ingest some data
-  //   send({message: 'ingest', entity: {type: 'person', jsonData: `{"name": "John Hancock"}`}});
-  // };
-  // //
-  // const autofillTest = () => {
-  //   send({message: 'spawn', recipe: 'PersonAutofill'});
-  // };
-  //
   const notificationTest = () => {
     // spawn an arc
     send({message: 'runArc', arcId: 'pipe-notification-test', modality: 'dom', recipe: 'Notification'});
@@ -114,9 +100,6 @@ const smokeTest = async (bus) => {
   //
   // perform tests
   enqueue([
-    //enableIngestion,
-    //ingestionTest,
-    //autofillTest,
     notificationTest,
     wasmTest,
     parseTest,
