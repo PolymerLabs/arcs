@@ -82,6 +82,9 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 
+    @After
+    fun teardown() = CapabilitiesResolver.reset()
+
     @Test
     fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
         val activeStore = createReferenceModeStore()

@@ -20,6 +20,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
@@ -46,6 +47,7 @@ class DatabaseDriverProviderTest {
         databaseFactory = null
         DriverFactory.clearRegistrationsForTesting()
         schemaHashLookup.clear()
+        CapabilitiesResolver.reset()
     }
 
     @Test
