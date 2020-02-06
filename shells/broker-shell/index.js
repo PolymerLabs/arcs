@@ -19,11 +19,10 @@ const config = {
   },
   storage: 'volatile://',
   manifest: `
-import 'https://$particles/Pipes/Pipes.arcs'
-import 'https://$particles/Restaurants/Restaurants.arcs'
-import 'https://$particles/Notification/Notification.arcs'
-  `
-};
+    import 'https://$particles/Pipes/Pipes.arcs'
+    import 'https://$particles/Restaurants/Restaurants.arcs'
+    import 'https://$particles/Notification/Notification.arcs'
+  `};
 
 const Application = {
   ready() {
@@ -32,20 +31,24 @@ const Application = {
   },
   context() {
     // testing ingestion
-    this.send({message: 'enableIngestion'});
-    this.send({message: 'ingest', entity: {type: 'person', jsonData: `{"name": "John Hancock"}`}});
-    setTimeout(() => {
-      this.ingestTid = this.send({message: 'spawn', recipe: 'PersonAutofill'});
-    }, 300);
+    // this.send({message: 'enableIngestion'});
+    // this.send({message: 'ingest', entity: {type: 'person', jsonData: `{"name": "John Hancock"}`}});
+    // setTimeout(() => {
+    //   this.ingestTid = this.send({message: 'spawn', recipe: 'PersonAutofill'});
+    // }, 300);
     // upon ready, we right away ask for an Arc
-    this.arcTid = this.send({message: 'spawn', recipe: 'Notification'});
+    this.send({message: 'runArc', arcId: 'notification-arc', recipe: 'Notification'});
   },
   // handle packets that were not otherwised consumed
+  // TODO(sjmiles): this code is confused about what a `packet` is.
+  // There are 'bus-message packets' and 'ui-broker packets'
+  // `receive` is generally used for the former, but this consumes the latter.
+  // I'm not cleaning it up right now because this app is likely to become vestigial.
   receive(packet) {
-    const {content: slot} = packet;
+    const {content} = packet;
     // TODO(sjmiles): UiParticles that do not implement `render` return no content(?)
-    if (slot) {
-      const {model} = slot.content;
+    if (content) {
+      const {model} = content;
       // if we get a slot-render request for 'notification' modality, make a toast for it
       if (model.modality === 'notification') {
         addToast(model.text);
@@ -55,15 +58,15 @@ const Application = {
   // platform calls here if toast is clicked
   async notificationClick(toast) {
     // if we haven't already created a Restaurants Arc...
-    if (!this.restaurantsTid && toast.innerText.includes('dinner')) {
+    if (!this.restaurantsArcId && toast.innerText.includes('dinner')) {
       // spin up a render surface (like a WebView)
       await waitForRenderSurface();
+      // choose arcId
+      this.restaurantsArcId = 'restaurant-arc';
       // spawn 'Restaurants' arc
-      const tid = Application.send({message: 'spawn', recipe: 'Restaurants'});
+      Application.send({message: 'runArc', recipe: 'Restaurants', arcId: this.restaurantsArcId});
       // add 'Reservations' recipes
-      Application.send({tid, message: 'recipe', recipe: 'MakeReservations'});
-      // remember the arc's transaction identifier
-      this.restaurantsTid = tid;
+      //Application.send({arcId, message: 'recipe', recipe: 'MakeReservations'});
     }
   }
 };

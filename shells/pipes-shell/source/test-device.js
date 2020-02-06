@@ -74,19 +74,19 @@ const smokeTest = async (bus) => {
     }
   };
   //
-  const enableIngestion = () => {
-    // enable 'classic' ingestion
-    send({message: 'enableIngestion'});
-  };
-  //
-  const ingestionTest = () => {
-    // ingest some data
-    send({message: 'ingest', entity: {type: 'person', jsonData: `{"name": "John Hancock"}`}});
-  };
-  //
-  const autofillTest = () => {
-    send({message: 'spawn', recipe: 'PersonAutofill'});
-  };
+  // const enableIngestion = () => {
+  //   // enable 'classic' ingestion
+  //   send({message: 'enableIngestion'});
+  // };
+  // //
+  // const ingestionTest = () => {
+  //   // ingest some data
+  //   send({message: 'ingest', entity: {type: 'person', jsonData: `{"name": "John Hancock"}`}});
+  // };
+  // //
+  // const autofillTest = () => {
+  //   send({message: 'spawn', recipe: 'PersonAutofill'});
+  // };
   //
   const notificationTest = () => {
     // spawn an arc
@@ -95,17 +95,17 @@ const smokeTest = async (bus) => {
   //
   const parseTest = () => {
     // parse manifest content
-    send({message: 'parse', content: `import 'https://$particles/PipeApps/PipeApps.arcs'`});
+    send({message: 'parse', id: 'content-parse', content: `import 'https://$particles/PipeApps/PipeApps.arcs'`});
     // parse manifest file
-    send({message: 'parse', path: `https://$particles/PipeApps/PipeApps.arcs`});
+    send({message: 'parse', id: 'path-parse', path: `https://$particles/PipeApps/PipeApps.arcs`});
   };
   //
   const wasmTest = () => {
     // spawn an arc using WASM particle
-    send({message: 'spawn', modality: 'dom', recipe: 'HelloWorldRecipe'});
+    send({message: 'runArc', arcId: 'wasm-test', modality: 'dom', recipe: 'HelloWorldRecipe'});
   };
   //
-  const runArcSerialTest = () => {
+  const serialRunArcTest = () => {
     // async `runArc` commands are performed serially
     send({message: 'runArc', arcId: 'pipe-notification-test1', modality: 'dom', recipe: 'Notification'});
     send({message: 'runArc', arcId: 'pipe-notification-test2', modality: 'dom', recipe: 'Notification'});
@@ -114,12 +114,12 @@ const smokeTest = async (bus) => {
   //
   // perform tests
   enqueue([
-    enableIngestion,
-    ingestionTest,
-    autofillTest,
+    //enableIngestion,
+    //ingestionTest,
+    //autofillTest,
     notificationTest,
     wasmTest,
     parseTest,
-    runArcSerialTest
+    serialRunArcTest
   ], 500);
 };

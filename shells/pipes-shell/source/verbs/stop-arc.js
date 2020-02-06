@@ -8,9 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export const event = async ({pid, particleId, eventlet}, runtime) => {
-  // TODO(sjmiles): support either key for particleId (for backward compat)
-  const id = particleId || pid;
-  const arc = runtime.findArcByParticleId(id);
-  arc.pec.slotComposer.sendEvent(id, eventlet);
+export const stopArc = async ({arcId}, runtime) => {
+  runtime.stop(arcId);
 };

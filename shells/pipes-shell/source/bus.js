@@ -13,17 +13,12 @@ const {log} = logsFactory('BUS', '#d32e1b');
 
 export const Bus = class {
   constructor(dispatcher, client) {
-    // start with a dummy entry so all live indices > 0
-    this.transactionIds = [0];
     this.dispatcher = dispatcher;
     this.client = client;
   }
   receive(msg) {
     const body = this.parse(msg);
-    const tid = this.assignTransactionId();
-    log(`[${tid}] :: received [${JSON.stringify(body, null, '  ')}]`);
-    this.mapAsyncValue(tid, async () => this.dispatcher.dispatch(body, tid, this));
-    return tid;
+    this.dispatcher.dispatch(body, this);
   }
   send(msg) {
     const json = typeof msg === 'string' ? msg : JSON.stringify(msg);
@@ -42,28 +37,5 @@ export const Bus = class {
       }
     }
     return msg;
-  }
-  assignTransactionId() {
-    // the `id` we return is an index into transactionIds which are promises
-    let resolve;
-    const promise = new Promise(resolve_ => resolve = resolve_);
-    promise.resolve = resolve;
-    return this.transactionIds.push(promise) - 1;
-  }
-  async mapAsyncValue(id, asyncFunction) {
-    // when `asyncFunction` completes, it's return value is mapped against id
-    this.transactionIds[id].resolve(await asyncFunction());
-  }
-  async recoverTransactionId(forValue) {
-    // return tid whose async value matches forValue
-    for (let tid=1, promise; (promise=this.transactionIds[tid]); tid++) {
-      const value = await promise;
-      if (value === forValue) {
-        return tid;
-      }
-    }
-  }
-  async getAsyncValue(transactionId) {
-    return await this.transactionIds[transactionId];
   }
 };

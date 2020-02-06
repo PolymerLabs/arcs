@@ -14,7 +14,7 @@ import {logsFactory} from '../../../../build/platform/logs-factory.js';
 const {log} = logsFactory('pipe::parse');
 
 // can provide either a path or literal content for a manifest
-export const parse = async ({path, content}, tid, bus) => {
+export const parse = async ({id, path, content}, bus) => {
   // TODO(sjmiles): catch exceptions and relay over bus?
   let manifest;
   if (path) {
@@ -29,5 +29,5 @@ export const parse = async ({path, content}, tid, bus) => {
     recipes = manifest.allRecipes.map(r => ({name: r.name, triggers: r.triggers}));
   }
   log(`sending [${JSON.stringify(recipes)}]`);
-  bus.send({tid, messageType: 'manifest', recipes});
+  bus.send({messageType: 'manifest', id, recipes});
 };

@@ -42,7 +42,7 @@ const configOptions = {
   },
   arc: {
     aliases: ['arckey'],
-    persistToUrl: true
+    persistToUrl: false
   },
   search: {
   },

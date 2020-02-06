@@ -12,6 +12,20 @@ const pipeShellHref = new URL(`../pipes-shell/web/index.html?log`, location.href
 const renderSurfaceHref = new URL('../pipes-shell/surface/surface.html?log', location.href).href;
 
 export const connectToPlatform = async Application => {
+  // bus packet handlers
+  const dispatcher = {
+    ready(packet) {
+      // create function which sends to Arcs runtime
+      Application.send = msg => arcsProcess.ShellApi.receive(msg);
+      // forward signal
+      Application.ready(packet);
+    },
+    // hand all slot rendering requests to a uiBroker (we could differentiate
+    // by modality here, or let uiBroker do it; these decisions can be composed)
+    output(packet) {
+      uiBroker.render(packet);
+    }
+  };
   // spin up runtime
   const arcsProcess = await createRuntimeProcess();
   // implements the DeviceClient side of the PipeShell bus, the bit which recieves messages
@@ -32,28 +46,14 @@ export const connectToPlatform = async Application => {
       }
     }
   };
-  // bus packet handlers
-  const dispatcher = {
-    ready(packet) {
-      // create function which sends to Arcs runtime
-      Application.send = msg => arcsProcess.ShellApi.receive(msg);
-      // forward signal
-      Application.ready(packet);
-    },
-    // hand all slot rendering requests to a uiBroker (we could differentiate
-    // by modality here, or let uiBroker do it; these decisions can be composed)
-    slot(packet) {
-      uiBroker.render(packet);
-    }
-  };
   // uiBroker communicates with the ui surface
   const uiBroker = {
     render(packet) {
-      const {content: slot} = packet;
-      switch (slot.content.model && slot.content.model.modality) {
+      const {content} = packet.data;
+      switch (content.model && content.model.modality) {
         case 'notification':
           // delegate to Application
-          Application.receive(packet);
+          Application.receive(packet.data);
           break;
         default:
           renderToSurface(packet);
@@ -67,17 +67,18 @@ export const connectToPlatform = async Application => {
     // locate the renderer
     const {renderer} = renderSurface;
     // extract packet data
-    const {content: slot, tid} = packet;
+    const {data, tid} = packet;
     // attach an event dispatcher
-    if (!tid) {
-      console.warn('slot packet missing `tid`: so events are not supported');
-    } else {
+    //if (!tid) {
+    //  console.warn('slot packet missing `tid`: so events are not supported');
+    //} else {
       renderer.dispatch = (pid, eventlet) => {
         Application.send({message: 'event', tid, pid, eventlet});
       };
-    }
+    //}
+    console.log('renderer gets:', data);
     // send message to renderer
-    renderer.render(slot);
+    renderer.render(data);
   };
   // forward toast events to application
   renderToasts.onclick = toast => Application.notificationClick(toast);
@@ -137,7 +138,6 @@ export const addToast = msg => {
 };
 
 const renderToasts = () => {
-  const html = [];
   toastContainer.innerText = '';
   toasts.forEach((toast, i) => {
     toast = dom('toast', toastContainer, {
