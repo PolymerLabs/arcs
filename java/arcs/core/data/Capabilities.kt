@@ -17,10 +17,13 @@ data class Capabilities(val capabilities: Set<Capability>) {
 
     fun contains(other: Capabilities): Boolean = capabilities.containsAll(other.capabilities)
 
+    /** Whether the store needs to be persistent */
     val isPersistent: Boolean
         get() = capabilities.contains(Capability.Persistent)
+    /** Whether the store needs to be in-memory and shared across all Arcs (e.g. ramdisk) */
     val isTiedToRuntime: Boolean
         get() = capabilities.contains(Capability.TiedToRuntime)
+    /** Whether the store needs to be in-memory and private to the Arc (e.g. volatile) */
     val isTiedToArc: Boolean
         get() = capabilities.contains(Capability.TiedToArc)
 
@@ -31,6 +34,7 @@ data class Capabilities(val capabilities: Set<Capability>) {
     }
 
     companion object {
+        /** Helper constants with useful capability variants. */
         val Persistent: Capabilities = Capabilities(setOf<Capability>(Capability.Persistent))
         val TiedToRuntime: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToRuntime))
         val TiedToArc: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToArc))
