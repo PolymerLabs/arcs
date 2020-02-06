@@ -18,8 +18,9 @@ class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
         res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
         if (allSynced) {
             val ptr = HandleSyncUpdateTest_Res()
-            ptr.txt = if (sng.fetch() != null) "sng:populated" else "sng:null"
-            res.store(ptr)
+            res.store(ptr.copy(
+                txt = if (sng.fetch() != null) "sng:populated" else "sng:null"
+            ))
         }
     }
 
