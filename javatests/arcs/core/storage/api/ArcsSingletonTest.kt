@@ -55,10 +55,10 @@ class ArcsSingletonTest {
         val bestFriend = ArcsSingleton(entityKey, personSchema, coroutineContext = coroutineContext)
         assertThat(bestFriend.fetch()).isNull()
 
-        assertThat(bestFriend.fetch(Person("Larry", 32))).isTrue()
+        assertThat(bestFriend.set(Person("Larry", 32))).isTrue()
         assertThat(bestFriend.fetch()).isEqualTo(Person("Larry", 32))
 
-        assertThat(bestFriend.fetch(Person("Sergey", 44))).isTrue()
+        assertThat(bestFriend.set(Person("Sergey", 44))).isTrue()
         assertThat(bestFriend.fetch()).isEqualTo(Person("Sergey", 44))
 
         assertThat(bestFriend.clear()).isTrue()

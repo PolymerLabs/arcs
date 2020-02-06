@@ -266,7 +266,7 @@ class GetPersonParticle : AbstractGetPersonParticle() {
         // on the element.
         eventHandler("onNameInputChange") { eventData ->
             // Get the current person (a handle) if it doesn't exist we get a new object.
-            val p = person.get() ?: GetPerson_Person()
+            val p = person.fetch() ?: GetPerson_Person()
             // Set the name to be the newly entered value.
             p.name = eventData["value"] ?: "Human"
             // Update the handle based to be our new person.
@@ -291,7 +291,7 @@ class DisplayGreetingParticle : AbstractDisplayGreetingParticle() {
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         return model + mapOf(
-            "name" to (person.get()?.name ?: "Human")
+            "name" to (person.fetch()?.name ?: "Human")
         )
     }
 }
@@ -523,7 +523,7 @@ package arcs.tutorials
  */
 class JsonStoreParticle : AbstractJsonStoreParticle() {
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val person = res.get() ?: JsonStoreParticle_InputData()
+        val person = res.fetch() ?: JsonStoreParticle_InputData()
 
         return model + mapOf(
             "name" to person.name,

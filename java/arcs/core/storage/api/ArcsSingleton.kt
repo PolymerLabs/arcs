@@ -191,7 +191,7 @@ class ArcsSingleton<T, StoreData, StoreOp>(
      */
     suspend fun getAsync(
         coroutineContext: CoroutineContext = scope.coroutineContext
-    ): Deferred<T?> = scope.async(coroutineContext) { get() }
+    ): Deferred<T?> = scope.async(coroutineContext) { fetch() }
 
     /**
      * Sets the value of the [ArcsSingleton] to the provided [value] and returns whether or not the

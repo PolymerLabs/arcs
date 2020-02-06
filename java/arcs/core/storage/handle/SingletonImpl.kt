@@ -33,7 +33,7 @@ class SingletonImpl<T : Referencable>(
     storageProxy: SingletonProxy<T>
 ) : SingletonHandle<T>(name, storageProxy) {
     /** Get the current value from the backing [StorageProxy]. */
-    fun fetch() = value
+    suspend fun fetch() = value()
 
     /** Send a new value to the backing [StorageProxy]. */
     suspend fun set(entity: T) {
