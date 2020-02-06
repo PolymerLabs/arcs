@@ -11,7 +11,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.newFixedThreadPoolContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.withTimeout
@@ -30,23 +29,19 @@ import kotlin.random.Random
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class StorageProxyTest {
-    @Mock
-    private lateinit var mockStorageEndpoint:
-        StorageCommunicationEndpoint<CrdtData, CrdtOperation, String>
-    @Mock
-    private lateinit var mockStorageEndpointProvider:
+    private lateinit var fakeStoreEndpoint: StoreEndpointFake<CrdtData, CrdtOperation, String>
+
+    @Mock private lateinit var mockStorageEndpointProvider:
         StorageCommunicationEndpointProvider<CrdtData, CrdtOperation, String>
-    @Mock
-    private lateinit var mockCrdtOperation: CrdtOperation
-    @Mock
-    private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperation, String>
-    @Mock
-    private lateinit var mockCrdtData: CrdtData
+    @Mock private lateinit var mockCrdtOperation: CrdtOperation
+    @Mock private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperation, String>
+    @Mock private lateinit var mockCrdtData: CrdtData
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        whenever(mockStorageEndpointProvider.getStorageEndpoint()).thenReturn(mockStorageEndpoint)
+        fakeStoreEndpoint = StoreEndpointFake<CrdtData, CrdtOperation, String>()
+        whenever(mockStorageEndpointProvider.getStorageEndpoint()).thenReturn(fakeStoreEndpoint)
         whenever(mockCrdtModel.data).thenReturn(mockCrdtData)
         whenever(mockCrdtModel.versionMap).thenReturn(VersionMap())
     }
@@ -83,7 +78,7 @@ class StorageProxyTest {
         storageProxy.onMessage(ProxyMessage.SyncRequest(null))
 
         val modelUpdate = ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, String>(mockCrdtData, null)
-        verify(mockStorageEndpoint).onProxyMessage(modelUpdate)
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(modelUpdate)
     }
 
     @Test
@@ -111,7 +106,7 @@ class StorageProxyTest {
         assertThat(storageProxy.applyOp(mockCrdtOperation)).isFalse()
 
         val syncReq = ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
-        verify(mockStorageEndpoint).onProxyMessage(syncReq)
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(syncReq)
     }
 
     @Test
@@ -177,7 +172,6 @@ class StorageProxyTest {
             suspend {
                 // store sends op
                 val op = mock(CrdtOperation::class.java)
-                mockCrdtModel.appliesOpAs(op, Random.nextBoolean())
                 storageProxy.onMessage(ProxyMessage.Operations(listOf(op), null))
             },
             suspend {
