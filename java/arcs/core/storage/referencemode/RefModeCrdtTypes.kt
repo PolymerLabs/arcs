@@ -15,6 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
+import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
@@ -168,26 +169,19 @@ private fun ProxyMessage.ModelUpdate<*, *, *>.sanitizeModelUpdate(
     storeType: Type
 ): RefModeModelUpdate = when (storeType) {
     is CollectionType<*> -> {
-        if (model !is CrdtSet.Data<*>) {
-            throw CrdtException(
-                "ReferenceModeStore is managing a Set, Singleton messages not supported"
-            )
-        }
-
-        if (model !is RefModeStoreData)
+        requireCrdtSet(model)
+        if (model !is RefModeStoreData) {
             RefModeModelUpdate(
                 RefModeStoreData.Set(model as CrdtSet.Data<RawEntity>),
                 id
             )
-        else this as RefModeModelUpdate
+        } else {
+            this as RefModeModelUpdate
+        }
     }
     is ReferenceType<*>,
     is SingletonType<*> -> {
-        if (model !is CrdtSingleton.Data<*>) {
-            throw CrdtException(
-                "ReferenceModeStore is managing a Singleton, Set messages not supported"
-            )
-        }
+        requireCrdtSingleton(model)
         if (model !is RefModeStoreData.Singleton) {
             RefModeModelUpdate(
                 RefModeStoreData.Singleton(model as CrdtSingleton.Data<RawEntity>),
@@ -216,53 +210,56 @@ private fun ProxyMessage.Operations<*, *, *>.sanitizeOperations(
 
     return when (storeType) {
         is CollectionType<*> -> {
-            if (firstOp !is CrdtSet.Operation<*>?) {
-                throw CrdtException(
-                    "ReferenceModeStore is managing a Set, Singleton messages not supported"
-                )
-            }
-
-            RefModeOperations(
-                operations.map {
-                    val op = it as CrdtSet.Operation<RawEntity>
-                    when (op) {
-                        is CrdtSet.Operation.Add<*> ->
-                            RefModeStoreOp.SetAdd(it as CrdtSet.Operation.Add<RawEntity>)
-                        is CrdtSet.Operation.Remove<*> ->
-                            RefModeStoreOp.SetRemove(it as CrdtSet.Operation.Remove<RawEntity>)
-                        is CrdtSet.Operation.FastForward<*> ->
-                            throw IllegalArgumentException(
-                                "ReferenceModeStore does not support FastForward"
-                            )
-                    } as RefModeStoreOp
-                },
-                id
-            )
+            requireCrdtSet(firstOp)
+            RefModeOperations(operations.map(CrdtOperation::toRefModeStoreSetOp), id)
         }
         is ReferenceType<*>,
         is SingletonType<*> -> {
-            if (firstOp !is CrdtSingleton.Operation<*>?) {
-                throw CrdtException(
-                    "ReferenceModeStore is managing a Singleton, Set messages not supported"
-                )
-            }
-            RefModeOperations(
-                operations.map {
-                    val op = it as CrdtSingleton.Operation<RawEntity>
-                    when (op) {
-                        is CrdtSingleton.Operation.Update<*> ->
-                            RefModeStoreOp.SingletonUpdate(
-                                it as CrdtSingleton.Operation.Update<RawEntity>
-                            )
-                        is CrdtSingleton.Operation.Clear<*> ->
-                            RefModeStoreOp.SingletonClear(
-                                it as CrdtSingleton.Operation.Clear<RawEntity>
-                            )
-                    } as RefModeStoreOp
-                },
-                id
-            )
+            requireCrdtSingleton(firstOp)
+            RefModeOperations(operations.map(CrdtOperation::toRefModeStoreSingletonOp), id)
         }
         else -> throw IllegalArgumentException("Invalid store type: $storeType")
     }
 }
+
+private fun requireCrdtSet(data: CrdtData) {
+    if (data is CrdtSet.Data<*>) return
+    throw CrdtException("ReferenceModeStore is managing a Set, Singleton messages not supported")
+}
+
+private fun requireCrdtSet(op: CrdtOperation?) {
+    if (op is CrdtSet.Operation<*> || op == null) return
+    throw CrdtException("ReferenceModeStore is managing a Set, Singleton messages not supported")
+}
+
+private fun requireCrdtSingleton(data: CrdtData) {
+    if (data is CrdtSingleton.Data<*>) return
+    throw CrdtException("ReferenceModeStore is managing a Singleton, Set messages not supported")
+}
+
+private fun requireCrdtSingleton(op: CrdtOperation?) {
+    if (op is CrdtSingleton.Operation<*> || op == null) return
+    throw CrdtException("ReferenceModeStore is managing a Singleton, Set messages not supported")
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun CrdtOperation.toRefModeStoreSetOp(): RefModeStoreOp =
+    when (this as CrdtSet.Operation<RawEntity>) {
+        is CrdtSet.Operation.Add<*> ->
+            RefModeStoreOp.SetAdd(this as CrdtSet.Operation.Add<RawEntity>)
+        is CrdtSet.Operation.Remove<*> ->
+            RefModeStoreOp.SetRemove(this as CrdtSet.Operation.Remove<RawEntity>)
+        is CrdtSet.Operation.FastForward<*> ->
+            throw IllegalArgumentException(
+                "ReferenceModeStore does not support FastForward"
+            )
+    }
+
+@Suppress("UNCHECKED_CAST")
+private fun CrdtOperation.toRefModeStoreSingletonOp(): RefModeStoreOp =
+    when (this as CrdtSingleton.Operation<RawEntity>) {
+        is CrdtSingleton.Operation.Update<*> ->
+            RefModeStoreOp.SingletonUpdate(this as CrdtSingleton.Operation.Update<RawEntity>)
+        is CrdtSingleton.Operation.Clear<*> ->
+            RefModeStoreOp.SingletonClear(this as CrdtSingleton.Operation.Clear<RawEntity>)
+    }

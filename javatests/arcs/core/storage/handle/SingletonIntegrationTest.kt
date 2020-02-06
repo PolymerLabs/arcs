@@ -64,9 +64,9 @@ class SingletonIntegrationTest {
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSingleton<RawEntity>())
 
-        singletonA = SingletonImpl("collectionA", storageProxy)
+        singletonA = SingletonImpl("singletonA", storageProxy)
         storageProxy.registerHandle(singletonA)
-        singletonB = SingletonImpl("collectionB", storageProxy)
+        singletonB = SingletonImpl("singletonB", storageProxy)
         storageProxy.registerHandle(singletonB)
         Unit
     }
@@ -94,7 +94,7 @@ class SingletonIntegrationTest {
     @Test
     fun reSettingOnB_showsUpInA() = runBlockingTest {
         val lou = Person("Lou", 95, true)
-        val jan = Person("Jan", 28, true)
+        val jan = Person("Jan", 28, true, emptySet())
 
         singletonA.set(lou.toRawEntity())
         assertThat(singletonA.get()).isEqualTo(lou.toRawEntity())
@@ -118,7 +118,12 @@ class SingletonIntegrationTest {
         assertThat(singletonB.get()).isNull()
     }
 
-    private data class Person(val name: String, val age: Int, val isCool: Boolean) {
+    private data class Person(
+        val name: String,
+        val age: Int,
+        val isCool: Boolean,
+        val pets: Set<String> = setOf("Fido")
+    ) {
         fun toRawEntity(): RawEntity = RawEntity(
             hashCode().toString(),
             singletons = mapOf(
@@ -126,7 +131,9 @@ class SingletonIntegrationTest {
                 "age" to age.toReferencable(),
                 "is_cool" to isCool.toReferencable()
             ),
-            collections = emptyMap()
+            collections = mapOf(
+                "pets" to pets.map { it.toReferencable() }.toSet()
+            )
         )
     }
 
@@ -144,7 +151,9 @@ class SingletonIntegrationTest {
                     "age" to FieldType.Number,
                     "is_cool" to FieldType.Boolean
                 ),
-                collections = emptyMap()
+                collections = mapOf(
+                    "pets" to FieldType.Text
+                )
             ),
             SchemaDescription(),
             "1234acf"
