@@ -213,6 +213,9 @@ abstract class RefinementExpression {
       case 'NumberPrimitiveNode': return NumberPrimitive.fromLiteral(expr);
       case 'BooleanPrimitiveNode': return BooleanPrimitive.fromLiteral(expr);
       case 'TextPrimitiveNode': return TextPrimitive.fromLiteral(expr);
+      default:
+        // Should never happen; all known kinds are handled above, but the linter wants a default.
+        throw new Error(`RefinementExpression.fromLiteral: Unknown node type ${expr['kind']}`);
     }
   }
 
