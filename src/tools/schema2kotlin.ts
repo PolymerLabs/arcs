@@ -133,8 +133,8 @@ class KotlinGenerator implements ClassGenerator {
       `${fixed} = ${defaultVal}`,
     );
     this.fieldsForCopyDecl.push(`${fixed}: ${type} = this.${fixed}`);
-    this.fieldsForCopy.push(`${fixed} = ${fixed}`)
-    this.setFieldsToDefaults.push(`var ${fixed} = ${defaultVal}`)
+    this.fieldsForCopy.push(`${fixed} = ${fixed}`);
+    this.setFieldsToDefaults.push(`var ${fixed} = ${defaultVal}`);
 
     this.decode.push(`"${field}" -> {`,
                      `    decoder.validate("${typeChar}")`,
