@@ -38,6 +38,7 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.referencemode.sanitizeForRefModeStore
 import arcs.core.storage.referencemode.toBridgingData
 import arcs.core.storage.referencemode.toBridgingOp
 import arcs.core.storage.referencemode.toBridgingOps
@@ -47,6 +48,7 @@ import arcs.core.storage.util.SendQueue
 import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.Result
+import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
 import kotlin.coroutines.coroutineContext
@@ -77,6 +79,8 @@ class ReferenceModeStore private constructor(
     /* internal */
     val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
+    private val log = TaggedLog { "Store($storageKey)" }
+
     /**
      * A queue of incoming updates from the backing store, container store, and connected proxies.
      */
@@ -161,32 +165,13 @@ class ReferenceModeStore private constructor(
      * to be updated.
      */
 
+    @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY")
     override suspend fun onProxyMessage(
         message: ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Boolean {
-        if (message is ProxyMessage.ModelUpdate<*, *, *>) {
-            if (type is CollectionType<*> && message.model !is CrdtSet.Data<*>) {
-                throw CrdtException(
-                    "ReferenceModeStore is managing a Set, Singleton messages not supported"
-                )
-            } else if (type is ReferenceType<*> && message.model !is CrdtSingleton.Data<*>) {
-                throw CrdtException(
-                    "ReferenceModeStore is managing a Singleton, Set messages not supported"
-                )
-            }
-        } else if (message is ProxyMessage.Operations<*, *, *>) {
-            val firstOp = message.operations.firstOrNull()
-            if (type is CollectionType<*> && firstOp !is CrdtSet.Operation<*>?) {
-                throw CrdtException(
-                    "ReferenceModeStore is managing a Set, Singleton messages not supported"
-                )
-            } else if (type is ReferenceType<*> && firstOp !is CrdtSingleton.Operation<*>?) {
-                throw CrdtException(
-                    "ReferenceModeStore is managing a Singleton, Set messages not supported"
-                )
-            }
-        }
-        return receiveQueue.enqueue(Message.PreEnqueuedFromStorageProxy(message))
+        log.debug { "onProxyMessage: $message" }
+        val refModeMessage = message.sanitizeForRefModeStore(type)
+        return receiveQueue.enqueue(Message.PreEnqueuedFromStorageProxy(refModeMessage))
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -221,6 +206,7 @@ class ReferenceModeStore private constructor(
      */
     @Suppress("UNCHECKED_CAST")
     private val handleProxyMessage: suspend (EnqueuedFromStorageProxy) -> Boolean = fn@{ message ->
+        log.debug { "handleProxyMessage: $message" }
         suspend fun itemVersionGetter(item: RawEntity): VersionMap {
             val localBackingVersion = backingStore.getLocalData(item.id).versionMap
             if (localBackingVersion.isNotEmpty()) return localBackingVersion

@@ -12,10 +12,10 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.internal.VersionMap
+import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 import kotlinx.coroutines.CompletableDeferred
@@ -36,6 +36,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
     initialCrdt: CrdtModel<Data, Op, T>
 ) {
+    private val log = TaggedLog { "StorageProxy" }
     private val mutex = reentrantLock()
     private val handles: MutableSet<Handle<Data, Op, T>> = mutableSetOf()
     private val crdt = initialCrdt
@@ -51,15 +52,14 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
      */
     suspend fun registerHandle(handle: Handle<Data, Op, T>): VersionMap {
         // non-readers don't get callbacks, return early
-        if (!handle.canRead) {
-            mutex.withLock {
-                return crdt.versionMap.copy()
-            }
-        }
+        if (!handle.canRead) return mutex.withLock { crdt.versionMap.copy() }
 
-        mutex.withLock() {
+        log.debug { "Registering handle: $handle" }
+
+        mutex.withLock {
             if (!listenerAttached) {
-                store.setCallback(ProxyCallback<Data, Op, T>(::onMessage))
+                log.debug { "Attaching listener to store: $store" }
+                store.setCallback(ProxyCallback(::onMessage))
                 listenerAttached = true
             }
 
@@ -85,10 +85,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     /**
      * Disconnects a handle so it no longer receives callbacks.
      */
-    suspend fun deregisterHandle(handle: Handle<Data, Op, T>) {
-        mutex.withLock {
-            handles.remove(handle)
-        }
+    fun deregisterHandle(handle: Handle<Data, Op, T>) {
+        log.debug { "Unregistering handle: $handle" }
+        mutex.withLock { handles.remove(handle) }
     }
 
     /**
@@ -96,14 +95,14 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
      * handles, and forwards the write to the [Store].
      */
     suspend fun applyOp(op: Op): Boolean {
-        mutex.withLock {
-            if (!crdt.applyOperation(op)) {
-                return false
-            }
+        log.debug { "Applying operation: $op" }
+        return mutex.withLock {
+            if (!crdt.applyOperation(op)) return@withLock false
+
             val msg = ProxyMessage.Operations<Data, Op, T>(listOf(op), null)
             store.onProxyMessage(msg)
             notifyUpdate(op)
-            return true
+            true
         }
     }
 
@@ -111,17 +110,28 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
      * Return the current local version of the model, as well as the current associated version map
      * for the data. Suspends until it has a synchronized view of the data.
      */
-    suspend fun getParticleView(): ValueAndVersion<T> {
-        return getParticleViewAsync().await()
-    }
+    suspend fun getParticleView(): ValueAndVersion<T> = getParticleViewAsync().await()
 
-    suspend fun getParticleViewAsync(): CompletableDeferred<ValueAndVersion<T>> {
+    fun getParticleViewAsync(): CompletableDeferred<ValueAndVersion<T>> {
+        log.debug { "Getting particle view" }
         val future = CompletableDeferred<ValueAndVersion<T>>()
+        future.invokeOnCompletion {
+            if (it == null) {
+                log.debug {
+                    @Suppress("EXPERIMENTAL_API_USAGE")
+                    "Particle view resolved: ${future.getCompleted()}"
+                }
+            } else {
+                log.error(it) { "Particle view could not be resolved" }
+            }
+        }
         mutex.withLock {
             if (synchronized) {
                 future.complete(ValueAndVersion(crdt.consumerView, crdt.versionMap))
+                false
             } else {
                 waitingSyncs.add(future)
+                true
             }
         }
         return future
@@ -131,6 +141,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
      * Applies messages from a [Store].
      */
     suspend fun onMessage(message: ProxyMessage<Data, Op, T>): Boolean {
+        log.debug { "onMessage: $message" }
         mutex.withLock {
             when (message) {
                 is ProxyMessage.ModelUpdate -> {
@@ -162,7 +173,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
                     val modelUpdate = ProxyMessage.ModelUpdate<Data, Op, T>(this.crdt.data, null)
                     this.store.onProxyMessage(modelUpdate)
                 }
-                else -> throw CrdtException("Invalid operation, msg: $message")
             }
             return true
         }
@@ -174,10 +184,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
             this.synchronized = true
             this.notifySync()
         }
-        for (sync in waitingSyncs) {
-            sync.complete(getParticleView())
-        }
-        waitingSyncs.clear()
+        waitingSyncs.onEach { it.complete(getParticleView()) }.clear()
     }
 
     // must be called under single-thread-confinement
