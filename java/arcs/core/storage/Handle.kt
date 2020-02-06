@@ -14,6 +14,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.internal.VersionMap
+import arcs.core.util.TaggedLog
 
 /**
  * The [Callbacks] interface is a simple stand-in for the callbacks that a [Handle] might want to
@@ -71,6 +72,7 @@ open class Handle<Data : CrdtData, Op : CrdtOperation, T>(
      */
     val canRead: Boolean = true
 ) {
+    protected val log = TaggedLog { "Handle($name)" }
 
     /** The currently registered [Callbacks] instance */
     var callback: Callbacks<Op>? = null
@@ -81,6 +83,7 @@ open class Handle<Data : CrdtData, Op : CrdtOperation, T>(
 
     /** Read value from the backing [StorageProxy], updating the internal clock copy. */
     suspend fun value(): T {
+        log.debug { "Fetching value." }
         val particleView = storageProxy.getParticleView()
         this.versionMap = particleView.versionMap
         return particleView.value
