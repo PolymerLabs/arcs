@@ -25,13 +25,11 @@ class TTTGame : AbstractTTTGame() {
         }
         if (handle.name == "playerOne" && playerOne.fetch()?.id != 0.0) {
             val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
-            p1.id = 0.0
-            playerOne.set(p1)
+            playerOne.set(p1.copy(id = 0.0))
         }
         if (handle.name == "playerTwo" && playerTwo.fetch()?.id != 1.0) {
             val p2 = playerTwo.fetch() ?: TTTGame_PlayerTwo()
-            p2.id = 1.0
-            playerTwo.set(p2)
+            playerTwo.set(p2.copy(id = 1.0))
         }
     }
 
@@ -75,10 +73,11 @@ class TTTGame : AbstractTTTGame() {
     ) {
         if (!mv.isValidMove(boardList)) return
         boardList[mv] = avatar
-        gs.board = boardList.joinToString(",")
 
-        gs.currentPlayer = (gs.currentPlayer + 1) % 2
-        gameState.set(gs)
+        gameState.set(gs.copy(
+            board = boardList.joinToString(","),
+            currentPlayer = (gs.currentPlayer + 1) % 2
+        ))
     }
 
     private fun Int.isValidMove(boardList: List<String>) = this in 0..9 && boardList[this] == ""

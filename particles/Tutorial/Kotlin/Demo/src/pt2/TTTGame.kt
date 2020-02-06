@@ -50,7 +50,6 @@ class TTTGame : AbstractTTTGame() {
         gs: TTTGame_GameState
     ) {
         boardList[mv] = avatar
-        gs.board = boardList.joinToString(",")
-        gameState.set(gs)
+        gameState.set(gs.copy(board = boardList.joinToString(",")))
     }
 }

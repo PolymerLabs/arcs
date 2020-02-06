@@ -265,12 +265,8 @@ class GetPersonParticle : AbstractGetPersonParticle() {
         // When the name is changed, we want to assign the new name to the person. So we register an event handler
         // on the element.
         eventHandler("onNameInputChange") { eventData ->
-            // Get the current person (a handle) if it doesn't exist we get a new object.
-            val p = person.fetch() ?: GetPerson_Person()
-            // Set the name to be the newly entered value.
-            p.name = eventData["value"] ?: "Human"
-            // Update the handle based to be our new person.
-            person.set(p)
+            // Update the handle based on the eventData.
+            person.set(GetPerson_Person(name = eventData["value"] ?: "Human"))
         }
     }
 }

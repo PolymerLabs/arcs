@@ -15,13 +15,10 @@ class GoldInternal1() : WasmEntity {
 
     override var internalId = ""
 
-    var _val_Set = false
     var val_ = ""
         get() = field
-        set(value) {
-            field = value
-            _val_Set = true
-        }
+        private set(value) {
+            val_ = value        }
 
     constructor(
         val_: String
@@ -29,19 +26,16 @@ class GoldInternal1() : WasmEntity {
         this.val_ = val_
     }
 
-    override fun isSet(): Boolean {
-        return _val_Set
+    fun copy(
+        val_: String = this.val_
+    ) : GoldInternal1 {
+      return GoldInternal1(
+          val_ = val_
+      )
     }
 
     fun reset() {
         val_ = ""
-        _val_Set = false
-    }
-
-    override fun getFieldsNotSet(): List<String> {
-        val rtn = mutableListOf<String>()
-        if (!_val_Set) rtn.add("val_")
-        return rtn
     }
 
     override fun schemaHash() = "485712110d89359a3e539dac987329cd2649d889"
@@ -99,34 +93,22 @@ class Gold_Data() : WasmEntity {
 
     override var internalId = ""
 
-    var _numSet = false
     var num = 0.0
         get() = field
-        set(value) {
-            field = value
-            _numSet = true
-        }
-    var _txtSet = false
+        private set(value) {
+            num = value        }
     var txt = ""
         get() = field
-        set(value) {
-            field = value
-            _txtSet = true
-        }
-    var _lnkSet = false
+        private set(value) {
+            txt = value        }
     var lnk = ""
         get() = field
-        set(value) {
-            field = value
-            _lnkSet = true
-        }
-    var _flgSet = false
+        private set(value) {
+            lnk = value        }
     var flg = false
         get() = field
-        set(value) {
-            field = value
-            _flgSet = true
-        }
+        private set(value) {
+            flg = value        }
 
     constructor(
         num: Double,
@@ -140,28 +122,25 @@ class Gold_Data() : WasmEntity {
         this.flg = flg
     }
 
-    override fun isSet(): Boolean {
-        return _numSet && _txtSet && _lnkSet && _flgSet
+    fun copy(
+        num: Double = this.num,
+        txt: String = this.txt,
+        lnk: String = this.lnk,
+        flg: Boolean = this.flg
+    ) : Gold_Data {
+      return Gold_Data(
+          num = num,
+          txt = txt,
+          lnk = lnk,
+          flg = flg
+      )
     }
 
     fun reset() {
         num = 0.0
-        _numSet = false
         txt = ""
-        _txtSet = false
         lnk = ""
-        _lnkSet = false
         flg = false
-        _flgSet = false
-    }
-
-    override fun getFieldsNotSet(): List<String> {
-        val rtn = mutableListOf<String>()
-        if (!_numSet) rtn.add("num")
-        if (!_txtSet) rtn.add("txt")
-        if (!_lnkSet) rtn.add("lnk")
-        if (!_flgSet) rtn.add("flg")
-        return rtn
     }
 
     override fun schemaHash() = "d8058d336e472da47b289eafb39733f77eadb111"

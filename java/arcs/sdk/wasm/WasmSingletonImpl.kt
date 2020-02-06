@@ -42,11 +42,6 @@ class WasmSingletonImpl<T : WasmEntity>(
         this.entity = entity
         val encoded = entity.encodeEntity()
         WasmRuntimeClient.singletonSet(particle, this, encoded)
-        if (!entity.isSet()) {
-            log("WARNING: ${
-            entity.getFieldsNotSet().joinToString(", ")
-            } fields on $entity are not set")
-        }
     }
 
     override fun clear() {
