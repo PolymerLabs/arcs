@@ -13,21 +13,42 @@ package arcs.core.allocator
 import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.common.toArcId
+import arcs.core.crdt.CrdtSet
 import arcs.core.data.CollectionType
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
+import arcs.core.data.FieldType
 import arcs.core.data.Plan
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
+import arcs.core.data.util.toReferencable
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageMode
+import arcs.core.storage.StorageProxy
+import arcs.core.storage.Store
+import arcs.core.storage.StoreOptions
+import arcs.core.storage.handle.CollectionHandle
+import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
+import arcs.core.util.Time
 import arcs.core.util.plus
 import arcs.core.util.traverse
+
+private typealias EntityCollectionData = CrdtSet.Data<RawEntity>
+private typealias EntityCollectionOp = CrdtSet.IOperation<RawEntity>
+private typealias EntityCollectionView = Set<RawEntity>
+
+private typealias PartitionProxy =
+    StorageProxy<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -38,10 +59,18 @@ import arcs.core.util.traverse
  * [arcs.core.data.Schema], a set of [Particle]s to instantiate, and connections between each
  * [HandleSpec] and [Particle].
  */
-class Allocator(val hostRegistry: HostRegistry) {
+class Allocator private constructor(
+    private val hostRegistry: HostRegistry,
+    private val time: Time,
+    private val store: Store<EntityCollectionData, EntityCollectionOp, EntityCollectionView>,
+    private val storageProxy: PartitionProxy,
+    private val collection: CollectionHandle<RawEntity>
+) {
 
     /** Currently active Arcs and their associated [Plan.Partition]s. */
     private val partitionMap: MutableMap<ArcId, List<Plan.Partition>> = mutableMapOf()
+
+    private var counter = 0
 
     /**
      * Start a new Arc given a [Plan] and return the generated [ArcId].
@@ -89,12 +118,23 @@ class Allocator(val hostRegistry: HostRegistry) {
             it.hostId == arcHost
         }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
 
-    /**
-     * Persists [ArcId] and associated [PlanPartition]s.
-     */
-    private fun writePartitionMap(arcId: ArcId, partitions: List<Plan.Partition>) {
+    /** Persists [ArcId] and associated [PlanPartition]s */
+    private suspend fun writePartitionMap(arcId: ArcId, partitions: List<Plan.Partition>) {
         partitionMap[arcId] = partitions
-        // TODO(cromwellian): implement actual persistence that survives reboot?
+
+        partitions.forEach { partition ->
+            val singletons = mapOf(
+                "arc" to arcId.toString().toReferencable(),
+                "host" to partition.arcHost.toReferencable()
+            )
+            val collections = mapOf(
+                "particles" to partition.particles.map {
+                    it.particleName.toReferencable()
+                }.toSet()
+            )
+            val entity = RawEntity(arcId.toString() + partition.arcHost, singletons, collections)
+            collection.store(entity)
+        }
     }
 
     /**
@@ -155,9 +195,9 @@ class Allocator(val hostRegistry: HostRegistry) {
                 toEntitySchema(type),
                 idGenerator.newChildId(arcId, "").toString()
             )
-        ?: throw Exception(
-            "Unable to create storage key $storageKey"
-        )
+            ?: throw Exception(
+                "Unable to create storage key $storageKey"
+            )
 
     /**
      * Retrieves [Schema] from the given [Type], if possible.
@@ -201,4 +241,40 @@ class Allocator(val hostRegistry: HostRegistry) {
         hostRegistry.availableArcHosts()
             .firstOrNull { host -> host.isHostForParticle(particle) }
             ?: throw ParticleNotFoundException(particle)
+
+    companion object {
+        /** Schema for persistent storage of [PlanPartition] information */
+        private val SCHEMA = Schema(
+            listOf(SchemaName("partition")),
+            SchemaFields(
+                mapOf(
+                    "arc" to FieldType.Text,
+                    "host" to FieldType.Text
+                ),
+                mapOf(
+                    "particles" to FieldType.Text
+                )),
+            "plan-partition-schema"
+        )
+
+        private val STORAGE_KEY = ReferenceModeStorageKey(
+            RamDiskStorageKey("partition"),
+            RamDiskStorageKey("partitions")
+        )
+
+        private val STORE_OPTIONS =
+            StoreOptions<EntityCollectionData, EntityCollectionOp, EntityCollectionView>(
+                storageKey = STORAGE_KEY,
+                type = CollectionType(EntityType(SCHEMA)),
+                mode = StorageMode.ReferenceMode
+            )
+
+        suspend fun create(hostRegistry: HostRegistry, time: Time): Allocator {
+            val store = Store(STORE_OPTIONS)
+            val storageProxy = StorageProxy(store.activate(), CrdtSet<RawEntity>())
+            val actor = "allocator" + Math.random().toString()
+            val collection = CollectionHandle(actor, storageProxy, time = time)
+            return Allocator(hostRegistry, time, store, storageProxy, collection)
+        }
+    }
 }

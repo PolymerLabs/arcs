@@ -17,15 +17,17 @@ import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProvider
+import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
 import arcs.core.util.plus
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
+import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -82,6 +84,7 @@ open class AllocatorTestBase {
 
     @Before
     open fun setUp() = runBlocking {
+        RamDisk.clear()
         RamDiskStorageKey.registerKeyCreator()
         RamDiskDriverProvider()
 
@@ -91,7 +94,7 @@ open class AllocatorTestBase {
         writingExternalHost = writingHost()
 
         hostRegistry = hostRegistry()
-        allocator = Allocator(hostRegistry)
+        allocator = Allocator.create(hostRegistry, TimeImpl())
 
         recipePersonStorageKey = CreateableStorageKey(
             "recipePerson", storageCapability
@@ -130,7 +133,6 @@ open class AllocatorTestBase {
      */
     @Test
     fun allocator_computePartitions() = runAllocatorTest {
-        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
             writeAndReadPersonPlan
@@ -175,7 +177,6 @@ open class AllocatorTestBase {
                 assertThat(connection.storageKey).isInstanceOf(CreateableStorageKey::class.java)
             }
         }
-        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan(
             "readWritePerson", writeAndReadPersonPlan
         )
@@ -211,7 +212,6 @@ open class AllocatorTestBase {
 
         val testPlan = allStorageKeyLens.mod(writeAndReadPersonPlan) { testKey!! }
 
-        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
             testPlan
@@ -226,7 +226,6 @@ open class AllocatorTestBase {
 
     @Test
     fun allocator_verifyArcHostStartCalled() = runAllocatorTest {
-        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
             writeAndReadPersonPlan
@@ -257,7 +256,6 @@ open class AllocatorTestBase {
 
     @Test
     fun allocator_verifyUnknownParticleThrows() = runAllocatorTest {
-        val allocator = Allocator(hostRegistry)
         val particle = Plan.Particle("UnknownParticle", "Unknown", mapOf())
 
         val plan = Plan(listOf(particle))
