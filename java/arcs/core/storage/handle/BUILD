@@ -13,7 +13,7 @@ arcs_kt_library(
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/internal",
+        "//java/arcs/core/crdt/internal",  # unuseddeps: keep
         "//java/arcs/core/storage",
         "//java/arcs/core/util",
     ],

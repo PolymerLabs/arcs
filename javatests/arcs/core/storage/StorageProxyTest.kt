@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.withTimeout
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -149,6 +150,7 @@ class StorageProxyTest {
     }
 
     @Test
+    @Ignore("We've detected flakes with this approach, reworking in follow up PR")
     fun deadlockDetectionTest() = runBlocking {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
         whenever(mockCrdtModel.consumerView).thenReturn("someData")
@@ -196,8 +198,9 @@ class StorageProxyTest {
         val workers = 20
         val jobs = 10
         Executors.newFixedThreadPool(workers).asCoroutineDispatcher().use {
+            val newScope = it // does it@ work for this?
             repeat(10) {
-                runBlocking {
+                runBlocking(newScope) {
                     withTimeout(2000) {
                         repeat(workers) {
                             launch {
