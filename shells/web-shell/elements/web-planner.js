@@ -44,8 +44,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
   async _createPlanificator(config, arc) {
     const options = {
       userid: 'user',
-      //TODO(sjmiles): try StorageKeyParser.parse?
-      //storageKeyBase: config.plannerStorage,
+      storageKeyBase: config.plannerStorage,
       onlyConsumer: config.plannerOnlyConsumer,
       debug: config.plannerDebug,
       inspectorFactory: devtoolsPlannerInspectorFactory
