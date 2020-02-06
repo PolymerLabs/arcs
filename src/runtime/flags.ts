@@ -21,7 +21,7 @@
  */
 class FlagDefaults {
   static useNewStorageStack = false;
-  static enforceRefinements = true;
+  static enforceRefinements = false;
   static useSlandles = false;
 }
 
