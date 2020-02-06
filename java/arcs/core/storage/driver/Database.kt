@@ -273,6 +273,7 @@ class DatabaseDriver<Data : Any>(
                 }
                 DatabaseData.Singleton(
                     referenceData.toReferenceSingleton(),
+                    schema,
                     version,
                     referenceData.versionMap
                 )
@@ -283,6 +284,7 @@ class DatabaseDriver<Data : Any>(
                 }
                 DatabaseData.Collection(
                     referenceData.toReferenceSet(),
+                    schema,
                     version,
                     referenceData.versionMap
                 )

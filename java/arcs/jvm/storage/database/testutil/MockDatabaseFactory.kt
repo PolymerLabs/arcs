@@ -91,9 +91,9 @@ open class MockDatabase : Database {
 
         return when (dataType) {
             DatabaseData.Singleton::class ->
-                DatabaseData.Singleton(null, -1, VersionMap())
+                DatabaseData.Singleton(null, schema, -1, VersionMap())
             DatabaseData.Collection::class ->
-                DatabaseData.Collection(emptySet(), -1, VersionMap())
+                DatabaseData.Collection(emptySet(), schema, -1, VersionMap())
             DatabaseData.Entity::class -> null
             else -> throw IllegalArgumentException("Illegal type.")
         }
