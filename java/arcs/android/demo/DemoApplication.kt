@@ -17,8 +17,8 @@ import arcs.core.util.Log
 
 /** Application class for Arcs Demo. */
 class DemoApplication : Application() {
-  override fun onCreate() {
-    super.onCreate()
-    initLogForAndroid(Log.Level.Debug)
-  }
+    override fun onCreate() {
+        super.onCreate()
+        initLogForAndroid(Log.Level.Debug)
+    }
 }
