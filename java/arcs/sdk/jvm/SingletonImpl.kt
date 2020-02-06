@@ -27,7 +27,7 @@ class SingletonImpl<T : Entity>(
     override fun set(entity: T) {
         this.entity = entity
         particle.onHandleUpdate(this)
-        onUpdateActions.forEach{ action ->
+        onUpdateActions.forEach { action ->
             action(entity)
         }
     }
@@ -35,7 +35,7 @@ class SingletonImpl<T : Entity>(
     override fun clear() {
         this.entity = null
         particle.onHandleUpdate(this)
-        onUpdateActions.forEach{ action ->
+        onUpdateActions.forEach { action ->
             action(entity)
         }
     }
