@@ -124,8 +124,8 @@ class KotlinGenerator implements ClassGenerator {
     this.fieldVals.push(
       `var ${fixed} = ${defaultVal}\n` +
       `        get() = field\n` +
-      `        private set(value) {\n` +
-      `            ${fixed} = value\n` +
+      `        private set(_value) {\n` +
+      `            ${fixed} = _value\n` +
       `        }`
     );
     this.setFields.push(`this.${fixed} = ${fixed}`);
@@ -138,7 +138,7 @@ class KotlinGenerator implements ClassGenerator {
 
     this.decode.push(`"${field}" -> {`,
                      `    decoder.validate("${typeChar}")`,
-                     `    this.${fixed} = decoder.${decodeFn}`,
+                     `    ${fixed} = decoder.${decodeFn}`,
                      `}`);
 
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
@@ -201,15 +201,15 @@ ${this.opts.wasm ? `
         if (encoded.isEmpty()) return null
 
         val decoder = StringDecoder(encoded)
-        internalId = decoder.decodeText()
+        val internalId = decoder.decodeText()
         decoder.validate("|")
         ${withFields(`
         ${this.setFieldsToDefaults.join('\n        ')}
         var i = 0
         while (i < ${fieldCount} && !decoder.done()) {
-            val name = decoder.upTo(':').toUtf8String()
-            when (name) {
-                ${this.decode.join('\n                    ')}
+            val _name = decoder.upTo(':').toUtf8String()
+            when (_name) {
+                ${this.decode.join('\n                ')}
                 else -> {
                     // Ignore unknown fields until type slicing is fully implemented.
                     when (decoder.chomp(1).toUtf8String()) {
@@ -223,9 +223,11 @@ ${this.opts.wasm ? `
             decoder.validate("|")
             i++
         }`)}
-        return create().copy(
+        val _rtn = create().copy(
             ${this.fieldsForCopy.join(', \n            ')}
         )
+        _rtn.internalId = internalId
+        return _rtn
     }` : ''}
 }
 

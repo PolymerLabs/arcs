@@ -32,9 +32,9 @@ class DealingShoe : AbstractDealingShoe() {
      * Returns an initialized set of decks.
      */
     fun initializedDecks(): DealingShoe_Decks {
-        var d = DealingShoe_Decks()
-        d.cards = cardPresent.repeat(totalCards)
-        return d
+        return DealingShoe_Decks(
+            cards = cardPresent.repeat(totalCards)
+        )
     }
 
     fun pickACard(): Card? {
@@ -47,8 +47,9 @@ class DealingShoe : AbstractDealingShoe() {
             choice = (choice + 1) % totalCards
             ++readCards
         }
-        localDecks.cards = cards.replaceRange(choice, choice + 1, cardAbsent)
-        decks.set(localDecks)
+        decks.set(localDecks.copy(
+            cards = cards.replaceRange(choice, choice + 1, cardAbsent)
+        ))
         return Card(choice % 52)
     }
 }

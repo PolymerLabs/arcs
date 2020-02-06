@@ -100,8 +100,8 @@ class TTTGame : AbstractTTTGame() {
                 gameOver = false,
                 winnerAvatar = ""
             ))
-            playerOneMove.set(mv1.apply { move = -1.0 })
-            playerTwoMove.set(mv2.apply { move = -1.0 })
+            playerOneMove.set(mv1.copy(move = -1.0))
+            playerTwoMove.set(mv2.copy(move = -1.0))
             events.clear()
         }
         renderOutput()
@@ -137,7 +137,7 @@ class TTTGame : AbstractTTTGame() {
             board = boardList.joinToString(","),
             currentPlayer = (gs.currentPlayer + 1) % 2,
             gameOver = gameOver,
-            winnerAvatar = gameOver ? avatar : ""
+            winnerAvatar = if (gameOver) avatar else ""
         ))
     }
 

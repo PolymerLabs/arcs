@@ -109,9 +109,11 @@ class TestParticle : AbstractTestParticle() {
                 lnk = "",
                 flg = false
             )
-            newData.num = newData.num.let { it + 2 }
-            newData.txt = "${newData.txt}!!!!!!"
-            this.data.set(newData)
+            
+            this.data.set(newData.copy(
+                num = newData.num.let { it + 2 },
+                txt = "${newData.txt}!!!!!!"
+            ))
         }
 
         eventHandler("dataclear") {
@@ -124,8 +126,9 @@ class TestParticle : AbstractTestParticle() {
                 val_ = 0.0
             )
             info.internalId = "wasm" + (++storeCount)
-            info.val_ = (this.info.size + storeCount).toDouble()
-            this.info.store(info)
+            this.info.store(info.copy(
+                val_ = (this.info.size + storeCount).toDouble()
+            ))
         }
 
         eventHandler("remove") {
