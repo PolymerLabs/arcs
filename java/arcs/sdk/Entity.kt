@@ -14,8 +14,6 @@ package arcs.sdk
 interface Entity {
     var internalId: String
     fun schemaHash(): String
-    fun isSet(): Boolean
-    fun getFieldsNotSet(): List<String>
 }
 
 /**

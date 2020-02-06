@@ -52,8 +52,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                     num = input?.num ?: 0.0,
                     txt = input?.txt ?: ""
                 )
-                d.num = d.num.times(2)
-                outHandle.set(d)
+                outHandle.set(d.copy(num = d.num.times(2)))
             }
             "case3" -> {
                 val input = inHandle.fetch()
@@ -61,8 +60,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                     num = input?.num ?: 0.0,
                     txt = input?.txt ?: ""
                 )
-                d.num = d.num.times(3)
-                ioHandle.set(d)
+                ioHandle.set(d.copy(d.num.times(3)))
             }
             "case4" -> {
                 if (ioHandle.fetch() != null) {

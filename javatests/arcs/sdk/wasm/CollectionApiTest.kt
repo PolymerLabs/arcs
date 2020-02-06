@@ -12,7 +12,7 @@
 package arcs.sdk.wasm
 
 class CollectionApiTest : AbstractCollectionApiTest() {
-    private val stored = CollectionApiTest_OutHandle()
+    private var stored = CollectionApiTest_OutHandle()
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
@@ -21,8 +21,10 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                 ioHandle.clear()
             }
             "case2" -> {
-                stored.flg = inHandle.isEmpty()
-                stored.num = inHandle.size.toDouble()
+                stored = stored.copy(
+                    flg = inHandle.isEmpty(),
+                    num = inHandle.size.toDouble()
+                )
                 outHandle.store(stored)
             }
             "case3" -> {
@@ -31,26 +33,28 @@ class CollectionApiTest : AbstractCollectionApiTest() {
             "case4" -> {
                 val d1 = CollectionApiTest_OutHandle()
                 val iter = inHandle.iterator()
-                d1.flg = iter.hasNext()
+                val flg = iter.hasNext()
                 val i1 = iter.next()
-                d1.txt = "num: ${i1.num.toInt()}"
-                d1.num = i1.num.let { it * 2 }
-                outHandle.store(d1)
+                outHandle.store(d1.copy(
+                    txt = "num: ${i1.num.toInt()}",
+                    num = i1.num.let { it * 2 },
+                    flg = flg
+                ))
 
-                val d2 = CollectionApiTest_OutHandle()
-                d2.txt = "eq"
-                d2.flg = iter.hasNext()
-                outHandle.store(d2)
+                outHandle.store(d1.copy(
+                    txt = "eq",
+                    flg = iter.hasNext()
+                ))
 
-                val d3 = CollectionApiTest_OutHandle()
-                d3.txt = "ne"
-                d3.flg = !iter.hasNext()
-                outHandle.store(d3)
+                outHandle.store(d1.copy(
+                    txt = "ne",
+                    flg = !iter.hasNext()
+                ))
             }
             "case5" -> {
-                val extra = CollectionApiTest_IoHandle()
+                val extra = CollectionApiTest_IoHandle().copy(txt = "abc")
 
-                extra.txt = "abc"
+
                 ioHandle.store(extra)
                 val d1 = CollectionApiTest_OutHandle(
                     num = ioHandle.size.toDouble(),

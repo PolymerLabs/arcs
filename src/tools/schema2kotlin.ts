@@ -101,11 +101,13 @@ class KotlinGenerator implements ClassGenerator {
   fields: string[] = [];
   fieldVals: string[] = [];
   setFields: string[] = [];
-  fieldSets: string[] = [];
   encode: string[] = [];
   decode: string[] = [];
   fieldsReset: string[] = [];
   getUnsetFields: string[] = [];
+  fieldsForCopyDecl: string[] = [];
+  fieldsForCopy: string[] = [];
+  setFieldsToDefaults: string[] = [];
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
@@ -116,29 +118,27 @@ class KotlinGenerator implements ClassGenerator {
 
     const {type, decodeFn, defaultVal} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
-    const set = `_${fixed}Set`;
+    
 
     this.fields.push(`${fixed}: ${type}`);
     this.fieldVals.push(
-      `var ${set} = false\n` +
-      `    var ${fixed} = ${defaultVal}\n` +
+      `var ${fixed} = ${defaultVal}\n` +
       `        get() = field\n` +
-      `        set(value) {\n` +
-      `            field = value\n` +
-      `            ${set} = true\n` +
+      `        private set(_value) {\n` +
+      `            field = _value\n` +
       `        }`
     );
     this.setFields.push(`this.${fixed} = ${fixed}`);
-    this.fieldSets.push(`${set}`);
     this.fieldsReset.push(
       `${fixed} = ${defaultVal}`,
-      `${set} = false`
     );
-    this.getUnsetFields.push(`if (!${set}) rtn.add("${fixed}")`);
+    this.fieldsForCopyDecl.push(`${fixed}: ${type} = this.${fixed}`);
+    this.fieldsForCopy.push(`${fixed} = ${fixed}`);
+    this.setFieldsToDefaults.push(`var ${fixed} = ${defaultVal}`);
 
     this.decode.push(`"${field}" -> {`,
                      `    decoder.validate("${typeChar}")`,
-                     `    this.${fixed} = decoder.${decodeFn}`,
+                     `    ${fixed} = decoder.${decodeFn}`,
                      `}`);
 
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
@@ -171,18 +171,16 @@ class ${name}() : ${this.getType('Entity')} {
         ${this.setFields.join('\n        ')}
     }`)}
 
-    override fun isSet(): Boolean {
-        return ${withFields(`${this.fieldSets.join(' && ')}`)}${withoutFields('true')}
+    fun copy(
+        ${this.fieldsForCopyDecl.join(',\n        ')}
+    ) : ${name} {
+      return ${name}(
+          ${this.fieldsForCopy.join(', \n          ')}
+      )
     }
 
     fun reset() {
         ${withFields(`${this.fieldsReset.join('\n        ')}`)}
-    }
-
-    override fun getFieldsNotSet(): List<String> {
-        val rtn = mutableListOf<String>()
-        ${withFields(this.getUnsetFields.join('\n        '))}
-        return rtn
     }
 
     override fun schemaHash() = "${schemaHash}"
@@ -203,28 +201,33 @@ ${this.opts.wasm ? `
         if (encoded.isEmpty()) return null
 
         val decoder = StringDecoder(encoded)
-        return create().apply {
-            internalId = decoder.decodeText()
-            decoder.validate("|")
-            ${withFields(`var i = 0
-            while (i < ${fieldCount} && !decoder.done()) {
-                val name = decoder.upTo(':').toUtf8String()
-                when (name) {
-                    ${this.decode.join('\n                    ')}
-                    else -> {
-                        // Ignore unknown fields until type slicing is fully implemented.
-                        when (decoder.chomp(1).toUtf8String()) {
-                            "T", "U" -> decoder.decodeText()
-                            "N" -> decoder.decodeNum()
-                            "B" -> decoder.decodeBool()
-                        }
-                        i--
+        val internalId = decoder.decodeText()
+        decoder.validate("|")
+        ${withFields(`
+        ${this.setFieldsToDefaults.join('\n        ')}
+        var i = 0
+        while (i < ${fieldCount} && !decoder.done()) {
+            val _name = decoder.upTo(':').toUtf8String()
+            when (_name) {
+                ${this.decode.join('\n                ')}
+                else -> {
+                    // Ignore unknown fields until type slicing is fully implemented.
+                    when (decoder.chomp(1).toUtf8String()) {
+                        "T", "U" -> decoder.decodeText()
+                        "N" -> decoder.decodeNum()
+                        "B" -> decoder.decodeBool()
                     }
+                    i--
                 }
-                decoder.validate("|")
-                i++
-            }`)}
-        }
+            }
+            decoder.validate("|")
+            i++
+        }`)}
+        val _rtn = create().copy(
+            ${this.fieldsForCopy.join(', \n            ')}
+        )
+        _rtn.internalId = internalId
+        return _rtn
     }` : ''}
 }
 

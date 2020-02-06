@@ -21,9 +21,7 @@ class GetPerson : AbstractGetPerson() {
 
     init {
         eventHandler("onNameInputChange") { eventData ->
-            val p = GetPerson_Person("Human")
-            p.name = eventData["value"] ?: "Human"
-            person.set(p)
+            person.set(GetPerson_Person(name = eventData["value"] ?: "Human"))
         }
     }
 }

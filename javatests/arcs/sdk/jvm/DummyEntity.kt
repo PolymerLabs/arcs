@@ -20,10 +20,6 @@ data class DummyEntity(val text: String) : Entity {
 
     override fun schemaHash() = "def"
 
-    override fun isSet() = true
-
-    override fun getFieldsNotSet(): List<String> = emptyList()
-
     /** Fake [EntitySpec] implementation for [DummyEntity]. */
     class Spec : EntitySpec<DummyEntity> {
         override fun create() = DummyEntity("default")

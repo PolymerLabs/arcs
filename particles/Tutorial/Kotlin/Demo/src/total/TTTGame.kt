@@ -33,16 +33,16 @@ class TTTGame : AbstractTTTGame() {
     )
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.fetch() == null) {
+        if (gameState.fetch()?.board == null) {
             gameState.set(defaultGame)
         }
         if (handle.name == "playerOne" && playerOne.fetch()?.id != 0.0) {
             val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
-            playerOne.set(p1.apply { id = 0.0 })
+            playerOne.set(p1.copy(id = 0.0))
         }
         if (handle.name == "playerTwo" && playerTwo.fetch()?.id != 1.0) {
             val p2 = playerTwo.fetch() ?: TTTGame_PlayerTwo()
-            playerTwo.set(p2.apply { id = 1.0 })
+            playerTwo.set(p2.copy(id = 1.0))
         }
     }
 
@@ -100,8 +100,8 @@ class TTTGame : AbstractTTTGame() {
                 gameOver = false,
                 winnerAvatar = ""
             ))
-            playerOneMove.set(mv1.apply { move = -1.0 })
-            playerTwoMove.set(mv2.apply { move = -1.0 })
+            playerOneMove.set(mv1.copy(move = -1.0))
+            playerTwoMove.set(mv2.copy(move = -1.0))
             events.clear()
         }
         renderOutput()
@@ -121,31 +121,24 @@ class TTTGame : AbstractTTTGame() {
     ) {
         if (!mv.isValidMove(boardList)) return
         boardList[mv] = avatar
-        gs.board = boardList.joinToString(",")
 
-        gs.currentPlayer = (gs.currentPlayer + 1) % 2
-
-        gameState.set(checkGameOver(boardList, gs, avatar))
-    }
-
-    private fun checkGameOver(
-        boardList: List<String>,
-        gs: TTTGame_GameState,
-        avatar: String
-    ): TTTGame_GameState {
-        // Check if the board is full, meaning the game is tied
-        gs.gameOver = !boardList.contains("")
+        var gameOver = !boardList.contains("")
 
         // Check if the game is over
         winningSequences.forEach { sequence ->
             if (boardList[sequence[0]] != "" &&
                 boardList[sequence[0]] == boardList[sequence[1]] &&
                 boardList[sequence[0]] == boardList[sequence[2]]) {
-                gs.gameOver = true
-                gs.winnerAvatar = avatar
+                gameOver = true
             }
         }
-        return gs
+
+        gameState.set(gs.copy(
+            board = boardList.joinToString(","),
+            currentPlayer = (gs.currentPlayer + 1) % 2,
+            gameOver = gameOver,
+            winnerAvatar = if (gameOver) avatar else ""
+        ))
     }
 
     private fun hasReset() = events.any { it.type == "reset" }
