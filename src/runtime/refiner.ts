@@ -17,6 +17,7 @@ enum Primitive {
   BOOLEAN = 'Boolean',
   NUMBER = 'Number',
   TEXT = 'Text',
+  UNKNOWN = '~query_arg_type',
 }
 
 export enum Op {
@@ -183,7 +184,7 @@ export class Refinement {
 type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode';
 
 abstract class RefinementExpression {
-  evalType: Primitive.BOOLEAN | Primitive.NUMBER | Primitive.TEXT;
+  evalType: Primitive;
 
   constructor(readonly kind: RefinementExpressionNodeType) {}
   static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
@@ -534,18 +535,18 @@ export class QueryArgumentPrimitive extends RefinementExpression {
   value: string;
   evalType: Primitive;
 
-  constructor(value: string, evalType?: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT) {
+  constructor(value: string, evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT | Primitive.UNKNOWN) {
     super('QueryArgumentPrimitiveNode');
     this.value = value;
     this.evalType = evalType;
   }
 
   static fromAst(expression: QueryNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-    return new QueryArgumentPrimitive(expression.value, typeData[expression.value]);
+    return new QueryArgumentPrimitive(expression.value, typeData[expression.value] || Primitive.UNKNOWN);
   }
 
   static fromLiteral(expr): RefinementExpression {
-    return new QueryArgumentPrimitive(expr.value);
+    return new QueryArgumentPrimitive(expr.value, expr.evalType);
   }
 
   toString(): string {
@@ -1116,11 +1117,11 @@ export class RefinementOperator {
     }
     if (this.opInfo.argType === 'same') {
       // If there is a type variable, apply the restriction.
-      if (operands[0].evalType === undefined) {
+      if (operands[0].evalType === Primitive.UNKNOWN) {
         operands[0].evalType = operands[1].evalType;
         return;
       }
-      if (operands[1].evalType === undefined) {
+      if (operands[1].evalType === Primitive.UNKNOWN) {
         operands[1].evalType = operands[0].evalType;
         return;
       }
