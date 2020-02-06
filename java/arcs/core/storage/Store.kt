@@ -26,7 +26,7 @@ import arcs.core.type.Type
  * of an inactive [Store].
  */
 interface ActivationFactory<Data : CrdtData, Op : CrdtOperation, T> {
-    suspend fun create(options: StoreOptions<Data, Op, T>): ActiveStore<Data, Op, T>
+    suspend operator fun invoke(options: StoreOptions<Data, Op, T>): ActiveStore<Data, Op, T>
 }
 
 /**
@@ -79,7 +79,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             model = model
         )
         // If we were given a specific factory to use, use it; otherwise use the default factory.
-        val  activeStore = (activationFactory ?: getDefaultFactory<Data, Op, ConsumerData>()).create(options)
+        val  activeStore = (activationFactory ?: getDefaultFactory()).invoke(options)
 
         existenceCriteria = ExistenceCriteria.ShouldExist
         this.activeStore = activeStore
@@ -103,7 +103,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         }
 
         private val defaultFactory = object : ActivationFactory<CrdtData, CrdtOperation, Any> {
-            override suspend fun create(
+            override suspend fun invoke(
                 options: StoreOptions<CrdtData, CrdtOperation, Any>
             ): ActiveStore<CrdtData, CrdtOperation, Any> {
                 val constructor = CrdtException.requireNotNull(DEFAULT_CONSTRUCTORS[options.mode]) {
