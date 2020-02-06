@@ -27,7 +27,7 @@ class RenderTest : AbstractRenderTest() {
         if (shouldPopulate) mapOf("foo" to "bar") else null
 
     override fun onHandleUpdate(handle: Handle) {
-        flags.fetch()?.let {
+        handles.flags.fetch()?.let {
             shouldTemplate = it.template
             shouldPopulate = it.model
         }

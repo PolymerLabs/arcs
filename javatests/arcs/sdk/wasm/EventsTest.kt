@@ -13,6 +13,8 @@ package arcs.sdk.wasm
 
 class EventsTest : AbstractEventsTest() {
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
-        output.set(EventsTest_Output(txt = "event:$slotName:$eventName:${eventData["info"]}"))
+        handles.output.set(
+                EventsTest_Output(txt = "event:$slotName:$eventName:${eventData["info"]}")
+        )
     }
 }

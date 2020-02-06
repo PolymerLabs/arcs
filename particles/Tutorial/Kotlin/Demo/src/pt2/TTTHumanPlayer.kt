@@ -15,13 +15,13 @@ import arcs.sdk.Handle
 
 class TTTHumanPlayer : AbstractTTTHumanPlayer() {
     override fun onHandleUpdate(handle: Handle) {
-        if (events.size <= 0) return
+        if (handles.events.size <= 0) return
 
         // Get the element with the largest time as this will be the most recent.
-        val event = events.sortedBy { it.time }.last()
+        val event = handles.events.sortedBy { it.time }.last()
         // Set the move
         if (event.type == "move" && event.time > -1.0) {
-            myMove.set(TTTHumanPlayer_MyMove(event.move))
+            handles.myMove.set(TTTHumanPlayer_MyMove(event.move))
         }
     }
 }

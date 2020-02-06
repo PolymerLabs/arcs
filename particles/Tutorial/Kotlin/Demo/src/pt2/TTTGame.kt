@@ -17,15 +17,15 @@ class TTTGame : AbstractTTTGame() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.fetch() == null) {
-            gameState.set(defaultGame)
+        if (handles.gameState.fetch() == null) {
+            handles.gameState.set(defaultGame)
         }
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val gs = gameState.fetch() ?: defaultGame
-        val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
-        val mv = playerOneMove.fetch() ?: TTTGame_PlayerOneMove()
+        val gs = handles.gameState.fetch() ?: defaultGame
+        val p1 = handles.playerOne.fetch() ?: TTTGame_PlayerOne()
+        val mv = handles.playerOneMove.fetch() ?: TTTGame_PlayerOneMove()
         val boardList = gs.board.split(",").toMutableList()
         // Check the handle updated matches the current player
         if (handle.name == "playerOneMove") {
@@ -50,6 +50,6 @@ class TTTGame : AbstractTTTGame() {
         gs: TTTGame_GameState
     ) {
         boardList[mv] = avatar
-        gameState.set(gs.copy(board = boardList.joinToString(",")))
+        handles.gameState.set(gs.copy(board = boardList.joinToString(",")))
     }
 }

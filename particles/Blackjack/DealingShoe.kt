@@ -13,13 +13,13 @@ class DealingShoe : AbstractDealingShoe() {
     override fun getTemplate(slotName: String) = "Card is <span>{{nextCard}}</span>"
 
     override fun populateModel(slotName: String, model: Map<String, Any>) =
-        model + mapOf("nextCard" to nextCard.toString())
+        model + mapOf("nextCard" to handles.nextCard.toString())
 
     override fun onHandleUpdate(handle: Handle) {
         if (handle.name != "cardRequest") return
-        val request = cardRequest.fetch() ?: return
+        val request = handles.cardRequest.fetch() ?: return
         val card = pickACard() ?: return
-        nextCard.set(
+        handles.nextCard.set(
             DealingShoe_NextCard(
                 player = request.player,
                 card = card.value.toDouble()
@@ -38,7 +38,7 @@ class DealingShoe : AbstractDealingShoe() {
     }
 
     fun pickACard(): Card? {
-        val localDecks = decks.fetch() ?: initializedDecks()
+        val localDecks = handles.decks.fetch() ?: initializedDecks()
         var choice = Random.nextInt(totalCards)
         val cards = localDecks.cards.takeIf { it != emptyDeck } ?: return null
         // This could be done more efficiently, but should suffice for now.
@@ -47,7 +47,7 @@ class DealingShoe : AbstractDealingShoe() {
             choice = (choice + 1) % totalCards
             ++readCards
         }
-        decks.set(localDecks.copy(
+        handles.decks.set(localDecks.copy(
             cards = cards.replaceRange(choice, choice + 1, cardAbsent)
         ))
         return Card(choice % 52)

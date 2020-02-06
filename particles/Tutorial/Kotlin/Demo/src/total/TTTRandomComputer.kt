@@ -14,12 +14,12 @@ package arcs.tutorials.tictactoe
 import arcs.sdk.Handle
 
 class TTTRandomComputer : AbstractTTTRandomComputer() {
-    override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(gameState)
+    override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(handles.gameState)
 
     override fun onHandleUpdate(handle: Handle) {
-        if (gameState.fetch()?.currentPlayer != player.fetch()?.id) return
+        if (handles.gameState.fetch()?.currentPlayer != handles.player.fetch()?.id) return
 
-        val gs = gameState.fetch() ?: TTTRandomComputer_GameState()
+        val gs = handles.gameState.fetch() ?: TTTRandomComputer_GameState()
 
         val boardArr = gs.board.split(",")
         val emptyCells = mutableListOf<Double>()
@@ -32,7 +32,7 @@ class TTTRandomComputer : AbstractTTTRandomComputer() {
         // Choose a random cell as the move
         if (emptyCells.isNotEmpty()) {
             val mv = emptyCells.shuffled().first()
-            myMove.set(TTTRandomComputer_MyMove(move = mv))
+            handles.myMove.set(TTTRandomComputer_MyMove(move = mv))
         }
     }
 }

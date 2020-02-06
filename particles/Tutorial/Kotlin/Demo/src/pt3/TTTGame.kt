@@ -20,25 +20,25 @@ class TTTGame : AbstractTTTGame() {
     )
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.fetch()?.board == null) {
-            gameState.set(defaultGame)
+        if (handles.gameState.fetch()?.board == null) {
+            handles.gameState.set(defaultGame)
         }
-        if (handle.name == "playerOne" && playerOne.fetch()?.id != 0.0) {
-            val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
-            playerOne.set(p1.copy(id = 0.0))
+        if (handle.name == "handles.playerOne" && handles.playerOne.fetch()?.id != 0.0) {
+            val p1 = handles.playerOne.fetch() ?: TTTGame_PlayerOne()
+            handles.playerOne.set(p1.copy(id = 0.0))
         }
-        if (handle.name == "playerTwo" && playerTwo.fetch()?.id != 1.0) {
-            val p2 = playerTwo.fetch() ?: TTTGame_PlayerTwo()
-            playerTwo.set(p2.copy(id = 1.0))
+        if (handle.name == "playerTwo" && handles.playerTwo.fetch()?.id != 1.0) {
+            val p2 = handles.playerTwo.fetch() ?: TTTGame_PlayerTwo()
+            handles.playerTwo.set(p2.copy(id = 1.0))
         }
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val gs = gameState.fetch() ?: defaultGame
-        val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
-        val p2 = playerTwo.fetch() ?: TTTGame_PlayerTwo()
-        val mv1 = playerOneMove.fetch() ?: TTTGame_PlayerOneMove()
-        val mv2 = playerTwoMove.fetch() ?: TTTGame_PlayerTwoMove()
+        val gs = handles.gameState.fetch() ?: defaultGame
+        val p1 = handles.playerOne.fetch() ?: TTTGame_PlayerOne()
+        val p2 = handles.playerTwo.fetch() ?: TTTGame_PlayerTwo()
+        val mv1 = handles.playerOneMove.fetch() ?: TTTGame_PlayerOneMove()
+        val mv2 = handles.playerTwoMove.fetch() ?: TTTGame_PlayerTwoMove()
 
         // Apply the moves
         val boardList = gs.board.split(",").toMutableList()
@@ -74,7 +74,7 @@ class TTTGame : AbstractTTTGame() {
         if (!mv.isValidMove(boardList)) return
         boardList[mv] = avatar
 
-        gameState.set(gs.copy(
+        handles.gameState.set(gs.copy(
             board = boardList.joinToString(","),
             currentPlayer = (gs.currentPlayer + 1) % 2
         ))

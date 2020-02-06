@@ -17,36 +17,36 @@ class CollectionApiTest : AbstractCollectionApiTest() {
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
             "case1" -> {
-                outHandle.clear()
-                ioHandle.clear()
+                handles.outHandle.clear()
+                handles.ioHandle.clear()
             }
             "case2" -> {
                 stored = stored.copy(
-                    flg = inHandle.isEmpty(),
-                    num = inHandle.size.toDouble()
+                    flg = handles.inHandle.isEmpty(),
+                    num = handles.inHandle.size.toDouble()
                 )
-                outHandle.store(stored)
+                handles.outHandle.store(stored)
             }
             "case3" -> {
-                outHandle.remove(stored)
+                handles.outHandle.remove(stored)
             }
             "case4" -> {
                 val d1 = CollectionApiTest_OutHandle()
-                val iter = inHandle.iterator()
+                val iter = handles.inHandle.iterator()
                 val flg = iter.hasNext()
                 val i1 = iter.next()
-                outHandle.store(d1.copy(
+                handles.outHandle.store(d1.copy(
                     txt = "num: ${i1.num.toInt()}",
                     num = i1.num.let { it * 2 },
                     flg = flg
                 ))
 
-                outHandle.store(d1.copy(
+                handles.outHandle.store(d1.copy(
                     txt = "eq",
                     flg = iter.hasNext()
                 ))
 
-                outHandle.store(d1.copy(
+                handles.outHandle.store(d1.copy(
                     txt = "ne",
                     flg = !iter.hasNext()
                 ))
@@ -55,38 +55,38 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                 val extra = CollectionApiTest_IoHandle().copy(txt = "abc")
 
 
-                ioHandle.store(extra)
+                handles.ioHandle.store(extra)
                 val d1 = CollectionApiTest_OutHandle(
-                    num = ioHandle.size.toDouble(),
+                    num = handles.ioHandle.size.toDouble(),
                     txt = "",
-                    flg = ioHandle.isEmpty())
-                outHandle.store(d1)
+                    flg = handles.ioHandle.isEmpty())
+                handles.outHandle.store(d1)
 
-                ioHandle.remove(extra)
+                handles.ioHandle.remove(extra)
                 val d2 = CollectionApiTest_OutHandle(
-                    num = ioHandle.size.toDouble(),
+                    num = handles.ioHandle.size.toDouble(),
                     txt = "",
                     flg = false
                 )
-                outHandle.store(d2)
+                handles.outHandle.store(d2)
 
                 // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
-                val sorted = ioHandle.sortedBy { it.num.toInt() }
+                val sorted = handles.ioHandle.sortedBy { it.num.toInt() }
                 sorted.forEach {
-                    outHandle.store(CollectionApiTest_OutHandle(
+                    handles.outHandle.store(CollectionApiTest_OutHandle(
                         num = it.num,
                         txt = it.txt,
                         flg = false
                     ))
                 }
 
-                ioHandle.clear()
+                handles.ioHandle.clear()
                 val d3 = CollectionApiTest_OutHandle(
-                    num = ioHandle.size.toDouble(),
+                    num = handles.ioHandle.size.toDouble(),
                     txt = "",
-                    flg = ioHandle.isEmpty()
+                    flg = handles.ioHandle.isEmpty()
                 )
-                outHandle.store(d3)
+                handles.outHandle.store(d3)
             }
         }
     }

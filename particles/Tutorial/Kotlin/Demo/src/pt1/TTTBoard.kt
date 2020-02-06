@@ -18,7 +18,7 @@ class TTTBoard : AbstractTTTBoard() {
 
     init {
         eventHandler("onClick") { eventData ->
-            events.store(TTTBoard_Events(
+            handles.events.store(TTTBoard_Events(
                     type = "move",
                     move = eventData["value"]?.toDouble() ?: -1.0,
                     time = clicks
@@ -27,7 +27,7 @@ class TTTBoard : AbstractTTTBoard() {
         }
 
         eventHandler("reset") {
-            events.store(TTTBoard_Events(type = "reset", time = clicks, move = -1.0))
+            handles.events.store(TTTBoard_Events(type = "reset", time = clicks, move = -1.0))
             clicks++
         }
     }
@@ -35,7 +35,7 @@ class TTTBoard : AbstractTTTBoard() {
     override fun onHandleUpdate(handle: Handle) = renderOutput()
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val gs = gameState.fetch() ?: TTTBoard_GameState()
+        val gs = handles.gameState.fetch() ?: TTTBoard_GameState()
         val boardList = gs.board.split(",")
         val boardModel = mutableListOf<Map<String, String?>>()
         boardList.forEachIndexed { index, cell ->
