@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Consumer, Literal} from './hot.js';
+import {Arc} from './arc.js';
 
 export interface SerializedPropagatedException extends Literal {
   exceptionType: string;
@@ -44,6 +45,9 @@ export class PropagatedException extends Error {
     const cause = literal.cause as Error;
     let exception: PropagatedException;
     switch (literal.exceptionType) {
+      case AuditException.name:
+        exception = new AuditException(cause, literal.method, literal.particleId, literal.particleName);
+        break;
       case SystemException.name:
         exception = new SystemException(cause, literal.method, literal.particleId, literal.particleName);
         break;
@@ -79,19 +83,27 @@ export class UserException extends PropagatedException {
   }
 }
 
-type ExceptionHandler = Consumer<Error>;
-
-const systemHandlers = <ExceptionHandler[]>[];
-
-export function reportSystemException(exception: PropagatedException) {
-  for (const handler of systemHandlers) {
-    handler(exception);
+export class AuditException extends PropagatedException {
+  get message(): string {
+    const particleName = this.particleName ? this.particleName : this.particleId;
+    return `AuditException: exception ${this.cause.name} raised when invoking function ${this.method} on particle ${particleName}: ${
+      this.cause.message}`;
   }
 }
 
-export function reportGlobalException(exception: Error) {
+type ExceptionHandler = (arc: Arc, input: Error) => void;
+
+const systemHandlers = <ExceptionHandler[]>[];
+
+export function reportSystemException(arc: Arc, exception: PropagatedException) {
   for (const handler of systemHandlers) {
-    handler(exception);
+    handler(arc, exception);
+  }
+}
+
+export function reportGlobalException(arc: Arc, exception: Error) {
+  for (const handler of systemHandlers) {
+    handler(arc, exception);
   }
 }
 
@@ -108,15 +120,18 @@ export function removeSystemExceptionHandler(handler: ExceptionHandler) {
   }
 }
 
-export const defaultSystemExceptionHandler = (exception) => {
-  if (exception.particleName && exception.method) {
-    console.log(`Exception in particle '${exception.particleName}', method '${exception.method}'`);
-  } else if (exception.particleName) {
-    console.log(`Exception in particle '${exception.particleName}', unknown method`);
-  } else if (exception.method) {
-    console.log(`Exception in unknown particle, method '${exception.method}'`);
+export const defaultSystemExceptionHandler = (arc: Arc, exception: Error) => {
+  if (exception instanceof PropagatedException) {
+    if (exception.particleName && exception.method) {
+      console.log(`Exception in particle '${exception.particleName}', method '${exception.method}'`);
+    } else if (exception.particleName) {
+      console.log(`Exception in particle '${exception.particleName}', unknown method`);
+    } else if (exception.method) {
+      console.log(`Exception in unknown particle, method '${exception.method}'`);
+    }
   }
-  throw exception;
+  console.log(exception.message);
+  arc.dispose();
 };
 
 registerSystemExceptionHandler(defaultSystemExceptionHandler);

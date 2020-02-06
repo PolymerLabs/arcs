@@ -141,6 +141,9 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
           idGenerator: null,
           getStorageProxy() {
             throw new Error('References not yet supported outside of the PEC');
+          },
+          reportExceptionInHost(exception: PropagatedException): void {
+            store.reportExceptionInHost(exception);
           }
         };
       }

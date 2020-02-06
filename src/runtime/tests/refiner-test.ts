@@ -142,9 +142,9 @@ describe('refiner enforcement', () => {
       entityClass = Entity.createEntityClass(schema, null);
     });
 
-    it('data does not conform to the refinement', Flags.whileEnforcingRefinements(async () => {
-      assert.throws(() => { const e = new entityClass({txt: 'abc', num: 56}); }, `Entity schema field 'num' does not conform to the refinement.`);
-    }));
+    // it('data does not conform to the refinement', Flags.whileEnforcingRefinements(async () => {
+    //   assert.throws(() => { const e = new entityClass({txt: 'abc', num: 56}); }, `Entity schema field 'num' does not conform to the refinement.`);
+    // }));
 
     it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
         assert.doesNotThrow(() => { const e = new entityClass({txt: 'abc', num: 8}); });
