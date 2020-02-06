@@ -11,22 +11,25 @@
 
 package arcs.core.data
 
+/** A class containing a set of capabilities describing a store. */
 data class Capabilities(val capabilities: Set<Capability>) {
     fun isEmpty(): Boolean = capabilities.isEmpty()
 
-    fun isSame(other: Capabilities): Boolean = capabilities.equals(other.capabilities)
-
     fun contains(other: Capabilities): Boolean = capabilities.containsAll(other.capabilities)
 
-    fun isPersistent(): Boolean = capabilities.contains(Capability.Persistent)
-    fun isTiedToRuntime(): Boolean = capabilities.contains(Capability.TiedToRuntime)
-    fun isTiedToArc(): Boolean = capabilities.contains(Capability.TiedToArc)
+    val isPersistent: Boolean
+        get() = capabilities.contains(Capability.Persistent)
+    val isTiedToRuntime: Boolean
+        get() = capabilities.contains(Capability.TiedToRuntime)
+    val isTiedToArc: Boolean
+        get() = capabilities.contains(Capability.TiedToArc)
 
     enum class Capability {
         Persistent,
         TiedToRuntime,
         TiedToArc
     }
+
     companion object {
         val Persistent: Capabilities = Capabilities(setOf<Capability>(Capability.Persistent))
         val TiedToRuntime: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToRuntime))

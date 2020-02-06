@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -11,8 +11,7 @@
 
 package arcs.core.data
 
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -21,39 +20,23 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class CapabilitiesTest {
     @Test
-    fun capabilities_verifiesSame() {
-        assertTrue(Capabilities.Persistent.isSame(Capabilities.Persistent))
-        assertTrue(Capabilities.TiedToRuntime.isSame(Capabilities.TiedToRuntime))
-        assertTrue(Capabilities.TiedToArc.isSame(Capabilities.TiedToArc))
-
-        assertFalse(Capabilities.Persistent.isSame(Capabilities.TiedToRuntime))
-        assertFalse(Capabilities.TiedToRuntime.isSame(Capabilities.TiedToArc))
-        assertFalse(Capabilities.TiedToArc.isSame(Capabilities.Persistent))
-
-
-        assertTrue(Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)).isSame(
-                Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc))))
-        assertFalse(Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)).isSame(
-                Capabilities(setOf(Capabilities.Capability.Persistent))))
-        assertFalse(Capabilities.Persistent.isSame(
-                Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc))))
-    }
-
-    @Test
     fun capabilities_verifiesContains() {
-        assertTrue(Capabilities.Persistent.contains(Capabilities.Persistent))
-        assertTrue(Capabilities.TiedToRuntime.contains(Capabilities.TiedToRuntime))
-        assertTrue(Capabilities.TiedToArc.contains(Capabilities.TiedToArc))
+        assertThat(Capabilities.Persistent.contains(Capabilities.Persistent)).isTrue()
+        assertThat(Capabilities.TiedToRuntime.contains(Capabilities.TiedToRuntime)).isTrue()
+        assertThat(Capabilities.TiedToArc.contains(Capabilities.TiedToArc)).isTrue()
 
-        assertFalse(Capabilities.Persistent.contains(Capabilities.TiedToRuntime))
-        assertFalse(Capabilities.TiedToRuntime.contains(Capabilities.TiedToArc))
-        assertFalse(Capabilities.TiedToArc.contains(Capabilities.Persistent))
+        assertThat(Capabilities.Persistent.contains(Capabilities.TiedToRuntime)).isFalse()
+        assertThat(Capabilities.TiedToRuntime.contains(Capabilities.TiedToArc)).isFalse()
+        assertThat(Capabilities.TiedToArc.contains(Capabilities.Persistent)).isFalse()
 
-        assertTrue(Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)).contains(
-                Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc))))
-        assertTrue(Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)).contains(
-                Capabilities(setOf(Capabilities.Capability.Persistent))))
-        assertFalse(Capabilities.Persistent.contains(
-                Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc))))
+        assertThat(Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)).contains(
+                Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)))
+        ).isTrue()
+        assertThat(Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)).contains(
+                Capabilities(setOf(Capabilities.Capability.Persistent)))
+        ).isTrue()
+        assertThat(Capabilities.Persistent.contains(
+                Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)))
+        ).isFalse()
     }
 }
