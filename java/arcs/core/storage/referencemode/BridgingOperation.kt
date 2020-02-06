@@ -93,9 +93,7 @@ sealed class BridgingOperation : CrdtOperationAtTime {
  */
 fun List<RefModeStoreOp>.toBridgingOps(
     backingStorageKey: StorageKey
-): List<BridgingOperation> = map {
-    it.toBridgingOp(backingStorageKey)
-}
+): List<BridgingOperation> = map { it.toBridgingOp(backingStorageKey) }
 
 /**
  * Converts a [CrdtOperationAtTime] from some referencable-typed operation to [BridgingOperation]

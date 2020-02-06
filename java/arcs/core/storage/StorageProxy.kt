@@ -115,23 +115,11 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     fun getParticleViewAsync(): CompletableDeferred<ValueAndVersion<T>> {
         log.debug { "Getting particle view" }
         val future = CompletableDeferred<ValueAndVersion<T>>()
-        future.invokeOnCompletion {
-            if (it == null) {
-                log.debug {
-                    @Suppress("EXPERIMENTAL_API_USAGE")
-                    "Particle view resolved: ${future.getCompleted()}"
-                }
-            } else {
-                log.error(it) { "Particle view could not be resolved" }
-            }
-        }
         mutex.withLock {
             if (synchronized) {
                 future.complete(ValueAndVersion(crdt.consumerView, crdt.versionMap))
-                false
             } else {
                 waitingSyncs.add(future)
-                true
             }
         }
         return future

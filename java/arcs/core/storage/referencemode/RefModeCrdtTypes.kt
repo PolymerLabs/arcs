@@ -114,7 +114,7 @@ interface RefModeStoreOp : CrdtOperationAtTime {
     }
 }
 
-/** Consumer data value of the [arcs.storage.ReferenceModeStore]. */
+/** Consumer data value of the [arcs.core.storage.ReferenceModeStore]. */
 sealed class RefModeStoreOutput : Referencable {
     data class DereferencedSingleton(
         override val id: ReferenceId,
@@ -127,15 +127,35 @@ sealed class RefModeStoreOutput : Referencable {
     ) : RefModeStoreOutput(), RefModeSet, Set<RawEntity> by value
 }
 
+/** Alias for [ProxyMessage]s pertaining to the [arcs.core.storage.ReferenceModeStore]. */
 typealias RefModeMessage =
     ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
+
+/**
+ * Alias for [ProxyMessage.ModelUpdate]s pertaining to the [arcs.core.storage.ReferenceModeStore].
+ */
 typealias RefModeModelUpdate =
     ProxyMessage.ModelUpdate<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
+
+/**
+ * Alias for [ProxyMessage.Operations] messages pertaining to the
+ * [arcs.core.storage.ReferenceModeStore].
+ */
 typealias RefModeOperations =
     ProxyMessage.Operations<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
+
+/**
+ * Alias for [ProxyMessage.SyncRequest] messages pertaining to the
+ * [arcs.core.storage.ReferenceModeStore].
+ */
 typealias RefModeSyncRequest =
     ProxyMessage.SyncRequest<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
 
+/**
+ * Sanitizes messages coming from the [StorageProxy] for use with the
+ * [arcs.core.storage.ReferenceModeStore] by converting them into messages of the type expected by
+ * the store. See [RefModeMessage].
+ */
 @Suppress("UNCHECKED_CAST")
 fun ProxyMessage<*, *, *>.sanitizeForRefModeStore(storeType: Type): RefModeMessage = when (this) {
     is ProxyMessage.ModelUpdate<*, *, *> -> sanitizeModelUpdate(storeType)
