@@ -81,7 +81,7 @@ describe('refiner', () => {
                 num: 6,
             };
             ref.validateData(data);
-        }, `Got type Number. Expected Boolean.`);
+        }, `Refinement expression num has type Number. Expected Boolean.`);
         assert.throws(() => {
           const manifestAst = parse(`
               particle Foo
@@ -93,7 +93,7 @@ describe('refiner', () => {
               name: 'Josh',
           };
             ref.validateData(data);
-        }, `Refinement expression num has type Number. Expected Boolean.`);
+        }, `Refinement expression name has type Text. Expected Number.`);
     });
     it('tests expression to range conversion.', () => {
         let manifestAst = parse(`
