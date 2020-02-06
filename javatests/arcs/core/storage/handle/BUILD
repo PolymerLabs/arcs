@@ -18,8 +18,13 @@ arcs_kt_android_test_suite(
     deps = [
         ":fakes",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/data",
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
+        "//java/arcs/core/storage/referencemode",
+        "//java/arcs/core/util/testutil",
         "//javatests/arcs/core/storage",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
