@@ -745,7 +745,7 @@ ${particleStr1}
         `);
         verify(manifest, false, ["Type validations failed for handle 'data: create': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}"]);
       });
-      it('ignores dynamic query refinement expressions but applies refinements', async () => {
+      it('ignores dynamic query refinement expressions and-ed with refinements', async () => {
         const manifest = await parseManifest(`
           particle Impossible
             output: writes Something {num: Number [ (num > 5) ] }
@@ -757,7 +757,21 @@ ${particleStr1}
             Reader
               input: reads data
         `);
-        verify(manifest, false, []);
+        verify(manifest, true, []);
+      });
+      it('ignores refinements or-ed with dynamic query refinement expressions', async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number }
+          particle Reader
+            input: reads Something {num: Number [ (num > ?) or (num > 3) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, true, []);
       });
     });
   });
