@@ -661,11 +661,12 @@ ${particleStr1}
     }));
 
     describe('refinement type checking', async () => {
-      const verify = (manifest, norms, expectedErrors) => {
+      const verify = (manifest: Manifest, norms: boolean, expectedErrors: string[]) => {
         const recipe = manifest.recipes[0];
         const options = {errors: new Map()};
-        assert.deepEqual(recipe.normalize(options), norms, `normalizes: ${norms}`);
+        const normalizes = recipe.normalize(options);
         assert.sameMembers([...options.errors.values()], expectedErrors);
+        assert.deepEqual(normalizes, norms, `is ${norms ? '' : 'not '}expected to normalize`);
         if (norms) {
           assert(recipe.isResolved());
         }

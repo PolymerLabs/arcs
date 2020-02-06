@@ -1153,7 +1153,7 @@ export class RefinementOperator {
     } else {
       for (const operand of operands) {
         if (operand.evalType !== this.opInfo.argType) {
-          if (operand.evalType !== undefined || operand.kind !== 'QueryArgumentPrimitiveNode') {
+          if (operand.evalType !== Primitive.UNKNOWN || operand.kind !== 'QueryArgumentPrimitiveNode') {
             throw new Error(`Refinement expression ${operand} has type ${operand.evalType}. Expected ${this.opInfo.argType}.`);
           }
           // Assign the type
