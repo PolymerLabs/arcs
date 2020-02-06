@@ -54,7 +54,9 @@ fun ArcsSingleton(
     schema: Schema,
     existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
     coroutineContext: CoroutineContext = Dispatchers.Default,
+    /* ktlint-disable max-line-length */
     activationFactory: ActivationFactory<RefModeStoreData.Singleton, RefModeStoreOp.Singleton, RawEntity>? = null
+    /* ktlint-enable max-line-length */
 ): ArcsSingleton<RawEntity, RefModeStoreData.Singleton, RefModeStoreOp.Singleton> {
     val storeOpts = StoreOptions<RefModeStoreData.Singleton, RefModeStoreOp.Singleton, RawEntity>(
         storageKey = storageKey,
@@ -90,7 +92,9 @@ inline fun <reified T> ArcsSingleton(
     storageKey: StorageKey,
     existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
     coroutineContext: CoroutineContext = Dispatchers.Default,
+    /* ktlint-disable max-line-length */
     activationFactory: ActivationFactory<CrdtSingleton.Data<ReferencablePrimitive<T>>, CrdtSingleton.IOperation<ReferencablePrimitive<T>>, ReferencablePrimitive<T>>? = null
+    /* ktlint-enable max-line-length */
 ): ArcsSingleton<ReferencablePrimitive<T>,
     CrdtSingleton.Data<ReferencablePrimitive<T>>,
     CrdtSingleton.IOperation<ReferencablePrimitive<T>>> {

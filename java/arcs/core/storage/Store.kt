@@ -63,9 +63,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
      * Supply a custom [activationFactory] to override the default behavior.
      */
     suspend fun activate(
-        /* ktlint-disable max-line-length */
         activationFactory: ActivationFactory<Data, Op, ConsumerData>? = null
-        /* ktlint-enable max-line-length */
     ): ActiveStore<Data, Op, ConsumerData> {
         activeStore?.let { return it }
 
@@ -79,7 +77,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             model = model
         )
         // If we were given a specific factory to use, use it; otherwise use the default factory.
-        val  activeStore = (activationFactory ?: getDefaultFactory()).invoke(options)
+        val activeStore = (activationFactory ?: getDefaultFactory()).invoke(options)
 
         existenceCriteria = ExistenceCriteria.ShouldExist
         this.activeStore = activeStore
@@ -98,9 +96,8 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
          * the [defaultFactory] instance.
          */
         @Suppress("UNCHECKED_CAST")
-        private fun <Data : CrdtData, Op : CrdtOperation, T>getDefaultFactory(): ActivationFactory<Data, Op, T> {
-            return defaultFactory as ActivationFactory<Data, Op, T>
-        }
+        private fun <Data : CrdtData, Op : CrdtOperation, T> getDefaultFactory() =
+            defaultFactory as ActivationFactory<Data, Op, T>
 
         private val defaultFactory = object : ActivationFactory<CrdtData, CrdtOperation, Any> {
             override suspend fun invoke(
@@ -117,7 +114,9 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
                 return CrdtException.requireNotNull(
                     constructor(options, dataClass) as? ActiveStore<CrdtData, CrdtOperation, Any>
-                ) { "Could not cast constructed store to ActiveStore${constructor.typeParamString}" }
+                ) {
+                    "Could not cast constructed store to ActiveStore${constructor.typeParamString}"
+                }
             }
         }
     }
