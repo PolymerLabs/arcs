@@ -78,8 +78,8 @@ class SingletonIntegrationTest {
 
     @Test
     fun initialState() = runBlockingTest {
-        assertThat(singletonA.get()).isNull()
-        assertThat(singletonB.get()).isNull()
+        assertThat(singletonA.value()).isNull()
+        assertThat(singletonB.value()).isNull()
     }
 
     @Test
@@ -87,8 +87,8 @@ class SingletonIntegrationTest {
         val person = Person("Lou", 95, true)
 
         singletonA.set(person.toRawEntity())
-        assertThat(singletonA.get()).isEqualTo(person.toRawEntity())
-        assertThat(singletonB.get()).isEqualTo(person.toRawEntity())
+        assertThat(singletonA.value()).isEqualTo(person.toRawEntity())
+        assertThat(singletonB.value()).isEqualTo(person.toRawEntity())
     }
 
     @Test
@@ -97,12 +97,12 @@ class SingletonIntegrationTest {
         val jan = Person("Jan", 28, true, emptySet())
 
         singletonA.set(lou.toRawEntity())
-        assertThat(singletonA.get()).isEqualTo(lou.toRawEntity())
-        assertThat(singletonB.get()).isEqualTo(lou.toRawEntity())
+        assertThat(singletonA.value()).isEqualTo(lou.toRawEntity())
+        assertThat(singletonB.value()).isEqualTo(lou.toRawEntity())
 
         singletonB.set(jan.toRawEntity())
-        assertThat(singletonA.get()).isEqualTo(jan.toRawEntity())
-        assertThat(singletonB.get()).isEqualTo(jan.toRawEntity())
+        assertThat(singletonA.value()).isEqualTo(jan.toRawEntity())
+        assertThat(singletonB.value()).isEqualTo(jan.toRawEntity())
     }
 
     @Test
@@ -110,12 +110,12 @@ class SingletonIntegrationTest {
         val person = Person("Susan", 48, true)
 
         singletonA.set(person.toRawEntity())
-        assertThat(singletonA.get()).isEqualTo(person.toRawEntity())
-        assertThat(singletonB.get()).isEqualTo(person.toRawEntity())
+        assertThat(singletonA.value()).isEqualTo(person.toRawEntity())
+        assertThat(singletonB.value()).isEqualTo(person.toRawEntity())
 
         singletonB.clear()
-        assertThat(singletonA.get()).isNull()
-        assertThat(singletonB.get()).isNull()
+        assertThat(singletonA.value()).isNull()
+        assertThat(singletonB.value()).isNull()
     }
 
     private data class Person(
