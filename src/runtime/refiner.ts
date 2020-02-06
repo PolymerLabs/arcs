@@ -1107,25 +1107,25 @@ export class RefinementOperator {
     return this.opInfo.evalType;
   }
 
-  validateOperandCompatibility(operandTypes: {evalType: string}[]): void {
-    if (operandTypes.length !== this.opInfo.nArgs) {
-      throw new Error(`Expected ${this.opInfo.nArgs} operands. Got ${operandTypes.length}.`);
+  validateOperandCompatibility(operands: RefinementExpression[]): void {
+    if (operands.length !== this.opInfo.nArgs) {
+      throw new Error(`Expected ${this.opInfo.nArgs} operands. Got ${operands.length}.`);
     }
     if (this.opInfo.argType === 'same') {
       // If there is a type variable, apply the restriction.
-      if (operandTypes[0].evalType === undefined) {
-        operandTypes[0].evalType = operandTypes[1].evalType;
+      if (operands[0].evalType === undefined) {
+        operands[0].evalType = operands[1].evalType;
         return;
       }
-      if (operandTypes[1].evalType === undefined) {
-        operandTypes[1].evalType = operandTypes[0].evalType;
+      if (operands[1].evalType === undefined) {
+        operands[1].evalType = operands[0].evalType;
         return;
       }
-      if (operandTypes[0].evalType !== operandTypes[1].evalType) {
-        throw new Error(`Expected refinement expression ${operandTypes[0]} and ${operandTypes[1]} to have the same type. But found types ${operandTypes[0].evalType} and ${operandTypes[1].evalType}.`);
+      if (operands[0].evalType !== operands[1].evalType) {
+        throw new Error(`Expected refinement expression ${operands[0]} and ${operands[1]} to have the same type. But found types ${operands[0].evalType} and ${operands[1].evalType}.`);
       }
     } else {
-      for (const type of operandTypes) {
+      for (const type of operands) {
         if (type.evalType !== this.opInfo.argType) {
           throw new Error(`Refinement expression ${type} has type ${type.evalType}. Expected ${this.opInfo.argType}.`);
         }
