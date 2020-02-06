@@ -58,12 +58,7 @@ const nameSort = (a, b) => a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
 //const simpleNameOfType = type => type.getEntitySchema().names[0];
 
 const nameOfType = type => {
-  const schema = type.getEntitySchema();
-  if (!schema) {
-    console.warn('type has no schema: ', type);
-    return 'n/a';
-  }
-  let typeName = schema.names[0];
+  let typeName = type.getEntitySchema().names[0];
   if (type.isCollection) {
     typeName = `[${typeName}]`;
   }
