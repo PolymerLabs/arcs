@@ -12,6 +12,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
 import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.ProxyCallback
@@ -52,7 +53,10 @@ fun ArcsSingleton(
     storageKey: ReferenceModeStorageKey,
     schema: Schema,
     existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
-    coroutineContext: CoroutineContext = Dispatchers.Default
+    coroutineContext: CoroutineContext = Dispatchers.Default,
+    /* ktlint-disable max-line-length */
+    activationFactory: ActivationFactory<RefModeStoreData.Singleton, RefModeStoreOp.Singleton, RawEntity>? = null
+    /* ktlint-enable max-line-length */
 ): ArcsSingleton<RawEntity, RefModeStoreData.Singleton, RefModeStoreOp.Singleton> {
     val storeOpts = StoreOptions<RefModeStoreData.Singleton, RefModeStoreOp.Singleton, RawEntity>(
         storageKey = storageKey,
@@ -70,7 +74,8 @@ fun ArcsSingleton(
                 else -> throw IllegalArgumentException("Invalid operation type: $it")
             }
         },
-        coroutineContext = coroutineContext
+        coroutineContext = coroutineContext,
+        activationFactory = activationFactory
     )
 }
 
@@ -86,7 +91,10 @@ fun ArcsSingleton(
 inline fun <reified T> ArcsSingleton(
     storageKey: StorageKey,
     existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
-    coroutineContext: CoroutineContext = Dispatchers.Default
+    coroutineContext: CoroutineContext = Dispatchers.Default,
+    /* ktlint-disable max-line-length */
+    activationFactory: ActivationFactory<CrdtSingleton.Data<ReferencablePrimitive<T>>, CrdtSingleton.IOperation<ReferencablePrimitive<T>>, ReferencablePrimitive<T>>? = null
+    /* ktlint-enable max-line-length */
 ): ArcsSingleton<ReferencablePrimitive<T>,
     CrdtSingleton.Data<ReferencablePrimitive<T>>,
     CrdtSingleton.IOperation<ReferencablePrimitive<T>>> {
@@ -109,7 +117,8 @@ inline fun <reified T> ArcsSingleton(
         store = Store(storeOps),
         toStoreData = { it },
         toStoreOp = { it },
-        coroutineContext = coroutineContext
+        coroutineContext = coroutineContext,
+        activationFactory = activationFactory
     )
 }
 
@@ -127,7 +136,8 @@ class ArcsSingleton<T, StoreData, StoreOp>(
     private val store: Store<StoreData, StoreOp, T>,
     private val toStoreData: (CrdtSingleton.Data<T>) -> StoreData,
     private val toStoreOp: (CrdtSingleton.IOperation<T>) -> StoreOp,
-    coroutineContext: CoroutineContext
+    coroutineContext: CoroutineContext,
+    activationFactory: ActivationFactory<StoreData, StoreOp, T>? = null
 ) : Referencable
     where T : Referencable,
           StoreData : CrdtSingleton.Data<T>,
@@ -160,7 +170,7 @@ class ArcsSingleton<T, StoreData, StoreOp>(
         // Launch a coroutine to activate the backing store, register ourselves as a ProxyCallback,
         // and perform an initial sync.
         scope.launch {
-            activeStore = store.activate().also { activeStore ->
+            activeStore = store.activate(activationFactory).also { activeStore ->
                 initialized.complete()
                 ProxyCallback<StoreData, StoreOp, T> { handleStoreCallback(it) }
                     .also {

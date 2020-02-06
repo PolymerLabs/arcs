@@ -25,6 +25,7 @@ import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
@@ -62,8 +63,8 @@ class ServiceStoreFactory<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val crdtType: ParcelableCrdtType,
     private val coroutineContext: CoroutineContext = Dispatchers.IO,
     private val connectionFactory: ConnectionFactory? = null
-) {
-    suspend operator fun invoke(
+) : ActivationFactory<Data, Op, ConsumerData> {
+    override suspend operator fun invoke(
         options: StoreOptions<Data, Op, ConsumerData>
     ): ServiceStore<Data, Op, ConsumerData> {
         val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
