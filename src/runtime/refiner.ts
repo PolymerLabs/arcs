@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
+import {RefinementNode, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
@@ -17,6 +17,7 @@ enum Primitive {
   BOOLEAN = 'Boolean',
   NUMBER = 'Number',
   TEXT = 'Text',
+  UNKNOWN = '~query_arg_type',
 }
 
 export enum Op {
@@ -174,16 +175,18 @@ export class Refinement {
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.applyOperator(data);
     if (typeof res !== 'boolean') {
-      throw new Error('Refinement expression evaluated to a non-boolean type.');
+      throw new Error(`Refinement expression ${this.expression} evaluated to a non-boolean type.`);
     }
     return res;
   }
 }
 
-abstract class RefinementExpression {
-  evalType: Primitive.BOOLEAN | Primitive.NUMBER | Primitive.TEXT;
+type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode';
 
-  constructor(readonly kind: 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode') {}
+abstract class RefinementExpression {
+  evalType: Primitive;
+
+  constructor(readonly kind: RefinementExpressionNodeType) {}
   static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
     if (!expr) {
       return null;
@@ -192,6 +195,7 @@ abstract class RefinementExpression {
       case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
       case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
       case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
+      case 'query-argument-node': return QueryArgumentPrimitive.fromAst(expr, typeData);
       case 'number-node': return NumberPrimitive.fromAst(expr);
       case 'boolean-node': return BooleanPrimitive.fromAst(expr);
       case 'text-node': return TextPrimitive.fromAst(expr);
@@ -201,13 +205,15 @@ abstract class RefinementExpression {
     }
   }
 
-  static fromLiteral(expr): RefinementExpression {
+  static fromLiteral(expr: {kind: RefinementExpressionNodeType}): RefinementExpression {
     switch (expr.kind) {
       case 'BinaryExpressionNode': return BinaryExpression.fromLiteral(expr);
       case 'UnaryExpressionNode': return UnaryExpression.fromLiteral(expr);
       case 'FieldNamePrimitiveNode': return FieldNamePrimitive.fromLiteral(expr);
+      case 'QueryArgumentPrimitiveNode': return QueryArgumentPrimitive.fromLiteral(expr);
       case 'NumberPrimitiveNode': return NumberPrimitive.fromLiteral(expr);
       case 'BooleanPrimitiveNode': return BooleanPrimitive.fromLiteral(expr);
+      case 'TextPrimitiveNode': return TextPrimitive.fromLiteral(expr);
       default:
         // Should never happen; all known kinds are handled above, but the linter wants a default.
         throw new Error(`RefinementExpression.fromLiteral: Unknown node type ${expr['kind']}`);
@@ -248,7 +254,7 @@ export class BinaryExpression extends RefinementExpression {
     this.leftExpr = leftExpr;
     this.rightExpr = rightExpr;
     this.operator = op;
-    this.operator.validateOperandCompatibility([this.leftExpr.evalType, this.rightExpr.evalType]);
+    this.operator.validateOperandCompatibility([this.leftExpr, this.rightExpr]);
     this.evalType = this.operator.evalType();
   }
 
@@ -407,7 +413,7 @@ export class UnaryExpression extends RefinementExpression {
     super('UnaryExpressionNode');
     this.expr = expr;
     this.operator = op;
-    this.operator.validateOperandCompatibility([this.expr.evalType]);
+    this.operator.validateOperandCompatibility([this.expr]);
     this.evalType = this.operator.evalType();
   }
 
@@ -514,6 +520,49 @@ export class FieldNamePrimitive extends RefinementExpression {
       return data[this.value];
     }
     throw new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
+  }
+
+  getFieldNames(): Set<string> {
+    return new Set<string>([this.value]);
+  }
+
+  getTextPrimitives(): Set<string> {
+    return new Set<string>();
+  }
+}
+
+export class QueryArgumentPrimitive extends RefinementExpression {
+  value: string;
+  evalType: Primitive;
+
+  constructor(value: string, evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT | Primitive.UNKNOWN) {
+    super('QueryArgumentPrimitiveNode');
+    this.value = value;
+    this.evalType = evalType;
+  }
+
+  static fromAst(expression: QueryNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+    return new QueryArgumentPrimitive(expression.value, typeData[expression.value] || Primitive.UNKNOWN);
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    return new QueryArgumentPrimitive(expr.value, expr.evalType);
+  }
+
+  toString(): string {
+    return this.value.toString();
+  }
+
+  toSQLExpression(): string {
+    return this.value.toString();
+  }
+
+  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+    if (data[this.value] != undefined) {
+      return data[this.value];
+    }
+    // This is an 'explicit' unknown value which should not restrict data.
+    return null;
   }
 
   getFieldNames(): Set<string> {
@@ -1062,18 +1111,27 @@ export class RefinementOperator {
     return this.opInfo.evalType;
   }
 
-  validateOperandCompatibility(operandTypes: string[]): void {
-    if (operandTypes.length !== this.opInfo.nArgs) {
-      throw new Error(`Expected ${this.opInfo.nArgs} operands. Got ${operandTypes.length}.`);
+  validateOperandCompatibility(operands: RefinementExpression[]): void {
+    if (operands.length !== this.opInfo.nArgs) {
+      throw new Error(`Expected ${this.opInfo.nArgs} operands. Got ${operands.length}.`);
     }
     if (this.opInfo.argType === 'same') {
-      if (operandTypes[0] !== operandTypes[1]) {
-        throw new Error(`Expected ${operandTypes[0]} and ${operandTypes[1]} to be the same.`);
+      // If there is a type variable, apply the restriction.
+      if (operands[0].evalType === Primitive.UNKNOWN) {
+        operands[0].evalType = operands[1].evalType;
+        return;
+      }
+      if (operands[1].evalType === Primitive.UNKNOWN) {
+        operands[1].evalType = operands[0].evalType;
+        return;
+      }
+      if (operands[0].evalType !== operands[1].evalType) {
+        throw new Error(`Expected refinement expression ${operands[0]} and ${operands[1]} to have the same type. But found types ${operands[0].evalType} and ${operands[1].evalType}.`);
       }
     } else {
-      for (const type of operandTypes) {
-        if (type !== this.opInfo.argType) {
-          throw new Error(`Got type ${type}. Expected ${this.opInfo.argType}.`);
+      for (const type of operands) {
+        if (type.evalType !== this.opInfo.argType) {
+          throw new Error(`Refinement expression ${type} has type ${type.evalType}. Expected ${this.opInfo.argType}.`);
         }
       }
     }

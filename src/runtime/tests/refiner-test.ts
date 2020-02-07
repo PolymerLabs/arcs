@@ -40,7 +40,7 @@ describe('refiner', () => {
             const data = {
                 num: 6,
             };
-            const _ = ref.validateData(data);
+            ref.validateData(data);
         }, `Unresolved field name 'num2' in the refinement expression.`);
     });
     it('Throws error when expression does not produce boolean result.', () => {
@@ -54,8 +54,8 @@ describe('refiner', () => {
             const data = {
                 num: 6,
             };
-            const _ = ref.validateData(data);
-        }, `Refinement expression evaluated to a non-boolean type.`);
+            ref.validateData(data);
+        }, `Refinement expression (num + 5) evaluated to a non-boolean type.`);
     });
     it('Throws error when operators and operands are incompatible.', () => {
         assert.throws(() => {
@@ -68,8 +68,8 @@ describe('refiner', () => {
             const data = {
                 num: 6,
             };
-            const _ = ref.validateData(data);
-        }, `Got type Boolean. Expected Number.`);
+            ref.validateData(data);
+        }, `Refinement expression (num < 5) has type Boolean. Expected Number.`);
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -80,8 +80,8 @@ describe('refiner', () => {
             const data = {
                 num: 6,
             };
-            const _ = ref.validateData(data);
-        }, `Got type Number. Expected Boolean.`);
+            ref.validateData(data);
+        }, `Refinement expression num has type Number. Expected Boolean.`);
         assert.throws(() => {
           const manifestAst = parse(`
               particle Foo
@@ -92,8 +92,8 @@ describe('refiner', () => {
           const data = {
               name: 'Josh',
           };
-          const _ = ref.validateData(data);
-      }, `Got type Text. Expected Number.`);
+            ref.validateData(data);
+        }, `Refinement expression name has type Text. Expected Number.`);
     });
     it('tests expression to range conversion.', () => {
         let manifestAst = parse(`
@@ -128,8 +128,7 @@ describe('refiner', () => {
   });
 });
 
-
-describe('refiner', () => {
+describe('refiner enforcement', () => {
     let schema: Schema;
     let entityClass: EntityClass;
     before(async () => {
@@ -150,6 +149,25 @@ describe('refiner', () => {
     it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
         assert.doesNotThrow(() => { const e = new entityClass({txt: 'abc', num: 8}); });
       }));
+});
+
+describe('dynamic refinements', () => {
+    it('Parses and type checks a particle with dynamic refinements.', () => {
+        const manifestAst = parse(`
+            particle AddressBook
+                contacts: reads [Contact {name: Text [ name == ? ] }]
+        `);
+        const typeData = {'name': 'Text'};
+        const contacts = manifestAst[0].args[0];
+        const nameType = contacts.type.type.fields[0].type;
+        const ref = Refinement.fromAst(nameType.refinement, typeData);
+
+        assert.sameMembers([...ref.expression.getFieldNames()], ['name', '?'], 'should infer indexes from refinement');
+
+        assert.strictEqual(ref.toString(), '[(name == ?)]');
+        const dyn = (ref.expression as BinaryExpression).rightExpr;
+        assert.equal(dyn.evalType, 'Text', 'the algorithm discovers the type');
+    });
 });
 
 describe('normalisation', () => {
