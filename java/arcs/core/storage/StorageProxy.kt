@@ -56,7 +56,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
      */
     suspend fun registerHandle(handle: Handle<Data, Op, T>): VersionMap {
         // non-readers don't get callbacks, return early
-        if (!handle.canRead) return run { crdt.versionMap.copy() }
+        if (!handle.canRead) return syncMutex.withLock { crdt.versionMap.copy() }
 
         log.debug { "Registering handle: $handle" }
 
@@ -95,6 +95,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
         val msg = ProxyMessage.Operations<Data, Op, T>(listOf(op), null)
         val storeSuccess = store.onProxyMessage(msg)
 
+        // TODO(jwf/jibbl): We need to think-through the ramifications of returning false if
+        //  the store fails to apply the update. Maybe we should delete our local copy and ask for
+        //  a re-sync in this situation?
         if (!storeSuccess) return false
 
         notifyUpdate(listOf(op))
