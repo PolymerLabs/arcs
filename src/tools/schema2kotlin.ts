@@ -54,7 +54,7 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-${this.opts.wasm ? 'import arcs.sdk.wasm.*' : ''}
+${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable'}
 `;
   }
 
@@ -112,6 +112,7 @@ class KotlinGenerator implements ClassGenerator {
   fieldsForCopyDecl: string[] = [];
   fieldsForCopy: string[] = [];
   setFieldsToDefaults: string[] = [];
+  fieldSerializes: string[] = [];
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
@@ -145,6 +146,8 @@ class KotlinGenerator implements ClassGenerator {
                      `}`);
 
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
+
+    this.fieldSerializes.push(`"${field}" to (if (${set}) ${fixed}.toReferencable() else null)`);
   }
 
   generate(schemaHash: string, fieldCount: number): string {
@@ -191,7 +194,10 @@ ${this.opts.wasm ? `
         encoder.encode("", internalId)
         ${this.encode.join('\n        ')}
         return encoder.toNullTermByteArray()
-    }` : ''}
+    }` : `
+    override fun serialize(): RawEntity {
+        return RawEntity("", mapOf(${this.fieldSerializes.join(', ')}))
+    }`}
 }
 
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
@@ -236,6 +242,6 @@ ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
   }
 
   private getType(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : type;
+    return this.opts.wasm ? `Wasm${type}` : `Jvm${type}`;
   }
 }

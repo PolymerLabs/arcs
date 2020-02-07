@@ -15,6 +15,10 @@ arcs_kt_jvm_library(
         "*.kt",
         "jvm/*.kt",
     ]),
+    deps = [
+        "//java/arcs/core/data",
+        "//java/arcs/core/data/util:data-util",
+    ],
 )
 
 kt_js_library(
