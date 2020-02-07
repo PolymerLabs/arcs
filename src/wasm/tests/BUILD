@@ -23,5 +23,5 @@ arcs_ts_test(
 
 arcs_manifest_json(
     name = "manifest_data",
-    src = "manifest.arcs",
+    srcs = ["manifest.arcs"],
 )
