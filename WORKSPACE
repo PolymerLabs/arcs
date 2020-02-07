@@ -126,7 +126,7 @@ ROBOLECTRIC_VERSION = "4.1"
 
 KOTLINPOET_VERSION = "1.5.0"
 
-CLIKT_VERSION = "1.3.0"
+CLIKT_VERSION = "2.4.0"
 
 maven_install(
     artifacts = [
