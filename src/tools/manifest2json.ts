@@ -83,7 +83,7 @@ async function aggregateLiterals(srcs: string[]): Promise<Serialization> {
     if (manifest.errors.length) {
       throw new Error(`Errors found in manifest '${src}'.`);
     }
-    aggregate.merge(toLiteral(manifest))
+    aggregate.merge(toLiteral(manifest));
   }
   return aggregate;
 }
