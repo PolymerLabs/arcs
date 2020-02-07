@@ -13,7 +13,17 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.host.ParticleSpec
+import arcs.core.common.ArcId
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType.Companion.Text
+import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.ParticleSpec
+import arcs.core.data.Schema
+import arcs.core.data.SchemaDescription
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
+import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.type.TypeFactory
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,7 +34,21 @@ class ParcelableParticleSpecTest {
 
     @Test
     fun particleSpec_parcelableRoundTrip_works() {
-        val spec = ParticleSpec("Foobar", "foo.bar.Foobar")
+        val personSchema = Schema(
+            listOf(SchemaName("Person")),
+            SchemaFields(mapOf("name" to Text), emptyMap()),
+            SchemaDescription(),
+            "42"
+        )
+
+        val connectionSpec = HandleConnectionSpec(
+            VolatileStorageKey(
+                ArcId.newForTest("foo"), "bar"
+            ),
+            EntityType(personSchema)
+        )
+
+        val spec = ParticleSpec("Foobar", "foo.bar.Foobar", mapOf("foo" to connectionSpec))
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(spec.toParcelable(), 0)

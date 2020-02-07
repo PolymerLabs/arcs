@@ -1,33 +1,32 @@
 package arcs.core.host
 
-import arcs.core.sdk.Particle
+import arcs.sdk.Particle
 import kotlin.reflect.KClass
 
 /**
- * A [ParticleIdentifier] is a multiplatform identifier for [Class]. Since [Class] is not
- * serializable and deserializable on every platform, and Arcs architecture is inherently
- * distributed, a more portable representation is needed. This is loosely based on Android's
- * ComponentName class.
+ * A [ParticleIdentifier] is a multiplatform identifier for a [Particle] implementation.
  *
- * @property package the Java package the [Particle] implementation resides in.
- * @property cls the Java classname (simple class name)
+ * @property id the unique identifier for this particle implementation (usually qualified classname)
  */
-data class ParticleIdentifier(val pkg: String, val cls: String) {
+data class ParticleIdentifier(val id: String) {
     companion object {
-        /** Converts from JVM canonical class name format. */
-        fun from(location: String): ParticleIdentifier {
-            val parts = location.splitToSequence('.')
-            return ParticleIdentifier(
-                parts.filter { x -> x.isNotEmpty() && x[0].isLowerCase() }.joinToString("."),
-                parts.filter { x -> x.isNotEmpty() && x[0].isUpperCase() }.joinToString(".")
-            )
-        }
-
-        fun from(kclass: KClass<out Particle>): ParticleIdentifier = from(kclass.java.canonicalName)
+        /** Converts to JVM canonical class name format. */
+        fun from(location: String) = ParticleIdentifier(location.replace('/', '.'))
     }
 }
 
 /**
  * Creates a [ParticleIdenfifier] from a [KClass].
+ *
+ * There's a multiplatform workaround here. Since [KClass.qualifiedName] is not available on JS,
+ * this uses toString() to obtain the internal class name and replaces inner-class '$' separators
+ * with '.'
  */
-fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(this)
+fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(
+    this
+        .toString() // format is "interface|class|enum foo.bar.Bar$Inner<Type> (error messages)"
+        .substringAfter(' ')
+        .substringBefore(' ')
+        .substringBefore('<')
+        .replace('$', '.')
+)

@@ -10,21 +10,16 @@
  */
 package arcs.jvm.host
 
-import arcs.core.data.ParticleSpec
 import arcs.core.host.ArcHost
 import arcs.core.host.ProdHost
-import com.google.auto.service.AutoService
+import arcs.core.host.toParticleIdentifier
+import arcs.sdk.Particle
+import kotlin.reflect.KClass
 
 /**
  * An [ArcHost] that runs isolatable particles that are expected to have no platform
  * dependencies directly on Android APIs.
  */
-@AutoService(ArcHost::class)
-class JvmProdHost : ProdHost() {
-
-    override val hostName = this::class.java.canonicalName!!
-
-    override suspend fun isHostForSpec(spec: ParticleSpec): Boolean {
-        return this.registeredParticles().map { it.java.getCanonicalName() }.contains(spec.location)
-    }
+class JvmProdHost(vararg particles: KClass<out Particle>) :
+    ProdHost(*particles.map { it.toParticleIdentifier() }.toTypedArray()) {
 }

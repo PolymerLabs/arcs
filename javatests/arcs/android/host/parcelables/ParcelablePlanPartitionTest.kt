@@ -14,15 +14,17 @@ package arcs.android.host.parcelables
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
+import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.ParticleSpec
+import arcs.core.data.PlanPartition
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.host.HandleConnectionSpec
-import arcs.core.host.HandleSpec
-import arcs.core.host.ParticleSpec
-import arcs.core.host.PlanPartition
 import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.type.TypeFactory
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,27 +34,31 @@ import org.junit.runner.RunWith
 class ParcelablePlanPartitionTest {
 
     private val personSchema = Schema(
-        listOf(SchemaName("Person")),
-        SchemaFields(setOf("name"), emptySet()),
-        SchemaDescription()
+        listOf(SchemaName("Person")), SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+        SchemaDescription(), "42"
     )
 
     @Test
     fun planPartition_parcelableRoundTrip_works() {
-        val particleSpec = ParticleSpec("Foobar", "foo.bar.Foobar")
-        val particleSpec2 = ParticleSpec("Foobar2", "foo.bar.Foobar2")
-
-        val handleSpec = HandleSpec(
-            "foo", "bar", VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
-            mutableSetOf("volatile"),
-            personSchema
+        val handleConnectionSpec = HandleConnectionSpec(
+            VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            EntityType(personSchema)
         )
 
-        val handleConnectionSpec = HandleConnectionSpec("blah", handleSpec, particleSpec)
-        val handleConnectionSpec2 = HandleConnectionSpec("blah2", handleSpec, particleSpec2)
+        val handleConnectionSpec2 = HandleConnectionSpec(
+            VolatileStorageKey(ArcId.newForTest("foo"), "bar2"),
+            EntityType(personSchema)
+        )
 
-        val planPartition =
-            PlanPartition("arcId", "arcHost", listOf(handleConnectionSpec, handleConnectionSpec2))
+        val particleSpec = ParticleSpec(
+            "Foobar", "foo.bar.Foobar", mapOf("foo1" to handleConnectionSpec)
+        )
+        val particleSpec2 = ParticleSpec(
+            "Foobar2", "foo.bar.Foobar2", mapOf("foo2" to handleConnectionSpec2)
+        )
+
+        val planPartition = PlanPartition("arcId", "arcHost", listOf(particleSpec, particleSpec2))
+
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(planPartition.toParcelable(), 0)

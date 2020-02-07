@@ -13,7 +13,8 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.core.host.ParticleSpec
+import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.ParticleSpec
 
 /** [Parcelable] variant of [ParticleSpec]. */
 data class ParcelableParticleSpec(
@@ -22,6 +23,9 @@ data class ParcelableParticleSpec(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.particleName)
         parcel.writeString(actual.location)
+        parcel.writeMap(actual.handles.map {
+           it.key to ParcelableHandleConnectionSpec(it.value)
+        }.toMap())
     }
 
     override fun describeContents(): Int = 0
@@ -34,8 +38,12 @@ data class ParcelableParticleSpec(
             val location = requireNotNull(parcel.readString()) {
                 "No Location found in Parcel"
             }
+            val handles = mutableMapOf<String, ParcelableHandleConnectionSpec>()
+            parcel.readMap(handles as Map<*, *>, this::class.java.classLoader)
 
-            return ParcelableParticleSpec(ParticleSpec(particleName, location))
+            return ParcelableParticleSpec(
+                ParticleSpec(particleName, location, handles.mapValues { it.value.actual })
+            )
         }
 
         override fun newArray(size: Int): Array<ParcelableParticleSpec?> = arrayOfNulls(size)

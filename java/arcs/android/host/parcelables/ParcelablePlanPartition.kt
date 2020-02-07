@@ -13,8 +13,8 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.core.host.HandleConnectionSpec
-import arcs.core.host.PlanPartition
+import arcs.core.data.ParticleSpec
+import arcs.core.data.PlanPartition
 
 /** [Parcelable] variant of [PlanPartition]. */
 data class ParcelablePlanPartition(
@@ -23,9 +23,9 @@ data class ParcelablePlanPartition(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.arcId)
         parcel.writeString(actual.arcHost)
-        parcel.writeInt(actual.handleConnectionSpecs.size)
-        actual.handleConnectionSpecs.forEach {
-            parcel.writeHandleConnectionSpec(it, 0)
+        parcel.writeInt(actual.particles.size)
+        actual.particles.forEach {
+            parcel.writeParticleSpec(it, 0)
         }
     }
 
@@ -40,19 +40,19 @@ data class ParcelablePlanPartition(
                 "No ArcHost found in Parcel"
             }
             val size = requireNotNull(parcel.readInt()) {
-                "No size of handleConnectionSpecs found in Parcel"
+                "No size of ParticleSpecs found in Parcel"
             }
-            val handleConnectionSpecs = mutableListOf<HandleConnectionSpec>()
+            val particleSpecs = mutableListOf<ParticleSpec>()
 
             repeat(size) {
-                handleConnectionSpecs.add(
-                    requireNotNull(parcel.readHandleConnectionSpec()) {
-                        "No HandleConnectionSpec found in parcel when reading PlanPartition"
+                particleSpecs.add(
+                    requireNotNull(parcel.readParticleSpec()) {
+                        "No ParcelSpecs found in parcel when reading PlanPartition"
                     }
                 )
             }
 
-            return ParcelablePlanPartition(PlanPartition(arcId, arcHost, handleConnectionSpecs))
+            return ParcelablePlanPartition(PlanPartition(arcId, arcHost, particleSpecs))
         }
 
         override fun newArray(size: Int): Array<ParcelablePlanPartition?> = arrayOfNulls(size)
@@ -63,8 +63,8 @@ data class ParcelablePlanPartition(
 fun PlanPartition.toParcelable(): ParcelablePlanPartition = ParcelablePlanPartition(this)
 
 /** Writes a [PlanPartition] to a [Parcel]. */
-fun Parcel.writePlanPartition(PlanPartition: PlanPartition, flags: Int) =
-    writeTypedObject(PlanPartition.toParcelable(), flags)
+fun Parcel.writePlanPartition(planPartition: PlanPartition, flags: Int) =
+    writeTypedObject(planPartition.toParcelable(), flags)
 
 /** Reads a [PlanPartition] from a [Parcel]. */
 fun Parcel.readPlanPartition(): PlanPartition? = readTypedObject(ParcelablePlanPartition)?.actual

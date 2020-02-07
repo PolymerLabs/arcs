@@ -10,20 +10,23 @@
  */
 package arcs.core.host
 
+import arcs.core.data.ParticleSpec
 import arcs.core.data.PlanPartition
 import arcs.core.util.guardWith
 import arcs.sdk.Particle
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.Console
 
 /**
  * Base helper class for [ArcHost] implementations to provide implementation of
  * registration.
  */
-abstract class AbstractArcHost : ArcHost {
+abstract class AbstractArcHost(
     private var particles: MutableList<ParticleIdentifier> = mutableListOf()
-
+) : ArcHost {
+    // TODO: fix this, qualifiedName is not supported on JS
     override val hostId = this::class.java.canonicalName!!
 
     protected fun registerParticle(particle: ParticleIdentifier) {
@@ -37,10 +40,17 @@ abstract class AbstractArcHost : ArcHost {
     override suspend fun registeredParticles(): List<ParticleIdentifier> = particles
 
     override suspend fun startArc(partition: PlanPartition) {
-        TODO("Not yet implemented")
+        // TODO: not implemented yet
     }
 
     override suspend fun stopArc(partition: PlanPartition) {
-        TODO("Not yet implemented")
+        // TODO: not implemented yet
     }
+
+    override suspend fun isHostForSpec(spec: ParticleSpec) =
+        registeredParticles().contains(ParticleIdentifier.from(spec.location))
 }
+
+fun Array<out KClass<out Particle>>.toIdentifierList(): MutableList<ParticleIdentifier> =
+    this.map { it.toParticleIdentifier() }.toMutableList()
+

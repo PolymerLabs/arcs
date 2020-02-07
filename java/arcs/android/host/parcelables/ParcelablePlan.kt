@@ -13,15 +13,15 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.core.host.HandleConnectionSpec
-import arcs.core.host.Plan
+import arcs.core.data.ParticleSpec
+import arcs.core.data.Plan
 
 /** [Parcelable] variant of [Plan]. */
 data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeInt(actual.handleConnectionSpecs.size)
-        actual.handleConnectionSpecs.forEach {
-            parcel.writeHandleConnectionSpec(it, 0)
+        parcel.writeInt(actual.particles.size)
+        actual.particles.forEach {
+            parcel.writeParticleSpec(it, 0)
         }
     }
 
@@ -31,17 +31,17 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
         override fun createFromParcel(parcel: Parcel): ParcelablePlan {
 
             val size = requireNotNull(parcel.readInt()) {
-                "No size of handleConnectionSpecs found in Parcel"
+                "No size of ParticleSpecs found in Parcel"
             }
-            val handleConnectionSpecs = mutableListOf<HandleConnectionSpec>()
+            val particleSpecs = mutableListOf<ParticleSpec>()
 
             repeat(size) {
-                handleConnectionSpecs.add(requireNotNull(parcel.readHandleConnectionSpec()) {
-                    "No HandleConnectionSpec found in list position $it of parcel when reading Plan"
+                particleSpecs.add(requireNotNull(parcel.readParticleSpec()) {
+                    "No ParticleSpec found in list position $it of parcel when reading Plan"
                 })
             }
 
-            return ParcelablePlan(Plan(handleConnectionSpecs))
+            return ParcelablePlan(Plan(particleSpecs))
         }
 
         override fun newArray(size: Int): Array<ParcelablePlan?> = arrayOfNulls(size)

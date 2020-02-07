@@ -6,9 +6,10 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.ResultReceiver
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
+import arcs.core.data.ParticleSpec
+import arcs.core.data.PlanPartition
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleIdentifier
-import arcs.core.host.PlanPartition
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -51,6 +52,10 @@ class IntentArcHostAdapter(
                 arcHostComponentName
             )
         )
+    }
+
+    override suspend fun isHostForSpec(spec: ParticleSpec): Boolean {
+        return registeredParticles().contains(ParticleIdentifier.from(spec.location))
     }
 
     /**

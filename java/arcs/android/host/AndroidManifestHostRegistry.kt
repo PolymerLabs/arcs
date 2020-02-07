@@ -16,12 +16,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.annotation.VisibleForTesting
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.sdk.host.ArcHostHelper.Companion.ACTION_HOST_INTENT
 import arcs.android.sdk.host.toArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.HostRegistry
-import arcs.core.sdk.Particle
-import arcs.jvm.host.ServiceLoaderHostRegistry
+import arcs.sdk.Particle
 
 /**
  * A [HostRegistry] that discovers available [ArcHost] services by using [PackageManager] to

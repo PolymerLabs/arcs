@@ -24,9 +24,9 @@ import arcs.android.host.parcelables.ActualParcelable
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
 import arcs.android.host.parcelables.ParcelablePlanPartition
 import arcs.android.host.parcelables.toParcelable
+import arcs.core.data.PlanPartition
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleIdentifier
-import arcs.core.host.PlanPartition
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

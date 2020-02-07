@@ -15,15 +15,20 @@ import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import arcs.android.sdk.host.toComponentName
+import arcs.core.allocator.Allocator
+import arcs.core.common.ArcId
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
+import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.ParticleSpec
+import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.host.Allocator
-import arcs.core.host.HandleConnectionSpec
-import arcs.core.host.HandleSpec
-import arcs.core.host.ParticleSpec
-import arcs.core.host.Plan
+import arcs.core.storage.StorageKey
+import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -35,12 +40,12 @@ import org.robolectric.Robolectric
 @RunWith(AndroidJUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
 class AndroidAllocatorTest {
+    private lateinit var recipePersonStorageKey: StorageKey
     private lateinit var context: Context
     private lateinit var readingService: TestReadingExternalHostService
     private lateinit var writingService: TestWritingExternalHostService
     private lateinit var allocator: Allocator
     private lateinit var hostRegistry: AndroidManifestHostRegistry
-    private lateinit var personHandleSpec: HandleSpec
     private lateinit var readPersonHandleConnectionSpec: HandleConnectionSpec
     private lateinit var writePersonHandleConnectionSpec: HandleConnectionSpec
     private lateinit var writePersonParticleSpec: ParticleSpec
@@ -48,9 +53,11 @@ class AndroidAllocatorTest {
     private lateinit var writeAndReadPersonPlan: Plan
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
-        SchemaFields(setOf("name"), emptySet()),
-        SchemaDescription()
+        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+        SchemaDescription(),
+        "42"
     )
+    private var personEntityType: Type = EntityType(personSchema)
 
     @Before
     fun setUp() = runBlocking {
@@ -74,30 +81,29 @@ class AndroidAllocatorTest {
             }
         allocator = Allocator(hostRegistry)
 
-        personHandleSpec =
-            HandleSpec(
-                null, "recipePerson", null, mutableSetOf("volatile"),
-                personSchema
-            )
+        recipePersonStorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "foo")
+        writePersonHandleConnectionSpec =
+            HandleConnectionSpec(recipePersonStorageKey, personEntityType)
 
         writePersonParticleSpec =
             ParticleSpec(
                 "WritePerson",
-                TestWritingExternalHostService.WritePerson::class.java.getCanonicalName()!!
+                TestWritingExternalHostService.WritePerson::class.java.getCanonicalName()!!,
+                mapOf("person" to writePersonHandleConnectionSpec)
             )
-        writePersonHandleConnectionSpec =
-            HandleConnectionSpec("person", personHandleSpec, writePersonParticleSpec)
+
+        readPersonHandleConnectionSpec =
+            HandleConnectionSpec(recipePersonStorageKey, personEntityType)
 
         readPersonParticleSpec =
             ParticleSpec(
                 "ReadPerson",
-                TestReadingExternalHostService.ReadPerson::class.java.getCanonicalName()!!
+                TestReadingExternalHostService.ReadPerson::class.java.getCanonicalName()!!,
+                mapOf("person" to readPersonHandleConnectionSpec)
             )
-        readPersonHandleConnectionSpec =
-            HandleConnectionSpec("person", personHandleSpec, readPersonParticleSpec)
 
         writeAndReadPersonPlan = Plan(
-            listOf(writePersonHandleConnectionSpec, readPersonHandleConnectionSpec)
+            listOf(writePersonParticleSpec, readPersonParticleSpec)
         )
 
         TestReadingExternalHostService.ReadingExternalHost.reset()

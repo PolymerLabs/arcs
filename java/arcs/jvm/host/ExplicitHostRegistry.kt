@@ -10,22 +10,31 @@
  */
 package arcs.jvm.host
 
+import arcs.core.host.ArcHost
+import arcs.core.host.HostRegistry
 import arcs.sdk.Particle
-import kotlin.reflect.KClass
 
 /**
  * A []HostRegistry] that discovers the available [ArcHost]s available on this platform by using
  * explicitly registered [ArcHost]s and [Particle]s invoked by [HostRegistry.registerHost] and
  * [ExplicitHostRegistry.registerParticles].
  */
-object ExplicitHostRegistry : AnnotationBasedHostRegistry() {
+object ExplicitHostRegistry : HostRegistry {
+    private val arcHosts = mutableListOf<ArcHost>()
 
-    /**
-     * Explicitly register all particles used.
-     */
-    suspend fun registerParticles(allParticles: List<KClass<out Particle>>) {
-        availableArcHosts().forEach { host ->
-            registerParticles(findParticlesForHost(allParticles, host), host)
-        }
+    override suspend fun availableArcHosts() = arcHosts
+
+    override suspend fun registerHost(host: ArcHost)  {
+        arcHosts.add(host)
     }
+
+    override suspend fun unregisterHost(host: ArcHost) {
+        arcHosts.remove(host)
+    }
+
+    fun clear() {
+        arcHosts.clear()
+    }
+
+    fun hosts() = arcHosts
 }

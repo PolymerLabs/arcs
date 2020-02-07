@@ -22,7 +22,7 @@ import kotlin.reflect.KClass
  * particles, and connecting them to storage keys.
  */
 interface ArcHost {
-    /** Return a unique identifier for this host instance. */
+    /** A canonical identifying ID for this host. */
     val hostId: String
 
     /** Returns a list of Particles registered to run in this host. */
@@ -41,9 +41,6 @@ interface ArcHost {
      */
     suspend fun stopArc(partition: PlanPartition)
     // TODO: HandleMessage
-
-    /** A canonical identifying ID for this host. */
-    val hostName: String
 
     /**
      * Returns true if the provided [ParticleSpec] can be loaded by this [ArcHost].

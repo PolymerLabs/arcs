@@ -67,7 +67,7 @@ class Allocator(val hostRegistry: HostRegistry) {
     // VisibleForTesting
     suspend fun lookupArcHost(arcHost: String) =
         hostRegistry.availableArcHosts().filter { it ->
-            it.hostName == arcHost
+            it.hostId == arcHost
         }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
 
     /**
@@ -114,7 +114,7 @@ class Allocator(val hostRegistry: HostRegistry) {
             .map { (host, particles) ->
                 PlanPartition(
                     arcId.toString(),
-                    host.hostName,
+                    host.hostId,
                     particles
                 )
             }

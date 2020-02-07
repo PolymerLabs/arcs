@@ -14,14 +14,15 @@ package arcs.android.host.parcelables
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.host.HandleConnectionSpec
-import arcs.core.host.HandleSpec
-import arcs.core.host.ParticleSpec
-import arcs.core.host.Plan
+import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.ParticleSpec
+import arcs.core.data.Plan
 import arcs.core.storage.driver.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -33,25 +34,32 @@ class ParcelablePlanTest {
 
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
-        SchemaFields(setOf("name"), emptySet()),
-        SchemaDescription()
+        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+        SchemaDescription(),
+        "42"
     )
+
+    private val personType = EntityType(personSchema)
 
     @Test
     fun plan_parcelableRoundTrip_works() {
-        val particleSpec = ParticleSpec("Foobar", "foo.bar.Foobar")
-        val particleSpec2 = ParticleSpec("Foobar2", "foo.bar.Foobar2")
 
-        val handleSpec = HandleSpec(
-            "foo", "bar", VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
-            mutableSetOf("volatile"),
-            personSchema
+        val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+        val handleConnectionSpec = HandleConnectionSpec(storageKey, personType)
+        val handleConnectionSpec2 = HandleConnectionSpec(storageKey, personType)
+        val particleSpec = ParticleSpec(
+            "Foobar",
+            "foo.bar.Foobar",
+            mapOf("foo" to handleConnectionSpec)
         )
 
-        val handleConnectionSpec = HandleConnectionSpec("blah", handleSpec, particleSpec)
-        val handleConnectionSpec2 = HandleConnectionSpec("blah2", handleSpec, particleSpec2)
+        val particleSpec2 = ParticleSpec(
+            "Foobar2",
+            "foo.bar.Foobar2",
+             mapOf("foo" to handleConnectionSpec2)
+        )
 
-        val plan = Plan(listOf(handleConnectionSpec, handleConnectionSpec2))
+        val plan = Plan(listOf(particleSpec, particleSpec2))
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(plan.toParcelable(), 0)

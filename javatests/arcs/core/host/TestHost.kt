@@ -1,13 +1,7 @@
 package arcs.core.host
 
-import arcs.core.data.ParticleSpec
-import com.google.auto.service.AutoService
+import arcs.sdk.Particle
+import kotlin.reflect.KClass
 
-@AutoService(ArcHost::class)
-class TestHost : AbstractArcHost() {
-    override val hostName = this::class.java.canonicalName!!
-
-    override suspend fun isHostForSpec(spec: ParticleSpec): Boolean {
-        return this.registeredParticles().map { it.java.getCanonicalName() }.contains(spec.location)
-    }
-}
+class TestHost(vararg particles: KClass<out Particle>) :
+    AbstractArcHost(particles.toIdentifierList())

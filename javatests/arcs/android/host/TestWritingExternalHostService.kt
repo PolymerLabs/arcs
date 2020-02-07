@@ -4,9 +4,9 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import arcs.android.sdk.host.ArcHostHelper
+import arcs.core.data.PlanPartition
 import arcs.core.host.ExternalHost
-import arcs.core.host.PlanPartition
-import arcs.core.sdk.Particle
+import arcs.sdk.Particle
 
 class TestWritingExternalHostService : Service() {
     class WritePerson : Particle

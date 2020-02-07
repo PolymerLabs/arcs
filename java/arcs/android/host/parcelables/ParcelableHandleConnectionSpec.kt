@@ -13,34 +13,34 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.core.host.HandleConnectionSpec
+import arcs.android.type.readType
+import arcs.android.type.writeType
+import arcs.core.data.HandleConnectionSpec
+import arcs.core.storage.StorageKeyParser
 
 /** [Parcelable] variant of [HandleConnectionSpec]. */
 data class ParcelableHandleConnectionSpec(
     override val actual: HandleConnectionSpec
 ) : ActualParcelable<HandleConnectionSpec> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(actual.connectionName)
-        parcel.writeHandleSpec(actual.handleSpec, 0)
-        parcel.writeParticleSpec(actual.particleSpec, 0)
+        parcel.writeString(actual.storageKey?.toString())
+        parcel.writeType(actual.type, flags)
     }
 
     override fun describeContents(): Int = 0
 
     companion object CREATOR : Parcelable.Creator<ParcelableHandleConnectionSpec> {
         override fun createFromParcel(parcel: Parcel): ParcelableHandleConnectionSpec {
-            val connectionName = requireNotNull(parcel.readString()) {
-                "No connectionName found in Parcel"
-            }
-            val handleSpec = requireNotNull(parcel.readHandleSpec()) {
+            val storageKeyString = parcel.readString()
+            val type = requireNotNull(parcel.readType()) {
                 "No name found in Parcel"
-            }
-            val particleSpec = requireNotNull(parcel.readParticleSpec()) {
-                "No storageKey found in Parcel"
             }
 
             return ParcelableHandleConnectionSpec(
-                HandleConnectionSpec(connectionName, handleSpec, particleSpec)
+                HandleConnectionSpec(
+                    storageKeyString?.let { StorageKeyParser.parse(it) },
+                    type
+                )
             )
         }
 

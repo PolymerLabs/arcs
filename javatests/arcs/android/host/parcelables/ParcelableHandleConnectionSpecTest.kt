@@ -14,13 +14,13 @@ package arcs.android.host.parcelables
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType.Companion.Text
+import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.host.HandleConnectionSpec
-import arcs.core.host.HandleSpec
-import arcs.core.host.ParticleSpec
 import arcs.core.storage.driver.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -32,20 +32,17 @@ class ParcelableHandleConnectionSpecTest {
 
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
-        SchemaFields(setOf("name"), emptySet()),
-        SchemaDescription()
+        SchemaFields(mapOf("name" to Text), emptyMap()),
+        SchemaDescription(),
+        "42"
     )
 
     @Test
     fun handleConnectionSpec_parcelableRoundTrip_works() {
-        val particleSpec = ParticleSpec("Foobar", "foo.bar.Foobar")
-        val handleSpec = HandleSpec(
-            "foo", "bar", VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
-            mutableSetOf("volatile"),
-            personSchema
+        val handleConnectionSpec = HandleConnectionSpec(
+            VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            EntityType(personSchema)
         )
-
-        val handleConnectionSpec = HandleConnectionSpec("blah", handleSpec, particleSpec)
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(handleConnectionSpec.toParcelable(), 0)

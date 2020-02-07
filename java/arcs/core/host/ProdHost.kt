@@ -14,4 +14,5 @@ package arcs.core.host
  * An ArcsHost that runs isolatable particles that are expected to have no platform
  * dependencies directly on Android APIs.
  */
-abstract class ProdHost : AbstractArcHost()
+abstract class ProdHost(vararg particles: ParticleIdentifier) :
+    AbstractArcHost(particles.toMutableList())

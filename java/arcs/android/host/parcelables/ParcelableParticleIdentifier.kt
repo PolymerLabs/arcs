@@ -20,15 +20,16 @@ import arcs.core.host.ParticleIdentifier
 data class ParcelableParticleIdentifier(
     override val actual: ParticleIdentifier
 ) : ActualParcelable<ParticleIdentifier> {
-    override fun writeToParcel(parcel: Parcel, flags: Int) =
-        actual.toComponentName().writeToParcel(parcel, flags)
+    override fun writeToParcel(parcel: Parcel, flags: Int) = parcel.writeString(actual.id)
 
     override fun describeContents(): Int = 0
 
     companion object CREATOR : Parcelable.Creator<ParcelableParticleIdentifier> {
         override fun createFromParcel(parcel: Parcel): ParcelableParticleIdentifier {
-            val componentName = ComponentName(parcel)
-            return ParcelableParticleIdentifier(componentName.toParticleIdentifier())
+            val id = requireNotNull(parcel.readString()) {
+              "No id found for ParcelableParticleIdentifier"
+            }
+            return ParcelableParticleIdentifier(ParticleIdentifier(id))
         }
 
         override fun newArray(size: Int): Array<ParcelableParticleIdentifier?> = arrayOfNulls(size)
@@ -48,6 +49,4 @@ fun Parcel.readParticleIdentifier(): ParticleIdentifier? =
     readTypedObject(ParcelableParticleIdentifier)?.actual
 
 fun ComponentName.toParticleIdentifier() =
-    arcs.core.host.ParticleIdentifier(this.packageName, this.className)
-
-fun ParticleIdentifier.toComponentName() = ComponentName(this.pkg, this.cls)
+    ParticleIdentifier(this.packageName + '.' + this.className)

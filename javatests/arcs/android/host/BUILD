@@ -16,6 +16,8 @@ arcs_kt_android_test_suite(
     deps = [
         ":services",
         "//java/arcs/android/host",
+        "//java/arcs/core/allocator",
+        "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
@@ -23,6 +25,8 @@ arcs_kt_android_test_suite(
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/robolectric",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
 
@@ -35,6 +39,6 @@ kt_android_library(
     deps = [
         "//java/arcs/android/host",
         "//java/arcs/core/host",
-        "//java/arcs/core/sdk",
+        "//java/arcs/sdk",
     ],
 )

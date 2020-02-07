@@ -14,7 +14,8 @@ package arcs.android.host.parcelables
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.host.ParticleIdentifier
-import arcs.core.sdk.Particle
+import arcs.core.host.toParticleIdentifier
+import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,9 +27,7 @@ class ParcelableParticleIdentifierTest {
 
     @Test
     fun data_parcelableRoundTrip_works() {
-        val id = ParticleIdentifier.from(
-            TestParticle::class
-        )
+        val id = TestParticle::class.toParticleIdentifier()
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(id.toParcelable(), 0)
