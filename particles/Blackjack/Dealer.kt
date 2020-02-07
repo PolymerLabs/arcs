@@ -23,7 +23,9 @@ class Dealer : AbstractDealer() {
         """.trimIndent()
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val desc = handles.hand.fetchAll().joinToString(separator = ":") { Card.cardDesc(it.value.toInt()) }
+        val desc = handles.hand.fetchAll().joinToString(separator = ":") {
+            Card.cardDesc(it.value.toInt())
+        }
         return model + mapOf("hand" to desc)
     }
 
