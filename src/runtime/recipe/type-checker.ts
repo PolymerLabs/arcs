@@ -83,7 +83,10 @@ export class TypeChecker {
     baseType = newBaseType;
 
     const concreteTypes: TypeListInfo[] = [];
-
+    console.log(`Processing types list`);
+    for(const ti of list) {
+      console.log(`  ${ti.type}`);
+    }
     // baseType might be a variable (and is definitely a variable if no baseType was available).
     // Some of the list might contain variables too.
 
@@ -112,7 +115,14 @@ export class TypeChecker {
       }
     }
 
-    return TypeChecker.getResolution(baseType.resolvedType(), options);
+    const x = TypeChecker.getResolution(baseType.resolvedType(), options);
+    if (x != null) {
+      console.log(`Write superset: ${(x.canWriteSuperset)}`);
+      console.log(`Read subset: ${(x.canReadSubset)}`);
+    } else {
+      console.log(`Write/Read sets: null`);
+    }
+    return x;
   }
 
   static _tryMergeTypeVariable(base: Type, onto: Type, options: {typeErrors?: string[]} = {}): Type {

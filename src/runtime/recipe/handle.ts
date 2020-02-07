@@ -280,8 +280,10 @@ export class Handle implements Comparable<Handle> {
     if (options && options.errors) {
       options.typeErrors = [];
     }
+    console.log(`Resolving handle '${this.localName}'.`)
     const type = this.resolveEffectiveType(options);
     if (!type) {
+      console.log(`Resolving handle '${this.localName}' failed.`)
       if (options && options.errors) {
         const errs = options.typeErrors;
         if (errs && errs.length > 0) {
@@ -292,7 +294,7 @@ export class Handle implements Comparable<Handle> {
       }
       return false;
     }
-
+    console.log(`Resolving handle '${this.localName}' succeeded (W, R): ${type.canWriteSuperset}, ${type.canReadSubset}.`)
     this._type = type;
     this._tags.forEach(tag => tags.add(tag));
     this._tags = [...tags];
