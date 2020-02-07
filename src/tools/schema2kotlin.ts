@@ -178,7 +178,7 @@ class ${name}() : ${this.getType('Entity')} {
     fun copy(
         ${this.fieldsForCopyDecl.join(',\n        ')}
     ) = ${name}(
-        ${this.fieldsForCopy.join(', \n          ')}
+        ${this.fieldsForCopy.join(', \n        ')}
     )
 
     fun reset() {

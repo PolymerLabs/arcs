@@ -23,9 +23,8 @@ class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val out = HandleSyncUpdateTest_Res()
         var txt = "update:${handle.name}"
-        var num = out.num
+        var num = 0.0
         if (handle.name == "sng") {
             num = handles.sng.fetch()?.num ?: -1.0
         } else if (handle.name == "col") {
