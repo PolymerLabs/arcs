@@ -38,27 +38,24 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
         execute = False,
     )
 
-def arcs_manifest_json(name, src, deps = [], out = None, visibility = None):
+def arcs_manifest_json(name, srcs = [], deps = [], out = None, visibility = None):
     """Serialize a manifest file.
 
     This converts a '.arcs' file into a JSON representation, using manifest2json.
 
     Args:
       name: the name of the target to create
-      src: an Arcs manifest files to serialize
+      srcs: an Arcs manifest files to serialize
       deps: list of dependencies (other manifests)
       out: the name of the output artifact (a JSON file).
       visibility: list of visibilities
     """
-    if not src.endswith(".arcs"):
-        fail("src must be a .arcs file")
-
-    out = out or output_name(src, ".json")
+    outs = [out] if out != None else [output_name(name, ".json")]
 
     sigh_command(
         name = name,
-        srcs = [src],
-        outs = [out],
+        srcs = srcs,
+        outs = outs,
         deps = deps,
         progress_message = "Serializing manifest",
         sigh_cmd = "manifest2json --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
