@@ -41,7 +41,7 @@ class CollectionApiTest : AbstractCollectionApiTest() {
             }
             "case4" -> {
                 val d1 = CollectionApiTest_OutHandle()
-                val iter = handles.inHandle.iterator()
+                val iter = handles.inHandle.fetchAll().iterator()
                 val flg = iter.hasNext()
                 val i1 = iter.next()
                 if (x == 3.0) {

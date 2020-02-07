@@ -28,8 +28,6 @@ class CollectionImpl<T : Entity>(
 
     override fun isEmpty(): Boolean = entities.isEmpty()
 
-    override fun iterator(): Iterator<T> = entities.iterator()
-
     override fun fetchAll(): Set<T> {
         return entities.toSet()
     }

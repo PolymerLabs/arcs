@@ -132,7 +132,7 @@ class TestParticle : AbstractTestParticle() {
         }
 
         eventHandler("remove") {
-            val iterator = handles.info.iterator()
+            val iterator = handles.info.fetchAll().iterator()
             if (iterator.hasNext()) {
                 handles.info.remove(iterator.next())
             }
