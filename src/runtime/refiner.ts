@@ -176,6 +176,9 @@ export class Refinement {
 
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.applyOperator(data);
+    if (res === null && this.expression.getFieldNames().has('?')) {
+      return true;
+    }
     if (typeof res !== 'boolean') {
       throw new Error(`Refinement expression ${this.expression} evaluated to a non-boolean type.`);
     }
@@ -292,6 +295,18 @@ export class BinaryExpression extends RefinementExpression {
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const left = this.leftExpr.applyOperator(data);
     const right = this.rightExpr.applyOperator(data);
+    if (this.operator.op === Op.AND && left !== null && right === null) {
+      return left;
+    }
+    if (this.operator.op === Op.AND && left === null && right !== null) {
+      return right;
+    }
+    if (left === null) {
+      return null;
+    }
+    if (right === null) {
+      return null;
+    }
     return this.operator.eval([left, right]);
   }
 
@@ -441,6 +456,9 @@ export class UnaryExpression extends RefinementExpression {
 
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const expression = this.expr.applyOperator(data);
+    if (expression === null) {
+      return null;
+    }
     return this.operator.eval([expression]);
   }
 

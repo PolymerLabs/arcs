@@ -186,7 +186,7 @@ describe('refiner enforcement', () => {
 });
 
 describe('dynamic refinements', () => {
-    it('Parses and type checks a particle with dynamic refinements.', Flags.withFieldRefinementsAllowed(async () => {
+    describe('Parses and type checks a particle with dynamic refinements.', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst = parse(`
             particle AddressBook
                 contacts: reads [Contact {name: Text [ name == ? ] }]
@@ -195,13 +195,71 @@ describe('dynamic refinements', () => {
         const contacts = manifestAst[0].args[0];
         const nameType = contacts.type.type.fields[0].type;
         const ref = Refinement.fromAst(nameType.refinement, typeData);
-
         assert.sameMembers([...ref.expression.getFieldNames()], ['name', '?'], 'should infer indexes from refinement');
 
         assert.strictEqual(ref.toString(), '[(name == ?)]');
+
         const dyn = (ref.expression as BinaryExpression).rightExpr;
         assert.equal(dyn.evalType, 'Text', 'the algorithm discovers the type');
+        it('without the query param', () => {
+          const data = {
+              name: 'Ghost Busters'
+          };
+          assert.isTrue(ref.validateData(data), 'Data is valid');
+        });
+        it('with the query param', () => {
+          const data_with_query = {
+              name: 'Ghost Busters',
+              '?': 'Not Ghost Busters',
+          };
+          assert.isFalse(ref.validateData(data_with_query), 'Data is not valid');
+        });
     }));
+    describe('Parses and type checks a particle with dynamic and static refinements.', () => {
+        const manifestAst = parse(`
+            particle AddressBook
+                contacts: reads [Contact {name: Text, age: Number } [ name == ?  and age > 10]]
+        `);
+        const typeData = {'name': 'Text', 'age': 'Number' };
+        const contacts = manifestAst[0].args[0];
+        const ref = Refinement.fromAst(contacts.type.type.refinement, typeData);
+        assert.sameMembers([...ref.expression.getFieldNames()], ['name', '?', 'age'], 'should infer indexes from refinement');
+
+        assert.strictEqual(ref.toString(), '[((name == ?) and (age > 10))]');
+
+        const dyn = ((ref.expression as BinaryExpression).leftExpr as BinaryExpression).rightExpr;
+        assert.equal(dyn.evalType, 'Text', 'the algorithm discovers the type');
+        it('without the query param and a valid age', () => {
+          const data = {
+              name: 'Ghost Busters',
+              age: 20,
+          };
+          assert.isTrue(ref.validateData(data), 'Data is valid');
+        });
+        it('with the query param and a valid age', () => {
+          const data = {
+              name: 'Ghost Busters',
+              '?': 'Not Ghost Busters',
+              age: 20,
+          };
+          assert.isFalse(ref.validateData(data), 'Data is not valid');
+        });
+        it('without the query param and an invalid age', () => {
+          const data = {
+              name: 'Ghost Busters',
+              age: 2,
+          };
+          assert.isFalse(ref.validateData(data), 'Data is not valid');
+        });
+        it('with the query param and an invalid age', () => {
+          const data = {
+              name: 'Ghost Busters',
+              '?': 'Not Ghost Busters',
+              age: 2,
+          };
+          assert.isFalse(ref.validateData(data), 'Data is not valid');
+        });
+    });
 });
 
 describe('normalisation', () => {
