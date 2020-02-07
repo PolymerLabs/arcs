@@ -16,6 +16,7 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.internal.VersionMap
 import arcs.core.util.TaggedLog
+import arcs.core.util.guardWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -37,13 +38,18 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     initialCrdt: CrdtModel<Data, Op, T>
 ) {
     private val log = TaggedLog { "StorageProxy" }
+
     private val handlesMutex = Mutex()
-    private val handles: MutableSet<Handle<Data, Op, T>> = mutableSetOf()
-    private var hasReaders = false
+    private val readHandles
+        by guardWith<MutableSet<Handle<Data, Op, T>>>(handlesMutex, mutableSetOf())
+
     private val syncMutex = Mutex()
-    private val crdt = initialCrdt
-    private val waitingSyncs: MutableList<CompletableDeferred<ValueAndVersion<T>>> = mutableListOf()
-    private var synchronized = false
+    private val crdt
+        by guardWith(syncMutex, initialCrdt)
+    private val waitingSyncs
+        by guardWith(syncMutex, mutableListOf<CompletableDeferred<ValueAndVersion<T>>>())
+    private var synchronized
+        by guardWith(syncMutex, false)
 
     private val store = storeEndpointProvider.getStorageEndpoint()
 
@@ -52,7 +58,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     }
 
     /**
-     * Connects a handle. If the handle is readable, it will receive the configured callbacks.
+     * Connects a [Handle]. If the handle is readable, it will receive the configured callbacks.
      */
     suspend fun registerHandle(handle: Handle<Data, Op, T>): VersionMap {
         // non-readers don't get callbacks, return early
@@ -61,16 +67,14 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
         log.debug { "Registering handle: $handle" }
 
         val firstReader = handlesMutex.withLock {
-            handles.add(handle)
-            val result = !hasReaders
-            hasReaders = true
-            result
+            readHandles.add(handle)
+            readHandles.size == 1
         }
 
         val (hasSynced, versionMap) = syncMutex.withLock { synchronized to crdt.versionMap.copy() }
 
         if (firstReader) requestSynchronization()
-        else if (hasSynced) handle.callback?.onSync()
+        else if (hasSynced) coroutineScope { launch { handle.callback?.onSync() } }
 
         return versionMap
     }
@@ -80,7 +84,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
      */
     suspend fun deregisterHandle(handle: Handle<Data, Op, T>) {
         log.debug { "Unregistering handle: $handle" }
-        handlesMutex.withLock { handles.remove(handle) }
+        handlesMutex.withLock { readHandles.remove(handle) }
     }
 
     /**
@@ -114,16 +118,21 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     suspend fun getParticleViewAsync(): CompletableDeferred<ValueAndVersion<T>> {
         log.debug { "Getting particle view" }
         val future = CompletableDeferred<ValueAndVersion<T>>()
-        syncMutex.withLock {
+
+        val needsSync = syncMutex.withLock {
             if (synchronized) {
                 val result = ValueAndVersion(crdt.consumerView, crdt.versionMap.copy())
                 log.debug { "Already synchronized, returning $result" }
                 future.complete(result)
+                false
             } else {
                 log.debug { "Awaiting sync." }
                 waitingSyncs.add(future)
+                true
             }
         }
+
+        if (needsSync) requestSynchronization()
         return future
     }
 
@@ -146,9 +155,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
                 notifySync()
             }
             is ProxyMessage.Operations -> {
-                // If we have no readers, we can ignore updates from storage
-                if (handlesMutex.withLock { !hasReaders }) return true
-
                 val shouldNotifyDesync = syncMutex.withLock {
                     val failures = message.operations.any { !crdt.applyOperation(it) }
                     synchronized = !failures
@@ -174,20 +180,17 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
         return true
     }
 
-    // must be called under single-thread-confinement
     private suspend fun notifyUpdate(ops: List<Op>) = forEachHandle { handle ->
         ops.forEach { handle.callback?.onUpdate(it) }
     }
 
-    // must be called under single-thread-confinement
     private suspend fun notifySync() = forEachHandle { it.callback?.onSync() }
 
-    // must be called under single-thread-confinement
     private suspend fun notifyDesync() = forEachHandle { it.callback?.onDesync() }
 
     private suspend inline fun forEachHandle(crossinline block: (Handle<Data, Op, T>) -> Unit) {
         val handlesToNotify = handlesMutex.withLock {
-            mutableSetOf<Handle<Data, Op, T>>().apply { addAll(handles) }
+            mutableSetOf<Handle<Data, Op, T>>().apply { addAll(readHandles) }
         }
         coroutineScope {
             handlesToNotify.forEach { handle ->
@@ -196,7 +199,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
         }
     }
 
-    // must be called under single-thread-confinement
     private suspend fun requestSynchronization(): Boolean {
         val msg = ProxyMessage.SyncRequest<Data, Op, T>(null)
         return store.onProxyMessage(msg)
