@@ -27,7 +27,7 @@ abstract class StorageKey(val protocol: String) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        if (other == null || other::class != this::class) return false
         return toString() == other.toString()
     }
 

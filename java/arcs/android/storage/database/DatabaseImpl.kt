@@ -170,11 +170,13 @@ class DatabaseImpl(
                 """.trimIndent(),
                 arrayOf(collectionId.toString())
             ).forEach {
-                values.add(Reference(
-                    id = it.getString(0),
-                    storageKey = StorageKeyParser.parse(it.getString(1)),
-                    version = VersionMap() // TODO: VersionMap
-                ))
+                values.add(
+                    Reference(
+                        id = it.getString(0),
+                        storageKey = StorageKeyParser.parse(it.getString(1)),
+                        version = VersionMap() // TODO: VersionMap
+                    )
+                )
             }
 
             DatabaseData.Collection(
@@ -241,14 +243,20 @@ class DatabaseImpl(
 
             if (collectionId == null) {
                 // Create a new collection ID and storage key ID.
-                collectionId = insert(TABLE_COLLECTIONS, null, ContentValues().apply {
-                    put("type_id", schemaTypeId)
-                })
-                insert(TABLE_STORAGE_KEYS, null, ContentValues().apply {
-                    put("storage_key", storageKey.toString())
-                    put("data_type", DataType.Collection.ordinal)
-                    put("value_id", collectionId)
-                })
+                collectionId = insert(
+                    TABLE_COLLECTIONS,
+                    null,
+                    ContentValues().apply { put("type_id", schemaTypeId) }
+                )
+                insert(
+                    TABLE_STORAGE_KEYS,
+                    null,
+                    ContentValues().apply {
+                        put("storage_key", storageKey.toString())
+                        put("data_type", DataType.Collection.ordinal)
+                        put("value_id", collectionId)
+                    }
+                )
             } else {
                 // Collection already exists; delete all existing entries.
                 // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
@@ -377,10 +385,14 @@ class DatabaseImpl(
                 arrayOf(reference.id, reference.storageKey.toString())
             ).forSingleResult { it.getLong(0) }
             refId ?: run {
-                insert(TABLE_ENTITY_REFS, null, ContentValues().apply {
-                    put("entity_id", reference.id)
-                    put("backing_storage_key", reference.storageKey.toString())
-                })
+                insert(
+                    TABLE_ENTITY_REFS,
+                    null,
+                    ContentValues().apply {
+                        put("entity_id", reference.id)
+                        put("backing_storage_key", reference.storageKey.toString())
+                    }
+                )
             }
         }
 
