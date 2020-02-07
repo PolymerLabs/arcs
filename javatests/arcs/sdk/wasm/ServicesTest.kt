@@ -14,7 +14,7 @@ package arcs.sdk.wasm
 class ServicesTest : AbstractServicesTest() {
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")
-        output.store(ServicesTest_Output("resolveUrl", tag = "", payload = url))
+        handles.output.store(ServicesTest_Output("resolveUrl", tag = "", payload = url))
 
         serviceRequest("random.next", mapOf(), "first")
         serviceRequest("random.next", mapOf(), "second")
@@ -28,6 +28,6 @@ class ServicesTest : AbstractServicesTest() {
             .forEach { str -> builder.append(str) }
         val payload = builder.toString()
 
-        output.store(ServicesTest_Output(call, tag, payload))
+        handles.output.store(ServicesTest_Output(call, tag, payload))
     }
 }

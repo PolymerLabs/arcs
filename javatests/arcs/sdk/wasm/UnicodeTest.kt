@@ -21,6 +21,6 @@ class UnicodeTest : AbstractUnicodeTest() {
         } else {
             ((handle as WasmCollectionImpl<*>).iterator().next() as UnicodeTest_Col).pass
         }
-        res.store(out.copy(pass = pass))
+        handles.res.store(out.copy(pass = pass))
     }
 }

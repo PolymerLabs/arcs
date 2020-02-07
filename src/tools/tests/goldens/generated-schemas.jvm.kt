@@ -123,7 +123,11 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 }
 
 
+class GoldHandles(particle : BaseParticle) {
+    val data: ReadableSingleton<Gold_Data> = SingletonImpl(particle, "data", Gold_Data_Spec())
+    val alias: WritableSingleton<Gold_Alias> = SingletonImpl(particle, "alias", Gold_Alias_Spec())
+}
+
 abstract class AbstractGold : BaseParticle() {
-    protected val data: ReadableSingleton<Gold_Data> = SingletonImpl(this, "data", Gold_Data_Spec())
-    protected val alias: WritableSingleton<Gold_Alias> = SingletonImpl(this, "alias", Gold_Alias_Spec())
+    protected val handles: GoldHandles = GoldHandles(this)
 }

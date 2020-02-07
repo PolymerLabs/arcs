@@ -8,7 +8,7 @@ class Player : AbstractPlayer() {
 
     init {
         eventHandler("onHit") {
-            cardRequest.set(Player_CardRequest(player = name))
+            handles.cardRequest.set(Player_CardRequest(player = name))
             log("Hit.")
         }
         eventHandler("onStand") {
@@ -23,7 +23,7 @@ class Player : AbstractPlayer() {
          """.trimIndent()
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val desc = hand.joinToString(separator = ":") { card ->
+        val desc = handles.hand.joinToString(separator = ":") { card ->
             Card.cardDesc(card.value.toInt())
         }
         return model + mapOf("hand" to desc)
@@ -32,8 +32,8 @@ class Player : AbstractPlayer() {
     override fun onHandleUpdate(handle: Handle) {
         // We only respond to changes to nextCard.
         if (handle.name != "nextCard") return
-        val nc = nextCard.fetch()?.takeIf { it.player == name } ?: return
-        hand.store(Player_Hand(value = nc.card))
+        val nc = handles.nextCard.fetch()?.takeIf { it.player == name } ?: return
+        handles.hand.store(Player_Hand(value = nc.card))
         this.renderOutput()
     }
 }

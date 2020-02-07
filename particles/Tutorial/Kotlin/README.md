@@ -266,7 +266,7 @@ class GetPersonParticle : AbstractGetPersonParticle() {
         // on the element.
         eventHandler("onNameInputChange") { eventData ->
             // Update the handle based on the eventData.
-            person.set(GetPerson_Person(name = eventData["value"] ?: "Human"))
+            handles.person.set(GetPerson_Person(name = eventData["value"] ?: "Human"))
         }
     }
 }
@@ -287,7 +287,7 @@ class DisplayGreetingParticle : AbstractDisplayGreetingParticle() {
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         return model + mapOf(
-            "name" to (person.fetch()?.name ?: "Human")
+            "name" to (handles.person.fetch()?.name ?: "Human")
         )
     }
 }
@@ -406,7 +406,7 @@ class CollectionsParticle : AbstractCollectionsParticle() {
         // We begin by generating the list of models that should fill the template. Our template
         // has name ang age so we will use these names.
         val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
-        people.forEach { people ->
+        handles.people.forEach { people ->
             peopleList.add(mapOf("name" to people.name, "age" to people.age))
         }
 
@@ -419,7 +419,7 @@ class CollectionsParticle : AbstractCollectionsParticle() {
                 "\$template" to "person",
                 // Each model in this list will get passed into the person template. The template
                 // can access the properties in this model (name and age) via placeholders.
-                "models" to peopleList
+                "models" to handles.peopleList
             )
         )
     }
@@ -519,7 +519,7 @@ package arcs.tutorials
  */
 class JsonStoreParticle : AbstractJsonStoreParticle() {
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val person = res.fetch() ?: JsonStoreParticle_InputData()
+        val person = handles.res.fetch() ?: JsonStoreParticle_InputData()
 
         return model + mapOf(
             "name" to person.name,

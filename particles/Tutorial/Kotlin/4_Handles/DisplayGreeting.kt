@@ -25,7 +25,7 @@ class DisplayGreeting : AbstractDisplayGreeting() {
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         return model + mapOf(
-            "name" to (person.fetch()?.name ?: "Human")
+            "name" to (handles.person.fetch()?.name ?: "Human")
         )
     }
 }

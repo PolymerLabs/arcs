@@ -21,7 +21,7 @@ class GetPerson : AbstractGetPerson() {
 
     init {
         eventHandler("onNameInputChange") { eventData ->
-            person.set(GetPerson_Person(name = eventData["value"] ?: "Human"))
+            handles.person.set(GetPerson_Person(name = eventData["value"] ?: "Human"))
         }
     }
 }
