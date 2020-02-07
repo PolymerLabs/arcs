@@ -16,6 +16,7 @@ kt_android_library(
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",

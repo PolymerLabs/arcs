@@ -31,7 +31,7 @@ import kotlinx.coroutines.Job
 
 /** A [ConnectionFactory] is capable of creating a [StorageServiceConnection]. */
 typealias ConnectionFactory =
-    (StoreOptions<*, *, *>, ParcelableCrdtType) -> StorageServiceConnection
+        (StoreOptions<*, *, *>, ParcelableCrdtType) -> StorageServiceConnection
 
 /**
  * Returns a default [ConnectionFactory] implementation which uses the provided [context] to bind to
@@ -67,7 +67,9 @@ class DefaultStorageServiceBindingDelegate(
         conn: ServiceConnection,
         flags: Int,
         options: ParcelableStoreOptions
-    ): Boolean = context.bindService(StorageService.createBindIntent(context, options), conn, flags)
+    ): Boolean {
+        return context.bindService(StorageService.createBindIntent(context, options), conn, flags)
+    }
 
     override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)
 }
@@ -112,7 +114,11 @@ class StorageServiceConnection(
             deferred
         }
         needsDisconnect =
-            bindingDelegate.bindStorageService(this, flags = 0, options = storeOptions).also {
+            bindingDelegate.bindStorageService(
+                this,
+                flags = Context.BIND_AUTO_CREATE,
+                options = storeOptions
+            ).also {
                 if (!it) {
                     deferred.completeExceptionally(
                         IllegalStateException("Could not initiate connection to the StorageService")
@@ -134,7 +140,7 @@ class StorageServiceConnection(
     }
 
     override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-        this.service.value?.complete(service as IStorageService)
+        this.service.value?.complete(IStorageService.Stub.asInterface(service))
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {

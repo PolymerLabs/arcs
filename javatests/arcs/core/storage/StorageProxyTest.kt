@@ -138,8 +138,8 @@ class StorageProxyTest {
         val future = storageProxy.getParticleViewAsync()
         assertThat(future.isCompleted).isFalse()
 
-        // cleanly apply op from Store so we are now synced
-        assertThat(storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null)))
+        // cleanly apply model from Store so we are now synced
+        assertThat(storageProxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtModel.data, null)))
             .isTrue()
 
         assertThat(future.isCompleted).isTrue()
