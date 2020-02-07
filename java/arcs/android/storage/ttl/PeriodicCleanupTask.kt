@@ -5,15 +5,16 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import arcs.core.util.TaggedLog
 
+/**
+ * Implementation of a [Worker] which performs periodic scan of storage and deletes expired data.
+ */
 class PeriodicCleanupTask(
     appContext: Context,
     workerParams: WorkerParameters
 ) : Worker(appContext, workerParams) {
 
-    private val log = TaggedLog { this.toString() }
-    init {
-        log.debug { "Created." }
-    }
+    private val log = TaggedLog { "PeriodCleanupTask" }
+    init { log.debug { "Created." } }
 
     override fun doWork(): Result {
         log.debug { "Running." }
@@ -24,6 +25,7 @@ class PeriodicCleanupTask(
     }
 
     companion object {
+        /** Unique name of the worker, used to enqueue the periodic task in [WorkManager]. */
         const val WORKER_TAG = "PeriodicCleanupTask"
     }
 }

@@ -53,12 +53,14 @@ class StorageService : ResurrectorService() {
         startTime = startTime ?: System.currentTimeMillis()
 
         val periodicCleanupTask =
-                PeriodicWorkRequest.Builder(PeriodicCleanupTask::class.java, 1, TimeUnit.HOURS)
-                        .addTag(PeriodicCleanupTask.WORKER_TAG)
-                        .build()
+            PeriodicWorkRequest.Builder(PeriodicCleanupTask::class.java, 1, TimeUnit.HOURS)
+                .addTag(PeriodicCleanupTask.WORKER_TAG)
+                .build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-                PeriodicCleanupTask.WORKER_TAG, ExistingPeriodicWorkPolicy.KEEP, periodicCleanupTask
+            PeriodicCleanupTask.WORKER_TAG,
+            ExistingPeriodicWorkPolicy.KEEP,
+            periodicCleanupTask
         )
     }
 
