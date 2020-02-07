@@ -48,7 +48,13 @@ public interface RuntimeSettings {
   // Used together with the setting {@link #useWorkerPool()} to supply additional
   // worker pool configurations. Options are separated by commas.
   // Available options:
-  //   'nosuspend': only create new workers ahead of time (no resurrecting workers)
+  //   'nosuspend': only create new workers ahead of time (no resurrecting workers).
+  //                A resurrected or resumed worker exposes the same global context
+  //                to all Arcs that were and is running on it. Which implies new
+  //                Arcs can potentially eavesdrop older Arcs' information as a
+  //                side-channel attack if old Arcs forgot to clean what they stored
+  //                at the worker's global context.
+  //
   String workerPoolOptions();
 
   // Used only by Javascript-based Arcs runtime to determine and adjust size of

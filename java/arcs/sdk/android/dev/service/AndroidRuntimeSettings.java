@@ -61,7 +61,8 @@ public final class AndroidRuntimeSettings implements RuntimeSettings {
   // Activates worker pool
   private static final boolean DEFAULT_USE_WORKER_POOL = true;
   // "nosuspend" prepares or replenishes new workers ahead of time but never
-  // re-uses (suspend-then-resume) them.
+  // re-uses (suspend-then-resume) them. More details, please see:
+  // {@link RuntimeSettings#workerPoolOptions()}
   private static final String DEFAULT_WORKER_POOL_OPTIONS = "nosuspend";
   // Uses the default sizing policy auto-selected by Arcs runtime
   private static final String DEFAULT_SIZING_POLICY = "default";
