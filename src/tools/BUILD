@@ -17,6 +17,7 @@ kt_jvm_library(
     srcs = ["Recipe2Plan.kt"],
     deps = [
         "//third_party/kotlin/kotlinpoet",
+        "//third_party/kotlin/clikt",
     ]
 )
 
