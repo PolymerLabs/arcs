@@ -1,3 +1,5 @@
+load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
+
 package(default_visibility = ["//visibility:public"])
 
 filegroup(
@@ -8,4 +10,18 @@ filegroup(
 filegroup(
     name = "all_srcs",
     srcs = glob(["**"]),
+)
+
+kt_jvm_library(
+    name = "generator",
+    srcs = ["Recipe2Plan.kt"],
+    deps = [
+        "//third_party/kotlin/kotlinpoet",
+    ]
+)
+
+java_binary(
+    name = "recipe2plan",
+    main_class = "test.Recipe2PlanKt",
+    runtime_deps = [":generator"],
 )
