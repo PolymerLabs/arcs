@@ -25,7 +25,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util/testutil",
-        "//javatests/arcs/core/storage",
+        "//javatests/arcs/core/storage",  # unuseddeps: keep
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/truth:truth-android",
