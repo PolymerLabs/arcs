@@ -28,6 +28,10 @@ class WasmCollectionImpl<T : WasmEntity>(
 
     override fun iterator() = entities.values.iterator()
 
+    override fun fetchAll(): Set<T> {
+        return entities.values.toSet()
+    }
+
     override fun sync(encoded: ByteArray) {
         entities.clear()
         add(encoded)

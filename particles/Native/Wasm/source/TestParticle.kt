@@ -38,7 +38,7 @@ class TestParticle : AbstractTestParticle() {
         var infoStr = "Size: ${handles.info.size}\n"
         if (!handles.info.isEmpty()) {
             var i = 0
-            handles.info.forEach { info ->
+            handles.info.fetchAll().forEach { info ->
                 infoStr += "${(++i)}. $info | \n"
             }
         } else {

@@ -19,7 +19,7 @@ class TTTHumanPlayer : AbstractTTTHumanPlayer() {
                 || handles.gameState.fetch()?.currentPlayer != handles.player.fetch()?.id) return
 
         // Get the element with the largest time as this will be the most recent.
-        val event = handles.events.sortedBy { it.time }.last()
+        val event = handles.events.fetchAll().sortedBy { it.time }.last()
         // Set the move
         if (event.type == "move") {
             handles.myMove.set(TTTHumanPlayer_MyMove(event.move))
