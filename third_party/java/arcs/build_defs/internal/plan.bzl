@@ -1,6 +1,4 @@
-
 def _recipe2plan_impl(ctx):
-
     output_name = ctx.label.name + ".kt"
     out = ctx.actions.declare_file(output_name)
 
@@ -15,11 +13,10 @@ def _recipe2plan_impl(ctx):
         inputs = ctx.files.srcs,
         outputs = [out],
         arguments = [args],
-        executable = ctx.executable._compiler
+        executable = ctx.executable._compiler,
     )
 
     return [DefaultInfo(files = depset([out]))]
-
 
 recipe2plan = rule(
     implementation = _recipe2plan_impl,
@@ -31,10 +28,10 @@ recipe2plan = rule(
             default = Label("//src/tools:recipe2plan"),
             allow_files = True,
             executable = True,
-        )
+        ),
     },
     doc = """Generates plans from recipes.
 
     This rule reads recipes from a serialized manifest and generates Kotlin `Plan` classes.
-    """
+    """,
 )

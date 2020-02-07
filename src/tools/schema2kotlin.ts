@@ -118,7 +118,7 @@ class KotlinGenerator implements ClassGenerator {
 
     const {type, decodeFn, defaultVal} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
-    
+
 
     this.fields.push(`${fixed}: ${type}`);
     this.fieldVals.push(
