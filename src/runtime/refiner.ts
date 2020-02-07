@@ -1242,8 +1242,6 @@ export class Fraction {
       return Fraction.updateGivenOp(expr.operator.op, [fn]);
     } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.NUMBER) {
       return new Fraction(new Polynomial([0, 1], expr.value));
-    } else if (expr instanceof QueryArgumentPrimitive && expr.evalType === Primitive.NUMBER) {
-      return new Fraction(new Polynomial([0, 1], expr.value));
     } else if (expr instanceof NumberPrimitive) {
       return new Fraction(new Polynomial([expr.value]));
     }

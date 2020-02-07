@@ -761,6 +761,8 @@ ${particleStr1}
         verify(manifest, true, []);
       });
       it('ignores refinements or-ed with dynamic query refinement expressions', async () => {
+        // TODO(cypher1): In future we should support refinements and queries, with the queries
+        // not getting in the way of the refinements, but the refinements still should restrict the queries.
         const manifest = await parseManifest(`
           particle Impossible
             output: writes Something {num: Number }
@@ -772,7 +774,7 @@ ${particleStr1}
             Reader
               input: reads data
         `);
-        verify(manifest, true, []);
+        verify(manifest, false, ['Type validations failed for handle \'data: create\': could not guarantee variable ~ meets read requirements Something {num: Number[((num > ?) or (num > 3))]} with write guarantees Something {num: Number}']);
       });
     });
   });
