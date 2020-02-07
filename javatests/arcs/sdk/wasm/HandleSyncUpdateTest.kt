@@ -15,10 +15,10 @@ import arcs.sdk.Handle
 
 class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
+        handles.res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
         if (allSynced) {
             var ptr = HandleSyncUpdateTest_Res()
-            res.store(ptr.copy(txt = if (sng.fetch() != null) "sng:populated" else "sng:null"))
+            handles.res.store(ptr.copy(txt = if (handles.sng.fetch() != null) "sng:populated" else "sng:null"))
         }
     }
 
@@ -27,13 +27,13 @@ class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
         var txt = "update:${handle.name}"
         var num = out.num
         if (handle.name == "sng") {
-            num = sng.fetch()?.num ?: -1.0
+            num = handles.sng.fetch()?.num ?: -1.0
         } else if (handle.name == "col") {
-            num = if (col.size > 0) col.iterator().next().num else -1.0
+            num = if (handles.col.size > 0) handles.col.iterator().next().num else -1.0
         } else {
             txt = "unexpected handle name: ${handle.name}"
         }
-        res.store(out.copy(
+        handles.res.store(out.copy(
             txt = txt,
             num = num
         ))

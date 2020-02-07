@@ -19,18 +19,18 @@ class EntitySlicingTest : AbstractEntitySlicingTest() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
         if (!allSynced) return;
 
-        s1.fetch()?.let { res.store(Res("s1:${it.num.toInt()}")) }
-        s2.fetch()?.let { res.store(Res("s2:${it.num.toInt()},${it.txt}")) }
-        s3.fetch()?.let { res.store(Res("s3:${it.num.toInt()},${it.txt},${it.flg}")) }
+        handles.s1.fetch()?.let { handles.res.store(Res("s1:${it.num.toInt()}")) }
+        handles.s2.fetch()?.let { handles.res.store(Res("s2:${it.num.toInt()},${it.txt}")) }
+        handles.s3.fetch()?.let { handles.res.store(Res("s3:${it.num.toInt()},${it.txt},${it.flg}")) }
 
-        for (e in c1) {
-            res.store(Res("c1:${e.num.toInt()}"))
+        for (e in handles.c1) {
+            handles.res.store(Res("c1:${e.num.toInt()}"))
         }
-        for (e in c2) {
-            res.store(Res("c2:${e.num.toInt()},${e.txt}"))
+        for (e in handles.c2) {
+            handles.res.store(Res("c2:${e.num.toInt()},${e.txt}"))
         }
-        for (e in c3) {
-            res.store(Res("c3:${e.num.toInt()},${e.txt},${e.flg}"))
+        for (e in handles.c3) {
+            handles.res.store(Res("c3:${e.num.toInt()},${e.txt},${e.flg}"))
         }
     }
 }

@@ -32,13 +32,13 @@ class TestParticle : AbstractTestParticle() {
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val dataCol = if (updated == 1) "color: blue;" else ""
-        val dataStr = "${data.fetch()}\n"
+        val dataStr = "${handles.data.fetch()}\n"
 
         val infoCol = if (updated == 2) "color: blue;" else ""
-        var infoStr = "Size: ${info.size}\n"
-        if (!info.isEmpty()) {
+        var infoStr = "Size: ${handles.info.size}\n"
+        if (!handles.info.isEmpty()) {
             var i = 0
-            info.forEach { info ->
+            handles.info.forEach { info ->
                 infoStr += "${(++i)}. $info | \n"
             }
         } else {
@@ -103,21 +103,21 @@ class TestParticle : AbstractTestParticle() {
 
     init {
         eventHandler("add") {
-            val newData = data.fetch() ?: TestParticle_Data(
+            val newData = handles.data.fetch() ?: TestParticle_Data(
                 num = 0.0,
                 txt = "",
                 lnk = "",
                 flg = false
             )
             
-            this.data.set(newData.copy(
+            handles.data.set(newData.copy(
                 num = newData.num.let { it + 2 },
                 txt = "${newData.txt}!!!!!!"
             ))
         }
 
         eventHandler("dataclear") {
-            data.clear()
+            handles.data.clear()
         }
 
         eventHandler("store") {
@@ -126,19 +126,19 @@ class TestParticle : AbstractTestParticle() {
                 val_ = 0.0
             )
             info.internalId = "wasm" + (++storeCount)
-            this.info.store(info.copy(
-                val_ = (this.info.size + storeCount).toDouble()
+            handles.info.store(info.copy(
+                val_ = (handles.info.size + storeCount).toDouble()
             ))
         }
 
         eventHandler("remove") {
-            val iterator = info.iterator()
+            val iterator = handles.info.iterator()
             if (iterator.hasNext()) {
-                info.remove(iterator.next())
+                handles.info.remove(iterator.next())
             }
         }
         eventHandler("infoclear") {
-            info.clear()
+            handles.info.clear()
         }
         eventHandler("throw") {
             throw Exception("this message doesn't get passed (yet?)")

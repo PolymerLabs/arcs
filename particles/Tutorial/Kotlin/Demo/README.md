@@ -182,8 +182,8 @@ class TTTGame : AbstractTTTGame() {
     private val defaultGame = TTTGame_GameState(board = ",,,,,,,,")
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.fetch() == null) {
-            gameState.set(defaultGame)
+        if (handles.gameState.fetch() == null) {
+            handles.gameState.set(defaultGame)
         }
     }
 
@@ -217,7 +217,7 @@ class TTTBoard : AbstractTTTBoard() {
 
     init {
         eventHandler("onClick") { eventData ->
-            events.store(TTTBoard_Events(
+            handles.events.store(TTTBoard_Events(
                     type = "move",
                     move = eventData["value"]?.toDouble() ?: -1.0,
                     time = clicks
@@ -226,7 +226,7 @@ class TTTBoard : AbstractTTTBoard() {
         }
 
         eventHandler("reset") {
-            events.store(TTTBoard_Events(type = "reset", time = clicks, move = -1.0))
+            handles.events.store(TTTBoard_Events(type = "reset", time = clicks, move = -1.0))
             clicks++
         }
     }
@@ -234,7 +234,7 @@ class TTTBoard : AbstractTTTBoard() {
     override fun onHandleUpdate(handle: Handle) = renderOutput()
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val gs = gameState.fetch() ?: defaultGameState
+        val gs = handles.gameState.fetch() ?: defaultGameState
         val boardList = gs.board.split(",")
         val boardModel = mutableListOf<Map<String, String?>>()
         boardList.forEachIndexed { index, cell ->

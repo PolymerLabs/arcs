@@ -226,7 +226,11 @@ class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
 }
 
 
+class GoldHandles(particle : WasmParticleImpl) {
+    val data: ReadableSingleton<Gold_Data> = WasmSingletonImpl(particle, "data", Gold_Data_Spec())
+    val alias: WritableSingleton<Gold_Alias> = WasmSingletonImpl(particle, "alias", Gold_Alias_Spec())
+}
+
 abstract class AbstractGold : WasmParticleImpl() {
-    protected val data: ReadableSingleton<Gold_Data> = WasmSingletonImpl(this, "data", Gold_Data_Spec())
-    protected val alias: WritableSingleton<Gold_Alias> = WasmSingletonImpl(this, "alias", Gold_Alias_Spec())
+    protected val handles: GoldHandles = GoldHandles(this)
 }

@@ -21,7 +21,7 @@ class WasmSingletonImpl<T : WasmEntity>(
 ) : WasmHandle<T>(name, particle), ReadWriteSingleton<T> {
 
     private var entity: T? = null
-    private var onUpdateAction: (T?) -> Unit = {}
+    private var onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
 
     override fun sync(encoded: ByteArray) {
         entity = if (encoded.size > 0) entitySpec.decode(encoded) else null
@@ -29,11 +29,13 @@ class WasmSingletonImpl<T : WasmEntity>(
 
     override fun update(added: ByteArray, removed: ByteArray) {
         sync(added)
-        onUpdateAction(entity)
+        onUpdateActions.forEach { action ->
+            action(entity)
+        }
     }
 
     override fun onUpdate(action: (T?) -> Unit) {
-        onUpdateAction = action
+        onUpdateActions.add(action)
     }
 
     override fun fetch() = entity
@@ -47,6 +49,8 @@ class WasmSingletonImpl<T : WasmEntity>(
     override fun clear() {
         entity = null
         WasmRuntimeClient.singletonClear(particle, this)
-        onUpdateAction(entity)
+        onUpdateActions.forEach { action ->
+            action(entity)
+        }
     }
 }

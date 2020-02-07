@@ -83,11 +83,15 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : ''}
         default:
           throw new Error(`Unsupported handle direction: ${connection.direction}`);
       }
-      handleDecls.push(`protected val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(this, "${handleName}", ${entityType}_Spec())`);
+      handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
     }
     return `
-abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
+class ${particleName}Handles(particle : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}) {
     ${handleDecls.join('\n    ')}
+}
+
+abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
+    protected val handles: ${particleName}Handles = ${particleName}Handles(this)
 }
 `;
   }

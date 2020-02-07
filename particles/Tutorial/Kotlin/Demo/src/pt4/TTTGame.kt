@@ -33,23 +33,23 @@ class TTTGame : AbstractTTTGame() {
     )
 
     override fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (gameState.fetch()?.board == null) {
-            gameState.set(defaultGame)
+        if (handles.gameState.fetch()?.board == null) {
+            handles.gameState.set(defaultGame)
         }
-        if (handle.name == "playerOne" && playerOne.fetch()?.id != 0.0) {
-            val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
-            playerOne.set(p1.copy(id = 0.0))
+        if (handle.name == "playerOne" && handles.playerOne.fetch()?.id != 0.0) {
+            val p1 = handles.playerOne.fetch() ?: TTTGame_PlayerOne()
+            handles.playerOne.set(p1.copy(id = 0.0))
         }
-        if (handle.name == "playerTwo" && playerTwo.fetch()?.id != 1.0) {
-            val p2 = playerTwo.fetch() ?: TTTGame_PlayerTwo()
-            playerTwo.set(p2.copy(id = 1.0))
+        if (handle.name == "playerTwo" && handles.playerTwo.fetch()?.id != 1.0) {
+            val p2 = handles.playerTwo.fetch() ?: TTTGame_PlayerTwo()
+            handles.playerTwo.set(p2.copy(id = 1.0))
         }
     }
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val gs = gameState.fetch() ?: TTTGame_GameState()
-        val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
-        val p2 = playerTwo.fetch() ?: TTTGame_PlayerTwo()
+        val gs = handles.gameState.fetch() ?: TTTGame_GameState()
+        val p1 = handles.playerOne.fetch() ?: TTTGame_PlayerOne()
+        val p2 = handles.playerTwo.fetch() ?: TTTGame_PlayerTwo()
 
         val cpName = if (gs.currentPlayer == p1.id) p1.name else p2.name
         val cpAvatar = if (gs.currentPlayer == p1.id) p1.avatar else p2.avatar
@@ -68,11 +68,11 @@ class TTTGame : AbstractTTTGame() {
     }
 
     override fun onHandleUpdate(handle: Handle) {
-        val gs = gameState.fetch() ?: defaultGame
-        val p1 = playerOne.fetch() ?: TTTGame_PlayerOne()
-        val p2 = playerTwo.fetch() ?: TTTGame_PlayerTwo()
-        val mv1 = playerOneMove.fetch() ?: TTTGame_PlayerOneMove()
-        val mv2 = playerTwoMove.fetch() ?: TTTGame_PlayerTwoMove()
+        val gs = handles.gameState.fetch() ?: defaultGame
+        val p1 = handles.playerOne.fetch() ?: TTTGame_PlayerOne()
+        val p2 = handles.playerTwo.fetch() ?: TTTGame_PlayerTwo()
+        val mv1 = handles.playerOneMove.fetch() ?: TTTGame_PlayerOneMove()
+        val mv2 = handles.playerTwoMove.fetch() ?: TTTGame_PlayerTwoMove()
         // Apply the moves
         if (gs.gameOver != true) {
             val boardList = gs.board.split(",").toMutableList()
@@ -94,15 +94,15 @@ class TTTGame : AbstractTTTGame() {
             }
         }
         if (hasReset()) {
-            gameState.set(TTTGame_GameState(
+            handles.gameState.set(TTTGame_GameState(
                 board = ",,,,,,,,",
                 currentPlayer = (0..1).random().toDouble(),
                 gameOver = false,
                 winnerAvatar = ""
             ))
-            playerOneMove.set(mv1.copy(move = -1.0))
-            playerTwoMove.set(mv2.copy(move = -1.0))
-            events.clear()
+            handles.playerOneMove.set(mv1.copy(move = -1.0))
+            handles.playerTwoMove.set(mv2.copy(move = -1.0))
+            handles.events.clear()
         }
         renderOutput()
     }
@@ -133,7 +133,7 @@ class TTTGame : AbstractTTTGame() {
             }
         }
 
-        gameState.set(gs.copy(
+        handles.gameState.set(gs.copy(
             board = boardList.joinToString(","),
             currentPlayer = (gs.currentPlayer + 1) % 2,
             gameOver = gameOver,
@@ -141,7 +141,7 @@ class TTTGame : AbstractTTTGame() {
         ))
     }
 
-    private fun hasReset() = events.any { it.type == "reset" }
+    private fun hasReset() = handles.events.any { it.type == "reset" }
 
     private fun Int.isValidMove(boardList: List<String>) = this in 0..9 && boardList[this] == ""
 }
