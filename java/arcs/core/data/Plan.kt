@@ -21,13 +21,8 @@ open class Plan(
     // Because Plan is not a data class to allow sub-classing, these are required.
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
 
-        other as Plan
-
-        if (particles != other.particles) return false
-
-        return true
+        return (other as? Plan)?.let { particles == other.particles } ?: false
     }
 
     override fun hashCode(): Int {
