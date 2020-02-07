@@ -35,11 +35,11 @@ Usage
   $ tools/sigh manifest2json [options] [file ...]
 
 Description
-  Serializes manifests to JSON. 
+  Serializes manifests to a JSON file. 
 
 Options
-  --outdir, -d  output directory; defaults to '.'
   --outfile, -f output filename; required
+  --outdir, -d  output directory; defaults to '.'
   --help        usage info
 `);
   process.exit(0);
