@@ -23,6 +23,6 @@ kt_jvm_library(
 
 java_binary(
     name = "recipe2plan",
-    main_class = "test.Recipe2PlanKt",
+    main_class = "arcs.tools.Recipe2PlanKt",
     runtime_deps = [":generator"],
 )
