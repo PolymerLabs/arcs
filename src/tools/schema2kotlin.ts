@@ -124,7 +124,7 @@ class KotlinGenerator implements ClassGenerator {
     const fixed = field + (keywords.includes(field) ? '_' : '');
     
 
-    this.fields.push(`${fixed}: ${type}`);
+    this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
     this.fieldVals.push(
       `var ${fixed} = ${defaultVal}\n` +
       `        get() = field\n` +

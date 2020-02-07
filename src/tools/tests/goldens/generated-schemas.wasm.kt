@@ -22,7 +22,7 @@ class GoldInternal1() : WasmEntity {
         }
 
     constructor(
-        val_: String
+        val_: String = ""
     ) : this() {
         this.val_ = val_
     }
@@ -119,10 +119,10 @@ class Gold_Data() : WasmEntity {
         }
 
     constructor(
-        num: Double,
-        txt: String,
-        lnk: String,
-        flg: Boolean
+        num: Double = 0.0,
+        txt: String = "",
+        lnk: String = "",
+        flg: Boolean = false
     ) : this() {
         this.num = num
         this.txt = txt

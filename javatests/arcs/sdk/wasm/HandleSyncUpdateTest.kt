@@ -32,7 +32,7 @@ class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
         } else {
             txt = "unexpected handle name: ${handle.name}"
         }
-        handles.res.store(out.copy(
+        handles.res.store(HandleSyncUpdateTest_Res(
             txt = txt,
             num = num
         ))
