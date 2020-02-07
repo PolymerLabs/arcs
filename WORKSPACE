@@ -53,6 +53,7 @@ git_repository(
     shallow_since = "1578612474 -0800",
 )
 
+
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
 KOTLIN_VERSION = "1.3.60"
@@ -168,3 +169,15 @@ maven_install(
         "https://repo1.maven.org/maven2",
     ],
 )
+
+# Android Instrumentation Test 
+git_repository(
+    name = "android_test_support",
+    remote = "https://github.com/android/android-test",
+    commit = "08adbbf3cf2116687f371250c744d48369c9c221",
+    shallow_since = "1580845287 -0800",
+)
+
+load("@android_test_support//:repo.bzl", "android_test_repositories")
+
+android_test_repositories()

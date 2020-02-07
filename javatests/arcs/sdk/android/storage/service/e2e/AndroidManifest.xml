@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="arcs.sdk.android.storage">
+
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
+
+    <application>
+        <service android:name="arcs.android.storage.service.StorageService" android:exported="false"/>
+    </application>
+
+</manifest>
