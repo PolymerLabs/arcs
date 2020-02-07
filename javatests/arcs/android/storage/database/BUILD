@@ -14,7 +14,9 @@ arcs_kt_android_test_suite(
     deps = [
         "//java/arcs/android/common",  # unuseddeps: keep
         "//java/arcs/android/storage/database",
+        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
+        "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/testutil",
