@@ -185,12 +185,13 @@ class StorageProxyTest {
             suspend {
                 // handle reads data
                 storageProxy.getParticleView()
-                // make sure we follow up with a sync so the particle view doesn't get block
+                // make sure we follow up by ensuring view is synced so the particle view doesn't
+                // stay blocked
                 launch {
                     delay(10)
                     val op = mock(CrdtOperation::class.java)
                     mockCrdtModel.appliesOpAs(op, true)
-                    storageProxy.applyOp(op)
+                    storageProxy.onMessage(ProxyMessage.Operations(listOf(op), null))
                 }
             }
         )
@@ -198,12 +199,12 @@ class StorageProxyTest {
         val workers = 20
         val jobs = 10
         Executors.newFixedThreadPool(workers).asCoroutineDispatcher().use {
-            val newScope = it // does it@ work for this?
+            val inPool = it
             repeat(10) {
-                runBlocking(newScope) {
-                    withTimeout(2000) {
+                runBlocking {
+                    withTimeout(5000) {
                         repeat(workers) {
-                            launch {
+                            launch(inPool) {
                                 repeat(jobs) {
                                     val randomOp = ops[Random.nextInt(0, ops.size - 1)]
                                     randomOp()
