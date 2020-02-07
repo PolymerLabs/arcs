@@ -24,4 +24,12 @@ abstract class StorageKey(val protocol: String) {
         childKeyWithComponent("handle/$handleId")
 
     override fun toString(): String = "$protocol://${toKeyString()}"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        return toString() == other.toString()
+    }
+
+    override fun hashCode() = toString().hashCode()
 }

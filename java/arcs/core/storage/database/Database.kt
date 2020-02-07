@@ -77,24 +77,27 @@ interface DatabaseClient {
 
 /** Data-exchange encapsulation to use when making requests to a [Database]. */
 sealed class DatabaseData(
+    open val schema: Schema,
     open val databaseVersion: Int,
     open val versionMap: VersionMap
 ) {
     data class Singleton(
         val reference: Reference?,
+        override val schema: Schema,
         override val databaseVersion: Int,
         override val versionMap: VersionMap
-    ) : DatabaseData(databaseVersion, versionMap)
+    ) : DatabaseData(schema, databaseVersion, versionMap)
 
     data class Collection(
         val values: Set<Reference>,
+        override val schema: Schema,
         override val databaseVersion: Int,
         override val versionMap: VersionMap
-    ) : DatabaseData(databaseVersion, versionMap)
+    ) : DatabaseData(schema, databaseVersion, versionMap)
 
     data class Entity(
         val entity: arcs.core.data.Entity,
         override val databaseVersion: Int,
         override val versionMap: VersionMap
-    ) : DatabaseData(databaseVersion, versionMap)
+    ) : DatabaseData(entity.schema, databaseVersion, versionMap)
 }

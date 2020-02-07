@@ -100,14 +100,11 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is VersionMap &&
-            other.backingMap.size == backingMap.size &&
-            other.backingMap.all { this[it.key] == it.value }
+        if (this === other) return true
+        return other is VersionMap && backingMap == other.backingMap
     }
 
-    // TODO: better method for calculating hashcode. This implementation is just so we have
-    //  **something**.
-    override fun hashCode(): Int = backingMap.entries.sortedBy { it.key }.joinToString().hashCode()
+    override fun hashCode(): Int = backingMap.hashCode()
 
     override fun toString(): String =
         backingMap.entries
