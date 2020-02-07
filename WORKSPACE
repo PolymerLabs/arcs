@@ -124,6 +124,8 @@ KOTLINX_COROUTINES_VERSION = "1.3.3"
 
 ROBOLECTRIC_VERSION = "4.1"
 
+KOTLINPOET_VERSION = "1.5.0"
+
 maven_install(
     artifacts = [
         "androidx.appcompat:appcompat:1.1.0",
@@ -161,6 +163,7 @@ maven_install(
         "org.robolectric:robolectric:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
+        "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
     ],
     fetch_sources = True,
     repositories = [
