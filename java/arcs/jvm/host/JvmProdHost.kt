@@ -20,5 +20,6 @@ import kotlin.reflect.KClass
  * An [ArcHost] that runs isolatable particles that are expected to have no platform
  * dependencies directly on Android APIs.
  */
-class JvmProdHost(vararg particles: KClass<out Particle>) :
-    ProdHost(*particles.map { it.toParticleIdentifier() }.toTypedArray())
+class JvmProdHost(
+    vararg particles: KClass<out Particle>
+) : ProdHost(*particles.map { it.toParticleIdentifier() }.toTypedArray())
