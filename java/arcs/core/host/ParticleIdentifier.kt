@@ -15,9 +15,5 @@ data class ParticleIdentifier(val id: String) {
     }
 }
 
-/**
- * Creates a [ParticleIdenfifier] from a [KClass].
- *
-
- */
+/** Creates a [ParticleIdenfifier] from a [KClass] */
 fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(className())

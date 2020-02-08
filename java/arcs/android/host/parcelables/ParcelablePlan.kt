@@ -29,16 +29,17 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
 
     companion object CREATOR : Parcelable.Creator<ParcelablePlan> {
         override fun createFromParcel(parcel: Parcel): ParcelablePlan {
-
             val size = requireNotNull(parcel.readInt()) {
                 "No size of ParticleSpecs found in Parcel"
             }
             val particleSpecs = mutableListOf<ParticleSpec>()
 
             repeat(size) {
-                particleSpecs.add(requireNotNull(parcel.readParticleSpec()) {
-                    "No ParticleSpec found in list position $it of parcel when reading Plan"
-                })
+                particleSpecs.add(
+                    requireNotNull(parcel.readParticleSpec()) {
+                        "No ParticleSpec found in list position $it of parcel when reading Plan"
+                    }
+                )
             }
 
             return ParcelablePlan(Plan(particleSpecs))

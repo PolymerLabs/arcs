@@ -22,9 +22,11 @@ data class ParcelableParticleSpec(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.particleName)
         parcel.writeString(actual.location)
-        parcel.writeMap(actual.handles.map {
-            it.key to ParcelableHandleConnectionSpec(it.value)
-        }.toMap())
+        parcel.writeMap(
+            actual.handles.map {
+                it.key to ParcelableHandleConnectionSpec(it.value)
+            }.toMap()
+        )
     }
 
     override fun describeContents(): Int = 0

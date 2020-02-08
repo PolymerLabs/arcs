@@ -49,4 +49,4 @@ fun Parcel.readParticleIdentifier(): ParticleIdentifier? =
     readTypedObject(ParcelableParticleIdentifier)?.actual
 
 fun ComponentName.toParticleIdentifier() =
-    ParticleIdentifier(this.packageName + '.' + this.className)
+    ParticleIdentifier("${packageName}.$className")

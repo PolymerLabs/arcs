@@ -49,20 +49,7 @@ class AndroidManifestHostRegistry private constructor(
 
     private val arcHosts = mutableListOf<ArcHost>()
 
-    companion object {
-        /** Auxiliary constructor with default sender. */
-        fun create(ctx: Context) =
-            AndroidManifestHostRegistry(ctx) { intent -> ctx.startService(intent) }.initialize()
-
-        /** Auxiliary constructor for testing. */
-        @VisibleForTesting
-        fun createForTest(ctx: Context, sender: (Intent) -> Unit) =
-            AndroidManifestHostRegistry(ctx, sender).initialize()
-    }
-
-    /**
-     * Discover all Android services which handle ArcHost operations.
-     */
+    /** Discover all Android services which handle ArcHost operations. */
     fun initialize(): AndroidManifestHostRegistry = apply {
         arcHosts.addAll(findHostsByManifest())
     }
@@ -80,11 +67,11 @@ class AndroidManifestHostRegistry private constructor(
      */
     private fun findHostsByManifest(): List<ArcHost> =
         context.packageManager.queryIntentServices(
-                Intent(ArcHostHelper.Companion.ACTION_HOST_INTENT),
-                PackageManager.MATCH_ALL
-            )
-            .filter { it.serviceInfo != null }
-            .map { it.serviceInfo.toArcHost(sender) }
+            Intent(ArcHostHelper.Companion.ACTION_HOST_INTENT),
+            PackageManager.MATCH_ALL
+        )
+        .filter { it.serviceInfo != null }
+        .map { it.serviceInfo.toArcHost(sender) }
 
     override suspend fun availableArcHosts(): List<ArcHost> = arcHosts
 
@@ -98,5 +85,16 @@ class AndroidManifestHostRegistry private constructor(
         throw UnsupportedOperationException(
             "Hosts cannot be unregistered directly, use unregisterService()"
         )
+    }
+
+    companion object {
+        /** Auxiliary constructor with default sender. */
+        fun create(ctx: Context) =
+            AndroidManifestHostRegistry(ctx) { intent -> ctx.startService(intent) }.initialize()
+
+        /** Auxiliary constructor for testing. */
+        @VisibleForTesting
+        fun createForTest(ctx: Context, sender: (Intent) -> Unit) =
+            AndroidManifestHostRegistry(ctx, sender).initialize()
     }
 }

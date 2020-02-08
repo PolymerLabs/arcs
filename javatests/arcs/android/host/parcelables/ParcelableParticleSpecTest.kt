@@ -42,9 +42,7 @@ class ParcelableParticleSpecTest {
         )
 
         val connectionSpec = HandleConnectionSpec(
-            VolatileStorageKey(
-                ArcId.newForTest("foo"), "bar"
-            ),
+            VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
             EntityType(personSchema)
         )
 

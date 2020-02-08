@@ -43,7 +43,6 @@ class ParcelablePlanTest {
 
     @Test
     fun plan_parcelableRoundTrip_works() {
-
         val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
         val handleConnectionSpec = HandleConnectionSpec(storageKey, personType)
         val handleConnectionSpec2 = HandleConnectionSpec(storageKey, personType)

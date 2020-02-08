@@ -17,10 +17,11 @@ class ParticleRegistrationTest {
         var foundProdHost = false
         var foundTestHost = false
 
-        ExplicitHostRegistry.registerHost(JvmProdHost(TestProdParticle::class))
-        ExplicitHostRegistry.registerHost(TestHost(TestHostParticle::class))
+        val hostRegistry = ExplicitHostRegistry()
+        hostRegistry.registerHost(JvmProdHost(TestProdParticle::class))
+        hostRegistry.registerHost(TestHost(TestHostParticle::class))
 
-        ExplicitHostRegistry.availableArcHosts().forEach { host: ArcHost ->
+        hostRegistry.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
                 is ProdHost -> {
                     assertThat(host.registeredParticles()).contains(

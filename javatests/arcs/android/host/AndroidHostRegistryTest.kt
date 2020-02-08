@@ -39,10 +39,7 @@ class AndroidHostRegistryTest {
         context = InstrumentationRegistry.getInstrumentation().targetContext
         service = Robolectric.setupService(TestReadingExternalHostService::class.java)
         sender = { intent -> service.onStartCommand(intent, 0, 0) }
-        hostRegistry =
-            AndroidManifestHostRegistry.createForTest(
-                context, sender
-            )
+        hostRegistry = AndroidManifestHostRegistry.createForTest(context, sender)
     }
 
     @Test
@@ -51,20 +48,4 @@ class AndroidHostRegistryTest {
             TestReadingExternalHostService().toArcHost(context, sender)
         )
     }
-
-//    @Test
-//    fun hostRegistry_arcHost_canRegisterUnregisterParticle() {
-//        runBlocking {
-//            val particle = ParticleIdentifier("foo.bar", "Baz")
-//            val arcHost = hostRegistry.availableArcHosts()
-//                .filter {
-//                    it.hostId().equals(
-//                        TestReadingExternalHostService().toArcHost(context, sender).hostId
-//                    )
-//                }
-//                .first()
-//            arcHost.registerParticle(particle)
-//            assertThat(arcHost.registeredParticles()).contains(particle)
-//        }
-//    }
 }

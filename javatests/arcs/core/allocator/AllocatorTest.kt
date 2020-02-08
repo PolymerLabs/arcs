@@ -12,10 +12,8 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.AbstractArcHost
-import arcs.core.host.ParticleIdentifier
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.toIdentifierList
-import arcs.core.host.toParticleIdentifier
 import arcs.core.storage.driver.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.host.ExplicitHostRegistry
@@ -92,15 +90,16 @@ class AllocatorTest {
     private lateinit var writePersonParticleSpec: ParticleSpec
     private lateinit var readPersonParticleSpec: ParticleSpec
     private lateinit var writeAndReadPersonPlan: Plan
+    private lateinit var hostRegistry: ExplicitHostRegistry
 
     @Before
     fun setUp() {
         runBlocking {
-            ExplicitHostRegistry.clear()
-            ExplicitHostRegistry.registerHost(ReadingHost())
-            ExplicitHostRegistry.registerHost(WritingHost())
+            hostRegistry = ExplicitHostRegistry()
+            hostRegistry.registerHost(ReadingHost())
+            hostRegistry.registerHost(WritingHost())
             writePersonHandleConnectionSpec =
-              HandleConnectionSpec(null, personEntityType)
+                HandleConnectionSpec(null, personEntityType)
 
             writePersonParticleSpec = ParticleSpec(
                 "WritePerson",
@@ -120,7 +119,7 @@ class AllocatorTest {
                 listOf(writePersonParticleSpec, readPersonParticleSpec)
             )
 
-            ExplicitHostRegistry.availableArcHosts().forEach {
+            hostRegistry.availableArcHosts().forEach {
                 if (it is TestingHost) {
                     it.setup()
                 }
@@ -135,7 +134,7 @@ class AllocatorTest {
      */
     @Test
     fun allocator_computePartitions() = runBlockingTest {
-        val allocator = Allocator(ExplicitHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         assertThat(planPartitions).containsExactly(
@@ -159,7 +158,7 @@ class AllocatorTest {
                 assertThat(spec.storageKey).isNull()
             }
         }
-        val allocator = Allocator(ExplicitHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach {
@@ -179,7 +178,7 @@ class AllocatorTest {
             it.handles.getValue("recipePerson").storageKey = testKey
         }
 
-        val allocator = Allocator(ExplicitHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach {
@@ -191,7 +190,7 @@ class AllocatorTest {
 
     @Test
     fun allocator_verifyArcHostStartCalled() = runBlockingTest {
-        val allocator = Allocator(ExplicitHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.forEach {
@@ -210,7 +209,7 @@ class AllocatorTest {
 
     @Test
     fun allocator_verifyUnknownParticleThrows() = runBlockingTest {
-        val allocator = Allocator(ExplicitHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val particleSpec = ParticleSpec("UnknownParticle", "Unknown", mapOf())
 
         val plan = Plan(listOf(particleSpec))

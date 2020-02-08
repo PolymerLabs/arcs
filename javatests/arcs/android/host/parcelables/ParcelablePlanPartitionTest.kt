@@ -34,8 +34,10 @@ import org.junit.runner.RunWith
 class ParcelablePlanPartitionTest {
 
     private val personSchema = Schema(
-        listOf(SchemaName("Person")), SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        SchemaDescription(), "42"
+        listOf(SchemaName("Person")),
+        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+        SchemaDescription(),
+        "42"
     )
 
     @Test
@@ -51,10 +53,14 @@ class ParcelablePlanPartitionTest {
         )
 
         val particleSpec = ParticleSpec(
-            "Foobar", "foo.bar.Foobar", mapOf("foo1" to handleConnectionSpec)
+            "Foobar",
+            "foo.bar.Foobar",
+            mapOf("foo1" to handleConnectionSpec)
         )
         val particleSpec2 = ParticleSpec(
-            "Foobar2", "foo.bar.Foobar2", mapOf("foo2" to handleConnectionSpec2)
+            "Foobar2",
+            "foo.bar.Foobar2",
+            mapOf("foo2" to handleConnectionSpec2)
         )
 
         val planPartition = PlanPartition("arcId", "arcHost", listOf(particleSpec, particleSpec2))

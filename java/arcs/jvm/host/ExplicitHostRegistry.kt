@@ -15,11 +15,11 @@ import arcs.core.host.HostRegistry
 import arcs.sdk.Particle
 
 /**
- * A []HostRegistry] that discovers the available [ArcHost]s available on this platform by using
+ * A [HostRegistry] that discovers the available [ArcHost]s available on this platform by using
  * explicitly registered [ArcHost]s and [Particle]s invoked by [HostRegistry.registerHost] and
  * [ExplicitHostRegistry.registerParticles].
  */
-object ExplicitHostRegistry : HostRegistry {
+class ExplicitHostRegistry : HostRegistry {
     private val arcHosts = mutableListOf<ArcHost>()
 
     override suspend fun availableArcHosts() = arcHosts
@@ -31,10 +31,4 @@ object ExplicitHostRegistry : HostRegistry {
     override suspend fun unregisterHost(host: ArcHost) {
         arcHosts.remove(host)
     }
-
-    fun clear() {
-        arcHosts.clear()
-    }
-
-    fun hosts() = arcHosts
 }

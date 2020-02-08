@@ -5,5 +5,5 @@ import android.content.Intent
 import android.os.IBinder
 
 class TestAndroidArcHostService : Service() {
-    override fun onBind(p0: Intent?): IBinder? = null
+    override fun onBind(intent: Intent?): IBinder? = null
 }

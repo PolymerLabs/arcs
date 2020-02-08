@@ -22,10 +22,8 @@ open class Plan(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
 
-        return (other as? Plan)?.let { particles == other.particles } ?: false
+        return (other as? Plan)?.let { particles == it.particles } ?: false
     }
 
-    override fun hashCode(): Int {
-        return particles.hashCode()
-    }
+    override fun hashCode(): Int = particles.hashCode()
 }

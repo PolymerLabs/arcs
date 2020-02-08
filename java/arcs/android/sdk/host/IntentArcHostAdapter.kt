@@ -111,7 +111,6 @@ class IntentArcHostAdapter(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as ArcHost
-        if (hostId == other.hostId) return false
-        return true
+        return hostId == other.hostId
     }
 }

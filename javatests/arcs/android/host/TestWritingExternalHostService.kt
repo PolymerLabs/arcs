@@ -10,6 +10,19 @@ import arcs.sdk.Particle
 
 class TestWritingExternalHostService : Service() {
     class WritePerson : Particle
+
+    private val arcHostHelper: ArcHostHelper by lazy {
+        ArcHostHelper(this, WritingExternalHost)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val result = super.onStartCommand(intent, flags, startId)
+        arcHostHelper.onStartCommand(intent)
+        return result
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
     companion object WritingExternalHost : ExternalHost(WritePerson()) {
         val started: MutableList<PlanPartition> = mutableListOf()
         override suspend fun startArc(partition: PlanPartition) {
@@ -22,16 +35,4 @@ class TestWritingExternalHostService : Service() {
 
         fun reset() { started.clear() }
     }
-
-    private val arcHostHelper: ArcHostHelper by lazy {
-        ArcHostHelper(this, WritingExternalHost)
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val result = super.onStartCommand(intent, flags, startId)
-        arcHostHelper.onStartCommand(intent)
-        return result
-    }
-
-    override fun onBind(p0: Intent?): IBinder? = null
 }

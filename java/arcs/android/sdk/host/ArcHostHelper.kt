@@ -158,7 +158,8 @@ class ArcHostHelper(
             operation: Operation,
             component: ComponentName,
             argument: Parcelable?
-        ): Intent = Intent(ACTION_HOST_INTENT).setComponent(component)
+        ): Intent = Intent(ACTION_HOST_INTENT)
+            .setComponent(component)
             .putExtra(EXTRA_OPERATION, operation.ordinal)
             .putExtra(EXTRA_OPERATION_ARG, argument)
 
@@ -174,17 +175,13 @@ class ArcHostHelper(
         fun getParticleIdentifierListResult(resultData: Bundle?): List<ParticleIdentifier> =
             resultData?.getParcelableArrayList<ParcelableParticleIdentifier>(
                 EXTRA_OPERATION_RESULT
-            )?.map { it -> it.actual } ?: listOf()
+            )?.map { it.actual } ?: listOf()
     }
 }
 
-private fun Int.toOperation(): ArcHostHelper.Operation? {
-    if (this < ArcHostHelper.Operation.values().size) {
-        return ArcHostHelper.Operation.values()[this]
-    } else {
-        return null
-    }
-}
+private fun Int.toOperation(): ArcHostHelper.Operation? =
+    ArcHostHelper.Operation.values().getOrNull(this)
+
 
 /** Return a [ComponentName] given the [KClass] of a [Service]. */
 @VisibleForTesting
@@ -199,9 +196,7 @@ fun Service.toArcHost(context: Context, sender: (Intent) -> Unit) =
  * via [Intent]s
  **/
 fun ServiceInfo.toArcHost(sender: (Intent) -> Unit) =
-    IntentArcHostAdapter(
-        ComponentName(this.packageName, this.name), sender
-    )
+    IntentArcHostAdapter(ComponentName(this.packageName, this.name), sender)
 
 /**
  * Creates an [Intent] to invoke [ArcHost.registeredParticles] on a [Service]'s internal [ArcHost].

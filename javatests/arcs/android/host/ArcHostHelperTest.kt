@@ -125,9 +125,10 @@ class ArcHostHelperTest {
     @Test
     fun onStartCommand_callsOnStartArcStopArc_whenStarsAlign() = runBlockingTest {
         val personSchema = Schema(
-            listOf(SchemaName("Person")), SchemaFields(mapOf("name" to Text), emptyMap()),
+            listOf(SchemaName("Person")),
+            SchemaFields(mapOf("name" to Text), emptyMap()),
             SchemaDescription(),
-        "42"
+            "42"
         )
 
         val connectionSpec = HandleConnectionSpec(
@@ -136,7 +137,9 @@ class ArcHostHelperTest {
         )
 
         val particleSpec = ParticleSpec(
-            "FooParticle", "foo.bar.FooParticle", mapOf("foo" to connectionSpec)
+            "FooParticle",
+            "foo.bar.FooParticle",
+            mapOf("foo" to connectionSpec)
         )
 
         val planPartition = PlanPartition("id", "FooHost", listOf(particleSpec))
@@ -168,7 +171,8 @@ class ArcHostHelperTest {
         runBlocking {
             suspendCoroutine<List<ParticleIdentifier>?> { coroutine ->
                 ArcHostHelper.setResultReceiver(
-                    getParticlesIntent, object : ResultReceiver(Handler()) {
+                    getParticlesIntent,
+                    object : ResultReceiver(Handler()) {
                         override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
                             val particles =
                                 ArcHostHelper.getParticleIdentifierListResult(resultData)
@@ -178,7 +182,8 @@ class ArcHostHelperTest {
                             )
                             coroutine.resume(particles)
                         }
-                    })
+                    }
+                )
                 helper.onStartCommand(getParticlesIntent)
             }
         }
