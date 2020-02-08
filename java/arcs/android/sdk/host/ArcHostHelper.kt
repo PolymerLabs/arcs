@@ -182,7 +182,6 @@ class ArcHostHelper(
 private fun Int.toOperation(): ArcHostHelper.Operation? =
     ArcHostHelper.Operation.values().getOrNull(this)
 
-
 /** Return a [ComponentName] given the [KClass] of a [Service]. */
 @VisibleForTesting
 fun KClass<out Service>.toComponentName(context: Context) = ComponentName(context, this.java)
