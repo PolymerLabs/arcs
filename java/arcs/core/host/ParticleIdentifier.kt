@@ -18,15 +18,7 @@ data class ParticleIdentifier(val id: String) {
 /**
  * Creates a [ParticleIdenfifier] from a [KClass].
  *
- * There's a multiplatform workaround here. Since [KClass.qualifiedName] is not available on JS,
- * this uses toString() to obtain the internal class name and replaces inner-class '$' separators
- * with '.'
+
  */
-fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(
-    this
-        .toString() // format is "interface|class|enum foo.bar.Bar$Inner<Type> (error messages)"
-        .substringAfter(' ')
-        .substringBefore(' ')
-        .substringBefore('<')
-        .replace('$', '.')
-)
+fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(className())
+

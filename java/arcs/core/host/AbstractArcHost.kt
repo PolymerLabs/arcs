@@ -12,12 +12,8 @@ package arcs.core.host
 
 import arcs.core.data.ParticleSpec
 import arcs.core.data.PlanPartition
-import arcs.core.util.guardWith
 import arcs.sdk.Particle
 import kotlin.reflect.KClass
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import java.io.Console
 
 /**
  * Base helper class for [ArcHost] implementations to provide implementation of
@@ -27,7 +23,7 @@ abstract class AbstractArcHost(
     private var particles: MutableList<ParticleIdentifier> = mutableListOf()
 ) : ArcHost {
     // TODO: fix this, qualifiedName is not supported on JS
-    override val hostId = this::class.java.canonicalName!!
+    override val hostId = this::class.className()
 
     protected fun registerParticle(particle: ParticleIdentifier) {
         particles.add(particle)
@@ -51,6 +47,8 @@ abstract class AbstractArcHost(
         registeredParticles().contains(ParticleIdentifier.from(spec.location))
 }
 
+/**
+ * Convert an array of [Particle] class literals to a [MutableList] of [ParticleIdentifier].
+ */
 fun Array<out KClass<out Particle>>.toIdentifierList(): MutableList<ParticleIdentifier> =
     this.map { it.toParticleIdentifier() }.toMutableList()
-
