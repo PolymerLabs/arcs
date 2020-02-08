@@ -2,26 +2,26 @@ load("//third_party/java/arcs/build_defs/internal:manifest.bzl", "arcs_manifest_
 
 def _recipe2plan_impl(ctx):
     output_name = ctx.label.name + ".kt"
+    serialized_name = ctx.label.name + ".json"
     out = ctx.actions.declare_file(output_name)
+    ir_out = ctx.actions.declare_file(serialized_name)
 
     # Serialize arcs manifest
-    jsons = []
-    for man in ctx.files.srcs:
-      arcs_manifest_json(
-        name = ctx.label.name + "-serialized",
-        src = man,
-
-      )
+    arcs_manifest_json(
+      name = ctx.label.name + "-serializing",
+      srcs = ctx.files.srcs,
+      out = serialized_name,
+    )
 
     args = ctx.actions.args()
 
     args.add_all("--outfile", [output_name])
     args.add_all("--outdir", [out.dirname])
     args.add_all("--package-name", [ctx.attr.package])
-    args.add_all(ctx.files.srcs)
+    args.add_all([ir_out])
 
     ctx.actions.run(
-        inputs = ctx.files.srcs,
+        inputs = [ir_out],
         outputs = [out],
         arguments = [args],
         executable = ctx.executable._compiler,
