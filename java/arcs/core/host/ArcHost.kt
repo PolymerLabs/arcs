@@ -13,8 +13,6 @@ package arcs.core.host
 
 import arcs.core.data.ParticleSpec
 import arcs.core.data.PlanPartition
-import arcs.sdk.Particle
-import kotlin.reflect.KClass
 
 /**
  * An [ArcHost] manages the instantiation and execution of particles participating in an Arc by

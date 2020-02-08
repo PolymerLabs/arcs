@@ -21,4 +21,3 @@ data class ParticleIdentifier(val id: String) {
 
  */
 fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(className())
-

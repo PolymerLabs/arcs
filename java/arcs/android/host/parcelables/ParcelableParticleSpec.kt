@@ -13,7 +13,6 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.ParticleSpec
 
 /** [Parcelable] variant of [ParticleSpec]. */
@@ -24,7 +23,7 @@ data class ParcelableParticleSpec(
         parcel.writeString(actual.particleName)
         parcel.writeString(actual.location)
         parcel.writeMap(actual.handles.map {
-           it.key to ParcelableHandleConnectionSpec(it.value)
+            it.key to ParcelableHandleConnectionSpec(it.value)
         }.toMap())
     }
 

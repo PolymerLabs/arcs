@@ -27,7 +27,7 @@ data class ParcelableParticleIdentifier(
     companion object CREATOR : Parcelable.Creator<ParcelableParticleIdentifier> {
         override fun createFromParcel(parcel: Parcel): ParcelableParticleIdentifier {
             val id = requireNotNull(parcel.readString()) {
-              "No id found for ParcelableParticleIdentifier"
+                "No id found for ParcelableParticleIdentifier"
             }
             return ParcelableParticleIdentifier(ParticleIdentifier(id))
         }

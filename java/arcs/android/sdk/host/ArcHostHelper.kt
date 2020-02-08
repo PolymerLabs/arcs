@@ -27,13 +27,13 @@ import arcs.android.host.parcelables.toParcelable
 import arcs.core.data.PlanPartition
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleIdentifier
+import kotlin.coroutines.CoroutineContext
+import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
-import kotlin.reflect.KClass
 
 /**
  * Tool which can be used by [ArcHost]s to handle [Intent] based API calls, as well as
@@ -176,10 +176,9 @@ class ArcHostHelper(
                 EXTRA_OPERATION_RESULT
             )?.map { it -> it.actual } ?: listOf()
     }
-
 }
 
-private fun Int.toOperation(): ArcHostHelper.Operation?  {
+private fun Int.toOperation(): ArcHostHelper.Operation? {
     if (this < ArcHostHelper.Operation.values().size) {
         return ArcHostHelper.Operation.values()[this]
     } else {
@@ -236,4 +235,3 @@ fun PlanPartition.createStopArcHostIntent(service: ComponentName): Intent =
         service,
         this.toParcelable()
     )
-

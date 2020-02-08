@@ -21,5 +21,4 @@ import kotlin.reflect.KClass
  * dependencies directly on Android APIs.
  */
 class JvmProdHost(vararg particles: KClass<out Particle>) :
-    ProdHost(*particles.map { it.toParticleIdentifier() }.toTypedArray()) {
-}
+    ProdHost(*particles.map { it.toParticleIdentifier() }.toTypedArray())

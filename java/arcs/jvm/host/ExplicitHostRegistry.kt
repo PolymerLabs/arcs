@@ -24,7 +24,7 @@ object ExplicitHostRegistry : HostRegistry {
 
     override suspend fun availableArcHosts() = arcHosts
 
-    override suspend fun registerHost(host: ArcHost)  {
+    override suspend fun registerHost(host: ArcHost) {
         arcHosts.add(host)
     }
 
