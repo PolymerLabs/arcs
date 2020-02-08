@@ -57,7 +57,10 @@ export class ParticleExecutionHost {
 
   constructor({slotComposer, arc, ports}: ParticleExecutionHostOptions) {
     this.close = () => {
-      this._apiPorts.forEach(apiPort => apiPort.close());
+      this._apiPorts.forEach(apiPort => {
+        (apiPort as PECOuterPortImpl).clear();
+        apiPort.close();
+      });
     };
     this.arc = arc;
     this.slotComposer = slotComposer;
@@ -117,6 +120,7 @@ export class ParticleExecutionHost {
   reinstantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
     assert(this.particles.find(p => p === particle),
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
+    this._apiPorts.forEach(apiPort => (apiPort as PECOuterPortImpl).clear());
     const apiPort = this.getPort(particle);
     stores.forEach((store, name) => {
       apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.ttl);
@@ -155,6 +159,7 @@ export class ParticleExecutionHost {
 class PECOuterPortImpl extends PECOuterPort {
   arc: Arc;
   readonly systemTraceClient: Client | undefined;
+  storageListenerRemovalCallbacks: Function[] = [];
 
   constructor(port, arc: Arc) {
     super(port, arc);
@@ -166,9 +171,17 @@ class PECOuterPortImpl extends PECOuterPort {
     }
   }
 
+  // Should be called when closing apiPorts or re-instantiating particles to
+  // clean up stale resources such as registered storage listeners, etc.
+  clear() {
+    this.storageListenerRemovalCallbacks.forEach(cb => cb());
+  }
+
   onInitializeProxy(handle: StorageProviderBase, callback: number) {
     const target = {};
-    handle.legacyOn(data => this.SimpleCallback(callback, data));
+    const cb = data => this.SimpleCallback(callback, data);
+    this.storageListenerRemovalCallbacks.push(() => handle.legacyOff(cb));
+    handle.legacyOn(cb);
   }
 
   async onSynchronizeProxy(handle: StorageProviderBase, callback: number) {
@@ -230,6 +243,8 @@ class PECOuterPortImpl extends PECOuterPort {
   async onRegister(store: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
     // Need an ActiveStore here to listen to changes. Calling .activate() should
     // generally be a no-op.
+    // TODO: add listener removal callback to storageListenerRemovalCallbacks
+    //       for StorageNG if necessary.
     const id = (await store.activate()).on(async data => {
       this.SimpleCallback(messagesCallback, data);
       return Promise.resolve(true);
