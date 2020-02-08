@@ -30,6 +30,6 @@ arcs_manifest_json(
 # TODO(alxr): Remove, or find a better test location.
 recipe2plan(
     name = "test_rule",
-    srcs = ["manifest.arcs"],
+    srcs = [":manifest_data"],
     package = "arcs.tools.test",
 )
