@@ -581,7 +581,7 @@ class DatabaseImpl(
                     backing_storage_key TEXT NOT NULL
                 );
                 
-                CREATE INDEX entity_refs_index ON entity_refs (entity_id, backing_storage_key)
+                CREATE INDEX entity_refs_index ON entity_refs (entity_id, backing_storage_key);
 
                 -- Name is a bit of a misnomer. Defines both collections and singletons. 
                 CREATE TABLE collections (
