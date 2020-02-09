@@ -288,9 +288,11 @@ class DatabaseImpl(
         data.values
             .map { getEntityReferenceId(it, db) }
             .forEach { referenceId ->
-                insert(TABLE_COLLECTION_ENTRIES, null, content.apply {
-                    put("value_id", referenceId)
-                })
+                insert(
+                    TABLE_COLLECTION_ENTRIES,
+                    null,
+                    content.apply { put("value_id", referenceId) }
+                )
             }
     }
 
