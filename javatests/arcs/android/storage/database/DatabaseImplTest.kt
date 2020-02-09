@@ -370,6 +370,7 @@ class DatabaseImplTest {
             databaseVersion = 1,
             versionMap = VersionMap()
         )
+        database.insertOrUpdate(collectionKey, inputCollection1)
 
         // Test removal of old elements.
         values.removeIf { it.id == "ref-to-remove" }
@@ -397,6 +398,157 @@ class DatabaseImplTest {
         }
         assertThat(exception).hasMessageThat().isEqualTo(
             "Collection at storage key dummy://key does not exist."
+        )
+    }
+
+    @Test
+    fun insertAndGet_singleton_newWithNullRef() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val schema = newSchema("hash")
+        val inputSingleton = DatabaseData.Singleton(
+            reference = null,
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+
+        database.insertOrUpdate(key, inputSingleton)
+        val outputSingleton = database.getSingleton(key, schema)
+
+        assertThat(outputSingleton).isEqualTo(inputSingleton)
+    }
+
+    @Test
+    fun insertAndGet_singleton_newWithRef() = runBlockingTest {
+        val singletonKey = DummyStorageKey("singleton")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val inputSingleton = DatabaseData.Singleton(
+            reference = Reference("ref", backingKey, VersionMap()),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+
+        database.insertOrUpdate(singletonKey, inputSingleton)
+        val outputSingleton = database.getSingleton(singletonKey, schema)
+
+        assertThat(outputSingleton).isEqualTo(inputSingleton)
+    }
+
+    @Test
+    fun insertAndGet_singleton_canChangeValues() = runBlockingTest {
+        val singletonKey = DummyStorageKey("singleton")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val inputSingleton1 = DatabaseData.Singleton(
+            reference = Reference("ref", backingKey, VersionMap()),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(singletonKey, inputSingleton1)
+
+        // Test can change reference.
+        val inputSingleton2 = inputSingleton1.copy(
+            reference = Reference("new-ref", backingKey, VersionMap())
+        )
+        database.insertOrUpdate(singletonKey, inputSingleton2)
+        assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton2)
+
+        // Test can clear value.
+        val inputSingleton3 = inputSingleton2.copy(reference = null)
+        database.insertOrUpdate(singletonKey, inputSingleton3)
+        assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton3)
+    }
+
+    @Test
+    fun get_singleton_unknownStorageKey() = runBlockingTest {
+        val exception = assertThrows(IllegalArgumentException::class) {
+            database.getSingleton(DummyStorageKey("key"), newSchema("hash"))
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Singleton at storage key dummy://key does not exist."
+        )
+    }
+
+    @Test
+    fun get_mismatchedDataTypes_entity() = runBlockingTest {
+        val entityKey = DummyStorageKey("entity")
+        val schema = newSchema("hash")
+        val entity = DatabaseData.Entity(
+            entity = Entity("entity", schema, mutableMapOf()),
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(entityKey, entity)
+
+        val exception1 = assertThrows(IllegalArgumentException::class) {
+            database.getCollection(entityKey, schema)
+        }
+        assertThat(exception1).hasMessageThat().isEqualTo(
+            "Expected storage key dummy://entity to be a Collection but was a Entity."
+        )
+
+        val exception2 = assertThrows(IllegalArgumentException::class) {
+            database.getSingleton(entityKey, schema)
+        }
+        assertThat(exception2).hasMessageThat().isEqualTo(
+            "Expected storage key dummy://entity to be a Singleton but was a Entity."
+        )
+    }
+
+    @Test
+    fun get_mismatchedDataTypes_collection() = runBlockingTest {
+        val collectionKey = DummyStorageKey("collection")
+        val schema = newSchema("hash")
+        val collection = DatabaseData.Collection(
+            values = emptySet(),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(collectionKey, collection)
+
+        val exception1 = assertThrows(IllegalArgumentException::class) {
+            database.getSingleton(collectionKey, schema)
+        }
+        assertThat(exception1).hasMessageThat().isEqualTo(
+            "Expected storage key dummy://collection to be a Singleton but was a Collection."
+        )
+
+        val exception2 = assertThrows(IllegalArgumentException::class) {
+            database.getEntity(collectionKey, schema)
+        }
+        assertThat(exception2).hasMessageThat().isEqualTo(
+            "Expected storage key dummy://collection to be an Entity but was a Collection."
+        )
+    }
+
+    @Test
+    fun get_mismatchedDataTypes_singleton() = runBlockingTest {
+        val singletonKey = DummyStorageKey("singleton")
+        val schema = newSchema("hash")
+        val singleton = DatabaseData.Singleton(
+            reference = null,
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(singletonKey, singleton)
+
+        val exception1 = assertThrows(IllegalArgumentException::class) {
+            database.getCollection(singletonKey, schema)
+        }
+        assertThat(exception1).hasMessageThat().isEqualTo(
+            "Expected storage key dummy://singleton to be a Collection but was a Singleton."
+        )
+
+        val exception2 = assertThrows(IllegalArgumentException::class) {
+            database.getEntity(singletonKey, schema)
+        }
+        assertThat(exception2).hasMessageThat().isEqualTo(
+            "Expected storage key dummy://singleton to be an Entity but was a Singleton."
         )
     }
 
