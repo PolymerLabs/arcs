@@ -50,6 +50,9 @@ typealias SetStoreFactory<T> = ServiceStoreFactory<SetData<T>, SetOp<T>, Set<T>>
  * Handles that are used by end-users will deal with [RawEntity], so this helper only bothers to
  * create those types.
  *
+ * It will create a [StorageProxy] for each new storage key, and keep a reference to it for as
+ * long as the [HandleFactory] exists.
+ *
  * Instantiate it with the context and lifecycle that should own the resulting activate stores.
 */
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
