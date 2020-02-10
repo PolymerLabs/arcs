@@ -25,7 +25,7 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     constructor(vararg initialData: Pair<Actor, Version>) : this(mapOf(*initialData))
     constructor(actor: Actor, version: Version) : this(mapOf(actor to version))
 
-    private val backingMap = HashMap(initialData)
+    val backingMap = HashMap(initialData)
 
     /** The number of entries in the [VersionMap]. */
     val size: Int

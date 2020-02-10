@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package arcs.android.crdt;
+
+option java_multiple_files = true;
+
+message VersionMapProto {
+  // Maps from actor name to version number.
+  map<string, uint32> version = 1;
+}

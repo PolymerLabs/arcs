@@ -13,12 +13,12 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.util.writeProto
 import arcs.core.crdt.VersionMap
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Tests for [ParcelableVersionMap]. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableVersionMapTest {
     @Test
@@ -37,9 +37,9 @@ class ParcelableVersionMapTest {
         )
 
         val marshalled = with(Parcel.obtain()) {
-            writeParcelable(emptyMap.toParcelable(), 0)
-            writeParcelable(singleItem.toParcelable(), 0)
-            writeParcelable(lotsOfItems.toParcelable(), 0)
+            writeProto(emptyMap.toProto())
+            writeProto(singleItem.toProto())
+            writeProto(lotsOfItems.toProto())
             marshall()
         }
 
@@ -48,20 +48,8 @@ class ParcelableVersionMapTest {
         }
         unmarshalled.setDataPosition(0)
 
-        assertThat(
-            unmarshalled.readParcelable<ParcelableVersionMap>(
-                ParcelableVersionMap::class.java.classLoader
-            )?.actual
-        ).isEqualTo(emptyMap)
-        assertThat(
-            unmarshalled.readParcelable<ParcelableVersionMap>(
-                ParcelableVersionMap::class.java.classLoader
-            )?.actual
-        ).isEqualTo(singleItem)
-        assertThat(
-            unmarshalled.readParcelable<ParcelableVersionMap>(
-                ParcelableVersionMap::class.java.classLoader
-            )?.actual
-        ).isEqualTo(lotsOfItems)
+        assertThat(unmarshalled.readVersionMap()).isEqualTo(emptyMap)
+        assertThat(unmarshalled.readVersionMap()).isEqualTo(singleItem)
+        assertThat(unmarshalled.readVersionMap()).isEqualTo(lotsOfItems)
     }
 }

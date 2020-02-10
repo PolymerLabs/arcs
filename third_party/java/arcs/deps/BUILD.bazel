@@ -1,0 +1,11 @@
+licenses(["notice"])
+
+package(default_visibility = ["//visibility:public"])
+
+# Aliases for third-party libraries used by Arcs.
+# Prefer adding aliases under //third_party where possible.
+
+alias(
+    name = "protobuf_javalite",
+    actual = "@com_google_protobuf//:protobuf_javalite",
+)
