@@ -27,4 +27,3 @@ fun VersionMap.toProto(): VersionMapProto = VersionMapProto.newBuilder()
 /** Reads a [VersionMap] out of a [Parcel]. */
 fun Parcel.readVersionMap(): VersionMap? =
     readProto(VersionMapProto.getDefaultInstance())?.let { VersionMap(it) }
-

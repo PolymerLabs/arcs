@@ -1,9 +1,9 @@
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
-    "proto_library",
     "android_proto_library",
+    "proto_library",
 )
+load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
 

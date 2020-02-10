@@ -109,7 +109,7 @@ http_archive(
 )
 
 load(
-    "@rules_proto_grpc//android:repositories.bzl", 
+    "@rules_proto_grpc//android:repositories.bzl",
     rules_proto_grpc_android_repos = "android_repos",
 )
 
