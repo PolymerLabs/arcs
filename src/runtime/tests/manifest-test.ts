@@ -747,7 +747,7 @@ ${particleStr1}
             Reader
               input: reads data
         `);
-        verify(manifest, false, ["Type validations failed for handle 'data: create': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}"]);
+        verify(manifest, false, ['Type validations failed for handle \'data: create\': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}']);
       });
       it('ignores dynamic query refinement expressions and-ed with refinements', async () => {
         const manifest = await parseManifest(`

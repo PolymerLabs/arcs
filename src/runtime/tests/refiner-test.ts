@@ -209,11 +209,11 @@ describe('dynamic refinements', () => {
           assert.isTrue(ref.validateData(data), 'Data is valid');
         });
         it('with the query param', () => {
-          const data_with_query = {
+          const dataWithQuery = {
               name: 'Ghost Busters',
               '?': 'Not Ghost Busters',
           };
-          assert.isFalse(ref.validateData(data_with_query), 'Data is not valid');
+          assert.isFalse(ref.validateData(dataWithQuery), 'Data is not valid');
         });
     }));
     describe('Parses and type checks a particle with dynamic and static refinements.', () => {
@@ -221,7 +221,7 @@ describe('dynamic refinements', () => {
             particle AddressBook
                 contacts: reads [Contact {name: Text, age: Number } [ name == ?  and age > 10]]
         `);
-        const typeData = {'name': 'Text', 'age': 'Number' };
+        const typeData = {'name': 'Text', 'age': 'Number'};
         const contacts = manifestAst[0].args[0];
         const ref = Refinement.fromAst(contacts.type.type.refinement, typeData);
         assert.sameMembers([...ref.expression.getFieldNames()], ['name', 'age'], 'should infer indexes from refinement');
