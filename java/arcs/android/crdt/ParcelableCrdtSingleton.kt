@@ -13,6 +13,7 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import android.os.Parcelable
+import arcs.android.util.writeProto
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtSet
@@ -28,7 +29,7 @@ object ParcelableCrdtSingleton {
         override var versionMap = actual.versionMap
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeTypedObject(actual.versionMap.toParcelable(), flags)
+            parcel.writeProto(actual.versionMap.toProto())
             parcel.writeInt(actual.values.size)
             actual.values.forEach { (actor, value) ->
                 parcel.writeString(actor)
@@ -86,7 +87,7 @@ object ParcelableCrdtSingleton {
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 super.writeToParcel(parcel, flags)
                 parcel.writeString(actual.actor)
-                parcel.writeTypedObject(actual.clock.toParcelable(), flags)
+                parcel.writeProto(actual.clock.toProto())
                 parcel.writeTypedObject(actual.value.toParcelable(), flags)
             }
 
@@ -110,7 +111,7 @@ object ParcelableCrdtSingleton {
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 super.writeToParcel(parcel, flags)
                 parcel.writeString(actual.actor)
-                parcel.writeTypedObject(actual.clock.toParcelable(), flags)
+                parcel.writeProto(actual.clock.toProto())
             }
 
             companion object CREATOR : Parcelable.Creator<Clear> {

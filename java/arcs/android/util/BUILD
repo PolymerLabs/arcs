@@ -10,5 +10,6 @@ kt_android_library(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/core/util",
+        "//third_party/java/arcs/deps:protobuf_javalite",
     ],
 )

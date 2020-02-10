@@ -13,6 +13,7 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import android.os.Parcelable
+import arcs.android.util.writeProto
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtSet
@@ -26,7 +27,7 @@ object ParcelableCrdtSet {
         override fun describeContents(): Int = 0
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeTypedObject(actual.versionMap.toParcelable(), flags)
+            parcel.writeProto(actual.versionMap.toProto())
             parcel.writeTypedObject(actual.value.toParcelable(), flags)
         }
 
@@ -50,7 +51,7 @@ object ParcelableCrdtSet {
         override var versionMap = actual.versionMap
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeTypedObject(actual.versionMap.toParcelable(), flags)
+            parcel.writeProto(actual.versionMap.toProto())
             parcel.writeInt(actual.values.size)
             actual.values.forEach { (actor, value) ->
                 parcel.writeString(actor)
@@ -106,7 +107,7 @@ object ParcelableCrdtSet {
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 super.writeToParcel(parcel, flags)
-                parcel.writeTypedObject(actual.clock.toParcelable(), flags)
+                parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
                 parcel.writeTypedObject(actual.added.toParcelable(), flags)
             }
@@ -135,7 +136,7 @@ object ParcelableCrdtSet {
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 super.writeToParcel(parcel, flags)
-                parcel.writeTypedObject(actual.clock.toParcelable(), flags)
+                parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
                 parcel.writeTypedObject(actual.removed.toParcelable(), flags)
             }
@@ -164,8 +165,8 @@ object ParcelableCrdtSet {
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 super.writeToParcel(parcel, flags)
-                parcel.writeTypedObject(actual.oldClock.toParcelable(), flags)
-                parcel.writeTypedObject(actual.newClock.toParcelable(), flags)
+                parcel.writeProto(actual.oldClock.toProto())
+                parcel.writeProto(actual.newClock.toProto())
 
                 parcel.writeInt(actual.added.size)
                 actual.added.forEach {
