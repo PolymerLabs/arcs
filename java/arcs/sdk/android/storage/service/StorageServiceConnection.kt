@@ -114,11 +114,7 @@ class StorageServiceConnection(
             deferred
         }
         needsDisconnect =
-            bindingDelegate.bindStorageService(
-                this,
-                flags = Context.BIND_AUTO_CREATE,
-                options = storeOptions
-            ).also {
+            bindingDelegate.bindStorageService(this, flags = Context.BIND_AUTO_CREATE, options = storeOptions).also {
                 if (!it) {
                     deferred.completeExceptionally(
                         IllegalStateException("Could not initiate connection to the StorageService")

@@ -12,7 +12,10 @@
 package arcs.sdk.android.storage.service
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
+import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.resurrection.ResurrectionRequest
@@ -38,6 +41,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
 
+
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class StorageServiceTest {
@@ -49,7 +53,7 @@ class StorageServiceTest {
         app = ApplicationProvider.getApplicationContext()
         storeOptions = StoreOptions(
             RamDiskStorageKey("count"),
-            ExistenceCriteria.MayExist,
+            ExistenceCriteria.MayEfxist,
             CountType()
         )
     }

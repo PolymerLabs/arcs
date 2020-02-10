@@ -21,6 +21,7 @@ import arcs.core.storage.handle.CollectionImpl
 import arcs.core.storage.handle.SingletonImpl
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -54,16 +55,23 @@ typealias SetStoreFactory<T> = ServiceStoreFactory<SetData<T>, SetOp<T>, Set<T>>
 class HandleFactory(
    private val context: Context,
    private val lifecycle: Lifecycle,
-   private val coroutineContext: CoroutineContext = EmptyCoroutineContext
+   private val coroutineContext: CoroutineContext = EmptyCoroutineContext,
+   private val connectionFactory: ConnectionFactory? = null
 ) {
-    /**
-     * Convenience for making a ramdisk-backed reference mode key
-     */
-    fun ramdiskStorageKeyForName(name: String) = ReferenceModeStorageKey(
-        backingKey = RamDiskStorageKey("$name-backing"),
-        storageKey = RamDiskStorageKey("$name-storage")
-    )
 
+    companion object {
+        /**
+         * Convenience for making a ramdisk-backed reference mode key
+         */
+        fun ramdiskStorageKeyForName(name: String) = ReferenceModeStorageKey(
+            backingKey = RamDiskStorageKey("$name-backing"),
+            storageKey = RamDiskStorageKey("$name-storage")
+        )
+    }
+
+    /**
+     * Create a new SingletonHandle backed by an Android [ServiceStore]
+     */
     suspend fun singletonHandle(
         storageKey: StorageKey,
         schema: Schema,
@@ -80,16 +88,21 @@ class HandleFactory(
             context,
             lifecycle,
             ParcelableCrdtType.Singleton,
-            coroutineContext + Dispatchers.IO
+            coroutineContext + Dispatchers.IO,
+            connectionFactory
         )
 
         val storageProxy = SingletonProxy(Store(storeOptions).activate(serviceStoreFactory), CrdtSingleton())
 
         return SingletonHandle(storageKey.toKeyString(), storageProxy).also {
+            storageProxy.registerHandle(it)
             it.callback = callbacks
         }
     }
 
+    /**
+     * Create a new [SetHandle] backed by an Android [ServiceStore]
+     */
     suspend fun setHandle(
         storageKey: StorageKey,
         schema: Schema,
@@ -106,12 +119,14 @@ class HandleFactory(
             context,
             lifecycle,
             ParcelableCrdtType.Singleton,
-            coroutineContext + Dispatchers.IO
+            coroutineContext + Dispatchers.IO,
+            connectionFactory
         )
 
         val storageProxy = SetProxy(Store(storeOptions).activate(serviceStoreFactory), CrdtSet())
 
         return SetHandle(storageKey.toKeyString(), storageProxy).also {
+            storageProxy.registerHandle(it)
             it.callback = callbacks
         }
     }
