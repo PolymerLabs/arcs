@@ -169,6 +169,8 @@ KOTLINPOET_VERSION = "1.5.0"
 
 CLIKT_VERSION = "2.4.0"
 
+GSON_VERSION = "2.8.6"
+
 maven_install(
     artifacts = [
         "androidx.appcompat:appcompat:1.1.0",
@@ -193,6 +195,7 @@ maven_install(
         "com.google.auto.service:auto-service:" + AUTO_SERVICE_VERSION,
         "com.google.auto.service:auto-service-annotations:" + AUTO_SERVICE_VERSION,
         "com.google.truth:truth:1.0",
+        "com.google.code.gson:gson:" + GSON_VERSION,
         "com.github.ajalt:clikt:" + CLIKT_VERSION,
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
         "javax.inject:javax.inject:1",

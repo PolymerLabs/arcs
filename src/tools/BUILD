@@ -19,7 +19,7 @@ kt_jvm_library(
     deps = [
         "//third_party/kotlin/clikt",
         "//third_party/kotlin/kotlinpoet",
-        "//third_party/java/json"
+        "//third_party/java/gson"
     ],
 )
 
