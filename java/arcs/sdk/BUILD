@@ -15,6 +15,10 @@ arcs_kt_jvm_library(
         "*.kt",
         "jvm/*.kt",
     ]),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//java/arcs/core/data:rawentity",
+    ],
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
