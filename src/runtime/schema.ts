@@ -224,7 +224,7 @@ export class Schema {
     results.push(`schema ${this.names.join(' ')}`);
     results.push(...Object.entries(this.fields).map(f => `  ${Schema.fieldToString(f)}`));
     if (this.refinement) {
-      results.push(this.refinement.toString());
+      results.push(`  ${this.refinement.toString()}`);
     }
     if (Object.keys(this.description).length > 0) {
       results.push(`  description \`${this.description.pattern}\``);
