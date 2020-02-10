@@ -5,6 +5,7 @@ import androidx.lifecycle.Lifecycle
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -111,14 +112,14 @@ class HandleFactory(
         val storeOptions = SetStoreOptions<RawEntity>(
             storageKey = storageKey,
             existenceCriteria = ExistenceCriteria.MayExist,
-            type = SingletonType(EntityType(schema)),
+            type = CollectionType(EntityType(schema)),
             mode = StorageMode.ReferenceMode
         )
 
         val serviceStoreFactory = SetStoreFactory<RawEntity>(
             context,
             lifecycle,
-            ParcelableCrdtType.Singleton,
+            ParcelableCrdtType.Set,
             coroutineContext + Dispatchers.IO,
             connectionFactory
         )

@@ -116,7 +116,6 @@ class HandleFactoryTest {
 
     @Test
     fun testCreateSingletonHandle() = runBlockingTest {
-        Log.level = Log.Level.Debug
         handleFactoryTest { hf ->
             val singletonHandle = hf.singletonHandle(HandleFactory.ramdiskStorageKeyForName("foo"), schema)
             singletonHandle.set(entity1)
@@ -130,9 +129,8 @@ class HandleFactoryTest {
 
     @Test
     fun testCreateSetHandle() = runBlockingTest {
-        Log.level = Log.Level.Debug
         handleFactoryTest { hf ->
-            val setHandle = hf.setHandle(HandleFactory.ramdiskStorageKeyForName("foo"), schema)
+            val setHandle = hf.setHandle(HandleFactory.ramdiskStorageKeyForName("fooset"), schema)
             setHandle.store(entity1)
         }
     }
