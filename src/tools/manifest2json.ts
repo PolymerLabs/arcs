@@ -80,14 +80,21 @@ async function aggregateLiterals(srcs: string[]): Promise<Serialization> {
       throw new Error(`File not found: ${src}`);
     }
     const manifest: Manifest = await Runtime.parseFile(src);
-    if (manifest.errors.length) {
-      const errMsgs = manifest.errors
-        .filter(e => e.severity === ErrorSeverity.Error)
-        .map(formatManifestErrors);
 
+    manifest.errors
+      .filter(e => e.severity === ErrorSeverity.Warning)
+      .map(formatManifestErrors)
+      .forEach(console.warn);
+
+    const errMsgs = manifest.errors
+      .filter(e => e.severity === ErrorSeverity.Error)
+      .map(formatManifestErrors);
+
+    if (errMsgs) {
       throw new Error(`Problems found in manifest '${src}':\n` +
                       `${errMsgs.join('\n')}`);
     }
+
     aggregate.merge(toLiteral(manifest));
   }
   return aggregate;
