@@ -162,13 +162,10 @@ object DatabaseDriverProvider : DriverProvider {
         DriverFactory.register(this)
         CapabilitiesResolver.registerKeyCreator(
             DATABASE_DRIVER_PROTOCOL,
-            Capabilities.Persistent,
-            { (arcId), entitySchemaHash -> DatabaseStorageKey(
-                arcId.toString(),
-                entitySchemaHash,
-                false
-            ) }
-        )
+            Capabilities.Persistent
+        ) { storageKeyOptions, entitySchemaHash ->
+            DatabaseStorageKey(storageKeyOptions.arcId.toString(), entitySchemaHash, false)
+        }
     }
 
     private const val ERROR_MESSAGE_CONFIGURE_NOT_CALLED =

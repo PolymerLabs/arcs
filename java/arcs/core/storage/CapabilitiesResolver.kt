@@ -28,11 +28,11 @@ class CapabilitiesResolver(
 
     init {
         if (creators.isEmpty()) {
-            CapabilitiesResolver.defaultCreators.forEach {
-                protocol, creator -> creators[protocol] = creator
+            for ((protocol, creator) in CapabilitiesResolver.defaultCreators) {
+                creators[protocol] = creator
             }
-            CapabilitiesResolver.registeredCreators.forEach {
-                protocol, creator -> creators[protocol] = creator
+            for ((protocol, creator) in CapabilitiesResolver.registeredCreators) {
+                creators[protocol] = creator
             }
         }
     }
@@ -49,16 +49,16 @@ class CapabilitiesResolver(
     ): StorageKey? {
         // TODO: This is a naive and basic solution for picking the appropriate
         // storage key creator for the given capabilities. As more capabilities are
-        // added the heuristics is to become more robust.
+        // added the heuristics will become more robust.
         val protocols = findStorageKeyProtocols(capabilities)
         if (protocols.isEmpty()) {
             throw IllegalStateException(
-                "Cannot create a suitable storage key for $capabilities.toString()"
+                "Cannot create a suitable storage key for $capabilities"
             )
         } else if (protocols.size > 1) {
-            log.warning { "Multiple storage key creators for $capabilities.toString()" }
+            log.warning { "Multiple storage key creators for $capabilities" }
         }
-        return this.creators[protocols.first()]?.create?.invoke(
+        return creators[protocols.first()]?.create?.invoke(
             options,
             entitySchemaHash ?: ""
         )
@@ -66,8 +66,8 @@ class CapabilitiesResolver(
 
     fun findStorageKeyProtocols(capabilities: Capabilities): Set<String> {
         val protocols: MutableSet<String> = mutableSetOf()
-        creators.forEach { protocol, creator ->
-            if (creator.capabilities.contains((capabilities))) {
+        for ((protocol, creator) in creators) {
+            if (creator.capabilities.contains(capabilities)) {
                 protocols.add(protocol)
             }
         }

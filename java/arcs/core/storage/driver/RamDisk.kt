@@ -100,9 +100,8 @@ object RamDisk {
     init {
         CapabilitiesResolver.registerKeyCreator(
             RAMDISK_DRIVER_PROTOCOL,
-            Capabilities.TiedToRuntime,
-            { _, _ -> RamDiskStorageKey("") }
-        )
+            Capabilities.TiedToRuntime
+        ) { _, _ -> RamDiskStorageKey("") }
     }
     /** Clears every piece of data from the [RamDisk] memory. */
     fun clear() = memory.clear()
