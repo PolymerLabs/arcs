@@ -3,7 +3,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever

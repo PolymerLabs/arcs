@@ -12,7 +12,6 @@ kt_android_library(
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
         "//third_party/java/jsr305_annotations",

@@ -17,7 +17,6 @@ import arcs.core.crdt.CrdtSingleton.Data
 import arcs.core.crdt.CrdtSingleton.IOperation
 import arcs.core.crdt.CrdtSingleton.Operation.Clear
 import arcs.core.crdt.CrdtSingleton.Operation.Update
-import arcs.core.crdt.internal.VersionMap
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test

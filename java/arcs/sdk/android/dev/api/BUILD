@@ -17,7 +17,6 @@ android_library(
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/internal",
         "//third_party/java/dagger",
         "//third_party/java/jsr330_inject",
     ],

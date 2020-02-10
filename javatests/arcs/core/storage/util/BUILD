@@ -13,7 +13,6 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",

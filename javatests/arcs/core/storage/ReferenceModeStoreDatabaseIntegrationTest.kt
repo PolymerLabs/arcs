@@ -12,15 +12,10 @@
 package arcs.core.storage
 
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.CrdtCount
-import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
-import arcs.core.crdt.CrdtException
-import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSet
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
-import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
@@ -28,8 +23,6 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.data.SingletonType
-import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriver
@@ -39,25 +32,19 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.storage.database.testutil.MockDatabase
 import arcs.jvm.storage.database.testutil.MockDatabaseFactory
-import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
 @UseExperimental(ExperimentalCoroutinesApi::class)

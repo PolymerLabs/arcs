@@ -12,7 +12,6 @@
 package arcs.core.crdt
 
 import arcs.core.crdt.CrdtChange.Data
-import arcs.core.crdt.internal.VersionMap
 import arcs.core.type.Type
 import kotlin.reflect.KClass
 

@@ -16,7 +16,6 @@ import arcs.core.crdt.CrdtEntity.Operation.ClearSingleton
 import arcs.core.crdt.CrdtEntity.Operation.RemoveFromSet
 import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
 import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
-import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
