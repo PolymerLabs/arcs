@@ -195,7 +195,8 @@ describe('dynamic refinements', () => {
         const contacts = manifestAst[0].args[0];
         const nameType = contacts.type.type.fields[0].type;
         const ref = Refinement.fromAst(nameType.refinement, typeData);
-        assert.sameMembers([...ref.expression.getFieldNames()], ['name', '?'], 'should infer indexes from refinement');
+        assert.sameMembers([...ref.expression.getFieldNames()], ['name'], 'should infer indexes from refinement');
+        assert.sameMembers([...ref.expression.getQueryNames()], ['?'], 'should infer query args from refinement');
 
         assert.strictEqual(ref.toString(), '[(name == ?)]');
 
@@ -223,7 +224,8 @@ describe('dynamic refinements', () => {
         const typeData = {'name': 'Text', 'age': 'Number' };
         const contacts = manifestAst[0].args[0];
         const ref = Refinement.fromAst(contacts.type.type.refinement, typeData);
-        assert.sameMembers([...ref.expression.getFieldNames()], ['name', '?', 'age'], 'should infer indexes from refinement');
+        assert.sameMembers([...ref.expression.getFieldNames()], ['name', 'age'], 'should infer indexes from refinement');
+        assert.sameMembers([...ref.expression.getQueryNames()], ['?'], 'should infer query args from refinement');
 
         assert.strictEqual(ref.toString(), '[((name == ?) and (age > 10))]');
 

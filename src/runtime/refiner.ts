@@ -99,19 +99,19 @@ export class Refinement {
     return this.expression.getFieldNames();
   }
 
+  getQueryNames(): Set<string> {
+    return this.expression.getQueryNames();
+  }
+
   getTextPrimitives(): Set<string> {
     return this.expression.getTextPrimitives();
   }
 
   // checks if a is at least as specific as b, returns null if can't be determined
   static isAtleastAsSpecificAs(a: Refinement, b: Refinement): AtleastAsSpecific {
-    if (!a && b) {
-      return AtleastAsSpecific.NO;
-    } else if (a && !b) {
-      return AtleastAsSpecific.YES;
-    } else if (!a && !b) {
-      return AtleastAsSpecific.YES;
-    }
+    // Ensure there is a refinement to check with.
+    a = a || new Refinement(new BooleanPrimitive(true));
+    b = b || new Refinement(new BooleanPrimitive(true));
     try {
       a.normalize();
       b.normalize();
@@ -122,6 +122,7 @@ export class Refinement {
          textToNum[text] = idx;
          idx += 1;
       }
+      // Find the range of values for the field name over which the refinement is valid.
       const rangeA = Range.fromExpression(a.expression, textToNum);
       const rangeB = Range.fromExpression(b.expression, textToNum);
       return rangeA.isSubsetOf(rangeB) ? AtleastAsSpecific.YES : AtleastAsSpecific.NO;
@@ -228,6 +229,8 @@ abstract class RefinementExpression {
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives;
 
   abstract getFieldNames(): Set<string>;
+
+  abstract getQueryNames(): Set<string>;
 
   abstract getTextPrimitives(): Set<string>;
 }
@@ -408,6 +411,12 @@ export class BinaryExpression extends RefinementExpression {
     return new Set<string>([...fn1, ...fn2]);
   }
 
+  getQueryNames(): Set<string> {
+    const fn1 = this.leftExpr.getQueryNames();
+    const fn2 = this.rightExpr.getQueryNames();
+    return new Set<string>([...fn1, ...fn2]);
+  }
+
   getTextPrimitives(): Set<string> {
     const fn1 = this.leftExpr.getTextPrimitives();
     const fn2 = this.rightExpr.getTextPrimitives();
@@ -492,6 +501,10 @@ export class UnaryExpression extends RefinementExpression {
     return this.expr.getFieldNames();
   }
 
+  getQueryNames(): Set<string> {
+    return this.expr.getQueryNames();
+  }
+
   getTextPrimitives(): Set<string> {
     return this.expr.getTextPrimitives();
   }
@@ -540,6 +553,10 @@ export class FieldNamePrimitive extends RefinementExpression {
     return new Set<string>([this.value]);
   }
 
+  getQueryNames(): Set<string> {
+    return new Set<string>();
+  }
+
   getTextPrimitives(): Set<string> {
     return new Set<string>();
   }
@@ -580,6 +597,10 @@ export class QueryArgumentPrimitive extends RefinementExpression {
   }
 
   getFieldNames(): Set<string> {
+    return new Set<string>();
+  }
+
+  getQueryNames(): Set<string> {
     return new Set<string>([this.value]);
   }
 
@@ -621,6 +642,10 @@ export class NumberPrimitive extends RefinementExpression {
     return new Set<string>();
   }
 
+  getQueryNames(): Set<string> {
+    return new Set<string>();
+  }
+
   getTextPrimitives(): Set<string> {
     return new Set<string>();
   }
@@ -659,6 +684,10 @@ class BooleanPrimitive extends RefinementExpression {
     return new Set<string>();
   }
 
+  getQueryNames(): Set<string> {
+    return new Set<string>();
+  }
+
   getTextPrimitives(): Set<string> {
     return new Set<string>();
   }
@@ -694,6 +723,10 @@ class TextPrimitive extends RefinementExpression {
   }
 
   getFieldNames(): Set<string> {
+    return new Set<string>();
+  }
+
+  getQueryNames(): Set<string> {
     return new Set<string>();
   }
 
@@ -873,6 +906,9 @@ export class Range {
     if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BOOLEAN) {
       return Range.booleanRange(1);
     }
+    if (expr instanceof BooleanPrimitive && expr.evalType === Primitive.BOOLEAN) {
+      return Range.universal(Primitive.UNKNOWN);
+    }
 
     // This represents cases that the refinement system cannot solve statically.
     return null;
@@ -916,7 +952,6 @@ export class Range {
         return Range.complementOf(ranges[0]);
       }
       default: {
-        console.log(ranges);
         throw new Error(`Unsupported operator '${op}': cannot update range`);
       }
     }

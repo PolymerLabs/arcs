@@ -157,7 +157,8 @@ export class Schema {
         return false;
       }
     }
-    const fields = {};
+    // tslint:disable-next-line: no-any
+    const fields: Dictionary<any> = {};
     for (const [name, type] of Object.entries(this.fields)) {
       fields[name] = type;
     }
@@ -215,13 +216,16 @@ export class Schema {
   toInlineSchemaString(options?: {hideFields?: boolean}): string {
     const names = this.names.join(' ') || '*';
     const fields = Object.entries(this.fields).map(Schema.fieldToString).join(', ');
-    return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}`;
+    return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}${this.refinement ? this.refinement.toString() : ''}`;
   }
 
   toManifestString(): string {
     const results:string[] = [];
     results.push(`schema ${this.names.join(' ')}`);
     results.push(...Object.entries(this.fields).map(f => `  ${Schema.fieldToString(f)}`));
+    if (this.refinement) {
+      results.push(this.refinement.toString());
+    }
     if (Object.keys(this.description).length > 0) {
       results.push(`  description \`${this.description.pattern}\``);
       for (const name of Object.keys(this.description)) {

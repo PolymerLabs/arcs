@@ -729,7 +729,10 @@ ${particleStr1}
             Reader
               input: reads data
         `);
-        verify(manifest, true, []);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        assert.lengthOf(cc.warn, 2);
+        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
       });
 
       it('applies refinements', async () => {
@@ -758,11 +761,13 @@ ${particleStr1}
             Reader
               input: reads data
         `);
-        verify(manifest, true, []);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        assert.lengthOf(cc.warn, 2);
+        assert.lengthOf(cc.log, 0);
+        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
       });
       it('ignores refinements or-ed with dynamic query refinement expressions', async () => {
-        // TODO(cypher1): In future we should support refinements and queries, with the queries
-        // not getting in the way of the refinements, but the refinements still should restrict the queries.
         const manifest = await parseManifest(`
           particle Impossible
             output: writes Something {num: Number }
@@ -774,7 +779,39 @@ ${particleStr1}
             Reader
               input: reads data
         `);
-        verify(manifest, false, ['Type validations failed for handle \'data: create\': could not guarantee variable ~ meets read requirements Something {num: Number[((num > ?) or (num > 3))]} with write guarantees Something {num: Number}']);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        assert.lengthOf(cc.warn, 2);
+        assert.lengthOf(cc.log, 0);
+        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
+      });
+      it('catches unsafe schema level refinements', async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number } [num > 0]
+          particle Reader
+            input: reads Something {num: Number } [num > 3]
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, false, ['Type validations failed for handle \'data: create\': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 3)]} with write guarantees Something {num: Number[(num > 0)]}']);
+      });
+      it('allows safe schema level refinements', async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number } [num > 5]
+          particle Reader
+            input: reads Something {num: Number } [num > 3]
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, true, []);
       });
     });
   });
