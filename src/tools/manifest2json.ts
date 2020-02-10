@@ -11,7 +11,7 @@ import minimist from 'minimist';
 import fs from 'fs';
 import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
-import {Manifest} from '../runtime/manifest.js';
+import {ErrorSeverity, Manifest, ManifestError} from '../runtime/manifest.js';
 
 class Serialization {
   particles: object[] = [];
@@ -80,12 +80,30 @@ async function aggregateLiterals(srcs: string[]): Promise<Serialization> {
       throw new Error(`File not found: ${src}`);
     }
     const manifest: Manifest = await Runtime.parseFile(src);
-    if (manifest.errors.length) {
-      throw new Error(`Errors found in manifest '${src}'.`);
+
+    manifest.errors
+      .filter(e => e.severity === ErrorSeverity.Warning)
+      .map(formatManifestErrors)
+      .forEach(console.warn);
+
+    const errMsgs = manifest.errors
+      .filter(e => e.severity === ErrorSeverity.Error)
+      .map(formatManifestErrors);
+
+    if (errMsgs.length) {
+      throw new Error(`Problems found in manifest '${src}':\n` +
+                      `${errMsgs.join('\n')}`);
     }
+
     aggregate.merge(toLiteral(manifest));
   }
   return aggregate;
+}
+
+/** Converts `ManifestError` into debug string */
+function formatManifestErrors(error: ManifestError): string {
+  const location = `${error.location.filename}:${error.location.start}:${error.location.end}`;
+  return `${error.severity} ${location} ${error.message}`;
 }
 
 async function main() {
