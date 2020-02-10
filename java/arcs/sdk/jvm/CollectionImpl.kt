@@ -28,9 +28,7 @@ class CollectionImpl<T : Entity>(
 
     override fun isEmpty(): Boolean = entities.isEmpty()
 
-    override fun fetchAll(): Set<T> {
-        return entities.toSet()
-    }
+    override fun fetchAll() = entities.toSet()
 
     override fun store(entity: T) {
         entities.add(entity)
