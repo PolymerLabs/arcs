@@ -8,13 +8,13 @@ kt_android_library(
     name = "handle",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/sdk/android/storage",
         "//java/arcs/android/crdt",
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/referencemode",
+        "//java/arcs/sdk/android/storage",
         "//third_party/java/androidx/lifecycle",
     ],
 )

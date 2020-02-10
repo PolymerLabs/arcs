@@ -23,9 +23,9 @@ import arcs.core.storage.handle.SingletonImpl
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
-import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.Dispatchers
 
 typealias SingletonData<T> = CrdtSingleton.Data<T>
 typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
@@ -57,10 +57,10 @@ typealias SetStoreFactory<T> = ServiceStoreFactory<SetData<T>, SetOp<T>, Set<T>>
 */
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class HandleFactory(
-   private val context: Context,
-   private val lifecycle: Lifecycle,
-   private val coroutineContext: CoroutineContext = EmptyCoroutineContext,
-   private val connectionFactory: ConnectionFactory? = null
+    private val context: Context,
+    private val lifecycle: Lifecycle,
+    private val coroutineContext: CoroutineContext = EmptyCoroutineContext,
+    private val connectionFactory: ConnectionFactory? = null
 ) {
 
     companion object {
@@ -83,7 +83,7 @@ class HandleFactory(
         storageKey: StorageKey,
         schema: Schema,
         callbacks: Callbacks<SingletonOp<RawEntity>>? = null
-        ): SingletonHandle<RawEntity> {
+    ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
             existenceCriteria = ExistenceCriteria.MayExist,
