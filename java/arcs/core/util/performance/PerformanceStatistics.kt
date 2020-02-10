@@ -25,57 +25,7 @@ import kotlinx.coroutines.sync.withLock
 /**
  * Utility for tracking running performance/runtime statistics of arbitrary operations.
  *
- * Example usage:
- *
- * ```kotlin
- * object FibonacciCalculator {
- *     private val fiboSlowStats =
- *         PerformanceStatistics(PlatformTimer, "additions", "recursiveCalls")
- *     private val fiboFastStats =
- *         PerformanceStatistics(PlatformTimer, "additions", "loops")
- *
- *     fun fiboSlow(n: Int): Int = fiboSlowStats.time { counters ->
- *         fun inner(n: Int): Int {
- *             if (n == 0 || n == 1) return 1
- *
- *             counters.increment("recursiveCalls")
- *             val nMinus2 = inner(n - 2)
- *             counters.increment("recursiveCalls")
- *             val nMinus1 = inner(n - 1)
- *
- *             counters.increment("additions")
- *             return nMinus2 + nMinus1
- *         }
- *
- *         return@time inner(n)
- *     }
- *
- *     fun fiboFast(n: Int): Int = fiboFastStats.time { counters ->
- *         var nMinus2 = 0
- *         var nMinus1 = 1
- *
- *         repeat(n) {
- *             counters.increment("loops")
- *             counters.increment("additions")
- *             val sum = nMinus1 + nMinus2
- *             nMinus2 = nMinus1
- *             nMinus1 = sum
- *         }
- *
- *         return@time nMinus1
- *     }
- *
- *     suspend fun printStats() {
- *         val fiboSlowSnapshot = fiboSlowStats.snapshot()
- *         println("Slow stats:")
- *         println(fiboSlowSnapshot)
- *
- *         val fiboFastSnapshot = fiboFastStats.snapshot()
- *         println("Fast stats:")
- *         println(fiboFastSnapshot)
- *     }
- * }
- * ```
+ * For an example use-case, see [FiboPerformanceStatisticsTest].
  */
 class PerformanceStatistics private constructor(
     private val timer: Timer,
