@@ -198,8 +198,7 @@ class StorageProxyTest {
 
         val workers = 20
         val jobs = 10
-        Executors.newFixedThreadPool(workers).asCoroutineDispatcher().use {
-            val inPool = it
+        Executors.newFixedThreadPool(workers).asCoroutineDispatcher().use {inPool ->
             repeat(10) {
                 runBlocking {
                     withTimeout(5000) {
