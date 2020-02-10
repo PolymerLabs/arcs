@@ -195,9 +195,12 @@ ${this.opts.wasm ? `
         ${this.encode.join('\n        ')}
         return encoder.toNullTermByteArray()
     }` : `
-    override fun serialize(): RawEntity {
-        return RawEntity("", mapOf(${this.fieldSerializes.join(', ')}))
-    }`}
+    override fun serialize() = RawEntity(
+        "",
+        mapOf(
+            ${this.fieldSerializes.join(',\n            ')}
+        )
+    )`}
 }
 
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {

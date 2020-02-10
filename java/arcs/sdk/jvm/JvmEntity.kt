@@ -14,6 +14,7 @@ package arcs.sdk
 
 import arcs.core.data.RawEntity
 
+/** JVM-specific extensions to the base [Entity] interface. */
 interface JvmEntity : Entity {
     fun serialize(): RawEntity
 }

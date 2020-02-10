@@ -40,9 +40,12 @@ class GoldInternal1() : JvmEntity {
 
     override fun schemaHash() = "485712110d89359a3e539dac987329cd2649d889"
 
-    override fun serialize(): RawEntity {
-        return RawEntity("", mapOf("val" to val_.toReferencable()))
-    }
+    override fun serialize() = RawEntity(
+        "",
+        mapOf(
+            "val" to val_.toReferencable()
+        )
+    )
 }
 
 class GoldInternal1_Spec() : JvmEntitySpec<GoldInternal1> {
@@ -114,9 +117,15 @@ class Gold_Data() : JvmEntity {
 
     override fun schemaHash() = "d8058d336e472da47b289eafb39733f77eadb111"
 
-    override fun serialize(): RawEntity {
-        return RawEntity("", mapOf("num" to num.toReferencable(), "txt" to txt.toReferencable(), "lnk" to lnk.toReferencable(), "flg" to flg.toReferencable()))
-    }
+    override fun serialize() = RawEntity(
+        "",
+        mapOf(
+            "num" to num.toReferencable(),
+            "txt" to txt.toReferencable(),
+            "lnk" to lnk.toReferencable(),
+            "flg" to flg.toReferencable()
+        )
+    )
 }
 
 class Gold_Data_Spec() : JvmEntitySpec<Gold_Data> {
