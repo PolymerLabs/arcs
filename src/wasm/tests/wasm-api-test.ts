@@ -122,7 +122,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       ]);
     });
 
-    it('getTemplate / populateModel / renderSlot', async () => {
+    it.skip('getTemplate / populateModel / renderSlot', async () => {
       const {arc, stores, slotObserver} = await setup('RenderTest');
       const flags = await singletonHandleForTest(arc, stores.get('flags'));
 
@@ -146,7 +146,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // ]);
     });
 
-    it('autoRender', async () => {
+    it.skip('autoRender', async () => {
       const {arc, stores, slotObserver} = await setup('AutoRenderTest');
       const data = await singletonHandleForTest(arc, stores.get('data'));
 
