@@ -2,6 +2,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -14,7 +15,10 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> : StorageCommuni
     private var proxyMessages = mutableListOf<ProxyMessage<Data, Op, T>>()
 
     override fun setCallback(callback: ProxyCallback<Data, Op, T>) {
-        mutex.withLock { callbacks.add(callback) }
+        // must be blocking since the storage impl is. Unlikely to be heavily contended.
+        runBlocking {
+            mutex.withLock { callbacks.add(callback) }
+        }
     }
 
     suspend fun getCallbacks(): List<ProxyCallback<Data, Op, T>> {
@@ -26,7 +30,7 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> : StorageCommuni
         return true
     }
 
-    fun getProxyMessages() : List<ProxyMessage<Data, Op, T>> {
+    suspend fun getProxyMessages() : List<ProxyMessage<Data, Op, T>> {
         mutex.withLock { return proxyMessages.toList() }
     }
 }
