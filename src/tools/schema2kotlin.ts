@@ -147,7 +147,7 @@ class KotlinGenerator implements ClassGenerator {
 
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
 
-    this.fieldSerializes.push(`"${field}" to (if (${set}) ${fixed}.toReferencable() else null)`);
+    this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
   }
 
   generate(schemaHash: string, fieldCount: number): string {

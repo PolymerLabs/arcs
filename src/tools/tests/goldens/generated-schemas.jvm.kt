@@ -9,9 +9,10 @@ package arcs.sdk
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
+import arcs.core.data.RawEntity
+import arcs.core.data.util.toReferencable
 
-
-class GoldInternal1() : Entity {
+class GoldInternal1() : JvmEntity {
 
     override var internalId = ""
 
@@ -39,9 +40,12 @@ class GoldInternal1() : Entity {
 
     override fun schemaHash() = "485712110d89359a3e539dac987329cd2649d889"
 
+    override fun serialize(): RawEntity {
+        return RawEntity("", mapOf("val" to val_.toReferencable()))
+    }
 }
 
-class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
+class GoldInternal1_Spec() : JvmEntitySpec<GoldInternal1> {
 
     override fun create() = GoldInternal1()
 
@@ -52,7 +56,7 @@ typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
 
-class Gold_Data() : Entity {
+class Gold_Data() : JvmEntity {
 
     override var internalId = ""
 
@@ -110,9 +114,12 @@ class Gold_Data() : Entity {
 
     override fun schemaHash() = "d8058d336e472da47b289eafb39733f77eadb111"
 
+    override fun serialize(): RawEntity {
+        return RawEntity("", mapOf("num" to num.toReferencable(), "txt" to txt.toReferencable(), "lnk" to lnk.toReferencable(), "flg" to flg.toReferencable()))
+    }
 }
 
-class Gold_Data_Spec() : EntitySpec<Gold_Data> {
+class Gold_Data_Spec() : JvmEntitySpec<Gold_Data> {
 
     override fun create() = Gold_Data()
 

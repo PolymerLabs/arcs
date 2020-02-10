@@ -14,9 +14,8 @@ package arcs.sdk
 
 import arcs.core.data.RawEntity
 
-interface JvmEntity: Entity {
+interface JvmEntity : Entity {
     fun serialize(): RawEntity
 }
 
-interface JvmEntitySpec<T : Entity>: EntitySpec<T> {
-}
+interface JvmEntitySpec<T : Entity> : EntitySpec<T>
