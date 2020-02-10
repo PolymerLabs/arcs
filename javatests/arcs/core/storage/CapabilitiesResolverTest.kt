@@ -27,7 +27,7 @@ import java.lang.Error
 
 /** Tests for [CapabilitiesResolver]. */
 @RunWith(JUnit4::class)
-class CapabilitiesResolverTest{
+class CapabilitiesResolverTest {
     @Before
     fun setUp() {
         VolatileDriverProvider(ArcId.newForTest("test"))
@@ -43,10 +43,12 @@ class CapabilitiesResolverTest{
     fun capabilitiesResolver_createsStorageKeysDefault() {
         val options = CapabilitiesResolver.StorageKeyOptions(ArcId.newForTest("test"))
         val resolver = CapabilitiesResolver(options)
-        assertThat(resolver.findStorageKeyProtocols(Capabilities.TiedToArc)).containsExactly(VOLATILE_DRIVER_PROTOCOL)
+        assertThat(resolver.findStorageKeyProtocols(Capabilities.TiedToArc))
+            .containsExactly(VOLATILE_DRIVER_PROTOCOL)
         assertThat(resolver.findStorageKeyProtocols(Capabilities.TiedToRuntime)).isEmpty()
         assertThat(resolver.findStorageKeyProtocols(Capabilities.Persistent)).isEmpty()
-        assertThat(resolver.createStorageKey(Capabilities.TiedToArc)).isInstanceOf(VolatileStorageKey::class.java)
+        assertThat(resolver.createStorageKey(Capabilities.TiedToArc))
+            .isInstanceOf(VolatileStorageKey::class.java)
         assertThrows(IllegalStateException::class) {
             resolver.createStorageKey(Capabilities.TiedToRuntime)
         }
@@ -54,19 +56,20 @@ class CapabilitiesResolverTest{
             resolver.createStorageKey(Capabilities.Persistent)
         }
         assertThrows(IllegalStateException::class) {
-            resolver.createStorageKey(Capabilities(setOf(Capabilities.Capability.TiedToArc, Capabilities.Capability.Persistent)))
+            resolver.createStorageKey(Capabilities(setOf(
+                Capabilities.Capability.TiedToArc,
+                Capabilities.Capability.Persistent
+            )))
         }
     }
 
     @Test
     fun capabilitiesResolver_createsStorageKeysCtor() {
         val options = CapabilitiesResolver.StorageKeyOptions(ArcId.newForTest("test"))
-        val resolver = CapabilitiesResolver(options,
-            mutableMapOf("ramdisk" to CapabilitiesResolver.CapabilitiesCreator(
-                Capabilities.TiedToRuntime
-                ) { storageKeyOptions, _ -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) }
-            )
-        )
+        val resolver = CapabilitiesResolver(options, mutableMapOf(
+            RAMDISK_DRIVER_PROTOCOL to (Capabilities.TiedToRuntime to
+                { storageKeyOptions, _ -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) })
+        ))
         assertThrows(IllegalStateException::class) {
             resolver.createStorageKey(Capabilities.TiedToArc)
         }
@@ -90,8 +93,8 @@ class CapabilitiesResolverTest{
             .isInstanceOf(VolatileStorageKey::class.java)
         assertThat(resolver1.createStorageKey(Capabilities.TiedToRuntime))
             .isInstanceOf(RamDiskStorageKey::class.java)
-        assertThat(resolver1.createStorageKey(Capabilities.Persistent, "abc012")).
-            isInstanceOf(DatabaseStorageKey::class.java)
+        assertThat(resolver1.createStorageKey(Capabilities.Persistent, "abc012"))
+            .isInstanceOf(DatabaseStorageKey::class.java)
 
         CapabilitiesResolver.reset()
         val resolver2 = CapabilitiesResolver(options)
@@ -110,14 +113,14 @@ class CapabilitiesResolverTest{
         CapabilitiesResolver.registerDefaultKeyCreator(
             "test1",
             Capabilities.TiedToRuntime
-        ) {storageKeyOptions, _ -> RamDiskStorageKey(storageKeyOptions.arcId.toString())}
+        ) { storageKeyOptions, _ -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) }
         assertThat(CapabilitiesResolver.defaultCreators).hasSize(2);
         assertThat(CapabilitiesResolver.registeredCreators).isEmpty()
 
         CapabilitiesResolver.registerKeyCreator(
             "test2",
             Capabilities.Persistent
-        ) {storageKeyOptions, _ -> RamDiskStorageKey(storageKeyOptions.arcId.toString())}
+        ) { storageKeyOptions, _ -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) }
         assertThat(CapabilitiesResolver.defaultCreators).hasSize(2);
         assertThat(CapabilitiesResolver.registeredCreators).hasSize(1)
 
