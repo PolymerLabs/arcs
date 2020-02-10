@@ -272,6 +272,7 @@ export class APIPort {
       // is closed.
       workerPool.suspend(this._port);
     }
+    this.clear();
     this._port.close();
   }
 

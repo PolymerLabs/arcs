@@ -57,10 +57,7 @@ export class ParticleExecutionHost {
 
   constructor({slotComposer, arc, ports}: ParticleExecutionHostOptions) {
     this.close = () => {
-      this._apiPorts.forEach(apiPort => {
-        apiPort.clear();
-        apiPort.close();
-      });
+      this._apiPorts.forEach(apiPort => apiPort.close());
     };
     this.arc = arc;
     this.slotComposer = slotComposer;
