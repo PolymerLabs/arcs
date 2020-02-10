@@ -11,7 +11,6 @@
 
 package arcs.android.storage.service
 
-import androidx.annotation.VisibleForTesting
 import arcs.core.util.RunningStatistics
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +50,6 @@ interface BindingContextStatistics : BindingContextStatisticsSink {
     }
 }
 
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class BindingContextStatsImpl : BindingContextStatistics {
     private val runningStats = RunningStatistics()
     private val mutex = Mutex()

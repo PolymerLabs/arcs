@@ -28,6 +28,7 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.util.TaggedLog
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
@@ -47,9 +48,11 @@ class StorageService : ResurrectorService() {
     private val stores = ConcurrentHashMap<StoreOptions<*, *, *>, Store<*, *, *>>()
     private var startTime: Long? = null
     private val stats = BindingContextStatsImpl()
+    private val log = TaggedLog { "StorageService" }
 
     override fun onCreate() {
         super.onCreate()
+        log.debug { "onCreate" }
         startTime = startTime ?: System.currentTimeMillis()
 
         val periodicCleanupTask =
@@ -65,6 +68,7 @@ class StorageService : ResurrectorService() {
     }
 
     override fun onBind(intent: Intent): IBinder? {
+        log.debug { "onBind: $intent" }
         val parcelableOptions = requireNotNull(
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
@@ -89,8 +93,6 @@ class StorageService : ResurrectorService() {
     }
 
     override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
-        super.dump(fd, writer, args)
-
         val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
         val storageKeys = stores.keys.map { it.storageKey }.toSet()
 
@@ -98,20 +100,22 @@ class StorageService : ResurrectorService() {
 
         writer.println(
             """
-                Arcs StorageService:
-                --------------------
-                
-                Uptime: ${DateUtils.formatElapsedTime(elapsedTime)}
-                Active StorageKeys: 
-                ${storageKeys.joinToString(",\n", prefix = "[\n", postfix = "\n]")}
-                ProxyMessage Roundtrip Statistics (ms):
-                  - Average: ${stats.roundtripMean}
-                  - StdDev:  ${stats.roundtripStdDev}
-                  - 75th percentile: ${statsPercentiles.seventyFifth}
-                  - 90th percentile: ${statsPercentiles.ninetieth}
-                  - 99th percentile: ${statsPercentiles.ninetyNinth}
-            """.trimIndent()
+                |Arcs StorageService:
+                |--------------------
+                |
+                |Uptime: ${DateUtils.formatElapsedTime(elapsedTime / 1000)}
+                |Active StorageKeys: 
+                |${storageKeys.joinToString(",\n\t", prefix = "[\n\t", postfix = "\n]")}
+                |ProxyMessage Roundtrip Statistics (ms):
+                |  - Average: ${stats.roundtripMean}
+                |  - StdDev:  ${stats.roundtripStdDev}
+                |  - 75th percentile: ${statsPercentiles.seventyFifth}
+                |  - 90th percentile: ${statsPercentiles.ninetieth}
+                |  - 99th percentile: ${statsPercentiles.ninetyNinth}
+            """.trimMargin("|")
         )
+
+        writer.println()
 
         dumpRegistrations(writer)
     }

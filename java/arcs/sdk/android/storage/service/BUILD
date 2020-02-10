@@ -17,6 +17,7 @@ kt_android_library(
         "//java/arcs/android/storage/ttl",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/util",
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/work",
         "//third_party/kotlin/kotlinx_atomicfu",
