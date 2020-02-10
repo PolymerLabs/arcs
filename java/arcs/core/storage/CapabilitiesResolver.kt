@@ -11,7 +11,6 @@
 
 package arcs.core.storage
 
-import androidx.annotation.VisibleForTesting
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
 import arcs.core.util.TaggedLog
@@ -76,10 +75,8 @@ class CapabilitiesResolver(
     }
 
     companion object {
-        @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-        val defaultCreators: StorageKeyCreatorsMap = mutableMapOf()
-        @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-        val registeredCreators: StorageKeyCreatorsMap = mutableMapOf()
+        /* internal */ val defaultCreators: StorageKeyCreatorsMap = mutableMapOf()
+        /* internal */ val registeredCreators: StorageKeyCreatorsMap = mutableMapOf()
 
         fun registerDefaultKeyCreator(
             protocol: String,
