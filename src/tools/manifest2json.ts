@@ -90,7 +90,7 @@ async function aggregateLiterals(srcs: string[]): Promise<Serialization> {
       .filter(e => e.severity === ErrorSeverity.Error)
       .map(formatManifestErrors);
 
-    if (errMsgs) {
+    if (errMsgs.length) {
       throw new Error(`Problems found in manifest '${src}':\n` +
                       `${errMsgs.join('\n')}`);
     }
