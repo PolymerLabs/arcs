@@ -426,7 +426,35 @@ class DatabaseImpl(
         storageKey: StorageKey,
         originatingClientId: Int?
     ): Unit = stats.delete.timeSuspending<Unit> {
-        TODO("not implemented")
+        writableDatabase.useTransaction {
+            val (storageKeyId, collectionId) = rawQuery(
+                "SELECT id, data_type, value_id FROM storage_keys WHERE storage_key = ?",
+                arrayOf(storageKey.toString())
+            ).forSingleResult {
+                val dataType = DataType.values()[it.getInt(1)]
+                var collectionId: Long? = null
+                if (dataType == DataType.Singleton || dataType == DataType.Collection) {
+                    collectionId = it.getLong(2)
+                }
+                it.getLong(0) to collectionId
+            } ?: return@useTransaction
+
+            execSQL("DELETE FROM storage_keys WHERE id = ?", arrayOf(storageKeyId))
+            execSQL("DELETE FROM entities WHERE storage_key_id = ?", arrayOf(storageKeyId))
+            execSQL(
+                "DELETE FROM field_values WHERE entity_storage_key_id = ?",
+                arrayOf(storageKeyId)
+            )
+            // entity_refs and types don't get deleted.
+
+            if (collectionId != null) {
+                execSQL("DELETE FROM collections WHERE id = ?", arrayOf(collectionId))
+                execSQL(
+                    "DELETE FROM collection_entries WHERE collection_id = ?",
+                    arrayOf(collectionId)
+                )
+            }
+        }
     }
 
     override suspend fun snapshotStatistics() = stats.snapshot()
@@ -551,7 +579,7 @@ class DatabaseImpl(
 
             // Insert entity ID.
             counters?.increment(DatabaseCounters.INSERT_ENTITY_RECORD)
-            val result = insert(
+            insert(
                 TABLE_ENTITIES,
                 null,
                 ContentValues().apply {
@@ -821,13 +849,13 @@ class DatabaseImpl(
                 );
 
                 CREATE INDEX storage_key_index ON storage_keys (storage_key, id);
-                
+
                 -- Maps entity storage key IDs to entity IDs (Arcs string ID, not a row ID).
                 CREATE TABLE entities (
                     storage_key_id INTEGER NOT NULL PRIMARY KEY,
                     entity_id TEXT NOT NULL
                 );
-                
+
                 -- Stores references to entities.
                 CREATE TABLE entity_refs (
                     -- Unique ID in this table.
@@ -837,10 +865,10 @@ class DatabaseImpl(
                     -- The storage key for the backing store for this entity.
                     backing_storage_key TEXT NOT NULL
                 );
-                
+
                 CREATE INDEX entity_refs_index ON entity_refs (entity_id, backing_storage_key);
 
-                -- Name is a bit of a misnomer. Defines both collections and singletons. 
+                -- Name is a bit of a misnomer. Defines both collections and singletons.
                 CREATE TABLE collections (
                     id INTEGER NOT NULL PRIMARY KEY,
                     -- Type of the elements stored in the collection/singleton.
@@ -850,7 +878,7 @@ class DatabaseImpl(
                 -- Entries in a collection/singleton. (Singletons will have only a single row.)
                 CREATE TABLE collection_entries (
                     collection_id INTEGER NOT NULL,
-                    
+
                     -- For collections of primitives: value_id for primitive in collection.
                     -- For collections of entities: id of reference in entity_refs table.
                     -- For singletons: storage_key_id of entity.
@@ -866,7 +894,7 @@ class DatabaseImpl(
                     parent_type_id INTEGER NOT NULL,
                     name TEXT NOT NULL,
                     -- Boolean indicating if the field is a collection or singleton.
-                    is_collection INTEGER NOT NULL 
+                    is_collection INTEGER NOT NULL
                 );
 
                 CREATE INDEX field_names_by_parent_type ON fields (parent_type_id, name);

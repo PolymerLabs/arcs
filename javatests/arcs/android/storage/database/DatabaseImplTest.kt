@@ -30,6 +30,7 @@ import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import java.lang.IllegalArgumentException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -566,6 +567,145 @@ class DatabaseImplTest {
         )
     }
 
+    @Test
+    fun delete_entity_getsRemoved() = runBlockingTest {
+        val entityKey = DummyStorageKey("entity")
+        val schema = newSchema("hash")
+        val entity = DatabaseData.Entity(
+            entity = Entity("entity", schema, mutableMapOf()),
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(entityKey, entity)
+
+        database.delete(entityKey)
+
+        assertTableIsEmpty("storage_keys")
+        assertTableIsEmpty("entities")
+        assertTableIsEmpty("field_values")
+        val exception = assertThrows(IllegalArgumentException::class) {
+            database.getEntity(entityKey, schema)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Entity at storage key dummy://entity does not exist."
+        )
+    }
+
+    @Test
+    fun delete_collection_otherEntitiesUnaffected() = runBlockingTest {
+        val keyToKeep = DummyStorageKey("key-to-keep")
+        val keyToDelete = DummyStorageKey("key-to-delete")
+        val schema = newSchema("hash")
+        val entity = DatabaseData.Entity(
+            entity = Entity("entity", schema, mutableMapOf()),
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(keyToKeep, entity)
+        database.insertOrUpdate(keyToDelete, entity)
+
+        database.delete(keyToDelete)
+
+        assertThat(database.getEntity(keyToKeep, schema)).isEqualTo(entity)
+        assertThrows(IllegalArgumentException::class) {
+            database.getEntity(keyToDelete, schema)
+        }
+    }
+
+    @Test
+    fun delete_collection_getsRemoved() = runBlockingTest {
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val collection = DatabaseData.Collection(
+            values = setOf(Reference("ref1", backingKey, VersionMap())),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(collectionKey, collection)
+
+        database.delete(collectionKey)
+
+        assertTableIsEmpty("storage_keys")
+        assertTableIsEmpty("collections")
+        assertTableIsEmpty("collection_entries")
+        val exception = assertThrows(IllegalArgumentException::class) {
+            database.getCollection(collectionKey, schema)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Collection at storage key dummy://collection does not exist."
+        )
+    }
+
+    @Test
+    fun delete_collection_otherCollectionsUnaffected() = runBlockingTest {
+        val keyToKeep = DummyStorageKey("key-to-keep")
+        val keyToDelete = DummyStorageKey("key-to-delete")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val collection = DatabaseData.Collection(
+            values = setOf(Reference("ref1", backingKey, VersionMap())),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(keyToKeep, collection)
+        database.insertOrUpdate(keyToDelete, collection)
+
+        database.delete(keyToDelete)
+
+        assertThat(database.getCollection(keyToKeep, schema)).isEqualTo(collection)
+        assertThrows(IllegalArgumentException::class) {
+            database.getCollection(keyToDelete, schema)
+        }
+    }
+
+    @Test
+    fun delete_singleton_getsRemoved() = runBlockingTest {
+        val singletonKey = DummyStorageKey("singleton")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val singleton = DatabaseData.Singleton(
+            reference = Reference("ref1", backingKey, VersionMap()),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(singletonKey, singleton)
+
+        database.delete(singletonKey)
+
+        assertTableIsEmpty("storage_keys")
+        assertTableIsEmpty("collections")
+        assertTableIsEmpty("collection_entries")
+        val exception = assertThrows(IllegalArgumentException::class) {
+            database.getSingleton(singletonKey, schema)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Singleton at storage key dummy://singleton does not exist."
+        )
+    }
+
+    @Test
+    fun delete_singleton_otherSingletonsUnaffected() = runBlockingTest {
+        val keyToKeep = DummyStorageKey("key-to-keep")
+        val keyToDelete = DummyStorageKey("key-to-delete")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val reference = Reference("ref1", backingKey, VersionMap())
+        val singleton = DatabaseData.Singleton(reference, schema, 1, VersionMap())
+        database.insertOrUpdate(keyToKeep, singleton)
+        database.insertOrUpdate(keyToDelete, singleton)
+
+        database.delete(keyToDelete)
+
+        assertThat(database.getSingleton(keyToKeep, schema)).isEqualTo(singleton)
+        assertThrows(IllegalArgumentException::class) {
+            database.getSingleton(keyToDelete, schema)
+        }
+    }
+
     private fun newSchema(
         hash: String,
         fields: SchemaFields = SchemaFields(emptyMap(), emptyMap())
@@ -579,6 +719,14 @@ class DatabaseImplTest {
     /** Returns a list of all the rows in the 'fields' table. */
     private fun readFieldsTable() =
         database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
+
+    private fun assertTableIsEmpty(tableName: String) {
+        database.readableDatabase.rawQuery("SELECT * FROM $tableName", arrayOf()).use {
+            assertWithMessage("Expected table $tableName to be empty, but found ${it.count} rows.")
+                .that(it.count)
+                .isEqualTo(0)
+        }
+    }
 
     companion object {
         /** The first free Type ID after all primitive types have been assigned. */
