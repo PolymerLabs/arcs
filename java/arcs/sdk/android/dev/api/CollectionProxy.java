@@ -2,7 +2,7 @@ package arcs.sdk.android.dev.api;
 
 import arcs.core.common.Referencable;
 import arcs.core.crdt.CrdtSet;
-import arcs.core.crdt.internal.VersionMap;
+import arcs.core.crdt.VersionMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;

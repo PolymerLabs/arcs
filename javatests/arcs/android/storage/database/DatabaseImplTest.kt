@@ -16,7 +16,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.Entity
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType

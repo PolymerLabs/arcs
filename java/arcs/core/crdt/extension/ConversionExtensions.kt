@@ -13,7 +13,7 @@ package arcs.core.crdt.extension
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.Entity
 import arcs.core.data.FieldName
 import arcs.core.data.RawEntity

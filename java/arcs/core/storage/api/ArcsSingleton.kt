@@ -2,10 +2,10 @@ package arcs.core.storage.api
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
+import arcs.core.crdt.Actor
 import arcs.core.crdt.CrdtChange
 import arcs.core.crdt.CrdtSingleton
-import arcs.core.crdt.internal.Actor
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.RawEntity

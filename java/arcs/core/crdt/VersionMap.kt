@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -9,10 +9,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.crdt.internal
+package arcs.core.crdt
 
 import kotlin.math.max
 
+/** Denotes an individual actor responsible for modifications to a CRDT. */
+typealias Actor = String
+
+/** Type of the version used in a [VersionMap]. */
 typealias Version = Int
 
 /** Vector clock implementation. */

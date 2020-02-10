@@ -12,7 +12,6 @@ arcs_kt_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/common",
-        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/type",
         # This may get unwieldy with avoiding circular deps as entity is implemented. We'll see.

@@ -17,8 +17,6 @@ import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtChange.Operations
 import arcs.core.crdt.CrdtSet.Data
-import arcs.core.crdt.internal.Actor
-import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.util.ReferencablePrimitive
 
 /** A [CrdtModel] capable of managing a set of items [T]. */

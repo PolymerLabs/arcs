@@ -14,7 +14,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock

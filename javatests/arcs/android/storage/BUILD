@@ -15,7 +15,6 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",

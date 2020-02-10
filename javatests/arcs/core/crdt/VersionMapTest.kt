@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.crdt.internal
+package arcs.core.crdt
 
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

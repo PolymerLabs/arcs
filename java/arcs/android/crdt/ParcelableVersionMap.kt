@@ -13,7 +13,7 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 
 /** [Parcelable] wrapper for [VersionMap]. */
 data class ParcelableVersionMap(

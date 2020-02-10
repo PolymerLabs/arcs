@@ -18,7 +18,6 @@ arcs_kt_android_test_suite(
     deps = [
         ":fakes",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",

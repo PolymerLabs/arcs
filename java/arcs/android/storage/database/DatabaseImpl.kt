@@ -23,7 +23,7 @@ import arcs.android.common.getBoolean
 import arcs.android.common.map
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.Entity
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType

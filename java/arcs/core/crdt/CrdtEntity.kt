@@ -19,8 +19,6 @@ import arcs.core.crdt.CrdtSet.Operation as SetOp
 import arcs.core.crdt.CrdtSingleton.Data as SingletonData
 import arcs.core.crdt.CrdtSingleton.IOperation as ISingletonOp
 import arcs.core.crdt.CrdtSingleton.Operation as SingletonOp
-import arcs.core.crdt.internal.Actor
-import arcs.core.crdt.internal.VersionMap
 import arcs.core.data.FieldName
 import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencablePrimitive
