@@ -69,7 +69,7 @@ class PerformanceStatisticsTest {
         )
         val stats = PerformanceStatistics(timer, initialSnapshot, "foo", "bar")
 
-        val deferred = stats.snapshotAsync()
+        val deferred = stats.snapshotAsync(coroutineContext)
 
         assertThat(deferred.await()).isEqualTo(initialSnapshot)
     }
@@ -83,7 +83,7 @@ class PerformanceStatisticsTest {
             it.increment("foo")
         }
 
-        yield() // let the mutex in the time function run.
+        delay(100) // let the mutex in the time function run.
 
         val snapshot = stats.snapshot()
         assertThat(snapshot.runtimeStatistics.measurements).isEqualTo(1)

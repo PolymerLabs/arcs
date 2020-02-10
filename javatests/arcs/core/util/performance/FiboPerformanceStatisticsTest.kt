@@ -12,16 +12,15 @@
 package arcs.core.util.performance
 
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-@Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class FiboPerformanceStatisticsTest {
     @Test
-    fun compareStats() = runBlockingTest {
+    fun compareStats() = runBlocking {
         val calculator = FibonacciCalculator()
         assertThat(calculator.fiboSlow(0)).isEqualTo(1)
         assertThat(calculator.fiboSlow(1)).isEqualTo(1)
@@ -81,7 +80,7 @@ class FiboPerformanceStatisticsTest {
         val fiboSlowStats = PerformanceStatistics(PlatformTimer, "additions", "recursiveCalls")
         val fiboFastStats = PerformanceStatistics(PlatformTimer, "additions", "loops")
 
-        fun fiboSlow(n: Int): Int = fiboSlowStats.time { counters ->
+        suspend fun fiboSlow(n: Int): Int = fiboSlowStats.timeSuspending { counters ->
             fun inner(n: Int): Int {
                 if (n == 0 || n == 1) return 1
 
@@ -94,10 +93,10 @@ class FiboPerformanceStatisticsTest {
                 return nMinus2 + nMinus1
             }
 
-            return@time inner(n)
+            return@timeSuspending inner(n)
         }
 
-        fun fiboFast(n: Int): Int = fiboFastStats.time { counters ->
+        suspend fun fiboFast(n: Int): Int = fiboFastStats.timeSuspending { counters ->
             var nMinus2 = 0
             var nMinus1 = 1
 
@@ -109,7 +108,7 @@ class FiboPerformanceStatisticsTest {
                 nMinus1 = sum
             }
 
-            return@time nMinus1
+            return@timeSuspending nMinus1
         }
     }
 
