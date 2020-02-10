@@ -8,6 +8,11 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_library(
-    name = "internal",
+    name = "performance",
     srcs = glob(["*.kt"]),
+    deps = [
+        "//java/arcs/core/util",
+        "//third_party/kotlin/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx_coroutines",
+    ],
 )

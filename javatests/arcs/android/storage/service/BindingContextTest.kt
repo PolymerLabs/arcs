@@ -15,7 +15,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtCount
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CountType
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.ProxyMessage

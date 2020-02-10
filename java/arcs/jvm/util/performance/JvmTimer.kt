@@ -9,9 +9,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage.handle
+package arcs.jvm.util.performance
 
-import arcs.core.common.Referencable
-import arcs.core.common.ReferenceId
+import arcs.core.util.performance.Timer
 
-data class MockDataItem(override val id: ReferenceId) : Referencable
+/** Implementation of [Timer] for the JVM. */
+object JvmTimer : Timer() {
+    override val currentTimeNanos: Long
+        get() = System.nanoTime()
+}

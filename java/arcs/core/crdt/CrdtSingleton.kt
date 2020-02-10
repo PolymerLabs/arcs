@@ -16,8 +16,6 @@ import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtSet.Operation.Add
 import arcs.core.crdt.CrdtSet.Operation.Remove
 import arcs.core.crdt.CrdtSingleton.Data
-import arcs.core.crdt.internal.Actor
-import arcs.core.crdt.internal.VersionMap
 
 /** A [CrdtModel] capable of managing a mutable reference. */
 class CrdtSingleton<T : Referencable>(

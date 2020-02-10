@@ -14,7 +14,7 @@ package arcs.core.storage.referencemode
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.referencemode.Message.PreEnqueuedFromBackingStore
 import arcs.core.storage.referencemode.Message.PreEnqueuedFromContainer

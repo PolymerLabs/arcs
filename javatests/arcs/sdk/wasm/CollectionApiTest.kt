@@ -52,8 +52,7 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                 ))
             }
             "case5" -> {
-                val extra = CollectionApiTest_IoHandle().copy(txt = "abc")
-
+                val extra = CollectionApiTest_IoHandle(txt = "abc")
 
                 handles.ioHandle.store(extra)
                 val d1 = CollectionApiTest_OutHandle(

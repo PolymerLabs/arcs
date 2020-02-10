@@ -2,13 +2,13 @@ package arcs.core.storage.api
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
+import arcs.core.crdt.Actor
 import arcs.core.crdt.CrdtChange
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSet.Operation.Add
 import arcs.core.crdt.CrdtSet.Operation.FastForward
 import arcs.core.crdt.CrdtSet.Operation.Remove
-import arcs.core.crdt.internal.Actor
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
 import arcs.core.data.CountType
 import arcs.core.data.EntityType

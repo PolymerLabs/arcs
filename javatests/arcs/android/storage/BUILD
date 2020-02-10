@@ -13,14 +13,12 @@ arcs_kt_android_test_suite(
     package = "arcs.android.storage",
     deps = [
         "//java/arcs/android/crdt",
-        "//java/arcs/android/storage",
+        "//java/arcs/android/storage",  # unuseddeps: keep
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/referencemode",
-        "//java/arcs/core/type",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
         "//third_party/java/robolectric",

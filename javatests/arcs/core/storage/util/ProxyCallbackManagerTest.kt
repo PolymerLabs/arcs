@@ -13,7 +13,7 @@ package arcs.core.storage.util
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.storage.MultiplexedProxyCallback
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage

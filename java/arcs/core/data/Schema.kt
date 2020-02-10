@@ -12,7 +12,7 @@
 package arcs.core.data
 
 import arcs.core.crdt.CrdtEntity
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.type.Type
 
 data class Schema(

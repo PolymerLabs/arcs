@@ -13,6 +13,7 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import android.os.Parcelable
+import arcs.android.util.writeProto
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
@@ -53,7 +54,7 @@ object ParcelableCrdtEntity {
 
         @Suppress("UNCHECKED_CAST")
         override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeTypedObject(actual.versionMap.toParcelable(), flags)
+            parcel.writeProto(actual.versionMap.toProto())
 
             parcel.writeInt(actual.singletons.size)
             actual.singletons.forEach { (field, value) ->
@@ -137,7 +138,7 @@ object ParcelableCrdtEntity {
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 super.writeToParcel(parcel, flags)
-                parcel.writeTypedObject(actual.clock.toParcelable(), flags)
+                parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
                 parcel.writeString(actual.field)
                 parcel.writeTypedObject(actual.value.toParcelable(), flags)
@@ -170,7 +171,7 @@ object ParcelableCrdtEntity {
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 super.writeToParcel(parcel, flags)
-                parcel.writeTypedObject(actual.clock.toParcelable(), flags)
+                parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
                 parcel.writeString(actual.field)
             }
@@ -199,7 +200,7 @@ object ParcelableCrdtEntity {
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 super.writeToParcel(parcel, flags)
-                parcel.writeTypedObject(actual.clock.toParcelable(), flags)
+                parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
                 parcel.writeString(actual.field)
                 parcel.writeTypedObject(actual.added.toParcelable(), flags)
@@ -230,7 +231,7 @@ object ParcelableCrdtEntity {
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 super.writeToParcel(parcel, flags)
-                parcel.writeTypedObject(actual.clock.toParcelable(), flags)
+                parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
                 parcel.writeString(actual.field)
                 parcel.writeTypedObject(actual.removed.toParcelable(), flags)

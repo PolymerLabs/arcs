@@ -13,7 +13,7 @@ package arcs.core.storage
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 
 /**
  * [arcs.core.storage.ReferenceModeStore] uses an expanded notion of Reference that also includes a

@@ -22,18 +22,16 @@ class GoldInternal1() : WasmEntity {
         }
 
     constructor(
-        val_: String
+        val_: String = ""
     ) : this() {
         this.val_ = val_
     }
 
     fun copy(
         val_: String = this.val_
-    ) : GoldInternal1 {
-      return GoldInternal1(
-          val_ = val_
-      )
-    }
+    ) = GoldInternal1(
+        val_ = val_
+    )
 
     fun reset() {
         val_ = ""
@@ -121,10 +119,10 @@ class Gold_Data() : WasmEntity {
         }
 
     constructor(
-        num: Double,
-        txt: String,
-        lnk: String,
-        flg: Boolean
+        num: Double = 0.0,
+        txt: String = "",
+        lnk: String = "",
+        flg: Boolean = false
     ) : this() {
         this.num = num
         this.txt = txt
@@ -137,14 +135,12 @@ class Gold_Data() : WasmEntity {
         txt: String = this.txt,
         lnk: String = this.lnk,
         flg: Boolean = this.flg
-    ) : Gold_Data {
-      return Gold_Data(
-          num = num,
-          txt = txt,
-          lnk = lnk,
-          flg = flg
-      )
-    }
+    ) = Gold_Data(
+        num = num,
+        txt = txt,
+        lnk = lnk,
+        flg = flg
+    )
 
     fun reset() {
         num = 0.0

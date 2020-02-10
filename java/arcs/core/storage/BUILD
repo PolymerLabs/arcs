@@ -37,8 +37,6 @@ arcs_kt_library(
         ":storage_key",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        # TODO: should we move VersionMap to the top-level crdt package if it's being used here?
-        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",  # unuseddeps: keep
         "//java/arcs/core/storage/referencemode",
@@ -61,7 +59,7 @@ arcs_kt_library(
     deps = [
         ":storage_key",
         "//java/arcs/core/common",
-        "//java/arcs/core/crdt/internal",
+        "//java/arcs/core/crdt",
     ],
 )
 

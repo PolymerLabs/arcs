@@ -12,10 +12,10 @@ arcs_kt_android_test_suite(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.crdt",
     deps = [
-        "//java/arcs/android/crdt",
+        "//java/arcs/android/crdt",  # unuseddeps: keep
+        "//java/arcs/android/util",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/internal",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
         "//third_party/android/androidx_test/ext/junit",

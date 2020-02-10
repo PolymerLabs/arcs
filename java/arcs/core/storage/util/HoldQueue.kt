@@ -13,7 +13,7 @@ package arcs.core.storage.util
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
