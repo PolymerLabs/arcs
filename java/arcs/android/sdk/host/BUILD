@@ -18,6 +18,7 @@ kt_android_library(
         "//java/arcs/jvm/host",
         "//third_party/java/androidx/annotation",
         "//third_party/java/jsr305_annotations",
+        "//third_party/kotlin/kotlin:kotlin_reflect",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

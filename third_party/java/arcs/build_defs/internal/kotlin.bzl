@@ -291,6 +291,8 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
     android_local_test_deps = [":%s" % name]
     if IS_BAZEL:
         android_local_test_deps.append("@robolectric//bazel:android-all")
+    else:
+        android_local_test_deps.append("//third_party/android/androidx_test/runner/monitor")
 
     for src in srcs:
         class_name = src[:-3]

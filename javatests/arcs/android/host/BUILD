@@ -24,6 +24,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/type",
+        "//java/arcs/core/util",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
         "//third_party/java/robolectric",
