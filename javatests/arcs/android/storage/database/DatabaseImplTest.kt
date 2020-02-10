@@ -165,20 +165,34 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getStorageKeyId_newKeys() = runBlockingTest {
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), 123L, db)).isEqualTo(1L)
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), 123L, db)).isEqualTo(2L)
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key3"), 123L, db)).isEqualTo(3L)
+    fun getEntityStorageKeyId_newKeys() = runBlockingTest {
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key3"), "eid3", 123L, db)).isEqualTo(3L)
     }
 
     @Test
-    fun getStorageKeyId_existingKeys() = runBlockingTest {
+    fun getEntityStorageKeyId_existingKeys() = runBlockingTest {
         // Create new keys.
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), 123L, db)).isEqualTo(1L)
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), 123L, db)).isEqualTo(2L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
         // Check existing keys.
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), 123L, db)).isEqualTo(1L)
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), 123L, db)).isEqualTo(2L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
+        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
+    }
+
+    @Test
+    fun getEntityStorageKeyId_wrongEntityId() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        database.getEntityStorageKeyId(key, "correct-entity-id", 123L, db)
+
+        val exception = assertThrows(IllegalArgumentException::class) {
+            database.getEntityStorageKeyId(key, "incorrect-entity-id", 123L, db)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Expected storage key dummy://key to have entity ID incorrect-entity-id but was " +
+                "correct-entity-id."
+        )
     }
 
     @Test
@@ -274,7 +288,7 @@ class DatabaseImplTest {
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema).entity
 
-        assertEqualEntities(entityOut, entity)
+        assertThat(entityOut).isEqualTo(entity)
     }
 
     @Test
@@ -304,7 +318,7 @@ class DatabaseImplTest {
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema).entity
 
-        assertEqualEntities(entityOut, entity)
+        assertThat(entityOut).isEqualTo(entity)
     }
 
     @Test
@@ -565,13 +579,6 @@ class DatabaseImplTest {
     /** Returns a list of all the rows in the 'fields' table. */
     private fun readFieldsTable() =
         database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
-
-    /** Custom equality checker for Entities. Ignores ID field. */
-    private fun assertEqualEntities(actual: Entity, expected: Entity) {
-        // TODO: Entity ID is not set correctly.
-        assertThat(actual.schema).isEqualTo(expected.schema)
-        assertThat(actual.data).isEqualTo(expected.data)
-    }
 
     companion object {
         /** The first free Type ID after all primitive types have been assigned. */
