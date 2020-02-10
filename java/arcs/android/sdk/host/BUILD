@@ -13,9 +13,11 @@ kt_android_library(
         "//java/arcs/android/host/parcelables",
         "//java/arcs/android/type",
         "//java/arcs/core/common",
+        "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/jvm/host",
         "//third_party/java/androidx/annotation",
         "//third_party/java/jsr305_annotations",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

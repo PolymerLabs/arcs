@@ -23,9 +23,7 @@ data class ParcelableParticleSpec(
         parcel.writeString(actual.particleName)
         parcel.writeString(actual.location)
         parcel.writeMap(
-            actual.handles.map {
-                it.key to ParcelableHandleConnectionSpec(it.value)
-            }.toMap()
+            actual.handles.mapValues { ParcelableHandleConnectionSpec(it.value) }
         )
     }
 

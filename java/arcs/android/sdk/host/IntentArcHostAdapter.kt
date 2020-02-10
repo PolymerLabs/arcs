@@ -83,6 +83,7 @@ class IntentArcHostAdapter(
     /**
      * Sends an asynchronous [ArcHost] command via [Intent] to a [Service] and waits for a
      * result using a suspendable coroutine.
+     *
      * @property intent the [ArcHost] command, usually from [ArcHostHelper]
      * @property transformer a lambda to map return values from a [Bundle] into other types.
      */

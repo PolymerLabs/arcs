@@ -34,7 +34,7 @@ import arcs.sdk.Particle
  *     <action android:name="arcs.android.host.ARCS_HOST" />
  *   </intent-filter>
  * </service>
- *```
+ * ```
  * These [ArcHost] implementations are [ExternalHost]s mostly assumed to have
  * pre-registered particles. [ProdHost] will still find its [Particle] implementations
  * via [ServiceLoaderHostRegistry]
@@ -49,7 +49,7 @@ class AndroidManifestHostRegistry private constructor(
 
     private val arcHosts = mutableListOf<ArcHost>()
 
-    /** Discover all Android services which handle ArcHost operations. */
+    /** Discover all Android services which handle [ArcHost] operations. */
     fun initialize(): AndroidManifestHostRegistry = apply {
         arcHosts.addAll(findHostsByManifest())
     }
@@ -60,7 +60,7 @@ class AndroidManifestHostRegistry private constructor(
      * <intent-filter>
      *   <action android:name="arcs.android.host.ARC_HOST"/>
      * </intent-filter>
-     *```
+     * ```
      *
      * Constructs an [ArcHost] delegate that communicates via [Intent]s for each
      * [Service] discovered.

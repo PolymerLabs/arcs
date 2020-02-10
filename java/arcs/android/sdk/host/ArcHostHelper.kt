@@ -89,13 +89,20 @@ class ArcHostHelper(
 
         when (operation) {
             Operation.StartArc -> runWithResult(
-                intent, ParcelablePlanPartition::class, arcHost::startArc
+                intent,
+                ParcelablePlanPartition::class,
+                arcHost::startArc
             )
             Operation.StopArc -> runWithResult(
-                intent, ParcelablePlanPartition::class, arcHost::stopArc
+                intent,
+                ParcelablePlanPartition::class,
+                arcHost::stopArc
             )
             Operation.GetRegisteredParticles ->
-                runWithResult(intent, arcHost::registeredParticles)
+                runWithResult(
+                    intent,
+                    arcHost::registeredParticles
+                )
         }
     }
 
@@ -186,13 +193,13 @@ private fun Int.toOperation(): ArcHostHelper.Operation? =
 @VisibleForTesting
 fun KClass<out Service>.toComponentName(context: Context) = ComponentName(context, this.java)
 
-/** Create a wrapper around a [Service] to invoke it's internal [ArcHost] via [Intent]s */
+/** Create a wrapper around a [Service] to invoke it's internal [ArcHost] via [Intent]s. */
 fun Service.toArcHost(context: Context, sender: (Intent) -> Unit) =
     IntentArcHostAdapter(this::class.toComponentName(context), sender)
 
 /**
  * Create a wrapper around a [ServiceInfo] to invoke the associate [Service]'s internal [ArcHost]
- * via [Intent]s
+ * via [Intent]s.
  **/
 fun ServiceInfo.toArcHost(sender: (Intent) -> Unit) =
     IntentArcHostAdapter(ComponentName(this.packageName, this.name), sender)

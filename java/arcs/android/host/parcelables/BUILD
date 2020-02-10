@@ -12,7 +12,9 @@ kt_android_library(
     deps = [
         "//java/arcs/android/type",
         "//java/arcs/core/common",
+        "//java/arcs/core/data",
         "//java/arcs/core/host",
+        "//java/arcs/core/storage:storage_key",
         "//third_party/java/jsr305_annotations",
     ],
 )
