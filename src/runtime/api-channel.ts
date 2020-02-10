@@ -260,6 +260,11 @@ export class APIPort {
   _testingHook() {
   }
 
+  // Clear resources bound to this port prior to closing.
+  // Overridden by inner, outer and any derived port implementations.
+  clear() {
+  }
+
   close(): void {
     if (workerPool.exist(this._port)) {
       // The worker associated with this port is put into the suspended list

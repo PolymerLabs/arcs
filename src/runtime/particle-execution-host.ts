@@ -58,7 +58,7 @@ export class ParticleExecutionHost {
   constructor({slotComposer, arc, ports}: ParticleExecutionHostOptions) {
     this.close = () => {
       this._apiPorts.forEach(apiPort => {
-        (apiPort as PECOuterPortImpl).clear();
+        apiPort.clear();
         apiPort.close();
       });
     };
@@ -120,7 +120,7 @@ export class ParticleExecutionHost {
   reinstantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
     assert(this.particles.find(p => p === particle),
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
-    this._apiPorts.forEach(apiPort => (apiPort as PECOuterPortImpl).clear());
+    this._apiPorts.forEach(apiPort => apiPort.clear());
     const apiPort = this.getPort(particle);
     stores.forEach((store, name) => {
       apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.ttl);
