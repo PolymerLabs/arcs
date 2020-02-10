@@ -70,6 +70,9 @@ class HandleFactory(
         )
     }
 
+    private val singletonProxies = mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
+    private val setProxies = mutableMapOf<StorageKey, SetProxy<RawEntity>>()
+
     /**
      * Create a new SingletonHandle backed by an Android [ServiceStore]
      */
@@ -93,7 +96,9 @@ class HandleFactory(
             connectionFactory
         )
 
-        val storageProxy = SingletonProxy(Store(storeOptions).activate(serviceStoreFactory), CrdtSingleton())
+        val storageProxy = singletonProxies.getOrElse(storageKey) {
+            SingletonProxy(Store(storeOptions).activate(serviceStoreFactory), CrdtSingleton())
+        }
 
         return SingletonHandle(storageKey.toKeyString(), storageProxy).also {
             storageProxy.registerHandle(it)
@@ -124,7 +129,9 @@ class HandleFactory(
             connectionFactory
         )
 
-        val storageProxy = SetProxy(Store(storeOptions).activate(serviceStoreFactory), CrdtSet())
+        val storageProxy = setProxies.getOrElse(storageKey) {
+            SetProxy(Store(storeOptions).activate(serviceStoreFactory), CrdtSet())
+        }
 
         return SetHandle(storageKey.toKeyString(), storageProxy).also {
             storageProxy.registerHandle(it)
