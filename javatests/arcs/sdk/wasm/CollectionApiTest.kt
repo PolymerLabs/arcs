@@ -13,6 +13,13 @@ package arcs.sdk.wasm
 
 class CollectionApiTest : AbstractCollectionApiTest() {
     private var stored = CollectionApiTest_OutHandle()
+    var x = 0;
+
+    init{
+        handles.outHandle.onUpdate{
+            x = handles.outHandle.
+        }
+    }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {

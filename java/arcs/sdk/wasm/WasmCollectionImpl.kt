@@ -21,6 +21,7 @@ class WasmCollectionImpl<T : WasmEntity>(
 ) : WasmHandle<T>(name, particle), ReadWriteCollection<T> {
 
     private val entities: MutableMap<String, T> = mutableMapOf()
+    private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
 
     override val size: Int
         get() = entities.size
@@ -44,6 +45,13 @@ class WasmCollectionImpl<T : WasmEntity>(
                 entities.remove(entity.internalId)
             }
         }
+        onUpdateActions.forEach { action ->
+            action(entities.values.toSet())
+        }
+    }
+
+    override fun onUpdate(action: (Set<T>) -> Unit) {
+        onUpdateActions.add(action)
     }
 
     override fun isEmpty() = entities.isEmpty()
@@ -76,5 +84,8 @@ class WasmCollectionImpl<T : WasmEntity>(
     override fun clear() {
         entities.clear()
         WasmRuntimeClient.collectionClear(particle, this)
+        onUpdateActions.forEach { action ->
+            action(entities.values.toSet())
+        }
     }
 }
