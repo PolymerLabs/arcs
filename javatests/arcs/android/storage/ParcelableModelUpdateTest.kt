@@ -15,7 +15,7 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.crdt.CrdtCount
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

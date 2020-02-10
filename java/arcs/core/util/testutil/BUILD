@@ -11,5 +11,6 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/util",
         "//third_party/java/junit:junit-android",
+        "//third_party/kotlin/kotlinx_atomicfu",
     ],
 )

@@ -13,9 +13,10 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import android.os.Parcelable
+import arcs.android.util.writeProto
+import arcs.core.crdt.Actor
 import arcs.core.crdt.CrdtCount
-import arcs.core.crdt.internal.Actor
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 
 /** Container of [Parcelable] implementations for [CrdtCount]'s data and ops classes. */
 object ParcelableCrdtCount {
@@ -32,7 +33,7 @@ object ParcelableCrdtCount {
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             // Write the version map.
-            parcel.writeTypedObject(ParcelableVersionMap(actual.versionMap), flags)
+            parcel.writeProto(actual.versionMap.toProto())
 
             // Write the number of values as a hint of what to expect.
             parcel.writeInt(actual.values.size)

@@ -123,8 +123,7 @@ class KotlinGenerator implements ClassGenerator {
     const {type, decodeFn, defaultVal} = typeMap[typeChar];
     const fixed = field + (keywords.includes(field) ? '_' : '');
 
-
-    this.fields.push(`${fixed}: ${type}`);
+    this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
     this.fieldVals.push(
       `var ${fixed} = ${defaultVal}\n` +
       `        get() = field\n` +
@@ -177,11 +176,9 @@ class ${name}() : ${this.getType('Entity')} {
 
     fun copy(
         ${this.fieldsForCopyDecl.join(',\n        ')}
-    ) : ${name} {
-      return ${name}(
-          ${this.fieldsForCopy.join(', \n          ')}
-      )
-    }
+    ) = ${name}(
+        ${this.fieldsForCopy.join(', \n        ')}
+    )
 
     fun reset() {
         ${withFields(`${this.fieldsReset.join('\n        ')}`)}

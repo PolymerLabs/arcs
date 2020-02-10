@@ -13,7 +13,7 @@ package arcs.core.storage.util
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest

@@ -1229,7 +1229,11 @@ describe('Arc storage migration', () => {
       assert.equal(worldThing0.rawData.name, 'world');
       // `world` entity was added 1s after `hello`.
       // This also verifies `hello` wasn't update when being re-added.
-      assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp > 1000);
+      if (worldThing0.expirationTimestamp - helloThing0.expirationTimestamp < 1000) {
+        console.warn(`Flaky test: worldThing0.expirationTimestamp - helloThing0.expirationTimestamp` +
+            `${worldThing0.expirationTimestamp} - ${helloThing0.expirationTimestamp} < 1000`);
+      }
+      assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp >= 1000);
 
       const things1Store = await getStoreByConnectionName('things1');
       const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);

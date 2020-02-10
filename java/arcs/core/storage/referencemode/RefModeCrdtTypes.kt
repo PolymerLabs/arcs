@@ -13,14 +13,14 @@ package arcs.core.storage.referencemode
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
+import arcs.core.crdt.Actor
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
-import arcs.core.crdt.internal.Actor
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
 import arcs.core.data.RawEntity
 import arcs.core.data.ReferenceType

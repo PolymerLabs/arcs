@@ -18,7 +18,7 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSet
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
 import arcs.core.data.CountType
 import arcs.core.data.EntityType
@@ -344,7 +344,7 @@ class ReferenceModeStoreTest {
         val bobCrdt = createPersonEntityCrdt()
         val actor = activeStore.crdtKey
         bobCrdt.applyOperation(
-                CrdtEntity.Operation.SetSingleton(
+            CrdtEntity.Operation.SetSingleton(
                 actor,
                 VersionMap(actor to 1),
                 "name",

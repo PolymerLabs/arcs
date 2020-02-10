@@ -11,7 +11,7 @@
 
 package arcs.jvm.storage.database.testutil
 
-import arcs.core.crdt.internal.VersionMap
+import arcs.core.crdt.VersionMap
 import arcs.core.data.Schema
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database

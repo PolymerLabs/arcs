@@ -12,40 +12,18 @@
 package arcs.android.crdt
 
 import android.os.Parcel
-import android.os.Parcelable
-import arcs.core.crdt.internal.VersionMap
+import arcs.android.util.readProto
+import arcs.core.crdt.VersionMap
 
-/** [Parcelable] wrapper for [VersionMap]. */
-data class ParcelableVersionMap(
-    val actual: VersionMap
-) : Parcelable {
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        val actors = actual.actors.toList()
-        parcel.writeInt(actors.size)
-        actors.forEach {
-            parcel.writeString(it)
-            parcel.writeInt(actual[it])
-        }
-    }
+/** Constructs a [VersionMap] from the given [VersionMapProto]. */
+@Suppress("FunctionName")
+fun VersionMap(proto: VersionMapProto) = VersionMap(proto.versionMap)
 
-    override fun describeContents(): Int = 0
-
-    companion object CREATOR : Parcelable.Creator<ParcelableVersionMap> {
-        override fun createFromParcel(parcel: Parcel): ParcelableVersionMap {
-            val actual = VersionMap()
-            val entries = parcel.readInt()
-            repeat(entries) {
-                actual[requireNotNull(parcel.readString())] = requireNotNull(parcel.readInt())
-            }
-            return ParcelableVersionMap(actual)
-        }
-
-        override fun newArray(size: Int): Array<ParcelableVersionMap?> = arrayOfNulls(size)
-    }
-}
-
-/** Converts a [VersionMap] into a [ParcelableVersionMap]. */
-fun VersionMap.toParcelable(): ParcelableVersionMap = ParcelableVersionMap(this)
+/** Serializes a [VersionMap] to its proto form. */
+fun VersionMap.toProto(): VersionMapProto = VersionMapProto.newBuilder()
+    .putAllVersion(this.backingMap)
+    .build()
 
 /** Reads a [VersionMap] out of a [Parcel]. */
-fun Parcel.readVersionMap(): VersionMap? = readTypedObject(ParcelableVersionMap)?.actual
+fun Parcel.readVersionMap(): VersionMap? =
+    readProto(VersionMapProto.getDefaultInstance())?.let { VersionMap(it) }

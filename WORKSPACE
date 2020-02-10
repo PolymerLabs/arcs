@@ -95,6 +95,45 @@ load("@rules_python//python:repositories.bzl", "py_repositories")
 
 py_repositories()
 
+# Protobuf
+
+# Note: using the gRPC protobuf rules, since they seem to be the most
+# comprehensive and best documented:
+# https://github.com/rules-proto-grpc/rules_proto_grpc
+
+http_archive(
+    name = "rules_proto_grpc",
+    sha256 = "5f0f2fc0199810c65a2de148a52ba0aff14d631d4e8202f41aff6a9d590a471b",
+    strip_prefix = "rules_proto_grpc-1.0.2",
+    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/1.0.2.tar.gz"],
+)
+
+load(
+    "@rules_proto_grpc//android:repositories.bzl",
+    rules_proto_grpc_android_repos = "android_repos",
+)
+
+rules_proto_grpc_android_repos()
+
+load("@io_grpc_grpc_java//:repositories.bzl", "grpc_java_repositories")
+
+grpc_java_repositories(
+    omit_bazel_skylib = True,
+    omit_com_google_protobuf = True,
+    omit_com_google_protobuf_javalite = True,
+    omit_net_zlib = True,
+)
+
+load(
+    "@rules_proto_grpc//:repositories.bzl",
+    "rules_proto_grpc_repos",
+    "rules_proto_grpc_toolchains",
+)
+
+rules_proto_grpc_toolchains()
+
+rules_proto_grpc_repos()
+
 # Java deps from Maven.
 
 RULES_JVM_EXTERNAL_TAG = "2.10"
@@ -114,6 +153,8 @@ ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
 
 ANDROIDX_TEST_VERSION = "1.2.0"
 
+ANDROIDX_WORK_VERSION = "2.3.1"
+
 AUTO_VALUE_VERSION = "1.7"
 
 AUTO_SERVICE_VERSION = "1.0-rc6"
@@ -132,6 +173,7 @@ maven_install(
         "androidx.lifecycle:lifecycle-common-java8:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-runtime:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.webkit:webkit:1.1.0-rc01",
+        "androidx.work:work-runtime:" + ANDROIDX_WORK_VERSION,
         "androidx.test:core:" + ANDROIDX_TEST_VERSION,
         "androidx.test.ext:junit:1.1.1",
         "androidx.test:monitor:" + ANDROIDX_TEST_VERSION,
