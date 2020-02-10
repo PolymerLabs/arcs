@@ -2,15 +2,13 @@ package arcs.android.storage.handle
 
 import android.app.Application
 import android.content.ServiceConnection
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.lifecycle.Lifecycle
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.service.IStorageService
-import arcs.core.crdt.CrdtSingleton
-import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -18,17 +16,10 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Callbacks
-import arcs.core.util.Log
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -36,7 +27,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ServiceController
-import kotlin.coroutines.CoroutineContext
 
 
 @Suppress("EXPERIMENTAL_API_USAGE")
