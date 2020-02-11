@@ -9,7 +9,8 @@ import kotlinx.coroutines.sync.withLock
 /** [StoreEndpointFake] exists to capture calls made to [Store] for unit tests. This is needed
  * because Google3's Mockito is incompatible with suspend functions.
  */
-class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> : StorageCommunicationEndpoint<Data, Op, T> {
+class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T>:
+ StorageCommunicationEndpoint<Data, Op, T> {
     private val mutex = Mutex()
     private var callbacks = mutableListOf<ProxyCallback<Data, Op, T>>()
     private var proxyMessages = mutableListOf<ProxyMessage<Data, Op, T>>()

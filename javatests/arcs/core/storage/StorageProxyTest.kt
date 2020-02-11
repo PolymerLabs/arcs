@@ -7,6 +7,8 @@ import arcs.core.crdt.VersionMap
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
+import java.util.concurrent.Executors
+import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -23,8 +25,6 @@ import org.mockito.Mock
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
-import java.util.concurrent.Executors
-import kotlin.random.Random
 
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
 @ExperimentalCoroutinesApi
@@ -216,9 +216,10 @@ class StorageProxyTest {
         }
     }
 
-    private fun newHandle(name: String,
-                          storageProxy: StorageProxy<CrdtData, CrdtOperation, String>,
-                          reader: Boolean
+    private fun newHandle(
+        name: String,
+        storageProxy: StorageProxy<CrdtData, CrdtOperation, String>,
+        reader: Boolean
     ) = Handle(name, storageProxy, reader).apply {
         this.callback = mock(Callbacks::class.java) as Callbacks<CrdtOperation>
     }
