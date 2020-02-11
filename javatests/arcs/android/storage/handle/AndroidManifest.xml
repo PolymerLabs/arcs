@@ -16,6 +16,12 @@
 
     <application>
         <service android:name="arcs.sdk.android.service.StorageService" android:exported="false"/>
+        <activity android:name="arcs.android.storage.handle.TestActivity" >
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN"/>
+          <category android:name="android.intent.category.LAUNCHER"/>
+        </intent-filter>
+      </activity>
     </application>
 
 </manifest>
