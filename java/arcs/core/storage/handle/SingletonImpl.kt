@@ -17,9 +17,9 @@ import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 
 /** These typealiases are defined to clean up the class declaration below. */
-private typealias SingletonProxy<T> =
+typealias SingletonProxy<T> =
     StorageProxy<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
-private typealias SingletonHandle<T> =
+typealias SingletonBase<T> =
     Handle<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
 
 /**
@@ -31,7 +31,7 @@ private typealias SingletonHandle<T> =
 class SingletonImpl<T : Referencable>(
     name: String,
     storageProxy: SingletonProxy<T>
-) : SingletonHandle<T>(name, storageProxy) {
+) : SingletonBase<T>(name, storageProxy) {
     /** Get the current value from the backing [StorageProxy]. */
     suspend fun fetch() = value()
 

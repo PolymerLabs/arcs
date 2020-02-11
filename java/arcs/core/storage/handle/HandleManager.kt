@@ -1,8 +1,5 @@
-package arcs.android.storage.handle
+package arcs.core.storage.handle
 
-import android.content.Context
-import androidx.lifecycle.Lifecycle
-import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.CollectionType
@@ -10,6 +7,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
@@ -18,34 +16,29 @@ import arcs.core.storage.StorageProxy
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.core.storage.handle.CollectionImpl
-import arcs.core.storage.handle.SingletonImpl
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.sdk.android.storage.ServiceStoreFactory
-import arcs.sdk.android.storage.service.ConnectionFactory
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlinx.coroutines.Dispatchers
 
 typealias SingletonData<T> = CrdtSingleton.Data<T>
 typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
+typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<T>, T?>
+typealias SingletonStore<T> = Store<SingletonData<T>, SingletonOp<T>, T?>
+typealias SingletonHandle<T> = SingletonImpl<T>
+typealias SingletonActivationFactory<T> = ActivationFactory<SingletonData<T>, SingletonOp<T>, T?>
+
 typealias SetData<T> = CrdtSet.Data<T>
 typealias SetOp<T> = CrdtSet.IOperation<T>
-
-typealias SingletonHandle<T> = SingletonImpl<T>
-typealias SetHandle<T> = CollectionImpl<T>
-typealias SingletonProxy<T> = StorageProxy<SingletonData<T>, SingletonOp<T>, T?>
-typealias SetProxy<T> = StorageProxy<SetData<T>, SetOp<T>, Set<T>>
-typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<T>, T?>
 typealias SetStoreOptions<T> = StoreOptions<SetData<T>, SetOp<T>, Set<T>>
-@UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-typealias SingletonStoreFactory<T> = ServiceStoreFactory<SingletonData<T>, SingletonOp<T>, T?>
-@UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-typealias SetStoreFactory<T> = ServiceStoreFactory<SetData<T>, SetOp<T>, Set<T>>
+typealias SetStore<T> = Store<SetData<T>, SetOp<T>, Set<T>>
+typealias SetHandle<T> = CollectionImpl<T>
+typealias SetActivationFactory<T> = ActivationFactory<SetData<T>, SetOp<T>, Set<T>>
+
+interface ActivationFactoryFactory {
+    fun singletonFactory(): SingletonActivationFactory<RawEntity>
+    fun setFactory(): SetActivationFactory<RawEntity>
+}
 
 /**
- * HandleFactory is a convenience for creating handles that communicate with an Android service
- * store outside of a full Arcs ecosystem.
+ * [HandleManager] is a convenience for creating handles using a provided store factory.
  *
  * Handles that are used by end-users will deal with [RawEntity], so this helper only bothers to
  * create those types.
@@ -54,15 +47,8 @@ typealias SetStoreFactory<T> = ServiceStoreFactory<SetData<T>, SetOp<T>, Set<T>>
  * long as the [HandleFactory] exists.
  *
  * Instantiate it with the context and lifecycle that should own the resulting activate stores.
-*/
-@UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class HandleFactory(
-    private val context: Context,
-    private val lifecycle: Lifecycle,
-    private val coroutineContext: CoroutineContext = EmptyCoroutineContext,
-    private val connectionFactory: ConnectionFactory? = null
-) {
-
+ */
+class HandleManager(private val aff: ActivationFactoryFactory) {
     companion object {
         /**
          * Convenience for making a ramdisk-backed reference mode key
@@ -75,6 +61,9 @@ class HandleFactory(
 
     private val singletonProxies = mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
     private val setProxies = mutableMapOf<StorageKey, SetProxy<RawEntity>>()
+
+    private val singletonStores = mutableMapOf<StorageKey, SingletonStore<RawEntity>>()
+    private val setStores = mutableMapOf<StorageKey, SetStore<RawEntity>>()
 
     /**
      * Create a new SingletonHandle backed by an Android [ServiceStore]
@@ -91,16 +80,12 @@ class HandleFactory(
             mode = StorageMode.ReferenceMode
         )
 
-        val serviceStoreFactory = SingletonStoreFactory<RawEntity>(
-            context,
-            lifecycle,
-            ParcelableCrdtType.Singleton,
-            coroutineContext + Dispatchers.IO,
-            connectionFactory
-        )
+        val store = singletonStores.getOrPut(storageKey) {
+            Store(storeOptions)
+        }
 
-        val storageProxy = singletonProxies.getOrElse(storageKey) {
-            SingletonProxy(Store(storeOptions).activate(serviceStoreFactory), CrdtSingleton())
+        val storageProxy = singletonProxies.getOrPut(storageKey) {
+            SingletonProxy(store.activate(aff.singletonFactory()), CrdtSingleton())
         }
 
         return SingletonHandle(storageKey.toKeyString(), storageProxy).also {
@@ -124,16 +109,12 @@ class HandleFactory(
             mode = StorageMode.ReferenceMode
         )
 
-        val serviceStoreFactory = SetStoreFactory<RawEntity>(
-            context,
-            lifecycle,
-            ParcelableCrdtType.Set,
-            coroutineContext + Dispatchers.IO,
-            connectionFactory
-        )
+        val store = setStores.getOrPut(storageKey) {
+            Store(storeOptions)
+        }
 
-        val storageProxy = setProxies.getOrElse(storageKey) {
-            SetProxy(Store(storeOptions).activate(serviceStoreFactory), CrdtSet())
+        val storageProxy = setProxies.getOrPut(storageKey) {
+            SetProxy(store.activate(aff.setFactory()), CrdtSet())
         }
 
         return SetHandle(storageKey.toKeyString(), storageProxy).also {

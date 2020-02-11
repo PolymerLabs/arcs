@@ -8,6 +8,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.android.storage.handle.TestActivity
 import arcs.android.storage.service.IStorageService
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
@@ -16,6 +17,7 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.handle.HandleManager
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
@@ -31,7 +33,7 @@ import org.robolectric.android.controller.ServiceController
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
-class HandleFactoryTest {
+class AndroidHandleManagerTest {
     private lateinit var app: Application
 
     inner class TestBindingDelegate : StorageServiceBindingDelegate {
@@ -85,14 +87,14 @@ class HandleFactoryTest {
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
     }
 
-    fun handleFactoryTest(block: suspend (HandleFactory) -> Unit) {
+    fun handleFactoryTest(block: suspend (HandleManager) -> Unit) {
         val scenario = ActivityScenario.launch(TestActivity::class.java)
 
         scenario.moveToState(Lifecycle.State.STARTED)
 
         scenario.onActivity { activity ->
             runBlocking {
-                val hf = HandleFactory(
+                val hf = AndroidHandleManager(
                     lifecycle = activity.lifecycle,
                     context = activity,
                     connectionFactory = DefaultConnectionFactory(activity, TestBindingDelegate())
@@ -107,11 +109,11 @@ class HandleFactoryTest {
     @Test
     fun testCreateSingletonHandle() = runBlockingTest {
         handleFactoryTest { hf ->
-            val singletonHandle = hf.singletonHandle(HandleFactory.ramdiskStorageKeyForName("foo"), schema)
+            val singletonHandle = hf.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
             singletonHandle.set(entity1)
 
             // Now read back from a different handle
-            val readbackHandle = hf.singletonHandle(HandleFactory.ramdiskStorageKeyForName("foo"), schema)
+            val readbackHandle = hf.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
             val readBack = readbackHandle.fetch()
             assertThat(readBack).isEqualTo(entity1)
         }
@@ -120,7 +122,7 @@ class HandleFactoryTest {
     @Test
     fun testCreateSetHandle() = runBlockingTest {
         handleFactoryTest { hf ->
-            val setHandle = hf.setHandle(HandleFactory.ramdiskStorageKeyForName("fooset"), schema)
+            val setHandle = hf.setHandle(HandleManager.ramdiskStorageKeyForName("fooset"), schema)
             setHandle.store(entity1)
         }
     }

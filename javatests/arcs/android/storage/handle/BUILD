@@ -20,7 +20,7 @@ kt_android_library(
 
 arcs_kt_android_test_suite(
     name = "handle",
-    srcs = ["HandleFactoryTest.kt"],
+    srcs = glob(["*Test.kt"]),
     manifest = "AndroidManifest.xml",
     package = "arcs.android.storage.handle",
     deps = [
