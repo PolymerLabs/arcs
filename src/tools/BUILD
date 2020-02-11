@@ -14,9 +14,19 @@ filegroup(
 )
 
 kt_jvm_library(
+    name = "deserialize",
+    srcs = ["deserialize.kt"],
+    deps = [
+        "//third_party/java/gson"
+    ],
+
+)
+
+kt_jvm_library(
     name = "generator",
     srcs = ["Recipe2Plan.kt"],
     deps = [
+        ":deserialize",
         "//third_party/kotlin/clikt",
         "//third_party/kotlin/kotlinpoet",
         "//third_party/java/gson"
