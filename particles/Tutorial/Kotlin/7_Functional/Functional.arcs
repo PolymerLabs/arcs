@@ -1,0 +1,29 @@
+// Imports contents of another manifest via a relative path from this manifest.
+import 'PeopleSchemas.arcs'
+
+
+// The GetPerson particle allows the user to input their name, then writes
+// the input to the Person handle.
+// This particle also provides a slot to display a greeting to the person.
+particle GetPerson in 'Functional.wasm'
+  person: writes Person
+  root: consumes
+    greetingSlot: provides
+
+// The DisplayGreeting particle, takes the name passed through the Person
+// handle, and displays a greeting.
+particle DisplayGreeting in 'Functional.wasm'
+  person: reads Person
+  greetingSlot: consumes
+
+recipe HandleRecipe
+  GetPerson
+    // Pass the output person to the handle recipePerson.
+    person: writes recipePerson
+    root: consumes
+      greetingSlot: provides greeting
+  DisplayGreeting
+    // Define the input person to be the handle recipePerson.
+    person: reads recipePerson
+    greetingSlot: consumes greeting
+  description `Kotlin Tutorial 7: Functional`
