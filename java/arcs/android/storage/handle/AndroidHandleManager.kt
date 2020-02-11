@@ -34,29 +34,30 @@ fun AndroidHandleManager(
     lifecycle: Lifecycle,
     coroutineContext: CoroutineContext = EmptyCoroutineContext,
     connectionFactory: ConnectionFactory? = null
-) = HandleManager(object : ActivationFactoryFactory {
+) = HandleManager(
+    object : ActivationFactoryFactory {
+        /**
+         * Create a ActivationFactory that will create [ServiceStore] instances that can manage
+         * singleton [RawEntities]
+         */
+        override fun singletonFactory() = SingletonServiceStoreFactory<RawEntity>(
+            context,
+            lifecycle,
+            ParcelableCrdtType.Singleton,
+            coroutineContext,
+            connectionFactory
+        )
 
-    /**
-     * Create a ActivationFactory that will create [ServiceStore] instances that can manage
-     * singleton [RawEntities]
-     */
-    override fun singletonFactory() = SingletonServiceStoreFactory<RawEntity>(
-        context,
-        lifecycle,
-        ParcelableCrdtType.Singleton,
-        coroutineContext,
-        connectionFactory
-    )
-
-    /**
-     * Create a ActivationFactory that will create [ServiceStore] instances that can manage
-     * sets of [RawEntities]
-     */
-    override fun setFactory() = SetServiceStoreFactory<RawEntity>(
-        context,
-        lifecycle,
-        ParcelableCrdtType.Set,
-        coroutineContext,
-        connectionFactory
-    )
-})
+        /**
+         * Create a ActivationFactory that will create [ServiceStore] instances that can manage
+         * sets of [RawEntities]
+         */
+        override fun setFactory() = SetServiceStoreFactory<RawEntity>(
+            context,
+            lifecycle,
+            ParcelableCrdtType.Set,
+            coroutineContext,
+            connectionFactory
+        )
+    }
+)

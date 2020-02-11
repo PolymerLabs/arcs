@@ -17,8 +17,10 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.handle.ExperimentalHandleApi
 import arcs.core.storage.handle.HandleManager
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
@@ -98,6 +100,16 @@ class AndroidHandleManagerTest {
         "1234acf"
     )
 
+    private val singletonKey = ReferenceModeStorageKey(
+        backingKey = RamDiskStorageKey("single-back"),
+        storageKey = RamDiskStorageKey("single-ent")
+    )
+
+    private val setKey = ReferenceModeStorageKey(
+        backingKey = RamDiskStorageKey("set-back"),
+        storageKey = RamDiskStorageKey("set-ent")
+    )
+
     @Before
     fun setUp() {
         app = ApplicationProvider.getApplicationContext()
@@ -129,11 +141,11 @@ class AndroidHandleManagerTest {
     @Test
     fun testCreateSingletonHandle() = runBlockingTest {
         handleManagerTest { hm ->
-            val singletonHandle = hm.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
+            val singletonHandle = hm.singletonHandle(singletonKey, schema)
             singletonHandle.set(entity1)
 
             // Now read back from a different handle
-            val readbackHandle = hm.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
+            val readbackHandle = hm.singletonHandle(singletonKey, schema)
             val readBack = readbackHandle.fetch()
             assertThat(readBack).isEqualTo(entity1)
         }
@@ -142,12 +154,12 @@ class AndroidHandleManagerTest {
     @Test
     fun testCreateSetHandle() = runBlockingTest {
         handleManagerTest { hm ->
-            val setHandle = hm.setHandle(HandleManager.ramdiskStorageKeyForName("fooset"), schema)
+            val setHandle = hm.setHandle(setKey, schema)
             setHandle.store(entity1)
             setHandle.store(entity2)
 
             // Now read back from a different handle
-            val readbackHandle = hm.setHandle(HandleManager.ramdiskStorageKeyForName("fooset"), schema)
+            val readbackHandle = hm.setHandle(setKey, schema)
             val readBack = readbackHandle.value()
             assertThat(readBack).containsExactly(entity1, entity2)
         }

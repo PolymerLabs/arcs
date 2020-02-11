@@ -15,8 +15,8 @@ import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 typealias SingletonData<T> = CrdtSingleton.Data<T>
 typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
@@ -54,8 +54,8 @@ annotation class ExperimentalHandleApi
  * Handles that are used by end-users will deal with [RawEntity], so this helper only bothers to
  * create those types.
  *
- * It will create a [StorageProxy] for each new storage key, and keep a reference to it for as
- * long as the [HandleFactory] exists.
+ * It will create a [StorageProxy] for each new [StorageKey], and keep a reference to it for as
+ * long as the [HandleManager] exists.
  *
  * If no arguments are passed, the default store ActivationFactory will be used. Optionally,
  * you can provide your own ActivationFactoryFactory, which provides methods for creating
@@ -63,16 +63,7 @@ annotation class ExperimentalHandleApi
  */
 @ExperimentalHandleApi
 class HandleManager(private val aff: ActivationFactoryFactory? = null) {
-    companion object {
-        /**
-         * Convenience for making a ramdisk-backed reference mode key
-         */
-        fun ramdiskStorageKeyForName(name: String) = ReferenceModeStorageKey(
-            backingKey = RamDiskStorageKey("$name-backing"),
-            storageKey = RamDiskStorageKey("$name-storage")
-        )
-    }
-
+    private val mutex = Mutex()
     private val singletonProxies = mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
     private val setProxies = mutableMapOf<StorageKey, SetProxy<RawEntity>>()
 
@@ -96,21 +87,19 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             mode = StorageMode.ReferenceMode
         )
 
-        val store = singletonStores.getOrPut(storageKey) {
-            Store(storeOptions)
-        }
+        val storageProxy = mutex.withLock {
+            val store = singletonStores.getOrPut(storageKey) {
+                Store(storeOptions)
+            }
 
-        val activeStore = aff?.let {
-            store.activate(it.singletonFactory())
-        } ?: store.activate()
-
-        val storageProxy = singletonProxies.getOrPut(storageKey) {
-            SingletonProxy(activeStore, CrdtSingleton())
+            singletonProxies.getOrPut(storageKey) {
+                SingletonProxy(store.activate(aff?.singletonFactory()), CrdtSingleton())
+            }
         }
 
         return SingletonHandle(storageKey.toKeyString(), storageProxy).also {
-            storageProxy.registerHandle(it)
-            it.callback = callbacks
+        storageProxy.registerHandle(it)
+        it.callback = callbacks
         }
     }
 
@@ -131,16 +120,14 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             mode = StorageMode.ReferenceMode
         )
 
-        val store = setStores.getOrPut(storageKey) {
-            Store(storeOptions)
-        }
+        val storageProxy = mutex.withLock {
+            val store = setStores.getOrPut(storageKey) {
+                Store(storeOptions)
+            }
 
-        val activeStore = aff?.let {
-            store.activate(it.setFactory())
-        } ?: store.activate()
-
-        val storageProxy = setProxies.getOrPut(storageKey) {
-            SetProxy(activeStore, CrdtSet())
+            setProxies.getOrPut(storageKey) {
+                SetProxy(store.activate(aff?.setFactory()), CrdtSet())
+            }
         }
 
         return SetHandle(storageKey.toKeyString(), storageProxy).also {
