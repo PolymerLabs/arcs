@@ -22,6 +22,8 @@ class CapabilitiesTest {
     @Test
     fun capabilities_verifiesContains() {
         assertThat(Capabilities.Persistent.contains(Capabilities.Persistent)).isTrue()
+        assertThat(Capabilities.Persistent in Capabilities.Persistent).isTrue()
+        assertThat(Capabilities.Persistent !in Capabilities.Persistent).isFalse()
         assertThat(Capabilities.TiedToRuntime.contains(Capabilities.TiedToRuntime)).isTrue()
         assertThat(Capabilities.TiedToArc.contains(Capabilities.TiedToArc)).isTrue()
 

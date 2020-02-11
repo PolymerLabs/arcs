@@ -49,13 +49,13 @@ class CapabilitiesResolverTest {
         assertThat(resolver.findStorageKeyProtocols(Capabilities.Persistent)).isEmpty()
         assertThat(resolver.createStorageKey(Capabilities.TiedToArc))
             .isInstanceOf(VolatileStorageKey::class.java)
-        assertThrows(IllegalStateException::class) {
+        assertThrows(IllegalArgumentException::class) {
             resolver.createStorageKey(Capabilities.TiedToRuntime)
         }
-        assertThrows(IllegalStateException::class) {
+        assertThrows(IllegalArgumentException::class) {
             resolver.createStorageKey(Capabilities.Persistent)
         }
-        assertThrows(IllegalStateException::class) {
+        assertThrows(IllegalArgumentException::class) {
             resolver.createStorageKey(Capabilities(setOf(
                 Capabilities.Capability.TiedToArc,
                 Capabilities.Capability.Persistent
@@ -70,7 +70,7 @@ class CapabilitiesResolverTest {
             RAMDISK_DRIVER_PROTOCOL to (Capabilities.TiedToRuntime to
                 { storageKeyOptions, _ -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) })
         ))
-        assertThrows(IllegalStateException::class) {
+        assertThrows(IllegalArgumentException::class) {
             resolver.createStorageKey(Capabilities.TiedToArc)
         }
         assertThat(resolver.createStorageKey(Capabilities.TiedToRuntime))
@@ -100,7 +100,7 @@ class CapabilitiesResolverTest {
         val resolver2 = CapabilitiesResolver(options)
         assertThat(resolver2.createStorageKey(Capabilities.TiedToArc))
             .isInstanceOf(VolatileStorageKey::class.java)
-        assertThrows(IllegalStateException::class) {
+        assertThrows(IllegalArgumentException::class) {
             resolver2.createStorageKey(Capabilities.TiedToRuntime)
         }
     }

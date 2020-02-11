@@ -37,11 +37,10 @@ class CapabilitiesResolver(
         // storage key creator for the given capabilities. As more capabilities are
         // added the heuristics will become more robust.
         val protocols = findStorageKeyProtocols(capabilities)
-        if (protocols.isEmpty()) {
-            throw IllegalStateException(
-                "Cannot create a suitable storage key for $capabilities"
-            )
-        } else if (protocols.size > 1) {
+        require(protocols.isNotEmpty()) {
+            "Cannot create. a suitable storage key for $capabilities"
+        }
+        if (protocols.size > 1) {
             log.warning { "Multiple storage key creators for $capabilities" }
         }
         return creators[protocols.first()]?.second?.invoke(
@@ -54,7 +53,7 @@ class CapabilitiesResolver(
     /* internal */ fun findStorageKeyProtocols(capabilities: Capabilities): Set<String> {
         val protocols: MutableSet<String> = mutableSetOf()
         for ((protocol, creator) in creators) {
-            if (creator.first.contains(capabilities)) {
+            if (capabilities in creator.first) {
                 protocols.add(protocol)
             }
         }
