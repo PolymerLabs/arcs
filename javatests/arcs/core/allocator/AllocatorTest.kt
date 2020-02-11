@@ -1,6 +1,7 @@
 package arcs.core.allocator
 
 import arcs.core.common.Id
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.ParticleSpec
@@ -11,14 +12,12 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.AbstractArcHost
-import arcs.core.host.ArcHost
 import arcs.core.host.ParticleNotFoundException
-import arcs.jvm.host.TargetHost
+import arcs.core.host.toIdentifierList
 import arcs.core.storage.driver.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.jvm.host.ServiceLoaderHostRegistry
+import arcs.jvm.host.ExplicitHostRegistry
 import arcs.sdk.Particle
-import com.google.auto.service.AutoService
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -27,6 +26,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.reflect.KClass
 
 @RunWith(JUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
@@ -61,30 +61,14 @@ class AllocatorTest {
         "hash"
     )
 
-    @Target(AnnotationTarget.CLASS)
-    @Retention(AnnotationRetention.RUNTIME)
-    @TargetHost(WritingHost::class)
-    annotation class RunInWritingHost
+    private val personEntityType = EntityType(personSchema)
 
-    @Target(AnnotationTarget.CLASS)
-    @Retention(AnnotationRetention.RUNTIME)
-    @TargetHost(ReadingHost::class)
-    annotation class RunInReadingHost
 
-    @AutoService(Particle::class)
-    @RunInWritingHost
     class WritePerson : Particle
-
-    @AutoService(Particle::class)
-    @RunInReadingHost
     class ReadPerson : Particle
 
-    open class TestingHost : AbstractArcHost() {
-        override val hostName = this::class.java.canonicalName!!
-        override suspend fun isHostForSpec(spec: ParticleSpec): Boolean {
-            return this.registeredParticles().map { it.java.getCanonicalName() }
-                .contains(spec.location)
-        }
+    open class TestingHost(vararg particles: KClass<out Particle>) :
+        AbstractArcHost(particles.toIdentifierList()) {
 
         var started = mutableListOf<PlanPartition>()
 
@@ -98,23 +82,24 @@ class AllocatorTest {
         }
     }
 
-    @AutoService(ArcHost::class)
-    class WritingHost : TestingHost()
-
-    @AutoService(ArcHost::class)
-    class ReadingHost : TestingHost()
+    class WritingHost : TestingHost(WritePerson::class)
+    class ReadingHost : TestingHost(ReadPerson::class)
 
     private lateinit var readPersonHandleConnectionSpec: HandleConnectionSpec
     private lateinit var writePersonHandleConnectionSpec: HandleConnectionSpec
     private lateinit var writePersonParticleSpec: ParticleSpec
     private lateinit var readPersonParticleSpec: ParticleSpec
     private lateinit var writeAndReadPersonPlan: Plan
+    private lateinit var hostRegistry: ExplicitHostRegistry
 
     @Before
     fun setUp() {
         runBlocking {
+            hostRegistry = ExplicitHostRegistry()
+            hostRegistry.registerHost(ReadingHost())
+            hostRegistry.registerHost(WritingHost())
             writePersonHandleConnectionSpec =
-              HandleConnectionSpec(null, personSchema)
+                HandleConnectionSpec(null, personEntityType)
 
             writePersonParticleSpec = ParticleSpec(
                 "WritePerson",
@@ -122,7 +107,7 @@ class AllocatorTest {
                 mapOf("recipePerson" to writePersonHandleConnectionSpec)
             )
 
-            readPersonHandleConnectionSpec = HandleConnectionSpec(null, personSchema)
+            readPersonHandleConnectionSpec = HandleConnectionSpec(null, personEntityType)
 
             readPersonParticleSpec = ParticleSpec(
                 "ReadPerson",
@@ -134,7 +119,7 @@ class AllocatorTest {
                 listOf(writePersonParticleSpec, readPersonParticleSpec)
             )
 
-            ServiceLoaderHostRegistry.availableArcHosts().forEach {
+            hostRegistry.availableArcHosts().forEach {
                 if (it is TestingHost) {
                     it.setup()
                 }
@@ -149,7 +134,7 @@ class AllocatorTest {
      */
     @Test
     fun allocator_computePartitions() = runBlockingTest {
-        val allocator = Allocator(ServiceLoaderHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         assertThat(planPartitions).containsExactly(
@@ -173,7 +158,7 @@ class AllocatorTest {
                 assertThat(spec.storageKey).isNull()
             }
         }
-        val allocator = Allocator(ServiceLoaderHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach {
@@ -193,7 +178,7 @@ class AllocatorTest {
             it.handles.getValue("recipePerson").storageKey = testKey
         }
 
-        val allocator = Allocator(ServiceLoaderHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach {
@@ -205,7 +190,7 @@ class AllocatorTest {
 
     @Test
     fun allocator_verifyArcHostStartCalled() = runBlockingTest {
-        val allocator = Allocator(ServiceLoaderHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.forEach {
@@ -224,7 +209,7 @@ class AllocatorTest {
 
     @Test
     fun allocator_verifyUnknownParticleThrows() = runBlockingTest {
-        val allocator = Allocator(ServiceLoaderHostRegistry)
+        val allocator = Allocator(hostRegistry)
         val particleSpec = ParticleSpec("UnknownParticle", "Unknown", mapOf())
 
         val plan = Plan(listOf(particleSpec))

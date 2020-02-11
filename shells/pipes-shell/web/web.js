@@ -23,7 +23,7 @@ import {Bus} from '../source/bus.js';
 import {busReady} from '../source/pipe.js';
 import {dispatcher} from '../source/dispatcher.js';
 //import {smokeTest} from '../source/smoke.js';
-import {createTestDevice} from '../source/testDevice.js';
+import {createTestDevice} from '../source/test-device.js';
 
 console.log(`${version} -- ${storage}`);
 

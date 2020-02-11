@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -13,8 +13,6 @@ package arcs.core.host
 
 import arcs.core.data.ParticleSpec
 import arcs.core.data.PlanPartition
-import arcs.sdk.Particle
-import kotlin.reflect.KClass
 
 /**
  * An [ArcHost] manages the instantiation and execution of particles participating in an Arc by
@@ -22,21 +20,11 @@ import kotlin.reflect.KClass
  * particles, and connecting them to storage keys.
  */
 interface ArcHost {
+    /** A canonical identifying ID for this host. */
+    val hostId: String
 
-    /**
-     * Registers a [Particle] class with this host.
-     */
-    suspend fun registerParticle(particle: KClass<out Particle>): Unit
-
-    /**
-     * Unregisters a [Particle] class.
-     */
-    suspend fun unregisterParticle(particle: KClass<out Particle>): Unit
-
-    /**
-     * Returns a list of Particles registered to run in this host.
-     */
-    suspend fun registeredParticles(): List<KClass<out Particle>>
+    /** Returns a list of Particles registered to run in this host. */
+    suspend fun registeredParticles(): List<ParticleIdentifier>
 
     /**
      * Requests this arc host to start or restart an Arc associated with this [PlanPartition]. This
@@ -51,9 +39,6 @@ interface ArcHost {
      */
     suspend fun stopArc(partition: PlanPartition)
     // TODO: HandleMessage
-
-    /** A canonical identifying ID for this host. */
-    val hostName: String
 
     /**
      * Returns true if the provided [ParticleSpec] can be loaded by this [ArcHost].

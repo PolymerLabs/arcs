@@ -200,6 +200,7 @@ maven_install(
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
         "javax.inject:javax.inject:1",
         "junit:junit:4.11",
+        "org.jetbrains.kotlin:kotlin-reflect:1.3.61",
         "org.jetbrains.kotlinx:kotlinx-coroutines-android:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,

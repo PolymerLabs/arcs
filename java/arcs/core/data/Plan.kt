@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -17,4 +17,13 @@ package arcs.core.data
 open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val particles: List<ParticleSpec>
-)
+) {
+    // Because Plan is not a data class to allow sub-classing, these are required.
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+
+        return (other as? Plan)?.particles == particles
+    }
+
+    override fun hashCode(): Int = particles.hashCode()
+}

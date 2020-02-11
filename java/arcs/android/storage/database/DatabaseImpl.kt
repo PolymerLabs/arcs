@@ -120,15 +120,24 @@ class DatabaseImpl(
         readableDatabase.useTransaction {
             val db = this
             // Fetch the entity's type by storage key.
-            val (storageKeyId, schemaTypeId) = rawQuery(
-                "SELECT id, value_id, data_type FROM storage_keys WHERE storage_key = ?",
+            val (storageKeyId, schemaTypeId, entityId) = rawQuery(
+                """
+                    SELECT
+                        storage_keys.id,
+                        storage_keys.value_id,
+                        storage_keys.data_type,
+                        entities.entity_id
+                    FROM storage_keys
+                    LEFT JOIN entities ON storage_keys.id = entities.storage_key_id
+                    WHERE storage_keys.storage_key = ?
+                """.trimIndent(),
                 arrayOf(storageKey.toString())
             ).forSingleResult {
                 val dataType = DataType.values()[it.getInt(2)]
                 require(dataType == DataType.Entity) {
                     "Expected storage key $storageKey to be an Entity but was a $dataType."
                 }
-                it.getLong(0) to it.getLong(1)
+                Triple(it.getLong(0), it.getLong(1), it.getString(3))
             } ?: throw IllegalArgumentException(
                 "Entity at storage key $storageKey does not exist."
             )
@@ -150,7 +159,7 @@ class DatabaseImpl(
             }
             DatabaseData.Entity(
                 Entity(
-                    id = "TODO", // TODO: Store Entity ID in database.
+                    id = entityId,
                     schema = schema,
                     data = data
                 ),
@@ -218,7 +227,7 @@ class DatabaseImpl(
             // Fetch/create the entity's type ID.
             val schemaTypeId = getSchemaTypeId(entity.schema, db)
             // Set the type ID for this storage key.
-            val storageKeyId = getEntityStorageKeyId(storageKey, schemaTypeId, db)
+            val storageKeyId = getEntityStorageKeyId(storageKey, entity.id, schemaTypeId, db)
             // Insert/update the entity's field types.
             val fields = getSchemaFields(schemaTypeId, db)
             val content = ContentValues().apply {
@@ -322,6 +331,7 @@ class DatabaseImpl(
         writableDatabase.useTransaction {
             execSQL("DELETE FROM collection_entries")
             execSQL("DELETE FROM collections")
+            execSQL("DELETE FROM entities")
             execSQL("DELETE FROM entity_refs")
             execSQL("DELETE FROM field_values")
             execSQL("DELETE FROM fields")
@@ -382,12 +392,18 @@ class DatabaseImpl(
     @VisibleForTesting
     fun getEntityStorageKeyId(
         storageKey: StorageKey,
+        entityId: String,
         typeId: TypeId,
         db: SQLiteDatabase
     ): StorageKeyId = db.transaction {
         // TODO: Use an LRU cache.
         val storageKeyId = rawQuery(
-            "SELECT id, data_type FROM storage_keys WHERE storage_key = ?",
+            """
+                SELECT storage_keys.id, storage_keys.data_type, entities.entity_id
+                FROM storage_keys
+                LEFT JOIN entities ON storage_keys.id = entities.storage_key_id
+                WHERE storage_keys.storage_key = ?
+            """.trimIndent(),
             arrayOf(storageKey.toString())
         ).forSingleResult {
             // Return existing storage key id.
@@ -396,16 +412,36 @@ class DatabaseImpl(
             require(dataType == DataType.Entity) {
                 "Expected storage key $storageKey to be an Entity, instead was $dataType."
             }
+            val storedEntityId = it.getString(2)
+            require(storedEntityId == entityId) {
+                "Expected storage key $storageKey to have entity ID $entityId but was " +
+                    "$storedEntityId."
+            }
             storageKeyId
         }
         storageKeyId ?: run {
             // Insert storage key.
-            val content = ContentValues().apply {
-                put("storage_key", storageKey.toString())
-                put("data_type", DataType.Entity.ordinal)
-                put("value_id", typeId)
-            }
-            insert(TABLE_STORAGE_KEYS, null, content)
+            val newStorageKeyId = insert(
+                TABLE_STORAGE_KEYS,
+                null,
+                ContentValues().apply {
+                    put("storage_key", storageKey.toString())
+                    put("data_type", DataType.Entity.ordinal)
+                    put("value_id", typeId)
+                }
+            )
+
+            // Insert entity ID.
+            val result = insert(
+                TABLE_ENTITIES,
+                null,
+                ContentValues().apply {
+                    put("storage_key_id", newStorageKeyId)
+                    put("entity_id", entityId)
+                }
+            )
+
+            newStorageKeyId
         }
     }
 
@@ -598,6 +634,7 @@ class DatabaseImpl(
         private val TABLE_STORAGE_KEYS = "storage_keys"
         private val TABLE_COLLECTION_ENTRIES = "collection_entries"
         private val TABLE_COLLECTIONS = "collections"
+        private val TABLE_ENTITIES = "entities"
         private val TABLE_ENTITY_REFS = "entity_refs"
         private val TABLE_FIELD_VALUES = "field_values"
         private val TABLE_TYPES = "types"
@@ -625,6 +662,12 @@ class DatabaseImpl(
                 );
 
                 CREATE INDEX storage_key_index ON storage_keys (storage_key, id);
+                
+                -- Maps entity storage key IDs to entity IDs (Arcs string ID, not a row ID).
+                CREATE TABLE entities (
+                    storage_key_id INTEGER NOT NULL PRIMARY KEY,
+                    entity_id TEXT NOT NULL
+                );
                 
                 -- Stores references to entities.
                 CREATE TABLE entity_refs (

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -10,22 +10,25 @@
  */
 package arcs.jvm.host
 
+import arcs.core.host.ArcHost
+import arcs.core.host.HostRegistry
 import arcs.sdk.Particle
-import kotlin.reflect.KClass
 
 /**
- * A []HostRegistry] that discovers the available [ArcHost]s available on this platform by using
+ * A [HostRegistry] that discovers the available [ArcHost]s available on this platform by using
  * explicitly registered [ArcHost]s and [Particle]s invoked by [HostRegistry.registerHost] and
  * [ExplicitHostRegistry.registerParticles].
  */
-object ExplicitHostRegistry : AnnotationBasedHostRegistry() {
+class ExplicitHostRegistry : HostRegistry {
+    private val arcHosts = mutableListOf<ArcHost>()
 
-    /**
-     * Explicitly register all particles used.
-     */
-    suspend fun registerParticles(allParticles: List<KClass<out Particle>>) {
-        availableArcHosts().forEach { host ->
-            registerParticles(findParticlesForHost(allParticles, host), host)
-        }
+    override suspend fun availableArcHosts() = arcHosts
+
+    override suspend fun registerHost(host: ArcHost) {
+        arcHosts.add(host)
+    }
+
+    override suspend fun unregisterHost(host: ArcHost) {
+        arcHosts.remove(host)
     }
 }

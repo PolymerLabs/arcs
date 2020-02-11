@@ -8,14 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {logsFactory} from '../../../../build/platform/logs-factory.js';
-
-const {log} = logsFactory('pipe::event');
-
-export const event = async (msg, tid, bus) => {
-  // find the arc from the tid in the message (not the tid for this request)
-  const arc = await bus.getAsyncValue(msg.tid);
-  if (arc) {
-    arc.pec.slotComposer.sendEvent(msg.pid, msg.eventlet);
-  }
+export const event = async ({pid, particleId, eventlet}, runtime) => {
+  // TODO(sjmiles): support either key for particleId (for backward compat)
+  const id = particleId || pid;
+  const arc = runtime.findArcByParticleId(id);
+  arc.pec.slotComposer.sendEvent(id, eventlet);
 };
