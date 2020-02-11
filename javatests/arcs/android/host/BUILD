@@ -26,6 +26,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//third_party/android/androidx_test/ext/junit",
+        "//third_party/android/androidx_test/runner/monitor",
         "//third_party/java/junit:junit-android",
         "//third_party/java/robolectric",
         "//third_party/java/truth:truth-android",
