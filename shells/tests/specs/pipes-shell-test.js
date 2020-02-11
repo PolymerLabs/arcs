@@ -28,9 +28,6 @@ describe(`pipes-shell (${persona})`, () => {
   it('passes smoke test', async function() {
     await startPipeShell(persona);
   });
-  it('passes autofill test', async function() {
-    await waitForPipeOutput(`John Hancock`);
-  });
   it('passes notification test', async function() {
     await waitForPipeOutput(`dinner reservations`);
   });

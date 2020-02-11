@@ -37,7 +37,6 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
   });
   arc.pec.slotComposer.slotObserver = {
     observe: (content, arc) => {
-      delete content.particle;
       bus.send({message: 'output', data: content});
     },
     dispose: () => null
@@ -119,13 +118,4 @@ const updateParticleInPlan = (plan, particleId, particleName, providedSlotId) =>
     }
   }
   return plan;
-};
-
-export const stopArc = async ({arcId}, runtime) => {
-  runtime.stop(arcId);
-};
-
-export const uiEvent = async ({particleId, eventlet}, runtime) => {
-  const arc = runtime.findArcByParticleId(particleId);
-  arc.pec.slotComposer.sendEvent(particleId, eventlet);
 };

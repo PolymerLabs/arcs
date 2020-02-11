@@ -10,24 +10,19 @@
 
 import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
-import {SlotComposer} from '../../../build/runtime/slot-composer.js';
 import {pec} from './verbs/pec.js';
-import {runArc, stopArc, uiEvent} from './verbs/run-arc.js';
+import {runArc} from './verbs/run-arc.js';
+import {stopArc} from './verbs/stop-arc.js';
 import {event} from './verbs/event.js';
-import {spawn} from './verbs/spawn.js';
-import {ingest} from './verbs/ingest.js';
 import {parse} from './verbs/parse.js';
-import {instantiateRecipeByName} from './lib/utils.js';
-import {requireContext} from './context.js';
 import {dispatcher} from './dispatcher.js';
-import {requireIngestionArc} from './ingestion-arc.js';
 import {serializeVerb} from './serialize-verb.js';
 
 const {log} = logsFactory('pipe');
 
 export const busReady = async (bus, {manifest}) => {
-  bus.dispatcher.configure = async ({config}, tid, bus) => {
-    // TODO(sjmiles): hack to allow configuring mainfest via runtime argument
+  bus.dispatcher.configure = async ({config}, bus) => {
+    // TODO(sjmiles): config.manifest: allow configuring mainfest via runtime argument
     // for back-compat (deprecated)
     config.manifest = manifest || config.manifest;
     return await configureRuntime(config, bus);
@@ -47,8 +42,15 @@ const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
   contextReady(bus, context);
 };
 
+const requireContext = async manifest => {
+  if (!requireContext.promise) {
+    requireContext.promise = Runtime.parse(manifest);
+    window.context = await requireContext.promise;
+  }
+  return await requireContext.promise;
+};
+
 const contextReady = async (bus, context) => {
-  // TODO(sjmiles): Formalize the pipes API.
   const recipes = context.allRecipes.map(r => ({name: r.name, triggers: r.triggers}));
   bus.send({message: 'context', recipes});
 };
@@ -56,75 +58,25 @@ const contextReady = async (bus, context) => {
 const populateDispatcher = (dispatcher, storage, context) => {
   const runtime = Runtime.getRuntime();
   Object.assign(dispatcher, {
-    pec: async (msg, tid, bus) => {
-      return await pec(msg, tid, bus);
+    pec: async (msg, bus) => {
+      return await pec(msg, bus);
     },
-    // TODO: consolidate runArc and uiEvent with spawn and event, as well as
-    // use of runtime object and composerFactory, brokerFactory below.
-    runArc: async (msg, tid, bus) => {
-      const task = async () => await runArc(msg, bus, runtime, storage);
-      return await serializeVerb('runArc', task);
+    runArc: async (msg, bus) => {
+      const runArcTask = async () => await runArc(msg, bus, runtime, storage);
+      return await serializeVerb('runArc', runArcTask);
     },
-    uiEvent: async (msg, tid, bus) => {
-      return await uiEvent(msg, runtime);
+    uiEvent: async (msg, bus) => {
+      return await event(msg, runtime);
     },
-    stopArc: async (msg, tid, bus) => {
+    event: async (msg, bus) => {
+      return await event(msg, runtime);
+    },
+    stopArc: async (msg, bus) => {
       return await stopArc(msg, runtime);
     },
-    // TODO(sjmiles): below here are "live context" tools (remove when other context options are viable)
-    ingest: async (msg, tid, bus) => {
-      return await ingest(msg.entity, tid, bus);
-    },
-    spawn: async (msg, tid, bus) => {
-      return await spawn(msg, tid, bus, composerFactory, storage, context);
-    },
-    recipe: async (msg, tid, bus) => {
-      const arc = await bus.getAsyncValue(msg.tid);
-      if (arc) {
-        return await instantiateRecipeByName(arc, msg.recipe);
-      }
-    },
-    event: async (msg, tid, bus) => {
-      return await event(msg, tid, bus);
-    },
-    parse: async (msg, tid, bus) => {
-      return await parse(msg, tid, bus);
-    },
-    enableIngestion: async (msg, tid, bus) => {
-      // TODO(sjmiles): "live context" tool (for demos)
-      // marshal ingestion arc
-      return await requireIngestionArc(storage, bus);
+    parse: async (msg, bus) => {
+      return await parse(msg, bus);
     }
   });
   return dispatcher;
-};
-
-const composerFactory = (modality, bus, tid) => {
-  const composer = new SlotComposer();
-  // TODO(sjmiles): hack in transaction identity, make this cleaner
-  composer.tid = tid;
-  // TODO(sjmiles): slotObserver could be late attached or we could attach
-  // a thunk that dispatches to an actual broker configured elsewhere.
-  composer.slotObserver = brokerFactory(bus);
-  return composer;
-};
-
-// `slot-composer` delegates ui work to a `ui-broker`
-const brokerFactory = bus => {
-  return {
-    observe: async (output, arc) => {
-      log('UiBroker received', output);
-      const content = output;
-      content.particle = {
-        name: output.particle.name,
-        id: String(output.particle.id)
-      };
-      const tid = await bus.recoverTransactionId(arc);
-      if (!tid) {
-        log(`couldn't match the arc to a tid, inner arc?`);
-      }
-      bus.send({message: 'slot', tid, content: output});
-    },
-    dispose: () => null
-  };
 };
