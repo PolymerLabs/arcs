@@ -270,7 +270,7 @@ export class Runtime {
 
   async parseFile(path: string, options?): Promise<Manifest> {
     const content = await this.loader.loadResource(path);
-    const opts = {id: path, fileName: path, loader: this.loader, ...options};
+    const opts = {id: path, fileName: path, loader: this.loader, memoryProvider: this.memoryProvider, ...options};
     return this.parse(content, opts);
   }
 
