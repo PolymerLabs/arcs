@@ -16,8 +16,8 @@ class CollectionApiTest : AbstractCollectionApiTest() {
     var x = 0;
 
     init{
-        handles.outHandle.onUpdate{
-            x = handles.outHandle.
+        handles.ioHandle.onUpdate{ collection ->
+            x++
         }
     }
 
@@ -33,20 +33,30 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                     num = handles.inHandle.size.toDouble()
                 )
                 handles.outHandle.store(stored)
+                handles.ioHandle.store(stored)
             }
             "case3" -> {
                 handles.outHandle.remove(stored)
+                handles.ioHandle.remove(stored)
             }
             "case4" -> {
                 val d1 = CollectionApiTest_OutHandle()
                 val iter = handles.inHandle.iterator()
                 val flg = iter.hasNext()
                 val i1 = iter.next()
-                handles.outHandle.store(d1.copy(
-                    txt = "num: ${i1.num.toInt()}",
-                    num = i1.num.let { it * 2 },
-                    flg = flg
-                ))
+                if (x == 3) {
+                    handles.outHandle.store(d1.copy(
+                        txt = "num: ${i1.num.toInt()}",
+                        num = i1.num.let { it * 2 },
+                        flg = flg
+                    ))
+                } else {
+                    handles.outHandle.store(d1.copy(
+                      txt = "handle.onUpdate() is not working.",
+                      num = i1.num.let { it * 2 },
+                      flg = flg
+                    ))
+                }
 
                 handles.outHandle.store(d1.copy(
                     txt = "eq",
