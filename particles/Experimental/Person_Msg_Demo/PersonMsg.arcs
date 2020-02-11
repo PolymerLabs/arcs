@@ -13,7 +13,7 @@ schema Message
   sentTime: Number [sentTime > 0]
 
 schema Ordered
-  index: Number [index > -1] 
+  index: Number [index >= 0] 
 
 particle GetMessages in 'GetMessages.js'
   messages: writes [Message]

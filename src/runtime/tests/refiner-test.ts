@@ -17,7 +17,7 @@ import {Schema} from '../schema.js';
 import {Flags} from '../flags.js';
 import {removeSystemExceptionHandler, registerSystemExceptionHandler, defaultSystemExceptionHandler} from '../arc-exceptions.js';
 describe('refiner', () => {
-    it('Refines data given an expression.', () => {
+    it('Refines data given an expression 1', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [ (num/-3 < 0 and num*num == 36) or num == 0 ] }
@@ -29,8 +29,21 @@ describe('refiner', () => {
         };
         const res = ref.validateData(data);
         assert.strictEqual(res, data.num === 0 || data.num === 6);
-    });
-    it('Throws error when field name not found.', () => {
+    }));
+    it('Refines data given an expression 2', () => {
+      const manifestAst = parse(`
+          particle Foo
+              input: reads Something {num: Number } [(num/-3 < 0 and num*num == 36) or num == 0]
+      `);
+      const typeData = {'num': 'Number'};
+      const ref = Refinement.fromAst(manifestAst[0].args[0].type.refinement, typeData);
+      const data = {
+          num: 6
+      };
+      const res = ref.validateData(data);
+      assert.strictEqual(res, data.num === 0 || data.num === 6);
+  });
+    it('Throws error when field name not found 1', Flags.withFieldRefinementsAllowed(async () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -43,8 +56,22 @@ describe('refiner', () => {
             };
             ref.validateData(data);
         }, `Unresolved field name 'num2' in the refinement expression.`);
-    });
-    it('Throws error when expression does not produce boolean result.', () => {
+    }));
+    it('Throws error when field name not found 2', () => {
+      assert.throws(() => {
+          const manifestAst = parse(`
+              particle Foo
+                  input: reads Something {num: Number } [num < num2]
+          `);
+          const typeData = {'num': 'Number'};
+          const ref = Refinement.fromAst(manifestAst[0].args[0].type.refinement, typeData);
+          const data = {
+              num: 6,
+          };
+          ref.validateData(data);
+      }, `Unresolved field name 'num2' in the refinement expression.`);
+  });
+    it('Throws error when expression does not produce boolean result.', Flags.withFieldRefinementsAllowed(async () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -57,8 +84,8 @@ describe('refiner', () => {
             };
             ref.validateData(data);
         }, `Refinement expression (num + 5) evaluated to a non-boolean type.`);
-    });
-    it('Throws error when operators and operands are incompatible.', () => {
+    }));
+    it('Throws error when operators and operands are incompatible.', Flags.withFieldRefinementsAllowed(async () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -95,8 +122,8 @@ describe('refiner', () => {
           };
             ref.validateData(data);
         }, `Refinement expression name has type Text. Expected Number.`);
-    });
-    it('tests expression to range conversion.', () => {
+    }));
+    it('tests expression to range conversion.', Flags.withFieldRefinementsAllowed(async () => {
         let manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [ ((num < 3) and (num > 0)) or (num == 5) ] }
@@ -120,11 +147,11 @@ describe('refiner', () => {
         range = Range.fromExpression(ref.expression);
         assert.isTrue(range.equals(new Range([Segment.closedClosed(10, 10)])));
 
-    });
+    }));
     it('regression test for parse failure on operator ordering.', () => {
       parse(`
       particle Foo
-          input: reads Something {num: Number [num <= 20] }
+          input: reads Something {num: Number } [num <= 20]
       `);
   });
 });
@@ -133,7 +160,7 @@ describe('refiner enforcement', () => {
     let schema: Schema;
     let entityClass: EntityClass;
     let exceptions: Error[] = [];
-    before(async () => {
+    before(Flags.withFieldRefinementsAllowed(async () => {
       exceptions = [];
       const manifest = await Manifest.parse(`
         schema Foo
@@ -145,7 +172,7 @@ describe('refiner enforcement', () => {
       const reportExceptionInHost = (error) => {exceptions.push(error);};
       // tslint:disable-next-line: no-any
       entityClass = Entity.createEntityClass(schema, {reportExceptionInHost} as any);
-    });
+    }));
     it('data does not conform to the refinement', Flags.whileEnforcingRefinements(async () => {
       const _ = new entityClass({txt: 'abc', num: 56});
       assert.lengthOf(exceptions, 1);
@@ -159,7 +186,7 @@ describe('refiner enforcement', () => {
 });
 
 describe('dynamic refinements', () => {
-    it('Parses and type checks a particle with dynamic refinements.', () => {
+    it('Parses and type checks a particle with dynamic refinements.', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst = parse(`
             particle AddressBook
                 contacts: reads [Contact {name: Text [ name == ? ] }]
@@ -174,11 +201,11 @@ describe('dynamic refinements', () => {
         assert.strictEqual(ref.toString(), '[(name == ?)]');
         const dyn = (ref.expression as BinaryExpression).rightExpr;
         assert.equal(dyn.evalType, 'Text', 'the algorithm discovers the type');
-    });
+    }));
 });
 
 describe('normalisation', () => {
-    it('tests if field name is rearranged to left in a binary node.', () => {
+    it('tests if field name is rearranged to left in a binary node.', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst1 = parse(`
             particle Foo
                 input: reads Something {num: Number [ (10+2) > num ] }
@@ -193,8 +220,8 @@ describe('normalisation', () => {
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
         // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
-    });
-    it('tests if primitive boolean expressions are automatically evaluated', () => {
+    }));
+    it('tests if primitive boolean expressions are automatically evaluated', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst1 = parse(`
             particle Foo
                 input: reads Something {num: Boolean [ num == not (true or false) ] }
@@ -209,8 +236,8 @@ describe('normalisation', () => {
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
         // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
-    });
-    it('tests if primitive math expressions are automatically evaluated', () => {
+    }));
+    it('tests if primitive math expressions are automatically evaluated', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst1 = parse(`
             particle Foo
                 input: reads Something {num: Number [ (2+11-9) > num or False ] }
@@ -225,8 +252,8 @@ describe('normalisation', () => {
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
         // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
-    });
-    it(`tests if multiple 'not's are cancelled. `, () => {
+    }));
+    it(`tests if multiple 'not's are cancelled. `, Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst1 = parse(`
             particle Foo
                 input: reads Something {num: Boolean [ not (not num) ] }
@@ -241,8 +268,8 @@ describe('normalisation', () => {
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
         // normalized version of ref1 should be the same as ref2
         assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
-    });
-    it(`tests if expressions are rearranged 1`, () => {
+    }));
+    it(`tests if expressions are rearranged 1`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
               input: reads Something {num: Number [ (num + 5) <= (2*num - 11) ] }
@@ -257,8 +284,8 @@ describe('normalisation', () => {
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
       // normalized version of ref1 should be the same as ref2
       assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
-  });
-  it(`tests if expressions are rearranged 2`, () => {
+  }));
+  it(`tests if expressions are rearranged 2`, Flags.withFieldRefinementsAllowed(async () => {
     const manifestAst1 = parse(`
         particle Foo
             input: reads Something {num: Number [ (num - 5)/(num - 2) <= 0 ] }
@@ -273,8 +300,8 @@ describe('normalisation', () => {
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
     // normalized version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
-});
-  it(`tests if expressions are rearranged 3`, () => {
+  }));
+  it(`tests if expressions are rearranged 3`, Flags.withFieldRefinementsAllowed(async () => {
     const manifestAst1 = parse(`
         particle Foo
             input: reads Something {num: Number [ (num+2)*(num+1)+3 > 4 ] }
@@ -289,8 +316,8 @@ describe('normalisation', () => {
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
     // normalized version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
-  });
-  it(`tests if expressions are rearranged 4`, () => {
+  }));
+  it(`tests if expressions are rearranged 4`, Flags.withFieldRefinementsAllowed(async () => {
     const manifestAst1 = parse(`
         particle Foo
             input: reads Something {num: Number [ ((num+2)/(2*num-1))+3 == 4 ] }
@@ -305,7 +332,7 @@ describe('normalisation', () => {
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
     // normalized version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
-  });
+  }));
 });
 
 describe('Range', () => {
@@ -393,7 +420,7 @@ describe('Range', () => {
 });
 
 describe('SQLExtracter', () => {
-  it('tests can create queries from refinement expressions involving math expressions', async () => {
+  it('tests can create queries from refinement expressions involving math expressions', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await Manifest.parse(`
         particle Foo
           input: reads Something {a: Number [ a > 3 and a != 100 ], b: Number [b > 20 and b < 100] } [a + b/3 > 100]
@@ -401,8 +428,8 @@ describe('SQLExtracter', () => {
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = SQLExtracter.fromSchema(schema, 'table');
       assert.strictEqual(query, 'SELECT * FROM table WHERE ((a + (b / 3)) > 100) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));');
-  });
-  it('tests can create queries from refinement expressions involving boolean expressions', async () => {
+  }));
+  it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         input: reads Something {a: Boolean [ not (a == true) ], b: Boolean [not not b != false] } [a or b]
@@ -410,7 +437,7 @@ describe('SQLExtracter', () => {
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = SQLExtracter.fromSchema(schema, 'table');
     assert.strictEqual(query, 'SELECT * FROM table WHERE ((b = 1) OR (a = 1)) AND (NOT (a = 1)) AND (b = 1);');
-  });
+  }));
   it('tests can create queries where field refinement is null', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
@@ -420,7 +447,7 @@ describe('SQLExtracter', () => {
     const query = SQLExtracter.fromSchema(schema, 'table');
     assert.strictEqual(query, 'SELECT * FROM table WHERE ((b = 1) AND (a = 1));');
   });
-  it('tests can create queries where schema refinement is null', async () => {
+  it('tests can create queries where schema refinement is null', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         input: reads Something {a: Boolean [not a], b: Boolean [b]}
@@ -428,7 +455,7 @@ describe('SQLExtracter', () => {
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = SQLExtracter.fromSchema(schema, 'table');
     assert.strictEqual(query, 'SELECT * FROM table WHERE (NOT (a = 1)) AND (b = 1);');
-  });
+  }));
   it('tests can create queries where there is no refinement', async () => {
     const manifest = await Manifest.parse(`
       particle Foo

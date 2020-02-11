@@ -120,7 +120,7 @@ export class Refinement {
     return this.expression.getTextPrimitives();
   }
 
-  // checks if a is more specific than b, returns null if can't be determined
+  // checks if a is at least as specific as b, returns null if can't be determined
   static isAtleastAsSpecificAs(a: Refinement, b: Refinement): AtleastAsSpecific {
     if (!a && b) {
       return AtleastAsSpecific.NO;
