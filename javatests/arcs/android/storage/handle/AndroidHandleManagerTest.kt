@@ -17,6 +17,7 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.handle.ExperimentalHandleApi
 import arcs.core.storage.handle.HandleManager
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageService
@@ -31,6 +32,7 @@ import org.robolectric.Robolectric
 import org.robolectric.android.controller.ServiceController
 
 
+@ExperimentalHandleApi
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class AndroidHandleManagerTest {
@@ -38,7 +40,11 @@ class AndroidHandleManagerTest {
 
     inner class TestBindingDelegate : StorageServiceBindingDelegate {
         var sc: ServiceController<StorageService>? = null
-        override fun bindStorageService(conn: ServiceConnection, flags: Int, options: ParcelableStoreOptions): Boolean {
+        override fun bindStorageService(
+            conn: ServiceConnection,
+            flags: Int,
+            options: ParcelableStoreOptions
+        ): Boolean {
             val intent = StorageService.createBindIntent(
                 app,
                 options
@@ -58,11 +64,25 @@ class AndroidHandleManagerTest {
         }
     }
 
-    val entity1 = RawEntity("empty", singletons=mapOf(
-        "name" to "Jason".toReferencable(),
-        "age" to 21.toReferencable(),
-        "is_cool" to false.toReferencable()
-    ), collections=emptyMap())
+    val entity1 = RawEntity(
+        "entity1",
+        singletons=mapOf(
+            "name" to "Jason".toReferencable(),
+            "age" to 21.toReferencable(),
+            "is_cool" to false.toReferencable()
+        ),
+        collections=emptyMap()
+    )
+
+    val entity2 = RawEntity(
+        "entity2",
+        singletons=mapOf(
+            "name" to "Jason".toReferencable(),
+            "age" to 22.toReferencable(),
+            "is_cool" to true.toReferencable()
+        ),
+        collections=emptyMap()
+    )
 
     private val schema = Schema(
         listOf(SchemaName("Person")),
@@ -87,7 +107,7 @@ class AndroidHandleManagerTest {
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
     }
 
-    fun handleFactoryTest(block: suspend (HandleManager) -> Unit) {
+    fun handleManagerTest(block: suspend (HandleManager) -> Unit) {
         val scenario = ActivityScenario.launch(TestActivity::class.java)
 
         scenario.moveToState(Lifecycle.State.STARTED)
@@ -108,12 +128,12 @@ class AndroidHandleManagerTest {
 
     @Test
     fun testCreateSingletonHandle() = runBlockingTest {
-        handleFactoryTest { hf ->
-            val singletonHandle = hf.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
+        handleManagerTest { hm ->
+            val singletonHandle = hm.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
             singletonHandle.set(entity1)
 
             // Now read back from a different handle
-            val readbackHandle = hf.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
+            val readbackHandle = hm.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
             val readBack = readbackHandle.fetch()
             assertThat(readBack).isEqualTo(entity1)
         }
@@ -121,9 +141,15 @@ class AndroidHandleManagerTest {
 
     @Test
     fun testCreateSetHandle() = runBlockingTest {
-        handleFactoryTest { hf ->
-            val setHandle = hf.setHandle(HandleManager.ramdiskStorageKeyForName("fooset"), schema)
+        handleManagerTest { hm ->
+            val setHandle = hm.setHandle(HandleManager.ramdiskStorageKeyForName("fooset"), schema)
             setHandle.store(entity1)
+            setHandle.store(entity2)
+
+            // Now read back from a different handle
+            val readbackHandle = hm.setHandle(HandleManager.ramdiskStorageKeyForName("fooset"), schema)
+            val readBack = readbackHandle.value()
+            assertThat(readBack).containsExactly(entity1, entity2)
         }
     }
 }

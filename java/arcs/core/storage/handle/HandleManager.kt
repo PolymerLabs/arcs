@@ -32,10 +32,21 @@ typealias SetStore<T> = Store<SetData<T>, SetOp<T>, Set<T>>
 typealias SetHandle<T> = CollectionImpl<T>
 typealias SetActivationFactory<T> = ActivationFactory<SetData<T>, SetOp<T>, Set<T>>
 
+/**
+ * This interface is a convenience for creating the two common types of activation factories
+ * that are used: singletons of [RawEntity] and sets of [RawEntity]
+ *
+ * An implementation of this interface can be provided to the constructor for [HandleFactory]
+ */
 interface ActivationFactoryFactory {
     fun singletonFactory(): SingletonActivationFactory<RawEntity>
     fun setFactory(): SetActivationFactory<RawEntity>
 }
+
+@Experimental
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+annotation class ExperimentalHandleApi
 
 /**
  * [HandleManager] is a convenience for creating handles using a provided store factory.
@@ -46,8 +57,11 @@ interface ActivationFactoryFactory {
  * It will create a [StorageProxy] for each new storage key, and keep a reference to it for as
  * long as the [HandleFactory] exists.
  *
- * Instantiate it with the context and lifecycle that should own the resulting activate stores.
+ * If no arguments are passed, the default store ActivationFactory will be used. Optionally,
+ * you can provide your own ActivationFactoryFactory, which provides methods for creating
+ * activations factories to create singleton-rawentity and set-rawentity [ActiveStore]s
  */
+@ExperimentalHandleApi
 class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     companion object {
         /**
@@ -67,6 +81,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
 
     /**
      * Create a new SingletonHandle backed by an Android [ServiceStore]
+     *
+     * The SingletonHandle will represent an Entity specified by the provided [Schema]
      */
     suspend fun singletonHandle(
         storageKey: StorageKey,
@@ -100,6 +116,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
 
     /**
      * Create a new [SetHandle] backed by an Android [ServiceStore]
+     *
+     * The SetHandle will represent an Entity specified by the provided [Schema]
      */
     suspend fun setHandle(
         storageKey: StorageKey,

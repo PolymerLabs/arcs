@@ -15,6 +15,7 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.util.Log
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -24,14 +25,29 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 
+@ExperimentalHandleApi
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class HandleManagerTest {
-    val entity1 = RawEntity("empty", singletons=mapOf(
-        "name" to "Jason".toReferencable(),
-        "age" to 21.toReferencable(),
-        "is_cool" to false.toReferencable()
-    ), collections=emptyMap())
+    val entity1 = RawEntity(
+        "entity1",
+        singletons=mapOf(
+            "name" to "Jason".toReferencable(),
+            "age" to 21.toReferencable(),
+            "is_cool" to false.toReferencable()
+        ),
+        collections=emptyMap()
+    )
+
+    val entity2 = RawEntity(
+        "entity2",
+        singletons=mapOf(
+            "name" to "Jason".toReferencable(),
+            "age" to 22.toReferencable(),
+            "is_cool" to true.toReferencable()
+        ),
+        collections=emptyMap()
+    )
 
     private val schema = Schema(
         listOf(SchemaName("Person")),
@@ -49,6 +65,7 @@ class HandleManagerTest {
 
     @Before
     fun setup() {
+        Log.level = Log.Level.Debug
         DriverFactory.register(RamDiskDriverProvider())
     }
 
@@ -77,6 +94,13 @@ class HandleManagerTest {
         handleManagerTest { hm ->
             val setHandle = hm.setHandle(HandleManager.ramdiskStorageKeyForName("fooset"), schema)
             setHandle.store(entity1)
+            setHandle.store(entity2)
+
+            // Now read back from a different handle
+            val readbackHandle = hm.setHandle(HandleManager.ramdiskStorageKeyForName("fooset"), schema)
+            val readBack = readbackHandle.value()
+            assertThat(readBack).containsExactly(entity1, entity2)
+
         }
     }
 }
