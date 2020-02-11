@@ -15,6 +15,7 @@ import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
+import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -61,9 +62,16 @@ annotation class ExperimentalHandleApi
  */
 @ExperimentalHandleApi
 class HandleManager(private val aff: ActivationFactoryFactory? = null) {
-    private val mutex = Mutex()
-    private val singletonProxies = mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
-    private val setProxies = mutableMapOf<StorageKey, SetProxy<RawEntity>>()
+    private val singletonProxiesMutex = Mutex()
+    private val singletonProxies by guardedBy(
+        singletonProxeiesMutex,
+        mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
+    )
+    private val setProxiesMutex = Mutex()
+    private val setProxies by guardedBy(
+        setProxeiesMutex,
+        mutableMapOf<StorageKey, SetProxy<RawEntity>>()
+    )
 
     /**
      * Create a new SingletonHandle backed by an Android [ServiceStore]
@@ -82,7 +90,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             mode = StorageMode.ReferenceMode
         )
 
-        val storageProxy = mutex.withLock {
+        val storageProxy = singletonProxiesMutex.withLock {
             singletonProxies.getOrPut(storageKey) {
                 SingletonProxy(
                     Store(storeOptions).activate(aff?.singletonFactory()),
@@ -114,7 +122,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             mode = StorageMode.ReferenceMode
         )
 
-        val storageProxy = mutex.withLock {
+        val storageProxy = setProxiesMutex.withLock {
             setProxies.getOrPut(storageKey) {
                 SetProxy(Store(storeOptions).activate(aff?.setFactory()), CrdtSet())
             }

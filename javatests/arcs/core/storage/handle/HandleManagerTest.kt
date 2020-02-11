@@ -99,7 +99,6 @@ class HandleManagerTest {
             val readbackHandle = hm.setHandle(setKey, schema)
             val readBack = readbackHandle.value()
             assertThat(readBack).containsExactly(entity1, entity2)
-
         }
     }
 
