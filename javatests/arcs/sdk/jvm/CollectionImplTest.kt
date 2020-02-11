@@ -43,7 +43,7 @@ class CollectionImplTest {
         assertThat(collection.name).isEqualTo(HANDLE_NAME)
         assertThat(collection.size).isEqualTo(0)
         assertThat(collection.isEmpty()).isTrue()
-        assertThat(collection.toList()).isEmpty()
+        assertThat(collection.fetchAll()).isEmpty()
     }
 
     @Test
@@ -52,7 +52,7 @@ class CollectionImplTest {
 
         assertThat(collection.size).isEqualTo(1)
         assertThat(collection.isEmpty()).isFalse()
-        assertThat(collection.toList()).containsExactly(DUMMY_VALUE1)
+        assertThat(collection.fetchAll()).containsExactly(DUMMY_VALUE1)
     }
 
     @Test
@@ -62,7 +62,7 @@ class CollectionImplTest {
 
         assertThat(collection.size).isEqualTo(2)
         assertThat(collection.isEmpty()).isFalse()
-        assertThat(collection.toList()).containsExactly(DUMMY_VALUE1, DUMMY_VALUE2)
+        assertThat(collection.fetchAll()).containsExactly(DUMMY_VALUE1, DUMMY_VALUE2)
     }
 
     @Test
@@ -80,7 +80,7 @@ class CollectionImplTest {
 
         assertThat(collection.size).isEqualTo(1)
         assertThat(collection.isEmpty()).isFalse()
-        assertThat(collection.toList()).containsExactly(DUMMY_VALUE1)
+        assertThat(collection.fetchAll()).containsExactly(DUMMY_VALUE1)
     }
 
     @Test
@@ -98,7 +98,7 @@ class CollectionImplTest {
 
         assertThat(collection.size).isEqualTo(0)
         assertThat(collection.isEmpty()).isTrue()
-        assertThat(collection.toList()).isEmpty()
+        assertThat(collection.fetchAll()).isEmpty()
     }
 
     @Test

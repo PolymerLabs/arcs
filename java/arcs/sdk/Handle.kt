@@ -37,7 +37,10 @@ interface WritableSingleton<T : Entity> : Handle {
 interface ReadWriteSingleton<T : Entity> : ReadableSingleton<T>, WritableSingleton<T>
 
 /** A collection handle with read access. */
-interface ReadableCollection<T : Entity> : Handle, Iterable<T> {
+interface ReadableCollection<T : Entity> : Handle {
+    /** Returns the values of all entities in the collection. */
+    fun fetchAll(): Iterable<T>
+
     /** The number of elements in the collection. */
     val size: Int
 

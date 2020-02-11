@@ -19,7 +19,8 @@ class UnicodeTest : AbstractUnicodeTest() {
         val pass = if (handle.name == "sng") {
             ((handle as WasmSingletonImpl<*>).fetch() as UnicodeTest_Sng).pass
         } else {
-            ((handle as WasmCollectionImpl<*>).iterator().next() as UnicodeTest_Col).pass
+            // TODO(cypher1): This is unsafe, there is no guarantee of ordering.
+            ((handle as WasmCollectionImpl<*>).fetchAll().iterator().next() as UnicodeTest_Col).pass
         }
         handles.res.store(out.copy(pass = pass))
     }

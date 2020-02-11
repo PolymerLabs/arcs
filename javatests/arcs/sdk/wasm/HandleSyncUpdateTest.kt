@@ -28,7 +28,8 @@ class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
         if (handle.name == "sng") {
             num = handles.sng.fetch()?.num ?: -1.0
         } else if (handle.name == "col") {
-            num = if (handles.col.size > 0) handles.col.iterator().next().num else -1.0
+            // TODO(cypher1): This is unsafe, there is no guarantee of ordering.
+            num = if (handles.col.size > 0) handles.col.fetchAll().iterator().next().num else -1.0
         } else {
             txt = "unexpected handle name: ${handle.name}"
         }

@@ -26,7 +26,7 @@ class CollectionImpl<T : Entity>(
 
     override fun isEmpty(): Boolean = entities.isEmpty()
 
-    override fun iterator(): Iterator<T> = entities.iterator()
+    override fun fetchAll(): Iterable<T> = entities
 
     override fun store(entity: T) {
         entities.add(entity)

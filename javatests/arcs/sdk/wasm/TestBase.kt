@@ -30,7 +30,7 @@ open class TestBase<T : WasmEntity>(
             fail("expected container to have ${expected.size} items; actual size ${container.size}")
 
         // Convert result values to strings and sort them when checking an unordered container.
-        val converted = container.map(converter)
+        val converted = container.fetchAll().map(converter)
         val res = if (isOrdered) converted else converted.sorted()
 
         val comparison = expected zip res
