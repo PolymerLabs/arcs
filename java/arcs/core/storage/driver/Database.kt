@@ -34,7 +34,7 @@ import arcs.core.storage.referencemode.toReferenceSet
 import arcs.core.storage.referencemode.toReferenceSingleton
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -177,8 +177,8 @@ class DatabaseDriver<Data : Any>(
     /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
     /* internal */ val clientId: Int = database.addClient(this)
     private val localDataMutex = Mutex()
-    private var localData: Data? by guardWith<Data?>(localDataMutex, null)
-    private var localVersion: Int? by guardWith<Int?>(localDataMutex, null)
+    private var localData: Data? by guardedBy<Data?>(localDataMutex, null)
+    private var localVersion: Int? by guardedBy<Int?>(localDataMutex, null)
     private val schema: Schema
         get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
             "Schema not found for hash: ${storageKey.entitySchemaHash}"

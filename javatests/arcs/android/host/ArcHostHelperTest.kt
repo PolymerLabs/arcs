@@ -36,7 +36,7 @@ import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleIdentifier
 import arcs.core.storage.driver.VolatileStorageKey
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -59,9 +59,9 @@ class ArcHostHelperTest {
 
     class TestArcHost : ArcHost {
         private val hostMutex = Mutex()
-        var startArcCalls: MutableList<PlanPartition> by guardWith(hostMutex, mutableListOf())
-        var stopArcCalls: MutableList<PlanPartition> by guardWith(hostMutex, mutableListOf())
-        var registeredParticles: MutableList<ParticleIdentifier> by guardWith(
+        var startArcCalls: MutableList<PlanPartition> by guardedBy(hostMutex, mutableListOf())
+        var stopArcCalls: MutableList<PlanPartition> by guardedBy(hostMutex, mutableListOf())
+        var registeredParticles: MutableList<ParticleIdentifier> by guardedBy(
             hostMutex, mutableListOf()
         )
 

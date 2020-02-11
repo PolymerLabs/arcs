@@ -14,7 +14,7 @@ package arcs.android.storage.database
 import android.content.Context
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseFactory
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -25,7 +25,7 @@ import kotlinx.coroutines.sync.withLock
 class AndroidSqliteDatabaseFactory(context: Context) : DatabaseFactory {
     private val context = context.applicationContext
     private val mutex = Mutex()
-    private val dbCache by guardWith(mutex, mutableMapOf<Pair<String, Boolean>, Database>())
+    private val dbCache by guardedBy(mutex, mutableMapOf<Pair<String, Boolean>, Database>())
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
         dbCache[name to persistent]

@@ -35,7 +35,7 @@ import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -75,7 +75,7 @@ class DatabaseImpl(
     private val mutex = Mutex()
 
     /** Maps from schema hash to type ID (local copy of the 'types' table). */
-    private val schemaTypeMap by guardWith(mutex, ::loadTypes)
+    private val schemaTypeMap by guardedBy(mutex, ::loadTypes)
 
     override fun onCreate(db: SQLiteDatabase) = db.transaction {
         CREATE.forEach(db::execSQL)
