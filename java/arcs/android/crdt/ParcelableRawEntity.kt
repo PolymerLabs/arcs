@@ -48,7 +48,6 @@ data class ParcelableRawEntity(
     internal companion object CREATOR : Parcelable.Creator<ParcelableRawEntity> {
         override fun createFromParcel(parcel: Parcel): ParcelableRawEntity {
             val id = requireNotNull(parcel.readString())
-            val expirationTimestamp = requireNotNull(parcel.readString())
 
             val singletons = mutableMapOf<FieldName, Referencable?>()
             val numSingletons = parcel.readInt()
@@ -67,6 +66,8 @@ data class ParcelableRawEntity(
                 }
                 collections[key] = set
             }
+
+            val expirationTimestamp = requireNotNull(parcel.readString())
 
             val rawEntity = RawEntity(id, singletons, collections, expirationTimestamp)
             return ParcelableRawEntity(rawEntity)
