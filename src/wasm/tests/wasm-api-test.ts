@@ -18,12 +18,12 @@ import {VolatileCollection, VolatileSingleton, VolatileStorage} from '../../runt
 //import {assertThrowsAsync} from '../../testing/test-util.js';
 import {ReferenceType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
-import {SimpleVolatileMemoryProvider} from '../../runtime/storageNG/drivers/volatile.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -65,7 +65,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
           loader,
           fileName: process.cwd() + '/manifest.arcs',
-          memoryProvider: new SimpleVolatileMemoryProvider()
+          memoryProvider: new TestVolatileMemoryProvider()
         });
       }
     });
