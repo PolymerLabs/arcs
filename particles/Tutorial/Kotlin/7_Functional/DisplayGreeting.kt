@@ -29,9 +29,5 @@ class DisplayGreeting : AbstractDisplayGreeting() {
 
     override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
 
-    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        return model + mapOf(
-            "name" to name
-        )
-    }
+    override fun populateModel(slotName: String, model: Map<String, Any>) = mapOf("name" to name)
 }
