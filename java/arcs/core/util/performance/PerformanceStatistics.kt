@@ -12,7 +12,7 @@
 package arcs.core.util.performance
 
 import arcs.core.util.RunningStatistics
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -33,8 +33,8 @@ class PerformanceStatistics private constructor(
     initialStats: Snapshot = Snapshot(counterNames)
 ) {
     private val mutex = Mutex()
-    private val runtimeStats by guardWith(mutex, RunningStatistics(initialStats.runtimeStatistics))
-    private val counters by guardWith(mutex, CounterStatistics(initialStats.countStatistics))
+    private val runtimeStats by guardedBy(mutex, RunningStatistics(initialStats.runtimeStatistics))
+    private val counters by guardedBy(mutex, CounterStatistics(initialStats.countStatistics))
 
     /**
      * Creates a [PerformanceStatistics] object.

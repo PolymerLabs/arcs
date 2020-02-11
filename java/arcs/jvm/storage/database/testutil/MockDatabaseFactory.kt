@@ -18,7 +18,7 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseFactory
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +35,7 @@ import kotlinx.coroutines.sync.withLock
 class MockDatabaseFactory : DatabaseFactory {
     private val mutex = Mutex()
     private val cache: MutableMap<Pair<String, Boolean>, Database>
-        by guardWith(mutex, mutableMapOf())
+        by guardedBy(mutex, mutableMapOf())
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
         cache[name to persistent]

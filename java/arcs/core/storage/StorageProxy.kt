@@ -16,7 +16,7 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
 import arcs.core.util.TaggedLog
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -41,15 +41,15 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
 
     private val handlesMutex = Mutex()
     private val readHandles
-        by guardWith<MutableSet<Handle<Data, Op, T>>>(handlesMutex, mutableSetOf())
+        by guardedBy<MutableSet<Handle<Data, Op, T>>>(handlesMutex, mutableSetOf())
 
     private val syncMutex = Mutex()
     private val crdt
-        by guardWith(syncMutex, initialCrdt)
+        by guardedBy(syncMutex, initialCrdt)
     private val waitingSyncs
-        by guardWith(syncMutex, mutableListOf<CompletableDeferred<ValueAndVersion<T>>>())
+        by guardedBy(syncMutex, mutableListOf<CompletableDeferred<ValueAndVersion<T>>>())
     private var synchronized
-        by guardWith(syncMutex, false)
+        by guardedBy(syncMutex, false)
 
     private val store = storeEndpointProvider.getStorageEndpoint()
 

@@ -25,7 +25,7 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
@@ -152,13 +152,13 @@ class ArcsSingleton<T, StoreData, StoreOp>(
 
     private val scope = CoroutineScope(coroutineContext)
     private val crdtMutex = Mutex()
-    private val crdtSingleton by guardWith(crdtMutex, CrdtSingleton<T>())
-    private var cachedVersion by guardWith(crdtMutex, VersionMap())
+    private val crdtSingleton by guardedBy(crdtMutex, CrdtSingleton<T>())
+    private var cachedVersion by guardedBy(crdtMutex, VersionMap())
     @Suppress("RemoveExplicitTypeArguments")
-    private var cachedConsumerData: T? by guardWith<T?>(crdtMutex, null)
+    private var cachedConsumerData: T? by guardedBy<T?>(crdtMutex, null)
     private val initialized: CompletableJob = Job(scope.coroutineContext[Job])
     @Suppress("RemoveExplicitTypeArguments")
-    private var syncJob: CompletableJob? by guardWith<CompletableJob?>(crdtMutex, null)
+    private var syncJob: CompletableJob? by guardedBy<CompletableJob?>(crdtMutex, null)
     private var callbackId: Int = -1
     private val activated =
         CompletableDeferred<ActiveStore<StoreData, StoreOp, T>>(initialized)

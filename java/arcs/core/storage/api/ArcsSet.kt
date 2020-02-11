@@ -26,7 +26,7 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CompletableJob
@@ -143,9 +143,9 @@ class ArcsSet<T, StoreData, StoreOp>(
     val actor: Actor by lazy { "ArcsSet@${hashCode()}" }
 
     private val crdtMutex = Mutex()
-    private val crdtSet by guardWith(crdtMutex, CrdtSet<T>())
-    private var cachedVersion by guardWith(crdtMutex, VersionMap())
-    private var cachedConsumerData by guardWith(crdtMutex, emptySet<T>())
+    private val crdtSet by guardedBy(crdtMutex, CrdtSet<T>())
+    private var cachedVersion by guardedBy(crdtMutex, VersionMap())
+    private var cachedConsumerData by guardedBy(crdtMutex, emptySet<T>())
     private val scope = CoroutineScope(coroutineContext)
     private val initialized: CompletableJob = Job(scope.coroutineContext[Job.Key])
     private var syncJob: CompletableJob? = null
