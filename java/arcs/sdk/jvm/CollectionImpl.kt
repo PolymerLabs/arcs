@@ -33,17 +33,13 @@ class CollectionImpl<T : Entity>(
     override fun store(entity: T) {
         entities.add(entity)
         particle.onHandleUpdate(this)
-        onUpdateActions.forEach { action ->
-            action(entities.toSet())
-        }
+        notifyOnUpdateActions()
     }
 
     override fun clear() {
         entities.clear()
         particle.onHandleUpdate(this)
-        onUpdateActions.forEach { action ->
-            action(entities.toSet())
-        }
+        notifyOnUpdateActions()
     }
 
     override fun onUpdate(action: (Set<T>) -> Unit) {
@@ -53,8 +49,13 @@ class CollectionImpl<T : Entity>(
     override fun remove(entity: T) {
         entities.remove(entity)
         particle.onHandleUpdate(this)
+        notifyOnUpdateActions()
+    }
+
+    fun notifyOnUpdateActions() {
+        val s = entities.toSet()
         onUpdateActions.forEach { action ->
-            action(entities.toSet())
+            action(s)
         }
     }
 }
