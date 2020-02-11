@@ -43,6 +43,9 @@ interface ReadableCollection<T : Entity> : Handle, Iterable<T> {
 
     /** Returns true if the collection is empty. */
     fun isEmpty(): Boolean
+
+    /** Assign a callback when the collection is Updated. */
+    fun onUpdate(action: (Set<T>) -> Unit)
 }
 
 /** A collection handle with write access. */

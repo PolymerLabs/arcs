@@ -13,6 +13,13 @@ package arcs.sdk.wasm
 
 class CollectionApiTest : AbstractCollectionApiTest() {
     private var stored = CollectionApiTest_OutHandle()
+    var x = 0.0;
+
+    init{
+        handles.ioHandle.onUpdate{ _ ->
+            x++
+        }
+    }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
@@ -26,20 +33,34 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                     num = handles.inHandle.size.toDouble()
                 )
                 handles.outHandle.store(stored)
+                handles.ioHandle.store(stored)
             }
             "case3" -> {
                 handles.outHandle.remove(stored)
+                handles.ioHandle.remove(stored)
             }
             "case4" -> {
                 val d1 = CollectionApiTest_OutHandle()
                 val iter = handles.inHandle.iterator()
                 val flg = iter.hasNext()
                 val i1 = iter.next()
-                handles.outHandle.store(d1.copy(
-                    txt = "num: ${i1.num.toInt()}",
-                    num = i1.num.let { it * 2 },
-                    flg = flg
-                ))
+                if (x == 3.0) {
+                    handles.outHandle.store(
+                        d1.copy(
+                            txt = "num: ${i1.num.toInt()}",
+                            num = i1.num * 2.0,
+                            flg = flg
+                        )
+                    )
+                } else {
+                    handles.outHandle.store(
+                        d1.copy(
+                            txt = "handle.onUpdate() called is not working.",
+                            num = x,
+                            flg = flg
+                        )
+                    )
+                }
 
                 handles.outHandle.store(d1.copy(
                     txt = "eq",

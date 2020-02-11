@@ -19,6 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.Mock
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
@@ -31,11 +32,13 @@ class CollectionImplTest {
     private val HANDLE_NAME = "HANDLE_NAME"
     private val DUMMY_VALUE1 = DummyEntity("111")
     private val DUMMY_VALUE2 = DummyEntity("222")
+    @Mock private lateinit var action: (Set<DummyEntity>) -> Unit
 
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
         collection = CollectionImpl(particle, HANDLE_NAME, DummyEntity.Spec())
+        collection.onUpdate(action)
     }
 
     @Test
@@ -106,4 +109,19 @@ class CollectionImplTest {
         collection.clear()
         verify(particle).onHandleUpdate(collection)
     }
+
+    @Test
+    fun test_onUpdates() {
+        collection.clear()
+        val s: Set<DummyEntity> = setOf()
+        verify(action).invoke(s)
+
+        collection.store(DUMMY_VALUE1)
+        val s2: Set<DummyEntity> = setOf(DUMMY_VALUE1)
+        verify(action).invoke(s2)
+
+        collection.remove(DUMMY_VALUE1)
+        verify(action, times(2)).invoke(s)
+    }
+
 }

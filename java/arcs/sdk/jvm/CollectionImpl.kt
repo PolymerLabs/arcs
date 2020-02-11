@@ -19,7 +19,9 @@ class CollectionImpl<T : Entity>(
     override val name: String,
     entitySpec: EntitySpec<T>
 ) : ReadWriteCollection<T> {
+
     private val entities = mutableListOf<T>()
+    private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
 
     override val size: Int
         get() = entities.size
@@ -31,15 +33,28 @@ class CollectionImpl<T : Entity>(
     override fun store(entity: T) {
         entities.add(entity)
         particle.onHandleUpdate(this)
+        onUpdateActions.forEach { action ->
+            action(entities.toSet())
+        }
     }
 
     override fun clear() {
         entities.clear()
         particle.onHandleUpdate(this)
+        onUpdateActions.forEach { action ->
+            action(entities.toSet())
+        }
+    }
+
+    override fun onUpdate(action: (Set<T>) -> Unit) {
+        onUpdateActions.add(action)
     }
 
     override fun remove(entity: T) {
         entities.remove(entity)
         particle.onHandleUpdate(this)
+        onUpdateActions.forEach { action ->
+            action(entities.toSet())
+        }
     }
 }
