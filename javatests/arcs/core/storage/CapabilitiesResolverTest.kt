@@ -66,10 +66,12 @@ class CapabilitiesResolverTest {
     @Test
     fun capabilitiesResolver_createsStorageKeysCtor() {
         val options = CapabilitiesResolver.StorageKeyOptions(ArcId.newForTest("test"))
-        val resolver = CapabilitiesResolver(options, mutableMapOf(
-            RAMDISK_DRIVER_PROTOCOL to (Capabilities.TiedToRuntime to
-                { storageKeyOptions, _ -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) })
-        ))
+        val ramDiskCreator: Pair<Capabilities, StorageKeyCreator> = Capabilities.TiedToRuntime to
+            { storageKeyOptions, _ -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) }
+        val resolver = CapabilitiesResolver(
+            options,
+            mutableMapOf(RAMDISK_DRIVER_PROTOCOL to ramDiskCreator)
+        )
         assertThrows(IllegalArgumentException::class) {
             resolver.createStorageKey(Capabilities.TiedToArc)
         }
