@@ -13,7 +13,7 @@ let exceptions: Error[] = [];
 
 before(() => {
   removeSystemExceptionHandler(defaultSystemExceptionHandler);
-  registerSystemExceptionHandler(exception => exceptions.push(exception));
+  registerSystemExceptionHandler((arc, exception) => exceptions.push(exception));
 });
 
 afterEach(function() {

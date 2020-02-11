@@ -431,7 +431,7 @@ class PECOuterPortImpl extends PECOuterPort {
     if (!exception.particleName && exception.particleId) {
       exception.particleName = this.arc.loadedParticleInfo.get(exception.particleId).spec.name;
     }
-    reportSystemException(exception);
+    reportSystemException(this.arc, exception);
   }
 
   async onServiceRequest(particle: Particle, request: {}, callback: number): Promise<void> {
