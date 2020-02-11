@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -14,4 +14,5 @@ package arcs.core.host
  * An ArcsHost that runs isolatable particles that are expected to have no platform
  * dependencies directly on Android APIs.
  */
-abstract class ProdHost : AbstractArcHost()
+abstract class ProdHost(vararg particles: ParticleIdentifier) :
+    AbstractArcHost(particles.toMutableList())

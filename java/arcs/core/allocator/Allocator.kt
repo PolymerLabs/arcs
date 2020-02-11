@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -67,7 +67,7 @@ class Allocator(val hostRegistry: HostRegistry) {
     // VisibleForTesting
     suspend fun lookupArcHost(arcHost: String) =
         hostRegistry.availableArcHosts().filter { it ->
-            it.hostName == arcHost
+            it.hostId == arcHost
         }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
 
     /**
@@ -114,7 +114,7 @@ class Allocator(val hostRegistry: HostRegistry) {
             .map { (host, particles) ->
                 PlanPartition(
                     arcId.toString(),
-                    host.hostName,
+                    host.hostId,
                     particles
                 )
             }

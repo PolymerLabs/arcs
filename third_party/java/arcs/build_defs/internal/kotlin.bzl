@@ -50,6 +50,7 @@ KOTLINC_OPTS = [
 DISABLED_LINT_CHECKS = [
     "PackageName",
     "TopLevelName",
+    "KotlinReflectNeeded",
 ]
 
 # All supported Kotlin platforms.
