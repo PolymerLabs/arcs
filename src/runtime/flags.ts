@@ -47,6 +47,7 @@ export class Flags extends FlagDefaults {
     return Flags.withFlags({enforceRefinements: true}, f);
   }
 
+  // tslint:disable-next-line: no-any
   static withFieldRefinementsAllowed<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return Flags.withFlags({fieldRefinementsAllowed: true}, f);
   }

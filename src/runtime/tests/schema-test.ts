@@ -20,7 +20,7 @@ import {Loader} from '../../platform/loader.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Entity} from '../entity.js';
 import {ConCap} from '../../testing/test-util.js';
-import { Flags } from '../flags.js';
+import {Flags} from '../flags.js';
 
 // Modifies the schema in-place.
 function deleteLocations(schema: Schema): Schema {
