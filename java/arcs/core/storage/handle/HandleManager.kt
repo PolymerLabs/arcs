@@ -48,7 +48,7 @@ interface ActivationFactoryFactory {
  *
  * Instantiate it with the context and lifecycle that should own the resulting activate stores.
  */
-class HandleManager(private val aff: ActivationFactoryFactory) {
+class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     companion object {
         /**
          * Convenience for making a ramdisk-backed reference mode key
@@ -84,8 +84,12 @@ class HandleManager(private val aff: ActivationFactoryFactory) {
             Store(storeOptions)
         }
 
+        val activeStore = aff?.let {
+            store.activate(it.singletonFactory())
+        } ?: store.activate()
+
         val storageProxy = singletonProxies.getOrPut(storageKey) {
-            SingletonProxy(store.activate(aff.singletonFactory()), CrdtSingleton())
+            SingletonProxy(activeStore, CrdtSingleton())
         }
 
         return SingletonHandle(storageKey.toKeyString(), storageProxy).also {
@@ -113,8 +117,12 @@ class HandleManager(private val aff: ActivationFactoryFactory) {
             Store(storeOptions)
         }
 
+        val activeStore = aff?.let {
+            store.activate(it.setFactory())
+        } ?: store.activate()
+
         val storageProxy = setProxies.getOrPut(storageKey) {
-            SetProxy(store.activate(aff.setFactory()), CrdtSet())
+            SetProxy(activeStore, CrdtSet())
         }
 
         return SetHandle(storageKey.toKeyString(), storageProxy).also {

@@ -53,21 +53,7 @@ class HandleManagerTest {
     }
 
     fun handleManagerTest(block: suspend (HandleManager) -> Unit) {
-        val hm = HandleManager(object : ActivationFactoryFactory {
-            override fun singletonFactory() = object : SingletonActivationFactory<RawEntity> {
-                override suspend fun invoke(options: StoreOptions<SingletonData<RawEntity>, SingletonOp<RawEntity>, RawEntity?>): ActiveStore<SingletonData<RawEntity>, SingletonOp<RawEntity>, RawEntity?> {
-                    val driver = DriverFactory.getDriver<SingletonData<RawEntity>>(options.storageKey, options.existenceCriteria)
-                    return DirectStore<SingletonData<RawEntity>, SingletonOp<RawEntity>, RawEntity?>(options, CrdtSingleton(), driver!!)
-                }
-            }
-
-            override fun setFactory() = object : SetActivationFactory<RawEntity> {
-                override suspend fun invoke(options: StoreOptions<SetData<RawEntity>, SetOp<RawEntity>, Set<RawEntity>>): ActiveStore<SetData<RawEntity>, SetOp<RawEntity>, Set<RawEntity>> {
-                    val driver = DriverFactory.getDriver<SetData<RawEntity>>(options.storageKey, options.existenceCriteria)
-                    return DirectStore<SetData<RawEntity>, SetOp<RawEntity>, Set<RawEntity>>(options, CrdtSet(), driver!!)
-                }
-            }
-        })
+        val hm = HandleManager()
         runBlocking {
             block(hm)
         }
@@ -76,11 +62,11 @@ class HandleManagerTest {
     @Test
     fun testCreateSingletonHandle() = runBlockingTest {
         handleManagerTest { hm ->
-            val singletonHandle = hm.singletonHandle(RamDiskStorageKey("foo"), schema)
+            val singletonHandle = hm.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
             singletonHandle.set(entity1)
 
             // Now read back from a different handle
-            val readbackHandle = hm.singletonHandle(RamDiskStorageKey("foo"), schema)
+            val readbackHandle = hm.singletonHandle(HandleManager.ramdiskStorageKeyForName("foo"), schema)
             val readBack = readbackHandle.fetch()
             assertThat(readBack).isEqualTo(entity1)
         }
@@ -89,7 +75,7 @@ class HandleManagerTest {
     @Test
     fun testCreateSetHandle() = runBlockingTest {
         handleManagerTest { hm ->
-            val setHandle = hm.setHandle(RamDiskStorageKey("fooset"), schema)
+            val setHandle = hm.setHandle(HandleManager.ramdiskStorageKeyForName("fooset"), schema)
             setHandle.store(entity1)
         }
     }
