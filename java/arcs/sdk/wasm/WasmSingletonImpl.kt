@@ -21,7 +21,7 @@ class WasmSingletonImpl<T : WasmEntity>(
 ) : WasmHandle<T>(name, particle), ReadWriteSingleton<T> {
 
     private var entity: T? = null
-    private var onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
+    private val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
 
     override fun sync(encoded: ByteArray) {
         entity = if (encoded.size > 0) entitySpec.decode(encoded) else null

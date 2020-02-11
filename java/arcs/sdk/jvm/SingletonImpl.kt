@@ -20,7 +20,7 @@ class SingletonImpl<T : Entity>(
     entitySpec: EntitySpec<T>
 ) : ReadWriteSingleton<T> {
     private var entity: T? = null
-    private var onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
+    private val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
 
     override fun fetch(): T? = entity
 
