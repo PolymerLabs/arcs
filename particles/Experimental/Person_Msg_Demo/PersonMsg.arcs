@@ -1,40 +1,25 @@
 // Demo: Person-Msg
 
-schema Person
-  name: Text
-  id: Text
-  age: Number [age > 0]
-
-schema Message
-  toID: Text
-  fromID: Text
-  content: Text
-  // time since message was sent (in hours)
-  sentTime: Number [sentTime > 0]
-
-schema Ordered
-  index: Number [index >= 0] 
-
 particle GetMessages in 'GetMessages.js'
-  messages: writes [Message]
+  messages: writes [Message {toID: Text, fromID: Text, content: Text, sentTime: Number} [sentTime > 0]]
   messagesInputSlot: consumes
 
 particle FilterMessages in 'FilterMessages.js'
-  allMessages: reads [Message]
-  filteredMessages: writes [Message {toID, fromID, sentTime: Number [sentTime < 24]}]
+  allMessages: reads [Message {toID: Text, fromID: Text, content: Text, sentTime: Number} [sentTime > 0]]
+  filteredMessages: writes [Message {toID: Text, fromID: Text, sentTime: Number} [sentTime < 24]]
 
 particle GetPeople in 'GetPeople.js'
-  people: writes [Person]
+  people: writes [Person {name: Text, id: Text, age: Number} [age > 0]]
   peopleInputSlot: consumes
 
 particle OrderPeople in 'OrderPeople.js'
-  unorderedPeople: reads [Person]
-  messages: reads [Message {toID, fromID, sentTime: Number [sentTime < 24]}]
-  orderedPeople: writes [Ordered Person {name, id, index}]
+  unorderedPeople: reads [Person {name: Text, id: Text, age: Number} [age > 0]]
+  messages: reads [Message {toID: Text, fromID: Text, sentTime: Number} [sentTime < 24]]
+  orderedPeople: writes [Person {name: Text, id: Text, index: Number} [index >= 0]]
   forSlot: consumes
 
 particle DisplayParticle in 'Display.js'
-  displayData: reads [Ordered Person {name, id, index}]
+  displayData: reads [Person {name: Text, id: Text, index: Number} [index >= 0]]
   root: consumes
     messagesInputSlot: provides
     peopleInputSlot: provides
