@@ -21,14 +21,12 @@ import kotlinx.coroutines.sync.withLock
 typealias SingletonData<T> = CrdtSingleton.Data<T>
 typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
 typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<T>, T?>
-typealias SingletonStore<T> = Store<SingletonData<T>, SingletonOp<T>, T?>
 typealias SingletonHandle<T> = SingletonImpl<T>
 typealias SingletonActivationFactory<T> = ActivationFactory<SingletonData<T>, SingletonOp<T>, T?>
 
 typealias SetData<T> = CrdtSet.Data<T>
 typealias SetOp<T> = CrdtSet.IOperation<T>
 typealias SetStoreOptions<T> = StoreOptions<SetData<T>, SetOp<T>, Set<T>>
-typealias SetStore<T> = Store<SetData<T>, SetOp<T>, Set<T>>
 typealias SetHandle<T> = CollectionImpl<T>
 typealias SetActivationFactory<T> = ActivationFactory<SetData<T>, SetOp<T>, Set<T>>
 
@@ -67,9 +65,6 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     private val singletonProxies = mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
     private val setProxies = mutableMapOf<StorageKey, SetProxy<RawEntity>>()
 
-    private val singletonStores = mutableMapOf<StorageKey, SingletonStore<RawEntity>>()
-    private val setStores = mutableMapOf<StorageKey, SetStore<RawEntity>>()
-
     /**
      * Create a new SingletonHandle backed by an Android [ServiceStore]
      *
@@ -88,18 +83,17 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         )
 
         val storageProxy = mutex.withLock {
-            val store = singletonStores.getOrPut(storageKey) {
-                Store(storeOptions)
-            }
-
             singletonProxies.getOrPut(storageKey) {
-                SingletonProxy(store.activate(aff?.singletonFactory()), CrdtSingleton())
+                SingletonProxy(
+                    Store(storeOptions).activate(aff?.singletonFactory()),
+                    CrdtSingleton()
+                )
             }
         }
 
         return SingletonHandle(storageKey.toKeyString(), storageProxy).also {
-        storageProxy.registerHandle(it)
-        it.callback = callbacks
+            storageProxy.registerHandle(it)
+            it.callback = callbacks
         }
     }
 
@@ -121,12 +115,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         )
 
         val storageProxy = mutex.withLock {
-            val store = setStores.getOrPut(storageKey) {
-                Store(storeOptions)
-            }
-
             setProxies.getOrPut(storageKey) {
-                SetProxy(store.activate(aff?.setFactory()), CrdtSet())
+                SetProxy(Store(storeOptions).activate(aff?.setFactory()), CrdtSet())
             }
         }
 
