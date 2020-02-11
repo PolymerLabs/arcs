@@ -64,12 +64,12 @@ annotation class ExperimentalHandleApi
 class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     private val singletonProxiesMutex = Mutex()
     private val singletonProxies by guardedBy(
-        singletonProxeiesMutex,
+        singletonProxiesMutex,
         mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
     )
     private val setProxiesMutex = Mutex()
     private val setProxies by guardedBy(
-        setProxeiesMutex,
+        setProxiesMutex,
         mutableMapOf<StorageKey, SetProxy<RawEntity>>()
     )
 
