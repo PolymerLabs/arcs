@@ -68,6 +68,9 @@ class WasmCollectionImpl<T : WasmEntity>(
             entities.remove(entity.internalId)
             WasmRuntimeClient.collectionRemove(particle, this, encoded)
         }
+        onUpdateActions.forEach { action ->
+            action(entities.values.toSet())
+        }
     }
 
     private fun add(added: ByteArray) {

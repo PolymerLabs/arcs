@@ -13,10 +13,10 @@ package arcs.sdk.wasm
 
 class CollectionApiTest : AbstractCollectionApiTest() {
     private var stored = CollectionApiTest_OutHandle()
-    var x = 0;
+    var x = 0.0;
 
     init{
-        handles.ioHandle.onUpdate{ collection ->
+        handles.ioHandle.onUpdate{ _ ->
             x++
         }
     }
@@ -44,18 +44,22 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                 val iter = handles.inHandle.iterator()
                 val flg = iter.hasNext()
                 val i1 = iter.next()
-                if (x == 3) {
-                    handles.outHandle.store(d1.copy(
-                        txt = "num: ${i1.num.toInt()}",
-                        num = i1.num.let { it * 2 },
-                        flg = flg
-                    ))
+                if (x == 3.0) {
+                    handles.outHandle.store(
+                        d1.copy(
+                            txt = "num: ${i1.num.toInt()}",
+                            num = i1.num * 2.0,
+                            flg = flg
+                        )
+                    )
                 } else {
-                    handles.outHandle.store(d1.copy(
-                      txt = "handle.onUpdate() is not working.",
-                      num = i1.num.let { it * 2 },
-                      flg = flg
-                    ))
+                    handles.outHandle.store(
+                        d1.copy(
+                            txt = "handle.onUpdate() called is not working.",
+                            num = x,
+                            flg = flg
+                        )
+                    )
                 }
 
                 handles.outHandle.store(d1.copy(
