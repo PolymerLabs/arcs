@@ -10,11 +10,14 @@ kt_android_library(
     deps = [
         "//java/arcs/android/crdt",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/data:data-kt",
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/sdk/android/storage",
         "//third_party/java/androidx/lifecycle",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
