@@ -11,7 +11,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {singletonHandleForTest, collectionHandleForTest} from '../../runtime/testing/handle-for-test.js';
+import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
 import {VolatileCollection, VolatileSingleton, VolatileStorage} from '../../runtime/storage/volatile-storage.js';
@@ -23,6 +23,7 @@ import {Entity} from '../../runtime/entity.js';
 // registered automatically).
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
+import {SimpleVolatileMemoryProvider} from '../../runtime/storageNG/drivers/volatile.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -61,14 +62,17 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       } else {
         loader = new TestLoader(testDir);
         VolatileStorage.setStorageCache(new RuntimeCacheService());
-        manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`,
-                                         {loader, fileName: process.cwd() + '/manifest.arcs'});
+        manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
+          loader,
+          fileName: process.cwd() + '/manifest.arcs',
+          memoryProvider: new SimpleVolatileMemoryProvider()
+        });
       }
     });
 
     async function setup(recipeName) {
       const runtime = new Runtime({loader, context: await manifestPromise});
-      const arc = runtime.newArc('wasm-test', 'volatile://');
+      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
 
       const recipe = arc.context.allRecipes.find(r => r.name === recipeName);
       if (!recipe) {
@@ -457,7 +461,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // extra fields are correctly ignored.
       const manifest = await manifestPromise;
       const runtime = new Runtime({loader, context: manifest});
-      const arc = runtime.newArc('wasm-test', 'volatile://');
+      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
 
       const sliceClass = Entity.createEntityClass(manifest.findSchemaByName('Slice'), null);
       const sngStore = await arc.createStore(sliceClass.type, undefined, 'test:0');
