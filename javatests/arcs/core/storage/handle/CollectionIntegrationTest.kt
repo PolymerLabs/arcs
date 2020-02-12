@@ -78,8 +78,8 @@ class CollectionIntegrationTest {
 
     @Test
     fun initialState() = runBlockingTest {
-        assertThat(collectionA.value()).isEmpty()
-        assertThat(collectionB.value()).isEmpty()
+        assertThat(collectionA.fetchAll()).isEmpty()
+        assertThat(collectionB.fetchAll()).isEmpty()
     }
 
     @Test
@@ -87,8 +87,8 @@ class CollectionIntegrationTest {
         val person = Person("Miles", 55, true)
 
         collectionA.store(person.toRawEntity())
-        assertThat(collectionA.value()).containsExactly(person.toRawEntity())
-        assertThat(collectionB.value()).containsExactly(person.toRawEntity())
+        assertThat(collectionA.fetchAll()).containsExactly(person.toRawEntity())
+        assertThat(collectionB.fetchAll()).containsExactly(person.toRawEntity())
     }
 
     @Test
@@ -99,12 +99,12 @@ class CollectionIntegrationTest {
         collectionA.store(miles.toRawEntity())
         collectionB.store(jason.toRawEntity())
 
-        assertThat(collectionA.value()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
-        assertThat(collectionB.value()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
+        assertThat(collectionA.fetchAll()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
+        assertThat(collectionB.fetchAll()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
 
         collectionA.remove(jason.toRawEntity())
-        assertThat(collectionA.value()).containsExactly(miles.toRawEntity())
-        assertThat(collectionB.value()).containsExactly(miles.toRawEntity())
+        assertThat(collectionA.fetchAll()).containsExactly(miles.toRawEntity())
+        assertThat(collectionB.fetchAll()).containsExactly(miles.toRawEntity())
     }
 
     @Test
@@ -117,11 +117,11 @@ class CollectionIntegrationTest {
         collectionA.store(Person("f", 6, false).toRawEntity())
         collectionA.store(Person("g", 7, true).toRawEntity())
 
-        assertThat(collectionB.value()).hasSize(7)
+        assertThat(collectionB.fetchAll()).hasSize(7)
 
         collectionA.clear()
-        assertThat(collectionA.value()).isEmpty()
-        assertThat(collectionB.value()).isEmpty()
+        assertThat(collectionA.fetchAll()).isEmpty()
+        assertThat(collectionB.fetchAll()).isEmpty()
     }
 
     private data class Person(

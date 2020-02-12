@@ -82,7 +82,7 @@ open class Handle<Data : CrdtData, Op : CrdtOperation, T>(
         protected set
 
     /** Read value from the backing [StorageProxy], updating the internal clock copy. */
-    suspend fun value(): T {
+    protected suspend fun value(): T {
         log.debug { "Fetching value." }
         val particleView = storageProxy.getParticleView()
         this.versionMap = particleView.versionMap
