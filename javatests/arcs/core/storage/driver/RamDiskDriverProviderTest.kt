@@ -12,6 +12,7 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
@@ -26,7 +27,10 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class RamDiskDriverProviderTest {
     @After
-    fun teardown() = DriverFactory.clearRegistrationsForTesting()
+    fun teardown() {
+        DriverFactory.clearRegistrationsForTesting()
+        CapabilitiesResolver.reset()
+    }
 
     @Test
     fun registersSelfWithDriverFactory() {

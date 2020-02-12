@@ -16,7 +16,9 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.extension.toCrdtEntityData
 import arcs.core.crdt.extension.toEntity
+import arcs.core.data.Capabilities
 import arcs.core.data.Schema
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
@@ -158,6 +160,12 @@ object DatabaseDriverProvider : DriverProvider {
         this._factory = databaseFactory
         this.schemaLookup = schemaLookup
         DriverFactory.register(this)
+        CapabilitiesResolver.registerKeyCreator(
+            DATABASE_DRIVER_PROTOCOL,
+            Capabilities.Persistent
+        ) { storageKeyOptions, entitySchemaHash ->
+            DatabaseStorageKey(storageKeyOptions.arcId.toString(), entitySchemaHash, false)
+        }
     }
 
     private const val ERROR_MESSAGE_CONFIGURE_NOT_CALLED =

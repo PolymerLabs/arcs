@@ -21,6 +21,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
@@ -74,6 +75,7 @@ class SingletonIntegrationTest {
     @After
     fun tearDown() {
         RamDisk.clear()
+        CapabilitiesResolver.reset()
     }
 
     @Test

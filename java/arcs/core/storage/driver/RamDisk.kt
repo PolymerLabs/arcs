@@ -11,6 +11,8 @@
 
 package arcs.core.storage.driver
 
+import arcs.core.data.Capabilities
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
@@ -35,7 +37,7 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DR
         private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
 
         init {
-            // When VolatileStorageKey is imported, this will register its parser with the storage
+            // When RamDiskStorageKey is imported, this will register its parser with the storage
             // key parsers.
             StorageKeyParser.addParser(RAMDISK_DRIVER_PROTOCOL, ::fromString)
         }
@@ -95,6 +97,12 @@ class RamDiskDriverProvider : DriverProvider {
 object RamDisk {
     /* internal */ val memory = VolatileMemory()
 
+    init {
+        CapabilitiesResolver.registerKeyCreator(
+            RAMDISK_DRIVER_PROTOCOL,
+            Capabilities.TiedToRuntime
+        ) { _, _ -> RamDiskStorageKey("") }
+    }
     /** Clears every piece of data from the [RamDisk] memory. */
     fun clear() = memory.clear()
 }

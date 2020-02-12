@@ -7,6 +7,7 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -19,6 +20,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runBlockingTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -52,6 +54,9 @@ class ArcsSetTest {
 
     @Before
     fun setup() = RamDisk.clear()
+
+    @After
+    fun teardown() = CapabilitiesResolver.reset()
 
     @Test
     fun canCreateSet_ofEntities() = runBlockingTest {

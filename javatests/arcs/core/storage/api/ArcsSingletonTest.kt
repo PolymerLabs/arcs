@@ -7,6 +7,7 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
@@ -48,7 +49,10 @@ class ArcsSingletonTest {
     }
 
     @After
-    fun teardown() = RamDisk.clear()
+    fun teardown() {
+        RamDisk.clear()
+        CapabilitiesResolver.reset()
+    }
 
     @Test
     fun canCreate_singletonOfEntity() = runBlockingTest {

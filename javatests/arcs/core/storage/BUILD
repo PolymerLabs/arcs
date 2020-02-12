@@ -17,6 +17,7 @@ arcs_kt_android_test_suite(
     package = "arcs.core.storage",
     deps = [
         ":fakes",
+        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
