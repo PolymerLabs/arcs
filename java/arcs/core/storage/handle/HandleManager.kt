@@ -7,29 +7,14 @@ import arcs.core.data.EntityType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
-import arcs.core.storage.ActivationFactory
-import arcs.core.storage.Callbacks
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.Store
-import arcs.core.storage.StoreOptions
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
-typealias SingletonData<T> = CrdtSingleton.Data<T>
-typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
-typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<T>, T?>
-typealias SingletonHandle<T> = SingletonImpl<T>
-typealias SingletonActivationFactory<T> = ActivationFactory<SingletonData<T>, SingletonOp<T>, T?>
-
-typealias SetData<T> = CrdtSet.Data<T>
-typealias SetOp<T> = CrdtSet.IOperation<T>
-typealias SetStoreOptions<T> = StoreOptions<SetData<T>, SetOp<T>, Set<T>>
-typealias SetHandle<T> = CollectionImpl<T>
-typealias SetActivationFactory<T> = ActivationFactory<SetData<T>, SetOp<T>, Set<T>>
 
 /**
  * This interface is a convenience for creating the two common types of activation factories
@@ -75,7 +60,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     suspend fun singletonHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: Callbacks<SingletonOp<RawEntity>>? = null
+        callbacks: SingletonCallbacks<RawEntity>? = null
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -106,7 +91,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     suspend fun setHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: Callbacks<SetOp<RawEntity>>? = null
+        callbacks: SetCallbacks<RawEntity>? = null
     ): SetHandle<RawEntity> {
         val storeOptions = SetStoreOptions<RawEntity>(
             storageKey = storageKey,
