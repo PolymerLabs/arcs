@@ -45,9 +45,7 @@ class WasmCollectionImpl<T : WasmEntity>(
                 entities.remove(entity.internalId)
             }
         }
-        onUpdateActions.forEach { action ->
-            action(entities.values.toSet())
-        }
+        notifyOnUpdateActions()
     }
 
     override fun onUpdate(action: (Set<T>) -> Unit) {
@@ -68,9 +66,7 @@ class WasmCollectionImpl<T : WasmEntity>(
             entities.remove(entity.internalId)
             WasmRuntimeClient.collectionRemove(particle, this, encoded)
         }
-        onUpdateActions.forEach { action ->
-            action(entities.values.toSet())
-        }
+        notifyOnUpdateActions()
     }
 
     private fun add(added: ByteArray) {
@@ -87,8 +83,13 @@ class WasmCollectionImpl<T : WasmEntity>(
     override fun clear() {
         entities.clear()
         WasmRuntimeClient.collectionClear(particle, this)
+        notifyOnUpdateActions()
+    }
+
+    fun notifyOnUpdateActions() {
+        val s = entities.values.toSet()
         onUpdateActions.forEach { action ->
-            action(entities.values.toSet())
+            action(s)
         }
     }
 }

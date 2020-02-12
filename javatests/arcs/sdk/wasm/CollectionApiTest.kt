@@ -15,10 +15,8 @@ class CollectionApiTest : AbstractCollectionApiTest() {
     private var stored = CollectionApiTest_OutHandle()
     var x = 0.0;
 
-    init{
-        handles.ioHandle.onUpdate{ _ ->
-            x++
-        }
+    init {
+        handles.ioHandle.onUpdate{ x++ }
     }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
