@@ -16,7 +16,7 @@ import {Reference} from './reference.js';
 import {Type, EntityType, CollectionType, ReferenceType, SingletonType} from './type.js';
 import {Storable} from './handle.js';
 import {Particle} from './particle.js';
-import {Handle, Singleton, Collection} from './handle.js';
+import {Handle, Singleton} from './handle.js';
 import {Dictionary} from './hot.js';
 import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
@@ -839,7 +839,7 @@ export class WasmParticle extends Particle {
     }
     const encoder = this.getEncoder(handle.type);
     let p;
-    if (handle instanceof Singleton) {
+    if (handle instanceof Singleton || handle instanceof SingletonHandle) {
       p = this.container.storeBytes(await encoder.encodeSingleton(model));
     } else {
       p = this.container.storeBytes(await encoder.encodeCollection(model));
@@ -857,7 +857,7 @@ export class WasmParticle extends Particle {
     const encoder = this.getEncoder(handle.type);
     let p1 = 0;
     let p2 = 0;
-    if (handle instanceof Singleton) {
+    if (handle instanceof Singleton || handle instanceof SingletonHandle) {
       if (update.data) {
         p1 = this.container.storeBytes(await encoder.encodeSingleton(update.data));
       }
