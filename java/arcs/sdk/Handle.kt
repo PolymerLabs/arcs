@@ -47,7 +47,7 @@ interface ReadableCollection<T : Entity> : Handle {
     /** Assign a callback when the collection is Updated. */
     fun onUpdate(action: (Set<T>) -> Unit)
 
-    /** Returns a set with all the entities in the collection*/
+    /** Returns a set with all the entities in the collection. */
     fun fetchAll(): Set<T>
 }
 
