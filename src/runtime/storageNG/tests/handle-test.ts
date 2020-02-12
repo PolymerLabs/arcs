@@ -200,7 +200,7 @@ describe('CollectionHandle', async () => {
       clock: {'actor': 1}
     };
     await handle.onUpdate(op, {'actor': 1, 'other': 2});
-    assert.equal(Entity.id(particle.lastUpdate.removed), 'id');
+    assert.equal(Entity.id(particle.lastUpdate.removed[0]), 'id');
     assert.isFalse(particle.lastUpdate.originator);
   });
 

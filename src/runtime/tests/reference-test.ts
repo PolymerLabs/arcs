@@ -153,14 +153,9 @@ describe('references', () => {
 
             async onHandleUpdate(handle, update) {
               if (handle.name == 'inResult') {
-                if (update.added.length) {
-                  for (const ref of update.added) {
-                    await ref.dereference();
-                    this.output.store(ref.entity);
-                  }
-                } else {
-                  await update.added.dereference();
-                  this.output.add(update.added.entity);
+                for (const ref of update.added) {
+                  await ref.dereference();
+                  this.output.add(ref.entity);
                 }
               }
             }

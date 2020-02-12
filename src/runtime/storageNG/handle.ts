@@ -359,12 +359,12 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
       return this.onSync(set);
     }
     // Pass the change up to the particle.
-    const update: {added?: Entity, removed?: Entity, originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
+    const update: {added?: Entity[], removed?: Entity[], originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
     if (op.type === CollectionOpTypes.Add) {
-      update.added = this.serializer.deserialize(op.added, this.storageProxy.storageKey);
+      update.added = [this.serializer.deserialize(op.added, this.storageProxy.storageKey)];
     }
     if (op.type === CollectionOpTypes.Remove) {
-      update.removed = this.serializer.deserialize(op.removed, this.storageProxy.storageKey);
+      update.removed = [this.serializer.deserialize(op.removed, this.storageProxy.storageKey)];
     }
     if (this.particle) {
       await this.particle.callOnHandleUpdate(
