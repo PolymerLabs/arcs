@@ -207,7 +207,6 @@ fun ServiceInfo.toArcHost(sender: (Intent) -> Unit) =
 /**
  * Creates an [Intent] to invoke [ArcHost.registeredParticles] on a [Service]'s internal [ArcHost].
  */
-@VisibleForTesting
 fun ComponentName.createGetRegisteredParticlesIntent(): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.GetRegisteredParticles,
@@ -218,7 +217,6 @@ fun ComponentName.createGetRegisteredParticlesIntent(): Intent =
 /**
  * Creates an [Intent] to invoke [ArcHost.startArc] on a [Service]'s internal [ArcHost].
  */
-@VisibleForTesting
 fun PlanPartition.createStartArcHostIntent(service: ComponentName): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.StartArc,
@@ -229,7 +227,6 @@ fun PlanPartition.createStartArcHostIntent(service: ComponentName): Intent =
 /**
  * Creates an [Intent] to invoke [ArcHost.stopArc] on a [Service]'s internal [ArcHost].
  */
-@VisibleForTesting
 fun PlanPartition.createStopArcHostIntent(service: ComponentName): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.StopArc,

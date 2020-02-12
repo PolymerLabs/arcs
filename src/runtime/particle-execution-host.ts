@@ -44,7 +44,7 @@ export type ParticleExecutionHostOptions = Readonly<{
 
 @SystemTrace
 export class ParticleExecutionHost {
-  private readonly _apiPorts: PECOuterPort[];
+  private readonly apiPorts: PECOuterPort[];
   private readonly _portByParticle = new Map<Particle, PECOuterPort>();
   close : Runnable;
   private readonly arc: Arc;
@@ -57,16 +57,16 @@ export class ParticleExecutionHost {
 
   constructor({slotComposer, arc, ports}: ParticleExecutionHostOptions) {
     this.close = () => {
-      this._apiPorts.forEach(apiPort => apiPort.close());
+      this.apiPorts.forEach(apiPort => apiPort.close());
     };
     this.arc = arc;
     this.slotComposer = slotComposer;
-    this._apiPorts = ports.map(port => new PECOuterPortImpl(port, arc));
+    this.apiPorts = ports.map(port => new PECOuterPortImpl(port, arc));
   }
 
   private choosePortForParticle(particle: Particle): PECOuterPort {
     assert(!this._portByParticle.has(particle), `port already found for particle '${particle.spec.name}'`);
-    const port = this._apiPorts.find(port => particle.isExternalParticle() === port.supportsExternalParticle());
+    const port = this.apiPorts.find(port => particle.isExternalParticle() === port.supportsExternalParticle());
     assert(!!port, `No port found for '${particle.spec.name}'`);
     this._portByParticle.set(particle, port);
     return this.getPort(particle);
@@ -78,7 +78,7 @@ export class ParticleExecutionHost {
   }
 
   stop() {
-    this._apiPorts.forEach(apiPort => apiPort.Stop());
+    this.apiPorts.forEach(apiPort => apiPort.Stop());
   }
 
   get idle(): Promise<Map<Particle, number[]>> | undefined {
@@ -88,12 +88,12 @@ export class ParticleExecutionHost {
       });
     }
     this.idleVersion = this.nextIdentifier;
-    this._apiPorts.forEach(apiPort => apiPort.AwaitIdle(this.nextIdentifier++));
+    this.apiPorts.forEach(apiPort => apiPort.AwaitIdle(this.nextIdentifier++));
     return this.idlePromise;
   }
 
   get messageCount(): number {
-    return [...this._apiPorts.values()].map(apiPort => apiPort.messageCount).reduce((prev, current) => prev + current, 0);
+    return [...this.apiPorts.values()].map(apiPort => apiPort.messageCount).reduce((prev, current) => prev + current, 0);
   }
 
   sendEvent(particle, slotName, event): void {
@@ -117,7 +117,7 @@ export class ParticleExecutionHost {
   reinstantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
     assert(this.particles.find(p => p === particle),
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
-    this._apiPorts.forEach(apiPort => apiPort.clear());
+    this.apiPorts.forEach(apiPort => { apiPort.clear(); });
     const apiPort = this.getPort(particle);
     stores.forEach((store, name) => {
       apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.ttl);
@@ -171,13 +171,12 @@ class PECOuterPortImpl extends PECOuterPort {
   // Should be called when closing apiPorts or re-instantiating particles to
   // clean up stale resources such as registered storage listeners, etc.
   clear() {
-    this.storageListenerRemovalCallbacks.forEach(cb => cb());
+    this.storageListenerRemovalCallbacks.forEach(cb => { cb(); });
   }
 
   onInitializeProxy(handle: StorageProviderBase, callback: number) {
-    const target = {};
-    const cb = data => this.SimpleCallback(callback, data);
-    this.storageListenerRemovalCallbacks.push(() => handle.legacyOff(cb));
+    const cb = data => { this.SimpleCallback(callback, data); };
+    this.storageListenerRemovalCallbacks.push(() => { handle.legacyOff(cb); });
     handle.legacyOn(cb);
   }
 
