@@ -39,7 +39,7 @@ data class ParcelableRawEntity(
                 parcel.writeTypedObject(ParcelableReferencable(it), flags)
             }
         }
-        parcel.writeString(actual.expirationTimestamp)
+        parcel.writeLong(actual.expirationTimestamp)
     }
 
     override fun describeContents(): Int = 0
@@ -67,7 +67,7 @@ data class ParcelableRawEntity(
                 collections[key] = set
             }
 
-            val expirationTimestamp = requireNotNull(parcel.readString())
+            val expirationTimestamp = requireNotNull(parcel.readLong())
 
             val rawEntity = RawEntity(id, singletons, collections, expirationTimestamp)
             return ParcelableRawEntity(rawEntity)
