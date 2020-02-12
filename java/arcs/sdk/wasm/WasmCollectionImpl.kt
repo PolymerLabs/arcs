@@ -26,7 +26,7 @@ class WasmCollectionImpl<T : WasmEntity>(
     override val size: Int
         get() = entities.size
 
-    override fun iterator() = entities.values.iterator()
+    override fun fetchAll() = entities.values.toSet()
 
     override fun sync(encoded: ByteArray) {
         entities.clear()

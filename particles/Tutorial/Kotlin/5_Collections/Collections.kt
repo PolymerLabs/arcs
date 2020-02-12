@@ -17,7 +17,7 @@ package arcs.tutorials
 class Collections : AbstractCollections() {
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
-        handles.inputData.forEach { people ->
+        handles.inputData.fetchAll().forEach { people ->
             peopleList.add(mapOf("name" to people.name, "age" to people.age))
         }
 

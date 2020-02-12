@@ -406,7 +406,7 @@ class CollectionsParticle : AbstractCollectionsParticle() {
         // We begin by generating the list of models that should fill the template. Our template
         // has name ang age so we will use these names.
         val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
-        handles.people.forEach { people ->
+        handles.inputData.fetchAll().forEach { people ->
             peopleList.add(mapOf("name" to people.name, "age" to people.age))
         }
 

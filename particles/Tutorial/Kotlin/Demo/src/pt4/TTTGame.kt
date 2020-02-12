@@ -141,7 +141,7 @@ class TTTGame : AbstractTTTGame() {
         ))
     }
 
-    private fun hasReset() = handles.events.any { it.type == "reset" }
+    private fun hasReset() = handles.events.fetchAll().any { it.type == "reset" }
 
     private fun Int.isValidMove(boardList: List<String>) = this in 0..9 && boardList[this] == ""
 }

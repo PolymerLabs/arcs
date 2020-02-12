@@ -39,7 +39,7 @@ class CollectionApiTest : AbstractCollectionApiTest() {
             }
             "case4" -> {
                 val d1 = CollectionApiTest_OutHandle()
-                val iter = handles.inHandle.iterator()
+                val iter = handles.inHandle.fetchAll().iterator()
                 val flg = iter.hasNext()
                 val i1 = iter.next()
                 if (x == 3.0) {
@@ -89,7 +89,7 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                 handles.outHandle.store(d2)
 
                 // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
-                val sorted = handles.ioHandle.sortedBy { it.num.toInt() }
+                val sorted = handles.ioHandle.fetchAll().sortedBy { it.num.toInt() }
                 sorted.forEach {
                     handles.outHandle.store(CollectionApiTest_OutHandle(
                         num = it.num,
