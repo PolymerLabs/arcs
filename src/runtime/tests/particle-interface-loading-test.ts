@@ -19,6 +19,8 @@ import {ArcId} from '../id.js';
 import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {singletonHandleForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
+import { ArcStoresFetcher } from '../../devtools-connector/arc-stores-fetcher.js';
+import { Entity } from '../entity.js';
 
 describe('particle interface loading', () => {
 
@@ -234,5 +236,56 @@ describe('particle interface loading', () => {
     await arc.idle;
     const fooHandle = await singletonHandleForTest(arc, fooStore);
     assert.deepStrictEqual(await fooHandle.fetch(), {value: 'hello world!!!'});
+  });
+
+  it('updates transformation particle on inner handle koala', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        value: Text
+      particle UpdatingParticle in 'updating-particle.js'
+        innerFoo: writes Foo
+      recipe
+        h0: use *
+        UpdatingParticle
+          innerFoo: h0
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    const loader = new Loader(null, {
+      'updating-particle.js': `
+        'use strict';
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            setHandles(handles) {
+              this.innerFooHandle = handles.get('innerFoo');
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: 'hello world!!!'}));
+            }
+          };
+        });
+      `
+    });
+    const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
+    const fooType = manifest.findTypeByName('Foo');
+    const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
+    const fooStore = await arc.createStore(fooType);
+    recipe.handles[0].mapToStorage(fooStore);
+    recipe.normalize();
+
+    await arc.instantiate(recipe);
+    await arc.idle;
+    const fooHandle = await singletonHandleForTest(arc, fooStore);
+    assert.deepStrictEqual(await fooHandle.get(), {value: 'hello world!!!'});
+
+    await fooHandle.set(new foo({value: "Goodbye"}))
+    assert.deepStrictEqual(await fooHandle.get(), {value: 'Goodbye'});
+
+    const serialization = await arc.serialize();
+    
+    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
+    await arc2.idle;
+    const fooHandle2 = await singletonHandleForTest(arc2, fooStore);
+    
+    assert.deepStrictEqual(await fooHandle2.get(), {value: 'Goodbye'});
+    
   });
 });
