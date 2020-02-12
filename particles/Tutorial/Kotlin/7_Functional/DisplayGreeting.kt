@@ -18,10 +18,10 @@ import arcs.sdk.Handle
  */
 class DisplayGreeting : AbstractDisplayGreeting() {
 
-    var name = "Human"
+    private var name = "Human"
 
-    init{
-        handles.person.onUpdate{ p ->
+    init {
+        handles.person.onUpdate { p ->
             name = p?.name ?: name
             this.renderOutput()
         }

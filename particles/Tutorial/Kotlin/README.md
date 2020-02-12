@@ -552,12 +552,12 @@ file as shown below.
 ```kotlin
 class DisplayGreeting : AbstractDisplayGreeting() {
 
-    var name = "Human"
+    private var name = "Human"
 
     // Declaring the onUpdate function goes within init
-    init{
+    init {
         // The callback we provide will trigger when the person handle updates.
-        handles.person.onUpdate{ p ->
+        handles.person.onUpdate { p ->
             // p will be the enity the person handle now points at.
             name = p?.name ?: name
             this.renderOutput()
