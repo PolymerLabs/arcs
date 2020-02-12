@@ -27,7 +27,7 @@ interface ReadableSingleton<T : Entity> : Handle {
 /** A singleton handle with write access. */
 interface WritableSingleton<T : Entity> : Handle {
     /** Sets the value of the singleton. */
-    suspend fun set(entity: T)
+    suspend fun store(entity: T)
 
     /** Clears the value of the singleton. */
     suspend fun clear()
