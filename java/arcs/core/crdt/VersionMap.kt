@@ -42,7 +42,8 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     fun isNotEmpty(): Boolean = !isEmpty()
 
     /** Creates a deep copy of this [VersionMap]. */
-    fun copy(): VersionMap = VersionMap(this)
+    // toMutableMap is documented to copy the data.
+    fun copy(): VersionMap = VersionMap(this.backingMap.toMutableMap())
 
     /**
      * Gets a the current [Version] for a given [Actor], or [DEFAULT_VERSION] if no value has been
