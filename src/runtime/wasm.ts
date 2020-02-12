@@ -937,7 +937,7 @@ export class WasmParticle extends Particle {
     }
 
     const encoder = this.getEncoder(entityType);
-    const entity = await Reference.retrieve(this.container.pec, id, storageKey, entityType);
+    const entity = await Reference.retrieve(this.container.pec, id, storageKey, entityType, this.id);
 
     const p = this.container.storeBytes(await encoder.encodeSingleton(entity));
     this.exports._dereferenceResponse(this.innerParticle, continuationId, p);
