@@ -8,7 +8,7 @@ class Player : AbstractPlayer() {
 
     init {
         eventHandler("onHit") {
-            handles.cardRequest.set(Player_CardRequest(player = name))
+            handles.cardRequest.store(Player_CardRequest(player = name))
             log("Hit.")
         }
         eventHandler("onStand") {

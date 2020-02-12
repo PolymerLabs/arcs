@@ -115,7 +115,7 @@ class AndroidHandleManagerTest {
     fun testCreateSingletonHandle() = runBlockingTest {
         handleManagerTest { hm ->
             val singletonHandle = hm.singletonHandle(singletonKey, schema)
-            singletonHandle.set(entity1)
+            singletonHandle.store(entity1)
 
             // Now read back from a different handle
             val readbackHandle = hm.singletonHandle(singletonKey, schema)

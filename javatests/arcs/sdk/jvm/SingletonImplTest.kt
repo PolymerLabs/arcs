@@ -53,19 +53,19 @@ class SingletonImplTest {
 
     @Test
     fun set_changesValue() = runBlockingTest {
-        singleton.set(DUMMY_VALUE)
+        singleton.store(DUMMY_VALUE)
         assertThat(singleton.fetch()).isEqualTo(DUMMY_VALUE)
     }
 
     @Test
     fun set_updatesParticle() = runBlockingTest {
-        singleton.set(DUMMY_VALUE)
+        singleton.store(DUMMY_VALUE)
         verify(particle).onHandleUpdate(singleton)
     }
 
     @Test
     fun clear_changesValue() = runBlockingTest {
-        singleton.set(DUMMY_VALUE)
+        singleton.store(DUMMY_VALUE)
         singleton.clear()
         assertThat(singleton.fetch()).isNull()
     }
@@ -78,7 +78,7 @@ class SingletonImplTest {
 
     @Test
     fun set_updatesHandle() = runBlockingTest {
-        singleton.set(DUMMY_VALUE)
+        singleton.store(DUMMY_VALUE)
         verify(action).invoke(DUMMY_VALUE)
     }
 

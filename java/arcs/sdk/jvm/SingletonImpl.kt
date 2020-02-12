@@ -24,7 +24,7 @@ class SingletonImpl<T : Entity>(
 
     override suspend fun fetch(): T? = entity
 
-    override suspend fun set(entity: T) {
+    override suspend fun store(entity: T) {
         this.entity = entity
         particle.onHandleUpdate(this)
         onUpdateActions.forEach { action ->

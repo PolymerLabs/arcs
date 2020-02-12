@@ -95,7 +95,7 @@ val JsValue.asString: String
         if (len > 0) {
             val chars: CharArray = CharArray(len)
             for (i in 0 until len) {
-                chars.set(i, getStringCharCodeAt(this.arena, this.index, i))
+                chars.store(i, getStringCharCodeAt(this.arena, this.index, i))
             }
             return String(chars)
         }

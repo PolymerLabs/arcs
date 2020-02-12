@@ -110,7 +110,7 @@ class TestParticle : AbstractTestParticle() {
                 flg = false
             )
             
-            handles.data.set(newData.copy(
+            handles.data.store(newData.copy(
                 num = newData.num.let { it + 2 },
                 txt = "${newData.txt}!!!!!!"
             ))

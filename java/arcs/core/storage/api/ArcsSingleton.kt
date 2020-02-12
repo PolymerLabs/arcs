@@ -207,7 +207,7 @@ class ArcsSingleton<T, StoreData, StoreOp>(
      * Sets the value of the [ArcsSingleton] to the provided [value] and returns whether or not the
      * update could be applied.
      */
-    suspend fun set(value: T): Boolean {
+    suspend fun store(value: T): Boolean {
         activated.await()
         val (success, op) = crdtMutex.withLock {
             makeUpdateOp(value).let { crdtSingleton.applyOperation(it) to it }
@@ -220,10 +220,10 @@ class ArcsSingleton<T, StoreData, StoreOp>(
      * Launches a coroutine to set the value of the [ArcsSingleton] to the provided [value] and
      * returns a [Deferred] which will be resolved to whether or not the update could be applied.
      */
-    suspend fun setAsync(
+    suspend fun storeAsync(
         value: T,
         coroutineContext: CoroutineContext = scope.coroutineContext
-    ): Deferred<Boolean> = scope.async(coroutineContext) { set(value) }
+    ): Deferred<Boolean> = scope.async(coroutineContext) { store(value) }
 
     /**
      * Clears the value from the [ArcsSingleton] and returns whether or not the clearing operation

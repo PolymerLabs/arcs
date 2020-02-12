@@ -11,20 +11,16 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.wasm.WasmHandle
+import arcs.sdk.Handle
 
 class TTTRandomComputer : AbstractTTTRandomComputer() {
-    override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) = getMove(handles.gameState.fetch())
+    override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(handles.gameState)
 
-    init {
-        handles.gameState.onUpdate { gameState ->
-            getMove(gameState)
-        }
-    }
+    override fun onHandleUpdate(handle: Handle) {
+        if (handles.gameState.fetch()?.currentPlayer != handles.player.fetch()?.id) return
 
-    fun getMove(gameState: TTTRandomComputer_GameState?) {
-        val gs = gameState ?: TTTRandomComputer_GameState()
-        // Ensure we are the current player
+        val gs = handles.gameState.fetch() ?: TTTRandomComputer_GameState()
+
         val boardArr = gs.board.split(",")
         val emptyCells = mutableListOf<Double>()
 
