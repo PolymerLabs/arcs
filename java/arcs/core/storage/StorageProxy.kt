@@ -50,7 +50,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
         by guardedBy(syncMutex, initialCrdt)
     private val waitingSyncs: MutableList<CompletableDeferred<ValueAndVersion<T>>>
         by guardedBy(syncMutex, mutableListOf())
-    private var isSyncronized: Boolean
+    private var isSynchronized: Boolean
         by guardedBy(syncMutex, false)
 
     private val store = storeEndpointProvider.getStorageEndpoint()
@@ -73,7 +73,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
             readHandles.size == 1
         }
 
-        val (hasSynced, versionMap) = syncMutex.withLock { isSyncronized to crdt.versionMap.copy() }
+        val (hasSynced, versionMap) = syncMutex.withLock { isSynchronized to crdt.versionMap.copy() }
 
         if (firstReader) requestSynchronization()
         else if (hasSynced) coroutineScope { launch { handle.callback?.onSync() } }
@@ -122,7 +122,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
         val future = CompletableDeferred<ValueAndVersion<T>>()
 
         val needsSync = syncMutex.withLock {
-            if (isSyncronized) {
+            if (isSynchronized) {
                 val result = ValueAndVersion(crdt.consumerView, crdt.versionMap.copy())
                 log.debug { "Already synchronized, returning $result" }
                 future.complete(result)
@@ -147,7 +147,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
             is ProxyMessage.ModelUpdate -> {
                 val (futuresToResolve, valueAndVersion) = syncMutex.withLock {
                     crdt.merge(message.model)
-                    isSyncronized = true
+                    isSynchronized = true
                     val toResolve = waitingSyncs.toList() // list guaranteed to be copy
                     waitingSyncs.clear()
                     toResolve to ValueAndVersion(crdt.consumerView, crdt.versionMap.copy())
@@ -161,7 +161,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
                 var futuresToResolve: List<CompletableDeferred<ValueAndVersion<T>>> = emptyList()
                 val (valueAndVersion, applyFailures) = syncMutex.withLock {
                     val failures = message.operations.any { !crdt.applyOperation(it) }
-                    isSyncronized = !failures
+                    isSynchronized = !failures
                     if (!failures) {
                         futuresToResolve = waitingSyncs.toList()
                         waitingSyncs.clear()
@@ -201,7 +201,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     private suspend inline fun forEachHandle(crossinline block: (Handle<Data, Op, T>) -> Unit) {
         val handlesToNotify = handlesMutex.withLock { readHandles.toSet() }
 
-        // blocks until all handles have completed (in parallel)
+        // suspends until all handles have completed (in parallel)
         coroutineScope {
             handlesToNotify.forEach { handle ->
                 launch { block(handle) }
