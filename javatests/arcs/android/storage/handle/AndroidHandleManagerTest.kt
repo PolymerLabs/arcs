@@ -160,7 +160,7 @@ class AndroidHandleManagerTest {
 
             // Now read back from a different handle
             val readbackHandle = hm.setHandle(setKey, schema)
-            val readBack = readbackHandle.value()
+            val readBack = readbackHandle.fetchAll()
             assertThat(readBack).containsExactly(entity1, entity2)
         }
     }
