@@ -36,6 +36,9 @@ class CollectionImpl<T : Referencable>(
     /** Returns true if the current storage proxy view of the collection is empty. */
     suspend fun isEmpty(): Boolean = value().isEmpty()
 
+    /** Returns the values in the collection as a set. */
+    suspend fun fetchAll(): Set<T> = value()
+
     /**
      * Store a new entity in the collection.
      *
