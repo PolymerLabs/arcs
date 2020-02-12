@@ -470,10 +470,9 @@ When you execute this recipe, you should see everyone being greeted. If you add 
 
 # The Lore of a JSON Store
 
-Hopefully by now you are starting to see how the different components of Arcs work together to preserve user sovereignty as you develop. This is the final chapter in our introductory tutorials which are designed to introduce the base Arcs concepts. But don’t worry, this is not the end of our tutorials! From here you can continue to the next set of tutorials where you’ll build a tic-tac-toe game with interchangeable human and computer players.
-
-Alright, let’s get to the actual tutorial! This time, instead of embedding the store's data directly inside
-the Arcs Manifest file (as a `resource`), we're going to load it from a separate JSON file. Let’s start with the Arcs Manifest file:
+This time, instead of embedding the store's data directly inside the Arcs
+Manifest file (as a `resource`), we're going to load it from a separate JSON
+file. Let’s start with the Arcs Manifest file:
 
 ```
  import 'PeopleSchemas.arcs'
@@ -534,16 +533,65 @@ class JsonStoreParticle : AbstractJsonStoreParticle() {
 ```
 
 
-Before we finish, let’s go over all of the concepts we have introduced in these tutorials.
+# Giving Instructions using Functions
 
->- *Particle* - Modular component of functionality. Ideally small units so particles can be reusable.
+Hopefully by now you are starting to see how the different components of Arcs
+work together to preserve user sovereignty as you develop. This is the final
+chapter in our introductory tutorials which are designed to introduce the base
+Arcs concepts. But don’t worry, this is not the end of our tutorials! From here
+you can continue to the next set of tutorials where you’ll build a tic-tac-toe
+game with interchangeable human and computer players.
+
+Alright, let’s get to the actual tutorial! In this tutorial, we revisit the code
+in tutorial 4, and update it to use the functional features in Arcs. We do this
+through the `onUpdate` method which lets us set a call back on a handle. When
+the handle is updated, the provided method will be called with the entity the
+handle currenlty holds. To understand this better, let's look at an example. The
+rest of the code stays the same as tutorial 4, we just update the `getPerson.kt`
+file as shown below.
+```kotlin
+class DisplayGreeting : AbstractDisplayGreeting() {
+
+    private var name = "Human"
+
+    // Declaring the onUpdate function goes within init
+    init {
+        // The callback we provide will trigger when the person handle updates.
+        handles.person.onUpdate { p ->
+            // p will be the enity the person handle now points at.
+            name = p?.name ?: name
+            this.renderOutput()
+        }
+    }
+
+    override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
+
+    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
+        return model + mapOf(
+            "name" to name
+        )
+    }
+}
+```
+
+While this example is fairly trivial, when we get to more complex cases, having
+the ability to define callbacks on handle updates becomes more useful.
+
+Before we finish, let’s go over all of the concepts we have introduced in these
+tutorials.
+
+>- *Particle* - Modular component of functionality. Ideally small units so
+particles can be reusable.
 >- *Recipe* - A combination of particles to create features and systems.
->- *Template Interpolation* - A mechanism to substitute formatted data into renderable elements.
->- *Slots* - An element of the Arcs platform that allows particles to render on a user interface.
+>- *Template Interpolation* - A mechanism to substitute formatted data into
+renderable elements.
+>- *Slots* - An element of the Arcs platform that allows particles to render on
+a user interface.
 >- *Schema* - Composition of data to create a new type.
->- *Entity* - Entities are units of data in Arcs. They are created, exchanged and modified as means of communication between particles.
+>- *Entity* - Entities are units of data in Arcs. They are created, exchanged
+and modified as means of communication between particles.
 >- *Stores* - A store represents a data location
->- *Handles* - Handles are manifestations of stores inside an arc. They allow particles to read, write and listen for data updates.
+>- *Handles* - Handles are manifestations of stores inside an arc. They allow
+particles to read, write and listen for data updates.
 
 To see how we combine these elements to create a functioning system, checkout the tic-tac-toe tutorial next!
-
