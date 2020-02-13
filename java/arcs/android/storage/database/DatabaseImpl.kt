@@ -40,9 +40,9 @@ import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.jvm.util.performance.JvmTimer
-import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long
@@ -128,10 +128,7 @@ class DatabaseImpl(
             "get_singleton_id",
             "get_singleton_entries"
         ),
-        delete = PerformanceStatistics(
-            JvmTimer,
-            ""
-        )
+        delete = PerformanceStatistics(JvmTimer)
     )
 
     /** Maps from schema hash to type ID (local copy of the 'types' table). */
@@ -190,11 +187,11 @@ class DatabaseImpl(
     fun getEntity(
         storageKey: StorageKey,
         schema: Schema,
-        counters: Counters
+        counters: Counters? = null
     ): DatabaseData.Entity = readableDatabase.useTransaction {
         val db = this
         // Fetch the entity's type by storage key.
-        counters.increment("get_entity_type_by_storageKey")
+        counters?.increment("get_entity_type_by_storageKey")
         val (storageKeyId, schemaTypeId, entityId) = rawQuery(
             """
                 SELECT
@@ -217,11 +214,11 @@ class DatabaseImpl(
             "Entity at storage key $storageKey does not exist."
         )
         // Fetch the entity's fields.
-        counters.increment("get_entity_fields")
+        counters?.increment("get_entity_fields")
         val fieldsByName = getSchemaFields(schemaTypeId, db)
         val fieldsById = fieldsByName.mapKeys { it.value.fieldId }
         // Populate the entity's field data from the database.
-        counters.increment("get_entity_field_values")
+        counters?.increment("get_entity_field_values")
         val data = mutableMapOf<FieldName, Any?>()
         rawQuery(
             "SELECT field_id, value_id FROM field_values WHERE entity_storage_key_id = ?",
@@ -232,7 +229,7 @@ class DatabaseImpl(
             val field = fieldsById.getValue(fieldId)
             // TODO: Handle non-primitive and collection field values.
             // TODO: Don't do a separate query for every field.
-            counters.increment("get_entity_field_value_primitive")
+            counters?.increment("get_entity_field_value_primitive")
             data[field.fieldName] = getPrimitiveValue(fieldValueId, field.typeId, db, counters)
         }
         DatabaseData.Entity(
@@ -250,16 +247,16 @@ class DatabaseImpl(
     fun getCollection(
         storageKey: StorageKey,
         schema: Schema,
-        counters: Counters
+        counters: Counters? = null
     ): DatabaseData.Collection = readableDatabase.useTransaction {
         val db = this
-        counters.increment("collection_id")
+        counters?.increment("collection_id")
         val collectionId = requireNotNull(
             getCollectionId(storageKey, DataType.Collection, db)
         ) {
             "Collection at storage key $storageKey does not exist."
         }
-        counters.increment("collection_entries")
+        counters?.increment("collection_entries")
         val values = getCollectionEntries(collectionId, db)
         DatabaseData.Collection(
             values,
@@ -273,14 +270,14 @@ class DatabaseImpl(
     fun getSingleton(
         storageKey: StorageKey,
         schema: Schema,
-        counters: Counters
+        counters: Counters? = null
     ): DatabaseData.Singleton = readableDatabase.useTransaction {
         val db = this
-        counters.increment("get_singleton_id")
+        counters?.increment("get_singleton_id")
         val collectionId = requireNotNull(getCollectionId(storageKey, DataType.Singleton, db)) {
             "Singleton at storage key $storageKey does not exist."
         }
-        counters.increment("get_singleton_entries")
+        counters?.increment("get_singleton_entries")
         val values = getCollectionEntries(collectionId, db)
         require(values.size <= 1) {
             "Singleton at storage key $storageKey has more than one value."
@@ -318,7 +315,7 @@ class DatabaseImpl(
     }
 
     @VisibleForTesting
-    suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity, counters: Counters) =
+    suspend fun insertOrUpdate(storageKey: StorageKey, entity: Entity, counters: Counters? = null) =
         writableDatabase.useTransaction {
             val db = this
             // Fetch/create the entity's type ID.
@@ -332,7 +329,7 @@ class DatabaseImpl(
                 counters
             )
             // Insert/update the entity's field types.
-            counters.increment("get_entity_fields")
+            counters?.increment("get_entity_fields")
             val fields = getSchemaFields(schemaTypeId, db)
             val content = ContentValues().apply {
                 put("entity_storage_key_id", storageKeyId)
@@ -344,7 +341,7 @@ class DatabaseImpl(
                     // TODO: Handle non-primitive field values and collections.
                     put("value_id", getPrimitiveValueId(fieldValue, field.typeId, db, counters))
                 }
-                counters.increment("update_entity_field_value")
+                counters?.increment("update_entity_field_value")
                 insertWithOnConflict(
                     TABLE_FIELD_VALUES,
                     null,
@@ -359,7 +356,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         data: DatabaseData.Collection,
         dataType: DataType,
-        counters: Counters
+        counters: Counters?
     ) = writableDatabase.useTransaction {
         val db = this
 
@@ -369,9 +366,10 @@ class DatabaseImpl(
         // Retrieve existing collection ID for this storage key, if one exists.
         when (dataType) {
             DataType.Collection ->
-                counters.increment("get_collection_id")
+                counters?.increment("get_collection_id")
             DataType.Singleton ->
-                counters.increment("get_singleton_id")
+                counters?.increment("get_singleton_id")
+            else -> Unit
         }
         var collectionId = getCollectionId(storageKey, dataType, db)
 
@@ -379,9 +377,10 @@ class DatabaseImpl(
             // Create a new collection ID and storage key ID.
             when (dataType) {
                 DataType.Collection ->
-                    counters.increment("insert_collection_record")
+                    counters?.increment("insert_collection_record")
                 DataType.Singleton ->
-                    counters.increment("insert_singleton_record")
+                    counters?.increment("insert_singleton_record")
+                else -> Unit
             }
             collectionId = insert(
                 TABLE_COLLECTIONS,
@@ -390,9 +389,10 @@ class DatabaseImpl(
             )
             when (dataType) {
                 DataType.Collection ->
-                    counters.increment("insert_collection_storageKey")
+                    counters?.increment("insert_collection_storageKey")
                 DataType.Singleton ->
-                    counters.increment("insert_singleton_storageKey")
+                    counters?.increment("insert_singleton_storageKey")
+                else -> Unit
             }
             insert(
                 TABLE_STORAGE_KEYS,
@@ -408,9 +408,10 @@ class DatabaseImpl(
             // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
             when (dataType) {
                 DataType.Collection ->
-                    counters.increment("delete_collection_entries")
+                    counters?.increment("delete_collection_entries")
                 DataType.Singleton ->
-                    counters.increment("delete_singleton_entry")
+                    counters?.increment("delete_singleton_entry")
+                else -> Unit
             }
             delete(
                 TABLE_COLLECTION_ENTRIES,
@@ -431,9 +432,10 @@ class DatabaseImpl(
             .forEach { referenceId ->
                 when (dataType) {
                     DataType.Collection ->
-                        counters.increment("insert_collection_entry")
+                        counters?.increment("insert_collection_entry")
                     DataType.Singleton ->
-                        counters.increment("insert_singleton_entry")
+                        counters?.increment("insert_singleton_entry")
+                    else -> Unit
                 }
                 insert(
                     TABLE_COLLECTION_ENTRIES,
@@ -447,7 +449,7 @@ class DatabaseImpl(
     suspend fun insertOrUpdate(
         storageKey: StorageKey,
         data: DatabaseData.Singleton,
-        counters: Counters
+        counters: Counters? = null
     ) {
         // Convert Singleton into a a zero-or-one-element Collection.
         val set = mutableSetOf<Reference>()
