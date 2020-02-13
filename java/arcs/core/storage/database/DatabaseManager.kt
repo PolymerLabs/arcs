@@ -33,7 +33,7 @@ interface DatabaseManager {
      * aware of.
      */
     suspend fun snapshotStatistics():
-        Map<DatabaseIdentifier,  DatabasePerformanceStatistics.Snapshot>
+        Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot>
 }
 
 /** Identifier for an individual [Database] instance. */

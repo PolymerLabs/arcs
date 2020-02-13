@@ -40,9 +40,9 @@ import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.jvm.util.performance.JvmTimer
+import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.reflect.KClass
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long

@@ -23,6 +23,8 @@ import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.jvm.util.performance.JvmTimer
+import kotlin.coroutines.coroutineContext
+import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
@@ -32,8 +34,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.coroutines.coroutineContext
-import kotlin.reflect.KClass
 
 /** [DatabaseManager] which generates mockito mocks of [Database] objects. */
 class MockDatabaseManager : DatabaseManager {
