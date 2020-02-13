@@ -232,7 +232,7 @@ export class Collection extends HandleOld {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    return this._restore([await this.storage.get(id)])[0];
+    return this._restore([await this.storage.fetchAll(id)])[0];
   }
 
   /**
@@ -364,7 +364,7 @@ export class Singleton extends HandleOld {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    const model = await this.storage.get();
+    const model = await this.storage.fetch();
     return this._restore(model);
   }
 

@@ -181,14 +181,14 @@ export class Description {
       const handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'dummy'});
       if (handle instanceof SingletonHandle) {
         if (handle.type.getContainedType() instanceof EntityType) {
-          const entityValue = await handle.get();
+          const entityValue = await handle.fetch();
           if (entityValue) {
             const schema = store.type.getEntitySchema();
             const valueDescription = schema ? schema.description.value : undefined;
             return {entityValue, valueDescription};
           }
         } else if (handle.type.getContainedType() instanceof InterfaceType) {
-          const interfaceValue = await handle.get();
+          const interfaceValue = await handle.fetch();
           if (interfaceValue) {
             return {interfaceValue};
           }
@@ -217,13 +217,13 @@ export class Description {
       }
     } else if (store.type instanceof EntityType) {
       const singletonStore = store as SingletonStorageProvider;
-      const value = await singletonStore.get();
+      const value = await singletonStore.fetch();
       if (value && value['rawData']) {
         return {entityValue: value['rawData'], valueDescription: store.type.entitySchema.description.value};
       }
     } else if (store.type instanceof InterfaceType) {
       const singletonStore = store as SingletonStorageProvider;
-      const interfaceValue = await singletonStore.get();
+      const interfaceValue = await singletonStore.fetch();
       if (interfaceValue) {
         return {interfaceValue};
       }
