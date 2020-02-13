@@ -16,7 +16,6 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.yield
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -75,7 +74,7 @@ class PerformanceStatisticsTest {
     }
 
     @Test
-    fun time() = runBlockingTest {
+    fun time() = runBlocking {
         val stats = PerformanceStatistics(timer, "foo")
 
         stats.time {
