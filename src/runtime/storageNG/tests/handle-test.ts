@@ -278,7 +278,7 @@ describe('SingletonHandle', async () => {
     assert.isTrue(particle.onSyncCalled);
   });
 
-  it('syncs before clearing', async () => {
+  it('can clear value set by other actor', async () => {
     const handle = await getSingletonHandle(barType);
     await handle.set(newEntity('A'));
     // Simulate another writer overwriting the value.
