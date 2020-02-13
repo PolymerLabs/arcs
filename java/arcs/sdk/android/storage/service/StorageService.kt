@@ -164,10 +164,10 @@ class StorageService : ResurrectorService() {
             """
                 |$pad$title (%d measurements):
                 |$pad  Runtime (ms):
-                |$pad  Average: %.3f 
-                |$pad  StdDev: %.3f 
-                |$pad  Min: %.3f
-                |$pad  Max: %.3f 
+                |$pad    Average: %.3f 
+                |$pad    StdDev: %.3f 
+                |$pad    Min: %.3f
+                |$pad    Max: %.3f 
                 |        
                 |${pad}Counts per measurement (name: average, standard deviation, min, max):
             """.trimMargin()
