@@ -43,6 +43,9 @@ class SingletonImpl<T : Referencable>(
 
     /** Clear the value from the backing [StorageProxy]. */
     suspend fun clear() {
+        // Sync before clearing in order to get an updated versionMap. This ensures we can clear
+        // values set by other actors.
+        fetch()
         storageProxy.applyOp(CrdtSingleton.Operation.Clear(name, versionMap))
     }
 }

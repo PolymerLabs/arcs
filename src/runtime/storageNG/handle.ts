@@ -415,6 +415,11 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
+    // Sync before clearing in order to get an updated versionMap. This ensures
+    // we can clear values set by other actors.
+    const [_, versionMap] = await this.storageProxy.getParticleView();
+    this.clock = versionMap;
+    // Issue clear op.
     const op: CRDTOperation = {
       type: SingletonOpTypes.Clear,
       actor: this.key,

@@ -120,6 +120,19 @@ class SingletonIntegrationTest {
         assertThat(singletonB.fetch()).isNull()
     }
 
+    @Test
+    fun clearingOnA_clearsValueSetByB() = runBlockingTest {
+        val lou = Person("Lou", 95, true)
+        val jan = Person("Jan", 28, true, emptySet())
+        singletonA.set(lou.toRawEntity())
+        singletonB.fetch()
+        singletonB.set(jan.toRawEntity())
+
+        singletonA.clear()
+
+        assertThat(singletonA.fetch()).isNull()
+    }
+
     private data class Person(
         val name: String,
         val age: Int,
