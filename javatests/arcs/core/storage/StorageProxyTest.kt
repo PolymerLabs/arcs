@@ -7,6 +7,8 @@ import arcs.core.crdt.VersionMap
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
+import java.util.concurrent.Executors
+import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -23,8 +25,6 @@ import org.mockito.Mock
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
-import java.util.concurrent.Executors
-import kotlin.random.Random
 
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
 @ExperimentalCoroutinesApi
@@ -185,25 +185,25 @@ class StorageProxyTest {
             suspend {
                 // handle reads data
                 storageProxy.getParticleView()
-                // make sure we follow up with a sync so the particle view doesn't get block
+                // make sure we follow up by ensuring view is synced so the particle view doesn't
+                // stay blocked
                 launch {
                     delay(10)
                     val op = mock(CrdtOperation::class.java)
                     mockCrdtModel.appliesOpAs(op, true)
-                    storageProxy.applyOp(op)
+                    storageProxy.onMessage(ProxyMessage.Operations(listOf(op), null))
                 }
             }
         )
 
         val workers = 20
         val jobs = 10
-        Executors.newFixedThreadPool(workers).asCoroutineDispatcher().use {
-            val newScope = it // does it@ work for this?
+        Executors.newFixedThreadPool(workers).asCoroutineDispatcher().use {inPool ->
             repeat(10) {
-                runBlocking(newScope) {
-                    withTimeout(2000) {
+                runBlocking {
+                    withTimeout(5000) {
                         repeat(workers) {
-                            launch {
+                            launch(inPool) {
                                 repeat(jobs) {
                                     val randomOp = ops[Random.nextInt(0, ops.size - 1)]
                                     randomOp()
@@ -216,9 +216,10 @@ class StorageProxyTest {
         }
     }
 
-    private fun newHandle(name: String,
-                          storageProxy: StorageProxy<CrdtData, CrdtOperation, String>,
-                          reader: Boolean
+    private fun newHandle(
+        name: String,
+        storageProxy: StorageProxy<CrdtData, CrdtOperation, String>,
+        reader: Boolean
     ) = Handle(name, storageProxy, reader).apply {
         this.callback = mock(Callbacks::class.java) as Callbacks<CrdtOperation>
     }
