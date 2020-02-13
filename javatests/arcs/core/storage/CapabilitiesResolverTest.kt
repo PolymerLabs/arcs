@@ -16,14 +16,13 @@ import arcs.core.data.Capabilities
 import arcs.core.data.Schema
 import arcs.core.storage.driver.*
 import arcs.core.testutil.assertThrows
-import arcs.jvm.storage.database.testutil.MockDatabaseFactory
+import arcs.jvm.storage.database.testutil.MockDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.lang.Error
 
 /** Tests for [CapabilitiesResolver]. */
 @RunWith(JUnit4::class)
@@ -82,7 +81,7 @@ class CapabilitiesResolverTest {
     @Test
     fun capabilitiesResolver_createsStorageKeys() {
         RamDisk.clear()
-        DatabaseDriverProvider.configure(MockDatabaseFactory(), mapOf<String, Schema>()::get)
+        DatabaseDriverProvider.configure(MockDatabaseManager(), mapOf<String, Schema>()::get)
         val options = CapabilitiesResolver.StorageKeyOptions(ArcId.newForTest("test"))
         val resolver1 = CapabilitiesResolver(options)
         assertThat(resolver1.findStorageKeyProtocols(Capabilities.TiedToArc))

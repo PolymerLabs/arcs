@@ -45,6 +45,9 @@ interface Database {
     /** Removes everything associated with the given [storageKey] from the database. */
     suspend fun delete(storageKey: StorageKey, originatingClientId: Int? = null)
 
+    /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
+    suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot
+
     /**
      * Registers a [client] which will be called when the data at its specified
      * [DatabaseClient.storageKey] is created, updated, or deleted. Returns a unique identifier for

@@ -24,11 +24,10 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
-import arcs.core.storage.database.DatabaseFactory
+import arcs.core.storage.database.DatabaseManager
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.jvm.storage.database.testutil.MockDatabaseFactory
+import arcs.jvm.storage.database.testutil.MockDatabaseManager
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Test
@@ -39,12 +38,12 @@ import org.junit.runners.JUnit4
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class DatabaseDriverProviderTest {
-    private var databaseFactory: DatabaseFactory? = null
+    private var databaseManager: DatabaseManager? = null
     private val schemaHashLookup = mutableMapOf<String, Schema>()
 
     @After
     fun tearDown() {
-        databaseFactory = null
+        databaseManager = null
         DriverFactory.clearRegistrationsForTesting()
         schemaHashLookup.clear()
         CapabilitiesResolver.reset()
@@ -154,8 +153,8 @@ class DatabaseDriverProviderTest {
         assertThat(singletonDriver.storageKey).isEqualTo(key)
     }
 
-    private fun databaseFactory(): DatabaseFactory =
-        databaseFactory ?: MockDatabaseFactory().also { databaseFactory = it}
+    private fun databaseFactory(): DatabaseManager =
+        databaseManager ?: MockDatabaseManager().also { databaseManager = it}
 
     companion object {
         private val DUMMY_SCHEMA = Schema(
