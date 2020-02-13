@@ -13,6 +13,7 @@ import {Manifest, ManifestWarning} from '../runtime/manifest.js';
 import {Loader} from '../platform/loader.js';
 import {RuntimeCacheService} from '../runtime/runtime-cache.js';
 import {VolatileStorage} from '../runtime/storage/volatile-storage.js';
+import {SimpleVolatileMemoryProvider} from '../runtime/storageNG/drivers/volatile.js';
 
 // Script to check that a bundle of Arcs manifest files, particle
 // implementations and JSON data files is complete (i.e. no explicitly mentioned
@@ -27,7 +28,7 @@ import {VolatileStorage} from '../runtime/storage/volatile-storage.js';
 async function checkManifest(src: string) {
   const loader = new Loader({});
   VolatileStorage.setStorageCache(new RuntimeCacheService());
-  const manifest = await Manifest.load(src, loader);
+  const manifest = await Manifest.load(src, loader, {memoryProvider: new SimpleVolatileMemoryProvider()});
 
   // Look for errors from parsing the manifest (ignore warnings). This covers
   // missing .arcs imports.
