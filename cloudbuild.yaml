@@ -26,9 +26,11 @@ steps:
 - id: 'local-presubmit'
   name: 'gcr.io/cloud-builders/docker'
   args: [
-    'run', '--rm', 'arcs-base',
+    'run',
+    '--network=cloudbuild',
+    '--rm', 'arcs-base',
     'tools/local-presubmit',
-    '--bazelrc=tools/travis.bazelrc',
+    '--bazelrc=tools/gcb.bazelrc',
   ]
   waitFor: ['build-image']
 
