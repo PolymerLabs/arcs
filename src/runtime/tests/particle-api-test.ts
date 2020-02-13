@@ -359,7 +359,7 @@ describe('particle-api', () => {
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
             setHandles(handles) {
-              handles.get('a').get().then(result => {
+              handles.get('a').fetch().then(result => {
                 handles.get('b').set(result);
               });
             }
@@ -456,8 +456,8 @@ describe('particle-api', () => {
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
             setHandles(handles) {
-              handles.get('a').get().then(resultA => {
-                handles.get('nobId').get().then(resultNob => {
+              handles.get('a').fetch().then(resultA => {
+                handles.get('nobId').fetch().then(resultNob => {
                   if (resultNob && resultNob.nobId === '12345') {
                     handles.get('b').set(resultA);
                   }
@@ -557,8 +557,8 @@ describe('particle-api', () => {
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
             setHandles(handles) {
-              handles.get('a').get().then(resultA => {
-                handles.get('target').get().then(resultTarget => {
+              handles.get('a').fetch().then(resultA => {
+                handles.get('target').fetch().then(resultTarget => {
                   handles.get('b').set(resultA);
                 })
               });
@@ -658,8 +658,8 @@ describe('particle-api', () => {
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
             setHandles(handles) {
-              handles.get('a').get().then(resultA => {
-                handles.get('target').get().then(resultNob => {
+              handles.get('a').fetch().then(resultA => {
+                handles.get('target').fetch().then(resultNob => {
                   if (resultNob.nobId === '12345') {
                     handles.get('b').set(resultA);
                   }
@@ -996,7 +996,7 @@ describe('particle-api', () => {
               this.out = handles.get('far');
             }
             async onHandleSync(handle, model) {
-              await handle.get();
+              await handle.fetch();
               this.startBusy();
               setTimeout(async () => {
                 await this.out.set(new this.out.entityClass({result: 'hi'}));
@@ -1053,7 +1053,7 @@ describe('particle-api', () => {
               this.out = handles.get('far');
             }
             async onHandleUpdate(handle, update) {
-              await handle.get();
+              await handle.fetch();
               this.startBusy();
               setTimeout(async () => {
                 await this.out.set(new this.out.entityClass({result: 'hi'}));

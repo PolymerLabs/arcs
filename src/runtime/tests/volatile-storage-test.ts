@@ -91,7 +91,7 @@ describe('volatile', () => {
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
 
-      assert.deepEqual(await var1.backingStore.get('id1'), await var1.fetch());
+      assert.deepEqual(await var1.backingStore.fetchAll('id1'), await var1.fetch());
     });
 
     it('supports references', async () => {

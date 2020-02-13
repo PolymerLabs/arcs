@@ -131,7 +131,7 @@ describe('CollectionHandle', async () => {
     const handle = await getCollectionHandle(barType, new MockParticle(), false, true);
     try {
       await handle.fetchAll('A');
-      assert.fail('handle.get should not have succeeded');
+      assert.fail('handle.fetchAll should not have succeeded');
     } catch (e) {
       assert.match(e.toString(), /Error: Handle not readable/);
     }
@@ -355,7 +355,7 @@ describe('SingletonHandle', async () => {
     const handle = await getSingletonHandle(barType, new MockParticle(), false, true);
     try {
       await handle.fetch();
-      assert.fail('handle.get should not have succeeded');
+      assert.fail('handle.fetch should not have succeeded');
     } catch (e) {
       assert.match(e.toString(), /Error: Handle not readable/);
     }

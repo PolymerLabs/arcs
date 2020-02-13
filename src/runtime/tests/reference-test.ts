@@ -233,7 +233,7 @@ describe('references', () => {
 
             async onHandleSync(handle, model) {
               if (handle.name == 'inResult') {
-                let entity = await handle.get();
+                let entity = await handle.fetch();
                 let reference = new Reference(entity);
                 await reference.stored;
                 await this.output.set(reference);
