@@ -19,18 +19,18 @@ interface Handle {
 /** A singleton handle with read access. */
 interface ReadableSingleton<T : Entity> : Handle {
     /** Returns the value of the singleton. */
-    fun fetch(): T?
+    suspend fun fetch(): T?
 
-    fun onUpdate(action: (T?) -> Unit)
+    suspend fun onUpdate(action: (T?) -> Unit)
 }
 
 /** A singleton handle with write access. */
 interface WritableSingleton<T : Entity> : Handle {
     /** Sets the value of the singleton. */
-    fun set(entity: T)
+    suspend fun set(entity: T)
 
     /** Clears the value of the singleton. */
-    fun clear()
+    suspend fun clear()
 }
 
 /** A singleton handle with read and write access. */

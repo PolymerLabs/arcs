@@ -28,7 +28,7 @@ typealias SetServiceStoreFactory<T> = ServiceStoreFactory<SetData<T>, SetOp<T>, 
  * communication with a running [StorageService].
  */
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-@ExperimentalHandleApi
+//@ExperimentalHandleApi
 fun AndroidHandleManager(
     context: Context,
     lifecycle: Lifecycle,

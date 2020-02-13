@@ -22,9 +22,9 @@ class SingletonImpl<T : Entity>(
     private var entity: T? = null
     private val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
 
-    override fun fetch(): T? = entity
+    override suspend fun fetch(): T? = entity
 
-    override fun set(entity: T) {
+    override suspend fun set(entity: T) {
         this.entity = entity
         particle.onHandleUpdate(this)
         onUpdateActions.forEach { action ->
@@ -32,7 +32,7 @@ class SingletonImpl<T : Entity>(
         }
     }
 
-    override fun clear() {
+    override suspend fun clear() {
         this.entity = null
         particle.onHandleUpdate(this)
         onUpdateActions.forEach { action ->
@@ -40,7 +40,7 @@ class SingletonImpl<T : Entity>(
         }
     }
 
-    override fun onUpdate(action: (T?) -> Unit) {
+    override suspend fun onUpdate(action: (T?) -> Unit) {
         onUpdateActions.add(action)
     }
 }

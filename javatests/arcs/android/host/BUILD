@@ -41,12 +41,20 @@ kt_android_library(
     testonly = True,
     srcs = glob(
         ["*Service.kt"],
-    ),
+    ) + ["TestBindingDelegate.kt"],
     deps = [
+                "//third_party/java/androidx/lifecycle",
+"//java/arcs/android/crdt",
+"//java/arcs/sdk/android/storage/service",
+"//java/arcs/sdk/android/storage",
+        "//third_party/java/robolectric",
+"//java/arcs/android/storage/handle",
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/sdk",
+        "//javatests/arcs/core/host",
+        "//javatests/arcs/core/host:schemas",
     ],
 )

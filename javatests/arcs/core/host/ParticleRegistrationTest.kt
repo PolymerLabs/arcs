@@ -23,17 +23,17 @@ class ParticleRegistrationTest {
 
         hostRegistry.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
-                is ProdHost -> {
-                    assertThat(host.registeredParticles()).contains(
-                        TestProdParticle::class.toParticleIdentifier()
-                    )
-                    foundProdHost = true
-                }
                 is TestHost -> {
                     assertThat(host.registeredParticles()).contains(
                         TestHostParticle::class.toParticleIdentifier()
                     )
                     foundTestHost = true
+                }
+                is JvmProdHost -> {
+                    assertThat(host.registeredParticles()).contains(
+                        TestProdParticle::class.toParticleIdentifier()
+                    )
+                    foundProdHost = true
                 }
             }
         }

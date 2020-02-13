@@ -60,11 +60,11 @@ class StorageService : ResurrectorService() {
                 .addTag(PeriodicCleanupTask.WORKER_TAG)
                 .build()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            PeriodicCleanupTask.WORKER_TAG,
-            ExistingPeriodicWorkPolicy.KEEP,
-            periodicCleanupTask
-        )
+//        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+//            PeriodicCleanupTask.WORKER_TAG,
+//            ExistingPeriodicWorkPolicy.KEEP,
+//            periodicCleanupTask
+//        )
     }
 
     override fun onBind(intent: Intent): IBinder? {

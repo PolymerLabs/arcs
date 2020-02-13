@@ -24,4 +24,5 @@ interface Entity {
 interface EntitySpec<T : Entity> {
     /** Returns an empty new instance of [T]. */
     fun create(): T
+    fun deserialize(data: Map<String, Any?>): T
 }

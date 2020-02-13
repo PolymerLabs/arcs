@@ -17,6 +17,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import arcs.android.sdk.host.toComponentName
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
+import arcs.core.common.Id
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
@@ -26,11 +27,14 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SingletonType
 import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -40,7 +44,10 @@ import org.robolectric.Robolectric
 @RunWith(AndroidJUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
 class AndroidAllocatorTest {
-    private lateinit var recipePersonStorageKey: StorageKey
+    private var recipePersonStorageKey: StorageKey? = null
+    private lateinit var readingExternalHost: TestReadingExternalHostService.ReadingExternalHost
+
+    private lateinit var writingExternalHost: TestWritingExternalHostService.WritingExternalHost
     private lateinit var context: Context
     private lateinit var readingService: TestReadingExternalHostService
     private lateinit var writingService: TestWritingExternalHostService
@@ -57,14 +64,19 @@ class AndroidAllocatorTest {
         SchemaDescription(),
         "42"
     )
-    private var personEntityType: Type = EntityType(personSchema)
+    private var personEntityType: Type = SingletonType(EntityType(personSchema))
 
     @Before
     fun setUp() = runBlocking {
         readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
         writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
 
+
+
         context = InstrumentationRegistry.getInstrumentation().targetContext
+
+        TestBindingDelegate.delegate = TestBindingDelegate(context)
+
         hostRegistry =
             AndroidManifestHostRegistry.createForTest(context) {
                 val readingComponentName =
@@ -81,7 +93,15 @@ class AndroidAllocatorTest {
             }
         allocator = Allocator(hostRegistry)
 
-        recipePersonStorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "foo")
+        val arcId = ArcId.newForTest("foo")
+        val idGenerator = Id.Generator.newSession()
+
+        recipePersonStorageKey = ReferenceModeStorageKey(
+            RamDiskStorageKey(
+            idGenerator.newChildId(arcId, "backing").toString()),
+            RamDiskStorageKey(
+                idGenerator.newChildId(arcId, "direct").toString())
+        )
         writePersonHandleConnectionSpec =
             HandleConnectionSpec(recipePersonStorageKey, personEntityType)
 
@@ -106,21 +126,23 @@ class AndroidAllocatorTest {
             listOf(writePersonParticleSpec, readPersonParticleSpec)
         )
 
-        TestReadingExternalHostService.ReadingExternalHost.reset()
-        TestWritingExternalHostService.WritingExternalHost.reset()
+        readingExternalHost = readingService.arcHost
+        writingExternalHost = writingService.arcHost
+        readingExternalHost.reset()
+        writingExternalHost.reset()
     }
 
     @Test
     fun allocator_canStartArcInTwoExternalHosts() = runBlocking {
         val arcId = allocator.startArcForPlan("test", writeAndReadPersonPlan)
-        assertThat(TestReadingExternalHostService.ReadingExternalHost.started.size).isEqualTo(1)
-        assertThat(TestWritingExternalHostService.WritingExternalHost.started.size).isEqualTo(1)
+        assertThat(writingExternalHost.started.size).isEqualTo(1)
+//        assertThat(readingExternalHost.started.size).isEqualTo(1)
 
+//        assertThat(allocator.getPartitionsFor(arcId)).contains(
+//            readingExternalHost.started.first()
+//        )
         assertThat(allocator.getPartitionsFor(arcId)).contains(
-            TestReadingExternalHostService.ReadingExternalHost.started.first()
-        )
-        assertThat(allocator.getPartitionsFor(arcId)).contains(
-            TestWritingExternalHostService.WritingExternalHost.started.first()
+            writingExternalHost.started.first()
         )
     }
 }

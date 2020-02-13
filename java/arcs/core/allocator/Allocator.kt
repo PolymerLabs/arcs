@@ -20,7 +20,9 @@ import arcs.core.host.ArcHostNotFoundException
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.StorageKey
+import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.Particle
 
 /**
@@ -96,9 +98,10 @@ class Allocator(val hostRegistry: HostRegistry) {
     private fun createStorageKey(
         arcId: ArcId,
         idGenerator: Id.Generator
-    ): StorageKey = VolatileStorageKey(
-            arcId,
-            idGenerator.newChildId(arcId, "").toString()
+    ): StorageKey = ReferenceModeStorageKey(RamDiskStorageKey(
+            idGenerator.newChildId(arcId, "backing").toString()),
+        RamDiskStorageKey(
+            idGenerator.newChildId(arcId, "direct").toString())
         )
 
     private fun isVolatileHandle(tags: Set<String>) = tags.contains("volatile")

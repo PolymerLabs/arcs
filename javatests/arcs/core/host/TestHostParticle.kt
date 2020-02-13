@@ -1,5 +1,5 @@
 package arcs.core.host
 
-import arcs.sdk.Particle
+class TestHostParticle : AbstractReadPerson()
 
-class TestHostParticle : Particle
+

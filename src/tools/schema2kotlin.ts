@@ -65,6 +65,8 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
   generateParticleClass(particle: ParticleSpec): string {
     const particleName = particle.name;
     const handleDecls: string[] = [];
+    const specDecls: string[] = [];
+
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
@@ -83,15 +85,21 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
         default:
           throw new Error(`Unsupported handle direction: ${connection.direction}`);
       }
-      handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
+      handleDecls.push(`val ${handleName}: ${handleInterfaceType} by map`);
+      specDecls.push(`entitySpecs["${handleName}"] = ${entityType}_Spec()`);
+
+      // handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
     }
     return `
-class ${particleName}Handles(particle : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}) {
+class ${particleName}Handles(particle : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}) : HandleHolderBase() {
     ${handleDecls.join('\n    ')}
+    init {
+      ${specDecls.join('\n    ')}
+    }
 }
 
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
-    protected val handles: ${particleName}Handles = ${particleName}Handles(this)
+    override val handles: ${particleName}Handles = ${particleName}Handles(this)
 }
 `;
   }
@@ -113,6 +121,7 @@ class KotlinGenerator implements ClassGenerator {
   fieldsForCopy: string[] = [];
   setFieldsToDefaults: string[] = [];
   fieldSerializes: string[] = [];
+  fieldDeserializes: string[] = [];
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
@@ -148,6 +157,7 @@ class KotlinGenerator implements ClassGenerator {
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
 
     this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
+    this.fieldDeserializes.push(`${field} = (map["${field}"] as? ${type})!!`)
   }
 
   generate(schemaHash: string, fieldCount: number): string {
@@ -238,7 +248,13 @@ ${this.opts.wasm ? `
         )
         _rtn.internalId = internalId
         return _rtn
-    }` : ''}
+    }` : `
+    override fun deserialize(map: Map<String, Any?>): ${name} {
+      return create().copy(
+        ${withFields(`${this.fieldDeserializes.join(', \n        ')}`)}
+      )
+    }
+}`    
 }
 
 ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;

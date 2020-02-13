@@ -11,8 +11,20 @@
 
 package arcs.sdk
 
+interface HandleHolder {
+    val map: MutableMap<String, Handle>
+    val entitySpecs: MutableMap<String, EntitySpec<out Entity>>
+}
+
+abstract class HandleHolderBase(
+    override val map: MutableMap<String, Handle> = mutableMapOf(),
+    override val entitySpecs: MutableMap<String, EntitySpec<out Entity>> = mutableMapOf()
+) : HandleHolder
+
 /** Base interface for all particles. */
 interface Particle {
+    val handles: HandleHolder
+
     /**
      * React to handle updates.
      *

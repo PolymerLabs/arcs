@@ -10,10 +10,15 @@
  */
 package arcs.jvm.host
 
+import arcs.core.crdt.CrdtEntity
+import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.RawEntity
 import arcs.core.host.ArcHost
+import arcs.core.host.ExternalHost
 import arcs.core.host.ParticleIdentifier
-import arcs.core.host.ProdHost
+import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.toParticleIdentifier
+import arcs.core.storage.StorageProxy
 import arcs.sdk.Particle
 import kotlin.reflect.KClass
 
@@ -21,9 +26,9 @@ import kotlin.reflect.KClass
  * An [ArcHost] that runs isolatable particles that are expected to have no platform
  * dependencies directly on Android APIs.
  */
-open class JvmProdHost(
+open class JvmExternalHost(
     vararg particles: KClass<out Particle>
-) : ProdHost(*particles.map { it.toParticleIdentifier() }.toTypedArray()) {
+) : ExternalHost(*particles.map { it.toParticleIdentifier() }.toTypedArray()) {
 
     private var particleConstructorsById: Map<ParticleIdentifier, () -> Particle> =
         particles.associateBy(

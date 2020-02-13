@@ -12,11 +12,15 @@ import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.AbstractArcHost
+import arcs.core.host.ParticleIdentifier
 import arcs.core.host.ParticleNotFoundException
+import arcs.core.host.TestHostHandleHolder
+import arcs.core.host.TestHostParticleBase
 import arcs.core.host.toIdentifierList
 import arcs.core.storage.driver.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.host.ExplicitHostRegistry
+import arcs.sdk.Handle
 import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -64,8 +68,17 @@ class AllocatorTest {
     private val personEntityType = EntityType(personSchema)
 
 
-    class WritePerson : Particle
-    class ReadPerson : Particle
+    class ReadHandles : TestHostHandleHolder() {
+        val person: Handle by map
+    }
+
+    class ReadPerson : TestHostParticleBase(ReadHandles())
+
+    class WriteHandles : TestHostHandleHolder() {
+        val person: Handle by map
+    }
+
+    class WritePerson : TestHostParticleBase(WriteHandles())
 
     open class TestingHost(vararg particles: KClass<out Particle>) :
         AbstractArcHost(particles.toIdentifierList()) {
@@ -75,6 +88,10 @@ class AllocatorTest {
         override suspend fun startArc(partition: PlanPartition) {
             super.startArc(partition)
             started.add(partition)
+        }
+
+        override suspend fun instantiateParticle(identifier: ParticleIdentifier): Particle {
+            TODO("Not yet implemented")
         }
 
         fun setup() {

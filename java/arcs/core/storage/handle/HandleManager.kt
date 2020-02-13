@@ -60,7 +60,7 @@ annotation class ExperimentalHandleApi
  * you can provide your own ActivationFactoryFactory, which provides methods for creating
  * activations factories to create singleton-rawentity and set-rawentity [ActiveStore]s
  */
-@ExperimentalHandleApi
+//@ExperimentalHandleApi
 class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     private val singletonProxiesMutex = Mutex()
     private val singletonProxies by guardedBy(
