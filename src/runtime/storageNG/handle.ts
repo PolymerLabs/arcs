@@ -415,6 +415,10 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
+    // Sync before clearing (for a similar behaviour to collections).
+    const [_, versionMap] = await this.storageProxy.getParticleView();
+    this.clock = versionMap;
+    // Issue clear op.
     const op: CRDTOperation = {
       type: SingletonOpTypes.Clear,
       actor: this.key,

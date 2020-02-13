@@ -11,8 +11,8 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../platform/loader.js';
 import {VersionMap} from '../../crdt/crdt.js';
-import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../../crdt/crdt-collection.js';
-import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
+import {CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
+import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
 import {CollectionType, EntityType, SingletonType, Type} from '../../type.js';
@@ -22,6 +22,7 @@ import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
+import {SYMBOL_INTERNALS} from '../../symbols.js';
 
 
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
@@ -275,6 +276,20 @@ describe('SingletonHandle', async () => {
     const handle = await getSingletonHandle(barType, particle);
     await handle.onSync(null);
     assert.isTrue(particle.onSyncCalled);
+  });
+
+  it('syncs before clearing', async () => {
+    const handle = await getSingletonHandle(barType);
+    await handle.set(newEntity('A'));
+    // Simulate another writer overwriting the value.
+    await handle.storageProxy.applyOp({
+      type: SingletonOpTypes.Set,
+      value: newEntity('B')[SYMBOL_INTERNALS].serialize(),
+      actor: 'other',
+      clock: {'other': 1},
+    });
+    await handle.clear();
+    assert.strictEqual(await handle.get(), null);
   });
 
   it('notifies particle on desync event', async () => {
