@@ -75,9 +75,11 @@ async function createBackingEntity(arc: Arc, referenceType: ReferenceType, id: s
 [false, true].forEach(useNewStorageStack => {
 
 Object.entries(testMap).forEach(([testLabel, testDir]) => {
-  describe(`wasm tests (${testLabel}) (useNewStorageStack = ${useNewStorageStack})`, () => {
+  describe(`wasm tests (${testLabel}) (useNewStorageStack = ${useNewStorageStack})`, function() {
     const isKotlin = testLabel === 'Kotlin';
     const isCpp = testLabel === 'C++';
+
+    this.timeout(4000);
 
     let loader;
     let manifestPromise;
@@ -274,12 +276,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     // TODO - check that writing to read-only handles throws and vice versa
-    it('singleton storage API', async function() {
-      if (Flags.useNewStorageStack) {
-        // TODO(csilvestrini): Fix this test for storageNG.
-        this.skip();
-      }
-
+    it('singleton storage API', async () => {
       const {arc, stores} = await setup('SingletonApiTest');
       const inHandle = await singletonHandleForTest(arc, stores.get('inHandle'));
       const outHandle = await singletonHandleForTest(arc, stores.get('outHandle'));
