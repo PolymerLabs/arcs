@@ -255,10 +255,25 @@ describe('particle interface loading', () => {
       'updating-particle.js': `
         'use strict';
         defineParticle(({Particle}) => {
+          var str = "Not created!";
           return class extends Particle {
-            setHandles(handles) {
-              this.innerFooHandle = handles.get('innerFoo');
-              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: 'hello world!!!'}));
+            //setHandles(handles) {
+            //  this.innerFooHandle = handles.get('innerFoo');
+            //  this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: 'hello world!!!'}));
+            //}
+        
+            onCreate() {
+              console.log('I have been created');
+              this.str = "Created!";
+              console.log(this.str)
+              //this.innerFooHandle = this.handles.get('innerFoo');
+              //this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: 'hello world!!!'}));
+            }
+            async setHandles(handles) {
+              console.log("in set handles")
+              console.log(this.str)
+              this.innerFooHandle = this.handles.get('innerFoo');
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: this.str}));
             }
           };
         });
@@ -274,10 +289,7 @@ describe('particle interface loading', () => {
     await arc.instantiate(recipe);
     await arc.idle;
     const fooHandle = await singletonHandleForTest(arc, fooStore);
-    assert.deepStrictEqual(await fooHandle.get(), {value: 'hello world!!!'});
-
-    await fooHandle.set(new foo({value: "Goodbye"}))
-    assert.deepStrictEqual(await fooHandle.get(), {value: 'Goodbye'});
+    assert.deepStrictEqual(await fooHandle.get(), {value: 'Created!'});
 
     const serialization = await arc.serialize();
     
@@ -285,7 +297,7 @@ describe('particle interface loading', () => {
     await arc2.idle;
     const fooHandle2 = await singletonHandleForTest(arc2, fooStore);
     
-    assert.deepStrictEqual(await fooHandle2.get(), {value: 'Goodbye'});
+    assert.deepStrictEqual(await fooHandle2.get(), {value: 'Not created!'});
     
   });
 });
