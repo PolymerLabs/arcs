@@ -42,7 +42,6 @@ export abstract class Schema2Base {
   private async processFile(src: string) {
     const outName = this.opts.outfile || this.outputName(path.basename(src));
     const outPath = path.join(this.opts.outdir, outName);
-    console.log(outPath);
     if (this.opts.update && fs.existsSync(outPath) && fs.statSync(outPath).mtimeMs > fs.statSync(src).mtimeMs) {
       return;
     }
