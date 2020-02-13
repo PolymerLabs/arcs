@@ -27,16 +27,21 @@ import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.database.name
+import arcs.core.storage.database.persistent
+import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
-import java.io.FileDescriptor
-import java.io.PrintWriter
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
+import arcs.core.util.performance.PerformanceStatistics
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
+import java.io.FileDescriptor
+import java.io.PrintWriter
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 /**
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
@@ -117,15 +122,82 @@ class StorageService : ResurrectorService() {
 
         writer.println()
 
+        if (DatabaseDriverProvider.isConfigured) {
+            val databaseManager = DatabaseDriverProvider.manager
+            val statistics = runBlocking { databaseManager.snapshotStatistics() }
+
+            if (statistics.isNotEmpty()) {
+                writer.println(
+                    """
+                        Databases:
+                        ----------
+                    """.trimIndent()
+                )
+            }
+
+            statistics.forEach { (identifier, snapshot) ->
+                val persistenceLabel = if (identifier.persistent) "persistent" else "non-persistent"
+                writer.println(
+                    """
+                        |  ${identifier.name} ($persistenceLabel):
+                    """.trimMargin("|")
+                )
+                snapshot.insertUpdate.dump(writer, pad = "    ", title = "Insertions/Updates")
+                snapshot.get.dump(writer, pad = "    ", title = "Gets")
+                snapshot.delete.dump(writer, pad = "    ", title = "Deletions")
+                writer.println()
+            }
+        }
+
+
         dumpRegistrations(writer)
+    }
+
+    private fun PerformanceStatistics.Snapshot.dump(
+        writer: PrintWriter,
+        pad: String,
+        title: String
+    ) {
+        val runtime = runtimeStatistics
+        val counters = countStatistics
+        val counterNames = counters.counterNames.sorted()
+        writer.println(
+            """
+                |$pad$title (%d measurements):
+                |$pad  Runtime (ms):
+                |$pad  Average: %.3f 
+                |$pad  StdDev: %.3f 
+                |$pad  Min: %.3f
+                |$pad  Max: %.3f 
+                |        
+                |${pad}Counts per measurement (name: average, standard deviation, min, max):
+            """.trimMargin()
+                .format(
+                    runtime.measurements,
+                    runtime.mean / 1e6,
+                    runtime.standardDeviation / 1e6,
+                    (runtime.min ?: 0.0) / 1e6,
+                    (runtime.max ?: 0.0) / 1e6
+                )
+        )
+        counterNames.forEach { counter ->
+            val stats = counters[counter]
+            writer.println(
+                """
+                    |$pad  $counter: 
+                    |$pad    %.2f, %.2f, %.2f, %.2f 
+                """.trimMargin("|")
+                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0, stats.max ?: 0)
+            )
+        }
     }
 
     companion object {
         private const val EXTRA_OPTIONS = "storeOptions"
 
         init {
+            // TODO: Remove this, the Allocator should be responsible for setting up providers.
             RamDiskDriverProvider()
-            // TODO: handle registration of volatile driver providers
         }
 
         /**

@@ -108,8 +108,17 @@ data class DatabaseStorageKey(
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
 object DatabaseDriverProvider : DriverProvider {
+    /**
+     * Whether or not the [DatabaseDriverProvider] has been configured with a [DatabaseManager] and
+     * a schema lookup function.
+     */
+    val isConfigured: Boolean
+        get() = _manager != null
+
     private var _manager: DatabaseManager? = null
-    private val manager: DatabaseManager
+
+    /** The configured [DatabaseManager]. */
+    val manager: DatabaseManager
         get() = requireNotNull(_manager) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
 
     /**
