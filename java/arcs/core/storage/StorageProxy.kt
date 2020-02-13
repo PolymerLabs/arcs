@@ -73,7 +73,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
             readHandles.size == 1
         }
 
-        val (hasSynced, versionMap) = syncMutex.withLock { isSynchronized to crdt.versionMap.copy() }
+        val (hasSynced, versionMap) =
+            syncMutex.withLock { isSynchronized to crdt.versionMap.copy() }
 
         if (firstReader) requestSynchronization()
         else if (hasSynced) coroutineScope { launch { handle.callback?.onSync() } }
