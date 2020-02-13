@@ -24,7 +24,7 @@ defineParticle(({UiTransformationParticle}) => {
 
     async setHandles(handles) {
       const arc = await this.constructInnerArc();
-      const hostedParticle = await handles.get('particle0').get();
+      const hostedParticle = await handles.get('particle0').fetch();
 
       this.setState({arc, hostedParticle, type: handles.get('foos').type});
 

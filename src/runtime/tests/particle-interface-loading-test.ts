@@ -122,7 +122,7 @@ describe('particle interface loading', () => {
     await arc.instantiate(recipe);
     await arc.idle;
     const outHandle = await singletonHandleForTest(arc, outStore);
-    assert.deepStrictEqual(await outHandle.get(), {value: 'a foo1'});
+    assert.deepStrictEqual(await outHandle.fetch(), {value: 'a foo1'});
   });
 
   it('loads interfaces into particles declaratively', async () => {
@@ -159,7 +159,7 @@ describe('particle interface loading', () => {
 
     const barStore = arc.findStoresByType(barType)[0];
     const barHandle = await singletonHandleForTest(arc, barStore);
-    assert.deepEqual(await barHandle.get(), {value: 'a foo1'});
+    assert.deepEqual(await barHandle.fetch(), {value: 'a foo1'});
   });
 
   it('updates transformation particle on inner handle', async () => {
@@ -233,6 +233,6 @@ describe('particle interface loading', () => {
     await arc.instantiate(recipe);
     await arc.idle;
     const fooHandle = await singletonHandleForTest(arc, fooStore);
-    assert.deepStrictEqual(await fooHandle.get(), {value: 'hello world!!!'});
+    assert.deepStrictEqual(await fooHandle.fetch(), {value: 'hello world!!!'});
   });
 });

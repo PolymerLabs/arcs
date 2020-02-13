@@ -130,7 +130,7 @@ describe('CollectionHandle', async () => {
   it('respects canRead', async () => {
     const handle = await getCollectionHandle(barType, new MockParticle(), false, true);
     try {
-      await handle.get('A');
+      await handle.fetchAll('A');
       assert.fail('handle.get should not have succeeded');
     } catch (e) {
       assert.match(e.toString(), /Error: Handle not readable/);
@@ -149,7 +149,7 @@ describe('CollectionHandle', async () => {
     Entity.mutate(entity, {value: 'something'});
     await handle.add(entity);
     await handle.add(newEntity('B'));
-    assert.deepEqual(await handle.get('A'), entity);
+    assert.deepEqual(await handle.fetchAll('A'), entity);
   });
 
   it('assigns IDs to entities with missing IDs', async () => {
@@ -262,13 +262,13 @@ describe('CollectionHandle', async () => {
 describe('SingletonHandle', async () => {
   it('can set and clear elements', async () => {
     const handle = await getSingletonHandle(barType);
-    assert.strictEqual(await handle.get(), null);
+    assert.strictEqual(await handle.fetch(), null);
     await handle.set(newEntity('A'));
-    assert.deepEqual(await handle.get(), newEntity('A'));
+    assert.deepEqual(await handle.fetch(), newEntity('A'));
     await handle.set(newEntity('B'));
-    assert.deepEqual(await handle.get(), newEntity('B'));
+    assert.deepEqual(await handle.fetch(), newEntity('B'));
     await handle.clear();
-    assert.strictEqual(await handle.get(), null);
+    assert.strictEqual(await handle.fetch(), null);
   });
 
   it('notifies particle on sync event', async () => {
@@ -323,7 +323,7 @@ describe('SingletonHandle', async () => {
     };
 
     // This will pull in the version map above.
-    await handle.get();
+    await handle.fetch();
     // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
     let capturedClock;
     handle.storageProxy.applyOp = async (op: SingletonOperation<{id: string}>) => {
@@ -354,7 +354,7 @@ describe('SingletonHandle', async () => {
   it('respects canRead', async () => {
     const handle = await getSingletonHandle(barType, new MockParticle(), false, true);
     try {
-      await handle.get();
+      await handle.fetch();
       assert.fail('handle.get should not have succeeded');
     } catch (e) {
       assert.match(e.toString(), /Error: Handle not readable/);

@@ -257,7 +257,7 @@ class ParticleSpecSerializer implements Serializer<ParticleSpec, Referenceable> 
 // TODO(shanestephens): we can't guarantee the safety of this stack (except by the Type instance matching) - do we need the T
 // parameter here?
 export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referenceable>> {
-  async get(id: string): Promise<T> {
+  async fetchAll(id: string): Promise<T> {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
@@ -428,7 +428,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     return this.storageProxy.applyOp(op);
   }
 
-  async get(): Promise<T> {
+  async fetch(): Promise<T> {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }

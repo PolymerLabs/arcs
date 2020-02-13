@@ -333,7 +333,7 @@ export class CollectionProxy extends StorageProxy implements CollectionStore {
     }
   }
 
-  async get(id: string) {
+  async fetchAll(id: string) {
     if (this.synchronized === SyncState.full) {
       return Promise.resolve(this.model.getValue(id));
     } else {
@@ -461,7 +461,7 @@ export class SingletonProxy extends StorageProxy implements SingletonStore {
   // Otherwise, send a request to the backing store.
   // TODO: in synchronized mode, these should integrate with SynchronizeProxy rather than
   //       sending a parallel request
-  async get() {
+  async fetch() {
     if (this.synchronized === SyncState.full) {
       return Promise.resolve(this.model);
     } else {
@@ -529,7 +529,7 @@ export class BigCollectionProxy extends StorageProxy implements BigCollectionSto
     throw new Error('_synchronizeModel not implemented for BigCollectionProxy');
   }
   // TODO: surface get()
-  async get(id: string) {
+  async fetchAll(id: string) {
     throw new Error('unimplemented');
   }
   async store(value, keys, particleId): Promise<void> {
@@ -596,7 +596,10 @@ export class NoOpStorageProxy extends StorageProxy implements CollectionStore, B
   protected generateBarrier(): string {
     return null;
   }
-  async get(id?: string) {
+  async fetch(id?: string) {
+    return new Promise(resolve => {});
+  }
+  async fetchAll(id?: string) {
     return new Promise(resolve => {});
   }
   // tslint:disable-next-line: no-any

@@ -24,7 +24,7 @@ const getSingletonData = async (arc: Arc, index: number) => {
   const store = arc._stores[index];
   assert.ok(store, `failed to find store[${index}]`);
   const handle = await singletonHandleForTest(arc, store);
-  const data = await handle.get();
+  const data = await handle.fetch();
   assert.ok(data, `store[${index}] was empty`);
   return data;
 };

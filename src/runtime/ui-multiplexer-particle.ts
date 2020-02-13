@@ -52,7 +52,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
     let otherMappedHandles: string[] = [];
     let otherConnections: string[] = [];
     if (particleHandle) {
-      hostedParticle = await particleHandle['get']();
+      hostedParticle = await particleHandle['fetch']();
       if (hostedParticle) {
         ({otherMappedHandles, otherConnections} =
             await this._mapParticleConnections(listHandleName, particleHandleName, hostedParticle, handles, arc));

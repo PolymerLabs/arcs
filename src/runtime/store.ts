@@ -29,7 +29,7 @@ export interface Store {
 
 export interface SingletonStore extends Store {
   // tslint:disable-next-line: no-any
-  get(): Promise<any>;
+  fetch(): Promise<any>;
 
   // tslint:disable-next-line: no-any
   set(entity: any, particleId: string): Promise<void>;
@@ -39,7 +39,7 @@ export interface SingletonStore extends Store {
 
 export interface CollectionStore extends Store {
   // tslint:disable-next-line: no-any
-  get(id: string): Promise<any>;
+  fetchAll(id: string): Promise<any>;
 
   // tslint:disable-next-line: no-any
   store(value: any, keys: string[], particleId?: string): Promise<void>;
@@ -54,7 +54,7 @@ export interface CollectionStore extends Store {
 
 export interface BigCollectionStore extends Store {
   // tslint:disable-next-line: no-any
-  get(id: string): Promise<any>;
+  fetchAll(id: string): Promise<any>;
 
   // tslint:disable-next-line: no-any
   store(value: any, keys: string[], originatorId?: string): Promise<void>;

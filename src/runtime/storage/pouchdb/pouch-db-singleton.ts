@@ -116,7 +116,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
 
     if (this.referenceMode && value !== null) {
       const backingStore = await this.ensureBackingStore();
-      const result = await backingStore.get(value.id);
+      const result = await backingStore.fetchAll(value.id);
       return {
         version: this._version,
         model: [{id: value.id, value: result}]
@@ -179,7 +179,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
   /**
    * @return a promise containing the singleton value or null if it does not exist.
    */
-  async get(): Promise<ModelValue> {
+  async fetch(): Promise<ModelValue> {
     await this.initialized;
 
     try {
@@ -190,7 +190,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
       }
       if (this.referenceMode && value) {
         const backingStore = await this.ensureBackingStore();
-        value = await backingStore.get(value.id);
+        value = await backingStore.fetchAll(value.id);
       }
       // logging goes here
 
@@ -288,7 +288,7 @@ export class PouchDbSingleton extends PouchDbStorageProvider implements Singleto
     // Skip if value == null, which is what happens when docs are deleted..
     if (value) {
       await this.ensureBackingStore().then(async store => {
-        const data = await store.get(value.id);
+        const data = await store.fetchAll(value.id);
         if (!data) {
           // TODO(lindner): data referred to by this data is missing.
           console.log('PouchDbSingleton.onRemoteSynced: possible race condition for id=' + value.id);

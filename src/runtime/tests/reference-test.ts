@@ -123,7 +123,7 @@ describe('references', () => {
 
     const outStore = arc._stores[1];
     const handle = await singletonHandleForTest(arc, outStore);
-    const value = await handle.get();
+    const value = await handle.fetch();
     assert.deepStrictEqual(value, {value: 'val1'});
   });
 
@@ -260,7 +260,7 @@ describe('references', () => {
     const refStore = arc._stores[1];
     const storageKey = Entity.storageKey(entity);
     const refHandle = await singletonHandleForTest(arc, refStore);
-    const reference = await refHandle.get();
+    const reference = await refHandle.fetch();
     assert.equal(reference.id, Entity.id(entity));
     if (Flags.useNewStorageStack) {
       assert.equal(reference.entityStorageKey, storageKey);
@@ -342,7 +342,7 @@ describe('references', () => {
 
     const store = arc._stores[0];
     const handle = await singletonHandleForTest(arc, store);
-    assert.equal((await handle.get()).value, 'what a result!');
+    assert.equal((await handle.fetch()).value, 'what a result!');
   });
 
   it('can construct references in schemas', async () => {
@@ -633,7 +633,7 @@ describe('references', () => {
     } else {
       assert.strictEqual(outputStore.type.getEntitySchema().name, 'Foo');
     }
-    const outputRefs = await outputStore.get();
+    const outputRefs = await outputStore.fetch();
     const ids = [...outputRefs.result].map(ref => ref.id);
     assert.sameMembers(ids, ['id:1', 'id:2']);
   });

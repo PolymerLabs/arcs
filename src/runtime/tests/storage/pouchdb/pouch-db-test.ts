@@ -81,7 +81,7 @@ describe('pouchdb for ' + testUrl, () => {
       const callbackTracker = await CallbackTracker.create(variable, 1);
 
       await variable.set({id: 'test0:test', value});
-      const result = await variable.get();
+      const result = await variable.fetch();
       assert.strictEqual(result['value'], value);
       callbackTracker.verify();
     });
@@ -109,8 +109,8 @@ describe('pouchdb for ' + testUrl, () => {
 
       await var1.set({id: 'id1', value: 'value1'});
       await var2.set({id: 'id2', value: 'value2'});
-      const v1 = await var1.get();
-      const v2 = await var2.get();
+      const v1 = await var1.fetch();
+      const v2 = await var2.fetch();
       assert.deepEqual(v1, v2);
 
       var1Callbacks.verify();
@@ -131,13 +131,13 @@ describe('pouchdb for ' + testUrl, () => {
       const var1 = await storage.construct('test0', barType, key1) as PouchDbSingleton;
       await var1.set({id: 'id1', value: 'underlying'});
 
-      const result = await var1.get();
+      const result = await var1.fetch();
       assert.strictEqual(result['value'], 'underlying');
 
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
 
-      assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
+      assert.deepEqual(await var1.backingStore.fetchAll('id1'), await var1.fetch());
     });
 
     it('supports references', async () => {
@@ -154,7 +154,7 @@ describe('pouchdb for ' + testUrl, () => {
       const var1 = await storage.construct('test0', new ReferenceType(barType), key1) as PouchDbSingleton;
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
-      const result = await var1.get();
+      const result = await var1.fetch();
       assert.strictEqual('underlying', result.storageKey);
 
       assert.isFalse(var1.referenceMode);
@@ -183,7 +183,7 @@ describe('pouchdb for ' + testUrl, () => {
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
 
-      let result = await collection.get('id0');
+      let result = await collection.fetchAll('id0');
       assert.strictEqual(result.value, value1);
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
@@ -266,16 +266,16 @@ describe('pouchdb for ' + testUrl, () => {
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
 
-      let result = await collection1.get('id1');
+      let result = await collection1.fetchAll('id1');
       assert.strictEqual('value1', result.value);
-      result = await collection1.get('id2');
+      result = await collection1.fetchAll('id2');
       assert.strictEqual('value2', result.value);
 
       assert.isTrue(collection1.referenceMode);
       assert.isNotNull(collection1.backingStore);
 
-      assert.deepEqual(await collection1.backingStore.get('id1'), await collection1.get('id1'));
-      assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.get('id2'));
+      assert.deepEqual(await collection1.backingStore.fetchAll('id1'), await collection1.fetchAll('id1'));
+      assert.deepEqual(await collection1.backingStore.fetchAll('id2'), await collection1.fetchAll('id2'));
     });
 
     it('supports removeMultiple', async () => {
@@ -315,9 +315,9 @@ describe('pouchdb for ' + testUrl, () => {
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
 
-      let result = await collection1.get('id1');
+      let result = await collection1.fetchAll('id1');
       assert.strictEqual('value1', result.storageKey);
-      result = await collection1.get('id2');
+      result = await collection1.fetchAll('id2');
       assert.strictEqual('value2', result.storageKey);
 
       assert.isFalse(collection1.referenceMode);

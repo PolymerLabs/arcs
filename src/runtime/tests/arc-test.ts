@@ -155,7 +155,7 @@ describe('Arc new storage', () => {
 
     const varStorageProxy2 = new StorageProxyNG('id', await varStore2.activate(), new SingletonType(dataClass.type), varStore2.storageKey.toString());
     const varHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'varHandle') as SingletonHandle<Entity>;
-    const varData = await varHandle2.get();
+    const varData = await varHandle2.fetch();
 
     assert.deepEqual(varData, d1);
 
@@ -168,7 +168,7 @@ describe('Arc new storage', () => {
     const refVarStorageProxy2 = new StorageProxyNG('id-3', await refVarStore2.activate(), new SingletonType(dataClass.type), refVarStore2.storageKey.toString());
     const refVarHandle2 = await handleNGFor('crdt-key-3', refVarStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
 
-    const refVarData = await refVarHandle2.get();
+    const refVarData = await refVarHandle2.fetch();
     assert.deepEqual(refVarData, d4);
   }));
 
@@ -228,7 +228,7 @@ describe('Arc', () => {
     assert(recipe.normalize());
     await arc.instantiate(recipe);
     await arc.idle;
-    assert.deepStrictEqual(await barHandle.get(), {value: 'a Foo1'});
+    assert.deepStrictEqual(await barHandle.fetch(), {value: 'a Foo1'});
   });
 
   it('applies new stores to a particle ', async () => {
@@ -244,7 +244,7 @@ describe('Arc', () => {
     await arc.instantiate(recipe);
     await fooHandle.set(new Foo({value: 'a Foo'}));
     await arc.idle;
-    assert.deepStrictEqual(await barHandle.get(), {value: 'a Foo1'});
+    assert.deepStrictEqual(await barHandle.fetch(), {value: 'a Foo1'});
   });
 
   it('optional provided handles do not resolve without parent', async () => {
@@ -295,8 +295,8 @@ describe('Arc', () => {
     await aHandle.set(new thingClass({value: 'from_a'}));
     await cHandle.set(new thingClass({value: 'from_c'}));
     await arc.idle;
-    assert.deepStrictEqual(await bHandle.get(), {value: 'from_a1'});
-    assert.isNull(await dHandle.get());
+    assert.deepStrictEqual(await bHandle.fetch(), {value: 'from_a1'});
+    assert.isNull(await dHandle.fetch());
   });
 
   it('instantiates recipes only if fate is correct', async () => {
@@ -413,8 +413,8 @@ describe('Arc', () => {
     await aHandle.set(new thingClass({value: 'from_a'}));
     await cHandle.set(new thingClass({value: 'from_c'}));
     await arc.idle;
-    assert.deepStrictEqual(await bHandle.get(), {value: 'from_a1'});
-    assert.isNull(await dHandle.get());
+    assert.deepStrictEqual(await bHandle.fetch(), {value: 'from_a1'});
+    assert.isNull(await dHandle.fetch());
   });
 
   it('optional provided handles cannot resolve without parent', async () => {
@@ -558,8 +558,8 @@ describe('Arc', () => {
     await cHandle.set(new thingClass({value: 'from_c'}));
     await arc.instantiate(recipe);
     await arc.idle;
-    assert.deepStrictEqual(await bHandle.get(), {value: 'from_a1'});
-    assert.isNull(await dHandle.get());
+    assert.deepStrictEqual(await bHandle.fetch(), {value: 'from_a1'});
+    assert.isNull(await dHandle.fetch());
   });
 
   it('required provided handles must resolve with dependencies', async () =>
@@ -656,8 +656,8 @@ describe('Arc', () => {
     await aHandle.set(new thingClass({value: 'from_a'}));
     await cHandle.set(new thingClass({value: 'from_c'}));
     await arc.idle;
-    assert.deepStrictEqual(await bHandle.get(), {value: 'from_a1'});
-    assert.deepStrictEqual(await dHandle.get(), {value: 'from_c1'});
+    assert.deepStrictEqual(await bHandle.fetch(), {value: 'from_a1'});
+    assert.deepStrictEqual(await dHandle.fetch(), {value: 'from_c1'});
   });
 
   it('required provided handles can resolve with parent 2', async () => {
@@ -709,8 +709,8 @@ describe('Arc', () => {
     await aHandle.set(new thingClass({value: 'from_a'}));
     await cHandle.set(new thingClass({value: 'from_c'}));
     await arc.idle;
-    assert.deepStrictEqual(await bHandle.get(), {value: 'from_a1'});
-    assert.deepStrictEqual(await dHandle.get(), {value: 'from_c1'});
+    assert.deepStrictEqual(await bHandle.fetch(), {value: 'from_a1'});
+    assert.deepStrictEqual(await dHandle.fetch(), {value: 'from_c1'});
   });
 
   it('deserializing a serialized empty arc produces an empty arc', async () => {
@@ -749,7 +749,7 @@ describe('Arc', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.deepStrictEqual(await barHandle.get(), {value: 'a Foo1'});
+    assert.deepStrictEqual(await barHandle.fetch(), {value: 'a Foo1'});
     fooStoreCallbacks.verify();
     const serialization = await arc.serialize();
     arc.dispose();
@@ -892,7 +892,7 @@ describe('Arc', () => {
     assert.notStrictEqual(bigStore2, bigStore);
 
     // The old ones should still be cleared.
-    assert.isNull(await varHandle.get());
+    assert.isNull(await varHandle.fetch());
     assert.isEmpty(await colStore.toList());
     assert.isEmpty((await bigStore.serializeContents()).model);
 
@@ -974,7 +974,7 @@ describe('Arc', () => {
     const callbackTracker = await CallbackTracker.create(store, 0);
 
     assert.isNotNull(store, 'got a valid store');
-    const data = await store.get();
+    const data = await store.fetch();
     assert.isNotNull(data, 'got valid data');
     callbackTracker.verify();
 

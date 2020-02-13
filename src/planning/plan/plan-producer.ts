@@ -104,9 +104,9 @@ export class PlanProducer {
   async onSearchChanged(): Promise<boolean> {
     let values;
     if (Flags.useNewStorageStack) {
-      values = JSON.parse((await this.handle.get()).current) || [];
+      values = JSON.parse((await this.handle.fetch()).current) || [];
     } else {
-      values = await this.handle.get() || [];
+      values = await this.handle.fetch() || [];
     }
 
     const arcId = this.arc.id.idTreeAsString();
