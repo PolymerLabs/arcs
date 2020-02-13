@@ -45,6 +45,8 @@ class GoldInternal1() : WasmEntity {
         val_.let { encoder.encode("val:T", val_) }
         return encoder.toNullTermByteArray()
     }
+
+    override fun toString() = "GoldInternal1(val_ = $val_)"
 }
 
 class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
@@ -160,6 +162,8 @@ class Gold_Data() : WasmEntity {
         flg.let { encoder.encode("flg:B", flg) }
         return encoder.toNullTermByteArray()
     }
+
+    override fun toString() = "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 }
 
 class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {

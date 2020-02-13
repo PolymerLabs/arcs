@@ -113,6 +113,7 @@ class KotlinGenerator implements ClassGenerator {
   fieldsForCopy: string[] = [];
   setFieldsToDefaults: string[] = [];
   fieldSerializes: string[] = [];
+  fieldsForToString: string[] = [];
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
@@ -148,6 +149,8 @@ class KotlinGenerator implements ClassGenerator {
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
 
     this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
+
+    this.fieldsForToString.push(`${fixed} = $${fixed}`);
   }
 
   generate(schemaHash: string, fieldCount: number): string {
@@ -201,6 +204,8 @@ ${this.opts.wasm ? `
             ${this.fieldSerializes.join(',\n            ')}
         )
     )`}
+
+    override fun toString() = "${name}(${this.fieldsForToString.join(', ')})"
 }
 
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
