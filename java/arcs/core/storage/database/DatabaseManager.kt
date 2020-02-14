@@ -17,10 +17,32 @@ package arcs.core.storage.database
 // TODO: In the future it may be important for there to be an additional parameter on getDatabase
 //  which hints the factory as to where the database should be found (e.g. a remote server, a local
 //  service like postgres, android sqlite database, non-android sqlite database, WebDatabase, etc..)
-interface DatabaseFactory {
+interface DatabaseManager {
     /**
      * Gets a [Database] for the given [name].  If [persistent] is `false`, the [Database] should
      * only exist in-memory (if possible for the current platform).
      */
     suspend fun getDatabase(name: String, persistent: Boolean): Database
+
+    /** Gets a [Database] for the given [DatabaseIdentifier]. */
+    suspend fun getDatabase(databaseIdentifier: DatabaseIdentifier): Database =
+        getDatabase(databaseIdentifier.name, databaseIdentifier.persistent)
+
+    /**
+     * Gets [DatabasePerformanceStatistics.Snapshot]s for all databases the [DatabaseManager] is
+     * aware of.
+     */
+    suspend fun snapshotStatistics():
+        Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot>
 }
+
+/** Identifier for an individual [Database] instance. */
+typealias DatabaseIdentifier = Pair<String, Boolean>
+
+/** Name of the [Database]. */
+val DatabaseIdentifier.name: String
+    get() = first
+
+/** Whether or not the [Database] should be persisted to disk. */
+val DatabaseIdentifier.persistent: Boolean
+    get() = second

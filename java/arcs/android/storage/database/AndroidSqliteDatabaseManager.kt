@@ -13,22 +13,27 @@ package arcs.android.storage.database
 
 import android.content.Context
 import arcs.core.storage.database.Database
-import arcs.core.storage.database.DatabaseFactory
+import arcs.core.storage.database.DatabaseIdentifier
+import arcs.core.storage.database.DatabaseManager
+import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * [DatabaseFactory] implementation which constructs [DatabaseImpl] instances for use on Android
+ * [DatabaseManager] implementation which constructs [DatabaseImpl] instances for use on Android
  * with SQLite.
  */
-class AndroidSqliteDatabaseFactory(context: Context) : DatabaseFactory {
+class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
     private val context = context.applicationContext
     private val mutex = Mutex()
-    private val dbCache by guardedBy(mutex, mutableMapOf<Pair<String, Boolean>, Database>())
+    private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, Database>())
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
         dbCache[name to persistent]
             ?: DatabaseImpl(context, name, persistent).also { dbCache[name to persistent] = it }
     }
+
+    override suspend fun snapshotStatistics(): Map<DatabaseIdentifier, Snapshot> =
+        mutex.withLock { dbCache.mapValues { it.value.snapshotStatistics() } }
 }

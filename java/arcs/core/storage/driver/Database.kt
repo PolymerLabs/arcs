@@ -29,7 +29,7 @@ import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
-import arcs.core.storage.database.DatabaseFactory
+import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.referencemode.toCrdtSetData
 import arcs.core.storage.referencemode.toCrdtSingletonData
 import arcs.core.storage.referencemode.toReferenceSet
@@ -108,9 +108,18 @@ data class DatabaseStorageKey(
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
 object DatabaseDriverProvider : DriverProvider {
-    private var _factory: DatabaseFactory? = null
-    private val factory: DatabaseFactory
-        get() = requireNotNull(_factory) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
+    /**
+     * Whether or not the [DatabaseDriverProvider] has been configured with a [DatabaseManager] and
+     * a schema lookup function.
+     */
+    val isConfigured: Boolean
+        get() = _manager != null
+
+    private var _manager: DatabaseManager? = null
+
+    /** The configured [DatabaseManager]. */
+    val manager: DatabaseManager
+        get() = requireNotNull(_manager) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
 
     /**
      * Function which will be used to determine, at runtime, which [Schema] to associate with its
@@ -148,7 +157,7 @@ object DatabaseDriverProvider : DriverProvider {
             existenceCriteria,
             dataClass,
             schemaLookup,
-            factory.getDatabase(databaseKey.dbName, databaseKey.persistent)
+            manager.getDatabase(databaseKey.dbName, databaseKey.persistent)
         )
     }
 
@@ -156,8 +165,8 @@ object DatabaseDriverProvider : DriverProvider {
      * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
      * with the [DriverFactory].
      */
-    fun configure(databaseFactory: DatabaseFactory, schemaLookup: (String) -> Schema?) = apply {
-        this._factory = databaseFactory
+    fun configure(databaseManager: DatabaseManager, schemaLookup: (String) -> Schema?) = apply {
+        this._manager = databaseManager
         this.schemaLookup = schemaLookup
         DriverFactory.register(this)
         CapabilitiesResolver.registerKeyCreator(

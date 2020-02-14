@@ -14,6 +14,8 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/util",
+        "//java/arcs/core/util/performance",
+        "//java/arcs/jvm/util/performance",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

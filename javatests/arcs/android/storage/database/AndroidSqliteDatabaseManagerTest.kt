@@ -13,7 +13,7 @@ package arcs.android.storage.database
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.storage.database.DatabaseFactory
+import arcs.core.storage.database.DatabaseManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -26,33 +26,33 @@ import java.util.Random
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
-class AndroidSqliteDatabaseFactoryTest {
-    private lateinit var factory: DatabaseFactory
+class AndroidSqliteDatabaseManagerTest {
+    private lateinit var manager: DatabaseManager
     private lateinit var random: Random
 
     @Before
     fun setUp() {
-        factory = AndroidSqliteDatabaseFactory(ApplicationProvider.getApplicationContext())
+        manager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         random = Random(System.currentTimeMillis())
     }
 
     @Test
     fun getDatabase() = runBlockingTest {
-        val database = factory.getDatabase("foo", true)
+        val database = manager.getDatabase("foo", true)
         assertThat(database).isInstanceOf(DatabaseImpl::class.java)
     }
 
     @Test
     fun getDatabases() = runBlockingTest {
-        val databaseFoo = factory.getDatabase("foo", true)
+        val databaseFoo = manager.getDatabase("foo", true)
         assertThat(databaseFoo).isInstanceOf(DatabaseImpl::class.java)
 
-        val databaseBar = factory.getDatabase("bar", true)
+        val databaseBar = manager.getDatabase("bar", true)
         assertThat(databaseBar).isInstanceOf(DatabaseImpl::class.java)
         assertThat(databaseFoo).isNotEqualTo(databaseBar)
         assertThat(databaseFoo).isNotSameInstanceAs(databaseBar)
 
-        val databaseFooMemory = factory.getDatabase("foo", false)
+        val databaseFooMemory = manager.getDatabase("foo", false)
         assertThat(databaseFooMemory).isInstanceOf(DatabaseImpl::class.java)
         assertThat(databaseFoo).isNotEqualTo(databaseBar)
         assertThat(databaseFoo).isNotSameInstanceAs(databaseBar)
@@ -60,8 +60,8 @@ class AndroidSqliteDatabaseFactoryTest {
 
     @Test
     fun getSameDatabase_returnsSameObject() = runBlockingTest {
-        val firstFoo = factory.getDatabase("foo", true)
-        val secondFoo = factory.getDatabase("foo", true)
+        val firstFoo = manager.getDatabase("foo", true)
+        val secondFoo = manager.getDatabase("foo", true)
 
         assertThat(firstFoo).isInstanceOf(DatabaseImpl::class.java)
         assertThat(secondFoo).isInstanceOf(DatabaseImpl::class.java)
@@ -72,11 +72,11 @@ class AndroidSqliteDatabaseFactoryTest {
     fun getSameDatabase_concurrently_returnsSameObject() = runBlockingTest {
         val firstFoo = async {
             delay(random.nextInt(1000).toLong())
-            factory.getDatabase("foo", true)
+            manager.getDatabase("foo", true)
         }
         val secondFoo = async {
             delay(random.nextInt(1000).toLong())
-            factory.getDatabase("foo", true)
+            manager.getDatabase("foo", true)
         }
 
         assertThat(firstFoo.await()).isSameInstanceAs(secondFoo.await())

@@ -17,8 +17,12 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
-import arcs.core.storage.database.DatabaseFactory
+import arcs.core.storage.database.DatabaseIdentifier
+import arcs.core.storage.database.DatabaseManager
+import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.util.guardedBy
+import arcs.core.util.performance.PerformanceStatistics
+import arcs.jvm.util.performance.JvmTimer
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
@@ -31,20 +35,30 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** [DatabaseFactory] which generates mockito mocks of [Database] objects. */
-class MockDatabaseFactory : DatabaseFactory {
+/** [DatabaseManager] which generates mockito mocks of [Database] objects. */
+class MockDatabaseManager : DatabaseManager {
     private val mutex = Mutex()
-    private val cache: MutableMap<Pair<String, Boolean>, Database>
+    private val cache: MutableMap<DatabaseIdentifier, Database>
         by guardedBy(mutex, mutableMapOf())
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
         cache[name to persistent]
             ?: MockDatabase().also { cache[name to persistent] = it }
     }
+
+    override suspend fun snapshotStatistics():
+        Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
+        mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class MockDatabase : Database {
+    private val stats = DatabasePerformanceStatistics(
+        insertUpdate = PerformanceStatistics(JvmTimer),
+        get = PerformanceStatistics(JvmTimer),
+        delete = PerformanceStatistics(JvmTimer)
+    )
+
     private val clientMutex = Mutex()
     private var nextClientId = 1
     open val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient>>()
@@ -59,7 +73,7 @@ open class MockDatabase : Database {
         storageKey: StorageKey,
         data: DatabaseData,
         originatingClientId: Int?
-    ): Int {
+    ): Int = stats.insertUpdate.timeSuspending {
         val (version, isNew) = dataMutex.withLock {
             val oldData = this.data[storageKey]
             if (oldData?.databaseVersion != data.databaseVersion) {
@@ -76,7 +90,7 @@ open class MockDatabase : Database {
                 .launchIn(CoroutineScope(coroutineContext))
         }
 
-        return version
+        return@timeSuspending version
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -84,12 +98,12 @@ open class MockDatabase : Database {
         storageKey: StorageKey,
         dataType: KClass<out DatabaseData>,
         schema: Schema
-    ): DatabaseData? {
+    ): DatabaseData? = stats.get.timeSuspending {
         val dataVal = dataMutex.withLock { data[storageKey] }
 
-        if (dataVal != null) return dataVal
+        if (dataVal != null) return@timeSuspending dataVal
 
-        return when (dataType) {
+        return@timeSuspending when (dataType) {
             DatabaseData.Singleton::class ->
                 DatabaseData.Singleton(null, schema, -1, VersionMap())
             DatabaseData.Collection::class ->
@@ -99,11 +113,15 @@ open class MockDatabase : Database {
         }
     }
 
-    override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) {
-        dataMutex.withLock { data.remove(storageKey) }
-        clientFlow.onEach { it.onDatabaseDelete(originatingClientId) }
-            .launchIn(CoroutineScope(coroutineContext))
-    }
+    override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) =
+        stats.delete.timeSuspending {
+            dataMutex.withLock { data.remove(storageKey) }
+            clientFlow.onEach { it.onDatabaseDelete(originatingClientId) }
+                .launchIn(CoroutineScope(coroutineContext))
+            Unit
+        }
+
+    override suspend fun snapshotStatistics() = stats.snapshot()
 
     override fun addClient(client: DatabaseClient): Int = runBlocking {
         clientMutex.withLock {
