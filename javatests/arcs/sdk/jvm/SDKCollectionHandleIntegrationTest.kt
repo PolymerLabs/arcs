@@ -11,9 +11,24 @@
 
 package arcs.sdk.jvm
 
+import arcs.core.crdt.CrdtSet
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
+import arcs.core.data.RawEntity
+import arcs.core.storage.ExistenceCriteria
+import arcs.core.storage.StorageMode
+import arcs.core.storage.Store
+import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.handle.CollectionImpl
+import arcs.core.storage.handle.SetProxy
+import arcs.core.storage.handle.SetStoreOptions
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.Particle
-import arcs.sdk.CollectionImpl
+import arcs.sdk.SDKReadWriteCollection
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,9 +39,9 @@ import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
 @RunWith(JUnit4::class)
-class CollectionImplTest {
+class SDKCollectionHandleIntegrationTest {
 
-    private lateinit var collection: CollectionImpl<DummyEntity>
+    private lateinit var collection: SDKReadWriteCollection<DummyEntity>
     @Mock private lateinit var particle: Particle
 
     private val HANDLE_NAME = "HANDLE_NAME"
@@ -36,9 +51,27 @@ class CollectionImplTest {
 
     @Before
     fun setUp() {
+        RamDiskDriverProvider()
+        RamDisk.clear()
         MockitoAnnotations.initMocks(this)
-        collection = CollectionImpl(particle, HANDLE_NAME, DummyEntity.Spec())
-        collection.onUpdate(action)
+        val storageKey = ReferenceModeStorageKey(
+            backingKey = RamDiskStorageKey("back"),
+            storageKey = RamDiskStorageKey("coll")
+        )
+        val store = Store(SetStoreOptions<RawEntity>(
+            storageKey = storageKey,
+            existenceCriteria = ExistenceCriteria.MayExist,
+            type = CollectionType(EntityType(DummyEntity.schema)),
+            mode = StorageMode.ReferenceMode
+        ))
+
+        runBlocking {
+            val storageProxy = SetProxy(store.activate(), CrdtSet())
+            val storageHandle = CollectionImpl(HANDLE_NAME, storageProxy)
+            storageProxy.registerHandle(storageHandle)
+            collection = SDKReadWriteCollection(HANDLE_NAME, particle, storageHandle, DummyEntity.Spec())
+            collection.onUpdate(action)
+        }
     }
 
     @Test
@@ -88,8 +121,10 @@ class CollectionImplTest {
 
     @Test
     fun remove_updatesParticle() {
+        collection.store(DUMMY_VALUE1)
+        collection.store(DUMMY_VALUE2)
         collection.remove(DUMMY_VALUE2)
-        verify(particle).onHandleUpdate(collection)
+        verify(particle, times(3)).onHandleUpdate(collection)
     }
 
     @Test
@@ -106,22 +141,27 @@ class CollectionImplTest {
 
     @Test
     fun clear_updatesParticle() {
+        collection.store(DUMMY_VALUE1)
+        collection.store(DUMMY_VALUE2)
         collection.clear()
-        verify(particle).onHandleUpdate(collection)
+        // Expect 4 times: 2 stores and 2 removes
+        verify(particle, times(4)).onHandleUpdate(collection)
     }
 
     @Test
     fun test_onUpdates() {
-        collection.clear()
         val s: Set<DummyEntity> = setOf()
+        /*
+        collection.clear()
         verify(action).invoke(s)
+         */
 
         collection.store(DUMMY_VALUE1)
         val s2: Set<DummyEntity> = setOf(DUMMY_VALUE1)
         verify(action).invoke(s2)
 
         collection.remove(DUMMY_VALUE1)
-        verify(action, times(2)).invoke(s)
+        verify(action, times(1)).invoke(s)
     }
 
 }

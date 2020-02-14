@@ -11,51 +11,71 @@
 
 package arcs.sdk
 
-/** [ReadWriteCollection] implementation for the JVM. */
-@Suppress("UNUSED_PARAMETER")
-// TODO: Connect to storage.
-class CollectionImpl<T : Entity>(
-    val particle: Particle,
+import arcs.core.crdt.CrdtSet
+import arcs.core.data.RawEntity
+import arcs.core.storage.Callbacks
+import arcs.core.storage.handle.CollectionImpl
+import kotlinx.coroutines.runBlocking
+
+open class SDKReadableCollection<T : JvmEntity>(
     override val name: String,
-    entitySpec: EntitySpec<T>
-) : ReadWriteCollection<T> {
+    private val particle: Particle,
+    private val storageHandle: CollectionImpl<RawEntity>,
+    private val entitySpec: JvmEntitySpec<T>
+) : ReadableCollection<T> {
 
-    private val entities = mutableListOf<T>()
-    private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
+    var updateCallback: ((Set<T>) -> Unit)? = null
 
-    override val size: Int
-        get() = entities.size
+    init {
+        storageHandle.callback = object : Callbacks<CrdtSet.IOperation<RawEntity>> {
+            override fun onUpdate(op: CrdtSet.IOperation<RawEntity>) {
+                updateCallback?.invoke(fetchAll())
+                particle.onHandleUpdate(this@SDKReadableCollection)
+            }
 
-    override fun isEmpty(): Boolean = entities.isEmpty()
+            override fun onSync() {
+                particle.onHandleSync(this@SDKReadableCollection, true)
+            }
 
-    override fun fetchAll() = entities.toSet()
-
-    override fun store(entity: T) {
-        entities.add(entity)
-        particle.onHandleUpdate(this)
-        notifyOnUpdateActions()
-    }
-
-    override fun clear() {
-        entities.clear()
-        particle.onHandleUpdate(this)
-        notifyOnUpdateActions()
-    }
-
-    override fun onUpdate(action: (Set<T>) -> Unit) {
-        onUpdateActions.add(action)
-    }
-
-    override fun remove(entity: T) {
-        entities.remove(entity)
-        particle.onHandleUpdate(this)
-        notifyOnUpdateActions()
-    }
-
-    fun notifyOnUpdateActions() {
-        val s = entities.toSet()
-        onUpdateActions.forEach { action ->
-            action(s)
+            override fun onDesync() { }
         }
     }
+    override val size: Int
+        get() = fetchAll().size
+
+    override fun isEmpty() = fetchAll().isEmpty()
+
+    override fun onUpdate(action: (Set<T>) -> Unit) {
+        updateCallback = action
+    }
+
+    override fun fetchAll() = runBlocking {
+        storageHandle.fetchAll().map { entitySpec.deserialize(it) }.toSet()
+    }
 }
+
+class SDKWritableCollection<T : JvmEntity>(
+    override val name: String,
+    private val storageHandle: CollectionImpl<RawEntity>
+) : WritableCollection<T> {
+    override fun store(entity: T) = runBlocking {
+        storageHandle.store(entity.serialize())
+    }
+
+    override fun clear() = runBlocking {
+        storageHandle.clear()
+    }
+
+    override fun remove(entity: T) = runBlocking {
+        storageHandle.remove(entity.serialize())
+    }
+}
+
+class SDKReadWriteCollection<T : JvmEntity>(
+    override val name: String,
+    particle: Particle,
+    private val storageHandle: CollectionImpl<RawEntity>,
+    entitySpec: JvmEntitySpec<T>
+) : SDKReadableCollection<T>(name, particle, storageHandle, entitySpec),
+    WritableCollection<T> by SDKWritableCollection(name, storageHandle),
+    ReadWriteCollection<T>

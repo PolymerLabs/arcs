@@ -83,7 +83,9 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
         default:
           throw new Error(`Unsupported handle direction: ${connection.direction}`);
       }
-      handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
+      if(this.opts.wasm) {
+          handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
+      }
     }
     return `
 class ${particleName}Handles(particle : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}) {
@@ -243,7 +245,7 @@ ${this.opts.wasm ? `
         )
         _rtn.internalId = internalId
         return _rtn
-    }` : ''}
+    }` : `override fun deserialize(entity: RawEntity): ${name} = ${name}() `}
 }
 
 ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;

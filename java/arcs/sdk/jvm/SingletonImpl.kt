@@ -11,36 +11,66 @@
 
 package arcs.sdk
 
-/** [ReadWriteSingleton] implementation for the JVM. */
-@Suppress("UNUSED_PARAMETER")
-// TODO: Connect to storage.
-class SingletonImpl<T : Entity>(
-    private val particle: Particle,
+import arcs.core.crdt.CrdtSingleton
+import arcs.core.data.RawEntity
+import arcs.core.storage.Callbacks
+import arcs.core.storage.handle.SingletonImpl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+
+open class SDKReadableSingleton<T : JvmEntity>(
     override val name: String,
-    entitySpec: EntitySpec<T>
-) : ReadWriteSingleton<T> {
-    private var entity: T? = null
-    private val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
+    private val particle: Particle,
+    private val storageHandle: SingletonImpl<RawEntity>,
+    private val entitySpec: JvmEntitySpec<T>
+) : ReadableSingleton<T> {
 
-    override fun fetch(): T? = entity
+    var updateCallback: ((T?) -> Unit)? = null
 
-    override fun set(entity: T) {
-        this.entity = entity
-        particle.onHandleUpdate(this)
-        onUpdateActions.forEach { action ->
-            action(entity)
+    init {
+        storageHandle.callback = object : Callbacks<CrdtSingleton.IOperation<RawEntity>> {
+            override fun onUpdate(op: CrdtSingleton.IOperation<RawEntity>) {
+                updateCallback?.invoke(fetch())
+                particle.onHandleUpdate(this@SDKReadableSingleton)
+            }
+
+            override fun onSync() {
+                particle.onHandleSync(this@SDKReadableSingleton, true)
+            }
+
+            override fun onDesync() { }
         }
     }
 
-    override fun clear() {
-        this.entity = null
-        particle.onHandleUpdate(this)
-        onUpdateActions.forEach { action ->
-            action(entity)
+    override fun fetch(): T? = runBlocking {
+        storageHandle.fetch()?.let {
+            entitySpec.deserialize(it)
         }
     }
 
     override fun onUpdate(action: (T?) -> Unit) {
-        onUpdateActions.add(action)
+        updateCallback = action
     }
 }
+
+class SDKWritableSingleton<T : JvmEntity>(
+    override val name: String,
+    private val storageHandle: SingletonImpl<RawEntity>
+) : WritableSingleton<T> {
+    override fun set(entity: T) = runBlocking {
+        storageHandle.set(entity.serialize())
+    }
+
+    override fun clear() = runBlocking(Dispatchers.Default) {
+        storageHandle.clear()
+    }
+}
+
+class SDKReadWriteSingleton<T : JvmEntity>(
+    override val name: String,
+    particle: Particle,
+    private val storageHandle: SingletonImpl<RawEntity>,
+    entitySpec: JvmEntitySpec<T>
+) : SDKReadableSingleton<T>(name, particle, storageHandle, entitySpec),
+    WritableSingleton<T> by SDKWritableSingleton(name, storageHandle),
+    ReadWriteSingleton<T>
