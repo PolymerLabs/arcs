@@ -42,11 +42,6 @@ interface ActivationFactoryFactory {
     fun setFactory(): SetActivationFactory<RawEntity>
 }
 
-@Experimental
-@Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class ExperimentalHandleApi
-
 /**
  * [HandleManager] is a convenience for creating handles using a provided store factory.
  *
@@ -60,7 +55,6 @@ annotation class ExperimentalHandleApi
  * you can provide your own ActivationFactoryFactory, which provides methods for creating
  * activations factories to create singleton-rawentity and set-rawentity [ActiveStore]s
  */
-@ExperimentalHandleApi
 class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     private val singletonProxiesMutex = Mutex()
     private val singletonProxies by guardedBy(

@@ -1,14 +1,11 @@
 package arcs.android.storage.handle
 
 import android.app.Application
-import android.content.ServiceConnection
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
-import arcs.android.storage.ParcelableStoreOptions
-import arcs.android.storage.handle.TestActivity
 import arcs.android.storage.service.IStorageService
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
@@ -18,12 +15,10 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.core.storage.handle.ExperimentalHandleApi
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
-import arcs.sdk.android.storage.service.StorageService
-import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
+import arcs.sdk.android.storage.service.testutil.TestBindingDelegate
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -31,40 +26,12 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
-import org.robolectric.android.controller.ServiceController
 
 
-@ExperimentalHandleApi
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class AndroidHandleManagerTest {
     private lateinit var app: Application
-
-    inner class TestBindingDelegate : StorageServiceBindingDelegate {
-        var sc: ServiceController<StorageService>? = null
-        override fun bindStorageService(
-            conn: ServiceConnection,
-            flags: Int,
-            options: ParcelableStoreOptions
-        ): Boolean {
-            val intent = StorageService.createBindIntent(
-                app,
-                options
-            )
-            sc = Robolectric.buildService(StorageService::class.java, intent)
-                .create()
-                .bind()
-                .also {
-                    val binder = it.get().onBind(intent)
-                    conn.onServiceConnected(null, binder)
-                }
-            return true
-        }
-
-        override fun unbindStorageService(conn: ServiceConnection) {
-            sc?.destroy()
-        }
-    }
 
     val entity1 = RawEntity(
         "entity1",
@@ -129,7 +96,7 @@ class AndroidHandleManagerTest {
                 val hf = AndroidHandleManager(
                     lifecycle = activity.lifecycle,
                     context = activity,
-                    connectionFactory = DefaultConnectionFactory(activity, TestBindingDelegate())
+                    connectionFactory = DefaultConnectionFactory(activity, TestBindingDelegate(app))
                 )
                 block(hf)
             }
