@@ -19,4 +19,4 @@ import '6_JsonStore/JsonStore.arcs'
 
 import '7_Functional/Functional.arcs'
 
-import 'Demo/src/functional/TTTGame.arcs'
+import 'Demo/src/TTTGame.arcs'
