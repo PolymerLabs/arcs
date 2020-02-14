@@ -100,10 +100,10 @@ export class ParticleExecutionHost {
     this.getPort(particle).UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
+  instantiate(particle: Particle, stores: Map<string, UnifiedStore>, reinstantiate: Boolean): void {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
-    console.log(`I'm instantiating ${particle.name}`)
+    console.log(`I'm instantiating ${particle.name} ${reinstantiate}`)
     stores.forEach((store, name) => {
       apiPort.DefineHandle(
           store,
@@ -112,17 +112,22 @@ export class ParticleExecutionHost {
           store.storageKey.toString(),
           particle.getConnectionByName(name).handle.ttl);
     });
-    apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores);
+    apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores, reinstantiate);
   }
 
   reinstantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
+    console.log("1")
     assert(this.particles.find(p => p === particle),
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
+    console.log("2")
     this.apiPorts.forEach(apiPort => { apiPort.clear(); });
+    console.log("3")
     const apiPort = this.getPort(particle);
+    console.log("4")
     stores.forEach((store, name) => {
       apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.ttl);
     });
+    console.log("5")
     apiPort.ReinstantiateParticle(particle.id.toString(), particle.spec, stores);
   }
 
