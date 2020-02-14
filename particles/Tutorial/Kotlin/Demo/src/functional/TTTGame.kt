@@ -33,56 +33,62 @@ class TTTGame : AbstractTTTGame() {
     )
 
     init{
+
         handles.playerOneMove.onUpdate() { move ->
-            if(handles.gameState.fetch()?.currentPlayer == handles.playerOne.fetch()?.id) {
-                applyMove(move)
-            }
+            applyMove(
+              move ?: TTTGame_PlayerOneMove(),
+              handles.playerOne.fetch() ?: TTTGame_PlayerOne()
+            )
         }
+
         handles.playerTwoMove.onUpdate() { move ->
-            if(handles.gameState.fetch()?.currentPlayer == handles.playerTwo.fetch()?.id) {
-                applyMove(move)
+            applyMove(
+              move ?: TTTGame_PlayerTwoMove(),
+              handles.playerTwo.fetch() ?: TTTGame_PlayerTwo()
+            )
+        }
+
+        handles.events.onUpdate() {
+            if (hasReset()) {
+                handles.gameState.set(defaultGame)
+                handles.playerOneMove.set(handles.playerOneMove.fetch()!!.copy(move = -1.0))
+                handles.playerTwoMove.set(handles.playerTwoMove.fetch()!!.copy(move = -1.0))
+                handles.events.clear()
+                renderOutput()
             }
         }
-        
     }
 
-    override fun onHandleUpdate(handle: Handle) {
+    private fun applyMove(move: TTTGame_PlayerOneMove, player: TTTGame_PlayerOne) {
+        val mv = move.move.toInt()
         val gs = handles.gameState.fetch() ?: TTTGame_GameState()
-        val p1 = handles.playerOne.fetch() ?: TTTGame_PlayerOne()
-        val p2 = handles.playerTwo.fetch() ?: TTTGame_PlayerTwo()
-        val mv1 = handles.playerOneMove.fetch() ?: TTTGame_PlayerOneMove()
-        val mv2 = handles.playerTwoMove.fetch() ?: TTTGame_PlayerTwoMove()
-        // Apply the moves
-        if (gs.gameOver != true) {
-            val boardList = gs.board.split(",").toMutableList()
-            // Check the handle updated matches the current player
-            if (handle.name == "playerOneMove" && gs.currentPlayer == 0.0) {
-                applyMove(
-                  mv = mv1.move.toInt(),
-                  avatar = p1.avatar,
-                  boardList = boardList,
-                  gs = gs
-                )
-            } else if (handle.name == "playerTwoMove" && gs.currentPlayer == 1.0) {
-                applyMove(
-                  mv = mv2.move.toInt(),
-                  avatar = p2.avatar,
-                  boardList = boardList,
-                  gs = gs
-                )
+
+        // Check if move is valid
+        val boardList = gs.board.split(",").toMutableList()
+        if (!mv.isValidMove(boardList) || gs.currentPlayer != player.id || gs.gameOver) return
+
+        // Apply the move
+        boardList[mv] = player.avatar
+
+        var gameOver = !boardList.contains("")
+        var avatar = ""
+
+        // Check if the game is over
+        winningSequences.forEach { sequence ->
+            if (boardList[sequence[0]] != "" &&
+              boardList[sequence[0]] == boardList[sequence[1]] &&
+              boardList[sequence[0]] == boardList[sequence[2]]) {
+                gameOver = true
+                avatar = player.avatar
             }
         }
-        if (hasReset()) {
-            handles.gameState.set(TTTGame_GameState(
-              board = ",,,,,,,,",
-              currentPlayer = (0..1).random().toDouble(),
-              gameOver = false,
-              winnerAvatar = ""
-            ))
-            handles.playerOneMove.set(mv1.copy(move = -1.0))
-            handles.playerTwoMove.set(mv2.copy(move = -1.0))
-            handles.events.clear()
-        }
+
+        handles.gameState.set(gs.copy(
+          board = boardList.joinToString(","),
+          currentPlayer = (gs.currentPlayer + 1) % 2,
+          gameOver = gameOver,
+          winnerAvatar = avatar
+        ))
         renderOutput()
     }
 
@@ -121,41 +127,11 @@ class TTTGame : AbstractTTTGame() {
         )
     }
 
-
-
     override fun getTemplate(slotName: String): String = """
         It is your turn <span>{{playerDetails}}</span>.
         <div slotid="boardSlot"></div>
         <div hidden="{{hideCongrats}}"><span>{{message}}</span></div>
         """.trimIndent()
-
-    private fun applyMove(
-        mv: Int,
-        avatar: String,
-        boardList: MutableList<String>,
-        gs: TTTGame_GameState
-    ) {
-        if (!mv.isValidMove(boardList)) return
-        boardList[mv] = avatar
-
-        var gameOver = !boardList.contains("")
-
-        // Check if the game is over
-        winningSequences.forEach { sequence ->
-            if (boardList[sequence[0]] != "" &&
-                boardList[sequence[0]] == boardList[sequence[1]] &&
-                boardList[sequence[0]] == boardList[sequence[2]]) {
-                gameOver = true
-            }
-        }
-
-        handles.gameState.set(gs.copy(
-            board = boardList.joinToString(","),
-            currentPlayer = (gs.currentPlayer + 1) % 2,
-            gameOver = gameOver,
-            winnerAvatar = if (gameOver) avatar else ""
-        ))
-    }
 
     private fun hasReset() = handles.events.fetchAll().any { it.type == "reset" }
 
