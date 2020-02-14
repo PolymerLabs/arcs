@@ -46,6 +46,8 @@ class GoldInternal1() : JvmEntity {
             "val" to val_.toReferencable()
         )
     )
+
+    override fun toString() = "GoldInternal1(val_ = $val_)"
 }
 
 class GoldInternal1_Spec() : JvmEntitySpec<GoldInternal1> {
@@ -126,6 +128,8 @@ class Gold_Data() : JvmEntity {
             "flg" to flg.toReferencable()
         )
     )
+
+    override fun toString() = "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 }
 
 class Gold_Data_Spec() : JvmEntitySpec<Gold_Data> {
