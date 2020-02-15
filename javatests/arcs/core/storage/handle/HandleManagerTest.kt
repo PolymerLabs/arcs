@@ -21,7 +21,6 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 
-@ExperimentalHandleApi
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class HandleManagerTest {

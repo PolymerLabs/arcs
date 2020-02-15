@@ -5,7 +5,6 @@ import androidx.lifecycle.Lifecycle
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.data.RawEntity
 import arcs.core.storage.handle.ActivationFactoryFactory
-import arcs.core.storage.handle.ExperimentalHandleApi
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.SetData
 import arcs.core.storage.handle.SetOp
@@ -28,7 +27,6 @@ typealias SetServiceStoreFactory<T> = ServiceStoreFactory<SetData<T>, SetOp<T>, 
  * communication with a running [StorageService].
  */
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-@ExperimentalHandleApi
 fun AndroidHandleManager(
     context: Context,
     lifecycle: Lifecycle,
