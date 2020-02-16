@@ -38,7 +38,7 @@ arcs_kt_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
-        "//java/arcs/core/data:rawentity",  # unuseddeps: keep
+        "//java/arcs/core/data:rawentity",  # buildcleaner: keep
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/util",
         "//java/arcs/core/type",

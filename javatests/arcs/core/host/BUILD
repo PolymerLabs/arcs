@@ -13,7 +13,7 @@ arcs_kt_jvm_test_suite(
     srcs = glob(["*Test.kt"]),
     package = "arcs.core.host",
     deps = [
-        ":particle",  # unuseddeps: keep
+        ":particle",  # buildcleaner: keep
         "//java/arcs/jvm/host",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
