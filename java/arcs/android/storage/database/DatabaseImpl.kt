@@ -440,7 +440,6 @@ class DatabaseImpl(
                 it.getLong(0) to collectionId
             } ?: return@useTransaction
 
-
             counters.increment(DatabaseCounters.DELETE_STORAGE_KEY)
             execSQL("DELETE FROM storage_keys WHERE id = ?", arrayOf(storageKeyId))
             counters.increment(DatabaseCounters.DELETE_ENTITY)
