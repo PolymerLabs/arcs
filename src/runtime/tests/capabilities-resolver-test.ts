@@ -24,7 +24,7 @@ describe('Capabilities Resolver', () => {
     assert.isTrue(resolver1.createStorageKey(Capabilities.tiedToArc) instanceof VolatileStorageKey);
     assert.throws(() => resolver1.createStorageKey(Capabilities.tiedToRuntime));
     assert.throws(() => resolver1.createStorageKey(Capabilities.persistent));
-    
+
     const resolver2 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')},
         new Map([
             [RamDiskStorageKey.protocol, {

@@ -11,8 +11,15 @@
 
 package arcs.android.storage.database
 
-/** Collection of constants for use with [DatabasePerformanceStatistics] for [DatabaseImpl]. */
+/**
+ * Collection of constants for use with [arcs.core.storage.database.DatabasePerformanceStatistics]
+ * for [DatabaseImpl].
+ */
 object DatabaseCounters {
+    /* General storage key Counters. */
+    const val GET_STORAGE_KEY_ID = "get_storage_key_id"
+    const val DELETE_STORAGE_KEY = "delete_storage_key"
+
     /* Entity-related Counters */
     const val INSERTUPDATE_ENTITY = "insertUpdate_entity"
     const val GET_ENTITY = "get_entity"
@@ -30,6 +37,8 @@ object DatabaseCounters {
     const val INSERT_ENTITY_STORAGEKEY = "insert_entity_storageKey"
     const val INSERT_ENTITY_RECORD = "insert_entity_record"
     const val UPDATE_ENTITY_FIELD_VALUE = "update_entity_field_value"
+    const val DELETE_ENTITY = "delete_entity"
+    const val DELETE_ENTITY_FIELDS = "delete_entity_fields"
 
     /* Collection-related Counters */
     const val INSERTUPDATE_COLLECTION = "insertUpdate_collection"
@@ -38,6 +47,7 @@ object DatabaseCounters {
     const val GET_COLLECTION_ENTRIES = "get_collection_entries"
     const val INSERT_COLLECTION_RECORD = "insert_collection_record"
     const val INSERT_COLLECTION_STORAGEKEY = "insert_collection_storageKey"
+    const val DELETE_COLLECTION = "delete_collection"
     const val DELETE_COLLECTION_ENTRIES = "delete_collection_entries"
     const val INSERT_COLLECTION_ENTRY = "insert_collection_entry"
 
@@ -113,6 +123,12 @@ object DatabaseCounters {
     )
 
     /** [Array] of counter names for [DatabaseImpl.delete]. */
-    // TODO(csilvestrini): Flesh this out.
-    val DELETE_COUNTERS = arrayOf<String>()
+    val DELETE_COUNTERS = arrayOf(
+        DELETE_COLLECTION,
+        DELETE_COLLECTION_ENTRIES,
+        DELETE_ENTITY,
+        DELETE_ENTITY_FIELDS,
+        DELETE_STORAGE_KEY,
+        GET_STORAGE_KEY_ID
+    )
 }
