@@ -425,8 +425,9 @@ class DatabaseImpl(
     override suspend fun delete(
         storageKey: StorageKey,
         originatingClientId: Int?
-    ): Unit = stats.delete.timeSuspending<Unit> {
+    ): Unit = stats.delete.timeSuspending { counters ->
         writableDatabase.useTransaction {
+            counters.increment(DatabaseCounters.GET_STORAGE_KEY_ID)
             val (storageKeyId, collectionId) = rawQuery(
                 "SELECT id, data_type, value_id FROM storage_keys WHERE storage_key = ?",
                 arrayOf(storageKey.toString())
@@ -439,8 +440,12 @@ class DatabaseImpl(
                 it.getLong(0) to collectionId
             } ?: return@useTransaction
 
+
+            counters.increment(DatabaseCounters.DELETE_STORAGE_KEY)
             execSQL("DELETE FROM storage_keys WHERE id = ?", arrayOf(storageKeyId))
+            counters.increment(DatabaseCounters.DELETE_ENTITY)
             execSQL("DELETE FROM entities WHERE storage_key_id = ?", arrayOf(storageKeyId))
+            counters.increment(DatabaseCounters.DELETE_ENTITY_FIELDS)
             execSQL(
                 "DELETE FROM field_values WHERE entity_storage_key_id = ?",
                 arrayOf(storageKeyId)
@@ -448,7 +453,9 @@ class DatabaseImpl(
             // entity_refs and types don't get deleted.
 
             if (collectionId != null) {
+                counters.increment(DatabaseCounters.DELETE_COLLECTION)
                 execSQL("DELETE FROM collections WHERE id = ?", arrayOf(collectionId))
+                counters.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
                 execSQL(
                     "DELETE FROM collection_entries WHERE collection_id = ?",
                     arrayOf(collectionId)
@@ -878,7 +885,6 @@ class DatabaseImpl(
                 -- Entries in a collection/singleton. (Singletons will have only a single row.)
                 CREATE TABLE collection_entries (
                     collection_id INTEGER NOT NULL,
-
                     -- For collections of primitives: value_id for primitive in collection.
                     -- For collections of entities: id of reference in entity_refs table.
                     -- For singletons: storage_key_id of entity.
