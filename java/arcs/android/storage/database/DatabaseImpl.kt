@@ -181,16 +181,8 @@ class DatabaseImpl(
             val fieldId = it.getLong(0)
             val fieldValueId = it.getLong(1)
             val field = fieldsById.getValue(fieldId)
-            // TODO: Handle reference field values.
             // TODO: Don't do a separate query for every field.
-
-            data[field.fieldName] = if (field.isCollection) {
-                counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_PRIMITIVE_COLLECTION)
-                getCollectionPrimitiveEntries(fieldValueId, field.typeId, db, counters)
-            } else {
-                counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_PRIMITIVE)
-                getPrimitiveValue(fieldValueId, field.typeId, db, counters)
-            }
+            data[field.fieldName] = getEntityFieldValue(fieldValueId, field, db, counters)
         }
         DatabaseData.Entity(
             Entity(
@@ -202,6 +194,44 @@ class DatabaseImpl(
             VersionMap() // TODO: Fill in VersionMap
         )
     }
+
+    private fun getEntityFieldValue(
+        fieldValueId: FieldValueId,
+        field: SchemaField,
+        db: SQLiteDatabase,
+        counters: Counters?
+    ): Any = when {
+        field.isCollection -> {
+            counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_COLLECTION)
+            getCollectionEntries(fieldValueId, field.typeId, db, counters)
+        }
+        isPrimitiveType(field.typeId) -> {
+            counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_PRIMITIVE)
+            getPrimitiveValue(fieldValueId, field.typeId, db, counters)
+        }
+        else -> {
+            counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_REFERENCE)
+            getReferenceValue(fieldValueId, db)
+        }
+    }
+
+    private fun getReferenceValue(
+        entityRefId: FieldValueId,
+        db: SQLiteDatabase
+    ): Any = db.rawQuery(
+        """
+            SELECT entity_id, backing_storage_key
+            FROM entity_refs
+            WHERE id = ?
+        """.trimIndent(),
+        arrayOf(entityRefId.toString())
+    ).forSingleResult {
+        Reference(
+            id = it.getString(0),
+            storageKey = StorageKeyParser.parse(it.getString(1)),
+            version = VersionMap() // TODO: VersionMap
+        )
+    } ?: throw IllegalArgumentException("Entity Reference with ID $entityRefId does not exist.")
 
     @VisibleForTesting
     fun getCollection(
@@ -301,24 +331,32 @@ class DatabaseImpl(
             content.apply {
                 val field = fields.getValue(fieldName)
                 put("field_id", field.fieldId)
-                // TODO: Handle references in fields.
-                if (field.isCollection) {
-                    if (fieldValue == null) return@forEach
-                    require(fieldValue is Set<*>) {
-                        "Collection fields must be of type Set. Instead found " +
-                            "${fieldValue::class}."
+                val valueId = when {
+                    field.isCollection -> {
+                        if (fieldValue == null) return@forEach
+                        require(fieldValue is Set<*>) {
+                            "Collection fields must be of type Set. Instead found " +
+                                "${fieldValue::class}."
+                        }
+                        if (fieldValue.isEmpty()) return@forEach
+                        insertCollection(
+                            fieldValue,
+                            field.typeId,
+                            db,
+                            counters
+                        )
                     }
-                    if (fieldValue.isEmpty()) return@forEach
-                    val valueId = insertCollectionOfPrimitives(
-                        fieldValue,
-                        field.typeId,
-                        db,
-                        counters
-                    )
-                    put("value_id", valueId)
-                } else {
-                    put("value_id", getPrimitiveValueId(fieldValue, field.typeId, db, counters))
+                    isPrimitiveType(field.typeId) -> {
+                        getPrimitiveValueId(fieldValue, field.typeId, db, counters)
+                    }
+                    else -> {
+                        require(fieldValue is Reference) {
+                            "Expected field value to be a Reference but was $fieldValue."
+                        }
+                        getEntityReferenceId(fieldValue, db, counters)
+                    }
                 }
+                put("value_id", valueId)
             }
 
             counters?.increment(DatabaseCounters.UPDATE_ENTITY_FIELD_VALUE)
@@ -331,7 +369,7 @@ class DatabaseImpl(
         }
     }
 
-    private fun insertCollectionOfPrimitives(
+    private fun insertCollection(
         elements: Set<*>,
         typeId: TypeId,
         db: SQLiteDatabase,
@@ -351,8 +389,17 @@ class DatabaseImpl(
             put("collection_id", collectionId)
         }
         // TODO: Don't do this one-by-one.
-        elements.forEach {
-            val valueId = getPrimitiveValueId(it, typeId, db)
+        val valueIds = if (isPrimitiveType(typeId)) {
+            elements.map { getPrimitiveValueId(it, typeId, db) }
+        } else {
+            elements.map {
+                require(it is Reference) {
+                    "Expected element in collection to be a Reference but was $it."
+                }
+                getEntityReferenceId(it, db, counters)
+            }
+        }
+        valueIds.forEach { valueId ->
             content.put("value_id", valueId)
             counters?.increment(DatabaseCounters.INSERT_COLLECTION_ENTRY)
             insert(TABLE_COLLECTION_ENTRIES, null, content)
@@ -567,6 +614,7 @@ class DatabaseImpl(
             }
             val schemaTypeId = insert(TABLE_TYPES, null, content)
 
+            // TODO: If the transaction fails (elsewhere), we need to roll this back...
             schemaTypeMap[schema.hash] = schemaTypeId
 
             val insertFieldStatement = compileStatement(
@@ -576,14 +624,14 @@ class DatabaseImpl(
                 """.trimIndent()
             )
 
-            suspend fun insertFieldBlock(
+            fun insertFieldBlock(
                 fieldName: String,
                 fieldType: FieldType,
                 isCollection: Boolean
             ) {
                 counters?.increment(DatabaseCounters.INSERT_ENTITY_FIELD)
                 insertFieldStatement.apply {
-                    bindLong(1, getTypeId(fieldType))
+                    bindLong(1, getTypeId(fieldType, schemaTypeMap))
                     bindLong(2, schemaTypeId)
                     bindString(3, fieldName)
                     bindBoolean(4, isCollection)
@@ -706,6 +754,17 @@ class DatabaseImpl(
             collectionId
         }
 
+    private fun getCollectionEntries(
+        collectionId: CollectionId,
+        typeId: TypeId,
+        db: SQLiteDatabase,
+        counters: Counters?
+    ): Set<*> = if (isPrimitiveType(typeId)) {
+        getCollectionPrimitiveEntries(collectionId, typeId, db, counters)
+    } else {
+        getCollectionReferenceEntries(collectionId, db)
+    }
+
     private fun getCollectionPrimitiveEntries(
         collectionId: CollectionId,
         typeId: TypeId,
@@ -762,6 +821,9 @@ class DatabaseImpl(
             version = VersionMap() // TODO: VersionMap
         )
     }.toSet()
+
+    /** Returns true if the given [TypeId] represents a primitive type. */
+    private fun isPrimitiveType(typeId: TypeId) = typeId < PrimitiveType.values().size
 
     /**
      * Returns a map of field name to field ID and type ID, for each field in the given schema
@@ -884,14 +946,20 @@ class DatabaseImpl(
     }
 
     /** Returns the type ID for the given [fieldType] if known, otherwise throws. */
-    @VisibleForTesting
-    suspend fun getTypeId(fieldType: FieldType): TypeId = when (fieldType) {
+    private fun getTypeId(
+        fieldType: FieldType,
+        schemaTypeMap: Map<String, Long>
+    ): TypeId = when (fieldType) {
         is FieldType.Primitive -> fieldType.primitiveType.ordinal.toLong()
-        is FieldType.EntityRef -> mutex.withLock {
-            requireNotNull(schemaTypeMap[fieldType.schemaHash]) {
-                "Unknown type ID for schema with hash ${fieldType.schemaHash}"
-            }
+        is FieldType.EntityRef -> requireNotNull(schemaTypeMap[fieldType.schemaHash]) {
+            "Unknown type ID for schema with hash ${fieldType.schemaHash}"
         }
+    }
+
+    /** Test-only version of [getTypeId]. */
+    @VisibleForTesting
+    suspend fun getTypeIdForTest(fieldType: FieldType) = mutex.withLock {
+        getTypeId(fieldType, schemaTypeMap)
     }
 
     /** Loads all schema type IDs from the 'types' table into memory. */

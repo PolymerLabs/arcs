@@ -29,8 +29,8 @@ object DatabaseCounters {
     const val GET_ENTITY_TYPE_BY_STORAGEKEY = "get_entity_type_by_storageKey"
     const val GET_ENTITY_FIELD_VALUES = "get_entity_field_values"
     const val GET_ENTITY_FIELD_VALUE_PRIMITIVE = "get_entity_field_value_primitive"
-    const val GET_ENTITY_FIELD_VALUE_PRIMITIVE_COLLECTION =
-        "get_entity_field_value_primitive_collection"
+    const val GET_ENTITY_FIELD_VALUE_REFERENCE = "get_entity_field_value_reference"
+    const val GET_ENTITY_FIELD_VALUE_COLLECTION = "get_entity_field_value_collection"
     const val ENTITY_SCHEMA_CACHE_HIT = "entity_schema_cache_hit"
     const val ENTITY_SCHEMA_CACHE_MISS = "entity_schema_cache_miss"
     const val INSERT_ENTITY_TYPE_ID = "insert_entity_type_id"
@@ -117,8 +117,9 @@ object DatabaseCounters {
         GET_ENTITY_TYPE_BY_STORAGEKEY,
         GET_ENTITY_FIELDS,
         GET_ENTITY_FIELD_VALUES,
+        GET_ENTITY_FIELD_VALUE_COLLECTION,
         GET_ENTITY_FIELD_VALUE_PRIMITIVE,
-        GET_ENTITY_FIELD_VALUE_PRIMITIVE_COLLECTION,
+        GET_ENTITY_FIELD_VALUE_REFERENCE,
         GET_PRIMITIVE_VALUE_BOOLEAN,
         GET_PRIMITIVE_VALUE_TEXT,
         GET_PRIMITIVE_VALUE_NUMBER,

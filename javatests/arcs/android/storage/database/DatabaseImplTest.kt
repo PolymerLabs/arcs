@@ -31,7 +31,6 @@ import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import java.lang.IllegalArgumentException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
@@ -61,15 +60,15 @@ class DatabaseImplTest {
 
     @Test
     fun getTypeId_primitiveTypeIds() = runBlockingTest {
-        assertThat(database.getTypeId(FieldType.Boolean)).isEqualTo(PrimitiveType.Boolean.ordinal)
-        assertThat(database.getTypeId(FieldType.Number)).isEqualTo(PrimitiveType.Number.ordinal)
-        assertThat(database.getTypeId(FieldType.Text)).isEqualTo(PrimitiveType.Text.ordinal)
+        assertThat(database.getTypeIdForTest(FieldType.Boolean)).isEqualTo(PrimitiveType.Boolean.ordinal)
+        assertThat(database.getTypeIdForTest(FieldType.Number)).isEqualTo(PrimitiveType.Number.ordinal)
+        assertThat(database.getTypeIdForTest(FieldType.Text)).isEqualTo(PrimitiveType.Text.ordinal)
     }
 
     @Test
     fun getTypeId_entity_throwsWhenMissing() = runBlockingTest {
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.getTypeId(FieldType.EntityRef("abc"))
+            database.getTypeIdForTest(FieldType.EntityRef("abc"))
         }
         assertThat(exception)
             .hasMessageThat()
@@ -85,7 +84,7 @@ class DatabaseImplTest {
         // Repeating should give the same result.
         assertThat(database.getSchemaTypeId(schema, db)).isEqualTo(FIRST_ENTITY_TYPE_ID)
 
-        assertThat(database.getTypeId(FieldType.EntityRef("abc")))
+        assertThat(database.getTypeIdForTest(FieldType.EntityRef("abc")))
             .isEqualTo(FIRST_ENTITY_TYPE_ID)
     }
 
@@ -97,11 +96,11 @@ class DatabaseImplTest {
         val expectedTypeId2 = FIRST_ENTITY_TYPE_ID + 1
 
         assertThat(database.getSchemaTypeId(schema1, db)).isEqualTo(expectedTypeId1)
-        assertThat(database.getTypeId(FieldType.EntityRef("first")))
+        assertThat(database.getTypeIdForTest(FieldType.EntityRef("first")))
             .isEqualTo(expectedTypeId1)
 
         assertThat(database.getSchemaTypeId(schema2, db)).isEqualTo(expectedTypeId2)
-        assertThat(database.getTypeId(FieldType.EntityRef("second")))
+        assertThat(database.getTypeIdForTest(FieldType.EntityRef("second")))
             .isEqualTo(expectedTypeId2)
     }
 
@@ -330,20 +329,69 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun insertAndGet_entity_newEntityWithReferenceFields() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val childSchema = newSchema(
+            "child",
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = mapOf()
+            )
+        )
+        val schema = newSchema(
+            "parent",
+            SchemaFields(
+                singletons = mapOf("favouriteChild" to FieldType.EntityRef("child")),
+                collections = mapOf("otherChildren" to FieldType.EntityRef("child"))
+            )
+        )
+        val alice = Entity("alice-id", childSchema, mutableMapOf("name" to "Alice"))
+        val bob = Entity("bob-id", childSchema, mutableMapOf("name" to "Bob"))
+        val charlie = Entity("charlie-id", childSchema, mutableMapOf("name" to "Charlie"))
+        val parentEntity = Entity(
+            "parent-id",
+            schema,
+            mutableMapOf(
+                "favouriteChild" to Reference(
+                    "alice-id",
+                    DummyStorageKey("alice-key"),
+                    VersionMap()
+                ),
+                "otherChildren" to setOf(
+                    Reference("bob-id", DummyStorageKey("bob-key"), VersionMap()),
+                    Reference("charlie-id", DummyStorageKey("charlie-key"), VersionMap())
+                )
+            )
+        )
+        database.insertOrUpdate(DummyStorageKey("alice-key"), alice)
+        database.insertOrUpdate(DummyStorageKey("bob-key"), bob)
+        database.insertOrUpdate(DummyStorageKey("charlie-key"), charlie)
+
+        database.insertOrUpdate(key, parentEntity)
+        val entityOut = database.getEntity(key, schema).entity
+
+        assertThat(entityOut).isEqualTo(parentEntity)
+    }
+
+    @Test
     fun insertAndGet_entity_updateExistingEntity() = runBlockingTest {
         val key = DummyStorageKey("key")
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
         val schema = newSchema(
             "hash",
             SchemaFields(
                 singletons = mapOf(
                     "text" to FieldType.Text,
                     "bool" to FieldType.Boolean,
-                    "num" to FieldType.Number
+                    "num" to FieldType.Number,
+                    "ref" to FieldType.EntityRef("child")
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
                     "bools" to FieldType.Boolean,
-                    "nums" to FieldType.Number
+                    "nums" to FieldType.Number,
+                    "refs" to FieldType.EntityRef("child")
                 )
             )
         )
@@ -355,9 +403,14 @@ class DatabaseImplTest {
                 "text" to "aaa",
                 "bool" to true,
                 "num" to 111.0,
+                "ref" to Reference("child-id-1", DummyStorageKey("child-ref-1"), VersionMap()),
                 "texts" to setOf("aaa", "bbb"),
                 "bools" to setOf(true),
-                "nums" to setOf(11.0, 111.0)
+                "nums" to setOf(11.0, 111.0),
+                "refs" to setOf(
+                    Reference("child-id-2", DummyStorageKey("child-ref-2"), VersionMap()),
+                    Reference("child-id-3", DummyStorageKey("child-ref-3"), VersionMap())
+                )
             )
         )
         val entity2 = Entity(
@@ -367,9 +420,14 @@ class DatabaseImplTest {
                 "text" to "zzz",
                 "bool" to false,
                 "num" to 999.0,
+                "ref" to Reference("child-id-9", DummyStorageKey("child-ref-9"), VersionMap()),
                 "texts" to setOf("zzz", "yyy"),
                 "bools" to setOf(false),
-                "nums" to setOf(99.0, 999.0)
+                "nums" to setOf(99.0, 999.0),
+                "refs" to setOf(
+                    Reference("child-id-8", DummyStorageKey("child-ref-8"), VersionMap()),
+                    Reference("child-id-7", DummyStorageKey("child-ref-7"), VersionMap())
+                )
             )
         )
 
@@ -381,19 +439,24 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun insertAndGet_entity_primitiveCollectionField_isNull() = runBlockingTest {
+    fun insertAndGet_entity_collectionFields_areNull() = runBlockingTest {
         val key = DummyStorageKey("key")
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
         val schema = newSchema(
             "hash",
             SchemaFields(
                 singletons = mapOf(),
-                collections = mapOf("texts" to FieldType.Text)
+                collections = mapOf(
+                    "texts" to FieldType.Text,
+                    "refs" to FieldType.EntityRef("child")
+                )
             )
         )
         val entity = Entity(
             "entity",
             schema,
-            mutableMapOf("texts" to null)
+            mutableMapOf("texts" to null, "refs" to null)
         )
 
         database.insertOrUpdate(key, entity)
@@ -402,19 +465,24 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun insertAndGet_entity_primitiveCollectionField_isEmpty() = runBlockingTest {
+    fun insertAndGet_entity_collectionFields_areEmpty() = runBlockingTest {
         val key = DummyStorageKey("key")
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
         val schema = newSchema(
             "hash",
             SchemaFields(
                 singletons = mapOf(),
-                collections = mapOf("texts" to FieldType.Text)
+                collections = mapOf(
+                    "texts" to FieldType.Text,
+                    "refs" to FieldType.EntityRef("child")
+                )
             )
         )
         val entity = Entity(
             "entity",
             schema,
-            mutableMapOf("texts" to setOf<String>())
+            mutableMapOf("texts" to setOf<String>(), "refs" to setOf<Reference>())
         )
 
         database.insertOrUpdate(key, entity)
@@ -443,6 +511,58 @@ class DatabaseImplTest {
             database.insertOrUpdate(DummyStorageKey("key"), entity)
         }
         assertThat(exception).hasMessageThat().startsWith("Collection fields must be of type Set.")
+    }
+
+    @Test
+    fun insert_entity_singleReferenceField_wrongType() = runBlockingTest {
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("ref" to FieldType.EntityRef("child")),
+                collections = emptyMap()
+            )
+        )
+
+        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.insertOrUpdate(DummyStorageKey("key"), Entity(
+                "entity",
+                schema,
+                mutableMapOf(
+                    "ref" to "abc" // Should be a Reference.
+                )
+            ))
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Expected field value to be a Reference but was abc."
+        )
+    }
+
+    @Test
+    fun insert_entity_collectionReferenceField_wrongType() = runBlockingTest {
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = emptyMap(),
+                collections = mapOf("refs" to FieldType.EntityRef("child"))
+            )
+        )
+
+        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.insertOrUpdate(DummyStorageKey("key"), Entity(
+                "entity",
+                schema,
+                mutableMapOf(
+                    "refs" to setOf("abc") // Should be a Reference.
+                )
+            ))
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Expected element in collection to be a Reference but was abc."
+        )
     }
 
     @Test
