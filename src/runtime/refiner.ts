@@ -1156,13 +1156,16 @@ export class SQLExtracter {
   }
 }
 
+// A constant is represented by an empty Term object, where there is no indeterminate.
+const CONSTANT = '{}';
+
 export class Fraction {
   num: Multinomial;
   den: Multinomial;
 
   constructor(n?: Multinomial, d?: Multinomial) {
     this.num = n ? Multinomial.copyOf(n) : new Multinomial();
-    this.den = d ? Multinomial.copyOf(d) : new Multinomial({'{}': 1});
+    this.den = d ? Multinomial.copyOf(d) : new Multinomial({[CONSTANT]: 1});
     if (this.den.isZero()) {
       throw new Error('Division by zero.');
     }
@@ -1195,12 +1198,12 @@ export class Fraction {
 
   reduce() {
     if (this.num.isZero()) {
-      this.den = new Multinomial({'{}': 1});
+      this.den = new Multinomial({[CONSTANT]: 1});
       return;
     }
     if (this.num.isConstant() && this.den.isConstant()) {
-      this.num = new Multinomial({'{}': this.num.terms['{}']/this.den.terms['{}']});
-      this.den = new Multinomial({'{}': 1});
+      this.num = new Multinomial({[CONSTANT]: this.num.terms[CONSTANT]/this.den.terms[CONSTANT]});
+      this.den = new Multinomial({[CONSTANT]: 1});
       return;
     }
     // TODO(ragdev): Fractions can be reduced further by factoring out the gcd of
@@ -1221,7 +1224,7 @@ export class Fraction {
       const term = new Term({[expr.value]: 1});
       return new Fraction(new Multinomial({[term.toKey()]: 1}));
     } else if (expr instanceof NumberPrimitive) {
-      return new Fraction(new Multinomial({'{}': expr.value}));
+      return new Fraction(new Multinomial({[CONSTANT]: expr.value}));
     }
     throw new Error(`Cannot resolve expression: ${expr.toString()}`);
   }
@@ -1381,7 +1384,7 @@ export class Multinomial {
   }
 
   isConstant(): boolean {
-    return this.isZero() || (Object.keys(this.terms).length === 1 && this.terms.hasOwnProperty('{}'));
+    return this.isZero() || (Object.keys(this.terms).length === 1 && this.terms.hasOwnProperty(CONSTANT));
   }
 
   getIndeterminates(): Set<string> {
@@ -1416,7 +1419,7 @@ export class Multinomial {
   toExpression(op: Op): RefinementExpression {
     if (this.isConstant()) {
       return new BinaryExpression(
-        new NumberPrimitive(this.isZero() ? 0 : this.terms['{}']),
+        new NumberPrimitive(this.isZero() ? 0 : this.terms[CONSTANT]),
         new NumberPrimitive(0),
         new RefinementOperator(op));
     }
@@ -1425,7 +1428,7 @@ export class Multinomial {
       const indeterminate = this.getIndeterminates().values().next().value;
       // TODO(ragdev): Implement a neater way to get the leading coefficient
       const leadingCoeff = this.terms[`{"${indeterminate}":1}`];
-      const cnst = this.terms.hasOwnProperty('{}') ? this.terms['{}'] : 0;
+      const cnst = this.terms.hasOwnProperty(CONSTANT) ? this.terms[CONSTANT] : 0;
       if (leadingCoeff < 0) {
         operator.flip();
       }
@@ -1437,7 +1440,7 @@ export class Multinomial {
     let expr = null;
     for (const [tKey, tCoeff] of Object.entries(this.terms)) {
       let termExpr = null;
-      if (tKey === '{}') {
+      if (tKey === CONSTANT) {
         termExpr = new NumberPrimitive(tCoeff);
       } else {
         const term = Term.fromKey(tKey);
@@ -1503,4 +1506,5 @@ export class Normalizer {
     const dneq0 = frac.den.toExpression(Op.NEQ);
     return new BinaryExpression(neq0, dneq0, new RefinementOperator(Op.AND));
   }
+
 }
