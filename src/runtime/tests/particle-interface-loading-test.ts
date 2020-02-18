@@ -238,7 +238,7 @@ describe('particle interface loading', () => {
     assert.deepStrictEqual(await fooHandle.fetch(), {value: 'hello world!!!'});
   });
 
-  it('updates transformation particle on inner handle koala', async () => {
+  it('test onCreate only runs for initialization and not reinstantiation', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         value: Text
@@ -257,21 +257,10 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var str = "Not created!";
           return class extends Particle {
-            //setHandles(handles) {
-            //  this.innerFooHandle = handles.get('innerFoo');
-            //  this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: 'hello world!!!'}));
-            //}
-        
             onCreate() {
-              console.log('I have been created');
               str = "Created!";
-              console.log(str)
-              //this.innerFooHandle = this.handles.get('innerFoo');
-              //this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: 'hello world!!!'}));
             }
             async setHandles(handles) {
-              console.log("in set handles")
-              console.log(str)
               this.innerFooHandle = this.handles.get('innerFoo');
               this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: str}));
             }
@@ -288,8 +277,6 @@ describe('particle interface loading', () => {
     await arc.instantiate(recipe);
     await arc.idle;
     const fooHandle = await singletonHandleForTest(arc, fooStore);
-    console.log("foostore")
-    console.log(fooStore)
     assert.deepStrictEqual(await fooHandle.get(), {value: 'Created!'});
 
     const serialization = await arc.serialize();
@@ -297,18 +284,8 @@ describe('particle interface loading', () => {
     
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
     await arc2.idle;
-    arc2.allRecipes[0].handles[0].mapToStorage(fooStore)
-    const fooHandle2 = await singletonHandleForTest(arc2, fooStore);
-    console.log("arc")
-    console.log(arc)
-    console.log(`arc2`);
-    console.log(arc2)
-    const f1 = await fooHandle.get()
-    const f2 = await fooHandle2.get()
-    console.log(f1)
-    console.log(`Foo Handle 2:`);
-    console.log(f2);
-    
+
+    const fooHandle2 = await singletonHandleForTest(arc2, arc2._stores[1]);
     assert.deepStrictEqual(await fooHandle2.get(), {value: 'Not created!'});
     
   });

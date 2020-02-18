@@ -59,9 +59,10 @@ export class Particle {
   protected ready(): void {
   }
 
-  onCreate(): void {
-    console.log(`I made it!`)
-  }
+  /**
+   * Called after handles are writable, only on first initialization of particle.
+   */
+  onCreate(): void {}
 
   /**
    * This sets the capabilities for this particle.  This can only

@@ -160,7 +160,7 @@ export class Refinement {
       // Therefore, we TRY to rearrange, if possible.
       this.expression = this.expression.rearrange();
     } catch (e) {
-      //console.log(e);
+      console.log(e);
     }
     this.expression = this.expression.normalize();
   }
