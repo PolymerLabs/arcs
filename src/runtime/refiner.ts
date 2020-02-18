@@ -1438,13 +1438,13 @@ export class Multinomial {
         operator);
     }
     let expr = null;
+    let cnst = 0;
     for (const [tKey, tCoeff] of Object.entries(this.terms)) {
-      let termExpr = null;
       if (tKey === CONSTANT) {
-        termExpr = new NumberPrimitive(tCoeff);
+        cnst = tCoeff;
       } else {
         const term = Term.fromKey(tKey);
-        termExpr = term.toExpression();
+        let termExpr = term.toExpression();
         if (tCoeff !== 1) {
           termExpr = new BinaryExpression(
             new NumberPrimitive(tCoeff),
@@ -1452,10 +1452,10 @@ export class Multinomial {
             new RefinementOperator(Op.MUL)
           );
         }
+        expr = expr ? new BinaryExpression(expr, termExpr, new RefinementOperator(Op.ADD)) : termExpr;
       }
-      expr = expr ? new BinaryExpression(expr, termExpr, new RefinementOperator(Op.ADD)) : termExpr;
     }
-    return new BinaryExpression(expr, new NumberPrimitive(0), new RefinementOperator(op));
+    return new BinaryExpression(expr, new NumberPrimitive(-cnst), new RefinementOperator(op));
   }
 }
 
