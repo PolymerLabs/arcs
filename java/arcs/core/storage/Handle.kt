@@ -15,6 +15,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
 import arcs.core.util.TaggedLog
+import kotlinx.coroutines.runBlocking
 
 /**
  * The [Callbacks] interface is a simple stand-in for the callbacks that a [Handle] might want to
@@ -39,6 +40,28 @@ interface Callbacks<Op : CrdtOperation> {
      */
     fun onDesync()
 }
+
+interface HandleObserver {
+    /**
+     * [onUpdated] is called when a diff is received from storage, or from a handle. Handles can
+     * be notified for their own writes.
+     */
+    suspend fun onUpdated(): Unit
+}
+
+class HandleCallbacks<Op : CrdtOperation>(private val observer: HandleObserver) : Callbacks<Op> {
+    override fun onUpdate(op: Op) = runBlocking {
+        observer.onUpdated()
+    }
+
+    override fun onSync()  = runBlocking {
+        observer.onUpdated()
+    }
+
+    override fun onDesync()  = runBlocking {}
+}
+
+
 
 /**
  * Base implementation of Arcs handles on the runtime.

@@ -13,6 +13,7 @@ package arcs.sdk.jvm
 
 import arcs.sdk.Particle
 import arcs.sdk.SingletonImpl
+import arcs.sdk.SingletonWrapper
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -36,7 +37,7 @@ class SingletonImplTest {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        singleton = SingletonImpl(particle, HANDLE_NAME, DummyEntity.Spec())
+        singleton = SingletonWrapper(SingletonImpl(particle, HANDLE_NAME, DummyEntity.Spec()))
         singleton.onUpdate(action)
     }
 

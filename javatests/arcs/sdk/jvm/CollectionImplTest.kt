@@ -13,6 +13,7 @@ package arcs.sdk.jvm
 
 import arcs.sdk.Particle
 import arcs.sdk.CollectionImpl
+import arcs.sdk.CollectionWrapper
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -26,7 +27,7 @@ import org.mockito.MockitoAnnotations
 @RunWith(JUnit4::class)
 class CollectionImplTest {
 
-    private lateinit var collection: CollectionImpl<DummyEntity>
+    private lateinit var collection: CollectionWrapper<DummyEntity>
     @Mock private lateinit var particle: Particle
 
     private val HANDLE_NAME = "HANDLE_NAME"
@@ -37,7 +38,7 @@ class CollectionImplTest {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        collection = CollectionImpl(particle, HANDLE_NAME, DummyEntity.Spec())
+        collection = CollectionWrapper(CollectionImpl(particle, HANDLE_NAME, DummyEntity.Spec()))
         collection.onUpdate(action)
     }
 

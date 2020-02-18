@@ -21,6 +21,7 @@ interface ReadableSingleton<T : Entity> : Handle {
     /** Returns the value of the singleton. */
     fun fetch(): T?
 
+    /** Assign a callback to run when the singleton is Updated. */
     fun onUpdate(action: (T?) -> Unit)
 }
 
@@ -44,7 +45,7 @@ interface ReadableCollection<T : Entity> : Handle {
     /** Returns true if the collection is empty. */
     fun isEmpty(): Boolean
 
-    /** Assign a callback when the collection is Updated. */
+    /** Assign a callback to run when the collection is Updated. */
     fun onUpdate(action: (Set<T>) -> Unit)
 
     /** Returns a set with all the entities in the collection. */

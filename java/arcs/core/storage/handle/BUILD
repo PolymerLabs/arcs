@@ -22,6 +22,7 @@ arcs_kt_library(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//java/arcs/sdk",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
