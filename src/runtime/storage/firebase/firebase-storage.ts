@@ -441,7 +441,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     if (this.referenceMode && this.value) {
       const version = this._version;
       await this.ensureBackingStore().then(async store => {
-        const data = await store.get(this.value.id);
+        const data = await store.fetchAll(this.value.id);
         await this._fire(new ChangeEvent({data, version}));
       });
     } else {
@@ -508,12 +508,12 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
     return this._version;
   }
 
-  async get() {
+  async fetch() {
     await this.initialized;
     if (this.referenceMode && this.value) {
       const referredType = this.type;
       await this.ensureBackingStore();
-      return await this.backingStore.get(this.value.id);
+      return await this.backingStore.fetchAll(this.value.id);
     }
     return this.value;
   }
@@ -583,7 +583,7 @@ class FirebaseVariable extends FirebaseStorageProvider implements SingletonStora
       const value = this.value as {id: string, storageKey: string};
 
       await this.ensureBackingStore();
-      const result = await this.backingStore.get(value.id);
+      const result = await this.backingStore.fetchAll(value.id);
       return {
         version: this._version,
         model: [{id: value.id, value: result}]
@@ -831,7 +831,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
     return this._version;
   }
 
-  async get(id: string) {
+  async fetchAll(id: string) {
     await this.initialized;
     if (this.referenceMode) {
       const ref = this.model.getValue(id);
@@ -839,7 +839,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
         return null;
       }
       await this.ensureBackingStore();
-      return await this.backingStore.get(ref.id);
+      return await this.backingStore.fetchAll(ref.id);
     }
     return this.model.getValue(id);
   }
@@ -1079,7 +1079,7 @@ class FirebaseCollection extends FirebaseStorageProvider implements CollectionSt
       await this.ensureBackingStore();
       const retrieveItem = async item => {
         const ref = item.value;
-        return {id: ref.id, value: await this.backingStore.get(ref.id), keys: item.keys};
+        return {id: ref.id, value: await this.backingStore.fetchAll(ref.id), keys: item.keys};
       };
 
       return await Promise.all(items.map(retrieveItem));
@@ -1347,7 +1347,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider implements BigCollec
   }
 
   // TODO: rename this to avoid clashing with Singleton and allow particles some way to specify the id
-  async get(id: string) {
+  async fetchAll(id: string) {
     const encId = FirebaseStorage.encodeKey(id);
     const snapshot = await this.reference.child('items/' + encId).once('value');
     return (snapshot.val() !== null) ? snapshot.val().value : null;
@@ -1557,7 +1557,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     }, undefined, false);
   }
 
-  async get(id: string) {
+  async fetchAll(id: string) {
     const snapshot = await this.childRef(id).once('value');
     return (snapshot.val() !== null) ? snapshot.val().value : null;
   }

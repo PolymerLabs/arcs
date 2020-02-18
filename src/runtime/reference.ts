@@ -70,7 +70,7 @@ export class Reference implements Storable {
 
     await this.ensureStorageProxy();
 
-    this.entity = await this.handle.get(this.id);
+    this.entity = await this.handle.fetchAll(this.id);
     return this.entity;
   }
 
@@ -83,7 +83,7 @@ export class Reference implements Storable {
     const proxy = await pec.getStorageProxy(storageKey, entityType);
     // tslint:disable-next-line: no-any
     const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, particleId}) as CollectionHandle<any>;
-    return await handle.get(id);
+    return await handle.fetchAll(id);
   }
 }
 

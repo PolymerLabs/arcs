@@ -192,7 +192,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
    * @remarks Note that the id referred to here is not the same as
    * used in the constructor.
    */
-  async get(id: string) {
+  async fetchAll(id: string) {
     await this.initialized;
     if (this.referenceMode) {
       const ref = (await this.getModel()).getValue(id);
@@ -201,7 +201,7 @@ export class PouchDbCollection extends PouchDbStorageProvider implements Collect
       // choose to assert instead at least for the time being.
       assert(ref !== null, `no reference for id [id=${id}, collection.id=${this.id}, storageKey=${this._storageKey}, referenceMode=${this.referenceMode}].`);
       const backingStore = await this.ensureBackingStore();
-      const backedValue = await backingStore.get(ref.id);
+      const backedValue = await backingStore.fetchAll(ref.id);
       assert(backedValue !== null, `should never return a null entity value [ref.id=${ref.id}, collection.id=${this.id}, storageKey=${this._storageKey}, referenceMode=${this.referenceMode}].`);
       return backedValue;
     }

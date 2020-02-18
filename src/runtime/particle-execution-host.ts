@@ -186,7 +186,7 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onHandleGet(handle: StorageProviderBase, callback: number): Promise<void> {
-    const data = await (handle as SingletonStorageProvider).get();
+    const data = await (handle as SingletonStorageProvider).fetch();
     this.SimpleCallback(callback, data);
   }
 

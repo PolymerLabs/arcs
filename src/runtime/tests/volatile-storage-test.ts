@@ -65,7 +65,7 @@ describe('volatile', () => {
       const value = 'Hi there' + Math.random();
       const variable = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
       await variable.set({id: 'test0:test', value});
-      const result = await variable.get();
+      const result = await variable.fetch();
       assert.strictEqual(value, result.value);
     });
 
@@ -75,7 +75,7 @@ describe('volatile', () => {
       const var1 = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
       const var2 = await storage.connect('test0', barType, var1.storageKey) as SingletonStorageProvider;
       await Promise.all([var1.set({id: 'id1', value: 'value1'}), var2.set({id: 'id2', value: 'value2'})]);
-      assert.deepEqual(await var1.get(), await var2.get());
+      assert.deepEqual(await var1.fetch(), await var2.fetch());
     });
 
     it('enables referenceMode by default', async () => {
@@ -85,13 +85,13 @@ describe('volatile', () => {
       const var1 = await storage.construct('test0', barType, storeKey) as SingletonStorageProvider;
       await var1.set({id: 'id1', value: 'underlying'});
 
-      const result = await var1.get();
+      const result = await var1.fetch();
       assert.strictEqual('underlying', result.value);
 
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
 
-      assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
+      assert.deepEqual(await var1.backingStore.fetchAll('id1'), await var1.fetch());
     });
 
     it('supports references', async () => {
@@ -101,7 +101,7 @@ describe('volatile', () => {
       const var1 = await storage.construct('test0', new ReferenceType(barType), storeKey) as SingletonStorageProvider;
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
-      const result = await var1.get();
+      const result = await var1.fetch();
       assert.strictEqual('underlying', result.storageKey);
 
       assert.isFalse(var1.referenceMode);
@@ -125,7 +125,7 @@ describe('volatile', () => {
       const collection = await storage.construct('test1', barType.collectionOf(), storeKey) as CollectionStorageProvider;
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
-      let result = await collection.get('id0');
+      let result = await collection.fetchAll('id0');
       assert.strictEqual(value1, result.value);
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
@@ -173,9 +173,9 @@ describe('volatile', () => {
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
 
-      let result = await collection1.get('id1');
+      let result = await collection1.fetchAll('id1');
       assert.strictEqual('value1', result.value);
-      result = await collection1.get('id2');
+      result = await collection1.fetchAll('id2');
       assert.strictEqual('value2', result.value);
 
       assert.isTrue(collection1.referenceMode);
@@ -203,9 +203,9 @@ describe('volatile', () => {
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
 
-      let result = await collection1.get('id1');
+      let result = await collection1.fetchAll('id1');
       assert.strictEqual('value1', result.storageKey);
-      result = await collection1.get('id2');
+      result = await collection1.fetchAll('id2');
       assert.strictEqual('value2', result.storageKey);
 
       assert.isFalse(collection1.referenceMode);
@@ -231,20 +231,20 @@ describe('volatile', () => {
         collection1.store({id: 'id1', data: 'ab'}, ['k34']),
         collection2.store({id: 'id2', data: 'cd'}, ['k12'])
       ]);
-      assert.strictEqual((await collection2.get('id1')).data, 'ab');
-      assert.strictEqual((await collection1.get('id2')).data, 'cd');
+      assert.strictEqual((await collection2.fetchAll('id1')).data, 'ab');
+      assert.strictEqual((await collection1.fetchAll('id2')).data, 'cd');
 
       await collection1.remove('id2', ['key2']);
-      assert.isNull(await collection2.get('id2'));
+      assert.isNull(await collection2.fetchAll('id2'));
 
       // Concurrent writes to the same id.
       await Promise.all([
         collection1.store({id: 'id3', data: 'xx'}, ['k65']),
         collection2.store({id: 'id3', data: 'yy'}, ['k87'])
       ]);
-      assert.include(['xx', 'yy'], (await collection1.get('id3')).data);
+      assert.include(['xx', 'yy'], (await collection1.fetchAll('id3')).data);
 
-      assert.isNull(await collection1.get('non-existent'));
+      assert.isNull(await collection1.fetchAll('non-existent'));
       await collection1.remove('non-existent', ['key1']);
     });
 

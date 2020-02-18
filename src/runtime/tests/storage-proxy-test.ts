@@ -558,7 +558,7 @@ describe('storage-proxy', () => {
                         'onHandleSync:P1:foo:(null)', 'onHandleSync:P1:bar:[]');
 
     // Reading should return the local copy and not call the backing store.
-    await fooHandle.get();
+    await fooHandle.fetch();
     await barHandle.toList();
     await engine.verify(); // no HandleGet or HandleToList
   });
@@ -581,7 +581,7 @@ describe('storage-proxy', () => {
 
     // Reading should call through to the backing store.
     // TODO: Awaiting this promise causes tests to fail...
-    floatingPromiseToAudit(fooHandle.get());
+    floatingPromiseToAudit(fooHandle.fetch());
     floatingPromiseToAudit(barHandle.toList());
     await engine.verify('HandleGet:foo', 'HandleToList:bar');
   });
@@ -604,7 +604,7 @@ describe('storage-proxy', () => {
 
     // Reading should call through to the backing store.
     // TODO: Awaiting this promise causes tests to fail...
-    floatingPromiseToAudit(fooHandle.get());
+    floatingPromiseToAudit(fooHandle.fetch());
     floatingPromiseToAudit(barHandle.toList());
     await engine.verify('HandleGet:foo', 'HandleToList:bar');
   });
@@ -652,7 +652,7 @@ describe('storage-proxy', () => {
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:P1:foo:start');
 
     // Reading the inner-pec handle should return the local copy and not call the backing store.
-    await fooHandle.get();
+    await fooHandle.fetch();
     await engine.verify();
 
     // Write to handle modifies the model directly, dispatches update and store write.
@@ -662,7 +662,7 @@ describe('storage-proxy', () => {
     await engine.verify('HandleSet:foo:changed');
 
     // Read the handle again; the read should still be able to complete locally.
-    await fooHandle.get();
+    await fooHandle.fetch();
     await engine.verify();
 
     // Update the backing store with a concurrent write. This should not surface

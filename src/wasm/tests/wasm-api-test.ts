@@ -207,7 +207,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
-      assert.deepStrictEqual(await output.get(), {txt: 'event:root:icanhazclick:fooBar'});
+      assert.deepStrictEqual(await output.fetch(), {txt: 'event:root:icanhazclick:fooBar'});
     });
 
     it('serviceRequest / serviceResponse / resolveUrl', async () => {
@@ -293,25 +293,25 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await outHandle.set(new outHandle.entityClass({txt: 'writes'}));
       await ioHandle.set(new ioHandle.entityClass({txt: 'reads writes'}));
       await sendEvent('case1');
-      assert.isNull(await outHandle.get());
-      assert.isNull(await ioHandle.get());
+      assert.isNull(await outHandle.fetch());
+      assert.isNull(await ioHandle.fetch());
 
       // in.get(), out.set()
       await inHandle.set(new inHandle.entityClass({num: 4}));
       await sendEvent('case2');
-      assert.deepStrictEqual(await outHandle.get(), {num: 8, txt: ''});
+      assert.deepStrictEqual(await outHandle.fetch(), {num: 8, txt: ''});
 
       // io.get()/set()
       await ioHandle.set(new ioHandle.entityClass({num: 4}));
       await sendEvent('case3');
-      assert.deepStrictEqual(await ioHandle.get(), {num: 12, txt: ''});
+      assert.deepStrictEqual(await ioHandle.fetch(), {num: 12, txt: ''});
 
       // set() on out/io with pre-cleared stores
       await outHandle.clear();
       await ioHandle.clear();
       await sendEvent('case4');
-      assert.deepStrictEqual(await outHandle.get(), {num: 0, txt: 'out'});
-      assert.deepStrictEqual(await ioHandle.get(), {num: 0, txt: 'io'});
+      assert.deepStrictEqual(await outHandle.fetch(), {num: 0, txt: 'out'});
+      assert.deepStrictEqual(await ioHandle.fetch(), {num: 0, txt: 'io'});
 
       // Check that the null/non-null state of handles was correct.
       assert.deepStrictEqual((await errors.toList()).map(e => e.msg), []);
@@ -524,7 +524,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // The particle clones 'input', binds to a new entity and writes that to 'output'.
       // The ref field should have a storage key, but since this isn't deterministic we need to
       // check for its presence then discard it.
-      const data = JSON.parse(JSON.stringify((await output.get())));
+      const data = JSON.parse(JSON.stringify((await output.fetch())));
       assert.isNotEmpty(data.ref.entityStorageKey);
       assert.strictEqual(data.num, 12);
       assert.strictEqual(data.txt, 'xyz');
@@ -571,7 +571,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // The particle clones 'input', binds to a new entity and writes that to 'output'.
       // The ref field should have a storage key, but since this isn't deterministic we need to
       // check for its presence then discard it.
-      const data = JSON.parse(JSON.stringify((await output.get()).rawData));
+      const data = JSON.parse(JSON.stringify((await output.fetch()).rawData));
       assert.isNotEmpty(data.ref.entityStorageKey);
       delete data.ref.entityStorageKey;
       assert.deepStrictEqual(data, {num: 12, txt: 'xyz', ref: {id: 'foo1'}});

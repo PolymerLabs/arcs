@@ -179,9 +179,9 @@ describe('FindHostedParticle', () => {
     let particleSpec;
     if (Flags.useNewStorageStack) {
       const handle = await singletonHandleForTest(arc, particleSpecStore);
-      particleSpec = await handle.get();
+      particleSpec = await handle.fetch();
     } else {
-      particleSpec = await (particleSpecStore as SingletonStorageProvider).get();
+      particleSpec = await (particleSpecStore as SingletonStorageProvider).fetch();
     }
     assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
     delete particleSpec.id;

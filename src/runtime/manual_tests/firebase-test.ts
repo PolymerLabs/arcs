@@ -79,7 +79,7 @@ describe('firebase', function() {
       variable.legacyOn(() => events++);
 
       await variable.set({id: 'test0:test', value});
-      const result = await variable.get();
+      const result = await variable.fetch();
       assert.strictEqual(result.value, value);
 
       assert.strictEqual(variable._version, 1);
@@ -101,7 +101,7 @@ describe('firebase', function() {
       void var1.set({id: 'id1', value: 'value1'});
       void var2.set({id: 'id2', value: 'value2'});
       await synchronized(var1, var2);
-      assert.deepEqual(await var1.get(), await var2.get());
+      assert.deepEqual(await var1.fetch(), await var2.fetch());
     });
 
     it('enables referenceMode by default', async () => {
@@ -117,13 +117,13 @@ describe('firebase', function() {
       const var1 = await storage.construct('test0', barType, key1) as SingletonStorageProvider;
       await var1.set({id: 'id1', value: 'underlying'});
 
-      const result = await var1.get();
+      const result = await var1.fetch();
       assert.strictEqual(result.value, 'underlying');
 
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
 
-      assert.deepEqual(await var1.backingStore.get('id1'), await var1.get());
+      assert.deepEqual(await var1.backingStore.get('id1'), await var1.fetch());
     });
 
     it('supports references', async () => {
@@ -140,7 +140,7 @@ describe('firebase', function() {
       const var1 = await storage.construct('test0', new ReferenceType(barType), key1) as SingletonStorageProvider;
       await var1.set({id: 'id1', storageKey: 'underlying'});
 
-      const result = await var1.get();
+      const result = await var1.fetch();
       assert.strictEqual(result.storageKey, 'underlying');
 
       assert.isFalse(var1.referenceMode);
@@ -171,15 +171,15 @@ describe('firebase', function() {
       assert.isNotNull(backing);
       assert.strictEqual(backing, var2.backingStore);
 
-      assert.deepEqual(await var1.get(), bar(1));
-      assert.deepEqual(await var2.get(), bar(2));
+      assert.deepEqual(await var1.fetch(), bar(1));
+      assert.deepEqual(await var2.fetch(), bar(2));
       assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2)]);
 
       await var1.clear();
       await var2.set(bar(3));
 
-      assert.isNull(await var1.get());
-      assert.deepEqual(await var2.get(), bar(3));
+      assert.isNull(await var1.fetch());
+      assert.deepEqual(await var2.fetch(), bar(3));
       assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2), bar(3)]);
     });
   });
@@ -202,7 +202,7 @@ describe('firebase', function() {
 
       await collection.store({id: 'id0', value: value1}, ['key0']);
       await collection.store({id: 'id1', value: value2}, ['key1']);
-      let result = await collection.get('id0');
+      let result = await collection.fetchAll('id0');
       assert.strictEqual(result.value, value1);
       result = await collection.toList();
       assert.deepEqual(result, [{id: 'id0', value: value1}, {id: 'id1', value: value2}]);
@@ -282,16 +282,16 @@ describe('firebase', function() {
       await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
 
-      let result = await collection1.get('id1');
+      let result = await collection1.fetchAll('id1');
       assert.strictEqual(result.value, 'value1');
-      result = await collection1.get('id2');
+      result = await collection1.fetchAll('id2');
       assert.strictEqual(result.value, 'value2');
 
       assert.isTrue(collection1.referenceMode);
       assert.isNotNull(collection1.backingStore);
 
-      assert.deepEqual(await collection1.backingStore.get('id1'), await collection1.get('id1'));
-      assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.get('id2'));
+      assert.deepEqual(await collection1.backingStore.get('id1'), await collection1.fetchAll('id1'));
+      assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.fetchAll('id2'));
     });
 
     it('supports references', async () => {
@@ -309,9 +309,9 @@ describe('firebase', function() {
       await collection1.store({id: 'id1', storageKey: 'value1'}, ['key1']);
       await collection1.store({id: 'id2', storageKey: 'value2'}, ['key2']);
 
-      let result = await collection1.get('id1');
+      let result = await collection1.fetchAll('id1');
       assert.strictEqual(result.storageKey, 'value1');
-      result = await collection1.get('id2');
+      result = await collection1.fetchAll('id2');
       assert.strictEqual(result.storageKey, 'value2');
 
       assert.isFalse(collection1.referenceMode);
@@ -417,20 +417,20 @@ describe('firebase', function() {
         collection1.store({id: 'id1', data: 'ab'}, ['k34']),
         collection2.store({id: 'id2', data: 'cd'}, ['k12'])
       ]);
-      assert.strictEqual((await collection2.get('id1')).data, 'ab');
-      assert.strictEqual((await collection1.get('id2')).data, 'cd');
+      assert.strictEqual((await collection2.fetchAll('id1')).data, 'ab');
+      assert.strictEqual((await collection1.fetchAll('id2')).data, 'cd');
 
       await collection1.remove('id2');
-      assert.isNull(await collection2.get('id2'));
+      assert.isNull(await collection2.fetchAll('id2'));
 
       // Concurrent writes to the same id.
       await Promise.all([
         collection1.store({id: 'id3', data: 'xx'}, ['k65']),
         collection2.store({id: 'id3', data: 'yy'}, ['k87'])
       ]);
-      assert.include(['xx', 'yy'], (await collection1.get('id3')).data);
+      assert.include(['xx', 'yy'], (await collection1.fetchAll('id3')).data);
 
-      assert.isNull(await collection1.get('non-existent'));
+      assert.isNull(await collection1.fetchAll('non-existent'));
 
       await collection1.remove('non-existent');
     });
@@ -770,7 +770,7 @@ describe('firebase', function() {
       assert.notStrictEqual(bigStore2, bigStore);
 
       // The new providers should reflect the updates made to the stores.
-      assert.strictEqual((await varStore2.get()).rawData.value, 'v4');
+      assert.strictEqual((await varStore2.fetch()).rawData.value, 'v4');
       assert.deepEqual((await colStore2.toList()).map(e => e.rawData.value), ['v2', 'v5']);
 
       const cursorId = await bigStore.stream(5);

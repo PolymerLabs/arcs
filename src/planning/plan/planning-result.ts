@@ -85,13 +85,13 @@ export class PlanningResult {
   async load(): Promise<boolean> {
     let value;
     if (Flags.useNewStorageStack) {
-      const handleValue = await this.handle.get();
+      const handleValue = await this.handle.fetch();
       if (!handleValue) {
         return false;
       }
       value = JSON.parse(handleValue.current);
     } else {
-      value = await this.handle.get() || {};
+      value = await this.handle.fetch() || {};
     }
     if (value.suggestions) {
       if (await this.fromLiteral(value)) {

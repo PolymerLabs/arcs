@@ -24,7 +24,7 @@ export class PouchDbBigCollection extends PouchDbStorageProvider implements BigC
     return this.type.getContainedType();
   }
 
-  async get(id: string) {
+  async fetchAll(id: string) {
     throw new Error('NotImplemented');
   }
 
