@@ -23,6 +23,7 @@ class FlagDefaults {
   static useNewStorageStack = false;
   static enforceRefinements = false;
   static useSlandles = false;
+  static fieldRefinementsAllowed = false;
 }
 
 export class Flags extends FlagDefaults {
@@ -44,6 +45,11 @@ export class Flags extends FlagDefaults {
   // tslint:disable-next-line: no-any
   static whileEnforcingRefinements<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return Flags.withFlags({enforceRefinements: true}, f);
+  }
+
+  // tslint:disable-next-line: no-any
+  static withFieldRefinementsAllowed<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
+    return Flags.withFlags({fieldRefinementsAllowed: true}, f);
   }
 
   // For testing with a different set of flags to the default.
