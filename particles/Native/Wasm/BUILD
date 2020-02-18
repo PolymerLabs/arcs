@@ -1,10 +1,10 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_cc_schema",
-    "arcs_kt_particles",
+    "arcs_kt_particles",  # @unused
     "arcs_kt_schema",
     "arcs_manifest",
-    "arcs_manifest_bundle",
+    "arcs_manifest_bundle",  # @unused
 )
 load(
     "//third_party/java/arcs/build_defs/emscripten:build_defs.bzl",
@@ -35,21 +35,22 @@ arcs_kt_schema(
     package = "arcs.test",
 )
 
-arcs_kt_particles(
-    name = "service_particle",
-    srcs = ["source/ServiceParticle.kt"],
-    package = "arcs.test",
-    platforms = ["wasm"],
-    deps = [":wasm_schemas"],
-)
-
-arcs_kt_particles(
-    name = "test_particle",
-    srcs = ["source/TestParticle.kt"],
-    package = "arcs.test",
-    platforms = ["wasm"],
-    deps = [":wasm_schemas"],
-)
+# TODO: Re-enable wasm
+# arcs_kt_particles(
+#     name = "service_particle",
+#     srcs = ["source/ServiceParticle.kt"],
+#     package = "arcs.test",
+#     platforms = ["wasm"],
+#     deps = [":wasm_schemas"],
+# )
+#
+# arcs_kt_particles(
+#     name = "test_particle",
+#     srcs = ["source/TestParticle.kt"],
+#     package = "arcs.test",
+#     platforms = ["wasm"],
+#     deps = [":wasm_schemas"],
+# )
 
 arcs_manifest(
     name = "example_manifest",
@@ -57,17 +58,18 @@ arcs_manifest(
     deps = [":example_particle"],
 )
 
-arcs_manifest(
-    name = "harness_manifest",
-    srcs = ["Harness.arcs"],
-    deps = [":test_particle"],
-)
-
-arcs_manifest_bundle(
-    name = "bundle",
-    visibility = ["//visibility:public"],
-    deps = [
-        ":example_manifest",
-        ":harness_manifest",
-    ],
-)
+# TODO: Re-enable wasm
+# arcs_manifest(
+#     name = "harness_manifest",
+#     srcs = ["Harness.arcs"],
+#     deps = [":test_particle"],
+# )
+#
+# arcs_manifest_bundle(
+#     name = "bundle",
+#     visibility = ["//visibility:public"],
+#     deps = [
+#         ":example_manifest",
+#         ":harness_manifest",
+#     ],
+# )

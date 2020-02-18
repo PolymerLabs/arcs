@@ -10,12 +10,12 @@ load(
 )
 load(
     "//third_party/bazel_rules/rules_kotlin/kotlin/native:native_rules.bzl",
-    "kt_native_binary",
+    "kt_native_binary",  # @unused
     "kt_native_library",
 )
 load(
     "//third_party/bazel_rules/rules_kotlin/kotlin/native:wasm.bzl",
-    "wasm_kt_binary",
+    "wasm_kt_binary",  # @unused
 )
 load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
@@ -24,7 +24,7 @@ load(
 )
 load(
     "//third_party/java/arcs/build_defs/internal:kotlin_wasm_annotations.bzl",
-    "kotlin_wasm_annotations",
+    "kotlin_wasm_annotations",  # @unused
 )
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load(
@@ -61,7 +61,7 @@ ALL_PLATFORMS = ["jvm", "js", "wasm"]
 DEFAULT_LIBRARY_PLATFORMS = ["jvm", "js"]
 
 # Default set of platforms for Kotlin particles.
-DEFAULT_PARTICLE_PLATFORMS = ["jvm", "wasm"]
+DEFAULT_PARTICLE_PLATFORMS = ["jvm"]
 
 def arcs_kt_jvm_library(**kwargs):
     """Wrapper around kt_jvm_library for Arcs.
@@ -217,50 +217,52 @@ def arcs_kt_particles(
         )
 
     if "wasm" in platforms:
-        wasm_deps = [_to_wasm_dep(dep) for dep in deps]
-
-        # Collect all the sources and annotation files in `wasm_srcs`.
-        wasm_srcs = []
-        for src in srcs:
-            if not src.endswith(".kt"):
-                fail("%s is not a Kotlin file (must end in .kt)" % src)
-            particle = src.split("/")[-1][:-3]
-            wasm_lib = particle + "-lib" + _WASM_SUFFIX
-            wasm_annotations_file = particle + ".wasm.kt"
-
-            kotlin_wasm_annotations(
-                name = particle + "-wasm-annotations",
-                particle = particle,
-                package = package,
-                out = wasm_annotations_file,
-            )
-            wasm_srcs.extend([src, wasm_annotations_file])
-
-        # Create a wasm library containing code for all the particles.
-        wasm_particle_lib = name + "-lib" + _WASM_SUFFIX
-        arcs_kt_native_library(
-            name = wasm_particle_lib,
-            srcs = wasm_srcs,
-            deps = wasm_deps,
-        )
-
-        # Create a kt_native_binary that groups everything together.
-        native_binary_name = name + _WASM_SUFFIX
-        kt_native_binary(
-            name = native_binary_name,
-            entry_point = "arcs.sdk.main",
-            deps = [wasm_particle_lib],
-            # Don't build this manually. Build the wasm_kt_binary rule below
-            # instead; otherwise this rule will build a non-wasm binary.
-            tags = ["manual", "notap"],
-        )
-
-        # Create a wasm binary from the native binary.
-        wasm_kt_binary(
-            name = name,
-            kt_target = ":" + native_binary_name,
-            visibility = visibility,
-        )
+        # TODO: Re-enable wasm.
+        fail("wasm temporarily disabled")
+        # wasm_deps = [_to_wasm_dep(dep) for dep in deps]
+        #
+        # # Collect all the sources and annotation files in `wasm_srcs`.
+        # wasm_srcs = []
+        # for src in srcs:
+        #     if not src.endswith(".kt"):
+        #         fail("%s is not a Kotlin file (must end in .kt)" % src)
+        #     particle = src.split("/")[-1][:-3]
+        #     wasm_lib = particle + "-lib" + _WASM_SUFFIX
+        #     wasm_annotations_file = particle + ".wasm.kt"
+        #
+        #     kotlin_wasm_annotations(
+        #         name = particle + "-wasm-annotations",
+        #         particle = particle,
+        #         package = package,
+        #         out = wasm_annotations_file,
+        #     )
+        #     wasm_srcs.extend([src, wasm_annotations_file])
+        #
+        # # Create a wasm library containing code for all the particles.
+        # wasm_particle_lib = name + "-lib" + _WASM_SUFFIX
+        # arcs_kt_native_library(
+        #     name = wasm_particle_lib,
+        #     srcs = wasm_srcs,
+        #     deps = wasm_deps,
+        # )
+        #
+        # # Create a kt_native_binary that groups everything together.
+        # native_binary_name = name + _WASM_SUFFIX
+        # kt_native_binary(
+        #     name = native_binary_name,
+        #     entry_point = "arcs.sdk.main",
+        #     deps = [wasm_particle_lib],
+        #     # Don't build this manually. Build the wasm_kt_binary rule below
+        #     # instead; otherwise this rule will build a non-wasm binary.
+        #     tags = ["manual", "notap"],
+        # )
+        #
+        # # Create a wasm binary from the native binary.
+        # wasm_kt_binary(
+        #     name = name,
+        #     kt_target = ":" + native_binary_name,
+        #     visibility = visibility,
+        # )
 
 def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = []):
     """Defines Kotlin Android test targets for a directory.

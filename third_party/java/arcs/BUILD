@@ -9,7 +9,8 @@ alias(
 )
 
 # Arcs SDK for WebAssenbly.
-alias(
-    name = "arcs-wasm",
-    actual = "//java/arcs/sdk:sdk-wasm",
-)
+# TODO: Re-enable wasm.
+# alias(
+#     name = "arcs-wasm",
+#     actual = "//java/arcs/sdk:sdk-wasm",
+# )
