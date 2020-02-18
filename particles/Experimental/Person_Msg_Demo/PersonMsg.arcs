@@ -1,5 +1,20 @@
 // Demo: Person-Msg
 
+schema Person
+  name: Text
+  id: Text
+  age: Number
+
+schema Message
+  toID: Text
+  fromID: Text
+  content: Text
+  // time since message was sent (in hours)
+  sentTime: Number
+
+schema Ordered
+  index: Number 
+
 particle GetMessages in 'GetMessages.js'
   messages: writes [Message {toID: Text, fromID: Text, content: Text, sentTime: Number} [sentTime > 0]]
   messagesInputSlot: consumes
@@ -15,11 +30,11 @@ particle GetPeople in 'GetPeople.js'
 particle OrderPeople in 'OrderPeople.js'
   unorderedPeople: reads [Person {name: Text, id: Text, age: Number} [age > 0]]
   messages: reads [Message {toID: Text, fromID: Text, sentTime: Number} [sentTime < 24]]
-  orderedPeople: writes [Person {name: Text, id: Text, index: Number} [index >= 0]]
+  orderedPeople: writes [Ordered Person {name: Text, id: Text, index: Number} [index >= 0]]
   forSlot: consumes
 
 particle DisplayParticle in 'Display.js'
-  displayData: reads [Person {name: Text, id: Text, index: Number} [index >= 0]]
+  displayData: reads [Ordered Person {name: Text, id: Text, index: Number} [index >= 0]]
   root: consumes
     messagesInputSlot: provides
     peopleInputSlot: provides

@@ -174,7 +174,7 @@ export class Schema {
         return false;
       }
     }
-    return !(Refinement.isAtleastAsSpecificAs(this.refinement, otherSchema.refinement) === AtleastAsSpecific.NO);
+    return Refinement.isAtleastAsSpecificAs(this.refinement, otherSchema.refinement) !== AtleastAsSpecific.NO;
   }
 
   // Returns true if there are fields in this.refinement, that are not in fields
