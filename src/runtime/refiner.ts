@@ -13,6 +13,7 @@ import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
 import {AuditException} from './arc-exceptions.js';
+import { type } from 'os';
 
 enum Primitive {
   BOOLEAN = 'Boolean',
@@ -1387,6 +1388,222 @@ export class Polynomial {
         }
       } else {
         termExpr = new NumberPrimitive(this.coeffs[0]);
+      }
+      expr = expr ? new BinaryExpression(expr, termExpr, new RefinementOperator(Op.ADD)) : termExpr;
+    }
+    return new BinaryExpression(expr, new NumberPrimitive(0), new RefinementOperator(op));
+  }
+}
+
+export class Term {
+  private _indeterminates: Dictionary<number>;
+
+  constructor(indeterminates: Dictionary<number> = {}) {
+    this.indeterminates = indeterminates;
+  }
+
+  static copyOf(tm: Term): Term {
+    return new Term(tm.indeterminates);
+  }
+
+  get indeterminates(): Dictionary<number> {
+    for (let [indeterminate, power] of Object.entries(this._indeterminates)) {
+      if (power === 0) {
+        delete this._indeterminates[indeterminate];
+      }
+    }
+    const ordered = {};
+    const unordered = this._indeterminates;
+    Object.keys(unordered).sort().forEach(function(key) {
+      ordered[key] = unordered[key];
+    });
+    this._indeterminates = ordered;
+    return this._indeterminates;
+  }
+
+  set indeterminates(indtrms: Dictionary<number>) {
+    this._indeterminates = {...indtrms};
+  }
+
+  toKey(): string {
+    return JSON.stringify(this.indeterminates);
+  }
+
+  static fromKey(key: string): Term {
+    return new Term(JSON.parse(key));
+  }
+
+  static indeterminateToExpression(fn: string, pow: number): RefinementExpression {
+    if (pow <= 0) {
+      throw new Error('Must have positive power.');
+    }
+    if (pow === 1) {
+      return new FieldNamePrimitive(fn, Primitive.NUMBER);
+    }
+    return new BinaryExpression(
+      Term.indeterminateToExpression(fn, 1),
+      Term.indeterminateToExpression(fn, pow - 1),
+      new RefinementOperator(Op.MUL));
+  }
+
+  // assumes that term is not a constant i.e. not {}
+  toExpression(): RefinementExpression {
+    if (this.indeterminates.size === 0) {
+      throw new Error('Cannot convert an empty term to expression');
+    }
+    let expr = null;
+    for (const [indeterminate, power] of Object.entries(this.indeterminates)) {
+      const indtrExpr = Term.indeterminateToExpression(indeterminate, power);
+      expr = expr ? new BinaryExpression(expr, indtrExpr, new RefinementOperator(Op.MUL)) : indtrExpr;
+    }
+    return expr;
+  }
+}
+
+export class Multinomial {
+  private _terms: Dictionary<number>;
+
+  constructor(terms: Dictionary<number> = {}) {
+    this.terms = terms;
+  }
+
+  static copyOf(mn: Multinomial): Multinomial {
+    return new Multinomial(mn.terms);
+  }
+
+  get terms(): Dictionary<number> {
+    for (let [term, coeff] of Object.entries(this._terms)) {
+      if (coeff === 0) {
+        delete this._terms[term];
+      }
+    }
+    const ordered = {};
+    const unordered = this._terms;
+    Object.keys(unordered).sort().forEach(function(key) {
+      ordered[key] = unordered[key];
+    });
+    this._terms = ordered;
+    return this._terms;
+  }
+
+  set terms(tms: Dictionary<number>) {
+    this._terms = {...tms};
+  }
+
+  static add(a: Multinomial, b: Multinomial): Multinomial {
+    const sum = new Multinomial();
+    for (const [term, coeff] of Object.entries(a.terms)) {
+      const val = coeff + (sum.terms.hasOwnProperty(term) ? sum.terms[term] : 0);
+      sum.terms[term] = val;
+    }
+    for (const [term, coeff] of Object.entries(b.terms)) {
+      const val = coeff + (sum.terms.hasOwnProperty(term) ? sum.terms[term] : 0);
+      sum.terms[term] = val;
+    }
+    return sum;
+  }
+
+  static subtract(a: Multinomial, b: Multinomial): Multinomial {
+    return Multinomial.add(a, Multinomial.negate(b));
+  }
+
+  static negate(a: Multinomial): Multinomial {
+    const neg = Multinomial.copyOf(a);
+    for (const [term, coeff] of Object.entries(neg.terms)) {
+      neg.terms[term] = -coeff;
+    }
+    return neg;
+  }
+
+  static multiply(a: Multinomial, b: Multinomial): Multinomial {
+    const prod = new Multinomial();
+    for (const [aKey, acoeff] of Object.entries(a.terms)) {
+      for (const [bKey, bcoeff] of Object.entries(b.terms)) {
+        const tprod = Term.fromKey(aKey);
+        const bterm = Term.fromKey(bKey);
+        for (const [indeterminate, power] of Object.entries(bterm.indeterminates)) {
+          const val = power + (tprod.indeterminates.hasOwnProperty(indeterminate) ? tprod.indeterminates[indeterminate] : 0);
+          tprod.indeterminates[indeterminate] = val;
+        }
+        const val = acoeff*bcoeff + (prod.terms.hasOwnProperty(tprod.toKey()) ? prod.terms[tprod.toKey()] : 0);
+        prod.terms[tprod.toKey()] = val;
+      }
+    }
+    return prod;
+  }
+
+  isZero(): boolean {
+    return this.terms.size === 0;
+  }
+
+  isConstant(): boolean {
+    return this.isZero() || (this.terms.size === 1 && this.terms.hasOwnProperty('{}'));
+  }
+
+  getIndeterminates(): Set<string> {
+    const indeterminates = new Set<string>();
+    for (const tKey of Object.keys(this.terms)) {
+      const term = Term.fromKey(tKey);
+      for (const indeterminate of Object.keys(term.indeterminates)) {
+        indeterminates.add(indeterminate);
+      }
+    }
+    return indeterminates;
+  }
+
+  isUnivariate(): boolean {
+    return this.getIndeterminates().size === 1;
+  }
+
+  degree(): number {
+    let degree = 0;
+    for (const tKey of Object.keys(this.terms)) {
+      const term = Term.fromKey(tKey);
+      let sum = 0;
+      for (const power of Object.values(term.indeterminates)) {
+        sum += power;
+      }
+      degree = sum > degree ? sum : degree;
+    }
+    return degree;
+  }
+
+  // returns <multinomial> <op> 0
+  toExpression(op: Op): RefinementExpression {
+    if (this.isConstant()) {
+      return new BinaryExpression(
+        new NumberPrimitive(this.isZero() ? 0 : this.terms['{}']),
+        new NumberPrimitive(0),
+        new RefinementOperator(op)); 
+    }
+    if (this.isUnivariate() && this.degree() === 1) {
+      const operator = new RefinementOperator(op);
+      const indeterminate = this.getIndeterminates().values().next().value;
+      const leadingCoeff = this.terms[`{${indeterminate}:1}`];
+      const cnst = this.terms.hasOwnProperty('{}') ? this.terms['{}'] : 0;
+      if (leadingCoeff < 0) {
+        operator.flip();
+      }
+      return new BinaryExpression(
+        new FieldNamePrimitive(indeterminate, Primitive.NUMBER),
+        new NumberPrimitive(-cnst/leadingCoeff),
+        operator);
+    }
+    let expr = null;
+    for (const [tKey, tCoeff] of Object.entries(this.terms)) {
+      let termExpr = null;
+      if (tKey === '{}') {
+        termExpr = new NumberPrimitive(tCoeff);
+      } else {
+        const term = Term.fromKey(tKey);
+        termExpr = term.toExpression();
+        if (tCoeff !== 1) {
+          termExpr = new BinaryExpression(
+            new NumberPrimitive(tCoeff),
+            termExpr,
+            new RefinementOperator(Op.MUL)
+          );
+        }
       }
       expr = expr ? new BinaryExpression(expr, termExpr, new RefinementOperator(Op.ADD)) : termExpr;
     }

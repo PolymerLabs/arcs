@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter, Polynomial, Fraction} from '../refiner.js';
+import {Range, Segment, Refinement, BinaryExpression, Multinomial, SQLExtracter, Polynomial, Fraction, Term} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -661,3 +661,108 @@ describe('Fractions', () => {
     assert.deepEqual(sum.den.coeffs, [0, 10, 2]);
   });
 });
+
+describe('Terms', () => {
+  it('tests to and from key', () => {
+    const term1 = new Term({'b': 1, 'a': 1});
+    const term2 = new Term({'a': 1, 'b': 1});
+    assert.strictEqual(term1.toKey(), term2.toKey());
+    assert.deepEqual(Term.fromKey(term1.toKey()), Term.fromKey(term2.toKey()));
+  });
+});
+
+describe.only('Multinomials', () => {
+  it('tests multinomial setters and getters work', () => {
+    const a_b = new Term({'b': 1, 'a': 1});  // ab
+    const a_b2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const num = new Multinomial({
+        [a_b.toKey()]: 2,   // 2ab
+        [a_b2.toKey()]: 1,  // ab^2
+        [cnst.toKey()]: 5   // 5
+    }); // 2ab + ab^2 + 5
+    assert.deepEqual(num.terms, {
+        [a_b2.toKey()]: 1,  // ab^2
+        [cnst.toKey()]: 5,  // 5
+        [a_b.toKey()]: 2,   // 2ab
+    });
+  });
+  it('tests multinomial addition works', () => {
+    const a_b = new Term({'b': 1, 'a': 1}); // ab
+    const a_b2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const num1 = new Multinomial({
+        [a_b2.toKey()]: 2,  // 2ab^2
+        [cnst.toKey()]: 1   // 5
+    }); // 2ab^2 + 1
+    const num2 = new Multinomial({
+      [a_b.toKey()]: 2,   // 2ab
+      [a_b2.toKey()]: 1,  // ab^2
+      [cnst.toKey()]: 5   // 5
+    }); // 2ab + ab^2 + 5
+    const sum = Multinomial.add(num1, num2);      // 2ab + 3ab^2 + 5
+    assert.deepEqual(sum.terms, {
+      [a_b.toKey()]: 2,   // 2ab
+      [a_b2.toKey()]: 3,  // 3ab^2
+      [cnst.toKey()]: 6   // 6
+    });
+  });
+  it('tests multinomial negation works', () => {
+    const a_b2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const num1 = new Multinomial({
+        [a_b2.toKey()]: 2,  // 2ab^2
+        [cnst.toKey()]: 1   // 5
+    }); // 2ab^2 + 1
+    const sum = Multinomial.negate(num1);      // -2ab^2 - 1
+    assert.deepEqual(sum.terms, {
+      [a_b2.toKey()]: -2,  // -2ab^2
+      [cnst.toKey()]: -1   // -1
+    });
+  });
+  it('tests multinomial subtraction works', () => {
+    const a_b = new Term({'b': 1, 'a': 1}); // ab
+    const a_b2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const num1 = new Multinomial({
+        [a_b2.toKey()]: 2,  // 2ab^2
+        [cnst.toKey()]: 1   // 5
+    }); // 2ab^2 + 1
+    const num2 = new Multinomial({
+      [a_b.toKey()]: 2,   // 2ab
+      [a_b2.toKey()]: 2,  // 2ab^2
+      [cnst.toKey()]: 5   // 5
+    }); // 2ab + ab^2 + 5
+    const sum = Multinomial.subtract(num1, num2);      // -2ab - 4
+    assert.deepEqual(sum.terms, {
+      [a_b.toKey()]: -2,   // 2ab
+      [cnst.toKey()]: -4   // -4
+    });
+  });
+  it('tests multinomial multiplication works', () => {
+    const a_b = new Term({'b': 1, 'a': 1}); // ab
+    const a_b2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const a2_b3 = new Term({'a': 2, 'b': 3});
+    const a2_b4 = new Term({'a': 2, 'b': 4});
+    const num1 = new Multinomial({
+        [a_b2.toKey()]: 2,  // 2ab^2
+        [cnst.toKey()]: 1   // 1
+    }); // 2ab^2 + 1
+    const num2 = new Multinomial({
+      [a_b.toKey()]: 2,   // 2ab
+      [a_b2.toKey()]: 1,  // ab^2
+      [cnst.toKey()]: 5   // 5
+    }); // 2ab + ab^2 + 5
+    const sum = Multinomial.multiply(num1, num2);      // 4a^2b^3 + 2a^2b^4 + 11ab^2 + 2ab + 5
+    assert.deepEqual(sum.terms, {
+      [a_b.toKey()]: 2,     // 2ab
+      [a_b2.toKey()]: 11,   // 11ab^2
+      [cnst.toKey()]: 5,    // 5
+      [a2_b3.toKey()]: 4,   // 4a^2b^3
+      [a2_b4.toKey()]: 2,   // 2a^2b^4
+    });
+  });
+});
+
+
