@@ -100,7 +100,7 @@ export class ParticleExecutionHost {
     this.getPort(particle).UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle: Particle, stores: Map<string, UnifiedStore>, reinstantiate: Boolean): void {
+  instantiate(particle: Particle, stores: Map<string, UnifiedStore>, reinstantiate: boolean): void {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
     stores.forEach((store, name) => {

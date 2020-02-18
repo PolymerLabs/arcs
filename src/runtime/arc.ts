@@ -328,7 +328,7 @@ export class Arc implements ArcInterface {
     this.pec.reinstantiate(recipeParticle, info.stores);
   }
 
-  async _instantiateParticle(recipeParticle: Particle, reinstantiate: Boolean) {
+  async _instantiateParticle(recipeParticle: Particle, reinstantiate: boolean) {
     if (!recipeParticle.id) {
       recipeParticle.id = this.generateID('particle');
     }
@@ -444,7 +444,7 @@ export class Arc implements ArcInterface {
    *
    * Waits for completion of an existing Instantiate before returning.
    */
-  async instantiate(recipe: Recipe, reinstantiate: Boolean = false): Promise<void> {
+  async instantiate(recipe: Recipe, reinstantiate: boolean = false): Promise<void> {
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     assert(recipe.isCompatible(this.modality),
       `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
@@ -575,7 +575,7 @@ export class Arc implements ArcInterface {
   }
 
   // Critical section for instantiate,
-  private async _doInstantiate(recipe: Recipe, reinstantiate: Boolean = false): Promise<void> {
+  private async _doInstantiate(recipe: Recipe, reinstantiate: boolean = false): Promise<void> {
     const {particles} = await this.mergeIntoActiveRecipe(recipe);
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle, reinstantiate)));
     if (this.inspector) {
