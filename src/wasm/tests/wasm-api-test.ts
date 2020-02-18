@@ -524,7 +524,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // The particle clones 'input', binds to a new entity and writes that to 'output'.
       // The ref field should have a storage key, but since this isn't deterministic we need to
       // check for its presence then discard it.
-      const data = JSON.parse(JSON.stringify((await output.get())));
+      const data = JSON.parse(JSON.stringify((await output.fetch())));
       assert.isNotEmpty(data.ref.entityStorageKey);
       assert.strictEqual(data.num, 12);
       assert.strictEqual(data.txt, 'xyz');

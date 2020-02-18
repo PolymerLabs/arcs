@@ -289,7 +289,7 @@ describe('SingletonHandle', async () => {
       clock: {'other': 1},
     });
     await handle.clear();
-    assert.strictEqual(await handle.get(), null);
+    assert.strictEqual(await handle.fetch(), null);
   });
 
   it('notifies particle on desync event', async () => {
