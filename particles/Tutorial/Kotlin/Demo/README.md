@@ -357,19 +357,42 @@ looking at our design diagram.
 From this, we can see that the Human Player needs a Player and
 Move handle, and these handles connect the Game and Human Player.
 We also need to populate the information about the player, so
-we create a store. This updates our Arcs Manifest File to
-the one [here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTGame.arcs).
+we create a store. You can examine TTTGame.arcs in the src directory
+to see this in action.
 
 Next, we create the human player to take the events stream and
 convert it to a move. This can be viewed in TTTHumanPlayer.kt
-[here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTHumanPlayer.kt).
+in the src directory.
 
 Next, we need to update the game particle to update the board
-based on the move. This gives us the updated TTTGame file
-[here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/TTTGame.kt).
+based on the move. To do this, we start by adding an init function
+and an applyMove function to TTTGame.kt:
+```kotlin
+init {
+    handles.playerOneMove.onUpdate() { move ->
+        applyMove(
+            move ?: TTTGame_PlayerOneMove(),
+            handles.playerOne.fetch() ?: TTTGame_PlayerOne()
+        )
+    }
+}
+private fun applyMove(move: TTTGame_PlayerOneMove, player: TTTGame_PlayerOne) {
+    val mv = move.move.toInt()
+    val gs = handles.gameState.fetch() ?: TTTGame_GameState()
 
-And finally, as always, we need to add the HumanPlayer to the
-[BUILD file](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt2/BUILD).
+    // Check if move is valid
+    val boardList = gs.board.split(",").toMutableList()
+    if (!mv.isValidMove(boardList) || gs.gameOver) return
+
+    // Apply the move
+    boardList[mv] = player.avatar
+
+    handles.gameState.set(gs.copy(board = boardList.joinToString(",")))
+    renderOutput()
+}
+```
+
+And finally, as always, we need to add the HumanPlayer to the BUILD file.
 
 By building and running this, when you click on a cell it should
 be populate with the avatar set in the resource. By using this
@@ -392,31 +415,25 @@ update Person to include an id.
 
 In addition, we need to add a random computer particle, along
 with the associated additional handles for a second player.
-All of these changes can be viewed here in the [Arcs Manifest
-File](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTGame.arcs).
+All of these changes can be viewed here in the Arcs manifest
+file in the src directory.
 
 We also need the game to verify that moves are only accepted from
 the current player and that each player only attempts to move
 when it is their turn. This implementation can be seen in the
-updated
-[Game particle here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTGame.kt).
-
-Inside the human player particle, we need to update it to only
-execute when the human player is the current player. This can
-be seen in the
-[code here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTHumanPlayer.kt).
+updated. To do this, we update the `if` statement in our
+`applyMove` function in TTTGame:
+```kotlin
+if (!mv.isValidMove(boardList) || gs.currentPlayer != player.id || gs.gameOver) return
+```
 
 And now we can get to the whole point of this tutorial, the
 random computer! Within this particle, we need to find the
 empty cells on the board, and then pick one of them at
 random. While this may not be the most exciting computer to
 play against, it is sufficient to see how Arcs works. The
-code for the random computer particle can be
-[viewed here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/TTTRandomComputer.kt).
-
-And, as always, we end with the updated
-[build
-file](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt3/BUILD).
+code for the random computer particle can be seen in
+TTTRandomComputer.kt in the src directory.
 
 ## Exclusivity to Avoid Infinity
 Alright, now we've got our game setup, and you can play it, but it isn't quite meeting all our
@@ -433,43 +450,11 @@ requirements. Let's take a look to see how we're doing:
 Three requirements down, only four to go! While this may sound like a lot, we've set ourselves up
 to make them really easy to tackle.
 
-Before we get to the code, it's important we remember that particles are reactive in nature. In
-practice, this means anytime we update any handle that a particle has access to, `onHandleUpdate`
-will be called. In the context of our Game particle, this has some deep reaching consequences.
+Before we get to the code, it's important we remember that particles are reactive in nature.
+Game should update GameState. However, we must be careful to not update GameState when the
+GameState handle is updated. Otherwise, we can easily create an infinite loop. 
 
-Game should update GameState within `onHandlUpdate`, however `onHandleUpdate` will be called
-anytime a handle input to Game is updated. This includes GameState. Thus, if we are not careful,
-we can easily create an infinite loop. To avoid this, we extensively use `if` statements to act as
-guards when we go to set a handle. Let's look at this in practice with a snippet of code from
-`TTTGame.kt`:
-
-```kotlin
-if (gs.gameOver != true) {
-    // Check the handle updated matches playerOne and that playerOne is the current player.
-    // This also ensures the handle updated was NOT gameState
-    if (handle.name == "playerOneMove" && gs.currentPlayer == 0.0) {
-        // applyMove sets gameState
-        applyMove(
-            mv = mv1.move.toInt(),
-            avatar = p1.avatar,
-            boardList = boardList,
-            gs = gs
-        )
-    // Check the handle updated matches playerTwo and that playerTwo is the current player.
-    // This also ensures the handle updated was NOT gameState
-    } else if (handle.name == "playerTwoMove" && gs.currentPlayer == 1.0) {
-        // applyMove sets gameState
-        applyMove(
-            mv = mv2.move.toInt(),
-            avatar = p2.avatar,
-            boardList = boardList,
-            gs = gs
-        )
-    }
-}
-```
-
-The rest of the changes are fairly straight forward. We update the template and create a model
+With this in mind, let's get to the code. We update the template and create a model
 to inform users who is the current player. To congratulate the winner by name, we first have to know
 someone has won. We do this by creating an array that represents all the combinations a player can
 win by, then check if any player has claimed all those cells. If so, we congratulate them by using
@@ -477,7 +462,7 @@ the template and model.
 
 And finally, we need to reset the game. When the Game sees a "reset" event, it simply sets gameState
 back to the original condition and resets the player's moves. You can see the completed TTTGame code
-[here](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/pt4/TTTGame.kt).
+in the TTTGame.kt file in the src directory.
 
 And, that's it, we've met all of our requirements! But wait, just like every great info-mercial,
 there's more! Checkout the next (and final) tutorial to see how Arcs lets us combine these particles
@@ -498,8 +483,7 @@ particles to create these systems.
 We just change whether a `TTTHumanPlayer` particle or a
 `TTTRandomComputer` particle is updating the associated `move` handle.  This means we can create
 these two variants of tic-tac-toe without writing another line of Kotlin code!  You can see all of
-this in the
-[Arcs Manifest file.](https://github.com/PolymerLabs/arcs/blob/master/particles/Tutorial/Kotlin/Demo/src/total/TTTGame.arcs)
+this in the Arcs Manifest file in the src directory.
 
 Upon closer inspection of this file, you'll also note we changed the "X"s and "O"s to be emojis.
 This is because Arcs supports Unicode and, once again, we wanted a chance to show off just a little.

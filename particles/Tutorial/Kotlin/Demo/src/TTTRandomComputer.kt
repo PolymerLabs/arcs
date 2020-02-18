@@ -14,13 +14,17 @@ package arcs.tutorials.tictactoe
 import arcs.sdk.Handle
 
 class TTTRandomComputer : AbstractTTTRandomComputer() {
-    override fun onHandleSync(handle: Handle, allSynced: Boolean) = onHandleUpdate(handles.gameState)
+    override fun onHandleSync(handle: Handle, allSynced: Boolean) = getMove(handles.gameState.fetch())
 
-    override fun onHandleUpdate(handle: Handle) {
-        if (handles.gameState.fetch()?.currentPlayer != handles.player.fetch()?.id) return
+    init {
+        handles.gameState.onUpdate { gameState ->
+            getMove(gameState)
+        }
+    }
 
-        val gs = handles.gameState.fetch() ?: TTTRandomComputer_GameState()
-
+    fun getMove(gameState: TTTRandomComputer_GameState?) {
+        val gs = gameState ?: TTTRandomComputer_GameState()
+        // Ensure we are the current player
         val boardArr = gs.board.split(",")
         val emptyCells = mutableListOf<Double>()
 

@@ -14,14 +14,15 @@ package arcs.tutorials.tictactoe
 import arcs.sdk.Handle
 
 class TTTHumanPlayer : AbstractTTTHumanPlayer() {
-    override fun onHandleUpdate(handle: Handle) {
-        if (handles.events.size <= 0) return
 
-        // Get the element with the largest time as this will be the most recent.
-        val event = handles.events.fetchAll().sortedBy { it.time }.last()
-        // Set the move
-        if (event.type == "move" && event.time > -1.0) {
-            handles.myMove.set(TTTHumanPlayer_MyMove(event.move))
+    init {
+        handles.events.onUpdate { events ->
+            if(events.size > 0) {
+                val event = events.sortedBy { it.time }.last()
+                if (event.type == "move") {
+                    handles.myMove.set(TTTHumanPlayer_MyMove(event.move))
+                }
+            }
         }
     }
 }
