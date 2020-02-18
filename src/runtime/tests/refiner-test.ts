@@ -364,14 +364,14 @@ describe('normalisation', () => {
   it(`tests if expressions are rearranged 3`, Flags.withFieldRefinementsAllowed(async () => {
     const manifestAst1 = parse(`
         particle Foo
-            input: reads Something {num: Number [ (num+2)*(num+1)+3 > 4 ] }
+            input: reads Something {num: Number [ (num+2)*(num+1)+3 > 6 ] }
     `);
     const typeData = {'num': 'Number'};
     const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
     ref1.normalize();
     const manifestAst2 = parse(`
         particle Foo
-            input: reads Something {num: Number [ num*3 + num*num + 1 > 0 ] }
+            input: reads Something {num: Number [ num*3 + num*num > 1 ] }
     `);
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
     // normalized version of ref1 should be the same as ref2
@@ -487,7 +487,7 @@ describe('SQLExtracter', () => {
       `);
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = SQLExtracter.fromSchema(schema, 'table');
-      assert.strictEqual(query, `SELECT * FROM table WHERE (((a + (b * ${1/3})) + -100) > 0) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));`);
+      assert.strictEqual(query, `SELECT * FROM table WHERE ((a + (b * ${1/3})) > 100) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));`);
   }));
   it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -529,178 +529,178 @@ describe('SQLExtracter', () => {
 
 describe('Fractions', () => {
   it('tests fraction addition works', () => {
-    const a = new Term({'a': 1});  // a
-    const a2 = new Term({'a': 2}); // a^2
+    const a = new Term({'a': 1});         // a
+    const a2 = new Term({'a': 2});        // a^2
     const cnst = new Term({});
     let num1 = new Multinomial({
-        [a2.toKey()]: 1,   // a^2
-        [a.toKey()]: 1,  // a
-        [cnst.toKey()]: 9   // 9
+        [a2.toKey()]: 1,                  // a^2
+        [a.toKey()]: 1,                   // a
+        [cnst.toKey()]: 9                 // 9
     }); // a^2 + a + 9
     const den1 = new Multinomial({
-      [a.toKey()]: 2,  // 2a
+      [a.toKey()]: 2,                     // 2a
     }); // 2a
-    let frac1 = new Fraction(num1, den1);       // (a^2+a+9)/2a
+    let frac1 = new Fraction(num1, den1); // (a^2+a+9)/2a
     let num2 = new Multinomial({
-      [a.toKey()]: 1,  // a
-      [cnst.toKey()]: 5   // 5
+      [a.toKey()]: 1,                     // a
+      [cnst.toKey()]: 5                   // 5
     }); // a+5
     let den2 = new Multinomial({
-      [cnst.toKey()]: 3   // 3
+      [cnst.toKey()]: 3                   // 3
     }); // 3
-    let frac2 = new Fraction(num2, den2);       // (a+5)/3
-    let sum = Fraction.add(frac1, frac2);       // (5a^2+13a+27)/6a
+    let frac2 = new Fraction(num2, den2); // (a+5)/3
+    let sum = Fraction.add(frac1, frac2); // (5a^2+13a+27)/6a
     assert.deepEqual(sum.num.terms, {
-      [a2.toKey()]: 5,   // a^2
-      [a.toKey()]: 13,  // a
-      [cnst.toKey()]: 27   // 9
+      [a2.toKey()]: 5,                    // a^2
+      [a.toKey()]: 13,                    // a
+      [cnst.toKey()]: 27                  // 9
     });
     assert.deepEqual(sum.den.terms, {
-      [a.toKey()]: 6  // a
+      [a.toKey()]: 6                      // a
     });
     num1 = new Multinomial({
-      [a.toKey()]: 1,  // a
+      [a.toKey()]: 1,                     // a
     }); // a
-    frac1 = new Fraction(num1);                 // a/1
+    frac1 = new Fraction(num1);           // a/1
     num2 = new Multinomial({
-      [cnst.toKey()]: 5   // 5
+      [cnst.toKey()]: 5                   // 5
     }); // 5
     den2 = new Multinomial({
-      [cnst.toKey()]: 9   // 9
+      [cnst.toKey()]: 9                   // 9
     }); // 9
-    frac2 = new Fraction(num2, den2);           // 0.55/1
-    sum = Fraction.add(frac1, frac2);           // (a+0.55)/1
+    frac2 = new Fraction(num2, den2);     // 0.55/1
+    sum = Fraction.add(frac1, frac2);     // (a+0.55)/1
     assert.deepEqual(sum.num.terms, {
-      [a.toKey()]: 1,  // a
-      [cnst.toKey()]: 5/9   // 5/9
+      [a.toKey()]: 1,                     // a
+      [cnst.toKey()]: 5/9                 // 5/9
     });
     assert.deepEqual(sum.den.terms, {
-      [cnst.toKey()]: 1   // 1
+      [cnst.toKey()]: 1                   // 1
     });
   });
   it('tests fraction subtraction works', () => {
-    const a = new Term({'a': 1});  // a
-    const a2 = new Term({'a': 2}); // a^2
+    const a = new Term({'a': 1});                 // a
+    const a2 = new Term({'a': 2});                // a^2
     const cnst = new Term({});
     const num1 = new Multinomial({
-        [a2.toKey()]: 1,   // a^2
-        [a.toKey()]: 1,  // a
-        [cnst.toKey()]: 9   // 9
+        [a2.toKey()]: 1,                          // a^2
+        [a.toKey()]: 1,                           // a
+        [cnst.toKey()]: 9                         // 9
     }); // a^2 + a + 9
     const den1 = new Multinomial({
-      [a.toKey()]: 2,  // 2a
+      [a.toKey()]: 2,                             // 2a
     }); // 2a
     const frac1 = new Fraction(num1, den1);       // (a^2+a+9)/2a
     const num2 = new Multinomial({
-      [a.toKey()]: 1,  // a
-      [cnst.toKey()]: 5   // 5
+      [a.toKey()]: 1,                             // a
+      [cnst.toKey()]: 5                           // 5
     }); // a+5
     const den2 = new Multinomial({
-      [cnst.toKey()]: 3   // 3
+      [cnst.toKey()]: 3                           // 3
     }); // 3
     const frac2 = new Fraction(num2, den2);       // (a+5)/3
-    const sum = Fraction.subtract(frac1, frac2);       // (a^2-7a+27)/6a
+    const sum = Fraction.subtract(frac1, frac2);  // (a^2-7a+27)/6a
     assert.deepEqual(sum.num.terms, {
-      [a2.toKey()]: 1,   // a^2
-      [a.toKey()]: -7,  // -7a
-      [cnst.toKey()]: 27   // 27
+      [a2.toKey()]: 1,                            // a^2
+      [a.toKey()]: -7,                            // -7a
+      [cnst.toKey()]: 27                          // 27
     });
     assert.deepEqual(sum.den.terms, {
-      [a.toKey()]: 6,  // 6a
+      [a.toKey()]: 6,                             // 6a
     });
   });
   it('tests fraction negation works', () => {
-    const a = new Term({'a': 1});  // a
-    const a2 = new Term({'a': 2}); // a^2
+    const a = new Term({'a': 1});                 // a
+    const a2 = new Term({'a': 2});                // a^2
     const cnst = new Term({});
     const num1 = new Multinomial({
-        [a2.toKey()]: 1,   // a^2
-        [a.toKey()]: 1,  // a
-        [cnst.toKey()]: 9   // 9
+        [a2.toKey()]: 1,                          // a^2
+        [a.toKey()]: 1,                           // a
+        [cnst.toKey()]: 9                         // 9
     }); // a^2 + a + 9
     const den1 = new Multinomial({
-      [a.toKey()]: 2,  // 2a
+      [a.toKey()]: 2,                             // 2a
     }); // 2a
     const frac1 = new Fraction(num1, den1);       // (a^2+a+9)/2a
-    const neg = Fraction.negate(frac1);       // (-a^2-a+-9)/2a
+    const neg = Fraction.negate(frac1);           // (-a^2-a+-9)/2a
     assert.deepEqual(neg.num.terms, {
-        [a2.toKey()]: -1,   // a^2
-        [a.toKey()]: -1,  // a
-        [cnst.toKey()]: -9   // 9
+        [a2.toKey()]: -1,                         // a^2
+        [a.toKey()]: -1,                          // a
+        [cnst.toKey()]: -9                        // 9
     });
     assert.deepEqual(neg.den.terms, {
       [a.toKey()]: 2,  // 2a
     });
   });
   it('tests fraction multiplication works', () => {
-    const a = new Term({'a': 1});  // a
-    const a2 = new Term({'a': 2}); // a^2
+    const a = new Term({'a': 1});                 // a
+    const a2 = new Term({'a': 2});                // a^2
     const cnst = new Term({});
     let num1 = new Multinomial({
-        [a.toKey()]: 1,  // a
-        [cnst.toKey()]: 9   // 9
+        [a.toKey()]: 1,                           // a
+        [cnst.toKey()]: 9                         // 9
     }); // a + 9
     const den1 = new Multinomial({
-      [a.toKey()]: 2,  // 2a
+      [a.toKey()]: 2,                             // 2a
     }); // 2a
-    let frac1 = new Fraction(num1, den1);             // (a+9)/2a
+    let frac1 = new Fraction(num1, den1);         // (a+9)/2a
     const num2 = new Multinomial({
-      [a.toKey()]: 1,  // a
-      [cnst.toKey()]: 5   // 5
+      [a.toKey()]: 1,                             // a
+      [cnst.toKey()]: 5                           // 5
     }); // a + 5
     const den2 = new Multinomial({
-      [cnst.toKey()]: 3   // 9
+      [cnst.toKey()]: 3                           // 9
     }); // a + 9
-    let frac2 = new Fraction(num2, den2);            // (a+5)/3
-    let sum = Fraction.multiply(frac1, frac2);       // (a^2+14a+45)/6a
+    let frac2 = new Fraction(num2, den2);         // (a+5)/3
+    let sum = Fraction.multiply(frac1, frac2);    // (a^2+14a+45)/6a
     assert.deepEqual(sum.num.terms, {
-      [a2.toKey()]: 1,   // a^2
-      [a.toKey()]: 14,  // 14a
-      [cnst.toKey()]: 45   // 45
+      [a2.toKey()]: 1,                            // a^2
+      [a.toKey()]: 14,                            // 14a
+      [cnst.toKey()]: 45                          // 45
     }); // a^2 + 14a + 45
     assert.deepEqual(sum.den.terms, {
-      [a.toKey()]: 6,  // 14a
+      [a.toKey()]: 6,                             // 14a
     });
     num1 = new Multinomial({
-      [a2.toKey()]: 1,   // a^2
-      [a.toKey()]: 1,  // a
+      [a2.toKey()]: 1,                            // a^2
+      [a.toKey()]: 1,                             // a
     });
-    frac1 = new Fraction(num1);                     // (a^2+a)/1
-    frac2 = new Fraction();                         // 0 / 1
-    sum = Fraction.multiply(frac1, frac2);          // 0/1
+    frac1 = new Fraction(num1);                   // (a^2+a)/1
+    frac2 = new Fraction();                       // 0 / 1
+    sum = Fraction.multiply(frac1, frac2);        // 0/1
     assert.deepEqual(sum.num.terms, {});
     assert.deepEqual(sum.den.terms, {
-      [cnst.toKey()]: 1   // 1
+      [cnst.toKey()]: 1                           // 1
     });
   });
   it('tests fraction division works', () => {
-    const a = new Term({'a': 1});  // a
-    const a2 = new Term({'a': 2}); // a^2
+    const a = new Term({'a': 1});                 // a
+    const a2 = new Term({'a': 2});                // a^2
     const cnst = new Term({});
     const num1 = new Multinomial({
-        [a.toKey()]: 1,  // a
-        [cnst.toKey()]: 9   // 9
+        [a.toKey()]: 1,                           // a
+        [cnst.toKey()]: 9                         // 9
     }); // a + 9
     const den1 = new Multinomial({
-      [a.toKey()]: 2,  // 2a
+      [a.toKey()]: 2,                             // 2a
     }); // 2a
-    const frac1 = new Fraction(num1, den1);             // (a+9)/2a
+    const frac1 = new Fraction(num1, den1);       // (a+9)/2a
     const num2 = new Multinomial({
-      [a.toKey()]: 1,  // a
-      [cnst.toKey()]: 5   // 5
+      [a.toKey()]: 1,                             // a
+      [cnst.toKey()]: 5                           // 5
     }); // a + 5
     const den2 = new Multinomial({
-      [cnst.toKey()]: 3   // 9
+      [cnst.toKey()]: 3                           // 9
     }); // a + 9
-    const frac2 = new Fraction(num2, den2);            // (a+5)/3
-    const sum = Fraction.divide(frac1, frac2);         // (3a+27)/(2a^2+10a)
+    const frac2 = new Fraction(num2, den2);       // (a+5)/3
+    const sum = Fraction.divide(frac1, frac2);    // (3a+27)/(2a^2+10a)
     assert.deepEqual(sum.num.terms, {
-      [a.toKey()]: 3,  // 3a
-      [cnst.toKey()]: 27   // 27
+      [a.toKey()]: 3,                             // 3a
+      [cnst.toKey()]: 27                          // 27
     });
     assert.deepEqual(sum.den.terms, {
-      [a2.toKey()]: 2,   // 2a^2
-      [a.toKey()]: 10,  // 10a
+      [a2.toKey()]: 2,                            // 2a^2
+      [a.toKey()]: 10,                            // 10a
     });
   });
 });
