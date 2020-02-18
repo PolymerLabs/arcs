@@ -17,7 +17,7 @@ class TTTRandomComputer : AbstractTTTRandomComputer() {
     override fun onHandleSync(handle: Handle, allSynced: Boolean) = getMove(handles.gameState.fetch())
 
     init {
-        handles.gameState.onUpdate{ gameState ->
+        handles.gameState.onUpdate { gameState ->
             getMove(gameState)
         }
     }

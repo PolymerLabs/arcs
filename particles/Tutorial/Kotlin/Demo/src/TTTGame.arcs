@@ -119,7 +119,7 @@ recipe GamePlayersDemoRecipe
     gameState: reads gameState
     myMove: writes playerTwoMove
     player: reads playerTwo
-  description `Kotlin Functional Tutorial TicTacToe One Player Demo`
+  description `Kotlin Tutorial TicTacToe One Player Demo`
 
 recipe GamePlayersDemoRecipe
   playerOne: copy HumanOneStore
@@ -149,7 +149,7 @@ recipe GamePlayersDemoRecipe
     events: reads events
     myMove: writes playerTwoMove
     player: reads playerTwo
-  description `Kotlin Functional Tutorial TicTacToe Two Players Demo`
+  description `Kotlin Tutorial TicTacToe Two Players Demo`
 
 recipe GamePlayersDemoRecipe
   playerOne: copy ComputerOneStore
@@ -177,4 +177,4 @@ recipe GamePlayersDemoRecipe
     gameState: reads gameState
     myMove: writes playerTwoMove
     player: reads playerTwo
-  description `Kotlin Functional Tutorial TicTacToe Zero Players Demo`
+  description `Kotlin Tutorial TicTacToe Zero Players Demo`

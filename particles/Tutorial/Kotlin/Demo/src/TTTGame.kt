@@ -32,28 +32,30 @@ class TTTGame : AbstractTTTGame() {
         arrayOf(2, 4, 6)
     )
 
-    init{
+    init {
 
-        handles.playerOneMove.onUpdate() { move ->
+        handles.playerOneMove.onUpdate { move ->
             applyMove(
               move ?: TTTGame_PlayerOneMove(),
               handles.playerOne.fetch() ?: TTTGame_PlayerOne()
             )
         }
 
-        handles.playerTwoMove.onUpdate() { move ->
+        handles.playerTwoMove.onUpdate { move ->
             applyMove(
               move ?: TTTGame_PlayerTwoMove(),
               handles.playerTwo.fetch() ?: TTTGame_PlayerTwo()
             )
         }
 
-        handles.events.onUpdate() {
+        handles.events.onUpdate {
             if (hasReset()) {
-                handles.gameState.set(defaultGame)
-                handles.playerOneMove.set(handles.playerOneMove.fetch()!!.copy(move = -1.0))
-                handles.playerTwoMove.set(handles.playerTwoMove.fetch()!!.copy(move = -1.0))
-                handles.events.clear()
+                with(handles) {
+                    gameState.set(defaultGame)
+                    playerOneMove.set(handles.playerOneMove.fetch()!!.copy(move = -1.0))
+                    playerTwoMove.set(handles.playerTwoMove.fetch()!!.copy(move = -1.0))
+                    events.clear()
+                }
                 renderOutput()
             }
         }
