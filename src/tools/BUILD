@@ -1,6 +1,3 @@
-load("@rules_java//java:defs.bzl", "java_binary")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
-
 package(default_visibility = ["//visibility:public"])
 
 filegroup(
@@ -11,30 +8,4 @@ filegroup(
 filegroup(
     name = "all_srcs",
     srcs = glob(["**"]),
-)
-
-kt_jvm_library(
-    name = "deserialize",
-    srcs = ["deserialize.kt"],
-    deps = [
-        "//third_party/java/gson"
-    ],
-
-)
-
-kt_jvm_library(
-    name = "generator",
-    srcs = ["Recipe2Plan.kt"],
-    deps = [
-        ":deserialize",
-        "//third_party/kotlin/clikt",
-        "//third_party/kotlin/kotlinpoet",
-        "//third_party/java/gson"
-    ],
-)
-
-java_binary(
-    name = "recipe2plan",
-    main_class = "arcs.tools.Recipe2PlanKt",
-    runtime_deps = [":generator"],
 )

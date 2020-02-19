@@ -38,9 +38,9 @@ data class ParticleSpec(
 )
 
 data class SchemaLocation(
-    val offset: Integer,
-    val line: Integer,
-    val column: Integer
+    val offset: Int,
+    val line: Int,
+    val column: Int
 )
 
 data class SchemaField(
