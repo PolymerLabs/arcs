@@ -242,7 +242,7 @@ export class Planificator {
                    idGenerator: this.arc.idGenerator,
                    particleId: this.arc.generateID().toString()
                  }) as SingletonHandle<Entity>;
-      const handleValue = await handleNG.get();
+      const handleValue = await handleNG.fetch();
       if (handleValue) {
         values = JSON.parse(handleValue.current);
       }
