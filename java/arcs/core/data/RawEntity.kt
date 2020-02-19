@@ -26,6 +26,7 @@ data class RawEntity(
      */
     val collections: Map<FieldName, Set<Referencable>> = emptyMap(),
     /** Indication of the timestamp when this entity expires. */
+    @Suppress("GoodTime") // use Instant
     val expirationTimestamp: Long = NO_EXPIRATION
 ) : Referencable {
     override fun tryDereference(): Referencable {
