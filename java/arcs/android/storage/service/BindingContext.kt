@@ -68,48 +68,54 @@ class BindingContext(
     private val coroutineContext = parentCoroutineContext + CoroutineName("BindingContext-$id")
 
     override fun getLocalData(callback: IStorageServiceCallback) {
-        bindingContextStatisticsSink.measure(coroutineContext) {
-            val activeStore = store.activate()
+        bindingContextStatisticsSink.traceTransaction("getLocalData") {
+            bindingContextStatisticsSink.measure(coroutineContext) {
+                val activeStore = store.activate()
 
-            val deferredResult = DeferredResult(coroutineContext)
-            sendQueue.enqueue {
-                callback.onProxyMessage(
-                    ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
-                        model = activeStore.getLocalData(),
-                        id = null
-                    ).toParcelable(crdtType),
-                    deferredResult
-                )
+                val deferredResult = DeferredResult(coroutineContext)
+                sendQueue.enqueue {
+                    callback.onProxyMessage(
+                            ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
+                                    model = activeStore.getLocalData(),
+                                    id = null
+                            ).toParcelable(crdtType),
+                            deferredResult
+                    )
+                }
+
+                deferredResult.await()
             }
-
-            deferredResult.await()
         }
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun registerCallback(callback: IStorageServiceCallback): Int {
-        val proxyCallback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
-            // Asynchronously pass the message along to the callback. Use a supervisorScope here
-            // so that we catch any exceptions thrown within and re-throw on the same coroutine
-            // as the callback-caller.
-            supervisorScope {
-                val deferredResult = DeferredResult(coroutineContext)
-                callback.onProxyMessage(message.toParcelable(crdtType), deferredResult)
-                deferredResult.await()
+        var callbackToken = 0
+        bindingContextStatisticsSink.traceTransaction("registerCallback") {
+            val proxyCallback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
+                // Asynchronously pass the message along to the callback. Use a supervisorScope here
+                // so that we catch any exceptions thrown within and re-throw on the same coroutine
+                // as the callback-caller.
+                supervisorScope {
+                    val deferredResult = DeferredResult(coroutineContext)
+                    callback.onProxyMessage(message.toParcelable(crdtType), deferredResult)
+                    deferredResult.await()
+                }
+            }
+
+            callbackToken = runBlocking {
+                val token =
+                        (store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>).on(proxyCallback)
+
+                // If the callback's binder dies, remove it from the callback collection.
+                callback.asBinder().linkToDeath({
+                    unregisterCallback(token)
+                }, 0)
+
+                token
             }
         }
-
-        return runBlocking {
-            val token =
-                (store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>).on(proxyCallback)
-
-            // If the callback's binder dies, remove it from the callback collection.
-            callback.asBinder().linkToDeath({
-                unregisterCallback(token)
-            }, 0)
-
-            token
-        }
+        return callbackToken
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -117,23 +123,27 @@ class BindingContext(
         message: ParcelableProxyMessage,
         resultCallback: IResultCallback
     ) {
-        bindingContextStatisticsSink.measure(coroutineContext) {
-            val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
-            val actualMessage = message.actual as ProxyMessage<CrdtData, CrdtOperation, Any?>
-            try {
-                if (activeStore.onProxyMessage(actualMessage)) {
-                    resultCallback.onResult(null)
+        bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
+            bindingContextStatisticsSink.measure(coroutineContext) {
+                val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
+                val actualMessage = message.actual as ProxyMessage<CrdtData, CrdtOperation, Any?>
+                try {
+                    if (activeStore.onProxyMessage(actualMessage)) {
+                        resultCallback.onResult(null)
 
-                    onProxyMessage(store.storageKey, actualMessage)
-                } else throw CrdtException("Failed to process message")
-            } catch (e: CrdtException) {
-                resultCallback.onResult(e.toParcelable())
+                        onProxyMessage(store.storageKey, actualMessage)
+                    } else throw CrdtException("Failed to process message")
+                } catch (e: CrdtException) {
+                    resultCallback.onResult(e.toParcelable())
+                }
             }
         }
     }
 
     override fun unregisterCallback(token: Int) {
-        CoroutineScope(coroutineContext).launch { store.activate().off(token) }
+        bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
+            CoroutineScope(coroutineContext).launch { store.activate().off(token) }
+        }
     }
 
     companion object {

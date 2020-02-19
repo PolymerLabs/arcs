@@ -109,7 +109,7 @@ class StorageService : ResurrectorService() {
                 |--------------------
                 |
                 |Uptime: ${DateUtils.formatElapsedTime(elapsedTime / 1000)}
-                |Active StorageKeys: 
+                |Active StorageKeys:
                 |${storageKeys.joinToString(",\n\t", prefix = "[\n\t", postfix = "\n]")}
                 |ProxyMessage Roundtrip Statistics (ms):
                 |  - Average: ${stats.roundtripMean}
@@ -117,6 +117,9 @@ class StorageService : ResurrectorService() {
                 |  - 75th percentile: ${statsPercentiles.seventyFifth}
                 |  - 90th percentile: ${statsPercentiles.ninetieth}
                 |  - 99th percentile: ${statsPercentiles.ninetyNinth}
+                |Transactions Statistics (level of concurrency):
+                |  - Current: ${stats.transactions.current}
+                |  - Peak: ${stats.transactions.peak}
             """.trimMargin("|")
         )
 
@@ -164,11 +167,11 @@ class StorageService : ResurrectorService() {
             """
                 |$pad$title (%d measurements):
                 |$pad  Runtime (ms):
-                |$pad    Average: %.3f 
-                |$pad    StdDev: %.3f 
+                |$pad    Average: %.3f
+                |$pad    StdDev: %.3f
                 |$pad    Min: %.3f
-                |$pad    Max: %.3f 
-                |        
+                |$pad    Max: %.3f
+                |
                 |${pad}Counts per measurement (name: average, standard deviation, min, max):
             """.trimMargin()
                 .format(
@@ -183,8 +186,8 @@ class StorageService : ResurrectorService() {
             val stats = counters[counter]
             writer.println(
                 """
-                    |$pad  $counter: 
-                    |$pad    %.2f, %.2f, %.2f, %.2f 
+                    |$pad  $counter:
+                    |$pad    %.2f, %.2f, %.2f, %.2f
                 """.trimMargin("|")
                     .format(stats.mean, stats.standardDeviation, stats.min ?: 0, stats.max ?: 0)
             )

@@ -23,6 +23,10 @@ import kotlinx.coroutines.sync.withLock
  */
 interface BindingContextStatisticsSink {
     fun measure(context: CoroutineContext, block: suspend () -> Unit)
+
+    // Must be called within a binder thread context instead of
+    // a coroutine dispatcher thread context.
+    fun traceTransaction(tag: String? = null, block: () -> Unit)
 }
 
 /**
@@ -57,6 +61,8 @@ class BindingContextStatsImpl : BindingContextStatistics {
         get() = runningStats.mean
     override val roundtripStdDev: Double
         get() = runningStats.standardDeviation
+    val transactions: Transactions
+        get() = Transactions(/*mutex=*/null, _transactions.current, _transactions.peak)
 
     override fun measure(context: CoroutineContext, block: suspend () -> Unit) {
         val startTime = System.currentTimeMillis()
@@ -66,6 +72,39 @@ class BindingContextStatsImpl : BindingContextStatistics {
             } finally {
                 val duration = (System.currentTimeMillis() - startTime).toDouble()
                 mutex.withLock { runningStats.logStat(duration) }
+            }
+        }
+    }
+
+    override fun traceTransaction(tag: String?, block: () -> Unit) {
+        // TODO(ianchang): Inject Android system traces with [tag]
+        ++_transactions
+        block()
+        --_transactions
+    }
+
+    companion object {
+        private var _transactions = Transactions(Mutex())
+    }
+}
+
+data class Transactions(val mutex: Mutex? = null, var current: Int = 0, var peak: Int = 0) {
+    operator fun inc(): Transactions {
+        return apply {
+            mutex?.let {
+                while (!mutex.tryLock()) {}
+                peak = maxOf(++current, peak)
+                mutex.unlock()
+            }
+        }
+    }
+
+    operator fun dec(): Transactions {
+        return apply {
+            mutex?.let {
+                while (!mutex.tryLock()) {}
+                --current
+                mutex.unlock()
             }
         }
     }
