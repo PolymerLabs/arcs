@@ -35,8 +35,10 @@ kt_js_library(
 
 arcs_kt_native_library(
     name = "sdk-wasm",
-    srcs = glob([
-        "*.kt",
+    srcs = [
+        # Don't depend on anything else from the sdk package.
+        "UtilsInterface.kt",
+    ] + glob([
         "wasm/*.kt",
     ]),
 )

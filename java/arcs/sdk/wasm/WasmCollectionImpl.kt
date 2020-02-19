@@ -11,22 +11,20 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.ReadWriteCollection
-
 /** [ReadWriteCollection] implementation for WASM. */
 class WasmCollectionImpl<T : WasmEntity>(
     particle: WasmParticleImpl,
     name: String,
     private val entitySpec: WasmEntitySpec<T>
-) : WasmHandle<T>(name, particle), ReadWriteCollection<T> {
+) : WasmHandle(name, particle) {
 
     private val entities: MutableMap<String, T> = mutableMapOf()
     private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
 
-    override val size: Int
+    val size: Int
         get() = entities.size
 
-    override fun fetchAll() = entities.values.toSet()
+    fun fetchAll() = entities.values.toSet()
 
     override fun sync(encoded: ByteArray) {
         entities.clear()
@@ -48,19 +46,19 @@ class WasmCollectionImpl<T : WasmEntity>(
         notifyOnUpdateActions()
     }
 
-    override fun onUpdate(action: (Set<T>) -> Unit) {
+    fun onUpdate(action: (Set<T>) -> Unit) {
         onUpdateActions.add(action)
     }
 
-    override fun isEmpty() = entities.isEmpty()
+    fun isEmpty() = entities.isEmpty()
 
-    override fun store(entity: T) {
+    fun store(entity: T) {
         val encoded = entity.encodeEntity()
         WasmRuntimeClient.collectionStore(particle, this, encoded)?.let { entity.internalId = it }
         entities[entity.internalId] = entity
     }
 
-    override fun remove(entity: T) {
+    fun remove(entity: T) {
         entities[entity.internalId]?.let {
             val encoded = it.encodeEntity()
             entities.remove(entity.internalId)
@@ -80,7 +78,7 @@ class WasmCollectionImpl<T : WasmEntity>(
         }
     }
 
-    override fun clear() {
+    fun clear() {
         entities.clear()
         WasmRuntimeClient.collectionClear(particle, this)
         notifyOnUpdateActions()

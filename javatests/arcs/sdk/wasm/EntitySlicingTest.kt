@@ -11,12 +11,10 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Handle
-
 typealias Res = EntitySlicingTest_Res
 
 class EntitySlicingTest : AbstractEntitySlicingTest() {
-    override fun onHandleSync(handle: Handle, allSynced: Boolean) {
+    override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) {
         if (!allSynced) return;
 
         handles.s1.fetch()?.let { handles.res.store(Res("s1:${it.num.toInt()}")) }

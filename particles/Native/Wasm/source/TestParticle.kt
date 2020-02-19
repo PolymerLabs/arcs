@@ -9,7 +9,7 @@
  */
 package arcs.test
 
-import arcs.sdk.Handle
+import arcs.sdk.wasm.WasmHandle
 import arcs.sdk.Utils.abort
 import arcs.sdk.Utils.log
 import kotlin.Exception
@@ -19,7 +19,7 @@ import kotlin.Exception
  */
 class TestParticle : AbstractTestParticle() {
 
-    override fun onHandleUpdate(handle: Handle) {
+    override fun onHandleUpdate(handle: WasmHandle) {
         log("A handle was updated!")
         if (handle.name.equals("data")) {
             log("data was updated")

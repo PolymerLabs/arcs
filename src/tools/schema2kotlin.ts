@@ -70,19 +70,24 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
       const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       let handleInterfaceType: string;
-      switch (connection.direction) {
-        case 'reads writes':
-          handleInterfaceType = `ReadWrite${handleConcreteType}<${entityType}>`;
-          break;
-        case 'writes':
-          handleInterfaceType = `Writable${handleConcreteType}<${entityType}>`;
-          break;
-        case 'reads':
-          handleInterfaceType = `Readable${handleConcreteType}<${entityType}>`;
-          break;
-        default:
-          throw new Error(`Unsupported handle direction: ${connection.direction}`);
+      if (this.opts.wasm) {
+        handleInterfaceType = `Wasm${handleConcreteType}Impl<${entityType}>`;
+      } else {
+        switch (connection.direction) {
+          case 'reads writes':
+            handleInterfaceType = `ReadWrite${handleConcreteType}<${entityType}>`;
+            break;
+          case 'writes':
+            handleInterfaceType = `Writable${handleConcreteType}<${entityType}>`;
+            break;
+          case 'reads':
+            handleInterfaceType = `Readable${handleConcreteType}<${entityType}>`;
+            break;
+          default:
+            throw new Error(`Unsupported handle direction: ${connection.direction}`);
+        }
       }
+
       handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
     }
     return `

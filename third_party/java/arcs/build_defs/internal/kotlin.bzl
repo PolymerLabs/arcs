@@ -61,7 +61,7 @@ ALL_PLATFORMS = ["jvm", "js", "wasm"]
 DEFAULT_LIBRARY_PLATFORMS = ["jvm", "js"]
 
 # Default set of platforms for Kotlin particles.
-DEFAULT_PARTICLE_PLATFORMS = ["jvm", "wasm"]
+DEFAULT_PARTICLE_PLATFORMS = ["jvm"]
 
 def arcs_kt_jvm_library(**kwargs):
     """Wrapper around kt_jvm_library for Arcs.
@@ -199,6 +199,9 @@ def arcs_kt_particles(
     _check_platforms(platforms)
 
     deps = ARCS_SDK_DEPS + deps
+
+    if "jvm" in platforms and "wasm" in platforms:
+        fail("Particles can only depend on one of jvm or wasm")
 
     if "jvm" in platforms:
         arcs_kt_jvm_library(

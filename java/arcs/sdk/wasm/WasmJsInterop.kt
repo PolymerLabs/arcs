@@ -134,7 +134,7 @@ fun init(particlePtr: WasmAddress) {
 @Retain
 @ExportForCppRuntime("_syncHandle")
 fun syncHandle(particlePtr: WasmAddress, handlePtr: WasmAddress, encoded: WasmNullableString) {
-    val handle = handlePtr.toObject<WasmHandle<*>>()
+    val handle = handlePtr.toObject<WasmHandle>()
     handle?.let {
         it.sync(encoded.toByteArray())
         particlePtr.toObject<WasmParticleImpl>()?.sync(it)
@@ -149,7 +149,7 @@ fun updateHandle(
     encoded1Ptr: WasmNullableString,
     encoded2Ptr: WasmNullableString
 ) {
-    val handle = handlePtr.toObject<WasmHandle<*>>()
+    val handle = handlePtr.toObject<WasmHandle>()
     handle?.let {
         it.update(encoded1Ptr.toByteArray(), encoded2Ptr.toByteArray())
         particlePtr.toObject<WasmParticleImpl>()?.onHandleUpdate(it)
