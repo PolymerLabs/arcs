@@ -24,4 +24,12 @@ interface Entity {
 interface EntitySpec<T : Entity> {
     /** Returns an empty new instance of [T]. */
     fun create(): T
+
+    /**
+     * Takes a [Map] representing a serialized representation of a [RawEntity] from the
+     * storage layer, and converts it to a concrete entity class.
+     * TODO: replace this with kotlinx.serialization
+     * TODO: this could just accept a RawEntity, but it would be tighter-coupling of SDK<->Core
+     */
+    fun deserialize(data: Map<String, Any?>): T
 }

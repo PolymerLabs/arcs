@@ -11,8 +11,33 @@
 
 package arcs.sdk
 
+/**
+ * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
+ * used by [Particle]s.
+ */
+interface HandleHolder {
+    val map: MutableMap<String, Handle>
+    val entitySpecs: MutableMap<String, EntitySpec<out Entity>>
+}
+
+/**
+ * Base class used by `schema2kotlin` code-generator tool to generate a class containing all
+ * declared handles.
+ */
+abstract class HandleHolderBase(
+    override val map: MutableMap<String, Handle> = mutableMapOf(),
+    override val entitySpecs: MutableMap<String, EntitySpec<out Entity>> = mutableMapOf()
+) : HandleHolder
+
 /** Base interface for all particles. */
 interface Particle {
+
+    /**
+     * This field is provided in an abstract base class by the `schema2kotlin` code generator
+     * and contains all declared handles in the manifest.
+     */
+    val handles: HandleHolder
+
     /**
      * React to handle updates.
      *
