@@ -13,7 +13,6 @@ import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
 import {AuditException} from './arc-exceptions.js';
-import {type} from 'os';
 
 enum Primitive {
   BOOLEAN = 'Boolean',
