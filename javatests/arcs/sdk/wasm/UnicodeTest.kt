@@ -11,10 +11,8 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Handle
-
 class UnicodeTest : AbstractUnicodeTest() {
-    override fun onHandleUpdate(handle: Handle) {
+    override fun onHandleUpdate(handle: WasmHandle) {
         val out = UnicodeTest_Res(pass = "", src = "åŗċş 🌈")
         val pass = if (handle.name == "sng") {
             ((handle as WasmSingletonImpl<*>).fetch() as UnicodeTest_Sng).pass

@@ -11,11 +11,9 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Handle
-
 class AutoRenderTest : AbstractAutoRenderTest() {
     override fun init() = renderOutput()
-    override fun onHandleUpdate(handle: Handle) = renderOutput()
-    override fun onHandleSync(handle: Handle, allSynced: Boolean) = renderOutput()
+    override fun onHandleUpdate(handle: WasmHandle) = renderOutput()
+    override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) = renderOutput()
     override fun getTemplate(slotName: String): String = handles.data.fetch()?.txt ?: ""
 }

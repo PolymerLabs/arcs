@@ -11,15 +11,12 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Handle
-import arcs.sdk.Particle
-
 /**
  * Base class for all wasm particles.
  */
-abstract class WasmParticleImpl : Particle {
-    private val handles: MutableMap<String, Handle> = mutableMapOf()
-    private val toSync: MutableSet<Handle> = mutableSetOf()
+abstract class WasmParticleImpl {
+    private val handles: MutableMap<String, WasmHandle> = mutableMapOf()
+    private val toSync: MutableSet<WasmHandle> = mutableSetOf()
     private val eventHandlers: MutableMap<String, (Map<String, String>) -> Unit> = mutableMapOf()
 
     /** Execute on initialization of Particle. */
@@ -30,7 +27,7 @@ abstract class WasmParticleImpl : Particle {
      *
      * @param handle Singleton or Collection, defined in this particle class
      */
-    fun registerHandle(handle: Handle) {
+    fun registerHandle(handle: WasmHandle) {
         handles[handle.name] = handle
     }
 
@@ -48,7 +45,7 @@ abstract class WasmParticleImpl : Particle {
      * @see [onHandleSync]
      */
     @Suppress("UNUSED_PARAMETER")
-    fun connectHandle(name: String, canRead: Boolean, canWrite: Boolean): Handle? {
+    fun connectHandle(name: String, canRead: Boolean, canWrite: Boolean): WasmHandle? {
         handles[name]?.let {
             if (canRead) {
                 toSync.add(it)
@@ -68,7 +65,7 @@ abstract class WasmParticleImpl : Particle {
      * @param name The name of the triggered event
      * @param handler A callback (consumer) in reaction to the event
      */
-    override fun eventHandler(name: String, handler: (Map<String, String>) -> Unit) {
+    fun eventHandler(name: String, handler: (Map<String, String>) -> Unit) {
         eventHandlers[name] = handler
     }
 
@@ -88,13 +85,13 @@ abstract class WasmParticleImpl : Particle {
     }
 
     /** @param handle Handle to synchronize */
-    fun sync(handle: Handle) {
+    fun sync(handle: WasmHandle) {
         toSync.remove(handle)
         onHandleSync(handle, toSync.isEmpty())
     }
 
     /** Rendering through UiBroker */
-    override fun renderOutput() {
+    fun renderOutput() {
         val slotName = ""
         val template = getTemplate(slotName)
         val model = populateModel(slotName)?.let {
@@ -102,6 +99,27 @@ abstract class WasmParticleImpl : Particle {
         }
         WasmRuntimeClient.onRenderOutput(this, template, model)
     }
+
+    /**
+     * Define template for rendering (optional).
+     *
+     * @param slotName name of slot where template is rendered.
+     * @see [renderOutput]
+     */
+    open fun getTemplate(slotName: String): String? = null
+
+    /**
+     * Populate model for rendering (UiBroker model).
+     *
+     * @param slotName name of slot where model data is populated
+     * @param model Starting model state; Default: empty map
+     * @return new model state
+     * @see [renderOutput]
+     */
+    open fun populateModel(
+        slotName: String,
+        model: Map<String, Any> = mapOf()
+    ): Map<String, Any>? = model
 
     /**
      * Request response from Service
@@ -134,4 +152,24 @@ abstract class WasmParticleImpl : Particle {
      * @return absolute URL
      */
     fun resolveUrl(url: String): String = WasmRuntimeClient.resolveUrl(url)
+
+    /**
+     * React to handle updates.
+     *
+     * Called for handles when change events are received from the backing store.
+     *
+     * @param handle Singleton or Collection handle
+     */
+    open fun onHandleUpdate(handle: WasmHandle) = Unit
+
+    /**
+     * React to handle synchronization.
+     *
+     * Called for handles that are marked for synchronization at connection, when they are updated with the full model
+     * of their data. This will occur once after setHandles() and any time thereafter if the handle is resynchronized.
+     *
+     * @param handle Singleton or Collection handle
+     * @param allSynced flag indicating if all handles are synchronized
+     */
+    open fun onHandleSync(handle: WasmHandle, allSynced: Boolean) = Unit
 }

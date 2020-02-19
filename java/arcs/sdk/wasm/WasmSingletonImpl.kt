@@ -11,14 +11,12 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.ReadWriteSingleton
-
 /** [ReadWriteSingleton] implementation for WASM. */
 class WasmSingletonImpl<T : WasmEntity>(
     particle: WasmParticleImpl,
     name: String,
     private val entitySpec: WasmEntitySpec<T>
-) : WasmHandle<T>(name, particle), ReadWriteSingleton<T> {
+) : WasmHandle(name, particle) {
 
     private var entity: T? = null
     private val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
@@ -34,19 +32,19 @@ class WasmSingletonImpl<T : WasmEntity>(
         }
     }
 
-    override fun onUpdate(action: (T?) -> Unit) {
+    fun onUpdate(action: (T?) -> Unit) {
         onUpdateActions.add(action)
     }
 
-    override fun fetch() = entity
+    fun fetch() = entity
 
-    override fun set(entity: T) {
+    fun set(entity: T) {
         this.entity = entity
         val encoded = entity.encodeEntity()
         WasmRuntimeClient.singletonSet(particle, this, encoded)
     }
 
-    override fun clear() {
+    fun clear() {
         entity = null
         WasmRuntimeClient.singletonClear(particle, this)
         onUpdateActions.forEach { action ->
