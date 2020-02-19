@@ -1414,7 +1414,7 @@ export class Multinomial {
     return degree;
   }
 
-  // returns <multinomial> <op> 0
+  // returns <multinomial> <op> CONSTANT
   toExpression(op: Op): RefinementExpression {
     if (this.isConstant()) {
       return new BinaryExpression(
