@@ -75,11 +75,11 @@ class BindingContext(
                 val deferredResult = DeferredResult(coroutineContext)
                 sendQueue.enqueue {
                     callback.onProxyMessage(
-                            ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
-                                    model = activeStore.getLocalData(),
-                                    id = null
-                            ).toParcelable(crdtType),
-                            deferredResult
+                        ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
+                            model = activeStore.getLocalData(),
+                            id = null
+                        ).toParcelable(crdtType),
+                        deferredResult
                     )
                 }
 
@@ -105,7 +105,8 @@ class BindingContext(
 
             callbackToken = runBlocking {
                 val token =
-                        (store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>).on(proxyCallback)
+                    (store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>)
+                        .on(proxyCallback)
 
                 // If the callback's binder dies, remove it from the callback collection.
                 callback.asBinder().linkToDeath({
