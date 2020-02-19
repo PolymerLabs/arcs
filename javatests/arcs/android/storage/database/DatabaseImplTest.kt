@@ -21,7 +21,6 @@ import arcs.core.data.Entity
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKeyParser
@@ -955,7 +954,6 @@ class DatabaseImplTest {
     ) = Schema(
         names = emptyList(),
         fields = fields,
-        description = SchemaDescription(),
         hash = hash
     )
 

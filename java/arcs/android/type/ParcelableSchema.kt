@@ -23,7 +23,6 @@ data class ParcelableSchema(val actual: Schema) : Parcelable {
             actual.names.mapTo(mutableListOf()) { it.name }
         )
         parcel.writeSchemaFields(actual.fields, flags)
-        parcel.writeSchemaDescription(actual.description, flags)
         parcel.writeString(actual.hash)
     }
 
@@ -39,15 +38,11 @@ data class ParcelableSchema(val actual: Schema) : Parcelable {
                 "No SchemaFields found in Parcel"
             }
 
-            val description = requireNotNull(parcel.readSchemaDescription()) {
-                "No SchemaDescription found in Parcel"
-            }
-
             val hash = requireNotNull(parcel.readString()) {
                 "No schema hash found in Parcel"
             }
 
-            return ParcelableSchema(Schema(names, fields, description, hash))
+            return ParcelableSchema(Schema(names, fields, hash))
         }
 
         override fun newArray(size: Int): Array<ParcelableSchema?> = arrayOfNulls(size)

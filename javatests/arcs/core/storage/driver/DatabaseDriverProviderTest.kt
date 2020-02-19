@@ -17,7 +17,6 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.FieldType
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.CapabilitiesResolver
@@ -163,7 +162,6 @@ class DatabaseDriverProviderTest {
                 mapOf("name" to FieldType.Text),
                 mapOf("cities_lived_in" to FieldType.Text)
             ),
-            SchemaDescription(),
             "1234a"
         )
     }
