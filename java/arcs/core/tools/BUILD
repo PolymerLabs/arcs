@@ -7,6 +7,7 @@ kt_jvm_library(
     name = "deserialize",
     srcs = ["deserialize.kt"],
     deps = [
+        "//java/arcs/core/data:data",
         "//third_party/java/gson"
     ],
 )

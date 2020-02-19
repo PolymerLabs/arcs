@@ -76,10 +76,56 @@ function toParticleLiteral(p: ParticleSpec) {
   };
 }
 
+async function toFieldsLiteral(fields: Dictionary<any>) {
+  const schemaFields = {
+    singletons: {},
+    collections: {},
+  };
+
+  const updateField = async field => {
+    let out = {};
+    let isSingleton = true;
+    switch(field.kind) {
+      case 'schema-reference':
+        out['tag'] = 'EntityRef';
+        out['schemaHash'] = await field.schema.hash();
+        break;
+      case 'schema-collection':
+        out = (await updateField(field.schema))[1];
+        isSingleton = false;
+        break;
+
+      default: // schema-singleton
+        out['tag'] = 'Primitive';
+        out['primitiveType'] = field;
+        break;
+    }
+    return [isSingleton, out];
+  };
+
+  for (const [key, field] of Object.entries(fields)) {
+    const [isSingleton, fieldType] = await updateField(field);
+    if(isSingleton) {
+      schemaFields.singletons[key] = fieldType;
+    } else {
+      schemaFields.collections[key] = fieldType;
+    }
+  }
+
+  return schemaFields;
+}
+
 async function toSchemaLiteral(s: Schema) {
   const lit = s.toLiteral();
-  lit['hash'] = await s.hash();
-  return lit;
+
+  const toSchemaName = (name: string) => ({name});
+
+  return {
+     names: lit.names.map(toSchemaName),
+     fields: toFieldsLiteral(s.fields),
+     description: s.description,
+     hash: await s.hash(),
+  }
 }
 
 /** Write literals to a file. */

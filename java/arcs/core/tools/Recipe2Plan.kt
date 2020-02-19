@@ -25,6 +25,11 @@ class Recipe2Plan : CliktCommand(
         manifests.forEach { manifest ->
             val outputFile = outputFile(manifest)
             echo("$manifest --> $outputFile")
+
+            val man = parse(manifest.readText())
+            echo(man.toString())
+            echo(man.schemas.toString())
+            echo(man.schemas.first().toString())
             outputFile(manifest).writeText(manifest.readText())
         }
     }
