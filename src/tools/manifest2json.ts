@@ -12,6 +12,8 @@ import fs from 'fs';
 import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
 import {ErrorSeverity, Manifest, ManifestError} from '../runtime/manifest.js';
+import {HandleConnectionSpec, ParticleSpec} from "../runtime/particle-spec";
+import {Dictionary} from "../runtime/hot";
 
 class Serialization {
   particles: object[] = [];
@@ -58,9 +60,18 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
 /** Extract JSON serializations from manifest. */
 function toLiteral(manifest: Manifest): Serialization {
   const lit = new Serialization();
-  lit.particles = manifest.particles.map(p => p.toLiteral());
+  lit.particles = manifest.particles.map(toParticleLiteral);
   lit.schemas = Object.values(manifest.schemas).map(s => s.toLiteral());
   return lit;
+}
+
+function toParticleLiteral(p: ParticleSpec) {
+  const lit = p.toLiteral();
+  return {
+    particleName: p.name,
+    location: p.implFile,
+    handles: lit.args,
+  };
 }
 
 /** Write literals to a file. */
@@ -92,7 +103,7 @@ async function aggregateLiterals(srcs: string[]): Promise<Serialization> {
 
     if (errMsgs.length) {
       throw new Error(`Problems found in manifest '${src}':\n` +
-                      `${errMsgs.join('\n')}`);
+        `${errMsgs.join('\n')}`);
     }
 
     aggregate.merge(toLiteral(manifest));
