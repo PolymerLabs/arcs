@@ -33,8 +33,8 @@ esac
 
 status "0. Pre-requisites"
 if [ "$OS_NAME" = "linux" ]; then
-  status "0.1 Installing pre-requisites for Bazel"
-  sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3
+  status "0.1 Installing pre-requisites for Bazel and node modules"
+  sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python3 make python openjdk-8-jdk
 elif [ "$OS_NAME" = "osx" ]; then
   status "0.1. Checking for Command Line Tools"
   xcode-select --version || xcode-select --install || fail "Unable to install Command Line Tools"
@@ -48,7 +48,7 @@ curl -L -s -o- "https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/in
 
 status "1.1 ensure nvm is in your current process"
 # shellcheck disable=SC1090
-. $HOME/.nvm/nvm.sh || fail "Nvm load failed"
+. $NVM_DIR/nvm.sh || fail "Nvm load failed"
 
 status "2. Install node"
 cd $ROOT && nvm install && nvm use || fail 'Failed to install target node version.'
