@@ -653,7 +653,7 @@ describe('references when new storage enabled', () => {
   });
 
   it('can construct references of entities stored in reference mode store', async () => {
-    const storageKeyPrefix = (arcId => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b')));
+    const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
     const loader = new Loader(null, {
       './manifest': `
         schema Result
@@ -679,7 +679,7 @@ describe('references when new storage enabled', () => {
   
             async onHandleSync(handle, model) {
               if (handle.name == 'inResult') {
-                let entity = await handle.get();
+                let entity = await handle.fetch();
                 let reference = new Reference(entity);
                 await reference.stored;
                 await this.output.set(reference);
@@ -714,7 +714,7 @@ describe('references when new storage enabled', () => {
 
     const storageKey = Entity.storageKey(entity);
     const refHandle = await singletonHandleForTest(arc, refStore);
-    const reference = await refHandle.get();
+    const reference = await refHandle.fetch();
     assert.equal(reference.id, Entity.id(entity));
     assert.equal(reference.entityStorageKey, storageKey);
   });
