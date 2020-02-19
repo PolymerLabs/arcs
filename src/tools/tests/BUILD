@@ -19,6 +19,12 @@ filegroup(
     ],
 )
 
+filegroup(
+    name = "encoded_manifest",
+    srcs = ["test-data/example.pb.bin"],
+    visibility = ["//visibility:public"],
+)
+
 arcs_cc_schema(
     name = "cc_schemas",
     src = "golden.arcs",
