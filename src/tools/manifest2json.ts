@@ -14,6 +14,8 @@ import {Runtime} from '../runtime/runtime.js';
 import {ErrorSeverity, Manifest, ManifestError} from '../runtime/manifest.js';
 import {HandleConnectionSpec, ParticleSpec} from "../runtime/particle-spec";
 import {Dictionary} from "../runtime/hot";
+import {SchemaSpec} from "../runtime/manifest-ast-nodes";
+import {Schema} from "../runtime/schema";
 
 class Serialization {
   particles: object[] = [];
@@ -58,10 +60,10 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
 }
 
 /** Extract JSON serializations from manifest. */
-function toLiteral(manifest: Manifest): Serialization {
+async function toLiteral(manifest: Manifest): Promise<Serialization> {
   const lit = new Serialization();
   lit.particles = manifest.particles.map(toParticleLiteral);
-  lit.schemas = Object.values(manifest.schemas).map(s => s.toLiteral());
+  lit.schemas = await Promise.all(Object.values(manifest.schemas).map(toSchemaLiteral));
   return lit;
 }
 
@@ -72,6 +74,12 @@ function toParticleLiteral(p: ParticleSpec) {
     location: p.implFile,
     handles: lit.args,
   };
+}
+
+async function toSchemaLiteral(s: Schema) {
+  const lit = s.toLiteral();
+  lit['hash'] = await s.hash();
+  return lit;
 }
 
 /** Write literals to a file. */
@@ -106,7 +114,7 @@ async function aggregateLiterals(srcs: string[]): Promise<Serialization> {
         `${errMsgs.join('\n')}`);
     }
 
-    aggregate.merge(toLiteral(manifest));
+    aggregate.merge(await toLiteral(manifest));
   }
   return aggregate;
 }
