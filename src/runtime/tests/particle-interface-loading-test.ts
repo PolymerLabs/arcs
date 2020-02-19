@@ -21,6 +21,7 @@ import {singletonHandleForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
 import {ArcStoresFetcher} from '../../devtools-connector/arc-stores-fetcher.js';
 import {Entity} from '../entity.js';
+import { VolatileSingleton } from '../storage/volatile-storage.js';
 
 describe('particle interface loading', () => {
 
@@ -238,7 +239,7 @@ describe('particle interface loading', () => {
     assert.deepStrictEqual(await fooHandle.fetch(), {value: 'hello world!!!'});
   });
 
-  it('test onCreate only runs for initialization and not reinstantiation', async () => {
+  it('onCreate only runs for initialization and not reinstantiation', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         value: Text
@@ -277,14 +278,22 @@ describe('particle interface loading', () => {
     await arc.instantiate(recipe);
     await arc.idle;
     const fooHandle = await singletonHandleForTest(arc, fooStore);
-    assert.deepStrictEqual(await fooHandle.get(), {value: 'Created!'});
+    assert.deepStrictEqual(await fooHandle.fetch(), {value: 'Created!'});
 
     const serialization = await arc.serialize();
 
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
     await arc2.idle;
 
-    const fooHandle2 = await singletonHandleForTest(arc2, arc2._stores[1]);
-    assert.deepStrictEqual(await fooHandle2.get(), {value: 'Not created!'});
+    let fooStore2 = fooStore
+
+    arc2._stores.forEach(s => {
+      if (s.type.tag == "Entity") {
+        fooStore2 = s
+      } 
+    })
+
+    const fooHandle2 = await singletonHandleForTest(arc2, fooStore2);
+    assert.deepStrictEqual(await fooHandle2.fetch(), {value: 'Not created!'});
   });
 });
