@@ -123,7 +123,7 @@ describe('firebase', function() {
       assert.isTrue(var1.referenceMode);
       assert.isNotNull(var1.backingStore);
 
-      assert.deepEqual(await var1.backingStore.get('id1'), await var1.fetch());
+      assert.deepEqual(await var1.backingStore.fetch('id1'), await var1.fetch());
     });
 
     it('supports references', async () => {
@@ -290,8 +290,8 @@ describe('firebase', function() {
       assert.isTrue(collection1.referenceMode);
       assert.isNotNull(collection1.backingStore);
 
-      assert.deepEqual(await collection1.backingStore.get('id1'), await collection1.fetchAll('id1'));
-      assert.deepEqual(await collection1.backingStore.get('id2'), await collection1.fetchAll('id2'));
+      assert.deepEqual(await collection1.backingStore.fetch('id1'), await collection1.fetchAll('id1'));
+      assert.deepEqual(await collection1.backingStore.fetch('id2'), await collection1.fetchAll('id2'));
     });
 
     it('supports references', async () => {
@@ -456,7 +456,7 @@ describe('firebase', function() {
       assert.strictEqual(value.length, ids.length);
       for (let i = 0; i < value.length; i++) {
         assert.strictEqual(value[i].id, ids[i]);
-        assert.strictEqual(value[i].data, items.get(ids[i]).data);
+        assert.strictEqual(value[i].data, items.fetch(ids[i]).data);
       }
     }
 
@@ -651,7 +651,7 @@ describe('firebase', function() {
           defineParticle(({Particle}) => {
             return class P extends Particle {
               async setHandles(handles) {
-                let collection = handles.get('big');
+                let collection = handles.fetch('big');
 
                 // Verify that store and remove work from a particle.
                 await collection.store(new collection.entityClass({value: 'morty'}));
@@ -804,31 +804,31 @@ describe('firebase', function() {
       await backing.storeMultiple([bar(3), bar(4), bar(5), bar(6)], ['keyM']);
 
       // get, getMultiple, toList
-      assert.deepEqual(await backing.get('id1'), bar(1));
-      assert.deepEqual(await backing.get('id5'), bar(5));
-      assert.isNull(await backing.get('not-an-id'));
+      assert.deepEqual(await backing.fetch('id1'), bar(1));
+      assert.deepEqual(await backing.fetch('id5'), bar(5));
+      assert.isNull(await backing.fetch('not-an-id'));
       assert.deepEqual(await backing.getMultiple(['id6', 'id2', 'not-an-id', 'id5']), [bar(6), bar(2), null, bar(5)]);
       assert.sameDeepMembers(await backing.toList(), [bar(1), bar(2), bar(3), bar(4), bar(5), bar(6)]);
 
       // remove: removing a subset of keys should not delete item
       await backing.remove('id2', ['key2b']);
-      assert.deepEqual(await backing.get('id2'), bar(2));
+      assert.deepEqual(await backing.fetch('id2'), bar(2));
 
       // removing remaining keys should delete item
       await backing.remove('id2', ['key2c', 'key2a', 'not-a-key']);
-      assert.isNull(await backing.get('id2'));
+      assert.isNull(await backing.fetch('id2'));
 
       // empty key list should delete item
       await backing.remove('id6', []);
-      assert.isNull(await backing.get('id6'));
+      assert.isNull(await backing.fetch('id6'));
 
       // removing a non-existent key should have no effect
       await backing.remove('id1', ['not-a-key']);
-      assert.deepEqual(await backing.get('id1'), bar(1));
+      assert.deepEqual(await backing.fetch('id1'), bar(1));
 
       // removing a non-existent id should have no effect
       await backing.remove('not-an-id', []);
-      assert.isNull(await backing.get('not-an-id'));
+      assert.isNull(await backing.fetch('not-an-id'));
 
       // removeMultiple: safe to use non-existent keys and ids
       await backing.removeMultiple([
