@@ -19,9 +19,6 @@ import {ArcId} from '../id.js';
 import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {singletonHandleForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
-import {ArcStoresFetcher} from '../../devtools-connector/arc-stores-fetcher.js';
-import {Entity} from '../entity.js';
-import { VolatileSingleton } from '../storage/volatile-storage.js';
 
 describe('particle interface loading', () => {
 
@@ -285,13 +282,13 @@ describe('particle interface loading', () => {
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
     await arc2.idle;
 
-    let fooStore2 = fooStore
+    let fooStore2 = fooStore;
 
     arc2._stores.forEach(s => {
-      if (s.type.tag == "Entity") {
-        fooStore2 = s
-      } 
-    })
+      if (s.type.tag === 'Entity') {
+        fooStore2 = s;
+      }
+    });
 
     const fooHandle2 = await singletonHandleForTest(arc2, fooStore2);
     assert.deepStrictEqual(await fooHandle2.fetch(), {value: 'Not created!'});
