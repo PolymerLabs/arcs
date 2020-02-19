@@ -34,7 +34,7 @@ const configureRuntime = async ({rootPath, urlMap, storage, manifest}, bus) => {
   // configure arcs runtime environment
   Runtime.init(rootPath, urlMap);
   // marshal and bind context
-  const context = await requireContext(manifest || config.manifest);
+  const context = await requireContext(manifest);
   Runtime.getRuntime().bindContext(context);
   // attach verb-handlers to dispatcher
   populateDispatcher(dispatcher, storage, context);
@@ -56,6 +56,8 @@ const contextReady = async (bus, context) => {
 };
 
 const populateDispatcher = (dispatcher, storage, context) => {
+  // TODO(sjmiles): StorageNG: storage parameter must be a StorageKey object
+  storage = null;
   const runtime = Runtime.getRuntime();
   Object.assign(dispatcher, {
     pec: async (msg, bus) => {

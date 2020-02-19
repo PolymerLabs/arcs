@@ -12,8 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
-import {Capabilities} from './capabilities.js';
-import {CapabilitiesResolver, StorageKeyCreator, StorageKeyCreatorsMap} from './capabilities-resolver.js';
+import {CapabilitiesResolver, StorageKeyCreatorsMap} from './capabilities-resolver.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -182,7 +181,7 @@ export class Runtime {
   // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
   // How best to provide default storage to an arc given whatever we decide?
-  newArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey) | null, options?: RuntimeArcOptions): Arc {
+  newArc(name: string, storageKeyPrefix?: string | ((arcId: ArcId) => StorageKey) | null, options?: RuntimeArcOptions): Arc {
     const {loader, context} = this;
     const id = IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
@@ -264,7 +263,7 @@ export class Runtime {
     // we could eliminate it if the Manifest object takes care of this.
     const id = `in-memory-${Math.floor((Math.random()+1)*1e6)}.manifest`;
     // TODO(sjmiles): this is a virtual manifest, the fileName is invented
-    const opts = {id, fileName: `./${id}`, loader, ...options};
+    const opts = {id, fileName: `./${id}`, loader, memoryProvider: this.memoryProvider, ...options};
     return Manifest.parse(content, opts);
   }
 
@@ -308,12 +307,14 @@ export class Runtime {
   // TODO(sjmiles): redundant vs. newArc, but has some impedance mismatch
   // strategy is to merge first, unify second
   async spawnArc({id, serialization, context, composer, storage, portFactories, inspectorFactory}: SpawnArgs): Promise<Arc> {
+    const arcid = IdGenerator.newSession().newArcId(id);
+    const storageKey = new VolatileStorageKey(arcid, '');
     const params = {
-      id: IdGenerator.newSession().newArcId(id),
+      id: arcid,
       fileName: './serialized.manifest',
       serialization,
       context,
-      storageKey: storage || 'volatile',
+      storageKey,
       slotComposer: composer,
       pecFactories: [this.pecFactory, ...(portFactories || [])],
       loader: this.loader,
