@@ -228,11 +228,11 @@ export class Collection extends HandleOld {
    * @throws {Error} if this handle is not configured as a readable handle (i.e. 'reads' or 'reads writes')
    * in the particle's manifest.
    */
-  async get(id: string) {
+  async fetchAll(id: string) {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    return this._restore([await this.storage.get(id)])[0];
+    return this._restore([await this.storage.fetchAll(id)])[0];
   }
 
   /**
@@ -360,11 +360,11 @@ export class Singleton extends HandleOld {
    * @throws {Error} if this Singleton is not configured as a readable handle (i.e. 'reads' or 'reads writes')
    * in the particle's manifest.
    */
-  async get() {
+  async fetch() {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    const model = await this.storage.get();
+    const model = await this.storage.fetch();
     return this._restore(model);
   }
 

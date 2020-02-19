@@ -241,4 +241,16 @@ class VersionMapTest {
         assertThat(difference["bob"]).isEqualTo(1337)
         assertThat(difference["alice"]).isEqualTo(0)
     }
+
+    @Test
+    fun versionMapCopyIsActuallyCopied() {
+        val a = VersionMap()
+        a["alice"]++
+
+        val b = a.copy()
+        a["alice"]++
+
+        var difference = a - b
+        assertThat(difference["alice"]).isEqualTo(1)
+    }
 }

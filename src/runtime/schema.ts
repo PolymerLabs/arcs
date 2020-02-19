@@ -45,7 +45,7 @@ export class Schema {
     this.refinement = options.refinement || null;
     const fNs = this.refinement && this.refinement.getFieldNames();
     // if the schema level refinement is univariate, propogate it to the appropriate field
-    if (fNs && fNs.size === 1) {
+    if (fNs && fNs.size === 1 && Flags.fieldRefinementsAllowed) {
       const fN = fNs.values().next().value;
       fields[fN].refinement = Refinement.intersectionOf(fields[fN].refinement, this.refinement);
       this.refinement = null;
@@ -174,7 +174,7 @@ export class Schema {
         return false;
       }
     }
-    return true;
+    return Refinement.isAtleastAsSpecificAs(this.refinement, otherSchema.refinement) !== AtleastAsSpecific.NO;
   }
 
   // Returns true if there are fields in this.refinement, that are not in fields

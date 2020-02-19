@@ -9,7 +9,7 @@
  */
 package arcs.test
 
-import arcs.sdk.Handle
+import arcs.sdk.wasm.WasmHandle
 import arcs.sdk.Utils.abort
 import arcs.sdk.Utils.log
 import kotlin.Exception
@@ -19,7 +19,7 @@ import kotlin.Exception
  */
 class TestParticle : AbstractTestParticle() {
 
-    override fun onHandleUpdate(handle: Handle) {
+    override fun onHandleUpdate(handle: WasmHandle) {
         log("A handle was updated!")
         if (handle.name.equals("data")) {
             log("data was updated")
@@ -38,7 +38,7 @@ class TestParticle : AbstractTestParticle() {
         var infoStr = "Size: ${handles.info.size}\n"
         if (!handles.info.isEmpty()) {
             var i = 0
-            handles.info.forEach { info ->
+            handles.info.fetchAll().forEach { info ->
                 infoStr += "${(++i)}. $info | \n"
             }
         } else {
@@ -132,7 +132,7 @@ class TestParticle : AbstractTestParticle() {
         }
 
         eventHandler("remove") {
-            val iterator = handles.info.iterator()
+            val iterator = handles.info.fetchAll().iterator()
             if (iterator.hasNext()) {
                 handles.info.remove(iterator.next())
             }

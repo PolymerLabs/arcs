@@ -3,6 +3,7 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
+load("//devtools/build_cleaner/skylark:build_defs.bzl", "register_extension_info")
 load(
     "//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl",
     "kt_js_library",
@@ -60,7 +61,7 @@ ALL_PLATFORMS = ["jvm", "js", "wasm"]
 DEFAULT_LIBRARY_PLATFORMS = ["jvm", "js"]
 
 # Default set of platforms for Kotlin particles.
-DEFAULT_PARTICLE_PLATFORMS = ["jvm", "wasm"]
+DEFAULT_PARTICLE_PLATFORMS = ["jvm"]
 
 def arcs_kt_jvm_library(**kwargs):
     """Wrapper around kt_jvm_library for Arcs.
@@ -198,6 +199,9 @@ def arcs_kt_particles(
     _check_platforms(platforms)
 
     deps = ARCS_SDK_DEPS + deps
+
+    if "jvm" in platforms and "wasm" in platforms:
+        fail("Particles can only depend on one of jvm or wasm")
 
     if "jvm" in platforms:
         arcs_kt_jvm_library(
@@ -339,6 +343,36 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
             runtime_deps = [":%s" % name],
             tags = tags,
         )
+
+register_extension_info(
+    extension = arcs_kt_android_test_suite,
+    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+)
+
+register_extension_info(
+    extension = arcs_kt_jvm_library,
+    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+)
+
+register_extension_info(
+    extension = arcs_kt_jvm_test_suite,
+    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+)
+
+register_extension_info(
+    extension = arcs_kt_library,
+    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+)
+
+register_extension_info(
+    extension = arcs_kt_native_library,
+    label_regex_for_dep = "{extension_name}",
+)
+
+register_extension_info(
+    extension = arcs_kt_particles,
+    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+)
 
 def _check_platforms(platforms):
     if len(platforms) == 0:

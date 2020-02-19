@@ -257,7 +257,7 @@ class ParticleSpecSerializer implements Serializer<ParticleSpec, Referenceable> 
 // TODO(shanestephens): we can't guarantee the safety of this stack (except by the Type instance matching) - do we need the T
 // parameter here?
 export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referenceable>> {
-  async get(id: string): Promise<T> {
+  async fetchAll(id: string): Promise<T> {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
@@ -359,12 +359,12 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
       return this.onSync(set);
     }
     // Pass the change up to the particle.
-    const update: {added?: Entity, removed?: Entity, originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
+    const update: {added?: Entity[], removed?: Entity[], originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
     if (op.type === CollectionOpTypes.Add) {
-      update.added = this.serializer.deserialize(op.added, this.storageProxy.storageKey);
+      update.added = [this.serializer.deserialize(op.added, this.storageProxy.storageKey)];
     }
     if (op.type === CollectionOpTypes.Remove) {
-      update.removed = this.serializer.deserialize(op.removed, this.storageProxy.storageKey);
+      update.removed = [this.serializer.deserialize(op.removed, this.storageProxy.storageKey)];
     }
     if (this.particle) {
       await this.particle.callOnHandleUpdate(
@@ -415,6 +415,11 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
+    // Sync before clearing in order to get an updated versionMap. This ensures
+    // we can clear values set by other actors.
+    const [_, versionMap] = await this.storageProxy.getParticleView();
+    this.clock = versionMap;
+    // Issue clear op.
     const op: CRDTOperation = {
       type: SingletonOpTypes.Clear,
       actor: this.key,
@@ -423,7 +428,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     return this.storageProxy.applyOp(op);
   }
 
-  async get(): Promise<T> {
+  async fetch(): Promise<T> {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }

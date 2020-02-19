@@ -13,6 +13,11 @@ package arcs.sdk.wasm
 
 class CollectionApiTest : AbstractCollectionApiTest() {
     private var stored = CollectionApiTest_OutHandle()
+    var x = 0.0;
+
+    init {
+        handles.ioHandle.onUpdate{ x++ }
+    }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
@@ -26,20 +31,34 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                     num = handles.inHandle.size.toDouble()
                 )
                 handles.outHandle.store(stored)
+                handles.ioHandle.store(stored)
             }
             "case3" -> {
                 handles.outHandle.remove(stored)
+                handles.ioHandle.remove(stored)
             }
             "case4" -> {
                 val d1 = CollectionApiTest_OutHandle()
-                val iter = handles.inHandle.iterator()
+                val iter = handles.inHandle.fetchAll().iterator()
                 val flg = iter.hasNext()
                 val i1 = iter.next()
-                handles.outHandle.store(d1.copy(
-                    txt = "num: ${i1.num.toInt()}",
-                    num = i1.num.let { it * 2 },
-                    flg = flg
-                ))
+                if (x == 3.0) {
+                    handles.outHandle.store(
+                        d1.copy(
+                            txt = "num: ${i1.num.toInt()}",
+                            num = i1.num * 2.0,
+                            flg = flg
+                        )
+                    )
+                } else {
+                    handles.outHandle.store(
+                        d1.copy(
+                            txt = "handle.onUpdate() called is not working.",
+                            num = x,
+                            flg = flg
+                        )
+                    )
+                }
 
                 handles.outHandle.store(d1.copy(
                     txt = "eq",
@@ -70,7 +89,7 @@ class CollectionApiTest : AbstractCollectionApiTest() {
                 handles.outHandle.store(d2)
 
                 // Ranged iteration; order is not guaranteed so use 'num' to assign sorted array slots.
-                val sorted = handles.ioHandle.sortedBy { it.num.toInt() }
+                val sorted = handles.ioHandle.fetchAll().sortedBy { it.num.toInt() }
                 sorted.forEach {
                     handles.outHandle.store(CollectionApiTest_OutHandle(
                         num = it.num,

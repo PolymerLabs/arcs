@@ -149,7 +149,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
       targetStore: SingletonStorageProvider,
       storageFactory: StorageProviderFactory) {
     const sc = new SyntheticCollection(type, id, key, targetStore, storageFactory);
-    const data = await targetStore.get();
+    const data = await targetStore.fetch();
     const retriever = storageFactory.getHandleRetriever();
     await sc.process(data, false, retriever);
     targetStore.legacyOn(details => sc.process(details.data, true, retriever));
@@ -222,7 +222,7 @@ class SyntheticCollection extends StorageProviderBase implements CollectionStora
     throw new Error('unimplemented');
   }
 
-  async get(id: string): Promise<{}> {
+  async fetchAll(id: string): Promise<{}> {
     throw new Error('unimplemented');
   }
 

@@ -1281,6 +1281,9 @@ SchemaType
   / [^\n\]}]* { expected('a schema type'); }
   ) whiteSpace? refinement:Refinement?
   {
+    if (!Flags.fieldRefinementsAllowed && refinement) {
+      error('field refinements are unsupported');
+    }
       type.refinement = refinement;
       return type;
   }

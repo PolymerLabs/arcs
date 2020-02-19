@@ -23,7 +23,7 @@ class Player : AbstractPlayer() {
          """.trimIndent()
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
-        val desc = handles.hand.joinToString(separator = ":") { card ->
+        val desc = handles.hand.fetchAll().joinToString(separator = ":") { card ->
             Card.cardDesc(card.value.toInt())
         }
         return model + mapOf("hand" to desc)

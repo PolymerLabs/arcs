@@ -12,7 +12,7 @@ arcs_kt_jvm_test_suite(
     srcs = glob(["*Test.kt"]),
     package = "arcs.core.allocator",
     deps = [
-        "//java/arcs/core/allocator",
+        "//java/arcs/core/allocator",  # buildcleaner: keep
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/host",

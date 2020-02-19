@@ -10,6 +10,7 @@
 
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
+import {Flags} from '../flags.js';
 
 describe('manifest parser', () => {
   it('parses an empy manifest', () => {
@@ -390,13 +391,13 @@ describe('manifest parser', () => {
         outRef: writes &Bar
     `);
   });
-  it('parses refinement types in a schema', () => {
+  it('parses refinement types in a schema', Flags.withFieldRefinementsAllowed(async () => {
       parse(`
         schema Foo
           num: Number [num > 10]
       `);
-  });
-  it('parses refinement types in a particle', () => {
+  }));
+  it('parses refinement types in a particle', Flags.withFieldRefinementsAllowed(async () => {
     parse(`
     particle Foo
       input: reads Something {value: Text [ (square - 5) < 11 and (square * square > 5) or square == 0] }
@@ -413,8 +414,8 @@ describe('manifest parser', () => {
     particle Foo
       input: reads Something {value: Text [value == 'abc']}
     `);
-  });
-  it('tests the refinement syntax tree', () => {
+  }));
+  it('tests the refinement syntax tree', Flags.withFieldRefinementsAllowed(async () => {
     const manifestAst = parse(`
     particle Foo
       input: reads Something {value: Text [ a < b and d > 2*2+1 ] }
@@ -450,7 +451,7 @@ describe('manifest parser', () => {
     assert.deepEqual(root.operator, '*');
     assert.deepEqual(root.leftExpr.value, 2);
     assert.deepEqual(root.rightExpr.value, 2);
-  });
+  }));
   it('does not parse invalid refinement expressions', () => {
       assert.throws(() => {
       parse(`

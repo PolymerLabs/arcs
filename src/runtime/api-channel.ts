@@ -509,7 +509,7 @@ function AutoConstruct<S extends {prototype: {}}>(target: S) {
 
 export abstract class PECOuterPort extends APIPort {
   constructor(messagePort: MessagePort, arc: Arc) {
-    super(messagePort, 'o', reportGlobalException);
+    super(messagePort, 'o', (error: Error) => { reportGlobalException(arc, error); });
     this.inspector = arc.inspector;
     if (this.inspector) {
       this.inspector.onceActive.then(() => this.DevToolsConnected(), e => console.error(e));

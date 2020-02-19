@@ -33,13 +33,14 @@ import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.storage.database.testutil.MockDatabaseFactory
+import arcs.jvm.storage.database.testutil.MockDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -55,7 +56,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
     private lateinit var hash: String
     private lateinit var testKey: ReferenceModeStorageKey
-    private lateinit var databaseFactory: MockDatabaseFactory
+    private lateinit var databaseFactory: MockDatabaseManager
     private lateinit var schema: Schema
 
     @Before
@@ -78,9 +79,12 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         )
 
         DriverFactory.clearRegistrationsForTesting()
-        databaseFactory = MockDatabaseFactory()
+        databaseFactory = MockDatabaseManager()
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
+
+    @After
+    fun teardown() = CapabilitiesResolver.reset()
 
     @Test
     fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {

@@ -1,0 +1,27 @@
+<!--
+  ~ Copyright 2020 Google LLC.
+  ~
+  ~ This code may only be used under the BSD style license found at
+  ~ http://polymer.github.io/LICENSE.txt
+  ~
+  ~ Code distributed by Google as part of this project is also subject to an additional IP rights
+  ~ grant found at
+  ~ http://polymer.github.io/PATENTS.txt
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="arcs.sdk.android.handle">
+
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
+
+    <application>
+        <service android:name="arcs.sdk.android.service.StorageService" android:exported="false"/>
+        <activity android:name="arcs.android.storage.handle.TestActivity" >
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN"/>
+          <category android:name="android.intent.category.LAUNCHER"/>
+        </intent-filter>
+      </activity>
+    </application>
+
+</manifest>

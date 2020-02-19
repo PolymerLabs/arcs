@@ -180,6 +180,7 @@ maven_install(
         "androidx.lifecycle:lifecycle-runtime:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.webkit:webkit:1.1.0-rc01",
         "androidx.work:work-runtime:" + ANDROIDX_WORK_VERSION,
+        "androidx.work:work-testing:" + ANDROIDX_WORK_VERSION,
         "androidx.test:core:" + ANDROIDX_TEST_VERSION,
         "androidx.test.ext:junit:1.1.1",
         "androidx.test:monitor:" + ANDROIDX_TEST_VERSION,

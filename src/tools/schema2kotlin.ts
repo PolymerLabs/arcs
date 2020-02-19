@@ -54,7 +54,7 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-${this.opts.wasm ? 'import arcs.sdk.wasm.*' : ''}
+${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable'}
 `;
   }
 
@@ -70,19 +70,24 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : ''}
       const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       let handleInterfaceType: string;
-      switch (connection.direction) {
-        case 'reads writes':
-          handleInterfaceType = `ReadWrite${handleConcreteType}<${entityType}>`;
-          break;
-        case 'writes':
-          handleInterfaceType = `Writable${handleConcreteType}<${entityType}>`;
-          break;
-        case 'reads':
-          handleInterfaceType = `Readable${handleConcreteType}<${entityType}>`;
-          break;
-        default:
-          throw new Error(`Unsupported handle direction: ${connection.direction}`);
+      if (this.opts.wasm) {
+        handleInterfaceType = `Wasm${handleConcreteType}Impl<${entityType}>`;
+      } else {
+        switch (connection.direction) {
+          case 'reads writes':
+            handleInterfaceType = `ReadWrite${handleConcreteType}<${entityType}>`;
+            break;
+          case 'writes':
+            handleInterfaceType = `Writable${handleConcreteType}<${entityType}>`;
+            break;
+          case 'reads':
+            handleInterfaceType = `Readable${handleConcreteType}<${entityType}>`;
+            break;
+          default:
+            throw new Error(`Unsupported handle direction: ${connection.direction}`);
+        }
       }
+
       handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
     }
     return `
@@ -112,6 +117,8 @@ class KotlinGenerator implements ClassGenerator {
   fieldsForCopyDecl: string[] = [];
   fieldsForCopy: string[] = [];
   setFieldsToDefaults: string[] = [];
+  fieldSerializes: string[] = [];
+  fieldsForToString: string[] = [];
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
@@ -145,6 +152,10 @@ class KotlinGenerator implements ClassGenerator {
                      `}`);
 
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
+
+    this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
+
+    this.fieldsForToString.push(`${fixed} = $${fixed}`);
   }
 
   generate(schemaHash: string, fieldCount: number): string {
@@ -191,7 +202,15 @@ ${this.opts.wasm ? `
         encoder.encode("", internalId)
         ${this.encode.join('\n        ')}
         return encoder.toNullTermByteArray()
-    }` : ''}
+    }` : `
+    override fun serialize() = RawEntity(
+        "",
+        mapOf(
+            ${this.fieldSerializes.join(',\n            ')}
+        )
+    )`}
+
+    override fun toString() = "${name}(${this.fieldsForToString.join(', ')})"
 }
 
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
@@ -236,6 +255,6 @@ ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
   }
 
   private getType(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : type;
+    return this.opts.wasm ? `Wasm${type}` : `Jvm${type}`;
   }
 }

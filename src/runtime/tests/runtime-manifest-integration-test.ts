@@ -23,7 +23,7 @@ describe('runtime manifest integration', () => {
     const handle = await singletonHandleForTest(arc, store);
     // TODO: This should not be necessary.
     type.maybeEnsureResolved();
-    const result = await handle.get();
+    const result = await handle.fetch();
     assert.strictEqual(result['value'], 'Hello, world!');
   });
 });

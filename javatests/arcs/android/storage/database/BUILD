@@ -12,7 +12,7 @@ arcs_kt_android_test_suite(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage.database",
     deps = [
-        "//java/arcs/android/common",  # unuseddeps: keep
+        "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/android/storage/database",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",

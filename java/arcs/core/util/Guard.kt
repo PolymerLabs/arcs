@@ -17,7 +17,7 @@ import kotlinx.coroutines.sync.Mutex
  * ```kotlin
  * class MyClass {
  *     val mutex = Mutex()
- *     var myProtectedString: String by guardWith(mutex) { "Hello world." }
+ *     var myProtectedString: String by guardedBy(mutex) { "Hello world." }
  *
  *     suspend fun succeed() {
  *         val randomNum = Random.nextInt()
@@ -31,7 +31,7 @@ import kotlinx.coroutines.sync.Mutex
  * }
  * ```
  */
-fun <T> guardWith(mutex: Mutex, initialValue: () -> T) = Guard(mutex, initialValue)
+fun <T> guardedBy(mutex: Mutex, initialValue: () -> T) = Guard(mutex, initialValue)
 
 /**
  * Builds a [Guard] property delegate where all access/mutation to the delegated property must be
@@ -44,7 +44,7 @@ fun <T> guardWith(mutex: Mutex, initialValue: () -> T) = Guard(mutex, initialVal
  * ```kotlin
  * class MyClass {
  *     val mutex = Mutex()
- *     var myProtectedString: String by guardWith(mutex, "Hello world.")
+ *     var myProtectedString: String by guardedBy(mutex, "Hello world.")
  *
  *     suspend fun succeed() {
  *         val randomNum = Random.nextInt()
@@ -58,7 +58,7 @@ fun <T> guardWith(mutex: Mutex, initialValue: () -> T) = Guard(mutex, initialVal
  * }
  * ```
  */
-fun <T> guardWith(mutex: Mutex, initialValue: T) = Guard(mutex) { initialValue }
+fun <T> guardedBy(mutex: Mutex, initialValue: T) = Guard(mutex) { initialValue }
 
 /** Provider of the [GuardDelegate] property delegate. */
 class Guard<T>(private val mutex: Mutex, private val initialValue: () -> T) {

@@ -11,8 +11,6 @@
 
 package arcs.sdk.wasm
 
-import arcs.sdk.Handle
-
 class RenderTest : AbstractRenderTest() {
     private var shouldTemplate: Boolean = true
     private var shouldPopulate: Boolean = true
@@ -26,7 +24,7 @@ class RenderTest : AbstractRenderTest() {
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any>? =
         if (shouldPopulate) mapOf("foo" to "bar") else null
 
-    override fun onHandleUpdate(handle: Handle) {
+    override fun onHandleUpdate(handle: WasmHandle) {
         handles.flags.fetch()?.let {
             shouldTemplate = it.template
             shouldPopulate = it.model

@@ -147,7 +147,7 @@ describe('Hot Code Reload for JS Particle', async () => {
 
     await arc.instantiate(recipe);
     await arc.idle;
-    assert.deepStrictEqual(await personHandleOut.get(), {name: 'Jack', age: 30});
+    assert.deepStrictEqual(await personHandleOut.fetch(), {name: 'Jack', age: 30});
 
     loader.staticMap['A.js'] = `defineParticle(({Particle}) => {
       return class extends Particle {
@@ -169,7 +169,7 @@ describe('Hot Code Reload for JS Particle', async () => {
     await arc.idle;
     await personHandleIn.set(new personHandleIn.entityClass({name: 'Jane', age: 20}));
     await arc.idle;
-    assert.deepStrictEqual(await personHandleOut.get(), {name: 'Jane', age: 18});
+    assert.deepStrictEqual(await personHandleOut.fetch(), {name: 'Jane', age: 18});
   });
 });
 
@@ -232,13 +232,13 @@ describe('Hot Code Reload for WASM Particle', async () => {
 
     await arc.instantiate(recipe);
     await arc.idle;
-    assert.deepStrictEqual(await personHandleOut.get(), {name: 'Jack', age: 30});
+    assert.deepStrictEqual(await personHandleOut.fetch(), {name: 'Jack', age: 30});
 
     loader.reloaded = true;
     arc.pec.reload(arc.pec.particles);
     await arc.idle;
     await personHandleIn.set(new personHandleIn.entityClass({name: 'Jane', age: 20}));
     await arc.idle;
-    assert.deepStrictEqual(await personHandleOut.get(), {name: 'Jane', age: 18});
+    assert.deepStrictEqual(await personHandleOut.fetch(), {name: 'Jane', age: 18});
   });
 });

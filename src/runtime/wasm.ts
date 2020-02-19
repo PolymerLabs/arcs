@@ -13,15 +13,16 @@ import {Loader} from '../platform/loader.js';
 import {TextEncoder, TextDecoder} from '../platform/text-encoder-web.js';
 import {Entity} from './entity.js';
 import {Reference} from './reference.js';
-import {Type, EntityType, CollectionType, ReferenceType} from './type.js';
+import {Type, EntityType, CollectionType, ReferenceType, SingletonType} from './type.js';
 import {Storable} from './handle.js';
 import {Particle} from './particle.js';
-import {Handle, Singleton, Collection} from './handle.js';
+import {Handle, Singleton} from './handle.js';
 import {Dictionary} from './hot.js';
 import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {BiMap} from './bimap.js';
+import {CollectionHandle, SingletonHandle} from './storageNG/handle.js';
 
 type EntityTypeMap = BiMap<string, EntityType>;
 
@@ -114,7 +115,7 @@ export abstract class StringEncoder {
   protected constructor(protected readonly schema: Schema) {}
 
   static create(type: Type): StringEncoder {
-    if (type instanceof CollectionType) {
+    if (type instanceof CollectionType || type instanceof SingletonType) {
       type = type.getContainedType();
     }
     if (type instanceof EntityType) {
@@ -257,7 +258,7 @@ export abstract class StringDecoder {
                         protected pec: ParticleExecutionContext) {}
 
   static create(type: Type, typeMap: EntityTypeMap, pec: ParticleExecutionContext): StringDecoder {
-    if (type instanceof CollectionType) {
+    if (type instanceof CollectionType || type instanceof SingletonType) {
       type = type.getContainedType();
     }
     if (type instanceof EntityType) {
@@ -838,7 +839,7 @@ export class WasmParticle extends Particle {
     }
     const encoder = this.getEncoder(handle.type);
     let p;
-    if (handle instanceof Singleton) {
+    if (handle instanceof Singleton || handle instanceof SingletonHandle) {
       p = this.container.storeBytes(await encoder.encodeSingleton(model));
     } else {
       p = this.container.storeBytes(await encoder.encodeCollection(model));
@@ -856,7 +857,7 @@ export class WasmParticle extends Particle {
     const encoder = this.getEncoder(handle.type);
     let p1 = 0;
     let p2 = 0;
-    if (handle instanceof Singleton) {
+    if (handle instanceof Singleton || handle instanceof SingletonHandle) {
       if (update.data) {
         p1 = this.container.storeBytes(await encoder.encodeSingleton(update.data));
       }
@@ -883,7 +884,8 @@ export class WasmParticle extends Particle {
   // in allocated memory that the wasm particle must free. If the entity already has an id this
   // returns 0 (nulltpr).
   singletonSet(wasmHandle: WasmAddress, entityPtr: WasmAddress): WasmAddress {
-    const singleton = this.getHandle(wasmHandle) as Singleton;
+    // tslint:disable-next-line: no-any
+    const singleton = this.getHandle(wasmHandle) as SingletonHandle<any>;
     const decoder = this.getDecoder(singleton.type);
     const entity = decoder.decodeSingleton(this.container.readBytes(entityPtr));
     const p = this.ensureIdentified(entity, singleton);
@@ -892,7 +894,8 @@ export class WasmParticle extends Particle {
   }
 
   singletonClear(wasmHandle: WasmAddress) {
-    const singleton = this.getHandle(wasmHandle) as Singleton;
+    // tslint:disable-next-line: no-any
+    const singleton = this.getHandle(wasmHandle) as SingletonHandle<any>;
     void singleton.clear();
   }
 
@@ -900,23 +903,26 @@ export class WasmParticle extends Particle {
   // in allocated memory that the wasm particle must free. If the entity already has an id this
   // returns 0 (nulltpr).
   collectionStore(wasmHandle: WasmAddress, entityPtr: WasmAddress): WasmAddress {
-    const collection = this.getHandle(wasmHandle) as Collection;
+    // tslint:disable-next-line: no-any
+    const collection = this.getHandle(wasmHandle) as CollectionHandle<any>;
     const decoder = this.getDecoder(collection.type);
     const entity = decoder.decodeSingleton(this.container.readBytes(entityPtr));
     const p = this.ensureIdentified(entity, collection);
-    void collection.store(entity);
+    void collection.add(entity);
     return p;
   }
 
   collectionRemove(wasmHandle: WasmAddress, entityPtr: WasmAddress) {
-    const collection = this.getHandle(wasmHandle) as Collection;
+    // tslint:disable-next-line: no-any
+    const collection = this.getHandle(wasmHandle) as CollectionHandle<any>;
     const decoder = this.getDecoder(collection.type);
     const entity = decoder.decodeSingleton(this.container.readBytes(entityPtr));
     void collection.remove(entity);
   }
 
   collectionClear(wasmHandle: WasmAddress) {
-    const collection = this.getHandle(wasmHandle) as Collection;
+    // tslint:disable-next-line: no-any
+    const collection = this.getHandle(wasmHandle) as CollectionHandle<any>;
     void collection.clear();
   }
 
@@ -931,7 +937,7 @@ export class WasmParticle extends Particle {
     }
 
     const encoder = this.getEncoder(entityType);
-    const entity = await Reference.retrieve(this.container.pec, id, storageKey, entityType);
+    const entity = await Reference.retrieve(this.container.pec, id, storageKey, entityType, this.id);
 
     const p = this.container.storeBytes(await encoder.encodeSingleton(entity));
     this.exports._dereferenceResponse(this.innerParticle, continuationId, p);

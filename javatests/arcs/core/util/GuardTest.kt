@@ -10,18 +10,18 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for the [guardWith]-generated property delegate: [GuardDelegate]. */
+/** Tests for the [guardedBy]-generated property delegate: [GuardDelegate]. */
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class GuardTest {
     class RequiresLocking(initialValue: Int = 0) {
         val mutex = Mutex()
-        var value by guardWith(mutex) { initialValue }
+        var value by guardedBy(mutex) { initialValue }
     }
 
     class LazyTestClass(initialValue: () -> Int) {
         val mutex = Mutex()
-        var value: Int by guardWith(mutex, initialValue)
+        var value: Int by guardedBy(mutex, initialValue)
     }
 
     @Test
@@ -69,7 +69,7 @@ class GuardTest {
         var initializerCalled = false
         class NullableValue {
             val mutex = Mutex()
-            var value: Int? by guardWith(mutex) {
+            var value: Int? by guardedBy(mutex) {
                 initializerCalled = true
                 1
             }

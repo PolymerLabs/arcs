@@ -112,6 +112,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
                     else -> throw CrdtException("Unsupported type for storage: $type")
                 }
 
+                @Suppress("UNCHECKED_CAST")
                 return CrdtException.requireNotNull(
                     constructor(options, dataClass) as? ActiveStore<CrdtData, CrdtOperation, Any>
                 ) {

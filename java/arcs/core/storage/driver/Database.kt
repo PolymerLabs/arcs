@@ -16,7 +16,9 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.extension.toCrdtEntityData
 import arcs.core.crdt.extension.toEntity
+import arcs.core.data.Capabilities
 import arcs.core.data.Schema
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
@@ -27,14 +29,14 @@ import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
-import arcs.core.storage.database.DatabaseFactory
+import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.referencemode.toCrdtSetData
 import arcs.core.storage.referencemode.toCrdtSingletonData
 import arcs.core.storage.referencemode.toReferenceSet
 import arcs.core.storage.referencemode.toReferenceSingleton
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -106,9 +108,18 @@ data class DatabaseStorageKey(
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
 object DatabaseDriverProvider : DriverProvider {
-    private var _factory: DatabaseFactory? = null
-    private val factory: DatabaseFactory
-        get() = requireNotNull(_factory) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
+    /**
+     * Whether or not the [DatabaseDriverProvider] has been configured with a [DatabaseManager] and
+     * a schema lookup function.
+     */
+    val isConfigured: Boolean
+        get() = _manager != null
+
+    private var _manager: DatabaseManager? = null
+
+    /** The configured [DatabaseManager]. */
+    val manager: DatabaseManager
+        get() = requireNotNull(_manager) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
 
     /**
      * Function which will be used to determine, at runtime, which [Schema] to associate with its
@@ -146,7 +157,7 @@ object DatabaseDriverProvider : DriverProvider {
             existenceCriteria,
             dataClass,
             schemaLookup,
-            factory.getDatabase(databaseKey.dbName, databaseKey.persistent)
+            manager.getDatabase(databaseKey.dbName, databaseKey.persistent)
         )
     }
 
@@ -154,10 +165,16 @@ object DatabaseDriverProvider : DriverProvider {
      * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
      * with the [DriverFactory].
      */
-    fun configure(databaseFactory: DatabaseFactory, schemaLookup: (String) -> Schema?) = apply {
-        this._factory = databaseFactory
+    fun configure(databaseManager: DatabaseManager, schemaLookup: (String) -> Schema?) = apply {
+        this._manager = databaseManager
         this.schemaLookup = schemaLookup
         DriverFactory.register(this)
+        CapabilitiesResolver.registerKeyCreator(
+            DATABASE_DRIVER_PROTOCOL,
+            Capabilities.Persistent
+        ) { storageKeyOptions, entitySchemaHash ->
+            DatabaseStorageKey(storageKeyOptions.arcId.toString(), entitySchemaHash, false)
+        }
     }
 
     private const val ERROR_MESSAGE_CONFIGURE_NOT_CALLED =
@@ -177,8 +194,8 @@ class DatabaseDriver<Data : Any>(
     /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
     /* internal */ val clientId: Int = database.addClient(this)
     private val localDataMutex = Mutex()
-    private var localData: Data? by guardWith<Data?>(localDataMutex, null)
-    private var localVersion: Int? by guardWith<Int?>(localDataMutex, null)
+    private var localData: Data? by guardedBy<Data?>(localDataMutex, null)
+    private var localVersion: Int? by guardedBy<Int?>(localDataMutex, null)
     private val schema: Schema
         get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
             "Schema not found for hash: ${storageKey.entitySchemaHash}"

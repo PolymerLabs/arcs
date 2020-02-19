@@ -17,6 +17,7 @@ arcs_kt_android_test_suite(
     package = "arcs.core.storage",
     deps = [
         ":fakes",
+        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
@@ -24,7 +25,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/referencemode",
-        "//java/arcs/core/storage/testutil",  # unuseddeps: keep
+        "//java/arcs/core/storage/testutil",  # buildcleaner: keep
         "//java/arcs/core/testutil",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/storage/database/testutil",
@@ -46,6 +47,6 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
-        "//third_party/kotlin/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

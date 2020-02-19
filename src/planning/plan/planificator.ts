@@ -247,7 +247,7 @@ export class Planificator {
         values = JSON.parse(handleValue.current);
       }
     } else {
-      values = await (this.searchStore as SingletonStorageProvider).get() || [];
+      values = await (this.searchStore as SingletonStorageProvider).fetch() || [];
     }
 
     const arcKey = this.arc.id.idTreeAsString();

@@ -385,12 +385,21 @@ function getInternals(entity): EntityInternals {
 }
 
 function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, context: ChannelConstructor) {
+  const temp = {...target};
   for (const [name, value] of Object.entries(data)) {
     const sanitizedValue = Entity.sanitizeEntry(schema.fields[name], value, name, context);
     Entity.validateFieldAndTypes(name, sanitizedValue, schema);
-    target[name] = sanitizedValue;
+    temp[name] = sanitizedValue;
   }
   if (Flags.enforceRefinements) {
-    Refinement.refineData(target, schema);
+    const exception = Refinement.refineData(temp, schema);
+    if (exception) {
+      context.reportExceptionInHost(exception);
+      return;
+    }
+  }
+  // update target after ensuring that the data conforms to the refinements (if enforced)
+  for (const [name, value] of Object.entries(temp)) {
+    target[name] = value;
   }
 }

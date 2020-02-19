@@ -12,6 +12,7 @@ import {RefinementNode, RefinementExpressionNode, BinaryExpressionNode, UnaryExp
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
+import {AuditException} from './arc-exceptions.js';
 
 enum Primitive {
   BOOLEAN = 'Boolean',
@@ -68,18 +69,19 @@ export class Refinement {
     return new Refinement(RefinementExpression.fromLiteral(ref.expression));
   }
 
-  static refineData(entity: Entity, schema: Schema): void {
+  static refineData(entity: Entity, schema: Schema): AuditException {
     for (const [name, value] of Object.entries(entity)) {
       const refDict = {[name]: value};
       const ref = schema.fields[name].refinement;
       if (ref && !ref.validateData(refDict)) {
-        throw new Error(`Entity schema field '${name}' does not conform to the refinement.`);
+        return new AuditException(new Error(`Entity schema field '${name}' does not conform to the refinement ${ref}`), 'Refinement:refineData');
       }
     }
     const ref = schema.refinement;
     if (ref && !ref.validateData(entity)) {
-      throw new Error('Entity data does not conform to the refinement.');
+      return new AuditException(new Error(`Entity data does not conform to the refinement ${ref}`), 'Refinement:refineData');
     }
+    return null;
   }
 
   static unionOf(ref1: Refinement, ref2: Refinement): Refinement {
@@ -118,7 +120,7 @@ export class Refinement {
     return this.expression.getTextPrimitives();
   }
 
-  // checks if a is more specific than b, returns null if can't be determined
+  // checks if a is at least as specific as b, returns null if can't be determined
   static isAtleastAsSpecificAs(a: Refinement, b: Refinement): AtleastAsSpecific {
     if (!a && b) {
       return AtleastAsSpecific.NO;

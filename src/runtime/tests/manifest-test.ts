@@ -590,7 +590,7 @@ ${particleStr1}
     verify(await parseManifest(manifest.toString()));
   });
   describe('refinement types', async () => {
-    it('can construct manifest containing schema with refinement types', async () => {
+    it('can construct manifest containing schema with refinement types', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await parseManifest(`
         schema Foo
           num: Number [num < 5]`);
@@ -604,8 +604,8 @@ ${particleStr1}
       };
       verify(manifest);
       verify(await parseManifest(manifest.toString()));
-    });
-    it('can construct manifest with particles using already defined schema (with refinements)', async () => {
+    }));
+    it('can construct manifest with particles using already defined schema (with refinements)', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await parseManifest(`
       schema Person
         name: Text
@@ -633,8 +633,8 @@ ${particleStr1}
         assert.strictEqual(refIndex.expression.rightExpr.value, 0);
       };
       verify(manifest);
-    });
-    it('can construct manifest containing a particle with refinement types', async () => {
+    }));
+    it('can construct manifest containing a particle with refinement types', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await parseManifest(`
       particle Foo
         input: reads Something {value: Number [value > 0], price: Number [price > 0]} [value > 10 and price < 2]`);
@@ -658,7 +658,7 @@ ${particleStr1}
       };
       verify(manifest);
       verify(await parseManifest(manifest.toString()));
-    });
+    }));
 
     describe('refinement type checking', async () => {
       const verify = (manifest, norms, expectedErrors) => {
@@ -671,7 +671,7 @@ ${particleStr1}
         }
       };
 
-      it('checks refinement expressions', async () => {
+      it('checks refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
         const manifest = await parseManifest(`
           particle Writer
             output: writes Something {num: Number [ num > 5 ] }
@@ -684,8 +684,8 @@ ${particleStr1}
               input: reads data
         `);
         verify(manifest, true, []);
-      });
-      it('checks for unsafe refinement expressions', async () => {
+      }));
+      it('checks for unsafe refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
         const manifest = await parseManifest(`
           particle BadWriter
             output: writes Something {num: Number [ num > 3 ] }
@@ -699,8 +699,8 @@ ${particleStr1}
         `);
         const refinementError = `Type validations failed for handle 'data: create': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}`;
         verify(manifest, false, [refinementError]);
-      });
-      it('ignores impossible refinement expressions', async () => {
+      }));
+      it('ignores impossible refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
         const manifest = await parseManifest(`
           particle Impossible
             output: writes Something {num: Number [ (num < 3) and (num > 3) ] }
@@ -714,7 +714,7 @@ ${particleStr1}
         `);
         // TODO(cypher1): check that a warning is thrown by Impossible.output
         verify(manifest, true, []);
-      });
+      }));
     });
   });
 

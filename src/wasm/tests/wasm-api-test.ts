@@ -11,13 +11,20 @@ import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {singletonHandleForTest, collectionHandleForTest} from '../../runtime/testing/handle-for-test.js';
+import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
 import {VolatileCollection, VolatileSingleton, VolatileStorage} from '../../runtime/storage/volatile-storage.js';
 //import {assertThrowsAsync} from '../../testing/test-util.js';
-import {ReferenceType} from '../../runtime/type.js';
+import {ReferenceType, SingletonType, Type} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
+import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
+import {Flags} from '../../runtime/flags.js';
+import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
+import {Store} from '../../runtime/storageNG/store.js';
+import {Exists} from '../../runtime/storageNG/drivers/driver.js';
+import {Reference} from '../../runtime/reference.js';
+import {Arc} from '../../runtime/arc.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
@@ -48,10 +55,31 @@ const testMap = {
   'Kotlin': '../../javatests/arcs/sdk/wasm',
 };
 
+async function createBackingEntity(arc: Arc, referenceType: ReferenceType, id: string, entityData: {}): Promise<[string, Reference|{}]> {
+  assert(Flags.useNewStorageStack, 'createBackingEntity requires the new storage stack');
+  const backingStorageKey = new VolatileStorageKey(arc.id, '', id);
+  const baseType = referenceType.getContainedType();
+  const backingStore = new Store({
+    id: 'backing1',
+    storageKey: backingStorageKey,
+    type: new SingletonType(baseType),
+    exists: Exists.MayExist,
+  });
+  const backingHandle1 = await singletonHandleForTest(arc, backingStore);
+  const entity = await backingHandle1.setFromData(entityData);
+  const entityId = Entity.id(entity);
+  const reference = new Reference({id: entityId, entityStorageKey: backingStorageKey.toString()}, referenceType, null);
+  return [entityId, reference];
+}
+
+[false, true].forEach(useNewStorageStack => {
+
 Object.entries(testMap).forEach(([testLabel, testDir]) => {
-  describe(`wasm tests (${testLabel})`, () => {
+  describe(`wasm tests (${testLabel}) (useNewStorageStack = ${useNewStorageStack})`, function() {
     const isKotlin = testLabel === 'Kotlin';
     const isCpp = testLabel === 'C++';
+
+    this.timeout(4000);
 
     let loader;
     let manifestPromise;
@@ -59,16 +87,24 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       if (!global['testFlags'].bazel) {
         this.skip();
       } else {
+        Flags.useNewStorageStack = useNewStorageStack;
         loader = new TestLoader(testDir);
         VolatileStorage.setStorageCache(new RuntimeCacheService());
-        manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`,
-                                         {loader, fileName: process.cwd() + '/manifest.arcs'});
+        manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
+          loader,
+          fileName: process.cwd() + '/manifest.arcs',
+          memoryProvider: new TestVolatileMemoryProvider()
+        });
       }
+    });
+
+    after(() => {
+      Flags.reset();
     });
 
     async function setup(recipeName) {
       const runtime = new Runtime({loader, context: await manifestPromise});
-      const arc = runtime.newArc('wasm-test', 'volatile://');
+      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
 
       const recipe = arc.context.allRecipes.find(r => r.name === recipeName);
       if (!recipe) {
@@ -122,7 +158,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       ]);
     });
 
-    it('getTemplate / populateModel / renderSlot', async () => {
+    it.skip('getTemplate / populateModel / renderSlot', async () => {
       const {arc, stores, slotObserver} = await setup('RenderTest');
       const flags = await singletonHandleForTest(arc, stores.get('flags'));
 
@@ -146,7 +182,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // ]);
     });
 
-    it('autoRender', async () => {
+    it.skip('autoRender', async () => {
       const {arc, stores, slotObserver} = await setup('AutoRenderTest');
       const data = await singletonHandleForTest(arc, stores.get('data'));
 
@@ -171,7 +207,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
-      assert.deepStrictEqual(await output.get(), {txt: 'event:root:icanhazclick:fooBar'});
+      assert.deepStrictEqual(await output.fetch(), {txt: 'event:root:icanhazclick:fooBar'});
     });
 
     it('serviceRequest / serviceResponse / resolveUrl', async () => {
@@ -257,25 +293,25 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await outHandle.set(new outHandle.entityClass({txt: 'writes'}));
       await ioHandle.set(new ioHandle.entityClass({txt: 'reads writes'}));
       await sendEvent('case1');
-      assert.isNull(await outHandle.get());
-      assert.isNull(await ioHandle.get());
+      assert.isNull(await outHandle.fetch());
+      assert.isNull(await ioHandle.fetch());
 
       // in.get(), out.set()
       await inHandle.set(new inHandle.entityClass({num: 4}));
       await sendEvent('case2');
-      assert.deepStrictEqual(await outHandle.get(), {num: 8, txt: ''});
+      assert.deepStrictEqual(await outHandle.fetch(), {num: 8, txt: ''});
 
       // io.get()/set()
       await ioHandle.set(new ioHandle.entityClass({num: 4}));
       await sendEvent('case3');
-      assert.deepStrictEqual(await ioHandle.get(), {num: 12, txt: ''});
+      assert.deepStrictEqual(await ioHandle.fetch(), {num: 12, txt: ''});
 
       // set() on out/io with pre-cleared stores
       await outHandle.clear();
       await ioHandle.clear();
       await sendEvent('case4');
-      assert.deepStrictEqual(await outHandle.get(), {num: 0, txt: 'out'});
-      assert.deepStrictEqual(await ioHandle.get(), {num: 0, txt: 'io'});
+      assert.deepStrictEqual(await outHandle.fetch(), {num: 0, txt: 'out'});
+      assert.deepStrictEqual(await ioHandle.fetch(), {num: 0, txt: 'io'});
 
       // Check that the null/non-null state of handles was correct.
       assert.deepStrictEqual((await errors.toList()).map(e => e.msg), []);
@@ -335,11 +371,70 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     // TODO: writing to reference-typed handles
-    // TODO: convert to the new storage access pattern (ie. using *HandleForTest and handle.entityClass)
-    it('reference-typed handles', async () => {
+    it('reference-typed handles - storageNG', async function() {
+      if (!Flags.useNewStorageStack) {
+        this.skip();
+      }
       // TODO(alxr): Remove when tests are ready
       if (isKotlin) {
         return;
+      }
+      const {arc, stores} = await setup('ReferenceHandlesTest');
+      const sng = await singletonHandleForTest(arc, stores.get('sng'));
+      const col = await collectionHandleForTest(arc, stores.get('col'));
+      const res = await collectionHandleForTest(arc, stores.get('res'));
+
+      assert.instanceOf(sng.type, SingletonType);
+      assert.instanceOf(sng.type.getContainedType(), ReferenceType);
+      assert.instanceOf(col.type.getContainedType(), ReferenceType);
+
+      // onHandleSync tests uninitialised reference handles.
+      assert.sameMembers((await res.toList()).map(e => e.txt), [
+        's::null',  // handle should just be null
+      ]);
+      await res.clear();
+
+      // onHandleUpdate tests populated references handles.
+      const referenceType = sng.type.getContainedType() as ReferenceType;
+      const [entityId1, reference1] = await createBackingEntity(arc, referenceType, 'id1', {num: 6, txt: 'ok'});
+      const [entityId2, reference2] = await createBackingEntity(arc, referenceType, 'id2', {num: 7, txt: 'ko'});
+
+      // Singleton
+      await sng.set(reference1);
+      await arc.idle;
+      assert.sameMembers((await res.toList()).map(e => e.txt), [
+        `s::before <${entityId1}> !{}`,                      // before dereferencing: contained entity is empty
+        `s::after <${entityId1}> {${entityId1}}, num: 6, txt: ok`     // after: entity is populated, ids should match
+      ]);
+      await res.clear();
+
+      // Collection
+      await col.add(reference1);
+      await arc.idle;
+      assert.sameMembers((await res.toList()).map(e => e.txt), [
+        `c::before <${entityId1}> !{}`,                      // ref to same entity as singleton; still empty in this handle
+        `c::after <${entityId1}> {${entityId1}}, num: 6, txt: ok`
+      ]);
+      await res.clear();
+
+      await col.add(reference2);
+      await arc.idle;
+      assert.sameMembers((await res.toList()).map(e => e.txt), [
+        `c::before <${entityId1}> {${entityId1}}, num: 6, txt: ok`,   // already populated by the previous deref
+        `c::after <${entityId1}> {${entityId1}}, num: 6, txt: ok`,
+        `c::before <${entityId2}> !{}`,
+        `c::after <${entityId2}> {${entityId2}}, num: 7, txt: ko`
+      ]);
+    });
+
+    // TODO: delete once storageNG is in.
+    it('reference-typed handles - storageOG', async function() {
+      if (Flags.useNewStorageStack) {
+        this.skip();
+      }
+      // TODO(alxr): Remove when tests are ready
+      if (isKotlin) {
+        this.skip();
       }
       const {arc, stores} = await setup('ReferenceHandlesTest');
       const sng = stores.get('sng') as VolatileSingleton;
@@ -390,8 +485,57 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     // TODO: nested references
-    // TODO: convert to the new storage access pattern (ie. using *HandleForTest and handle.entityClass)
-    it('reference-typed schema fields', async () => {
+    it('reference-typed schema fields - storageNG', async function() {
+      if (!Flags.useNewStorageStack) {
+        this.skip();
+      }
+      // TODO(alxr): Remove when tests are ready
+      if (isKotlin) {
+        this.skip();
+      }
+      const {arc, stores} = await setup('SchemaReferenceFieldsTest');
+      const input = await singletonHandleForTest(arc, stores.get('input'));
+      const output = await singletonHandleForTest(arc, stores.get('output'));
+      const res = await collectionHandleForTest(arc, stores.get('res'));
+
+      // Uninitialised reference fields.
+      await input.set(new input.entityClass({num: 5}));
+      await arc.idle;
+
+      assert.sameMembers((await res.toList()).map(e => e.txt), [
+        'before <> !{}',  // no id or entity data; dereference is a no-op (no 'after' output)
+      ]);
+      await res.clear();
+
+      // Populated reference fields.
+      const entityType = input.type.getEntitySchema().fields.ref.schema.model;  // yikes
+      const refType = new ReferenceType(entityType);
+      const [childEntityId, childRef] = await createBackingEntity(arc, refType, 'id1', {val: 'v1'});
+
+      const parentEntity = new input.entityClass({num: 12, ref: childRef});
+      await input.set(parentEntity);
+      await arc.idle;
+
+      assert.sameMembers((await res.toList()).map(e => e.txt), [
+        `before <${childEntityId}> !{}`,            // before dereferencing: contained entity is empty
+        `after <${childEntityId}> {${childEntityId}}, val: v1`,  // after dereferencing: entity is populated, ids should match
+      ]);
+
+      // The particle clones 'input', binds to a new entity and writes that to 'output'.
+      // The ref field should have a storage key, but since this isn't deterministic we need to
+      // check for its presence then discard it.
+      const data = JSON.parse(JSON.stringify((await output.fetch())));
+      assert.isNotEmpty(data.ref.entityStorageKey);
+      assert.strictEqual(data.num, 12);
+      assert.strictEqual(data.txt, 'xyz');
+      assert.strictEqual(data.ref.id, 'foo1');
+    });
+
+    // TODO: delete once storageNG is in.
+    it('reference-typed schema fields - storageOG', async function() {
+      if (Flags.useNewStorageStack) {
+        this.skip();
+      }
       // TODO(alxr): Remove when tests are ready
       if (isKotlin) {
         return;
@@ -427,7 +571,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // The particle clones 'input', binds to a new entity and writes that to 'output'.
       // The ref field should have a storage key, but since this isn't deterministic we need to
       // check for its presence then discard it.
-      const data = JSON.parse(JSON.stringify((await output.get()).rawData));
+      const data = JSON.parse(JSON.stringify((await output.fetch()).rawData));
       assert.isNotEmpty(data.ref.entityStorageKey);
       delete data.ref.entityStorageKey;
       assert.deepStrictEqual(data, {num: 12, txt: 'xyz', ref: {id: 'foo1'}});
@@ -457,7 +601,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // extra fields are correctly ignored.
       const manifest = await manifestPromise;
       const runtime = new Runtime({loader, context: manifest});
-      const arc = runtime.newArc('wasm-test', 'volatile://');
+      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
 
       const sliceClass = Entity.createEntityClass(manifest.findSchemaByName('Slice'), null);
       const sngStore = await arc.createStore(sliceClass.type, undefined, 'test:0');
@@ -500,3 +644,5 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
   });
 });
+
+});  // forEach(useNewStorageStack)

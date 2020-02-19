@@ -294,13 +294,13 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.deepStrictEqual(await resultHandle.get(), {value: 'done'});
+    assert.deepStrictEqual(await resultHandle.fetch(), {value: 'done'});
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[0];
     assert.strictEqual(newStore.name, 'hello');
 
     const newHandle = await singletonHandleForTest(arc, newStore);
-    assert.deepStrictEqual(await newHandle.get(), {value: 'success'});
+    assert.deepStrictEqual(await newHandle.fetch(), {value: 'success'});
   });
 
   it('can load a recipe', async () => {
@@ -359,7 +359,7 @@ describe('particle-api', () => {
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
             setHandles(handles) {
-              handles.get('a').get().then(result => {
+              handles.get('a').fetch().then(result => {
                 handles.get('b').set(result);
               });
             }
@@ -378,13 +378,13 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.deepStrictEqual(await resultHandle.get(), {value: 'done'});
+    assert.deepStrictEqual(await resultHandle.fetch(), {value: 'done'});
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[1];
     assert.strictEqual(newStore.name, 'the-out');
 
     const newHandle = await singletonHandleForTest(arc, newStore);
-    assert.deepStrictEqual(await newHandle.get(), {value: 'success'});
+    assert.deepStrictEqual(await newHandle.fetch(), {value: 'success'});
   });
   // TODO(cypher1): Disabling this for now. The resolution seems to depend on order.
   // It is likely that this usage was depending on behavior that may not be intended.
@@ -456,8 +456,8 @@ describe('particle-api', () => {
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
             setHandles(handles) {
-              handles.get('a').get().then(resultA => {
-                handles.get('nobId').get().then(resultNob => {
+              handles.get('a').fetch().then(resultA => {
+                handles.get('nobId').fetch().then(resultNob => {
                   if (resultNob && resultNob.nobId === '12345') {
                     handles.get('b').set(resultA);
                   }
@@ -479,13 +479,13 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.deepStrictEqual(await resultHandle.get(), {value: 'done'});
+    assert.deepStrictEqual(await resultHandle.fetch(), {value: 'done'});
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[1];
     assert.strictEqual(newStore.name, 'the-out');
 
     const newHandle = await singletonHandleForTest(arc, newStore);
-    assert.deepStrictEqual(await newHandle.get(), {value: 'success'});
+    assert.deepStrictEqual(await newHandle.fetch(), {value: 'success'});
   });
 
   it('can load a recipe referencing a tagged handle in containing arc', async () => {
@@ -557,8 +557,8 @@ describe('particle-api', () => {
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
             setHandles(handles) {
-              handles.get('a').get().then(resultA => {
-                handles.get('target').get().then(resultTarget => {
+              handles.get('a').fetch().then(resultA => {
+                handles.get('target').fetch().then(resultTarget => {
                   handles.get('b').set(resultA);
                 })
               });
@@ -578,13 +578,13 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.deepStrictEqual(await resultHandle.get(), {value: 'done'});
+    assert.deepStrictEqual(await resultHandle.fetch(), {value: 'done'});
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[1];
     assert.strictEqual(newStore.name, 'the-out');
 
     const newHandle = await singletonHandleForTest(arc, newStore);
-    assert.deepStrictEqual(await newHandle.get(), {value: 'success'});
+    assert.deepStrictEqual(await newHandle.fetch(), {value: 'success'});
   });
 
   // TODO(wkorman): The below test fails and is currently skipped as we're only
@@ -658,8 +658,8 @@ describe('particle-api', () => {
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
             setHandles(handles) {
-              handles.get('a').get().then(resultA => {
-                handles.get('target').get().then(resultNob => {
+              handles.get('a').fetch().then(resultA => {
+                handles.get('target').fetch().then(resultNob => {
                   if (resultNob.nobId === '12345') {
                     handles.get('b').set(resultA);
                   }
@@ -681,13 +681,13 @@ describe('particle-api', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.deepStrictEqual(await resultHandle.get(), {value: 'done'});
+    assert.deepStrictEqual(await resultHandle.fetch(), {value: 'done'});
     const [innerArc] = arc.findInnerArcs(arc.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(result.type)[1];
     assert.strictEqual(newStore.name, 'the-out');
 
     const newHandle = await singletonHandleForTest(arc, newStore);
-    assert.deepStrictEqual(await newHandle.get(), {value: 'success'});
+    assert.deepStrictEqual(await newHandle.fetch(), {value: 'success'});
   });
 
   it('multiplexing', async () => {
@@ -795,12 +795,12 @@ describe('particle-api', () => {
     let newStore = innerArcStores[1];
     assert.strictEqual(innerArcStores[1].name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     let newHandle = await singletonHandleForTest(arc, newStore);
-    assert.deepStrictEqual(await newHandle.get(), {value: 'HELLO'});
+    assert.deepStrictEqual(await newHandle.fetch(), {value: 'HELLO'});
 
     newStore = innerArcStores[3];
     assert.strictEqual(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     newHandle = await singletonHandleForTest(arc, newStore);
-    assert.deepStrictEqual(await newHandle.get(), {value: 'WORLD'});
+    assert.deepStrictEqual(await newHandle.fetch(), {value: 'WORLD'});
   });
 
   it('big collection store and remove', async function() {
@@ -972,7 +972,7 @@ describe('particle-api', () => {
 
     await arc.idle;
     const outHandle = await singletonHandleForTest(arc, outStore);
-    assert.deepStrictEqual(await outHandle.get(), {result: 'hi'});
+    assert.deepStrictEqual(await outHandle.fetch(), {result: 'hi'});
   });
 
   it('particles can indicate that they are busy in onHandleSync', async () => {
@@ -996,7 +996,7 @@ describe('particle-api', () => {
               this.out = handles.get('far');
             }
             async onHandleSync(handle, model) {
-              await handle.get();
+              await handle.fetch();
               this.startBusy();
               setTimeout(async () => {
                 await this.out.set(new this.out.entityClass({result: 'hi'}));
@@ -1029,7 +1029,7 @@ describe('particle-api', () => {
 
     await arc.idle;
     const outHandle = await singletonHandleForTest(arc, outStore);
-    assert.deepStrictEqual(await outHandle.get(), {result: 'hi'});
+    assert.deepStrictEqual(await outHandle.fetch(), {result: 'hi'});
   });
 
   it('particles can indicate that they are busy in onHandleUpdate', async () => {
@@ -1053,7 +1053,7 @@ describe('particle-api', () => {
               this.out = handles.get('far');
             }
             async onHandleUpdate(handle, update) {
-              await handle.get();
+              await handle.fetch();
               this.startBusy();
               setTimeout(async () => {
                 await this.out.set(new this.out.entityClass({result: 'hi'}));
@@ -1084,7 +1084,7 @@ describe('particle-api', () => {
     await inHandle.set(new inHandle.entityClass({}));
     await arc.idle;
     const outHandle = await singletonHandleForTest(arc, outStore);
-    assert.deepStrictEqual(await outHandle.get(), {result: 'hi'});
+    assert.deepStrictEqual(await outHandle.fetch(), {result: 'hi'});
   });
 
   it('particles call startBusy in setHandles and set values in descriptions', async () => {

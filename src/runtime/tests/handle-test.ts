@@ -40,7 +40,7 @@ describe('Handle', () => {
     const barStore = await arc.createStore(new EntityType(manifest.schemas.Bar)) as SingletonStorageProvider;
     await barStore.set({id: 'an id', value: 'a Bar'});
     await barStore.clear();
-    assert.isNull(await barStore.get());
+    assert.isNull(await barStore.fetch());
   });
 
   it('ignores duplicate stores of the same entity value (singleton)', async () => {
@@ -114,7 +114,7 @@ describe('Handle', () => {
 
     await fooHandle.set(new Foo({value: '1'}, 'id1'));
     await fooHandle.set(new Foo({value: '2'}, 'id1'));
-    const stored = await fooHandle.get();
+    const stored = await fooHandle.fetch();
     assert.strictEqual(stored['value'], '2');
   });
 
@@ -151,7 +151,7 @@ describe('Handle', () => {
 
     const ifaceStore = await arc.createStore(iface) as SingletonStorageProvider;
     await ifaceStore.set(manifest.particles[0]);
-    assert.strictEqual(await ifaceStore.get(), manifest.particles[0]);
+    assert.strictEqual(await ifaceStore.fetch(), manifest.particles[0]);
   });
 
   it('createHandle only allows valid tags & types in stores', async () => {

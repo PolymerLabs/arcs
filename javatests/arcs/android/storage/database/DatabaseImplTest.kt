@@ -30,7 +30,7 @@ import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
-import java.lang.IllegalArgumentException
+import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
@@ -60,15 +60,15 @@ class DatabaseImplTest {
 
     @Test
     fun getTypeId_primitiveTypeIds() = runBlockingTest {
-        assertThat(database.getTypeId(FieldType.Boolean)).isEqualTo(PrimitiveType.Boolean.ordinal)
-        assertThat(database.getTypeId(FieldType.Number)).isEqualTo(PrimitiveType.Number.ordinal)
-        assertThat(database.getTypeId(FieldType.Text)).isEqualTo(PrimitiveType.Text.ordinal)
+        assertThat(database.getTypeIdForTest(FieldType.Boolean)).isEqualTo(PrimitiveType.Boolean.ordinal)
+        assertThat(database.getTypeIdForTest(FieldType.Number)).isEqualTo(PrimitiveType.Number.ordinal)
+        assertThat(database.getTypeIdForTest(FieldType.Text)).isEqualTo(PrimitiveType.Text.ordinal)
     }
 
     @Test
     fun getTypeId_entity_throwsWhenMissing() = runBlockingTest {
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.getTypeId(FieldType.EntityRef("abc"))
+            database.getTypeIdForTest(FieldType.EntityRef("abc"))
         }
         assertThat(exception)
             .hasMessageThat()
@@ -84,7 +84,7 @@ class DatabaseImplTest {
         // Repeating should give the same result.
         assertThat(database.getSchemaTypeId(schema, db)).isEqualTo(FIRST_ENTITY_TYPE_ID)
 
-        assertThat(database.getTypeId(FieldType.EntityRef("abc")))
+        assertThat(database.getTypeIdForTest(FieldType.EntityRef("abc")))
             .isEqualTo(FIRST_ENTITY_TYPE_ID)
     }
 
@@ -96,11 +96,11 @@ class DatabaseImplTest {
         val expectedTypeId2 = FIRST_ENTITY_TYPE_ID + 1
 
         assertThat(database.getSchemaTypeId(schema1, db)).isEqualTo(expectedTypeId1)
-        assertThat(database.getTypeId(FieldType.EntityRef("first")))
+        assertThat(database.getTypeIdForTest(FieldType.EntityRef("first")))
             .isEqualTo(expectedTypeId1)
 
         assertThat(database.getSchemaTypeId(schema2, db)).isEqualTo(expectedTypeId2)
-        assertThat(database.getTypeId(FieldType.EntityRef("second")))
+        assertThat(database.getTypeIdForTest(FieldType.EntityRef("second")))
             .isEqualTo(expectedTypeId2)
     }
 
@@ -165,29 +165,29 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getEntityStorageKeyId_newKeys() = runBlockingTest {
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key3"), "eid3", 123L, db)).isEqualTo(3L)
+    fun createEntityStorageKeyId_createsNewIds() = runBlockingTest {
+        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
+        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
+        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key3"), "eid3", 123L, db)).isEqualTo(3L)
     }
 
     @Test
-    fun getEntityStorageKeyId_existingKeys() = runBlockingTest {
-        // Create new keys.
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
-        // Check existing keys.
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
-        assertThat(database.getEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
+    fun createEntityStorageKeyId_replacesExistingIds() = runBlockingTest {
+        // Insert keys for the first time.
+        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
+        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
+        // Inserting again should overwrite them.
+        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(3L)
+        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(4L)
     }
 
     @Test
-    fun getEntityStorageKeyId_wrongEntityId() = runBlockingTest {
+    fun createEntityStorageKeyId_wrongEntityId() = runBlockingTest {
         val key = DummyStorageKey("key")
-        database.getEntityStorageKeyId(key, "correct-entity-id", 123L, db)
+        database.createEntityStorageKeyId(key, "correct-entity-id", 123L, db)
 
-        val exception = assertThrows(IllegalArgumentException::class) {
-            database.getEntityStorageKeyId(key, "incorrect-entity-id", 123L, db)
+        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.createEntityStorageKeyId(key, "incorrect-entity-id", 123L, db)
         }
         assertThat(exception).hasMessageThat().isEqualTo(
             "Expected storage key dummy://key to have entity ID incorrect-entity-id but was " +
@@ -302,7 +302,11 @@ class DatabaseImplTest {
                     "bool" to FieldType.Boolean,
                     "num" to FieldType.Number
                 ),
-                collections = emptyMap()
+                collections = mapOf(
+                    "texts" to FieldType.Text,
+                    "bools" to FieldType.Boolean,
+                    "nums" to FieldType.Number
+                )
             )
         )
         val entity = Entity(
@@ -311,7 +315,10 @@ class DatabaseImplTest {
             mutableMapOf(
                 "text" to "abc",
                 "bool" to true,
-                "num" to 123.0
+                "num" to 123.0,
+                "texts" to setOf("abc", "def"),
+                "bools" to setOf(true, false),
+                "nums" to setOf(123.0, 456.0)
             )
         )
 
@@ -319,6 +326,243 @@ class DatabaseImplTest {
         val entityOut = database.getEntity(key, schema).entity
 
         assertThat(entityOut).isEqualTo(entity)
+    }
+
+    @Test
+    fun insertAndGet_entity_newEntityWithReferenceFields() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val childSchema = newSchema(
+            "child",
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = mapOf()
+            )
+        )
+        val schema = newSchema(
+            "parent",
+            SchemaFields(
+                singletons = mapOf("favouriteChild" to FieldType.EntityRef("child")),
+                collections = mapOf("otherChildren" to FieldType.EntityRef("child"))
+            )
+        )
+        val alice = Entity("alice-id", childSchema, mutableMapOf("name" to "Alice"))
+        val bob = Entity("bob-id", childSchema, mutableMapOf("name" to "Bob"))
+        val charlie = Entity("charlie-id", childSchema, mutableMapOf("name" to "Charlie"))
+        val parentEntity = Entity(
+            "parent-id",
+            schema,
+            mutableMapOf(
+                "favouriteChild" to Reference(
+                    "alice-id",
+                    DummyStorageKey("alice-key"),
+                    VersionMap()
+                ),
+                "otherChildren" to setOf(
+                    Reference("bob-id", DummyStorageKey("bob-key"), VersionMap()),
+                    Reference("charlie-id", DummyStorageKey("charlie-key"), VersionMap())
+                )
+            )
+        )
+        database.insertOrUpdate(DummyStorageKey("alice-key"), alice)
+        database.insertOrUpdate(DummyStorageKey("bob-key"), bob)
+        database.insertOrUpdate(DummyStorageKey("charlie-key"), charlie)
+
+        database.insertOrUpdate(key, parentEntity)
+        val entityOut = database.getEntity(key, schema).entity
+
+        assertThat(entityOut).isEqualTo(parentEntity)
+    }
+
+    @Test
+    fun insertAndGet_entity_updateExistingEntity() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text,
+                    "bool" to FieldType.Boolean,
+                    "num" to FieldType.Number,
+                    "ref" to FieldType.EntityRef("child")
+                ),
+                collections = mapOf(
+                    "texts" to FieldType.Text,
+                    "bools" to FieldType.Boolean,
+                    "nums" to FieldType.Number,
+                    "refs" to FieldType.EntityRef("child")
+                )
+            )
+        )
+        val entityId = "entity"
+        val entity1 = Entity(
+            entityId,
+            schema,
+            mutableMapOf(
+                "text" to "aaa",
+                "bool" to true,
+                "num" to 111.0,
+                "ref" to Reference("child-id-1", DummyStorageKey("child-ref-1"), VersionMap()),
+                "texts" to setOf("aaa", "bbb"),
+                "bools" to setOf(true),
+                "nums" to setOf(11.0, 111.0),
+                "refs" to setOf(
+                    Reference("child-id-2", DummyStorageKey("child-ref-2"), VersionMap()),
+                    Reference("child-id-3", DummyStorageKey("child-ref-3"), VersionMap())
+                )
+            )
+        )
+        val entity2 = Entity(
+            entityId,
+            schema,
+            mutableMapOf(
+                "text" to "zzz",
+                "bool" to false,
+                "num" to 999.0,
+                "ref" to Reference("child-id-9", DummyStorageKey("child-ref-9"), VersionMap()),
+                "texts" to setOf("zzz", "yyy"),
+                "bools" to setOf(false),
+                "nums" to setOf(99.0, 999.0),
+                "refs" to setOf(
+                    Reference("child-id-8", DummyStorageKey("child-ref-8"), VersionMap()),
+                    Reference("child-id-7", DummyStorageKey("child-ref-7"), VersionMap())
+                )
+            )
+        )
+
+        database.insertOrUpdate(key, entity1)
+        database.insertOrUpdate(key, entity2)
+        val entityOut = database.getEntity(key, schema).entity
+
+        assertThat(entityOut).isEqualTo(entity2)
+    }
+
+    @Test
+    fun insertAndGet_entity_collectionFields_areNull() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf(),
+                collections = mapOf(
+                    "texts" to FieldType.Text,
+                    "refs" to FieldType.EntityRef("child")
+                )
+            )
+        )
+        val entity = Entity(
+            "entity",
+            schema,
+            mutableMapOf("texts" to null, "refs" to null)
+        )
+
+        database.insertOrUpdate(key, entity)
+        val entityOut = database.getEntity(key, schema).entity
+        assertThat(entityOut.data).isEmpty()
+    }
+
+    @Test
+    fun insertAndGet_entity_collectionFields_areEmpty() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf(),
+                collections = mapOf(
+                    "texts" to FieldType.Text,
+                    "refs" to FieldType.EntityRef("child")
+                )
+            )
+        )
+        val entity = Entity(
+            "entity",
+            schema,
+            mutableMapOf("texts" to setOf<String>(), "refs" to setOf<Reference>())
+        )
+
+        database.insertOrUpdate(key, entity)
+        val entityOut = database.getEntity(key, schema).entity
+        assertThat(entityOut.data).isEmpty()
+    }
+
+    @Test
+    fun insert_entity_primitiveCollectionField_wrongType() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf(),
+                collections = mapOf("texts" to FieldType.Text)
+            )
+        )
+        val entity = Entity(
+            "entity",
+            schema,
+            mutableMapOf(
+                "texts" to listOf("aaa", "bbb") // Should be a Set, not a List.
+            )
+        )
+
+        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.insertOrUpdate(DummyStorageKey("key"), entity)
+        }
+        assertThat(exception).hasMessageThat().startsWith("Collection fields must be of type Set.")
+    }
+
+    @Test
+    fun insert_entity_singleReferenceField_wrongType() = runBlockingTest {
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("ref" to FieldType.EntityRef("child")),
+                collections = emptyMap()
+            )
+        )
+
+        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.insertOrUpdate(DummyStorageKey("key"), Entity(
+                "entity",
+                schema,
+                mutableMapOf(
+                    "ref" to "abc" // Should be a Reference.
+                )
+            ))
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Expected field value to be a Reference but was abc."
+        )
+    }
+
+    @Test
+    fun insert_entity_collectionReferenceField_wrongType() = runBlockingTest {
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = emptyMap(),
+                collections = mapOf("refs" to FieldType.EntityRef("child"))
+            )
+        )
+
+        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.insertOrUpdate(DummyStorageKey("key"), Entity(
+                "entity",
+                schema,
+                mutableMapOf(
+                    "refs" to setOf("abc") // Should be a Reference.
+                )
+            ))
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Expected element in collection to be a Reference but was abc."
+        )
     }
 
     @Test
@@ -566,6 +810,145 @@ class DatabaseImplTest {
         )
     }
 
+    @Test
+    fun delete_entity_getsRemoved() = runBlockingTest {
+        val entityKey = DummyStorageKey("entity")
+        val schema = newSchema("hash")
+        val entity = DatabaseData.Entity(
+            entity = Entity("entity", schema, mutableMapOf()),
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(entityKey, entity)
+
+        database.delete(entityKey)
+
+        assertTableIsEmpty("storage_keys")
+        assertTableIsEmpty("entities")
+        assertTableIsEmpty("field_values")
+        val exception = assertThrows(IllegalArgumentException::class) {
+            database.getEntity(entityKey, schema)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Entity at storage key dummy://entity does not exist."
+        )
+    }
+
+    @Test
+    fun delete_collection_otherEntitiesUnaffected() = runBlockingTest {
+        val keyToKeep = DummyStorageKey("key-to-keep")
+        val keyToDelete = DummyStorageKey("key-to-delete")
+        val schema = newSchema("hash")
+        val entity = DatabaseData.Entity(
+            entity = Entity("entity", schema, mutableMapOf()),
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(keyToKeep, entity)
+        database.insertOrUpdate(keyToDelete, entity)
+
+        database.delete(keyToDelete)
+
+        assertThat(database.getEntity(keyToKeep, schema)).isEqualTo(entity)
+        assertThrows(IllegalArgumentException::class) {
+            database.getEntity(keyToDelete, schema)
+        }
+    }
+
+    @Test
+    fun delete_collection_getsRemoved() = runBlockingTest {
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val collection = DatabaseData.Collection(
+            values = setOf(Reference("ref1", backingKey, VersionMap())),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(collectionKey, collection)
+
+        database.delete(collectionKey)
+
+        assertTableIsEmpty("storage_keys")
+        assertTableIsEmpty("collections")
+        assertTableIsEmpty("collection_entries")
+        val exception = assertThrows(IllegalArgumentException::class) {
+            database.getCollection(collectionKey, schema)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Collection at storage key dummy://collection does not exist."
+        )
+    }
+
+    @Test
+    fun delete_collection_otherCollectionsUnaffected() = runBlockingTest {
+        val keyToKeep = DummyStorageKey("key-to-keep")
+        val keyToDelete = DummyStorageKey("key-to-delete")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val collection = DatabaseData.Collection(
+            values = setOf(Reference("ref1", backingKey, VersionMap())),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(keyToKeep, collection)
+        database.insertOrUpdate(keyToDelete, collection)
+
+        database.delete(keyToDelete)
+
+        assertThat(database.getCollection(keyToKeep, schema)).isEqualTo(collection)
+        assertThrows(IllegalArgumentException::class) {
+            database.getCollection(keyToDelete, schema)
+        }
+    }
+
+    @Test
+    fun delete_singleton_getsRemoved() = runBlockingTest {
+        val singletonKey = DummyStorageKey("singleton")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val singleton = DatabaseData.Singleton(
+            reference = Reference("ref1", backingKey, VersionMap()),
+            schema = schema,
+            databaseVersion = 1,
+            versionMap = VersionMap()
+        )
+        database.insertOrUpdate(singletonKey, singleton)
+
+        database.delete(singletonKey)
+
+        assertTableIsEmpty("storage_keys")
+        assertTableIsEmpty("collections")
+        assertTableIsEmpty("collection_entries")
+        val exception = assertThrows(IllegalArgumentException::class) {
+            database.getSingleton(singletonKey, schema)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Singleton at storage key dummy://singleton does not exist."
+        )
+    }
+
+    @Test
+    fun delete_singleton_otherSingletonsUnaffected() = runBlockingTest {
+        val keyToKeep = DummyStorageKey("key-to-keep")
+        val keyToDelete = DummyStorageKey("key-to-delete")
+        val backingKey = DummyStorageKey("backing")
+        val schema = newSchema("hash")
+        val reference = Reference("ref1", backingKey, VersionMap())
+        val singleton = DatabaseData.Singleton(reference, schema, 1, VersionMap())
+        database.insertOrUpdate(keyToKeep, singleton)
+        database.insertOrUpdate(keyToDelete, singleton)
+
+        database.delete(keyToDelete)
+
+        assertThat(database.getSingleton(keyToKeep, schema)).isEqualTo(singleton)
+        assertThrows(IllegalArgumentException::class) {
+            database.getSingleton(keyToDelete, schema)
+        }
+    }
+
     private fun newSchema(
         hash: String,
         fields: SchemaFields = SchemaFields(emptyMap(), emptyMap())
@@ -579,6 +962,14 @@ class DatabaseImplTest {
     /** Returns a list of all the rows in the 'fields' table. */
     private fun readFieldsTable() =
         database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
+
+    private fun assertTableIsEmpty(tableName: String) {
+        database.readableDatabase.rawQuery("SELECT * FROM $tableName", arrayOf()).use {
+            assertWithMessage("Expected table $tableName to be empty, but found ${it.count} rows.")
+                .that(it.count)
+                .isEqualTo(0)
+        }
+    }
 
     companion object {
         /** The first free Type ID after all primitive types have been assigned. */

@@ -205,6 +205,10 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     };
   }
 
+  reportExceptionInHost(exception: PropagatedException): void {
+    this.apiPort.ReportExceptionInHost(exception);
+  }
+
   innerArcHandle(arcId: string, particleId: string): InnerArcHandle {
     const pec = this;
     return {

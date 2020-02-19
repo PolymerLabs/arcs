@@ -53,7 +53,6 @@ COPY tools/install-android-sdk tools/install-android-sdk
 COPY tools/logging.sh tools/logging.sh
 RUN tools/install-android-sdk ${ANDROID_HOME}
 
-
 # Install npm packages
 COPY concrete-storage/package.json concrete-storage/package.json
 RUN (cd concrete-storage && npm install)
@@ -62,19 +61,6 @@ COPY tools tools
 COPY config config
 COPY devtools devtools
 RUN npm install
-
-# Fetch external Bazel artifacts.
-# Copy over the WORKSPACE file, everything it imports, and bazelisk.
-COPY tools/bazelisk* tools/
-COPY build_defs/emscripten build_defs/emscripten
-COPY build_defs/kotlin_native build_defs/kotlin_native
-COPY emscripten_cache emscripten_cache
-COPY .bazelignore \
-     .bazelversion \
-     WORKSPACE \
-     BUILD.bazel \
-     ./
-RUN ./tools/bazelisk sync
 
 # Copy the contents of the working dir. After this the image should be ready for
 # use.

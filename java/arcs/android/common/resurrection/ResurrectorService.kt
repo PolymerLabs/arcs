@@ -17,7 +17,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.annotation.VisibleForTesting
 import arcs.core.storage.StorageKey
-import arcs.core.util.guardWith
+import arcs.core.util.guardedBy
 import java.io.PrintWriter
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -44,9 +44,9 @@ abstract class ResurrectorService : Service() {
 
     private val mutex = Mutex()
     private var registeredRequests: Set<ResurrectionRequest>
-        by guardWith(mutex, setOf())
+        by guardedBy(mutex, setOf())
     private var registeredRequestsByNotifiers: Map<StorageKey?, Set<ResurrectionRequest>>
-        by guardWith(mutex, mapOf())
+        by guardedBy(mutex, mapOf())
     @VisibleForTesting var loadJob: Job? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

@@ -11,8 +11,8 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../platform/loader.js';
 import {VersionMap} from '../../crdt/crdt.js';
-import {CollectionOperation, CollectionOpTypes, CRDTCollection, CRDTCollectionTypeRecord, Referenceable} from '../../crdt/crdt-collection.js';
-import {CRDTSingleton, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
+import {CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
+import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
 import {CollectionType, EntityType, SingletonType, Type} from '../../type.js';
@@ -22,6 +22,7 @@ import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
+import {SYMBOL_INTERNALS} from '../../symbols.js';
 
 
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
@@ -129,8 +130,8 @@ describe('CollectionHandle', async () => {
   it('respects canRead', async () => {
     const handle = await getCollectionHandle(barType, new MockParticle(), false, true);
     try {
-      await handle.get('A');
-      assert.fail('handle.get should not have succeeded');
+      await handle.fetchAll('A');
+      assert.fail('handle.fetchAll should not have succeeded');
     } catch (e) {
       assert.match(e.toString(), /Error: Handle not readable/);
     }
@@ -148,7 +149,7 @@ describe('CollectionHandle', async () => {
     Entity.mutate(entity, {value: 'something'});
     await handle.add(entity);
     await handle.add(newEntity('B'));
-    assert.deepEqual(await handle.get('A'), entity);
+    assert.deepEqual(await handle.fetchAll('A'), entity);
   });
 
   it('assigns IDs to entities with missing IDs', async () => {
@@ -200,7 +201,7 @@ describe('CollectionHandle', async () => {
       clock: {'actor': 1}
     };
     await handle.onUpdate(op, {'actor': 1, 'other': 2});
-    assert.equal(Entity.id(particle.lastUpdate.removed), 'id');
+    assert.equal(Entity.id(particle.lastUpdate.removed[0]), 'id');
     assert.isFalse(particle.lastUpdate.originator);
   });
 
@@ -261,13 +262,13 @@ describe('CollectionHandle', async () => {
 describe('SingletonHandle', async () => {
   it('can set and clear elements', async () => {
     const handle = await getSingletonHandle(barType);
-    assert.strictEqual(await handle.get(), null);
+    assert.strictEqual(await handle.fetch(), null);
     await handle.set(newEntity('A'));
-    assert.deepEqual(await handle.get(), newEntity('A'));
+    assert.deepEqual(await handle.fetch(), newEntity('A'));
     await handle.set(newEntity('B'));
-    assert.deepEqual(await handle.get(), newEntity('B'));
+    assert.deepEqual(await handle.fetch(), newEntity('B'));
     await handle.clear();
-    assert.strictEqual(await handle.get(), null);
+    assert.strictEqual(await handle.fetch(), null);
   });
 
   it('notifies particle on sync event', async () => {
@@ -275,6 +276,20 @@ describe('SingletonHandle', async () => {
     const handle = await getSingletonHandle(barType, particle);
     await handle.onSync(null);
     assert.isTrue(particle.onSyncCalled);
+  });
+
+  it('can clear value set by other actor', async () => {
+    const handle = await getSingletonHandle(barType);
+    await handle.set(newEntity('A'));
+    // Simulate another writer overwriting the value.
+    await handle.storageProxy.applyOp({
+      type: SingletonOpTypes.Set,
+      value: newEntity('B')[SYMBOL_INTERNALS].serialize(),
+      actor: 'other',
+      clock: {'other': 1},
+    });
+    await handle.clear();
+    assert.strictEqual(await handle.fetch(), null);
   });
 
   it('notifies particle on desync event', async () => {
@@ -308,7 +323,7 @@ describe('SingletonHandle', async () => {
     };
 
     // This will pull in the version map above.
-    await handle.get();
+    await handle.fetch();
     // Swap out storageProxy.applyOp to check the updated clock is passed in the next op.
     let capturedClock;
     handle.storageProxy.applyOp = async (op: SingletonOperation<{id: string}>) => {
@@ -339,8 +354,8 @@ describe('SingletonHandle', async () => {
   it('respects canRead', async () => {
     const handle = await getSingletonHandle(barType, new MockParticle(), false, true);
     try {
-      await handle.get();
-      assert.fail('handle.get should not have succeeded');
+      await handle.fetch();
+      assert.fail('handle.fetch should not have succeeded');
     } catch (e) {
       assert.match(e.toString(), /Error: Handle not readable/);
     }

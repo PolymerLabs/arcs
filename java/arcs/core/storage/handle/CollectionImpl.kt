@@ -17,9 +17,8 @@ import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 
 /** These typealiases are defined to clean up the class declaration below. */
-private typealias SetProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
-
-private typealias SetHandle<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+typealias SetProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+typealias SetBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 
 /**
  * Collection Handle implementation for the runtime.
@@ -30,12 +29,15 @@ private typealias SetHandle<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, 
 class CollectionImpl<T : Referencable>(
     name: String,
     storageProxy: SetProxy<T>
-) : SetHandle<T>(name, storageProxy) {
+) : SetBase<T>(name, storageProxy) {
     /** Return the number of items in the storage proxy view of the collection. */
     suspend fun size(): Int = value().size
 
     /** Returns true if the current storage proxy view of the collection is empty. */
     suspend fun isEmpty(): Boolean = value().isEmpty()
+
+    /** Returns the values in the collection as a set. */
+    suspend fun fetchAll(): Set<T> = value()
 
     /**
      * Store a new entity in the collection.

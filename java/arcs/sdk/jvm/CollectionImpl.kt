@@ -19,27 +19,43 @@ class CollectionImpl<T : Entity>(
     override val name: String,
     entitySpec: EntitySpec<T>
 ) : ReadWriteCollection<T> {
+
     private val entities = mutableListOf<T>()
+    private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
 
     override val size: Int
         get() = entities.size
 
     override fun isEmpty(): Boolean = entities.isEmpty()
 
-    override fun iterator(): Iterator<T> = entities.iterator()
+    override fun fetchAll() = entities.toSet()
 
     override fun store(entity: T) {
         entities.add(entity)
         particle.onHandleUpdate(this)
+        notifyOnUpdateActions()
     }
 
     override fun clear() {
         entities.clear()
         particle.onHandleUpdate(this)
+        notifyOnUpdateActions()
+    }
+
+    override fun onUpdate(action: (Set<T>) -> Unit) {
+        onUpdateActions.add(action)
     }
 
     override fun remove(entity: T) {
         entities.remove(entity)
         particle.onHandleUpdate(this)
+        notifyOnUpdateActions()
+    }
+
+    fun notifyOnUpdateActions() {
+        val s = entities.toSet()
+        onUpdateActions.forEach { action ->
+            action(s)
+        }
     }
 }

@@ -15,7 +15,8 @@ package arcs.core.data
 data class Capabilities(val capabilities: Set<Capability>) {
     fun isEmpty(): Boolean = capabilities.isEmpty()
 
-    fun contains(other: Capabilities): Boolean = capabilities.containsAll(other.capabilities)
+    operator fun contains(other: Capabilities): Boolean =
+        capabilities.containsAll(other.capabilities)
 
     /** Whether the store needs to be persistent */
     val isPersistent: Boolean

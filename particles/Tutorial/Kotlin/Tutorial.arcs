@@ -17,4 +17,6 @@ import '5_Collections/Collections.arcs'
 
 import '6_JsonStore/JsonStore.arcs'
 
-import 'Demo/src/total/TTTGame.arcs'
+import '7_Functional/Functional.arcs'
+
+import 'Demo/src/TTTGame.arcs'

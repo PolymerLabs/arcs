@@ -298,14 +298,14 @@ export class VolatileCollection extends VolatileStorageProvider implements Colle
     this._version++;
   }
 
-  async get(id: string) {
+  async fetchAll(id: string) {
     if (this.referenceMode) {
       const ref = this._model.getValue(id);
       if (ref == null) {
         return null;
       }
       await this.ensureBackingStore();
-      return await this.backingStore.get(ref.id);
+      return await this.backingStore.fetchAll(ref.id);
     }
     return this._model.getValue(id);
   }
@@ -420,7 +420,7 @@ export class VolatileSingleton extends VolatileStorageProvider implements Single
       const value = this._stored as {id: string, storageKey: string};
 
       await this.ensureBackingStore();
-      const result = await this.backingStore.get(value.id);
+      const result = await this.backingStore.fetchAll(value.id);
       return {
         version: this._version,
         model: [{id: value.id, value: result}]
@@ -451,12 +451,12 @@ export class VolatileSingleton extends VolatileStorageProvider implements Single
     return {stored: this._stored !== null};
   }
 
-  async get() {
+  async fetch() {
     if (this.referenceMode && this._stored) {
       const value = this._stored as {id: string, storageKey: string};
 
       await this.ensureBackingStore();
-      return await this.backingStore.get(value.id);
+      return await this.backingStore.fetchAll(value.id);
     }
     return this._stored;
   }
@@ -552,7 +552,7 @@ class VolatileBigCollection extends VolatileStorageProvider implements BigCollec
     return this.type.getContainedType();
   }
 
-  async get(id: string) {
+  async fetchAll(id: string) {
     const data = this.items.get(id);
     return (data !== undefined) ? data.value : null;
   }

@@ -13,7 +13,7 @@ arcs_kt_android_test_suite(
     package = "arcs.android.storage",
     deps = [
         "//java/arcs/android/crdt",
-        "//java/arcs/android/storage",  # unuseddeps: keep
+        "//java/arcs/android/storage",  # buildcleaner: keep
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",

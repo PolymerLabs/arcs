@@ -15,6 +15,14 @@ arcs_kt_jvm_library(
         "*.kt",
         "jvm/*.kt",
     ]),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//java/arcs/core/data:rawentity",
+    ],
+    deps = [
+        "//java/arcs/core/data",
+        "//java/arcs/core/data/util:data-util",
+    ],
 )
 
 kt_js_library(
@@ -27,8 +35,10 @@ kt_js_library(
 
 arcs_kt_native_library(
     name = "sdk-wasm",
-    srcs = glob([
-        "*.kt",
+    srcs = [
+        # Don't depend on anything else from the sdk package.
+        "UtilsInterface.kt",
+    ] + glob([
         "wasm/*.kt",
     ]),
 )
