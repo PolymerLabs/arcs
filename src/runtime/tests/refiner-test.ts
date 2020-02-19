@@ -333,6 +333,40 @@ describe('normalisation', () => {
     // normalized version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
   }));
+  it(`tests if expressions are rearranged 5`, () => {
+    const manifestAst1 = parse(`
+        particle Foo
+            input: reads Something {a: Number, b: Number } [3*(a+b) > a+2*b]
+    `);
+    const typeData = {'a': 'Number', 'b': 'Number'};
+    const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
+    ref1.normalize();
+    const manifestAst2 = parse(`
+        particle Foo
+            input: reads Something {a: Number, b: Number } [b + a*2 > 0]
+    `);
+    const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.refinement, typeData);
+    // normalized version of ref1 should be the same as ref2
+    assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+  });
+  it(`tests if expressions are rearranged 6`, () => {
+    const manifestAst1 = parse(`
+        particle Foo
+            input: reads Something {a: Number, b: Number } [2*(a+b) > a+2*b]
+    `);
+    const typeData = {'a': 'Number', 'b': 'Number'};
+    const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
+    ref1.normalize();
+    const manifestAst2 = parse(`
+        particle Foo
+            input: reads Something {a: Number, b: Number } [a > 0]
+    `);
+    const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.refinement, typeData);
+    console.log(ref1.toString());
+    console.log(`${ref2}`);
+    // normalized version of ref1 should be the same as ref2
+    assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+  });
 });
 
 describe('Range', () => {
