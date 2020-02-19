@@ -228,11 +228,17 @@ abstract class RefinementExpression {
 
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives;
 
-  abstract getFieldNames(): Set<string>;
+  getFieldNames(): Set<string> {
+    return new Set<string>();
+  }
 
-  abstract getQueryNames(): Set<string>;
+  getQueryNames(): Set<string> {
+    return new Set<string>();
+  }
 
-  abstract getTextPrimitives(): Set<string>;
+  getTextPrimitives(): Set<string> {
+    return new Set<string>();
+  }
 }
 
 export class BinaryExpression extends RefinementExpression {
@@ -552,14 +558,6 @@ export class FieldNamePrimitive extends RefinementExpression {
   getFieldNames(): Set<string> {
     return new Set<string>([this.value]);
   }
-
-  getQueryNames(): Set<string> {
-    return new Set<string>();
-  }
-
-  getTextPrimitives(): Set<string> {
-    return new Set<string>();
-  }
 }
 
 export class QueryArgumentPrimitive extends RefinementExpression {
@@ -596,16 +594,8 @@ export class QueryArgumentPrimitive extends RefinementExpression {
     return null;
   }
 
-  getFieldNames(): Set<string> {
-    return new Set<string>();
-  }
-
   getQueryNames(): Set<string> {
     return new Set<string>([this.value]);
-  }
-
-  getTextPrimitives(): Set<string> {
-    return new Set<string>();
   }
 }
 
@@ -637,18 +627,6 @@ export class NumberPrimitive extends RefinementExpression {
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
-
-  getFieldNames(): Set<string> {
-    return new Set<string>();
-  }
-
-  getQueryNames(): Set<string> {
-    return new Set<string>();
-  }
-
-  getTextPrimitives(): Set<string> {
-    return new Set<string>();
-  }
 }
 
 class BooleanPrimitive extends RefinementExpression {
@@ -679,18 +657,6 @@ class BooleanPrimitive extends RefinementExpression {
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
-
-  getFieldNames(): Set<string> {
-    return new Set<string>();
-  }
-
-  getQueryNames(): Set<string> {
-    return new Set<string>();
-  }
-
-  getTextPrimitives(): Set<string> {
-    return new Set<string>();
-  }
 }
 
 class TextPrimitive extends RefinementExpression {
@@ -720,14 +686,6 @@ class TextPrimitive extends RefinementExpression {
 
   applyOperator(): ExpressionPrimitives {
     return this.value;
-  }
-
-  getFieldNames(): Set<string> {
-    return new Set<string>();
-  }
-
-  getQueryNames(): Set<string> {
-    return new Set<string>();
   }
 
   getTextPrimitives(): Set<string> {
