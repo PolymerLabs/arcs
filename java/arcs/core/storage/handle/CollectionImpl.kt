@@ -15,7 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.storage.ActivationFactory
-import arcs.core.storage.Callbacks
+import arcs.core.data.Ttl
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
@@ -41,8 +41,9 @@ class CollectionImpl<T : Referencable>(
     storageProxy: SetProxy<T>,
     callbacks: SetCallbacks<T>? = null,
     private val refinement: Refinement<T>? = null,
+    ttl: Ttl = Ttl.Infinite,
     canRead: Boolean = true
-) : SetBase<T>(name, storageProxy, callbacks, canRead) {
+) : SetBase<T>(name, storageProxy, callbacks, ttl, canRead) {
     /** Return the number of items in the storage proxy view of the collection. */
     suspend fun size(): Int = value().size
 
@@ -73,6 +74,10 @@ class CollectionImpl<T : Referencable>(
      */
     suspend fun store(entity: T): Boolean {
         log.debug { "Storing: $entity" }
+        if (!Ttl.Infinite.equals(ttl)) {
+            @Suppress("GoodTime") // use Instant
+            entity.setExpiration(ttl.calculateExpiration())
+        }
         return storageProxy.applyOp(
             CrdtSet.Operation.Add(name, versionMap().increment(), entity)
         )

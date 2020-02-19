@@ -15,6 +15,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.data.Ttl
 import arcs.core.util.TaggedLog
 
 /**
@@ -71,6 +72,8 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /** [callback] contains optional Handle-owner provided callbacks to add behavior. */
     var callback: Callbacks<Data, Op, T>? = null,
 
+    /** [ttl] applied to the data in the [Handle]. */
+    val ttl: Ttl,
     /**
      * [canRead] is whether this handle reads data so proxy can decide whether to keep its crdt
      * up to date.

@@ -11,6 +11,7 @@
 
 package arcs.core.util.performance
 
+import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -24,7 +25,7 @@ class TimerTest {
     private lateinit var timer: Timer
     @Before
     fun setUp() {
-        timer = TimerImpl()
+        timer = Timer(TimeImpl())
     }
 
     @Test
@@ -49,8 +50,10 @@ class TimerTest {
         assertThat(durationNanos).isAtLeast(500 * 1000 * 1000)
     }
 
-    private class TimerImpl : Timer() {
+    private class TimeImpl : Time() {
         override val currentTimeNanos: Long
             get() = System.nanoTime()
+        override val currentTimeMillis: Long
+            get() = System.currentTimeMillis()
     }
 }

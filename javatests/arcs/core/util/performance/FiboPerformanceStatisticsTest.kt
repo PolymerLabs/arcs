@@ -11,6 +11,7 @@
 
 package arcs.core.util.performance
 
+import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -77,8 +78,8 @@ class FiboPerformanceStatisticsTest {
 
     /** Implementation of the example from the KDoc on [PerformanceStatistics]. */
     private class FibonacciCalculator {
-        val fiboSlowStats = PerformanceStatistics(PlatformTimer, "additions", "recursiveCalls")
-        val fiboFastStats = PerformanceStatistics(PlatformTimer, "additions", "loops")
+        val fiboSlowStats = PerformanceStatistics(Timer(PlatformTime), "additions", "recursiveCalls")
+        val fiboFastStats = PerformanceStatistics(Timer(PlatformTime), "additions", "loops")
 
         suspend fun fiboSlow(n: Int): Int = fiboSlowStats.timeSuspending { counters ->
             fun inner(n: Int): Int {
@@ -112,8 +113,10 @@ class FiboPerformanceStatisticsTest {
         }
     }
 
-    private object PlatformTimer : Timer() {
+    private object PlatformTime : Time() {
         override val currentTimeNanos: Long
             get() = System.nanoTime()
+        override val currentTimeMillis: Long
+            get() = System.currentTimeMillis()
     }
 }

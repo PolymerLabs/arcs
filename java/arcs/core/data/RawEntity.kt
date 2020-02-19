@@ -25,9 +25,9 @@ data class RawEntity(
      * collections.
      */
     val collections: Map<FieldName, Set<Referencable>> = emptyMap(),
-    /** Indication of the timestamp when this entity expires. */
+    /** Entity expiration time (in millis). */
     @Suppress("GoodTime") // use Instant
-    val expirationTimestamp: Long = NO_EXPIRATION
+    var expirationTimestamp: Long = NO_EXPIRATION
 ) : Referencable {
     override fun unwrap(): Referencable {
         return RawEntity(
@@ -38,6 +38,14 @@ data class RawEntity(
                 it.value.map { item -> item.unwrap() }.toSet()
             }
         )
+    }
+
+    override fun setExpiration(expirationTimestamp: Long) {
+        require(this.expirationTimestamp == NO_EXPIRATION) {
+            "cannot override expirationTimestamp $expirationTimestamp"
+        }
+        @Suppress("GoodTime") // use Instant
+        this.expirationTimestamp = expirationTimestamp
     }
 
     /** Constructor for a [RawEntity] when only the field names are known. */

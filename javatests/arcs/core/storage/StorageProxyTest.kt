@@ -5,6 +5,7 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.data.Ttl
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
@@ -228,7 +229,7 @@ class StorageProxyTest {
         storageProxy: StorageProxy<CrdtData, CrdtOperationAtTime, String>,
         reader: Boolean
     ) = mock<Callbacks<CrdtData, CrdtOperationAtTime, String>>().let {
-        HandleWithCallback(Handle(name, storageProxy, it, reader, true), it)
+        HandleWithCallback(Handle(name, storageProxy, it, Ttl.Infinite, reader, true), it)
     }
 
     fun CrdtModel<CrdtData, CrdtOperationAtTime, String>.appliesOpAs(op: CrdtOperationAtTime, result: Boolean) {

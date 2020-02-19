@@ -44,7 +44,8 @@ import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
-import arcs.jvm.util.performance.JvmTimer
+import arcs.core.util.performance.Timer
+import arcs.jvm.util.JvmTime
 import com.google.protobuf.ByteString
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlin.coroutines.coroutineContext
@@ -94,9 +95,11 @@ class DatabaseImpl(
 
     // TODO: handle rehydrating from a snapshot.
     private val stats = DatabasePerformanceStatistics(
-        insertUpdate = PerformanceStatistics(JvmTimer, *DatabaseCounters.INSERT_UPDATE_COUNTERS),
-        get = PerformanceStatistics(JvmTimer, *DatabaseCounters.GET_COUNTERS),
-        delete = PerformanceStatistics(JvmTimer, *DatabaseCounters.DELETE_COUNTERS)
+        insertUpdate = PerformanceStatistics(
+            Timer(JvmTime),
+            *DatabaseCounters.INSERT_UPDATE_COUNTERS),
+        get = PerformanceStatistics(Timer(JvmTime), *DatabaseCounters.GET_COUNTERS),
+        delete = PerformanceStatistics(Timer(JvmTime), *DatabaseCounters.DELETE_COUNTERS)
     )
 
     private val schemaMutex = Mutex()
