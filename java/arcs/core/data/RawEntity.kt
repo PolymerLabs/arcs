@@ -24,11 +24,14 @@ data class RawEntity(
      * Collection ([Set]) fields and the set of [ReferenceId]s referencing the values in those
      * collections.
      */
-    val collections: Map<FieldName, Set<Referencable>> = emptyMap()
+    val collections: Map<FieldName, Set<Referencable>> = emptyMap(),
+    /** Indication of the timestamp when this entity expires. */
+    val expirationTimestamp: Long = NO_EXPIRATION
 ) : Referencable {
     override fun tryDereference(): Referencable {
         return RawEntity(
             id = id,
+            expirationTimestamp = expirationTimestamp,
             singletons = singletons.mapValues { it.value?.tryDereference() },
             collections = collections.mapValues {
                 it.value.map { item -> item.tryDereference() }.toSet()
@@ -40,14 +43,17 @@ data class RawEntity(
     constructor(
         id: ReferenceId = NO_REFERENCE_ID,
         singletonFields: Set<FieldName> = emptySet(),
-        collectionFields: Set<FieldName> = emptySet()
+        collectionFields: Set<FieldName> = emptySet(),
+        expirationTimestamp: Long = NO_EXPIRATION
     ) : this(
         id,
         singletonFields.associateWith { null },
-        collectionFields.associateWith { emptySet<Referencable>() }
+        collectionFields.associateWith { emptySet<Referencable>() },
+        expirationTimestamp
     )
 
     companion object {
         const val NO_REFERENCE_ID = "NO REFERENCE ID"
+        const val NO_EXPIRATION: Long = -1
     }
 }
