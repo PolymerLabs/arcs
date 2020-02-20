@@ -11,7 +11,7 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Handle
+import arcs.sdk.wasm.WasmHandle
 
 class TTTBoard : AbstractTTTBoard() {
     private var clicks = 0.0
@@ -32,7 +32,7 @@ class TTTBoard : AbstractTTTBoard() {
         }
     }
 
-    override fun onHandleUpdate(handle: Handle) = renderOutput()
+    override fun onHandleUpdate(handle: WasmHandle) = renderOutput()
 
     override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val gs = handles.gameState.fetch() ?: TTTBoard_GameState()

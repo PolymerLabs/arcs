@@ -23,5 +23,6 @@ arcs_kt_particles(
     name = "JsonStore",
     srcs = ["JsonStore.kt"],
     package = "arcs.tutorials",
+    platforms = ["wasm"],
     deps = [":store_schemas"],
 )

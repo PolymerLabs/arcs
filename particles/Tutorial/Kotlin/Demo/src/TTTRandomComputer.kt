@@ -11,10 +11,10 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Handle
+import arcs.sdk.wasm.WasmHandle
 
 class TTTRandomComputer : AbstractTTTRandomComputer() {
-    override fun onHandleSync(handle: Handle, allSynced: Boolean) = getMove(handles.gameState.fetch())
+    override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) = getMove(handles.gameState.fetch())
 
     init {
         handles.gameState.onUpdate { gameState ->

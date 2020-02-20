@@ -11,7 +11,7 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Handle
+import arcs.sdk.wasm.WasmHandle
 
 class TTTGame : AbstractTTTGame() {
     private val defaultGame = TTTGame_GameState(
@@ -94,7 +94,7 @@ class TTTGame : AbstractTTTGame() {
         renderOutput()
     }
 
-    override fun onHandleSync(handle: Handle, allSynced: Boolean) {
+    override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) {
         if (handles.gameState.fetch()?.board == null) {
             handles.gameState.set(defaultGame)
         }

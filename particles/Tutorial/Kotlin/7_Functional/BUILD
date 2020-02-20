@@ -23,5 +23,6 @@ arcs_kt_particles(
     name = "Functional",
     srcs = glob(["*.kt"]),
     package = "arcs.tutorials",
+    platforms = ["wasm"],
     deps = [":functional_schemas"],
 )
