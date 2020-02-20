@@ -30,7 +30,7 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.ParticleSpec
 import arcs.core.data.PlanPartition
 import arcs.core.data.Schema
-=import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleIdentifier

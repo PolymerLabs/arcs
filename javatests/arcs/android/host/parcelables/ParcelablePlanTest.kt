@@ -17,7 +17,7 @@ import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.Schema
-simport arcs.core.data.SchemaFields
+import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.ParticleSpec
