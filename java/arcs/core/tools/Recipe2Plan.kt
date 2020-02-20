@@ -1,5 +1,7 @@
 package arcs.core.tools
 
+import arcs.core.data.FieldType
+import arcs.core.data.SchemaFields
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -27,10 +29,10 @@ class Recipe2Plan : CliktCommand(
             echo("$manifest --> $outputFile")
 
             val man = parse(manifest.readText())
-            echo(man.toString())
-            echo(man.schemas.toString())
-            echo(man.schemas.first().toString())
-            outputFile(manifest).writeText(manifest.readText())
+            val test = SchemaFields(mapOf("test" to FieldType.Number), mapOf())
+            val debug = man.schemas.toString() + "\n" + test.toString()
+            echo(debug)
+            outputFile(manifest).writeText(debug)
         }
     }
 

@@ -85,11 +85,13 @@ async function toFieldsLiteral(fields: Dictionary<any>) {
   const updateField = async field => {
     let out = {};
     let isSingleton = true;
+
     switch(field.kind) {
       case 'schema-reference':
         out['tag'] = 'EntityRef';
         out['schemaHash'] = await field.schema.hash();
         break;
+
       case 'schema-collection':
         out = (await updateField(field.schema))[1];
         isSingleton = false;
@@ -122,7 +124,7 @@ async function toSchemaLiteral(s: Schema) {
 
   return {
      names: lit.names.map(toSchemaName),
-     fields: toFieldsLiteral(s.fields),
+     fields: await toFieldsLiteral(s.fields),
      description: s.description,
      hash: await s.hash(),
   }
