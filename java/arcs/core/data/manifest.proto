@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package arcs;
+
+option java_package = "arcs.core.data";
+option java_multiple_files = true;
+
+// Placeholder for the manifest proto format.
+// Used to validate the encoding and decoding infra.
+
+message Recipe {
+  string name = 1;
+
+  repeated string handles = 2;
+
+  repeated string particles = 3;
+}
+
+message Manifest {
+  repeated Recipe recipes = 1;
+}

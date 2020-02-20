@@ -1,0 +1,12 @@
+external particle Writer
+  data: writes Thing {name: Text}
+
+external particle Reader
+  data: reads Thing {name: Text}
+
+recipe PassThrough
+  thing: create
+  Writer
+    data: writes thing
+  Reader
+    data: reads thing
