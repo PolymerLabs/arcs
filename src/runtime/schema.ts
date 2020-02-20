@@ -13,6 +13,7 @@ import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
 import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
+import {Flags} from './flags.js';
 import {SchemaType} from './manifest-ast-nodes.js';
 import {Refinement, AtleastAsSpecific} from './refiner.js';
 
