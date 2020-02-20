@@ -1,6 +1,6 @@
 package arcs.tutorials.blackjack
 
-import arcs.sdk.Handle
+import arcs.sdk.wasm.WasmHandle
 import kotlin.random.Random
 
 class DealingShoe : AbstractDealingShoe() {
@@ -15,7 +15,7 @@ class DealingShoe : AbstractDealingShoe() {
     override fun populateModel(slotName: String, model: Map<String, Any>) =
         model + mapOf("nextCard" to handles.nextCard.toString())
 
-    override fun onHandleUpdate(handle: Handle) {
+    override fun onHandleUpdate(handle: WasmHandle) {
         if (handle.name != "cardRequest") return
         val request = handles.cardRequest.fetch() ?: return
         val card = pickACard() ?: return

@@ -23,5 +23,6 @@ arcs_kt_particles(
     name = "Handles",
     srcs = glob(["*.kt"]),
     package = "arcs.tutorials",
+    platforms = ["wasm"],
     deps = [":handles_schemas"],
 )

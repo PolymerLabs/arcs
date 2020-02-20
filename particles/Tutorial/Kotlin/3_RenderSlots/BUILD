@@ -16,5 +16,6 @@ arcs_kt_particles(
     name = "RenderSlots",
     srcs = glob(["*.kt"]),
     package = "arcs.tutorials",
+    platforms = ["wasm"],
     deps = [":schemas"],
 )

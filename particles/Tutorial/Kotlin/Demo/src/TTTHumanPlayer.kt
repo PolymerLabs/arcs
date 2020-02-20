@@ -11,8 +11,6 @@
 
 package arcs.tutorials.tictactoe
 
-import arcs.sdk.Handle
-
 class TTTHumanPlayer : AbstractTTTHumanPlayer() {
 
     init {

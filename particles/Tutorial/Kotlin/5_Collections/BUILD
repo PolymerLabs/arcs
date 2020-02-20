@@ -23,5 +23,6 @@ arcs_kt_particles(
     name = "Collections",
     srcs = ["Collections.kt"],
     package = "arcs.tutorials",
+    platforms = ["wasm"],
     deps = [":collections_schemas"],
 )
