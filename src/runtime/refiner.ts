@@ -1200,9 +1200,18 @@ export class Fraction {
       this.den = new Multinomial({[CONSTANT]: 1});
       return;
     }
-    if (this.num.isConstant() && this.den.isConstant()) {
-      this.num = new Multinomial({[CONSTANT]: this.num.terms[CONSTANT]/this.den.terms[CONSTANT]});
-      this.den = new Multinomial({[CONSTANT]: 1});
+    if (this.num.isConstant() &&
+        this.den.isConstant() &&
+        Number.isInteger(this.num.terms[CONSTANT]) &&
+        Number.isInteger(this.den.terms[CONSTANT])
+    ) {
+      const gcd = (a: number, b: number) => {
+        a = Math.abs(a); b = Math.abs(b);
+        return b === 0 ? a : gcd(b, a%b);
+      };
+      const g = gcd(this.num.terms[CONSTANT], this.den.terms[CONSTANT]);
+      this.num = new Multinomial({[CONSTANT]: this.num.terms[CONSTANT]/g});
+      this.den = new Multinomial({[CONSTANT]: this.den.terms[CONSTANT]/g});
       return;
     }
     // TODO(ragdev): Fractions can be reduced further by factoring out the gcd of
@@ -1258,12 +1267,6 @@ export class Term {
         delete this._indeterminates[indeterminate];
       }
     }
-    const ordered = {};
-    const unordered = this._indeterminates;
-    Object.keys(unordered).sort().forEach((key) => {
-      ordered[key] = unordered[key];
-    });
-    this._indeterminates = ordered;
     return this._indeterminates;
   }
 
@@ -1272,7 +1275,13 @@ export class Term {
   }
 
   toKey(): string {
-    return JSON.stringify(this.indeterminates);
+    // sort the indeterminates
+    const ordered = {};
+    const unordered = this.indeterminates;
+    Object.keys(unordered).sort().forEach((key) => {
+      ordered[key] = unordered[key];
+    });
+    return JSON.stringify(ordered);
   }
 
   static fromKey(key: string): Term {
@@ -1337,13 +1346,9 @@ export class Multinomial {
   }
 
   static add(a: Multinomial, b: Multinomial): Multinomial {
-    const sum = new Multinomial();
-    for (const [term, coeff] of Object.entries(a.terms)) {
-      const val = coeff + (sum.terms.hasOwnProperty(term) ? sum.terms[term] : 0);
-      sum.terms[term] = val;
-    }
+    const sum = Multinomial.copyOf(a);
     for (const [term, coeff] of Object.entries(b.terms)) {
-      const val = coeff + (sum.terms.hasOwnProperty(term) ? sum.terms[term] : 0);
+      const val = (sum.terms[term] || 0) + coeff;
       sum.terms[term] = val;
     }
     return sum;
@@ -1368,10 +1373,10 @@ export class Multinomial {
         const tprod = Term.fromKey(aKey);
         const bterm = Term.fromKey(bKey);
         for (const [indeterminate, power] of Object.entries(bterm.indeterminates)) {
-          const val = power + (tprod.indeterminates.hasOwnProperty(indeterminate) ? tprod.indeterminates[indeterminate] : 0);
+          const val = power + (tprod.indeterminates[indeterminate] || 0);
           tprod.indeterminates[indeterminate] = val;
         }
-        const val = acoeff*bcoeff + (prod.terms.hasOwnProperty(tprod.toKey()) ? prod.terms[tprod.toKey()] : 0);
+        const val = acoeff*bcoeff + (prod.terms[tprod.toKey()] || 0);
         prod.terms[tprod.toKey()] = val;
       }
     }
@@ -1427,7 +1432,7 @@ export class Multinomial {
       const indeterminate = this.getIndeterminates().values().next().value;
       // TODO(ragdev): Implement a neater way to get the leading coefficient
       const leadingCoeff = this.terms[`{"${indeterminate}":1}`];
-      const cnst = this.terms.hasOwnProperty(CONSTANT) ? this.terms[CONSTANT] : 0;
+      const cnst = this.terms[CONSTANT] || 0;
       if (leadingCoeff < 0) {
         operator.flip();
       }
@@ -1436,21 +1441,24 @@ export class Multinomial {
         new NumberPrimitive(-cnst/leadingCoeff),
         operator);
     }
+    const termToExpression = (tKey: string, tCoeff: number) => {
+      const termExpr = Term.fromKey(tKey).toExpression();
+      if (tCoeff === 1) {
+        return termExpr;
+      }
+      return new BinaryExpression(
+        new NumberPrimitive(tCoeff),
+        termExpr,
+        new RefinementOperator(Op.MUL)
+      );
+    };
     let expr = null;
     let cnst = 0;
     for (const [tKey, tCoeff] of Object.entries(this.terms)) {
       if (tKey === CONSTANT) {
         cnst = tCoeff;
       } else {
-        const term = Term.fromKey(tKey);
-        let termExpr = term.toExpression();
-        if (tCoeff !== 1) {
-          termExpr = new BinaryExpression(
-            new NumberPrimitive(tCoeff),
-            termExpr,
-            new RefinementOperator(Op.MUL)
-          );
-        }
+        const termExpr = termToExpression(tKey, tCoeff);
         expr = expr ? new BinaryExpression(expr, termExpr, new RefinementOperator(Op.ADD)) : termExpr;
       }
     }
