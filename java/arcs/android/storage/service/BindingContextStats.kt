@@ -13,6 +13,8 @@ package arcs.android.storage.service
 
 import arcs.core.util.RunningStatistics
 import kotlin.coroutines.CoroutineContext
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -24,8 +26,15 @@ import kotlinx.coroutines.sync.withLock
 interface BindingContextStatisticsSink {
     fun measure(context: CoroutineContext, block: suspend () -> Unit)
 
-    // Must be called within a binder thread context instead of
-    // a coroutine dispatcher thread context.
+    /**
+     * Traces a binder transaction which executes [block] and is identified by [tag].
+     *
+     * This enclosing trace api should be called synchronously for accurate tracing result like
+     * entry and exit timestamps which are aligned at UI representation i.e. Chrome tracing UI.
+     * If it is called asynchronously i.e. at a coroutine dispatcher, the recorded timestamps will
+     * not reflect the actual timing properly, e.g. timestamps are recorded after the corresponding
+     * binder thread finished. Besides, the tracked level of binder concurrency will be incorrect.
+     */
     fun traceTransaction(tag: String? = null, block: () -> Unit)
 }
 
@@ -62,7 +71,7 @@ class BindingContextStatsImpl : BindingContextStatistics {
     override val roundtripStdDev: Double
         get() = runningStats.standardDeviation
     val transactions: Transactions
-        get() = Transactions(/*mutex=*/null, _transactions.current, _transactions.peak)
+        get() = Transactions(_transactions.current, _transactions.peak)
 
     override fun measure(context: CoroutineContext, block: suspend () -> Unit) {
         val startTime = System.currentTimeMillis()
@@ -78,34 +87,48 @@ class BindingContextStatsImpl : BindingContextStatistics {
 
     override fun traceTransaction(tag: String?, block: () -> Unit) {
         // TODO(ianchang): Inject Android system traces with [tag]
-        ++_transactions
-        block()
-        --_transactions
+        _transactions++
+        try {
+            block()
+        } finally {
+            _transactions--
+        }
     }
 
     companion object {
-        private var _transactions = Transactions(Mutex())
+        private var _transactions = Transactions()
     }
 }
 
-data class Transactions(val mutex: Mutex? = null, var current: Int = 0, var peak: Int = 0) {
-    operator fun inc(): Transactions {
-        return apply {
-            mutex?.let {
-                while (!mutex.tryLock()) {}
-                peak = maxOf(++current, peak)
-                mutex.unlock()
-            }
-        }
+/**
+ * Maintains stats and information of transactions at a binding context.
+ *
+ * Uses the ++ operator for entering a transaction and the -- operator for exiting.
+ * Accesses [current] for querying current concurrency level and [peak] for peak concurrency
+ * level even seen.
+ */
+class Transactions(initCurrent: Int = 0, initPeak: Int = 0) {
+    private val stats = atomic(TransactionStat(initCurrent, initPeak))
+    val current
+        get() = stats.value.current
+    val peak
+        get() = stats.value.peak
+
+    operator fun inc(): Transactions = apply {
+        // The atomic TransactionStat update must be done quickly since the nature
+        // of atomic<T> is implemented as:
+        //   while(_someone_cut_in_my_update_) {
+        //     /** redo update (re-visit the update closure) */
+        //   }
+        // Given that be careful of what will be done at the update closure which may
+        // be executed multiple times in practice.
+        stats.update { s -> TransactionStat(s.current + 1, maxOf(s.current + 1, s.peak)) }
     }
 
-    operator fun dec(): Transactions {
-        return apply {
-            mutex?.let {
-                while (!mutex.tryLock()) {}
-                --current
-                mutex.unlock()
-            }
-        }
+    operator fun dec(): Transactions = apply {
+        stats.update { s -> TransactionStat(s.current - 1, s.peak) }
     }
+
+    /** Tracks current concurrency level at [current] and peak concurrency level at [peak] */
+    data class TransactionStat(val current: Int, val peak: Int)
 }

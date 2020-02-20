@@ -117,7 +117,7 @@ class StorageService : ResurrectorService() {
                 |  - 75th percentile: ${statsPercentiles.seventyFifth}
                 |  - 90th percentile: ${statsPercentiles.ninetieth}
                 |  - 99th percentile: ${statsPercentiles.ninetyNinth}
-                |Transactions Statistics (level of concurrency):
+                |Transaction Statistics (level of concurrency):
                 |  - Current: ${stats.transactions.current}
                 |  - Peak: ${stats.transactions.peak}
             """.trimMargin("|")
