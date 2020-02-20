@@ -21,5 +21,5 @@ set -x
 ./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/... //src/... //particles/...
 ./tools/sigh testShells
 ./tools/sigh lint
-./tools/sigh test
+./tools/sigh test --all
 
