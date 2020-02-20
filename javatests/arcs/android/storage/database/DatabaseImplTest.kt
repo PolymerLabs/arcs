@@ -166,28 +166,91 @@ class DatabaseImplTest {
 
     @Test
     fun createEntityStorageKeyId_createsNewIds() = runBlockingTest {
-        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
-        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
-        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key3"), "eid3", 123L, db)).isEqualTo(3L)
+        assertThat(
+            database.createEntityStorageKeyId(
+                DummyStorageKey("key1"),
+                "eid1",
+                123L,
+                VERSION_MAP,
+                db
+            )
+        ).isEqualTo(1L)
+
+        assertThat(
+            database.createEntityStorageKeyId(
+                DummyStorageKey("key2"),
+                "eid2",
+                123L,
+                VERSION_MAP,
+                db
+            )
+        ).isEqualTo(2L)
+
+        assertThat(
+            database.createEntityStorageKeyId(
+                DummyStorageKey("key3"),
+                "eid3",
+                123L,
+                VERSION_MAP,
+                db
+            )
+        ).isEqualTo(3L)
     }
 
     @Test
     fun createEntityStorageKeyId_replacesExistingIds() = runBlockingTest {
         // Insert keys for the first time.
-        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(1L)
-        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(2L)
+
+        assertThat(
+            database.createEntityStorageKeyId(
+                DummyStorageKey("key1"),
+                "eid1",
+                123L,
+                VERSION_MAP,
+                db
+            )
+        ).isEqualTo(1L)
+
+        assertThat(
+            database.createEntityStorageKeyId(
+                DummyStorageKey("key2"),
+                "eid2",
+                123L,
+                VERSION_MAP,
+                db
+            )
+        ).isEqualTo(2L)
+
         // Inserting again should overwrite them.
-        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key1"), "eid1", 123L, db)).isEqualTo(3L)
-        assertThat(database.createEntityStorageKeyId(DummyStorageKey("key2"), "eid2", 123L, db)).isEqualTo(4L)
+
+        assertThat(
+            database.createEntityStorageKeyId(
+                DummyStorageKey("key1"),
+                "eid1",
+                123L,
+                VERSION_MAP,
+                db
+            )
+        ).isEqualTo(3L)
+
+        assertThat(
+            database.createEntityStorageKeyId(
+                DummyStorageKey("key2"),
+                "eid2",
+                123L,
+                VERSION_MAP,
+                db
+            )
+        ).isEqualTo(4L)
     }
 
     @Test
     fun createEntityStorageKeyId_wrongEntityId() = runBlockingTest {
         val key = DummyStorageKey("key")
-        database.createEntityStorageKeyId(key, "correct-entity-id", 123L, db)
+        database.createEntityStorageKeyId(key, "correct-entity-id", 123L, VERSION_MAP, db)
 
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.createEntityStorageKeyId(key, "incorrect-entity-id", 123L, db)
+            database.createEntityStorageKeyId(key, "incorrect-entity-id", 123L, VERSION_MAP, db)
         }
         assertThat(exception).hasMessageThat().isEqualTo(
             "Expected storage key dummy://key to have entity ID incorrect-entity-id but was " +
@@ -283,10 +346,14 @@ class DatabaseImplTest {
     fun insertAndGet_entity_newEmptyEntity() = runBlockingTest {
         val key = DummyStorageKey("key")
         val schema = newSchema("hash")
-        val entity = Entity("entity", schema, mutableMapOf())
+        val entity = DatabaseData.Entity(
+            Entity("entity", schema, mutableMapOf()),
+            DATABASE_VERSION,
+            VERSION_MAP
+        )
 
         database.insertOrUpdate(key, entity)
-        val entityOut = database.getEntity(key, schema).entity
+        val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity)
     }
@@ -309,21 +376,26 @@ class DatabaseImplTest {
                 )
             )
         )
-        val entity = Entity(
-            "entity",
-            schema,
-            mutableMapOf(
-                "text" to "abc",
-                "bool" to true,
-                "num" to 123.0,
-                "texts" to setOf("abc", "def"),
-                "bools" to setOf(true, false),
-                "nums" to setOf(123.0, 456.0)
-            )
+        val entity = DatabaseData.Entity(
+            Entity(
+                "entity",
+                schema,
+                mutableMapOf(
+                    "text" to "abc",
+                    "bool" to true,
+                    "num" to 123.0,
+                    "texts" to setOf("abc", "def"),
+                    "bools" to setOf(true, false),
+                    "nums" to setOf(123.0, 456.0)
+                )
+            ),
+            DATABASE_VERSION,
+            VERSION_MAP
         )
 
         database.insertOrUpdate(key, entity)
-        val entityOut = database.getEntity(key, schema).entity
+        database.dumpTables("storage_keys", "entities", "fields", "field_values")
+        val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity)
     }
@@ -345,30 +417,50 @@ class DatabaseImplTest {
                 collections = mapOf("otherChildren" to FieldType.EntityRef("child"))
             )
         )
-        val alice = Entity("alice-id", childSchema, mutableMapOf("name" to "Alice"))
-        val bob = Entity("bob-id", childSchema, mutableMapOf("name" to "Bob"))
-        val charlie = Entity("charlie-id", childSchema, mutableMapOf("name" to "Charlie"))
-        val parentEntity = Entity(
-            "parent-id",
-            schema,
-            mutableMapOf(
-                "favouriteChild" to Reference(
-                    "alice-id",
-                    DummyStorageKey("alice-key"),
-                    VersionMap()
-                ),
-                "otherChildren" to setOf(
-                    Reference("bob-id", DummyStorageKey("bob-key"), VersionMap()),
-                    Reference("charlie-id", DummyStorageKey("charlie-key"), VersionMap())
+        val alice = DatabaseData.Entity(
+            Entity("alice-id", childSchema, mutableMapOf("name" to "Alice")),
+            1,
+            VersionMap("alice" to 1)
+        )
+        val bob = DatabaseData.Entity(
+            Entity("bob-id", childSchema, mutableMapOf("name" to "Bob")),
+            1,
+            VersionMap("bob" to 2)
+        )
+        val charlie = DatabaseData.Entity(
+            Entity("charlie-id", childSchema, mutableMapOf("name" to "Charlie")),
+            1,
+            VersionMap("charlie" to 3)
+        )
+        val parentEntity = DatabaseData.Entity(
+            Entity(
+                "parent-id",
+                schema,
+                mutableMapOf(
+                    "favouriteChild" to Reference(
+                        "alice-id",
+                        DummyStorageKey("alice-key"),
+                        VersionMap("alice" to 1)
+                    ),
+                    "otherChildren" to setOf(
+                        Reference("bob-id", DummyStorageKey("bob-key"), VersionMap("bob" to 2)),
+                        Reference(
+                            "charlie-id",
+                            DummyStorageKey("charlie-key"),
+                            VersionMap("charlie" to 3)
+                        )
+                    )
                 )
-            )
+            ),
+            DATABASE_VERSION,
+            VERSION_MAP
         )
         database.insertOrUpdate(DummyStorageKey("alice-key"), alice)
         database.insertOrUpdate(DummyStorageKey("bob-key"), bob)
         database.insertOrUpdate(DummyStorageKey("charlie-key"), charlie)
 
         database.insertOrUpdate(key, parentEntity)
-        val entityOut = database.getEntity(key, schema).entity
+        val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(parentEntity)
     }
@@ -396,44 +488,52 @@ class DatabaseImplTest {
             )
         )
         val entityId = "entity"
-        val entity1 = Entity(
-            entityId,
-            schema,
-            mutableMapOf(
-                "text" to "aaa",
-                "bool" to true,
-                "num" to 111.0,
-                "ref" to Reference("child-id-1", DummyStorageKey("child-ref-1"), VersionMap()),
-                "texts" to setOf("aaa", "bbb"),
-                "bools" to setOf(true),
-                "nums" to setOf(11.0, 111.0),
-                "refs" to setOf(
-                    Reference("child-id-2", DummyStorageKey("child-ref-2"), VersionMap()),
-                    Reference("child-id-3", DummyStorageKey("child-ref-3"), VersionMap())
+        val entity1 = DatabaseData.Entity(
+            Entity(
+                entityId,
+                schema,
+                mutableMapOf(
+                    "text" to "aaa",
+                    "bool" to true,
+                    "num" to 111.0,
+                    "ref" to Reference("child-id-1", DummyStorageKey("child-ref-1"), VersionMap("child-1" to 1)),
+                    "texts" to setOf("aaa", "bbb"),
+                    "bools" to setOf(true),
+                    "nums" to setOf(11.0, 111.0),
+                    "refs" to setOf(
+                        Reference("child-id-2", DummyStorageKey("child-ref-2"), VersionMap("child-2" to 2)),
+                        Reference("child-id-3", DummyStorageKey("child-ref-3"), VersionMap("child-3" to 3))
+                    )
                 )
-            )
+            ),
+            1,
+            VersionMap("actor" to 1)
         )
-        val entity2 = Entity(
-            entityId,
-            schema,
-            mutableMapOf(
-                "text" to "zzz",
-                "bool" to false,
-                "num" to 999.0,
-                "ref" to Reference("child-id-9", DummyStorageKey("child-ref-9"), VersionMap()),
-                "texts" to setOf("zzz", "yyy"),
-                "bools" to setOf(false),
-                "nums" to setOf(99.0, 999.0),
-                "refs" to setOf(
-                    Reference("child-id-8", DummyStorageKey("child-ref-8"), VersionMap()),
-                    Reference("child-id-7", DummyStorageKey("child-ref-7"), VersionMap())
+        val entity2 = DatabaseData.Entity(
+            Entity(
+                entityId,
+                schema,
+                mutableMapOf(
+                    "text" to "zzz",
+                    "bool" to false,
+                    "num" to 999.0,
+                    "ref" to Reference("child-id-9", DummyStorageKey("child-ref-9"), VersionMap("child-9" to 9)),
+                    "texts" to setOf("zzz", "yyy"),
+                    "bools" to setOf(false),
+                    "nums" to setOf(99.0, 999.0),
+                    "refs" to setOf(
+                        Reference("child-id-8", DummyStorageKey("child-ref-8"), VersionMap("child-8" to 8)),
+                        Reference("child-id-7", DummyStorageKey("child-ref-7"), VersionMap("child-7" to 7))
+                    )
                 )
-            )
+            ),
+            1,
+            VersionMap("actor" to 2)
         )
 
         database.insertOrUpdate(key, entity1)
         database.insertOrUpdate(key, entity2)
-        val entityOut = database.getEntity(key, schema).entity
+        val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity2)
     }
@@ -453,15 +553,19 @@ class DatabaseImplTest {
                 )
             )
         )
-        val entity = Entity(
-            "entity",
-            schema,
-            mutableMapOf("texts" to null, "refs" to null)
+        val entity = DatabaseData.Entity(
+            Entity(
+                "entity",
+                schema,
+                mutableMapOf("texts" to null, "refs" to null)
+            ),
+            DATABASE_VERSION,
+            VERSION_MAP
         )
 
         database.insertOrUpdate(key, entity)
-        val entityOut = database.getEntity(key, schema).entity
-        assertThat(entityOut.data).isEmpty()
+        val entityOut = database.getEntity(key, schema)
+        assertThat(entityOut.entity.data).isEmpty()
     }
 
     @Test
@@ -479,15 +583,19 @@ class DatabaseImplTest {
                 )
             )
         )
-        val entity = Entity(
-            "entity",
-            schema,
-            mutableMapOf("texts" to setOf<String>(), "refs" to setOf<Reference>())
+        val entity = DatabaseData.Entity(
+            Entity(
+                "entity",
+                schema,
+                mutableMapOf("texts" to setOf<String>(), "refs" to setOf<Reference>())
+            ),
+            DATABASE_VERSION,
+            VERSION_MAP
         )
 
         database.insertOrUpdate(key, entity)
-        val entityOut = database.getEntity(key, schema).entity
-        assertThat(entityOut.data).isEmpty()
+        val entityOut = database.getEntity(key, schema)
+        assertThat(entityOut.entity.data).isEmpty()
     }
 
     @Test
@@ -499,12 +607,16 @@ class DatabaseImplTest {
                 collections = mapOf("texts" to FieldType.Text)
             )
         )
-        val entity = Entity(
-            "entity",
-            schema,
-            mutableMapOf(
-                "texts" to listOf("aaa", "bbb") // Should be a Set, not a List.
-            )
+        val entity = DatabaseData.Entity(
+            Entity(
+                "entity",
+                schema,
+                mutableMapOf(
+                    "texts" to listOf("aaa", "bbb") // Should be a Set, not a List.
+                )
+            ),
+            DATABASE_VERSION,
+            VERSION_MAP
         )
 
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
@@ -526,13 +638,19 @@ class DatabaseImplTest {
         )
 
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.insertOrUpdate(DummyStorageKey("key"), Entity(
-                "entity",
-                schema,
-                mutableMapOf(
-                    "ref" to "abc" // Should be a Reference.
+            database.insertOrUpdate(
+                DummyStorageKey("key"),
+                DatabaseData.Entity(
+                    Entity(
+                        "entity",
+                        schema,
+                        // Should be a Reference.
+                        mutableMapOf("ref" to "abc")
+                    ),
+                    DATABASE_VERSION,
+                    VERSION_MAP
                 )
-            ))
+            )
         }
         assertThat(exception).hasMessageThat().isEqualTo(
             "Expected field value to be a Reference but was abc."
@@ -552,13 +670,19 @@ class DatabaseImplTest {
         )
 
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.insertOrUpdate(DummyStorageKey("key"), Entity(
-                "entity",
-                schema,
-                mutableMapOf(
-                    "refs" to setOf("abc") // Should be a Reference.
+            database.insertOrUpdate(
+                DummyStorageKey("key"),
+                DatabaseData.Entity(
+                    Entity(
+                        "entity",
+                        schema,
+                        // Should be Set<Reference>.
+                        mutableMapOf("refs" to setOf("abc"))
+                    ),
+                    DATABASE_VERSION,
+                    VERSION_MAP
                 )
-            ))
+            )
         }
         assertThat(exception).hasMessageThat().isEqualTo(
             "Expected element in collection to be a Reference but was abc."
@@ -583,7 +707,7 @@ class DatabaseImplTest {
             values = emptySet(),
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
 
         database.insertOrUpdate(key, inputCollection)
@@ -599,12 +723,12 @@ class DatabaseImplTest {
         val schema = newSchema("hash")
         val inputCollection = DatabaseData.Collection(
             values = setOf(
-                Reference("ref1", backingKey, VersionMap()),
-                Reference("ref2", backingKey, VersionMap())
+                Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+                Reference("ref2", backingKey, VersionMap("ref2" to 2))
             ),
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
 
         database.insertOrUpdate(collectionKey, inputCollection)
@@ -619,14 +743,14 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val values = mutableSetOf(
-            Reference("ref", backingKey, VersionMap()),
-            Reference("ref-to-remove", backingKey, VersionMap())
+            Reference("ref", backingKey, VersionMap("ref" to 1)),
+            Reference("ref-to-remove", backingKey, VersionMap("ref-to-remove" to 2))
         )
         val inputCollection1 = DatabaseData.Collection(
             values = values,
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(collectionKey, inputCollection1)
 
@@ -637,7 +761,7 @@ class DatabaseImplTest {
         assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection2)
 
         // Test addition of new elements.
-        values.add(Reference("new-ref", backingKey, VersionMap()))
+        values.add(Reference("new-ref", backingKey, VersionMap("new-ref" to 3)))
         val inputCollection3 = inputCollection2.copy(values = values)
         database.insertOrUpdate(collectionKey, inputCollection3)
         assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection3)
@@ -667,7 +791,7 @@ class DatabaseImplTest {
             reference = null,
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
 
         database.insertOrUpdate(key, inputSingleton)
@@ -682,10 +806,10 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val inputSingleton = DatabaseData.Singleton(
-            reference = Reference("ref", backingKey, VersionMap()),
+            reference = Reference("ref", backingKey, VersionMap("ref" to 1)),
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
 
         database.insertOrUpdate(singletonKey, inputSingleton)
@@ -700,16 +824,16 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val inputSingleton1 = DatabaseData.Singleton(
-            reference = Reference("ref", backingKey, VersionMap()),
+            reference = Reference("ref", backingKey, VersionMap("ref" to 1)),
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(singletonKey, inputSingleton1)
 
         // Test can change reference.
         val inputSingleton2 = inputSingleton1.copy(
-            reference = Reference("new-ref", backingKey, VersionMap())
+            reference = Reference("new-ref", backingKey, VersionMap("new-ref" to 2))
         )
         database.insertOrUpdate(singletonKey, inputSingleton2)
         assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton2)
@@ -737,7 +861,7 @@ class DatabaseImplTest {
         val entity = DatabaseData.Entity(
             entity = Entity("entity", schema, mutableMapOf()),
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(entityKey, entity)
 
@@ -764,7 +888,7 @@ class DatabaseImplTest {
             values = emptySet(),
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(collectionKey, collection)
 
@@ -791,7 +915,7 @@ class DatabaseImplTest {
             reference = null,
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(singletonKey, singleton)
 
@@ -817,7 +941,7 @@ class DatabaseImplTest {
         val entity = DatabaseData.Entity(
             entity = Entity("entity", schema, mutableMapOf()),
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(entityKey, entity)
 
@@ -842,7 +966,7 @@ class DatabaseImplTest {
         val entity = DatabaseData.Entity(
             entity = Entity("entity", schema, mutableMapOf()),
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(keyToKeep, entity)
         database.insertOrUpdate(keyToDelete, entity)
@@ -861,10 +985,10 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val collection = DatabaseData.Collection(
-            values = setOf(Reference("ref1", backingKey, VersionMap())),
+            values = setOf(Reference("ref1", backingKey, VersionMap("ref1" to 1))),
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(collectionKey, collection)
 
@@ -888,10 +1012,10 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val collection = DatabaseData.Collection(
-            values = setOf(Reference("ref1", backingKey, VersionMap())),
+            values = setOf(Reference("ref1", backingKey, VersionMap("ref1" to 1))),
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(keyToKeep, collection)
         database.insertOrUpdate(keyToDelete, collection)
@@ -910,10 +1034,10 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
         val singleton = DatabaseData.Singleton(
-            reference = Reference("ref1", backingKey, VersionMap()),
+            reference = Reference("ref1", backingKey, VersionMap("ref1" to 1)),
             schema = schema,
             databaseVersion = 1,
-            versionMap = VersionMap()
+            versionMap = VERSION_MAP
         )
         database.insertOrUpdate(singletonKey, singleton)
 
@@ -936,8 +1060,8 @@ class DatabaseImplTest {
         val keyToDelete = DummyStorageKey("key-to-delete")
         val backingKey = DummyStorageKey("backing")
         val schema = newSchema("hash")
-        val reference = Reference("ref1", backingKey, VersionMap())
-        val singleton = DatabaseData.Singleton(reference, schema, 1, VersionMap())
+        val reference = Reference("ref1", backingKey, VersionMap("ref1" to 1))
+        val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
         database.insertOrUpdate(keyToKeep, singleton)
         database.insertOrUpdate(keyToDelete, singleton)
 
@@ -974,6 +1098,9 @@ class DatabaseImplTest {
     companion object {
         /** The first free Type ID after all primitive types have been assigned. */
         private const val FIRST_ENTITY_TYPE_ID = 3
+
+        private const val DATABASE_VERSION = 1
+        private val VERSION_MAP = VersionMap("first" to 1, "second" to 2)
 
         private val TEXT_TYPE_ID = PrimitiveType.Text.ordinal.toLong()
         private val BOOLEAN_TYPE_ID = PrimitiveType.Boolean.ordinal.toLong()
