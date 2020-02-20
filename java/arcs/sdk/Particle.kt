@@ -36,12 +36,6 @@ abstract class HandleHolderBase(
 interface Particle {
 
     /**
-     * This field contains a reference to all of the [Particle]'s handles that were declared in
-     * the manifest.
-     */
-    val handles: HandleHolder
-
-    /**
      * React to handle updates.
      *
      * Called for handles when change events are received from the backing store.

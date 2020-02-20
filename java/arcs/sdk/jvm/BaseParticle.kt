@@ -12,4 +12,10 @@
 package arcs.sdk
 
 /** Implementation of [Particle] for the JVM. */
-abstract class BaseParticle : Particle
+abstract class BaseParticle : Particle {
+    /**
+     * This field contains a reference to all of the [Particle]'s handles that were declared in
+     * the manifest.
+     */
+    abstract val handles: HandleHolder
+}
