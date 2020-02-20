@@ -14,10 +14,13 @@ package arcs.sdk
 /**
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
  * used by [Particle]s.
+ *
+ * @property map Key is a handle name, value is the corresponding [Handle].
+ * @property entitySpecs Key is a handle name, value is the corresponding [EntitySpec].
  */
 interface HandleHolder {
-    val map: MutableMap<String, Handle>
-    val entitySpecs: MutableMap<String, EntitySpec<out Entity>>
+    val map: Map<String, Handle>
+    val entitySpecs: Map<String, EntitySpec<out Entity>>
 }
 
 /**
@@ -25,16 +28,16 @@ interface HandleHolder {
  * declared handles.
  */
 abstract class HandleHolderBase(
-    override val map: MutableMap<String, Handle> = mutableMapOf(),
-    override val entitySpecs: MutableMap<String, EntitySpec<out Entity>> = mutableMapOf()
+    override val map: Map<String, Handle>,
+    override val entitySpecs: Map<String, EntitySpec<out Entity>>
 ) : HandleHolder
 
 /** Base interface for all particles. */
 interface Particle {
 
     /**
-     * This field is provided in an abstract base class by the `schema2kotlin` code generator
-     * and contains all declared handles in the manifest.
+     * This field contains a reference to all of the [Particle]'s handles that were declared in
+     * the manifest.
      */
     val handles: HandleHolder
 

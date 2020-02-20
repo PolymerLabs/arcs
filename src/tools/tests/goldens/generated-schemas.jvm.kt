@@ -11,6 +11,7 @@ package arcs.sdk
 import arcs.sdk.*
 import arcs.core.data.RawEntity
 import arcs.core.data.util.toReferencable
+import arcs.core.data.util.ReferencablePrimitive
 
 class GoldInternal1() : JvmEntity {
 
@@ -46,16 +47,18 @@ class GoldInternal1() : JvmEntity {
             "val" to val_.toReferencable()
         )
     )
+
+    override fun toString() = "GoldInternal1(val_ = $val_)"
 }
 
 class GoldInternal1_Spec() : JvmEntitySpec<GoldInternal1> {
 
     override fun create() = GoldInternal1()
 
-    override fun deserialize(data: Map<String, Any?>): GoldInternal1 {
+    override fun deserialize(data: RawEntity): GoldInternal1 {
       // TODO: only handles singletons for now
       return create().copy(
-        val_ = (data["val_"] as? String) ?: ""
+        val_ = (data.singletons["val_"] as? ReferencablePrimitive<String>?)?.value ?: ""
       )
     }
 
@@ -133,32 +136,38 @@ class Gold_Data() : JvmEntity {
             "flg" to flg.toReferencable()
         )
     )
+
+    override fun toString() = "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 }
 
 class Gold_Data_Spec() : JvmEntitySpec<Gold_Data> {
 
     override fun create() = Gold_Data()
 
-    override fun deserialize(data: Map<String, Any?>): Gold_Data {
+    override fun deserialize(data: RawEntity): Gold_Data {
       // TODO: only handles singletons for now
       return create().copy(
-        num = (data["num"] as? Double) ?: 0.0,
-        txt = (data["txt"] as? String) ?: "",
-        lnk = (data["lnk"] as? String) ?: "",
-        flg = (data["flg"] as? Boolean) ?: false
+        num = (data.singletons["num"] as? ReferencablePrimitive<Double>?)?.value ?: 0.0,
+        txt = (data.singletons["txt"] as? ReferencablePrimitive<String>?)?.value ?: "",
+        lnk = (data.singletons["lnk"] as? ReferencablePrimitive<String>?)?.value ?: "",
+        flg = (data.singletons["flg"] as? ReferencablePrimitive<Boolean>?)?.value ?: false
       )
     }
 
 }
 
 
-class GoldHandles(particle : BaseParticle) : HandleHolderBase() {
+class GoldHandles(
+    particle : BaseParticle
+) : HandleHolderBase(
+        mutableMapOf(),
+        mapOf(
+            "data" to Gold_Data_Spec(),
+            "alias" to Gold_Alias_Spec()
+        )
+    ) {
     val data: ReadableSingleton<Gold_Data> by map
     val alias: WritableSingleton<Gold_Alias> by map
-    init {
-      entitySpecs["data"] = Gold_Data_Spec()
-      entitySpecs["alias"] = Gold_Alias_Spec()
-    }
 }
 
 abstract class AbstractGold : BaseParticle() {

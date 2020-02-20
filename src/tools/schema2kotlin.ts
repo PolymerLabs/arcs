@@ -54,7 +54,7 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable'}
+${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable\nimport arcs.core.data.util.ReferencablePrimitive'}
 `;
   }
 
@@ -89,23 +89,38 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
             throw new Error(`Unsupported handle direction: ${connection.direction}`);
         }
       }
-      handleDecls.push(`val ${handleName}: ${handleInterfaceType} by map`);
-      specDecls.push(`entitySpecs["${handleName}"] = ${entityType}_Spec()`);
+      if (this.opts.wasm) {
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
+      } else {
+        specDecls.push(`"${handleName}" to ${entityType}_Spec()`);
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} by map`);
+      }
 
-      // handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
     }
     return `
-class ${particleName}Handles(particle : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}) : HandleHolderBase() {
-    ${handleDecls.join('\n    ')}
-    init {
-      ${specDecls.join('\n      ')}
-    }
+class ${particleName}Handles(
+    particle : ${this.getBaseParticle()}
+) ${this.getExtendsClause(specDecls)} {
+    ${handleDecls.join('\n    ')} 
 }
 
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
-    override val handles: ${particleName}Handles = ${particleName}Handles(this)
+    ${this.opts.wasm ? '' : 'override '}val handles: ${particleName}Handles = ${particleName}Handles(this)
 }
 `;
+  }
+
+  private getExtendsClause(entitySpecs): string {
+    return this.opts.wasm ? '' : `: HandleHolderBase(
+        mutableMapOf(), 
+        mapOf(
+            ${entitySpecs.join(',\n            ')}
+        )
+    )`;
+  }
+
+  private getBaseParticle(): string {
+    return this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle';
   }
 
   private getType(type: string): string {
@@ -162,7 +177,7 @@ class KotlinGenerator implements ClassGenerator {
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
 
     this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
-    this.fieldDeserializes.push(`${fixed} = (data["${fixed}"] as? ${type}) ?: ${defaultVal}`);
+    this.fieldDeserializes.push(`${fixed} = (data.singletons["${fixed}"] as? ReferencablePrimitive<${type}>?)?.value ?: ${defaultVal}`);
     this.fieldsForToString.push(`${fixed} = $${fixed}`);
   }
 
@@ -224,13 +239,13 @@ ${this.opts.wasm ? `
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 
     override fun create() = ${name}()
-    
-    override fun deserialize(data: Map<String, Any?>): ${name} {
+    ${!this.opts.wasm ? `
+    override fun deserialize(data: RawEntity): ${name} {
       // TODO: only handles singletons for now
       return create().copy(
         ${withFields(`${this.fieldDeserializes.join(', \n        ')}`)}
       )
-    }
+    }` : ''}
 ${this.opts.wasm ? `
     override fun decode(encoded: ByteArray): ${name}? {
         if (encoded.isEmpty()) return null
