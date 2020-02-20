@@ -11,8 +11,30 @@
 
 package arcs.sdk
 
+/**
+ * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
+ * used by [Particle]s.
+ *
+ * @property map Key is a handle name, value is the corresponding [Handle].
+ * @property entitySpecs Key is a handle name, value is the corresponding [EntitySpec].
+ */
+interface HandleHolder {
+    val map: Map<String, Handle>
+    val entitySpecs: Map<String, EntitySpec<out Entity>>
+}
+
+/**
+ * Base class used by `schema2kotlin` code-generator tool to generate a class containing all
+ * declared handles.
+ */
+abstract class HandleHolderBase(
+    override val map: Map<String, Handle>,
+    override val entitySpecs: Map<String, EntitySpec<out Entity>>
+) : HandleHolder
+
 /** Base interface for all particles. */
 interface Particle {
+
     /**
      * React to handle updates.
      *

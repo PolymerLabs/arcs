@@ -19,4 +19,11 @@ interface JvmEntity : Entity {
     fun serialize(): RawEntity
 }
 
-interface JvmEntitySpec<T : Entity> : EntitySpec<T>
+interface JvmEntitySpec<T : Entity> : EntitySpec<T> {
+    /**
+     * Takes a [Map] representing a serialized representation of a [RawEntity] from the
+     * storage layer, and converts it to a concrete entity class.
+     * TODO: replace this with kotlinx.serialization
+     */
+    fun deserialize(data: RawEntity): T
+}
