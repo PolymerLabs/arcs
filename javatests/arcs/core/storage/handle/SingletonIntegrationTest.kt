@@ -87,7 +87,7 @@ class SingletonIntegrationTest {
     fun settingOnA_showsUpInB() = runBlockingTest {
         val person = Person("Lou", 95, true)
 
-        singletonA.set(person.toRawEntity())
+        assertThat(singletonA.set(person.toRawEntity())).isTrue()
         assertThat(singletonA.fetch()).isEqualTo(person.toRawEntity())
         assertThat(singletonB.fetch()).isEqualTo(person.toRawEntity())
     }
