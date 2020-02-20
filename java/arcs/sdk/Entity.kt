@@ -11,8 +11,6 @@
 
 package arcs.sdk
 
-import arcs.core.data.RawEntity
-
 interface Entity {
     var internalId: String
     fun schemaHash(): String
@@ -26,11 +24,4 @@ interface Entity {
 interface EntitySpec<T : Entity> {
     /** Returns an empty new instance of [T]. */
     fun create(): T
-
-    /**
-     * Takes a [Map] representing a serialized representation of a [RawEntity] from the
-     * storage layer, and converts it to a concrete entity class.
-     * TODO: replace this with kotlinx.serialization
-     */
-    fun deserialize(data: RawEntity): T
 }
