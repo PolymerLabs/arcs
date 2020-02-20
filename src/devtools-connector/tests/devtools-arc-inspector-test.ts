@@ -62,6 +62,7 @@ describe('DevtoolsArcInspector', () => {
     assert.deepEqual(pecMsgBody, {
       id: `!${sessionId}:demo:particle1`,
       identifier: `!${sessionId}:demo:particle1`,
+      reinstantiate: false,
       stores: {
         foo: 'fooStore'
       },

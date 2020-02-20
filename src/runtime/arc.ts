@@ -294,7 +294,7 @@ export class Arc implements ArcInterface {
     const recipe = manifest.activeRecipe.clone();
     const options: IsValidOptions = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
-    await arc.instantiate(recipe);
+    await arc.instantiate(recipe, true);
 
     // TODO(shanestephens): if we decide that merging a 'use' handle adds any tags on that handle to
     // the handle in the underlying recipe, then we can remove this from here.
@@ -328,12 +328,12 @@ export class Arc implements ArcInterface {
     this.pec.reinstantiate(recipeParticle, info.stores);
   }
 
-  async _instantiateParticle(recipeParticle: Particle) {
+  async _instantiateParticle(recipeParticle: Particle, reinstantiate: boolean) {
     if (!recipeParticle.id) {
       recipeParticle.id = this.generateID('particle');
     }
     const info = await this._getParticleInstantiationInfo(recipeParticle);
-    this.pec.instantiate(recipeParticle, info.stores);
+    this.pec.instantiate(recipeParticle, info.stores, reinstantiate);
   }
 
   async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, UnifiedStore>}> {
@@ -444,14 +444,14 @@ export class Arc implements ArcInterface {
    *
    * Waits for completion of an existing Instantiate before returning.
    */
-  async instantiate(recipe: Recipe): Promise<void> {
+  async instantiate(recipe: Recipe, reinstantiate: boolean = false): Promise<void> {
     assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     assert(recipe.isCompatible(this.modality),
       `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
 
     const release = await this.instantiateMutex.acquire();
     try {
-      await this._doInstantiate(recipe);
+      await this._doInstantiate(recipe, reinstantiate);
     } finally {
       release();
     }
@@ -575,9 +575,9 @@ export class Arc implements ArcInterface {
   }
 
   // Critical section for instantiate,
-  private async _doInstantiate(recipe: Recipe): Promise<void> {
+  private async _doInstantiate(recipe: Recipe, reinstantiate: boolean = false): Promise<void> {
     const {particles} = await this.mergeIntoActiveRecipe(recipe);
-    await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
+    await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle, reinstantiate)));
     if (this.inspector) {
       await this.inspector.recipeInstantiated(particles, this.activeRecipe.toString());
     }

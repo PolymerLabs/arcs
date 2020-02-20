@@ -60,6 +60,11 @@ export class Particle {
   }
 
   /**
+   * Called after handles are writable, only on first initialization of particle.
+   */
+  onCreate(): void {}
+
+  /**
    * This sets the capabilities for this particle.  This can only
    * be called once.
    */
