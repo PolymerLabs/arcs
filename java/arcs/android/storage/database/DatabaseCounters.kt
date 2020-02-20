@@ -73,8 +73,8 @@ object DatabaseCounters {
     const val GET_PRIMITIVE_VALUE_TEXT = "get_primitive_value_text"
     const val GET_PRIMITIVE_VALUE_NUMBER = "get_primitive_value_number"
     const val GET_PRIMITIVE_COLLECTION_BOOLEAN = "get_primitive_collection_boolean"
-    const val GET_PRIMITIVE_COLLECTION_TEXT = "get_primitive_collection_text"
     const val GET_PRIMITIVE_COLLECTION_NUMBER = "get_primitive_collection_number"
+    const val GET_PRIMITIVE_COLLECTION_TEXT = "get_primitive_collection_text"
 
     /** [Array] of counter names for [DatabaseImpl.insertOrUpdate]. */
     val INSERT_UPDATE_COUNTERS = arrayOf(
@@ -120,7 +120,6 @@ object DatabaseCounters {
         GET_ENTITY_FIELD_VALUE_COLLECTION,
         GET_ENTITY_FIELD_VALUE_PRIMITIVE,
         GET_ENTITY_FIELD_VALUE_REFERENCE,
-        GET_ENTITY_FIELD_VALUE_PRIMITIVE_COLLECTION,
         GET_PRIMITIVE_COLLECTION_BOOLEAN,
         GET_PRIMITIVE_COLLECTION_NUMBER,
         GET_PRIMITIVE_COLLECTION_TEXT,
