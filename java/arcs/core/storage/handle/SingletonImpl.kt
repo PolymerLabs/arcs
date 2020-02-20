@@ -36,8 +36,8 @@ class SingletonImpl<T : Referencable>(
     suspend fun fetch() = value()
 
     /**
-     * Send a new value to the backing [StorageProxy]. If this returns false, your operation failed
-     * and should be retried.
+     * Sends a new value to the backing [StorageProxy]. If this returns `false`, your operation
+     * did not apply fully. Fetch the latest value and retry.
      * */
     suspend fun set(entity: T): Boolean {
         versionMap.increment()
@@ -45,8 +45,8 @@ class SingletonImpl<T : Referencable>(
     }
 
     /**
-     * Clears the value in the backing [StorageProxy]. If this returns false, your operation failed
-     * and should be retried.
+     * Clears the value in the backing [StorageProxy]. If this returns `false`, your operation
+     * did not apply fully. Fetch the latest value and retry.
      * */
     suspend fun clear(): Boolean {
         // Sync before clearing in order to get an updated versionMap. This ensures we can clear
