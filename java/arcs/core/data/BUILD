@@ -44,11 +44,11 @@ arcs_kt_library(
 )
 
 proto_library(
-    name = "manifest_proto",
-    srcs = ["manifest.proto"],
+    name = "recipe_proto",
+    srcs = ["recipe.proto"],
 )
 
 android_proto_library(
-    name = "manifest_android_proto",
-    deps = [":manifest_proto"],
+    name = "recipe_android_proto",
+    deps = [":recipe_proto"],
 )
