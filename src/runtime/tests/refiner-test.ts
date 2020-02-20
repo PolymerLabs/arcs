@@ -521,7 +521,7 @@ describe('SQLExtracter', () => {
       `);
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = SQLExtracter.fromSchema(schema, 'table');
-      assert.strictEqual(query, `SELECT * FROM table WHERE ((a + (b * ${1/3})) > 100) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));`);
+      assert.strictEqual(query, 'SELECT * FROM table WHERE ((b + (a * 3)) > 300) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));');
   }));
   it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -602,14 +602,14 @@ describe('Fractions', () => {
     den2 = new Multinomial({
       [cnst.toKey()]: 9                   // 9
     }); // 9
-    frac2 = new Fraction(num2, den2);     // 0.55/1
-    sum = Fraction.add(frac1, frac2);     // (a+0.55)/1
+    frac2 = new Fraction(num2, den2);     // 5/9
+    sum = Fraction.add(frac1, frac2);     // (9a+5)/9
     assert.deepEqual(sum.num.terms, {
-      [a.toKey()]: 1,                     // a
-      [cnst.toKey()]: 5/9                 // 5/9
+      [a.toKey()]: 9,                     // 9a
+      [cnst.toKey()]: 5                   // 5
     });
     assert.deepEqual(sum.den.terms, {
-      [cnst.toKey()]: 1                   // 1
+      [cnst.toKey()]: 9                   // 9
     });
   });
   it('tests fraction subtraction works', () => {
