@@ -976,7 +976,7 @@ class DatabaseImpl(
         return typeMap
     }
 
-    @VisibleForTesting
+    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     fun dumpTables(vararg tableNames: String, db: SQLiteDatabase? = null) {
         tableNames.forEach { tableName ->
             println("\nDumping table \"$tableName\":")
