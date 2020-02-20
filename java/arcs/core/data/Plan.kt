@@ -10,14 +10,47 @@
  */
 package arcs.core.data
 
+import arcs.core.storage.StorageKey
+import arcs.core.type.Type
+
 /**
  * A [Plan] is usually produced by running the build time Particle Accelerator tool, it consists
  * of a set of specs for handles, particles used in a recipe, and mappings between them.
  */
 open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
-    val particles: List<ParticleSpec>
+    val particles: List<Particle>
 ) {
+    /**
+     * A [Particle] consists of the information neccessary to instantiate a particle
+     * when starting an arc.
+     * @property particleName is human readable name of the Particle in the recipe.
+     * @property location is either a fully qualified Java class name, or a filesystem path.
+     * @property handles is a map from particle connection name to connection info.
+     */
+    data class Particle(
+        val particleName: String,
+        val location: String,
+        val handles: Map<String, HandleConnection>
+    )
+
+    /** Represents a use of a [Handle] by a [Particle]. */
+    data class HandleConnection(
+        var storageKey: StorageKey?,
+            // TODO(shans): type should be a Type, not a Schema
+        val type: Type
+    )
+
+    /**
+     * A [Plan.Partition] is a part of a [Plan] that runs on an [ArcHost]. Since [Plan]s may span
+     * multiple [ArcHost]s, an [Allocator] must partition a plan by [ArcHost].
+     */
+    data class Partition(
+        val arcId: String,
+        val arcHost: String,
+        val particles: List<Particle>
+    )
+
     // Because Plan is not a data class to allow sub-classing, these are required.
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -24,7 +24,7 @@ import arcs.android.host.parcelables.ActualParcelable
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
 import arcs.android.host.parcelables.ParcelablePlanPartition
 import arcs.android.host.parcelables.toParcelable
-import arcs.core.data.PlanPartition
+import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleIdentifier
 import kotlin.coroutines.CoroutineContext
@@ -54,7 +54,7 @@ import kotlinx.coroutines.launch
  *     }
  *
  *     class MyArcHost : AbstractArcHost() {
- *         override suspend fun onStartArc(plan: PlanPartition) {
+ *         override suspend fun onStartArc(plan: Plan.Partition) {
  *             // ...
  *         }
  *     }
@@ -217,7 +217,7 @@ fun ComponentName.createGetRegisteredParticlesIntent(): Intent =
 /**
  * Creates an [Intent] to invoke [ArcHost.startArc] on a [Service]'s internal [ArcHost].
  */
-fun PlanPartition.createStartArcHostIntent(service: ComponentName): Intent =
+fun Plan.Partition.createStartArcHostIntent(service: ComponentName): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.StartArc,
         service,
@@ -227,7 +227,7 @@ fun PlanPartition.createStartArcHostIntent(service: ComponentName): Intent =
 /**
  * Creates an [Intent] to invoke [ArcHost.stopArc] on a [Service]'s internal [ArcHost].
  */
-fun PlanPartition.createStopArcHostIntent(service: ComponentName): Intent =
+fun Plan.Partition.createStopArcHostIntent(service: ComponentName): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.StopArc,
         service,

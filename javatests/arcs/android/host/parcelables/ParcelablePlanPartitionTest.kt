@@ -16,14 +16,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
-import arcs.core.data.HandleConnectionSpec
-import arcs.core.data.ParticleSpec
-import arcs.core.data.PlanPartition
+import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.driver.VolatileStorageKey
-import arcs.core.type.TypeFactory
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,29 +36,29 @@ class ParcelablePlanPartitionTest {
     )
 
     @Test
-    fun planPartition_parcelableRoundTrip_works() {
-        val handleConnectionSpec = HandleConnectionSpec(
+    fun PlanPartition_parcelableRoundTrip_works() {
+        val handleConnection = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
             EntityType(personSchema)
         )
 
-        val handleConnectionSpec2 = HandleConnectionSpec(
+        val handleConnection2 = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar2"),
             EntityType(personSchema)
         )
 
-        val particleSpec = ParticleSpec(
+        val particle = Plan.Particle(
             "Foobar",
             "foo.bar.Foobar",
-            mapOf("foo1" to handleConnectionSpec)
+            mapOf("foo1" to handleConnection)
         )
-        val particleSpec2 = ParticleSpec(
+        val particle2 = Plan.Particle(
             "Foobar2",
             "foo.bar.Foobar2",
-            mapOf("foo2" to handleConnectionSpec2)
+            mapOf("foo2" to handleConnection2)
         )
 
-        val planPartition = PlanPartition("arcId", "arcHost", listOf(particleSpec, particleSpec2))
+        val planPartition = Plan.Partition("arcId", "arcHost", listOf(particle, particle2))
 
 
         val marshalled = with(Parcel.obtain()) {
