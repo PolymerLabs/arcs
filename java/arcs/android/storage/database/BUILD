@@ -21,6 +21,7 @@ kt_android_library(
         "//java/arcs/core/util/performance",
         "//java/arcs/jvm/util/performance",
         "//third_party/java/androidx/annotation",
+        "//third_party/java/arcs/deps:protobuf_javalite",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
