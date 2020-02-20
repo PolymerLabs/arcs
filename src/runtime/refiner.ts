@@ -161,7 +161,7 @@ export class Refinement {
 
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.applyOperator(data);
-    if (res === null && this.expression.getFieldNames().has('?')) {
+    if (res === null && this.expression.getQueryNames().has('?')) {
       return true;
     }
     if (typeof res !== 'boolean') {
