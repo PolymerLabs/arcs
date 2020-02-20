@@ -246,7 +246,7 @@ describe('particle interface loading', () => {
       schema Foo
         value: Text
       particle UpdatingParticle in 'updating-particle.js'
-        innerFoo: writes Foo
+        innerFoo: reads writes Foo
       recipe
         h0: use *
         UpdatingParticle
@@ -254,6 +254,7 @@ describe('particle interface loading', () => {
     `);
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
+    // TODO(shans): Fix storage stack bug so 'this.innerFooHandle.fetch();' can be removed.
     const loader = new Loader(null, {
       'updating-particle.js': `
         'use strict';
@@ -263,46 +264,38 @@ describe('particle interface loading', () => {
             onCreate() {
               str = "Created!";
             }
-            async update() {
-              console.log(str)
+            async onHandleSync(handle, model) {
               this.innerFooHandle = this.handles.get('innerFoo');
-              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: str}));
+              await this.innerFooHandle.fetch();
+              await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: str}));
             }
           };
         });
       `
     });
-    const id = ArcId.newForTest('test')
+    const id = ArcId.newForTest('test');
     const storageKey = new VolatileStorageKey(id, 'unique');
     const arc = new Arc({id, storageKey, loader, context: manifest});
-    const fooType = manifest.findTypeByName('Foo');
-    //const fooStore = await arc.createStore(fooType);
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
-
 
     const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
     const varStorageProxy = new StorageProxy('id', await fooStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
     const fooHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGeneratorForTesting, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
     recipe.handles[0].mapToStorage(fooStore);
 
-
-    //recipe.handles[0].mapToStorage(fooStore);
     recipe.normalize();
-
     await arc.instantiate(recipe);
     await arc.idle;
-    //const fooHandle = await singletonHandleForTest(arc, fooStore);
     assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Created!'}));
 
     const serialization = await arc.serialize();
+    arc.dispose();
 
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
     await arc2.idle;
 
     const varStorageProxy2 = new StorageProxy('id', await arc2._stores[0].activate(), new SingletonType(fooClass.type), arc2._stores[0].storageKey.toString());
     const fooHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'varHandle') as SingletonHandle<Entity>;
-
-    //const fooHandle2 = await singletonHandleForTest(arc2, arc2._stores[0]);
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 });
