@@ -18,7 +18,6 @@ import arcs.core.type.Type
 data class Schema(
     val names: List<SchemaName>,
     val fields: SchemaFields,
-    val description: SchemaDescription,
     /**
      * The hash code for the schema (note that this is not the same as this object's [hashCode]
      * method.
@@ -34,14 +33,13 @@ data class Schema(
             collectionFields = fields.collections.keys
         )
 
-    fun toLiteral(): Literal = Literal(names, fields, description, hash)
+    fun toLiteral(): Literal = Literal(names, fields, hash)
 
     fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
 
     data class Literal(
         val names: List<SchemaName>,
         val fields: SchemaFields,
-        val description: SchemaDescription,
         val hash: String
     ) : arcs.core.common.Literal {
         fun toJson(): String {

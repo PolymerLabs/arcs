@@ -81,7 +81,7 @@ data class CollectionType<T : Type>(
 
     override fun toString(options: Type.ToStringOptions): String {
         return if (options.pretty) {
-            entitySchema?.description?.plural ?: "${collectionType.toString(options)} Collection"
+            "${collectionType.toString(options)} Collection"
         } else {
             "[${collectionType.toString(options)}]"
         }

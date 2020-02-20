@@ -8,7 +8,6 @@ import arcs.core.data.ParticleSpec
 import arcs.core.data.Plan
 import arcs.core.data.PlanPartition
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.AbstractArcHost
@@ -57,7 +56,6 @@ class AllocatorTest {
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
         SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        SchemaDescription(),
         "hash"
     )
 

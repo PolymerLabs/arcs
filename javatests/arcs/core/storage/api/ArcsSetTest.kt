@@ -3,7 +3,6 @@ package arcs.core.storage.api
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
@@ -43,7 +42,6 @@ class ArcsSetTest {
     private val personSchema = Schema(
         listOf(SchemaName("person")),
         SchemaFields(mapOf("name" to FieldType.Text, "age" to FieldType.Number), emptyMap()),
-        SchemaDescription(),
         "hash"
     )
 

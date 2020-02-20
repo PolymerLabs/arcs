@@ -18,7 +18,6 @@ import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.driver.VolatileStorageKey
@@ -33,7 +32,6 @@ class ParcelableHandleConnectionSpecTest {
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
         SchemaFields(mapOf("name" to Text), emptyMap()),
-        SchemaDescription(),
         "42"
     )
 

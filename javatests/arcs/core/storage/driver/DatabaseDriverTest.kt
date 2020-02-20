@@ -22,7 +22,6 @@ import arcs.core.data.Entity
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.ReferencablePrimitive
@@ -388,7 +387,6 @@ class DatabaseDriverTest {
                 singletons = mapOf("name" to FieldType.Text),
                 collections = mapOf("phone_numbers" to FieldType.Text)
             ),
-            SchemaDescription(),
             "bar"
         )
 
