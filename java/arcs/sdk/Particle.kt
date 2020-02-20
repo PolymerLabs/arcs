@@ -32,49 +32,4 @@ interface Particle {
      * @param allSynced flag indicating if all handles are synchronized
      */
     fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
-
-    /**
-     * Rendering through UiBroker.
-     *
-     * Only implemented for wasm, no-op on JVM.
-     */
-    fun renderOutput() = Unit
-
-    /**
-     * Define template for rendering (optional).
-     *
-     * Only implemented for wasm, no-op on JVM.
-     *
-     * @param slotName name of slot where template is rendered.
-     * @see [renderOutput]
-     */
-    fun getTemplate(slotName: String): String? = null
-
-    /**
-     * Populate model for rendering (UiBroker model).
-     *
-     * Only implemented for wasm, no-op on JVM.
-     *
-     * @param slotName name of slot where model data is populated
-     * @param model Starting model state; Default: empty map
-     * @return new model state
-     * @see [renderOutput]
-     */
-    fun populateModel(
-        slotName: String,
-        model: Map<String, Any> = mapOf()
-    ): Map<String, Any>? = model
-
-    /**
-     * Register a reaction to an event (optional).
-     *
-     * Particle templates may emit events, usually from user actions.
-     *
-     * Only implemented for wasm, no-op on JVM.
-     *
-     * @param name The name of the triggered event
-     * @param handler A callback (consumer) in reaction to the event
-     * @see [renderOutput]
-     */
-    fun eventHandler(name: String, handler: (Map<String, String>) -> Unit) = Unit
 }
