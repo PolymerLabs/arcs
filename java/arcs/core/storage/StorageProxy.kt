@@ -102,10 +102,11 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
         val msg = ProxyMessage.Operations<Data, Op, T>(listOf(op), null)
         val storeSuccess = store.onProxyMessage(msg)
 
-        // TODO(jwf/jibbl): We need to think-through the ramifications of returning false if
-        //  the store fails to apply the update. Maybe we should delete our local copy and ask for
-        //  a re-sync in this situation?
-        if (!storeSuccess) return false
+        if (!storeSuccess) {
+            // we're not up to date so request latest model from store. This will get merged with
+            // already applied local changes.
+            requestSynchronization()
+        }
 
         notifyUpdate(listOf(op))
 

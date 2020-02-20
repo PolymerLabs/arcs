@@ -35,17 +35,23 @@ class SingletonImpl<T : Referencable>(
     /** Get the current value from the backing [StorageProxy]. */
     suspend fun fetch() = value()
 
-    /** Send a new value to the backing [StorageProxy]. */
-    suspend fun set(entity: T) {
+    /**
+     * Send a new value to the backing [StorageProxy]. If this returns false, your operation failed
+     * and should be retried.
+     * */
+    suspend fun set(entity: T): Boolean {
         versionMap.increment()
-        storageProxy.applyOp(CrdtSingleton.Operation.Update(name, versionMap, entity))
+        return storageProxy.applyOp(CrdtSingleton.Operation.Update(name, versionMap, entity))
     }
 
-    /** Clear the value from the backing [StorageProxy]. */
-    suspend fun clear() {
+    /**
+     * Clears the value in the backing [StorageProxy]. If this returns false, your operation failed
+     * and should be retried.
+     * */
+    suspend fun clear(): Boolean {
         // Sync before clearing in order to get an updated versionMap. This ensures we can clear
         // values set by other actors.
         fetch()
-        storageProxy.applyOp(CrdtSingleton.Operation.Clear(name, versionMap))
+        return storageProxy.applyOp(CrdtSingleton.Operation.Clear(name, versionMap))
     }
 }

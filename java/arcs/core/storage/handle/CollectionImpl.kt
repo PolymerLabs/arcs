@@ -44,11 +44,15 @@ class CollectionImpl<T : Referencable>(
      *
      * It will be passed to the storage proxy in an add operation, with an incremented version
      * for this Handle in the version map.
+     *
+     * If this returns false, your change was not applied due to stale state or an invalid operation
+     * (such as removing a non-existent entity from a collection). You should reread the latest
+     * value of the handle and see if a retry is warranted.
      */
-    suspend fun store(entity: T) {
+    suspend fun store(entity: T): Boolean {
         log.debug { "Storing: $entity" }
         versionMap.increment()
-        storageProxy.applyOp(CrdtSet.Operation.Add(name, versionMap, entity))
+        return storageProxy.applyOp(CrdtSet.Operation.Add(name, versionMap, entity))
     }
 
     /**
@@ -56,21 +60,31 @@ class CollectionImpl<T : Referencable>(
      *
      * This currently works by iterating over all items in the storage proxy view of the
      * collection, and sending a Remove command for each one.
+     *
+     * If this returns false, your change was not applied due to stale state or an invalid operation
+     * (such as removing a non-existent entity from a collection). You should reread the latest
+     * value of the handle and see if a retry is warranted.
      */
-    suspend fun clear() {
+    suspend fun clear(): Boolean {
         log.debug { "Clearing" }
         storageProxy.getParticleView().value.forEach {
-            storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, it))
+            if (!storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, it)))
+                return false
         }
+        return true
     }
 
     /**
      * Remove a given entity from the collection.
      *
      * The specified entity will be passed to the storage proxy in a remove operation.
+     *
+     * If this returns false, your change was not applied due to stale state or an invalid operation
+     * (such as removing a non-existent entity from a collection). You should reread the latest
+     * value of the handle and see if a retry is warranted.
      */
-    suspend fun remove(entity: T) {
+    suspend fun remove(entity: T): Boolean {
         log.debug { "Removing $entity" }
-        storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, entity))
+        return storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, entity))
     }
 }
