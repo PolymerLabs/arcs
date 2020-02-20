@@ -157,7 +157,8 @@ class DatabaseImpl(
                     storage_keys.value_id,
                     storage_keys.data_type,
                     entities.entity_id,
-                    entities.version_map
+                    entities.version_map,
+                    entities.version_number
                 FROM storage_keys
                 LEFT JOIN entities ON storage_keys.id = entities.storage_key_id
                 WHERE storage_keys.storage_key = ?
@@ -172,6 +173,7 @@ class DatabaseImpl(
             val schemaTypeId = it.getLong(1)
             val entityId = it.getString(3)
             val versionMap = it.getVersionMap(4)
+            val versionNumber = it.getInt(5)
             // Fetch the entity's fields.
             counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
             val fieldsByName = getSchemaFields(schemaTypeId, db)
@@ -195,7 +197,7 @@ class DatabaseImpl(
                     schema = schema,
                     data = data
                 ),
-                1, // TODO: Set correct database version
+                versionNumber,
                 versionMap
             )
         } ?: throw IllegalArgumentException(
@@ -249,8 +251,8 @@ class DatabaseImpl(
     ): DatabaseData.Collection = readableDatabase.useTransaction {
         val db = this
         counters?.increment(DatabaseCounters.GET_COLLECTION_ID)
-        val (collectionId, versionMap) = requireNotNull(
-            getCollectionIdAndVersionMap(storageKey, DataType.Collection, db)
+        val (collectionId, versionMap, versionNumber) = requireNotNull(
+            getCollectionMetadata(storageKey, DataType.Collection, db)
         ) {
             "Collection at storage key $storageKey does not exist."
         }
@@ -259,7 +261,7 @@ class DatabaseImpl(
         DatabaseData.Collection(
             values,
             schema,
-            1, // TODO: Set correct database version
+            versionNumber,
             versionMap
         )
     }
@@ -272,8 +274,8 @@ class DatabaseImpl(
     ): DatabaseData.Singleton = readableDatabase.useTransaction {
         val db = this
         counters?.increment(DatabaseCounters.GET_SINGLETON_ID)
-        val (collectionId, versionMap) = requireNotNull(
-            getCollectionIdAndVersionMap(storageKey, DataType.Singleton, db)
+        val (collectionId, versionMap, versionNumber) = requireNotNull(
+            getCollectionMetadata(storageKey, DataType.Singleton, db)
         ) {
             "Singleton at storage key $storageKey does not exist."
         }
@@ -286,7 +288,7 @@ class DatabaseImpl(
         DatabaseData.Singleton(
             reference,
             schema,
-            1, // TODO: Set correct database version
+            versionNumber,
             versionMap
         )
     }
@@ -330,6 +332,7 @@ class DatabaseImpl(
             entity.id,
             schemaTypeId,
             data.versionMap,
+            data.databaseVersion,
             db,
             counters
         )
@@ -399,7 +402,7 @@ class DatabaseImpl(
             null,
             ContentValues().apply {
                 put("type_id", typeId)
-                // Entity field collections don't need version maps.
+                // Entity field collections don't need version maps or numbers.
             }
         )
 
@@ -438,7 +441,6 @@ class DatabaseImpl(
         // Fetch/create the entity's type ID.
         val schemaTypeId = getSchemaTypeId(data.schema, db, counters)
 
-        // Retrieve existing collection ID for this storage key, if one exists.
         when (dataType) {
             DataType.Collection ->
                 counters?.increment(DatabaseCounters.GET_COLLECTION_ID)
@@ -447,9 +449,10 @@ class DatabaseImpl(
             else -> Unit
         }
 
-        val pair = getCollectionIdAndVersionMap(storageKey, dataType, db)
+        // Retrieve existing collection ID for this storage key, if one exists.
+        val metadata = getCollectionMetadata(storageKey, dataType, db)
 
-        val collectionId = if (pair == null) {
+        val collectionId = if (metadata == null) {
             // Create a new collection ID and storage key ID.
             when (dataType) {
                 DataType.Collection ->
@@ -464,6 +467,7 @@ class DatabaseImpl(
                 ContentValues().apply {
                     put("type_id", schemaTypeId)
                     put("version_map", data.versionMap.toProtoLiteral())
+                    put("version_number", data.databaseVersion)
                 }
             )
             when (dataType) {
@@ -485,7 +489,12 @@ class DatabaseImpl(
             collectionId
         } else {
             // Collection already exists; delete all existing entries.
-            val (collectionId, storedVersionMap) = pair
+            val collectionId = metadata.collectionId
+            require(data.databaseVersion > metadata.versionNumber) {
+                "Given version (${data.databaseVersion}) must be greater than version in " +
+                    "database (${metadata.versionNumber}) when updating storage key $storageKey."
+            }
+
             // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
             when (dataType) {
                 DataType.Collection ->
@@ -500,17 +509,16 @@ class DatabaseImpl(
                 arrayOf(collectionId.toString())
             )
 
-            // Updated stored version map if different.
-            if (storedVersionMap != data.versionMap) {
-                update(
-                    TABLE_COLLECTIONS,
-                    ContentValues().apply {
-                        put("version_map", data.versionMap.toProtoLiteral())
-                    },
-                    "collection_id = ?",
-                    arrayOf(collectionId.toString())
-                )
-            }
+            // Updated collection metadata.
+            update(
+                TABLE_COLLECTIONS,
+                ContentValues().apply {
+                    put("version_map", data.versionMap.toProtoLiteral())
+                    put("version_number", data.databaseVersion)
+                },
+                "id = ?",
+                arrayOf(collectionId.toString())
+            )
             collectionId
         }
 
@@ -695,6 +703,7 @@ class DatabaseImpl(
         entityId: String,
         typeId: TypeId,
         versionMap: VersionMap,
+        databaseVersion: Int,
         db: SQLiteDatabase,
         counters: Counters? = null
     ): StorageKeyId = db.transaction {
@@ -702,7 +711,7 @@ class DatabaseImpl(
         counters?.increment(DatabaseCounters.GET_ENTITY_STORAGEKEY_ID)
         rawQuery(
             """
-                SELECT storage_keys.data_type, entities.entity_id
+                SELECT storage_keys.data_type, entities.entity_id, entities.version_number
                 FROM storage_keys
                 LEFT JOIN entities ON storage_keys.id = entities.storage_key_id
                 WHERE storage_keys.storage_key = ?
@@ -718,6 +727,11 @@ class DatabaseImpl(
             require(storedEntityId == entityId) {
                 "Expected storage key $storageKey to have entity ID $entityId but was " +
                     "$storedEntityId."
+            }
+            val storedVersion = it.getInt(2)
+            require(databaseVersion > storedVersion) {
+                "Given version ($databaseVersion) must be greater than version in database " +
+                    "($storedVersion) when updating storage key $storageKey."
             }
 
             // Remove the existing entity.
@@ -745,6 +759,7 @@ class DatabaseImpl(
                 put("storage_key_id", storageKeyId)
                 put("entity_id", entityId)
                 put("version_map", versionMap.toProtoLiteral())
+                put("version_number", databaseVersion)
             }
         )
 
@@ -785,14 +800,18 @@ class DatabaseImpl(
     }
 
     @VisibleForTesting
-    fun getCollectionIdAndVersionMap(
+    fun getCollectionMetadata(
         storageKey: StorageKey,
         expectedDataType: DataType,
         db: SQLiteDatabase
-    ): Pair<CollectionId, VersionMap>? =
+    ): CollectionMetadata? =
         db.rawQuery(
             """
-                SELECT storage_keys.data_type, collections.id, collections.version_map
+                SELECT
+                    storage_keys.data_type,
+                    collections.id,
+                    collections.version_map,
+                    collections.version_number
                 FROM storage_keys
                 LEFT JOIN collections ON collections.id = storage_keys.value_id
                 WHERE storage_keys.storage_key = ?
@@ -805,7 +824,8 @@ class DatabaseImpl(
                 "Expected storage key $storageKey to be a $expectedDataType but was a $dataType."
             }
             val versionMap = it.getVersionMap(2)
-            collectionId to versionMap
+            val versionNumber = it.getInt(3)
+            CollectionMetadata(collectionId, versionMap, versionNumber)
         }
 
     private fun getCollectionEntries(
@@ -1081,19 +1101,25 @@ class DatabaseImpl(
         val isCollection: Boolean
     )
 
+    data class CollectionMetadata(
+        val collectionId: CollectionId,
+        val versionMap: VersionMap,
+        val versionNumber: Int
+    )
+
     companion object {
         private const val DB_VERSION = 1
 
         // TODO: Add constants for column names?
-        private val TABLE_STORAGE_KEYS = "storage_keys"
-        private val TABLE_COLLECTION_ENTRIES = "collection_entries"
-        private val TABLE_COLLECTIONS = "collections"
-        private val TABLE_ENTITIES = "entities"
-        private val TABLE_ENTITY_REFS = "entity_refs"
-        private val TABLE_FIELD_VALUES = "field_values"
-        private val TABLE_TYPES = "types"
-        private val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
-        private val TABLE_NUMBER_PRIMITIVES = "number_primitive_values"
+        private const val TABLE_STORAGE_KEYS = "storage_keys"
+        private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
+        private const val TABLE_COLLECTIONS = "collections"
+        private const val TABLE_ENTITIES = "entities"
+        private const val TABLE_ENTITY_REFS = "entity_refs"
+        private const val TABLE_FIELD_VALUES = "field_values"
+        private const val TABLE_TYPES = "types"
+        private const val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
+        private const val TABLE_NUMBER_PRIMITIVES = "number_primitive_values"
 
         private val CREATE =
             """
@@ -1122,7 +1148,9 @@ class DatabaseImpl(
                     storage_key_id INTEGER NOT NULL PRIMARY KEY,
                     entity_id TEXT NOT NULL,
                     -- Serialized VersionMapProto for the entity.
-                    version_map TEXT NOT NULL
+                    version_map TEXT NOT NULL,
+                    -- Monotonically increasing version number for the entity.
+                    version_number INTEGER NOT NULL
                 );
 
                 -- Stores references to entities.
@@ -1148,9 +1176,12 @@ class DatabaseImpl(
                     id INTEGER NOT NULL PRIMARY KEY,
                     -- Type of the elements stored in the collection/singleton.
                     type_id INTEGER NOT NULL,
-                    -- Serialized VersionMapProto for the collection.
+                    -- Serialized VersionMapProto for the collection/singleton.
                     -- (Not required for entity field collections.)
-                    version_map TEXT
+                    version_map TEXT,
+                    -- Monotonically increasing version number for the collection/singleton.
+                    -- (Not required for entity field collections.)
+                    version_number INTEGER
                 );
 
                 -- Entries in a collection/singleton. (Singletons will have only a single row.)
