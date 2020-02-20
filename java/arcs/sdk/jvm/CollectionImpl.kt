@@ -23,20 +23,19 @@ class CollectionImpl<T : Entity>(
     private val entities = mutableListOf<T>()
     private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
 
-    override val size: Int
-        get() = entities.size
+    override suspend fun size() = fetchAll().size
 
-    override fun isEmpty(): Boolean = entities.isEmpty()
+    override suspend fun isEmpty(): Boolean = entities.isEmpty()
 
-    override fun fetchAll() = entities.toSet()
+    override suspend fun fetchAll() = entities.toSet()
 
-    override fun store(entity: T) {
+    override suspend fun store(entity: T) {
         entities.add(entity)
         particle.onHandleUpdate(this)
         notifyOnUpdateActions()
     }
 
-    override fun clear() {
+    override suspend fun clear() {
         entities.clear()
         particle.onHandleUpdate(this)
         notifyOnUpdateActions()
@@ -46,7 +45,7 @@ class CollectionImpl<T : Entity>(
         onUpdateActions.add(action)
     }
 
-    override fun remove(entity: T) {
+    override suspend fun remove(entity: T) {
         entities.remove(entity)
         particle.onHandleUpdate(this)
         notifyOnUpdateActions()

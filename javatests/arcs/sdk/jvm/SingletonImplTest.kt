@@ -14,15 +14,18 @@ package arcs.sdk.jvm
 import arcs.sdk.Particle
 import arcs.sdk.SingletonImpl
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
+@UseExperimental(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class SingletonImplTest {
 
@@ -37,48 +40,50 @@ class SingletonImplTest {
     fun setUp() {
         MockitoAnnotations.initMocks(this)
         singleton = SingletonImpl(particle, HANDLE_NAME, DummyEntity.Spec())
-        singleton.onUpdate(action)
+        runBlocking {
+            singleton.onUpdate(action)
+        }
     }
 
     @Test
-    fun initialState() {
+    fun initialState() = runBlockingTest {
         assertThat(singleton.name).isEqualTo(HANDLE_NAME)
         assertThat(singleton.fetch()).isNull()
     }
 
     @Test
-    fun set_changesValue() {
+    fun set_changesValue() = runBlockingTest {
         singleton.set(DUMMY_VALUE)
         assertThat(singleton.fetch()).isEqualTo(DUMMY_VALUE)
     }
 
     @Test
-    fun set_updatesParticle() {
+    fun set_updatesParticle() = runBlockingTest {
         singleton.set(DUMMY_VALUE)
         verify(particle).onHandleUpdate(singleton)
     }
 
     @Test
-    fun clear_changesValue() {
+    fun clear_changesValue() = runBlockingTest {
         singleton.set(DUMMY_VALUE)
         singleton.clear()
         assertThat(singleton.fetch()).isNull()
     }
 
     @Test
-    fun clear_updatesParticle() {
+    fun clear_updatesParticle() = runBlockingTest {
         singleton.clear()
         verify(particle).onHandleUpdate(singleton)
     }
 
     @Test
-    fun set_updatesHandle() {
+    fun set_updatesHandle() = runBlockingTest {
         singleton.set(DUMMY_VALUE)
         verify(action).invoke(DUMMY_VALUE)
     }
 
     @Test
-    fun clear_updatesHandle() {
+    fun clear_updatesHandle() = runBlockingTest {
         singleton.clear()
         verify(action).invoke(null)
     }
