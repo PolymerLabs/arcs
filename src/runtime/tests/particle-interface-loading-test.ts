@@ -19,11 +19,10 @@ import {ArcId} from '../id.js';
 import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {singletonHandleForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';
-import { VolatileStorageKey } from '../storageNG/drivers/volatile.js';
-import { StorageProxy } from '../storageNG/storage-proxy.js';
-import { handleNGFor, SingletonHandle } from '../storageNG/handle.js';
-import { Entity } from '../entity.js';
-import { ReferenceModeStorageKey } from '../storageNG/reference-mode-storage-key.js';
+import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
+import {StorageProxy} from '../storageNG/storage-proxy.js';
+import {handleNGFor, SingletonHandle} from '../storageNG/handle.js';
+import {Entity} from '../entity.js';
 
 describe('particle interface loading', () => {
 
