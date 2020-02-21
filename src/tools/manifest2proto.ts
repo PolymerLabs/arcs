@@ -86,7 +86,7 @@ async function main() {
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, Buffer.from(buffer));
-    fs.closeSync(outFile)
+    fs.closeSync(outFile);
   } catch (e) {
     console.error(e);
     process.exit(1);
