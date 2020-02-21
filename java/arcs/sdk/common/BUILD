@@ -1,0 +1,20 @@
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_library",
+)
+
+licenses(["notice"])
+
+package(default_visibility = ["//visibility:public"])
+
+arcs_kt_library(
+    name = "common",
+    srcs = glob(["*.kt"]),
+    visibility = ["//visibility:public"],
+    exports = [
+        "//java/arcs/core/common",
+    ],
+    deps = [
+        "//java/arcs/core/common",
+    ],
+)

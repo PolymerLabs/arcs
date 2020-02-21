@@ -25,7 +25,7 @@ import arcs.core.crdt.VersionMap
 data class Reference(
     override val id: ReferenceId,
     val storageKey: StorageKey,
-    val version: VersionMap
+    val version: VersionMap?
 ) : Referencable
 
 /** Converts any [Referencable] object into a reference-mode-friendly [Reference] object. */

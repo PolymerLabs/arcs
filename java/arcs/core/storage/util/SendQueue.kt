@@ -52,7 +52,7 @@ class SendQueue(
         mutex.withLock {
             val block = "${currentBlock++}"
             queue.add(PendingSend.Blocking(block, runnable))
-            holdQueue.enqueue(references.map { HoldQueue.Entity(it.id, it.version.copy()) }) {
+            holdQueue.enqueue(references.map { HoldQueue.Entity(it.id, it.version?.copy()) }) {
                 drain(block)
             }
         }

@@ -187,7 +187,9 @@ class DatabaseImpl(
             val storageKeyId = it.getLong(0)
             val schemaTypeId = it.getLong(1)
             val entityId = it.getString(3)
-            val versionMap = it.getVersionMap(4)
+            val versionMap = requireNotNull(it.getVersionMap(4)) {
+                "No VersionMap available for Entity at $storageKey"
+            }
             val versionNumber = it.getInt(5)
             // Fetch the entity's fields.
             counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
@@ -234,6 +236,8 @@ class DatabaseImpl(
             counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_PRIMITIVE)
             getPrimitiveValue(fieldValueId, field.typeId, db, counters)
         }
+        // TODO: This should look for a "singleton" collection entry. Maybe use the primitive
+        //  case first, then the else can handle collections and singletons of references.
         else -> {
             counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_REFERENCE)
             getReferenceValue(fieldValueId, db)
@@ -796,18 +800,30 @@ class DatabaseImpl(
         counters: Counters? = null
     ): ReferenceId = db.transaction {
         counters?.increment(DatabaseCounters.GET_ENTITY_REFERENCE)
-        val refId = rawQuery(
+        val withoutVersionMap =
+            """
+                SELECT id
+                FROM entity_refs
+                WHERE entity_id = ? AND backing_storage_key = ?
+            """.trimIndent() to arrayOf(
+                reference.id,
+                reference.storageKey.toString()
+            )
+        val withVersionMap =
             """
                 SELECT id
                 FROM entity_refs
                 WHERE entity_id = ? AND backing_storage_key = ? AND version_map = ?
-            """.trimIndent(),
-            arrayOf(
+            """.trimIndent() to arrayOf(
                 reference.id,
                 reference.storageKey.toString(),
-                reference.version.toProtoLiteral()
+                reference.version?.toProtoLiteral()
             )
-        ).forSingleResult { it.getLong(0) }
+
+        val refId = (reference.version?.let { withVersionMap } ?: withoutVersionMap)
+            .let { rawQuery(it.first, it.second) }
+            .forSingleResult { it.getLong(0) }
+
         refId ?: run {
             counters?.increment(DatabaseCounters.INSERT_ENTITY_REFERENCE)
             insertOrThrow(
@@ -816,7 +832,11 @@ class DatabaseImpl(
                 ContentValues().apply {
                     put("entity_id", reference.id)
                     put("backing_storage_key", reference.storageKey.toString())
-                    put("version_map", reference.version.toProtoLiteral())
+                    reference.version?.let {
+                        put("version_map", it.toProtoLiteral())
+                    } ?: run {
+                        putNull("version_map")
+                    }
                 }
             )
         }
@@ -846,7 +866,9 @@ class DatabaseImpl(
             require(dataType == expectedDataType) {
                 "Expected storage key $storageKey to be a $expectedDataType but was a $dataType."
             }
-            val versionMap = it.getVersionMap(2)
+            val versionMap = requireNotNull(it.getVersionMap(2)) {
+                "Expected a version map for the collection at $storageKey"
+            }
             val versionNumber = it.getInt(3)
             CollectionMetadata(collectionId, versionMap, versionNumber)
         }
@@ -1101,7 +1123,9 @@ class DatabaseImpl(
     private fun VersionMap.toProtoLiteral() = toProto().toByteString().toStringUtf8()
 
     /** Parses a [VersionMap] out of the [Cursor] for the given column. */
-    private fun Cursor.getVersionMap(column: Int): VersionMap {
+    private fun Cursor.getVersionMap(column: Int): VersionMap? {
+        if (isNull(column)) return null
+
         val str = getString(column)
         val bytes = ByteString.copyFromUtf8(str)
         val proto = VersionMapProto.parseFrom(bytes)
@@ -1184,8 +1208,8 @@ class DatabaseImpl(
                     entity_id TEXT NOT NULL,
                     -- The storage key for the backing store for this entity.
                     backing_storage_key TEXT NOT NULL,
-                    -- Serialized VersionMapProto for the reference.
-                    version_map TEXT NOT NULL
+                    -- Serialized VersionMapProto for the reference, if available.
+                    version_map TEXT
                 );
 
                 CREATE INDEX entity_refs_index ON entity_refs (
