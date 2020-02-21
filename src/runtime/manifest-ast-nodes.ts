@@ -539,8 +539,25 @@ export interface RefinementNode extends BaseNode {
 
 export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | NumberNode | BooleanNode | TextNode;
 
+export enum Op {
+  AND = 'and',
+  OR  = 'or',
+  LT  = '<',
+  GT  = '>',
+  LTE = '<=',
+  GTE = '>=',
+  ADD = '+',
+  SUB = '-',
+  MUL = '*',
+  DIV = '/',
+  NOT = 'not',
+  NEG = 'neg',
+  EQ = '==',
+  NEQ = '!=',
+}
+
 export interface ExpressionNode extends BaseNode {
-  operator: string;
+  operator: Op;
 }
 
 export interface BinaryExpressionNode extends ExpressionNode {

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
+import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
@@ -19,23 +19,6 @@ enum Primitive {
   NUMBER = 'Number',
   TEXT = 'Text',
   UNKNOWN = '~query_arg_type',
-}
-
-export enum Op {
-  AND = 'and',
-  OR  = 'or',
-  LT  = '<',
-  GT  = '>',
-  LTE = '<=',
-  GTE = '>=',
-  ADD = '+',
-  SUB = '-',
-  MUL = '*',
-  DIV = '/',
-  NOT = 'not',
-  NEG = 'neg',
-  EQ = '==',
-  NEQ = '!=',
 }
 
 export enum AtleastAsSpecific {
@@ -116,19 +99,19 @@ export class Refinement {
     return this.expression.getFieldNames();
   }
 
+  getQueryNames(): Set<string> {
+    return this.expression.getQueryNames();
+  }
+
   getTextPrimitives(): Set<string> {
     return this.expression.getTextPrimitives();
   }
 
   // checks if a is at least as specific as b, returns null if can't be determined
   static isAtleastAsSpecificAs(a: Refinement, b: Refinement): AtleastAsSpecific {
-    if (!a && b) {
-      return AtleastAsSpecific.NO;
-    } else if (a && !b) {
-      return AtleastAsSpecific.YES;
-    } else if (!a && !b) {
-      return AtleastAsSpecific.YES;
-    }
+    // Ensure there is a refinement to check with.
+    a = a || new Refinement(new BooleanPrimitive(true));
+    b = b || new Refinement(new BooleanPrimitive(true));
     try {
       a.normalize();
       b.normalize();
@@ -139,6 +122,7 @@ export class Refinement {
          textToNum[text] = idx;
          idx += 1;
       }
+      // Find the range of values for the field name over which the refinement is valid.
       const rangeA = Range.fromExpression(a.expression, textToNum);
       const rangeB = Range.fromExpression(b.expression, textToNum);
       return rangeA.isSubsetOf(rangeB) ? AtleastAsSpecific.YES : AtleastAsSpecific.NO;
@@ -160,7 +144,8 @@ export class Refinement {
       // Therefore, we TRY to rearrange, if possible.
       this.expression = this.expression.rearrange();
     } catch (e) {
-      console.log(e);
+      // tslint:disable-next-line no-empty
+      //TODO(cypher1): Report polynomial errors without using the console.
     }
     this.expression = this.expression.normalize();
   }
@@ -176,6 +161,9 @@ export class Refinement {
 
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.applyOperator(data);
+    if (res === null && this.expression.getQueryNames().has('?')) {
+      return true;
+    }
     if (typeof res !== 'boolean') {
       throw new Error(`Refinement expression ${this.expression} evaluated to a non-boolean type.`);
     }
@@ -238,11 +226,19 @@ abstract class RefinementExpression {
 
   abstract toSQLExpression(): string;
 
-  abstract applyOperator(data: Dictionary<ExpressionPrimitives>);
+  abstract applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives;
 
-  abstract getFieldNames(): Set<string>;
+  getFieldNames(): Set<string> {
+    return new Set<string>();
+  }
 
-  abstract getTextPrimitives(): Set<string>;
+  getQueryNames(): Set<string> {
+    return new Set<string>();
+  }
+
+  getTextPrimitives(): Set<string> {
+    return new Set<string>();
+  }
 }
 
 export class BinaryExpression extends RefinementExpression {
@@ -261,10 +257,15 @@ export class BinaryExpression extends RefinementExpression {
   }
 
   static fromAst(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+    if (operatorTable[expression.operator] === undefined) {
+      const loc = expression.location;
+      const filename = loc.filename ? ` in ${loc.filename}` : '';
+      throw new Error(`Unknown operator '${expression.operator}' at line ${loc.start.line}, col ${loc.start.column}${filename}`);
+    }
     return new BinaryExpression(
             RefinementExpression.fromAst(expression.leftExpr, typeData),
             RefinementExpression.fromAst(expression.rightExpr, typeData),
-            new RefinementOperator(expression.operator));
+            new RefinementOperator(expression.operator as Op));
   }
 
   static fromLiteral(expr): RefinementExpression {
@@ -292,6 +293,18 @@ export class BinaryExpression extends RefinementExpression {
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const left = this.leftExpr.applyOperator(data);
     const right = this.rightExpr.applyOperator(data);
+    if (this.operator.op === Op.AND && left !== null && right === null) {
+      return left;
+    }
+    if (this.operator.op === Op.AND && left === null && right !== null) {
+      return right;
+    }
+    if (left === null) {
+      return null;
+    }
+    if (right === null) {
+      return null;
+    }
     return this.operator.eval([left, right]);
   }
 
@@ -316,7 +329,12 @@ export class BinaryExpression extends RefinementExpression {
 
   rearrange(): RefinementExpression {
     if (this.evalType === Primitive.BOOLEAN && this.leftExpr.evalType === Primitive.NUMBER && this.rightExpr.evalType === Primitive.NUMBER) {
-      Normalizer.rearrangeNumericalExpression(this);
+      try {
+        Normalizer.rearrangeNumericalExpression(this);
+      } catch {
+        // tslint:disable-next-line no-empty
+        //TODO(cypher1): Report polynomial errors without using the console.
+      }
     } else {
       this.leftExpr = this.leftExpr.rearrange();
       this.rightExpr = this.rightExpr.rearrange();
@@ -399,6 +417,12 @@ export class BinaryExpression extends RefinementExpression {
     return new Set<string>([...fn1, ...fn2]);
   }
 
+  getQueryNames(): Set<string> {
+    const fn1 = this.leftExpr.getQueryNames();
+    const fn2 = this.rightExpr.getQueryNames();
+    return new Set<string>([...fn1, ...fn2]);
+  }
+
   getTextPrimitives(): Set<string> {
     const fn1 = this.leftExpr.getTextPrimitives();
     const fn2 = this.rightExpr.getTextPrimitives();
@@ -441,6 +465,9 @@ export class UnaryExpression extends RefinementExpression {
 
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const expression = this.expr.applyOperator(data);
+    if (expression === null) {
+      return null;
+    }
     return this.operator.eval([expression]);
   }
 
@@ -478,6 +505,10 @@ export class UnaryExpression extends RefinementExpression {
 
   getFieldNames(): Set<string> {
     return this.expr.getFieldNames();
+  }
+
+  getQueryNames(): Set<string> {
+    return this.expr.getQueryNames();
   }
 
   getTextPrimitives(): Set<string> {
@@ -527,10 +558,6 @@ export class FieldNamePrimitive extends RefinementExpression {
   getFieldNames(): Set<string> {
     return new Set<string>([this.value]);
   }
-
-  getTextPrimitives(): Set<string> {
-    return new Set<string>();
-  }
 }
 
 export class QueryArgumentPrimitive extends RefinementExpression {
@@ -567,12 +594,8 @@ export class QueryArgumentPrimitive extends RefinementExpression {
     return null;
   }
 
-  getFieldNames(): Set<string> {
+  getQueryNames(): Set<string> {
     return new Set<string>([this.value]);
-  }
-
-  getTextPrimitives(): Set<string> {
-    return new Set<string>();
   }
 }
 
@@ -604,14 +627,6 @@ export class NumberPrimitive extends RefinementExpression {
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
-
-  getFieldNames(): Set<string> {
-    return new Set<string>();
-  }
-
-  getTextPrimitives(): Set<string> {
-    return new Set<string>();
-  }
 }
 
 class BooleanPrimitive extends RefinementExpression {
@@ -642,14 +657,6 @@ class BooleanPrimitive extends RefinementExpression {
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
-
-  getFieldNames(): Set<string> {
-    return new Set<string>();
-  }
-
-  getTextPrimitives(): Set<string> {
-    return new Set<string>();
-  }
 }
 
 class TextPrimitive extends RefinementExpression {
@@ -679,10 +686,6 @@ class TextPrimitive extends RefinementExpression {
 
   applyOperator(): ExpressionPrimitives {
     return this.value;
-  }
-
-  getFieldNames(): Set<string> {
-    return new Set<string>();
   }
 
   getTextPrimitives(): Set<string> {
@@ -853,16 +856,23 @@ export class Range {
       const left = Range.fromExpression(expr.leftExpr, textToNum);
       const right = Range.fromExpression(expr.rightExpr, textToNum);
       return Range.updateGivenOp(expr.operator.op, [left, right]);
-    } else if (expr instanceof UnaryExpression) {
+    }
+    if (expr instanceof UnaryExpression) {
       const rg = Range.fromExpression(expr.expr, textToNum);
       return Range.updateGivenOp(expr.operator.op, [rg]);
-    } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BOOLEAN) {
+    }
+    if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BOOLEAN) {
       return Range.booleanRange(1);
     }
-    throw new Error(`Cannot resolve primitive nodes by themselves: ${expr.toString()}`);
+    if (expr instanceof BooleanPrimitive && expr.evalType === Primitive.BOOLEAN) {
+      return Range.universal(Primitive.UNKNOWN);
+    }
+
+    // This represents cases that the refinement system cannot solve statically.
+    return null;
   }
 
-  static makeInitialGivenOp(op: string, val: ExpressionPrimitives): Range {
+  static makeInitialGivenOp(op: Op, val: ExpressionPrimitives): Range {
     switch (op) {
       case Op.LT: return new Range([Segment.openOpen(Number.NEGATIVE_INFINITY, val)]);
       case Op.LTE: return new Range([Segment.openClosed(Number.NEGATIVE_INFINITY, val)]);
@@ -874,7 +884,7 @@ export class Range {
     }
   }
 
-  static updateGivenOp(op: string, ranges: Range[]): Range {
+  static updateGivenOp(op: Op, ranges: Range[]): Range {
     switch (op) {
       case Op.AND: {
         return Range.intersectionOf(ranges[0], ranges[1]);
@@ -899,8 +909,9 @@ export class Range {
       case Op.NOT: {
         return Range.complementOf(ranges[0]);
       }
-      default:
-        throw new Error(`Unsupported operator: cannot update range`);
+      default: {
+        throw new Error(`Unsupported operator '${op}': cannot update range`);
+      }
     }
   }
 }
@@ -1031,7 +1042,7 @@ interface Boundary {
 
 interface OperatorInfo {
   nArgs: number;
-  argType: string;
+  argType: Primitive | 'same';
   evalType: Primitive;
   sqlOp: string;
 }
@@ -1072,14 +1083,14 @@ const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimiti
 
 export class RefinementOperator {
   opInfo: OperatorInfo;
-  op: string;
+  op: Op;
 
-  constructor(operator: string) {
+  constructor(operator: Op) {
     this.op = operator;
     this.updateOp(operator);
   }
 
-  static fromLiteral(refOpr): RefinementOperator {
+  static fromLiteral(refOpr: RefinementOperator): RefinementOperator {
     return new RefinementOperator(refOpr.op);
   }
 
@@ -1097,7 +1108,7 @@ export class RefinementOperator {
     return this.opInfo.sqlOp;
   }
 
-  updateOp(operator: string) {
+  updateOp(operator: Op) {
     this.op = operator;
     this.opInfo = operatorTable[operator];
     if (!this.opInfo) {
@@ -1130,10 +1141,16 @@ export class RefinementOperator {
       if (operands[0].evalType !== operands[1].evalType) {
         throw new Error(`Expected refinement expression ${operands[0]} and ${operands[1]} to have the same type. But found types ${operands[0].evalType} and ${operands[1].evalType}.`);
       }
+      // TODO(cypher1): Use the type checker here (with type variables) as this is not typesafe.
+      // E.g. if both arguments are unknown, the types will be unknown but not enforced to be equal.
     } else {
-      for (const type of operands) {
-        if (type.evalType !== this.opInfo.argType) {
-          throw new Error(`Refinement expression ${type} has type ${type.evalType}. Expected ${this.opInfo.argType}.`);
+      for (const operand of operands) {
+        if (operand.evalType !== this.opInfo.argType) {
+          if (operand.evalType !== Primitive.UNKNOWN || operand.kind !== 'QueryArgumentPrimitiveNode') {
+            throw new Error(`Refinement expression ${operand} has type ${operand.evalType}. Expected ${this.opInfo.argType}.`);
+          }
+          // Assign the type
+          operand.evalType = this.opInfo.argType;
         }
       }
     }
@@ -1224,7 +1241,7 @@ export class Fraction {
     throw new Error(`Cannot resolve expression: ${expr.toString()}`);
   }
 
-  static updateGivenOp(op: string, fractions: Fraction[]): Fraction {
+  static updateGivenOp(op: Op, fractions: Fraction[]): Fraction {
     switch (op) {
       case Op.ADD: return Fraction.add(fractions[0], fractions[1]);
       case Op.MUL: return Fraction.multiply(fractions[0], fractions[1]);

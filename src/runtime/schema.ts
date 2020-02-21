@@ -9,14 +9,13 @@
  */
 
 import {digest} from '../platform/digest-web.js';
-import {ParticleExecutionContext} from './particle-execution-context.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
 import {Referenceable} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
-import {RefinementNode, SchemaType, SchemaPrimitiveType} from './manifest-ast-nodes.js';
-import {Refinement, BinaryExpression, RefinementOperator, Op, AtleastAsSpecific} from './refiner.js';
+import {SchemaType} from './manifest-ast-nodes.js';
+import {Refinement, AtleastAsSpecific} from './refiner.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -159,7 +158,8 @@ export class Schema {
         return false;
       }
     }
-    const fields = {};
+    // tslint:disable-next-line: no-any
+    const fields: Dictionary<any> = {};
     for (const [name, type] of Object.entries(this.fields)) {
       fields[name] = type;
     }
@@ -217,13 +217,16 @@ export class Schema {
   toInlineSchemaString(options?: {hideFields?: boolean}): string {
     const names = this.names.join(' ') || '*';
     const fields = Object.entries(this.fields).map(Schema.fieldToString).join(', ');
-    return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}`;
+    return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}${this.refinement ? this.refinement.toString() : ''}`;
   }
 
   toManifestString(): string {
     const results:string[] = [];
     results.push(`schema ${this.names.join(' ')}`);
     results.push(...Object.entries(this.fields).map(f => `  ${Schema.fieldToString(f)}`));
+    if (this.refinement) {
+      results.push(`  ${this.refinement.toString()}`);
+    }
     if (Object.keys(this.description).length > 0) {
       results.push(`  description \`${this.description.pattern}\``);
       for (const name of Object.keys(this.description)) {

@@ -408,15 +408,12 @@ export class ParticleSpec {
 
     const writeConnection = (connection: HandleConnectionSpec, indent: string) => {
       const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)}`;
-      const entitySchema = connection.type.getEntitySchema();
-      const ref = entitySchema && entitySchema.refinement;
 
       const subresults = [
         `${connection.name}:`,
         dir,
         connection.relaxed ? AstNode.RELAXATION_KEYWORD : '',
         connection.type.toString(),
-        ref ? ref.toString() : '',
         ...connection.tags.map((tag: string) => `#${tag}`)
       ];
 
