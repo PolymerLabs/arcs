@@ -84,6 +84,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   bundle: runNodeScriptSteps('bundle'),
   schema2wasm: runNodeScriptSteps('schema2wasm'),
   manifest2json: runNodeScriptSteps('manifest2json'),
+  manifest2proto: runNodeScriptSteps('manifest2proto'),
   flowcheck: runNodeScriptSteps('flowcheck'),
   devServer: [peg, build, webpack, devServer],
   languageServer: [peg, build, buildLS, webpackLS],
@@ -114,6 +115,9 @@ const scripts: {[index: string]: string} = {
 
   /** Serializes manifests to JSON. */
   manifest2json: 'build/tools/manifest2json.js',
+
+  /** Serializes a manifest to protobufs. */
+  manifest2proto: 'build/tools/manifest2proto.js',
 };
 
 const eslintCache = '.eslint_sigh_cache';
