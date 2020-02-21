@@ -117,7 +117,7 @@ const scripts: {[index: string]: string} = {
   manifest2json: 'build/tools/manifest2json.js',
 
   /** Serializes a manifest to protobufs. */
-  manifest2proto: 'build/tools/manifest2proto.js',
+  manifest2proto: 'build/tools/manifest2proto-cli.js',
 };
 
 const eslintCache = '.eslint_sigh_cache';
