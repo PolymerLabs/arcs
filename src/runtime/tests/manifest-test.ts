@@ -661,11 +661,12 @@ ${particleStr1}
     }));
 
     describe('refinement type checking', async () => {
-      const verify = (manifest, norms, expectedErrors) => {
+      const verify = (manifest: Manifest, norms: boolean, expectedErrors: string[]) => {
         const recipe = manifest.recipes[0];
         const options = {errors: new Map()};
-        assert.deepEqual(recipe.normalize(options), norms, `normalizes: ${norms}`);
+        const normalizes = recipe.normalize(options);
         assert.sameMembers([...options.errors.values()], expectedErrors);
+        assert.deepEqual(normalizes, norms, `is ${norms ? '' : 'not '}expected to normalize`);
         if (norms) {
           assert(recipe.isResolved());
         }
@@ -715,6 +716,121 @@ ${particleStr1}
         // TODO(cypher1): check that a warning is thrown by Impossible.output
         verify(manifest, true, []);
       }));
+
+      it('ignores dynamic query refinement expressions on fields', Flags.withFieldRefinementsAllowed(async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number [ (num > 3) ] }
+          particle Reader
+            input: reads Something {num: Number [ (num > ?) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        assert.lengthOf(cc.warn, 2);
+        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
+      }));
+
+      it('ignores dynamic query refinement expressions', async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number} [ (num > 3) ]
+          particle Reader
+            input: reads Something {num: Number} [ (num > ?) ]
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        assert.lengthOf(cc.warn, 2);
+        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
+      });
+
+      it('applies refinements', Flags.withFieldRefinementsAllowed(async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number [ (num > 3) ] }
+          particle Reader
+            input: reads Something {num: Number [ (num > 5) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, false, ['Type validations failed for handle \'data: create\': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}']);
+      }));
+      it('ignores dynamic query refinement expressions and-ed with refinements', Flags.withFieldRefinementsAllowed(async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number [ (num > 5) ] }
+          particle Reader
+            input: reads Something {num: Number [ (num > ?) and (num > 3) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        assert.lengthOf(cc.warn, 2);
+        assert.lengthOf(cc.log, 0);
+        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
+      }));
+      it('ignores refinements or-ed with dynamic query refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number }
+          particle Reader
+            input: reads Something {num: Number [ (num > ?) or (num > 3) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        assert.lengthOf(cc.warn, 2);
+        assert.lengthOf(cc.log, 0);
+        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
+      }));
+      it('catches unsafe schema level refinements', Flags.withFieldRefinementsAllowed(async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number } [num > 0]
+          particle Reader
+            input: reads Something {num: Number } [num > 3]
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, false, ['Type validations failed for handle \'data: create\': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 3)]} with write guarantees Something {num: Number[(num > 0)]}']);
+      }));
+      it('allows safe schema level refinements', async () => {
+        const manifest = await parseManifest(`
+          particle Impossible
+            output: writes Something {num: Number } [num > 5]
+          particle Reader
+            input: reads Something {num: Number } [num > 3]
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        verify(manifest, true, []);
+      });
     });
   });
 

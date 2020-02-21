@@ -10,6 +10,8 @@ kt_android_library(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/common",  # buildcleaner: keep
+        "//java/arcs/android/crdt",
+        "//java/arcs/android/crdt:version_map_android_proto",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/storage",
@@ -19,6 +21,7 @@ kt_android_library(
         "//java/arcs/core/util/performance",
         "//java/arcs/jvm/util/performance",
         "//third_party/java/androidx/annotation",
+        "//third_party/java/arcs/deps:protobuf_javalite",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

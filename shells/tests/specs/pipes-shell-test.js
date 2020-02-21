@@ -31,8 +31,7 @@ describe(`pipes-shell (${persona})`, () => {
   it('passes notification test', async function() {
     await waitForPipeOutput(`dinner reservations`);
   });
-  // TODO(csilvestrini): Fix this test.
-  it.skip('passes WASM test', async function() {
+  it('passes WASM test', async function() {
     await waitForPipeOutput(`'template':'<b>Hello, world!</b>'`);
   });
 });

@@ -53,6 +53,7 @@ class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
 
     override fun create() = GoldInternal1()
 
+
     override fun decode(encoded: ByteArray): GoldInternal1? {
         if (encoded.isEmpty()) return null
 
@@ -170,6 +171,7 @@ class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
 
     override fun create() = Gold_Data()
 
+
     override fun decode(encoded: ByteArray): Gold_Data? {
         if (encoded.isEmpty()) return null
 
@@ -226,11 +228,13 @@ class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
 }
 
 
-class GoldHandles(particle : WasmParticleImpl) {
+class GoldHandles(
+    particle : WasmParticleImpl
+)  {
     val data: WasmSingletonImpl<Gold_Data> = WasmSingletonImpl(particle, "data", Gold_Data_Spec())
     val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl(particle, "alias", Gold_Alias_Spec())
 }
 
 abstract class AbstractGold : WasmParticleImpl() {
-    protected val handles: GoldHandles = GoldHandles(this)
+    val handles: GoldHandles = GoldHandles(this)
 }

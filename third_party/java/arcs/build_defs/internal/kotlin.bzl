@@ -265,7 +265,7 @@ def arcs_kt_particles(
             visibility = visibility,
         )
 
-def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = []):
+def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = [], data = []):
     """Defines Kotlin Android test targets for a directory.
 
     Defines a Kotlin Android library (kt_android_library) for all of the sources
@@ -280,6 +280,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
         files will be used.
       tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_android_library
+      data: list of files available to the test at runtime
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
@@ -305,9 +306,10 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             test_class = "%s.%s" % (package, class_name),
             tags = tags,
             deps = android_local_test_deps,
+            data = data,
         )
 
-def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
+def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], data = []):
     """Defines Kotlin JVM test targets for a directory.
 
     Defines a Kotlin JVM library (kt_jvm_library) for all of the sources
@@ -321,6 +323,7 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
         files will be used.
       tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_jvm_library
+      data: list of files available to the test at runtime
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
@@ -342,6 +345,7 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = []):
             test_class = "%s.%s" % (package, class_name),
             runtime_deps = [":%s" % name],
             tags = tags,
+            data = data,
         )
 
 register_extension_info(

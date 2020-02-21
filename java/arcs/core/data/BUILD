@@ -2,6 +2,11 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_library",
 )
+load(
+    "//third_party/java/arcs/build_defs:native.oss.bzl",
+    "android_proto_library",
+    "proto_library",
+)
 
 licenses(["notice"])
 
@@ -36,4 +41,14 @@ arcs_kt_library(
     deps = [
         "//java/arcs/core/common",
     ],
+)
+
+proto_library(
+    name = "manifest_proto",
+    srcs = ["manifest.proto"],
+)
+
+android_proto_library(
+    name = "manifest_android_proto",
+    deps = [":manifest_proto"],
 )

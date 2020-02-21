@@ -14,7 +14,7 @@ import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, Inte
         ReferenceType, RelationType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Entity} from '../entity.js';
 import {Refinement} from '../refiner.js';
-import {UnaryExpressionNode, BooleanNode, FieldNode} from '../manifest-ast-nodes.js';
+import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
@@ -62,7 +62,7 @@ describe('types', () => {
             value: 'b',
             location: null,
           } as FieldNode,
-          operator: 'and'
+          operator: Op.AND
         }}, {'a': 'Boolean', 'b': 'Boolean'});
       // tslint:disable-next-line: no-any
       const entity = EntityType.make(['Foo'], {
@@ -77,7 +77,7 @@ describe('types', () => {
                 value: 'value',
                 location: null,
               } as FieldNode,
-              operator: 'not',
+              operator: Op.NOT,
               location: null,
             } as UnaryExpressionNode,
             location: null
@@ -105,7 +105,7 @@ describe('types', () => {
                 evalType: 'Boolean'
               },
               operator: {
-                op: 'and',
+                op: Op.AND,
                 opInfo: {
                   argType: 'Boolean',
                   evalType: 'Boolean',
@@ -129,7 +129,7 @@ describe('types', () => {
                     evalType: 'Boolean'
                   },
                   operator: {
-                    op: 'not',
+                    op: Op.NOT,
                     opInfo: {
                       argType: 'Boolean',
                       evalType: 'Boolean',

@@ -23,7 +23,6 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Plan
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.StorageKey
@@ -54,7 +53,6 @@ class AndroidAllocatorTest {
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
         SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        SchemaDescription(),
         "42"
     )
     private var personEntityType: Type = EntityType(personSchema)

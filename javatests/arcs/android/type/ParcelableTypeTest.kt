@@ -19,7 +19,6 @@ import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
@@ -126,7 +125,6 @@ class ParcelableTypeTest {
             singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
             collections = mapOf("friends" to FieldType.EntityRef("hash"))
         ),
-        description = SchemaDescription(),
         hash = "hash"
     )
 }

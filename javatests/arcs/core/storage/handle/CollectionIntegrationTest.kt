@@ -17,7 +17,6 @@ import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
@@ -88,7 +87,7 @@ class CollectionIntegrationTest {
     fun addingElementToA_showsUpInB() = runBlockingTest {
         val person = Person("Miles", 55, true)
 
-        collectionA.store(person.toRawEntity())
+        assertThat(collectionA.store(person.toRawEntity())).isTrue()
         assertThat(collectionA.fetchAll()).containsExactly(person.toRawEntity())
         assertThat(collectionB.fetchAll()).containsExactly(person.toRawEntity())
     }
@@ -104,7 +103,9 @@ class CollectionIntegrationTest {
         assertThat(collectionA.fetchAll()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
         assertThat(collectionB.fetchAll()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
 
-        collectionA.remove(jason.toRawEntity())
+        assertThat(collectionA.remove(jason.toRawEntity())).isTrue()
+        // duplicate remove fails
+        assertThat(collectionA.remove(jason.toRawEntity())).isFalse()
         assertThat(collectionA.fetchAll()).containsExactly(miles.toRawEntity())
         assertThat(collectionB.fetchAll()).containsExactly(miles.toRawEntity())
     }
@@ -163,7 +164,6 @@ class CollectionIntegrationTest {
                     "pets" to FieldType.Text
                 )
             ),
-            SchemaDescription(),
             "1234acf"
         )
 

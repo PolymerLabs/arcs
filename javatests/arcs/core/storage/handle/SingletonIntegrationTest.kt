@@ -16,7 +16,6 @@ import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
@@ -88,7 +87,7 @@ class SingletonIntegrationTest {
     fun settingOnA_showsUpInB() = runBlockingTest {
         val person = Person("Lou", 95, true)
 
-        singletonA.set(person.toRawEntity())
+        assertThat(singletonA.set(person.toRawEntity())).isTrue()
         assertThat(singletonA.fetch()).isEqualTo(person.toRawEntity())
         assertThat(singletonB.fetch()).isEqualTo(person.toRawEntity())
     }
@@ -170,7 +169,6 @@ class SingletonIntegrationTest {
                     "pets" to FieldType.Text
                 )
             ),
-            SchemaDescription(),
             "1234acf"
         )
 

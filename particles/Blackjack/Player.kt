@@ -1,7 +1,7 @@
 package arcs.tutorials.blackjack
 
-import arcs.sdk.Handle
 import arcs.sdk.Utils.log
+import arcs.sdk.wasm.WasmHandle
 
 class Player : AbstractPlayer() {
     val name = "Player"
@@ -29,7 +29,7 @@ class Player : AbstractPlayer() {
         return model + mapOf("hand" to desc)
     }
 
-    override fun onHandleUpdate(handle: Handle) {
+    override fun onHandleUpdate(handle: WasmHandle) {
         // We only respond to changes to nextCard.
         if (handle.name != "nextCard") return
         val nc = handles.nextCard.fetch()?.takeIf { it.player == name } ?: return

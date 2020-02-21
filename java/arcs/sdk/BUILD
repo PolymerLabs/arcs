@@ -18,10 +18,13 @@ arcs_kt_jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data/util:data-util",
     ],
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
 

@@ -20,7 +20,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ParcelableVersionMapTest {
+class VersionMapProtoTest {
     @Test
     fun parcelableRoundTrip_works() {
         val emptyMap = VersionMap()

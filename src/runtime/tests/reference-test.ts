@@ -15,14 +15,18 @@ import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/st
 import {VolatileStorage} from '../storage/volatile-storage.js';
 import {Loader} from '../../platform/loader.js';
 import {EntityType, ReferenceType, CollectionType, SingletonType} from '../type.js';
-import {Id} from '../id.js';
+import {Id, ArcId} from '../id.js';
 import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
 import {Entity} from '../entity.js';
 import {Flags} from '../flags.js';
 import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
+import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
 import {Store} from '../storageNG/store.js';
 import {Exists} from '../storageNG/drivers/driver.js';
 import {Reference} from '../reference.js';
+import {StorageKey} from '../storageNG/storage-key.js';
+import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
+import {Runtime} from '../runtime.js';
 
 describe('references', () => {
   it('can parse & validate a recipe containing references', async () => {
@@ -636,5 +640,82 @@ describe('references', () => {
     const outputRefs = await outputStore.fetch();
     const ids = [...outputRefs.result].map(ref => ref.id);
     assert.sameMembers(ids, ['id:1', 'id:2']);
+  });
+});
+
+describe('references when new storage enabled', () => {
+  before(() => {
+    Flags.useNewStorageStack = true;
+  });
+
+  after(() => {
+    Flags.reset();
+  });
+
+  it('can construct references of entities stored in reference mode store', async () => {
+    const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
+    const loader = new Loader(null, {
+      './manifest': `
+        schema Result
+          value: Text
+  
+        particle Referencer in 'referencer.js'
+          inResult: reads Result
+          outResult: writes &Result
+  
+        recipe
+          handle0: use 'test:1'
+          handle1: use 'test:2'
+          Referencer
+            inResult: reads handle0
+            outResult: writes handle1
+      `,
+      './referencer.js': `
+        defineParticle(({Particle, Reference}) => {
+          return class Referencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('outResult');
+            }
+  
+            async onHandleSync(handle, model) {
+              if (handle.name == 'inResult') {
+                let entity = await handle.fetch();
+                let reference = new Reference(entity);
+                await reference.stored;
+                await this.output.set(reference);
+              }
+            }
+          }
+        });
+      `
+    });
+    const memoryProvider = new TestVolatileMemoryProvider();
+
+    const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test', storageKeyPrefix);
+    const recipe = manifest.recipes[0];
+    const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
+
+
+    const inputStore = await arc.createStore(result.type, undefined, 'test:1', );
+    const refStore = await arc.createStore(new ReferenceType(result.type), undefined, 'test:2', undefined, new VolatileStorageKey(arc.id, 'refStore'));
+
+    recipe.handles[0].mapToStorage(inputStore);
+    recipe.handles[1].mapToStorage(refStore);
+
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+
+    const handle = await singletonHandleForTest(arc, inputStore);
+    const entity = await handle.setFromData({value: 'what a result!'});
+    await arc.idle;
+
+    const storageKey = Entity.storageKey(entity);
+    const refHandle = await singletonHandleForTest(arc, refStore);
+    const reference = await refHandle.fetch();
+    assert.equal(reference.id, Entity.id(entity));
+    assert.equal(reference.entityStorageKey, storageKey);
   });
 });

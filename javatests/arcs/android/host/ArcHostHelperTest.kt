@@ -30,7 +30,6 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.ParticleSpec
 import arcs.core.data.PlanPartition
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
@@ -127,7 +126,6 @@ class ArcHostHelperTest {
         val personSchema = Schema(
             listOf(SchemaName("Person")),
             SchemaFields(mapOf("name" to Text), emptyMap()),
-            SchemaDescription(),
             "42"
         )
 

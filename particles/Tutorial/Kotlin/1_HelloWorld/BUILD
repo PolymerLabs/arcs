@@ -16,5 +16,6 @@ arcs_kt_particles(
     name = "HelloWorld",
     srcs = ["HelloWorld.kt"],
     package = "arcs.tutorials",
+    platforms = ["wasm"],
     deps = [":schemas"],
 )

@@ -11,7 +11,7 @@
 
 package arcs.tutorials
 
-import arcs.sdk.Handle
+import arcs.sdk.wasm.WasmHandle
 
 /**
  * Sample WASM Particle.
@@ -19,7 +19,7 @@ import arcs.sdk.Handle
 class DisplayGreeting : AbstractDisplayGreeting() {
     override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"
 
-    override fun onHandleUpdate(handle: Handle) {
+    override fun onHandleUpdate(handle: WasmHandle) {
         this.renderOutput()
     }
 

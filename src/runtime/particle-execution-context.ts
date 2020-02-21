@@ -114,8 +114,8 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         }
       }
 
-      async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, UnifiedStorageProxy>) {
-        return pec.instantiateParticle(id, spec, proxies);
+      async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, UnifiedStorageProxy>, reinstantiate: boolean) {
+        return pec.instantiateParticle(id, spec, proxies, reinstantiate);
       }
 
       async onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>) {
@@ -296,7 +296,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   }
 
   // tslint:disable-next-line: no-any
-  private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, UnifiedStorageProxy>): Promise<[any, () => Promise<void>]> {
+  private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, UnifiedStorageProxy>, reinstantiate: boolean): Promise<[any, () => Promise<void>]> {
     let resolve: Runnable;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
@@ -311,6 +311,9 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     });
 
     return [particle, async () => {
+      if (!reinstantiate) {
+        particle.onCreate();
+      }
       await this.assignHandle(particle, spec, id, handleMap, registerList, p);
       resolve();
     }];

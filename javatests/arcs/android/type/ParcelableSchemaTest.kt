@@ -15,7 +15,6 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.data.FieldType
 import arcs.core.data.Schema
-import arcs.core.data.SchemaDescription
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import com.google.common.truth.Truth.assertThat
@@ -33,7 +32,6 @@ class ParcelableSchemaTest {
                 singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
                 collections = mapOf("friends" to FieldType.EntityRef("hash"))
             ),
-            description = SchemaDescription("MySchemaPattern"),
             hash = "hash"
         )
 
@@ -56,7 +54,6 @@ class ParcelableSchemaTest {
         val schema = Schema(
             names = emptyList(),
             fields = SchemaFields(singletons = emptyMap(), collections = emptyMap()),
-            description = SchemaDescription(),
             hash = "hash"
         )
 
