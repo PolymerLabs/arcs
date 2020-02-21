@@ -32,25 +32,23 @@ class Proto2SchemaTest {
         val p2s = Proto2Schema()
         val schemaProperty = p2s.generateSchemas(listOf(testSchema)).first()
 
-        println(schemaProperty.toString())
-        // TODO(alxr): Add asserts
-
-        assertThat(schemaProperty.toString()).isEqualTo("""val sliceSchema: arcs.core.data.Schema = arcs.core.data.Schema(
-    listOf(
-        arcs.core.data.SchemaName("Slice")
-    ),
-    arcs.core.data.SchemaFields(
-        singletons = mapOf(
-            "num" to arcs.core.data.FieldType.Number,
-            "flg" to arcs.core.data.FieldType.Boolean,
-            "txt" to arcs.core.data.FieldType.Text
-        ),
-        collections = mapOf(
-        )
-    ),
-    "f4907f97574693c81b5d62eb009d1f0f209000b8"
-    )
-
-""")
+        assertThat(schemaProperty.toString()).isEqualTo("""
+            |val sliceSchema: arcs.core.data.Schema = arcs.core.data.Schema(
+            |    listOf(
+            |        arcs.core.data.SchemaName("Slice")
+            |    ),
+            |    arcs.core.data.SchemaFields(
+            |        singletons = mapOf(
+            |            "num" to arcs.core.data.FieldType.Number,
+            |            "flg" to arcs.core.data.FieldType.Boolean,
+            |            "txt" to arcs.core.data.FieldType.Text
+            |        ),
+            |        collections = mapOf(
+            |        )
+            |    ),
+            |    "f4907f97574693c81b5d62eb009d1f0f209000b8"
+            |    )
+            |
+            |""".trimMargin())
     }
 }
