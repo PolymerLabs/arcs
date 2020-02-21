@@ -1,13 +1,13 @@
 package arcs.core.tools
 
-import arcs.core.data.FieldType
-import arcs.core.data.SchemaFields
+import arcs.core.data.*
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
+import com.squareup.kotlinpoet.*
 import java.io.File
 
 /** Generates plans from recipes. */
@@ -28,12 +28,17 @@ class Recipe2Plan : CliktCommand(
             val outputFile = outputFile(manifest)
             echo("$manifest --> $outputFile")
 
-            val man = parse(manifest.readText())
-            val test = SchemaFields(mapOf("test" to FieldType.Number), mapOf())
-            val debug = man.schemas.toString() + "\n" + test.toString()
-            echo(debug)
-            outputFile(manifest).writeText(debug)
+            val serializedManifest = parse(manifest.readText())
+            val fileBuilder = FileSpec.builder(packageName, "")
+
+            generate(serializedManifest, fileBuilder)
+
+            outputFile.writeText(fileBuilder.build().toString())
         }
+    }
+
+    fun generate(manifest: SerializedManifest, fileBuilder: FileSpec.Builder) {
+        //TODO Implement
     }
 
     /** Produces a File object per user specification, or with default values. */
@@ -43,6 +48,33 @@ class Recipe2Plan : CliktCommand(
         return File("$outputPath/$outputName")
     }
 
+}
+
+data class SerializedManifest(
+    val particles: List<ParticleSpec>,
+    val schemas: List<Schema>
+)
+
+fun parse(jsonString: String): SerializedManifest {
+//    val gson = Gson()
+//    return gson.fromJson(jsonString, SerializedManifest::class.java)
+    return SerializedManifest(
+        listOf(),
+        listOf(
+        Schema(
+            listOf(SchemaName("Slice")),
+            SchemaFields(
+                singletons = mapOf(
+                    "num" to FieldType.Number,
+                    "flg" to FieldType.Boolean,
+                    "txt" to FieldType.Text
+                ),
+                collections = mapOf()
+            ),
+            SchemaDescription(),
+            "f4907f97574693c81b5d62eb009d1f0f209000b8"
+        )
+    ))
 }
 
 fun main(args: Array<String>) = Recipe2Plan().main(args)
