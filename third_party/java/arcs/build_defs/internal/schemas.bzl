@@ -100,3 +100,38 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
         platforms = ["jvm", "wasm"],
         deps = ARCS_SDK_DEPS,
     )
+
+def _proto2schema_impl(ctx):
+    output_name = ctx.label.name + ".kt"
+    out = ctx.actions.declare_file(output_name)
+
+    args = ctx.actions.args()
+
+    args.add_all("--outfile", [output_name])
+    args.add_all("--outdir", [out.dirname])
+    args.add_all("--package-name", [ctx.attr.package])
+    args.add_all([src.path for src in ctx.files.srcs])
+
+    ctx.actions.run(
+        inputs = ctx.files.srcs,
+        outputs = [out],
+        arguments = [args],
+        executable = ctx.executable._compiler,
+    )
+
+    return [DefaultInfo(files = depset([out]))]
+
+proto2schema = rule(
+    implementation = _proto2schema_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".pb.bin"]),
+        "package": attr.string(),
+        "_compiler": attr.label(
+            cfg = "host",
+            default = Label("//java/arcs/core/tools:proto2schema"),
+            allow_files = True,
+            executable = True,
+        )
+    },
+    doc = """Generates Schemas from serialized manifests."""
+)

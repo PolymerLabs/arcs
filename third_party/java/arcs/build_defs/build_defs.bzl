@@ -24,6 +24,7 @@ load(
     "//third_party/java/arcs/build_defs/internal:schemas.bzl",
     _arcs_cc_schema = "arcs_cc_schema",
     _arcs_kt_schema = "arcs_kt_schema",
+    _proto2schema = "proto2schema",
 )
 load(":sigh.bzl", "sigh_command")
 
@@ -44,6 +45,8 @@ arcs_kt_native_library = _arcs_kt_native_library
 arcs_kt_particles = _arcs_kt_particles
 
 arcs_kt_schema = _arcs_kt_schema
+
+proto2schema = _proto2schema
 
 arcs_manifest = _arcs_manifest
 
