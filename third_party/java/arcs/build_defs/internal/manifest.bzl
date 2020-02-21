@@ -61,6 +61,29 @@ def arcs_manifest_json(name, srcs = [], deps = [], out = None, visibility = None
         sigh_cmd = "manifest2json --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
     )
 
+def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
+    """Serialize a manifest file.
+
+    This converts a '.arcs' file into a protobuf representation, using manifest2proto.
+
+    Args:
+      name: the name of the target to create
+      srcs: an Arcs manifest files to serialize
+      deps: list of dependencies (other manifests)
+      out: the name of the output artifact (a proto file).
+      visibility: list of visibilities
+    """
+    outs = [out] if out != None else [output_name(name, ".pb.bin")]
+
+    sigh_command(
+        name = name,
+        srcs = [src],
+        outs = outs,
+        deps = deps,
+        progress_message = "Serializing manifest",
+        sigh_cmd = "manifest2proto --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+    )
+
 def _generate_root_manifest_content(label, input_files):
     """Generates the contents for a root manifest for a manifest bundle.
 
