@@ -11,6 +11,8 @@
 
 package arcs.tutorials
 
+import arcs.sdk.wasm.log
+
 /**
  * Sample WASM Particle.
  */
@@ -23,6 +25,10 @@ class DisplayGreeting : AbstractDisplayGreeting() {
             name = p?.name ?: name
             this.renderOutput()
         }
+    }
+
+    override fun onCreate() {
+        log("hello, world!")
     }
 
     override fun getTemplate(slotName: String) = "Hello, <span>{{name}}</span>!"

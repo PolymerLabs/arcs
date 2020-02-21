@@ -172,4 +172,6 @@ abstract class WasmParticleImpl {
      * @param allSynced flag indicating if all handles are synchronized
      */
     open fun onHandleSync(handle: WasmHandle, allSynced: Boolean) = Unit
+
+    open fun onCreate() = Unit
 }

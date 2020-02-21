@@ -872,6 +872,10 @@ export class WasmParticle extends Particle {
   // Ignored for wasm particles.
   async onHandleDesync(handle: Handle<CRDTTypeRecord>) {}
 
+  // async onCreate() {
+  //   this.exports._onCreate();
+  // }
+
   // Store API.
   //
   // Each of these calls an async storage method, but we don't want to await them because returning
