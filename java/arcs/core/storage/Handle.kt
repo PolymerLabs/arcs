@@ -13,6 +13,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.util.TaggedLog
 
@@ -62,10 +63,14 @@ interface Callbacks<Op : CrdtOperation> {
  *
  * The base handle interface is at this layer to avoid circular dependencies.
  */
-open class Handle<Data : CrdtData, Op : CrdtOperation, T>(
+open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /** [name] is the unique name for this handle, used to track state in the [VersionMap]. */
     val name: String,
     val storageProxy: StorageProxy<Data, Op, T>,
+
+    /** [callback] contains optional Handle-owner provided callbacks to add behavior. */
+    private val callback: Callbacks<Op>? = null,
+
     /**
      * [canRead] is whether this handle reads data so proxy can decide whether to keep its crdt
      * up to date
@@ -73,9 +78,6 @@ open class Handle<Data : CrdtData, Op : CrdtOperation, T>(
     val canRead: Boolean = true
 ) {
     protected val log = TaggedLog { "Handle($name)" }
-
-    /** The currently registered [Callbacks] instance */
-    var callback: Callbacks<Op>? = null
 
     /** Local copy of the [VersionMap] for the backing CRDT. */
     var versionMap = VersionMap()
@@ -93,4 +95,28 @@ open class Handle<Data : CrdtData, Op : CrdtOperation, T>(
     protected fun VersionMap.increment() {
         this[name]++
     }
+
+    /**
+     * This should be called by the [StorageProxy] this [Handle] has been registered with,
+     * after a model update has been cleanly applied to the [StorageProxy]'s local copy.
+     */
+    internal fun onUpdate(op: Op) {
+        versionMap = op.clock.copy()
+        callback?.onUpdate(op)
+    }
+
+    /**
+     * This should be called by the [StorageProxy] this [Handle] has been registered with,
+     * after a full sync has occurred.
+     */
+    internal fun onSync(versionMap: VersionMap) {
+        this.versionMap = versionMap
+        callback?.onSync()
+    }
+
+    /**
+     * This should be called by the [StorageProxy] this [Handle] has been registered with,
+     * when the [StorageProxy] has detected that its local model is out of sync.
+     */
+    internal fun onDesync() = callback?.onDesync()
 }
