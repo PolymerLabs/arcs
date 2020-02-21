@@ -18,6 +18,7 @@ load(
     _arcs_manifest = "arcs_manifest",
     _arcs_manifest_bundle = "arcs_manifest_bundle",
     _arcs_manifest_json = "arcs_manifest_json",
+    _arcs_manifest_proto = "arcs_manifest_proto",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:schemas.bzl",
@@ -49,6 +50,8 @@ arcs_manifest = _arcs_manifest
 arcs_manifest_bundle = _arcs_manifest_bundle
 
 arcs_manifest_json = _arcs_manifest_json
+
+arcs_manifest_proto = _arcs_manifest_proto
 
 kt_js_library = _kt_js_library
 
