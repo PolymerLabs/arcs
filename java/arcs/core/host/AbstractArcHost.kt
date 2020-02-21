@@ -10,8 +10,7 @@
  */
 package arcs.core.host
 
-import arcs.core.data.ParticleSpec
-import arcs.core.data.PlanPartition
+import arcs.core.data.Plan
 import arcs.sdk.Particle
 import kotlin.reflect.KClass
 
@@ -35,16 +34,16 @@ abstract class AbstractArcHost(
 
     override suspend fun registeredParticles(): List<ParticleIdentifier> = particles
 
-    override suspend fun startArc(partition: PlanPartition) {
+    override suspend fun startArc(partition: Plan.Partition) {
         // TODO: not implemented yet
     }
 
-    override suspend fun stopArc(partition: PlanPartition) {
+    override suspend fun stopArc(partition: Plan.Partition) {
         // TODO: not implemented yet
     }
 
-    override suspend fun isHostForSpec(spec: ParticleSpec) =
-        registeredParticles().contains(ParticleIdentifier.from(spec.location))
+    override suspend fun isHostForParticle(particle: Plan.Particle) =
+        registeredParticles().contains(ParticleIdentifier.from(particle.location))
 }
 
 /**

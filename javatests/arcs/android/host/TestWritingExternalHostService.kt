@@ -4,7 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.core.data.PlanPartition
+import arcs.core.data.Plan
 import arcs.core.host.ExternalHost
 import arcs.sdk.Particle
 
@@ -24,12 +24,12 @@ class TestWritingExternalHostService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object WritingExternalHost : ExternalHost(WritePerson()) {
-        val started: MutableList<PlanPartition> = mutableListOf()
-        override suspend fun startArc(partition: PlanPartition) {
+        val started: MutableList<Plan.Partition> = mutableListOf()
+        override suspend fun startArc(partition: Plan.Partition) {
             started += partition
         }
 
-        override suspend fun stopArc(partition: PlanPartition) {
+        override suspend fun stopArc(partition: Plan.Partition) {
             started -= partition
         }
 

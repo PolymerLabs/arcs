@@ -26,9 +26,7 @@ import arcs.android.sdk.host.toComponentName
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
-import arcs.core.data.HandleConnectionSpec
-import arcs.core.data.ParticleSpec
-import arcs.core.data.PlanPartition
+import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
@@ -58,8 +56,8 @@ class ArcHostHelperTest {
 
     class TestArcHost : ArcHost {
         private val hostMutex = Mutex()
-        var startArcCalls: MutableList<PlanPartition> by guardedBy(hostMutex, mutableListOf())
-        var stopArcCalls: MutableList<PlanPartition> by guardedBy(hostMutex, mutableListOf())
+        var startArcCalls: MutableList<Plan.Partition> by guardedBy(hostMutex, mutableListOf())
+        var stopArcCalls: MutableList<Plan.Partition> by guardedBy(hostMutex, mutableListOf())
         var registeredParticles: MutableList<ParticleIdentifier> by guardedBy(
             hostMutex, mutableListOf()
         )
@@ -74,16 +72,16 @@ class ArcHostHelperTest {
             registeredParticles
         }
 
-        override suspend fun startArc(partition: PlanPartition): Unit = hostMutex.withLock {
+        override suspend fun startArc(partition: Plan.Partition): Unit = hostMutex.withLock {
             startArcCalls.add(partition)
         }
 
-        override suspend fun stopArc(partition: PlanPartition): Unit = hostMutex.withLock {
+        override suspend fun stopArc(partition: Plan.Partition): Unit = hostMutex.withLock {
             stopArcCalls.add(partition)
         }
 
-        override suspend fun isHostForSpec(spec: ParticleSpec) =
-            registeredParticles.contains(ParticleIdentifier.from(spec.location))
+        override suspend fun isHostForParticle(particle: Plan.Particle) =
+            registeredParticles.contains(ParticleIdentifier.from(particle.location))
 
         suspend fun registerParticle(particleIdentifier: ParticleIdentifier) =
             hostMutex.withLock { registeredParticles.add(particleIdentifier) }
@@ -129,18 +127,18 @@ class ArcHostHelperTest {
             "42"
         )
 
-        val connectionSpec = HandleConnectionSpec(
+        val connection = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
             EntityType(personSchema)
         )
 
-        val particleSpec = ParticleSpec(
+        val particleSpec = Plan.Particle(
             "FooParticle",
             "foo.bar.FooParticle",
-            mapOf("foo" to connectionSpec)
+            mapOf("foo" to connection)
         )
 
-        val planPartition = PlanPartition("id", "FooHost", listOf(particleSpec))
+        val planPartition = Plan.Partition("id", "FooHost", listOf(particleSpec))
         val startIntent = planPartition.createStartArcHostIntent(
             TestAndroidArcHostService::class.toComponentName(context)
         )

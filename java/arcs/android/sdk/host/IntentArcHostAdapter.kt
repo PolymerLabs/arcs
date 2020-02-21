@@ -6,8 +6,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.ResultReceiver
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
-import arcs.core.data.ParticleSpec
-import arcs.core.data.PlanPartition
+import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleIdentifier
 import kotlinx.coroutines.CancellableContinuation
@@ -38,7 +37,7 @@ class IntentArcHostAdapter(
         } ?: emptyList()
     }
 
-    override suspend fun startArc(partition: PlanPartition) {
+    override suspend fun startArc(partition: Plan.Partition) {
         sendIntentToArcHostServiceForResult(
             partition.createStartArcHostIntent(
                 arcHostComponentName
@@ -46,7 +45,7 @@ class IntentArcHostAdapter(
         )
     }
 
-    override suspend fun stopArc(partition: PlanPartition) {
+    override suspend fun stopArc(partition: Plan.Partition) {
         sendIntentToArcHostServiceForResult(
             partition.createStopArcHostIntent(
                 arcHostComponentName
@@ -54,8 +53,8 @@ class IntentArcHostAdapter(
         )
     }
 
-    override suspend fun isHostForSpec(spec: ParticleSpec): Boolean {
-        return registeredParticles().contains(ParticleIdentifier.from(spec.location))
+    override suspend fun isHostForParticle(particle: Plan.Particle): Boolean {
+        return registeredParticles().contains(ParticleIdentifier.from(particle.location))
     }
 
     /**

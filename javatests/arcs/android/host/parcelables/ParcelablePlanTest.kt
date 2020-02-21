@@ -19,8 +19,6 @@ import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.data.HandleConnectionSpec
-import arcs.core.data.ParticleSpec
 import arcs.core.data.Plan
 import arcs.core.storage.driver.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
@@ -42,21 +40,21 @@ class ParcelablePlanTest {
     @Test
     fun plan_parcelableRoundTrip_works() {
         val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-        val handleConnectionSpec = HandleConnectionSpec(storageKey, personType)
-        val handleConnectionSpec2 = HandleConnectionSpec(storageKey, personType)
-        val particleSpec = ParticleSpec(
+        val handleConnection = Plan.HandleConnection(storageKey, personType)
+        val handleConnection2 = Plan.HandleConnection(storageKey, personType)
+        val particle = Plan.Particle(
             "Foobar",
             "foo.bar.Foobar",
-            mapOf("foo" to handleConnectionSpec)
+            mapOf("foo" to handleConnection)
         )
 
-        val particleSpec2 = ParticleSpec(
+        val particle2 = Plan.Particle(
             "Foobar2",
             "foo.bar.Foobar2",
-             mapOf("foo" to handleConnectionSpec2)
+             mapOf("foo" to handleConnection2)
         )
 
-        val plan = Plan(listOf(particleSpec, particleSpec2))
+        val plan = Plan(listOf(particle, particle2))
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(plan.toParcelable(), 0)

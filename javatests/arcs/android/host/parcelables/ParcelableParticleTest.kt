@@ -16,8 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
-import arcs.core.data.HandleConnectionSpec
-import arcs.core.data.ParticleSpec
+import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
@@ -26,36 +25,36 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Tests for [ParcelableParticleSpec]'s classes. */
+/** Tests for [ParcelableParticle]'s classes. */
 @RunWith(AndroidJUnit4::class)
-class ParcelableParticleSpecTest {
+class ParcelableParticleTest {
 
     @Test
-    fun particleSpec_parcelableRoundTrip_works() {
+    fun particle_parcelableRoundTrip_works() {
         val personSchema = Schema(
             listOf(SchemaName("Person")),
             SchemaFields(mapOf("name" to Text), emptyMap()),
             "42"
         )
 
-        val connectionSpec = HandleConnectionSpec(
+        val connection = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
             EntityType(personSchema)
         )
 
-        val spec = ParticleSpec("Foobar", "foo.bar.Foobar", mapOf("foo" to connectionSpec))
+        val particle = Plan.Particle("Foobar", "foo.bar.Foobar", mapOf("foo" to connection))
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(spec.toParcelable(), 0)
+            writeTypedObject(particle.toParcelable(), 0)
             marshall()
         }
 
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableParticleSpec.CREATOR))
+            readTypedObject(requireNotNull(ParcelableParticle.CREATOR))
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(spec)
+        assertThat(unmarshalled?.actual).isEqualTo(particle)
     }
 }

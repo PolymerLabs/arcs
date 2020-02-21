@@ -19,8 +19,6 @@ import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
-import arcs.core.data.HandleConnectionSpec
-import arcs.core.data.ParticleSpec
 import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
@@ -45,10 +43,10 @@ class AndroidAllocatorTest {
     private lateinit var writingService: TestWritingExternalHostService
     private lateinit var allocator: Allocator
     private lateinit var hostRegistry: AndroidManifestHostRegistry
-    private lateinit var readPersonHandleConnectionSpec: HandleConnectionSpec
-    private lateinit var writePersonHandleConnectionSpec: HandleConnectionSpec
-    private lateinit var writePersonParticleSpec: ParticleSpec
-    private lateinit var readPersonParticleSpec: ParticleSpec
+    private lateinit var readPersonHandleConnection: Plan.HandleConnection
+    private lateinit var writePersonHandleConnection: Plan.HandleConnection
+    private lateinit var writePersonParticle: Plan.Particle
+    private lateinit var readPersonParticle: Plan.Particle
     private lateinit var writeAndReadPersonPlan: Plan
     private val personSchema = Schema(
         listOf(SchemaName("Person")),
@@ -80,28 +78,28 @@ class AndroidAllocatorTest {
         allocator = Allocator(hostRegistry)
 
         recipePersonStorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "foo")
-        writePersonHandleConnectionSpec =
-            HandleConnectionSpec(recipePersonStorageKey, personEntityType)
+        writePersonHandleConnection =
+            Plan.HandleConnection(recipePersonStorageKey, personEntityType)
 
-        writePersonParticleSpec =
-            ParticleSpec(
+        writePersonParticle =
+            Plan.Particle(
                 "WritePerson",
                 TestWritingExternalHostService.WritePerson::class.java.getCanonicalName()!!,
-                mapOf("person" to writePersonHandleConnectionSpec)
+                mapOf("person" to writePersonHandleConnection)
             )
 
-        readPersonHandleConnectionSpec =
-            HandleConnectionSpec(recipePersonStorageKey, personEntityType)
+        readPersonHandleConnection =
+            Plan.HandleConnection(recipePersonStorageKey, personEntityType)
 
-        readPersonParticleSpec =
-            ParticleSpec(
+        readPersonParticle =
+            Plan.Particle(
                 "ReadPerson",
                 TestReadingExternalHostService.ReadPerson::class.java.getCanonicalName()!!,
-                mapOf("person" to readPersonHandleConnectionSpec)
+                mapOf("person" to readPersonHandleConnection)
             )
 
         writeAndReadPersonPlan = Plan(
-            listOf(writePersonParticleSpec, readPersonParticleSpec)
+            listOf(writePersonParticle, readPersonParticle)
         )
 
         TestReadingExternalHostService.ReadingExternalHost.reset()
