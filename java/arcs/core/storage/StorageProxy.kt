@@ -13,7 +13,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
-import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
@@ -34,7 +34,7 @@ data class ValueAndVersion<T>(val value: T, val versionMap: VersionMap)
  * @param T the consumer data type for the model behind this proxy
  * @property initialCrdt the CrdtModel instance [StorageProxy] will apply ops to.
  */
-class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
+class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
     initialCrdt: CrdtModel<Data, Op, T>
 ) {
@@ -62,7 +62,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     /**
      * Connects a [Handle]. If the handle is readable, it will receive the configured callbacks.
      */
-    suspend fun registerHandle(handle: Handle<Data, Op, T>): VersionMap {
+    suspend fun registerHandle(handle: Handle<Data, Op, T>) {
         // non-readers don't get callbacks, return early
         if (!handle.canRead) return syncMutex.withLock { crdt.versionMap.copy() }
 
@@ -77,9 +77,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
             syncMutex.withLock { isSynchronized to crdt.versionMap.copy() }
 
         if (firstReader) requestSynchronization()
-        else if (hasSynced) coroutineScope { launch { handle.callback?.onSync() } }
-
-        return versionMap
+        else if (hasSynced) coroutineScope { launch { handle.onSync(versionMap) } }
     }
 
     /**
@@ -157,7 +155,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
 
                 futuresToResolve.forEach { it.complete(valueAndVersion) }
 
-                notifySync()
+                notifySync(valueAndVersion.versionMap)
             }
             is ProxyMessage.Operations -> {
                 var futuresToResolve: List<CompletableDeferred<ValueAndVersion<T>>> = emptyList()
@@ -193,12 +191,16 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperation, T>(
     }
 
     private suspend fun notifyUpdate(ops: List<Op>) = forEachHandle { handle ->
-        ops.forEach { handle.callback?.onUpdate(it) }
+        ops.forEach {
+            handle.onUpdate(it)
+        }
     }
 
-    private suspend fun notifySync() = forEachHandle { it.callback?.onSync() }
+    private suspend fun notifySync(versionMap: VersionMap) = forEachHandle {
+        it.onSync(versionMap.copy())
+    }
 
-    private suspend fun notifyDesync() = forEachHandle { it.callback?.onDesync() }
+    private suspend fun notifyDesync() = forEachHandle { it.onDesync() }
 
     private suspend inline fun forEachHandle(crossinline block: (Handle<Data, Op, T>) -> Unit) {
         val handlesToNotify = handlesMutex.withLock { readHandles.toSet() }
