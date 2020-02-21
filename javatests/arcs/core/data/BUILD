@@ -14,7 +14,7 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data:recipe_android_proto",
-        "//java/arcs/core/testutil",
+        "//java/arcs/repoutils",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
     ],
