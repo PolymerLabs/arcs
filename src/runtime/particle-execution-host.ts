@@ -260,7 +260,7 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {
-    this.arc.pec.resolveIfIdle(version, relevance);
+    this.arc.peh.resolveIfIdle(version, relevance);
   }
 
   async onGetBackingStore(callback: number, storageKey: string, type: Type) {
@@ -323,8 +323,8 @@ class PECOuterPortImpl extends PECOuterPort {
 
   onArcCreateSlot(callback: number, arc: Arc, transformationParticle: Particle, transformationSlotName: string, handleId: string) {
     let hostedSlotId;
-    if (this.arc.pec.slotComposer) {
-      hostedSlotId = this.arc.pec.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, handleId);
+    if (this.arc.peh.slotComposer) {
+      hostedSlotId = this.arc.peh.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, handleId);
     }
     this.CreateSlotCallback({}, callback, hostedSlotId);
   }
@@ -420,7 +420,7 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   onOutput(particle: Particle, content: {}) {
-    const composer = this.arc.pec.slotComposer;
+    const composer = this.arc.peh.slotComposer;
     if (composer && composer['delegateOutput']) {
       composer['delegateOutput'](this.arc, particle, content);
     }

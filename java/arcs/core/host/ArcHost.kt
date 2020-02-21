@@ -11,8 +11,7 @@
 
 package arcs.core.host
 
-import arcs.core.data.ParticleSpec
-import arcs.core.data.PlanPartition
+import arcs.core.data.Plan
 
 /**
  * An [ArcHost] manages the instantiation and execution of particles participating in an Arc by
@@ -27,21 +26,21 @@ interface ArcHost {
     suspend fun registeredParticles(): List<ParticleIdentifier>
 
     /**
-     * Requests this arc host to start or restart an Arc associated with this [PlanPartition]. This
+     * Requests this arc host to start or restart an Arc associated with this [Plan.Partition]. This
      * may include creating handles and storage proxies, registering for updates from the storage
      * system, instantiating particles, and registering for resurrection.
      */
-    suspend fun startArc(partition: PlanPartition)
+    suspend fun startArc(partition: Plan.Partition)
 
     /**
      * Shuts down an existing arc. This may include unregistering for updates from storage,
      * resurrection, and notifying particles they are at the end of their lifecycle.
      */
-    suspend fun stopArc(partition: PlanPartition)
+    suspend fun stopArc(partition: Plan.Partition)
     // TODO: HandleMessage
 
     /**
-     * Returns true if the provided [ParticleSpec] can be loaded by this [ArcHost].
+     * Returns true if the provided [Plan.Particle] can be loaded by this [ArcHost].
      */
-    suspend fun isHostForSpec(spec: ParticleSpec): Boolean
+    suspend fun isHostForParticle(particle: Plan.Particle): Boolean
 }

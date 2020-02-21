@@ -11,11 +11,11 @@
 
 package arcs.core.host
 
-import arcs.core.data.ParticleSpec
+import arcs.core.data.Plan
 
 /**
- * An [ParticleNotFoundException] is thrown if a [Particle] cannot be located in
+ * An [ParticleNotFoundException] is thrown if a [Plan.Particle] cannot be located in
  * any [ArcHost]s available on the [HostRegistry].
  */
-class ParticleNotFoundException(spec: ParticleSpec) :
+class ParticleNotFoundException(spec: Plan.Particle) :
     Exception("""${spec.particleName} with location ${spec.location} cannot be found.""")

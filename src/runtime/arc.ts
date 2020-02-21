@@ -113,7 +113,7 @@ export class Arc implements ArcInterface {
   readonly id: Id;
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
   loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, UnifiedStore>}>();
-  readonly pec: ParticleExecutionHost;
+  readonly peh: ParticleExecutionHost;
 
   // Volatile storage local to this Arc instance.
   readonly volatileMemory = new VolatileMemory();
@@ -138,7 +138,7 @@ export class Arc implements ArcInterface {
     this.inspector = inspectorFactory && inspectorFactory.create(this);
     this.storageKey = storageKey;
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator));
-    this.pec = new ParticleExecutionHost({slotComposer, arc: this, ports});
+    this.peh = new ParticleExecutionHost({slotComposer, arc: this, ports});
     if (Flags.useNewStorageStack) {
       if (typeof storageKey === 'string') {
         throw new Error(`Can't use string storage keys with new storage stack. Provide a StorageKey subclass to Arc constructor.`);
@@ -158,8 +158,8 @@ export class Arc implements ArcInterface {
   }
 
   get modality(): Modality {
-    if (this.pec.slotComposer && this.pec.slotComposer.modality) {
-      return this.pec.slotComposer.modality;
+    if (this.peh.slotComposer && this.peh.slotComposer.modality) {
+      return this.peh.slotComposer.modality;
     }
     if (!this.activeRecipe.isEmpty()) {
       return this.activeRecipe.modality;
@@ -172,12 +172,12 @@ export class Arc implements ArcInterface {
       innerArc.dispose();
     }
     // TODO: disconnect all associated store event handlers
-    this.pec.stop();
-    this.pec.close();
+    this.peh.stop();
+    this.peh.close();
     // Slot contexts and consumers from inner and outer arcs can be interwoven. Slot composer
     // is therefore disposed in its entirety with an outer Arc's disposal.
-    if (!this.isInnerArc && this.pec.slotComposer) {
-      this.pec.slotComposer.dispose();
+    if (!this.isInnerArc && this.peh.slotComposer) {
+      this.peh.slotComposer.dispose();
     }
 
     DriverFactory.unregister(this.volatileStorageDriverProvider);
@@ -188,16 +188,16 @@ export class Arc implements ArcInterface {
   async _waitForIdle(): Promise<void> {
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const messageCount = this.pec.messageCount;
+      const messageCount = this.peh.messageCount;
       const innerArcsLength = this.innerArcs.length;
 
       // tslint:disable-next-line: no-any
-      await Promise.all([this.pec.idle as Promise<any>, ...this.innerArcs.map(async arc => arc.idle)]);
+      await Promise.all([this.peh.idle as Promise<any>, ...this.innerArcs.map(async arc => arc.idle)]);
 
       // We're idle if no new inner arcs appeared and this.pec had exactly 2 messages,
       // one requesting the idle status, and one answering it.
       if (this.innerArcs.length === innerArcsLength
-        && this.pec.messageCount === messageCount + 2) break;
+        && this.peh.messageCount === messageCount + 2) break;
     }
   }
 
@@ -241,7 +241,7 @@ export class Arc implements ArcInterface {
 
   createInnerArc(transformationParticle: Particle): Arc {
     const id = this.generateID('inner');
-    const innerArc = new Arc({id, pecFactories: this.pecFactories, slotComposer: this.pec.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory});
+    const innerArc = new Arc({id, pecFactories: this.pecFactories, slotComposer: this.peh.slotComposer, loader: this._loader, context: this.context, innerArc: true, speculative: this.isSpeculative, inspectorFactory: this.inspectorFactory});
 
     let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
     if (!particleInnerArcs) {
@@ -325,7 +325,7 @@ export class Arc implements ArcInterface {
 
   async reinstantiateParticle(recipeParticle: Particle) {
     const info = await this._getParticleInstantiationInfo(recipeParticle);
-    this.pec.reinstantiate(recipeParticle, info.stores);
+    this.peh.reinstantiate(recipeParticle, info.stores);
   }
 
   async _instantiateParticle(recipeParticle: Particle, reinstantiate: boolean) {
@@ -333,7 +333,7 @@ export class Arc implements ArcInterface {
       recipeParticle.id = this.generateID('particle');
     }
     const info = await this._getParticleInstantiationInfo(recipeParticle);
-    this.pec.instantiate(recipeParticle, info.stores, reinstantiate);
+    this.peh.instantiate(recipeParticle, info.stores, reinstantiate);
   }
 
   async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, UnifiedStore>}> {

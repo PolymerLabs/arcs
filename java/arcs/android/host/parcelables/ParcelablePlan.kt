@@ -13,7 +13,6 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.core.data.ParticleSpec
 import arcs.core.data.Plan
 
 /** [Parcelable] variant of [Plan]. */
@@ -21,7 +20,7 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(actual.particles.size)
         actual.particles.forEach {
-            parcel.writeParticleSpec(it, 0)
+            parcel.writeParticle(it, 0)
         }
     }
 
@@ -32,17 +31,17 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
             val size = requireNotNull(parcel.readInt()) {
                 "No size of ParticleSpecs found in Parcel"
             }
-            val particleSpecs = mutableListOf<ParticleSpec>()
+            val particles = mutableListOf<Plan.Particle>()
 
             repeat(size) {
-                particleSpecs.add(
-                    requireNotNull(parcel.readParticleSpec()) {
+                particles.add(
+                    requireNotNull(parcel.readParticle()) {
                         "No ParticleSpec found in list position $it of parcel when reading Plan"
                     }
                 )
             }
 
-            return ParcelablePlan(Plan(particleSpecs))
+            return ParcelablePlan(Plan(particles))
         }
 
         override fun newArray(size: Int): Array<ParcelablePlan?> = arrayOfNulls(size)

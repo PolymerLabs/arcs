@@ -12,31 +12,28 @@ package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.common.Id
-import arcs.core.data.ParticleSpec
 import arcs.core.data.Plan
-import arcs.core.data.PlanPartition
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.VolatileStorageKey
-import arcs.sdk.Particle
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
  * set of [ArcHost] implementations. It accomplishes this by being given a [Plan]
- * which it partitions into a set of [PlanPartition] objects, one per participating
+ * which it partitions into a set of [Plan.Partition] objects, one per participating
  * [ArcHost] according to [HostRegistry] entries.
  *
- * Each [PlanPartition] lists a set of [HandleSpec] objects with [arcs.core.storage.StorageKey] and
+ * Each [Plan.Partition] lists a set of [HandleSpec] objects with [arcs.core.storage.StorageKey] and
  * [arcs.core.data.Schema], a set of [Particle]s to instantiate, and connections between each
  * [HandleSpec] and [Particle].
  */
 class Allocator(val hostRegistry: HostRegistry) {
 
-    /** Currently active Arcs and their associated [PlanPartition]s. */
-    private val partitionMap: MutableMap<ArcId, List<PlanPartition>> = mutableMapOf()
+    /** Currently active Arcs and their associated [Plan.Partition]s. */
+    private val partitionMap: MutableMap<ArcId, List<Plan.Partition>> = mutableMapOf()
 
     /**
      * Start a new Arc given a [Plan] and return the generated [ArcId].
@@ -54,14 +51,14 @@ class Allocator(val hostRegistry: HostRegistry) {
     }
 
     // VisibleForTesting
-    fun getPartitionsFor(arcId: ArcId): List<PlanPartition>? {
+    fun getPartitionsFor(arcId: ArcId): List<Plan.Partition>? {
         return partitionMap[arcId]
     }
 
     /**
-     * Asks each [ArcHost] to start an Arc given a [PlanPartition].
+     * Asks each [ArcHost] to start an Arc given a [Plan.Partition].
      */
-    private suspend fun startPlanPartitionsOnHosts(partitions: List<PlanPartition>) =
+    private suspend fun startPlanPartitionsOnHosts(partitions: List<Plan.Partition>) =
         partitions.forEach { partition -> lookupArcHost(partition.arcHost).startArc(partition) }
 
     // VisibleForTesting
@@ -73,7 +70,7 @@ class Allocator(val hostRegistry: HostRegistry) {
     /**
      * Persists [ArcId] and associoated [PlatPartition]s.
      */
-    private fun writePartitionMap(arcId: ArcId, partitions: List<PlanPartition>) {
+    private fun writePartitionMap(arcId: ArcId, partitions: List<Plan.Partition>) {
         partitionMap[arcId] = partitions
         // TODO(cromwellian): implement actual persistence that survives reboot?
     }
@@ -104,15 +101,15 @@ class Allocator(val hostRegistry: HostRegistry) {
     private fun isVolatileHandle(tags: Set<String>) = tags.contains("volatile")
 
     /**
-     * Slice plan into pieces grouped by [ArcHost], each group consisting of a [PlanPartition]
-     * that lists [ParticleSpec] needed for that host.
+     * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]
+     * that lists [Particle] needed for that host.
      */
-    private suspend fun computePartitions(arcId: ArcId, plan: Plan): List<PlanPartition> =
+    private suspend fun computePartitions(arcId: ArcId, plan: Plan): List<Plan.Partition> =
         plan.particles
-            .map { spec -> findArcHostBySpec(spec) to spec }
+            .map { particle -> findArcHostByParticle(particle) to particle }
             .groupBy({ it.first }, { it.second })
             .map { (host, particles) ->
-                PlanPartition(
+                Plan.Partition(
                     arcId.toString(),
                     host.hostId,
                     particles
@@ -122,10 +119,10 @@ class Allocator(val hostRegistry: HostRegistry) {
     /**
      * Find [ArcHosts] by looking up known registered particles in every [ArcHost],
      * mapping them to fully qualified Java classnames, and comparing them with the
-     * [ParticleSpec.location].
+     * [Particle.location].
      */
-    private suspend fun findArcHostBySpec(spec: ParticleSpec): ArcHost =
+    private suspend fun findArcHostByParticle(particle: arcs.core.data.Plan.Particle): ArcHost =
         hostRegistry.availableArcHosts()
-            .firstOrNull { host -> host.isHostForSpec(spec) }
-            ?: throw ParticleNotFoundException(spec)
+            .firstOrNull { host -> host.isHostForParticle(particle) }
+            ?: throw ParticleNotFoundException(particle)
 }

@@ -109,7 +109,7 @@ describe('Multiplexer', () => {
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
     const observer = new SlotTestObserver();
-    arc.pec.slotComposer.observeSlots(observer);
+    arc.peh.slotComposer.observeSlots(observer);
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
     assert.lengthOf(suggestions, 1);

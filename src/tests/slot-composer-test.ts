@@ -94,7 +94,7 @@ recipe
     plan = plan.clone();
     plan.normalize();
     assert.isTrue(plan.isResolved());
-    assert.strictEqual(arc.pec.slotComposer, slotComposer);
+    assert.strictEqual(arc.peh.slotComposer, slotComposer);
 
     observer.newExpectations()
         .expectRenderSlot('A', 'root')
@@ -132,7 +132,7 @@ recipe
       ['ItemMultiplexer', 'List', 'ProductFilter']
     );
 
-    const slotComposer = arc.pec.slotComposer;
+    const slotComposer = arc.peh.slotComposer;
     const observer = new SlotTestObserver();
     slotComposer.observeSlots(observer);
     observer
@@ -264,7 +264,7 @@ recipe
     recipe.normalize();
 
     const observer = new SlotTestObserver();
-    arc.pec.slotComposer.observeSlots(observer);
+    arc.peh.slotComposer.observeSlots(observer);
 
     observer.newExpectations()
         .expectRenderSlot('A', 'content')

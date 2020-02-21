@@ -13,19 +13,18 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
-import arcs.core.data.ParticleSpec
-import arcs.core.data.PlanPartition
+import arcs.core.data.Plan
 
-/** [Parcelable] variant of [PlanPartition]. */
+/** [Parcelable] variant of [Plan.Partition]. */
 data class ParcelablePlanPartition(
-    override val actual: PlanPartition
-) : ActualParcelable<PlanPartition> {
+    override val actual: Plan.Partition
+) : ActualParcelable<Plan.Partition> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.arcId)
         parcel.writeString(actual.arcHost)
         parcel.writeInt(actual.particles.size)
         actual.particles.forEach {
-            parcel.writeParticleSpec(it, 0)
+            parcel.writeParticle(it, 0)
         }
     }
 
@@ -42,29 +41,29 @@ data class ParcelablePlanPartition(
             val size = requireNotNull(parcel.readInt()) {
                 "No size of ParticleSpecs found in Parcel"
             }
-            val particleSpecs = mutableListOf<ParticleSpec>()
+            val particles = mutableListOf<Plan.Particle>()
 
             repeat(size) {
-                particleSpecs.add(
-                    requireNotNull(parcel.readParticleSpec()) {
-                        "No ParcelSpecs found in parcel when reading PlanPartition"
+                particles.add(
+                    requireNotNull(parcel.readParticle()) {
+                        "No Particle found in parcel when reading Plan.Partition"
                     }
                 )
             }
 
-            return ParcelablePlanPartition(PlanPartition(arcId, arcHost, particleSpecs))
+            return ParcelablePlanPartition(Plan.Partition(arcId, arcHost, particles))
         }
 
         override fun newArray(size: Int): Array<ParcelablePlanPartition?> = arrayOfNulls(size)
     }
 }
 
-/** Wraps a [PlanPartition] as a [ParcelablePlanPartition]. */
-fun PlanPartition.toParcelable(): ParcelablePlanPartition = ParcelablePlanPartition(this)
+/** Wraps a [Plan.Partition] as a [ParcelablePlanPartition]. */
+fun Plan.Partition.toParcelable(): ParcelablePlanPartition = ParcelablePlanPartition(this)
 
-/** Writes a [PlanPartition] to a [Parcel]. */
-fun Parcel.writePlanPartition(planPartition: PlanPartition, flags: Int) =
+/** Writes a [Plan.Partition] to a [Parcel]. */
+fun Parcel.writePlanPartition(planPartition: Plan.Partition, flags: Int) =
     writeTypedObject(planPartition.toParcelable(), flags)
 
-/** Reads a [PlanPartition] from a [Parcel]. */
-fun Parcel.readPlanPartition(): PlanPartition? = readTypedObject(ParcelablePlanPartition)?.actual
+/** Reads a [Plan.Partition] from a [Parcel]. */
+fun Parcel.readPlanPartition(): Plan.Partition? = readTypedObject(ParcelablePlanPartition)?.actual

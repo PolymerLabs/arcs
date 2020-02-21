@@ -35,7 +35,7 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
     loader: runtime.loader,
     inspectorFactory: devtoolsArcInspectorFactory
   });
-  arc.pec.slotComposer.slotObserver = {
+  arc.peh.slotComposer.slotObserver = {
     observe: (content, arc) => {
       bus.send({message: 'output', data: content});
     },
