@@ -7,7 +7,7 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.FileSpec
 import java.io.File
 
 /** Generates plans from recipes. */
@@ -50,18 +50,21 @@ class Recipe2Plan : CliktCommand(
 
 }
 
+data class Recipe(
+    val name: String,
+    val particles: List<ParticleSpec>
+)
+
 data class SerializedManifest(
-    val particles: List<ParticleSpec>,
+    val recipes: List<Recipe>,
+//    val particles: List<ParticleSpec>,
     val schemas: List<Schema>
 )
 
 fun parse(jsonString: String): SerializedManifest {
 //    val gson = Gson()
 //    return gson.fromJson(jsonString, SerializedManifest::class.java)
-    return SerializedManifest(
-        listOf(),
-        listOf(
-        Schema(
+    val sliceSchema = Schema(
             listOf(SchemaName("Slice")),
             SchemaFields(
                 singletons = mapOf(
@@ -74,7 +77,28 @@ fun parse(jsonString: String): SerializedManifest {
             SchemaDescription(),
             "f4907f97574693c81b5d62eb009d1f0f209000b8"
         )
-    ))
+    val sliceEntity = EntityType(sliceSchema)
+    val sliceCollection = CollectionType(sliceEntity)
+    return SerializedManifest(
+        listOf(
+            Recipe(
+                "EntitySlicingTest",
+                listOf(
+                    ParticleSpec(
+                        "EntitySlicingTest",
+                        "src/wasm/tests/\$module.wasm",
+                        mapOf(
+                            "s1" to HandleConnectionSpec(null, sliceEntity),
+                            "s2" to HandleConnectionSpec(null, sliceEntity),
+                            "c1" to HandleConnectionSpec(null, sliceCollection)
+                        )
+
+                    )
+                )
+            )
+        ),
+        listOf(sliceSchema)
+    )
 }
 
 fun main(args: Array<String>) = Recipe2Plan().main(args)
