@@ -9,7 +9,6 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
     name = "tools",
-    srcs = glob(["*Test.kt"]),
     data = ["//java/arcs/core/data/testdata:encoded_manifest"],
     package = "arcs.core.tools",
     deps = [
