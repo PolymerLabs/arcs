@@ -66,7 +66,7 @@ export class SlotUtils {
       // If this slot is internal to the recipe, it has the sourceConnection set to the providing connection
       // (and hence the consuming connection is considered connected already). Otherwise, this may only be a remote slot.
       local: !slotConn || !slotConn.targetSlot ? SlotUtils._findSlotCandidates(particle, slotSpec, particle.recipe.slots) : [],
-      remote: SlotUtils._findSlotCandidates(particle, slotSpec, arc.pec.slotComposer.getAvailableContexts())
+      remote: SlotUtils._findSlotCandidates(particle, slotSpec, arc.peh.slotComposer.getAvailableContexts())
     };
   }
 

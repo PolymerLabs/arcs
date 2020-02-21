@@ -12,5 +12,5 @@ export const event = async ({pid, particleId, eventlet}, runtime) => {
   // TODO(sjmiles): support either key for particleId (for backward compat)
   const id = particleId || pid;
   const arc = runtime.findArcByParticleId(id);
-  arc.pec.slotComposer.sendEvent(id, eventlet);
+  arc.peh.slotComposer.sendEvent(id, eventlet);
 };

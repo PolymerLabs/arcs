@@ -32,11 +32,11 @@ export class Speculator {
   }
 
   private async awaitCompletion(relevance: Relevance, speculativeArc: Arc): Promise<Relevance> {
-    const messageCount = speculativeArc.pec.messageCount;
-    relevance.apply(await speculativeArc.pec.idle);
+    const messageCount = speculativeArc.peh.messageCount;
+    relevance.apply(await speculativeArc.peh.idle);
 
     // We expect two messages here, one requesting the idle status, and one answering it.
-    if (speculativeArc.pec.messageCount !== messageCount + 2) {
+    if (speculativeArc.peh.messageCount !== messageCount + 2) {
       return this.awaitCompletion(relevance, speculativeArc);
     } else {
       speculativeArc.dispose();
