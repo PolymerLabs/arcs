@@ -1,5 +1,6 @@
 package arcs.core.tools
 
+import arcs.core.data.Manifest
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -26,6 +27,10 @@ class Proto2Schema : CliktCommand(
         protos.forEach { protoFile ->
             val outFile = outputFile(protoFile)
             echo("$protoFile --> $outFile")
+
+            val bytes = protoFile.readBytes()
+            val manifest = Manifest.parseFrom(bytes)
+
             outFile.writeBytes(protoFile.readBytes())
         }
     }

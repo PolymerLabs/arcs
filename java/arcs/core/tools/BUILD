@@ -8,6 +8,7 @@ kt_jvm_library(
     srcs = ["Proto2Schema.kt"],
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/data:manifest_android_proto",
         "//third_party/kotlin/clikt",
         "//third_party/kotlin/kotlinpoet",
     ],
