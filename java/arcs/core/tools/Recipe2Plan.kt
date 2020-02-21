@@ -1,6 +1,8 @@
 package arcs.core.tools
 
-import arcs.core.data.*
+import arcs.core.data.FieldType
+import arcs.core.data.Plan
+import arcs.core.data.Schema
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -9,8 +11,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import kotlinx.coroutines.yield
-
 import java.io.File
 
 /** Generates plans from recipes. */
@@ -29,15 +29,25 @@ class Recipe2Plan : CliktCommand(
     private val listOfMethod = MemberName("kotlin.collections", "listOf")
     private val mapOfMethod = MemberName("kotlin.collections", "mapOf")
 
+
+    data class Recipe(
+        val name: String,
+        val particles: List<Plan.Particle>
+    )
+
+    data class SerializedManifest(
+        val recipes: List<Recipe>,
+        val schemas: List<Schema>
+    )
+
     override fun run() {
         manifests.forEach { manifest ->
             val outputFile = outputFile(manifest)
             echo("$manifest --> $outputFile")
 
-            val serializedManifest = parse(manifest.readText())
             val fileBuilder = FileSpec.builder(packageName, "")
 
-            generate(serializedManifest, fileBuilder)
+            // TODO(alxr): Generate classes
 
             outputFile.writeText(fileBuilder.build().toString())
         }
@@ -149,59 +159,6 @@ class Recipe2Plan : CliktCommand(
         val outputPath = outdir ?: System.getProperty("user.dir")
         return File("$outputPath/$outputName")
     }
-
 }
-
-data class Recipe(
-    val name: String,
-    val particles: List<Plan.Particle>
-)
-
-data class SerializedManifest(
-    val recipes: List<Recipe>,
-//    val particles: List<ParticleSpec>,
-    val schemas: List<Schema>
-)
-
-fun parse(jsonString: String): SerializedManifest {
-//    val gson = Gson()
-//    return gson.fromJson(jsonString, SerializedManifest::class.java)
-    val sliceSchema = Schema(
-        listOf(SchemaName("Slice")),
-        SchemaFields(
-            singletons = mapOf(
-                "num" to FieldType.Number,
-                "flg" to FieldType.Boolean,
-                "txt" to FieldType.Text
-            ),
-            collections = mapOf()
-        ),
-        "f4907f97574693c81b5d62eb009d1f0f209000b8"
-    )
-
-    val sliceEntity = EntityType(sliceSchema)
-    val sliceCollection = CollectionType(sliceEntity)
-    return SerializedManifest(
-        listOf(
-            Recipe(
-                "EntitySlicingTest",
-                listOf(
-                    Plan.Particle(
-                        "EntitySlicingTest",
-                        "src/wasm/tests/\$module.wasm",
-                        mapOf(
-                            "s1" to Plan.HandleConnection(null, sliceEntity),
-                            "s2" to Plan.HandleConnection(null, sliceEntity),
-                            "c1" to Plan.HandleConnection(null, sliceCollection)
-                        )
-
-                    )
-                )
-            )
-        ),
-        listOf(sliceSchema)
-    )
-}
-
 
 fun main(args: Array<String>) = Recipe2Plan().main(args)
