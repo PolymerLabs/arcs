@@ -7,7 +7,7 @@ kt_jvm_library(
     name = "generator",
     srcs = ["Recipe2Plan.kt"],
     deps = [
-        "//java/arcs/core/data:data",
+        "//java/arcs/core/data",
         "//third_party/java/gson",
         "//third_party/kotlin/clikt",
         "//third_party/kotlin/kotlinpoet",
