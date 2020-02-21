@@ -33,12 +33,12 @@ export class HotCodeReloader {
 
     for (const arc of arcs) {
       const particles: Particle[] = [];
-      for (const particle of arc.pec.particles) {
+      for (const particle of arc.peh.particles) {
         if (particle.spec.implFile === filepath) {
           particles.push(particle);
         }
       }
-      arc.pec.reload(particles);
+      arc.peh.reload(particles);
     }
   }
 

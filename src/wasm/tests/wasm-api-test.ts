@@ -116,7 +116,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const [info] = arc.loadedParticleInfo.values();
 
-      const slotComposer = arc.pec.slotComposer;
+      const slotComposer = arc.peh.slotComposer;
       const slotObserver = new SlotTestObserver();
       slotComposer.observeSlots(slotObserver);
 
@@ -204,7 +204,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const output = await singletonHandleForTest(arc, stores.get('output'));
 
       const particle = arc.activeRecipe.particles[0];
-      arc.pec.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
+      arc.peh.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
       assert.deepStrictEqual(await output.fetch(), {txt: 'event:root:icanhazclick:fooBar'});
@@ -285,7 +285,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const sendEvent = async handler => {
         await arc.idle;
-        arc.pec.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+        arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
         await arc.idle;
       };
 
@@ -325,7 +325,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const sendEvent = async handler => {
         await arc.idle;
-        arc.pec.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+        arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
         await arc.idle;
       };
 

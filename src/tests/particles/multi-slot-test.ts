@@ -35,7 +35,7 @@ describe.skip('multi-slot test', () => {
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
 
-    const slotComposer = arc.pec.slotComposer;
+    const slotComposer = arc.peh.slotComposer;
     const observer = new SlotTestObserver();
     slotComposer.observeSlots(observer);
 

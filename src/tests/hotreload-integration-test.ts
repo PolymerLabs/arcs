@@ -86,7 +86,7 @@ describe('Hot Code Reload for JS Particle', async () => {
         }
       };
     });`;
-    arc.pec.reload(arc.pec.particles);
+    arc.peh.reload(arc.peh.particles);
     await arc.idle;
 
     // TODO(sjmiles): render data no longer captured by slot objects
@@ -165,7 +165,7 @@ describe('Hot Code Reload for JS Particle', async () => {
         }
       };
     });`;
-    arc.pec.reload(arc.pec.particles);
+    arc.peh.reload(arc.peh.particles);
     await arc.idle;
     await personHandleIn.set(new personHandleIn.entityClass({name: 'Jane', age: 20}));
     await arc.idle;
@@ -204,7 +204,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     // assert.deepStrictEqual(slotConsumer._content.template, `<div>Hello <span>{{name}}</span>, old age: <span>{{age}}</span></div>`);
 
     loader.reloaded = true;
-    arc.pec.reload(arc.pec.particles);
+    arc.peh.reload(arc.peh.particles);
     await arc.idle;
 
     // TODO(sjmiles): render data no longer captured by slot objects
@@ -235,7 +235,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     assert.deepStrictEqual(await personHandleOut.fetch(), {name: 'Jack', age: 30});
 
     loader.reloaded = true;
-    arc.pec.reload(arc.pec.particles);
+    arc.peh.reload(arc.peh.particles);
     await arc.idle;
     await personHandleIn.set(new personHandleIn.entityClass({name: 'Jane', age: 20}));
     await arc.idle;
