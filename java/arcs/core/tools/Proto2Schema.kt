@@ -17,7 +17,8 @@ import java.io.File
 class Proto2Schema : CliktCommand(
     help = """Generates Schemas and Types from a protobuf-serialized manifest.
     
-    This script reads schemas from a serialized manifest and generates Kotlin `Schema` and `Type` classes.""",
+    This script reads schemas from a serialized manifest and generates Kotlin `Schema` and `Type` 
+    classes.""",
     printHelpOnEmptyArgs = true
 ) {
 
@@ -57,7 +58,8 @@ class Proto2Schema : CliktCommand(
         val schemaNameClass = ClassName("arcs.core.data", "SchemaName")
         val schemaFieldsClass = ClassName("arcs.core.data", "SchemaFields")
         return schemas.map {
-            PropertySpec.builder("${formatName(it.name?.name ?: "anon${++anons}")}Schema", Schema::class)
+            PropertySpec.builder("${formatName(it.name?.name
+                ?: "anon${++anons}")}Schema", Schema::class)
                 .initializer(CodeBlock.builder()
                     .addStatement("%T(", schemaClass)
                     .indent()
@@ -79,8 +81,18 @@ class Proto2Schema : CliktCommand(
                         val entries = it.fields.singletons.entries
                         entries.forEachIndexed { index, entry ->
                             when (entry.value.tag) {
-                                FieldType.Tag.EntityRef -> add("%S to %T(%S)", entry.key, FieldType.EntityRef::class, (entry.value as FieldType.EntityRef).schemaHash)
-                                FieldType.Tag.Primitive -> add("%S to %T.%L", entry.key, FieldType::class, (entry.value as FieldType.Primitive).primitiveType)
+                                FieldType.Tag.EntityRef -> add(
+                                    "%S to %T(%S)",
+                                    entry.key,
+                                    FieldType.EntityRef::class,
+                                    (entry.value as FieldType.EntityRef).schemaHash
+                                )
+                                FieldType.Tag.Primitive -> add(
+                                    "%S to %T.%L",
+                                    entry.key,
+                                    FieldType::class,
+                                    (entry.value as FieldType.Primitive).primitiveType
+                                )
                             }
                             if (index != entries.size - 1) add(",")
                             add("\n")
@@ -94,8 +106,18 @@ class Proto2Schema : CliktCommand(
                         val entries = it.fields.collections.entries
                         entries.forEachIndexed { index, entry ->
                             when (entry.value.tag) {
-                                FieldType.Tag.EntityRef -> add("%S to %T(%S)", entry.key, FieldType.EntityRef::class, (entry.value as FieldType.EntityRef).schemaHash)
-                                FieldType.Tag.Primitive -> add("%S to %T.%L", entry.key, FieldType::class, (entry.value as FieldType.Primitive).primitiveType)
+                                FieldType.Tag.EntityRef -> add(
+                                    "%S to %T(%S)",
+                                    entry.key,
+                                    FieldType.EntityRef::class,
+                                    (entry.value as FieldType.EntityRef).schemaHash
+                                )
+                                FieldType.Tag.Primitive -> add(
+                                    "%S to %T.%L",
+                                    entry.key,
+                                    FieldType::class,
+                                    (entry.value as FieldType.Primitive).primitiveType
+                                )
                             }
                             if (index != entries.size - 1) add(",")
                             add("\n")
@@ -111,7 +133,6 @@ class Proto2Schema : CliktCommand(
                 .build()
         }
     }
-
 }
 
 fun main(args: Array<String>) = Proto2Schema().main(args)

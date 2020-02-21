@@ -131,7 +131,7 @@ proto2schema = rule(
             default = Label("//java/arcs/core/tools:proto2schema"),
             allow_files = True,
             executable = True,
-        )
+        ),
     },
-    doc = """Generates Schemas from serialized manifests."""
+    doc = """Generates Schemas from serialized manifests.""",
 )
