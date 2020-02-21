@@ -25,7 +25,11 @@ typealias Reference = arcs.core.storage.Reference
  * by [regionKey].
  */
 fun Reference(entityId: ReferenceId, regionKey: StorageKey) =
-    Reference(entityId as arcs.core.common.ReferenceId, regionKey, version = null)
+    Reference(
+        entityId as arcs.core.common.ReferenceId,
+        regionKey.toCoreStorageKey(),
+        version = null
+    )
 
 /**
  * Dereferences a [Reference] into a [RawEntity] or `null` if the [Reference] is invalid.

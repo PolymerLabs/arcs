@@ -11,24 +11,28 @@
 
 package arcs.sdk.storage
 
+import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.driver.DatabaseStorageKey
+import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
+
 /**
  * Represents a location in Arcs' storage system where an [Entity], [Collection], [Singleton], or a
  * region of any of those items can be found.
  */
-typealias StorageKey = arcs.core.storage.StorageKey
+@Suppress("EXPERIMENTAL_FEATURE_WARNING")
+inline class StorageKey(val raw: String) {
+    /** Converts this SDK [StorageKey] into a core [arcs.core.storage.StorageKey]. */
+    /* internal */
+    fun toCoreStorageKey(): arcs.core.storage.StorageKey = StorageKeyParser.parse(raw)
 
-/**
- * A [StorageKey] implementation for data kept in memory and bound to the lifecycle of the [Arc]
- * which created the data.
- */
-typealias VolatileStorageKey = arcs.core.storage.driver.VolatileStorageKey
-
-/**
- * A [StorageKey] implementation for data kept in memory and which is globally-accessible.
- */
-typealias RamDiskStorageKey = arcs.core.storage.driver.RamDiskStorageKey
-
-/**
- * A [StorageKey] implementation for data persisted to disk using a SQL (or SQL-like) database.
- */
-typealias DatabaseStorageKey = arcs.core.storage.driver.DatabaseStorageKey
+    companion object {
+        init {
+            VolatileStorageKey.registerParser()
+            RamDiskStorageKey.registerParser()
+            DatabaseStorageKey.registerParser()
+            ReferenceModeStorageKey.registerParser()
+        }
+    }
+}

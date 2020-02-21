@@ -37,9 +37,9 @@ import arcs.core.storage.referencemode.toReferenceSingleton
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
-import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
 /** Protocol to be used with the database driver. */
 const val DATABASE_DRIVER_PROTOCOL = "db"
@@ -89,6 +89,12 @@ data class DatabaseStorageKey(
         init {
             // When DatabaseStorageKey is imported, this will register its parser with the storage
             // key parsers.
+            registerParser()
+        }
+
+        /** Registers the [DatabaseStorageKey] for parsing with the [StorageKeyParser]. */
+        /* internal */
+        fun registerParser() {
             StorageKeyParser.addParser(DATABASE_DRIVER_PROTOCOL, ::fromString)
         }
 
