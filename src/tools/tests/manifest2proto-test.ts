@@ -14,8 +14,8 @@ import {serialize2proto} from '../manifest2proto.js';
 describe('manifest2proto', () => {
   it('encodes the example manifest', async () => {
     assert.deepStrictEqual(
-      await serialize2proto('src/tools/tests/test-data/Example.arcs'),
-      fs.readFileSync('src/tools/tests/test-data/example.pb.bin')
+      await serialize2proto('java/arcs/core/data/testdata/Example.arcs'),
+      fs.readFileSync('java/arcs/core/data/testdata/example.pb.bin')
     );
   });
 });
