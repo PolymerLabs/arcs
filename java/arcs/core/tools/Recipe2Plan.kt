@@ -9,6 +9,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import kotlinx.coroutines.yield
 
 import java.io.File
 
@@ -45,19 +46,20 @@ class Recipe2Plan : CliktCommand(
     fun generate(manifest: SerializedManifest, fileBuilder: FileSpec.Builder) {
         // Ask Ray: do we need plans to be instances or classes?
 
-        val particleSpecClass = ClassName("arcs.core.data", "ParticleSpec")
-        val listOfParticleSpecs = LIST.parameterizedBy(particleSpecClass)
-
         val schemasObjectBuilder = TypeSpec.objectBuilder("Schemas")
             .addProperties(generateSchemas(manifest.schemas))
 
         fileBuilder.addType(schemasObjectBuilder.build())
 
-        manifest.recipes.forEach {
+        generatePlans(manifest.recipes).forEach {
+            fileBuilder.addType(it.build())
+        }
+    }
 
-            // Create Schemas
-
-            // Create Entities and Collections from Schemas
+    fun generatePlans(recipes: List<Recipe>): Iterable<TypeSpec.Builder> {
+        val particleSpecClass = ClassName("arcs.core.data.Plan", "Particle")
+        val listOfParticleSpecs = LIST.parameterizedBy(particleSpecClass)
+        return recipes.map {
 
             // Create ParticleSpecs
             val particleSpecProperty = PropertySpec.builder("particles", listOfParticleSpecs)
@@ -72,7 +74,7 @@ class Recipe2Plan : CliktCommand(
                 .superclass(Plan::class)
                 .addSuperclassConstructorParameter("%N", particleSpecProperty)
 
-            fileBuilder.addType(planBuilder.build())
+            planBuilder
         }
     }
 
@@ -134,7 +136,6 @@ class Recipe2Plan : CliktCommand(
                     .addStatement(")")
                     .unindent()
                     .addStatement("),")
-                    .addStatement("%T(%S, %S),", SchemaDescription::class, it.description.pattern, it.description.plural)
                     .addStatement("%S", it.hash)
                     .addStatement(")")
                     .build())
@@ -153,7 +154,7 @@ class Recipe2Plan : CliktCommand(
 
 data class Recipe(
     val name: String,
-    val particles: List<ParticleSpec>
+    val particles: List<Plan.Particle>
 )
 
 data class SerializedManifest(
@@ -175,7 +176,6 @@ fun parse(jsonString: String): SerializedManifest {
             ),
             collections = mapOf()
         ),
-        SchemaDescription(),
         "f4907f97574693c81b5d62eb009d1f0f209000b8"
     )
 
@@ -186,13 +186,13 @@ fun parse(jsonString: String): SerializedManifest {
             Recipe(
                 "EntitySlicingTest",
                 listOf(
-                    ParticleSpec(
+                    Plan.Particle(
                         "EntitySlicingTest",
                         "src/wasm/tests/\$module.wasm",
                         mapOf(
-                            "s1" to HandleConnectionSpec(null, sliceEntity),
-                            "s2" to HandleConnectionSpec(null, sliceEntity),
-                            "c1" to HandleConnectionSpec(null, sliceCollection)
+                            "s1" to Plan.HandleConnection(null, sliceEntity),
+                            "s2" to Plan.HandleConnection(null, sliceEntity),
+                            "c1" to Plan.HandleConnection(null, sliceCollection)
                         )
 
                     )
@@ -203,11 +203,5 @@ fun parse(jsonString: String): SerializedManifest {
     )
 }
 
-
-class MyPlan : Plan(particles) {
-    companion object {
-        val particles: List<ParticleSpec> = listOf()
-    }
-}
 
 fun main(args: Array<String>) = Recipe2Plan().main(args)
