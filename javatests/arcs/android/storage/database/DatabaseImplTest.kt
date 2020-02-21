@@ -171,6 +171,7 @@ class DatabaseImplTest {
                 "eid1",
                 123L,
                 VERSION_MAP,
+                FIRST_VERSION_NUMBER,
                 db
             )
         ).isEqualTo(1L)
@@ -181,6 +182,7 @@ class DatabaseImplTest {
                 "eid2",
                 123L,
                 VERSION_MAP,
+                FIRST_VERSION_NUMBER,
                 db
             )
         ).isEqualTo(2L)
@@ -191,6 +193,7 @@ class DatabaseImplTest {
                 "eid3",
                 123L,
                 VERSION_MAP,
+                FIRST_VERSION_NUMBER,
                 db
             )
         ).isEqualTo(3L)
@@ -206,6 +209,7 @@ class DatabaseImplTest {
                 "eid1",
                 123L,
                 VERSION_MAP,
+                1,
                 db
             )
         ).isEqualTo(1L)
@@ -216,6 +220,7 @@ class DatabaseImplTest {
                 "eid2",
                 123L,
                 VERSION_MAP,
+                1,
                 db
             )
         ).isEqualTo(2L)
@@ -228,6 +233,7 @@ class DatabaseImplTest {
                 "eid1",
                 123L,
                 VERSION_MAP,
+                2,
                 db
             )
         ).isEqualTo(3L)
@@ -238,6 +244,7 @@ class DatabaseImplTest {
                 "eid2",
                 123L,
                 VERSION_MAP,
+                2,
                 db
             )
         ).isEqualTo(4L)
@@ -246,15 +253,58 @@ class DatabaseImplTest {
     @Test
     fun createEntityStorageKeyId_wrongEntityId() = runBlockingTest {
         val key = DummyStorageKey("key")
-        database.createEntityStorageKeyId(key, "correct-entity-id", 123L, VERSION_MAP, db)
+        database.createEntityStorageKeyId(
+            key,
+            "correct-entity-id",
+            123L,
+            VERSION_MAP,
+            FIRST_VERSION_NUMBER,
+            db
+        )
 
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.createEntityStorageKeyId(key, "incorrect-entity-id", 123L, VERSION_MAP, db)
+            database.createEntityStorageKeyId(
+                key,
+                "incorrect-entity-id",
+                123L,
+                VERSION_MAP,
+                FIRST_VERSION_NUMBER,
+                db
+            )
         }
         assertThat(exception).hasMessageThat().isEqualTo(
             "Expected storage key dummy://key to have entity ID incorrect-entity-id but was " +
                 "correct-entity-id."
         )
+    }
+
+    @Test
+    fun createEntityStorageKeyId_versionNumberMustBeLarger() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val entityId = "entity-id"
+        val typeId = 123L
+        database.createEntityStorageKeyId(key, entityId, typeId, VERSION_MAP, 10, db)
+
+        // Same version number is rejected.
+        val exception1 = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.createEntityStorageKeyId(key, entityId, typeId, VERSION_MAP, 10, db)
+        }
+        assertThat(exception1).hasMessageThat().isEqualTo(
+            "Given version (10) must be greater than version in database (10) when updating " +
+                "storage key dummy://key."
+        )
+
+        // Smaller version number is rejected.
+        val exception2 = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.createEntityStorageKeyId(key, entityId, typeId, VERSION_MAP, 9, db)
+        }
+        assertThat(exception2).hasMessageThat().isEqualTo(
+            "Given version (9) must be greater than version in database (10) when updating " +
+                "storage key dummy://key."
+        )
+
+        // Increasing version number is ok.
+        database.createEntityStorageKeyId(key, entityId, typeId, VERSION_MAP, 11, db)
     }
 
     @Test
@@ -347,7 +397,7 @@ class DatabaseImplTest {
         val schema = newSchema("hash")
         val entity = DatabaseData.Entity(
             Entity("entity", schema, mutableMapOf()),
-            DATABASE_VERSION,
+            FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
@@ -388,7 +438,7 @@ class DatabaseImplTest {
                     "nums" to setOf(123.0, 456.0)
                 )
             ),
-            DATABASE_VERSION,
+            FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
@@ -451,7 +501,7 @@ class DatabaseImplTest {
                     )
                 )
             ),
-            DATABASE_VERSION,
+            FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
         database.insertOrUpdate(DummyStorageKey("alice-key"), alice)
@@ -526,7 +576,7 @@ class DatabaseImplTest {
                     )
                 )
             ),
-            1,
+            2,
             VersionMap("actor" to 2)
         )
 
@@ -558,7 +608,7 @@ class DatabaseImplTest {
                 schema,
                 mutableMapOf("texts" to null, "refs" to null)
             ),
-            DATABASE_VERSION,
+            FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
@@ -588,7 +638,7 @@ class DatabaseImplTest {
                 schema,
                 mutableMapOf("texts" to setOf<String>(), "refs" to setOf<Reference>())
             ),
-            DATABASE_VERSION,
+            FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
@@ -614,7 +664,7 @@ class DatabaseImplTest {
                     "texts" to listOf("aaa", "bbb") // Should be a Set, not a List.
                 )
             ),
-            DATABASE_VERSION,
+            FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
@@ -646,7 +696,7 @@ class DatabaseImplTest {
                         // Should be a Reference.
                         mutableMapOf("ref" to "abc")
                     ),
-                    DATABASE_VERSION,
+                    FIRST_VERSION_NUMBER,
                     VERSION_MAP
                 )
             )
@@ -678,7 +728,7 @@ class DatabaseImplTest {
                         // Should be Set<Reference>.
                         mutableMapOf("refs" to setOf("abc"))
                     ),
-                    DATABASE_VERSION,
+                    FIRST_VERSION_NUMBER,
                     VERSION_MAP
                 )
             )
@@ -755,21 +805,43 @@ class DatabaseImplTest {
 
         // Test removal of old elements.
         values.removeIf { it.id == "ref-to-remove" }
-        val inputCollection2 = inputCollection1.copy(values = values)
+        val inputCollection2 = inputCollection1.copy(values = values, databaseVersion = 2)
         database.insertOrUpdate(collectionKey, inputCollection2)
         assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection2)
 
         // Test addition of new elements.
         values.add(Reference("new-ref", backingKey, VersionMap("new-ref" to 3)))
-        val inputCollection3 = inputCollection2.copy(values = values)
+        val inputCollection3 = inputCollection2.copy(values = values, databaseVersion = 3)
         database.insertOrUpdate(collectionKey, inputCollection3)
         assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection3)
 
         // Test clearing all elements.
         values.clear()
-        val inputCollection4 = inputCollection3.copy(values = values)
+        val inputCollection4 = inputCollection3.copy(values = values, databaseVersion = 4)
         database.insertOrUpdate(collectionKey, inputCollection4)
         assertThat(database.getCollection(collectionKey, schema)).isEqualTo(inputCollection4)
+    }
+
+    @Test
+    fun insertAndGet_collection_mustIncrementVersion() = runBlockingTest {
+        val key = DummyStorageKey("collection")
+        val collection = DatabaseData.Collection(
+            values = mutableSetOf(
+                Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1))
+            ),
+            schema = newSchema("hash"),
+            databaseVersion = 1,
+            versionMap = VERSION_MAP
+        )
+        database.insertOrUpdate(key, collection)
+
+        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.insertOrUpdate(key, collection)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Given version (1) must be greater than version in database (1) when updating " +
+                "storage key dummy://collection."
+        )
     }
 
     @Test
@@ -832,15 +904,36 @@ class DatabaseImplTest {
 
         // Test can change reference.
         val inputSingleton2 = inputSingleton1.copy(
-            reference = Reference("new-ref", backingKey, VersionMap("new-ref" to 2))
+            reference = Reference("new-ref", backingKey, VersionMap("new-ref" to 2)),
+            databaseVersion = 2
         )
         database.insertOrUpdate(singletonKey, inputSingleton2)
         assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton2)
 
         // Test can clear value.
-        val inputSingleton3 = inputSingleton2.copy(reference = null)
+        val inputSingleton3 = inputSingleton2.copy(reference = null, databaseVersion = 3)
         database.insertOrUpdate(singletonKey, inputSingleton3)
         assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton3)
+    }
+
+    @Test
+    fun insertAndGet_singleton_mustIncrementVersion() = runBlockingTest {
+        val key = DummyStorageKey("singleton")
+        val singleton = DatabaseData.Singleton(
+            reference = Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1)),
+            schema = newSchema("hash"),
+            databaseVersion = 1,
+            versionMap = VERSION_MAP
+        )
+        database.insertOrUpdate(key, singleton)
+
+        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+            database.insertOrUpdate(key, singleton)
+        }
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Given version (1) must be greater than version in database (1) when updating " +
+                "storage key dummy://singleton."
+        )
     }
 
     @Test
@@ -1097,7 +1190,7 @@ class DatabaseImplTest {
         /** The first free Type ID after all primitive types have been assigned. */
         private const val FIRST_ENTITY_TYPE_ID = 3
 
-        private const val DATABASE_VERSION = 1
+        private const val FIRST_VERSION_NUMBER = 1
         private val VERSION_MAP = VersionMap("first" to 1, "second" to 2)
 
         private val TEXT_TYPE_ID = PrimitiveType.Text.ordinal.toLong()
