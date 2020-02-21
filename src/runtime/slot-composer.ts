@@ -98,7 +98,7 @@ export class SlotComposer {
     const arc = this.arc;
     if (arc && arc.activeRecipe) {
       const particle = arc.activeRecipe.findParticle(particleId);
-      arc.pec.sendEvent(particle, '', eventlet);
+      arc.peh.sendEvent(particle, '', eventlet);
     }
   }
 
