@@ -15,7 +15,7 @@ class DecodeManifestProtoTest {
      */
     @Test
     fun decodesEncodedManifest() {
-        val bytes = File("src/tools/tests/test-data/example.pb.bin").readBytes()
+        val bytes = File("java/arcs/core/data/testdata/example.pb.bin").readBytes()
 
         val manifest = Manifest.parseFrom(bytes);
         assertThat(manifest.recipesList).hasSize(1)
