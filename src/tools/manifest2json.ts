@@ -12,16 +12,18 @@ import fs from 'fs';
 import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
 import {ErrorSeverity, Manifest, ManifestError} from '../runtime/manifest.js';
-import {HandleConnectionSpec, ParticleSpec} from "../runtime/particle-spec";
+import {ParticleSpec} from "../runtime/particle-spec";
 import {Dictionary} from "../runtime/hot";
-import {SchemaSpec} from "../runtime/manifest-ast-nodes";
 import {Schema} from "../runtime/schema";
+import {Recipe} from "../runtime/recipe/recipe";
 
 class Serialization {
+  recipes: object[] = [];
   particles: object[] = [];
   schemas: object[] = [];
 
   merge(other: Serialization) {
+    this.recipes = this.recipes.concat(other.recipes);
     this.particles = this.particles.concat(other.particles);
     this.schemas = this.schemas.concat(other.schemas);
   }
@@ -62,9 +64,17 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
 /** Extract JSON serializations from manifest. */
 async function toLiteral(manifest: Manifest): Promise<Serialization> {
   const lit = new Serialization();
+  lit.recipes = manifest.recipes.map(toRecipeLiteral);
   lit.particles = manifest.particles.map(toParticleLiteral);
   lit.schemas = await Promise.all(Object.values(manifest.schemas).map(toSchemaLiteral));
   return lit;
+}
+
+function toRecipeLiteral(r: Recipe) {
+  return {
+    name: r.name,
+    particles: r.particles.map(p => p.spec).map(toParticleLiteral),
+  };
 }
 
 function toParticleLiteral(p: ParticleSpec) {
@@ -86,7 +96,7 @@ async function toFieldsLiteral(fields: Dictionary<any>) {
     let out = {};
     let isSingleton = true;
 
-    switch(field.kind) {
+    switch (field.kind) {
       case 'schema-reference':
         out['tag'] = 'EntityRef';
         out['schemaHash'] = await field.schema.hash();
@@ -107,7 +117,7 @@ async function toFieldsLiteral(fields: Dictionary<any>) {
 
   for (const [key, field] of Object.entries(fields)) {
     const [isSingleton, fieldType] = await updateField(field);
-    if(isSingleton) {
+    if (isSingleton) {
       schemaFields.singletons[key] = fieldType;
     } else {
       schemaFields.collections[key] = fieldType;
@@ -123,10 +133,10 @@ async function toSchemaLiteral(s: Schema) {
   const toSchemaName = (name: string) => ({name});
 
   return {
-     names: lit.names.map(toSchemaName),
-     fields: await toFieldsLiteral(s.fields),
-     description: s.description,
-     hash: await s.hash(),
+    names: lit.names.map(toSchemaName),
+    fields: await toFieldsLiteral(s.fields),
+    description: s.description,
+    hash: await s.hash(),
   }
 }
 
