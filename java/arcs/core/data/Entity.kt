@@ -27,4 +27,6 @@ data class Entity(
         }
         return data.put(key, value)
     }
+
+    fun toReference(): Reference<Entity> = TODO("not implemented")
 }

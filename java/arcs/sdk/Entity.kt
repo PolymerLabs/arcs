@@ -12,6 +12,7 @@
 package arcs.sdk
 
 import arcs.core.storage.api.Entity
+import arcs.core.storage.api.EntitySpec
 
 /** Base class of all generated [Entity] types. */
 typealias Entity = arcs.core.storage.api.Entity
