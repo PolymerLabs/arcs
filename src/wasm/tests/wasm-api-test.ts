@@ -72,10 +72,9 @@ async function createBackingEntity(arc: Arc, referenceType: ReferenceType, id: s
   return [entityId, reference];
 }
 
-[false, true].forEach(useNewStorageStack => {
 
 Object.entries(testMap).forEach(([testLabel, testDir]) => {
-  describe(`wasm tests (${testLabel}) (useNewStorageStack = ${useNewStorageStack})`, function() {
+  describe(`wasm tests (${testLabel})`, function() {
     const isKotlin = testLabel === 'Kotlin';
     const isCpp = testLabel === 'C++';
 
@@ -87,7 +86,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       if (!global['testFlags'].bazel) {
         this.skip();
       } else {
-        Flags.useNewStorageStack = useNewStorageStack;
         loader = new TestLoader(testDir);
         VolatileStorage.setStorageCache(new RuntimeCacheService());
         manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
@@ -644,5 +642,3 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
   });
 });
-
-});  // forEach(useNewStorageStack)
