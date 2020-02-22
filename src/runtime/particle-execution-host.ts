@@ -264,32 +264,15 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onGetBackingStore(callback: number, storageKey: string, type: Type) {
-    let store;
-    if (Flags.useNewStorageStack) {
-      if (!storageKey) {
-        // TODO(shanestephens): What should we do here?!
-        throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
-      }
-      const key = StorageKeyParser.parse(storageKey);
-      // TODO(shanestephens): We could probably register the active store here, but at the moment onRegister and onProxyMessage both
-      // expect to be able to do activation
-      const storeBase = new Store({id: storageKey, exists: Exists.MayExist, storageKey: key, type});
-      this.GetBackingStoreCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
-    } else {
-      if (!storageKey) {
-        // XXX
-        storageKey = this.arc.storageProviderFactory.baseStorageKey(type, this.arc.storageKey as string || 'volatile');
-      }
-      store = await this.arc.storageProviderFactory.baseStorageFor(type, storageKey);
-      // TODO(shans): THIS IS NOT SAFE!
-      //
-      // Without an auditor on the runtime side that inspects what is being fetched from
-      // this store, particles with a reference can access any data of that reference's type.
-      //
-      // TOODO(sjmiles): randomizing the id as a workaround for https://github.com/PolymerLabs/arcs/issues/2936
-      const twiddledId = `${store.id}:${`String(Math.random())`.slice(2, 9)}`;
-      this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), twiddledId, storageKey);
+    if (!storageKey) {
+      // TODO(shanestephens): What should we do here?!
+      throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
+    const key = StorageKeyParser.parse(storageKey);
+    // TODO(shanestephens): We could probably register the active store here, but at the moment onRegister and onProxyMessage both
+    // expect to be able to do activation
+    const storeBase = new Store({id: storageKey, exists: Exists.MayExist, storageKey: key, type});
+    this.GetBackingStoreCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
   }
 
   onConstructInnerArc(callback: number, particle: Particle) {

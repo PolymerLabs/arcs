@@ -30,9 +30,7 @@ import {KeyBase} from '../../../runtime/storage/key-base.js';
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const runtime = new Runtime();
-    const arcStorageKey = Flags.useNewStorageStack ?
-        (() => new MockFirebaseStorageKey('location')) :
-        'firebase://arcs-storage.firebaseio.com/AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8/0_6_0/demo';
+    const arcStorageKey = () => new MockFirebaseStorageKey('location');
     const arc = runtime.newArc('demo', arcStorageKey);
 
     const verifySuggestion = (storageKeyBase) => {
@@ -41,11 +39,6 @@ describe('planificator', () => {
             `Cannot construct key for '${storageKeyBase}' planificator storage key base`);
       assert(key.protocol.length > 0,
             `Invalid protocol in key for '${storageKeyBase}' planificator storage key base`);
-      if (!Flags.useNewStorageStack) {
-        const keyBase: KeyBase = key as KeyBase;
-        assert(keyBase.location && keyBase.location.length > 0,
-            `Invalid location in key for '${storageKeyBase}' planificator storage key base`);
-      }
     };
 
     verifySuggestion(storageKeyForTest(arc.id));

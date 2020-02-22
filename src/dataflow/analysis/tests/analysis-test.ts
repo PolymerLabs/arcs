@@ -13,7 +13,6 @@ import {buildFlowGraph, TestEdge, TestNode} from '../testing/flow-graph-testing.
 import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {FlowSet, Flow, FlowModifier, TagOperation, FlowModifierSet} from '../graph-internals.js';
 import {FlowGraph} from '../flow-graph.js';
-import {Flags} from '../../../runtime/flags.js';
 
 /** Checks that the given ValidationResult failed with the expected failure messages. */
 function assertGraphFailures(graph: FlowGraph, expectedFailures: string[]) {
@@ -395,10 +394,7 @@ describe('Solver', () => {
 });
 
 function entityString() {
-  if (Flags.useNewStorageStack) {
-    return '{"root": {"values": {"ida": {"value": {"id": "ida", "text": "asdf"}, "version": {"u": 1}}}, "version":{"u": 1}}, "locations": {}}';
-  }
-  return '[{"text": "asdf"}]';
+  return '{"root": {"values": {"ida": {"value": {"id": "ida", "text": "asdf"}, "version": {"u": 1}}}, "version":{"u": 1}}, "locations": {}}';
 }
 
 describe('FlowGraph validation', () => {

@@ -60,7 +60,7 @@ export type ArcOptions = Readonly<{
   pecFactories?: PecFactory[];
   slotComposer?: SlotComposer;
   loader: Loader;
-  storageKey?: string | StorageKey;
+  storageKey?: StorageKey;
   storageProviderFactory?: StorageProviderFactory;
   speculative?: boolean;
   innerArc?: boolean;
@@ -97,7 +97,7 @@ export class Arc implements ArcInterface {
   private readonly storesByKey = new Map<string | StorageKey, UnifiedStore>();
   // storage keys for referenced handles
   private storageKeys: Dictionary<string | StorageKey> = {};
-  public readonly storageKey?: string | StorageKey;
+  public readonly storageKey?:  StorageKey;
   storageProviderFactory: StorageProviderFactory;
   private readonly capabilitiesResolver: CapabilitiesResolver;
   // Map from each store to a set of tags. public for debug access
@@ -262,12 +262,7 @@ export class Arc implements ArcInterface {
   // contents of the serialized arc before persisting.
   async persistSerialization(serialization: string): Promise<void> {
     const storage = this.storageProviderFactory;
-    let key: KeyBase | StorageKey;
-    if (typeof this.storageKey === 'string') {
-      key = storage.parseStringAsKey(this.storageKey).childKeyForArcInfo();
-    } else {
-      key = this.storageKey.childKeyForArcInfo();
-    }
+    const key = this.storageKey.childKeyForArcInfo();
     const arcInfoType = new ArcType();
     const store = await storage.connectOrConstruct('store', arcInfoType, key.toString()) as SingletonStorageProvider;
     store.referenceMode = false;
@@ -279,7 +274,7 @@ export class Arc implements ArcInterface {
     const manifest = await Manifest.parse(serialization, {loader, fileName, context});
     const storageProviderFactory = Flags.useNewStorageStack ? null : manifest.storageProviderFactory;
     const id = Id.fromString(manifest.meta.name);
-    const storageKey = Flags.useNewStorageStack ? StorageKeyParser.parse(manifest.meta.storageKey) : manifest.meta.storageKey;
+    const storageKey = StorageKeyParser.parse(manifest.meta.storageKey);
     const arc = new Arc({id, storageKey, slotComposer, pecFactories, loader, storageProviderFactory, context, inspectorFactory});
 
     await Promise.all(manifest.stores.map(async storeStub => {

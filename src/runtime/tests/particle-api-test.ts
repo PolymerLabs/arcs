@@ -98,12 +98,11 @@ class ResultInspector {
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
   const runtime = new Runtime({loader: new Loader(null, fileMap), context: manifest});
-  return runtime.newArc('demo', Flags.useNewStorageStack ? null : 'volatile://');
+  return runtime.newArc('demo', null);
 }
 
 describe('particle-api', () => {
   it('StorageProxy integration test', async () => {
-    const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Data
@@ -143,7 +142,7 @@ describe('particle-api', () => {
             }
 
             async addResult(value) {
-              await this.resHandle.${addFunc}(new this.resHandle.entityClass({value}));
+              await this.resHandle.add(new this.resHandle.entityClass({value}));
             }
           }
         });
@@ -1317,7 +1316,7 @@ describe('particle-api', () => {
     // TODO(lindner): add strict rendering
     const slotComposer = new SlotComposer();
     const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
-        storageKey: 'key', loader, slotComposer, context});
+        storageKey: null, loader, slotComposer, context});
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 
