@@ -8,12 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- import {Flags} from './flags.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {InterfaceType} from './type.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {KeyBase} from './storage/key-base.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Recipe} from './recipe/recipe.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
@@ -33,7 +31,6 @@ import {VolatileMemory, VolatileStorageKey} from './storageNG/drivers/volatile.j
 
 export interface ArcInterface {
   activeRecipe: Recipe;
-  storageProviderFactory: StorageProviderFactory;
   id: Id;
   storeTags: Map<UnifiedStore, Set<string>>;
   context: Manifest;
@@ -48,7 +45,6 @@ export class ArcSerializer {
   private handles = '';
   private resources = '';
   private interfaces = '';
-  private dataResources = new Map<string, string>();
   private memoryResourceNames = new Map<string, string>();
 
   constructor(arc: ArcInterface) {
@@ -76,23 +72,19 @@ ${this.arc.activeRecipe.toString()}`;
     let serialization = '';
     const indent = '  ';
 
-    if (Flags.useNewStorageStack) {
-      for (const [key, value] of this.arc.volatileMemory.entries.entries()) {
-        this.memoryResourceNames.set(key, `VolatileMemoryResource${resourceNum}`);
-        const data = {root: value.root.data, locations: {}};
-        for (const [key, entry] of Object.entries(value.locations)) {
-          data.locations[key] = entry.data;
-        }
-        serialization +=
-          `resource VolatileMemoryResource${resourceNum++} // ${key}\n` +
-          indent + 'start\n' +
-          JSON.stringify(data).split('\n').map(line => indent + line).join('\n') + '\n';
+    for (const [key, value] of this.arc.volatileMemory.entries.entries()) {
+      this.memoryResourceNames.set(key, `VolatileMemoryResource${resourceNum}`);
+      const data = {root: value.root.data, locations: {}};
+      for (const [key, entry] of Object.entries(value.locations)) {
+        data.locations[key] = entry.data;
       }
-
-      return serialization;
-    } else {
-      return '';
+      serialization +=
+        `resource VolatileMemoryResource${resourceNum++} // ${key}\n` +
+        indent + 'start\n' +
+        JSON.stringify(data).split('\n').map(line => indent + line).join('\n') + '\n';
     }
+
+    return serialization;
   }
 
   private async _serializeStore(store: UnifiedStore, name: string): Promise<void> {
@@ -100,21 +92,9 @@ ${this.arc.activeRecipe.toString()}`;
     if (type instanceof InterfaceType) {
       this.interfaces += type.interfaceInfo.toString() + '\n';
     }
-    let key: StorageKey | KeyBase;
-    if (typeof store.storageKey === 'string') {
-      key = this.arc.storageProviderFactory.parseStringAsKey(store.storageKey);
-    } else {
-      key = store.storageKey;
-    }
+    const key = store.storageKey;
     const tags: Set<string> = this.arc.storeTags.get(store) || new Set();
     const handleTags = [...tags];
-
-    const actualHandle = this.arc.activeRecipe.findHandle(store.id);
-    const originalId = actualHandle ? actualHandle.originalId : null;
-    let combinedId = `'${store.id}'`;
-    if (originalId) {
-      combinedId += `!!'${originalId}'`;
-    }
 
     switch (key.protocol) {
       case 'reference-mode':
@@ -122,70 +102,11 @@ ${this.arc.activeRecipe.toString()}`;
       case 'pouchdb':
         this.handles += store.toManifestString({handleTags, overrides: {name}}) + '\n';
         break;
-      case 'volatile':
-        if (Flags.useNewStorageStack) {
-          const storageKey = store.storageKey as VolatileStorageKey;
-          this.handles += store.toManifestString({handleTags, overrides: {name, source: this.memoryResourceNames.get(storageKey.unique), origin: 'resource', includeKey: storageKey.toString()}}) + '\n';
-        } else {
-          // TODO(sjmiles): emit empty data for stores marked `volatile`: shell will supply data
-          const volatile = handleTags.includes('volatile');
-          let serializedData: {storageKey: string}[] | null = [];
-          if (!volatile) {
-            // TODO: include keys in serialized [big]collections?
-            const activeStore = await store.activate();
-            const model = await activeStore.serializeContents();
-            serializedData = model.model.map((model) => {
-              const {id, value} = model;
-              const index = model['index']; // TODO: Invalid Type
-
-              if (value == null) {
-                return null;
-              }
-
-              let result;
-              if (value.rawData) {
-                result = {$id: id};
-                for (const field of Object.keys(value.rawData)) {
-                  result[field] = value.rawData[field];
-                }
-              } else {
-                result = value;
-              }
-              if (index !== undefined) {
-                result.$index = index;
-              }
-              return result;
-            });
-          }
-
-          if (store.referenceMode && serializedData.length > 0) {
-            const storageKey = serializedData[0].storageKey;
-            if (!this.dataResources.has(storageKey)) {
-              const storeId = `${name}_Data`;
-              this.dataResources.set(storageKey, storeId);
-              // TODO: can't just reach into the store for the backing Store like this, should be an
-              // accessor that loads-on-demand in the storage objects.
-              if (store instanceof StorageProviderBase) {
-                await store.ensureBackingStore();
-                await this._serializeStore(store.backingStore, storeId);
-              }
-            }
-            const storeId = this.dataResources.get(storageKey);
-            serializedData.forEach(a => {a.storageKey = storeId;});
-          }
-
-          const indent = '  ';
-          const data = JSON.stringify(serializedData);
-          const resourceName = `${name}Resource`;
-
-          this.resources += `resource ${resourceName}\n`
-            + indent + 'start\n'
-            + data.split('\n').map(line => indent + line).join('\n')
-            + '\n';
-
-          this.handles += store.toManifestString({handleTags, overrides: {name, source: resourceName, origin: 'resource'}}) + '\n';
-        }
+      case 'volatile': {
+        const storageKey = store.storageKey as VolatileStorageKey;
+        this.handles += store.toManifestString({handleTags, overrides: {name, source: this.memoryResourceNames.get(storageKey.unique), origin: 'resource', includeKey: storageKey.toString()}}) + '\n';
         break;
+      }
       default:
         throw new Error(`unknown storageKey protocol ${key.protocol}`);
     }
@@ -215,13 +136,10 @@ ${this.arc.activeRecipe.toString()}`;
     }
 
     for (const store of this.arc._stores) {
-
-      if (Flags.useNewStorageStack || (handlesToSerialize.has(store.id))) {
-        if (handlesToSkip.has(store.id)) {
-          continue;
-        }
-        await this._serializeStore(store, `Store${id++}`);
+      if (handlesToSkip.has(store.id)) {
+        continue;
       }
+      await this._serializeStore(store, `Store${id++}`);
     }
 
     return this.resources + this.interfaces + this.handles;

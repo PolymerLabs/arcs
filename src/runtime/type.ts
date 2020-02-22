@@ -150,6 +150,10 @@ export abstract class Type {
     return false;
   }
 
+  get isCollection(): boolean {
+    return false;
+  }
+
   get isEntity(): boolean {
     return false;
   }

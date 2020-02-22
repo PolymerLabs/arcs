@@ -13,13 +13,12 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
 import {InterfaceType} from '../../../runtime/type.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
-import {singletonHandleForTest} from '../../../runtime/testing/handle-for-test.js';
-import {Flags} from '../../../runtime/flags.js';
+import {singletonHandle, SingletonEntityHandle, SingletonInterfaceHandle} from '../../../runtime/storageNG/storage-ng.js';
+import {isSingletonInterfaceStore} from '../../../runtime/storageNG/unified-store.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
@@ -174,22 +173,14 @@ describe('FindHostedParticle', () => {
 
     assert.isEmpty(arc._stores);
     await arc.instantiate(outRecipe);
-    // TODO(shans): This is not really the right way to look for stores on an arc...
-    const particleSpecStore = arc._stores.find(store => store.type instanceof InterfaceType || store.type.getContainedType() instanceof InterfaceType);
-    let particleSpec;
-    if (Flags.useNewStorageStack) {
-      const handle = await singletonHandleForTest(arc, particleSpecStore);
-      particleSpec = await handle.fetch();
-    } else {
-      particleSpec = await (particleSpecStore as SingletonStorageProvider).fetch();
-    }
-    assert.isNotNull(particleSpec.id, 'particleSpec stored in handle should have an id');
-    delete particleSpec.id;
+    const particleSpecStore = arc._stores.find(isSingletonInterfaceStore);
+    const handle: SingletonInterfaceHandle = singletonHandle(await particleSpecStore.activate(), arc);
+    const particleSpec = await handle.fetch();
+    // TODO(shans): fix this by putting an id field on particleSpec, or by having a ParticleSpec subclass
+    // for storing.
+    assert.isNotNull(particleSpec['id'], 'particleSpec stored in handle should have an id');
+    delete particleSpec['id'];
     await arc.idle;
-    if (Flags.useNewStorageStack) {
-      assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec.toLiteral());
-    } else {
-      assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec);
-    }
+    assert.deepEqual(manifest.findParticleByName('TestParticle').toLiteral(), particleSpec.toLiteral());
   });
 });

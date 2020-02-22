@@ -940,42 +940,6 @@ describe('Arc', () => {
     assert.strictEqual('B', connection.handle.immediateValue.name);
   });
 
-  // We don't currently support ArcInfo through the new stack
-  it.skip('persist serialization for', async () => {
-    const id = ArcId.newForTest('test');
-    const manifest = await Manifest.parse(`
-      schema Data
-        value: Text
-      recipe
-        description \`abc\``);
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
-    const recipe = manifest.recipes[0];
-    recipe.normalize();
-    await arc.instantiate(recipe);
-    const serialization = await arc.serialize();
-    await arc.persistSerialization(serialization);
-
-    const key = 'volatile://' + `${id}^^arc-info`;
-    const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as SingletonStorageProvider;
-
-    const callbackTracker = await CallbackTracker.create(store, 0);
-
-    assert.isNotNull(store, 'got a valid store');
-    const data = await store.fetch();
-    assert.isNotNull(data, 'got valid data');
-    callbackTracker.verify();
-
-    // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
-    data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
-
-    const expected = `meta name: '${id}' storageKey: 'volatile://${id}' @active recipe description \`abc\``;
-    assert.deepEqual({id: id.toString(), serialization: expected}, data);
-
-    // TODO Simulate a cold-load to catch reference mode issues.
-    // in the interim you can disable the provider cache in pouch-db-storage.ts
-  });
-
   // Particle A creates an inner arc with a hosted slot and instantiates B connected to that slot.
   // Whatever template is rendered into the hosted slot gets 'A' prepended and is rendered by A.
   //

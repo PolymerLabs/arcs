@@ -93,11 +93,8 @@ export class ArcStoresFetcher {
 
   // tslint:disable-next-line: no-any
   private async dereference(store: UnifiedStore): Promise<any> {
-    if ((store as CollectionStorageProvider).toList) {
-      return (store as CollectionStorageProvider).toList();
-    } else if ((store as SingletonStorageProvider).fetch) {
-      return (store as SingletonStorageProvider).fetch();
-    } else if (store instanceof Store) {
+    // TODO(shanestephens): Replace this with handle-based reading
+    if (store instanceof Store) {
       // tslint:disable-next-line: no-any
       const crdtData = await (await (store as Store<any>).activate()).serializeContents();
       if (crdtData.values) {

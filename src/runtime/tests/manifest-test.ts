@@ -20,10 +20,8 @@ import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore} from '../particle-check.js';
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
-import {Flags} from '../flags.js';
 import {Schema} from '../schema.js';
 import {Store} from '../storageNG/store.js';
-import {StorageStub} from '../storage-stub.js';
 import {collectionHandleForTest} from '../testing/handle-for-test.js';
 import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
@@ -34,6 +32,7 @@ import {FirebaseStorageDriverProvider} from '../storageNG/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
 import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.js';
+import {Flags} from '../flags.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -274,28 +273,18 @@ ${particleStr1}
     verify(await parseManifest(manifest.toString()));
   });
   it('two manifests with stores with the same filename, store name and data have the same ids', async () => {
-    let manifestText: string;
-    if (Flags.useNewStorageStack) {
-      manifestText = `
-      store NobId of NobIdStore {nobId: Text} in NobIdJson
-      resource NobIdJson
-        start
-        {
-          "root": {
-            "values": {"anid": {"value": {"id": "anid", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}},
-            "version": {"u": 1}
-          },
-          "locations": {}
-        }
-      `;
-    } else {
-      manifestText = `
-      store NobId of NobIdStore {nobId: Text} in NobIdJson
-      resource NobIdJson
-        start
-        [{"nobId": "12345"}]
-      `;
-    }
+    const manifestText = `
+    store NobId of NobIdStore {nobId: Text} in NobIdJson
+    resource NobIdJson
+      start
+      {
+        "root": {
+          "values": {"anid": {"value": {"id": "anid", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}},
+          "version": {"u": 1}
+        },
+        "locations": {}
+      }
+    `;
     const manifestA = await parseManifest(manifestText, {fileName: 'the.manifest', memoryProvider});
 
     const manifestB = await parseManifest(manifestText, {fileName: 'the.manifest', memoryProvider});
@@ -303,28 +292,18 @@ ${particleStr1}
     assert.strictEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
   it('two manifests with stores with the same filename and store name but different data have different ids', async () => {
-    let manifestText: (id: number) => string;
-    if (Flags.useNewStorageStack) {
-      manifestText = id => `
-      store NobId of NobIdStore {nobId: Text} in NobIdJson
-      resource NobIdJson
-        start
-        {
-          "root": {
-            "values": {"anid": {"value": {"id": "anid", "rawData": {"nobId": "${id}"}}, "version": {"u": 1}}},
-            "version": {"u": 1}
-          },
-          "locations": {}
-        }
-      `;
-    } else {
-      manifestText = id => `
-      store NobId of NobIdStore {nobId: Text} in NobIdJson
-      resource NobIdJson
-        start
-        [{"nobId": "${id}"}]
-      `;
-    }
+    const manifestText = (id: number) => `
+    store NobId of NobIdStore {nobId: Text} in NobIdJson
+    resource NobIdJson
+      start
+      {
+        "root": {
+          "values": {"anid": {"value": {"id": "anid", "rawData": {"nobId": "${id}"}}, "version": {"u": 1}}},
+          "version": {"u": 1}
+        },
+        "locations": {}
+      }
+    `;
     const manifestA = await parseManifest(manifestText(12345), {fileName: 'the.manifest', memoryProvider});
 
     const manifestB = await parseManifest(manifestText(67890), {fileName: 'the.manifest', memoryProvider});
@@ -1742,7 +1721,7 @@ recipe SomeRecipe
     const manifestSource = `
         schema Thing
           someProp: Text
-        store Store0 of [Thing] in '${Flags.useNewStorageStack ? 'new-entities.json' : 'entities.json'}'`;
+        store Store0 of [Thing] in 'new-entities.json'`;
     const entitySource = JSON.stringify([
       {someProp: 'someValue'},
       {
@@ -1769,10 +1748,9 @@ recipe SomeRecipe
     assert(store);
     const handle = await collectionHandleForTest(manifest, store.baseStore);
 
-    const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
-        id: Flags.useNewStorageStack ? 'e1' : `!${sessionId}:./the.manifest::0`,
+        id: 'e1',
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
@@ -1799,74 +1777,42 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     }
   });
   it('loads entities from a resource section', async () => {
-    if (Flags.useNewStorageStack) {
-      const manifest = await parseManifest(`
-        schema Thing
-          someProp: Text
+    const manifest = await parseManifest(`
+      schema Thing
+        someProp: Text
 
-        resource EntityList
-          start
-          {
-            "root": {
-              "values": {
-                "eid2": {"value": {"id": "eid2", "rawData": {"someProp": "someValue"}}, "version": {"u": 1}},
-                "entity-id": {"value": {"id": "entity-id", "rawData": {"someProp": "someValue2"}}, "version": {"u": 1}}
-              },
-              "version": {"u": 1}
+      resource EntityList
+        start
+        {
+          "root": {
+            "values": {
+              "eid2": {"value": {"id": "eid2", "rawData": {"someProp": "someValue"}}, "version": {"u": 1}},
+              "entity-id": {"value": {"id": "entity-id", "rawData": {"someProp": "someValue2"}}, "version": {"u": 1}}
             },
-            "locations": {}
-          }
-
-        store Store0 of [Thing] in EntityList
-      `, {fileName: 'the.manifest', memoryProvider});
-      const store = (await manifest.findStoreByName('Store0').activate());
-      assert(store);
-      const handle = await collectionHandleForTest(manifest, store.baseStore);
-
-      //const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
-
-      // TODO(shans): address as part of storage refactor
-      assert.deepEqual((await handle.toList()).map(Entity.serialize), [
-        {
-          id: `eid2`,
-          rawData: {someProp: 'someValue'},
-        }, {
-          id: 'entity-id',
-          rawData: {someProp: 'someValue2'},
+            "version": {"u": 1}
+          },
+          "locations": {}
         }
-      ]);
-      DriverFactory.clearRegistrationsForTesting();
-    } else {
-      const manifest = await parseManifest(`
-        schema Thing
-          someProp: Text
 
-        resource EntityList
-          start
-          [
-            {"someProp": "someValue"},
-            {"$id": "entity-id", "someProp": "someValue2"}
-          ]
+      store Store0 of [Thing] in EntityList
+    `, {fileName: 'the.manifest', memoryProvider});
+    const store = (await manifest.findStoreByName('Store0').activate());
+    assert(store);
+    const handle = await collectionHandleForTest(manifest, store.baseStore);
 
-        store Store0 of [Thing] in EntityList
-      `, {fileName: 'the.manifest', memoryProvider});
-      const store = (await manifest.findStoreByName('Store0').activate());
-      assert(store);
-      const handle = await collectionHandleForTest(manifest, store.baseStore);
+    //const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
 
-      const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
-
-      // TODO(shans): address as part of storage refactor
-      assert.deepEqual((await handle.toList()).map(Entity.serialize), [
-        {
-          id: `!${sessionId}:the.manifest::0`,
-          rawData: {someProp: 'someValue'},
-        }, {
-          id: 'entity-id',
-          rawData: {someProp: 'someValue2'},
-        }
-      ]);
-    }
+    // TODO(shans): address as part of storage refactor
+    assert.deepEqual((await handle.toList()).map(Entity.serialize), [
+      {
+        id: `eid2`,
+        rawData: {someProp: 'someValue'},
+      }, {
+        id: 'entity-id',
+        rawData: {someProp: 'someValue2'},
+      }
+    ]);
+    DriverFactory.clearRegistrationsForTesting();
   });
   it('resolves store names to ids', async () => {
     const manifestSource = `
@@ -1874,18 +1820,14 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         store Store0 of [Thing] in 'entities.json'
         recipe
           myStore: map Store0`;
-    const entitySource = JSON.stringify(Flags.useNewStorageStack ? {root: {}, locations: {}} : []);
+    const entitySource = JSON.stringify({root: {}, locations: {}});
     const loader = new Loader(null, {
       './the.manifest': manifestSource,
       './entities.json': entitySource,
     });
     const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider});
     const recipe = manifest.recipes[0];
-    if (Flags.useNewStorageStack) {
-      assert.deepEqual(recipe.toString(), `recipe\n  myStore: map '!manifest:./the.manifest:store0:${await digest(entitySource)}'`);
-    } else {
-      assert.deepEqual(recipe.toString(), 'recipe\n  myStore: map \'!manifest:./the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\'');
-    }
+    assert.deepEqual(recipe.toString(), `recipe\n  myStore: map '!manifest:./the.manifest:store0:${await digest(entitySource)}'`);
   });
 
   it('has prettyish syntax errors', async () => {
@@ -2115,7 +2057,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   });
   it('can parse a manifest containing stores', async () => {
     const loader = new Loader(null, {
-      '*': Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[]'
+      '*': '{"root": {}, "locations": {}}'
     });
     const parseOptions = {loader, memoryProvider};
     const manifest = await parseManifest(`
@@ -2546,7 +2488,7 @@ resource SomeName
   });
 
   it('can relate inline schemas to generic connections', async () => {
-    const data = Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[]';
+    const data = '{"root": {}, "locations": {}}';
     const manifest = await parseManifest(`
       schema Thing
         value: Text
@@ -3008,7 +2950,7 @@ resource SomeName
     });
 
     it('data stores can make claims', async () => {
-      const data = Flags.useNewStorageStack ? '{"root": {}, "locations": {}}' : '[{"nobId": "12345"}]';
+      const data = '{"root": {}, "locations": {}}';
 
       const manifest = await parseManifest(`
         store NobId of NobIdStore {nobId: Text} in NobIdJson
@@ -3279,7 +3221,7 @@ resource SomeName
         particle Bar
           recipe Food
             Bar`;
-        const jsonStr = Flags.useNewStorageStack ?
+        const jsonStr =
         `
         {
           "root": {
@@ -3289,15 +3231,7 @@ resource SomeName
             "version": {"u": 1}
           },
           "locations": {}
-        }`
-        :
-        `
-        [
-          {
-              "name": "Jack",
-              "age": 7
-          }
-        ]`;
+        }`;
         const loader = new Loader(null, {
           './a': manifestStr,
           './b': jsonStr,
@@ -3312,11 +3246,8 @@ resource SomeName
         assert.isDefined(result[0].fields.age);
       });
       it('handles multiple schemas with internal and external stores and passing them via handles', async () => {
-        const inlineJson = Flags.useNewStorageStack ?
-          `{"root": {"values": {"anid": {"value": {"id": "anid", "rawData": {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}}, "version": {"u": 1}}}, "version": {"u": 1}}, "locations": {}}`
-          :
-          `[{"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}]`;
-
+        const inlineJson =
+          `{"root": {"values": {"anid": {"value": {"id": "anid", "rawData": {"num": 73, "txt": "abc", "lnk": "http://xyz", "flg": true}}, "version": {"u": 1}}}, "version": {"u": 1}}, "locations": {}}`;
 
         const manifestStr = `
         schema Data
@@ -3361,7 +3292,7 @@ resource SomeName
         recipe ServicesAPI
           ServiceParticle
         `;
-        const jsonStr = Flags.useNewStorageStack ?
+        const jsonStr =
         `
         {
           "root": {
@@ -3374,14 +3305,7 @@ resource SomeName
           },
           "locations": {}
         }
-        `
-        :
-        `
-        [
-            {"for": "xx", "val": -5.8},
-            {"val": 107},
-            {"for": "yy"}
-        ]`;
+        `;
         const loader = new Loader(null, {
           './a': manifestStr,
           './b': jsonStr,
@@ -3435,12 +3359,8 @@ particle A
 describe('Manifest storage migration', () => {
   let memoryProvider;
   beforeEach(() => { memoryProvider = new TestVolatileMemoryProvider(); });
-  afterEach(() => {
-    Flags.reset();
-  });
 
   it('works with new storage stack', async () => {
-    Flags.useNewStorageStack = true;
     const manifest = await Manifest.parse(`
 store NobId of NobIdStore {nobId: Text} in NobIdJson
 resource NobIdJson
@@ -3461,25 +3381,6 @@ resource NobIdJson
     assert.instanceOf(store, Store);
     assert.strictEqual(store.name, 'NobId');
     assert.instanceOf(store.storageKey, RamDiskStorageKey);
-    const schema = store.type.getEntitySchema();
-    assert.sameMembers(schema.names, ['NobIdStore']);
-  });
-
-  it('works with old storage stack', async () => {
-    Flags.useNewStorageStack = false;
-    const manifest = await Manifest.parse(`
-store NobId of NobIdStore {nobId: Text} in NobIdJson
-resource NobIdJson
-  start
-  [{"nobId": "12345"}]
-`, {memoryProvider});
-    assert.lengthOf(manifest.stores, 1);
-    const store = manifest.stores[0];
-
-    assert.instanceOf(store, StorageStub);
-    assert.strictEqual(store.name, 'NobId');
-    assert.typeOf(store.storageKey, 'string');
-    assert.isTrue((store.storageKey as string).startsWith('volatile://'));
     const schema = store.type.getEntitySchema();
     assert.sameMembers(schema.names, ['NobIdStore']);
   });
