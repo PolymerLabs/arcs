@@ -10,25 +10,27 @@
 import {Runtime} from '../runtime/runtime.js';
 import protobuf from 'protobufjs';
 
-const rootNamespace = protobuf.loadSync('./java/arcs/core/data/manifest.proto');
-const manifestProto = rootNamespace.lookupType('arcs.Manifest');
+const rootNamespace = protobuf.loadSync('./java/arcs/core/data/recipe.proto');
+const envelope = rootNamespace.lookupType('arcs.RecipeEnvelopeProto');
 
 export async function serialize2proto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
 
-  // This is a super early sketch of manifest serialization, just for demo purposes.
+  if (manifest.recipes.length !== 1) throw Error('Manifest should have exactly one recipe');
+
+  // This is a super early sketch of a plan serialization, just for demo purposes.
   const payload = {
-    recipes: manifest.recipes.map(r => ({
+    recipe: manifest.recipes.map(r => ({
       name: r.name,
-      particles: r.particles.map(p => p.name),
-      handles: r.handles.map(h => h.localName).filter(h => !!h /* skip immediate handles */),
-    }))
+      particles: r.particles.map(p => ({specName: p.name})),
+      handles: r.handles.map(h => ({name: h.localName})),
+    }))[0],
   };
 
-  const errMsg = manifestProto.verify(payload);
+  const errMsg = envelope.verify(payload);
   if (errMsg) throw Error(errMsg);
 
-  const message = manifestProto.create(payload);
+  const message = envelope.create(payload);
 
-  return manifestProto.encode(message).finish();
+  return envelope.encode(message).finish();
 }

@@ -13,12 +13,14 @@ package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
+import arcs.core.storage.Callbacks
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 
 /** These typealiases are defined to clean up the class declaration below. */
 typealias SetProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 typealias SetBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+typealias SetCallbacks<T> = Callbacks<CrdtSet.IOperation<T>>
 
 /**
  * Collection Handle implementation for the runtime.
@@ -28,8 +30,9 @@ typealias SetBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
  */
 class CollectionImpl<T : Referencable>(
     name: String,
-    storageProxy: SetProxy<T>
-) : SetBase<T>(name, storageProxy) {
+    storageProxy: SetProxy<T>,
+    callbacks: SetCallbacks<T>? = null
+) : SetBase<T>(name, storageProxy, callbacks) {
     /** Return the number of items in the storage proxy view of the collection. */
     suspend fun size(): Int = value().size
 

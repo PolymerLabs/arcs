@@ -93,9 +93,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SingletonHandle(storageKey.toKeyString(), storageProxy).also {
+        return SingletonHandle(storageKey.toKeyString(), storageProxy, callbacks).also {
             storageProxy.registerHandle(it)
-            it.callback = callbacks
         }
     }
 
@@ -122,9 +121,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SetHandle(storageKey.toKeyString(), storageProxy).also {
+        return SetHandle(storageKey.toKeyString(), storageProxy, callbacks).also {
             storageProxy.registerHandle(it)
-            it.callback = callbacks
         }
     }
 }

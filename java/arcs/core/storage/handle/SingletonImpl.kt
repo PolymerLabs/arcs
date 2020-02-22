@@ -13,6 +13,7 @@ package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.storage.Callbacks
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 
@@ -21,6 +22,7 @@ typealias SingletonProxy<T> =
     StorageProxy<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
 typealias SingletonBase<T> =
     Handle<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
+typealias SingletonCallbacks<T> = Callbacks<CrdtSingleton.IOperation<T>>
 
 /**
  * Singleton [Handle] implementation for the runtime.
@@ -30,8 +32,9 @@ typealias SingletonBase<T> =
  */
 class SingletonImpl<T : Referencable>(
     name: String,
-    storageProxy: SingletonProxy<T>
-) : SingletonBase<T>(name, storageProxy) {
+    storageProxy: SingletonProxy<T>,
+    callbacks: SingletonCallbacks<T>? = null
+) : SingletonBase<T>(name, storageProxy, callbacks) {
     /** Get the current value from the backing [StorageProxy]. */
     suspend fun fetch() = value()
 
