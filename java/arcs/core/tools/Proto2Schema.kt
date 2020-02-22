@@ -1,7 +1,7 @@
 package arcs.core.tools
 
 import arcs.core.data.FieldType
-import arcs.core.data.Manifest
+import arcs.core.data.RecipeEnvelopeProto
 import arcs.core.data.Schema
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
@@ -35,7 +35,7 @@ class Proto2Schema : CliktCommand(
             echo("$protoFile --> $outFile")
 
             val bytes = protoFile.readBytes()
-            val manifest = Manifest.parseFrom(bytes)
+            val envelope = RecipeEnvelopeProto.parseFrom(bytes)
 
             outFile.writeBytes(protoFile.readBytes())
         }
