@@ -35,6 +35,13 @@ data class ReferencablePrimitive<T>(
 
     override fun toString(): String = "Primitive($valueRepr)"
 
+    override fun hashCode(): Int = id.hashCode()
+
+    override fun equals(other: Any?): Boolean {
+        val otherRef = other as? Referencable ?: return false
+        return otherRef.id == id
+    }
+
     companion object {
         private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
 
@@ -59,10 +66,10 @@ data class ReferencablePrimitive<T>(
             return when {
                 className == Int::class.toString() ||
                 className.contains("java.lang.Int") ->
-                    ReferencablePrimitive(Int::class, value.toDouble())
+                    ReferencablePrimitive(Double::class, value.toDouble())
                 className == Float::class.toString() ||
                 className.contains("java.lang.Float") ->
-                    ReferencablePrimitive(Float::class, value.toDouble())
+                    ReferencablePrimitive(Double::class, value.toDouble())
                 className == Double::class.toString() ||
                 className.contains("java.lang.Double") ->
                     ReferencablePrimitive(Double::class, value.toDouble())
@@ -83,11 +90,11 @@ data class ReferencablePrimitive<T>(
 
 /** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Int]. */
 fun Int.toReferencable(): ReferencablePrimitive<Double> =
-    ReferencablePrimitive(Int::class, this.toDouble())
+    ReferencablePrimitive(Double::class, this.toDouble())
 
 /** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Float]. */
 fun Float.toReferencable(): ReferencablePrimitive<Double> =
-    ReferencablePrimitive(Float::class, this.toDouble())
+    ReferencablePrimitive(Double::class, this.toDouble())
 
 /** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Double]. */
 fun Double.toReferencable(): ReferencablePrimitive<Double> =
