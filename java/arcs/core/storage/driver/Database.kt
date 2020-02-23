@@ -158,7 +158,7 @@ object DatabaseDriverProvider : DriverProvider {
             dataClass,
             schemaLookup,
             manager.getDatabase(databaseKey.dbName, databaseKey.persistent)
-        ).also { it.register() }
+        ).register()
     }
 
     /**
@@ -216,7 +216,8 @@ class DatabaseDriver<Data : Any>(
         }
     }
 
-    internal suspend fun register() {
+    /* internal */
+    suspend fun register(): DatabaseDriver<Data> = apply {
         clientId = database.addClient(this)
 
         log.debug { "Registered with clientId = $clientId" }

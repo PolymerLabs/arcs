@@ -129,6 +129,11 @@ class ReferenceModeStore private constructor(
         ) { "Provided type must contain CrdtModelType" }.containedType
     }
 
+    override suspend fun idle() {
+        backingStore.idle()
+        containerStore.idle()
+    }
+
     override suspend fun getLocalData(): RefModeStoreData {
         val containerData = containerStore.getLocalData()
         val (pendingIds, modelGetter) = constructPendingIdsAndModel(containerData)

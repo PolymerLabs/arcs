@@ -15,9 +15,9 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtEntity.Reference.Companion.buildReference
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.crdt.VersionMap
 import arcs.core.crdt.extension.toCrdtEntityData
 import arcs.core.crdt.extension.toEntity
-import arcs.core.crdt.VersionMap
 import arcs.core.data.Entity
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
@@ -31,7 +31,6 @@ import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseData
-import arcs.core.storage.driver.DatabaseDriverTest.DriverBuilder.Companion.buildDriver
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.MockDatabase
@@ -344,7 +343,7 @@ class DatabaseDriverTest {
         assertThat(driver.getLocalData()).isNull()
     }
 
-    private class DriverBuilder<Data : Any> private constructor(
+    class DriverBuilder<Data : Any>(
         var dataClass: KClass<Data>,
         var database: Database,
         var existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
@@ -355,24 +354,25 @@ class DatabaseDriverTest {
             get() = schemaLookup("whatever")
             set(value) { schemaLookup = createSchemaLookup(value) }
 
-        fun build(): DatabaseDriver<Data> =
+        suspend fun build(): DatabaseDriver<Data> =
             DatabaseDriver(storageKey, existenceCriteria, dataClass, schemaLookup, database)
+                .register()
 
         companion object {
-            inline fun <reified Data : Any> buildDriver(
-                database: Database,
-                noinline block: DriverBuilder<Data>.() -> Unit = {}
-            ) = buildDriver(database, Data::class, block)
-
-            fun <Data : Any> buildDriver(
-                database: Database,
-                dataClass: KClass<Data>,
-                block: DriverBuilder<Data>.() -> Unit = {}
-            ) = DriverBuilder(dataClass, database).apply(block).build()
-
             private fun createSchemaLookup(schema: Schema?): (String) -> Schema? = { schema }
         }
     }
+
+    suspend inline fun <reified Data : Any> buildDriver(
+        database: Database,
+        crossinline block: DriverBuilder<Data>.() -> Unit = {}
+    ) = buildDriver(database, Data::class) { this.block() }
+
+    suspend fun <Data : Any> buildDriver(
+        database: Database,
+        dataClass: KClass<Data>,
+        block: DriverBuilder<Data>.() -> Unit = {}
+    ) = DriverBuilder(dataClass, database).apply(block).build()
 
     companion object {
         private val DEFAULT_STORAGE_KEY = DatabaseStorageKey(
