@@ -45,9 +45,16 @@ import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.jvm.util.performance.JvmTimer
 import com.google.protobuf.ByteString
-import kotlin.reflect.KClass
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.coroutineContext
+import kotlin.reflect.KClass
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long
@@ -69,7 +76,7 @@ typealias ReferenceId = Long
 
 /** Implementation of [Database] for Android using SQLite. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-@Suppress("Recycle") // Our helper extension methods close Cursors correctly.
+@Suppress("Recycle", "EXPERIMENTAL_API_USAGE") // Our helper extension methods close Cursors correctly.
 class DatabaseImpl(
     context: Context,
     databaseName: String,
@@ -81,7 +88,6 @@ class DatabaseImpl(
     /* cursorFactory = */ null,
     DB_VERSION
 ) {
-    private val mutex = Mutex()
     // TODO: handle rehydrating from a snapshot.
     private val stats = DatabasePerformanceStatistics(
         insertUpdate = PerformanceStatistics(JvmTimer, *DatabaseCounters.INSERT_UPDATE_COUNTERS),
@@ -89,8 +95,15 @@ class DatabaseImpl(
         delete = PerformanceStatistics(JvmTimer, *DatabaseCounters.DELETE_COUNTERS)
     )
 
+    private val schemaMutex = Mutex()
     /** Maps from schema hash to type ID (local copy of the 'types' table). */
-    private val schemaTypeMap by guardedBy(mutex, ::loadTypes)
+    private val schemaTypeMap by guardedBy(schemaMutex, ::loadTypes)
+
+    private val clientMutex = Mutex()
+    private var nextClientId by guardedBy(clientMutex, 1)
+    private val clients by guardedBy(clientMutex, mutableMapOf<Int, DatabaseClient>())
+    private val clientFlow: Flow<DatabaseClient> =
+        flow { clientMutex.withLock { clients.values }.forEach { emit(it) } }
 
     override fun onCreate(db: SQLiteDatabase) = db.transaction {
         CREATE.forEach(db::execSQL)
@@ -111,12 +124,14 @@ class DatabaseImpl(
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
-    override fun addClient(client: DatabaseClient): Int {
-        TODO("not implemented")
+    override suspend fun addClient(client: DatabaseClient): Int = clientMutex.withLock {
+        clients[nextClientId] = client
+        nextClientId++
     }
 
-    override fun removeClient(identifier: Int) {
-        TODO("not implemented")
+    override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
+        clients.remove(nextClientId)
+        Unit
     }
 
     override suspend fun get(
@@ -314,6 +329,10 @@ class DatabaseImpl(
         }
         // TODO: Return a proper database version number.
         return@timeSuspending 1
+    }.also { newVersion ->
+        clientFlow.filter { it.storageKey == storageKey }
+            .onEach { it.onDatabaseUpdate(data, newVersion, originatingClientId) }
+            .launchIn(CoroutineScope(coroutineContext))
     }
 
     @VisibleForTesting
@@ -573,6 +592,10 @@ class DatabaseImpl(
         originatingClientId: Int?
     ) = writableDatabase.use {
         delete(storageKey, originatingClientId, it)
+    }.also {
+        clientFlow.filter { it.storageKey == storageKey }
+            .onEach { it.onDatabaseDelete(originatingClientId) }
+            .launchIn(CoroutineScope(coroutineContext))
     }
 
     @Suppress("UNUSED_PARAMETER") // TODO: use originatingClientId
@@ -644,7 +667,7 @@ class DatabaseImpl(
         schema: Schema,
         db: SQLiteDatabase,
         counters: Counters? = null
-    ): TypeId = mutex.withLock {
+    ): TypeId = schemaMutex.withLock {
         schemaTypeMap[schema.hash]?.let {
             counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_HIT)
             return@withLock it
@@ -1032,7 +1055,7 @@ class DatabaseImpl(
 
     /** Test-only version of [getTypeId]. */
     @VisibleForTesting
-    suspend fun getTypeIdForTest(fieldType: FieldType) = mutex.withLock {
+    suspend fun getTypeIdForTest(fieldType: FieldType) = schemaMutex.withLock {
         getTypeId(fieldType, schemaTypeMap)
     }
 
