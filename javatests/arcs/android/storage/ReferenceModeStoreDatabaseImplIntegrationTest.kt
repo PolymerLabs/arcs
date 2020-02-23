@@ -49,11 +49,9 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -431,15 +429,14 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             .isEqualTo(driver.getLocalData())
     }
 
-    @Ignore
     @Test
-    fun holdsOnto_containerUpdate_untilBackingDataArrives() = runBlocking {
+    fun holdsOnto_containerUpdate_untilBackingDataArrives() = runBlockingTest {
         val activeStore = createReferenceModeStore()
         val actor = activeStore.crdtKey
 
         val referenceCollection = CrdtSet<Reference>()
         val ref = Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
-        referenceCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref))
+        referenceCollection.applyOperation(CrdtSet.Operation.Add(actor, VersionMap(actor to 1), ref))
 
         val job = Job(coroutineContext[Job])
         var backingStoreSent = false

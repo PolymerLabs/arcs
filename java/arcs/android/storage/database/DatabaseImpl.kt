@@ -45,8 +45,6 @@ import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.jvm.util.performance.JvmTimer
 import com.google.protobuf.ByteString
-import kotlin.coroutines.coroutineContext
-import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
@@ -55,6 +53,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.coroutineContext
+import kotlin.reflect.KClass
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long
@@ -324,7 +324,7 @@ class DatabaseImpl(
             }
         }
         // TODO: Return a proper database version number.
-        return@timeSuspending 1
+        return@timeSuspending data.databaseVersion
     }.also { newVersion ->
         clientFlow.filter { it.storageKey == storageKey }
             .onEach { it.onDatabaseUpdate(data, newVersion, originatingClientId) }
@@ -505,10 +505,7 @@ class DatabaseImpl(
         } else {
             // Collection already exists; delete all existing entries.
             val collectionId = metadata.collectionId
-            require(data.databaseVersion > metadata.versionNumber) {
-                "Given version (${data.databaseVersion}) must be greater than version in " +
-                    "database (${metadata.versionNumber}) when updating storage key $storageKey."
-            }
+            if (data.databaseVersion <= metadata.versionNumber) return@useTransaction
 
             // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
             when (dataType) {
