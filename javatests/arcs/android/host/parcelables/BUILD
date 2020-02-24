@@ -13,6 +13,7 @@ arcs_kt_android_test_suite(
     package = "arcs.android.host.parcelables",
     deps = [
         "//java/arcs/android/host",
+        "//java/arcs/android/host/parcelables",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
