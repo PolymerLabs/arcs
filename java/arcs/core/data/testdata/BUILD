@@ -1,7 +1,7 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_manifest_proto",
-    "arcs_proto2plan",
+    "arcs_proto_plan",
 )
 
 licenses(["notice"])
@@ -18,8 +18,8 @@ arcs_manifest_proto(
     visibility = ["//visibility:public"],
 )
 
-recipe2plan(
+arcs_proto_plan(
     name = "test_rule",
-    srcs = [":manifest_data"],
+    srcs = [":example"],
     package = "arcs.tools.test",
 )

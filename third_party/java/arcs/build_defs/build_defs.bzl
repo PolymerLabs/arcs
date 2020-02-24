@@ -58,7 +58,7 @@ arcs_manifest_json = _arcs_manifest_json
 
 arcs_manifest_proto = _arcs_manifest_proto
 
-arcs_proto2plan = _recipe2plan
+arcs_proto_plan = _recipe2plan
 
 kt_js_library = _kt_js_library
 

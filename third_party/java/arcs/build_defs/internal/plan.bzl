@@ -23,7 +23,7 @@ def _recipe2plan_impl(ctx):
 recipe2plan = rule(
     implementation = _recipe2plan_impl,
     attrs = {
-        "srcs": attr.label_list(allow_files = [".json"]),
+        "srcs": attr.label_list(allow_files = [".pb.bin"]),
         "package": attr.string(),
         "_compiler": attr.label(
             cfg = "host",
