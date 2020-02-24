@@ -1721,15 +1721,8 @@ recipe SomeRecipe
     const manifestSource = `
         schema Thing
           someProp: Text
-        store Store0 of [Thing] in 'new-entities.json'`;
-    const entitySource = JSON.stringify([
-      {someProp: 'someValue'},
-      {
-        $id: 'entity-id',
-        someProp: 'someValue2'
-      },
-    ]);
-    const newEntitySource = JSON.stringify(
+        store Store0 of [Thing] in 'entities.json'`;
+    const entitySource = JSON.stringify(
       {root: {values:
         {
           e1: {value: {id: 'e1', rawData: {someProp: 'someValue'}}, version: {u: 1}},
@@ -1738,8 +1731,7 @@ recipe SomeRecipe
       }, locations: {}});
     const loader = new Loader(null, {
       './the.manifest': manifestSource,
-      './entities.json': entitySource,
-      './new-entities.json': newEntitySource
+      './entities.json': entitySource
     });
     const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider});
     const storageStub = manifest.findStoreByName('Store0');
@@ -1799,8 +1791,6 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     const store = (await manifest.findStoreByName('Store0').activate());
     assert(store);
     const handle = await collectionHandleForTest(manifest, store.baseStore);
-
-    //const sessionId = manifest.idGeneratorForTesting.currentSessionIdForTesting;
 
     // TODO(shans): address as part of storage refactor
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
@@ -3360,7 +3350,7 @@ describe('Manifest storage migration', () => {
   let memoryProvider;
   beforeEach(() => { memoryProvider = new TestVolatileMemoryProvider(); });
 
-  it('works with new storage stack', async () => {
+  it('inflates into RamDisk', async () => {
     const manifest = await Manifest.parse(`
 store NobId of NobIdStore {nobId: Text} in NobIdJson
 resource NobIdJson

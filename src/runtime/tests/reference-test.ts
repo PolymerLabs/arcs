@@ -588,7 +588,7 @@ describe('references', () => {
   });
 });
 
-describe('references when new storage enabled', () => {
+describe('reference mode store tests', () => {
   it('can construct references of entities stored in reference mode store', async () => {
     const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
     const loader = new Loader(null, {

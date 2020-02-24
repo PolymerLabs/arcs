@@ -17,7 +17,7 @@ import {InterfaceType} from '../../../runtime/type.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
-import {singletonHandle, SingletonEntityHandle, SingletonInterfaceHandle} from '../../../runtime/storageNG/storage-ng.js';
+import {singletonHandle, SingletonInterfaceHandle} from '../../../runtime/storageNG/storage-ng.js';
 import {isSingletonInterfaceStore} from '../../../runtime/storageNG/unified-store.js';
 
 async function runStrategy(manifestStr) {

@@ -153,7 +153,7 @@ export class Manifest {
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
-  readonly _idGenerator: IdGenerator = IdGenerator.newSession();
+  readonly idGenerator: IdGenerator = IdGenerator.newSession();
   private _storageProviderFactory: StorageProviderFactory | undefined = undefined;
   private _meta = new ManifestMeta();
   private _resources = {};
@@ -180,10 +180,6 @@ export class Manifest {
       return Id.fromString(this._meta.name);
     }
     return this._id;
-  }
-
-  get idGenerator() {
-    return this._idGenerator;
   }
 
   get storageProviderFactory() {
@@ -375,7 +371,7 @@ export class Manifest {
   }
 
   generateID(subcomponent?: string): Id {
-    return this._idGenerator.newChildId(this.id, subcomponent);
+    return this.idGenerator.newChildId(this.id, subcomponent);
   }
 
   static async load(fileName: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Manifest> {
@@ -1429,9 +1425,5 @@ ${e.message}
     });
 
     return results.join('\n');
-  }
-
-  get idGeneratorForTesting(): IdGenerator {
-    return this._idGenerator;
   }
 }

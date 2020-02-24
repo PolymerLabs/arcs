@@ -45,7 +45,7 @@ import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {Ttl} from './recipe/ttl.js';
-import {singletonHandle, CRDTEntitySingleton, SingletonInterfaceHandle} from './storageNG/storage-ng.js';
+import {singletonHandle, CRDTEntitySingleton, SingletonInterfaceHandle, SingletonEntityStore} from './storageNG/storage-ng.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -246,7 +246,7 @@ export class Arc implements ArcInterface {
     // TODO(shans): ensure implementation works once ArcType is available through new storage stack
     const key = this.storageKey.childKeyForArcInfo();
     const arcInfoType = new ArcType();
-    const store: Store<CRDTEntitySingleton> = new Store({storageKey: key, exists: Exists.MayExist, id: 'store', type: arcInfoType});
+    const store: SingletonEntityStore = new Store({storageKey: key, exists: Exists.MayExist, id: 'store', type: arcInfoType});
     const handle = singletonHandle(await store.activate(), this);
     await handle.set(arcInfoType.newInstance(this.id, serialization));
   }
@@ -471,7 +471,7 @@ export class Arc implements ArcInterface {
           const type = recipeHandle.type;
           if (isSingletonInterfaceStore(newStore)) {
             assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
-            const handle: SingletonInterfaceHandle = singletonHandle(await newStore.activate(), this);
+            const handle: SingletonInterfaceHandle = singletonHandle(await newStore.activate(), this, {ttl: recipeHandle.ttl});
             await handle.set(particleSpec.clone());
           } else {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
@@ -750,9 +750,5 @@ export class Arc implements ArcInterface {
 
   get apiChannelMappingId() {
     return this.id.toString();
-  }
-
-  get idGeneratorForTesting(): IdGenerator {
-    return this.idGenerator;
   }
 }

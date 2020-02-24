@@ -103,7 +103,7 @@ ${this.arc.activeRecipe.toString()}`;
         this.handles += store.toManifestString({handleTags, overrides: {name}}) + '\n';
         break;
       case 'volatile': {
-        const storageKey = store.storageKey as VolatileStorageKey;
+        const storageKey = key as VolatileStorageKey;
         this.handles += store.toManifestString({handleTags, overrides: {name, source: this.memoryResourceNames.get(storageKey.unique), origin: 'resource', includeKey: storageKey.toString()}}) + '\n';
         break;
       }
@@ -114,25 +114,16 @@ ${this.arc.activeRecipe.toString()}`;
 
   private async serializeHandles(): Promise<string> {
     let id = 0;
-    const importSet: Set<string> = new Set();
-    const handlesToSerialize: Set<string> = new Set();
     const handlesToSkip: Set<string> = new Set();
 
     for (const handle of this.arc.activeRecipe.handles) {
       if (handle.fate === 'map') {
-        importSet.add(this.arc.context.findManifestUrlForHandleId(handle.id));
-      } else {
+        const url = this.arc.context.findManifestUrlForHandleId(handle.id);
+        this.resources += `import '${url}'\n`;
+      } else if (handle.immediateValue) {
         // Immediate value handles have values inlined in the recipe and are not serialized.
-        if (handle.immediateValue) {
-          handlesToSkip.add(handle.id);
-          continue;
-        }
-
-        handlesToSerialize.add(handle.id);
+        handlesToSkip.add(handle.id);
       }
-    }
-    for (const url of importSet.values()) {
-      this.resources += `import '${url}'\n`;
     }
 
     for (const store of this.arc._stores) {

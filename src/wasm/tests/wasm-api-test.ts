@@ -15,8 +15,7 @@ import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
 import {VolatileStorage} from '../../runtime/storage/volatile-storage.js';
-//import {assertThrowsAsync} from '../../testing/test-util.js';
-import {ReferenceType, SingletonType, Type} from '../../runtime/type.js';
+import {ReferenceType, SingletonType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {Flags} from '../../runtime/flags.js';
