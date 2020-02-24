@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk
+package arcs.core.storage.api
 
 interface Entity {
     var internalId: String

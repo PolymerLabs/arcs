@@ -10,9 +10,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.sdk
+package arcs.jvm.storage.api
 
 import arcs.core.data.RawEntity
+import arcs.core.storage.api.Entity
+import arcs.core.storage.api.EntitySpec
 
 /** JVM-specific extensions to the base [Entity] interface. */
 interface JvmEntity : Entity {

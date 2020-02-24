@@ -11,6 +11,9 @@
 
 package arcs.sdk
 
+typealias JvmEntity = arcs.jvm.storage.api.JvmEntity
+typealias JvmEntitySpec<T> = arcs.jvm.storage.api.JvmEntitySpec<T>
+
 /** Implementation of [Particle] for the JVM. */
 abstract class BaseParticle : Particle {
     /**

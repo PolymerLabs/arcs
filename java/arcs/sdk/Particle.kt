@@ -11,6 +11,16 @@
 
 package arcs.sdk
 
+typealias Entity = arcs.core.storage.api.Entity
+typealias EntitySpec<T> = arcs.core.storage.api.EntitySpec<T>
+typealias Handle = arcs.core.storage.api.Handle
+typealias ReadableSingleton<T> = arcs.core.storage.api.ReadableSingleton<T>
+typealias WritableSingleton<T> = arcs.core.storage.api.WritableSingleton<T>
+typealias ReadWriteSingleton<T> = arcs.core.storage.api.ReadWriteSingleton<T>
+typealias ReadableCollection<T> = arcs.core.storage.api.ReadableCollection<T>
+typealias WritableCollection<T> = arcs.core.storage.api.WritableCollection<T>
+typealias ReadWriteCollection<T> = arcs.core.storage.api.ReadWriteCollection<T>
+
 /**
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
  * used by [Particle]s.
