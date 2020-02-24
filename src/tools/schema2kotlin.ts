@@ -99,13 +99,13 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
     }
     return `
 class ${particleName}Handles(
-    particle : ${this.getBaseParticle()}
+   ${this.getBaseParticleDecl()}
 ) ${this.getExtendsClause(specDecls)} {
     ${handleDecls.join('\n    ')} 
 }
 
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
-    ${this.opts.wasm ? '' : 'override '}val handles: ${particleName}Handles = ${particleName}Handles(this)
+    ${this.opts.wasm ? '' : 'override '}val handles: ${particleName}Handles = ${particleName}Handles(${this.opts.wasm ? 'this' : ''})
 }
 `;
   }
@@ -119,8 +119,8 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     )`;
   }
 
-  private getBaseParticle(): string {
-    return this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle';
+  private getBaseParticleDecl(): string {
+    return this.opts.wasm ? 'particle: WasmParticleImpl' : '';
   }
 
   private getType(type: string): string {
@@ -218,6 +218,25 @@ class ${name}() : ${this.getType('Entity')} {
         ${withFields(`${this.fieldsReset.join('\n        ')}`)}
     }
 
+    override fun equals(other: Any?): Boolean {
+      if (this === other) {
+        return true
+      }
+      
+      if (javaClass != other?.javaClass) {
+            return false
+      }
+      
+      other as ${name}
+      if (internalId != "") {
+        return internalId == other.internalId
+      }
+      return toString() == other.toString()
+    }
+    
+    override fun hashCode(): Int =
+      if (internalId != "") internalId.hashCode() else toString().hashCode()
+        
     override fun schemaHash() = "${schemaHash}"
 ${this.opts.wasm ? `
     override fun encodeEntity(): NullTermByteArray {
@@ -227,7 +246,7 @@ ${this.opts.wasm ? `
         return encoder.toNullTermByteArray()
     }` : `
     override fun serialize() = RawEntity(
-        "",
+        internalId,
         mapOf(
             ${this.fieldSerializes.join(',\n            ')}
         )
@@ -242,9 +261,11 @@ class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
     ${!this.opts.wasm ? `
     override fun deserialize(data: RawEntity): ${name} {
       // TODO: only handles singletons for now
-      return create().copy(
+      val rtn = create().copy(
         ${withFields(`${this.fieldDeserializes.join(', \n        ')}`)}
       )
+      rtn.internalId = data.id
+      return rtn
     }` : ''}
 ${this.opts.wasm ? `
     override fun decode(encoded: ByteArray): ${name}? {
