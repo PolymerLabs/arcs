@@ -18,9 +18,9 @@ arcs_kt_jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage/api:api-common",
         "//java/arcs/jvm/storage/api",
-        "//java/arcs/core/data/util:data-util",
     ],
     deps = [
         "//java/arcs/core/data",
@@ -39,7 +39,7 @@ kt_js_library(
         "js/*.kt",
     ]),
     deps = [
-      "//java/arcs/core/storage/api:api-common-js",
+        "//java/arcs/core/storage/api:api-common-js",
     ],
 )
 
@@ -63,5 +63,5 @@ arcs_kt_jvm_library(
     ],
     deps = [
         "//java/arcs/core/storage/api:api-common",
-    ]
+    ],
 )

@@ -7,11 +7,17 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-SDK_INTERFACES = ["Entity.kt", "Handle.kt"]
+SDK_INTERFACES = [
+    "Entity.kt",
+    "Handle.kt",
+]
 
 arcs_kt_library(
     name = "api",
-    srcs = glob(["*.kt"], exclude = SDK_INTERFACES),
+    srcs = glob(
+        ["*.kt"],
+        exclude = SDK_INTERFACES,
+    ),
     deps = [
         ":api-common",
         "//java/arcs/core/common",
