@@ -21,5 +21,5 @@ arcs_manifest_proto(
 arcs_proto_plan(
     name = "test_rule",
     srcs = [":example"],
-    package = "arcs.tools.test",
+    package = "arcs.core.data.testdata",
 )
