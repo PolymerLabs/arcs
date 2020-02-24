@@ -40,7 +40,7 @@ export function singletonHandle<T extends CRDTReferenceableSingleton, U>(
   const type = options && options.type ? options.type : store.baseStore.type;
   const storageKey = store.baseStore.storageKey.toString();
   const ttl = options && options.ttl ? options.ttl : undefined;
-  const proxy = new StorageProxy<T>('argument no longer required', store, type, storageKey, ttl);
+  const proxy = new StorageProxy<T>(store.baseStore.id, store, type, storageKey, ttl);
   const idGenerator = arc.idGenerator;
   const particle = options && options.particle ? options.particle : null;
   const canRead = options && options.canRead ? options.canRead : true;

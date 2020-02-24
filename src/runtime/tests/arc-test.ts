@@ -205,7 +205,7 @@ const doSetup = async () => setup(arcId => new VolatileStorageKey(arcId, ''));
 describe('Arc', () => {
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();
-    const arc = runtime.newArc('test', null);
+    const arc = runtime.newArc('test');
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
   });
@@ -338,17 +338,17 @@ describe('Arc', () => {
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
 
     // Successfully instantiates a recipe with 'copy' handle for store in a context.
-    await runtime.newArc('test0', null).instantiate(manifest.recipes[0]);
+    await runtime.newArc('test0').instantiate(manifest.recipes[0]);
 
     // Fails instantiating a recipe with 'use' handle for store in a context.
     try {
-      await runtime.newArc('test1', null).instantiate(manifest.recipes[1]);
+      await runtime.newArc('test1').instantiate(manifest.recipes[1]);
       assert.fail();
     } catch (e) {
       assert.isTrue(e.toString().includes('store \'storeInContext\'')); // with "use" fate was not found'));
     }
 
-    const arc = await runtime.newArc('test2', null);
+    const arc = await runtime.newArc('test2');
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     await arc.createStore(thingClass.type, 'name', 'storeInArc');
     const resolver = new RecipeResolver(arc);
@@ -941,7 +941,7 @@ describe('Arc', () => {
   });
 
   // We don't currently support ArcInfo through the new stack
-  it('persist serialization for', async () => {
+  it.skip('persist serialization for', async () => {
     const id = ArcId.newForTest('test');
     const manifest = await Manifest.parse(`
       schema Data
@@ -1122,104 +1122,103 @@ describe('Arc', () => {
 });
 
 describe('Arc storage migration', () => {
-  describe('when new storage enabled', () => {
-    it('supports new StorageKey type', async () => {
-      const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
-      const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-      assert.instanceOf(fooStore, Store);
-      const activeStore = await fooStore.activate();
-      assert.instanceOf(activeStore, DirectStore);
-      const directStore = activeStore as DirectStore<CRDTTypeRecord>;
-      assert.instanceOf(directStore.driver, VolatileDriver);
-    });
+  it('supports new StorageKey type', async () => {
+    const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
+    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+    assert.instanceOf(fooStore, Store);
+    const activeStore = await fooStore.activate();
+    assert.instanceOf(activeStore, DirectStore);
+    const directStore = activeStore as DirectStore<CRDTTypeRecord>;
+    assert.instanceOf(directStore.driver, VolatileDriver);
+  });
 
-    it('sets ttl on create entities', async () => {
-      const id = ArcId.newForTest('test');
-      const loader = new Loader(null, {
-        'ThingAdder.js': `
-        defineParticle(({Particle}) => {
-          return class extends Particle {
-            async setHandles(handles) {
-              super.setHandles(handles);
-              // Add a single entity to each collection and a singleton.
-              const things0Handle = this.handles.get('things0');
-              const hello = new things0Handle.entityClass({name: 'hello'});
-              things0Handle.add(hello);
-              const things1Handle = this.handles.get('things1');
-              things1Handle.add(new things1Handle.entityClass({name: 'foo'}));
-              const things2Handle = this.handles.get('things2');
-              things2Handle.set(new things2Handle.entityClass({name: 'bar'}));
+  it('sets ttl on create entities', async () => {
+    const id = ArcId.newForTest('test');
+    const loader = new Loader(null, {
+      'ThingAdder.js': `
+      defineParticle(({Particle}) => {
+        return class extends Particle {
+          async setHandles(handles) {
+            super.setHandles(handles);
+            // Add a single entity to each collection and a singleton.
+            const things0Handle = this.handles.get('things0');
+            const hello = new things0Handle.entityClass({name: 'hello'});
+            things0Handle.add(hello);
+            const things1Handle = this.handles.get('things1');
+            things1Handle.add(new things1Handle.entityClass({name: 'foo'}));
+            const things2Handle = this.handles.get('things2');
+            things2Handle.set(new things2Handle.entityClass({name: 'bar'}));
 
-              // wait 1s and add an additional item to things0.
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              things0Handle.add(new things0Handle.entityClass({name: 'world'}));
-              things0Handle.add(hello);
-            }
+            // wait 1s and add an additional item to things0.
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            things0Handle.add(new things0Handle.entityClass({name: 'world'}));
+            things0Handle.add(hello);
           }
-        });
-      `});
-      // TODO: add `copy` handle to recipe.
-      const manifest = await Manifest.parse(`
-          schema Thing
-            name: Text
-          particle ThingAdder in 'ThingAdder.js'
-            things0: reads writes [Thing]
-            things1: reads writes [Thing]
-            things2: reads writes Thing
-          recipe
-            h0: create @ttl(3m)
-            h1: create @ttl(23h)
-            h2: create @ttl(2d)
-            ThingAdder
-              things0: h0
-              things1: h1
-              things2: h2
-          `);
-      const recipe = manifest.recipes[0];
-      assert.isTrue(recipe.normalize() && recipe.isResolved());
+        }
+      });
+    `});
+    // TODO: add `copy` handle to recipe.
+    const manifest = await Manifest.parse(`
+        schema Thing
+          name: Text
+        particle ThingAdder in 'ThingAdder.js'
+          things0: reads writes [Thing]
+          things1: reads writes [Thing]
+          things2: reads writes Thing
+        recipe
+          h0: create @ttl(3m)
+          h1: create @ttl(23h)
+          h2: create @ttl(2d)
+          ThingAdder
+            things0: h0
+            things1: h1
+            things2: h2
+        `);
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
 
-      const runtime = new Runtime({loader, context: manifest});
-      const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest());
-      await arc.instantiate(recipe);
-      await arc.idle;
+    const runtime = new Runtime({loader, context: manifest});
+    const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest());
+    await arc.instantiate(recipe);
+    await arc.idle;
 
-      const getStoreByConnectionName = async (connectionName) => {
-        const store = arc.findStoreById(
-          arc.activeRecipe.particles[0].connections[connectionName].handle.id);
-        return await store.activate();
-      };
-      const getStoreValue = (storeContents, index, expectedLength) => {
-        assert.lengthOf(Object.keys(storeContents['values']), expectedLength);
-        const value = Object.values(storeContents['values'])[index]['value'];
-        assert.sameMembers(Object.keys(value), ['id', 'rawData', 'expirationTimestamp']);
-        assert.isTrue(value.id.length > 0);
-        return value;
-      };
+    const getStoreByConnectionName = async (connectionName) => {
+      const store = arc.findStoreById(
+        arc.activeRecipe.particles[0].connections[connectionName].handle.id);
+      return await store.activate();
+    };
+    const getStoreValue = (storeContents, index, expectedLength) => {
+      assert.lengthOf(Object.keys(storeContents['values']), expectedLength);
+      const value = Object.values(storeContents['values'])[index]['value'];
+      assert.sameMembers(Object.keys(value), ['id', 'rawData', 'expirationTimestamp']);
+      assert.isTrue(value.id.length > 0);
+      return value;
+    };
 
-      const things0Store = await getStoreByConnectionName('things0');
-      const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
-      assert.equal(helloThing0.rawData.name, 'hello');
-      const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
-      assert.equal(worldThing0.rawData.name, 'world');
-      // `world` entity was added 1s after `hello`.
-      // This also verifies `hello` wasn't update when being re-added.
-      if (worldThing0.expirationTimestamp - helloThing0.expirationTimestamp < 1000) {
-        console.warn(`Flaky test: worldThing0.expirationTimestamp - helloThing0.expirationTimestamp` +
-            `${worldThing0.expirationTimestamp} - ${helloThing0.expirationTimestamp} < 1000`);
-      }
-      assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp >= 1000);
+    const things0Store = await getStoreByConnectionName('things0');
+    const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
+    assert.equal(helloThing0.rawData.name, 'hello');
+    const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
+    assert.equal(worldThing0.rawData.name, 'world');
+    // `world` entity was added 1s after `hello`.
+    // This also verifies `hello` wasn't update when being re-added.
+    if (worldThing0.expirationTimestamp - helloThing0.expirationTimestamp < 1000) {
+      console.warn(`Flaky test: worldThing0.expirationTimestamp - helloThing0.expirationTimestamp` +
+          `${worldThing0.expirationTimestamp} - ${helloThing0.expirationTimestamp} < 1000`);
+    }
+    assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp >= 1000);
 
-      const things1Store = await getStoreByConnectionName('things1');
-      const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
-      assert.equal(fooThing1.rawData.name, 'foo');
+    const things1Store = await getStoreByConnectionName('things1');
+    const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
+    assert.equal(fooThing1.rawData.name, 'foo');
 
-      const things2Store = await getStoreByConnectionName('things2');
-      const things2Contents = await things2Store.serializeContents();
-      const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
-      assert.equal(barThing2.rawData.name, 'bar');
-      // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
-      assert.isTrue(barThing2.expirationTimestamp - fooThing1.expirationTimestamp >
-          24 * 60 * 60 * 1000);
-    });
+    const things2Store = await getStoreByConnectionName('things2');
+    const things2Contents = await things2Store.serializeContents();
+    const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
+    assert.equal(barThing2.rawData.name, 'bar');
+    // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
+    assert.isTrue(barThing2.expirationTimestamp - fooThing1.expirationTimestamp >
+        24 * 60 * 60 * 1000);
   });
 });
+

@@ -23,9 +23,7 @@ import '../../../runtime/storage/firebase/firebase-provider.js';
 import '../../../runtime/storage/pouchdb/pouch-db-provider.js';
 import {DriverFactory} from '../../../runtime/storageNG/drivers/driver-factory.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
-import {Flags} from '../../../runtime/flags.js';
 import {MockFirebaseStorageKey} from '../../../runtime/storageNG/testing/mock-firebase.js';
-import {KeyBase} from '../../../runtime/storage/key-base.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
@@ -42,12 +40,7 @@ describe('planificator', () => {
     };
 
     verifySuggestion(storageKeyForTest(arc.id));
-    if (Flags.useNewStorageStack) {
-      verifySuggestion(new MockFirebaseStorageKey('planificator location'));
-    } else {
-      verifySuggestion('firebase://arcs-test.firebaseio.com/123-456-7890-abcdef/1_2_3');
-      verifySuggestion('pouchdb://local/testdb/');
-    }
+    verifySuggestion(new MockFirebaseStorageKey('planificator location'));
 
     assert.isTrue(Planificator.constructSearchKey(arc).toString().length > 0);
   });

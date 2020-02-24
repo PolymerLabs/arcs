@@ -98,7 +98,7 @@ class ResultInspector {
 async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
   const manifest = await Manifest.parse(fileMap.manifest);
   const runtime = new Runtime({loader: new Loader(null, fileMap), context: manifest});
-  return runtime.newArc('demo', null);
+  return runtime.newArc('demo');
 }
 
 describe('particle-api', () => {
@@ -1315,8 +1315,7 @@ describe('particle-api', () => {
     });
     // TODO(lindner): add strict rendering
     const slotComposer = new SlotComposer();
-    const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'),
-        storageKey: null, loader, slotComposer, context});
+    const arc = new Arc({id: IdGenerator.newSession().newArcId('demo'), loader, slotComposer, context});
     const [recipe] = arc.context.recipes;
     recipe.normalize();
 

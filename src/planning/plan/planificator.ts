@@ -191,12 +191,9 @@ export class Planificator {
   }
 
   async _storeSearch(): Promise<void> {
-    let values = [];
     const handleNG: SingletonEntityHandle = singletonHandle(this.searchStore, this.arc);
     const handleValue = await handleNG.fetch();
-    if (handleValue) {
-      values = JSON.parse(handleValue.current);
-    }
+    const values = handleValue ? JSON.parse(handleValue.current) : [];
 
     const arcKey = this.arc.id.idTreeAsString();
     const newValues: {arc: string, search: string}[] = [];
