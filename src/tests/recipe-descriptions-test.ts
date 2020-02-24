@@ -135,7 +135,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         options.manifestString || createManifestString(options),
         {loader, memoryProvider, fileName: 'foo.js'});
     const runtime = new Runtime({loader, context, memoryProvider});
-    const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
+    const key = (id: ArcId) => new VolatileStorageKey(id, '');
     const arc = runtime.newArc('demo', key);
 
     const suggestions = await StrategyTestHelper.planForArc(arc);
@@ -253,7 +253,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`show \${ShowFoo.foo} with dummy\`
     `, {loader, fileName: '', memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
-    const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
+    const key = (id: ArcId) => new VolatileStorageKey(id, '');
     const arc = runtime.newArc('demo', key);
     // Plan for arc
     const suggestions0 = await StrategyTestHelper.planForArc(arc);
@@ -287,7 +287,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`do C\`
     `, {loader, fileName: '', memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});
-    const key = Flags.useNewStorageStack ? (id: ArcId) => new VolatileStorageKey(id, '') : 'volatile://';
+    const key = (id: ArcId) => new VolatileStorageKey(id, '');
     const arc = runtime.newArc('demo', key);
 
     const suggestions = await StrategyTestHelper.planForArc(arc);

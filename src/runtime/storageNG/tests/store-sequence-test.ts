@@ -283,7 +283,7 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
       const runtime = Runtime.newForNodeTesting();
-      const arc = runtime.newArc('arc', 'volatile://');
+      const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, ''));
       DriverFactory.clearRegistrationsForTesting();
       VolatileStorageDriverProvider.register(arc);
       const storageKey = new VolatileStorageKey(arc.id, 'unique');

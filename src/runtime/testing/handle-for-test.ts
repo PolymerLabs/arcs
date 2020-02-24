@@ -82,27 +82,18 @@ export async function collectionHandleForTest(arcOrManifest: Arc | Manifest, sto
  * Creates a storage key prefix for a store for testing purposes. Returns an
  * appropriate string or NG storage key type depending on the storage migration flag.
  */
-export function storageKeyPrefixForTest(): string|((arcId: ArcId) => StorageKey) {
-  if (Flags.useNewStorageStack) {
-    return arcId => new VolatileStorageKey(arcId, '');
-  }
-  return 'volatile://';
+export function storageKeyPrefixForTest(): ((arcId: ArcId) => StorageKey) {
+  return arcId => new VolatileStorageKey(arcId, '');
 }
-export function volatileStorageKeyPrefixForTest(): string|((arcId: ArcId) => StorageKey) {
+export function volatileStorageKeyPrefixForTest(): (arcId: ArcId) => StorageKey {
   return storageKeyPrefixForTest();
 }
-export function ramDiskStorageKeyPrefixForTest(): string|((arcId: ArcId) => StorageKey) {
-  if (Flags.useNewStorageStack) {
-    return arcId => new RamDiskStorageKey('');
-  }
-  return 'ramdisk://';
+export function ramDiskStorageKeyPrefixForTest(): (arcId: ArcId) => StorageKey {
+  return arcId => new RamDiskStorageKey('');
 }
 
-export function storageKeyForTest(arcId: ArcId): string|StorageKey {
-  if (Flags.useNewStorageStack) {
-    return (storageKeyPrefixForTest() as ((arcId: ArcId) => StorageKey))(arcId);
-  }
-  return 'volatile://' + arcId.toString();
+export function storageKeyForTest(arcId: ArcId): StorageKey {
+  return storageKeyPrefixForTest()(arcId);
 }
 
 async function createStorageProxyForTest<T extends CRDTTypeRecord>(
