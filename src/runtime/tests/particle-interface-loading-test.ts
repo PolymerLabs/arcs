@@ -279,7 +279,7 @@ describe('particle interface loading', () => {
 
     const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
     const varStorageProxy = new StorageProxy('id', await fooStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
-    const fooHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGeneratorForTesting, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
+    const fooHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
     recipe.handles[0].mapToStorage(fooStore);
 
     recipe.normalize();
@@ -294,7 +294,7 @@ describe('particle interface loading', () => {
     await arc2.idle;
 
     const varStorageProxy2 = new StorageProxy('id', await arc2._stores[0].activate(), new SingletonType(fooClass.type), arc2._stores[0].storageKey.toString());
-    const fooHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+    const fooHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 });

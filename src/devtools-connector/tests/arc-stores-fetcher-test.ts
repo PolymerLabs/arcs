@@ -51,7 +51,7 @@ describe('ArcStoresFetcher', () => {
     // We don't assert on it in this test.
     delete results[0].messageBody.arcStores[0].type.innerType.entitySchema.fields.value.location;
 
-    const sessionId = arc.idGeneratorForTesting.currentSessionIdForTesting;
+    const sessionId = arc.idGenerator.currentSessionIdForTesting;
     const entityId = '!' + sessionId + ':demo:test-proxy2:3';
 
     assert.deepEqual(results[0].messageBody, {
@@ -125,7 +125,7 @@ describe('ArcStoresFetcher', () => {
         m => m.messageType === 'store-value-changed');
     assert.lengthOf(results, 1);
 
-    const sessionId = arc.idGeneratorForTesting.currentSessionIdForTesting;
+    const sessionId = arc.idGenerator.currentSessionIdForTesting;
     assert.deepEqual(results[0].messageBody, {
       id: `!${sessionId}:demo:1`,
       value: {

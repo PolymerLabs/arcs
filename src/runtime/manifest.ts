@@ -41,7 +41,6 @@ import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {VolatileStorage} from './storage/volatile-storage.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
-import {StorageStub} from './storage-stub.js';
 import {Flags} from './flags.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
@@ -49,8 +48,6 @@ import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileMemoryProvider} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
-import {CRDTSingletonTypeRecord} from './crdt/crdt-singleton.js';
-import {Entity, SerializedEntity} from './entity.js';
 import {Refinement} from './refiner.js';
 import {Capabilities} from './capabilities.js';
 
@@ -156,7 +153,7 @@ export class Manifest {
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
-  readonly _idGenerator: IdGenerator = IdGenerator.newSession();
+  readonly idGenerator: IdGenerator = IdGenerator.newSession();
   private _storageProviderFactory: StorageProviderFactory | undefined = undefined;
   private _meta = new ManifestMeta();
   private _resources = {};
@@ -184,6 +181,7 @@ export class Manifest {
     }
     return this._id;
   }
+
   get storageProviderFactory() {
     if (Flags.useNewStorageStack) {
       throw new Error('Not present in the new storage stack.');
@@ -273,32 +271,12 @@ export class Manifest {
     if (opts.source) {
       this.storeManifestUrls.set(opts.id, this.fileName);
     }
-    let store: UnifiedStore;
-    if (Flags.useNewStorageStack) {
-      let storageKey = opts.storageKey;
-      if (typeof storageKey === 'string') {
-        storageKey = StorageKeyParser.parse(storageKey);
-      }
-      store = new Store({...opts, storageKey, exists: Exists.MayExist});
-    } else {
-      if (opts.storageKey instanceof StorageKey) {
-        throw new Error(`Can't use new-style storage keys with the old storage stack.`);
-      }
-      store = new StorageStub(
-          opts.type,
-          opts.id,
-          opts.name,
-          opts.storageKey,
-          this.storageProviderFactory,
-          opts.originalId,
-          opts.claims,
-          opts.description,
-          opts.version,
-          opts.source,
-          opts.origin,
-          opts.referenceMode,
-          opts.model);
+
+    let storageKey = opts.storageKey;
+    if (typeof storageKey === 'string') {
+      storageKey = StorageKeyParser.parse(storageKey);
     }
+    const store = new Store({...opts, storageKey, exists: Exists.MayExist});
     return this._addStore(store, opts.tags);
   }
 
@@ -393,7 +371,7 @@ export class Manifest {
   }
 
   generateID(subcomponent?: string): Id {
-    return this._idGenerator.newChildId(this.id, subcomponent);
+    return this.idGenerator.newChildId(this.id, subcomponent);
   }
 
   static async load(fileName: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Manifest> {
@@ -1447,9 +1425,5 @@ ${e.message}
     });
 
     return results.join('\n');
-  }
-
-  get idGeneratorForTesting(): IdGenerator {
-    return this._idGenerator;
   }
 }

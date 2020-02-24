@@ -13,15 +13,10 @@ import {logsFactory} from '../../platform/logs-factory.js';
 import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../runtime/hot.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
-import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
 import {UnifiedActiveStore} from '../../runtime/storageNG/unified-store.js';
-import {unifiedHandleFor} from '../../runtime/handle.js';
-import {StorageProxy} from '../../runtime/storageNG/storage-proxy.js';
-import {SingletonHandle} from '../../runtime/storageNG/handle.js';
-import {Flags} from '../../runtime/flags.js';
-import {Entity} from '../../runtime/entity.js';
 import {EntityType} from '../../runtime/type.js';
+import {singletonHandle, ActiveSingletonEntityStore, SingletonEntityHandle} from '../../runtime/storageNG/storage-ng.js';
 
 const {error} = logsFactory('PlanningResult', '#ff0090');
 
@@ -46,28 +41,18 @@ export class PlanningResult {
   generations: SerializableGeneration[] = [];
   contextual = true;
   store?: UnifiedActiveStore;
-  handle?: SingletonHandle<Entity>|SingletonStorageProvider;
+  handle?: SingletonEntityHandle;
   private storeCallbackId: number;
   private changeCallbacks: Runnable[] = [];
   private envOptions: EnvOptions;
 
-  constructor(envOptions: EnvOptions, store?: UnifiedActiveStore) {
+  constructor(envOptions: EnvOptions, store?: ActiveSingletonEntityStore) {
     this.envOptions = envOptions;
     assert(envOptions.context, `context cannot be null`);
     assert(envOptions.loader, `loader cannot be null`);
     this.store = store;
     if (this.store) {
-      this.handle = Flags.useNewStorageStack ?
-          unifiedHandleFor({
-            proxy: new StorageProxy(
-                envOptions.context.generateID().toString(),
-                this.store,
-                this.store.baseStore.type,
-                this.store.baseStore.storageKey.toString()),
-            idGenerator: envOptions.context._idGenerator,
-            particleId: envOptions.context.generateID().toString()
-          }) as SingletonHandle<Entity>:
-          this.store.baseStore as SingletonStorageProvider;
+      this.handle = singletonHandle(store, envOptions.context);
       this.storeCallbackId = this.store.on(() => this.load());
     }
   }
@@ -83,16 +68,11 @@ export class PlanningResult {
   }
 
   async load(): Promise<boolean> {
-    let value;
-    if (Flags.useNewStorageStack) {
-      const handleValue = await this.handle.fetch();
-      if (!handleValue) {
-        return false;
-      }
-      value = JSON.parse(handleValue.current);
-    } else {
-      value = await this.handle.fetch() || {};
+    const handleValue = await this.handle.fetch();
+    if (!handleValue) {
+      return false;
     }
+    const value = JSON.parse(handleValue.current);
     if (value.suggestions) {
       if (await this.fromLiteral(value)) {
         return true;
@@ -103,13 +83,7 @@ export class PlanningResult {
 
   async flush() {
     try {
-      if (Flags.useNewStorageStack) {
-        const entityClass = Entity.createEntityClass(PlanningResult.suggestionEntityType.entitySchema, null);
-        await this.handle.set(new entityClass({current: JSON.stringify(this.toLiteral())}));
-      } else {
-        await (this.store as SingletonStorageProvider).set(this.toLiteral());
-      }
-
+      await this.handle.setFromData({current: JSON.stringify(this.toLiteral())});
     } catch (e) {
       error('Failed storing suggestions: ', e);
       throw e;
@@ -123,9 +97,6 @@ export class PlanningResult {
   dispose() {
     this.changeCallbacks = [];
     this.store.off(this.storeCallbackId);
-    if (!Flags.useNewStorageStack) {
-      (this.store as SingletonStorageProvider).dispose();
-    }
   }
 
   static formatSerializableGenerations(generations): SerializableGeneration[] {

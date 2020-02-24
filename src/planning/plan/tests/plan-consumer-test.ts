@@ -23,11 +23,11 @@ import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {DriverFactory} from '../../../runtime/storageNG/drivers/driver-factory.js';
-import {UnifiedActiveStore} from '../../../runtime/storageNG/unified-store.js';
 import {Arc} from '../../../runtime/arc.js';
+import {ActiveSingletonEntityStore} from '../../../runtime/storageNG/storage-ng.js';
 
 async function createPlanConsumer(arc: Arc) {
-  const store: UnifiedActiveStore = await Planificator['_initSuggestStore'](arc);
+  const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
   assert.isNotNull(store);
   const result = new PlanningResult({context: arc.context, loader: arc.loader}, store);
   return new PlanConsumer(arc, result);

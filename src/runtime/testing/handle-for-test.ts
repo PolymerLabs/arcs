@@ -36,13 +36,13 @@ export async function singletonHandleForTest(arcOrManifest: Arc | Manifest, stor
     return new SingletonHandle(
       arcOrManifest.generateID('test-handle').toString(),
       await createStorageProxyForTest<CRDTSingletonTypeRecord<SerializedEntity>>(arcOrManifest, store),
-      arcOrManifest.idGeneratorForTesting,
+      arcOrManifest.idGenerator,
       /* particle= */ null, // TODO: We don't have a particle here.
       /* canRead= */ true,
       /* canWrite= */ true,
       /* name?= */ null);
   } else {
-    const handle = handleFor(store, arcOrManifest.idGeneratorForTesting);
+    const handle = handleFor(store, arcOrManifest.idGenerator);
     if (handle instanceof Singleton) {
       // tslint:disable-next-line: no-any
       return handle as unknown as SingletonHandle<any>;
@@ -63,13 +63,13 @@ export async function collectionHandleForTest(arcOrManifest: Arc | Manifest, sto
     return new CollectionHandle(
       arcOrManifest.generateID('test-handle').toString(),
       await createStorageProxyForTest<CRDTCollectionTypeRecord<SerializedEntity>>(arcOrManifest, store),
-      arcOrManifest.idGeneratorForTesting,
+      arcOrManifest.idGenerator,
       /* particle= */ null, // TODO: We don't have a particle here.
       /* canRead= */ true,
       /* canWrite= */ true,
       /* name?= */ null);
   } else {
-    const handle = handleFor(store, arcOrManifest.idGeneratorForTesting);
+    const handle = handleFor(store, arcOrManifest.idGenerator);
     if (handle instanceof Collection) {
       return collectionHandleWrapper(handle);
     } else {

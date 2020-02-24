@@ -21,7 +21,7 @@ import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {ActiveSingletonEntityStore, CRDTReferenceableSingleton, singletonHandle, SingletonEntityHandle} from '../../runtime/storageNG/storage-ng.js';
+import {ActiveSingletonEntityStore, CRDTEntitySingleton, singletonHandle, SingletonEntityHandle} from '../../runtime/storageNG/storage-ng.js';
 
 const planificatorId = 'plans';
 
@@ -187,7 +187,7 @@ export class Planificator {
   }
 
   private static async _initStore(arc: Arc, id: string, type: Type, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
-    return new Store<CRDTReferenceableSingleton>({storageKey, exists: Exists.MayExist, type: new SingletonType(type), id}).activate();
+    return new Store<CRDTEntitySingleton>({storageKey, exists: Exists.MayExist, type: new SingletonType(type), id}).activate();
   }
 
   async _storeSearch(): Promise<void> {

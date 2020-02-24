@@ -15,7 +15,6 @@ import {reportSystemException, PropagatedException, SystemException} from './arc
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
-import {StorageStub} from './storage-stub.js';
 import {MessagePort} from './message-channel.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
@@ -285,13 +284,7 @@ class PECOuterPortImpl extends PECOuterPort {
     // recreated when an arc is deserialized. As a consequence of this, dynamically
     // created handles for inner arcs must always be volatile to prevent storage
     // in firebase.
-    let storageKey: string | StorageKey;
-    if (Flags.useNewStorageStack) {
-      // TODO(shans): should this have a well defined id?
-      storageKey = new VolatileStorageKey(arc.id, String(Math.random()));
-    } else {
-      storageKey = 'volatile';
-    }
+    const storageKey = new VolatileStorageKey(arc.id, String(Math.random()));
     const store = await arc.createStore(type, name, null, [], storageKey);
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
@@ -371,11 +364,7 @@ class PECOuterPortImpl extends PECOuterPort {
               // TODO: pass tags through too, and reconcile with similar logic
               // in Arc.deserialize.
               for (const store of manifest.stores) {
-                if (store instanceof StorageStub) {
-                  await this.arc._registerStore(await store.inflate(), []);
-                } else {
-                  await this.arc._registerStore(store, []);
-                }
+                await this.arc._registerStore(store, []);
               }
               // TODO: Awaiting this promise causes tests to fail...
               const instantiateAndCaptureError = async () => {

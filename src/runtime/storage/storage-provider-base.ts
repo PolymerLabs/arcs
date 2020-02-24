@@ -143,12 +143,14 @@ export abstract class StorageProviderBase extends UnifiedStore implements Store,
   // Required to implement interface UnifiedActiveStore. Each
   // StorageProviderBase instance is both a UnifiedStore and a
   // UnifiedActiveStore.
-  get baseStore(): StorageProviderBase {
-    return this;
+  get baseStore() {
+    // tslint:disable-next-line: no-any
+    return this as any;
   }
 
-  get storageKey(): string {
-    return this._storageKey;
+  get storageKey() {
+    // tslint:disable-next-line: no-any
+    return this._storageKey as any;
   }
 
   reportExceptionInHost(exception: PropagatedException) {
