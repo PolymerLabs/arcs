@@ -42,7 +42,7 @@ interface Particle {
      *
      * @param handle Singleton or Collection handle
      */
-    fun onHandleUpdate(handle: Handle) = Unit
+    suspend fun onHandleUpdate(handle: Handle) = Unit
 
     /**
      * React to handle synchronization.
@@ -53,5 +53,5 @@ interface Particle {
      * @param handle Singleton or Collection handle
      * @param allSynced flag indicating if all handles are synchronized
      */
-    fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
+    suspend fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
 }

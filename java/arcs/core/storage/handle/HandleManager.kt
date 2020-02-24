@@ -62,7 +62,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         storageKey: StorageKey,
         schema: Schema,
         callbacks: SingletonCallbacks<RawEntity>? = null,
-        name: String = storageKey.toKeyString()
+        name: String = storageKey.toKeyString(),
+        canRead: Boolean = true
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -80,7 +81,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SingletonHandle(name, storageProxy, callbacks).also {
+        return SingletonHandle(name, storageProxy, callbacks, canRead).also {
             storageProxy.registerHandle(it)
         }
     }
@@ -95,7 +96,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         schema: Schema,
         callbacks: SetCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
-        refinement: Refinement<RawEntity>? = null
+        refinement: Refinement<RawEntity>? = null,
+        canRead: Boolean = true
     ): SetHandle<RawEntity> {
         val storeOptions = SetStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -110,7 +112,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SetHandle(name, storageProxy, callbacks, refinement).also {
+        return SetHandle(name, storageProxy, callbacks, refinement, canRead).also {
             storageProxy.registerHandle(it)
         }
     }

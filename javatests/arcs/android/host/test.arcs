@@ -1,0 +1,25 @@
+
+schema Person
+  name: Text
+  age: Number
+  is_cool: Boolean
+
+particle TestParticle in 'arcs.android.host.AndroidSdkHandlesTest.TestParticle'
+  readHandle: reads Person
+  writeHandle: writes Person
+  readWriteHandle: reads writes Person
+  writeSetHandle: writes [Person]
+  readWriteSetHandle: reads writes [Person]
+
+recipe TestRecipe
+  data: create
+  dataSet: create
+
+  TestParticle
+    readHandle: reads data
+    writeHandle: writes data
+    readWriteHandle: reads writes data
+    writeSetHandle: writes dataSet
+    readWriteSetHandle: reads dataSet
+
+

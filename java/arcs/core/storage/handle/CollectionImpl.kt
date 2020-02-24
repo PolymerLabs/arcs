@@ -40,8 +40,9 @@ class CollectionImpl<T : Referencable>(
     name: String,
     storageProxy: SetProxy<T>,
     callbacks: SetCallbacks<T>? = null,
-    private val refinement: Refinement<T>?
-) : SetBase<T>(name, storageProxy, callbacks) {
+    private val refinement: Refinement<T>? = null,
+    canRead: Boolean = true
+) : SetBase<T>(name, storageProxy, callbacks, canRead) {
     /** Return the number of items in the storage proxy view of the collection. */
     suspend fun size(): Int = value().size
 
