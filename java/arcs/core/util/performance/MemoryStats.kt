@@ -22,7 +22,7 @@ enum class MemoryIdentifier(val desc: String) {
     SYSTEM("Shared and system memory usage in KB"),
     OTHER("Other private memory usage in KB"),
 
-    /** Declare more per-platform/per-OS/per-purpose memory ids here. */
+    /* Declare more per-platform/per-OS/per-purpose memory ids here. */
 }
 
 /**
@@ -40,7 +40,7 @@ enum class MemoryIdentifier(val desc: String) {
  */
 object MemoryStats {
     /** Connect to platform/os-dependent stats retrieval pipe. */
-    var pipe = DEFAULT_PIPE
+    var pipe: () -> Map<MemoryIdentifier, Long> = DEFAULT_PIPE
 
     /**
      * Take a snapshot of memory stats of current process.
