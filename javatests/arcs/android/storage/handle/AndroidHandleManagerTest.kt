@@ -175,7 +175,7 @@ class AndroidHandleManagerTest {
             val testCallback2 = mock<Callbacks<CrdtSingleton.IOperation<RawEntity>>>()
             val firstHandle = hm.singletonHandle(singletonKey, schema, testCallback1)
             val secondHandle = hm.singletonHandle(singletonKey, schema, testCallback2)
-            secondHandle.set(entity1)
+            secondHandle.store(entity1)
             val expectedAdd = CrdtSingleton.Operation.Update(
                 singletonKey.toKeyString(),
                 testMapForKey(singletonKey),
