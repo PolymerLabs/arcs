@@ -5,10 +5,10 @@ package(default_visibility = ["//visibility:public"])
 
 kt_jvm_library(
     name = "generator",
-    srcs = ["Recipe2Plan.kt"],
+    srcs = ["Recipe2Plan.kt", "PlanGenerator.kt"],
     deps = [
         "//java/arcs/core/data",
-        "//third_party/java/gson",
+        "//java/arcs/core/data:recipe_android_proto",
         "//third_party/kotlin/clikt",
         "//third_party/kotlin/kotlinpoet",
     ],
