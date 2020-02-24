@@ -42,10 +42,13 @@ class SingletonImpl<T : Referencable>(
      * Sends a new value to the backing [StorageProxy]. If this returns `false`, your operation
      * did not apply fully. Fetch the latest value and retry.
      * */
-    suspend fun set(entity: T): Boolean {
+    suspend fun store(entity: T): Boolean {
         versionMap.increment()
         return storageProxy.applyOp(CrdtSingleton.Operation.Update(name, versionMap, entity))
     }
+
+    /**TODO(heimlich): remove once all implementations use store. */
+    suspend fun set(entity: T): Boolean = store(entity)
 
     /**
      * Clears the value in the backing [StorageProxy]. If this returns `false`, your operation

@@ -8,7 +8,7 @@ class Dealer : AbstractDealer() {
 
     init {
         eventHandler("onHit") {
-            handles.cardRequest.set(Dealer_CardRequest(player = name))
+            handles.cardRequest.store(Dealer_CardRequest(player = name))
             log("Hit.")
         }
         eventHandler("onStand") {

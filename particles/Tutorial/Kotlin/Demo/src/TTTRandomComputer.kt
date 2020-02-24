@@ -36,7 +36,7 @@ class TTTRandomComputer : AbstractTTTRandomComputer() {
         // Choose a random cell as the move
         if (emptyCells.isNotEmpty()) {
             val mv = emptyCells.shuffled().first()
-            handles.myMove.set(TTTRandomComputer_MyMove(move = mv))
+            handles.myMove.store(TTTRandomComputer_MyMove(move = mv))
         }
     }
 }

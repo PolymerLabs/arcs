@@ -87,7 +87,7 @@ class SingletonIntegrationTest {
     fun settingOnA_showsUpInB() = runBlockingTest {
         val person = Person("Lou", 95, true)
 
-        assertThat(singletonA.set(person.toRawEntity())).isTrue()
+        assertThat(singletonA.store(person.toRawEntity())).isTrue()
         assertThat(singletonA.fetch()).isEqualTo(person.toRawEntity())
         assertThat(singletonB.fetch()).isEqualTo(person.toRawEntity())
     }
@@ -97,11 +97,11 @@ class SingletonIntegrationTest {
         val lou = Person("Lou", 95, true)
         val jan = Person("Jan", 28, true, emptySet())
 
-        singletonA.set(lou.toRawEntity())
+        singletonA.store(lou.toRawEntity())
         assertThat(singletonA.fetch()).isEqualTo(lou.toRawEntity())
         assertThat(singletonB.fetch()).isEqualTo(lou.toRawEntity())
 
-        singletonB.set(jan.toRawEntity())
+        singletonB.store(jan.toRawEntity())
         assertThat(singletonA.fetch()).isEqualTo(jan.toRawEntity())
         assertThat(singletonB.fetch()).isEqualTo(jan.toRawEntity())
     }
@@ -110,7 +110,7 @@ class SingletonIntegrationTest {
     fun clearingOnA_clearsB() = runBlockingTest {
         val person = Person("Susan", 48, true)
 
-        singletonA.set(person.toRawEntity())
+        singletonA.store(person.toRawEntity())
         assertThat(singletonA.fetch()).isEqualTo(person.toRawEntity())
         assertThat(singletonB.fetch()).isEqualTo(person.toRawEntity())
 
@@ -123,9 +123,9 @@ class SingletonIntegrationTest {
     fun clearingOnA_clearsValueSetByB() = runBlockingTest {
         val lou = Person("Lou", 95, true)
         val jan = Person("Jan", 28, true, emptySet())
-        singletonA.set(lou.toRawEntity())
+        singletonA.store(lou.toRawEntity())
         singletonB.fetch()
-        singletonB.set(jan.toRawEntity())
+        singletonB.store(jan.toRawEntity())
 
         singletonA.clear()
 

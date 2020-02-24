@@ -51,9 +51,9 @@ class TTTGame : AbstractTTTGame() {
         handles.events.onUpdate {
             if (hasReset()) {
                 with(handles) {
-                    gameState.set(defaultGame)
-                    playerOneMove.set(handles.playerOneMove.fetch()!!.copy(move = -1.0))
-                    playerTwoMove.set(handles.playerTwoMove.fetch()!!.copy(move = -1.0))
+                    gameState.store(defaultGame)
+                    playerOneMove.store(handles.playerOneMove.fetch()!!.copy(move = -1.0))
+                    playerTwoMove.store(handles.playerTwoMove.fetch()!!.copy(move = -1.0))
                     events.clear()
                 }
                 renderOutput()
@@ -85,7 +85,7 @@ class TTTGame : AbstractTTTGame() {
             }
         }
 
-        handles.gameState.set(gs.copy(
+        handles.gameState.store(gs.copy(
           board = boardList.joinToString(","),
           currentPlayer = (gs.currentPlayer + 1) % 2,
           gameOver = gameOver,
@@ -96,15 +96,15 @@ class TTTGame : AbstractTTTGame() {
 
     override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) {
         if (handles.gameState.fetch()?.board == null) {
-            handles.gameState.set(defaultGame)
+            handles.gameState.store(defaultGame)
         }
         if (handle.name == "playerOne" && handles.playerOne.fetch()?.id != 0.0) {
             val p1 = handles.playerOne.fetch() ?: TTTGame_PlayerOne()
-            handles.playerOne.set(p1.copy(id = 0.0))
+            handles.playerOne.store(p1.copy(id = 0.0))
         }
         if (handle.name == "playerTwo" && handles.playerTwo.fetch()?.id != 1.0) {
             val p2 = handles.playerTwo.fetch() ?: TTTGame_PlayerTwo()
-            handles.playerTwo.set(p2.copy(id = 1.0))
+            handles.playerTwo.store(p2.copy(id = 1.0))
         }
     }
 
