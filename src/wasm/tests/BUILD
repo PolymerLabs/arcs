@@ -3,7 +3,6 @@ load(
     "arcs_manifest_json",
     "arcs_ts_test",
 )
-load("//third_party/java/arcs/build_defs/internal:plan.bzl", "recipe2plan")
 
 exports_files(["manifest.arcs"])
 
@@ -27,9 +26,3 @@ arcs_manifest_json(
     srcs = ["manifest.arcs"],
 )
 
-# TODO(alxr): Remove, or find a better test location.
-recipe2plan(
-    name = "test_rule",
-    srcs = [":manifest_data"],
-    package = "arcs.tools.test",
-)
