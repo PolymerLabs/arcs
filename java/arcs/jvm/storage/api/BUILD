@@ -18,6 +18,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/data:rawentity",
     ],
     deps = [
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/storage/api:api-common",
         "//java/arcs/core/storage/handle",
     ],
