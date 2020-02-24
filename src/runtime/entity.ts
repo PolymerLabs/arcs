@@ -125,11 +125,9 @@ class EntityInternals {
     }
     this.storageKey = storageKey;
     this.id = id;
-    if (Flags.useNewStorageStack) {
-      assert(ttl, `ttl cannot be null`);
-      if (!ttl.isInfinite) {
-        this.expirationTimestamp = ttl.calculateExpiration().getTime().toString();
-      }
+    assert(ttl, `ttl cannot be null`);
+    if (!ttl.isInfinite) {
+      this.expirationTimestamp = ttl.calculateExpiration().getTime().toString();
     }
   }
 

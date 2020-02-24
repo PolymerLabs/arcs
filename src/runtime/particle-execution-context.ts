@@ -17,8 +17,7 @@ import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
-import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
-import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
+import {StorageProxy} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
 import {PropagatedException} from './arc-exceptions.js';
@@ -28,14 +27,13 @@ import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
 import {UserException} from './arc-exceptions.js';
 import {Store} from './store.js';
-import {Flags} from './flags.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './recipe/ttl.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
-type UnifiedStorageProxy = Store|StorageProxyNG<CRDTTypeRecord>;
+type UnifiedStorageProxy = Store|StorageProxy<CRDTTypeRecord>;
 
 export type InnerArcHandle = {
   createHandle(type: Type, name: string, hostParticle?: Particle): Promise<Handle>;
@@ -51,8 +49,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   private readonly pecId: Id;
   private readonly loader: Loader;
   private readonly pendingLoads = <Promise<void>[]>[];
-  private readonly scheduler: StorageProxyScheduler = new StorageProxyScheduler();
-  private readonly keyedProxies: Dictionary<StorageProxy | Promise<StorageProxy>> = {};
+  private readonly keyedProxies: Dictionary<StorageProxy<CRDTTypeRecord> | Promise<StorageProxy<CRDTTypeRecord>>> = {};
   private readonly wasmContainers: Dictionary<WasmContainer> = {};
 
   readonly idGenerator: IdGenerator;
@@ -63,40 +60,26 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     this.apiPort = new class extends PECInnerPort {
 
       onDefineHandle(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl) {
-        if (Flags.useNewStorageStack) {
-          return new StorageProxyNG(identifier, pec, type, storageKey, ttl);
-        }
-        return StorageProxy.newProxy(identifier, type, this, pec, pec.scheduler, name);
+        return new StorageProxy(identifier, pec, type, storageKey, ttl);
       }
 
       onGetBackingStoreCallback(
-          callback: (proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>, key: string) => void,
+          callback: (proxy: StorageProxy<CRDTTypeRecord>, key: string) => void,
           type: Type,
           name: string,
           id: string,
           storageKey: string) {
-        let proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>;
-        if (Flags.useNewStorageStack) {
-          proxy = new StorageProxyNG(id, pec, type, storageKey);
-        } else {
-          proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
-          proxy.storageKey = storageKey;
-        }
+        const proxy = new StorageProxy(id, pec, type, storageKey);
         return [proxy, () => callback(proxy, storageKey)];
       }
 
       onCreateHandleCallback(
-          callback: (proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>) => void,
+          callback: (proxy: StorageProxy<CRDTTypeRecord>) => void,
           type: Type,
           name: string,
           id: string) {
-        let proxy: StorageProxy|StorageProxyNG<CRDTTypeRecord>;
-        if (Flags.useNewStorageStack) {
-          // TODO(shanestephens): plumb storageKey through to internally created handles too.
-          proxy = new StorageProxyNG(id, pec, type, null);
-        } else {
-          proxy = StorageProxy.newProxy(id, type, this, pec, pec.scheduler, name);
-        }
+        // TODO(shanestephens): plumb storageKey through to internally created handles too.
+        const proxy = new StorageProxy(id, pec, type, null);
         return [proxy, () => callback(proxy)];
       }
 
@@ -118,7 +101,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return pec.instantiateParticle(id, spec, proxies, reinstantiate);
       }
 
-      async onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy>) {
+      async onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>) {
         assert(false, `Not implemented`);
       }
 
@@ -172,7 +155,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     return this.idGenerator.newChildId(this.pecId).toString();
   }
 
-  getStorageEndpoint(storageProxy: StorageProxyNG<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
+  getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
     const pec = this;
     let idPromise: Promise<number> = null;
     let id: number = null;
@@ -220,9 +203,6 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           pec.apiPort.ArcCreateHandle(proxy => {
             const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, name, particleId: Math.random() + '', particle: hostParticle});
             resolve(handle);
-            if (hostParticle && !Flags.useNewStorageStack) {
-              proxy.register(hostParticle, handle);
-            }
           }, arcId, type, name));
       },
       async mapHandle(handle: Handle) {
@@ -254,17 +234,13 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   /**
    * Establishes a storage proxy that's connected to the provided storage key.
    */
-  async getStorageProxy(storageKey: string, type: Type): Promise<StorageProxy> {
-    if (Flags.useNewStorageStack) {
-      type = new CollectionType(type);
-    }
+  async getStorageProxy(storageKey: string, type: Type): Promise<StorageProxy<CRDTTypeRecord>> {
+    type = new CollectionType(type);
     if (!this.keyedProxies[storageKey]) {
       this.keyedProxies[storageKey] = new Promise((resolve, reject) => {
         this.apiPort.GetBackingStore((proxy, newStorageKey) => {
-          if (Flags.useNewStorageStack) {
-            if (storageKey !== newStorageKey) {
-              throw new Error('returned storage key should always match provided storage key for new storage stack');
-            }
+          if (storageKey !== newStorageKey) {
+            throw new Error('returned storage key should always match provided storage key for new storage stack');
           }
           this.keyedProxies[newStorageKey] = proxy;
           resolve(proxy);
@@ -304,17 +280,16 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     const particle: Particle = await this.createParticleFromSpec(id, spec);
 
     const handleMap = new Map();
-    const registerList: {proxy: UnifiedStorageProxy, particle: Particle, handle: Handle}[] = [];
 
     proxies.forEach((proxy, name) => {
-      this.createHandle(particle, spec, id, name, proxy, handleMap, registerList);
+      this.createHandle(particle, spec, id, name, proxy, handleMap);
     });
 
     return [particle, async () => {
       if (!reinstantiate) {
         particle.onCreate();
       }
-      await this.assignHandle(particle, spec, id, handleMap, registerList, p);
+      await this.assignHandle(particle, spec, id, handleMap, p);
       resolve();
     }];
   }
@@ -344,27 +319,24 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       const particle: Particle = await this.createParticleFromSpec(id, oldParticle.spec);
 
       const handleMap = new Map();
-      const registerList: {proxy: UnifiedStorageProxy, particle: Particle, handle: Handle}[] = [];
 
-      const storageList: StorageProxyNG<CRDTTypeRecord>[] = [];
+      const storageList: StorageProxy<CRDTTypeRecord>[] = [];
 
-      if (Flags.useNewStorageStack) {
-        for (const oldHandle of oldParticle.handles.values()) {
-          const storage = oldHandle.storage as StorageProxyNG<CRDTTypeRecord>;
-          storageList.push(storage);
-          await storage.pause();
-        }
+      for (const oldHandle of oldParticle.handles.values()) {
+        const storage = oldHandle.storage as StorageProxy<CRDTTypeRecord>;
+        storageList.push(storage);
+        await storage.pause();
       }
 
       // Create new handles and disable the handles of the old particles
       oldParticle.handles.forEach((oldHandle) => {
-        this.createHandle(particle, oldParticle.spec, id, oldHandle.name, oldHandle.storage, handleMap, registerList);
+        this.createHandle(particle, oldParticle.spec, id, oldHandle.name, oldHandle.storage, handleMap);
         oldHandle.disable(oldParticle);
       });
 
       result.push([particle, async () => {
         // Set the new handles to the new particle
-        await this.assignHandle(particle, oldParticle.spec, id, handleMap, registerList, p);
+        await this.assignHandle(particle, oldParticle.spec, id, handleMap, p);
         storageList.forEach(storage => storage.unpause());
         resolve();
       }]);
@@ -373,7 +345,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   }
 
   private createHandle(particle: Particle, spec: ParticleSpec, id: string, name: string, proxy: UnifiedStorageProxy,
-                       handleMap, registerList: {proxy: UnifiedStorageProxy, particle: Particle, handle: Handle}[]) {
+                       handleMap) {
     const connSpec = spec.handleConnectionMap.get(name);
     const handle = unifiedHandleFor({
       proxy,
@@ -385,29 +357,15 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       canWrite: connSpec.isOutput,
     });
     handleMap.set(name, handle);
-
-    // Defer registration of handles with proxies until after particles have a chance to
-    // configure them in setHandles.
-    registerList.push({proxy, particle, handle});
   }
 
-  private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap,
-                             registerList: {proxy: UnifiedStorageProxy, particle: Particle, handle: Handle}[], p) {
+  private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap, p) {
     await particle.callSetHandles(handleMap, err => {
       if (typeof err === 'string') {
         err = new Error(err); // Convert to a real error.
       }
       const exc = new UserException(err, 'setHandles', id, spec.name);
       this.apiPort.ReportExceptionInHost(exc);
-    });
-    registerList.forEach(({proxy, particle, handle}) => {
-      if (proxy instanceof StorageProxy) {
-        proxy.register(particle, handle);
-      } else if (proxy instanceof StorageProxyNG) {
-        // NG Handles appear to register themselves on construction
-      } else {
-        throw new Error('Expecting a StorageProxy');
-      }
     });
     const idx = this.pendingLoads.indexOf(p);
     this.pendingLoads.splice(idx, 1);
@@ -464,7 +422,8 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   }
 
   get busy() {
-    if (this.pendingLoads.length > 0 || this.scheduler.busy) {
+    // TODO(shans): check each proxy's scheduler for busy signal too.
+    if (this.pendingLoads.length > 0) {
       return true;
     }
     if ([...this.particles.values()].filter(particle => particle.busy).length > 0) {
@@ -478,6 +437,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       return Promise.resolve();
     }
     const busyParticlePromises = [...this.particles.values()].filter(particle => particle.busy).map(async particle => particle.idle);
-    return Promise.all([this.scheduler.idle, ...this.pendingLoads, ...busyParticlePromises]).then(() => this.idle);
+    // TODO(shans): check each proxy's scheduler for idleness too.
+    return Promise.all([...this.pendingLoads, ...busyParticlePromises]).then(() => this.idle);
   }
 }

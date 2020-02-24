@@ -12,11 +12,11 @@ import {assert} from '../platform/assert-web.js';
 import {HandleOld, Collection, Storable, unifiedHandleFor} from './handle.js';
 import {ReferenceType, EntityType} from './type.js';
 import {Entity, SerializedEntity} from './entity.js';
-import {StorageProxy} from './storage-proxy.js';
+import {StorageProxy} from './storageNG/storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {CollectionHandle, Handle} from './storageNG/handle.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {Flags} from './flags.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
 
 enum ReferenceMode {Unstored, Stored}
 
@@ -32,7 +32,7 @@ export class Reference implements Storable {
   protected readonly id: string;
   private entityStorageKey: string;
   private readonly context: ChannelConstructor;
-  private storageProxy: StorageProxy = null;
+  private storageProxy: StorageProxy<CRDTTypeRecord> = null;
   // tslint:disable-next-line: no-any
   protected handle: Collection|CollectionHandle<any>|null = null;
 
@@ -98,28 +98,14 @@ export abstract class ClientReference extends Reference {
     super(
       {
         id: Entity.id(entity),
-        entityStorageKey: Flags.useNewStorageStack ? Entity.storageKey(entity) : null
+        entityStorageKey: Entity.storageKey(entity)
       },
       new ReferenceType(Entity.entityClass(entity).type),
       context
     );
 
     this.entity = entity;
-    if (Flags.useNewStorageStack) {
-      this.stored = Promise.resolve();
-      this.mode = ReferenceMode.Stored;
-    } else {
-      this.stored = this.storeReference(entity);
-    }
-  }
-
-  private async storeReference(entity): Promise<void> {
-    await this.ensureStorageProxy();
-    if (this.handle instanceof CollectionHandle) {
-      await this.handle.add(entity);
-    } else {
-      await this.handle.store(entity);
-    }
+    this.stored = Promise.resolve();
     this.mode = ReferenceMode.Stored;
   }
 

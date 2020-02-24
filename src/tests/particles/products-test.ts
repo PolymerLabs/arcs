@@ -11,7 +11,6 @@
 import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Arc} from '../../runtime/arc.js';
-import {Flags} from '../../runtime/flags.js';
 import {IdGenerator} from '../../runtime/id.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
@@ -24,17 +23,11 @@ import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-me
 
 describe('products test', () => {
 
-  beforeEach(() => {
-    manifestFilename = Flags.useNewStorageStack ?
-      './src/tests/particles/artifacts/ProductsTestNg.arcs' :
-      './src/tests/particles/artifacts/products-test.recipes';
-  });
-
   afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
-  let manifestFilename: string;
+  const manifestFilename = './src/tests/particles/artifacts/ProductsTestNg.arcs';
 
   const verifyFilteredBook = async (arc: Arc) => {
     const booksHandle = arc.activeRecipe.handleConnections.find(hc => hc.isOutput).handle;

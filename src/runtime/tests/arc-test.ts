@@ -14,7 +14,7 @@ import {Arc} from '../arc.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {CallbackTracker} from '../testing/callback-tracker.js';
 import {SlotComposer} from '../slot-composer.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
@@ -36,7 +36,6 @@ import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.j
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 // database providers are optional, these tests use these provider(s)
 import '../storage/firebase/firebase-provider.js';
-import '../storage/pouchdb/pouch-db-provider.js';
 
 async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
   const loader = new Loader();

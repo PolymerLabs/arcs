@@ -18,9 +18,7 @@ import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memor
 import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
-import {Flags} from '../runtime/flags.js';
 import {DriverFactory} from '../runtime/storageNG/drivers/driver-factory.js';
-import {VolatileCollection} from '../runtime/storage/volatile-storage.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
@@ -97,24 +95,16 @@ describe('Multiplexer', () => {
     await arc.idle;
 
     // Add and render one more post
-    if (Flags.useNewStorageStack) {
-      // new storage doesn't swallow duplicate writes to Singletons, so the multiplexer's behavior of always
-      // updating all generated handles when the collection changes is reflected in the rendering pattern.
-      observer
-        .newExpectations()
-        .expectRenderSlot('List', 'root')
-        .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
-        .expectRenderSlot('ShowOne', 'item', {times: 2})
-        .expectRenderSlot('ShowTwo', 'item')
-        ;
 
-    } else {
-      observer
-        .newExpectations()
-        .expectRenderSlot('List', 'root')
-        .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
-        ;
-    }
+    // new storage doesn't swallow duplicate writes to Singletons, so the multiplexer's behavior of always
+    // updating all generated handles when the collection changes is reflected in the rendering pattern.
+    observer
+      .newExpectations()
+      .expectRenderSlot('List', 'root')
+      .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
+      .expectRenderSlot('ShowOne', 'item', {times: 2})
+      .expectRenderSlot('ShowTwo', 'item')
+      ;
 
     const postsStore = await collectionHandleForTest(arc, arc.findStoreById(arc.activeRecipe.handles[0].id));
     const entityClass = new postsStore.entityClass({

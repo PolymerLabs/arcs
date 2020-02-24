@@ -16,13 +16,12 @@ import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType, SingletonType} from '../type.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ArcId} from '../id.js';
-import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {singletonHandleForTest} from '../testing/handle-for-test.js';
-import {Flags} from '../flags.js';
 import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
 import {StorageProxy} from '../storageNG/storage-proxy.js';
 import {handleNGFor, SingletonHandle} from '../storageNG/handle.js';
 import {Entity} from '../entity.js';
+import {singletonHandle, SingletonInterfaceStore, SingletonEntityStore} from '../storageNG/storage-ng.js';
 
 describe('particle interface loading', () => {
 
@@ -88,18 +87,13 @@ describe('particle interface loading', () => {
       ],
     });
 
-    const ifaceStore = await arc.createStore(ifaceType) as SingletonStorageProvider;
+    const ifaceStore = await arc.createStore(ifaceType) as SingletonInterfaceStore;
     const outStore = await arc.createStore(barType);
-    const inStore = await arc.createStore(fooType) as SingletonStorageProvider;
-    if (Flags.useNewStorageStack) {
-      const ifaceHandle = await singletonHandleForTest(arc, ifaceStore);
-      await ifaceHandle.set(manifest.particles[0]);
-      const inHandle = await singletonHandleForTest(arc, inStore);
-      await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
-    } else {
-      await ifaceStore.set(manifest.particles[0].toLiteral());
-      await inStore.set({id: 'id', rawData: {value: 'a foo'}});
-    }
+    const inStore = await arc.createStore(fooType) as SingletonEntityStore;
+    const ifaceHandle = singletonHandle(await ifaceStore.activate(), arc);
+    await ifaceHandle.set(manifest.particles[0]);
+    const inHandle = singletonHandle(await inStore.activate(), arc);
+    await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
 
     const recipe = new Recipe();
     const particle = recipe.newParticle('outerParticle');

@@ -13,7 +13,7 @@ import {Loader} from '../../platform/loader.js';
 import {Arc} from '../arc.js';
 import {SlotComposer} from '../slot-composer.js';
 import {Description} from '../description.js';
-import {IdGenerator} from '../id.js';
+import {IdGenerator, Id} from '../id.js';
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 import {EntityType, CollectionType} from '../type.js';
@@ -22,11 +22,11 @@ import {Runtime} from '../runtime.js';
 import {Speculator} from '../../planning/speculator.js';
 import {BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
-import {Flags} from '../flags.js';
 import {StorageProxy} from '../storageNG/storage-proxy.js';
 import {unifiedHandleFor} from '../handle.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
+import {collectionHandle} from '../storageNG/storage-ng.js';
 
 class ResultInspector {
   private readonly _arc: Arc;
@@ -52,18 +52,10 @@ class ResultInspector {
    */
   async verify(...expectations) {
     await this._arc.idle;
-    let handle;
-    if (Flags.useNewStorageStack) {
-      const proxy = new StorageProxy('id', await this._store.activate(), this._store.type, this._store.storageKey.toString());
-      handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'pid'});
-    } else {
-      handle = this._store;
-    }
-    let received = await handle.toList();
+    const handle = collectionHandle(await this._store.activate(), {idGenerator: null, generateID: () => Id.fromString('id')});
+    const received = await handle.toList();
     const misses = [];
-    if (!Flags.useNewStorageStack) {
-      received = received.map(r => r.rawData);
-    }
+
     for (const item of received.map(r => r[this._field])) {
       const i = expectations.indexOf(item);
       if (i >= 0) {
@@ -72,11 +64,8 @@ class ResultInspector {
         misses.push(item);
       }
     }
-    if (Flags.useNewStorageStack) {
-      await handle.clear();
-    } else {
-      this._store.clearItemsForTesting();
-    }
+    await handle.clear();
+
     const errors: string[] = [];
     if (expectations.length) {
       errors.push(`Expected, not received: ${expectations.join(', ')}`);
@@ -164,47 +153,24 @@ describe('particle-api', () => {
 
     // Drop event 2; desync is triggered by v3.
     await fooHandle.set(new fooHandle.entityClass({value: 'v1'}));
-    let fireFn;
     const activeStore = await fooStore.activate();
-    if (Flags.useNewStorageStack) {
-      fireFn = activeStore['deliverCallbacks'];
-      activeStore['deliverCallbacks'] = () => {};
-    } else {
-      fireFn = fooStore['_fire'];
-      fooStore['_fire'] = async () => {};
-    }
+    const fireFn = activeStore['deliverCallbacks'];
+    activeStore['deliverCallbacks'] = () => {};
     await fooHandle.set(new fooHandle.entityClass({value: 'v2'}));
-    if (Flags.useNewStorageStack) {
-      activeStore['deliverCallbacks'] = (...args) => fireFn.bind(activeStore)(...args);
-    } else {
-      fooStore['_fire'] = fireFn;
-    }
+    activeStore['deliverCallbacks'] = (...args) => fireFn.bind(activeStore)(...args);
+
     await fooHandle.set(new fooHandle.entityClass({value: 'v3'}));
-    if (Flags.useNewStorageStack) {
-      await inspector.verify('update:{"originator":false,"data":{"value":"v1"}}',
-                            'desync',
-                            'sync:{"value":"v3"}');
-    } else {
-      await inspector.verify('update:{"data":{"value":"v1"}}',
-                            'desync',
-                            'sync:{"value":"v3"}');
-    }
+    await inspector.verify('update:{"originator":false,"data":{"value":"v1"}}',
+                          'desync',
+                          'sync:{"value":"v3"}');
 
     // Check it includes the previous value (v3) in updates.
     await fooHandle.set(new fooHandle.entityClass({value: 'v4'}));
-    if (Flags.useNewStorageStack) {
-      await inspector.verify('update:{"originator":false,"data":{"value":"v4"}}');
-    } else {
-      await inspector.verify('update:{"data":{"value":"v4"}}');
-    }
+    await inspector.verify('update:{"originator":false,"data":{"value":"v4"}}');
 
     // Check clearing the store.
     await fooHandle.clear();
-    if (Flags.useNewStorageStack) {
-      await inspector.verify('update:{"originator":false}');
-    } else {
-      await inspector.verify('update:{"data":null}');
-    }
+    await inspector.verify('update:{"originator":false}');
   });
 
   it('can sync/update and store/remove with collections', async () => {
@@ -389,8 +355,6 @@ describe('particle-api', () => {
   // It is likely that this usage was depending on behavior that may not be intended.
   it.skip('can load a recipe referencing a manifest store', async () => {
     RamDiskStorageDriverProvider.register(new TestVolatileMemoryProvider());
-    const nobType = Flags.useNewStorageStack ? '![NobIdStore {nobId: Text}]' : 'NobIdStore {nobId: Text}';
-    const nobData = Flags.useNewStorageStack ? '{"root": {"values": {"nid": {"value": {"id": "nid", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}}, "version": {"u": 1}}, "locations": {}}' : '[{"nobId": "12345"}]';
 
     const arc = await loadFilesIntoNewArc({
       manifest: `
@@ -420,10 +384,10 @@ describe('particle-api', () => {
                   schema Result
                     value: Text
 
-                  store NobId of ${nobType} in NobIdJson
+                  store NobId of ![NobIdStore {nobId: Text}] in NobIdJson
                    resource NobIdJson
                      start
-                     ${nobData}
+                     {"root": {"values": {"nid": {"value": {"id": "nid", "rawData": {"nobId": "12345"}}, "version": {"u": 1}}}, "version": {"u": 1}}, "locations": {}}
 
                    particle PassThrough in 'pass-through.js'
                      nobId: reads NobIdStore {nobId: Text}
@@ -690,7 +654,6 @@ describe('particle-api', () => {
   });
 
   it('multiplexing', async () => {
-    const addFunc = Flags.useNewStorageStack ? 'add' : 'store';
     const arc = await loadFilesIntoNewArc({
       manifest: `
         schema Result
@@ -739,15 +702,15 @@ describe('particle-api', () => {
                         b: writes handle2
                   \`);
                   inHandle.set(input);
-                  this.resHandle.${addFunc}(new this.resHandle.entityClass({value: 'done'}));
+                  this.resHandle.add(new this.resHandle.entityClass({value: 'done'}));
                 } catch (e) {
-                  this.resHandle.${addFunc}(new this.resHandle.entityClass({value: e}));
+                  this.resHandle.add(new this.resHandle.entityClass({value: e}));
                 }
               }
             }
             async onHandleUpdate(handle, update) {
               if (handle.name === 'the-out') {
-                this.resHandle.${addFunc}(update.data);
+                this.resHandle.add(update.data);
               }
             }
           }
@@ -800,122 +763,6 @@ describe('particle-api', () => {
     assert.strictEqual(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
     newHandle = await singletonHandleForTest(arc, newStore);
     assert.deepStrictEqual(await newHandle.fetch(), {value: 'WORLD'});
-  });
-
-  it('big collection store and remove', async function() {
-    // Big collection is not supported in new storage stack.
-    if (Flags.useNewStorageStack) {
-      this.skip();
-    }
-    const arc = await loadFilesIntoNewArc({
-      manifest: `
-        schema Data
-          value: Text
-
-        particle P in 'a.js'
-          big: reads writes BigCollection<Data>
-
-        recipe
-          handle0: use 'test:0'
-          P
-            big: handle0
-      `,
-      'a.js': `
-        'use strict';
-
-        defineParticle(({Particle}) => {
-          return class P extends Particle {
-            async setHandles(handles) {
-              let collection = await handles.get('big');
-              await collection.store(new collection.entityClass({value: 'finn'}));
-              let toRemove = new collection.entityClass({value: 'barry'});
-              await collection.store(toRemove);
-              await collection.store(new collection.entityClass({value: 'jake'}));
-              await collection.remove(toRemove);
-              await collection.remove(new collection.entityClass({value: 'no one'}));
-            }
-          }
-        });
-      `
-    });
-
-    const dataClass = Entity.createEntityClass(arc.context.findSchemaByName('Data'), null);
-    const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), 'big', 'test:0') as BigCollectionStorageProvider;
-    const recipe = arc.context.recipes[0];
-    recipe.handles[0].mapToStorage(bigStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
-    await arc.idle;
-
-    const cursorId = await bigStore.stream(5);
-    const data = await bigStore.cursorNext(cursorId);
-    assert.deepStrictEqual(data.value.map(item => item.rawData.value), ['finn', 'jake']);
-  });
-
-  it('big collection streamed reads', async function() {
-    // Big collection is not supported in new storage stack.
-    if (Flags.useNewStorageStack) {
-      this.skip();
-    }
-    const arc = await loadFilesIntoNewArc({
-      manifest: `
-        schema Data
-          value: Text
-
-        particle P in 'a.js'
-          big: reads BigCollection<Data>
-          res: writes [Data]
-
-        recipe
-          handle0: use 'test:0'
-          handle1: use 'test:1'
-          P
-            big: reads handle0
-            res: writes handle1
-      `,
-      'a.js': `
-        'use strict';
-
-        defineParticle(({Particle}) => {
-          return class P extends Particle {
-            async setHandles(handles) {
-              this.resHandle = handles.get('res');
-              let cursor = await handles.get('big').stream({pageSize: 3});
-              for (let i = 0; i < 3; i++) {
-                let {value, done} = await cursor.next();
-                if (done) {
-                  this.addResult('done');
-                  return;
-                }
-                this.addResult(value.map(item => item.value).join(','));
-              }
-              this.addResult('error - cursor did not terminate correctly');
-            }
-
-            async addResult(value) {
-              await this.resHandle.store(new this.resHandle.entityClass({value}));
-            }
-          }
-        });
-      `
-    });
-
-    const dataClass = Entity.createEntityClass(arc.context.findSchemaByName('Data'), null);
-    const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), 'big', 'test:0') as BigCollectionStorageProvider;
-    const promises: Promise<void>[] = [];
-    for (let i = 1; i <= 5; i++) {
-      promises.push(bigStore.store({id: 'i' + i, rawData: {value: 'v' + i}}, ['k' + i]));
-    }
-    await Promise.all(promises);
-
-    const resStore = await arc.createStore(dataClass.type.collectionOf(), 'res', 'test:1');
-    const inspector = new ResultInspector(arc, resStore, 'value');
-    const recipe = arc.context.recipes[0];
-    recipe.handles[0].mapToStorage(bigStore);
-    recipe.handles[1].mapToStorage(resStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
-    await inspector.verify('v1,v2,v3', 'v4,v5', 'done');
   });
 
   it('particles can indicate that they are busy in setHandles', async () => {

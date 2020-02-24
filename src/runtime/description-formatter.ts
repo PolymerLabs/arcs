@@ -10,14 +10,13 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {ParticleSpec, isRoot} from './particle-spec.js';
+import {isRoot} from './particle-spec.js';
 import {HandleConnection} from './recipe/handle-connection.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {BigCollectionType, CollectionType, InterfaceType} from './type.js';
 import {ModelValue} from './storage/crdt-collection-model.js';
 import {Dictionary} from './hot.js';
-import {Flags} from './flags.js';
 
 export type ParticleDescription = {
   _particle: Particle,
@@ -275,7 +274,7 @@ export class DescriptionFormatter {
             return undefined;
           }
           assert(token.value.interfaceValue, `Missing interface type value for '${token._handleConn.type}'.`);
-          const particleSpec = Flags.useNewStorageStack ? token.value.interfaceValue : ParticleSpec.fromLiteral(token.value.interfaceValue);
+          const particleSpec = token.value.interfaceValue;
           // TODO: call this.patternToSuggestion(...) to resolved expressions in the pattern template.
           return particleSpec.pattern;
         }
@@ -376,11 +375,11 @@ export class DescriptionFormatter {
   }
 
   _formatCollection(handleName, values) {
-    if ((Flags.useNewStorageStack ? values[0] : values[0].rawData).name) {
+    if (values[0].name) {
       if (values.length > 2) {
-        return `${(Flags.useNewStorageStack ? values[0] : values[0].rawData).name} plus ${values.length-1} other items`;
+        return `${values[0].name} plus ${values.length-1} other items`;
       }
-      return values.map(v => (Flags.useNewStorageStack ? v : v.rawData).name).join(', ');
+      return values.map(v => v.name).join(', ');
     } else {
       return `${values.length} items`;
     }
