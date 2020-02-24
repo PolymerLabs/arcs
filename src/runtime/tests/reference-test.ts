@@ -718,4 +718,96 @@ describe('references when new storage enabled', () => {
     assert.equal(reference.id, Entity.id(entity));
     assert.equal(reference.entityStorageKey, storageKey);
   });
+
+  it('can construct collections of references in schemas of entities stored in reference mode store', async () => {
+    const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
+    const loader = new Loader(null, {
+      './manifest': `
+        schema Result
+          value: Text
+
+        particle ConstructReferenceCollection in 'constructReferenceCollection.js'
+          rawIn: reads [Result]
+          referenceOut: writes Foo {result: [&Result]}
+
+        recipe
+          handle0: use 'input:1'
+          handle1: use 'output:1'
+          ConstructReferenceCollection
+            rawIn: reads handle0
+            referenceOut: writes handle1
+        `,
+      './constructReferenceCollection.js': `
+        defineParticle(({Particle, Reference}) => {
+          return class Dereferencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('referenceOut');
+              this.results = [];
+              this.generated = false;
+            }
+
+            async onHandleSync(handle, model) {
+              model.forEach(result => this.results.push(result));
+              this.maybeGenerateOutput();
+            }
+
+            async onHandleUpdate(handle, update) {
+              if (handle.name == 'rawIn') {
+                if (update.added.length) {
+                  update.added.forEach(result => this.results.push(result));
+                } else {
+                  this.results.push(update.added);
+                }
+                this.maybeGenerateOutput();
+              }
+            }
+
+            async maybeGenerateOutput() {
+              if (this.results.length == 2 && !this.generated) {
+                this.generated = true;
+                const data = {result: new Set()};
+                for (const result of this.results) {
+                  const ref = new Reference(result);
+                  await ref.stored;
+                  data.result.add(ref);
+                }
+                this.results = [];
+                this.output.set(new this.output.entityClass(data));
+              }
+            }
+          }
+        });
+      `
+    });
+    const memoryProvider = new TestVolatileMemoryProvider();
+
+    const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test', storageKeyPrefix);
+    const recipe = manifest.recipes[0];
+    const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
+    const referenceOut = manifest.particles[0].handleConnectionMap.get('referenceOut');
+
+    const inputStore = await arc.createStore(new CollectionType(result.type), undefined, 'input:1');
+    const refStore = await arc.createStore(referenceOut.type, undefined, 'output:1', undefined, new VolatileStorageKey(arc.id, 'refStore'));
+
+    recipe.handles[0].mapToStorage(inputStore);
+    recipe.handles[1].mapToStorage(refStore);
+
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+
+    const handle = await collectionHandleForTest(arc, inputStore);
+    assert.strictEqual((handle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
+    await handle.add(Entity.identify(new handle.entityClass({value: 'what a result!'}), 'id:1', null));
+    await handle.add(Entity.identify(new handle.entityClass({value: 'what another result!'}), 'id:2', null));
+
+    await arc.idle;
+    const outputStore = await singletonHandleForTest(arc, refStore);
+    assert.strictEqual(outputStore.type.getContainedType().getEntitySchema().name, 'Foo');
+    const outputRefs = await outputStore.fetch();
+    const ids = [...outputRefs.result].map(ref => ref.id);
+    assert.sameMembers(ids, ['id:1', 'id:2']);
+  });
 });
