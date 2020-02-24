@@ -13,7 +13,6 @@ import {buildFlowGraph, TestEdge, TestNode} from '../testing/flow-graph-testing.
 import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {FlowSet, Flow, FlowModifier, TagOperation, FlowModifierSet} from '../graph-internals.js';
 import {FlowGraph} from '../flow-graph.js';
-import {Flags} from '../../../runtime/flags.js';
 
 /** Checks that the given ValidationResult failed with the expected failure messages. */
 function assertGraphFailures(graph: FlowGraph, expectedFailures: string[]) {
@@ -394,12 +393,8 @@ describe('Solver', () => {
   });
 });
 
-function entityString() {
-  if (Flags.useNewStorageStack) {
-    return '{"root": {"values": {"ida": {"value": {"id": "ida", "text": "asdf"}, "version": {"u": 1}}}, "version":{"u": 1}}, "locations": {}}';
-  }
-  return '[{"text": "asdf"}]';
-}
+const entityString
+  = '{"root": {"values": {"ida": {"value": {"id": "ida", "text": "asdf"}, "version": {"u": 1}}}, "version":{"u": 1}}, "locations": {}}';
 
 describe('FlowGraph validation', () => {
   it('succeeds when there are no checks', async () => {
@@ -906,7 +901,7 @@ describe('FlowGraph validation', () => {
         text: Text
       resource MyResource
         start
-        ${entityString()}
+        ${entityString}
       store MyStore of MyEntity in MyResource
         claim is trusted
       particle P
@@ -1163,7 +1158,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          ${entityString()}
+          ${entityString}
         store MyStore of MyEntity in MyResource
         particle P
           input: reads MyEntity
@@ -1182,7 +1177,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          ${entityString()}
+          ${entityString}
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
           input: reads MyEntity
@@ -1201,7 +1196,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          ${entityString()}
+          ${entityString}
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
           input: reads MyEntity
@@ -1221,7 +1216,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          ${entityString()}
+          ${entityString}
         store MyStore of MyEntity 'my-store-id' in MyResource
         particle P
           input: reads MyEntity
@@ -1262,7 +1257,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          ${entityString()}
+          ${entityString}
         store MyStore of MyEntity 'my-store-id' in MyResource
         store SomeOtherStore of MyEntity in MyResource
         particle P
@@ -1281,7 +1276,7 @@ describe('FlowGraph validation', () => {
           text: Text
         resource MyResource
           start
-          ${entityString()}
+          ${entityString}
         store MyStore of MyEntity in MyResource
         store SomeOtherStore of MyEntity in MyResource
         particle P

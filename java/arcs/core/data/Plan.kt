@@ -36,8 +36,7 @@ open class Plan(
 
     /** Represents a use of a [Handle] by a [Particle]. */
     data class HandleConnection(
-        var storageKey: StorageKey?,
-            // TODO(shans): type should be a Type, not a Schema
+        var storageKey: StorageKey,
         val type: Type,
         val ttl: Ttl? = null
     )

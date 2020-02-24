@@ -144,29 +144,16 @@ export class Description {
   private static async _getPatternByNameFromDescriptionHandle(particle: Particle, arc: Arc): Promise<Dictionary<string>> {
     const descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
-      if (Flags.useNewStorageStack) {
-        const descStore = arc.findStoreById(descriptionConn.handle.id);
-        if (descStore) {
-          const descProxy = new StorageProxy('', await descStore.activate(), descStore.type, descStore.storageKey.toString());
-          const descHandle = handleNGFor('', descProxy, null, null, true, false) as CollectionHandle<{key: string, value: string}>;
+      const descStore = arc.findStoreById(descriptionConn.handle.id);
+      if (descStore) {
+        const descProxy = new StorageProxy('', await descStore.activate(), descStore.type, descStore.storageKey.toString());
+        const descHandle = handleNGFor('', descProxy, null, null, true, false) as CollectionHandle<{key: string, value: string}>;
 
-          const descByName: Dictionary<string> = {};
-          for (const d of await descHandle.toList()) {
-            descByName[d.key] = d.value;
-          }
-          return descByName;
+        const descByName: Dictionary<string> = {};
+        for (const d of await descHandle.toList()) {
+          descByName[d.key] = d.value;
         }
-      } else {
-        const descHandle = arc.findStoreById(descriptionConn.handle.id) as CollectionStorageProvider;
-
-        if (descHandle) {
-          // TODO(shans): fix this mess when there's a unified Collection class or interface.
-          const descByName: Dictionary<string> = {};
-          for (const d of await descHandle.toList()) {
-            descByName[d.rawData.key] = d.rawData.value;
-          }
-          return descByName;
-        }
+        return descByName;
       }
     }
     return {};
@@ -176,56 +163,27 @@ export class Description {
     if (!store) {
       return undefined;
     }
-    if (Flags.useNewStorageStack) {
-      const proxy = new StorageProxy('id', await store.activate(), store.type, store.storageKey.toString());
-      const handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'dummy'});
-      if (handle instanceof SingletonHandle) {
-        if (handle.type.getContainedType() instanceof EntityType) {
-          const entityValue = await handle.fetch();
-          if (entityValue) {
-            const schema = store.type.getEntitySchema();
-            const valueDescription = schema ? schema.description.value : undefined;
-            return {entityValue, valueDescription};
-          }
-        } else if (handle.type.getContainedType() instanceof InterfaceType) {
-          const interfaceValue = await handle.fetch();
-          if (interfaceValue) {
-            return {interfaceValue};
-          }
+
+    const proxy = new StorageProxy('id', await store.activate(), store.type, store.storageKey.toString());
+    const handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'dummy'});
+    if (handle instanceof SingletonHandle) {
+      if (handle.type.getContainedType() instanceof EntityType) {
+        const entityValue = await handle.fetch();
+        if (entityValue) {
+          const schema = store.type.getEntitySchema();
+          const valueDescription = schema ? schema.description.value : undefined;
+          return {entityValue, valueDescription};
         }
-      } else if (handle instanceof CollectionHandle) {
-        const values = await handle.toList();
-        if (values && values.length > 0) {
-          return {collectionValues: values};
+      } else if (handle.type.getContainedType() instanceof InterfaceType) {
+        const interfaceValue = await handle.fetch();
+        if (interfaceValue) {
+          return {interfaceValue};
         }
       }
-      return undefined;
-    }
-    if (store.type instanceof CollectionType) {
-      const collectionStore = store as CollectionStorageProvider;
-      const values = await collectionStore.toList();
+    } else if (handle instanceof CollectionHandle) {
+      const values = await handle.toList();
       if (values && values.length > 0) {
         return {collectionValues: values};
-      }
-    } else if (store.type instanceof BigCollectionType) {
-      const bigCollectionStore = store as BigCollectionStorageProvider;
-      const cursorId = await bigCollectionStore.stream(1);
-      const {value, done} = await bigCollectionStore.cursorNext(cursorId);
-      bigCollectionStore.cursorClose(cursorId);
-      if (!done && value[0].rawData.name) {
-        return {bigCollectionValues: value[0]};
-      }
-    } else if (store.type instanceof EntityType) {
-      const singletonStore = store as SingletonStorageProvider;
-      const value = await singletonStore.fetch();
-      if (value && value['rawData']) {
-        return {entityValue: value['rawData'], valueDescription: store.type.entitySchema.description.value};
-      }
-    } else if (store.type instanceof InterfaceType) {
-      const singletonStore = store as SingletonStorageProvider;
-      const interfaceValue = await singletonStore.fetch();
-      if (interfaceValue) {
-        return {interfaceValue};
       }
     }
     return undefined;

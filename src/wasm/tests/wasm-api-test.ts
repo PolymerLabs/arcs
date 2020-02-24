@@ -14,9 +14,8 @@ import {Runtime} from '../../runtime/runtime.js';
 import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
-import {VolatileCollection, VolatileSingleton, VolatileStorage} from '../../runtime/storage/volatile-storage.js';
-//import {assertThrowsAsync} from '../../testing/test-util.js';
-import {ReferenceType, SingletonType, Type} from '../../runtime/type.js';
+import {VolatileStorage} from '../../runtime/storage/volatile-storage.js';
+import {ReferenceType, SingletonType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {Flags} from '../../runtime/flags.js';
@@ -72,10 +71,9 @@ async function createBackingEntity(arc: Arc, referenceType: ReferenceType, id: s
   return [entityId, reference];
 }
 
-[false, true].forEach(useNewStorageStack => {
 
 Object.entries(testMap).forEach(([testLabel, testDir]) => {
-  describe(`wasm tests (${testLabel}) (useNewStorageStack = ${useNewStorageStack})`, function() {
+  describe(`wasm tests (${testLabel})`, function() {
     const isKotlin = testLabel === 'Kotlin';
     const isCpp = testLabel === 'C++';
 
@@ -87,7 +85,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       if (!global['testFlags'].bazel) {
         this.skip();
       } else {
-        Flags.useNewStorageStack = useNewStorageStack;
         loader = new TestLoader(testDir);
         VolatileStorage.setStorageCache(new RuntimeCacheService());
         manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
@@ -427,63 +424,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       ]);
     });
 
-    // TODO: delete once storageNG is in.
-    it('reference-typed handles - storageOG', async function() {
-      if (Flags.useNewStorageStack) {
-        this.skip();
-      }
-      // TODO(alxr): Remove when tests are ready
-      if (isKotlin) {
-        this.skip();
-      }
-      const {arc, stores} = await setup('ReferenceHandlesTest');
-      const sng = stores.get('sng') as VolatileSingleton;
-      const col = stores.get('col') as VolatileCollection;
-      const res = stores.get('res') as VolatileCollection;
-      assert.instanceOf(sng.type, ReferenceType);
-      assert.instanceOf(col.type.getContainedType(), ReferenceType);
-
-      // onHandleSync tests uninitialised reference handles.
-      assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        's::null',  // handle should just be null
-      ]);
-      await res.clear();
-
-      // onHandleUpdate tests populated references handles.
-      const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
-      const backingStore = await volatileEngine.baseStorageFor(sng.type, volatileEngine.baseStorageKey(sng.type));
-      await backingStore.store({id: 'id1', rawData: {num: 6, txt: 'ok'}}, ['key1']);
-      await backingStore.store({id: 'id2', rawData: {num: 7, txt: 'ko'}}, ['key2']);
-      const entityStorageKey = backingStore.storageKey;
-
-      // Singleton
-      await sng.set({id: 'id1', rawData: {id: 'id1', entityStorageKey}});
-      await arc.idle;
-      assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        's::before <id1> !{}',                      // before dereferencing: contained entity is empty
-        's::after <id1> {id1}, num: 6, txt: ok'     // after: entity is populated, ids should match
-      ]);
-      await res.clear();
-
-      // Collection
-      await col.store({id: 'id1', rawData: {id: 'id1', entityStorageKey}}, ['key1a']);
-      await arc.idle;
-      assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        'c::before <id1> !{}',                      // ref to same entity as singleton; still empty in this handle
-        'c::after <id1> {id1}, num: 6, txt: ok'
-      ]);
-      await res.clear();
-
-      await col.store({id: 'id2', rawData: {id: 'id2', entityStorageKey}}, ['key2a']);
-      await arc.idle;
-      assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        'c::before <id1> {id1}, num: 6, txt: ok',   // already populated by the previous deref
-        'c::after <id1> {id1}, num: 6, txt: ok',
-        'c::before <id2> !{}',
-        'c::after <id2> {id2}, num: 7, txt: ko'
-      ]);
-    });
-
     // TODO: nested references
     it('reference-typed schema fields - storageNG', async function() {
       if (!Flags.useNewStorageStack) {
@@ -529,52 +469,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       assert.strictEqual(data.num, 12);
       assert.strictEqual(data.txt, 'xyz');
       assert.strictEqual(data.ref.id, 'foo1');
-    });
-
-    // TODO: delete once storageNG is in.
-    it('reference-typed schema fields - storageOG', async function() {
-      if (Flags.useNewStorageStack) {
-        this.skip();
-      }
-      // TODO(alxr): Remove when tests are ready
-      if (isKotlin) {
-        return;
-      }
-      const {arc, stores} = await setup('SchemaReferenceFieldsTest');
-      const input = stores.get('input') as VolatileSingleton;
-      const output = stores.get('output') as VolatileSingleton;
-      const res = stores.get('res') as VolatileCollection;
-
-      // Uninitialised reference fields.
-      await input.set({id: 'i0', rawData: {num: 5}});
-      await arc.idle;
-
-      assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        'before <> !{}',  // no id or entity data; dereference is a no-op (no 'after' output)
-      ]);
-      await res.clear();
-
-      // Populated reference fields.
-      const refType = input.type.getEntitySchema().fields.ref.schema.model;  // yikes
-      const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
-      const backingStore = await volatileEngine.baseStorageFor(refType, volatileEngine.baseStorageKey(refType));
-      await backingStore.store({id: 'id1', rawData: {val: 'v1'}}, ['k1']);
-
-      await input.set({id: 'i1', rawData: {num: 12, ref: {id: 'id1', entityStorageKey: backingStore.storageKey}}});
-      await arc.idle;
-
-      assert.sameMembers((await res.toList()).map(e => e.rawData.txt), [
-        'before <id1> !{}',            // before dereferencing: contained entity is empty
-        'after <id1> {id1}, val: v1',  // after dereferencing: entity is populated, ids should match
-      ]);
-
-      // The particle clones 'input', binds to a new entity and writes that to 'output'.
-      // The ref field should have a storage key, but since this isn't deterministic we need to
-      // check for its presence then discard it.
-      const data = JSON.parse(JSON.stringify((await output.fetch()).rawData));
-      assert.isNotEmpty(data.ref.entityStorageKey);
-      delete data.ref.entityStorageKey;
-      assert.deepStrictEqual(data, {num: 12, txt: 'xyz', ref: {id: 'foo1'}});
     });
 
     it('unicode strings', async () => {
@@ -644,5 +538,3 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
   });
 });
-
-});  // forEach(useNewStorageStack)

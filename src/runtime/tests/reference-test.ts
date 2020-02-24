@@ -11,22 +11,19 @@
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
-import {CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
-import {VolatileStorage} from '../storage/volatile-storage.js';
 import {Loader} from '../../platform/loader.js';
 import {EntityType, ReferenceType, CollectionType, SingletonType} from '../type.js';
 import {Id, ArcId} from '../id.js';
-import {collectionHandleForTest, singletonHandleForTest} from '../testing/handle-for-test.js';
 import {Entity} from '../entity.js';
-import {Flags} from '../flags.js';
 import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
 import {Store} from '../storageNG/store.js';
 import {Exists} from '../storageNG/drivers/driver.js';
 import {Reference} from '../reference.js';
-import {StorageKey} from '../storageNG/storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {Runtime} from '../runtime.js';
+import {singletonHandle, SingletonEntityStore, SingletonEntityHandle, collectionHandle, SingletonReferenceHandle, CollectionEntityStore, CollectionEntityHandle, SingletonReferenceStore} from '../storageNG/storage-ng.js';
+import {isSingletonEntityStore, isCollectionEntityStore, isCollectionReferenceStore, isSingletonReferenceStore, entityHasName} from '../storageNG/unified-store.js';
 
 describe('references', () => {
   it('can parse & validate a recipe containing references', async () => {
@@ -105,28 +102,20 @@ describe('references', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    const refStore = arc._stores[0] as SingletonStorageProvider;
-    if (Flags.useNewStorageStack) {
-      assert.isTrue(refStore.type.getContainedType() instanceof ReferenceType);
-      const backingKey = new VolatileStorageKey(arc.id, '', 'id1');
-      const baseType = refStore.type.getContainedType().getContainedType();
-      const backingStore = new Store({id: 'backing', storageKey: backingKey, type: new SingletonType(baseType), exists: Exists.ShouldCreate});
-      const handle = await singletonHandleForTest(arc, backingStore);
-      const entity = await handle.setFromData({value: 'val1'});
+    const refStore = arc._stores.find(isSingletonReferenceStore);
+    assert.isTrue(refStore.type.getContainedType() instanceof ReferenceType);
+    const backingKey = new VolatileStorageKey(arc.id, '', 'id1');
+    const baseType = refStore.type.getContainedType().getContainedType();
+    const backingStore: SingletonEntityStore = new Store({id: 'backing', storageKey: backingKey, type: new SingletonType(baseType), exists: Exists.ShouldCreate});
+    const backingHandle: SingletonEntityHandle = singletonHandle(await backingStore.activate(), arc);
+    const entity = await backingHandle.setFromData({value: 'val1'});
 
-      const refHandle = await singletonHandleForTest(arc, refStore);
-      await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: backingKey.toString()}, refStore.type.getContainedType() as ReferenceType, null));
-    } else {
-      assert.isTrue(refStore.type instanceof ReferenceType);
-      const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
-      const backingStore = await volatileEngine.baseStorageFor(refStore.type, volatileEngine.baseStorageKey(refStore.type));
-      await backingStore.store({id: 'id1', rawData: {value: 'val1'}}, ['key1']);
-      await refStore.set({id: 'id1', rawData: {id: 'id1', entityStorageKey: backingStore.storageKey}});
-    }
+    const refHandle = singletonHandle(await refStore.activate(), arc);
+    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: backingKey.toString()}, refStore.type.getContainedType() as ReferenceType, null));
     await arc.idle;
 
-    const outStore = arc._stores[1];
-    const handle = await singletonHandleForTest(arc, outStore);
+    const outStore = arc._stores.find(isSingletonEntityStore);
+    const handle = singletonHandle(await outStore.activate(), arc);
     const value = await handle.fetch();
     assert.deepStrictEqual(value, {value: 'val1'});
   });
@@ -176,38 +165,31 @@ describe('references', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    const refStore = arc._stores[0] as CollectionStorageProvider;
+    const refStore = arc._stores.find(isCollectionReferenceStore);
     assert.instanceOf(refStore.type, CollectionType);
 
     const resType = refStore.type.getContainedType();
     assert.instanceOf(resType, ReferenceType);
 
-    if (Flags.useNewStorageStack) {
-      const backingKey1 = new VolatileStorageKey(arc.id, '', 'id1');
-      const backingKey2 = new VolatileStorageKey(arc.id, '', 'id2');
-      const baseType = refStore.type.getContainedType().getContainedType();
-      const backingStore1 = new Store({id: 'backing1', storageKey: backingKey1, type: new SingletonType(baseType), exists: Exists.ShouldCreate});
-      const backingStore2 = new Store({id: 'backing2', storageKey: backingKey2, type: new SingletonType(baseType), exists: Exists.ShouldExist});
-      const handle1 = await singletonHandleForTest(arc, backingStore1);
-      const handle2 = await singletonHandleForTest(arc, backingStore2);
-      const entity1 = await handle1.setFromData({value: 'val1'});
-      const entity2 = await handle2.setFromData({value: 'val2'});
+    const backingKey1 = new VolatileStorageKey(arc.id, '', 'id1');
+    const backingKey2 = new VolatileStorageKey(arc.id, '', 'id2');
+    const baseType = refStore.type.getContainedType().getContainedType();
+    const backingStore1: SingletonEntityStore = new Store({id: 'backing1', storageKey: backingKey1, type: new SingletonType(baseType), exists: Exists.ShouldCreate});
+    const backingStore2: SingletonEntityStore = new Store({id: 'backing2', storageKey: backingKey2, type: new SingletonType(baseType), exists: Exists.ShouldExist});
+    const handle1: SingletonEntityHandle = singletonHandle(await backingStore1.activate(), arc);
+    const handle2: SingletonEntityHandle = singletonHandle(await backingStore2.activate(), arc);
+    const entity1 = await handle1.setFromData({value: 'val1'});
+    const entity2 = await handle2.setFromData({value: 'val2'});
 
-      const refHandle = await collectionHandleForTest(arc, refStore);
-      await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: backingKey1.toString()}, refStore.type.getContainedType() as ReferenceType, null));
-      await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: backingKey2.toString()}, refStore.type.getContainedType() as ReferenceType, null));
-    } else {
-      const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
-      const backingStore = await volatileEngine.baseStorageFor(resType, volatileEngine.baseStorageKey(resType));
-      await backingStore.store({id: 'id1', rawData: {value: 'val1'}}, ['key1']);
-      await backingStore.store({id: 'id2', rawData: {value: 'val2'}}, ['key2']);
-      await refStore.store({id: 'id1', rawData: {id: 'id1', entityStorageKey: backingStore.storageKey}}, ['key1a']);
-      await refStore.store({id: 'id2', rawData: {id: 'id2', entityStorageKey: backingStore.storageKey}}, ['key2a']);
-    }
+    const refHandle = collectionHandle(await refStore.activate(), arc);
+    await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: backingKey1.toString()}, resType as ReferenceType, null));
+    await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: backingKey2.toString()}, resType as ReferenceType, null));
+
     await arc.idle;
 
-    const outStore = await collectionHandleForTest(arc, arc._stores[1]);
-    const values = await outStore.toList();
+    const outStore = arc._stores.find(isCollectionEntityStore);
+    const outHandle = collectionHandle(await outStore.activate(), arc);
+    const values = await outHandle.toList();
     assert.deepStrictEqual(values, [{value: 'val1'}, {value: 'val2'}]);
   });
 
@@ -256,24 +238,17 @@ describe('references', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const inputStore = arc._stores[0];
-    const handle = await singletonHandleForTest(arc, inputStore);
+    const inputStore = arc._stores.find(isSingletonEntityStore);
+    const handle: SingletonEntityHandle = singletonHandle(await inputStore.activate(), arc);
     const entity = await handle.setFromData({value: 'what a result!'});
     await arc.idle;
 
-    const refStore = arc._stores[1];
+    const refStore = arc._stores.find(isSingletonReferenceStore);
     const storageKey = Entity.storageKey(entity);
-    const refHandle = await singletonHandleForTest(arc, refStore);
+    const refHandle: SingletonReferenceHandle = singletonHandle(await refStore.activate(), arc);
     const reference = await refHandle.fetch();
-    assert.equal(reference.id, Entity.id(entity));
-    if (Flags.useNewStorageStack) {
-      assert.equal(reference.entityStorageKey, storageKey);
-    } else {
-      const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
-      const baseStoreType = new EntityType(manifest.schemas.Result);
-      const backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType)) as CollectionStorageProvider;
-      assert.equal(reference.entityStorageKey, backingStore.storageKey);
-    }
+    assert.equal(reference['id'], Entity.id(entity));
+    assert.equal(reference['entityStorageKey'], storageKey);
   });
 
   it('can deal with references in schemas', async () => {
@@ -322,30 +297,23 @@ describe('references', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    let entity: Entity;
-    let backingStore: CollectionStorageProvider;
-    if (Flags.useNewStorageStack) {
-      const entityStoreType = new CollectionType(new EntityType(manifest.schemas.Result));
-      // TODO(shanestephens): References currently expect to read from collection stores
-      // but should in fact only be able to read from backing stores.
-      const store = await arc.createStore(entityStoreType);
-      const handle = await collectionHandleForTest(arc, store);
-      entity = await handle.addFromData({value: 'what a result!'});
-    } else {
-      const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
-      const baseStoreType = new EntityType(manifest.schemas.Result);
-      backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType)) as CollectionStorageProvider;
-      await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
-    }
+    const entityStoreType = new CollectionType(new EntityType(manifest.schemas.Result));
+    // TODO(shanestephens): References currently expect to read from collection stores
+    // but should in fact only be able to read from backing stores.
+    const entityStore = await arc.createStore(entityStoreType) as CollectionEntityStore;
+    const entityHandle: CollectionEntityHandle = collectionHandle(await entityStore.activate(), arc);
+    const entity = await entityHandle.addFromData({value: 'what a result!'});
 
-    const refStore = arc._stores[1];
+    const stores = arc._stores.filter(isSingletonEntityStore);
 
-    const refHandle = await singletonHandleForTest(arc, refStore);
-    await refHandle.setFromData({result: Flags.useNewStorageStack ? {id: Entity.id(entity), entityStorageKey: Entity.storageKey(entity)} : {id: 'id:1', entityStorageKey: backingStore.storageKey}});
+    const refStore = stores.find(entityHasName('Foo'));
+
+    const refHandle = singletonHandle(await refStore.activate(), arc);
+    await refHandle.setFromData({result: {id: Entity.id(entity), entityStorageKey: Entity.storageKey(entity)}});
     await arc.idle;
 
-    const store = arc._stores[0];
-    const handle = await singletonHandleForTest(arc, store);
+    const store = stores.find(entityHasName('Result'));
+    const handle: SingletonEntityHandle = singletonHandle(await store.activate(), arc);
     assert.equal((await handle.fetch()).value, 'what a result!');
   });
 
@@ -443,26 +411,21 @@ describe('references', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const fooStore = arc._stores[0] as SingletonStorageProvider;
-    if (Flags.useNewStorageStack) {
-      assert.strictEqual(fooStore.type.getContainedType().getEntitySchema().name, 'Foo');
-    } else {
-      assert.strictEqual((fooStore.type as EntityType).entitySchema.name, 'Foo');
-    }
-    const fooHandle = await singletonHandleForTest(arc, fooStore);
+    const fooStore = arc._stores.filter(isSingletonEntityStore).find(entityHasName('Foo'));
+    const fooHandle = singletonHandle(await fooStore.activate(), arc);
     await fooHandle.setFromData({result: null, shortForm: 'a'});
 
-    const inputStore = await collectionHandleForTest(arc, arc._stores[1]);
-    assert.strictEqual(inputStore.type.getContainedType().getEntitySchema().name, 'Result');
-    const entities = await inputStore.addMultipleFromData([{value: 'this is an a'}, {value: 'this is a b'}]);
+    const inputStore = arc._stores.filter(isCollectionEntityStore).find(entityHasName('Result'));
+    const inputHandle: CollectionEntityHandle = collectionHandle(await inputStore.activate(), arc);
+    const entities = await inputHandle.addMultipleFromData([{value: 'this is an a'}, {value: 'this is a b'}]);
 
-    const outputStore = await collectionHandleForTest(arc, arc._stores[2]);
-    assert.strictEqual(outputStore.type.getContainedType().getEntitySchema().name, 'Foo');
-    await outputStore.addFromData({result: null, shortForm: 'b'});
+    const outputStore = arc._stores.filter(isCollectionEntityStore).find(entityHasName('Foo'));
+    const outputHandle: CollectionEntityHandle = collectionHandle(await outputStore.activate(), arc);
+    await outputHandle.addFromData({result: null, shortForm: 'b'});
 
     await arc.idle;
 
-    const values = await outputStore.toList();
+    const values = await outputHandle.toList();
     assert.strictEqual(values.length, 2);
     for (const value of values) {
       if (value.shortForm === 'a') {
@@ -522,37 +485,23 @@ describe('references', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    let entities: Entity[];
-    let backingStore: CollectionStorageProvider;
-    if (Flags.useNewStorageStack) {
-      const store = await arc.createStore(new CollectionType(new EntityType(manifest.schemas.Result)));
-      const handle = await collectionHandleForTest(arc, store);
-      entities = await handle.addMultipleFromData([{value: 'what a result!'}, {value: 'what another result!'}]);
-    } else {
-      const volatileEngine = arc.storageProviderFactory._storageForKey('volatile') as VolatileStorage;
-      const baseStoreType = new EntityType(manifest.schemas.Result);
-      backingStore = await volatileEngine.baseStorageFor(baseStoreType, volatileEngine.baseStorageKey(baseStoreType)) as CollectionStorageProvider;
-      await backingStore.store({id: 'id:1', rawData: {value: 'what a result!'}}, ['totes a key']);
-      await backingStore.store({id: 'id:2', rawData: {value: 'what another result!'}}, ['totes a key']);
-    }
+    const store = await arc.createStore(new CollectionType(new EntityType(manifest.schemas.Result))) as CollectionEntityStore;
+    const handle: CollectionEntityHandle = collectionHandle(await store.activate(), arc);
+    const entities = await handle.addMultipleFromData([{value: 'what a result!'}, {value: 'what another result!'}]);
 
-    const refStore = arc._stores[1];
-    if (Flags.useNewStorageStack) {
-      assert.strictEqual(refStore.type.getContainedType().getEntitySchema().name, 'Foo');
-      const handle = await singletonHandleForTest(arc, refStore);
-      const entity = handle.setFromData({result: [
-        {id: Entity.id(entities[0]), entityStorageKey: Entity.storageKey(entities[0])},
-        {id: Entity.id(entities[1]), entityStorageKey: Entity.storageKey(entities[1])}
-      ]});
-    } else {
-      assert.strictEqual(refStore.type.getEntitySchema().name, 'Foo');
-      await (refStore as SingletonStorageProvider).set({id: 'id:a', rawData: {result: [{id: 'id:1', entityStorageKey: backingStore.storageKey}, {id: 'id:2', entityStorageKey: backingStore.storageKey}]}});
-    }
+    const refStore = arc._stores.filter(isSingletonEntityStore).find(entityHasName('Foo'));
+    const refHandle = singletonHandle(await refStore.activate(), arc);
+    await refHandle.setFromData({result: [
+      {id: Entity.id(entities[0]), entityStorageKey: Entity.storageKey(entities[0])},
+      {id: Entity.id(entities[1]), entityStorageKey: Entity.storageKey(entities[1])}
+    ]});
 
     await arc.idle;
-    const outputStore = await collectionHandleForTest(arc, arc._stores[0]);
-    assert.strictEqual((outputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
-    const values = await outputStore.toList();
+
+    const outputHandle: CollectionEntityHandle
+      = collectionHandle(await arc._stores.find(isCollectionEntityStore).activate(), arc);
+    assert.strictEqual((outputHandle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
+    const values = await outputHandle.toList();
     assert.strictEqual(values.length, 2);
     assert.strictEqual(values[0].value, 'what a result!');
     assert.strictEqual(values[1].value, 'what another result!');
@@ -625,33 +574,21 @@ describe('references', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const inputStore = await collectionHandleForTest(arc, arc._stores[0]);
-    assert.strictEqual((inputStore.type.getContainedType() as EntityType).entitySchema.name, 'Result');
-    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'what a result!'}), 'id:1', null));
-    await inputStore.add(Entity.identify(new inputStore.entityClass({value: 'what another result!'}), 'id:2', null));
+    const inputStore = arc._stores.filter(isCollectionEntityStore).find(entityHasName('Result'));
+    const inputHandle: CollectionEntityHandle = collectionHandle(await inputStore.activate(), arc);
+    const entities = await inputHandle.addMultipleFromData([{value: 'what a result!'}, {value: 'what another result!'}]);
 
     await arc.idle;
-    const outputStore = await singletonHandleForTest(arc, arc._stores[1]);
-    if (Flags.useNewStorageStack) {
-      assert.strictEqual(outputStore.type.getContainedType().getEntitySchema().name, 'Foo');
-    } else {
-      assert.strictEqual(outputStore.type.getEntitySchema().name, 'Foo');
-    }
-    const outputRefs = await outputStore.fetch();
+
+    const outputStore = arc._stores.filter(isSingletonEntityStore).find(entityHasName('Foo'));
+    const outputHandle: SingletonEntityHandle = singletonHandle(await outputStore.activate(), arc);
+    const outputRefs = await outputHandle.fetch();
     const ids = [...outputRefs.result].map(ref => ref.id);
-    assert.sameMembers(ids, ['id:1', 'id:2']);
+    assert.sameMembers(ids, entities.map(e => Entity.id(e)));
   });
 });
 
-describe('references when new storage enabled', () => {
-  before(() => {
-    Flags.useNewStorageStack = true;
-  });
-
-  after(() => {
-    Flags.reset();
-  });
-
+describe('reference mode store tests', () => {
   it('can construct references of entities stored in reference mode store', async () => {
     const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
     const loader = new Loader(null, {
@@ -698,8 +635,14 @@ describe('references when new storage enabled', () => {
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
 
-    const inputStore = await arc.createStore(result.type, undefined, 'test:1', );
-    const refStore = await arc.createStore(new ReferenceType(result.type), undefined, 'test:2', undefined, new VolatileStorageKey(arc.id, 'refStore'));
+    const inputStore = await arc.createStore(result.type, undefined, 'test:1') as SingletonEntityStore;
+    const refStore = await arc.createStore(
+      new ReferenceType(result.type),
+      undefined,
+      'test:2',
+      undefined,
+      new VolatileStorageKey(arc.id, 'refStore')
+    ) as SingletonReferenceStore;
 
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(refStore);
@@ -708,14 +651,106 @@ describe('references when new storage enabled', () => {
     assert.isTrue(recipe.isResolved());
     await arc.instantiate(recipe);
 
-    const handle = await singletonHandleForTest(arc, inputStore);
+    const handle: SingletonEntityHandle = singletonHandle(await inputStore.activate(), arc);
     const entity = await handle.setFromData({value: 'what a result!'});
     await arc.idle;
 
     const storageKey = Entity.storageKey(entity);
-    const refHandle = await singletonHandleForTest(arc, refStore);
+    const refHandle: SingletonReferenceHandle = singletonHandle(await refStore.activate(), arc);
     const reference = await refHandle.fetch();
-    assert.equal(reference.id, Entity.id(entity));
-    assert.equal(reference.entityStorageKey, storageKey);
+    assert.equal(reference['id'], Entity.id(entity));
+    assert.equal(reference['entityStorageKey'], storageKey);
+  });
+
+  it('can construct collections of references in schemas of entities stored in reference mode store', async () => {
+    const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
+    const loader = new Loader(null, {
+      './manifest': `
+        schema Result
+          value: Text
+
+        particle ConstructReferenceCollection in 'constructReferenceCollection.js'
+          rawIn: reads [Result]
+          referenceOut: writes Foo {result: [&Result]}
+
+        recipe
+          handle0: use 'input:1'
+          handle1: use 'output:1'
+          ConstructReferenceCollection
+            rawIn: reads handle0
+            referenceOut: writes handle1
+        `,
+      './constructReferenceCollection.js': `
+        defineParticle(({Particle, Reference}) => {
+          return class Dereferencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('referenceOut');
+              this.results = [];
+              this.generated = false;
+            }
+
+            async onHandleSync(handle, model) {
+              model.forEach(result => this.results.push(result));
+              this.maybeGenerateOutput();
+            }
+
+            async onHandleUpdate(handle, update) {
+              if (handle.name == 'rawIn') {
+                if (update.added.length) {
+                  update.added.forEach(result => this.results.push(result));
+                } else {
+                  this.results.push(update.added);
+                }
+                this.maybeGenerateOutput();
+              }
+            }
+
+            async maybeGenerateOutput() {
+              if (this.results.length == 2 && !this.generated) {
+                this.generated = true;
+                const data = {result: new Set()};
+                for (const result of this.results) {
+                  const ref = new Reference(result);
+                  await ref.stored;
+                  data.result.add(ref);
+                }
+                this.results = [];
+                this.output.set(new this.output.entityClass(data));
+              }
+            }
+          }
+        });
+      `
+    });
+    const memoryProvider = new TestVolatileMemoryProvider();
+
+    const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test', storageKeyPrefix);
+    const recipe = manifest.recipes[0];
+    const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
+    const referenceOut = manifest.particles[0].handleConnectionMap.get('referenceOut');
+
+    const inputStore = await arc.createStore(new CollectionType(result.type), undefined, 'input:1') as CollectionEntityStore;
+    const refStore = await arc.createStore(referenceOut.type, undefined, 'output:1', undefined, new VolatileStorageKey(arc.id, 'refStore')) as SingletonEntityStore;
+
+    recipe.handles[0].mapToStorage(inputStore);
+    recipe.handles[1].mapToStorage(refStore);
+
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+
+    const handle = collectionHandle(await inputStore.activate(), arc);
+    assert.strictEqual((handle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
+    await handle.add(Entity.identify(new handle.entityClass({value: 'what a result!'}), 'id:1', null));
+    await handle.add(Entity.identify(new handle.entityClass({value: 'what another result!'}), 'id:2', null));
+
+    await arc.idle;
+    const outputStore: SingletonEntityHandle = singletonHandle(await refStore.activate(), arc);
+    assert.strictEqual(outputStore.type.getContainedType().getEntitySchema().name, 'Foo');
+    const outputRefs = await outputStore.fetch();
+    const ids = [...outputRefs.result].map(ref => ref.id);
+    assert.sameMembers(ids, ['id:1', 'id:2']);
   });
 });

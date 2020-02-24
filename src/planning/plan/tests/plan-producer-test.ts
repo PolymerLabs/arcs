@@ -14,18 +14,15 @@ import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
-import {SingletonStorageProvider} from '../../../runtime/storage/storage-provider-base.js';
-import {storageKeyPrefixForTest, singletonHandleForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
+import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {UnifiedActiveStore} from '../../../runtime/storageNG/unified-store.js';
-import {Flags} from '../../../runtime/flags.js';
 import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
-import {Entity} from '../../../runtime/entity.js';
+import {singletonHandle, ActiveSingletonEntityStore} from '../../../runtime/storageNG/storage-ng.js';
 
 class TestPlanProducer extends PlanProducer {
   options;
@@ -154,7 +151,7 @@ describe('plan producer - search', () => {
     options;
     produceSuggestionsCalled = 0;
 
-    constructor(arc: Arc, searchStore: UnifiedActiveStore) {
+    constructor(arc: Arc, searchStore: ActiveSingletonEntityStore) {
       super(arc, new PlanningResult({context: arc.context, loader: arc.loader}, searchStore), searchStore);
     }
 
@@ -164,16 +161,8 @@ describe('plan producer - search', () => {
     }
 
     async setNextSearch(search: string) {
-      if (Flags.useNewStorageStack) {
-        const entityClass = Entity.createEntityClass(Planificator.searchEntityType.getEntitySchema(), null);
-        const entity = new entityClass({current: JSON.stringify([{arc: this.arc.id.idTreeAsString(), search}])});
-        const handle = await singletonHandleForTest(this.arc, this.searchStore.baseStore);
-        await handle.set(entity);
-      } else {
-        await (this.searchStore as SingletonStorageProvider).set([
-          {arc: this.arc.id.idTreeAsString(), search}
-        ]);
-      }
+      const handle = singletonHandle(this.searchStore, this.arc);
+      await handle.setFromData({current: JSON.stringify([{arc: this.arc.id.idTreeAsString(), search}])});
       return this.onSearchChanged();
     }
   }

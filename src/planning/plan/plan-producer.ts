@@ -12,7 +12,6 @@ import {assert} from '../../platform/assert-web.js';
 import {now} from '../../platform/date-web.js';
 import {logsFactory} from '../../platform/logs-factory.js';
 import {Arc} from '../../runtime/arc.js';
-import {SingletonStorageProvider} from '../../runtime/storage/storage-provider-base.js';
 import {Planner, Generation} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Speculator} from '../speculator.js';
@@ -21,12 +20,7 @@ import {StrategyDerived} from '../strategizer.js';
 import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
 import {PlannerInspector} from '../planner-inspector.js';
-import {UnifiedActiveStore} from '../../runtime/storageNG/unified-store.js';
-import {StorageProxy} from '../../runtime/storageNG/storage-proxy.js';
-import {unifiedHandleFor} from '../../runtime/handle.js';
-import {SingletonHandle} from '../../runtime/storageNG/handle.js';
-import {Flags} from '../../runtime/flags.js';
-import {Entity} from '../../runtime/entity.js';
+import {singletonHandle, ActiveSingletonEntityStore, SingletonEntityHandle} from '../../runtime/storageNG/storage-ng.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -54,14 +48,14 @@ export class PlanProducer {
   _isPlanning = false;
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
-  searchStore?: UnifiedActiveStore;
-  handle?: SingletonHandle<Entity>|SingletonStorageProvider;
+  searchStore?: ActiveSingletonEntityStore;
+  handle?: SingletonEntityHandle;
   searchStoreCallbackId: number;
   debug: boolean;
   noSpecEx: boolean;
   inspector?: PlannerInspector;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore?: UnifiedActiveStore, inspector?: PlannerInspector, {debug = false, noSpecEx = false} = {}) {
+  constructor(arc: Arc, result: PlanningResult, searchStore?: ActiveSingletonEntityStore, inspector?: PlannerInspector, {debug = false, noSpecEx = false} = {}) {
     assert(result, 'result cannot be null');
     assert(arc, 'arc cannot be null');
     this.arc = arc;
@@ -71,17 +65,7 @@ export class PlanProducer {
     this.searchStore = searchStore;
     this.inspector = inspector;
     if (this.searchStore) {
-      this.handle = Flags.useNewStorageStack ?
-          unifiedHandleFor({
-            proxy: new StorageProxy(
-                arc.generateID().toString(),
-                this.searchStore,
-                this.searchStore.baseStore.type,
-                this.searchStore.baseStore.storageKey.toString()),
-            idGenerator: null,
-            particleId: arc.generateID().toString()
-          }) as SingletonHandle<Entity>:
-          this.searchStore.baseStore as SingletonStorageProvider;
+      this.handle = singletonHandle(this.searchStore, this.arc);
       this.searchStoreCallbackId = this.searchStore.on(() => this.onSearchChanged());
     }
     this.debug = debug;
@@ -102,12 +86,7 @@ export class PlanProducer {
   }
 
   async onSearchChanged(): Promise<boolean> {
-    let values;
-    if (Flags.useNewStorageStack) {
-      values = JSON.parse((await this.handle.fetch()).current) || [];
-    } else {
-      values = await this.handle.fetch() || [];
-    }
+    const values = JSON.parse((await this.handle.fetch()).current) || [];
 
     const arcId = this.arc.id.idTreeAsString();
     const value = values.find(value => value.arc === arcId);

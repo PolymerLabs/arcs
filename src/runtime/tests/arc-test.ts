@@ -14,7 +14,7 @@ import {Arc} from '../arc.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from '../storage/storage-provider-base.js';
+import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider} from '../storage/storage-provider-base.js';
 import {CallbackTracker} from '../testing/callback-tracker.js';
 import {SlotComposer} from '../slot-composer.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
@@ -23,24 +23,22 @@ import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {VolatileStorageKey, VolatileDriver} from '../storageNG/drivers/volatile.js';
-import {Flags} from '../flags.js';
 import {StorageKey} from '../storageNG/storage-key.js';
 import {Store} from '../storageNG/store.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {DirectStore} from '../storageNG/direct-store.js';
-import {VolatileStorageProvider, VolatileSingleton} from '../storage/volatile-storage.js';
 import {singletonHandleForTest, collectionHandleForTest, ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {handleNGFor, SingletonHandle, CollectionHandle} from '../storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
 import {Entity} from '../entity.js';
-import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 // database providers are optional, these tests use these provider(s)
 import '../storage/firebase/firebase-provider.js';
 import '../storage/pouchdb/pouch-db-provider.js';
 
-async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) {
+async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
   const loader = new Loader();
   const memoryProvider = new TestVolatileMemoryProvider();
 
@@ -66,11 +64,8 @@ async function setup(storageKeyPrefix: string | ((arcId: ArcId) => StorageKey)) 
   };
 }
 
-// TODO(lindner): add fireBase
-//  const testUrl = 'firebase://arcs-storage-test.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/firebase-storage-test/arc-1';
-
 describe('Arc new storage', () => {
-  it('preserves data when round-tripping through serialization', Flags.withNewStorageStack(async () => {
+  it('preserves data when round-tripping through serialization', async () => {
     DriverFactory.clearRegistrationsForTesting();
     // TODO(shans): deserialization currently uses a RamDisk store to deserialize into because we don't differentiate
     // between parsing a manifest for public consumption (e.g. with RamDisk resources in it) and parsing a serialized
@@ -115,13 +110,13 @@ describe('Arc new storage', () => {
     const refVarStore = await arc.createStore(new SingletonType(dataClass.type), undefined, 'test:2', [], refVarKey);
 
     const varStorageProxy = new StorageProxyNG('id', await varStore.activate(), new SingletonType(dataClass.type), varStore.storageKey.toString());
-    const varHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGeneratorForTesting, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+    const varHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
 
     const colStorageProxy = new StorageProxyNG('id-2', await colStore.activate(), dataClass.type.collectionOf(), colStore.storageKey.toString());
-    const colHandle = await handleNGFor('crdt-key-2', colStorageProxy, arc.idGeneratorForTesting, null, true, true, 'colHandle') as CollectionHandle<Entity>;
+    const colHandle = await handleNGFor('crdt-key-2', colStorageProxy, arc.idGenerator, null, true, true, 'colHandle') as CollectionHandle<Entity>;
 
     const refVarStorageProxy = new StorageProxyNG('id-3', await refVarStore.activate(), new SingletonType(dataClass.type), refVarStore.storageKey.toString());
-    const refVarHandle = await handleNGFor('crdt-key-3', refVarStorageProxy, arc.idGeneratorForTesting, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
+    const refVarHandle = await handleNGFor('crdt-key-3', refVarStorageProxy, arc.idGenerator, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
 
     // Populate the stores, run the arc and get its serialization.
     const d1 = new dataClass({value: 'v1'});
@@ -154,25 +149,25 @@ describe('Arc new storage', () => {
     const refVarStore2 = arc2.findStoreById(refVarStore.id);
 
     const varStorageProxy2 = new StorageProxyNG('id', await varStore2.activate(), new SingletonType(dataClass.type), varStore2.storageKey.toString());
-    const varHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+    const varHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
     const varData = await varHandle2.fetch();
 
     assert.deepEqual(varData, d1);
 
     const colStorageProxy2 = new StorageProxyNG('id-2', await colStore2.activate(), dataClass.type.collectionOf(), colStore2.storageKey.toString());
-    const colHandle2 = await handleNGFor('crdt-key-2', colStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'colHandle') as CollectionHandle<Entity>;
+    const colHandle2 = await handleNGFor('crdt-key-2', colStorageProxy2, arc2.idGenerator, null, true, true, 'colHandle') as CollectionHandle<Entity>;
     const colData = await colHandle2.toList();
 
     assert.deepEqual(colData, [d2, d3]);
 
     const refVarStorageProxy2 = new StorageProxyNG('id-3', await refVarStore2.activate(), new SingletonType(dataClass.type), refVarStore2.storageKey.toString());
-    const refVarHandle2 = await handleNGFor('crdt-key-3', refVarStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
+    const refVarHandle2 = await handleNGFor('crdt-key-3', refVarStorageProxy2, arc2.idGenerator, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
 
     const refVarData = await refVarHandle2.fetch();
     assert.deepEqual(refVarData, d4);
-  }));
+  });
 
-  it('supports capabilities - storage protocol', Flags.withNewStorageStack(async () => {
+  it('supports capabilities - storage protocol', async () => {
     DriverFactory.clearRegistrationsForTesting();
     const loader = new Loader(null, {
       '*': `
@@ -202,15 +197,15 @@ describe('Arc new storage', () => {
     assert.instanceOf(arc.activeRecipe.handles[0].storageKey, VolatileStorageKey);
     assert.isTrue(
         arc.activeRecipe.handles[0].storageKey.toString().includes(arc.id.toString()));
-  }));
+  });
 });
 
-const doSetup = async () => Flags.useNewStorageStack ? setup(arcId => new VolatileStorageKey(arcId, '')) : setup('volatile://');
+const doSetup = async () => setup(arcId => new VolatileStorageKey(arcId, ''));
 
 describe('Arc', () => {
   it('idle can safely be called multiple times ', async () => {
     const runtime = Runtime.newForNodeTesting();
-    const arc = runtime.newArc('test', Flags.useNewStorageStack ? null : 'volatile://');
+    const arc = runtime.newArc('test');
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
   });
@@ -271,7 +266,7 @@ describe('Arc', () => {
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const id = ArcId.newForTest('test');
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -300,8 +295,8 @@ describe('Arc', () => {
   });
 
   it('instantiates recipes only if fate is correct', async () => {
-    const data = Flags.useNewStorageStack ? '{"root": {"values": {}, "version": {}}, "locations": {}}' : '[]';
-    const type = Flags.useNewStorageStack ? '![Thing]' : 'Thing';
+    const data = '{"root": {"values": {}, "version": {}}, "locations": {}}';
+    const type = '![Thing]';
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
 
@@ -343,17 +338,17 @@ describe('Arc', () => {
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
 
     // Successfully instantiates a recipe with 'copy' handle for store in a context.
-    await runtime.newArc('test0', Flags.useNewStorageStack ? null : 'volatile://').instantiate(manifest.recipes[0]);
+    await runtime.newArc('test0').instantiate(manifest.recipes[0]);
 
     // Fails instantiating a recipe with 'use' handle for store in a context.
     try {
-      await runtime.newArc('test1', Flags.useNewStorageStack ? null : 'volatile://').instantiate(manifest.recipes[1]);
+      await runtime.newArc('test1').instantiate(manifest.recipes[1]);
       assert.fail();
     } catch (e) {
       assert.isTrue(e.toString().includes('store \'storeInContext\'')); // with "use" fate was not found'));
     }
 
-    const arc = await runtime.newArc('test2', Flags.useNewStorageStack ? null : 'volatile://');
+    const arc = await runtime.newArc('test2');
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     await arc.createStore(thingClass.type, 'name', 'storeInArc');
     const resolver = new RecipeResolver(arc);
@@ -389,7 +384,7 @@ describe('Arc', () => {
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const id = ArcId.newForTest('test');
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -442,7 +437,7 @@ describe('Arc', () => {
             d: writes maybeThingD
       `, {loader, fileName: process.cwd() + '/input.manifest'});
       const id = ArcId.newForTest('test');
-      const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+      const storageKey = new VolatileStorageKey(id, '');
       const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -488,7 +483,7 @@ describe('Arc', () => {
       `, {loader, fileName: process.cwd() + '/input.manifest'});
 
       const id = ArcId.newForTest('test');
-      const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+      const storageKey = new VolatileStorageKey(id, '');
       const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -532,7 +527,7 @@ describe('Arc', () => {
           c: reads maybeThingC
     `, {loader, fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -587,7 +582,7 @@ describe('Arc', () => {
             c: reads maybeThingC
       `, {loader, fileName: process.cwd() + '/input.manifest'});
       const id = ArcId.newForTest('test');
-      const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+      const storageKey = new VolatileStorageKey(id, '');
       const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -632,7 +627,7 @@ describe('Arc', () => {
           d: writes maybeThingD
     `, {loader, fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -685,7 +680,7 @@ describe('Arc', () => {
           d: writes maybeThingD
     `, {loader, fileName: process.cwd() + '/input.manifest'});
     const id = ArcId.newForTest('test');
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
@@ -717,7 +712,7 @@ describe('Arc', () => {
     const slotComposer = new SlotComposer();
     const loader = new Loader();
     const id = Id.fromString('test');
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const context = new Manifest({id});
     const arc = new Arc({slotComposer, loader, id, storageKey, context});
     await arc.idle;
@@ -782,7 +777,7 @@ describe('Arc', () => {
     const recipe = manifest.recipes[0];
     const slotComposer = new SlotComposer();
     const id = Id.fromString('test2');
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader()});
 
     const barType = manifest.findTypeByName('Bar');
@@ -808,10 +803,7 @@ describe('Arc', () => {
     //assert.strictEqual(slotComposer.slotsCreated, 1);
   });
 
-  it('serialization roundtrip preserves data for volatile stores', async function() {
-    if (Flags.useNewStorageStack) {
-      this.skip();
-    }
+  it.skip('serialization roundtrip preserves data for volatile stores', async () => {
     const loader = new Loader(null, {
       './manifest': `
         schema Data
@@ -839,7 +831,7 @@ describe('Arc', () => {
     const manifest = await Manifest.load('./manifest', loader);
     const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
     const id = Id.fromString('test');
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const arc = new Arc({id, storageKey, loader, context: manifest});
 
     const varStore = await arc.createStore(dataClass.type, undefined, 'test:0');
@@ -923,7 +915,7 @@ describe('Arc', () => {
 
     const manifest = await Manifest.load('./manifest', loader);
     const id = Id.fromString('test');
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const arc = new Arc({id, storageKey, loader, context: manifest});
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
@@ -946,46 +938,6 @@ describe('Arc', () => {
     assert.strictEqual('reader', connection.name);
     assert.strictEqual('A', connection.particle.spec.name);
     assert.strictEqual('B', connection.handle.immediateValue.name);
-  });
-
-
-  it('persist serialization for', async function() {
-    if (Flags.useNewStorageStack) {
-      // We don't currently support ArcInfo through the new stack
-      this.skip();
-    }
-    const id = ArcId.newForTest('test');
-    const manifest = await Manifest.parse(`
-      schema Data
-        value: Text
-      recipe
-        description \`abc\``);
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, ''): 'volatile://' + id.toString();
-    const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
-    const recipe = manifest.recipes[0];
-    recipe.normalize();
-    await arc.instantiate(recipe);
-    const serialization = await arc.serialize();
-    await arc.persistSerialization(serialization);
-
-    const key = 'volatile://' + `${id}^^arc-info`;
-    const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as SingletonStorageProvider;
-
-    const callbackTracker = await CallbackTracker.create(store, 0);
-
-    assert.isNotNull(store, 'got a valid store');
-    const data = await store.fetch();
-    assert.isNotNull(data, 'got valid data');
-    callbackTracker.verify();
-
-    // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
-    data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
-
-    const expected = `meta name: '${id}' storageKey: 'volatile://${id}' @active recipe description \`abc\``;
-    assert.deepEqual({id: id.toString(), serialization: expected}, data);
-
-    // TODO Simulate a cold-load to catch reference mode issues.
-    // in the interim you can disable the provider cache in pouch-db-storage.ts
   });
 
   // Particle A creates an inner arc with a hosted slot and instantiates B connected to that slot.
@@ -1081,7 +1033,7 @@ describe('Arc', () => {
             foods: foods
         `, {loader, fileName: process.cwd() + '/input.manifest'});
 
-    const storageKey = Flags.useNewStorageStack ? new VolatileStorageKey(id, '') : 'volatile://' + id.toString();
+    const storageKey = new VolatileStorageKey(id, '');
     const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
     assert.isNotNull(arc);
 
@@ -1110,7 +1062,7 @@ describe('Arc', () => {
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
   });
 
-  it('registers and deregisters its own volatile storage', Flags.withNewStorageStack(async () => {
+  it('registers and deregisters its own volatile storage', async () => {
     const id1 = ArcId.newForTest('test1');
     const id2 = ArcId.newForTest('test2');
     const storageKey1 = new VolatileStorageKey(id1, '');
@@ -1130,147 +1082,107 @@ describe('Arc', () => {
 
     arc2.dispose();
     assert.isEmpty(DriverFactory.providers);
-  }));
+  });
 });
 
 describe('Arc storage migration', () => {
-  describe('when new storage enabled', () => {
-    beforeEach(() => {
-      Flags.useNewStorageStack = true;
-    });
-
-    afterEach(() => {
-      Flags.reset();
-    });
-
-    it('supports new StorageKey type', async () => {
-      const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
-      const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-      assert.instanceOf(fooStore, Store);
-      const activeStore = await fooStore.activate();
-      assert.instanceOf(activeStore, DirectStore);
-      const directStore = activeStore as DirectStore<CRDTTypeRecord>;
-      assert.instanceOf(directStore.driver, VolatileDriver);
-    });
-
-    it('rejects old string storage keys', async () => {
-      await assertThrowsAsync(async () => {
-        await setup('volatile://');
-      }, `Can't use string storage keys with new storage stack.`);
-    });
-
-    it('sets ttl on create entities', async () => {
-      const id = ArcId.newForTest('test');
-      const loader = new Loader(null, {
-        'ThingAdder.js': `
-        defineParticle(({Particle}) => {
-          return class extends Particle {
-            async setHandles(handles) {
-              super.setHandles(handles);
-              // Add a single entity to each collection and a singleton.
-              const things0Handle = this.handles.get('things0');
-              const hello = new things0Handle.entityClass({name: 'hello'});
-              things0Handle.add(hello);
-              const things1Handle = this.handles.get('things1');
-              things1Handle.add(new things1Handle.entityClass({name: 'foo'}));
-              const things2Handle = this.handles.get('things2');
-              things2Handle.set(new things2Handle.entityClass({name: 'bar'}));
-
-              // wait 1s and add an additional item to things0.
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              things0Handle.add(new things0Handle.entityClass({name: 'world'}));
-              things0Handle.add(hello);
-            }
-          }
-        });
-      `});
-      // TODO: add `copy` handle to recipe.
-      const manifest = await Manifest.parse(`
-          schema Thing
-            name: Text
-          particle ThingAdder in 'ThingAdder.js'
-            things0: reads writes [Thing]
-            things1: reads writes [Thing]
-            things2: reads writes Thing
-          recipe
-            h0: create @ttl(3m)
-            h1: create @ttl(23h)
-            h2: create @ttl(2d)
-            ThingAdder
-              things0: h0
-              things1: h1
-              things2: h2
-          `);
-      const recipe = manifest.recipes[0];
-      assert.isTrue(recipe.normalize() && recipe.isResolved());
-
-      const runtime = new Runtime({loader, context: manifest});
-      const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest());
-      await arc.instantiate(recipe);
-      await arc.idle;
-
-      const getStoreByConnectionName = async (connectionName) => {
-        const store = arc.findStoreById(
-          arc.activeRecipe.particles[0].connections[connectionName].handle.id);
-        return await store.activate();
-      };
-      const getStoreValue = (storeContents, index, expectedLength) => {
-        assert.lengthOf(Object.keys(storeContents['values']), expectedLength);
-        const value = Object.values(storeContents['values'])[index]['value'];
-        assert.sameMembers(Object.keys(value), ['id', 'rawData', 'expirationTimestamp']);
-        assert.isTrue(value.id.length > 0);
-        return value;
-      };
-
-      const things0Store = await getStoreByConnectionName('things0');
-      const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
-      assert.equal(helloThing0.rawData.name, 'hello');
-      const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
-      assert.equal(worldThing0.rawData.name, 'world');
-      // `world` entity was added 1s after `hello`.
-      // This also verifies `hello` wasn't update when being re-added.
-      if (worldThing0.expirationTimestamp - helloThing0.expirationTimestamp < 1000) {
-        console.warn(`Flaky test: worldThing0.expirationTimestamp - helloThing0.expirationTimestamp` +
-            `${worldThing0.expirationTimestamp} - ${helloThing0.expirationTimestamp} < 1000`);
-      }
-      assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp >= 1000);
-
-      const things1Store = await getStoreByConnectionName('things1');
-      const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
-      assert.equal(fooThing1.rawData.name, 'foo');
-
-      const things2Store = await getStoreByConnectionName('things2');
-      const things2Contents = await things2Store.serializeContents();
-      const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
-      assert.equal(barThing2.rawData.name, 'bar');
-      // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
-      assert.isTrue(barThing2.expirationTimestamp - fooThing1.expirationTimestamp >
-          24 * 60 * 60 * 1000);
-    });
+  it('supports new StorageKey type', async () => {
+    const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
+    const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+    assert.instanceOf(fooStore, Store);
+    const activeStore = await fooStore.activate();
+    assert.instanceOf(activeStore, DirectStore);
+    const directStore = activeStore as DirectStore<CRDTTypeRecord>;
+    assert.instanceOf(directStore.driver, VolatileDriver);
   });
 
-  describe('when new storage disabled', () => {
-    beforeEach(() => {
-      Flags.useNewStorageStack = false;
-    });
+  it('sets ttl on create entities', async () => {
+    const id = ArcId.newForTest('test');
+    const loader = new Loader(null, {
+      'ThingAdder.js': `
+      defineParticle(({Particle}) => {
+        return class extends Particle {
+          async setHandles(handles) {
+            super.setHandles(handles);
+            // Add a single entity to each collection and a singleton.
+            const things0Handle = this.handles.get('things0');
+            const hello = new things0Handle.entityClass({name: 'hello'});
+            things0Handle.add(hello);
+            const things1Handle = this.handles.get('things1');
+            things1Handle.add(new things1Handle.entityClass({name: 'foo'}));
+            const things2Handle = this.handles.get('things2');
+            things2Handle.set(new things2Handle.entityClass({name: 'bar'}));
 
-    afterEach(() => {
-      Flags.reset();
-    });
+            // wait 1s and add an additional item to things0.
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            things0Handle.add(new things0Handle.entityClass({name: 'world'}));
+            things0Handle.add(hello);
+          }
+        }
+      });
+    `});
+    // TODO: add `copy` handle to recipe.
+    const manifest = await Manifest.parse(`
+        schema Thing
+          name: Text
+        particle ThingAdder in 'ThingAdder.js'
+          things0: reads writes [Thing]
+          things1: reads writes [Thing]
+          things2: reads writes Thing
+        recipe
+          h0: create @ttl(3m)
+          h1: create @ttl(23h)
+          h2: create @ttl(2d)
+          ThingAdder
+            things0: h0
+            things1: h1
+            things2: h2
+        `);
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
 
-    it('supports old string storage keys', async () => {
-      const {arc, Foo} = await setup('volatile://');
-      const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
-      assert.instanceOf(fooStore, StorageProviderBase);
-      assert.instanceOf(fooStore, VolatileStorageProvider);
-      assert.instanceOf(fooStore, VolatileSingleton);
-    });
+    const runtime = new Runtime({loader, context: manifest});
+    const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest());
+    await arc.instantiate(recipe);
+    await arc.idle;
 
-    it('rejects new StorageKey type', async () => {
-      const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
-      await assertThrowsAsync(async () => {
-        await arc.createStore(Foo.type, undefined, 'test:1');
-      }, `Can't use new-style storage keys with the old storage stack.`);
-    });
+    const getStoreByConnectionName = async (connectionName) => {
+      const store = arc.findStoreById(
+        arc.activeRecipe.particles[0].connections[connectionName].handle.id);
+      return await store.activate();
+    };
+    const getStoreValue = (storeContents, index, expectedLength) => {
+      assert.lengthOf(Object.keys(storeContents['values']), expectedLength);
+      const value = Object.values(storeContents['values'])[index]['value'];
+      assert.sameMembers(Object.keys(value), ['id', 'rawData', 'expirationTimestamp']);
+      assert.isTrue(value.id.length > 0);
+      return value;
+    };
+
+    const things0Store = await getStoreByConnectionName('things0');
+    const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
+    assert.equal(helloThing0.rawData.name, 'hello');
+    const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
+    assert.equal(worldThing0.rawData.name, 'world');
+    // `world` entity was added 1s after `hello`.
+    // This also verifies `hello` wasn't update when being re-added.
+    if (worldThing0.expirationTimestamp - helloThing0.expirationTimestamp < 1000) {
+      console.warn(`Flaky test: worldThing0.expirationTimestamp - helloThing0.expirationTimestamp` +
+          `${worldThing0.expirationTimestamp} - ${helloThing0.expirationTimestamp} < 1000`);
+    }
+    assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp >= 1000);
+
+    const things1Store = await getStoreByConnectionName('things1');
+    const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
+    assert.equal(fooThing1.rawData.name, 'foo');
+
+    const things2Store = await getStoreByConnectionName('things2');
+    const things2Contents = await things2Store.serializeContents();
+    const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
+    assert.equal(barThing2.rawData.name, 'bar');
+    // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
+    assert.isTrue(barThing2.expirationTimestamp - fooThing1.expirationTimestamp >
+        24 * 60 * 60 * 1000);
   });
 });
+

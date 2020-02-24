@@ -13,12 +13,8 @@ import {checkDefined} from '../../../runtime/testing/preconditions.js';
 import {ParticleNode, ParticleOutput, ParticleInput} from '../particle-node.js';
 import {buildFlowGraph} from '../testing/flow-graph-testing.js';
 import {FlowModifier} from '../graph-internals.js';
-import {Flags} from '../../../runtime/flags.js';
 
-const entityString = Flags.useNewStorageStack ?
-  '{"root": {"values": {"ida": {"value": {"id": "ida", "text": "asdf"}, "version": {"u": 1}}}, "version":{"u": 1}}, "locations": {}}'
-  :
-  '[{"text": "asdf"}]';
+const entityString = '{"root": {"values": {"ida": {"value": {"id": "ida", "text": "asdf"}, "version": {"u": 1}}}, "version":{"u": 1}}, "locations": {}}';
 
 describe('FlowGraph', () => {
   it('works with empty recipe', async () => {

@@ -44,6 +44,8 @@ type ReferenceMaker = (data: {id: string, entityStorageKey: string | null}, type
 /**
  * Base class for Handles.
  */
+// TODO(shans): reduce required interface for Particle argument so that it's just an event target for updates.
+// TODO(shans): can actor("key" in constructor) always be automatically derived from idGenerator?
 export abstract class Handle<StorageType extends CRDTTypeRecord> {
   storageProxy: StorageProxy<StorageType>;
   key: string;

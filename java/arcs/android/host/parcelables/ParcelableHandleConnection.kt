@@ -23,7 +23,7 @@ data class ParcelableHandleConnection(
     override val actual: Plan.HandleConnection
 ) : ActualParcelable<Plan.HandleConnection> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(actual.storageKey?.toString())
+        parcel.writeString(actual.storageKey.toString())
         parcel.writeType(actual.type, flags)
     }
 
@@ -31,16 +31,15 @@ data class ParcelableHandleConnection(
 
     companion object CREATOR : Parcelable.Creator<ParcelableHandleConnection> {
         override fun createFromParcel(parcel: Parcel): ParcelableHandleConnection {
-            val storageKeyString = parcel.readString()
+            val storageKeyString = requireNotNull(parcel.readString()) {
+                "No storageKey found in Parcel"
+            }
             val type = requireNotNull(parcel.readType()) {
                 "No name found in Parcel"
             }
 
             return ParcelableHandleConnection(
-                Plan.HandleConnection(
-                    storageKeyString?.let { StorageKeyParser.parse(it) },
-                    type
-                )
+                Plan.HandleConnection(StorageKeyParser.parse(storageKeyString), type)
             )
         }
 

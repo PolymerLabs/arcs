@@ -181,15 +181,13 @@ export class Runtime {
   // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
   // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
   // How best to provide default storage to an arc given whatever we decide?
-  newArc(name: string, storageKeyPrefix?: string | ((arcId: ArcId) => StorageKey) | null, options?: RuntimeArcOptions): Arc {
+  newArc(name: string, storageKeyPrefix?: ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
     const {loader, context} = this;
     const id = IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id}, options ? options.storageKeyCreators : undefined);
-    let storageKey : string | StorageKey;
-    if (typeof storageKeyPrefix === 'string') {
-      storageKey = `${storageKeyPrefix}${id.toString()}`;
-    } else if (storageKeyPrefix == null) {
+    let storageKey : StorageKey;
+    if (storageKeyPrefix == null) {
       storageKey = new VolatileStorageKey(id, '');
     } else {
       storageKey = storageKeyPrefix(id);
@@ -205,7 +203,7 @@ export class Runtime {
    * (2) a deserialized arc (TODO: needs implementation)
    * (3) a newly created arc
    */
-  runArc(name: string, storageKeyPrefix: string | ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
+  runArc(name: string, storageKeyPrefix: (arcId: ArcId) => StorageKey, options?: RuntimeArcOptions): Arc {
     if (!this.arcById.has(name)) {
       // TODO: Support deserializing serialized arcs.
       this.arcById.set(name, this.newArc(name, storageKeyPrefix, options));

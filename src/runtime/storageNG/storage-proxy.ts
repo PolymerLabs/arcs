@@ -27,6 +27,8 @@ import {Ttl} from '../recipe/ttl.js';
 export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
   private crdt: CRDTModel<T>;
+  // TODO(shans): remove apiChannelId once we're not constructing StorageProxy objects
+  // directly from many places.
   apiChannelId: string;
   private store: StorageCommunicationEndpoint<T>;
   readonly type: Type;

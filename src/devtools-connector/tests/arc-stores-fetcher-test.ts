@@ -16,7 +16,6 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {SingletonType} from '../../runtime/type.js';
 import {singletonHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-import {Flags} from '../../runtime/flags.js';
 
 import {Entity} from '../../runtime/entity.js';
 
@@ -52,10 +51,8 @@ describe('ArcStoresFetcher', () => {
     // We don't assert on it in this test.
     delete results[0].messageBody.arcStores[0].type.innerType.entitySchema.fields.value.location;
 
-    const sessionId = arc.idGeneratorForTesting.currentSessionIdForTesting;
-    const entityId = Flags.useNewStorageStack ?
-        '!' + sessionId + ':demo:test-proxy2:3' :
-        '!' + sessionId + ':fooStoreId:1';
+    const sessionId = arc.idGenerator.currentSessionIdForTesting;
+    const entityId = '!' + sessionId + ':demo:test-proxy2:3';
 
     assert.deepEqual(results[0].messageBody, {
       arcStores: [{
@@ -128,7 +125,7 @@ describe('ArcStoresFetcher', () => {
         m => m.messageType === 'store-value-changed');
     assert.lengthOf(results, 1);
 
-    const sessionId = arc.idGeneratorForTesting.currentSessionIdForTesting;
+    const sessionId = arc.idGenerator.currentSessionIdForTesting;
     assert.deepEqual(results[0].messageBody, {
       id: `!${sessionId}:demo:1`,
       value: {

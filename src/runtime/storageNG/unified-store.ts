@@ -8,16 +8,40 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Comparable, compareStrings, compareNumbers} from '../recipe/comparable.js';
+import {Comparable, compareStrings} from '../recipe/comparable.js';
 import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
-import {StorageStub} from '../storage-stub.js';
-import {assert} from '../../platform/assert-web.js';
 import {Store as OldStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ProxyCallback, StorageCommunicationEndpointProvider} from './store.js';
 import {ClaimIsTag} from '../particle-claim.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore} from './storage-ng.js';
+
+export function isSingletonInterfaceStore(store: UnifiedStore): store is SingletonInterfaceStore {
+  return (store.type.isSingleton && store.type.getContainedType().isInterface);
+}
+
+export function isSingletonEntityStore(store: UnifiedStore): store is SingletonEntityStore {
+  return (store.type.isSingleton && store.type.getContainedType().isEntity);
+}
+
+export function isCollectionEntityStore(store: UnifiedStore): store is CollectionEntityStore {
+  return (store.type.isCollection && store.type.getContainedType().isEntity);
+}
+
+export function isSingletonReferenceStore(store: UnifiedStore): store is SingletonReferenceStore {
+  return (store.type.isSingleton && store.type.getContainedType().isReference);
+}
+
+export function isCollectionReferenceStore(store: UnifiedStore): store is CollectionReferenceStore {
+  return (store.type.isCollection && store.type.getContainedType().isReference);
+}
+
+export function entityHasName(name: string) {
+  return (store: UnifiedStore) =>
+    store.type.getContainedType().isEntity && store.type.getContainedType().getEntitySchema().names.includes(name);
+}
 
 /**
  * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
@@ -36,11 +60,11 @@ import {CRDTTypeRecord} from '../crdt/crdt.js';
  */
 export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore {
   // Tags for all subclasses of UnifiedStore.
-  protected abstract unifiedStoreType: 'Store' | 'StorageStub' | 'StorageProviderBase';
+  protected abstract unifiedStoreType: 'Store' | 'StorageProviderBase';
 
   // TODO: Once the old storage stack is gone, this should only be of type
   // StorageKey, and can be moved into StoreInfo.
-  abstract storageKey: string | StorageKey;
+  abstract storageKey: StorageKey;
   abstract versionToken: string;
   abstract referenceMode: boolean;
 
@@ -61,17 +85,6 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
   get claims() { return this.storeInfo.claims; }
 
   abstract activate(): Promise<UnifiedActiveStore>;
-
-  /**
-   * Hack to cast this UnifiedStore to the old-style class StorageStub.
-   * TODO: Fix all usages of this method to handle new-style stores, and then
-   * delete.
-   */
-  castToStorageStub(): StorageStub {
-    // Can't use instanceof; causes circular dependencies.
-    assert(this.unifiedStoreType === 'StorageStub', 'Not a StorageStub!');
-    return this as unknown as StorageStub;
-  }
 
   // TODO: Delete this method when the old-style storage is deleted.
   reportExceptionInHost(exception: PropagatedException): void {
@@ -127,8 +140,6 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore
     } else if (this.storageKey) {
       handleStr.push(`at '${this.storageKey}'`);
     }
-    // TODO(shans): there's a 'this.source' in StorageProviderBase which is sometimes
-    // serialized here too - could it ever be part of StorageStub?
     results.push(handleStr.join(' '));
     if (info.claims && info.claims.length > 0) {
       results.push(`  claim is ${info.claims.map(claim => claim.tag).join(' and is ')}`);

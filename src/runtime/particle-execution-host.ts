@@ -15,7 +15,6 @@ import {reportSystemException, PropagatedException, SystemException} from './arc
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
-import {StorageStub} from './storage-stub.js';
 import {MessagePort} from './message-channel.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
@@ -264,32 +263,15 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onGetBackingStore(callback: number, storageKey: string, type: Type) {
-    let store;
-    if (Flags.useNewStorageStack) {
-      if (!storageKey) {
-        // TODO(shanestephens): What should we do here?!
-        throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
-      }
-      const key = StorageKeyParser.parse(storageKey);
-      // TODO(shanestephens): We could probably register the active store here, but at the moment onRegister and onProxyMessage both
-      // expect to be able to do activation
-      const storeBase = new Store({id: storageKey, exists: Exists.MayExist, storageKey: key, type});
-      this.GetBackingStoreCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
-    } else {
-      if (!storageKey) {
-        // XXX
-        storageKey = this.arc.storageProviderFactory.baseStorageKey(type, this.arc.storageKey as string || 'volatile');
-      }
-      store = await this.arc.storageProviderFactory.baseStorageFor(type, storageKey);
-      // TODO(shans): THIS IS NOT SAFE!
-      //
-      // Without an auditor on the runtime side that inspects what is being fetched from
-      // this store, particles with a reference can access any data of that reference's type.
-      //
-      // TOODO(sjmiles): randomizing the id as a workaround for https://github.com/PolymerLabs/arcs/issues/2936
-      const twiddledId = `${store.id}:${`String(Math.random())`.slice(2, 9)}`;
-      this.GetBackingStoreCallback(store, callback, type.collectionOf(), type.toString(), twiddledId, storageKey);
+    if (!storageKey) {
+      // TODO(shanestephens): What should we do here?!
+      throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
+    const key = StorageKeyParser.parse(storageKey);
+    // TODO(shanestephens): We could probably register the active store here, but at the moment onRegister and onProxyMessage both
+    // expect to be able to do activation
+    const storeBase = new Store({id: storageKey, exists: Exists.MayExist, storageKey: key, type});
+    this.GetBackingStoreCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
   }
 
   onConstructInnerArc(callback: number, particle: Particle) {
@@ -302,13 +284,7 @@ class PECOuterPortImpl extends PECOuterPort {
     // recreated when an arc is deserialized. As a consequence of this, dynamically
     // created handles for inner arcs must always be volatile to prevent storage
     // in firebase.
-    let storageKey: string | StorageKey;
-    if (Flags.useNewStorageStack) {
-      // TODO(shans): should this have a well defined id?
-      storageKey = new VolatileStorageKey(arc.id, String(Math.random()));
-    } else {
-      storageKey = 'volatile';
-    }
+    const storageKey = new VolatileStorageKey(arc.id, String(Math.random()));
     const store = await arc.createStore(type, name, null, [], storageKey);
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
@@ -388,11 +364,7 @@ class PECOuterPortImpl extends PECOuterPort {
               // TODO: pass tags through too, and reconcile with similar logic
               // in Arc.deserialize.
               for (const store of manifest.stores) {
-                if (store instanceof StorageStub) {
-                  await this.arc._registerStore(await store.inflate(), []);
-                } else {
-                  await this.arc._registerStore(store, []);
-                }
+                await this.arc._registerStore(store, []);
               }
               // TODO: Awaiting this promise causes tests to fail...
               const instantiateAndCaptureError = async () => {
