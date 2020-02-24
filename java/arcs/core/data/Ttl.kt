@@ -28,7 +28,7 @@ sealed class Ttl(val time: Time?, count: Int, val isInfinite: Boolean = false) {
         }
         if (!isInfinite) {
             requireNotNull(time) {
-                "time cannot be null for non infinit ttl"
+                "time cannot be null for non infinite ttl"
             }
         }
     }

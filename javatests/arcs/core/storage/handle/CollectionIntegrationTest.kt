@@ -21,6 +21,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageMode
@@ -33,6 +34,7 @@ import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -63,6 +65,7 @@ class CollectionIntegrationTest {
     @Before
     fun setUp() = runBlocking {
         RamDiskDriverProvider()
+        Ttl.time = TimeImpl()
 
         val queryByAge = Refinement { value: RawEntity, args: Any -> value.singletons.get("age") == (args as Int).toReferencable()};
 
@@ -163,6 +166,27 @@ class CollectionIntegrationTest {
         assertThat(collectionB.fetchAll()).isEmpty()
     }
 
+    @Test
+    fun addElementsWithTtls() = runBlockingTest {
+        val person = Person("John", 29, false)
+        collectionA.store(person.toRawEntity())
+        assertThat(collectionA.fetchAll().first().expirationTimestamp)
+            .isEqualTo(RawEntity.NO_EXPIRATION)
+
+        val collectionC = CollectionImpl("collectionC", storageProxy, null, Ttl.Days(2))
+        storageProxy.registerHandle(collectionC)
+        assertThat(collectionC.store(person.toRawEntity())).isTrue()
+        val entityC = collectionC.fetchAll().first()
+        assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+
+        val collectionD = CollectionImpl("collectionD", storageProxy, null, Ttl.Minutes(1))
+        storageProxy.registerHandle(collectionD)
+        assertThat(collectionD.store(person.toRawEntity())).isTrue()
+        val entityD = collectionD.fetchAll().first()
+        assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+        assertThat(entityC.expirationTimestamp).isGreaterThan(entityD.expirationTimestamp)
+    }
+
     private data class Person(
         val name: String,
         val age: Int,
@@ -209,5 +233,14 @@ class CollectionIntegrationTest {
                 type = CollectionType(EntityType(SCHEMA)),
                 mode = StorageMode.ReferenceMode
             )
+    }
+
+    // TODO(mmandlis): make a testutil/ Time implementation and reuse in all tests.
+    // What package should it be in?
+    private class TimeImpl : Time() {
+        override val currentTimeNanos: Long
+            get() = System.nanoTime()
+        override val currentTimeMillis: Long
+            get() = System.currentTimeMillis()
     }
 }

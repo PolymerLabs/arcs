@@ -19,6 +19,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
+import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageMode
@@ -29,6 +30,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -59,6 +61,7 @@ class SingletonIntegrationTest {
     @Before
     fun setUp() = runBlocking {
         RamDiskDriverProvider()
+        Ttl.time = TimeImpl()
 
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSingleton<RawEntity>())
@@ -131,6 +134,27 @@ class SingletonIntegrationTest {
         assertThat(singletonA.fetch()).isNull()
     }
 
+    @Test
+    fun addEntityWithTtl() = runBlockingTest {
+        val person = Person("Jane", 29, false)
+        assertThat(singletonA.set(person.toRawEntity())).isTrue()
+        assertThat(requireNotNull(singletonA.fetch()).expirationTimestamp)
+            .isEqualTo(RawEntity.NO_EXPIRATION)
+
+        val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2))
+        storageProxy.registerHandle(singletonC)
+        assertThat(singletonC.set(person.toRawEntity())).isTrue()
+        val entityC = requireNotNull(singletonC.fetch())
+        assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+
+        val singletonD = SingletonImpl("singletonD", storageProxy, null, Ttl.Minutes(1))
+        storageProxy.registerHandle(singletonD)
+        assertThat(singletonD.set(person.toRawEntity())).isTrue()
+        val entityD = requireNotNull(singletonD.fetch())
+        assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+        assertThat(entityC.expirationTimestamp).isGreaterThan(entityD.expirationTimestamp)
+    }
+
     private data class Person(
         val name: String,
         val age: Int,
@@ -177,5 +201,14 @@ class SingletonIntegrationTest {
                 type = SingletonType(EntityType(SCHEMA)),
                 mode = StorageMode.ReferenceMode
             )
+    }
+
+    // TODO(mmandlis): make a testutil/ Time implementation and reuse in all tests.
+    // What package should it be in?
+    private class TimeImpl : Time() {
+        override val currentTimeNanos: Long
+            get() = System.nanoTime()
+        override val currentTimeMillis: Long
+            get() = System.currentTimeMillis()
     }
 }
