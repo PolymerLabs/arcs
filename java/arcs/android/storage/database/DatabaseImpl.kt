@@ -40,12 +40,14 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabasePerformanceStatistics
+import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.jvm.util.performance.JvmTimer
 import com.google.protobuf.ByteString
 import kotlin.coroutines.coroutineContext
+import com.google.protobuf.InvalidProtocolBufferException
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -88,6 +90,8 @@ class DatabaseImpl(
     /* cursorFactory = */ null,
     DB_VERSION
 ) {
+    private val log = TaggedLog { this.toString() }
+
     // TODO: handle rehydrating from a snapshot.
     private val stats = DatabasePerformanceStatistics(
         insertUpdate = PerformanceStatistics(JvmTimer, *DatabaseCounters.INSERT_UPDATE_COUNTERS),
@@ -1128,7 +1132,13 @@ class DatabaseImpl(
 
         val str = getString(column)
         val bytes = ByteString.copyFromUtf8(str)
-        val proto = VersionMapProto.parseFrom(bytes)
+        val proto: VersionMapProto
+        try {
+            proto = VersionMapProto.parseFrom(bytes)
+        } catch (e: InvalidProtocolBufferException) {
+            log.error(e) { "Parsing serialized VersionMap \"$str\"." }
+            throw e
+        }
         return fromProto(proto)
     }
 
