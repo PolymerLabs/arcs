@@ -14,6 +14,7 @@ package arcs.core.storage.handle
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.storage.ActivationFactory
+import arcs.core.storage.Callbacks
 import arcs.core.data.Ttl
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
@@ -52,7 +53,7 @@ class SingletonImpl<T : Referencable>(
     suspend fun store(entity: T): Boolean {
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant
-            entity.setExpiration(ttl.calculateExpiration())
+            entity.expirationTimestamp = ttl.calculateExpiration()
         }
         return storageProxy.applyOp(
             CrdtSingleton.Operation.Update(

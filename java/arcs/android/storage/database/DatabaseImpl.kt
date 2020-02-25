@@ -97,7 +97,8 @@ class DatabaseImpl(
     private val stats = DatabasePerformanceStatistics(
         insertUpdate = PerformanceStatistics(
             Timer(JvmTime),
-            *DatabaseCounters.INSERT_UPDATE_COUNTERS),
+            *DatabaseCounters.INSERT_UPDATE_COUNTERS
+        ),
         get = PerformanceStatistics(Timer(JvmTime), *DatabaseCounters.GET_COUNTERS),
         delete = PerformanceStatistics(Timer(JvmTime), *DatabaseCounters.DELETE_COUNTERS)
     )

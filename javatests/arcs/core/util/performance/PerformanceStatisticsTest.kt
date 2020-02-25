@@ -13,6 +13,7 @@ package arcs.core.util.performance
 
 import arcs.core.util.RunningStatistics
 import arcs.core.util.Time
+import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -114,12 +115,5 @@ class PerformanceStatisticsTest {
         assertThat(snapshot.countStatistics["foo"].mean).isEqualTo(1)
         assertThat(snapshot.countStatistics["foo"].min).isEqualTo(1)
         assertThat(snapshot.countStatistics["foo"].max).isEqualTo(1)
-    }
-
-    private class TimeImpl : Time() {
-        override val currentTimeNanos: Long
-            get() = System.nanoTime()
-        override val currentTimeMillis: Long
-            get() = System.currentTimeMillis()
     }
 }

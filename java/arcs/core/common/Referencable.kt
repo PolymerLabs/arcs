@@ -19,8 +19,10 @@ interface Referencable {
     /** Unique identifier of the Referencable object. */
     val id: ReferenceId
 
-    /** Sets expiration timestamp on the Referencable object. */
-    fun setExpiration(expirationTimestamp: Long): Unit = throw NotImplementedError()
+    /** Expiration timestamp (in millis) on the Referencable object. */
+    var expirationTimestamp: Long
+        get() = TODO("not implemented")
+        set(@Suppress("UNUSED_PARAMETER") value) = TODO("not implemented")
 
     /**
      * If the implementation of [Referencable] supports it, this function returns a realized-version

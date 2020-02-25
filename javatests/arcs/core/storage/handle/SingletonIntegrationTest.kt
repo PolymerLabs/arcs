@@ -32,6 +32,7 @@ import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -201,14 +202,5 @@ class SingletonIntegrationTest {
                 type = SingletonType(EntityType(SCHEMA)),
                 mode = StorageMode.ReferenceMode
             )
-    }
-
-    // TODO(mmandlis): make a testutil/ Time implementation and reuse in all tests.
-    // What package should it be in?
-    private class TimeImpl : Time() {
-        override val currentTimeNanos: Long
-            get() = System.nanoTime()
-        override val currentTimeMillis: Long
-            get() = System.currentTimeMillis()
     }
 }

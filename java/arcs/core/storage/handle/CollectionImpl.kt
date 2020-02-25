@@ -15,6 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.storage.ActivationFactory
+import arcs.core.storage.Callbacks
 import arcs.core.data.Ttl
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
@@ -82,7 +83,7 @@ class CollectionImpl<T : Referencable>(
         log.debug { "Storing: $entity" }
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant
-            entity.setExpiration(ttl.calculateExpiration())
+            entity.expirationTimestamp = ttl.calculateExpiration()
         }
         return storageProxy.applyOp(
             CrdtSet.Operation.Add(name, versionMap().increment(), entity)
