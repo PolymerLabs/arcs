@@ -23,15 +23,21 @@ import arcs.core.data.PrimitiveType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.storage.Reference
+import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.assertThrows
+import arcs.core.util.guardedBy
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -1165,6 +1171,70 @@ class DatabaseImplTest {
         }
     }
 
+    @Test
+    fun insertUpdate_notifiesCorrectClient() = runBlockingTest {
+        val backingKey = DummyStorageKey("backing")
+        val storageKeyA = DummyStorageKey("key-a")
+        val storageKeyB = DummyStorageKey("key-b")
+        val schema = newSchema("hash")
+
+        val clientA = FakeDatabaseClient(storageKeyA)
+        val clientAId = database.addClient(clientA)
+        assertThat(clientAId).isEqualTo(1)
+
+        val clientB = FakeDatabaseClient(storageKeyB)
+        val clientBId = database.addClient(clientB)
+        assertThat(clientBId).isEqualTo(2)
+
+        val reference = Reference("ref1", backingKey, VersionMap("ref1" to 1))
+        val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
+
+        database.insertOrUpdate(storageKeyA, singleton, clientAId)
+
+        clientA.eventMutex.withLock {
+            assertThat(clientA.updates)
+                .containsExactly(FakeDatabaseClient.Update(singleton, 1, clientAId))
+        }
+        clientB.eventMutex.withLock {
+            assertThat(clientB.updates).isEmpty()
+        }
+    }
+
+    @Test
+    fun delete_notifiesCorrectClient() = runBlockingTest {
+        val backingKey = DummyStorageKey("backing")
+        val storageKeyA = DummyStorageKey("key-a")
+        val storageKeyB = DummyStorageKey("key-b")
+        val schema = newSchema("hash")
+
+        val clientA = FakeDatabaseClient(storageKeyA)
+        val clientAId = database.addClient(clientA)
+        assertThat(clientAId).isEqualTo(1)
+
+        val clientB = FakeDatabaseClient(storageKeyB)
+        val clientBId = database.addClient(clientB)
+        assertThat(clientBId).isEqualTo(2)
+
+        val reference = Reference("ref1", backingKey, VersionMap("ref1" to 1))
+        val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
+
+        database.insertOrUpdate(storageKeyA, singleton, clientAId)
+        database.delete(storageKeyA, clientAId)
+
+        yield()
+
+        clientA.eventMutex.withLock {
+            assertThat(clientA.updates)
+                .containsExactly(FakeDatabaseClient.Update(singleton, 1, clientAId))
+            assertThat(clientA.deletes)
+                .containsExactly(clientAId)
+        }
+        clientB.eventMutex.withLock {
+            assertThat(clientB.updates).isEmpty()
+            assertThat(clientB.deletes).isEmpty()
+        }
+    }
+
     private fun newSchema(
         hash: String,
         fields: SchemaFields = SchemaFields(emptyMap(), emptyMap())
@@ -1212,4 +1282,26 @@ private data class FieldRow(
         cursor.getLong(2),
         cursor.getString(3)
     )
+}
+
+private class FakeDatabaseClient(override val storageKey: StorageKey) : DatabaseClient {
+    val eventMutex = Mutex()
+    val updates by guardedBy(eventMutex, mutableListOf<Update>())
+    val deletes by guardedBy(eventMutex, mutableListOf<Int?>())
+
+    override suspend fun onDatabaseUpdate(
+        data: DatabaseData,
+        version: Int,
+        originatingClientId: Int?
+    ) = eventMutex.withLock {
+        updates.add(Update(data, version, originatingClientId))
+        Unit
+    }
+
+    override suspend fun onDatabaseDelete(originatingClientId: Int?) = eventMutex.withLock {
+        deletes.add(originatingClientId)
+        Unit
+    }
+
+    data class Update(val data: DatabaseData, val version: Int, val originatingClientId: Int?)
 }

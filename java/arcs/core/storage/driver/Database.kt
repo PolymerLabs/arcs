@@ -158,7 +158,7 @@ object DatabaseDriverProvider : DriverProvider {
             dataClass,
             schemaLookup,
             manager.getDatabase(databaseKey.dbName, databaseKey.persistent)
-        )
+        ).register()
     }
 
     /**
@@ -192,7 +192,7 @@ class DatabaseDriver<Data : Any>(
     val database: Database
 ) : Driver<Data>, DatabaseClient {
     /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
-    /* internal */ val clientId: Int = database.addClient(this)
+    /* internal */ var clientId: Int = -1
     private val localDataMutex = Mutex()
     private var localData: Data? by guardedBy<Data?>(localDataMutex, null)
     private var localVersion: Int? by guardedBy<Int?>(localDataMutex, null)
@@ -214,8 +214,13 @@ class DatabaseDriver<Data : Any>(
                     "$existenceCriteria was specified."
             }
         }
+    }
 
-        log.debug { "Created with clientId = $clientId" }
+    /* internal */
+    suspend fun register(): DatabaseDriver<Data> = apply {
+        clientId = database.addClient(this)
+
+        log.debug { "Registered with clientId = $clientId" }
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -31,7 +31,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -123,18 +122,14 @@ open class MockDatabase : Database {
 
     override suspend fun snapshotStatistics() = stats.snapshot()
 
-    override fun addClient(client: DatabaseClient): Int = runBlocking {
-        clientMutex.withLock {
-            val clientId = nextClientId++
-            clients[clientId] = client.storageKey to client
-            clientId
-        }
+    override suspend fun addClient(client: DatabaseClient): Int = clientMutex.withLock {
+        val clientId = nextClientId++
+        clients[clientId] = client.storageKey to client
+        clientId
     }
 
-    override fun removeClient(identifier: Int) = runBlocking {
-        clientMutex.withLock {
-            clients.remove(identifier)
-            Unit
-        }
+    override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
+        clients.remove(identifier)
+        Unit
     }
 }

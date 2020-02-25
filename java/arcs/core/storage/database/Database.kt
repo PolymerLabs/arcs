@@ -27,7 +27,7 @@ import kotlin.reflect.KClass
 interface Database {
     /**
      * Inserts or updates the data at [storageKey] in the database, returns the new version [Int]
-     * when successful.
+     * when successful, or the current version when the update could not be applied.
      */
     suspend fun insertOrUpdate(
         storageKey: StorageKey,
@@ -53,13 +53,13 @@ interface Database {
      * [DatabaseClient.storageKey] is created, updated, or deleted. Returns a unique identifier for
      * the listener, which can be used to unregister it later, with [removeClient].
      */
-    fun addClient(client: DatabaseClient): Int
+    suspend fun addClient(client: DatabaseClient): Int
 
     /**
      * Unregisters a [DatabaseClient] by the unique [identifier] received via the return value of
      * [addClient]
      */
-    fun removeClient(identifier: Int)
+    suspend fun removeClient(identifier: Int)
 }
 
 /** A client interested in changes to a specific [StorageKey] in the database. */
