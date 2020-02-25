@@ -73,9 +73,15 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     /**
      * [canRead] is whether this handle reads data so proxy can decide whether to keep its crdt
-     * up to date
+     * up to date.
      */
-    val canRead: Boolean = true
+    val canRead: Boolean = true,
+
+    /**
+     * [canWrite] is whether this handle is writable. This can be used to enforce additional runtime
+     * checks.
+     */
+    val canWrite: Boolean = true
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 

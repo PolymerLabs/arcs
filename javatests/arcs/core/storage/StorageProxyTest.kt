@@ -230,7 +230,7 @@ class StorageProxyTest {
         storageProxy: StorageProxy<CrdtData, CrdtOperationAtTime, String>,
         reader: Boolean
     ) = mock<Callbacks<CrdtOperationAtTime>>().let {
-        HandleWithCallback(Handle(name, storageProxy, it, reader), it)
+        HandleWithCallback(Handle(name, storageProxy, it, reader, true), it)
     }
 
     fun CrdtModel<CrdtData, CrdtOperationAtTime, String>.appliesOpAs(op: CrdtOperationAtTime, result: Boolean) {
