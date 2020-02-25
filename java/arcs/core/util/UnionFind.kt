@@ -28,8 +28,8 @@ class UnionFind<E> {
      * element is not present in any set, it is added.
      */
     fun union(e1: E, e2: E) {
-        val e1Root = findRoot(e1)
-        val e2Root = findRoot(e2)
+        val e1Root = e1.findRoot()
+        val e2Root = e2.findRoot()
         if (e1Root !== e2Root) {
             e1Root.parent = e2Root
         }
@@ -39,7 +39,7 @@ class UnionFind<E> {
      * Find the equivalence class for the element [e]. If the element
      * is not already present in any set, a new singleton set is created.
      */
-    fun find(e: E): E = findRoot(e).element
+    fun find(e: E): E = e.findRoot().element
 
     /**
      * If [e] is not already in any set, create a set with a single element.
@@ -57,8 +57,8 @@ class UnionFind<E> {
     /**
      * Returns the root node for element [e].
      */
-    private fun findRoot(e: E): Node<E> {
-        var node = getOrCreateNode(e)
+    private fun E.findRoot(): Node<E> {
+        var node = getOrCreateNode(this)
         var parent = node.parent
         while (parent != null) {
             node = parent
