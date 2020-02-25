@@ -13,16 +13,21 @@ package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
+import arcs.core.storage.StoreOptions
 
 /** These typealiases are defined to clean up the class declaration below. */
-typealias SingletonProxy<T> =
-    StorageProxy<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
-typealias SingletonBase<T> =
-    Handle<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
-typealias SingletonCallbacks<T> = Callbacks<CrdtSingleton.IOperation<T>>
+typealias SingletonProxy<T> = StorageProxy<SingletonData<T>, SingletonOp<T>, T?>
+typealias SingletonBase<T> = Handle<SingletonData<T>, SingletonOp<T>, T?>
+typealias SingletonData<T> = CrdtSingleton.Data<T>
+typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
+typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<T>, T?>
+typealias SingletonHandle<T> = SingletonImpl<T>
+typealias SingletonActivationFactory<T> = ActivationFactory<SingletonData<T>, SingletonOp<T>, T?>
+typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?>
 
 /**
  * Singleton [Handle] implementation for the runtime.

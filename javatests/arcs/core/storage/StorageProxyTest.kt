@@ -59,7 +59,7 @@ class StorageProxyTest {
         storageProxy.registerHandle(readHandle)
         storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
 
-        verify(readCallback).onUpdate(mockCrdtOperation)
+        verify(readCallback).onUpdate(readHandle, mockCrdtOperation)
     }
 
     @Test
@@ -71,7 +71,7 @@ class StorageProxyTest {
         storageProxy.registerHandle(readHandle)
         storageProxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
 
-        verify(readCallback).onSync()
+        verify(readCallback).onSync(readHandle)
     }
 
     @Test
@@ -96,7 +96,7 @@ class StorageProxyTest {
         storageProxy.registerHandle(writeHandle)
         assertThat(storageProxy.applyOp(mockCrdtOperation)).isTrue()
 
-        verify(readCallback).onUpdate(mockCrdtOperation)
+        verify(readCallback).onUpdate(readHandle, mockCrdtOperation)
         verifyNoMoreInteractions(writeCallback)
     }
 
@@ -222,14 +222,14 @@ class StorageProxyTest {
 
     private data class HandleWithCallback<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         val handle: Handle<Data, Op, T>,
-        val callback: Callbacks<Op>
+        val callback: Callbacks<Data, Op, T>
     )
 
     private fun newHandle(
         name: String,
         storageProxy: StorageProxy<CrdtData, CrdtOperationAtTime, String>,
         reader: Boolean
-    ) = mock<Callbacks<CrdtOperationAtTime>>().let {
+    ) = mock<Callbacks<CrdtData, CrdtOperationAtTime, String>>().let {
         HandleWithCallback(Handle(name, storageProxy, it, reader, true), it)
     }
 

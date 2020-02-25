@@ -20,6 +20,8 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.handle.HandleManager
+import arcs.core.storage.handle.SetCallbacks
+import arcs.core.storage.handle.SingletonCallbacks
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestBindingDelegate
@@ -143,8 +145,8 @@ class AndroidHandleManagerTest {
     @Test
     fun testSetHandleOnUpdate()  = runBlockingTest {
         handleManagerTest { hm ->
-            val testCallback1 = mock<Callbacks<CrdtSet.IOperation<RawEntity>>>()
-            val testCallback2 = mock<Callbacks<CrdtSet.IOperation<RawEntity>>>()
+            val testCallback1 = mock<SetCallbacks<RawEntity>>()
+            val testCallback2 = mock<SetCallbacks<RawEntity>>()
             val firstHandle = hm.setHandle(setKey, schema, testCallback1)
             val secondHandle = hm.setHandle(setKey, schema, testCallback2)
 
@@ -154,8 +156,8 @@ class AndroidHandleManagerTest {
                 entity1
             )
             secondHandle.store(entity1)
-            verify(testCallback1, times(1)).onUpdate(expectedAdd)
-            verify(testCallback2, times(1)).onUpdate(expectedAdd)
+            verify(testCallback1, times(1)).onUpdate(firstHandle, expectedAdd)
+            verify(testCallback2, times(1)).onUpdate(secondHandle, expectedAdd)
 
             firstHandle.remove(entity1)
             val expectedRemove = CrdtSet.Operation.Remove(
@@ -163,16 +165,16 @@ class AndroidHandleManagerTest {
                 testMapForKey(setKey),
                 entity1
             )
-            verify(testCallback1, times(1)).onUpdate(expectedRemove)
-            verify(testCallback2, times(1)).onUpdate(expectedRemove)
+            verify(testCallback1, times(1)).onUpdate(firstHandle, expectedRemove)
+            verify(testCallback2, times(1)).onUpdate(secondHandle, expectedRemove)
         }
     }
 
     @Test
     fun testSingletonHandleOnUpdate() = runBlockingTest {
         handleManagerTest { hm ->
-            val testCallback1 = mock<Callbacks<CrdtSingleton.IOperation<RawEntity>>>()
-            val testCallback2 = mock<Callbacks<CrdtSingleton.IOperation<RawEntity>>>()
+            val testCallback1 = mock<SingletonCallbacks<RawEntity>>()
+            val testCallback2 = mock<SingletonCallbacks<RawEntity>>()
             val firstHandle = hm.singletonHandle(singletonKey, schema, testCallback1)
             val secondHandle = hm.singletonHandle(singletonKey, schema, testCallback2)
             secondHandle.store(entity1)
@@ -181,38 +183,38 @@ class AndroidHandleManagerTest {
                 testMapForKey(singletonKey),
                 entity1
             )
-            verify(testCallback1, times(1)).onUpdate(expectedAdd)
-            verify(testCallback2, times(1)).onUpdate(expectedAdd)
+            verify(testCallback1, times(1)).onUpdate(firstHandle, expectedAdd)
+            verify(testCallback2, times(1)).onUpdate(secondHandle, expectedAdd)
             firstHandle.clear()
 
             val expectedRemove = CrdtSingleton.Operation.Clear<RawEntity>(
                 singletonKey.toKeyString(),
                 testMapForKey(singletonKey)
             )
-            verify(testCallback1, times(1)).onUpdate(expectedRemove)
-            verify(testCallback2, times(1)).onUpdate(expectedRemove)
+            verify(testCallback1, times(1)).onUpdate(firstHandle, expectedRemove)
+            verify(testCallback2, times(1)).onUpdate(secondHandle, expectedRemove)
         }
     }
 
     @Test
     fun testSetSyncOnRegister() = runBlockingTest {
         handleManagerTest { hm ->
-            val testCallback = mock<Callbacks<CrdtSet.IOperation<RawEntity>>>()
+            val testCallback = mock<SetCallbacks<RawEntity>>()
             val firstHandle = hm.setHandle(setKey, schema, testCallback)
-            verify(testCallback, times(1)).onSync()
+            verify(testCallback, times(1)).onSync(firstHandle)
             firstHandle.fetchAll()
-            verify(testCallback, times(1)).onSync()
+            verify(testCallback, times(1)).onSync(firstHandle)
         }
     }
 
     @Test
     fun testSingletonSyncOnRegister() = runBlockingTest {
         handleManagerTest { hm ->
-            val testCallback = mock<Callbacks<CrdtSingleton.IOperation<RawEntity>>>()
+            val testCallback = mock<SingletonCallbacks<RawEntity>>()
             val firstHandle = hm.singletonHandle(setKey, schema, testCallback)
-            verify(testCallback, times(1)).onSync()
+            verify(testCallback, times(1)).onSync(firstHandle)
             firstHandle.fetch()
-            verify(testCallback, times(1)).onSync()
+            verify(testCallback, times(1)).onSync(firstHandle)
         }
     }
 }
