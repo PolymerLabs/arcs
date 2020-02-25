@@ -47,7 +47,7 @@ class Allocator(val hostRegistry: HostRegistry) {
         val idGenerator = Id.Generator.newSession()
         val arcId = idGenerator.newArcId(arcName)
         // Any unresolved handles ('create' fate) need storage keys
-        createStorageKeysIfNecessary(arcId, plan)
+        createStorageKeysIfNecessary(arcId, idGenerator, plan)
         val partitions = computePartitions(arcId, plan)
         // Store computed partitions for later
         writePartitionMap(arcId, partitions)
@@ -84,7 +84,7 @@ class Allocator(val hostRegistry: HostRegistry) {
      * Finds [HandleConnection] instances which were unresolved at build time
      * [CreateableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
      */
-    private fun createStorageKeysIfNecessary(arcId: ArcId, plan: Plan) {
+    private fun createStorageKeysIfNecessary(arcId: ArcId, idGenerator: Id.Generator, plan: Plan) {
         val createdKeys: MutableMap<StorageKey, StorageKey> = mutableMapOf()
 
         plan.particles.forEach {
@@ -94,6 +94,7 @@ class Allocator(val hostRegistry: HostRegistry) {
                         if (!createdKeys.containsKey(storageKey)) {
                             createdKeys[storageKey] = createStorageKey(
                                 arcId,
+                                idGenerator,
                                 storageKey as CreateableStorageKey,
                                 type
                             )
@@ -111,13 +112,14 @@ class Allocator(val hostRegistry: HostRegistry) {
      */
     private fun createStorageKey(
         arcId: ArcId,
+        idGenerator: Id.Generator,
         storageKey: CreateableStorageKey,
         type: Type
     ): StorageKey =
         CapabilitiesResolver(CapabilitiesResolver.StorageKeyOptions(arcId)).createStorageKey(
-            storageKey.capabilities,
-            type.toSchemaHash()
-        )?.childKeyForHandle(storageKey.nameFromManifest) ?: throw Exception(
+            storageKey.capabilities, type.toSchemaHash()
+        )?.childKeyForHandle(idGenerator.newChildId(arcId, "").toString()) ?:
+        throw Exception(
             "Unable to create storage key $storageKey"
         )
 
