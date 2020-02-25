@@ -200,7 +200,7 @@ describe('CollectionHandle', async () => {
       actor: 'actor',
       clock: {'actor': 1}
     };
-    await handle.onUpdate(op, {'actor': 1, 'other': 2});
+    await handle.onUpdate(op);
     assert.equal(Entity.id(particle.lastUpdate.removed[0]), 'id');
     assert.isFalse(particle.lastUpdate.originator);
   });
@@ -215,18 +215,20 @@ describe('CollectionHandle', async () => {
       oldClock: {'actor': 1},
       newClock: {'actor': 1}
     };
-    await handle.onUpdate(op, {'actor': 1, 'other': 2});
+    await handle.onUpdate(op);
     assert.isTrue(particle.onSyncCalled);
   });
 
-  it('stores new version map', async () => {
+  it('uses the storage proxy clock', async () => {
     const handle = await getCollectionHandle(barType);
 
     const versionMap: VersionMap = {'actor': 1, 'other': 2};
-    // Make storageProxy return the defined version map.
-    handle.storageProxy.getParticleView = async () => {
-      return Promise.resolve([new Set(), versionMap]);
-    };
+    // Set the storageProxy version map.
+    await handle.storageProxy.onMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: {values: {}, version: versionMap},
+      id: 1
+    });
 
     // This will pull in the version map above.
     await handle.toList();
@@ -308,19 +310,21 @@ describe('SingletonHandle', async () => {
       actor: 'actor',
       clock: {'actor': 1}
     };
-    await handle.onUpdate(op, {'actor': 1, 'other': 2});
+    await handle.onUpdate(op);
     assert.deepEqual(particle.lastUpdate, {data: {}, originator: false});
     assert.equal(Entity.id(particle.lastUpdate.data), 'id');
   });
 
-  it('stores new version map', async () => {
+  it('uses the storage proxy clock', async () => {
     const handle = await getSingletonHandle(barType);
 
     const versionMap: VersionMap = {'actor': 1, 'other': 2};
-    // Make storageProxy return the defined version map.
-    handle.storageProxy.getParticleView = async () => {
-      return Promise.resolve([{id: 'id', rawData: {}}, versionMap]);
-    };
+    // Set the storageProxy version map.
+    await handle.storageProxy.onMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: {values: {}, version: versionMap},
+      id: 1
+    });
 
     // This will pull in the version map above.
     await handle.fetch();

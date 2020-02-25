@@ -88,7 +88,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
-  registerHandle(handle: Handle<T>): VersionMap {
+  registerHandle(handle: Handle<T>): void {
     // Attach an event listener to the backing store when the first handle is registered.
     if (!this.listenerAttached) {
       this.store.setCallback(x => this.onMessage(x));
@@ -96,7 +96,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
 
     if (!handle.canRead) {
-      return this.versionCopy();
+      return;
     }
     this.handles.push(handle);
 
@@ -119,7 +119,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         this.notifySyncForHandle(handle);
       }
     }
-    return this.versionCopy();
+    return;
   }
 
   deregisterHandle(handleIn: Handle<T>) {
@@ -127,7 +127,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     this.handles = this.handles.filter(handle => handle !== handleIn);
   }
 
-  protected versionCopy(): VersionMap {
+  versionCopy(): VersionMap {
     const version = {};
     for (const [k, v] of Object.entries(this.crdt.getData().version)) {
       version[k] = v;
@@ -148,15 +148,15 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return true;
   }
 
-  async getParticleView(): Promise<[T['consumerType'], VersionMap]> {
+  async getParticleView(): Promise<T['consumerType']> {
     if (this.synchronized) {
       return this.getParticleViewAssumingSynchronized();
     } else {
-      const promise: Promise<[T['consumerType'], VersionMap]> =
+      const promise: Promise<T['consumerType']> =
           new Promise((resolve) => {
             this.modelHasSynced = () => {
               this.modelHasSynced = () => undefined;
-              resolve([this.crdt.getParticleView()!, this.versionCopy()]);
+              resolve(this.crdt.getParticleView()!);
             };
           });
       // Request a new model, it will come back asynchronously with a ModelUpdate message.
@@ -165,11 +165,11 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
-  getParticleViewAssumingSynchronized(): [T['consumerType'], VersionMap] {
+  getParticleViewAssumingSynchronized(): T['consumerType'] {
     if (!this.synchronized) {
       throw new Error('AssumingSynchronized variant called but proxy is not synchronized');
     }
-    return [this.crdt.getParticleView()!, this.versionCopy()];
+    return this.crdt.getParticleView()!;
   }
 
   private setSynchronized(initialModel = null) {
@@ -232,13 +232,12 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   protected notifyUpdate(operation: CRDTOperation, predicate: Predicate<HandleOptions>) {
-    const version: VersionMap = this.versionCopy();
     for (const handle of this.handles) {
       if (predicate(handle.options)) {
         this.scheduler.enqueue(
             handle.particle,
             handle,
-            {type: HandleMessageType.Update, op: operation, version});
+            {type: HandleMessageType.Update, op: operation});
       }
     }
   }
@@ -291,18 +290,18 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
   }
   deregisterHandle(handle: Handle<T>): void {}
 
-  protected versionCopy(): VersionMap {
+  versionCopy(): VersionMap {
     return null;
   }
 
   async applyOp(op: CRDTOperation): Promise<boolean> {
     return new Promise(resolve => {});
   }
-  async getParticleView(): Promise<[T['consumerType'], VersionMap]> {
+  async getParticleView(): Promise<T['consumerType']> {
     return new Promise(resolve => {});
   }
 
-  getParticleViewAssumingSynchronized(): [T['consumerType'], VersionMap] {
+  getParticleViewAssumingSynchronized(): T['consumerType'] {
     return [null, {}];
   }
 
@@ -338,7 +337,7 @@ enum HandleMessageType {
 type Event<T extends CRDTTypeRecord> =
   {type: HandleMessageType.Sync, model: T['consumerType']} |
   {type: HandleMessageType.Desync} |
-  {type: HandleMessageType.Update, op: T['operation'], version: VersionMap};
+  {type: HandleMessageType.Update, op: T['operation']};
 
 export class StorageProxyScheduler<T extends CRDTTypeRecord> {
   private _scheduled = false;
@@ -445,7 +444,7 @@ export class StorageProxyScheduler<T extends CRDTTypeRecord> {
         await handle.onDesync();
         break;
       case HandleMessageType.Update:
-        handle.onUpdate(update.op, update.version);
+        handle.onUpdate(update.op);
         break;
       default:
         console.error('Ignoring unknown update', update);
