@@ -10,8 +10,9 @@
 
 import {ParticleSpec} from './particle-spec.js';
 import {UiTransformationParticle} from './ui-transformation-particle.js';
-import {Handle} from './handle.js';
+import {Handle} from './storageNG/handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
+import { CRDTTypeRecord } from './crdt/crdt.js';
 
 export class UiMultiplexerParticle extends UiTransformationParticle {
 
@@ -135,7 +136,7 @@ export class UiMultiplexerParticle extends UiTransformationParticle {
       listHandleName: string,
       particleHandleName: string,
       hostedParticle: ParticleSpec,
-      handles: ReadonlyMap<string, Handle>,
+      handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>,
       arc: InnerArcHandle) {
     const otherMappedHandles: string[] = [];
     const otherConnections: string[] = [];

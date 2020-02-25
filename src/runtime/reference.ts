@@ -9,12 +9,12 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {HandleOld, Collection, Storable, unifiedHandleFor} from './handle.js';
+import {Storable} from './storable.js';
 import {ReferenceType, EntityType} from './type.js';
 import {Entity, SerializedEntity} from './entity.js';
 import {StorageProxy} from './storageNG/storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
-import {CollectionHandle, Handle} from './storageNG/handle.js';
+import {CollectionHandle, Handle, handleNGFor} from './storageNG/handle.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 
@@ -33,8 +33,7 @@ export class Reference implements Storable {
   private entityStorageKey: string;
   private readonly context: ChannelConstructor;
   private storageProxy: StorageProxy<CRDTTypeRecord> = null;
-  // tslint:disable-next-line: no-any
-  protected handle: Collection|CollectionHandle<any>|null = null;
+  protected handle: CollectionHandle<Entity>|null = null;
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
@@ -51,8 +50,7 @@ export class Reference implements Storable {
   protected async ensureStorageProxy(): Promise<void> {
     if (this.storageProxy == null) {
       this.storageProxy = await this.context.getStorageProxy(this.entityStorageKey, this.type.referredType);
-      // tslint:disable-next-line: no-any
-      this.handle = unifiedHandleFor({proxy: this.storageProxy, idGenerator: this.context.idGenerator, particleId: this.context.generateID()}) as CollectionHandle<any>;
+      this.handle = handleNGFor(this.context.generateID(), this.storageProxy, this.context.idGenerator, null, true, true) as CollectionHandle<Entity>;
       if (this.entityStorageKey) {
         assert(this.entityStorageKey === this.storageProxy.storageKey, `reference's storageKey differs from the storageKey of established channel.`);
       } else {
@@ -81,8 +79,7 @@ export class Reference implements Storable {
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
   static async retrieve(pec: ChannelConstructor, id: string, storageKey: string, entityType: EntityType, particleId: string) {
     const proxy = await pec.getStorageProxy(storageKey, entityType);
-    // tslint:disable-next-line: no-any
-    const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, particleId}) as CollectionHandle<any>;
+    const handle = handleNGFor(particleId, proxy, pec.idGenerator, null, true, true) as CollectionHandle<Entity>;
     return await handle.fetchAll(id);
   }
 }
@@ -139,5 +136,4 @@ function makeReference(data: {id: string, entityStorageKey: string | null}, type
  return new Reference(data, type, context);
 }
 
-HandleOld.makeReference = makeReference;
 Handle.makeReference = makeReference;

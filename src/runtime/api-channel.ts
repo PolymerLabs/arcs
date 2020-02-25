@@ -12,13 +12,11 @@ import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {ArcInspector} from './arc-inspector.js';
-import {Handle} from './handle.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import * as recipeHandle from './recipe/handle.js';
 import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
-import {SerializedModelEntry} from './storage/crdt-collection-model.js';
 import {Type} from './type.js';
 import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable, Runnable} from './hot.js';
@@ -26,10 +24,10 @@ import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
-import {StorageProviderBase} from './storage/storage-provider-base.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Ttl} from './recipe/ttl.js';
+import { Handle } from './storageNG/handle.js';
 
 type StorageProxy = StorageProxyNG<CRDTTypeRecord>;
 
@@ -539,11 +537,6 @@ export abstract class PECOuterPort extends APIPort {
   SimpleCallback(@RemoteMapped callback: number, @Direct data: {}) {}
   AwaitIdle(@Direct version: number) {}
 
-  // TODO: Delete these when the old storage code is deleted. They won't be
-  // needed anymore.
-  abstract onInitializeProxy(handle: StorageProviderBase, callback: number);
-  abstract onSynchronizeProxy(handle: StorageProviderBase, callback: number);
-
   abstract onRegister(handle: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
   abstract onProxyMessage(handle: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
@@ -601,8 +594,6 @@ export abstract class PECInnerPort extends APIPort {
 
   Output(@Mapped particle: Particle, @Direct content: {}) {}
 
-  InitializeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{version: number}>) {}
-  SynchronizeProxy(@Mapped handle: StorageProxy, @LocalMapped callback: Consumer<{version: number, model: SerializedModelEntry[]}>) {}
   Register(@Mapped handle: StorageProxy,
            @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
            @LocalMapped idCallback: Consumer<number>): void  {}
@@ -620,7 +611,7 @@ export abstract class PECInnerPort extends APIPort {
 
   ArcCreateHandle(@LocalMapped callback: Consumer<StorageProxy>, @RemoteMapped arc: {}, @ByLiteral(Type) type: Type, @Direct name: string) {}
   abstract onCreateHandleCallback(callback: Consumer<StorageProxy>, type: Type, name: string, id: string);
-  ArcMapHandle(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped handle: Handle) {}
+  ArcMapHandle(@LocalMapped callback: Consumer<string>, @RemoteMapped arc: {}, @Mapped handle: Handle<CRDTTypeRecord>) {}
   abstract onMapHandleCallback(callback: Consumer<string>, id: string);
 
   ServiceRequest(@Mapped particle: Particle, @Direct content: {}, @LocalMapped callback: Function) {}

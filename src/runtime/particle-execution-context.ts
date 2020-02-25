@@ -11,7 +11,6 @@
 import {assert} from '../platform/assert-web.js';
 
 import {PECInnerPort} from './api-channel.js';
-import {Handle, unifiedHandleFor} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
@@ -31,13 +30,13 @@ import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './recipe/ttl.js';
+import { Handle, handleNGFor } from './storageNG/handle.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
-type UnifiedStorageProxy = Store|StorageProxy<CRDTTypeRecord>;
 
 export type InnerArcHandle = {
-  createHandle(type: Type, name: string, hostParticle?: Particle): Promise<Handle>;
-  mapHandle(handle: Handle): Promise<string>;
+  createHandle(type: Type, name: string, hostParticle?: Particle): Promise<Handle<CRDTTypeRecord>>;
+  mapHandle(handle: Handle<CRDTTypeRecord>): Promise<string>;
   createSlot(transformationParticle: Particle, transformationSlotName: string, handleId: string): Promise<string>;
   loadRecipe(recipe: string): Promise<{error?: string}>;
 };
@@ -97,7 +96,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         }
       }
 
-      async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, UnifiedStorageProxy>, reinstantiate: boolean) {
+      async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, reinstantiate: boolean) {
         return pec.instantiateParticle(id, spec, proxies, reinstantiate);
       }
 
@@ -201,11 +200,11 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         }
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcCreateHandle(proxy => {
-            const handle = unifiedHandleFor({proxy, idGenerator: pec.idGenerator, name, particleId: Math.random() + '', particle: hostParticle});
+            const handle = handleNGFor(Math.random() + '', proxy, pec.idGenerator, hostParticle, true, true, name);
             resolve(handle);
           }, arcId, type, name));
       },
-      async mapHandle(handle: Handle) {
+      async mapHandle(handle: Handle<CRDTTypeRecord>) {
         return new Promise((resolve, reject) =>
           pec.apiPort.ArcMapHandle(id => {
             resolve(id);
@@ -272,7 +271,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   }
 
   // tslint:disable-next-line: no-any
-  private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, UnifiedStorageProxy>, reinstantiate: boolean): Promise<[any, () => Promise<void>]> {
+  private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, reinstantiate: boolean): Promise<[any, () => Promise<void>]> {
     let resolve: Runnable;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
@@ -344,18 +343,10 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     return result;
   }
 
-  private createHandle(particle: Particle, spec: ParticleSpec, id: string, name: string, proxy: UnifiedStorageProxy,
+  private createHandle(particle: Particle, spec: ParticleSpec, id: string, name: string, proxy: StorageProxy<CRDTTypeRecord>,
                        handleMap) {
     const connSpec = spec.handleConnectionMap.get(name);
-    const handle = unifiedHandleFor({
-      proxy,
-      idGenerator: this.idGenerator,
-      name,
-      particleId: id,
-      particle,
-      canRead: connSpec.isInput,
-      canWrite: connSpec.isOutput,
-    });
+    const handle = handleNGFor(id, proxy, this.idGenerator, particle, connSpec.isInput, connSpec.isOutput, name);
     handleMap.set(name, handle);
   }
 

@@ -39,13 +39,12 @@ import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Store} from './storageNG/store.js';
 import {UnifiedStore, isSingletonInterfaceStore} from './storageNG/unified-store.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {Ttl} from './recipe/ttl.js';
-import {singletonHandle, CRDTEntitySingleton, SingletonInterfaceHandle, SingletonEntityStore} from './storageNG/storage-ng.js';
+import {singletonHandle, SingletonInterfaceHandle, SingletonEntityStore} from './storageNG/storage-ng.js';
 
 export type ArcOptions = Readonly<{
   id: Id;

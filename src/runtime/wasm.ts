@@ -14,15 +14,15 @@ import {TextEncoder, TextDecoder} from '../platform/text-encoder-web.js';
 import {Entity} from './entity.js';
 import {Reference} from './reference.js';
 import {Type, EntityType, CollectionType, ReferenceType, SingletonType} from './type.js';
-import {Storable} from './handle.js';
+import {Storable} from './storable.js';
 import {Particle} from './particle.js';
-import {Handle, Singleton} from './handle.js';
 import {Dictionary} from './hot.js';
 import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {BiMap} from './bimap.js';
-import {CollectionHandle, SingletonHandle} from './storageNG/handle.js';
+import {CollectionHandle, SingletonHandle, Handle} from './storageNG/handle.js';
+import { CRDTTypeRecord } from './crdt/crdt.js';
 
 type EntityTypeMap = BiMap<string, EntityType>;
 
@@ -753,7 +753,7 @@ export class WasmParticle extends Particle {
   // tslint:disable-next-line: no-any
   private exports: any;
   private innerParticle: WasmAddress;
-  private handleMap = new BiMap<Handle, WasmAddress>();
+  private handleMap = new BiMap<Handle<CRDTTypeRecord>, WasmAddress>();
   private encoders = new Map<Type, StringEncoder>();
   private decoders = new Map<Type, StringDecoder>();
 
@@ -791,7 +791,7 @@ export class WasmParticle extends Particle {
   // That means entity transfer goes from the StorageProxy, deserializes at the outer Handle
   // which then notifies this class (calling onHandle*), and we then serialize into the wasm
   // transfer format. Obviously this can be improved.
-  async setHandles(handles: ReadonlyMap<string, Handle>) {
+  async setHandles(handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>) {
     const refTypePromises = [];
     for (const [name, handle] of handles) {
       const p = this.container.storeStr(name);
@@ -831,7 +831,7 @@ export class WasmParticle extends Particle {
     }
   }
 
-  async onHandleSync(handle: Handle, model) {
+  async onHandleSync(handle: Handle<CRDTTypeRecord>, model) {
     const wasmHandle = this.handleMap.getL(handle);
     if (!model) {
       this.exports._syncHandle(this.innerParticle, wasmHandle, 0);
@@ -839,7 +839,7 @@ export class WasmParticle extends Particle {
     }
     const encoder = this.getEncoder(handle.type);
     let p;
-    if (handle instanceof Singleton || handle instanceof SingletonHandle) {
+    if (handle instanceof SingletonHandle) {
       p = this.container.storeBytes(await encoder.encodeSingleton(model));
     } else {
       p = this.container.storeBytes(await encoder.encodeCollection(model));
@@ -849,7 +849,7 @@ export class WasmParticle extends Particle {
   }
 
   // tslint:disable-next-line: no-any
-  async onHandleUpdate(handle: Handle, update: {data?: any, added?: any, removed?: any, originator?: any}) {
+  async onHandleUpdate(handle: Handle<CRDTTypeRecord>, update: {data?: any, added?: any, removed?: any, originator?: any}) {
     if (update.originator) {
       return;
     }
@@ -857,7 +857,7 @@ export class WasmParticle extends Particle {
     const encoder = this.getEncoder(handle.type);
     let p1 = 0;
     let p2 = 0;
-    if (handle instanceof Singleton || handle instanceof SingletonHandle) {
+    if (handle instanceof SingletonHandle) {
       if (update.data) {
         p1 = this.container.storeBytes(await encoder.encodeSingleton(update.data));
       }
@@ -870,7 +870,7 @@ export class WasmParticle extends Particle {
   }
 
   // Ignored for wasm particles.
-  async onHandleDesync(handle: Handle) {}
+  async onHandleDesync(handle: Handle<CRDTTypeRecord>) {}
 
   // Store API.
   //
@@ -962,7 +962,7 @@ export class WasmParticle extends Particle {
     return decoder;
   }
 
-  private getHandle(wasmHandle: WasmAddress): Handle {
+  private getHandle(wasmHandle: WasmAddress): Handle<CRDTTypeRecord> {
     const handle = this.handleMap.getR(wasmHandle);
     if (!handle) {
       throw this.reportedError('attempted to write to unconnected handle');
@@ -970,7 +970,7 @@ export class WasmParticle extends Particle {
     return handle;
   }
 
-  private ensureIdentified(entity: Storable, handle: Handle): WasmAddress {
+  private ensureIdentified(entity: Storable, handle: Handle<CRDTTypeRecord>): WasmAddress {
     let p = 0;
     // TODO: rework Reference/Entity internals to avoid this instance check?
     if (entity instanceof Entity && !Entity.isIdentified(entity)) {

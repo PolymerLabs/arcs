@@ -11,7 +11,6 @@
 import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 import {Type, EntityType} from './type.js';
-import {Storable} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary, Consumer} from './hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
@@ -19,6 +18,7 @@ import {Refinement} from './refiner.js';
 import {Flags} from './flags.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './recipe/ttl.js';
+import {Storable} from './storable.js';
 
 export type EntityRawData = {};
 
