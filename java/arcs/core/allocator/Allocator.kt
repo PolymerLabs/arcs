@@ -23,7 +23,6 @@ import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.VolatileStorageKey
 import arcs.core.type.Type
 
 /**
@@ -48,7 +47,7 @@ class Allocator(val hostRegistry: HostRegistry) {
         val idGenerator = Id.Generator.newSession()
         val arcId = idGenerator.newArcId(arcName)
         // Any unresolved handles ('create' fate) need storage keys
-        createStorageKeysIfNecessary(arcId, idGenerator, plan)
+        createStorageKeysIfNecessary(arcId, plan)
         val partitions = computePartitions(arcId, plan)
         // Store computed partitions for later
         writePartitionMap(arcId, partitions)
@@ -82,10 +81,10 @@ class Allocator(val hostRegistry: HostRegistry) {
     }
 
     /**
-     * Finds [HandleSpec] instances which were unresolved at build time (null [StorageKey]) and
-     * attaches generated keys.
+     * Finds [HandleConnection] instances which were unresolved at build time
+     * [CreateableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
      */
-    private fun createStorageKeysIfNecessary(arcId: ArcId, idGenerator: Id.Generator, plan: Plan) {
+    private fun createStorageKeysIfNecessary(arcId: ArcId, plan: Plan) {
         val createdKeys: MutableMap<StorageKey, StorageKey> = mutableMapOf()
 
         plan.particles.forEach {
@@ -95,7 +94,6 @@ class Allocator(val hostRegistry: HostRegistry) {
                         if (!createdKeys.containsKey(storageKey)) {
                             createdKeys[storageKey] = createStorageKey(
                                 arcId,
-                                idGenerator,
                                 storageKey as CreateableStorageKey,
                                 type
                             )
@@ -112,11 +110,16 @@ class Allocator(val hostRegistry: HostRegistry) {
      * Incomplete implementation for now, only Ram or Volatile can be created.
      */
     private fun createStorageKey(
-        arcId: ArcId, idGenerator: Id.Generator, storageKey: CreateableStorageKey, type: Type
-    ): StorageKey = CapabilitiesResolver(
-        CapabilitiesResolver.StorageKeyOptions(arcId, idGenerator)
-    ).createStorageKey(storageKey.capabilities, type.toSchemeHash())
-        ?: throw Exception("Unable to create storage key $storageKey")
+        arcId: ArcId,
+        storageKey: CreateableStorageKey,
+        type: Type
+    ): StorageKey =
+        CapabilitiesResolver(CapabilitiesResolver.StorageKeyOptions(arcId)).createStorageKey(
+            storageKey.capabilities,
+            type.toSchemaHash()
+        )?.childKeyForHandle(storageKey.nameFromManifest) ?: throw Exception(
+            "Unable to create storage key $storageKey"
+        )
 
     /**
      * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]
@@ -145,7 +148,7 @@ class Allocator(val hostRegistry: HostRegistry) {
             ?: throw ParticleNotFoundException(particle)
 }
 
-private fun Type.toSchemeHash(): String {
+private fun Type.toSchemaHash(): String {
     if (this is SingletonType<*>) {
         if (this.containedType is EntityType) {
             return (this.containedType as EntityType).entitySchema.hash
@@ -155,5 +158,5 @@ private fun Type.toSchemeHash(): String {
             return (this.collectionType as EntityType).entitySchema.hash
         }
     }
-    return ""
+    throw Exception("Can't compute schemaHash of unknown type $this")
 }
