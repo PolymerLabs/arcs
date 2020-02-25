@@ -139,6 +139,8 @@ const nodeFlags = [
 ];
 
 // The 'cron' env type indicates the daily build in Travis.
+// TODO(bgogul): Review Travis-specific health stats upload and remove or
+// rework for Parker.
 const isTravisDaily = (process.env.TRAVIS_EVENT_TYPE === 'cron');
 
 /** Logs to console.log, unless suppressed by the global --quiet flag. */
