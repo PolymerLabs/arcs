@@ -151,14 +151,15 @@ class Allocator(val hostRegistry: HostRegistry) {
 }
 
 private fun Type.toSchemaHash(): String {
-    if (this is SingletonType<*>) {
-        if (this.containedType is EntityType) {
+    when (this) {
+        is SingletonType<*> -> if (this.containedType is EntityType) {
             return (this.containedType as EntityType).entitySchema.hash
         }
-    } else if (this is CollectionType<*>) {
-        if (this.collectionType is EntityType) {
+        is CollectionType<*> -> if (this.collectionType is EntityType) {
             return (this.collectionType as EntityType).entitySchema.hash
         }
+        is EntityType -> return this.entitySchema.hash
+        else -> Unit
     }
     throw Exception("Can't compute schemaHash of unknown type $this")
 }
