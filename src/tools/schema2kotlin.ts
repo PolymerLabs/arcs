@@ -84,9 +84,9 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
         const refinement = type.entitySchema.refinement;
         const queryArgType: Primitive = refinement.getQueryNames().get('?');
         switch (queryArgType) {
-          case 'Text': return 'String'
-          case 'Number': return 'Int'
-          case 'Boolean': return 'Boolean'
+          case 'Text': return 'String';
+          case 'Number': return 'Int';
+          case 'Boolean': return 'Boolean';
           default:
             throw new Error(`Unsupported query argument type: ${queryArgType}`);
         }
