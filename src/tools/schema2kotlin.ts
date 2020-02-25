@@ -10,6 +10,8 @@
 import {Schema2Base, ClassGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
+import {EntityType} from '../runtime/type.js';
+import {Primitive} from '../runtime/refiner.js';
 import minimist from 'minimist';
 
 // TODO: use the type lattice to generate interfaces
@@ -71,6 +73,24 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
       const handleName = connection.name;
       const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
+      const queryType = () => {
+        if (!connection.type.isCollectionType()) {
+          return 'Unit';
+        }
+        const type = connection.type.collectionType;
+        if (!(type instanceof EntityType)) {
+          return 'Unit';
+        }
+        const refinement = type.entitySchema.refinement;
+        const queryArgType: Primitive = refinement.getQueryNames().get('?');
+        switch (queryArgType) {
+          case 'Text': return 'String'
+          case 'Number': return 'Int'
+          case 'Boolean': return 'Boolean'
+          default:
+            throw new Error(`Unsupported query argument type: ${queryArgType}`);
+        }
+      };
       let handleInterfaceType: string;
       if (this.opts.wasm) {
         handleInterfaceType = `Wasm${handleConcreteType}Impl<${entityType}>`;

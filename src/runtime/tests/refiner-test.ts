@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter, Polynomial, Fraction} from '../refiner.js';
+import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter, KTExtracter, Polynomial, Fraction} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -195,10 +195,12 @@ describe('dynamic refinements', () => {
         const contacts = manifestAst[0].args[0];
         const nameType = contacts.type.type.fields[0].type;
         const ref = Refinement.fromAst(nameType.refinement, typeData);
-        assert.sameMembers([...ref.expression.getFieldNames()], ['name'], 'should infer indexes from refinement');
-        assert.sameMembers([...ref.expression.getQueryNames()], ['?'], 'should infer query args from refinement');
+        it('field names, query argument names and query argument types', () => {
+            assert.sameMembers([...ref.expression.getFieldNames()], ['name'], 'should infer indexes from refinement');
+            assert.sameMembers([...ref.expression.getQueryNames()], [['?', 'Text']], 'should infer query args from refinement');
 
-        assert.strictEqual(ref.toString(), '[(name == ?)]');
+            assert.strictEqual(ref.toString(), '[(name == ?)]');
+        });
 
         const dyn = (ref.expression as BinaryExpression).rightExpr;
         assert.equal(dyn.evalType, 'Text', 'the algorithm discovers the type');
@@ -224,10 +226,13 @@ describe('dynamic refinements', () => {
         const typeData = {'name': 'Text', 'age': 'Number'};
         const contacts = manifestAst[0].args[0];
         const ref = Refinement.fromAst(contacts.type.type.refinement, typeData);
-        assert.sameMembers([...ref.expression.getFieldNames()], ['name', 'age'], 'should infer indexes from refinement');
-        assert.sameMembers([...ref.expression.getQueryNames()], ['?'], 'should infer query args from refinement');
 
-        assert.strictEqual(ref.toString(), '[((name == ?) and (age > 10))]');
+        it('field names, query argument names and query argument types', () => {
+            assert.sameMembers([...ref.expression.getFieldNames()], ['name', 'age'], 'should infer indexes from refinement');
+            assert.sameMembers([...ref.expression.getQueryNames()], [['?', 'Text']], 'should infer query args from refinement');
+
+            assert.strictEqual(ref.toString(), '[((name == ?) and (age > 10))]');
+        });
 
         const dyn = ((ref.expression as BinaryExpression).leftExpr as BinaryExpression).rightExpr;
         assert.equal(dyn.evalType, 'Text', 'the algorithm discovers the type');
@@ -524,6 +529,56 @@ describe('SQLExtracter', () => {
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = SQLExtracter.fromSchema(schema, 'table');
     assert.strictEqual(query, 'SELECT * FROM table;');
+  });
+});
+
+describe('KTExtracter', () => {
+  it('tests can create queries from refinement expressions involving math expressions', Flags.withFieldRefinementsAllowed(async () => {
+      const manifest = await Manifest.parse(`
+        particle Foo
+          input: reads Something {a: Number [ a > 3 and a != 100 ], b: Number [b > 20 and b < 100] } [a + b/3 > 100]
+      `);
+      const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
+      const query: string = KTExtracter.fromSchema(schema);
+      assert.strictEqual(query, '((value.a + (value.b / 3)) > 100) && ((value.a > 3) && (!(value.a == 100))) && ((value.b > 20) && (value.b < 100))');
+  }));
+  it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        input: reads Something {a: Boolean [ not (a == true) ], b: Boolean [not not b != false] } [a or b]
+    `);
+    const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
+    const query = KTExtracter.fromSchema(schema);
+    //TODO(cypher1): Implement some simple boolean simplifications.
+    //This should simplify to, '(!value.a) && value.b'
+    assert.strictEqual(query, '(value.b || value.a) && (!value.a) && value.b');
+  }));
+  it('tests can create queries where field refinement is null', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        input: reads Something {a: Boolean, b: Boolean} [a and b]
+    `);
+    const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
+    const query = KTExtracter.fromSchema(schema);
+    assert.strictEqual(query, '(value.b && value.a)');
+  });
+  it('tests can create queries where schema refinement is null', Flags.withFieldRefinementsAllowed(async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        input: reads Something {a: Boolean [not a], b: Boolean [b]}
+    `);
+    const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
+    const query = KTExtracter.fromSchema(schema);
+    assert.strictEqual(query, '(!value.a) && value.b');
+  }));
+  it('tests can create queries where there is no refinement', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        input: reads Something {a: Boolean, b: Boolean}
+    `);
+    const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
+    const query = KTExtracter.fromSchema(schema);
+    assert.strictEqual(query, '');
   });
 });
 

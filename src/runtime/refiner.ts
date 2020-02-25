@@ -14,7 +14,7 @@ import {Schema} from './schema.js';
 import {Entity} from './entity.js';
 import {AuditException} from './arc-exceptions.js';
 
-enum Primitive {
+export enum Primitive {
   BOOLEAN = 'Boolean',
   NUMBER = 'Number',
   TEXT = 'Text',
@@ -26,6 +26,8 @@ export enum AtleastAsSpecific {
   NO,
   UNKNOWN
 }
+
+const KOTLIN_QUERY_ARGUMENT_NAME = 'query_argument';
 
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
@@ -99,7 +101,7 @@ export class Refinement {
     return this.expression.getFieldNames();
   }
 
-  getQueryNames(): Set<string> {
+  getQueryNames(): Map<string, Primitive> {
     return this.expression.getQueryNames();
   }
 
@@ -152,6 +154,11 @@ export class Refinement {
 
   toString(): string {
     return '[' + this.expression.toString() + ']';
+  }
+
+  toKTExpression(): string {
+    this.normalize();
+    return this.expression.toKTExpression();
   }
 
   toSQLExpression(): string {
@@ -226,14 +233,16 @@ abstract class RefinementExpression {
 
   abstract toSQLExpression(): string;
 
+  abstract toKTExpression(): string;
+
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives;
 
   getFieldNames(): Set<string> {
     return new Set<string>();
   }
 
-  getQueryNames(): Set<string> {
-    return new Set<string>();
+  getQueryNames(): Map<string, Primitive> {
+    return new Map<string, Primitive>();
   }
 
   getTextPrimitives(): Set<string> {
@@ -288,6 +297,10 @@ export class BinaryExpression extends RefinementExpression {
 
   toSQLExpression(): string {
     return `(${this.leftExpr.toSQLExpression()} ${this.operator.toSQLOp()} ${this.rightExpr.toSQLExpression()})`;
+  }
+
+  toKTExpression(): string {
+    return `(${this.leftExpr.toKTExpression()} ${this.operator.toKTOp()} ${this.rightExpr.toKTExpression()})`;
   }
 
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
@@ -417,10 +430,10 @@ export class BinaryExpression extends RefinementExpression {
     return new Set<string>([...fn1, ...fn2]);
   }
 
-  getQueryNames(): Set<string> {
+  getQueryNames(): Map<string, Primitive> {
     const fn1 = this.leftExpr.getQueryNames();
     const fn2 = this.rightExpr.getQueryNames();
-    return new Set<string>([...fn1, ...fn2]);
+    return new Map<string, Primitive>([...fn1, ...fn2]);
   }
 
   getTextPrimitives(): Set<string> {
@@ -461,6 +474,10 @@ export class UnaryExpression extends RefinementExpression {
 
   toSQLExpression(): string {
     return `(${this.operator.toSQLOp()} ${this.expr.toSQLExpression()})`;
+  }
+
+  toKTExpression(): string {
+    return `(${this.operator.toKTOp()}${this.expr.toKTExpression()})`;
   }
 
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
@@ -507,7 +524,7 @@ export class UnaryExpression extends RefinementExpression {
     return this.expr.getFieldNames();
   }
 
-  getQueryNames(): Set<string> {
+  getQueryNames(): Map<string, Primitive> {
     return this.expr.getQueryNames();
   }
 
@@ -548,6 +565,11 @@ export class FieldNamePrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
+  toKTExpression(): string {
+    // TODO(cypher1): Use the kotlin generator's identifier renaming system
+    return `value.${this.value.toString()}`;
+  }
+
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     if (data[this.value] != undefined) {
       return data[this.value];
@@ -586,6 +608,11 @@ export class QueryArgumentPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
+  toKTExpression(): string {
+    // TODO(cypher1): Handle multiple query arguments.
+    return KOTLIN_QUERY_ARGUMENT_NAME;
+  }
+
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     if (data[this.value] != undefined) {
       return data[this.value];
@@ -594,8 +621,8 @@ export class QueryArgumentPrimitive extends RefinementExpression {
     return null;
   }
 
-  getQueryNames(): Set<string> {
-    return new Set<string>([this.value]);
+  getQueryNames(): Map<string, Primitive> {
+    return new Map<string, Primitive>([[this.value, this.evalType]]);
   }
 }
 
@@ -621,6 +648,17 @@ export class NumberPrimitive extends RefinementExpression {
   }
 
   toSQLExpression(): string {
+    return this.value.toString();
+  }
+
+  toKTExpression(): string {
+    // This assumes that the associated Kotlin type will be `double`.
+    if (this.value === Infinity) {
+        return 'Double.POSITIVE_INFINITY';
+    }
+    if (this.value === -Infinity) {
+        return 'Double.NEGATIVE_INFINITY';
+    }
     return this.value.toString();
   }
 
@@ -654,6 +692,10 @@ class BooleanPrimitive extends RefinementExpression {
     throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalized.');
   }
 
+  toKTExpression(): string {
+    return `${this.value}`;
+  }
+
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
@@ -681,7 +723,13 @@ class TextPrimitive extends RefinementExpression {
   }
 
   toSQLExpression(): string {
-    throw new Error(`'${this.value}'`);
+    // TODO(cypher1): Consider escaping this for SQL code generation.
+    return `'${this.value}'`;
+  }
+
+  toKTExpression(): string {
+    // TODO(cypher1): Consider escaping this for Kotlin code generation.
+    return `"${this.value}"`;
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -1045,23 +1093,24 @@ interface OperatorInfo {
   argType: Primitive | 'same';
   evalType: Primitive;
   sqlOp: string;
+  ktOp: string;
 }
 
 const operatorTable: Dictionary<OperatorInfo> = {
-  [Op.AND]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, sqlOp: 'AND'},
-  [Op.OR]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, sqlOp: 'OR'},
-  [Op.LT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '<'},
-  [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '>'},
-  [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '<='},
-  [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '>='},
-  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '+'},
-  [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '-'},
-  [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '*'},
-  [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '/'},
-  [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN, sqlOp: 'NOT'},
-  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '-'},
-  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '='},
-  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '<>'},
+  [Op.AND]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, sqlOp: 'AND', ktOp: '&&'},
+  [Op.OR]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, sqlOp: 'OR', ktOp: '||'},
+  [Op.LT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '<', ktOp: '<'},
+  [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '>', ktOp: '>'},
+  [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '<=', ktOp: '<='},
+  [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '>=', ktOp: '>='},
+  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '+', ktOp: '+'},
+  [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '-', ktOp: '-'},
+  [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '*', ktOp: '*'},
+  [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '/', ktOp: '/'},
+  [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN, sqlOp: 'NOT', ktOp: '!'},
+  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '-', ktOp: '-'},
+  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '=', ktOp: '=='},
+  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '<>', ktOp: '!='},
 };
 
 const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimitives> = {
@@ -1106,6 +1155,10 @@ export class RefinementOperator {
 
   toSQLOp(): string {
     return this.opInfo.sqlOp;
+  }
+
+  toKTOp(): string {
+    return this.opInfo.ktOp;
   }
 
   updateOp(operator: Op) {
@@ -1169,6 +1222,22 @@ export class SQLExtracter {
       }
     }
     return `SELECT * FROM ${table}` + (filterTerms.length ? ` WHERE ${filterTerms.join(' AND ')}` : '') + ';';
+  }
+}
+
+export class KTExtracter {
+  static fromSchema(schema: Schema): string {
+    const filterTerms = [];
+    if (schema.refinement) {
+      filterTerms.push(schema.refinement.toKTExpression());
+    }
+    for (const field of Object.values(schema.fields)) {
+      if (field.refinement) {
+        filterTerms.push(field.refinement.toKTExpression());
+      }
+    }
+
+    return `${filterTerms.join(' && ')}`;
   }
 }
 
