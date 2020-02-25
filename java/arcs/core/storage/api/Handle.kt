@@ -29,9 +29,6 @@ interface WritableSingleton<T : Entity> : Handle {
     /** Sets the value of the singleton. */
     suspend fun store(entity: T)
 
-    /** TODO(heimlich): remove this once all particles are changed. */
-    suspend fun set(entity: T) = store(entity)
-
     /** Clears the value of the singleton. */
     suspend fun clear()
 }

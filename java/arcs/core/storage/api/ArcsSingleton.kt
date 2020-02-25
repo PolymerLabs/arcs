@@ -216,9 +216,6 @@ class ArcsSingleton<T, StoreData, StoreOp>(
         return success && applyOperationToStore(op)
     }
 
-    /** TODO(heimlich): remove once API updates are in */
-    suspend fun set(value: T): Boolean = store(value)
-
     /**
      * Launches a coroutine to set the value of the [ArcsSingleton] to the provided [value] and
      * returns a [Deferred] which will be resolved to whether or not the update could be applied.
