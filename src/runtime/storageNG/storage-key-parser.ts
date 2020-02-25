@@ -22,8 +22,6 @@ type Parser = (key: string, parse: ParserTopLevel) => StorageKey;
  * method.
  */
 export class StorageKeyParser {
-  private static parsers = StorageKeyParser.getDefaultParsers();
-
   private static defaultParsers: [string, Parser][] = [
     ['reference-mode', ReferenceModeStorageKey.fromString]
   ];
@@ -31,6 +29,8 @@ export class StorageKeyParser {
   private static getDefaultParsers(): Map<string, Parser> {
     return new Map<string, Parser>(this.defaultParsers);
   }
+
+  private static parsers = StorageKeyParser.getDefaultParsers();
 
   static parse(key: string): StorageKey {
     const match = key.match(/^((?:\w|-)+):\/\/(.*)$/);
