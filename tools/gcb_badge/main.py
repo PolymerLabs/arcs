@@ -15,7 +15,6 @@ from google.cloud import storage, exceptions
 import base64
 import json
 import os
-import re
 from string import Template
 
 
