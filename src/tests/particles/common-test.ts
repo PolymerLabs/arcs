@@ -71,23 +71,7 @@ describe('common particles test', () => {
   });
 
 
-  it.skip('copy handle test', async () => {
-    // TODO(shans): enable this test again. At the moment it fails because inline data is given
-    // in the old (incompatible format). It should be substituted with something like this:
-    //   resource BigThings
-    //   start
-    //   {"root": {"values": {"ida": {"value": {"id": "ida", "rawData":{"name": "house"}}, "version": {"u": 1}},
-    //                        "idb": {"value": {"id": "idb", "rawData":{"name": "car"}}, "version": {"u": 1}}},
-    //             "version":{"u": 1}}, "locations": {}}
-    // store Store0 of [Thing] 'bigthings' in BigThings
-
-    // resource SmallThings
-    //   start
-    //   {"root": {"values": {"idc": {"value": {"id": "idc", "rawData":{"name": "pen"}}, "version": {"u": 1}},
-    //                        "idd": {"value": {"id": "idd", "rawData":{"name": "spoon"}}, "version": {"u": 1}},
-    //                        "ide": {"value": {"id": "ide", "rawData":{"name": "ball"}}, "version": {"u": 1}}},
-    //             "version":{"u": 1}}, "locations": {}}
-    // store Store1 of [Thing] 'smallthings' in SmallThings
+  it('copy handle test', async () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);

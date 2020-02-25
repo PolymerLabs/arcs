@@ -28,7 +28,6 @@ import {Arc} from '../../runtime/arc.js';
 // registered automatically).
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
-import {Flags} from '../../runtime/flags.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -92,10 +91,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
           memoryProvider: new TestVolatileMemoryProvider()
         });
       }
-    });
-
-    after(() => {
-      Flags.reset();
     });
 
     async function setup(recipeName) {

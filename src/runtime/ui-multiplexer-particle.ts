@@ -12,7 +12,7 @@ import {ParticleSpec} from './particle-spec.js';
 import {UiTransformationParticle} from './ui-transformation-particle.js';
 import {Handle} from './storageNG/handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
-import { CRDTTypeRecord } from './crdt/crdt.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
 
 export class UiMultiplexerParticle extends UiTransformationParticle {
 

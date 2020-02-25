@@ -22,7 +22,7 @@ import {UserException} from './arc-exceptions.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {BiMap} from './bimap.js';
 import {CollectionHandle, SingletonHandle, Handle} from './storageNG/handle.js';
-import { CRDTTypeRecord } from './crdt/crdt.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
 
 type EntityTypeMap = BiMap<string, EntityType>;
 

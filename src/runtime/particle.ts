@@ -14,7 +14,7 @@ import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
-import { CRDTTypeRecord } from './crdt/crdt.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
 
 export interface Capabilities {
   constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>;

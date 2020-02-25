@@ -27,7 +27,7 @@ import {ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Ttl} from './recipe/ttl.js';
-import { Handle } from './storageNG/handle.js';
+import {Handle} from './storageNG/handle.js';
 
 type StorageProxy = StorageProxyNG<CRDTTypeRecord>;
 

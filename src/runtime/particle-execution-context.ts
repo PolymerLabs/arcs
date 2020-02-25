@@ -30,7 +30,7 @@ import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './recipe/ttl.js';
-import { Handle, handleNGFor } from './storageNG/handle.js';
+import {Handle, handleNGFor} from './storageNG/handle.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
