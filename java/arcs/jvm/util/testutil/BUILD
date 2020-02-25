@@ -6,8 +6,8 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_library(
     name = "testutil",
-    srcs = glob(["*.kt"]),
     testonly = True,
+    srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/util",
     ],
