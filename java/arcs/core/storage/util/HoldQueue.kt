@@ -14,6 +14,8 @@ package arcs.core.storage.util
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
+import arcs.core.storage.util.HoldQueue.Entity
+import arcs.core.storage.util.HoldQueue.Record
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -75,11 +77,11 @@ class HoldQueue {
     }
 
     /** Simple alias for an entity being referenced. */
-    data class Entity(val id: ReferenceId, val version: VersionMap)
+    data class Entity(val id: ReferenceId, val version: VersionMap?)
 
     // Internal for testing.
     /* internal */ data class Record(
-        val ids: MutableMap<ReferenceId, VersionMap>,
+        val ids: MutableMap<ReferenceId, VersionMap?>,
         val onRelease: suspend () -> Unit
     )
 }

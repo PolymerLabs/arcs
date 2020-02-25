@@ -412,7 +412,7 @@ class DatabaseDriverTest {
         ): CrdtSet.DataImpl<Reference> = CrdtSet.DataImpl(
             versionMap,
             this.map { it.toReference(baseKey) }
-                .associate { it.id to CrdtSet.DataValue(it.version, it) }
+                .associate { it.id to CrdtSet.DataValue(requireNotNull(it.version), it) }
                 .toMutableMap()
         )
 
@@ -423,7 +423,9 @@ class DatabaseDriverTest {
             versionMap,
             this?.let {
                 val reference = it.toReference(baseKey)
-                mutableMapOf(reference.id to CrdtSet.DataValue(reference.version, reference))
+                mutableMapOf(
+                    reference.id to CrdtSet.DataValue(requireNotNull(reference.version), reference)
+                )
             } ?: mutableMapOf()
         )
 
