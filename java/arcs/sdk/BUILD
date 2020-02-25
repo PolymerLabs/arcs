@@ -19,10 +19,14 @@ arcs_kt_jvm_library(
     exports = [
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/storage/api:api-common",
+        "//java/arcs/jvm/storage/api",
     ],
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/storage/api:api-common",
+        "//java/arcs/jvm/storage/api",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
@@ -34,6 +38,9 @@ kt_js_library(
         "*.kt",
         "js/*.kt",
     ]),
+    deps = [
+        "//java/arcs/core/storage/api:api-common-js",
+    ],
 )
 
 arcs_kt_native_library(
@@ -53,5 +60,8 @@ arcs_kt_jvm_library(
     srcs = glob(["*.kt"]) + [
         "wasm/Encoding.kt",
         "jvm/Utils.kt",
+    ],
+    deps = [
+        "//java/arcs/core/storage/api:api-common",
     ],
 )
