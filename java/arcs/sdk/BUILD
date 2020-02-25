@@ -24,10 +24,10 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
-        "//java/arcs/core/storage/api:api-common",
-        "//java/arcs/jvm/storage/api",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/api:api-common",
+        "//java/arcs/jvm/storage/api",
         "//java/arcs/sdk/storage",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
@@ -41,11 +41,11 @@ kt_js_library(
         "js/*.kt",
     ]),
     deps = [
-        "//java/arcs/core/storage/api:api-common-js",
         "//java/arcs/core/crdt:crdt-js",
         "//java/arcs/core/data:data-js",
         "//java/arcs/core/storage:reference-js",
         "//java/arcs/core/storage:storage_key-js",
+        "//java/arcs/core/storage/api:api-common-js",
         "//java/arcs/sdk/storage:storage-js",
     ],
 )
