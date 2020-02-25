@@ -5,7 +5,10 @@ import arcs.core.storage.StorageKey
 /**
  * This class represents a storage key in a compiled [Plan] with 'create' fate.
  */
-data class CreateableStorageKey(val nameFromManifest: String) : StorageKey("create") {
+data class CreateableStorageKey(
+    val nameFromManifest: String,
+    val capabilities: Capabilities
+) : StorageKey("create") {
     override fun toKeyString() = nameFromManifest
 
     override fun childKeyWithComponent(component: String): StorageKey {
