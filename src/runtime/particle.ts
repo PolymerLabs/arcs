@@ -8,14 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {BigCollection} from './handle.js';
-import {Collection} from './handle.js';
-import {Handle} from './handle.js';
+import {Handle} from './storageNG/handle.js';
 import {Runnable, Consumer} from './hot.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
 
 export interface Capabilities {
   constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>;
@@ -33,7 +32,7 @@ export class Particle {
   public spec: ParticleSpec;
   public readonly extraData: boolean;
   public readonly relevances: (Relevance | number)[] = [];
-  public handles: ReadonlyMap<string, Handle>;
+  public handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>;
 
   private _idle: Promise<void> = Promise.resolve();
   private _idleResolver: Runnable;
@@ -88,7 +87,7 @@ export class Particle {
     }
   }
 
-  async callSetHandles(handles: ReadonlyMap<string, Handle>, onException: Consumer<Error>) {
+  async callSetHandles(handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>, onException: Consumer<Error>) {
     this.handles = handles;
     await this.invokeSafely(async p => p.setHandles(handles), onException);
     this._handlesToSync = this._countInputHandles(handles);
@@ -107,10 +106,10 @@ export class Particle {
    *
    * @param handles a map from handle names to store handles.
    */
-  protected async setHandles(handles: ReadonlyMap<string, Handle>): Promise<void> {
+  protected async setHandles(handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>): Promise<void> {
   }
 
-  private _countInputHandles(handles: ReadonlyMap<string, Handle>): number {
+  private _countInputHandles(handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>): number {
     let count = 0;
     for (const [name, handle] of handles) {
       if (handle.canRead) {
@@ -120,7 +119,7 @@ export class Particle {
     return count;
   }
 
-  async callOnHandleSync(handle: Handle, model, onException: Consumer<Error>) {
+  async callOnHandleSync(handle: Handle<CRDTTypeRecord>, model, onException: Consumer<Error>) {
     await this.invokeSafely(async p => p.onHandleSync(handle, model), onException);
     // once we've synced each readable handle, we are ready to start
     if (--this._handlesToSync === 0) {
@@ -137,11 +136,11 @@ export class Particle {
    * @param model For Singleton-backed Handles, the Entity data or null if the Singleton is not set.
    *        For Collection-backed Handles, the Array of Entities, which may be empty.
    */
-  protected async onHandleSync(handle: Handle, model): Promise<void> {
+  protected async onHandleSync(handle: Handle<CRDTTypeRecord>, model): Promise<void> {
   }
 
   // tslint:disable-next-line: no-any
-  async callOnHandleUpdate(handle: Handle, update: {data?: any, added?: any, removed?: any, originator?: any}, onException: Consumer<Error>) {
+  async callOnHandleUpdate(handle: Handle<CRDTTypeRecord>, update: {data?: any, added?: any, removed?: any, originator?: any}, onException: Consumer<Error>) {
     await this.invokeSafely(async p => p.onHandleUpdate(handle, update), onException);
   }
 
@@ -159,10 +158,10 @@ export class Particle {
    *  - originator: whether the update originated from this particle.
    */
   // tslint:disable-next-line: no-any
-  protected async onHandleUpdate(handle: Handle, update: {data?: any, added?: any, removed?: any, originator?: boolean}): Promise<void> {
+  protected async onHandleUpdate(handle: Handle<CRDTTypeRecord>, update: {data?: any, added?: any, removed?: any, originator?: boolean}): Promise<void> {
   }
 
-  async callOnHandleDesync(handle: Handle, onException: Consumer<Error>) {
+  async callOnHandleDesync(handle: Handle<CRDTTypeRecord>, onException: Consumer<Error>) {
     await this.invokeSafely(async p => p.onHandleDesync(handle), onException);
   }
 
@@ -175,7 +174,7 @@ export class Particle {
    *
    * @param handle The Handle instance that was desynchronized.
    */
-  protected async onHandleDesync(handle: Handle): Promise<void> {
+  protected async onHandleDesync(handle: Handle<CRDTTypeRecord>): Promise<void> {
   }
 
   async constructInnerArc(): Promise<InnerArcHandle> {
@@ -265,10 +264,6 @@ export class Particle {
   async setDescriptionPattern(connectionName: string, pattern): Promise<boolean> {
     const descriptions = this.handles.get('descriptions');
     if (descriptions) {
-      if (descriptions instanceof Collection || descriptions instanceof BigCollection) {
-        const entityClass = descriptions.entityClass;
-        await descriptions.store(new entityClass({key: connectionName, value: pattern}, this.spec.name + '-' + connectionName));
-      }
       return true;
     }
     throw new Error('A particle needs a description handle to set a decription pattern');

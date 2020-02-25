@@ -39,9 +39,7 @@ import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceT
         ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
-import {VolatileStorage} from './storage/volatile-storage.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
-import {Flags} from './flags.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Exists} from './storageNG/drivers/driver.js';
@@ -182,15 +180,6 @@ export class Manifest {
     return this._id;
   }
 
-  get storageProviderFactory() {
-    if (Flags.useNewStorageStack) {
-      throw new Error('Not present in the new storage stack.');
-    }
-    if (this._storageProviderFactory == undefined) {
-      this._storageProviderFactory = new StorageProviderFactory(this.id, new ManifestHandleRetriever());
-    }
-    return this._storageProviderFactory;
-  }
   get recipes() {
     return this._recipes;
   }
@@ -1202,12 +1191,8 @@ ${e.message}
    * Creates a new storage key for data local to the manifest itself (e.g.
    * from embedded JSON data, or an external JSON file).
    */
-  private createLocalDataStorageKey(): string | RamDiskStorageKey {
-    if (Flags.useNewStorageStack) {
-      return new RamDiskStorageKey(this.generateID('local-data').toString());
-    } else {
-      return (this.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
-    }
+  private createLocalDataStorageKey(): RamDiskStorageKey {
+    return new RamDiskStorageKey(this.generateID('local-data').toString());
   }
 
   private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader, memoryProvider?: VolatileMemoryProvider) {
@@ -1269,109 +1254,25 @@ ${e.message}
       throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
     }
 
-    if (Flags.useNewStorageStack) {
-      const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
-      if (storageKey instanceof RamDiskStorageKey) {
-        if (!memoryProvider) {
-          throw new ManifestError(item.location, `Creating ram disk stores requires having a memory provider.`);
-        }
-        memoryProvider.getVolatileMemory().deserialize(entities, storageKey.unique);
+    const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
+    if (storageKey instanceof RamDiskStorageKey) {
+      if (!memoryProvider) {
+        throw new ManifestError(item.location, `Creating ram disk stores requires having a memory provider.`);
       }
-      // Note that we used to use a singleton entity ID (if present) instead of the hash. It seems
-      // cleaner not to rely on that.
-      if (!item.id) {
-        const entityHash = await digest(json);
-        id = `${id}:${entityHash}`;
-      }
-      if (!type.isSingleton && !type.isCollectionType()) {
-        type = new SingletonType(type);
-      }
-      return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
-        description: item.description, version: item.version || null, source: item.source,
-        origin: item.origin, referenceMode: false, model: entities});
+      memoryProvider.getVolatileMemory().deserialize(entities, storageKey.unique);
     }
-
-    // TODO: clean this up
-    let unitType: Type = null;
-    let referenceMode = true;
-    if (type instanceof CollectionType) {
-      unitType = type.collectionType;
-    } else if (type instanceof BigCollectionType) {
-      unitType = type.bigCollectionType;
-    } else {
-      if (entities.length === 0) {
-        referenceMode = false;
-      } else {
-        entities = entities.slice(entities.length - 1);
-        unitType = type;
-      }
+    // Note that we used to use a singleton entity ID (if present) instead of the hash. It seems
+    // cleaner not to rely on that.
+    if (!item.id) {
+      const entityHash = await digest(json);
+      id = `${id}:${entityHash}`;
     }
-
-    if (unitType && unitType instanceof EntityType) {
-      let hasSerializedId = false;
-      entities = entities.map(entity => {
-        if (entity == null) {
-          // FIXME: perhaps this happens when we have an empty singleton?
-          // we should just generate an empty list in that case.
-          return null;
-        }
-        hasSerializedId = hasSerializedId || entity.$id;
-        const id = entity.$id || manifest.generateID().toString();
-        delete entity.$id;
-        return {id, rawData: entity};
-      });
-      // TODO(wkorman): Efficiency improvement opportunities: (1) We could build
-      // array of entities in above map rather than mapping again below, (2) we
-      // could hash the object tree data directly rather than stringifying.
-      if (!item.id && !hasSerializedId) {
-        const entityHash = await digest(JSON.stringify(entities.map(entity => entity.rawData)));
-        id = `${id}:${entityHash}`;
-      }
+    if (!type.isSingleton && !type.isCollectionType()) {
+      type = new SingletonType(type);
     }
-
-    // While the referenceMode hack exists, we need to look at the entities being stored to
-    // determine whether this store should be in referenceMode or not.
-    // TODO(shans): Eventually the actual type will need to be part of the determination too.
-    // TODO(shans): Need to take into account the possibility of multiple storage key mappings
-    // at some point.
-    if (entities.length > 0 && entities[0].rawData && entities[0].rawData.storageKey) {
-      let storageKey = entities[0].rawData.storageKey;
-      storageKey = manifest.findStoreByName(storageKey).storageKey;
-      entities = entities.map(({id, rawData}) => ({id, storageKey}));
-    } else if (entities.length > 0) {
-      referenceMode = false;
-    }
-
-    // For this store to be able to be treated as a CRDT, each item needs a key.
-    // Using id as key seems safe, nothing else should do this.
-    let model;
-    if (type instanceof CollectionType) {
-      model = entities.map(value => ({id: value.id, value, keys: new Set([value.id])}));
-    } else if (type instanceof BigCollectionType) {
-      model = entities.map(value => {
-        const index = value.rawData.$index;
-        delete value.rawData.$index;
-        return {id: value.id, index, value, keys: new Set([value.id])};
-      });
-    } else {
-      model = entities.map(value => ({id: value.id, value}));
-    }
-    const version = item.version || null;
-    return manifest.newStore({
-        type,
-        name,
-        id,
-        storageKey: manifest.createLocalDataStorageKey(),
-        tags,
-        originalId,
-        claims,
-        description: item.description,
-        version,
-        source: item.source,
-        origin: item.origin,
-        referenceMode,
-        model,
-    });
+    return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
+      description: item.description, version: item.version || null, source: item.source,
+      origin: item.origin, referenceMode: false, model: entities});
   }
 
   private _newRecipe(name: string): Recipe {
@@ -1385,10 +1286,8 @@ ${e.message}
     // Only register stores that have non-volatile storage key and don't have a
     // #volatile tag.
     if (!this.findStoreById(store.id) &&
-        (Flags.useNewStorageStack
-            ? (store.storageKey as StorageKey).protocol !== 'volatile'
-            : !store.storageKey.toString().startsWith('volatile'))
-        && !tags.includes('volatile')) {
+        (store.storageKey as StorageKey).protocol !== 'volatile' &&
+        !tags.includes('volatile')) {
       this._addStore(store, tags);
     }
   }

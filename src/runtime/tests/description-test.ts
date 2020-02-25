@@ -22,7 +22,7 @@ import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {singletonHandleForTest, collectionHandleForTest} from '../testing/handle-for-test.js';
 import {ConCap} from '../../testing/test-util.js';
-import {Flags} from '../flags.js';
+import {singletonHandle, SingletonInterfaceStore} from '../storageNG/storage-ng.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new SlotComposer();
@@ -176,55 +176,8 @@ ${recipeManifest}
   });
 
   tests.forEach((test) => {
-    it('one particle with BigCollection descriptions ' + test.name, async function() {
-      if (Flags.useNewStorageStack) {
-        this.skip();
-      }
-      const manifest = await Manifest.parse(`
-        schema Foo
-          name: Text
-          fooValue: Text
-        particle A
-          ifoos: reads BigCollection<Foo>
-          ofoo: writes Foo
-          root: consumes Slot
-          description \`read from \${ifoos} and write \${ofoo}\`
-            ifoos \`my-in-foos\`
-            ofoo \`my-out-foo\`
-        recipe
-          foosHandle: create * // BigCollection<Foo>
-          fooHandle: create * // Foo
-          slot0: slot 'rootslotid-root'
-          A
-            ifoos: reads foosHandle
-            ofoo: writes fooHandle
-            root: consumes slot0`);
-
-      let recipe = manifest.recipes[0];
-      const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
-
-      recipe.handles[0].mapToStorage({id: 'test:1', type: fooType.bigCollectionOf()});
-      recipe.handles[1].mapToStorage({id: 'test:2', type: fooType});
-      assert.isTrue(recipe.normalize());
-      assert.isTrue(recipe.isResolved());
-      recipe = recipe.clone();
-
-      const arc = createTestArc(recipe, manifest);
-      const foosStore = await arc.createStore(fooType.bigCollectionOf(), undefined, 'test:1') as BigCollectionStorageProvider;
-
-      // BigCollections don't trigger sync/update events when new values are added to the backing
-      // store. Pre-populate the store to check the suggestion reads in the first one.
-      await foosStore.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key1']);
-      await foosStore.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key2']);
-
-      await test.verifySuggestion({arc},
-          'Read from my-in-foos (collection of items like foo-1) and write my-out-foo.');
-    });
-  });
-
-  tests.forEach((test) => {
     it('one particle and connections descriptions references ' + test.name, async () => {
-      const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
+      const {arc, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -249,7 +202,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('one particle and connections descriptions references no pattern ' + test.name, async () => {
-      const {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
+      const {arc, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -689,18 +642,9 @@ recipe
       const hostedParticle = manifest.findParticleByName('NoDescription');
       const hostedType = manifest.findParticleByName('NoDescMuxer').handleConnections[0].type;
 
-      /**
-       * Can't use singletonHandleForTest to store particle specs for old stack as serialization isn't
-       * implementated.
-       */
-      if (Flags.useNewStorageStack) {
-        const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle');
-        const newHandle = await singletonHandleForTest(arc, newStore);
-        await newHandle.set(hostedParticle.clone());
-      } else {
-        const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle') as SingletonStorageProvider;
-        await newStore.set(hostedParticle.clone().toLiteral());
-      }
+      const newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle') as SingletonInterfaceStore;
+      const newHandle = singletonHandle(await newStore.activate(), arc);
+      await newHandle.set(hostedParticle.clone());
 
       await test.verifySuggestion({arc}, 'Start with capital letter.');
     });

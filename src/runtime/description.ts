@@ -14,14 +14,11 @@ import {UnifiedStore} from './storageNG/unified-store.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, SingletonType} from './type.js';
-import {CollectionStorageProvider, BigCollectionStorageProvider, SingletonStorageProvider} from './storage/storage-provider-base.js';
+import {EntityType, InterfaceType} from './type.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
 import {Dictionary} from './hot.js';
-import {Flags} from './flags.js';
 import {StorageProxy} from './storageNG/storage-proxy.js';
-import {unifiedHandleFor} from './handle.js';
 import {SingletonHandle, CollectionHandle, handleNGFor} from './storageNG/handle.js';
 
 export class Description {
@@ -165,7 +162,7 @@ export class Description {
     }
 
     const proxy = new StorageProxy('id', await store.activate(), store.type, store.storageKey.toString());
-    const handle = unifiedHandleFor({proxy, idGenerator: null, particleId: 'dummy'});
+    const handle = handleNGFor('', proxy, null, null, true, true);
     if (handle instanceof SingletonHandle) {
       if (handle.type.getContainedType() instanceof EntityType) {
         const entityValue = await handle.fetch();

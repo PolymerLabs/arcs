@@ -20,15 +20,12 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider, SingletonStorageProvider, StorageProviderBase} from './storage/storage-provider-base.js';
 import {Type} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyMessage, Store} from './storageNG/store.js';
-import {Flags} from './flags.js';
-import {StorageKey} from './storageNG/storage-key.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
@@ -171,68 +168,6 @@ class PECOuterPortImpl extends PECOuterPort {
   // clean up stale resources such as registered storage listeners, etc.
   clear() {
     this.storageListenerRemovalCallbacks.forEach(cb => { cb(); });
-  }
-
-  onInitializeProxy(handle: StorageProviderBase, callback: number) {
-    const cb = data => { this.SimpleCallback(callback, data); };
-    this.storageListenerRemovalCallbacks.push(() => { handle.legacyOff(cb); });
-    handle.legacyOn(cb);
-  }
-
-  async onSynchronizeProxy(handle: StorageProviderBase, callback: number) {
-    const data = await handle.modelForSynchronization();
-    this.SimpleCallback(callback, data);
-  }
-
-  async onHandleGet(handle: StorageProviderBase, callback: number): Promise<void> {
-    const data = await (handle as SingletonStorageProvider).fetch();
-    this.SimpleCallback(callback, data);
-  }
-
-  async onHandleToList(handle: StorageProviderBase, callback: number) {
-    const data = await (handle as CollectionStorageProvider).toList();
-    this.SimpleCallback(callback, data);
-  }
-
-  onHandleSet(handle: StorageProviderBase, data: {}, particleId: string, barrier: string) {
-    // TODO: Awaiting this promise causes tests to fail...
-    floatingPromiseToAudit((handle as SingletonStorageProvider).set(data, particleId, barrier));
-  }
-
-  onHandleClear(handle: StorageProviderBase, particleId: string, barrier: string) {
-    // TODO: Awaiting this promise causes tests to fail...
-    floatingPromiseToAudit((handle as SingletonStorageProvider).clear(particleId, barrier));
-  }
-
-  async onHandleStore(handle: StorageProviderBase, callback: number, data: {value: {}, keys: string[]}, particleId: string) {
-    // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-    // tslint:disable-next-line: no-any
-    await (handle as CollectionStorageProvider).store(data.value, data.keys, particleId);
-    this.SimpleCallback(callback, {});
-  }
-
-  async onHandleRemove(handle: StorageProviderBase, callback: number, data: {id: string, keys: string[]}, particleId) {
-    // TODO(shans): fix typing once we have types for Singleton/Collection/etc
-    // tslint:disable-next-line: no-any
-    await (handle as CollectionStorageProvider).remove(data.id, data.keys, particleId);
-    this.SimpleCallback(callback, {});
-  }
-
-  async onHandleRemoveMultiple(handle: StorageProviderBase, callback: number, data: [], particleId: string) {
-    await (handle as CollectionStorageProvider).removeMultiple(data, particleId);
-    this.SimpleCallback(callback, {});
-  }
-
-  async onHandleStream(handle: StorageProviderBase, callback: number, pageSize: number, forward: boolean) {
-    this.SimpleCallback(callback, await (handle as BigCollectionStorageProvider).stream(pageSize, forward));
-  }
-
-  async onStreamCursorNext(handle: StorageProviderBase, callback: number, cursorId: number) {
-    this.SimpleCallback(callback, await (handle as BigCollectionStorageProvider).cursorNext(cursorId));
-  }
-
-  onStreamCursorClose(handle: StorageProviderBase, cursorId: number) {
-    (handle as BigCollectionStorageProvider).cursorClose(cursorId);
   }
 
   async onRegister(store: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {

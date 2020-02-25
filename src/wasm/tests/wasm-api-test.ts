@@ -18,7 +18,6 @@ import {VolatileStorage} from '../../runtime/storage/volatile-storage.js';
 import {ReferenceType, SingletonType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
-import {Flags} from '../../runtime/flags.js';
 import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
 import {Store} from '../../runtime/storageNG/store.js';
 import {Exists} from '../../runtime/storageNG/drivers/driver.js';
@@ -55,7 +54,6 @@ const testMap = {
 };
 
 async function createBackingEntity(arc: Arc, referenceType: ReferenceType, id: string, entityData: {}): Promise<[string, Reference|{}]> {
-  assert(Flags.useNewStorageStack, 'createBackingEntity requires the new storage stack');
   const backingStorageKey = new VolatileStorageKey(arc.id, '', id);
   const baseType = referenceType.getContainedType();
   const backingStore = new Store({
@@ -93,10 +91,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
           memoryProvider: new TestVolatileMemoryProvider()
         });
       }
-    });
-
-    after(() => {
-      Flags.reset();
     });
 
     async function setup(recipeName) {
@@ -368,10 +362,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     // TODO: writing to reference-typed handles
-    it('reference-typed handles - storageNG', async function() {
-      if (!Flags.useNewStorageStack) {
-        this.skip();
-      }
+    it('reference-typed handles - storageNG', async () => {
       // TODO(alxr): Remove when tests are ready
       if (isKotlin) {
         return;
@@ -426,9 +417,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     // TODO: nested references
     it('reference-typed schema fields - storageNG', async function() {
-      if (!Flags.useNewStorageStack) {
-        this.skip();
-      }
       // TODO(alxr): Remove when tests are ready
       if (isKotlin) {
         this.skip();

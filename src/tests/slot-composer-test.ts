@@ -11,7 +11,6 @@
 import {Planner} from '../planning/arcs-planning.js';
 import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
-import {Flags} from '../runtime/flags.js';
 import {Loader} from '../platform/loader.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {SlotTestObserver} from '../runtime/testing/slot-test-observer.js';
@@ -118,7 +117,7 @@ recipe
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new Loader();
-    const file = Flags.useNewStorageStack ? 'ProductsTestNg.arcs' : 'products-test.recipes';
+    const file = 'ProductsTestNg.arcs';
     const manifest = `./src/tests/particles/artifacts/${file}`;
     const context = await Manifest.load(manifest, loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});

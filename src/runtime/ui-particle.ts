@@ -10,8 +10,9 @@
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {UiParticleBase} from './ui-particle-base.js';
-import {Handle} from './handle.js';
+import {Handle} from './storageNG/handle.js';
 import {Runnable} from './hot.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
 
 export interface UiStatefulParticle extends UiParticleBase {
   // add type info for XenState members here
@@ -107,11 +108,11 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
     this._invalidate();
   }
 
-  async onHandleSync(handle: Handle, model): Promise<void> {
+  async onHandleSync(handle: Handle<CRDTTypeRecord>, model): Promise<void> {
     this._setProperty(handle.name, model);
   }
 
-  async onHandleUpdate({name}: Handle, {data, added, removed}): Promise<void> {
+  async onHandleUpdate({name}: Handle<CRDTTypeRecord>, {data, added, removed}): Promise<void> {
     if (data !== undefined) {
       //console.log('update.data:', JSON.stringify(data, null, '  '));
       this._setProps({[name]: data});
