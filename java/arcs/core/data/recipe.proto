@@ -110,7 +110,7 @@ message TypeVariableProto {
   // Identifies a type variable in a recipe or a particle spec.
   // Type variables with the same name are linked together.
   string name = 1;
-} 
+}
 
 message SchemaProto {
   repeated string names = 1;
