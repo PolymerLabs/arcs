@@ -223,15 +223,13 @@ class ${name}() : ${this.getType('Entity')} {
         return true
       }
       
-      if (javaClass != other?.javaClass) {
-            return false
-      }
-      
-      other as ${name}
-      if (internalId != "") {
-        return internalId == other.internalId
-      }
-      return toString() == other.toString()
+      if (other is ${name}) {
+        if (internalId != "") {
+          return internalId == other.internalId
+        }
+        return toString() == other.toString()
+      }  
+      return false;
     }
     
     override fun hashCode(): Int =
