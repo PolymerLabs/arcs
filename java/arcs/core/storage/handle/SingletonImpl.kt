@@ -48,8 +48,9 @@ class SingletonImpl<T : Referencable>(
      * did not apply fully. Fetch the latest value and retry.
      * */
     suspend fun store(entity: T): Boolean {
-        versionMap.increment()
-        return storageProxy.applyOp(CrdtSingleton.Operation.Update(name, versionMap, entity))
+        return storageProxy.applyOp(
+            CrdtSingleton.Operation.Update(
+                name, versionMap().increment(), entity))
     }
 
     /**TODO(heimlich): remove once all implementations use store. */
@@ -63,6 +64,7 @@ class SingletonImpl<T : Referencable>(
         // Sync before clearing in order to get an updated versionMap. This ensures we can clear
         // values set by other actors.
         fetch()
-        return storageProxy.applyOp(CrdtSingleton.Operation.Clear(name, versionMap))
+        return storageProxy.applyOp(
+            CrdtSingleton.Operation.Clear(name, versionMap()))
     }
 }

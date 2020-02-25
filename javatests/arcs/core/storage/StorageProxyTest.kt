@@ -125,8 +125,7 @@ class StorageProxyTest {
             .isTrue()
         val view = storageProxy.getParticleView()
 
-        assertThat(view.value).isEqualTo("someData")
-        assertThat(view.versionMap).isEqualTo(VersionMap())
+        assertThat(view).isEqualTo("someData")
     }
 
     @Test
@@ -148,8 +147,7 @@ class StorageProxyTest {
         assertThat(future.isCompleted).isTrue()
         val view = future.await()
 
-        assertThat(view.value).isEqualTo("someData")
-        assertThat(view.versionMap).isEqualTo(VersionMap())
+        assertThat(view).isEqualTo("someData")
     }
 
     @Test
