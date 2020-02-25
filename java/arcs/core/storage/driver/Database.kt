@@ -179,7 +179,7 @@ object DatabaseDriverProvider : DriverProvider {
             DATABASE_DRIVER_PROTOCOL,
             Capabilities.Persistent
         ) { storageKeyOptions, entitySchemaHash ->
-            DatabaseStorageKey(storageKeyOptions.arcId.toString(), entitySchemaHash, false)
+            DatabaseStorageKey(storageKeyOptions.idGenerator(), entitySchemaHash, false)
         }
     }
 

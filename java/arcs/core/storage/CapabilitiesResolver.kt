@@ -12,6 +12,7 @@
 package arcs.core.storage
 
 import arcs.core.common.ArcId
+import arcs.core.common.Id
 import arcs.core.data.Capabilities
 import arcs.core.util.TaggedLog
 
@@ -26,7 +27,12 @@ class CapabilitiesResolver(
     private val log = TaggedLog { "CapabilitiesResolver" }
 
     /* Options used to construct [CapabilitiesResolver] */
-    data class StorageKeyOptions(val arcId: ArcId)
+    data class StorageKeyOptions(
+        val arcId: ArcId,
+        val idGenerator: () -> String = {
+            Id.Generator.newSession().newChildId(arcId, "storageKey").toString()
+        }
+    )
 
     /* Creates and returns a [StorageKey] corresponding to the given [Capabilities]. */
     fun createStorageKey(

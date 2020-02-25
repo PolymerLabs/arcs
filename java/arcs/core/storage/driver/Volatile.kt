@@ -76,7 +76,10 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         CapabilitiesResolver.registerDefaultKeyCreator(
             VOLATILE_DRIVER_PROTOCOL,
             Capabilities.TiedToArc
-        ) { storageKeyOptions, _ -> VolatileStorageKey(storageKeyOptions.arcId, "") }
+        ) { storageKeyOptions, _ -> VolatileStorageKey(
+            storageKeyOptions.arcId,
+            storageKeyOptions.idGenerator()
+        ) }
     }
 
     override fun willSupport(storageKey: StorageKey): Boolean =
