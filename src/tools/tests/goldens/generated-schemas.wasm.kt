@@ -37,6 +37,23 @@ class GoldInternal1() : WasmEntity {
         val_ = ""
     }
 
+    override fun equals(other: Any?): Boolean {
+      if (this === other) {
+        return true
+      }
+
+      if (other is GoldInternal1) {
+        if (internalId != "") {
+          return internalId == other.internalId
+        }
+        return toString() == other.toString()
+      }
+      return false;
+    }
+
+    override fun hashCode(): Int =
+      if (internalId != "") internalId.hashCode() else toString().hashCode()
+
     override fun schemaHash() = "485712110d89359a3e539dac987329cd2649d889"
 
     override fun encodeEntity(): NullTermByteArray {
@@ -152,6 +169,23 @@ class Gold_Data() : WasmEntity {
         flg = false
     }
 
+    override fun equals(other: Any?): Boolean {
+      if (this === other) {
+        return true
+      }
+
+      if (other is Gold_Data) {
+        if (internalId != "") {
+          return internalId == other.internalId
+        }
+        return toString() == other.toString()
+      }
+      return false;
+    }
+
+    override fun hashCode(): Int =
+      if (internalId != "") internalId.hashCode() else toString().hashCode()
+
     override fun schemaHash() = "d8058d336e472da47b289eafb39733f77eadb111"
 
     override fun encodeEntity(): NullTermByteArray {
@@ -229,7 +263,7 @@ class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
 
 
 class GoldHandles(
-    particle : WasmParticleImpl
+   particle: WasmParticleImpl
 )  {
     val data: WasmSingletonImpl<Gold_Data> = WasmSingletonImpl(particle, "data", Gold_Data_Spec())
     val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl(particle, "alias", Gold_Alias_Spec())
