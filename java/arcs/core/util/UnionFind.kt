@@ -12,28 +12,25 @@
 package arcs.core.util
 
 /**
- * A union-find datastructure for computing equivalence classes
- * consisting of `Element` instances.
+ * A union-find datastructure for computing equivalence classes consisting of [E] instances.
+ * This datastructure is not thread safe.
  */
-class UnionFind<Element> {
+class UnionFind<E> {
     /**
      * A node in the union find datastructure.
      */
-    private inner class Node(e: Element, p: Node?) {
-        val element: Element = e
-        var parent: Node? = p
-    }
+    private data class Node<E>(val element: E, var parent: Node<E>? = null)
 
-    private val nodes = HashMap<Element, Node>()
+    private val nodes = mutableMapOf<E, Node<E>>()
 
     /**
      * Unifies the equivalence classes of elements [e1] and [e2]. If either
      * element is not present in any set, it is added.
      */
-    fun union(e1: Element, e2: Element) {
+    fun union(e1: E, e2: E) {
         val e1Root = findRoot(e1)
         val e2Root = findRoot(e2)
-        if (e1Root != e2Root) {
+        if (e1Root !== e2Root) {
             e1Root.parent = e2Root
         }
     }
@@ -42,35 +39,27 @@ class UnionFind<Element> {
      * Find the equivalence class for the element [e]. If the element
      * is not already present in any set, a new singleton set is created.
      */
-    fun find(e: Element): Element {
-        return findRoot(e).element
-    }
+    fun find(e: E): E = findRoot(e).element
 
     /**
      * If [e] is not already in any set, create a set with a single element.
      */
-    fun makeSet(e: Element) {
+    fun makeSet(e: E) {
         getOrCreateNode(e)
     }
 
     /**
      * Get or create a union-find node for the element [e].
      */
-    private fun getOrCreateNode(e: Element): Node {
-        var result = nodes[e]
-        if (result == null) {
-            result = Node(e, null)
-            nodes[e] = result
-        }
-        return result
-    }
+    private fun getOrCreateNode(e: E): Node<E> =
+        nodes[e] ?: Node(e, null).also { nodes[e] = it }
 
     /**
      * Returns the root node for element [e].
      */
-    private fun findRoot(e: Element): Node {
-        var node: Node = getOrCreateNode(e)
-        var parent: Node? = node.parent
+    private fun findRoot(e: E): Node<E> {
+        var node = getOrCreateNode(e)
+        var parent = node.parent
         while (parent != null) {
             node = parent
             parent = node.parent
