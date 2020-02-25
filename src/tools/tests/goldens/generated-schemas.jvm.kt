@@ -39,10 +39,27 @@ class GoldInternal1() : JvmEntity {
         val_ = ""
     }
 
+    override fun equals(other: Any?): Boolean {
+      if (this === other) {
+        return true
+      }
+
+      if (other is GoldInternal1) {
+        if (internalId != "") {
+          return internalId == other.internalId
+        }
+        return toString() == other.toString()
+      }
+      return false;
+    }
+
+    override fun hashCode(): Int =
+      if (internalId != "") internalId.hashCode() else toString().hashCode()
+
     override fun schemaHash() = "485712110d89359a3e539dac987329cd2649d889"
 
     override fun serialize() = RawEntity(
-        "",
+        internalId,
         mapOf(
             "val" to val_.toReferencable()
         )
@@ -57,9 +74,11 @@ class GoldInternal1_Spec() : JvmEntitySpec<GoldInternal1> {
 
     override fun deserialize(data: RawEntity): GoldInternal1 {
       // TODO: only handles singletons for now
-      return create().copy(
+      val rtn = create().copy(
         val_ = (data.singletons["val_"] as? ReferencablePrimitive<String>?)?.value ?: ""
       )
+      rtn.internalId = data.id
+      return rtn
     }
 
 }
@@ -125,10 +144,27 @@ class Gold_Data() : JvmEntity {
         flg = false
     }
 
+    override fun equals(other: Any?): Boolean {
+      if (this === other) {
+        return true
+      }
+
+      if (other is Gold_Data) {
+        if (internalId != "") {
+          return internalId == other.internalId
+        }
+        return toString() == other.toString()
+      }
+      return false;
+    }
+
+    override fun hashCode(): Int =
+      if (internalId != "") internalId.hashCode() else toString().hashCode()
+
     override fun schemaHash() = "d8058d336e472da47b289eafb39733f77eadb111"
 
     override fun serialize() = RawEntity(
-        "",
+        internalId,
         mapOf(
             "num" to num.toReferencable(),
             "txt" to txt.toReferencable(),
@@ -146,19 +182,21 @@ class Gold_Data_Spec() : JvmEntitySpec<Gold_Data> {
 
     override fun deserialize(data: RawEntity): Gold_Data {
       // TODO: only handles singletons for now
-      return create().copy(
+      val rtn = create().copy(
         num = (data.singletons["num"] as? ReferencablePrimitive<Double>?)?.value ?: 0.0,
         txt = (data.singletons["txt"] as? ReferencablePrimitive<String>?)?.value ?: "",
         lnk = (data.singletons["lnk"] as? ReferencablePrimitive<String>?)?.value ?: "",
         flg = (data.singletons["flg"] as? ReferencablePrimitive<Boolean>?)?.value ?: false
       )
+      rtn.internalId = data.id
+      return rtn
     }
 
 }
 
 
 class GoldHandles(
-    particle : BaseParticle
+
 ) : HandleHolderBase(
         mutableMapOf(),
         mapOf(
@@ -171,5 +209,5 @@ class GoldHandles(
 }
 
 abstract class AbstractGold : BaseParticle() {
-    override val handles: GoldHandles = GoldHandles(this)
+    override val handles: GoldHandles = GoldHandles()
 }
