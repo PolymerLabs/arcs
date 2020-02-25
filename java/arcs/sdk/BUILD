@@ -69,6 +69,7 @@ arcs_kt_jvm_library(
         "jvm/Utils.kt",
     ],
     deps = [
+        "//java/arcs/core/data",
         "//java/arcs/core/storage/api:api-common",
         "//java/arcs/sdk/storage",
     ],
