@@ -20,8 +20,6 @@ import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 import {ArcId} from '../../runtime/id.js';
 
-import {Flags} from '../../runtime/flags.js';
-import {StorageKey} from '../../runtime/storageNG/storage-key.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {EntityType} from '../../runtime/type.js';
@@ -387,12 +385,7 @@ ${particlesSpec}
 ${recipeManifest}
     `));
 
-    let key: (input: string) => (string | StorageKey);
-    if (Flags.useNewStorageStack) {
-      key = unique => new RamDiskStorageKey(unique);
-    }  else {
-      key = key => key;
-    }
+    const key = (unique: string) => new RamDiskStorageKey(unique);
 
     const schema = manifest.findSchemaByName('Foo');
     manifest.newStore({

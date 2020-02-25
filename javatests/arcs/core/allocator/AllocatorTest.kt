@@ -2,6 +2,7 @@ package arcs.core.allocator
 
 import arcs.sdk.Particle
 import arcs.core.common.Id
+import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.Plan
@@ -94,7 +95,10 @@ class AllocatorTest {
             hostRegistry.registerHost(ReadingHost())
             hostRegistry.registerHost(WritingHost())
             writePersonHandleConnection =
-                Plan.HandleConnection(null, personEntityType)
+                Plan.HandleConnection(
+                    CreateableStorageKey("recipePerson"),
+                    personEntityType
+                )
 
             writePersonParticle = Plan.Particle(
                 "WritePerson",
@@ -102,7 +106,10 @@ class AllocatorTest {
                 mapOf("recipePerson" to writePersonHandleConnection)
             )
 
-            readPersonHandleConnection = Plan.HandleConnection(null, personEntityType)
+            readPersonHandleConnection = Plan.HandleConnection(
+                CreateableStorageKey("recipePerson"),
+                personEntityType
+            )
 
             readPersonParticle = Plan.Particle(
                 "ReadPerson",
@@ -150,7 +157,7 @@ class AllocatorTest {
     fun allocator_verifyStorageKeysCreated() = runBlockingTest {
         writeAndReadPersonPlan.particles.forEach {
             it.handles.forEach { (_, connection) ->
-                assertThat(connection.storageKey).isNull()
+                assertThat(connection.storageKey).isInstanceOf(CreateableStorageKey::class.java)
             }
         }
         val allocator = Allocator(hostRegistry)
@@ -158,9 +165,10 @@ class AllocatorTest {
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach {
             particle -> particle.handles.forEach { (_, connection) ->
-                assertThat(connection.storageKey).isNotNull()
+                assertThat(connection.storageKey).isNotInstanceOf(CreateableStorageKey::class.java)
             }
         }
+        assertThat(readPersonHandleConnection.storageKey).isEqualTo(writePersonHandleConnection.storageKey)
     }
 
     @Test

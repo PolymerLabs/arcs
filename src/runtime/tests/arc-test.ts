@@ -110,13 +110,13 @@ describe('Arc new storage', () => {
     const refVarStore = await arc.createStore(new SingletonType(dataClass.type), undefined, 'test:2', [], refVarKey);
 
     const varStorageProxy = new StorageProxyNG('id', await varStore.activate(), new SingletonType(dataClass.type), varStore.storageKey.toString());
-    const varHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGeneratorForTesting, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+    const varHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
 
     const colStorageProxy = new StorageProxyNG('id-2', await colStore.activate(), dataClass.type.collectionOf(), colStore.storageKey.toString());
-    const colHandle = await handleNGFor('crdt-key-2', colStorageProxy, arc.idGeneratorForTesting, null, true, true, 'colHandle') as CollectionHandle<Entity>;
+    const colHandle = await handleNGFor('crdt-key-2', colStorageProxy, arc.idGenerator, null, true, true, 'colHandle') as CollectionHandle<Entity>;
 
     const refVarStorageProxy = new StorageProxyNG('id-3', await refVarStore.activate(), new SingletonType(dataClass.type), refVarStore.storageKey.toString());
-    const refVarHandle = await handleNGFor('crdt-key-3', refVarStorageProxy, arc.idGeneratorForTesting, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
+    const refVarHandle = await handleNGFor('crdt-key-3', refVarStorageProxy, arc.idGenerator, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
 
     // Populate the stores, run the arc and get its serialization.
     const d1 = new dataClass({value: 'v1'});
@@ -149,19 +149,19 @@ describe('Arc new storage', () => {
     const refVarStore2 = arc2.findStoreById(refVarStore.id);
 
     const varStorageProxy2 = new StorageProxyNG('id', await varStore2.activate(), new SingletonType(dataClass.type), varStore2.storageKey.toString());
-    const varHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+    const varHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
     const varData = await varHandle2.fetch();
 
     assert.deepEqual(varData, d1);
 
     const colStorageProxy2 = new StorageProxyNG('id-2', await colStore2.activate(), dataClass.type.collectionOf(), colStore2.storageKey.toString());
-    const colHandle2 = await handleNGFor('crdt-key-2', colStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'colHandle') as CollectionHandle<Entity>;
+    const colHandle2 = await handleNGFor('crdt-key-2', colStorageProxy2, arc2.idGenerator, null, true, true, 'colHandle') as CollectionHandle<Entity>;
     const colData = await colHandle2.toList();
 
     assert.deepEqual(colData, [d2, d3]);
 
     const refVarStorageProxy2 = new StorageProxyNG('id-3', await refVarStore2.activate(), new SingletonType(dataClass.type), refVarStore2.storageKey.toString());
-    const refVarHandle2 = await handleNGFor('crdt-key-3', refVarStorageProxy2, arc2.idGeneratorForTesting, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
+    const refVarHandle2 = await handleNGFor('crdt-key-3', refVarStorageProxy2, arc2.idGenerator, null, true, true, 'refVarHandle') as SingletonHandle<Entity>;
 
     const refVarData = await refVarHandle2.fetch();
     assert.deepEqual(refVarData, d4);
@@ -938,42 +938,6 @@ describe('Arc', () => {
     assert.strictEqual('reader', connection.name);
     assert.strictEqual('A', connection.particle.spec.name);
     assert.strictEqual('B', connection.handle.immediateValue.name);
-  });
-
-  // We don't currently support ArcInfo through the new stack
-  it.skip('persist serialization for', async () => {
-    const id = ArcId.newForTest('test');
-    const manifest = await Manifest.parse(`
-      schema Data
-        value: Text
-      recipe
-        description \`abc\``);
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest});
-    const recipe = manifest.recipes[0];
-    recipe.normalize();
-    await arc.instantiate(recipe);
-    const serialization = await arc.serialize();
-    await arc.persistSerialization(serialization);
-
-    const key = 'volatile://' + `${id}^^arc-info`;
-    const store = await arc.storageProviderFactory.connect('id', new ArcType(), key) as SingletonStorageProvider;
-
-    const callbackTracker = await CallbackTracker.create(store, 0);
-
-    assert.isNotNull(store, 'got a valid store');
-    const data = await store.fetch();
-    assert.isNotNull(data, 'got valid data');
-    callbackTracker.verify();
-
-    // The serialization tends to have lots of whitespace in it; squash it for easier comparison.
-    data.serialization = data.serialization.trim().replace(/[\n ]+/g, ' ');
-
-    const expected = `meta name: '${id}' storageKey: 'volatile://${id}' @active recipe description \`abc\``;
-    assert.deepEqual({id: id.toString(), serialization: expected}, data);
-
-    // TODO Simulate a cold-load to catch reference mode issues.
-    // in the interim you can disable the provider cache in pouch-db-storage.ts
   });
 
   // Particle A creates an inner arc with a hosted slot and instantiates B connected to that slot.

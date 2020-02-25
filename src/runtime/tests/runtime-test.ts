@@ -26,8 +26,8 @@ function unsafe<T>(value: T): any { return value; }
 function assertManifestsEqual(actual: Manifest, expected: Manifest) {
   // Delete the IdGenerator before comparing that the manifests are the same, since the IdGenerator will contain a different random session ID
   // for each Manifest instantiation.
-  unsafe(expected)._idGenerator = null;
-  unsafe(actual)._idGenerator = null;
+  unsafe(expected).idGenerator = null;
+  unsafe(actual).idGenerator = null;
 
   assert.deepEqual(expected, actual);
 }

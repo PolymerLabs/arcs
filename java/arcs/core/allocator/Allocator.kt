@@ -12,6 +12,7 @@ package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.common.Id
+import arcs.core.data.CreateableStorageKey
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
@@ -79,12 +80,22 @@ class Allocator(val hostRegistry: HostRegistry) {
      * Finds [HandleSpec] instances which were unresolved at build time (null [StorageKey]) and
      * attaches generated keys.
      */
-    private fun createStorageKeysIfNecessary(arcId: ArcId, idGenerator: Id.Generator, plan: Plan) =
-        plan.particles
-            .forEach {
-                it.handles.values.forEach { spec ->
-                    spec.storageKey = spec.storageKey ?: createStorageKey(arcId, idGenerator) }
+    private fun createStorageKeysIfNecessary(arcId: ArcId, idGenerator: Id.Generator, plan: Plan) {
+        val createdKeys: MutableMap<StorageKey, StorageKey> = mutableMapOf()
+
+        plan.particles.forEach {
+            it.handles.values.forEach { spec ->
+                spec.apply {
+                    if (storageKey is CreateableStorageKey) {
+                        if (!createdKeys.containsKey(storageKey)) {
+                            createdKeys[storageKey] = createStorageKey(arcId, idGenerator)
+                        }
+                        storageKey = createdKeys[storageKey]!!
+                    }
+                }
             }
+        }
+    }
 
     /**
      * Creates new [StorageKey] instances based on [HandleSpec] tags.

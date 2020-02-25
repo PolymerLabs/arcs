@@ -130,11 +130,11 @@ export class FirebaseStorage extends StorageBase {
     } else if (type.isTypeContainer() && type.getContainedType() instanceof ReferenceType) {
       mode = Mode.direct;
     }
-    return this._join(id, type, keyFragment, false, mode);
+    return this._join(id, type, keyFragment, false, mode) as Promise<FirebaseStorageProvider>;
   }
 
   async connect(id: string, type: Type, key: string) : Promise<FirebaseStorageProvider> {
-    return this._join(id, type, key, true, Mode.direct);
+    return this._join(id, type, key, true, Mode.direct) as Promise<FirebaseStorageProvider>;
   }
 
   // Unit tests should call this in an 'after' block.
@@ -1610,7 +1610,7 @@ class FirebaseBackingStore extends FirebaseStorageProvider implements Collection
     throw new Error('FirebaseBackingStore does not implement toLiteral');
   }
 
-  async cloneFrom(store: StorageProviderBase): Promise<void> {
+  async cloneFrom(store): Promise<void> {
     throw new Error('FirebaseBackingStore does not implement cloneFrom');
   }
 }

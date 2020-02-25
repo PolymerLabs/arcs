@@ -57,7 +57,7 @@ describe('DevtoolsArcInspector', () => {
     const pecMsgBody = JSON.parse(JSON.stringify(instantiateParticleCall.pecMsgBody));
     delete pecMsgBody.spec.args[0].type;
 
-    const sessionId = arc.idGeneratorForTesting.currentSessionIdForTesting;
+    const sessionId = arc.idGenerator.currentSessionIdForTesting;
 
     assert.deepEqual(pecMsgBody, {
       id: `!${sessionId}:demo:particle1`,

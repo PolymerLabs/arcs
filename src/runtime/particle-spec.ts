@@ -218,6 +218,10 @@ export interface SerializedParticleSpec extends Literal {
   trustChecks?: ParticleCheckStatement[];
 }
 
+export interface StorableSerializedParticleSpec extends SerializedParticleSpec {
+  id: string;
+}
+
 export class ParticleSpec {
   private readonly model: SerializedParticleSpec;
   name: string;

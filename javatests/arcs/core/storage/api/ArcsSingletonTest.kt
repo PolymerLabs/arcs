@@ -57,10 +57,10 @@ class ArcsSingletonTest {
         val bestFriend = ArcsSingleton(entityKey, personSchema, coroutineContext = coroutineContext)
         assertThat(bestFriend.fetch()).isNull()
 
-        assertThat(bestFriend.set(Person("Larry", 32))).isTrue()
+        assertThat(bestFriend.store(Person("Larry", 32))).isTrue()
         assertThat(bestFriend.fetch()).isEqualTo(Person("Larry", 32))
 
-        assertThat(bestFriend.set(Person("Sergey", 44))).isTrue()
+        assertThat(bestFriend.store(Person("Sergey", 44))).isTrue()
         assertThat(bestFriend.fetch()).isEqualTo(Person("Sergey", 44))
 
         assertThat(bestFriend.clear()).isTrue()
@@ -72,10 +72,10 @@ class ArcsSingletonTest {
         val favoriteColor = ArcsSingleton<String>(primitiveKey, coroutineContext = coroutineContext)
         assertThat(favoriteColor.fetch()).isNull()
 
-        assertThat(favoriteColor.set("Blue".toReferencable())).isTrue()
+        assertThat(favoriteColor.store("Blue".toReferencable())).isTrue()
         assertThat(favoriteColor.fetch()).isEqualTo("Blue".toReferencable())
 
-        assertThat(favoriteColor.set("Red".toReferencable())).isTrue()
+        assertThat(favoriteColor.store("Red".toReferencable())).isTrue()
         assertThat(favoriteColor.fetch()).isEqualTo("Red".toReferencable())
 
         assertThat(favoriteColor.clear()).isTrue()
@@ -94,11 +94,11 @@ class ArcsSingletonTest {
         assertThat(otherBob.getAsync().await()).isNull()
 
         // Setting bob's value should be reflected in otherBob.
-        assertThat(bob.setAsync(Person("bob", 42)).await()).isTrue()
+        assertThat(bob.storeAsync(Person("bob", 42)).await()).isTrue()
         assertThat(otherBob.fetch()).isEqualTo(Person("bob", 42))
 
         // Updating otherBob should also be reflected in bob.
-        assertThat(otherBob.setAsync(Person("notbob", 44)).await()).isTrue()
+        assertThat(otherBob.storeAsync(Person("notbob", 44)).await()).isTrue()
         assertThat(bob.fetch()).isEqualTo(Person("notbob", 44))
 
         // Clearing bob, should result in otherBob also being cleared.
