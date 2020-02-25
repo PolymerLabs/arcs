@@ -11,7 +11,6 @@
 import {Comparable, compareStrings} from '../recipe/comparable.js';
 import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
-import {Store as OldStore} from '../store.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ProxyCallback, StorageCommunicationEndpointProvider} from './store.js';
 import {ClaimIsTag} from '../particle-claim.js';
@@ -58,7 +57,7 @@ export function entityHasName(name: string) {
  * Once the old-style stores are deleted, this class can be merged into the new
  * Store class.
  */
-export abstract class UnifiedStore implements Comparable<UnifiedStore>, OldStore {
+export abstract class UnifiedStore implements Comparable<UnifiedStore> {
   // Tags for all subclasses of UnifiedStore.
   protected abstract unifiedStoreType: 'Store' | 'StorageProviderBase';
 

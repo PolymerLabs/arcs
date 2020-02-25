@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
-import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
+import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
         ReferenceType, RelationType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Entity} from '../entity.js';
 import {Refinement} from '../refiner.js';
@@ -281,13 +281,6 @@ describe('types', () => {
       deepEqual(ref3, ref3.clone(new Map()));
     });
 
-    it('ArcInfo', async () => {
-      const arcInfo = new ArcType();
-      deepEqual(arcInfo.toLiteral(), {tag: 'Arc'});
-      deepEqual(arcInfo, Type.fromLiteral(arcInfo.toLiteral()));
-      deepEqual(arcInfo, arcInfo.clone(new Map()));
-    });
-
     it('HandleInfo', async () => {
       const handleInfo = new HandleType();
       deepEqual(handleInfo.toLiteral(), {tag: 'Handle'});
@@ -302,8 +295,7 @@ describe('types', () => {
 
       const entity     = EntityType.make(['Foo'], {value: 'Text'});
       const variable   = TypeVariable.make('a');
-      const arcInfo    = new ArcType();
-      const iface      = InterfaceType.make('i', [{type: entity, direction: 'any'}, {type: variable, direction: 'any'}, {type: arcInfo, direction: 'any'}], []);
+      const iface      = InterfaceType.make('i', [{type: entity, direction: 'any'}, {type: variable, direction: 'any'}], []);
 
       const handleInfo = new HandleType();
 

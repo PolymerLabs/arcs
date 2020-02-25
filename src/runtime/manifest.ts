@@ -32,8 +32,6 @@ import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Ttl} from './recipe/ttl.js';
-import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {HandleRetriever} from './storage/handle-retriever.js';
 import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
@@ -129,16 +127,6 @@ interface ManifestLoadOptions {
   memoryProvider?: VolatileMemoryProvider;
 }
 
-export class ManifestHandleRetriever implements HandleRetriever {
-  async getHandlesFromManifest(content: string) : Promise<Handle[]> {
-    const manifest = await Manifest.parse(content, {});
-    if (!manifest.activeRecipe) {
-      return null;
-    }
-    return manifest.activeRecipe.handles || [];
-  }
-}
-
 export class Manifest {
   private _recipes: Recipe[] = [];
   private _imports: Manifest[] = [];
@@ -152,7 +140,6 @@ export class Manifest {
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
-  private _storageProviderFactory: StorageProviderFactory | undefined = undefined;
   private _meta = new ManifestMeta();
   private _resources = {};
   private storeManifestUrls: Map<string, string> = new Map();
@@ -226,11 +213,6 @@ export class Manifest {
     return this._resources;
   }
   applyMeta(section: {name: string} & {key: string, value: string}[]) {
-    if (this._storageProviderFactory !== undefined) {
-      assert(
-        section.name === this._meta.name || section.name == undefined,
-        `can't change manifest ID after storage is constructed`);
-    }
     this._meta.apply(section);
   }
   // TODO: newParticle, Schema, etc.
