@@ -1,4 +1,4 @@
-[![Cloud Build Status](https://storage.googleapis.com/arcs-github-gcb-badges/builds/arcs/branches/master.svg)](https://console.cloud.google.com/cloud-build/builds?project=arcs-265404&pageState=(%22builds%22:(%22f%22:%22%255B%257B_22k_22_3A_22Trigger%2520Name_22_2C_22t_22_3A10_2C_22v_22_3A_22_5C_22Arcs-Master-Trigger_5C_22_22_2C_22s_22_3Atrue_2C_22i_22_3A_22triggerName_22%257D%255D%22)))
+[![Cloud Build Status](https://storage.googleapis.com/arcs-github-gcb-badges/builds/arcs/branches/master.svg)](https://console.cloud.google.com/cloud-build/builds?query=trigger_id%3D%22bdf768b5-8901-43e5-814c-f3adffff2eab%22&project=arcs-265404)
 [![Build Status](https://travis-ci.org/PolymerLabs/arcs.svg?branch=master)](https://travis-ci.org/PolymerLabs/arcs)
 [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/rswlpkq2vtp9cns0/branch/master?svg=true)](https://ci.appveyor.com/project/arcs/arcs-3i77k/branch/master)
 
