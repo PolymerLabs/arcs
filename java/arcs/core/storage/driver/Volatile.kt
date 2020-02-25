@@ -18,7 +18,6 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import arcs.core.util.Random
@@ -84,20 +83,18 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria,
         dataClass: KClass<Data>
     ): Driver<Data> {
         require(
             willSupport(storageKey)
         ) { "This provider does not support storageKey: $storageKey" }
-        return VolatileDriver(storageKey, existenceCriteria, arcMemory)
+        return VolatileDriver(storageKey, arcMemory)
     }
 }
 
 /** [Driver] implementation for an in-memory store of data. */
 /* internal */ class VolatileDriver<Data : Any>(
     override val storageKey: StorageKey,
-    override val existenceCriteria: ExistenceCriteria,
     private val memory: VolatileMemory
 ) : Driver<Data> {
     private val log = TaggedLog { this.toString() }
@@ -118,32 +115,10 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
             storageKey is VolatileStorageKey || storageKey is RamDiskStorageKey
         ) { "Invalid storage key type: $storageKey" }
 
-        val dataForCriteria: VolatileEntry<Data> = when (existenceCriteria) {
-            ExistenceCriteria.ShouldCreate -> {
-                require(storageKey !in memory) {
-                    "Requested creation of memory loc $storageKey can't proceed: already exists"
-                }
-                VolatileEntry()
-            }
-            ExistenceCriteria.ShouldExist ->
-                requireNotNull(memory.get<Data>(storageKey)) {
-                    "Requested connection to memory location $storageKey failed: doesn't exist"
-                }.also {
-                    pendingModel = it.data
-                    pendingVersion = it.version
-                }
-            ExistenceCriteria.MayExist -> {
-                val preExisting =
-                    memory.get<Data>(storageKey)?.also {
-                        pendingModel = it.data
-                        pendingVersion = it.version
-                    }
-
-                // If we had a pre-existing value, return it. Otherwise make an empty one and put it
-                // in the memory.
-                preExisting ?: VolatileEntry()
-            }
-        }
+        val dataForCriteria: VolatileEntry<Data> = memory.get<Data>(storageKey)?.also {
+            pendingModel = it.data
+            pendingVersion = it.version
+        } ?: VolatileEntry()
 
         // Add the data to the memory.
         memory[storageKey] = dataForCriteria.copy(drivers = dataForCriteria.drivers + this)

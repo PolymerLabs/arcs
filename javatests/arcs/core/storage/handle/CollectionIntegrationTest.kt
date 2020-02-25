@@ -23,7 +23,6 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.Store
@@ -207,7 +206,6 @@ class CollectionIntegrationTest {
         private val STORE_OPTIONS =
             StoreOptions<EntityCollectionData, EntityCollectionOp, EntityCollectionView>(
                 storageKey = STORAGE_KEY,
-                existenceCriteria = ExistenceCriteria.MayExist,
                 type = CollectionType(EntityType(SCHEMA)),
                 mode = StorageMode.ReferenceMode
             )

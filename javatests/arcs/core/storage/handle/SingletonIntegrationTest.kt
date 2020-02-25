@@ -21,7 +21,6 @@ import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.Store
@@ -175,7 +174,6 @@ class SingletonIntegrationTest {
         private val STORE_OPTIONS =
             StoreOptions<EntitySingletonData, EntitySingletonOp, EntitySingletonView>(
                 storageKey = STORAGE_KEY,
-                existenceCriteria = ExistenceCriteria.MayExist,
                 type = SingletonType(EntityType(SCHEMA)),
                 mode = StorageMode.ReferenceMode
             )

@@ -63,7 +63,7 @@ class ReferenceModeStoreTest {
             MockHierarchicalStorageKey(),
             MockHierarchicalStorageKey()
         )
-        baseStore = Store(StoreOptions(testKey, ExistenceCriteria.ShouldCreate, CountType()))
+        baseStore = Store(StoreOptions(testKey, CountType()))
         schema = Schema(
             listOf(SchemaName("person")),
             SchemaFields(
@@ -86,7 +86,6 @@ class ReferenceModeStoreTest {
         val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
             StoreOptions(
                 testKey,
-                ExistenceCriteria.ShouldCreate,
                 SingletonType(EntityType(schema)),
                 StorageMode.ReferenceMode
             )
@@ -101,7 +100,6 @@ class ReferenceModeStoreTest {
         val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
             StoreOptions(
                 testKey,
-                ExistenceCriteria.ShouldCreate,
                 CollectionType(EntityType(schema)),
                 mode = StorageMode.ReferenceMode
             )
@@ -593,7 +591,6 @@ class ReferenceModeStoreTest {
         return ReferenceModeStore.CONSTRUCTOR(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                ExistenceCriteria.ShouldCreate,
                 CollectionType(EntityType(schema)),
                 StorageMode.ReferenceMode
             ),
@@ -661,14 +658,12 @@ class ReferenceModeStoreTest {
 
         override suspend fun <Data : Any> getDriver(
             storageKey: StorageKey,
-            existenceCriteria: ExistenceCriteria,
             dataClass: KClass<Data>
-        ): Driver<Data> = MockDriver(storageKey, existenceCriteria)
+        ): Driver<Data> = MockDriver(storageKey)
     }
 
     private class MockDriver<T : Any>(
-        override val storageKey: StorageKey,
-        override val existenceCriteria: ExistenceCriteria
+        override val storageKey: StorageKey
     ) : Driver<T> {
         override var token: String? = null
         var receiver: (suspend (data: T, version: Int) -> Unit)? = null

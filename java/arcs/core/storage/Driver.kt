@@ -26,9 +26,6 @@ interface Driver<Data : Any> {
     /** Key identifying the [Driver]. */
     val storageKey: StorageKey
 
-    /** Requirement for the existence of the [Driver]. */
-    val existenceCriteria: ExistenceCriteria
-
     /**
      * Returns a token that represents the current state of the data.
      *

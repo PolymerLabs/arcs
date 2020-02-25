@@ -22,7 +22,6 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
@@ -140,7 +139,6 @@ object DatabaseDriverProvider : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria,
         dataClass: KClass<Data>
     ): Driver<Data> {
         val databaseKey = requireNotNull(storageKey as? DatabaseStorageKey) {
@@ -160,7 +158,6 @@ object DatabaseDriverProvider : DriverProvider {
         }
         return DatabaseDriver(
             databaseKey,
-            existenceCriteria,
             dataClass,
             schemaLookup,
             manager.getDatabase(databaseKey.dbName, databaseKey.persistent)
@@ -191,7 +188,6 @@ object DatabaseDriverProvider : DriverProvider {
 @Suppress("RemoveExplicitTypeArguments")
 class DatabaseDriver<Data : Any>(
     override val storageKey: DatabaseStorageKey,
-    override val existenceCriteria: ExistenceCriteria,
     private val dataClass: KClass<Data>,
     private val schemaLookup: (String) -> Schema?,
     /* internal */
@@ -209,18 +205,6 @@ class DatabaseDriver<Data : Any>(
     private val log = TaggedLog { this.toString() }
     override var token: String? = null
         private set
-
-    init {
-        if (
-            existenceCriteria == ExistenceCriteria.ShouldCreate ||
-            existenceCriteria == ExistenceCriteria.ShouldExist
-        ) {
-            log.warning {
-                "DatabaseDriver should be used with ExistenceCriteria.MayExist, but " +
-                    "$existenceCriteria was specified."
-            }
-        }
-    }
 
     /* internal */
     suspend fun register(): DatabaseDriver<Data> = apply {

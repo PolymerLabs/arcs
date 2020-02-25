@@ -8,7 +8,6 @@ import arcs.core.data.EntityType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
@@ -66,7 +65,6 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
-            existenceCriteria = ExistenceCriteria.MayExist,
             type = SingletonType(EntityType(schema)),
             mode = StorageMode.ReferenceMode
         )
@@ -99,7 +97,6 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     ): SetHandle<RawEntity> {
         val storeOptions = SetStoreOptions<RawEntity>(
             storageKey = storageKey,
-            existenceCriteria = ExistenceCriteria.MayExist,
             type = CollectionType(EntityType(schema)),
             mode = StorageMode.ReferenceMode
         )

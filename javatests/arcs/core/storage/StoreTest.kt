@@ -334,13 +334,12 @@ class StoreTest {
     private suspend fun setupMocks(): Pair<Driver<CrdtCount.Data>, DriverProvider> {
         val driver = mock<Driver<CrdtCount.Data>> {
             on { storageKey }.thenReturn(testKey)
-            on { existenceCriteria }.thenReturn(ExistenceCriteria.ShouldCreate)
         }
         whenever(driver.send(any(), any())).thenReturn(true)
         val provider = mock<DriverProvider> {
             on { willSupport(testKey) }.thenReturn(true)
         }
-        whenever(provider.getDriver(any(), any(), eq(CrdtCount.Data::class))).thenReturn(driver)
+        whenever(provider.getDriver(any(), eq(CrdtCount.Data::class))).thenReturn(driver)
 
         DriverFactory.register(provider)
 
@@ -348,5 +347,5 @@ class StoreTest {
     }
 
     private fun createStore(): Store<CrdtData, CrdtOperation, Any?> =
-        Store(StoreOptions(testKey, ExistenceCriteria.ShouldCreate, CountType()))
+        Store(StoreOptions(testKey, CountType()))
 }

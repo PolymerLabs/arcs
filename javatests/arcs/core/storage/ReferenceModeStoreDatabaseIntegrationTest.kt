@@ -488,7 +488,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         return ReferenceModeStore.CONSTRUCTOR(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                ExistenceCriteria.MayExist,
                 CollectionType(EntityType(schema)),
                 StorageMode.ReferenceMode
             ),
