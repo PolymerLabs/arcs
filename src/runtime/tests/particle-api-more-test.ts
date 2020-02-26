@@ -109,7 +109,7 @@ describe('ui-particle-api', () => {
             thing2: writes Thing2 {value: Text}
           recipe
             // TODO(sjmiles): 'create with id' parses but doesn't work
-            stuff: create 'stuff-store'
+            stuff: create
             thing: create *
             thing2: create *
             result: create *

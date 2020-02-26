@@ -262,7 +262,8 @@ export class Recipe implements Cloneable<Recipe> {
         && checkAllValid(this._slots)
         && checkAllValid(this.handleConnections)
         && checkAllValid(this.slotConnections)
-        && (!this.search || this.search.isValid());
+        && (!this.search || this.search.isValid())
+        && (this.isLongRunning || !this.hasCreateHandleIds());
   }
 
   get requires(): RequireSection[] { return this._requires; }
@@ -696,6 +697,16 @@ export class Recipe implements Cloneable<Recipe> {
       }
     }
     return slot;
+  }
+
+  get isLongRunning(): boolean {
+    return this.triggers.some(group =>
+        group.some(trigger => trigger[0] === 'launch' && trigger[1] === 'startup')
+        && group.some(trigger => trigger[0] === 'arcId' && !!trigger[1]));
+  }
+
+  hasCreateHandleIds(): boolean {
+    return this.handles.some(handle => handle.fate === 'create' && !!handle.id);
   }
 }
 

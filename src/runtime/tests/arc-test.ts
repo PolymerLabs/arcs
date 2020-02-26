@@ -987,6 +987,38 @@ describe('Arc', () => {
     arc2.dispose();
     assert.isEmpty(DriverFactory.providers);
   });
+
+  it('preserves create handle ids in long running arcs', async () => {
+    const loader = new Loader(null, {
+      'a.js': `
+        defineParticle(({Particle}) => class Noop extends Particle {});
+      `
+    });
+
+    const memoryProvider = new TestVolatileMemoryProvider();
+    const manifest = await Manifest.parse(`
+        schema Thing
+        particle MyParticle in 'a.js'
+          thing: writes Thing
+        @trigger
+          launch startup
+          arcId myArc
+        recipe
+          h0: create 'mything'
+          MyParticle
+            thing: writes h0
+        `, {memoryProvider});
+
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test0');
+    await arc.instantiate(manifest.recipes[0]);
+    assert.lengthOf(arc.activeRecipe.handles, 1);
+    assert.equal(arc.activeRecipe.handles[0].id, 'mything');
+  });
 });
 
 describe('Arc storage migration', () => {
