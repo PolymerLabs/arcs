@@ -11,7 +11,6 @@
 package arcs.core.host
 
 import arcs.core.data.Plan
-import arcs.sdk.Particle
 import kotlin.reflect.KClass
 
 /**

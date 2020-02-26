@@ -97,7 +97,7 @@ class AndroidSdkHandleManagerTest {
                 schema,
                 HandleMode.Write
             )
-            handleHolder.writeHandle.set(entity1)
+            handleHolder.writeHandle.store(entity1)
             // Now read back from a different handle
             hm.sdkSingletonHandle(
                 handleHolder,

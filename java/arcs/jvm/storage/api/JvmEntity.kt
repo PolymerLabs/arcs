@@ -12,20 +12,12 @@
 
 package arcs.jvm.storage.api
 
-import arcs.core.data.RawEntity
 import arcs.core.storage.api.Entity
 import arcs.core.storage.api.EntitySpec
 
-/** JVM-specific extensions to the base [Entity] interface. */
-interface JvmEntity : Entity {
-    fun serialize(): RawEntity
-}
+/* TODO: delete these now that WASM is separated, leaving in place for follow-on PR */
 
-interface JvmEntitySpec<T : Entity> : EntitySpec<T> {
-    /**
-     * Takes a [Map] representing a serialized representation of a [RawEntity] from the
-     * storage layer, and converts it to a concrete entity class.
-     * TODO: replace this with kotlinx.serialization
-     */
-    fun deserialize(data: RawEntity): T
-}
+/** JVM-specific extensions to the base [Entity] interface. */
+interface JvmEntity : Entity
+
+interface JvmEntitySpec<T : Entity> : EntitySpec<T>

@@ -1,48 +1,39 @@
 package arcs.core.host
 
 import arcs.core.common.Id
-import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
-import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.storage.Callbacks
+import arcs.core.storage.Handle as StorageHandle
 import arcs.core.storage.StorageKey
+import arcs.core.storage.api.Entity
+import arcs.core.storage.api.EntitySpec
+import arcs.core.storage.api.Handle
+import arcs.core.storage.api.ReadWriteCollection
+import arcs.core.storage.api.ReadWriteSingleton
+import arcs.core.storage.api.ReadableCollection
+import arcs.core.storage.api.ReadableSingleton
+import arcs.core.storage.api.WritableCollection
+import arcs.core.storage.api.WritableSingleton
 import arcs.core.storage.handle.CollectionImpl
 import arcs.core.storage.handle.HandleManager
+import arcs.core.storage.handle.SetData
 import arcs.core.storage.handle.SetHandle
+import arcs.core.storage.handle.SetOp
+import arcs.core.storage.handle.SingletonData
 import arcs.core.storage.handle.SingletonHandle
 import arcs.core.storage.handle.SingletonImpl
-import arcs.core.storage.util.SendQueue
-import arcs.sdk.Entity
-import arcs.sdk.Handle
-import arcs.sdk.HandleHolder
-import arcs.sdk.JvmEntity
-import arcs.sdk.JvmEntitySpec
-import arcs.sdk.Particle
-import arcs.sdk.ReadWriteCollection
-import arcs.sdk.ReadWriteSingleton
-import arcs.sdk.ReadableCollection
-import arcs.sdk.ReadableSingleton
-import arcs.sdk.WritableCollection
-import arcs.sdk.WritableSingleton
+import arcs.core.storage.handle.SingletonOp
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import arcs.core.storage.Handle as StorageHandle
 
 typealias Sender = (block: suspend () -> Unit) -> Unit
-
-/**
- * Specifies the access mode for a [Handle].
- */
-enum class HandleMode {
-    /** [Handle] is read only. */
-    Read,
-    /** [Handle] is write only. */
-    Write,
-    /** [Handle] is read-write. */
-    ReadWrite
-}
+typealias SingletonSenderCallbackAdapter<E> =
+    SenderCallbackAdapter<SingletonData<RawEntity>, SingletonOp<RawEntity>, RawEntity?, E?>
+typealias CollectionSenderCallbackAdapter<E> =
+    SenderCallbackAdapter<SetData<RawEntity>, SetOp<RawEntity>, Set<RawEntity>, E>
 
 /**
  * Wraps a [HandleManager] and creates SDK handles based on [HandleMode], such as
@@ -53,7 +44,7 @@ enum class HandleMode {
 class SdkHandleManager(val handleManager: HandleManager) {
     /**
      * Create a [SingletonHandle] given a [StorageKey], [Schema],  a [HandleHolder] with
-     * [JvmEntitySpec] definitions indexed by `handleName`.
+     * [EntitySpec] definitions indexed by `handleName`.
      *
      * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
@@ -80,7 +71,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
     )
 
     /**
-     * Create a [SetHandle] given a [StorageKey], [Schema],  a [HandleHolder] with [JvmEntitySpec]
+     * Create a [SetHandle] given a [StorageKey], [Schema],  a [HandleHolder] with [EntitySpec]
      * definitions indexed by `handleName`.
      *
      * @property handleHolder contains handle and entitySpec declarations
@@ -114,7 +105,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
     }
 
     /**
-     * Create a [Handle] given a [StorageHandle] and a [JvmEntitySpec] definition.
+     * Create a [Handle] given a [StorageHandle] and a [EntitySpec] definition.
      *
      * @property entitySpec used to deserialize [RawEntity] types into [Entity]
      * @property handleName readable name for the handle, usually from a recipe
@@ -123,9 +114,9 @@ class SdkHandleManager(val handleManager: HandleManager) {
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
     private fun <T : Entity> createSdkHandle(
-        entitySpec: JvmEntitySpec<T>,
+        entitySpec: EntitySpec<T>,
         handleName: String,
-        storageHandle: StorageHandle<out CrdtSet.Data<RawEntity>, out CrdtOperationAtTime, out Any?>,
+        storageHandle: StorageHandle<*, *, *>,
         idGenerator: Id.Generator,
         sender: Sender
     ): Handle {
@@ -149,7 +140,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
     }
 
     /**
-     * Create a [Handle] given a [StorageHandle] and a [HandleHolder] with [JvmEntitySpec] definitions.
+     * Create a [Handle] given a [StorageHandle] and a [HandleHolder] with [EntitySpec] definitions.
      *
      * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
@@ -160,12 +151,12 @@ class SdkHandleManager(val handleManager: HandleManager) {
     private fun createSdkHandle(
         handleHolder: HandleHolder,
         handleName: String,
-        storageHandle: StorageHandle<out CrdtSet.Data<RawEntity>, out CrdtOperationAtTime, out Any?>,
+        storageHandle: StorageHandle<*, *, *>,
         idGenerator: Id.Generator,
         sender: Sender
     ): HandleHolder {
-        val entitySpec: JvmEntitySpec<*>? =
-            handleHolder.entitySpecs[handleName] as? JvmEntitySpec<*>
+        val entitySpec: EntitySpec<*>? =
+            handleHolder.entitySpecs[handleName] as? EntitySpec<*>
         val handle = createSdkHandle(
             entitySpec ?: throw EntitySpecNotFound(handleName, handleHolder),
             handleName,
@@ -180,34 +171,32 @@ class SdkHandleManager(val handleManager: HandleManager) {
 }
 
 internal open class HandleEventBase<T> {
-    protected val onUpdateActions: MutableList<suspend (T) -> Unit> = mutableListOf()
+    protected val onUpdateActions: MutableList<(T) -> Unit> = mutableListOf()
 
-    fun onUpdate(action: suspend (T) -> Unit) {
+    suspend fun onUpdate(action: (T) -> Unit) {
         onUpdateActions.add(action)
     }
 
-    protected suspend fun fireUpdate(value: T): Unit {
+    protected suspend fun fireUpdate(value: T) {
         onUpdateActions.forEach { action -> action(value) }
     }
 }
 
 internal open class ReadableSingletonHandleImpl<T : Entity>(
-    val entitySpec: JvmEntitySpec<T>,
+    val entitySpec: EntitySpec<T>,
     val handleName: String,
     val storageHandle: SingletonHandle<RawEntity>,
     val sender: Sender
 ) : HandleEventBase<T?>(), ReadableSingleton<T> {
-    var updateCallback: (suspend (T?) -> Unit?)? = null
-
     init {
-        storageHandle.callback = QueuingCallbackAdapter(
+        storageHandle.callback = SingletonSenderCallbackAdapter(
             this::fetch,
             this::invokeUpdate,
             sender
         )
     }
 
-    private suspend fun invokeUpdate(entity: T?): Unit? = fireUpdate(entity)
+    private suspend fun invokeUpdate(entity: T?): Unit = fireUpdate(entity)
 
     override val name: String
         get() = handleName
@@ -225,16 +214,17 @@ internal class WritableSingletonHandleImpl<T : Entity>(
     override val name: String
         get() = handleName
 
-    override suspend fun set(entity: T) {
-        storageHandle.set(entity.serialize())
+    override suspend fun store(entity: T) {
+        storageHandle.store(entity.serialize())
     }
 
-    override suspend fun clear() =
+    override suspend fun clear() {
         storageHandle.clear()
+    }
 }
 
 internal class ReadWriteSingletonHandleImpl<T : Entity>(
-    entitySpec: JvmEntitySpec<T>,
+    entitySpec: EntitySpec<T>,
     handleName: String,
     storageHandle: SingletonHandle<RawEntity>,
     idGenerator: Id.Generator,
@@ -252,13 +242,13 @@ internal class ReadWriteSingletonHandleImpl<T : Entity>(
 }
 
 internal open class ReadableCollectionHandleImpl<T : Entity>(
-    val entitySpec: JvmEntitySpec<T>,
+    val entitySpec: EntitySpec<T>,
     val handleName: String,
-    val storageHandle: CollectionImpl<RawEntity>,
+    val storageHandle: SetHandle<RawEntity>,
     val sender: Sender
 ) : HandleEventBase<Set<T>>(), ReadableCollection<T> {
     init {
-        storageHandle.callback = QueuingCallbackAdapter(
+        storageHandle.callback = CollectionSenderCallbackAdapter(
             this::fetchAll,
             this::invokeUpdate,
             sender
@@ -275,7 +265,7 @@ internal open class ReadableCollectionHandleImpl<T : Entity>(
     override suspend fun isEmpty() = fetchAll().isEmpty()
 
     override suspend fun fetchAll(): Set<T> = storageHandle.fetchAll().map {
-       it.deserialize<T>(entitySpec)
+        it.deserialize<T>(entitySpec)
     }.toSet()
 }
 
@@ -287,17 +277,23 @@ internal class WritableCollectionHandleImpl<T : Entity>(
     override val name: String
         get() = handleName
 
-    override suspend fun store(entity: T) = storageHandle.store(
-        entity.ensureIdentified(idGenerator, handleName).serialize()
-    )
+    override suspend fun store(entity: T) {
+        storageHandle.store(
+            entity.ensureIdentified(idGenerator, handleName).serialize()
+        )
+    }
 
-    override suspend fun clear() = storageHandle.clear()
+    override suspend fun clear() {
+        storageHandle.clear()
+    }
 
-    override suspend fun remove(entity: T) = storageHandle.remove(entity.serialize())
+    override suspend fun remove(entity: T) {
+        storageHandle.remove(entity.serialize())
+    }
 }
 
 internal class ReadWriteCollectionHandleImpl<T : Entity>(
-    entitySpec: JvmEntitySpec<T>,
+    entitySpec: EntitySpec<T>,
     handleName: String,
     storageHandle: CollectionImpl<RawEntity>,
     idGenerator: Id.Generator,
@@ -316,41 +312,41 @@ internal class ReadWriteCollectionHandleImpl<T : Entity>(
 
 /**
  * Adapts [StorageHandle] [Callbacks] events into SDK callbacks. All events are dispatched
- * from a queue, which can be per-handle, or shared, e.g. at the [Particle], [ArcHost], level.
+ * via a [Sender], which can enforce appropriate levels of concurrency.
  */
-internal class QueuingCallbackAdapter<Op : CrdtOperation, E>(
+class SenderCallbackAdapter<Data : CrdtData, Op : CrdtOperationAtTime, T, E>(
     private val fetchFunc: suspend () -> E,
-    private val updateCallback: (suspend (E) -> Unit?),
+    private val updateCallback: (suspend (E) -> Unit),
     private val sender: Sender
-) : Callbacks<Op> {
+) : Callbacks<Data, Op, T> {
 
     /**
      * Used to ensure serialized invocations of [Handle] events. This can be per-[Handle],
-     * per-[Particle], per-[Arc], depending on the [SendQueue] used. Typically, it will be
+     * per-[Particle], per-[Arc], depending on the [Sender] used. Typically, it will be
      * per-[Particle] when handles are hosted inside of a [Particle]
      */
-    private fun invokeOnQueue(block: suspend () -> Unit) = sender(block)
+    private fun invokeWithSender(block: suspend () -> Unit) = sender(block)
 
-    override fun onUpdate(op: Op) {
-        invokeOnQueue {
+    override fun onUpdate(handle: arcs.core.storage.Handle<Data, Op, T>, op: Op) {
+        invokeWithSender {
             updateCallback.invoke(fetchFunc())
         }
     }
 
-    override fun onSync() {
+    override fun onSync(handle: arcs.core.storage.Handle<Data, Op, T>) {
     }
 
-    override fun onDesync() {
+    override fun onDesync(handle: arcs.core.storage.Handle<Data, Op, T>) {
     }
 }
 
-internal fun <T : Entity> RawEntity.deserialize(entitySpec: JvmEntitySpec<T>) =
+internal fun <T : Entity> RawEntity.deserialize(entitySpec: EntitySpec<T>) =
     entitySpec.deserialize(this)
 
-internal fun <T : Entity> T.serialize() = (this as JvmEntity).serialize()
+internal fun <T : Entity> T.serialize() = (this as Entity).serialize()
 
 private fun <T : Entity> createSingletonHandle(
-    entitySpec: JvmEntitySpec<T>,
+    entitySpec: EntitySpec<T>,
     handleName: String,
     storageHandle: SingletonImpl<RawEntity>,
     idGenerator: Id.Generator,
@@ -371,7 +367,7 @@ private fun <T : Entity> createSingletonHandle(
 }
 
 private fun <T : Entity> createSetHandle(
-    entitySpec: JvmEntitySpec<T>,
+    entitySpec: EntitySpec<T>,
     handleName: String,
     storageHandle: CollectionImpl<RawEntity>,
     idGenerator: Id.Generator,

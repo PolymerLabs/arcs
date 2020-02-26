@@ -304,6 +304,6 @@ ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
   }
 
   private getType(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : `Jvm${type}`;
+    return this.opts.wasm ? `Wasm${type}` : `${type}`;
   }
 }

@@ -1,6 +1,5 @@
 package arcs.core.host
 
-import arcs.sdk.Particle
 import kotlin.reflect.KClass
 
 /**

@@ -10,9 +10,6 @@
  */
 package arcs.core.host
 
-import arcs.sdk.BaseParticle
-import arcs.sdk.HandleHolder
-
 /**
  * Called when no [arcs.sdk.JvmEntitySpec] was found in the [Particle]'s associated
  * [HandleHolder.entitySpec] map. This can happen if a [Handle] has been created for a
@@ -22,4 +19,4 @@ import arcs.sdk.HandleHolder
 class EntitySpecNotFound(
     handleName: String,
     handleHolder: HandleHolder
-): Exception("No JvmEntitySpec found for $handleName on HandleHolder ${handleHolder::class}")
+) : Exception("No JvmEntitySpec found for $handleName on HandleHolder ${handleHolder::class}")

@@ -21,7 +21,7 @@ interface ReadableSingleton<T : Entity> : Handle {
     /** Returns the value of the singleton. */
     suspend fun fetch(): T?
 
-    fun onUpdate(action: (T?) -> Unit)
+    suspend fun onUpdate(action: (T?) -> Unit)
 }
 
 /** A singleton handle with write access. */
@@ -45,7 +45,7 @@ interface ReadableCollection<T : Entity> : Handle {
     suspend fun isEmpty(): Boolean
 
     /** Assign a callback when the collection is Updated. */
-    fun onUpdate(action: (Set<T>) -> Unit)
+    suspend fun onUpdate(action: (Set<T>) -> Unit)
 
     /** Returns a set with all the entities in the collection. */
     suspend fun fetchAll(): Set<T>
