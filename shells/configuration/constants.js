@@ -21,7 +21,7 @@ export const Const = {
     pouchdbStorageKey: pouchdb,
     volatileStorageKey: volatile,
     storageKey: volatile, //pouchdb, //firebase,
-    plannerStorageKey: 'volatile://',
+    plannerStorageKey: 'volatile://planificator/a@b',
     manifest: `https://$particles/canonical.arcs`,
     launcherId: 'arc-launcher'
   },
