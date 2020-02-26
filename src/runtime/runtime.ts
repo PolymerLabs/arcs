@@ -144,9 +144,6 @@ export class Runtime {
 
   constructor({loader, composerClass, context, pecFactory, memoryProvider}: RuntimeOptions = {}) {
     this.cacheService = new RuntimeCacheService();
-    // We have to do this here based on a vast swathe of tests that just create
-    // a Runtime instance and forge ahead. This is only temporary until we move
-    // to the new storage stack.
     this.loader = loader || new Loader();
     this.pecFactory = pecFactory;
     this.composerClass = composerClass || SlotComposer;

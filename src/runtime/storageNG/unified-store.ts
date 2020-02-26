@@ -58,9 +58,6 @@ export function entityHasName(name: string) {
  * Store class.
  */
 export abstract class UnifiedStore implements Comparable<UnifiedStore> {
-  // Tags for all subclasses of UnifiedStore.
-  protected abstract unifiedStoreType: 'Store' | 'StorageProviderBase';
-
   // TODO: Once the old storage stack is gone, this should only be of type
   // StorageKey, and can be moved into StoreInfo.
   abstract storageKey: StorageKey;
