@@ -26,10 +26,8 @@ sealed class Ttl(val time: Time?, count: Int, val isInfinite: Boolean = false) {
             "must be either positive count on infinite, " +
                 "but got count=$count and isInfinite=$isInfinite"
         }
-        if (!isInfinite) {
-            requireNotNull(time) {
-                "time cannot be null for non infinite ttl"
-            }
+        require(time != null || isInfinite) {
+            "time cannot be null for non infinite ttl"
         }
     }
 

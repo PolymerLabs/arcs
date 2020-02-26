@@ -138,19 +138,19 @@ class SingletonIntegrationTest {
     @Test
     fun addEntityWithTtl() = runBlockingTest {
         val person = Person("Jane", 29, false)
-        assertThat(singletonA.set(person.toRawEntity())).isTrue()
+        assertThat(singletonA.store(person.toRawEntity())).isTrue()
         assertThat(requireNotNull(singletonA.fetch()).expirationTimestamp)
             .isEqualTo(RawEntity.NO_EXPIRATION)
 
         val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2))
         storageProxy.registerHandle(singletonC)
-        assertThat(singletonC.set(person.toRawEntity())).isTrue()
+        assertThat(singletonC.store(person.toRawEntity())).isTrue()
         val entityC = requireNotNull(singletonC.fetch())
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
 
         val singletonD = SingletonImpl("singletonD", storageProxy, null, Ttl.Minutes(1))
         storageProxy.registerHandle(singletonD)
-        assertThat(singletonD.set(person.toRawEntity())).isTrue()
+        assertThat(singletonD.store(person.toRawEntity())).isTrue()
         val entityD = requireNotNull(singletonD.fetch())
         assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
         assertThat(entityC.expirationTimestamp).isGreaterThan(entityD.expirationTimestamp)
