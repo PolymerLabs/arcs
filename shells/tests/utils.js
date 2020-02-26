@@ -149,7 +149,7 @@ exports.marshalPersona = function(storageType) {
 exports.openArc = async function(persona) {
   // configure url
   const urlParams = [
-    `plannerStorage=volatile`,
+    `plannerStorage=volatile://`,
     `persona=${persona}`,
     //`log`
   ];
@@ -172,7 +172,7 @@ exports.openNewArc = async function(testTitle, storageType, useSolo) {
   console.log(`running "${testTitle}" (${storageType})`);
   const urlParams = [
     //`log`,
-    `plannerStorage=volatile`,
+    `plannerStorage=volatile://`,
     `persona=${storage}`
   ];
   if (useSolo) {

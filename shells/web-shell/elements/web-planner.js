@@ -11,6 +11,7 @@
 import {Xen} from '../../lib/components/xen.js';
 import {Planificator} from '../../../build/planning/arcs-planning.js';
 import {devtoolsPlannerInspectorFactory} from '../../../build/devtools-connector/devtools-planner-inspector.js';
+import {StorageKeyParser} from '../../../build/runtime/storageNG/storage-key-parser.js';
 
 const log = Xen.logFactory('WebPlanner', '#104a91');
 //const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
@@ -44,13 +45,12 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
   async _createPlanificator(config, arc) {
     const options = {
       userid: 'user',
-      storageKeyBase: config.plannerStorage,
+      storageKeyBase: StorageKeyParser.parse(config.plannerStorage),
       onlyConsumer: config.plannerOnlyConsumer,
       debug: config.plannerDebug,
       inspectorFactory: devtoolsPlannerInspectorFactory
     };
     this._suggestionsChanged(null, []);
-    console.log(config.plannerStorage)
     const planificator = await Planificator.create(arc, options);
     // TODO(sjmiles): initialize listener with empty suggestions so it doesn't have to figure out
     // that we reset Planificator (Planificator does not notify if it generates no suggestions the first time).
