@@ -33,15 +33,15 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.PerformanceStatistics
-import java.io.FileDescriptor
-import java.io.PrintWriter
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import java.io.FileDescriptor
+import java.io.PrintWriter
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 /**
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
@@ -172,7 +172,7 @@ class StorageService : ResurrectorService() {
                 |$pad    Min: %.3f
                 |$pad    Max: %.3f
                 |
-                |${pad}Counts per measurement (name: average, standard deviation, min, max):
+                |$pad  Counts per measurement (name: average, standard deviation, min, max):
             """.trimMargin()
                 .format(
                     runtime.measurements,
@@ -186,12 +186,12 @@ class StorageService : ResurrectorService() {
             val stats = counters[counter]
             writer.println(
                 """
-                    |$pad  $counter:
-                    |$pad    %.2f, %.2f, %.2f, %.2f
+                    |$pad    ${counter.padEnd(35)}%.2f, %.2f, %.2f, %.2f
                 """.trimMargin("|")
-                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0, stats.max ?: 0)
+                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0.0, stats.max ?: 0.0)
             )
         }
+        writer.println()
     }
 
     companion object {
