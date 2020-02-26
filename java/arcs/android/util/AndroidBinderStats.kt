@@ -29,14 +29,11 @@ import java.io.File
 object AndroidBinderStats {
     private const val STATS_FILE_NODE = "/sys/kernel/debug/binder/stats"
     private const val PROCESS_TAG = "proc "
-    private val log = TaggedLog {"AndroidBinderStats"}
+    private val log = TaggedLog { "AndroidBinderStats" }
 
     /** Query the stats of the given binder process record [tags]. */
     fun query(vararg tags: String): List<String> =
         with(parse()) {
-            for ((k, v) in this) {
-                log.info {"${k}: ${v}"}
-            }
             tags.map { this[it] ?: "" }
         }
 
@@ -68,10 +65,10 @@ object AndroidBinderStats {
                     it.trim() to ""
                 }
             }
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             // The possible reasons could be Linux debugfs is not mounted on some Android
             // devices and builds, denial of permission, etc.
-            log.info {"${e.message}"}
+            log.info { "${e.message}" }
             return emptyMap()
         }
     }

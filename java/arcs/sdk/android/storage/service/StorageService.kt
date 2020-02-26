@@ -136,13 +136,13 @@ class StorageService : ResurrectorService() {
             AndroidBinderStats.query(*values.toTypedArray()).iterator().let { stats ->
                 mapValues { stats.next() }
             }.let { stats ->
-                if (stats.any {(_, v) -> v.isNotEmpty()}) stats else null
+                if (stats.any { (_, v) -> v.isNotEmpty() }) stats else null
             }
         }?.run {
             writer.println(
                 """
                     |Current Process Binder Stats:
-                    |  - ${map {(k, v) -> "${k}: ${v}"}.joinToString("\n|  - ")}
+                    |  - ${map {(k, v) -> "$k: $v"}.joinToString("\n|  - ")}
                 """.trimMargin("|")
             )
         }
