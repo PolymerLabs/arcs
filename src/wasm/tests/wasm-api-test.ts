@@ -14,7 +14,6 @@ import {Runtime} from '../../runtime/runtime.js';
 import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
-import {VolatileStorage} from '../../runtime/storage/volatile-storage.js';
 import {ReferenceType, SingletonType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
@@ -84,7 +83,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         this.skip();
       } else {
         loader = new TestLoader(testDir);
-        VolatileStorage.setStorageCache(new RuntimeCacheService());
         manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
           loader,
           fileName: process.cwd() + '/manifest.arcs',

@@ -18,8 +18,6 @@ import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../runtime/util.js';
-// database providers are optional, these tests use these provider(s)
-import '../../../runtime/storage/firebase/firebase-provider.js';
 import {DriverFactory} from '../../../runtime/storageNG/drivers/driver-factory.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {MockFirebaseStorageKey} from '../../../runtime/storageNG/testing/mock-firebase.js';

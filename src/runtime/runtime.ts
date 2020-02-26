@@ -17,11 +17,9 @@ import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
-import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {RamDiskStorageDriverProvider} from './storageNG/drivers/ramdisk.js';
 import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import {VolatileStorage} from './storage/volatile-storage.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
@@ -43,7 +41,6 @@ export type RuntimeOptions = Readonly<{
 
 export type RuntimeArcOptions = Readonly<{
   pecFactories?: PecFactory[];
-  storageProviderFactory?: StorageProviderFactory;
   speculative?: boolean;
   innerArc?: boolean;
   stub?: boolean;
@@ -147,10 +144,6 @@ export class Runtime {
 
   constructor({loader, composerClass, context, pecFactory, memoryProvider}: RuntimeOptions = {}) {
     this.cacheService = new RuntimeCacheService();
-    // We have to do this here based on a vast swathe of tests that just create
-    // a Runtime instance and forge ahead. This is only temporary until we move
-    // to the new storage stack.
-    VolatileStorage.setStorageCache(this.cacheService);
     this.loader = loader || new Loader();
     this.pecFactory = pecFactory;
     this.composerClass = composerClass || SlotComposer;

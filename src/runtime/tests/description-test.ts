@@ -15,7 +15,6 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Relevance} from '../relevance.js';
-import {SingletonStorageProvider, BigCollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {SlotComposer} from '../slot-composer.js';
 import {EntityType} from '../type.js';
 import {Entity} from '../entity.js';

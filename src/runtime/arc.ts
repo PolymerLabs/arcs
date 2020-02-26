@@ -28,7 +28,7 @@ import {Recipe, IsValidOptions} from './recipe/recipe.js';
 import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
-import {ArcType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
+import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
         RelationType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
@@ -242,12 +242,7 @@ export class Arc implements ArcInterface {
   // This does not directly use serialize() as callers may want to modify the
   // contents of the serialized arc before persisting.
   async persistSerialization(serialization: string): Promise<void> {
-    // TODO(shans): ensure implementation works once ArcType is available through new storage stack
-    const key = this.storageKey.childKeyForArcInfo();
-    const arcInfoType = new ArcType();
-    const store: SingletonEntityStore = new Store({storageKey: key, exists: Exists.MayExist, id: 'store', type: arcInfoType});
-    const handle = singletonHandle(await store.activate(), this);
-    await handle.set(arcInfoType.newInstance(this.id, serialization));
+    throw new Error('persistSerialization unimplemented, pending synthetic type support in new storage stack');
   }
 
   static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory}: DeserializeArcOptions): Promise<Arc> {
