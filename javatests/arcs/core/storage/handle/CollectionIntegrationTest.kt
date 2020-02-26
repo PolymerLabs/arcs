@@ -66,16 +66,29 @@ class CollectionIntegrationTest {
     @Before
     fun setUp() = runBlocking {
         RamDiskDriverProvider()
-        Ttl.time = TimeImpl()
 
         val queryByAge = Refinement { value: RawEntity, args: Any -> value.singletons.get("age") == (args as Int).toReferencable()};
 
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSet<RawEntity>())
 
-        collectionA = CollectionImpl("collectionA", storageProxy, null, null)
+        collectionA = CollectionImpl(
+            "collectionA",
+            storageProxy,
+            null,
+            null,
+            Ttl.Infinite,
+            TimeImpl()
+        )
         storageProxy.registerHandle(collectionA)
-        collectionB = CollectionImpl("collectionB", storageProxy, null, queryByAge)
+        collectionB = CollectionImpl(
+            "collectionB",
+            storageProxy,
+            null,
+            queryByAge,
+            Ttl.Infinite,
+            TimeImpl()
+        )
         storageProxy.registerHandle(collectionB)
         Unit
     }
@@ -174,13 +187,13 @@ class CollectionIntegrationTest {
         assertThat(collectionA.fetchAll().first().expirationTimestamp)
             .isEqualTo(RawEntity.NO_EXPIRATION)
 
-        val collectionC = CollectionImpl("collectionC", storageProxy, null, Ttl.Days(2))
+        val collectionC = CollectionImpl("collectionC", storageProxy, null, Ttl.Days(2), TimeImpl())
         storageProxy.registerHandle(collectionC)
         assertThat(collectionC.store(person.toRawEntity())).isTrue()
         val entityC = collectionC.fetchAll().first()
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
 
-        val collectionD = CollectionImpl("collectionD", storageProxy, null, Ttl.Minutes(1))
+        val collectionD = CollectionImpl("collectionD", storageProxy, null, Ttl.Minutes(1), TimeImpl())
         storageProxy.registerHandle(collectionD)
         assertThat(collectionD.store(person.toRawEntity())).isTrue()
         val entityD = collectionD.fetchAll().first()

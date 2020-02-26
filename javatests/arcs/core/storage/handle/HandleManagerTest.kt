@@ -11,6 +11,7 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Log
+import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -18,7 +19,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
@@ -100,7 +100,7 @@ class HandleManagerTest {
     }
 
     private fun handleManagerTest(block: suspend (HandleManager) -> Unit) {
-        val hm = HandleManager()
+        val hm = HandleManager(TimeImpl())
         runBlocking {
             block(hm)
         }

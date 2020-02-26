@@ -26,22 +26,13 @@ data class RawEntity(
      */
     val collections: Map<FieldName, Set<Referencable>> = emptyMap()
 ) : Referencable {
-<<<<<<< HEAD
     override fun unwrap(): Referencable {
         return RawEntity(
-=======
-    override fun tryDereference(): Referencable {
-        val entity = RawEntity(
->>>>>>> address comments: refactor TimeUtil into its own file, make expirationTimestamp field on Referencable interface
             id = id,
             expirationTimestamp = expirationTimestamp,
             singletons = singletons.mapValues { it.value?.unwrap() },
             collections = collections.mapValues {
-<<<<<<< HEAD
                 it.value.map { item -> item.unwrap() }.toSet()
-=======
-                it.value.map { item -> item.tryDereference() }.toSet()
->>>>>>> address comments: refactor TimeUtil into its own file, make expirationTimestamp field on Referencable interface
             }
         )
         entity.expirationTimestamp = expirationTimestamp

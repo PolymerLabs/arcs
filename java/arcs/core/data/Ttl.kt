@@ -14,7 +14,7 @@ package arcs.core.data
 import arcs.core.util.Time
 
 /** A class containing retention policy information. */
-sealed class Ttl(val time: Time?, count: Int, val isInfinite: Boolean = false) {
+sealed class Ttl(count: Int, val isInfinite: Boolean = false) {
     val minutes: Int = count * when (this) {
         is Minutes -> 1
         is Hours -> 60
@@ -26,9 +26,6 @@ sealed class Ttl(val time: Time?, count: Int, val isInfinite: Boolean = false) {
             "must be either positive count on infinite, " +
                 "but got count=$count and isInfinite=$isInfinite"
         }
-        require(time != null || isInfinite) {
-            "time cannot be null for non infinite ttl"
-        }
     }
 
     override fun equals(other: Any?): Boolean =
@@ -36,16 +33,12 @@ sealed class Ttl(val time: Time?, count: Int, val isInfinite: Boolean = false) {
 
     override fun hashCode(): Int = minutes.hashCode()
 
-    fun calculateExpiration(): Long =
+    fun calculateExpiration(time: Time): Long =
         if (isInfinite) RawEntity.NO_EXPIRATION
         else requireNotNull(time).currentTimeMillis + (minutes * 60 * 1000)
 
-    data class Minutes(val count: Int) : Ttl(Ttl.time, count)
-    data class Hours(val count: Int) : Ttl(Ttl.time, count)
-    data class Days(val count: Int) : Ttl(Ttl.time, count)
-    object Infinite : Ttl(null, -1, true)
-
-    companion object {
-        var time: Time? = null
-    }
+    data class Minutes(val count: Int) : Ttl(count)
+    data class Hours(val count: Int) : Ttl(count)
+    data class Days(val count: Int) : Ttl(count)
+    object Infinite : Ttl(-1, true)
 }

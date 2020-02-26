@@ -16,7 +16,6 @@ import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -24,11 +23,6 @@ import org.junit.runners.JUnit4
 /** Tests for [Ttl]. */
 @RunWith(JUnit4::class)
 class TtlTest {
-    @Before
-    fun setUp() {
-        Ttl.time = TimeImpl()
-    }
-
     @Test
     fun ttl_minutes() {
         assertThat(Ttl.Infinite.minutes).isEqualTo(-1)

@@ -19,6 +19,7 @@ import arcs.core.storage.Callbacks
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
+import arcs.core.util.Time
 
 /** These typealiases are defined to clean up the class declaration below. */
 typealias SingletonProxy<T> = StorageProxy<SingletonData<T>, SingletonOp<T>, T?>
@@ -41,8 +42,9 @@ class SingletonImpl<T : Referencable>(
     storageProxy: SingletonProxy<T>,
     callbacks: SingletonCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
+    time: Time,
     canRead: Boolean = true
-) : SingletonBase<T>(name, storageProxy, callbacks, ttl, canRead) {
+) : SingletonBase<T>(name, storageProxy, callbacks, ttl, time, canRead) {
     /** Get the current value from the backing [StorageProxy]. */
     suspend fun fetch() = value()
 
@@ -53,7 +55,7 @@ class SingletonImpl<T : Referencable>(
     suspend fun store(entity: T): Boolean {
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant
-            entity.expirationTimestamp = ttl.calculateExpiration()
+            entity.expirationTimestamp = ttl.calculateExpiration(time)
         }
         return storageProxy.applyOp(
             CrdtSingleton.Operation.Update(

@@ -62,14 +62,13 @@ class SingletonIntegrationTest {
     @Before
     fun setUp() = runBlocking {
         RamDiskDriverProvider()
-        Ttl.time = TimeImpl()
 
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSingleton<RawEntity>())
 
-        singletonA = SingletonImpl("singletonA", storageProxy)
+        singletonA = SingletonImpl("singletonA", storageProxy, null, Ttl.Infinite, TimeImpl())
         storageProxy.registerHandle(singletonA)
-        singletonB = SingletonImpl("singletonB", storageProxy)
+        singletonB = SingletonImpl("singletonB", storageProxy, null, Ttl.Infinite, TimeImpl())
         storageProxy.registerHandle(singletonB)
         Unit
     }
@@ -142,13 +141,13 @@ class SingletonIntegrationTest {
         assertThat(requireNotNull(singletonA.fetch()).expirationTimestamp)
             .isEqualTo(RawEntity.NO_EXPIRATION)
 
-        val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2))
+        val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2), TimeImpl())
         storageProxy.registerHandle(singletonC)
         assertThat(singletonC.store(person.toRawEntity())).isTrue()
         val entityC = requireNotNull(singletonC.fetch())
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
 
-        val singletonD = SingletonImpl("singletonD", storageProxy, null, Ttl.Minutes(1))
+        val singletonD = SingletonImpl("singletonD", storageProxy, null, Ttl.Minutes(1), TimeImpl())
         storageProxy.registerHandle(singletonD)
         assertThat(singletonD.store(person.toRawEntity())).isTrue()
         val entityD = requireNotNull(singletonD.fetch())
