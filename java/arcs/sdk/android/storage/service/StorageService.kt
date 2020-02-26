@@ -172,7 +172,7 @@ class StorageService : ResurrectorService() {
                 |$pad    Min: %.3f
                 |$pad    Max: %.3f
                 |
-                |${pad}Counts per measurement (name: average, standard deviation, min, max):
+                |$pad  Counts per measurement (name: average, standard deviation, min, max):
             """.trimMargin()
                 .format(
                     runtime.measurements,
@@ -186,12 +186,12 @@ class StorageService : ResurrectorService() {
             val stats = counters[counter]
             writer.println(
                 """
-                    |$pad  $counter:
-                    |$pad    %.2f, %.2f, %.2f, %.2f
+                    |$pad    ${counter.padEnd(35)}%.2f, %.2f, %.2f, %.2f
                 """.trimMargin("|")
-                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0, stats.max ?: 0)
+                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0.0, stats.max ?: 0.0)
             )
         }
+        writer.println()
     }
 
     companion object {
@@ -207,6 +207,7 @@ class StorageService : ResurrectorService() {
          */
         fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
             Intent(context, StorageService::class.java).apply {
+                action = storeOptions.actual.storageKey.toString()
                 putExtra(EXTRA_OPTIONS, storeOptions)
             }
     }

@@ -11,10 +11,8 @@
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {InterfaceType} from './type.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {KeyBase} from './storage/key-base.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Recipe} from './recipe/recipe.js';
-import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {Manifest} from './manifest.js';
 import {Id} from './id.js';
 import {VolatileMemory, VolatileStorageKey} from './storageNG/drivers/volatile.js';

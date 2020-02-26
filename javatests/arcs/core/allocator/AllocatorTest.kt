@@ -12,6 +12,7 @@ import arcs.core.data.SchemaName
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.toIdentifierList
+import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.host.ExplicitHostRegistry
@@ -94,6 +95,8 @@ class AllocatorTest {
             hostRegistry = ExplicitHostRegistry()
             hostRegistry.registerHost(ReadingHost())
             hostRegistry.registerHost(WritingHost())
+            RamDisk.clear()
+
             writePersonHandleConnection =
                 Plan.HandleConnection(
                     CreateableStorageKey("recipePerson"),

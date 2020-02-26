@@ -11,6 +11,8 @@
 
 package arcs.core.storage.handle
 
+import arcs.core.common.ReferenceId
+import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -30,6 +32,8 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.testutil.assertThrows
+import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -61,12 +65,14 @@ class CollectionIntegrationTest {
     fun setUp() = runBlocking {
         RamDiskDriverProvider()
 
+        val queryByAge = Refinement { value: RawEntity, args: Any -> value.singletons.get("age") == (args as Int).toReferencable()};
+
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSet<RawEntity>())
 
-        collectionA = CollectionImpl("collectionA", storageProxy)
+        collectionA = CollectionImpl("collectionA", storageProxy, null, null)
         storageProxy.registerHandle(collectionA)
-        collectionB = CollectionImpl("collectionB", storageProxy)
+        collectionB = CollectionImpl("collectionB", storageProxy, null, queryByAge)
         storageProxy.registerHandle(collectionB)
         Unit
     }
@@ -90,6 +96,37 @@ class CollectionIntegrationTest {
         assertThat(collectionA.store(person.toRawEntity())).isTrue()
         assertThat(collectionA.fetchAll()).containsExactly(person.toRawEntity())
         assertThat(collectionB.fetchAll()).containsExactly(person.toRawEntity())
+    }
+
+    @Test
+    fun addingElementsToA_showsUpInQueryOnB() = runBlockingTest {
+        val miles = Person("Miles", 55, true, emptySet())
+        val jason = Person("Jason", 35, false, setOf("Watson"))
+
+        collectionA.store(miles.toRawEntity())
+        collectionA.store(jason.toRawEntity())
+
+        assertThat(collectionA.fetchAll()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
+        // Ensure that the query argument is being used.
+        assertThat(collectionB.query(55)).containsExactly(miles.toRawEntity())
+        assertThat(collectionB.query(35)).containsExactly(jason.toRawEntity())
+
+        // Ensure that an empty set of results can be returned.
+        assertThat(collectionB.query(60)).containsExactly()
+    }
+
+    @Test
+    fun queryingWithoutAQueryThrows() = runBlockingTest {
+        val miles = Person("Miles", 55, true, emptySet())
+        val jason = Person("Jason", 35, false, setOf("Watson"))
+
+        collectionA.store(miles.toRawEntity())
+        collectionA.store(jason.toRawEntity())
+
+        assertThat(collectionA.fetchAll()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
+        assertSuspendingThrows(IllegalArgumentException::class) {
+            collectionA.query(Unit)
+        }
     }
 
     @Test

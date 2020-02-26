@@ -17,7 +17,6 @@ import {SlotComposer} from '../runtime/slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
 import {singletonHandleForTest} from '../runtime/testing/handle-for-test.js';
 import {RuntimeCacheService} from '../runtime/runtime-cache.js';
-import {VolatileStorage} from '../runtime/storage/volatile-storage.js';
 
 const manifestFile = 'src/tests/source/schemas.arcs';
 
@@ -36,11 +35,6 @@ class StubWasmLoader extends Loader {
 }
 
 describe('Hot Code Reload for JS Particle', async () => {
-  beforeEach(() => {
-    const cacheService = new RuntimeCacheService();
-    VolatileStorage.setStorageCache(cacheService);
-  });
-
   it('updates model and template', async () =>{
     const context = await Manifest.parse(`
       particle A in 'A.js'
@@ -177,8 +171,6 @@ describe('Hot Code Reload for WASM Particle', async () => {
   before(function() {
     if (!global['testFlags'].bazel) {
       this.skip();
-    } else {
-      VolatileStorage.setStorageCache(new RuntimeCacheService());
     }
   });
 

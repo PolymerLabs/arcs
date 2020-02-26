@@ -14,7 +14,6 @@ import {Runtime} from '../../runtime/runtime.js';
 import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
-import {VolatileStorage} from '../../runtime/storage/volatile-storage.js';
 import {ReferenceType, SingletonType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
@@ -84,7 +83,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         this.skip();
       } else {
         loader = new TestLoader(testDir);
-        VolatileStorage.setStorageCache(new RuntimeCacheService());
         manifestPromise = Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
           loader,
           fileName: process.cwd() + '/manifest.arcs',
@@ -149,6 +147,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       ]);
     });
 
+    // TODO(sjmiles, #4762): Enable this test.
     it.skip('getTemplate / populateModel / renderSlot', async () => {
       const {arc, stores, slotObserver} = await setup('RenderTest');
       const flags = await singletonHandleForTest(arc, stores.get('flags'));
@@ -173,6 +172,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // ]);
     });
 
+    // TODO(sjmiles, #4762): Enable this test.
     it.skip('autoRender', async () => {
       const {arc, stores, slotObserver} = await setup('AutoRenderTest');
       const data = await singletonHandleForTest(arc, stores.get('data'));
@@ -254,8 +254,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     prefix('reference class API', async () => {
-      // TODO(alxr): Remove when tests are ready
       if (isKotlin) {
+        // TODO(alxr, #4763): Enable this test.
         return;
       }
       const {arc, stores} = await setup('ReferenceClassApiTest');
@@ -362,10 +362,10 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     // TODO: writing to reference-typed handles
-    it('reference-typed handles - storageNG', async () => {
-      // TODO(alxr): Remove when tests are ready
+    it('reference-typed handles - storageNG', async function() {
       if (isKotlin) {
-        return;
+        // TODO(alxr, #4763): Enable this test.
+        this.skip();
       }
       const {arc, stores} = await setup('ReferenceHandlesTest');
       const sng = await singletonHandleForTest(arc, stores.get('sng'));
@@ -417,8 +417,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     // TODO: nested references
     it('reference-typed schema fields - storageNG', async function() {
-      // TODO(alxr): Remove when tests are ready
       if (isKotlin) {
+        // TODO(alxr, #4763): Enable this test.
         this.skip();
       }
       const {arc, stores} = await setup('SchemaReferenceFieldsTest');

@@ -11,7 +11,6 @@
 import {assert} from '../platform/assert-web.js';
 import {Id} from './id.js';
 import {SlotInfo} from './slot-info.js';
-import {ArcInfo} from './synthetic-types.js';
 import {Predicate, Literal} from './hot.js';
 import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
@@ -931,26 +930,6 @@ export class ReferenceType extends Type {
     return this.referredType.crdtInstanceConstructor();
   }
 }
-
-
-export class ArcType extends Type {
-  constructor() {
-    super('Arc');
-  }
-
-  get isArc(): boolean {
-    return true;
-  }
-
-  newInstance(arcId: Id, serialization: string): ArcInfo {
-    return new ArcInfo(arcId, serialization);
-  }
-
-  toLiteral(): TypeLiteral {
-    return {tag: this.tag};
-  }
-}
-
 
 export class HandleType extends Type {
   constructor() {

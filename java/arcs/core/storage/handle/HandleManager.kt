@@ -1,5 +1,6 @@
 package arcs.core.storage.handle
 
+import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.CollectionType
@@ -60,7 +61,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     suspend fun singletonHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: SingletonCallbacks<RawEntity>? = null
+        callbacks: SingletonCallbacks<RawEntity>? = null,
+        name: String = storageKey.toKeyString()
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -78,7 +80,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SingletonHandle(storageKey.toKeyString(), storageProxy, callbacks).also {
+        return SingletonHandle(name, storageProxy, callbacks).also {
             storageProxy.registerHandle(it)
         }
     }
@@ -91,7 +93,9 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
     suspend fun setHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: SetCallbacks<RawEntity>? = null
+        callbacks: SetCallbacks<RawEntity>? = null,
+        name: String = storageKey.toKeyString(),
+        refinement: Refinement<RawEntity>? = null
     ): SetHandle<RawEntity> {
         val storeOptions = SetStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -106,7 +110,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SetHandle(storageKey.toKeyString(), storageProxy, callbacks).also {
+        return SetHandle(name, storageProxy, callbacks, refinement).also {
             storageProxy.registerHandle(it)
         }
     }

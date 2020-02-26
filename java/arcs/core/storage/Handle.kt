@@ -85,21 +85,19 @@ private val callback: Callbacks<Data, Op, T>? = null,
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 
-    /** Local copy of the [VersionMap] for the backing CRDT. */
-    var versionMap = VersionMap()
-        protected set
+    /** Return the local copy of the [VersionMap] for the storage proxy CRDT. */
+    protected suspend fun versionMap() = storageProxy.getVersionMap()
 
-    /** Read value from the backing [StorageProxy], updating the internal clock copy. */
+    /** Read value from the backing [StorageProxy]. */
     protected suspend fun value(): T {
         log.debug { "Fetching value." }
-        val particleView = storageProxy.getParticleView()
-        this.versionMap = particleView.versionMap
-        return particleView.value
+        return storageProxy.getParticleView()
     }
 
-    /** Helper that subclasses can use to increment their version in the [VersionMap]. */
-    protected fun VersionMap.increment() {
+    /** Helper that subclasses can use to increment their version in a [VersionMap]. */
+    protected fun VersionMap.increment(): VersionMap {
         this[name]++
+        return this
     }
 
     /**
@@ -107,7 +105,6 @@ private val callback: Callbacks<Data, Op, T>? = null,
      * after a model update has been cleanly applied to the [StorageProxy]'s local copy.
      */
     internal fun onUpdate(op: Op) {
-        versionMap = op.clock.copy()
         callback?.onUpdate(this, op)
     }
 
@@ -115,8 +112,7 @@ private val callback: Callbacks<Data, Op, T>? = null,
      * This should be called by the [StorageProxy] this [Handle] has been registered with,
      * after a full sync has occurred.
      */
-    internal fun onSync(versionMap: VersionMap) {
-        this.versionMap = versionMap
+    internal fun onSync() {
         callback?.onSync(this)
     }
 
