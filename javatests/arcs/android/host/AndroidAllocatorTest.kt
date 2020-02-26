@@ -24,6 +24,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.StorageKey
+import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.VolatileStorageKey
 import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
@@ -57,6 +58,7 @@ class AndroidAllocatorTest {
 
     @Before
     fun setUp() = runBlocking {
+        RamDisk.clear()
         readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
         writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
 
