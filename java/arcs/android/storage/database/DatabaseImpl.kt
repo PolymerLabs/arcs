@@ -46,8 +46,8 @@ import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.jvm.util.performance.JvmTimer
 import com.google.protobuf.ByteString
-import kotlin.coroutines.coroutineContext
 import com.google.protobuf.InvalidProtocolBufferException
+import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
