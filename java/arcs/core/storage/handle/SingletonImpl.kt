@@ -50,7 +50,11 @@ class SingletonImpl<T : Referencable>(
     suspend fun store(entity: T): Boolean {
         return storageProxy.applyOp(
             CrdtSingleton.Operation.Update(
-                name, versionMap().increment(), entity))
+                name,
+                versionMap().increment(),
+                entity
+            )
+        )
     }
 
     /**TODO(heimlich): remove once all implementations use store. */
@@ -65,6 +69,7 @@ class SingletonImpl<T : Referencable>(
         // values set by other actors.
         fetch()
         return storageProxy.applyOp(
-            CrdtSingleton.Operation.Clear(name, versionMap()))
+            CrdtSingleton.Operation.Clear(name, versionMap())
+        )
     }
 }

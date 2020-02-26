@@ -62,7 +62,8 @@ class CollectionImpl<T : Referencable>(
     suspend fun store(entity: T): Boolean {
         log.debug { "Storing: $entity" }
         return storageProxy.applyOp(
-            CrdtSet.Operation.Add(name, versionMap().increment(), entity))
+            CrdtSet.Operation.Add(name, versionMap().increment(), entity)
+        )
     }
 
     /**
@@ -79,7 +80,8 @@ class CollectionImpl<T : Referencable>(
         log.debug { "Clearing" }
         return storageProxy.getParticleView().all {
             storageProxy.applyOp(
-                CrdtSet.Operation.Remove(name, versionMap(), it))
+                CrdtSet.Operation.Remove(name, versionMap(), it)
+            )
         }
     }
 
@@ -95,6 +97,7 @@ class CollectionImpl<T : Referencable>(
     suspend fun remove(entity: T): Boolean {
         log.debug { "Removing $entity" }
         return storageProxy.applyOp(
-            CrdtSet.Operation.Remove(name, versionMap(), entity))
+            CrdtSet.Operation.Remove(name, versionMap(), entity)
+        )
     }
 }
