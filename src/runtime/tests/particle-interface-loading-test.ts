@@ -247,7 +247,6 @@ describe('particle interface loading', () => {
     `);
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    // TODO(shans): Fix storage stack bug so 'this.innerFooHandle.fetch();' can be removed.
     const loader = new Loader(null, {
       'updating-particle.js': `
         'use strict';
@@ -259,7 +258,6 @@ describe('particle interface loading', () => {
             }
             async onHandleSync(handle, model) {
               this.innerFooHandle = this.handles.get('innerFoo');
-              await this.innerFooHandle.fetch();
               await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: str}));
             }
           };
