@@ -33,15 +33,15 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.PerformanceStatistics
+import java.io.FileDescriptor
+import java.io.PrintWriter
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
-import java.io.FileDescriptor
-import java.io.PrintWriter
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 
 /**
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
