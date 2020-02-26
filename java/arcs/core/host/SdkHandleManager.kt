@@ -66,6 +66,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
         handleHolder,
         handleName,
         handleManager.singletonHandle(storageKey, schema, canRead = handleMode != HandleMode.Write),
+        handleMode,
         idGenerator,
         sender
     )
@@ -94,10 +95,16 @@ class SdkHandleManager(val handleManager: HandleManager) {
         handleHolder,
         handleName,
         handleManager.setHandle(storageKey, schema, canRead = handleMode != HandleMode.Write),
+        handleMode,
         idGenerator,
         sender
     )
 
+    /**
+     * Same-thread non-blocking dispatch. Note that this may lead to concurrency problems on
+     * some platforms. On platforms with real preemptive threads, use an implementation that
+     * provides concurrency aware dispatch.
+     */
     private fun defaultSender(block: suspend () -> Unit) {
         GlobalScope.launch {
             block()
@@ -110,6 +117,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
      * @property entitySpec used to deserialize [RawEntity] types into [Entity]
      * @property handleName readable name for the handle, usually from a recipe
      * @property storageHandle a [StorageHandle] usually obtained thru [HandleManager]
+     * @property handleMode whether a handle is Read,Write, or ReadWrite (default)
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
@@ -117,6 +125,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
         entitySpec: EntitySpec<T>,
         handleName: String,
         storageHandle: StorageHandle<*, *, *>,
+        handleMode: HandleMode,
         idGenerator: Id.Generator,
         sender: Sender
     ): Handle {
@@ -125,6 +134,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
                 entitySpec,
                 handleName,
                 storageHandle as SingletonHandle<RawEntity>,
+                handleMode,
                 idGenerator,
                 sender
             )
@@ -132,6 +142,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
                 entitySpec,
                 handleName,
                 storageHandle as SetHandle<RawEntity>,
+                handleMode,
                 idGenerator,
                 sender
             )
@@ -145,6 +156,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
      * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
      * @property storageHandle a [StorageHandle] usually obtained thru [HandleManager]
+     * @property handleMode whether a handle is Read,Write, or ReadWrite (default)
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
@@ -152,6 +164,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
         handleHolder: HandleHolder,
         handleName: String,
         storageHandle: StorageHandle<*, *, *>,
+        handleMode: HandleMode,
         idGenerator: Id.Generator,
         sender: Sender
     ): HandleHolder {
@@ -161,6 +174,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
             entitySpec ?: throw EntitySpecNotFound(handleName, handleHolder),
             handleName,
             storageHandle,
+            handleMode,
             idGenerator,
             sender
         )
@@ -343,48 +357,65 @@ class SenderCallbackAdapter<Data : CrdtData, Op : CrdtOperationAtTime, T, E>(
 internal fun <T : Entity> RawEntity.deserialize(entitySpec: EntitySpec<T>) =
     entitySpec.deserialize(this)
 
-internal fun <T : Entity> T.serialize() = (this as Entity).serialize()
-
 private fun <T : Entity> createSingletonHandle(
     entitySpec: EntitySpec<T>,
     handleName: String,
     storageHandle: SingletonImpl<RawEntity>,
+    handleMode: HandleMode,
     idGenerator: Id.Generator,
     sender: Sender
 ): Handle {
-    // TODO: implement read-only handles
-    return if (storageHandle.canRead) ReadWriteSingletonHandleImpl<T>(
-        entitySpec,
-        handleName,
-        storageHandle,
-        idGenerator,
-        sender
-    ) else WritableSingletonHandleImpl<T>(
-        handleName,
-        storageHandle,
-        idGenerator
-    )
+    return when (handleMode) {
+        HandleMode.ReadWrite -> ReadWriteSingletonHandleImpl<T>(
+            entitySpec,
+            handleName,
+            storageHandle,
+            idGenerator,
+            sender
+        )
+        HandleMode.Read -> ReadableSingletonHandleImpl<T>(
+            entitySpec,
+            handleName,
+            storageHandle,
+            sender
+        )
+        HandleMode.Write -> WritableSingletonHandleImpl<T>(
+            handleName,
+            storageHandle,
+            idGenerator
+        )
+    }
 }
 
 private fun <T : Entity> createSetHandle(
     entitySpec: EntitySpec<T>,
     handleName: String,
     storageHandle: CollectionImpl<RawEntity>,
+    handleMode: HandleMode,
     idGenerator: Id.Generator,
     sender: Sender
 ): Handle {
     // TODO: implement read-only handles
-    return if (storageHandle.canRead) ReadWriteCollectionHandleImpl<T>(
-        entitySpec,
-        handleName,
-        storageHandle,
-        idGenerator,
-        sender
-    ) else WritableCollectionHandleImpl<T>(
-        handleName,
-        storageHandle,
-        idGenerator
-    )
+    return when (handleMode) {
+        HandleMode.ReadWrite -> ReadWriteCollectionHandleImpl<T>(
+            entitySpec,
+            handleName,
+            storageHandle,
+            idGenerator,
+            sender
+        )
+        HandleMode.Read -> ReadableCollectionHandleImpl<T>(
+            entitySpec,
+            handleName,
+            storageHandle,
+            sender
+        )
+        HandleMode.Write -> WritableCollectionHandleImpl<T>(
+            handleName,
+            storageHandle,
+            idGenerator
+        )
+    }
 }
 
 private fun <T : Entity> T.ensureIdentified(idGenerator: Id.Generator, handleName: String): T {

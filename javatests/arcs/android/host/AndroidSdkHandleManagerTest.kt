@@ -101,10 +101,10 @@ class AndroidSdkHandleManagerTest {
             // Now read back from a different handle
             hm.sdkSingletonHandle(
                 handleHolder,
-                "readWriteHandle",
+                "readHandle",
                 singletonKey,
                 schema,
-                HandleMode.ReadWrite
+                HandleMode.Read
             )
             val readBack = handleHolder.readWriteHandle.fetch()
             assertThat(readBack).isEqualTo(entity1)
@@ -129,9 +129,10 @@ class AndroidSdkHandleManagerTest {
             // Now read back from a different handle
             hm.sdkSetHandle(
                 handleHolder,
-                "readWriteSetHandle",
+                "readSetHandle",
                 setKey,
-                schema
+                schema,
+                HandleMode.Read
             )
 
             val readBack = handleHolder.readWriteSetHandle.fetchAll()

@@ -8,6 +8,7 @@ particle TestParticle in 'arcs.android.host.AndroidSdkHandlesTest.TestParticle'
   readHandle: reads Person
   writeHandle: writes Person
   readWriteHandle: reads writes Person
+  readSetHandle: reads [Person]
   writeSetHandle: writes [Person]
   readWriteSetHandle: reads writes [Person]
 
