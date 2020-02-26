@@ -24,6 +24,7 @@ import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.ttl.PeriodicCleanupTask
+import arcs.android.util.AndroidBinderStats
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
@@ -122,6 +123,29 @@ class StorageService : ResurrectorService() {
                 |  - Peak: ${stats.transactions.peak}
             """.trimMargin("|")
         )
+
+        // Dump current process global binder stats to understand contention in the thread pool,
+        // peak usage of shared binder memory, the number of pending transactions, etc.
+        // Hide the dump when failing to fetch the stats from the kernel binder driver.
+        mapOf(
+            "Memory high watermark (pages)" to "pages high watermark",
+            "Pending transactions" to "pending transactions",
+            "Requested threads" to "requested threads",
+            "Ready threads" to "ready threads"
+        ).run {
+            AndroidBinderStats.query(*values.toTypedArray()).iterator().let { stats ->
+                mapValues { stats.next() }
+            }.let { stats ->
+                if (stats.any {(_, v) -> v.isNotEmpty()}) stats else null
+            }
+        }?.run {
+            writer.println(
+                """
+                    |Current Process Binder Stats:
+                    |  - ${map {(k, v) -> "${k}: ${v}"}.joinToString("\n|  - ")}
+                """.trimMargin("|")
+            )
+        }
 
         writer.println()
 
