@@ -19,17 +19,16 @@ package arcs.core.util
  */
 class UnionFind<E, I> {
     /**
-     * Unifies the equivalence classes of elements [e1] and [e2]. If either element is not present
-     * in any set, it is added. The [combine] function determines how the information associated
-     * with the two equivalence classes are merged. The default [combine] method returns the
-     * information associated with the new root.
+     * Unifies the equivalence classes of elements [e1] and [e2].
+     *
+     * If either element is not present in any set, it is added. The [combine] function determines
+     * how the information associated with the two equivalence classes are merged. The default
+     * [combine] method returns the information associated with the new root.
      */
     fun union(
         e1: E,
         e2: E,
-        combine: (destInfo: I?, srcInfo: I?) -> I? = {
-            destInfo: I?, _: I? -> destInfo
-        }
+        combine: (destInfo: I?, srcInfo: I?) -> I? = { destInfo, _ -> destInfo }
     ) {
         val e1Root = e1.findRoot()
         val e2Root = e2.findRoot()
@@ -41,15 +40,18 @@ class UnionFind<E, I> {
     }
 
     /**
-     * Find the equivalence class for the element [e]. If the element
-     * is not already present in any set, a new singleton set is created.
+     * Finds the equivalence class for the element [e].
+     *
+     * If the element is not already present in any set, a new singleton set is created.
      */
     fun find(e: E): E = e.findRoot().element
 
     /**
-     * Update the information for the equivalence class for [e] with [info].
+     * Updates the information for the equivalence class for [e] with [info].
      */
-    fun setInfo(e: E, info: I) { e.findRoot().info = info }
+    fun setInfo(e: E, info: I) {
+        e.findRoot().info = info
+    }
 
     /**
      * Returns the information associated with the equivalence class for [e].
@@ -57,17 +59,19 @@ class UnionFind<E, I> {
     fun getInfo(e: E): I? = e.findRoot().info
 
     /**
-     * If [e] is not already in any set, create a set with a single element.
-     * Optionally, associate [info] with the newly created set.
+     * If [e] is not already in any set, creates a set with a single element.
+     * Optionally, also associates [info] with the newly created set.
      */
-    fun makeSet(e: E, info: I? = null) { getOrCreateNode(e, info) }
+    fun makeSet(e: E, info: I? = null) {
+        getOrCreateNode(e, info)
+    }
 
     /**
-     * Get or create a union-find node for the element [e].
+     * Gets or creates a union-find node for the element [e].
      * Optionally, associate [info] with the newly created set.
      */
     private fun getOrCreateNode(e: E, info: I? = null): Node<E, I> =
-        nodes[e] ?: Node(e, null, info).also { nodes[e] = it }
+        nodes[e] ?: Node(e, info = info).also { nodes[e] = it }
 
     /**
      * Returns the root node for element [e].
