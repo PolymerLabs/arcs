@@ -85,6 +85,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   schema2wasm: runNodeScriptSteps('schema2wasm'),
   manifest2json: runNodeScriptSteps('manifest2json'),
   manifest2proto: runNodeScriptSteps('manifest2proto'),
+  recipe2plan: runNodeScriptSteps('recipe2plan'),
   flowcheck: runNodeScriptSteps('flowcheck'),
   devServer: [peg, build, webpack, devServer],
   languageServer: [peg, build, buildLS, webpackLS],
@@ -118,6 +119,9 @@ const scripts: {[index: string]: string} = {
 
   /** Serializes a manifest to protobufs. */
   manifest2proto: 'build/tools/manifest2proto-cli.js',
+
+  /** Converts recipes in manifests into Kotlin Plans */
+  recipe2plan: 'build/tools/recipe2plan-cli.js',
 };
 
 const eslintCache = '.eslint_sigh_cache';

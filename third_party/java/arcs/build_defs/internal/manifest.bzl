@@ -1,7 +1,7 @@
 """Arcs manifest bundling rules."""
 
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load("//third_party/java/arcs/build_defs/internal:schemas.bzl", "output_name")
+load("//third_party/java/arcs/build_defs/internal:util.bzl", "output_name")
 
 def arcs_manifest(name, srcs, deps = [], visibility = None):
     """Bundles .arcs manifest files with their particle implementations.

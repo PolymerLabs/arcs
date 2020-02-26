@@ -4,16 +4,8 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
+load("//third_party/java/arcs/build_defs/internal:util.bzl", "output_name")
 load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library")
-
-def output_name(src, suffix = ""):
-    """Cleans up the given file name, and replaces the .arcs extension."""
-
-    # For references to files in other build targets, extract the filename:
-    #   //src/wasm/tests:manifest.arcs -> manifest.arcs
-    if src.startswith("//"):
-        src = src.split(":")[1]
-    return src.replace(".arcs", "").replace("_", "-").replace(".", "-") + suffix
 
 def _run_schema2wasm(
         name,
