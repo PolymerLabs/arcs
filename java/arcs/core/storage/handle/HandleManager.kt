@@ -61,7 +61,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         storageKey: StorageKey,
         schema: Schema,
         callbacks: SingletonCallbacks<RawEntity>? = null,
-        name: String = storageKey.toString()
+        name: String = storageKey.toKeyString()
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -93,7 +93,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         storageKey: StorageKey,
         schema: Schema,
         callbacks: SetCallbacks<RawEntity>? = null,
-        name: String = storageKey.toString()
+        name: String = storageKey.toKeyString()
     ): SetHandle<RawEntity> {
         val storeOptions = SetStoreOptions<RawEntity>(
             storageKey = storageKey,
