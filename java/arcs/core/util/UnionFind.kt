@@ -90,5 +90,6 @@ class UnionFind<E, I> {
     private data class Node<E, I>(
         val element: E,
         var parent: Node<E, I>? = null,
-        var info: I? = null)
+        var info: I? = null
+    )
 }
