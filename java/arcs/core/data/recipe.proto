@@ -68,7 +68,7 @@ message HandleConnectionSpecProto {
   }
   // Identifies a connection in a particle spec.
   string name = 1;
-  Direction directions = 2;
+  Direction direction = 2;
   TypeProto type = 3;
 }
 
@@ -76,11 +76,13 @@ message HandleConnectionSpecProto {
 message TypeProto {
   oneof data {
     PrimitiveTypeProto primitive = 1;
-    EntityTypeProto entity = 2;
-    CollectionTypeProto collection = 3;
-    ReferenceTypeProto reference = 4;
+    SchemaProto entity = 2;
+    TypeProto collection = 3;
+    TypeProto reference = 4;
     TupleTypeProto tuple = 5;
-    TypeVariableProto variable = 6;
+    // Identifies a type variable in a recipe or a particle spec.
+    // Type variables with the same name are linked together.
+    string variable = 6;
   }
 }
 
@@ -90,26 +92,8 @@ enum PrimitiveTypeProto {
   BOOLEAN = 2;
 }
 
-message EntityTypeProto {
-  SchemaProto schema = 1;
-}
-
-message CollectionTypeProto {
-  TypeProto collection_type = 1;
-}
-
 message TupleTypeProto {
   repeated TypeProto elements = 1;
-}
-
-message ReferenceTypeProto {
-  TypeProto referred_type = 1;
-}
-
-message TypeVariableProto {
-  // Identifies a type variable in a recipe or a particle spec.
-  // Type variables with the same name are linked together.
-  string name = 1;
 }
 
 message SchemaProto {
