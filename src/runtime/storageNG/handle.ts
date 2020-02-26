@@ -415,6 +415,8 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
       throw new Error('Handle not writeable');
     }
     // Sync the proxy before clearing in order to ensure we can clear values set by other actors.
+    // TODO: if we expose wether the storage proxy is synchronized to the handle,
+    // we could avoid introducing an unnecessary await here.
     await this.storageProxy.getParticleView();
 
     // Issue clear op.
