@@ -46,7 +46,7 @@ message HandleConnectionProto {
   // Refers to envelope.particle_specs.connections.name
   string name = 1;
   // Refers to envelope.plan.handles.name
-  string handle_name = 2;
+  string handle = 2;
 }
 
 // Defines a particle contract and links it with implementation.
@@ -68,7 +68,7 @@ message HandleConnectionSpecProto {
   }
   // Identifies a connection in a particle spec.
   string name = 1;
-  Direction directions = 2;
+  Direction direction = 2;
   TypeProto type = 3;
 }
 
