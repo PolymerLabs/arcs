@@ -27,6 +27,7 @@ import {Arc} from '../../runtime/arc.js';
 // registered automatically).
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
+import { assertThrowsAsync } from '../../testing/test-util.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -523,6 +524,40 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         'c3:60,Larry,false',
         'c3:90,Curly,true',
       ]);
+    });
+
+    it('onCreate() Wasm koala', async function() {
+      if(isCpp) {
+        this.skip()
+      }
+      
+      const {arc, stores} = await setup('OnCreateTest');
+      const fooHandle = await singletonHandleForTest(arc, stores.get('fooHandle'));
+
+      const sendEvent = async handler => {
+        await arc.idle;
+        arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+        await arc.idle;
+      };
+
+      await sendEvent('case1');
+      assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Created!'})
+     
+      const serialization = await arc.serialize();
+      arc.dispose();
+
+      var manifest = await Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
+        loader,
+        fileName: process.cwd() + '/manifest.arcs',
+        memoryProvider: new TestVolatileMemoryProvider()
+      });
+
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
+      await arc2.idle;
+
+      await sendEvent('case1');
+      assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Not Created!'})
+
     });
   });
 });
