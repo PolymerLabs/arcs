@@ -118,10 +118,10 @@ class Allocator(val hostRegistry: HostRegistry) {
     ): StorageKey =
         CapabilitiesResolver(CapabilitiesResolver.StorageKeyOptions(arcId)).createStorageKey(
             storageKey.capabilities, type.toSchemaHash()
-        )?.childKeyForHandle(idGenerator.newChildId(arcId, "").toString()) ?:
-        throw Exception(
-            "Unable to create storage key $storageKey"
-        )
+        )?.childKeyForHandle(idGenerator.newChildId(arcId, "").toString())
+            ?: throw Exception(
+                "Unable to create storage key $storageKey"
+            )
 
     /**
      * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]
