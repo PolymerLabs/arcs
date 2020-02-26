@@ -65,9 +65,12 @@ class DatabaseImplTest {
 
     @Test
     fun getTypeId_primitiveTypeIds() = runBlockingTest {
-        assertThat(database.getTypeIdForTest(FieldType.Boolean)).isEqualTo(PrimitiveType.Boolean.ordinal)
-        assertThat(database.getTypeIdForTest(FieldType.Number)).isEqualTo(PrimitiveType.Number.ordinal)
-        assertThat(database.getTypeIdForTest(FieldType.Text)).isEqualTo(PrimitiveType.Text.ordinal)
+        assertThat(database.getTypeIdForTest(FieldType.Boolean))
+            .isEqualTo(PrimitiveType.Boolean.ordinal)
+        assertThat(database.getTypeIdForTest(FieldType.Number))
+            .isEqualTo(PrimitiveType.Number.ordinal)
+        assertThat(database.getTypeIdForTest(FieldType.Text))
+            .isEqualTo(PrimitiveType.Text.ordinal)
     }
 
     @Test
@@ -620,7 +623,7 @@ class DatabaseImplTest {
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut.entity.data).isEmpty()
+        assertThat(entityOut!!.entity.data).isEmpty()
     }
 
     @Test
@@ -650,7 +653,7 @@ class DatabaseImplTest {
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut.entity.data).isEmpty()
+        assertThat(entityOut!!.entity.data).isEmpty()
     }
 
     @Test
@@ -746,12 +749,7 @@ class DatabaseImplTest {
 
     @Test
     fun get_entity_unknownStorageKey() = runBlockingTest {
-        val exception = assertThrows(IllegalArgumentException::class) {
-            database.getEntity(DummyStorageKey("nope"), newSchema("hash"))
-        }
-        assertThat(exception).hasMessageThat().isEqualTo(
-            "Entity at storage key dummy://nope does not exist."
-        )
+        assertThat(database.getEntity(DummyStorageKey("nope"), newSchema("hash"))).isNull()
     }
 
     @Test
@@ -839,25 +837,17 @@ class DatabaseImplTest {
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
-        database.insertOrUpdate(key, collection)
+        val oldVersion = database.insertOrUpdate(key, collection)
 
-        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.insertOrUpdate(key, collection)
-        }
-        assertThat(exception).hasMessageThat().isEqualTo(
-            "Given version (1) must be greater than version in database (1) when updating " +
-                "storage key dummy://collection."
-        )
+        // TODO - DatabaseImpl should return the last version when an insert/update could not be
+        //  applied.
+        assertThat(database.insertOrUpdate(key, collection.copy(databaseVersion = oldVersion - 1)))
+            .isEqualTo(oldVersion - 1)
     }
 
     @Test
     fun get_collection_unknownStorageKey() = runBlockingTest {
-        val exception = assertThrows(IllegalArgumentException::class) {
-            database.getCollection(DummyStorageKey("key"), newSchema("hash"))
-        }
-        assertThat(exception).hasMessageThat().isEqualTo(
-            "Collection at storage key dummy://key does not exist."
-        )
+        assertThat(database.getCollection(DummyStorageKey("key"), newSchema("hash"))).isNull()
     }
 
     @Test
@@ -931,25 +921,22 @@ class DatabaseImplTest {
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
-        database.insertOrUpdate(key, singleton)
+        val oldVersion = database.insertOrUpdate(key, singleton, originatingClientId = null)
 
-        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.insertOrUpdate(key, singleton)
-        }
-        assertThat(exception).hasMessageThat().isEqualTo(
-            "Given version (1) must be greater than version in database (1) when updating " +
-                "storage key dummy://singleton."
-        )
+        // TODO - DatabaseImpl should return the last version when an insert/update could not be
+        //  applied.
+        assertThat(
+            database.insertOrUpdate(
+                key,
+                singleton.copy(databaseVersion = oldVersion - 1),
+                originatingClientId = null
+            )
+        ).isEqualTo(oldVersion - 1)
     }
 
     @Test
     fun get_singleton_unknownStorageKey() = runBlockingTest {
-        val exception = assertThrows(IllegalArgumentException::class) {
-            database.getSingleton(DummyStorageKey("key"), newSchema("hash"))
-        }
-        assertThat(exception).hasMessageThat().isEqualTo(
-            "Singleton at storage key dummy://key does not exist."
-        )
+        assertThat(database.getSingleton(DummyStorageKey("key"), newSchema("hash"))).isNull()
     }
 
     @Test
@@ -1048,12 +1035,7 @@ class DatabaseImplTest {
         assertTableIsEmpty("storage_keys")
         assertTableIsEmpty("entities")
         assertTableIsEmpty("field_values")
-        val exception = assertThrows(IllegalArgumentException::class) {
-            database.getEntity(entityKey, schema)
-        }
-        assertThat(exception).hasMessageThat().isEqualTo(
-            "Entity at storage key dummy://entity does not exist."
-        )
+        assertThat(database.getEntity(entityKey, schema)).isNull()
     }
 
     @Test
@@ -1072,9 +1054,7 @@ class DatabaseImplTest {
         database.delete(keyToDelete)
 
         assertThat(database.getEntity(keyToKeep, schema)).isEqualTo(entity)
-        assertThrows(IllegalArgumentException::class) {
-            database.getEntity(keyToDelete, schema)
-        }
+        assertThat(database.getEntity(keyToDelete, schema)).isNull()
     }
 
     @Test
@@ -1095,12 +1075,7 @@ class DatabaseImplTest {
         assertTableIsEmpty("storage_keys")
         assertTableIsEmpty("collections")
         assertTableIsEmpty("collection_entries")
-        val exception = assertThrows(IllegalArgumentException::class) {
-            database.getCollection(collectionKey, schema)
-        }
-        assertThat(exception).hasMessageThat().isEqualTo(
-            "Collection at storage key dummy://collection does not exist."
-        )
+        assertThat(database.getCollection(collectionKey, schema)).isNull()
     }
 
     @Test
@@ -1121,9 +1096,7 @@ class DatabaseImplTest {
         database.delete(keyToDelete)
 
         assertThat(database.getCollection(keyToKeep, schema)).isEqualTo(collection)
-        assertThrows(IllegalArgumentException::class) {
-            database.getCollection(keyToDelete, schema)
-        }
+        assertThat(database.getCollection(keyToDelete, schema)).isNull()
     }
 
     @Test
@@ -1144,12 +1117,7 @@ class DatabaseImplTest {
         assertTableIsEmpty("storage_keys")
         assertTableIsEmpty("collections")
         assertTableIsEmpty("collection_entries")
-        val exception = assertThrows(IllegalArgumentException::class) {
-            database.getSingleton(singletonKey, schema)
-        }
-        assertThat(exception).hasMessageThat().isEqualTo(
-            "Singleton at storage key dummy://singleton does not exist."
-        )
+        assertThat(database.getSingleton(singletonKey, schema)).isNull()
     }
 
     @Test
@@ -1166,9 +1134,7 @@ class DatabaseImplTest {
         database.delete(keyToDelete)
 
         assertThat(database.getSingleton(keyToKeep, schema)).isEqualTo(singleton)
-        assertThrows(IllegalArgumentException::class) {
-            database.getSingleton(keyToDelete, schema)
-        }
+        assertThat(database.getSingleton(keyToDelete, schema)).isNull()
     }
 
     @Test
