@@ -32,17 +32,16 @@ object AndroidBinderStats {
     private val log = TaggedLog { "AndroidBinderStats" }
 
     /** Query the stats of the given binder process record [tags]. */
-    fun query(vararg tags: String): List<String> =
-        with(parse()) {
-            tags.map { this[it] ?: "" }
-        }
+    fun query(vararg tags: String): List<String> = with(parse()) {
+        tags.map { this[it] ?: "" }
+    }
 
     private fun parse(): Map<String, String> {
-        try {
+        return try {
             File(STATS_FILE_NODE).useLines { lines ->
                 val delimiter = PROCESS_TAG + Process.myPid()
                 var partitionFlip = false
-                return lines.partition {
+                lines.partition {
                     if (it.startsWith(PROCESS_TAG)) {
                         partitionFlip = it == delimiter
                     }
@@ -68,8 +67,8 @@ object AndroidBinderStats {
         } catch (e: Exception) {
             // The possible reasons could be Linux debugfs is not mounted on some Android
             // devices and builds, denial of permission, etc.
-            log.info { "${e.message}" }
-            return emptyMap()
+            log.info { e.message ?: "Unknown exception on accessing $STATS_FILE_NODE" }
+            emptyMap()
         }
     }
 }

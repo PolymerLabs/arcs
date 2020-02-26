@@ -136,8 +136,7 @@ class StorageService : ResurrectorService() {
             AndroidBinderStats.query(*values.toTypedArray()).iterator().let { stats ->
                 mapValues { stats.next() }
             }
-        }.run { if (any { (_, v) -> v.isNotEmpty() }) this else null
-        }?.run {
+        }.takeIf { it.any { (_, v) -> v.isNotEmpty() } }?.run {
             writer.println(
                 """
                     |Current Process Binder Stats:
