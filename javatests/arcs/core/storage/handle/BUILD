@@ -15,6 +15,7 @@ arcs_kt_android_test_suite(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.core.storage.handle",
     deps = [
+        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
@@ -22,6 +23,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/referencemode",
+        "//java/arcs/core/testutil",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
         "//javatests/arcs/core/storage",  # buildcleaner: keep
