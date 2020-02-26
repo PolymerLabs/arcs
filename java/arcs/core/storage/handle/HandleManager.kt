@@ -110,6 +110,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SetHandle(name, storageProxy, callbacks, refinement).also { storageProxy.registerHandle(it) }
+        return SetHandle(name, storageProxy, callbacks, refinement).also {
+            storageProxy.registerHandle(it)
+        }
     }
 }
