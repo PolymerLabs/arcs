@@ -14,9 +14,11 @@ package arcs.core.storage.handle
 import arcs.core.common.Referencable
 import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
+import arcs.core.data.RawEntity
 import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
+import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
@@ -45,8 +47,17 @@ class CollectionImpl<T : Referencable>(
     private val refinement: Refinement<T>? = null,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
-    canRead: Boolean = true
-) : SetBase<T>(name, storageProxy, callbacks, ttl, time, canRead) {
+    canRead: Boolean = true,
+    dereferencer: Dereferencer<RawEntity>? = null
+) : SetBase<T>(
+    name,
+    storageProxy,
+    callbacks,
+    ttl,
+    time,
+    canRead,
+    dereferencer = dereferencer
+) {
     /** Return the number of items in the storage proxy view of the collection. */
     suspend fun size(): Int = value().size
 

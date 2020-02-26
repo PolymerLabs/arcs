@@ -3,7 +3,9 @@ package arcs.android.storage.handle
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import arcs.android.crdt.ParcelableCrdtType
+import arcs.core.crdt.CrdtEntity
 import arcs.core.data.RawEntity
+import arcs.core.storage.EntityActivationFactory
 import arcs.core.storage.handle.ActivationFactoryFactory
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.SetData
@@ -21,6 +23,9 @@ typealias SingletonServiceStoreFactory<T> =
     ServiceStoreFactory<SingletonData<T>, SingletonOp<T>, T?>
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 typealias SetServiceStoreFactory<T> = ServiceStoreFactory<SetData<T>, SetOp<T>, Set<T>>
+@UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+typealias EntityServiceStoreFactory =
+    ServiceStoreFactory<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>
 
 /**
  * AndroidHandleManager will create a [HandleManager] instance, replacing the default
@@ -37,7 +42,19 @@ fun AndroidHandleManager(
     JvmTime,
     object : ActivationFactoryFactory {
         /**
-         * Create a ActivationFactory that will create [ServiceStore] instances that can manage
+         * Create an [ActivationFactory] which will create [ServiceStore] instances that can manage
+         * [CrdtEntity] objects.
+         */
+        override fun dereferenceFactory(): EntityActivationFactory = EntityServiceStoreFactory(
+            context,
+            lifecycle,
+            ParcelableCrdtType.Entity,
+            coroutineContext,
+            connectionFactory
+        )
+
+        /**
+         * Create an [ActivationFactory] that will create [ServiceStore] instances that can manage
          * singleton [RawEntities]
          */
         override fun singletonFactory() = SingletonServiceStoreFactory<RawEntity>(

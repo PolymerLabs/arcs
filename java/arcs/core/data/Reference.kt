@@ -11,29 +11,35 @@
 
 package arcs.core.data
 
+import arcs.core.common.Referencable
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.Dispatchers
+
 /**
  * A reference to an [Entity] of type [T].
  *
  * References may be "alive" or "dead".
  *
- * * An "alive" [Reference] is one where the [Entity] it refers to is still accessible via Arcs
+ * * An "alive" [Reference] is one where the [Referencable] it refers to is still accessible via Arcs
  *   storage.
- * * Conversely, a "dead" [Reference] is one whose [Entity] has been removed from storage by
- *   some means. For example: the [Entity]'s time-to-live could have elapsed.
+ * * Conversely, a "dead" [Reference] is one whose [Referencable] has been removed from storage by
+ *   some means. For example: the [Referencable]'s time-to-live could have elapsed.
  *
  * Developers can check the liveness of a [Reference] using either [isAlive] or [isDead].
  */
-interface Reference<T> {
+interface Reference<T : Referencable> {
     /**
      * Fetches the actual [Entity] value being referenced from storage.
      *
      * Returns `null` if this [Reference] is no longer alive.
      */
-    suspend fun dereference(): T?
+    suspend fun dereference(coroutineContext: CoroutineContext = Dispatchers.IO): T?
 
     /** Returns whether or not the [Entity] being referenced still exists. */
-    suspend fun isAlive(): Boolean
+    suspend fun isAlive(coroutineContext: CoroutineContext = Dispatchers.IO): Boolean =
+        dereference(coroutineContext) != null
 
     /** Returns whether or not the [Entity] being referenced has been removed from storage. */
-    suspend fun isDead(): Boolean = !isAlive()
+    suspend fun isDead(coroutineContext: CoroutineContext = Dispatchers.IO): Boolean =
+        !isAlive(coroutineContext)
 }

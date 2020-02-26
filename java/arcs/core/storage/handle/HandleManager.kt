@@ -9,6 +9,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
+import arcs.core.storage.EntityActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
@@ -20,11 +21,13 @@ import kotlinx.coroutines.sync.withLock
 
 /**
  * This interface is a convenience for creating the two common types of activation factories
- * that are used: singletons of [RawEntity] and sets of [RawEntity]
+ * that are used: singletons of [RawEntity] and sets of [RawEntity], as well as an activation
+ * factory to use when dereferencing [Reference]s.
  *
  * An implementation of this interface can be provided to the constructor for [HandleFactory]
  */
 interface ActivationFactoryFactory {
+    fun dereferenceFactory(): EntityActivationFactory
     fun singletonFactory(): SingletonActivationFactory<RawEntity>
     fun setFactory(): SetActivationFactory<RawEntity>
 }
@@ -85,9 +88,15 @@ class HandleManager(
             }
         }
 
-        return SingletonHandle(name, storageProxy, callbacks, ttl, time, canRead).also {
-            storageProxy.registerHandle(it)
-        }
+        return SingletonHandle(
+            name,
+            storageProxy,
+            callbacks,
+            ttl,
+            time,
+            canRead,
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+        ).also { storageProxy.registerHandle(it) }
     }
 
     /**
@@ -116,8 +125,15 @@ class HandleManager(
             }
         }
 
-        return SetHandle(name, storageProxy, callbacks, refinement, ttl, time, canRead).also {
-            storageProxy.registerHandle(it)
-        }
+        return SetHandle(
+            name,
+            storageProxy,
+            callbacks,
+            refinement,
+            ttl,
+            time,
+            canRead,
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+        ).also { storageProxy.registerHandle(it) }
     }
 }

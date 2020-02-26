@@ -19,17 +19,6 @@ import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.type.Type
 
 /**
- * An interface defining a method that will create a particular [ActivateStore] instance
- * based on provided [StoreOptions] of the same type.
- *
- * An implementation of this interface should be passed to the `activate` method
- * of an inactive [Store].
- */
-interface ActivationFactory<Data : CrdtData, Op : CrdtOperation, T> {
-    suspend operator fun invoke(options: StoreOptions<Data, Op, T>): ActiveStore<Data, Op, T>
-}
-
-/**
  * A representation of a store.
  *
  * **Note:** Initially a constructed store will be inactive - it will not connect to a driver, will

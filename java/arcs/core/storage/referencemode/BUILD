@@ -9,8 +9,15 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_library(
     name = "referencemode",
-    srcs = glob(["*.kt"]),
+    srcs = glob(
+        ["*.kt"],
+        exclude = ["ReferenceModeStorageKey.kt"],
+    ),
+    exports = [
+        ":referencemode_storage_key",
+    ],
     deps = [
+        ":referencemode_storage_key",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
@@ -21,5 +28,15 @@ arcs_kt_library(
         "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_coroutines",
+    ],
+)
+
+arcs_kt_library(
+    name = "referencemode_storage_key",
+    srcs = [
+        "ReferenceModeStorageKey.kt",
+    ],
+    deps = [
+        "//java/arcs/core/storage:storage_key",
     ],
 )

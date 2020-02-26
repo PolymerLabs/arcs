@@ -60,6 +60,7 @@ arcs_kt_library(
         ":storage_key",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/data",
     ],
 )
 
