@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
-
 export class SyntheticStores {
   static get providerFactory() {
     return SyntheticStores._providerFactory || (SyntheticStores._providerFactory = new StorageProviderFactory('shell'));

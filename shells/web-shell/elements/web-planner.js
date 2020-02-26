@@ -50,6 +50,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
       inspectorFactory: devtoolsPlannerInspectorFactory
     };
     this._suggestionsChanged(null, []);
+    console.log(config.plannerStorage)
     const planificator = await Planificator.create(arc, options);
     // TODO(sjmiles): initialize listener with empty suggestions so it doesn't have to figure out
     // that we reset Planificator (Planificator does not notify if it generates no suggestions the first time).

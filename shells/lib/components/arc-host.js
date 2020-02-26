@@ -8,10 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ArcType} from '../../../build/runtime/type.js';
 import {logsFactory} from '../../../build/platform/logs-factory.js';
 import {Runtime} from '../../../build/runtime/runtime.js';
-import {SyntheticStores} from '../synthetic-stores.js';
 import {devtoolsArcInspectorFactory} from '../../../build/devtools-connector/devtools-arc-inspector.js';
 
 const {log, warn, error} = logsFactory('ArcHost', '#cade57');

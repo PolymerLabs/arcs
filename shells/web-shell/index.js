@@ -10,9 +10,6 @@
 
 // process debug flags
 import '../lib/platform/loglevel-web.js';
-// (optional) database support
-import '../lib/firebase-support.js';
-import '../lib/pouchdb-support.js';
 // (optional) devtools support
 import {DevtoolsSupport} from '../lib/devtools-support.js';
 // whitelist components
