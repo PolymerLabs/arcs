@@ -44,7 +44,8 @@ typealias CollectionSenderCallbackAdapter<E> =
 class SdkHandleManager(val handleManager: HandleManager) {
     /**
      * Create a [SingletonHandle] given a [StorageKey], [Schema],  a [HandleHolder] with
-     * [EntitySpec] definitions indexed by `handleName`.
+     * [EntitySpec] definitions indexed by `handleName`. Populates the correct [HandleHolder]
+     * field with handle and returns newly created [SingletonHandle].
      *
      * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
@@ -72,8 +73,9 @@ class SdkHandleManager(val handleManager: HandleManager) {
     )
 
     /**
-     * Create a [SetHandle] given a [StorageKey], [Schema],  a [HandleHolder] with [EntitySpec]
-     * definitions indexed by `handleName`.
+     * Create a [SetHandle] given a [StorageKey], [Schema], a [HandleHolder] with [EntitySpec]
+     * definitions indexed by `handleName`. Populates the correct [HandleHolder] field with handle
+     * and returns newly created [SetHandle].
      *
      * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
@@ -167,7 +169,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
         handleMode: HandleMode,
         idGenerator: Id.Generator,
         sender: Sender
-    ): HandleHolder {
+    ): Handle {
         val entitySpec: EntitySpec<*>? =
             handleHolder.entitySpecs[handleName] as? EntitySpec<*>
         val handle = createSdkHandle(
@@ -180,7 +182,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
         )
         val handleMap = handleHolder.map as MutableMap<String, Handle>
         handleMap.put(handleName, handle)
-        return handleHolder
+        return handle
     }
 }
 

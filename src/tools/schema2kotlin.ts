@@ -100,7 +100,7 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
     return `
 class ${particleName}Handles(
    ${this.getBaseParticleDecl()}
-) ${this.getExtendsClause(specDecls)} {
+) ${this.getExtendsClause(specDecls, particleName)} {
     ${handleDecls.join('\n    ')} 
 }
 
@@ -110,9 +110,11 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
 `;
   }
 
-  private getExtendsClause(entitySpecs): string {
+  private getExtendsClause(entitySpecs, particleName): string {
     return this.opts.wasm ? '' : `: HandleHolderBase(
-        mutableMapOf(), 
+        mutableMapOf<String, Handle>().withDefault { 
+            key -> throw NoSuchElementException("Handle $key not initialized in ${particleName}")
+        },
         mapOf(
             ${entitySpecs.join(',\n            ')}
         )

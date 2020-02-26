@@ -13,7 +13,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
 
-class GoldInternal1() : JvmEntity {
+class GoldInternal1() : Entity {
 
     override var internalId = ""
 
@@ -68,7 +68,7 @@ class GoldInternal1() : JvmEntity {
     override fun toString() = "GoldInternal1(val_ = $val_)"
 }
 
-class GoldInternal1_Spec() : JvmEntitySpec<GoldInternal1> {
+class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
 
     override fun create() = GoldInternal1()
 
@@ -88,7 +88,7 @@ typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
 
-class Gold_Data() : JvmEntity {
+class Gold_Data() : Entity {
 
     override var internalId = ""
 
@@ -176,7 +176,7 @@ class Gold_Data() : JvmEntity {
     override fun toString() = "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 }
 
-class Gold_Data_Spec() : JvmEntitySpec<Gold_Data> {
+class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 
     override fun create() = Gold_Data()
 
@@ -198,7 +198,9 @@ class Gold_Data_Spec() : JvmEntitySpec<Gold_Data> {
 class GoldHandles(
 
 ) : HandleHolderBase(
-        mutableMapOf(),
+        mutableMapOf<String, Handle>().withDefault {
+            key -> throw NoSuchElementException("Handle $key not initialized in Gold")
+        },
         mapOf(
             "data" to Gold_Data_Spec(),
             "alias" to Gold_Alias_Spec()

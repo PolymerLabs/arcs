@@ -16,14 +16,22 @@ import arcs.core.host.HandleMode
 import arcs.core.host.SdkHandleManager
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.sdk.ReadWriteCollection
+import arcs.sdk.ReadWriteSingleton
+import arcs.sdk.ReadableCollection
+import arcs.sdk.ReadableSingleton
+import arcs.sdk.WritableCollection
+import arcs.sdk.WritableSingleton
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestBindingDelegate
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.coroutines.experimental.suspendCoroutine
 
 typealias Person = TestParticleInternal1
 
@@ -86,28 +94,91 @@ class AndroidSdkHandleManagerTest {
         scenario.close()
     }
 
+    private fun expectHandleException(
+        handleName: String,
+        block: () -> Unit
+    ) {
+        try {
+            block()
+        } catch (e: Exception) {
+            assertThat(e).isInstanceOf(NoSuchElementException::class.java)
+            assertThat(e.message).isEqualTo(
+                "Handle ${handleName} not initialized in TestParticle"
+            )
+        }
+    }
+
     @Test
     fun testCreateSingletonHandle() = runBlockingTest {
         handleManagerTest { hm ->
             val handleHolder = TestParticleHandles()
-            hm.sdkSingletonHandle(
+            val writeHandleName = "writeHandle"
+
+            // Uninitialized handles throw exceptions
+            expectHandleException(writeHandleName) {
+                handleHolder.writeHandle
+            }
+
+            val writeHandle = hm.sdkSingletonHandle(
                 handleHolder,
-                "writeHandle",
+                writeHandleName,
                 singletonKey,
                 schema,
                 HandleMode.Write
             )
+            assertThat(writeHandle).isInstanceOf(WritableSingleton::class.java)
+            assertThat(writeHandle).isNotInstanceOf(ReadableSingleton::class.java)
             handleHolder.writeHandle.store(entity1)
+
             // Now read back from a different handle
-            hm.sdkSingletonHandle(
+            val readHandleName = "readHandle"
+
+            expectHandleException(readHandleName) {
+                handleHolder.readHandle
+            }
+
+            val readHandle = hm.sdkSingletonHandle(
                 handleHolder,
-                "readHandle",
+                readHandleName,
                 singletonKey,
                 schema,
                 HandleMode.Read
             )
-            val readBack = handleHolder.readWriteHandle.fetch()
+            val readBack = handleHolder.readHandle.fetch()
+            assertThat(readHandle).isInstanceOf(ReadableSingleton::class.java)
+            assertThat(readHandle).isNotInstanceOf(WritableSingleton::class.java)
+
             assertThat(readBack).isEqualTo(entity1)
+
+            // Now read back from a different handle
+            val readWriteHandleName = "readWriteHandle"
+
+            expectHandleException(readWriteHandleName) {
+                handleHolder.readWriteHandle
+            }
+
+            val readWriteHandle = hm.sdkSingletonHandle(
+                handleHolder,
+                readWriteHandleName,
+                singletonKey,
+                schema,
+                HandleMode.ReadWrite
+            )
+            val readBack2 = handleHolder.readWriteHandle.fetch()
+            assertThat(readWriteHandle).isInstanceOf(ReadWriteSingleton::class.java)
+            assertThat(readBack2).isEqualTo(entity1)
+
+            val updatedEntity: Person? = suspendCoroutine { continuation ->
+                // Verify callbacks work
+                launch {
+                    handleHolder.readWriteHandle.onUpdate {
+                        continuation.resume(it)
+                    }
+                    handleHolder.writeHandle.store(entity2)
+                }
+            }
+
+            assertThat(updatedEntity).isEqualTo(entity2)
         }
     }
 
@@ -115,28 +186,78 @@ class AndroidSdkHandleManagerTest {
     fun testCreateSetHandle() = runBlockingTest {
         handleManagerTest { hm ->
             val handleHolder = TestParticleHandles()
-            hm.sdkSetHandle(
+            val writeSetHandleName = "writeSetHandle"
+
+            expectHandleException(writeSetHandleName) {
+                handleHolder.writeSetHandle
+            }
+
+            val writeSetHandle = hm.sdkSetHandle(
                 handleHolder,
-                "writeSetHandle",
+                writeSetHandleName,
                 setKey,
                 schema,
                 HandleMode.Write
             )
+            assertThat(writeSetHandle).isInstanceOf(WritableCollection::class.java)
+            assertThat(writeSetHandle).isNotInstanceOf(ReadableCollection::class.java)
 
             handleHolder.writeSetHandle.store(entity1)
             handleHolder.writeSetHandle.store(entity2)
 
             // Now read back from a different handle
-            hm.sdkSetHandle(
+            val readSetHandleName = "readSetHandle"
+
+            expectHandleException(writeSetHandleName) {
+                handleHolder.writeSetHandle
+            }
+
+            val readSetHandle = hm.sdkSetHandle(
                 handleHolder,
-                "readSetHandle",
+                readSetHandleName,
                 setKey,
                 schema,
                 HandleMode.Read
             )
 
-            val readBack = handleHolder.readWriteSetHandle.fetchAll()
+            assertThat(readSetHandle).isInstanceOf(ReadableCollection::class.java)
+            assertThat(readSetHandle).isNotInstanceOf(WritableCollection::class.java)
+
+            val readBack = handleHolder.readSetHandle.fetchAll()
             assertThat(readBack).containsExactly(entity1, entity2)
+
+            // Now read back from a different handle
+            val readWriteSetHandleName = "readWriteSetHandle"
+
+            expectHandleException(readWriteSetHandleName) {
+                handleHolder.readWriteSetHandle
+            }
+
+            val readWriteSetHandle = hm.sdkSetHandle(
+                handleHolder,
+                readWriteSetHandleName,
+                setKey,
+                schema,
+                HandleMode.ReadWrite
+            )
+
+            assertThat(readWriteSetHandle).isInstanceOf(ReadWriteCollection::class.java)
+
+            val readBack2 = handleHolder.readWriteSetHandle.fetchAll()
+            assertThat(readBack2).containsExactly(entity1, entity2)
+
+            val entity3 = entity2.copy(name = "Ray")
+
+            val updatedEntities: Set<Person> = suspendCoroutine { continuation ->
+                // Verify callbacks work
+                launch {
+                    handleHolder.readWriteSetHandle.onUpdate {
+                        continuation.resume(it)
+                    }
+                    handleHolder.writeSetHandle.store(entity3)
+                }
+            }
+            assertThat(updatedEntities).containsExactly(entity1, entity2, entity3)
         }
     }
 }
