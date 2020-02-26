@@ -24,9 +24,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** [ValueAndVersion] is used to tie a value to the VersionMap it was current as-of. */
-data class ValueAndVersion<T>(val value: T, val versionMap: VersionMap)
-
 /**
  * [StorageProxy] is an intermediary between a [Handle] and [Store]. It provides up-to-date CRDT
  * state to readers, and ensures write operations apply cleanly before forwarding to the store.
@@ -48,7 +45,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val syncMutex = Mutex()
     private val crdt: CrdtModel<Data, Op, T>
         by guardedBy(syncMutex, initialCrdt)
-    private val waitingSyncs: MutableList<CompletableDeferred<ValueAndVersion<T>>>
+    private val waitingSyncs: MutableList<CompletableDeferred<T>>
         by guardedBy(syncMutex, mutableListOf())
     private var isSynchronized: Boolean
         by guardedBy(syncMutex, false)
@@ -64,7 +61,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      */
     suspend fun registerHandle(handle: Handle<Data, Op, T>) {
         // non-readers don't get callbacks, return early
-        if (!handle.canRead) return syncMutex.withLock { crdt.versionMap.copy() }
+        if (!handle.canRead) return
 
         log.debug { "Registering handle: $handle" }
 
@@ -73,11 +70,10 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             readHandles.size == 1
         }
 
-        val (hasSynced, versionMap) =
-            syncMutex.withLock { isSynchronized to crdt.versionMap.copy() }
+        val hasSynced = syncMutex.withLock { isSynchronized }
 
         if (firstReader) requestSynchronization()
-        else if (hasSynced) coroutineScope { launch { handle.onSync(versionMap) } }
+        else if (hasSynced) coroutineScope { launch { handle.onSync() } }
     }
 
     /**
@@ -112,18 +108,23 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     /**
-     * Return the current local version of the model, as well as the current associated version map
-     * for the data. Suspends until it has a synchronized view of the data.
+     * Return the current local version of the model. Suspends until it has a synchronized view of
+     * the data.
      */
-    suspend fun getParticleView(): ValueAndVersion<T> = getParticleViewAsync().await()
+    suspend fun getParticleView(): T = getParticleViewAsync().await()
 
-    suspend fun getParticleViewAsync(): Deferred<ValueAndVersion<T>> {
+    /**
+     * Return a copy of the current version map.
+     */
+    suspend fun getVersionMap(): VersionMap = syncMutex.withLock { crdt.versionMap.copy() }
+
+    suspend fun getParticleViewAsync(): Deferred<T> {
         log.debug { "Getting particle view" }
-        val future = CompletableDeferred<ValueAndVersion<T>>()
+        val future = CompletableDeferred<T>()
 
         val needsSync = syncMutex.withLock {
             if (isSynchronized) {
-                val result = ValueAndVersion(crdt.consumerView, crdt.versionMap.copy())
+                val result = crdt.consumerView
                 log.debug { "Already synchronized, returning $result" }
                 future.complete(result)
                 false
@@ -145,28 +146,28 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         log.debug { "onMessage: $message" }
         when (message) {
             is ProxyMessage.ModelUpdate -> {
-                val (futuresToResolve, valueAndVersion) = syncMutex.withLock {
+                val (futuresToResolve, value) = syncMutex.withLock {
                     crdt.merge(message.model)
                     isSynchronized = true
                     val toResolve = waitingSyncs.toList() // list guaranteed to be copy
                     waitingSyncs.clear()
-                    toResolve to ValueAndVersion(crdt.consumerView, crdt.versionMap.copy())
+                    toResolve to crdt.consumerView
                 }
 
-                futuresToResolve.forEach { it.complete(valueAndVersion) }
+                futuresToResolve.forEach { it.complete(value) }
 
-                notifySync(valueAndVersion.versionMap)
+                notifySync()
             }
             is ProxyMessage.Operations -> {
-                var futuresToResolve: List<CompletableDeferred<ValueAndVersion<T>>> = emptyList()
-                val (valueAndVersion, applyFailures) = syncMutex.withLock {
+                var futuresToResolve: List<CompletableDeferred<T>> = emptyList()
+                val (value, applyFailures) = syncMutex.withLock {
                     val failures = message.operations.any { !crdt.applyOperation(it) }
                     isSynchronized = !failures
                     if (!failures) {
                         futuresToResolve = waitingSyncs.toList()
                         waitingSyncs.clear()
                     }
-                    ValueAndVersion(crdt.consumerView, crdt.versionMap.copy()) to failures
+                    crdt.consumerView to failures
                 }
 
                 if (applyFailures) {
@@ -176,7 +177,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 }
 
                 // all ops from storage applied cleanly so resolve waiting syncs
-                futuresToResolve.forEach { it.complete(valueAndVersion) }
+                futuresToResolve.forEach { it.complete(value) }
                 notifyUpdate(message.operations)
             }
             is ProxyMessage.SyncRequest -> {
@@ -196,8 +197,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         }
     }
 
-    private suspend fun notifySync(versionMap: VersionMap) = forEachHandle {
-        it.onSync(versionMap.copy())
+    private suspend fun notifySync() = forEachHandle {
+        it.onSync()
     }
 
     private suspend fun notifyDesync() = forEachHandle { it.onDesync() }
