@@ -72,23 +72,9 @@ class CollectionIntegrationTest {
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSet<RawEntity>())
 
-        collectionA = CollectionImpl(
-            "collectionA",
-            storageProxy,
-            null,
-            null,
-            Ttl.Infinite,
-            TimeImpl()
-        )
+        collectionA = CollectionImpl("collectionA", storageProxy, null, null, Ttl.Infinite, TimeImpl())
         storageProxy.registerHandle(collectionA)
-        collectionB = CollectionImpl(
-            "collectionB",
-            storageProxy,
-            null,
-            queryByAge,
-            Ttl.Infinite,
-            TimeImpl()
-        )
+        collectionB = CollectionImpl("collectionB", storageProxy, null, queryByAge, Ttl.Infinite, TimeImpl())
         storageProxy.registerHandle(collectionB)
         Unit
     }
@@ -187,13 +173,13 @@ class CollectionIntegrationTest {
         assertThat(collectionA.fetchAll().first().expirationTimestamp)
             .isEqualTo(RawEntity.NO_EXPIRATION)
 
-        val collectionC = CollectionImpl("collectionC", storageProxy, null, Ttl.Days(2), TimeImpl())
+        val collectionC = CollectionImpl("collectionC", storageProxy, null, null, Ttl.Days(2), TimeImpl())
         storageProxy.registerHandle(collectionC)
         assertThat(collectionC.store(person.toRawEntity())).isTrue()
         val entityC = collectionC.fetchAll().first()
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
 
-        val collectionD = CollectionImpl("collectionD", storageProxy, null, Ttl.Minutes(1), TimeImpl())
+        val collectionD = CollectionImpl("collectionD", storageProxy, null, null, Ttl.Minutes(1), TimeImpl())
         storageProxy.registerHandle(collectionD)
         assertThat(collectionD.store(person.toRawEntity())).isTrue()
         val entityD = collectionD.fetchAll().first()

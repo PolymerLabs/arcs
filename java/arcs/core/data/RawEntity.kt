@@ -76,4 +76,4 @@ fun RawEntity(
     collections: Map<FieldName, Set<Referencable>>,
     expirationTimestamp: Long
 ) =
-RawEntity(id, singletons,  collections).also { it.expirationTimestamp = expirationTimestamp }
+RawEntity(id, singletons, collections).also { it.expirationTimestamp = expirationTimestamp }
