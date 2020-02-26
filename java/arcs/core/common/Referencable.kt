@@ -23,5 +23,5 @@ interface Referencable {
      * If the implementation of [Referencable] supports it, this function returns a realized-version
      * of the referencable.
      */
-    fun tryDereference(): Referencable = this
+    fun unwrap(): Referencable = this
 }

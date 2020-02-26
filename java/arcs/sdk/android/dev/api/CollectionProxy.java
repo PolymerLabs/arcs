@@ -282,7 +282,7 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
     }
 
     @Override
-    public Referencable tryDereference() {
+    public Referencable unwrap() {
       return this;
     }
   }

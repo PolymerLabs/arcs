@@ -181,10 +181,10 @@ class CrdtEntity(
 
     /** Minimal [Reference] for contents of a singletons/collections in [Data]. */
     data class ReferenceImpl(override val id: ReferenceId) : Reference {
-        override fun tryDereference(): Referencable =
-            ReferencablePrimitive.tryDereference(id) ?: this
+        override fun unwrap(): Referencable =
+            ReferencablePrimitive.unwrap(id) ?: this
 
-        override fun toString(): String = when (val deref = tryDereference()) {
+        override fun toString(): String = when (val deref = unwrap()) {
             this -> "Reference($id)"
             else -> "Reference($deref)"
         }
@@ -222,17 +222,17 @@ class CrdtEntity(
         )
 
         fun toRawEntity() = RawEntity(
-            singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
+            singletons = singletons.mapValues { it.value.consumerView?.unwrap() },
             collections = collections.mapValues {
-                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
+                it.value.consumerView.map { item -> item.unwrap() }.toSet()
             }
         )
 
         fun toRawEntity(id: ReferenceId) = RawEntity(
             id = id,
-            singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
+            singletons = singletons.mapValues { it.value.consumerView?.unwrap() },
             collections = collections.mapValues {
-                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
+                it.value.consumerView.map { item -> item.unwrap() }.toSet()
             }
         )
 

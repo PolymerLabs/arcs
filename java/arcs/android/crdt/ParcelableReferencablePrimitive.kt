@@ -32,7 +32,7 @@ data class ParcelableReferencablePrimitive(
             val id = requireNotNull(parcel.readString())
             val primitive =
                 requireNotNull(
-                    ReferencablePrimitive.tryDereference(id) as? ReferencablePrimitive<*>
+                    ReferencablePrimitive.unwrap(id) as? ReferencablePrimitive<*>
                 )
             return ParcelableReferencablePrimitive(primitive)
         }

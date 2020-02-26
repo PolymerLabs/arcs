@@ -75,14 +75,14 @@ private fun RawEntity.toEntity(schema: Schema): Entity {
     val data = mutableMapOf<FieldName, Any?>()
 
     singletons.forEach { (fieldName, referencable) ->
-        data[fieldName] = referencable?.tryDereference()?.let {
+        data[fieldName] = referencable?.unwrap()?.let {
             (it as? ReferencablePrimitive<*>)?.value ?: it
         }
     }
 
     collections.forEach { (fieldName, referencableSet) ->
         data[fieldName] = referencableSet.map {
-            (it.tryDereference() as? ReferencablePrimitive<*>)?.value ?: it
+            (it.unwrap() as? ReferencablePrimitive<*>)?.value ?: it
         }.toSet()
     }
 
