@@ -753,4 +753,76 @@ describe('reference mode store tests', () => {
     const ids = [...outputRefs.result].map(ref => ref.id);
     assert.sameMembers(ids, ['id:1', 'id:2']);
   });
+
+  it('exposes a dereference API to particles for singleton handles', async () => {
+    const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
+    const loader = new Loader(null, {
+      './manifest': `
+        schema Result
+          value: Text
+
+        particle Dereferencer in 'dereferencer.js'
+          inResult: reads &Result
+          outResult: writes Result
+
+        recipe
+          handle0: use 'input:1'
+          handle1: use 'output:1'
+          Dereferencer
+            inResult: reads handle0
+            outResult: writes handle1
+      `,
+      './dereferencer.js': `
+        defineParticle(({Particle}) => {
+          return class Dereferencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('outResult');
+            }
+
+            async onHandleUpdate(handle, update) {
+              if (handle.name == 'inResult') {
+                await update.data.dereference();
+                this.output.set(update.data.entity);
+              }
+            }
+          }
+        });
+      `
+    });
+    const memoryProvider = new TestVolatileMemoryProvider();
+
+    const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test', storageKeyPrefix);
+    const recipe = manifest.recipes[0];
+    const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
+
+    const refModeStore = await arc.createStore(result.type, undefined, 'test:1') as SingletonEntityStore;
+    const refStore = await arc.createStore(
+      new ReferenceType(result.type),
+      undefined,
+      'input:1',
+      undefined,
+      new VolatileStorageKey(arc.id, 'refStore')
+    ) as SingletonReferenceStore;
+    const outStore = await arc.createStore(result.type, undefined, 'output:1') as SingletonEntityStore;
+
+    recipe.handles[0].mapToStorage(refStore);
+    recipe.handles[1].mapToStorage(outStore);
+
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    const inHandle: SingletonEntityHandle = singletonHandle(await refModeStore.activate(), arc);
+    const entity = await inHandle.setFromData({value: 'val1'});
+    const refHandle: SingletonReferenceHandle = singletonHandle(await refStore.activate(), arc);
+    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, refStore.type.getContainedType() as ReferenceType, null));
+    await arc.idle;
+
+    const outHandle = singletonHandle(await outStore.activate(), arc);
+    const value = await outHandle.fetch();
+    assert.deepStrictEqual(value, {value: 'val1'});
+  });
 });
