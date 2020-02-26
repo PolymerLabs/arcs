@@ -68,7 +68,7 @@ def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
 
     Args:
       name: the name of the target to create
-      src: an Arcs manifest files to serialize
+      src: an Arcs manifest file to serialize
       deps: list of dependencies (other manifests)
       out: the name of the output artifact (a proto file).
       visibility: list of visibilities
