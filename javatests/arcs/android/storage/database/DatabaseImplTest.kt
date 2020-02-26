@@ -17,11 +17,12 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
 import arcs.core.crdt.VersionMap
-import arcs.core.data.Entity
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
@@ -319,17 +320,21 @@ class DatabaseImplTest {
     @Test
     fun getPrimitiveValue_boolean() = runBlockingTest {
         // Test value -> ID.
-        assertThat(database.getPrimitiveValueId(true, BOOLEAN_TYPE_ID, db)).isEqualTo(1)
-        assertThat(database.getPrimitiveValueId(false, BOOLEAN_TYPE_ID, db)).isEqualTo(0)
+        assertThat(database.getPrimitiveValueId(true.toReferencable(), BOOLEAN_TYPE_ID, db))
+            .isEqualTo(1)
+        assertThat(database.getPrimitiveValueId(false.toReferencable(), BOOLEAN_TYPE_ID, db))
+            .isEqualTo(0)
 
         val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId("not a bool", BOOLEAN_TYPE_ID, db)
+            database.getPrimitiveValueId("not a bool".toReferencable(), BOOLEAN_TYPE_ID, db)
         }
         assertThat(exception1).hasMessageThat().isEqualTo("Expected value to be a Boolean.")
 
         // Test ID -> value.
-        assertThat(database.getPrimitiveValue(1, BOOLEAN_TYPE_ID, db)).isEqualTo(true)
-        assertThat(database.getPrimitiveValue(0, BOOLEAN_TYPE_ID, db)).isEqualTo(false)
+        assertThat(database.getPrimitiveValue(1, BOOLEAN_TYPE_ID, db))
+            .isEqualTo(true.toReferencable())
+        assertThat(database.getPrimitiveValue(0, BOOLEAN_TYPE_ID, db))
+            .isEqualTo(false.toReferencable())
 
         val exception2 = assertThrows(IllegalArgumentException::class) {
             database.getPrimitiveValue(2, BOOLEAN_TYPE_ID, db)
@@ -340,20 +345,27 @@ class DatabaseImplTest {
     @Test
     fun getPrimitiveValue_text() = runBlockingTest {
         // Test value -> ID.
-        assertThat(database.getPrimitiveValueId("aaa", TEXT_TYPE_ID, db)).isEqualTo(1)
-        assertThat(database.getPrimitiveValueId("bbb", TEXT_TYPE_ID, db)).isEqualTo(2)
-        assertThat(database.getPrimitiveValueId("ccc", TEXT_TYPE_ID, db)).isEqualTo(3)
-        assertThat(database.getPrimitiveValueId("aaa", TEXT_TYPE_ID, db)).isEqualTo(1)
+        assertThat(database.getPrimitiveValueId("aaa".toReferencable(), TEXT_TYPE_ID, db))
+            .isEqualTo(1)
+        assertThat(database.getPrimitiveValueId("bbb".toReferencable(), TEXT_TYPE_ID, db))
+            .isEqualTo(2)
+        assertThat(database.getPrimitiveValueId("ccc".toReferencable(), TEXT_TYPE_ID, db))
+            .isEqualTo(3)
+        assertThat(database.getPrimitiveValueId("aaa".toReferencable(), TEXT_TYPE_ID, db))
+            .isEqualTo(1)
 
         val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId(123.0, TEXT_TYPE_ID, db)
+            database.getPrimitiveValueId(123.0.toReferencable(), TEXT_TYPE_ID, db)
         }
         assertThat(exception1).hasMessageThat().isEqualTo("Expected value to be a String.")
 
         // Test ID -> value.
-        assertThat(database.getPrimitiveValue(1, TEXT_TYPE_ID, db)).isEqualTo("aaa")
-        assertThat(database.getPrimitiveValue(2, TEXT_TYPE_ID, db)).isEqualTo("bbb")
-        assertThat(database.getPrimitiveValue(3, TEXT_TYPE_ID, db)).isEqualTo("ccc")
+        assertThat(database.getPrimitiveValue(1, TEXT_TYPE_ID, db))
+            .isEqualTo("aaa".toReferencable())
+        assertThat(database.getPrimitiveValue(2, TEXT_TYPE_ID, db))
+            .isEqualTo("bbb".toReferencable())
+        assertThat(database.getPrimitiveValue(3, TEXT_TYPE_ID, db))
+            .isEqualTo("ccc".toReferencable())
 
         val exception2 = assertThrows(IllegalArgumentException::class) {
             database.getPrimitiveValue(4, TEXT_TYPE_ID, db)
@@ -364,20 +376,27 @@ class DatabaseImplTest {
     @Test
     fun getPrimitiveValue_number() = runBlockingTest {
         // Test value -> ID.
-        assertThat(database.getPrimitiveValueId(111.0, NUMBER_TYPE_ID, db)).isEqualTo(1)
-        assertThat(database.getPrimitiveValueId(222.0, NUMBER_TYPE_ID, db)).isEqualTo(2)
-        assertThat(database.getPrimitiveValueId(333.0, NUMBER_TYPE_ID, db)).isEqualTo(3)
-        assertThat(database.getPrimitiveValueId(111.0, NUMBER_TYPE_ID, db)).isEqualTo(1)
+        assertThat(database.getPrimitiveValueId(111.0.toReferencable(), NUMBER_TYPE_ID, db))
+            .isEqualTo(1)
+        assertThat(database.getPrimitiveValueId(222.0.toReferencable(), NUMBER_TYPE_ID, db))
+            .isEqualTo(2)
+        assertThat(database.getPrimitiveValueId(333.0.toReferencable(), NUMBER_TYPE_ID, db))
+            .isEqualTo(3)
+        assertThat(database.getPrimitiveValueId(111.0.toReferencable(), NUMBER_TYPE_ID, db))
+            .isEqualTo(1)
 
         val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId("not a number", NUMBER_TYPE_ID, db)
+            database.getPrimitiveValueId("not a number".toReferencable(), NUMBER_TYPE_ID, db)
         }
         assertThat(exception1).hasMessageThat().isEqualTo("Expected value to be a Double.")
 
         // Test ID -> value.
-        assertThat(database.getPrimitiveValue(1, NUMBER_TYPE_ID, db)).isEqualTo(111.0)
-        assertThat(database.getPrimitiveValue(2, NUMBER_TYPE_ID, db)).isEqualTo(222.0)
-        assertThat(database.getPrimitiveValue(3, NUMBER_TYPE_ID, db)).isEqualTo(333.0)
+        assertThat(database.getPrimitiveValue(1, NUMBER_TYPE_ID, db))
+            .isEqualTo(111.0.toReferencable())
+        assertThat(database.getPrimitiveValue(2, NUMBER_TYPE_ID, db))
+            .isEqualTo(222.0.toReferencable())
+        assertThat(database.getPrimitiveValue(3, NUMBER_TYPE_ID, db))
+            .isEqualTo(333.0.toReferencable())
 
         val exception2 = assertThrows(IllegalArgumentException::class) {
             database.getPrimitiveValue(4, NUMBER_TYPE_ID, db)
@@ -389,7 +408,7 @@ class DatabaseImplTest {
     fun getPrimitiveValue_unknownTypeId() = runBlockingTest {
         // Test value -> ID.
         val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId("aaa", 987654L, db)
+            database.getPrimitiveValueId("aaa".toReferencable(), 987654L, db)
         }
         assertThat(exception1).hasMessageThat().isEqualTo("Not a primitive type ID: 987654")
 
@@ -405,7 +424,8 @@ class DatabaseImplTest {
         val key = DummyStorageKey("key")
         val schema = newSchema("hash")
         val entity = DatabaseData.Entity(
-            Entity("entity", schema, mutableMapOf()),
+            RawEntity("entity", emptySet(), emptySet()),
+            schema,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -435,18 +455,20 @@ class DatabaseImplTest {
             )
         )
         val entity = DatabaseData.Entity(
-            Entity(
+            RawEntity(
                 "entity",
-                schema,
-                mutableMapOf(
-                    "text" to "abc",
-                    "bool" to true,
-                    "num" to 123.0,
-                    "texts" to setOf("abc", "def"),
-                    "bools" to setOf(true, false),
-                    "nums" to setOf(123.0, 456.0)
+                mapOf(
+                    "text" to "abc".toReferencable(),
+                    "bool" to true.toReferencable(),
+                    "num" to 123.0.toReferencable()
+                ),
+                mapOf(
+                    "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
+                    "bools" to setOf(true.toReferencable(), false.toReferencable()),
+                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())
                 )
             ),
+            schema,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -476,30 +498,34 @@ class DatabaseImplTest {
             )
         )
         val alice = DatabaseData.Entity(
-            Entity("alice-id", childSchema, mutableMapOf("name" to "Alice")),
+            RawEntity("alice-id", singletons = mapOf("name" to "Alice".toReferencable())),
+            childSchema,
             1,
             VersionMap("alice" to 1)
         )
         val bob = DatabaseData.Entity(
-            Entity("bob-id", childSchema, mutableMapOf("name" to "Bob")),
+            RawEntity("bob-id", singletons = mapOf("name" to "Bob".toReferencable())),
+            childSchema,
             1,
             VersionMap("bob" to 2)
         )
         val charlie = DatabaseData.Entity(
-            Entity("charlie-id", childSchema, mutableMapOf("name" to "Charlie")),
+            RawEntity("charlie-id", singletons = mapOf("name" to "Charlie".toReferencable())),
+            childSchema,
             1,
             VersionMap("charlie" to 3)
         )
         val parentEntity = DatabaseData.Entity(
-            Entity(
+            RawEntity(
                 "parent-id",
-                schema,
-                mutableMapOf(
+                mapOf(
                     "favouriteChild" to Reference(
                         "alice-id",
                         DummyStorageKey("alice-key"),
                         VersionMap("alice" to 1)
-                    ),
+                    )
+                ),
+                mapOf(
                     "otherChildren" to setOf(
                         Reference("bob-id", DummyStorageKey("bob-key"), VersionMap("bob" to 2)),
                         Reference(
@@ -510,6 +536,7 @@ class DatabaseImplTest {
                     )
                 )
             ),
+            schema,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
@@ -547,44 +574,72 @@ class DatabaseImplTest {
         )
         val entityId = "entity"
         val entity1 = DatabaseData.Entity(
-            Entity(
+            RawEntity(
                 entityId,
-                schema,
-                mutableMapOf(
-                    "text" to "aaa",
-                    "bool" to true,
-                    "num" to 111.0,
-                    "ref" to Reference("child-id-1", DummyStorageKey("child-ref-1"), VersionMap("child-1" to 1)),
-                    "texts" to setOf("aaa", "bbb"),
-                    "bools" to setOf(true),
-                    "nums" to setOf(11.0, 111.0),
+                mapOf(
+                    "text" to "aaa".toReferencable(),
+                    "bool" to true.toReferencable(),
+                    "num" to 111.0.toReferencable(),
+                    "ref" to Reference(
+                        "child-id-1",
+                        DummyStorageKey("child-ref-1"),
+                        VersionMap("child-1" to 1)
+                    )
+                ),
+                mapOf(
+                    "texts" to setOf("aaa".toReferencable(), "bbb".toReferencable()),
+                    "bools" to setOf(true.toReferencable()),
+                    "nums" to setOf(11.0.toReferencable(), 111.0.toReferencable()),
                     "refs" to setOf(
-                        Reference("child-id-2", DummyStorageKey("child-ref-2"), VersionMap("child-2" to 2)),
-                        Reference("child-id-3", DummyStorageKey("child-ref-3"), VersionMap("child-3" to 3))
+                        Reference(
+                            "child-id-2",
+                            DummyStorageKey("child-ref-2"),
+                            VersionMap("child-2" to 2)
+                        ),
+                        Reference(
+                            "child-id-3",
+                            DummyStorageKey("child-ref-3"),
+                            VersionMap("child-3" to 3)
+                        )
                     )
                 )
             ),
+            schema,
             1,
             VersionMap("actor" to 1)
         )
         val entity2 = DatabaseData.Entity(
-            Entity(
+            RawEntity(
                 entityId,
-                schema,
-                mutableMapOf(
-                    "text" to "zzz",
-                    "bool" to false,
-                    "num" to 999.0,
-                    "ref" to Reference("child-id-9", DummyStorageKey("child-ref-9"), VersionMap("child-9" to 9)),
-                    "texts" to setOf("zzz", "yyy"),
-                    "bools" to setOf(false),
-                    "nums" to setOf(99.0, 999.0),
+                mapOf(
+                    "text" to "zzz".toReferencable(),
+                    "bool" to false.toReferencable(),
+                    "num" to 999.0.toReferencable(),
+                    "ref" to Reference(
+                        "child-id-9",
+                        DummyStorageKey("child-ref-9"),
+                        VersionMap("child-9" to 9)
+                    )
+                ),
+                mapOf(
+                    "texts" to setOf("zzz".toReferencable(), "yyy".toReferencable()),
+                    "bools" to setOf(false.toReferencable()),
+                    "nums" to setOf(99.0.toReferencable(), 999.0.toReferencable()),
                     "refs" to setOf(
-                        Reference("child-id-8", DummyStorageKey("child-ref-8"), VersionMap("child-8" to 8)),
-                        Reference("child-id-7", DummyStorageKey("child-ref-7"), VersionMap("child-7" to 7))
+                        Reference(
+                            "child-id-8",
+                            DummyStorageKey("child-ref-8"),
+                            VersionMap("child-8" to 8)
+                        ),
+                        Reference(
+                            "child-id-7",
+                            DummyStorageKey("child-ref-7"),
+                            VersionMap("child-7" to 7)
+                        )
                     )
                 )
             ),
+            schema,
             2,
             VersionMap("actor" to 2)
         )
@@ -597,7 +652,7 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun insertAndGet_entity_collectionFields_areNull() = runBlockingTest {
+    fun insertAndGet_entity_collectionFields_areMissing() = runBlockingTest {
         val key = DummyStorageKey("key")
         val childSchema = newSchema("child")
         database.getSchemaTypeId(childSchema, db)
@@ -612,18 +667,15 @@ class DatabaseImplTest {
             )
         )
         val entity = DatabaseData.Entity(
-            Entity(
-                "entity",
-                schema,
-                mutableMapOf("texts" to null, "refs" to null)
-            ),
+            RawEntity("entity", emptyMap(), emptyMap()),
+            schema,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut!!.entity.data).isEmpty()
+        assertThat(entityOut!!.rawEntity.collections).isEmpty()
     }
 
     @Test
@@ -642,45 +694,18 @@ class DatabaseImplTest {
             )
         )
         val entity = DatabaseData.Entity(
-            Entity(
+            RawEntity(
                 "entity",
-                schema,
-                mutableMapOf("texts" to setOf<String>(), "refs" to setOf<Reference>())
+                collections = mapOf("texts" to emptySet(), "refs" to emptySet())
             ),
+            schema,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut!!.entity.data).isEmpty()
-    }
-
-    @Test
-    fun insert_entity_primitiveCollectionField_wrongType() = runBlockingTest {
-        val schema = newSchema(
-            "hash",
-            SchemaFields(
-                singletons = mapOf(),
-                collections = mapOf("texts" to FieldType.Text)
-            )
-        )
-        val entity = DatabaseData.Entity(
-            Entity(
-                "entity",
-                schema,
-                mutableMapOf(
-                    "texts" to listOf("aaa", "bbb") // Should be a Set, not a List.
-                )
-            ),
-            FIRST_VERSION_NUMBER,
-            VERSION_MAP
-        )
-
-        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.insertOrUpdate(DummyStorageKey("key"), entity)
-        }
-        assertThat(exception).hasMessageThat().startsWith("Collection fields must be of type Set.")
+        assertThat(entityOut!!.rawEntity.collections).isEmpty()
     }
 
     @Test
@@ -699,19 +724,19 @@ class DatabaseImplTest {
             database.insertOrUpdate(
                 DummyStorageKey("key"),
                 DatabaseData.Entity(
-                    Entity(
+                    RawEntity(
                         "entity",
-                        schema,
                         // Should be a Reference.
-                        mutableMapOf("ref" to "abc")
+                        singletons = mapOf("ref" to "abc".toReferencable())
                     ),
+                    schema,
                     FIRST_VERSION_NUMBER,
                     VERSION_MAP
                 )
             )
         }
         assertThat(exception).hasMessageThat().isEqualTo(
-            "Expected field value to be a Reference but was abc."
+            "Expected field value to be a Reference but was Primitive(abc)."
         )
     }
 
@@ -731,19 +756,19 @@ class DatabaseImplTest {
             database.insertOrUpdate(
                 DummyStorageKey("key"),
                 DatabaseData.Entity(
-                    Entity(
+                    RawEntity(
                         "entity",
-                        schema,
                         // Should be Set<Reference>.
-                        mutableMapOf("refs" to setOf("abc"))
+                        collections = mapOf("refs" to setOf("abc".toReferencable()))
                     ),
+                    schema,
                     FIRST_VERSION_NUMBER,
                     VERSION_MAP
                 )
             )
         }
         assertThat(exception).hasMessageThat().isEqualTo(
-            "Expected element in collection to be a Reference but was abc."
+            "Expected element in collection to be a Reference but was Primitive(abc)."
         )
     }
 
@@ -944,7 +969,8 @@ class DatabaseImplTest {
         val entityKey = DummyStorageKey("entity")
         val schema = newSchema("hash")
         val entity = DatabaseData.Entity(
-            entity = Entity("entity", schema, mutableMapOf()),
+            rawEntity = RawEntity("entity", singletons = mapOf(), collections = mapOf()),
+            schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
@@ -1024,7 +1050,8 @@ class DatabaseImplTest {
         val entityKey = DummyStorageKey("entity")
         val schema = newSchema("hash")
         val entity = DatabaseData.Entity(
-            entity = Entity("entity", schema, mutableMapOf()),
+            rawEntity = RawEntity("entity", singletons = emptyMap(), collections = emptyMap()),
+            schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
@@ -1044,7 +1071,8 @@ class DatabaseImplTest {
         val keyToDelete = DummyStorageKey("key-to-delete")
         val schema = newSchema("hash")
         val entity = DatabaseData.Entity(
-            entity = Entity("entity", schema, mutableMapOf()),
+            rawEntity = RawEntity("entity", emptySet(), emptySet()),
+            schema = schema,
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )

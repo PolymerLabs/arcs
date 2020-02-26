@@ -12,6 +12,7 @@
 package arcs.core.storage.database
 
 import arcs.core.crdt.VersionMap
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
@@ -99,8 +100,9 @@ sealed class DatabaseData(
     ) : DatabaseData(schema, databaseVersion, versionMap)
 
     data class Entity(
-        val entity: arcs.core.data.Entity,
+        val rawEntity: RawEntity,
+        override val schema: Schema,
         override val databaseVersion: Int,
         override val versionMap: VersionMap
-    ) : DatabaseData(entity.schema, databaseVersion, versionMap)
+    ) : DatabaseData(schema, databaseVersion, versionMap)
 }

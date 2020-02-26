@@ -17,8 +17,6 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
 import arcs.core.crdt.extension.toCrdtEntityData
-import arcs.core.crdt.extension.toEntity
-import arcs.core.data.Entity
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -75,11 +73,10 @@ class DatabaseDriverTest {
     @Test
     fun registerReceiver_withData_triggersReceiver() = runBlockingTest {
         val driver = buildDriver<CrdtEntity.Data>(database)
-        val entity = Entity(
+        val entity = RawEntity(
             "jason",
-            DEFAULT_SCHEMA,
-            mutableMapOf(
-                "name" to "Jason",
+            singletons = mapOf("name" to "Jason".toReferencable()),
+            collections = mapOf(
                 "phone_numbers" to setOf(
                     Reference(
                         ReferencablePrimitive(String::class, "555-5555").id,
@@ -89,7 +86,7 @@ class DatabaseDriverTest {
                 )
             )
         )
-        database.data[driver.storageKey] = DatabaseData.Entity(entity, 1, VersionMap())
+        database.data[driver.storageKey] = DatabaseData.Entity(entity, DEFAULT_SCHEMA,1, VersionMap())
 
         var calledWithData: CrdtEntity.Data? = null
         var calledWithVersion: Int? = null
@@ -125,7 +122,7 @@ class DatabaseDriverTest {
 
         val databaseValue = checkNotNull(database.data[driver.storageKey] as? DatabaseData.Entity)
 
-        assertThat(databaseValue.entity).isEqualTo(entity.toEntity(DEFAULT_SCHEMA))
+        assertThat(databaseValue.rawEntity).isEqualTo(entity.toRawEntity())
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(entity.versionMap)
 

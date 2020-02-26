@@ -23,7 +23,7 @@ package arcs.core.data
  *
  * Developers can check the liveness of a [Reference] using either [isAlive] or [isDead].
  */
-interface Reference<T : Entity> {
+interface Reference<T> {
     /**
      * Fetches the actual [Entity] value being referenced from storage.
      *

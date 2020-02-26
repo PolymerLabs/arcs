@@ -50,6 +50,13 @@ data class RawEntity(
             field = value
         }
 
+    /** Iterates over of all field data (both singletons and collections). */
+    val allData: Sequence<Map.Entry<FieldName, Any?>>
+        get() = sequence {
+            yieldAll(singletons.asIterable())
+            yieldAll(collections.asIterable())
+        }
+
     /** Constructor for a [RawEntity] when only the field names are known. */
     constructor(
         id: ReferenceId = NO_REFERENCE_ID,

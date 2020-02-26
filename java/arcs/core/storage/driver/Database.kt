@@ -15,7 +15,6 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.extension.toCrdtEntityData
-import arcs.core.crdt.extension.toEntity
 import arcs.core.data.Capabilities
 import arcs.core.data.Schema
 import arcs.core.storage.CapabilitiesResolver
@@ -272,7 +271,7 @@ class DatabaseDriver<Data : Any>(
                 )?.also {
                     dataAndVersion = when (it) {
                         is DatabaseData.Entity ->
-                            it.entity.toCrdtEntityData(it.versionMap)
+                            it.rawEntity.toCrdtEntityData(it.versionMap)
                         is DatabaseData.Singleton ->
                             it.reference.toCrdtSingletonData(it.versionMap)
                         is DatabaseData.Collection ->
@@ -310,7 +309,8 @@ class DatabaseDriver<Data : Any>(
         // Prep the data for storage.
         val databaseData = when (data) {
             is CrdtEntity.Data -> DatabaseData.Entity(
-                data.toEntity(schema),
+                data.toRawEntity(),
+                schema,
                 version,
                 data.versionMap
             )
@@ -361,7 +361,7 @@ class DatabaseDriver<Data : Any>(
         val actualData = when (data) {
             is DatabaseData.Singleton -> data.reference.toCrdtSingletonData(data.versionMap)
             is DatabaseData.Collection -> data.values.toCrdtSetData(data.versionMap)
-            is DatabaseData.Entity -> data.entity.toCrdtEntityData(data.versionMap)
+            is DatabaseData.Entity -> data.rawEntity.toCrdtEntityData(data.versionMap)
         } as Data
 
         // Stash it locally.

@@ -14,6 +14,7 @@ kt_android_library(
         "//java/arcs/android/crdt:version_map_android_proto",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",
