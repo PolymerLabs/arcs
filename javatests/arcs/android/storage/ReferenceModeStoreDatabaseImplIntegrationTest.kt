@@ -242,7 +242,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         var sentSyncRequest = false
         val job = Job(coroutineContext[Job])
-        var id = activeStore.on(ProxyCallback {
+        var id = -1
+        id = activeStore.on(ProxyCallback {
             if (it is ProxyMessage.Operations) {
                 assertThat(sentSyncRequest).isFalse()
                 sentSyncRequest = true
