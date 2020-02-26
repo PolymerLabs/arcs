@@ -41,21 +41,24 @@ arcs_kt_jvm_library(
     ],
 )
 
-kt_js_library(
-    name = "sdk-js",
-    srcs = glob([
-        "*.kt",
-        "js/*.kt",
-    ]),
-    deps = [
-        "//java/arcs/core/crdt:crdt-js",
-        "//java/arcs/core/data:data-js",
-        "//java/arcs/core/storage:reference-js",
-        "//java/arcs/core/storage:storage_key-js",
-        "//java/arcs/core/storage/api:api-js",
-        "//java/arcs/sdk/storage:storage-js",
-    ],
-)
+# Temporarily disable because of Kotlin-JS compiler bug
+# See https://gist.github.com/cromwellian/8b62b883ce32c3590ec93476cd7d6503
+#kt_js_library(
+#    name = "sdk-js",
+#    srcs = glob([
+#        "*.kt",
+#        "js/*.kt",
+#    ]),
+#    deps = [
+#        "//java/arcs/core/crdt:crdt-js",
+#        "//java/arcs/core/data:data-js",
+#        "//java/arcs/core/host:host-js",
+#        "//java/arcs/core/storage:reference-js",
+#        "//java/arcs/core/storage:storage_key-js",
+#        "//java/arcs/core/storage/api:api-common-js",
+#        "//java/arcs/sdk/storage:storage-js",
+#    ],
+#)
 
 arcs_kt_native_library(
     name = "sdk-wasm",
