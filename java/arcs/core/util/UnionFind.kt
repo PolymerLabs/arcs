@@ -17,13 +17,6 @@ package arcs.core.util
  */
 class UnionFind<E> {
     /**
-     * A node in the union find datastructure.
-     */
-    private data class Node<E>(val element: E, var parent: Node<E>? = null)
-
-    private val nodes = mutableMapOf<E, Node<E>>()
-
-    /**
      * Unifies the equivalence classes of elements [e1] and [e2]. If either
      * element is not present in any set, it is added.
      */
@@ -66,4 +59,11 @@ class UnionFind<E> {
         }
         return node
     }
+
+    private val nodes = mutableMapOf<E, Node<E>>()
+
+    /**
+     * A node in the union find datastructure.
+     */
+    private data class Node<E>(val element: E, var parent: Node<E>? = null)
 }
