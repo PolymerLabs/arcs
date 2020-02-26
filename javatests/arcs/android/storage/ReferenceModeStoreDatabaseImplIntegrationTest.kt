@@ -63,36 +63,30 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     @get:Rule
     val logRule = LogRule()
 
-    private lateinit var hash: String
-    private lateinit var testKey: ReferenceModeStorageKey
+    private var hash = "123456abcdef"
+    private var testKey = ReferenceModeStorageKey(
+        DatabaseStorageKey("entities", hash),
+        DatabaseStorageKey("set", hash)
+    )
+    private var schema = Schema(
+        listOf(SchemaName("person")),
+        SchemaFields(
+            singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+            collections = emptyMap()
+        ),
+        hash
+    )
     private lateinit var databaseFactory: AndroidSqliteDatabaseManager
-    private lateinit var schema: Schema
 
     @Before
-    fun setup() = runBlockingTest {
-        hash = "123456abcdef"
-
-        schema = Schema(
-            listOf(SchemaName("person")),
-            SchemaFields(
-                singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
-                collections = emptyMap()
-            ),
-            hash
-        )
-
-        testKey = ReferenceModeStorageKey(
-            DatabaseStorageKey("entities", hash),
-            DatabaseStorageKey("set", hash)
-        )
-
+    fun setUp() = runBlockingTest {
         DriverFactory.clearRegistrationsForTesting()
         databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 
     @After
-    fun teardown() = runBlockingTest {
+    fun tearDown() = runBlockingTest {
         CapabilitiesResolver.reset()
         databaseFactory.resetAll()
     }
@@ -248,8 +242,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         var sentSyncRequest = false
         val job = Job(coroutineContext[Job])
-        var id: Int = -1
-        id = activeStore.on(ProxyCallback {
+        var id = activeStore.on(ProxyCallback {
             if (it is ProxyMessage.Operations) {
                 assertThat(sentSyncRequest).isFalse()
                 sentSyncRequest = true
