@@ -8,18 +8,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.handle.AndroidHandleManager
 import arcs.android.storage.handle.TestActivity
-import arcs.android.storage.service.IStorageService
 import arcs.core.data.FieldType
-import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.data.util.toReferencable
-import arcs.core.host.createSdkHandle
+import arcs.core.host.HandleMode
+import arcs.core.host.SdkHandleManager
 import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.sdk.BaseParticle
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestBindingDelegate
 import com.google.common.truth.Truth.assertThat
@@ -28,16 +24,13 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
-
 
 typealias Person = TestParticleInternal1
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
-class AndroidSdkHandlesTest {
+class AndroidSdkHandleManagerTest {
     private lateinit var app: Application
-
 
     val entity1 = Person("Jason", 21.0, false)
     val entity2 = Person("Jason", 22.0, true)
@@ -74,7 +67,7 @@ class AndroidSdkHandlesTest {
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
     }
 
-    fun handleManagerTest(block: suspend (HandleManager) -> Unit) {
+    fun handleManagerTest(block: suspend (SdkHandleManager) -> Unit) {
         val scenario = ActivityScenario.launch(TestActivity::class.java)
 
         scenario.moveToState(Lifecycle.State.STARTED)
@@ -86,7 +79,7 @@ class AndroidSdkHandlesTest {
                     context = activity,
                     connectionFactory = DefaultConnectionFactory(activity, TestBindingDelegate(app))
                 )
-                block(hf)
+                block(SdkHandleManager(hf))
             }
         }
 
@@ -96,14 +89,23 @@ class AndroidSdkHandlesTest {
     @Test
     fun testCreateSingletonHandle() = runBlockingTest {
         handleManagerTest { hm ->
-            val singletonHandle = hm.singletonHandle(singletonKey, schema, canRead = false)
-
             val handleHolder = TestParticleHandles()
-            createSdkHandle(handleHolder, "writeHandle", singletonHandle)
+            hm.sdkSingletonHandle(
+                handleHolder,
+                "writeHandle",
+                singletonKey,
+                schema,
+                HandleMode.Write
+            )
             handleHolder.writeHandle.set(entity1)
             // Now read back from a different handle
-            val readbackHandle = hm.singletonHandle(singletonKey, schema)
-            createSdkHandle(handleHolder, "readWriteHandle", readbackHandle)
+            hm.sdkSingletonHandle(
+                handleHolder,
+                "readWriteHandle",
+                singletonKey,
+                schema,
+                HandleMode.ReadWrite
+            )
             val readBack = handleHolder.readWriteHandle.fetch()
             assertThat(readBack).isEqualTo(entity1)
         }
@@ -112,16 +114,25 @@ class AndroidSdkHandlesTest {
     @Test
     fun testCreateSetHandle() = runBlockingTest {
         handleManagerTest { hm ->
-            val setHandle = hm.setHandle(setKey, schema)
             val handleHolder = TestParticleHandles()
-            createSdkHandle(handleHolder, "writeSetHandle", setHandle)
+            hm.sdkSetHandle(
+                handleHolder,
+                "writeSetHandle",
+                setKey,
+                schema,
+                HandleMode.Write
+            )
 
             handleHolder.writeSetHandle.store(entity1)
             handleHolder.writeSetHandle.store(entity2)
 
             // Now read back from a different handle
-            val readbackHandle = hm.setHandle(setKey, schema)
-            createSdkHandle(handleHolder, "readWriteSetHandle", readbackHandle)
+            hm.sdkSetHandle(
+                handleHolder,
+                "readWriteSetHandle",
+                setKey,
+                schema
+            )
 
             val readBack = handleHolder.readWriteSetHandle.fetchAll()
             assertThat(readBack).containsExactly(entity1, entity2)
