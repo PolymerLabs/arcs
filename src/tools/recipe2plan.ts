@@ -1,10 +1,19 @@
-import {Runtime} from "../runtime/runtime";
-import {Manifest} from "../runtime/manifest";
-import {Recipe} from "../runtime/recipe/recipe";
-import {CapabilitiesResolver, StorageKeyCreatorsMap} from "../runtime/capabilities-resolver";
-import {IdGenerator} from "../runtime/id";
-import {Capabilities} from "../runtime/capabilities";
-import {Handle} from "../runtime/recipe/handle";
+/**
+ * @license
+ * Copyright 2019 Google LLC.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+import {Runtime} from '../runtime/runtime.js';
+import {Manifest} from '../runtime/manifest.js';
+import {Recipe} from '../runtime/recipe/recipe.js';
+import {CapabilitiesResolver, StorageKeyCreatorsMap} from '../runtime/capabilities-resolver.js';
+import {IdGenerator} from '../runtime/id.js';
+import {Capabilities} from '../runtime/capabilities.js';
+import {Handle} from '../runtime/recipe/handle.js';
 
 
 /** Reads a manifest and outputs generated Kotlin plans. */
@@ -47,7 +56,7 @@ class RecipeResolver {
 
   resolve(recipe: Recipe) {
     const arcId = IdGenerator.newSession().newArcId(this.getArcId(recipe.triggers));
-    if (arcId == null) return;
+    if (arcId === null) return;
 
     const resolver = new CapabilitiesResolver({arcId});
 
@@ -60,7 +69,7 @@ class RecipeResolver {
   getArcId(triggers: [string, string][][]): string | null {
     for (const trigger of triggers) {
       for (const pair of trigger) {
-        if (pair[0] == 'arcId') {
+        if (pair[0] === 'arcId') {
           return pair[1];
         }
       }
@@ -73,7 +82,7 @@ class RecipeResolver {
     const maps = [];
 
     const combine = (acc, h) => {
-      switch(h.fate){
+      switch (h.fate) {
         case 'create':
           return [acc[0].push(h), acc[1]];
         case 'map':
@@ -86,21 +95,20 @@ class RecipeResolver {
   }
 
   createKeysForCreatedHandles(recipe: Recipe, resolver: CapabilitiesResolver) {
-    const createHandles = recipe.handles.filter(h => h.fate == 'create');
+    const createHandles = recipe.handles.filter(h => h.fate === 'create');
 
     createHandles.forEach(ch => {
       const capabilities = ch.capabilities;
-      if(capabilities.isPersistent) {
-      }
+      // if (capabilities.isPersistent) {
+      // }
 
     });
 
-    const key = resolver.createStorageKey(Capabilities.tiedToRuntime)
+    const key = resolver.createStorageKey(Capabilities.tiedToRuntime);
 
   }
 
 }
-
 
 
 /** Predicate determines if we should create storage keys on a recipe. */
@@ -110,10 +118,10 @@ function isLongRunning(triggers: [string, string][][]): boolean {
 
   for (const trigger of triggers) {
     for (const pair of trigger) {
-      if (pair[0] == 'arcId') {
+      if (pair[0] === 'arcId') {
         hasArcId = true;
       }
-      if (pair[0] == 'launch' && pair[1] == 'startup') {
+      if (pair[0] === 'launch' && pair[1] === 'startup') {
         isLaunchedAtStartup = true;
       }
     }
