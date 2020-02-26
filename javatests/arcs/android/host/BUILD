@@ -66,13 +66,18 @@ kt_android_library(
     name = "services",
     testonly = True,
     srcs = glob(
-        ["*Service.kt"],
+        [
+            "*Service.kt",
+            "*Activity.kt",
+        ],
     ),
+    manifest = "AndroidManifest.xml",
     deps = [
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/sdk",
+        "//third_party/java/androidx/appcompat",
     ],
 )
