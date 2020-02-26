@@ -11,9 +11,9 @@
 package arcs.jvm.host
 
 import arcs.core.host.ArcHost
+import arcs.core.host.Particle
 import arcs.core.host.ProdHost
 import arcs.core.host.toParticleIdentifier
-import arcs.sdk.Particle
 import kotlin.reflect.KClass
 
 /**
