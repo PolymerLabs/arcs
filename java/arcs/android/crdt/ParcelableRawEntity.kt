@@ -70,8 +70,7 @@ data class ParcelableRawEntity(
             @Suppress("GoodTime") // use Instant
             val expirationTimestamp = requireNotNull(parcel.readLong())
 
-            val rawEntity = RawEntity(id, singletons, collections)
-            rawEntity.expirationTimestamp = expirationTimestamp
+            val rawEntity = RawEntity(id, singletons, collections, expirationTimestamp)
             return ParcelableRawEntity(rawEntity)
         }
 

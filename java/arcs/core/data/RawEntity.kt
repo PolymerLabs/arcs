@@ -42,7 +42,6 @@ data class RawEntity(
     /** Entity expiration time (in millis). */
     @Suppress("GoodTime") // use Instant
     override var expirationTimestamp: Long = NO_EXPIRATION
-        get() = field
         set(value) {
             require(this.expirationTimestamp == NO_EXPIRATION) {
                 "cannot override expirationTimestamp $value"
@@ -70,3 +69,11 @@ data class RawEntity(
         const val NO_EXPIRATION: Long = -1
     }
 }
+
+fun RawEntity(
+    id: String,
+    singletons: Map<FieldName, Referencable?>,
+    collections: Map<FieldName, Set<Referencable>>,
+    expirationTimestamp: Long
+) =
+RawEntity(id, singletons,  collections).also { it.expirationTimestamp = expirationTimestamp }
