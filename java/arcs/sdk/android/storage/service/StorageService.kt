@@ -207,6 +207,7 @@ class StorageService : ResurrectorService() {
          */
         fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
             Intent(context, StorageService::class.java).apply {
+                action = storeOptions.actual.storageKey.toString()
                 putExtra(EXTRA_OPTIONS, storeOptions)
             }
     }

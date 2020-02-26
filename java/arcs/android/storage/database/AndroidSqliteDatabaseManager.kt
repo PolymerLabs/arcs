@@ -27,7 +27,7 @@ import kotlinx.coroutines.sync.withLock
 class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
     private val context = context.applicationContext
     private val mutex = Mutex()
-    private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, Database>())
+    private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
         dbCache[name to persistent]
@@ -36,4 +36,8 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
 
     override suspend fun snapshotStatistics(): Map<DatabaseIdentifier, Snapshot> =
         mutex.withLock { dbCache.mapValues { it.value.snapshotStatistics() } }
+
+    suspend fun resetAll() = mutex.withLock {
+        dbCache.forEach { (_, db) -> db.reset() }
+    }
 }

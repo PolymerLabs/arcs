@@ -165,7 +165,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Entity = readableDatabase.useTransaction {
+    ): DatabaseData.Entity? = readableDatabase.useTransaction {
         val db = this
         // Fetch the entity's type by storage key.
         counters?.increment(DatabaseCounters.GET_ENTITY_TYPE_BY_STORAGEKEY)
@@ -221,9 +221,7 @@ class DatabaseImpl(
                 versionNumber,
                 versionMap
             )
-        } ?: throw IllegalArgumentException(
-            "Entity at storage key $storageKey does not exist."
-        )
+        }
     }
 
     private fun getEntityFieldValue(
@@ -271,14 +269,13 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Collection = readableDatabase.useTransaction {
+    ): DatabaseData.Collection? = readableDatabase.useTransaction {
         val db = this
         counters?.increment(DatabaseCounters.GET_COLLECTION_ID)
-        val (collectionId, versionMap, versionNumber) = requireNotNull(
+        val (collectionId, versionMap, versionNumber) =
             getCollectionMetadata(storageKey, DataType.Collection, db)
-        ) {
-            "Collection at storage key $storageKey does not exist."
-        }
+                ?: return@useTransaction null
+
         counters?.increment(DatabaseCounters.GET_COLLECTION_ENTRIES)
         val values = getCollectionReferenceEntries(collectionId, db)
         DatabaseData.Collection(
@@ -294,14 +291,13 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Singleton = readableDatabase.useTransaction {
+    ): DatabaseData.Singleton? = readableDatabase.useTransaction {
         val db = this
         counters?.increment(DatabaseCounters.GET_SINGLETON_ID)
-        val (collectionId, versionMap, versionNumber) = requireNotNull(
+        val (collectionId, versionMap, versionNumber) =
             getCollectionMetadata(storageKey, DataType.Singleton, db)
-        ) {
-            "Singleton at storage key $storageKey does not exist."
-        }
+                ?: return@useTransaction null
+
         counters?.increment(DatabaseCounters.GET_SINGLETON_ENTRIES)
         val values = getCollectionReferenceEntries(collectionId, db)
         require(values.size <= 1) {
@@ -336,7 +332,7 @@ class DatabaseImpl(
             }
         }
         // TODO: Return a proper database version number.
-        return@timeSuspending 1
+        return@timeSuspending data.databaseVersion
     }.also { newVersion ->
         clientFlow.filter { it.storageKey == storageKey }
             .onEach { it.onDatabaseUpdate(data, newVersion, originatingClientId) }
@@ -517,10 +513,7 @@ class DatabaseImpl(
         } else {
             // Collection already exists; delete all existing entries.
             val collectionId = metadata.collectionId
-            require(data.databaseVersion > metadata.versionNumber) {
-                "Given version (${data.databaseVersion}) must be greater than version in " +
-                    "database (${metadata.versionNumber}) when updating storage key $storageKey."
-            }
+            if (data.databaseVersion <= metadata.versionNumber) return@useTransaction
 
             // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
             when (dataType) {
