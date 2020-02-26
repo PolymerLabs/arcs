@@ -108,7 +108,7 @@ class AndroidSdkHandleManagerTest {
     }
 
     @Test
-    fun testCreateSingletonHandle() = runBlockingTest {
+    fun singletonHandle_writeFollowedByReadWithOnUpdate() = runBlockingTest {
         handleManagerTest { hm ->
             val handleHolder = TestParticleHandles()
             val writeHandleName = "writeHandle"
@@ -118,7 +118,7 @@ class AndroidSdkHandleManagerTest {
                 handleHolder.writeHandle
             }
 
-            val writeHandle = hm.sdkSingletonHandle(
+            val writeHandle = hm.createSingletonHandle(
                 handleHolder,
                 writeHandleName,
                 singletonKey,
@@ -136,7 +136,7 @@ class AndroidSdkHandleManagerTest {
                 handleHolder.readHandle
             }
 
-            val readHandle = hm.sdkSingletonHandle(
+            val readHandle = hm.createSingletonHandle(
                 handleHolder,
                 readHandleName,
                 singletonKey,
@@ -156,7 +156,7 @@ class AndroidSdkHandleManagerTest {
                 handleHolder.readWriteHandle
             }
 
-            val readWriteHandle = hm.sdkSingletonHandle(
+            val readWriteHandle = hm.createSingletonHandle(
                 handleHolder,
                 readWriteHandleName,
                 singletonKey,
@@ -182,7 +182,7 @@ class AndroidSdkHandleManagerTest {
     }
 
     @Test
-    fun testCreateSetHandle() = runBlockingTest {
+    fun setHandle_writeFollowedByReadWithOnUpdate() = runBlockingTest {
         handleManagerTest { hm ->
             val handleHolder = TestParticleHandles()
             val writeSetHandleName = "writeSetHandle"
@@ -191,7 +191,7 @@ class AndroidSdkHandleManagerTest {
                 handleHolder.writeSetHandle
             }
 
-            val writeSetHandle = hm.sdkSetHandle(
+            val writeSetHandle = hm.createSetHandle(
                 handleHolder,
                 writeSetHandleName,
                 setKey,
@@ -211,7 +211,7 @@ class AndroidSdkHandleManagerTest {
                 handleHolder.writeSetHandle
             }
 
-            val readSetHandle = hm.sdkSetHandle(
+            val readSetHandle = hm.createSetHandle(
                 handleHolder,
                 readSetHandleName,
                 setKey,
@@ -232,7 +232,7 @@ class AndroidSdkHandleManagerTest {
                 handleHolder.readWriteSetHandle
             }
 
-            val readWriteSetHandle = hm.sdkSetHandle(
+            val readWriteSetHandle = hm.createSetHandle(
                 handleHolder,
                 readWriteSetHandleName,
                 setKey,

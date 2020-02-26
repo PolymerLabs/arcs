@@ -55,7 +55,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
-    suspend fun sdkSingletonHandle(
+    suspend fun createSingletonHandle(
         handleHolder: HandleHolder,
         handleName: String,
         storageKey: StorageKey,
@@ -85,7 +85,7 @@ class SdkHandleManager(val handleManager: HandleManager) {
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
-    suspend fun sdkSetHandle(
+    suspend fun createSetHandle(
         handleHolder: HandleHolder,
         handleName: String,
         storageKey: StorageKey,
@@ -133,20 +133,12 @@ class SdkHandleManager(val handleManager: HandleManager) {
     ): Handle {
         return when (storageHandle) {
             is SingletonHandle<*> -> createSingletonHandle(
-                entitySpec,
-                handleName,
-                storageHandle as SingletonHandle<RawEntity>,
-                handleMode,
-                idGenerator,
-                sender
+                entitySpec, handleName, storageHandle as SingletonHandle<RawEntity>, handleMode,
+                idGenerator, sender
             )
             is SetHandle<*> -> createSetHandle(
-                entitySpec,
-                handleName,
-                storageHandle as SetHandle<RawEntity>,
-                handleMode,
-                idGenerator,
-                sender
+                entitySpec, handleName, storageHandle as SetHandle<RawEntity>, handleMode,
+                idGenerator, sender
             )
             else -> throw Exception("Unknown storage handle type ${storageHandle::class}")
         }
