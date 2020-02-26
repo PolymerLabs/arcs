@@ -12,6 +12,7 @@
 package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
+import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
@@ -38,7 +39,8 @@ typealias SetCallbacks<T> = Callbacks<SetData<T>, SetOp<T>, Set<T>>
 class CollectionImpl<T : Referencable>(
     name: String,
     storageProxy: SetProxy<T>,
-    callbacks: SetCallbacks<T>? = null
+    callbacks: SetCallbacks<T>? = null,
+    private val refinement: Refinement<T>?
 ) : SetBase<T>(name, storageProxy, callbacks) {
     /** Return the number of items in the storage proxy view of the collection. */
     suspend fun size(): Int = value().size
@@ -48,6 +50,15 @@ class CollectionImpl<T : Referencable>(
 
     /** Returns the values in the collection as a set. */
     suspend fun fetchAll(): Set<T> = value()
+
+    /** Returns the values in the collection that fit the requirement (as a set). */
+    suspend fun query(args: Any): Set<T> {
+        // Note: type checking for args is implemented in the refinement and code generated handle.
+        requireNotNull(refinement) {
+            "Invalid operation 'query' on collection $name which has no associated query"
+        }
+        return refinement.filterBy(value(), args)
+    }
 
     /**
      * Store a new entity in the collection.

@@ -1,5 +1,6 @@
 package arcs.core.storage.handle
 
+import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.CollectionType
@@ -93,7 +94,8 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         storageKey: StorageKey,
         schema: Schema,
         callbacks: SetCallbacks<RawEntity>? = null,
-        name: String = storageKey.toKeyString()
+        name: String = storageKey.toKeyString(),
+        refinement: Refinement<RawEntity>? = null
     ): SetHandle<RawEntity> {
         val storeOptions = SetStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -108,6 +110,6 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SetHandle(name, storageProxy, callbacks).also { storageProxy.registerHandle(it) }
+        return SetHandle(name, storageProxy, callbacks, refinement).also { storageProxy.registerHandle(it) }
     }
 }
