@@ -13,6 +13,8 @@ package arcs.core.storage
 
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
+import arcs.core.data.Schema
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
 
 /**
@@ -20,18 +22,50 @@ import arcs.core.util.TaggedLog
  * providers and given [Capabilities].
  */
 class CapabilitiesResolver(
-    val options: StorageKeyOptions,
+    val options: CapabilitiesResolverOptions,
     private val creators: StorageKeyCreatorsMap = getAllCreators()
 ) {
     private val log = TaggedLog { "CapabilitiesResolver" }
 
     /* Options used to construct [CapabilitiesResolver] */
-    data class StorageKeyOptions(val arcId: ArcId)
+    data class CapabilitiesResolverOptions(val arcId: ArcId)
+
+    /**
+     * Options passed to registered [StorageKey] constructors.
+     * @property arcId An identifier of an Arc requesting the [StorageKey]
+     * @property entitySchema A schema of an entities that will be stored
+     * @property unique A unique component of the [StorageKey]
+     * @property location A memory location of the [StorageKey]
+     */
+    interface StorageKeyOptions {
+        val arcId: ArcId
+        val entitySchema: Schema
+        val unique: String
+        val location: String
+    }
+
+    data class ContainerStorageKeyOptions(
+        override val arcId: ArcId,
+        override val entitySchema: Schema
+    ) : StorageKeyOptions {
+        override val unique: String = ""
+        override val location: String = arcId.toString()
+    }
+
+    data class BackingStorageKeyOptions(
+        override val arcId: ArcId,
+        override val entitySchema: Schema
+    ) : StorageKeyOptions {
+        override val unique: String =
+            requireNotNull(entitySchema.name).name.ifEmpty { entitySchema.hash }
+        override val location: String = unique
+    }
 
     /* Creates and returns a [StorageKey] corresponding to the given [Capabilities]. */
     fun createStorageKey(
         capabilities: Capabilities,
-        entitySchemaHash: String? = null
+        entitySchema: Schema,
+        handleId: String
     ): StorageKey? {
         // TODO: This is a naive and basic solution for picking the appropriate
         // storage key creator for the given capabilities. As more capabilities are
@@ -43,10 +77,10 @@ class CapabilitiesResolver(
         if (protocols.size > 1) {
             log.warning { "Multiple storage key creators for $capabilities" }
         }
-        return creators[protocols.first()]?.second?.invoke(
-            options,
-            entitySchemaHash ?: ""
-        )
+        val creator = requireNotNull(creators[protocols.first()]?.second)
+        val backingKey = creator.invoke(BackingStorageKeyOptions(options.arcId, entitySchema))
+        val storageKey = creator.invoke(ContainerStorageKeyOptions(options.arcId, entitySchema))
+        return ReferenceModeStorageKey(backingKey, storageKey.childKeyForHandle(handleId))
     }
 
     /* Returns set of protocols corresponding to the given [Capabilities]. */
@@ -103,10 +137,7 @@ class CapabilitiesResolver(
 }
 
 /* A method for generating [StorageKey] for the given parameters. */
-typealias StorageKeyCreator = (
-    options: CapabilitiesResolver.StorageKeyOptions,
-    entitySchemaHash: String
-) -> StorageKey
+typealias StorageKeyCreator = (options: CapabilitiesResolver.StorageKeyOptions) -> StorageKey
 
 /**
  * An alias for a map containing mappings of protocol to corresponding Capabilities and
