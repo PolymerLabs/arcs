@@ -11,6 +11,9 @@
 
 package arcs.sdk
 
+import arcs.core.storage.api.HandleLifecycle
+import arcs.core.storage.api.ReadableHandleLifecycle
+
 /** Implementation of [Particle] for the JVM. */
 abstract class BaseParticle : Particle {
     /**
@@ -18,4 +21,31 @@ abstract class BaseParticle : Particle {
      * the manifest.
      */
     abstract val handles: HandleHolder
+
+    /**
+     * Used to initialize [BaseParticle] implementations to subscribe to handle lifecycle
+     * events and publish them to the [Particle] interface.
+     */
+    suspend fun onInitialize() {
+        val synced = mutableSetOf<Handle>()
+
+        handles.handles.forEach { _, value ->
+            val handle = value as HandleLifecycle<Handle>
+            handle.onSync {
+                synced.add(it)
+                this@BaseParticle.onHandleSync(it, synced.size == handles.handles.size)
+            }
+
+            handle.onDesync {
+                synced.remove(it)
+                // particle.onHandleDesync()?
+            }
+
+            if (handle is ReadableHandleLifecycle<*, Handle>) {
+                handle.onUpdate {
+                    this@BaseParticle.onHandleUpdate(handle as Handle)
+                }
+            }
+        }
+    }
 }

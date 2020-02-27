@@ -16,22 +16,31 @@ interface Handle {
     val name: String
 }
 
-/** A singleton handle with read access. */
-interface ReadableSingleton<T : Entity> : Handle {
-    /** Returns the value of the singleton. */
-    suspend fun fetch(): T?
-
-    suspend fun onUpdate(action: (T?) -> Unit)
-
+/** Events that all handles must support. */
+interface HandleLifecycle<H : Handle> {
     /** Assign a callback when the handle is synced. */
-    suspend fun onSync(action: (ReadableSingleton<T>) -> Unit)
+    fun onSync(action: suspend (H) -> Unit)
 
     /** Assign a callback when the handle is sdeynced. */
-    suspend fun onDesync(action: (ReadableSingleton<T>) -> Unit)
+    fun onDesync(action: suspend (H) -> Unit)
 }
 
+interface ReadableHandleLifecycle<T, H : Handle> : HandleLifecycle<H> {
+    fun onUpdate(action: suspend (T) -> Unit)
+}
+
+/** A singleton handle with read access. */
+interface IReadableSingleton<T : Entity> : Handle {
+    /** Returns the value of the singleton. */
+    suspend fun fetch(): T?
+}
+
+/** A readable singleton with lifecycle methods. */
+interface ReadableSingleton<T : Entity> : IReadableSingleton<T>,
+    HandleLifecycle<ReadableSingleton<T>>, ReadableHandleLifecycle<T?, ReadableSingleton<T>>
+
 /** A singleton handle with write access. */
-interface WritableSingleton<T : Entity> : Handle {
+interface IWritableSingleton<T : Entity> : Handle {
     /** Sets the value of the singleton. */
     suspend fun store(entity: T)
 
@@ -39,32 +48,32 @@ interface WritableSingleton<T : Entity> : Handle {
     suspend fun clear()
 }
 
-/** A singleton handle with read and write access. */
-interface ReadWriteSingleton<T : Entity> : ReadableSingleton<T>, WritableSingleton<T>
+/** A writable singleton handle with lifecycle methods. */
+interface WritableSingleton<T : Entity> : IWritableSingleton<T>,
+    HandleLifecycle<WritableSingleton<T>>
+
+/** A read write singleton handle with lifecycle methods. */
+interface ReadWriteSingleton<T : Entity> : IReadableSingleton<T>, IWritableSingleton<T>,
+    HandleLifecycle<ReadWriteSingleton<T>>, ReadableHandleLifecycle<T?, ReadWriteSingleton<T>>
 
 /** A collection handle with read access. */
-interface ReadableCollection<T : Entity> : Handle {
+interface IReadableCollection<T : Entity> : Handle {
     /** The number of elements in the collection. */
     suspend fun size(): Int
 
     /** Returns true if the collection is empty. */
     suspend fun isEmpty(): Boolean
 
-    /** Assign a callback when the collection is Updated. */
-    suspend fun onUpdate(action: (Set<T>) -> Unit)
-
-    /** Assign a callback when the collection handle is synced. */
-    suspend fun onSync(action: (ReadableCollection<T>) -> Unit)
-
-    /** Assign a callback when the collection handle is desynced. */
-    suspend fun onDesync(action: (ReadableCollection<T>) -> Unit)
-
     /** Returns a set with all the entities in the collection. */
     suspend fun fetchAll(): Set<T>
 }
 
-/** A collection handle with write access. */
-interface WritableCollection<T : Entity> : Handle {
+/** A readable collection handle with lifecycle. */
+interface ReadableCollection<T : Entity> : IReadableCollection<T>,
+    ReadableHandleLifecycle<Set<T>, ReadableCollection<T>>
+
+/** A writable collection handle with write access. */
+interface IWritableCollection<T : Entity> : Handle {
     /** Adds the given [entity] to the collection. */
     suspend fun store(entity: T)
 
@@ -75,5 +84,10 @@ interface WritableCollection<T : Entity> : Handle {
     suspend fun remove(entity: T)
 }
 
+/** A writable collection handle with lifecycle. */
+interface WritableCollection<T : Entity> : IWritableCollection<T>,
+    HandleLifecycle<WritableCollection<T>>
+
 /** A collection handle with read and write access. */
-interface ReadWriteCollection<T : Entity> : ReadableCollection<T>, WritableCollection<T>
+interface ReadWriteCollection<T : Entity> : IReadableCollection<T>, IWritableCollection<T>,
+    ReadableHandleLifecycle<Set<T>, ReadWriteCollection<T>>

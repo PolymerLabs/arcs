@@ -11,9 +11,14 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.api.Entity
 import arcs.core.storage.api.EntitySpec
 import arcs.core.storage.api.Handle
+import arcs.core.storage.api.IReadableCollection
+import arcs.core.storage.api.IReadableSingleton
+import arcs.core.storage.api.IWritableCollection
+import arcs.core.storage.api.IWritableSingleton
 import arcs.core.storage.api.ReadWriteCollection
 import arcs.core.storage.api.ReadWriteSingleton
 import arcs.core.storage.api.ReadableCollection
+import arcs.core.storage.api.ReadableHandleLifecycle
 import arcs.core.storage.api.ReadableSingleton
 import arcs.core.storage.api.WritableCollection
 import arcs.core.storage.api.WritableSingleton
@@ -168,8 +173,7 @@ class EntityHandleManager(val handleManager: HandleManager) {
         idGenerator: Id.Generator,
         sender: Sender
     ): Handle {
-        val entitySpec: EntitySpec<*>? =
-            handleHolder.entitySpecs[handleName] as? EntitySpec<*>
+        val entitySpec: EntitySpec<*>? = handleHolder.entitySpecs[handleName]
         val handle = createSdkHandle(
             entitySpec ?: throw IllegalArgumentException(
                 "No EntitySpec found for $handleName on HandleHolder ${handleHolder::class}"
@@ -186,33 +190,33 @@ class EntityHandleManager(val handleManager: HandleManager) {
     }
 }
 
-internal open class HandleEventBase<T, H : Handle> {
-    protected val onUpdateActions: MutableList<(T) -> Unit> = mutableListOf()
-    protected val onSyncActions: MutableList<(H) -> Unit> = mutableListOf()
-    protected val onDesyncActions: MutableList<(H) -> Unit> = mutableListOf()
+internal open class HandleEventBase<T, H : Handle> : ReadableHandleLifecycle<T, H> {
+    protected val onUpdateActions: MutableList<suspend (T) -> Unit> = mutableListOf()
+    protected val onSyncActions: MutableList<suspend (H) -> Unit> = mutableListOf()
+    protected val onDesyncActions: MutableList<suspend (H) -> Unit> = mutableListOf()
 
-    suspend fun onUpdate(action: (T) -> Unit) {
+    override fun onUpdate(action: suspend (T) -> Unit) {
         onUpdateActions.add(action)
     }
 
-    suspend fun onSync(action: (H) -> Unit) {
+    override fun onSync(action: suspend (H) -> Unit) {
         onSyncActions.add(action)
     }
 
-    suspend fun onDesync(action: (H) -> Unit) {
+    override fun onDesync(action: suspend (H) -> Unit) {
         onDesyncActions.add(action)
     }
 
-    protected suspend fun fireUpdate(value: T) {
-        onUpdateActions.forEach { action -> action(value) }
+    internal suspend fun fireUpdate(value: T) {
+        onUpdateActions.forEach { action -> action.invoke(value) }
     }
 
-    protected suspend fun fireSync() {
-        onSyncActions.forEach { action -> action(this as H) }
+    internal suspend fun fireSync() {
+        onSyncActions.forEach { action -> action.invoke(this as H) }
     }
 
-    protected suspend fun fireDesync() {
-        onDesyncActions.forEach { action -> action(this as H) }
+    internal suspend fun fireDesync() {
+        onDesyncActions.forEach { action -> action.invoke(this as H) }
     }
 }
 
@@ -232,7 +236,7 @@ internal open class ReadableSingletonHandleImpl<T : Entity>(
         )
     }
 
-    private suspend fun invokeUpdate(entity: T?): Unit = fireUpdate(entity)
+    internal suspend fun invokeUpdate(entity: T?): Unit = fireUpdate(entity)
 
     override val name: String
         get() = handleName
@@ -245,8 +249,20 @@ internal open class ReadableSingletonHandleImpl<T : Entity>(
 internal class WritableSingletonHandleImpl<T : Entity>(
     val handleName: String,
     val storageHandle: SingletonHandle<RawEntity>,
-    val idGenerator: Id.Generator
-) : WritableSingleton<T> {
+    val idGenerator: Id.Generator,
+    val sender: Sender
+) : HandleEventBase<T, WritableSingleton<T>>(), WritableSingleton<T> {
+
+    init {
+        storageHandle.callback = SingletonSenderCallbackAdapter(
+            { null },
+            { Unit },
+            this::fireSync,
+            this::fireDesync,
+            sender
+        )
+    }
+
     override val name: String
         get() = handleName
 
@@ -261,20 +277,39 @@ internal class WritableSingletonHandleImpl<T : Entity>(
 
 internal class ReadWriteSingletonHandleImpl<T : Entity>(
     entitySpec: EntitySpec<T>,
-    handleName: String,
+    val handleName: String,
     storageHandle: SingletonHandle<RawEntity>,
     idGenerator: Id.Generator,
     sender: Sender,
+    private val readableSingleton: ReadableSingletonHandleImpl<T> = ReadableSingletonHandleImpl(
+        entitySpec,
+        handleName,
+        storageHandle,
+        sender
+    ),
     private val writableSingleton: WritableSingletonHandleImpl<T> = WritableSingletonHandleImpl(
         handleName,
         storageHandle,
-        idGenerator
-    )
-) : ReadWriteSingleton<T>,
-    ReadableSingletonHandleImpl<T>(entitySpec, handleName, storageHandle, sender),
-    WritableSingleton<T> by writableSingleton {
+        idGenerator,
+        sender
+    ),
+    private val handleLifecycle: HandleEventBase<T?, ReadWriteSingleton<T>> = HandleEventBase()
+) : IReadableSingleton<T> by readableSingleton,
+    IWritableSingleton<T> by writableSingleton,
+    ReadableHandleLifecycle<T?, ReadWriteSingleton<T>> by handleLifecycle,
+    ReadWriteSingleton<T> {
     override val name: String
-        get() = writableSingleton.name
+        get() = handleName
+
+    init {
+        storageHandle.callback = SingletonSenderCallbackAdapter(
+            readableSingleton::fetch,
+            handleLifecycle::fireUpdate,
+            handleLifecycle::fireSync,
+            handleLifecycle::fireDesync,
+            sender
+        )
+    }
 }
 
 internal open class ReadableCollectionHandleImpl<T : Entity>(
@@ -310,8 +345,20 @@ internal open class ReadableCollectionHandleImpl<T : Entity>(
 internal class WritableCollectionHandleImpl<T : Entity>(
     val handleName: String,
     val storageHandle: CollectionImpl<RawEntity>,
-    val idGenerator: Id.Generator
-) : WritableCollection<T> {
+    val idGenerator: Id.Generator,
+    val sender: Sender
+) : HandleEventBase<T, WritableCollection<T>>(), WritableCollection<T> {
+    init {
+        val empty: Set<T> = emptySet()
+
+        storageHandle.callback = CollectionSenderCallbackAdapter(
+            { empty },
+            { Unit },
+            this::fireSync,
+            this::fireDesync,
+            sender
+        )
+    }
     override val name: String
         get() = handleName
 
@@ -332,20 +379,38 @@ internal class WritableCollectionHandleImpl<T : Entity>(
 
 internal class ReadWriteCollectionHandleImpl<T : Entity>(
     entitySpec: EntitySpec<T>,
-    handleName: String,
+    val handleName: String,
     storageHandle: CollectionImpl<RawEntity>,
     idGenerator: Id.Generator,
     sender: Sender,
+    private val readableCollection: ReadableCollectionHandleImpl<T> = ReadableCollectionHandleImpl(
+        entitySpec,
+        handleName,
+        storageHandle,
+        sender
+    ),
     private val writableCollection: WritableCollectionHandleImpl<T> = WritableCollectionHandleImpl(
         handleName,
         storageHandle,
-        idGenerator
-    )
-) : ReadWriteCollection<T>,
-    ReadableCollectionHandleImpl<T>(entitySpec, handleName, storageHandle, sender),
-    WritableCollection<T> by writableCollection {
+        idGenerator,
+        sender
+    ),
+    private val handleLifecycle: HandleEventBase<Set<T>, ReadWriteCollection<T>> = HandleEventBase()
+) : IReadableCollection<T> by readableCollection,
+    IWritableCollection<T> by writableCollection,
+    ReadableHandleLifecycle<Set<T>, ReadWriteCollection<T>> by handleLifecycle,
+    ReadWriteCollection<T> {
+    init {
+        storageHandle.callback = CollectionSenderCallbackAdapter(
+            readableCollection::fetchAll,
+            handleLifecycle::fireUpdate,
+            handleLifecycle::fireSync,
+            handleLifecycle::fireDesync,
+            sender
+        )
+    }
     override val name: String
-        get() = writableCollection.name
+        get() = handleName
 }
 
 /**
@@ -405,7 +470,8 @@ private fun <T : Entity> createSingletonHandle(
         HandleMode.Write -> WritableSingletonHandleImpl<T>(
             handleName,
             storageHandle,
-            idGenerator
+            idGenerator,
+            sender
         )
     }
 }
@@ -435,7 +501,8 @@ private fun <T : Entity> createSetHandle(
         HandleMode.Write -> WritableCollectionHandleImpl<T>(
             handleName,
             storageHandle,
-            idGenerator
+            idGenerator,
+            sender
         )
     }
 }
