@@ -27,7 +27,7 @@ data class RawEntity(
     val collections: Map<FieldName, Set<Referencable>> = emptyMap()
 ) : Referencable {
     override fun unwrap(): Referencable {
-        return RawEntity(
+        val entity = RawEntity(
             id = id,
             expirationTimestamp = expirationTimestamp,
             singletons = singletons.mapValues { it.value?.unwrap() },
@@ -75,5 +75,8 @@ fun RawEntity(
     singletons: Map<FieldName, Referencable?>,
     collections: Map<FieldName, Set<Referencable>>,
     expirationTimestamp: Long
-) =
-RawEntity(id, singletons, collections).also { it.expirationTimestamp = expirationTimestamp }
+) = RawEntity(
+    id,
+    singletons,
+    collections
+).also { it.expirationTimestamp = expirationTimestamp }
