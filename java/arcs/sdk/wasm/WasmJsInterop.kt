@@ -158,12 +158,7 @@ fun updateHandle(
 
 @Retain
 @ExportForCppRuntime("_onCreate")
-fun onCreate(particlePtr: WasmAddress) {
-    log("In KT land")
-    log("particlePtr")
-    log(particlePtr.toString())
-    particlePtr.toObject<WasmParticleImpl>()?.onCreate()
-}
+fun onCreate(particlePtr: WasmAddress) = particlePtr.toObject<WasmParticleImpl>()?.onCreate()
 
 @Retain
 @ExportForCppRuntime("_fireEvent")
