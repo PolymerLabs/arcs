@@ -142,7 +142,7 @@ ${aParticleManifest}
     ifoo \`my-in-foo\`
     ofoos \`my-out-foos\`
 ${recipeManifest}
-  `));
+    `));
 
     let description = await verifySuggestion({arc}, 'Read from my-in-foo and populate my-out-foos.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
@@ -173,7 +173,7 @@ ${aParticleManifest}
     ifoo \`my-in-foo\`
     ofoos \`The Foos from \${ifoo}\`
 ${recipeManifest}
-  `));
+    `));
 
     let description = await verifySuggestion({arc}, 'Read from my-in-foo and populate The Foos from my-in-foo.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
@@ -195,7 +195,7 @@ ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
     ofoos \`The Foos from \${ifoo}\`
 ${recipeManifest}
-  `));
+    `));
 
     let description = await verifySuggestion({arc}, 'Read from foo and populate The Foos from foo.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
@@ -218,7 +218,7 @@ ${aParticleManifest}
     ifoo \`[fooValue: \${ifoo.fooValue}]\`
     ofoos \`[A list of \${ifoo}._type_ with values: \${ofoos}._values_]\`
 ${recipeManifest}
-  `));
+    `));
 
     await fooStore.set(new fooStore.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
     await foosStore.add(new foosStore.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
@@ -244,7 +244,7 @@ ${bParticleManifest}
 ${recipeManifest}
   B
     ofoo: writes fooHandle
-  `));
+    `));
 
     let description = await verifySuggestion({arc}, 'Read from best-new-foo and populate my-foos.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'best-new-foo');
@@ -294,7 +294,7 @@ recipe
     ifoo: reads fooHandle
     root: consumes slot0
       action: provides slot1
-  `));
+    `));
     const aFooHandle = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ifoo').handle;
 
     let description = await verifySuggestion(
@@ -394,7 +394,7 @@ recipe
   B
     ofoo: writes fooHandle2
     action: consumes slot1
-  `));
+    `));
 
     // Add values to both Foo handles
     await fooStore.set(new fooStore.entityClass({name: 'the-FOO'}));
@@ -429,7 +429,7 @@ recipe
   A
     ofoo: writes fooHandle
     root: consumes slot0
-  `));
+    `));
 
     const description = await verifySuggestion({arc}, 'Create &lt;new> &lt;&lt;my-foo>>.');
     const handle = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoo').handle;

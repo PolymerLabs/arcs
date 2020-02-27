@@ -988,7 +988,7 @@ describe('Arc', () => {
     assert.isEmpty(DriverFactory.providers);
   });
 
-  it('preserves create handle ids in long running arcs', async () => {
+  it('preserves create handle ids if specified', async () => {
     const loader = new Loader(null, {
       'a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
@@ -1000,9 +1000,6 @@ describe('Arc', () => {
         schema Thing
         particle MyParticle in 'a.js'
           thing: writes Thing
-        @trigger
-          launch startup
-          arcId myArc
         recipe
           h0: create 'mything'
           MyParticle

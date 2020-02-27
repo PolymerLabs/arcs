@@ -838,6 +838,4 @@ describe('recipe', () => {
     assert.isFalse(recipes[2].isLongRunning);
     assert.isTrue(recipes[3].isLongRunning);
   });
-  it('verifies ephemeral recipes do not have create handle IDs', async () => {
-  });
 });

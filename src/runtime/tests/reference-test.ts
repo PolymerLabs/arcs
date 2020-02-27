@@ -40,9 +40,9 @@ describe('references', () => {
           outResult: writes Result
 
         recipe
-          handle0: create
-          handle1: use 'reference:1'
-          handle2: create
+          handle0: create 'input:1'
+          handle1: create 'reference:1'
+          handle2: create 'output:1'
           Referencer
             inResult: reads handle0
             outResult: writes handle1
@@ -70,8 +70,8 @@ describe('references', () => {
           outResult: writes Result
 
         recipe
-          handle0: create
-          handle1: create
+          handle0: create 'input:1'
+          handle1: create 'output:1'
           Dereferencer
             inResult: reads handle0
             outResult: writes handle1
@@ -131,8 +131,8 @@ describe('references', () => {
           outResult: writes [Result]
 
         recipe
-          handle0: create
-          handle1: create
+          handle0: create 'input:1'
+          handle1: create 'output:1'
           Dereferencer
             inResult: reads handle0
             outResult: writes handle1
@@ -204,8 +204,8 @@ describe('references', () => {
           outResult: writes &Result
 
         recipe
-          handle0: create
-          handle1: create
+          handle0: create 'input:1'
+          handle1: create 'output:1'
           Referencer
             inResult: reads handle0
             outResult: writes handle1
@@ -262,8 +262,8 @@ describe('references', () => {
           rawOut: writes Result
 
         recipe
-          handle0: create
-          handle1: create
+          handle0: create 'input:1'
+          handle1: create 'output:1'
           ExtractReference
             referenceIn: reads handle0
             rawOut: writes handle1
@@ -336,9 +336,9 @@ describe('references', () => {
           outResult: reads writes [Foo {result: &Result, shortForm: Text}]
 
         recipe
-          handle0: create
-          handle1: create
-          handle2: create
+          handle0: create 'input:1'
+          handle1: create 'input:2'
+          handle2: create 'output:1'
           Referencer
             inResult: reads handle0
             inFoo: reads handle1
@@ -449,8 +449,8 @@ describe('references', () => {
           rawOut: writes [Result]
 
         recipe
-          handle0: create
-          handle1: create
+          handle0: create 'input:1'
+          handle1: create 'output:1'
           ExtractReferences
             referenceIn: reads handle0
             rawOut: writes handle1
@@ -518,8 +518,8 @@ describe('references', () => {
           rawIn: reads [Result]
 
         recipe
-          handle0: create
-          handle1: create
+          handle0: create 'input:1'
+          handle1: create 'output:1'
           ConstructReferenceCollection
             referenceOut: writes handle0
             rawIn: reads handle1
