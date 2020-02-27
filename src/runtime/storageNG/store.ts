@@ -12,8 +12,9 @@ import {CRDTModel, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
-import {UnifiedStore, StoreInfo} from './unified-store.js';
+import {AbstractStore, StoreInfo} from './abstract-store.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
+import {Type} from '../type.js';
 
 export {
   ActiveStore,
@@ -30,12 +31,13 @@ export {
 // StorageProxy objects, and no data will be read or written.
 //
 // Calling 'activate()' will generate an interactive store and return it.
-export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements StoreInterface<T> {
+export class Store<T extends CRDTTypeRecord> extends AbstractStore implements StoreInterface<T> {
   protected unifiedStoreType: 'Store' = 'Store';
 
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly mode: StorageMode;
+  type: Type;
 
   // The last known version of this store that was stored in the serialized
   // representation.
@@ -52,8 +54,9 @@ export class Store<T extends CRDTTypeRecord> extends UnifiedStore implements Sto
   // instead of being defined here.
   static constructors : Map<StorageMode, StoreConstructor> = null;
 
-  constructor(opts: StoreInfo & {storageKey: StorageKey, exists: Exists}) {
+  constructor(type: Type, opts: StoreInfo & {storageKey: StorageKey, exists: Exists}) {
     super(opts);
+    this.type = type;
     this.storageKey = opts.storageKey;
     this.exists = opts.exists;
     this.mode = opts.storageKey instanceof ReferenceModeStorageKey ? StorageMode.ReferenceMode : StorageMode.Direct;

@@ -38,13 +38,13 @@ import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Store} from './storageNG/store.js';
-import {UnifiedStore, isSingletonInterfaceStore} from './storageNG/unified-store.js';
+import {AbstractStore, isSingletonInterfaceStore} from './storageNG/abstract-store.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {Ttl} from './recipe/ttl.js';
-import {singletonHandle, SingletonInterfaceHandle, SingletonEntityStore} from './storageNG/storage-ng.js';
+import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storageNG/storage-ng.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -86,16 +86,16 @@ export class Arc implements ArcInterface {
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // All the stores, mapped by store ID
-  private readonly storesById = new Map<string, UnifiedStore>();
-  private readonly storesByKey = new Map<string | StorageKey, UnifiedStore>();
+  private readonly storesById = new Map<string, AbstractStore>();
+  private readonly storesByKey = new Map<string | StorageKey, AbstractStore>();
   // storage keys for referenced handles
   private storageKeys: Dictionary<StorageKey> = {};
   public readonly storageKey?:  StorageKey;
   private readonly capabilitiesResolver?: CapabilitiesResolver;
   // Map from each store to a set of tags. public for debug access
-  public readonly storeTags = new Map<UnifiedStore, Set<string>>();
+  public readonly storeTags = new Map<AbstractStore, Set<string>>();
   // Map from each store to its description (originating in the manifest).
-  private readonly storeDescriptions = new Map<UnifiedStore, string>();
+  private readonly storeDescriptions = new Map<AbstractStore, string>();
   private waitForIdlePromise: Promise<void> | null;
   private readonly inspectorFactory?: ArcInspectorFactory;
   public readonly inspector?: ArcInspector;
@@ -104,7 +104,7 @@ export class Arc implements ArcInterface {
 
   readonly id: Id;
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
-  loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, UnifiedStore>}>();
+  loadedParticleInfo = new Map<string, {spec: ParticleSpec, stores: Map<string, AbstractStore>}>();
   readonly peh: ParticleExecutionHost;
 
   // Volatile storage local to this Arc instance.
@@ -318,8 +318,8 @@ export class Arc implements ArcInterface {
     this.peh.instantiate(recipeParticle, info.stores, reinstantiate);
   }
 
-  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, UnifiedStore>}> {
-    const info = {spec: recipeParticle.spec, stores: new Map<string, UnifiedStore>()};
+  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, AbstractStore>}> {
+    const info = {spec: recipeParticle.spec, stores: new Map<string, AbstractStore>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     // if supported, provide particle caching via a BlobUrl representing spec.implFile
@@ -332,7 +332,7 @@ export class Arc implements ArcInterface {
         const store = this.findStoreById(connection.handle.id);
         assert(store, `can't find store of id ${connection.handle.id}`);
         assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
-        info.stores.set(name, store as UnifiedStore);
+        info.stores.set(name, store as AbstractStore);
       }
     }
     return info;
@@ -354,7 +354,7 @@ export class Arc implements ArcInterface {
     return this.idGenerator.newChildId(this.id, component);
   }
 
-  get _stores(): UnifiedStore[] {
+  get _stores(): AbstractStore[] {
     return [...this.storesById.values()];
   }
 
@@ -367,12 +367,11 @@ export class Arc implements ArcInterface {
                          speculative: true,
                          innerArc: this.isInnerArc,
                          inspectorFactory: this.inspectorFactory});
-    const storeMap: Map<UnifiedStore, UnifiedStore> = new Map();
+    const storeMap: Map<AbstractStore, AbstractStore> = new Map();
     for (const store of this._stores) {
-      const clone: UnifiedStore = new Store({
+      const clone: AbstractStore = new Store(store.type, {
         storageKey: new VolatileStorageKey(this.id, store.id),
         exists: Exists.MayExist,
-        type: store.type,
         id: store.id
       });
       await (await clone.activate()).cloneFrom(await store.activate());
@@ -384,7 +383,7 @@ export class Arc implements ArcInterface {
     }
 
     this.loadedParticleInfo.forEach((info, id) => {
-      const stores: Map<string, UnifiedStore> = new Map();
+      const stores: Map<string, AbstractStore> = new Map();
       info.stores.forEach((store, name) => stores.set(name, storeMap.get(store)));
       arc.loadedParticleInfo.set(id, {spec: info.spec, stores});
     });
@@ -456,9 +455,8 @@ export class Arc implements ArcInterface {
         throw new Error(`store '${recipeHandle.id}' with "use" fate was not found in recipe`);
       }
 
-      const store = this.context.findStoreById(recipeHandle.id);
       if (['copy', 'create'].includes(recipeHandle.fate)) {
-        let type = recipeHandle.type;
+      let type = recipeHandle.type;
         if (recipeHandle.fate === 'create') {
           assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
         }
@@ -471,6 +469,10 @@ export class Arc implements ArcInterface {
           ? new VolatileStorageKey(this.id, '').childKeyForHandle(storeId)
           : undefined;
 
+        // TODO(shanestephens): Remove this once singleton types are expressed directly in recipes.
+        if (type instanceof EntityType || type instanceof ReferenceType || type instanceof InterfaceType) {
+          type = new SingletonType(type);
+        }
         const newStore = await this.createStoreInternal(type, /* name= */ null, storeId,
             recipeHandle.tags, volatileKey, recipeHandle.capabilities, recipeHandle.ttl);
         if (recipeHandle.immediateValue) {
@@ -478,7 +480,7 @@ export class Arc implements ArcInterface {
           const type = recipeHandle.type;
           if (isSingletonInterfaceStore(newStore)) {
             assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
-            const handle: SingletonInterfaceHandle = singletonHandle(await newStore.activate(), this, {ttl: recipeHandle.ttl});
+            const handle: SingletonInterfaceHandle = await handleForStore(newStore, this, {ttl: recipeHandle.ttl});
             await handle.set(particleSpec.clone());
           } else {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
@@ -521,7 +523,7 @@ export class Arc implements ArcInterface {
         if (!type.isSingleton && !type.isCollectionType()) {
           type = new SingletonType(type);
         }
-        const store = new Store({storageKey, exists: Exists.ShouldExist, type, id: recipeHandle.id});
+        const store = new Store(type, {storageKey, exists: Exists.ShouldExist, id: recipeHandle.id});
         assert(store, `store '${recipeHandle.id}' was not found (${storageKey})`);
         await this._registerStore(store, recipeHandle.tags);
       }
@@ -539,7 +541,7 @@ export class Arc implements ArcInterface {
     }
   }
 
-  private addStoreToRecipe(store: UnifiedStore) {
+  private addStoreToRecipe(store: AbstractStore) {
     const handle = this.activeRecipe.newHandle();
     handle.mapToStorage(store);
     handle.fate = 'use';
@@ -547,17 +549,18 @@ export class Arc implements ArcInterface {
     handle._type = handle.mappedType;
   }
 
-  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: StorageKey, capabilities?: Capabilities): Promise<UnifiedStore> {
+  // TODO(shanestephens): Once we stop auto-wrapping in singleton types below, convert this to return a well-typed store.
+  async createStore<T extends Type>(type: T, name?: string, id?: string, tags?: string[], storageKey?: StorageKey, capabilities?: Capabilities): Promise<ToStore<T>> {
     const store = await this.createStoreInternal(type, name, id, tags, storageKey, capabilities);
     this.addStoreToRecipe(store);
     return store;
   }
 
-  private async createStoreInternal(type: Type, name: string, id: string, tags: string[],
-      storageKey: StorageKey, capabilities: Capabilities = Capabilities.empty, ttl?: Ttl): Promise<UnifiedStore> {
+  private async createStoreInternal<T extends Type>(type: T, name?: string, id?: string, tags?: string[],
+      storageKey?: StorageKey, capabilities: Capabilities = Capabilities.empty, ttl?: Ttl): Promise<ToStore<T>> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
     if (this.storesByKey.has(storageKey)) {
-      return this.storesByKey.get(storageKey);
+      return this.storesByKey.get(storageKey) as ToStore<T>;
     }
 
     if (type instanceof TupleType) {
@@ -582,12 +585,11 @@ export class Arc implements ArcInterface {
       storageKey = new VolatileStorageKey(this.id, id);
     }
 
-    // Wrap entity types in a singleton.
+    // Catch legacy cases that expected us to wrap entity types in a singleton.
     if (type.isEntity || type.isInterface || type.isReference) {
-      // TODO: Once recipes can handle singleton types this conversion can be removed.
-      type = new SingletonType(type);
+      throw new Error('unwrapped type provided to arc.createStore');
     }
-    const store = new Store({storageKey, exists: Exists.MayExist, type, id, name});
+    const store = newStore(type,  {storageKey, exists: Exists.MayExist, id, name});
 
     await this._registerStore(store, tags);
     if (storageKey instanceof ReferenceModeStorageKey) {
@@ -599,7 +601,7 @@ export class Arc implements ArcInterface {
     return store;
   }
 
-  async _registerStore(store: UnifiedStore, tags?: string[]): Promise<void> {
+  async _registerStore(store: AbstractStore, tags?: string[]): Promise<void> {
     assert(!this.storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
@@ -620,7 +622,7 @@ export class Arc implements ArcInterface {
     this.context.registerStore(store, tags);
   }
 
-  _tagStore(store: UnifiedStore, tags: Set<string>): void {
+  _tagStore(store: AbstractStore, tags: Set<string>): void {
     assert(this.storesById.has(store.id) && this.storeTags.has(store), `Store not registered '${store.id}'`);
     const storeTags = this.storeTags.get(store);
     tags = tags || new Set();
@@ -670,7 +672,7 @@ export class Arc implements ArcInterface {
     return null;
   }
 
-  findStoresByType(type: Type, options?: {tags: string[]}): UnifiedStore[] {
+  findStoresByType<T extends Type>(type: T, options?: {tags: string[]}): ToStore<T>[] {
     const typeKey = Arc._typeToKey(type);
     let stores = [...this.storesById.values()].filter(handle => {
       if (typeKey) {
@@ -699,12 +701,12 @@ export class Arc implements ArcInterface {
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => {
-      const storeType = s.type.isSingleton ? s.type.getContainedType() : s.type;
-      return !!Handle.effectiveType(type, [{type: storeType, direction: (storeType instanceof InterfaceType) ? 'hosts' : 'reads writes'}]);
-    });
+      const isInterface = s.type.getContainedType() ? s.type.getContainedType() instanceof InterfaceType : s.type instanceof InterfaceType;
+      return !!Handle.effectiveType(type, [{type: s.type, direction: isInterface ? 'hosts' : 'reads writes'}]);
+    }) as ToStore<T>[];
   }
 
-  findStoreById(id: string): UnifiedStore {
+  findStoreById(id: string): AbstractStore {
     const store = this.storesById.get(id);
     if (store == null) {
       return this._context.findStoreById(id);
@@ -712,14 +714,14 @@ export class Arc implements ArcInterface {
     return store;
   }
 
-  findStoreTags(store: UnifiedStore): Set<string> {
-    if (this.storeTags.has(store as UnifiedStore)) {
-      return this.storeTags.get(store as UnifiedStore);
+  findStoreTags(store: AbstractStore): Set<string> {
+    if (this.storeTags.has(store as AbstractStore)) {
+      return this.storeTags.get(store as AbstractStore);
     }
     return this._context.findStoreTags(store);
   }
 
-  getStoreDescription(store: UnifiedStore): string {
+  getStoreDescription(store: AbstractStore): string {
     assert(store, 'Cannot fetch description for nonexistent store');
     return this.storeDescriptions.get(store) || store.description;
   }

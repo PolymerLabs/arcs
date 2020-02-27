@@ -16,17 +16,14 @@ import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType, SingletonType} from '../type.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ArcId} from '../id.js';
-import {singletonHandleForTest} from '../testing/handle-for-test.js';
 import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
-import {StorageProxy} from '../storageNG/storage-proxy.js';
-import {handleNGFor, SingletonHandle} from '../storageNG/handle.js';
 import {Entity} from '../entity.js';
-import {singletonHandle, SingletonInterfaceStore, SingletonEntityStore} from '../storageNG/storage-ng.js';
+import {handleForStore} from '../storageNG/storage-ng.js';
+import {isSingletonEntityStore} from '../storageNG/abstract-store.js';
 
-async function mapHandleToStore(arc, recipe, classType, id) {
+async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
-  const storageProxy = new StorageProxy('id', await store.activate(), new SingletonType(classType.type), store.storageKey.toString());
-  const handle = await handleNGFor('crdt-key', storageProxy, arc.idGenerator, null, true, true, classType.toString()) as SingletonHandle<Entity>;
+  const handle = await handleForStore(store, arc);
   recipe.handles[id].mapToStorage(store);
   return handle;
 }
@@ -95,12 +92,12 @@ describe('particle interface loading', () => {
       ],
     });
 
-    const ifaceStore = await arc.createStore(ifaceType) as SingletonInterfaceStore;
-    const outStore = await arc.createStore(barType);
-    const inStore = await arc.createStore(fooType) as SingletonEntityStore;
-    const ifaceHandle = singletonHandle(await ifaceStore.activate(), arc);
+    const ifaceStore = await arc.createStore(new SingletonType(ifaceType));
+    const outStore = await arc.createStore(new SingletonType(barType));
+    const inStore = await arc.createStore(new SingletonType(fooType));
+    const ifaceHandle = await handleForStore(ifaceStore, arc);
     await ifaceHandle.set(manifest.particles[0]);
-    const inHandle = singletonHandle(await inStore.activate(), arc);
+    const inHandle = await handleForStore(inStore, arc);
     await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
 
     const recipe = new Recipe();
@@ -127,8 +124,8 @@ describe('particle interface loading', () => {
 
     await arc.instantiate(recipe);
     await arc.idle;
-    const outHandle = await singletonHandleForTest(arc, outStore);
-    assert.deepStrictEqual(await outHandle.fetch(), {value: 'a foo1'});
+    const outHandle = await handleForStore(outStore, arc);
+    assert.deepStrictEqual(await outHandle.fetch() as {}, {value: 'a foo1'});
   });
 
   it('loads interfaces into particles declaratively', async () => {
@@ -147,8 +144,8 @@ describe('particle interface loading', () => {
 
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
 
-    const fooType = manifest.findTypeByName('Foo');
-    const barType = manifest.findTypeByName('Bar');
+    const fooType = manifest.findTypeByName('Foo') as EntityType;
+    const barType = manifest.findTypeByName('Bar') as EntityType;
 
     const recipe = manifest.recipes[0];
 
@@ -157,15 +154,15 @@ describe('particle interface loading', () => {
 
     await arc.instantiate(recipe);
 
-    const fooStore = arc.findStoresByType(fooType)[0];
-    const fooHandle = await singletonHandleForTest(arc, fooStore);
-    await fooHandle.set(new fooHandle.entityClass({value: 'a foo'}));
+    const fooStore = arc.findStoresByType(new SingletonType(fooType))[0];
+    const fooHandle = await handleForStore(fooStore, arc);
+    await fooHandle.setFromData({value: 'a foo'});
 
     await arc.idle;
 
-    const barStore = arc.findStoresByType(barType)[0];
-    const barHandle = await singletonHandleForTest(arc, barStore);
-    assert.deepEqual(await barHandle.fetch(), {value: 'a foo1'});
+    const barStore = arc.findStoresByType(new SingletonType(barType))[0];
+    const barHandle = await handleForStore(barStore, arc);
+    assert.deepEqual(await barHandle.fetch() as {}, {value: 'a foo1'});
   });
 
   it('updates transformation particle on inner handle', async () => {
@@ -229,8 +226,8 @@ describe('particle interface loading', () => {
       `
     });
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
-    const fooType = manifest.findTypeByName('Foo');
-    const fooStore = await arc.createStore(fooType);
+    const fooType = manifest.findTypeByName('Foo') as EntityType;
+    const fooStore = await arc.createStore(new SingletonType(fooType));
     recipe.handles[0].mapToStorage(fooStore);
 
     assert.isTrue(recipe.normalize());
@@ -238,8 +235,8 @@ describe('particle interface loading', () => {
 
     await arc.instantiate(recipe);
     await arc.idle;
-    const fooHandle = await singletonHandleForTest(arc, fooStore);
-    assert.deepStrictEqual(await fooHandle.fetch(), {value: 'hello world!!!'});
+    const fooHandle = await handleForStore(fooStore, arc);
+    assert.deepStrictEqual(await fooHandle.fetch() as {}, {value: 'hello world!!!'});
   });
 
   it('onCreate only runs for initialization and not reinstantiation', async () => {
@@ -280,7 +277,10 @@ describe('particle interface loading', () => {
     const storageKey = new VolatileStorageKey(id, 'unique');
     const arc = new Arc({id, storageKey, loader, context: manifest});
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
-    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
+
+    const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
+    const fooHandle = await handleForStore(fooStore, arc);
+    recipe.handles[0].mapToStorage(fooStore);
 
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -293,8 +293,7 @@ describe('particle interface loading', () => {
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
     await arc2.idle;
 
-    const varStorageProxy2 = new StorageProxy('id', await arc2._stores[0].activate(), new SingletonType(fooClass.type), arc2._stores[0].storageKey.toString());
-    const fooHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+    const fooHandle2 = await handleForStore(arc2._stores.find(isSingletonEntityStore), arc2);
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 

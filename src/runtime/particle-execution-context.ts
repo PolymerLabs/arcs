@@ -29,7 +29,7 @@ import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './recipe/ttl.js';
-import {Handle, handleNGFor} from './storageNG/handle.js';
+import {Handle} from './storageNG/handle.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -39,6 +39,22 @@ export type InnerArcHandle = {
   createSlot(transformationParticle: Particle, transformationSlotName: string, handleId: string): Promise<string>;
   loadRecipe(recipe: string): Promise<{error?: string}>;
 };
+
+function handleNGFor<T extends CRDTTypeRecord>(key: string,
+  storageProxy: StorageProxy<T>,
+  idGenerator: IdGenerator,
+  particle: Particle,
+  canRead: boolean,
+  canWrite: boolean,
+  name?: string): Handle<T> {
+return new (storageProxy.type.handleConstructor<T>())(key,
+      storageProxy,
+      idGenerator,
+      particle,
+      canRead,
+      canWrite,
+      name);
+}
 
 @SystemTrace
 export class ParticleExecutionContext implements StorageCommunicationEndpointProvider<CRDTTypeRecord> {

@@ -46,7 +46,7 @@ export type MutableEntityData = Dictionary<any>;
  * @see https://stackoverflow.com/a/13955591
  */
 export interface EntityStaticInterface {
-  readonly type: Type;
+  readonly type: EntityType;
   readonly key: {tag: string, schema: Schema};
   readonly schema: Schema;
 }
@@ -327,7 +327,7 @@ export abstract class Entity implements Storable {
         });
       }
 
-      static get type(): Type {
+      static get type(): EntityType {
         // TODO: should the entity's key just be its type?
         // Should it just be called type in that case?
         return new EntityType(schema);
