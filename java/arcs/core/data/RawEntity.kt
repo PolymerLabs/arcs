@@ -29,13 +29,13 @@ data class RawEntity(
     @Suppress("GoodTime") // use Instant
     val expirationTimestamp: Long = NO_EXPIRATION
 ) : Referencable {
-    override fun tryDereference(): Referencable {
+    override fun unwrap(): Referencable {
         return RawEntity(
             id = id,
             expirationTimestamp = expirationTimestamp,
-            singletons = singletons.mapValues { it.value?.tryDereference() },
+            singletons = singletons.mapValues { it.value?.unwrap() },
             collections = collections.mapValues {
-                it.value.map { item -> item.tryDereference() }.toSet()
+                it.value.map { item -> item.unwrap() }.toSet()
             }
         )
     }

@@ -446,7 +446,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                     assertThat(entityRecord.singletons["name"]?.id)
                         .isEqualTo("bob".toReferencable().id)
                     val age = requireNotNull(entityRecord.singletons["age"])
-                    assertThat(age.tryDereference()).isEqualTo(42.0.toReferencable())
+                    assertThat(age.unwrap()).isEqualTo(42.0.toReferencable())
                     job.complete()
                 } else {
                     job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
