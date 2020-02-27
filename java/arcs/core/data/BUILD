@@ -43,13 +43,3 @@ arcs_kt_library(
         "//java/arcs/core/common",
     ],
 )
-
-proto_library(
-    name = "recipe_proto",
-    srcs = ["recipe.proto"],
-)
-
-java_proto_library(
-    name = "recipe_java_proto",
-    deps = [":recipe_proto"],
-)

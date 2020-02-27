@@ -8,15 +8,12 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
-    name = "data",
+    name = "proto",
     data = ["//java/arcs/core/data/testdata:examples"],
-    package = "arcs.core.data",
+    package = "arcs.core.data.proto",
     deps = [
-        "//java/arcs/core/data",
-        "//java/arcs/core/util",
-        "//java/arcs/jvm/util/testutil",
+        "//java/arcs/core/data/proto:recipe_java_proto",
         "//java/arcs/repoutils",
-        "//third_party/java/arcs/deps:protobuf_java",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
     ],
