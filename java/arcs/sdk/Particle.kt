@@ -25,6 +25,6 @@ typealias Particle = arcs.core.host.Particle
  * declared handles.
  */
 abstract class HandleHolderBase(
-    override val map: Map<String, Handle>,
+    override val handles: Map<String, Handle>,
     override val entitySpecs: Map<String, EntitySpec<out Entity>>
 ) : HandleHolder

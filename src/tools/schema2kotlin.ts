@@ -93,7 +93,7 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
       } else {
         specDecls.push(`"${handleName}" to ${entityType}_Spec()`);
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} by map`);
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
       }
 
     }

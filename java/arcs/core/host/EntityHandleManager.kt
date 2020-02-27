@@ -180,7 +180,7 @@ class EntityHandleManager(val handleManager: HandleManager) {
             idGenerator,
             sender
         )
-        val handleMap = handleHolder.map as MutableMap<String, Handle>
+        val handleMap = handleHolder.handles as MutableMap<String, Handle>
         handleMap.put(handleName, handle)
         return handle
     }

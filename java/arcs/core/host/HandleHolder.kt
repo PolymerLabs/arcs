@@ -18,10 +18,10 @@ import arcs.core.storage.api.Handle
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
  * used by [Particle]s.
  *
- * @property map Key is a handle name, value is the corresponding [Handle].
+ * @property handles Key is a handle name, value is the corresponding [Handle].
  * @property entitySpecs Key is a handle name, value is the corresponding [EntitySpec].
  */
 interface HandleHolder {
-    val map: Map<String, Handle>
+    val handles: Map<String, Handle>
     val entitySpecs: Map<String, EntitySpec<out Entity>>
 }
