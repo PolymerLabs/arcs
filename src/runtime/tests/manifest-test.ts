@@ -33,6 +33,7 @@ import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
 import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
+import {TupleType, CollectionType, ReferenceType} from '../type.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -2572,6 +2573,37 @@ resource SomeName
 
     assert.strictEqual(connections[3].name, 'dogsled');
     assert.deepEqual(connections[3].tags, ['multidog', 'winter', 'sled']);
+  });
+
+  it('can parse a particle with tuples', async () => {
+    const manifest = await parseManifest(`
+      particle P
+        foo: reads [(
+          &Bar {photo: URL},
+          &Baz {name: Text}
+        )]
+    `);
+    const [particle] = manifest.particles;
+    const [connection] = particle.handleConnections;
+    assert.strictEqual(connection.type.tag, 'Collection');
+    const collection = connection.type as CollectionType<TupleType>;
+    assert.strictEqual(collection.collectionType.tag, 'Tuple');
+    const tuple = collection.collectionType as TupleType;
+    assert.lengthOf(tuple.tupleTypes, 2);
+    assert.strictEqual(tuple.tupleTypes[0].tag, 'Reference');
+    assert.strictEqual(tuple.tupleTypes[1].tag, 'Reference');
+  });
+
+  it('parsing a particle with tuple of non reference fails', async () => {
+    try {
+      await parseManifest(`
+        particle P
+          foo: reads (Bar {photo: URL})
+      `);
+      assert.fail();
+    } catch (e) {
+      assert.include(e.message, 'Only tuples of references are supported');
+    }
   });
 
   it('can round-trip particles with tags', async () => {

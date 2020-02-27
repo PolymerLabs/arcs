@@ -73,6 +73,11 @@ export interface ReferenceType extends BaseNode {
   type: ParticleHandleConnectionType;
 }
 
+export interface TupleType extends BaseNode {
+  kind: 'tuple-type';
+  types: ParticleHandleConnectionType[];
+}
+
 export interface TypeVariable extends BaseNode {
   kind: 'variable-type';
   name: string;

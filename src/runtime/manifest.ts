@@ -34,7 +34,7 @@ import {TypeChecker} from './recipe/type-checker.js';
 import {Ttl} from './recipe/ttl.js';
 import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
+        ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
@@ -610,6 +610,12 @@ ${e.message}
             return;
           case 'singleton-type':
             node.model = new SingletonType(node.type.model);
+            return;
+          case 'tuple-type':
+            if (node.types.some(t => t.kind !== 'reference-type')) {
+              throw new ManifestError(node.location, 'Only tuples of references are supported.');
+            }
+            node.model = new TupleType(node.types.map(t => t.model));
             return;
           default:
             return;
