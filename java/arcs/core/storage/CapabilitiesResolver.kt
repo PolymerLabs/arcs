@@ -30,7 +30,13 @@ class CapabilitiesResolver(
     /* Options used to construct [CapabilitiesResolver] */
     data class CapabilitiesResolverOptions(val arcId: ArcId)
 
-    /* Options passed to registered [StorageKey] constructors */
+    /**
+     * Options passed to registered [StorageKey] constructors.
+     * @property arcId An identifier of an Arc requesting the [StorageKey]
+     * @property entitySchema A schema of an entities that will be stored
+     * @property unique A unique component of the [StorageKey]
+     * @property location A memory location of the [StorageKey]
+     */
     interface StorageKeyOptions {
         val arcId: ArcId
         val entitySchema: Schema
