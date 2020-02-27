@@ -9,10 +9,10 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class DecodeManifestProtoTest {
+class ParseManifestProtoTest {
 
     @Test
-    fun decodesManifestEncodedInTypeScript() {
+    fun parsesSerializedManifestProto() {
         val path = runfilesDir() + "java/arcs/core/data/testdata/example.pb.bin"
         val recipe = RecipeEnvelopeProto.parseFrom(File(path).readBytes()).recipe
         assertThat(recipe.name).isEqualTo("PassThrough")
@@ -21,7 +21,7 @@ class DecodeManifestProtoTest {
     }
 
     @Test
-    fun decodesManifestEncodedInTextFormat() {
+    fun parsesTextFormatManifestProto() {
         val path = runfilesDir() + "java/arcs/core/data/testdata/example.textproto"
         val builder = RecipeEnvelopeProto.newBuilder()
         TextFormat.getParser().merge(File(path).readText(), builder)
