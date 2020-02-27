@@ -453,7 +453,7 @@ export class Arc implements ArcInterface {
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
-        const storeId = this.generateID().toString();
+        const storeId = recipeHandle.fate === 'create' && !!recipeHandle.id ? recipeHandle.id : this.generateID().toString();
         const volatileKey = recipeHandle.immediateValue
           ? new VolatileStorageKey(this.id, '').childKeyForHandle(storeId)
           : undefined;
