@@ -10,6 +10,7 @@ import arcs.core.storage.handle.SetData
 import arcs.core.storage.handle.SetOp
 import arcs.core.storage.handle.SingletonData
 import arcs.core.storage.handle.SingletonOp
+import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlin.coroutines.CoroutineContext
@@ -33,6 +34,7 @@ fun AndroidHandleManager(
     coroutineContext: CoroutineContext = EmptyCoroutineContext,
     connectionFactory: ConnectionFactory? = null
 ) = HandleManager(
+    JvmTime,
     object : ActivationFactoryFactory {
         /**
          * Create a ActivationFactory that will create [ServiceStore] instances that can manage

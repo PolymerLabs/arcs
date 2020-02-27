@@ -8,10 +8,12 @@ import arcs.core.data.EntityType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
+import arcs.core.data.Ttl
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.Store
+import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -40,7 +42,10 @@ interface ActivationFactoryFactory {
  * you can provide your own ActivationFactoryFactory, which provides methods for creating
  * activations factories to create singleton-rawentity and set-rawentity [ActiveStore]s
  */
-class HandleManager(private val aff: ActivationFactoryFactory? = null) {
+class HandleManager(
+    private val time: Time,
+    private val aff: ActivationFactoryFactory? = null
+) {
     private val singletonProxiesMutex = Mutex()
     private val singletonProxies by guardedBy(
         singletonProxiesMutex,
@@ -62,6 +67,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         schema: Schema,
         callbacks: SingletonCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
+        ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
@@ -79,7 +85,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SingletonHandle(name, storageProxy, callbacks, canRead).also {
+        return SingletonHandle(name, storageProxy, callbacks, ttl, time, canRead).also {
             storageProxy.registerHandle(it)
         }
     }
@@ -95,6 +101,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         callbacks: SetCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
         refinement: Refinement<RawEntity>? = null,
+        ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
     ): SetHandle<RawEntity> {
         val storeOptions = SetStoreOptions<RawEntity>(
@@ -109,7 +116,7 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SetHandle(name, storageProxy, callbacks, refinement, canRead).also {
+        return SetHandle(name, storageProxy, callbacks, refinement, ttl, time, canRead).also {
             storageProxy.registerHandle(it)
         }
     }

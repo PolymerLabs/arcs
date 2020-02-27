@@ -9,12 +9,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.jvm.util.performance
+package arcs.jvm.util.testutil
 
-import arcs.core.util.performance.Timer
+import arcs.core.util.Time
 
-/** Implementation of [Timer] for the JVM. */
-object JvmTimer : Timer() {
+class TimeImpl : Time() {
     override val currentTimeNanos: Long
         get() = System.nanoTime()
+    override val currentTimeMillis: Long
+        get() = System.currentTimeMillis()
 }

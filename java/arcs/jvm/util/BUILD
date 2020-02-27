@@ -5,9 +5,9 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_library(
-    name = "performance",
+    name = "util",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/core/util/performance",
+        "//java/arcs/core/util",
     ],
 )

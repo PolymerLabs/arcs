@@ -19,6 +19,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
+import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageMode
@@ -29,7 +30,9 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -63,9 +66,9 @@ class SingletonIntegrationTest {
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSingleton<RawEntity>())
 
-        singletonA = SingletonImpl("singletonA", storageProxy)
+        singletonA = SingletonImpl("singletonA", storageProxy, null, Ttl.Infinite, TimeImpl())
         storageProxy.registerHandle(singletonA)
-        singletonB = SingletonImpl("singletonB", storageProxy)
+        singletonB = SingletonImpl("singletonB", storageProxy, null, Ttl.Infinite, TimeImpl())
         storageProxy.registerHandle(singletonB)
         Unit
     }
@@ -129,6 +132,27 @@ class SingletonIntegrationTest {
         singletonA.clear()
 
         assertThat(singletonA.fetch()).isNull()
+    }
+
+    @Test
+    fun addEntityWithTtl() = runBlockingTest {
+        val person = Person("Jane", 29, false)
+        assertThat(singletonA.store(person.toRawEntity())).isTrue()
+        assertThat(requireNotNull(singletonA.fetch()).expirationTimestamp)
+            .isEqualTo(RawEntity.NO_EXPIRATION)
+
+        val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2), TimeImpl())
+        storageProxy.registerHandle(singletonC)
+        assertThat(singletonC.store(person.toRawEntity())).isTrue()
+        val entityC = requireNotNull(singletonC.fetch())
+        assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+
+        val singletonD = SingletonImpl("singletonD", storageProxy, null, Ttl.Minutes(1), TimeImpl())
+        storageProxy.registerHandle(singletonD)
+        assertThat(singletonD.store(person.toRawEntity())).isTrue()
+        val entityD = requireNotNull(singletonD.fetch())
+        assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+        assertThat(entityC.expirationTimestamp).isGreaterThan(entityD.expirationTimestamp)
     }
 
     private data class Person(

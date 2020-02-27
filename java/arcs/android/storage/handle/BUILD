@@ -14,6 +14,7 @@ kt_android_library(
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util",
+        "//java/arcs/jvm/util",
         "//java/arcs/sdk/android/storage",
         "//third_party/java/androidx/lifecycle",
         "//third_party/kotlin/kotlinx_coroutines",

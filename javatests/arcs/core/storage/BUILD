@@ -29,6 +29,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/testutil",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/storage/database/testutil",
+        "//java/arcs/jvm/util/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",
         "//third_party/java/truth:truth-android",
