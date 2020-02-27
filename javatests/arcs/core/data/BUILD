@@ -16,6 +16,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/data:recipe_java_proto",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/testutil",
+        "//java/arcs/core/util",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/repoutils",
         "//third_party/java/arcs/deps:protobuf_java",
