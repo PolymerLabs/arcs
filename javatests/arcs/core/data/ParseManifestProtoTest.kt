@@ -30,4 +30,10 @@ class ParseManifestProtoTest {
         assertThat(recipe.particlesList.map { it.specName }).containsExactly("Reader", "Writer")
         assertThat(recipe.handlesList.map { it.name }).containsExactly("thing")
     }
+
+    @Test
+    fun decodesQueryExampleInTextFormat() {
+        val path = runfilesDir() + "java/arcs/core/data/testdata/query.textproto"
+        TextFormat.getParser().merge(File(path).readText(), RecipeEnvelopeProto.newBuilder())
+    }
 }
