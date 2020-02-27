@@ -22,6 +22,12 @@ interface ReadableSingleton<T : Entity> : Handle {
     suspend fun fetch(): T?
 
     suspend fun onUpdate(action: (T?) -> Unit)
+
+    /** Assign a callback when the handle is synced. */
+    suspend fun onSync(action: (ReadableSingleton<T>) -> Unit)
+
+    /** Assign a callback when the handle is sdeynced. */
+    suspend fun onDesync(action: (ReadableSingleton<T>) -> Unit)
 }
 
 /** A singleton handle with write access. */
@@ -46,6 +52,12 @@ interface ReadableCollection<T : Entity> : Handle {
 
     /** Assign a callback when the collection is Updated. */
     suspend fun onUpdate(action: (Set<T>) -> Unit)
+
+    /** Assign a callback when the collection handle is synced. */
+    suspend fun onSync(action: (ReadableCollection<T>) -> Unit)
+
+    /** Assign a callback when the collection handle is desynced. */
+    suspend fun onDesync(action: (ReadableCollection<T>) -> Unit)
 
     /** Returns a set with all the entities in the collection. */
     suspend fun fetchAll(): Set<T>

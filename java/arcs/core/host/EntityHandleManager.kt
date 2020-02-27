@@ -36,16 +36,15 @@ typealias CollectionSenderCallbackAdapter<E> =
     SenderCallbackAdapter<SetData<RawEntity>, SetOp<RawEntity>, Set<RawEntity>, E>
 
 /**
- * Wraps a [HandleManager] and creates SDK handles based on [HandleMode], such as
+ * Wraps a [HandleManager] and creates [Entity] handles based on [HandleMode], such as
  * [ReadableSingleton] for [HandleMode.Read]. To obtain a [HandleHolder], use
  * `arcs_kt_schema` on a manifest file to generate a `{ParticleName}Handles' class, and
  * invoke its default constructor, or obtain it from the [BaseParticle.handles] field.
  */
-class SdkHandleManager(val handleManager: HandleManager) {
+class EntityHandleManager(val handleManager: HandleManager) {
     /**
-     * Create a [SingletonHandle] given a [StorageKey], [Schema],  a [HandleHolder] with
-     * [EntitySpec] definitions indexed by `handleName`. Populates the correct [HandleHolder]
-     * field with handle and returns newly created [SingletonHandle].
+     * Creates and returns a new [SingletonHandle]. Will also populate the appropriate field inside
+     * the given [HandleHolder].
      *
      * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
@@ -73,9 +72,8 @@ class SdkHandleManager(val handleManager: HandleManager) {
     )
 
     /**
-     * Create a [SetHandle] given a [StorageKey], [Schema], a [HandleHolder] with [EntitySpec]
-     * definitions indexed by `handleName`. Populates the correct [HandleHolder] field with handle
-     * and returns newly created [SetHandle].
+     * Creates and returns a new [SetHandle]. Will also populate the appropriate field inside
+     * the given [HandleHolder].
      *
      * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
@@ -133,12 +131,20 @@ class SdkHandleManager(val handleManager: HandleManager) {
     ): Handle {
         return when (storageHandle) {
             is SingletonHandle<*> -> createSingletonHandle(
-                entitySpec, handleName, storageHandle as SingletonHandle<RawEntity>, handleMode,
-                idGenerator, sender
+                entitySpec,
+                handleName,
+                storageHandle as SingletonHandle<RawEntity>,
+                handleMode,
+                idGenerator,
+                sender
             )
             is SetHandle<*> -> createSetHandle(
-                entitySpec, handleName, storageHandle as SetHandle<RawEntity>, handleMode,
-                idGenerator, sender
+                entitySpec,
+                handleName,
+                storageHandle as SetHandle<RawEntity>,
+                handleMode,
+                idGenerator,
+                sender
             )
             else -> throw Exception("Unknown storage handle type ${storageHandle::class}")
         }
@@ -165,7 +171,9 @@ class SdkHandleManager(val handleManager: HandleManager) {
         val entitySpec: EntitySpec<*>? =
             handleHolder.entitySpecs[handleName] as? EntitySpec<*>
         val handle = createSdkHandle(
-            entitySpec ?: throw EntitySpecNotFound(handleName, handleHolder),
+            entitySpec ?: throw IllegalArgumentException(
+                "No EntitySpec found for $handleName on HandleHolder ${handleHolder::class}"
+            ),
             handleName,
             storageHandle,
             handleMode,
@@ -178,15 +186,33 @@ class SdkHandleManager(val handleManager: HandleManager) {
     }
 }
 
-internal open class HandleEventBase<T> {
+internal open class HandleEventBase<T, H : Handle> {
     protected val onUpdateActions: MutableList<(T) -> Unit> = mutableListOf()
+    protected val onSyncActions: MutableList<(H) -> Unit> = mutableListOf()
+    protected val onDesyncActions: MutableList<(H) -> Unit> = mutableListOf()
 
     suspend fun onUpdate(action: (T) -> Unit) {
         onUpdateActions.add(action)
     }
 
+    suspend fun onSync(action: (H) -> Unit) {
+        onSyncActions.add(action)
+    }
+
+    suspend fun onDesync(action: (H) -> Unit) {
+        onDesyncActions.add(action)
+    }
+
     protected suspend fun fireUpdate(value: T) {
         onUpdateActions.forEach { action -> action(value) }
+    }
+
+    protected suspend fun fireSync() {
+        onSyncActions.forEach { action -> action(this as H) }
+    }
+
+    protected suspend fun fireDesync() {
+        onDesyncActions.forEach { action -> action(this as H) }
     }
 }
 
@@ -195,11 +221,13 @@ internal open class ReadableSingletonHandleImpl<T : Entity>(
     val handleName: String,
     val storageHandle: SingletonHandle<RawEntity>,
     val sender: Sender
-) : HandleEventBase<T?>(), ReadableSingleton<T> {
+) : HandleEventBase<T?, ReadableSingleton<T>>(), ReadableSingleton<T> {
     init {
         storageHandle.callback = SingletonSenderCallbackAdapter(
             this::fetch,
             this::invokeUpdate,
+            this::fireSync,
+            this::fireDesync,
             sender
         )
     }
@@ -210,7 +238,7 @@ internal open class ReadableSingletonHandleImpl<T : Entity>(
         get() = handleName
 
     override suspend fun fetch(): T? = storageHandle.fetch()?.let {
-        rawEntity -> rawEntity.deserialize<T>(entitySpec)
+        rawEntity -> entitySpec.deserialize(rawEntity)
     }
 }
 
@@ -254,11 +282,13 @@ internal open class ReadableCollectionHandleImpl<T : Entity>(
     val handleName: String,
     val storageHandle: SetHandle<RawEntity>,
     val sender: Sender
-) : HandleEventBase<Set<T>>(), ReadableCollection<T> {
+) : HandleEventBase<Set<T>, ReadableCollection<T>>(), ReadableCollection<T> {
     init {
         storageHandle.callback = CollectionSenderCallbackAdapter(
             this::fetchAll,
             this::invokeUpdate,
+            this::fireSync,
+            this::fireDesync,
             sender
         )
     }
@@ -273,7 +303,7 @@ internal open class ReadableCollectionHandleImpl<T : Entity>(
     override suspend fun isEmpty() = fetchAll().isEmpty()
 
     override suspend fun fetchAll(): Set<T> = storageHandle.fetchAll().map {
-        it.deserialize<T>(entitySpec)
+        entitySpec.deserialize(it)
     }.toSet()
 }
 
@@ -325,6 +355,8 @@ internal class ReadWriteCollectionHandleImpl<T : Entity>(
 class SenderCallbackAdapter<Data : CrdtData, Op : CrdtOperationAtTime, T, E>(
     private val fetchFunc: suspend () -> E,
     private val updateCallback: (suspend (E) -> Unit),
+    private val syncCallback: (suspend () -> Unit),
+    private val desyncCallback: (suspend () -> Unit),
     private val sender: Sender
 ) : Callbacks<Data, Op, T> {
 
@@ -335,21 +367,18 @@ class SenderCallbackAdapter<Data : CrdtData, Op : CrdtOperationAtTime, T, E>(
      */
     private fun invokeWithSender(block: suspend () -> Unit) = sender(block)
 
-    override fun onUpdate(handle: arcs.core.storage.Handle<Data, Op, T>, op: Op) {
-        invokeWithSender {
-            updateCallback.invoke(fetchFunc())
-        }
+    override fun onUpdate(handle: StorageHandle<Data, Op, T>, op: Op) = invokeWithSender {
+        updateCallback.invoke(fetchFunc())
     }
 
-    override fun onSync(handle: arcs.core.storage.Handle<Data, Op, T>) {
+    override fun onSync(handle: StorageHandle<Data, Op, T>) = invokeWithSender {
+        syncCallback.invoke()
     }
 
-    override fun onDesync(handle: arcs.core.storage.Handle<Data, Op, T>) {
+    override fun onDesync(handle: StorageHandle<Data, Op, T>) = invokeWithSender {
+        desyncCallback.invoke()
     }
 }
-
-internal fun <T : Entity> RawEntity.deserialize(entitySpec: EntitySpec<T>) =
-    entitySpec.deserialize(this)
 
 private fun <T : Entity> createSingletonHandle(
     entitySpec: EntitySpec<T>,
@@ -389,7 +418,6 @@ private fun <T : Entity> createSetHandle(
     idGenerator: Id.Generator,
     sender: Sender
 ): Handle {
-    // TODO: implement read-only handles
     return when (handleMode) {
         HandleMode.ReadWrite -> ReadWriteCollectionHandleImpl<T>(
             entitySpec,
@@ -415,7 +443,7 @@ private fun <T : Entity> createSetHandle(
 private fun <T : Entity> T.ensureIdentified(idGenerator: Id.Generator, handleName: String): T {
     if (this.internalId == "") {
         this.internalId = idGenerator.newChildId(
-            // TODO: should be allow this to be plumbed through?
+            // TODO: should we allow this to be plumbed through?
             idGenerator.newArcId("dummy-arc"),
             handleName
         ).toString()

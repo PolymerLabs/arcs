@@ -58,7 +58,7 @@ DISABLED_LINT_CHECKS = [
 ALL_PLATFORMS = ["jvm", "js", "wasm"]
 
 # Default set of platforms for Kotlin libraries.
-# TODO: re-enable JS as a default when KotlinJS compiler fixed
+# TODO: re-enable JS after https://github.com/PolymerLabs/arcs/issues/4772 fixed
 DEFAULT_LIBRARY_PLATFORMS = ["jvm"]
 
 # Default set of platforms for Kotlin particles.

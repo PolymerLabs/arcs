@@ -29,7 +29,7 @@ interface EntitySpec<T : Entity> {
     fun create(): T
 
     /**
-     * Takes a [Map] representing a serialized representation of a [RawEntity] from the
+     * Takes a [RawEntity] representing a serialized representation of a [RawEntity] from the
      * storage layer, and converts it to a concrete entity class.
      * TODO: replace this with kotlinx.serialization
      */

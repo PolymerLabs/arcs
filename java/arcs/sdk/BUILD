@@ -2,7 +2,7 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_library",
     "arcs_kt_native_library",
-    # TODO: see below, revert this when KotlinJS compiler fixed
+    # TODO: KotlinJS crashes (https://github.com/PolymerLabs/arcs/issues/4772)
     #   "kt_js_library",
 )
 
@@ -23,7 +23,6 @@ arcs_kt_jvm_library(
         "//java/arcs/core/host",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/api:api-common",
-        "//java/arcs/jvm/storage/api",
     ],
     deps = [
         "//java/arcs/core/data",
@@ -34,14 +33,13 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/api:api-common",
         "//java/arcs/core/storage/util",
-        "//java/arcs/core/storage/api",
-        "//java/arcs/jvm/storage/api",
         "//java/arcs/sdk/storage",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
 
+# TODO: Reenable after https://github.com/PolymerLabs/arcs/issues/4772 fixed.
 # Temporarily disable because of Kotlin-JS compiler bug
 # See https://gist.github.com/cromwellian/8b62b883ce32c3590ec93476cd7d6503
 #kt_js_library(

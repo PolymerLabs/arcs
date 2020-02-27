@@ -77,6 +77,7 @@ kt_android_library(
         "//java/arcs/android/sdk/host",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
+        "//java/arcs/core/testutil",
         "//java/arcs/sdk",
         "//third_party/java/androidx/appcompat",
     ],
