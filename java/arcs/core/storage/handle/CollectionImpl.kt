@@ -11,6 +11,7 @@
 
 package arcs.core.storage.handle
 
+import arcs.core.common.Query
 import arcs.core.common.Referencable
 import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
@@ -45,6 +46,7 @@ class CollectionImpl<T : Referencable>(
     private val refinement: Refinement<T>? = null,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
+    private val query: Query<T>? = null,
     canRead: Boolean = true
 ) : SetBase<T>(name, storageProxy, callbacks, ttl, time, canRead) {
     /** Return the number of items in the storage proxy view of the collection. */
@@ -58,11 +60,11 @@ class CollectionImpl<T : Referencable>(
 
     /** Returns the values in the collection that fit the requirement (as a set). */
     suspend fun query(args: Any): Set<T> {
-        // Note: type checking for args is implemented in the refinement and code generated handle.
-        requireNotNull(refinement) {
+        // Note: type checking for args is implemented in the query refinement and code generated handle.
+        requireNotNull(query) {
             "Invalid operation 'query' on collection $name which has no associated query"
         }
-        return refinement.filterBy(value(), args)
+        return query.filterBy(value(), args)
     }
 
     /**
@@ -77,10 +79,17 @@ class CollectionImpl<T : Referencable>(
      */
     suspend fun store(entity: T): Boolean {
         log.debug { "Storing: $entity" }
+        if (refinement != null && !refinement.predicate(entity)) {
+            throw IllegalArgumentException(
+                "Invalid entity stored to handle $name (failed refinement)"
+            )
+        }
+
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant
             entity.expirationTimestamp = ttl.calculateExpiration(time)
         }
+
         return storageProxy.applyOp(
             CrdtSet.Operation.Add(name, versionMap().increment(), entity)
         )

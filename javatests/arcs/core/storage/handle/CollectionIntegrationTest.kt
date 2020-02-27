@@ -13,6 +13,7 @@ package arcs.core.storage.handle
 
 import arcs.core.common.ReferenceId
 import arcs.core.common.Refinement
+import arcs.core.common.Query
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -22,6 +23,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.Ttl
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageMode
@@ -67,14 +69,15 @@ class CollectionIntegrationTest {
     fun setUp() = runBlocking {
         RamDiskDriverProvider()
 
-        val queryByAge = Refinement { value: RawEntity, args: Any -> value.singletons.get("age") == (args as Int).toReferencable()};
+        val refinementAgeGtZero = Refinement { value: RawEntity -> (value.singletons["age"] as ReferencablePrimitive<Int>?)!!.value > 0}
+        val queryByAge = Query { value: RawEntity, args: Any -> value.singletons["age"] == (args as Int).toReferencable()}
 
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSet<RawEntity>())
 
-        collectionA = CollectionImpl("collectionA", storageProxy, null, null, Ttl.Infinite, TimeImpl())
+        collectionA = CollectionImpl("collectionA", storageProxy, null, refinementAgeGtZero, Ttl.Infinite, TimeImpl(), null)
         storageProxy.registerHandle(collectionA)
-        collectionB = CollectionImpl("collectionB", storageProxy, null, queryByAge, Ttl.Infinite, TimeImpl())
+        collectionB = CollectionImpl("collectionB", storageProxy, null, refinementAgeGtZero, Ttl.Infinite, TimeImpl(), queryByAge)
         storageProxy.registerHandle(collectionB)
         Unit
     }
@@ -115,6 +118,22 @@ class CollectionIntegrationTest {
 
         // Ensure that an empty set of results can be returned.
         assertThat(collectionB.query(60)).containsExactly()
+    }
+
+    @Test
+    fun dataConsideredInvalidByRefinementThrows() = runBlockingTest {
+        val miles = Person("Miles", 55, true, emptySet())
+        val jason = Person("Jason", 35, false, setOf("Watson"))
+        val timeTraveler = Person("the Doctor", -900, false, setOf("Watson"))
+
+        collectionA.store(miles.toRawEntity())
+        collectionA.store(jason.toRawEntity())
+
+        assertThat(collectionA.fetchAll()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
+
+        assertSuspendingThrows(IllegalArgumentException::class) {
+            collectionA.store(timeTraveler.toRawEntity())
+        }
     }
 
     @Test

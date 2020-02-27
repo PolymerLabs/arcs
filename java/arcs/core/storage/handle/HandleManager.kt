@@ -1,5 +1,6 @@
 package arcs.core.storage.handle
 
+import arcs.core.common.Query
 import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
@@ -68,6 +69,7 @@ class HandleManager(
         callbacks: SingletonCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
         ttl: Ttl = Ttl.Infinite,
+        refinement: Refinement<RawEntity>? = null,
         canRead: Boolean = true
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
@@ -85,7 +87,7 @@ class HandleManager(
             }
         }
 
-        return SingletonHandle(name, storageProxy, callbacks, ttl, time, canRead).also {
+        return SingletonHandle(name, storageProxy, callbacks, ttl, time, refinement, canRead).also {
             storageProxy.registerHandle(it)
         }
     }
@@ -102,6 +104,7 @@ class HandleManager(
         name: String = storageKey.toKeyString(),
         refinement: Refinement<RawEntity>? = null,
         ttl: Ttl = Ttl.Infinite,
+        query: Query<RawEntity>? = null,
         canRead: Boolean = true
     ): SetHandle<RawEntity> {
         val storeOptions = SetStoreOptions<RawEntity>(
@@ -116,7 +119,16 @@ class HandleManager(
             }
         }
 
-        return SetHandle(name, storageProxy, callbacks, refinement, ttl, time, canRead).also {
+        return SetHandle(
+            name,
+            storageProxy,
+            callbacks,
+            refinement,
+            ttl,
+            time,
+            query,
+            canRead
+        ).also {
             storageProxy.registerHandle(it)
         }
     }

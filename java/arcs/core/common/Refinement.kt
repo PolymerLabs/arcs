@@ -23,7 +23,24 @@ package arcs.core.common
  * This allows particles to write `people.query('personid')` in their implementation code.
  */
 class Refinement<EntityType>(
-    val predicate: (value: EntityType, args: Any) -> Boolean
+    val predicate: ((value: EntityType) -> Boolean)
+) {
+    // TODO(cypher1): val toSql: (args: Any) -> String
+}
+
+/**
+ * Representation of a refinement type for filtering data from a collection at runtime.
+ *
+ * Supports filtering and data validation via a predicate (optional runtime arguments).
+ * e.g. when querying a collection by id, a refinement predicate such as
+ * ```
+ *  { value: Person, args: String -> value.id == args }
+ * ```
+ * could be used to filter the dataset to only retrive relevant data.
+ * This allows particles to write `people.query('personid')` in their implementation code.
+ */
+class Query<EntityType>(
+    val predicate: ((value: EntityType, args: Any) -> Boolean)
 ) {
     // TODO(cypher1): val toSql: (args: Any) -> String
 
