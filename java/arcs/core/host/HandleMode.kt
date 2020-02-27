@@ -8,11 +8,16 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
 package arcs.core.host
 
 /**
- * An [ArcHostNotFoundException] is thrown if a [Particle] has an annotation with
- * [TargetHost] that requests an [ArcHost] that is not registered with a [HostRegistry].
+ * Specifies the access mode for a [Handle].
  */
-class ArcHostNotFoundException(msg: String) : Exception(msg)
+enum class HandleMode {
+    /** [Handle] is read only. */
+    Read,
+    /** [Handle] is write only. */
+    Write,
+    /** [Handle] is read-write. */
+    ReadWrite
+}

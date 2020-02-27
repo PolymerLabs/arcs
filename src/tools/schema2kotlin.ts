@@ -93,14 +93,14 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
       } else {
         specDecls.push(`"${handleName}" to ${entityType}_Spec()`);
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} by map`);
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
       }
 
     }
     return `
 class ${particleName}Handles(
    ${this.getBaseParticleDecl()}
-) ${this.getExtendsClause(specDecls)} {
+) ${this.getExtendsClause(specDecls, particleName)} {
     ${handleDecls.join('\n    ')} 
 }
 
@@ -110,9 +110,11 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
 `;
   }
 
-  private getExtendsClause(entitySpecs): string {
+  private getExtendsClause(entitySpecs, particleName): string {
     return this.opts.wasm ? '' : `: HandleHolderBase(
-        mutableMapOf(), 
+        mutableMapOf<String, Handle>().withDefault { 
+            key -> throw NoSuchElementException("Handle $key not initialized in ${particleName}")
+        },
         mapOf(
             ${entitySpecs.join(',\n            ')}
         )
@@ -304,6 +306,6 @@ ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
   }
 
   private getType(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : `Jvm${type}`;
+    return this.opts.wasm ? `Wasm${type}` : `${type}`;
   }
 }

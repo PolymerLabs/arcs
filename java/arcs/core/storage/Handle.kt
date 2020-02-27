@@ -69,7 +69,7 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     val storageProxy: StorageProxy<Data, Op, T>,
 
     /** [callback] contains optional Handle-owner provided callbacks to add behavior. */
-private val callback: Callbacks<Data, Op, T>? = null,
+    var callback: Callbacks<Data, Op, T>? = null,
 
     /**
      * [canRead] is whether this handle reads data so proxy can decide whether to keep its crdt

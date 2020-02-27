@@ -38,8 +38,9 @@ typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?
 class SingletonImpl<T : Referencable>(
     name: String,
     storageProxy: SingletonProxy<T>,
-    callbacks: SingletonCallbacks<T>? = null
-) : SingletonBase<T>(name, storageProxy, callbacks) {
+    callbacks: SingletonCallbacks<T>? = null,
+    canRead: Boolean = true
+) : SingletonBase<T>(name, storageProxy, callbacks, canRead) {
     /** Get the current value from the backing [StorageProxy]. */
     suspend fun fetch() = value()
 
