@@ -139,9 +139,8 @@ class Allocator(val hostRegistry: HostRegistry) {
                 return (type.collectionType as EntityType).entitySchema
             }
             is EntityType -> return type.entitySchema
-            else -> Unit
         }
-        throw Exception("Can't retrieve entitySchema of unknown type $type")
+        throw IllegalArgumentException("Can't retrieve entitySchema of unknown type $type")
     }
 
     /**

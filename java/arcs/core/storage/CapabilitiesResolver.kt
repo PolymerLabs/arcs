@@ -41,29 +41,24 @@ class CapabilitiesResolver(
         val arcId: ArcId
         val entitySchema: Schema
         val unique: String
-            get() = TODO("not implemented")
         val location: String
-            get() = TODO("not implemented")
     }
 
     data class ContainerStorageKeyOptions(
         override val arcId: ArcId,
         override val entitySchema: Schema
     ) : StorageKeyOptions {
-        override val unique: String
-            get() = ""
-        override val location: String
-            get() = arcId.toString()
+        override val unique: String = ""
+        override val location: String = arcId.toString()
     }
 
     data class BackingStorageKeyOptions(
         override val arcId: ArcId,
         override val entitySchema: Schema
     ) : StorageKeyOptions {
-        override val unique: String
-            get() = entitySchema.name?.name.orEmpty()
-        override val location: String
-            get() = unique
+        override val unique: String =
+            requireNotNull(entitySchema.name).name.ifEmpty { entitySchema.hash }
+        override val location: String = unique
     }
 
     /* Creates and returns a [StorageKey] corresponding to the given [Capabilities]. */
