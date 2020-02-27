@@ -11,9 +11,8 @@ import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.host.HandleMode
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.HandleHolder
+import arcs.core.host.HandleMode
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
@@ -85,18 +84,22 @@ class AndroidEntityHandleManagerTest {
 
         scenario.moveToState(Lifecycle.State.STARTED)
 
-        scenario.onActivity { activity ->
-            runBlocking {
+        val activityJob = launch {
+            scenario.onActivity { activity ->
                 val hf = AndroidHandleManager(
                     lifecycle = activity.lifecycle, context = activity,
                     connectionFactory = DefaultConnectionFactory(
-                        activity, TestBindingDelegate(app)
-                    )
+                        activity, TestBindingDelegate(app), coroutineContext
+                    ),
+                    coroutineContext = coroutineContext
                 )
-                this@runBlockingTest.block(EntityHandleManager(hf))
+                runBlocking {
+                    this@runBlockingTest.block(EntityHandleManager(hf))
+                }
+                scenario.close()
             }
         }
-       scenario.close()
+        activityJob.join()
     }
 
     private fun expectHandleException(handleName: String, block: () -> Unit) {
