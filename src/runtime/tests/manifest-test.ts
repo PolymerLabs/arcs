@@ -1985,7 +1985,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   });
 
   it('resolves manifest with recipe with search', async () => {
-    // TODO: support search tokens in manifest-parser.peg
+    // TODO: support search tokens in manifest-parser.pegjs
     const manifestSource = `
       recipe
         search \`Hello dear world\``;

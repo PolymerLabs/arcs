@@ -12,7 +12,7 @@ import {CheckType} from './particle-check.js';
 import {type} from 'os';
 
 /**
- * Complete set of tokens used by `manifest-parser.peg`. To use this you
+ * Complete set of tokens used by `manifest-parser.pegjs`. To use this you
  * need to follow some simple guidelines:
  *
  * - Most interfaces should extend `BaseNode`
