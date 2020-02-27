@@ -27,7 +27,7 @@ export interface TypeLiteral extends Literal {
   data?: any;
 }
 
-export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
+export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Tuple' |
   'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton';
 
 type TypeFromLiteral = (literal: TypeLiteral) => Type;
@@ -682,25 +682,24 @@ export class BigCollectionType<T extends Type> extends Type {
   }
 }
 
+export class TupleType extends Type {
+  private readonly tupleTypes: Type[];
 
-export class RelationType extends Type {
-  private readonly relationEntities: Type[];
-
-  constructor(relation: Type[]) {
-    super('Relation');
-    this.relationEntities = relation;
+  constructor(tuple: Type[]) {
+    super('Tuple');
+    this.tupleTypes = tuple;
   }
 
-  get isRelation() {
+  get isTuple() {
     return true;
   }
 
   toLiteral(): TypeLiteral {
-    return {tag: this.tag, data: this.relationEntities.map(t => t.toLiteral())};
+    return {tag: this.tag, data: this.tupleTypes.map(t => t.toLiteral())};
   }
 
   toPrettyString(): string {
-    return JSON.stringify(this.relationEntities);
+    return JSON.stringify(this.tupleTypes);
   }
 }
 

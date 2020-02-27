@@ -9,7 +9,7 @@
  */
 
 import {TypeLiteral, Type, EntityType, TypeVariable, CollectionType,
-        BigCollectionType, RelationType, InterfaceType, SlotType, ReferenceType,
+        BigCollectionType, TupleType, InterfaceType, SlotType, ReferenceType,
         HandleType, SingletonType, TypeVariableInfo, InterfaceInfo} from './type.js';
 import {Schema} from './schema.js';
 import {SlotInfo} from './slot-info.js';
@@ -24,8 +24,8 @@ function fromLiteral(literal: TypeLiteral) : Type {
       return new CollectionType(Type.fromLiteral(literal.data));
     case 'BigCollection':
       return new BigCollectionType(Type.fromLiteral(literal.data));
-    case 'Relation':
-      return new RelationType(literal.data.map(t => Type.fromLiteral(t)));
+    case 'Tuple':
+      return new TupleType(literal.data.map(t => Type.fromLiteral(t)));
     case 'Interface':
       return new InterfaceType(InterfaceInfo.fromLiteral(literal.data));
     case 'Slot':
