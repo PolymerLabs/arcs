@@ -70,14 +70,18 @@ export class Schema {
       } else if (field.kind === 'schema-collection') {
         return {kind: 'schema-collection', schema: updateField(field.schema)};
       } else {
-        return field;
+        const fieldLit = {...field};
+        if (field.refinement) {
+          fieldLit.refinement = field.refinement.toLiteral();
+        }
+        return fieldLit;
       }
     };
     for (const key of Object.keys(this.fields)) {
       fields[key] = updateField(this.fields[key]);
     }
 
-    return {names: this.names, fields, description: this.description, refinement: this.refinement};
+    return {names: this.names, fields, description: this.description, refinement: this.refinement && this.refinement.toLiteral()};
   }
 
   // TODO(cypher1): This should only be an ident used in manifest parsing.

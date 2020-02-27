@@ -35,7 +35,7 @@ type ExpressionPrimitives = any;
 
 export class Refinement {
   kind = 'refinement';
-  expression: RefinementExpression = null;
+  expression: RefinementExpression;
 
   constructor(expr: RefinementExpression) {
     // TODO(ragdev): Should be a copy?
@@ -48,6 +48,10 @@ export class Refinement {
       return null;
     }
     return new Refinement(RefinementExpression.fromAst(ref.expression, typeData));
+  }
+
+  toLiteral() {
+    return {kind: this.kind, expression: this.expression.toLiteral()};
   }
 
   static fromLiteral(ref): Refinement {
@@ -202,6 +206,8 @@ abstract class RefinementExpression {
     }
   }
 
+  abstract toLiteral();
+
   static fromLiteral(expr: {kind: RefinementExpressionNodeType}): RefinementExpression {
     switch (expr.kind) {
       case 'BinaryExpressionNode': return BinaryExpression.fromLiteral(expr);
@@ -275,6 +281,16 @@ export class BinaryExpression extends RefinementExpression {
             RefinementExpression.fromAst(expression.leftExpr, typeData),
             RefinementExpression.fromAst(expression.rightExpr, typeData),
             new RefinementOperator(expression.operator as Op));
+  }
+
+  toLiteral() {
+    return {
+      kind: this.kind,
+      leftExpr: this.leftExpr.toLiteral(),
+      rightExpr: this.rightExpr.toLiteral(),
+      evalType: this.evalType,
+      operator: this.operator.toLiteral()
+    };
   }
 
   static fromLiteral(expr): RefinementExpression {
@@ -462,6 +478,15 @@ export class UnaryExpression extends RefinementExpression {
             new RefinementOperator((expression.operator === Op.SUB) ? Op.NEG : expression.operator));
   }
 
+  toLiteral() {
+    return {
+      kind: this.kind,
+      evalType: this.evalType,
+      expr: this.expr.toLiteral(),
+      operator: this.operator.toLiteral()
+    };
+  }
+
   static fromLiteral(expr): RefinementExpression {
     return new UnaryExpression(
             RefinementExpression.fromLiteral(expr.expr),
@@ -550,6 +575,14 @@ export class FieldNamePrimitive extends RefinementExpression {
     return new FieldNamePrimitive(expression.value, typeData[expression.value]);
   }
 
+  toLiteral() {
+    return {
+      kind: this.kind,
+      evalType: this.evalType,
+      value: this.value
+    };
+  }
+
   static fromLiteral(expr): RefinementExpression {
     return new FieldNamePrimitive(expr.value, expr.evalType);
   }
@@ -596,6 +629,14 @@ export class QueryArgumentPrimitive extends RefinementExpression {
     return new QueryArgumentPrimitive(expression.value, typeData[expression.value] || Primitive.UNKNOWN);
   }
 
+  toLiteral() {
+    return {
+      kind: this.kind,
+      evalType: this.evalType,
+      value: this.value
+    };
+  }
+
   static fromLiteral(expr): RefinementExpression {
     return new QueryArgumentPrimitive(expr.value, expr.evalType);
   }
@@ -639,6 +680,14 @@ export class NumberPrimitive extends RefinementExpression {
     return new NumberPrimitive(expression.value);
   }
 
+  toLiteral() {
+    return {
+      kind: this.kind,
+      evalType: this.evalType,
+      value: this.value
+    };
+  }
+
   static fromLiteral(expr): RefinementExpression {
     return new NumberPrimitive(expr.value);
   }
@@ -680,6 +729,14 @@ class BooleanPrimitive extends RefinementExpression {
     return new BooleanPrimitive(expression.value);
   }
 
+  toLiteral() {
+    return {
+      kind: this.kind,
+      evalType: this.evalType,
+      value: this.value
+    };
+  }
+
   static fromLiteral(expr): RefinementExpression {
     return new BooleanPrimitive(expr.value);
   }
@@ -712,6 +769,14 @@ class TextPrimitive extends RefinementExpression {
 
   static fromAst(expression: TextNode): RefinementExpression {
     return new TextPrimitive(expression.value);
+  }
+
+  toLiteral() {
+    return {
+      kind: this.kind,
+      evalType: this.evalType,
+      value: this.value
+    };
   }
 
   static fromLiteral(expr): RefinementExpression {
@@ -1135,12 +1200,15 @@ export class RefinementOperator {
   op: Op;
 
   constructor(operator: Op) {
-    this.op = operator;
     this.updateOp(operator);
   }
 
-  static fromLiteral(refOpr: RefinementOperator): RefinementOperator {
-    return new RefinementOperator(refOpr.op);
+  toLiteral() {
+    return this.op;
+  }
+
+  static fromLiteral(refOpr: Op): RefinementOperator {
+    return new RefinementOperator(refOpr);
   }
 
   flip(): void {
