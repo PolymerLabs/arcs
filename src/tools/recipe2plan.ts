@@ -10,10 +10,8 @@
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
-import {CapabilitiesResolver, StorageKeyCreatorsMap} from '../runtime/capabilities-resolver.js';
+import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {IdGenerator} from '../runtime/id.js';
-import {Capabilities} from '../runtime/capabilities.js';
-import {Handle} from '../runtime/recipe/handle.js';
 
 
 /** Reads a manifest and outputs generated Kotlin plans. */
@@ -28,39 +26,41 @@ export async function recipe2plan(path: string): Promise<string> {
   return plans.join('\n');
 }
 
-interface Resolution {}
+interface Resolution {
+}
 
 function generatePlans(resolutions: Resolution[]): string[] {
   return [''];
 }
 
 async function resolveManifest(manifest: Manifest): Promise<Resolution[]> {
-
-  const recipes: Recipe[] = manifest.recipes;
-
-  const longRunningRecipes = recipes.filter(r => isLongRunning(r.triggers));
-
   const recipeResolver = new RecipeResolver(manifest);
-
-  for (const r of longRunningRecipes) {
-    recipeResolver.resolve(r);
-  }
+  recipeResolver.resolve();
 
   return [{}];
 }
 
 class RecipeResolver {
+  readonly longRunningRecipes;
   constructor(private manifest: Manifest) {
-
+    this.longRunningRecipes = manifest.recipes.filter(r => this.isLongRunning(r.triggers));
   }
 
-  resolve(recipe: Recipe) {
+  resolve() {
+    for (const r of this.longRunningRecipes) {
+      r.normalize();
+      this._resolve(r);
+    }
+  }
+
+  _resolve(recipe: Recipe) {
     const arcId = IdGenerator.newSession().newArcId(this.getArcId(recipe.triggers));
     if (arcId === null) return;
 
     const resolver = new CapabilitiesResolver({arcId});
 
     this.createKeysForCreatedHandles(recipe, resolver);
+    this.matchKeysForMappedHandles(recipe);
 
   }
 
@@ -77,56 +77,75 @@ class RecipeResolver {
     return null;
   }
 
-  partitionHandlesByFate(handles: Handle[]) {
-    const creates = [];
-    const maps = [];
+  /** Predicate determines if we should create storage keys on a recipe. */
+  isLongRunning(triggers: [string, string][][]): boolean {
+    let hasArcId = false;
+    let isLaunchedAtStartup = false;
 
-    const combine = (acc, h) => {
-      switch (h.fate) {
-        case 'create':
-          return [acc[0].push(h), acc[1]];
-        case 'map':
-          return [acc[0], acc[1].push(h)];
-        default:
-          return acc;
-      }
-    };
-    return handles.reduce(combine, [creates, maps]);
-  }
-
-  createKeysForCreatedHandles(recipe: Recipe, resolver: CapabilitiesResolver) {
-    const createHandles = recipe.handles.filter(h => h.fate === 'create');
-
-    createHandles.forEach(ch => {
-      const capabilities = ch.capabilities;
-      // if (capabilities.isPersistent) {
-      // }
-
-    });
-
-    const key = resolver.createStorageKey(Capabilities.tiedToRuntime);
-
-  }
-
-}
-
-
-/** Predicate determines if we should create storage keys on a recipe. */
-function isLongRunning(triggers: [string, string][][]): boolean {
-  let hasArcId = false;
-  let isLaunchedAtStartup = false;
-
-  for (const trigger of triggers) {
-    for (const pair of trigger) {
-      if (pair[0] === 'arcId') {
-        hasArcId = true;
-      }
-      if (pair[0] === 'launch' && pair[1] === 'startup') {
-        isLaunchedAtStartup = true;
+    for (const trigger of triggers) {
+      for (const pair of trigger) {
+        if (pair[0] === 'arcId') {
+          hasArcId = true;
+        }
+        if (pair[0] === 'launch' && pair[1] === 'startup') {
+          isLaunchedAtStartup = true;
+        }
       }
     }
+
+    return hasArcId && isLaunchedAtStartup;
   }
 
-  return hasArcId && isLaunchedAtStartup;
+  /**
+   * Assigns storage keys to all create handles.
+   *
+   * TODO(alxr) confirm with Maria how to configure storage keys correctly
+   *
+   * @param recipe Should be a recipe for a long-running Arc
+   * @param resolver CapabilitiesResolver should be associated with long-running-arc's ArcId.
+   */
+  createKeysForCreatedHandles(recipe: Recipe, resolver: CapabilitiesResolver) {
+    recipe.handles
+      .filter(h => h.fate === 'create')
+      .forEach(ch => ch.storageKey = resolver.createStorageKey(ch.capabilities));
+  }
+
+  /**
+   * For every mapped handle, we need to find a `create` handle that matches by type and ID
+   *  (ID may or may not be present). Need to use the fn `findStoresByType` on manifests to find a match
+   *
+   *  When we find a match, we need to set the storage key on the mapped handle on the Found Create Handle (found via findStoresByType).
+   *
+   * Likely don't have to support raw stores. If need to solve, check how runtime does this If need to solve, check how runtime does this.
+   *
+   * @throws when a mapped handle is associated with too many stores (ambiguous mapping).
+   * @throws when a mapped handle isn't associated with any store (no matches found).
+   * @param recipe
+   */
+  matchKeysForMappedHandles(recipe: Recipe) {
+    recipe.handles
+      .filter(h => h.fate == 'map')
+      .forEach(h => {
+        let matches = this.manifest.findStoresByType(h.type, {tags: h.tags, subtype: true});
+        if (h.id) {
+          matches = matches.filter(store => store.id === h.id);
+        }
+        // Ensure that the store originates from a `create` handle in a long-running-arc
+        matches = matches.filter(store => this.longRunningRecipes
+          .flatMap(r => r.handles)
+          .filter(h => h.fate == 'create')
+          .some(h => store.id === h.id)
+        );
+
+        if (matches.length !== 1) {
+          const extra = matches.length > 1 ? 'Ambiguous handles' : 'No matching handles';
+          throw Error(`Handle ${h.localName} mapped improperly: ${extra}.`);
+        }
+
+        h.storageKey = matches[0].storageKey;
+      });
+  }
 }
+
+
 
