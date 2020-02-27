@@ -54,7 +54,7 @@ class DatabaseDriverProviderTest {
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         assertThat(
-            DriverFactory.willSupport(DatabaseStorageKey("foo", "1234a"))
+            DriverFactory.willSupport(DatabaseStorageKey.Persistent("foo", "1234a"))
         ).isTrue()
     }
 
@@ -63,7 +63,7 @@ class DatabaseDriverProviderTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
         assertThat(provider.willSupport(key)).isTrue()
     }
 
@@ -86,7 +86,7 @@ class DatabaseDriverProviderTest {
     fun willSupport_returnsFalse_whenSchemaNotFound() = runBlockingTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
 
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
         assertThat(provider.willSupport(key)).isFalse()
     }
 
@@ -103,7 +103,7 @@ class DatabaseDriverProviderTest {
     @Test
     fun getDriver_throwsOnInvalidKey_schemaNotFound() = runBlockingTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
             provider.getDriver(key, ExistenceCriteria.ShouldCreate, CrdtEntity.Data::class)
@@ -113,7 +113,7 @@ class DatabaseDriverProviderTest {
     @Test
     fun getDriver_throwsOnInvalidDataClass() = runBlockingTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         assertSuspendingThrows(IllegalArgumentException::class) {
@@ -124,7 +124,7 @@ class DatabaseDriverProviderTest {
     @Test
     fun getDriver() = runBlockingTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         val entityDriver = provider.getDriver(

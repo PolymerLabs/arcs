@@ -375,10 +375,9 @@ class DatabaseDriverTest {
     ) = DriverBuilder(dataClass, database).apply(block).build()
 
     companion object {
-        private val DEFAULT_STORAGE_KEY = DatabaseStorageKey(
+        private val DEFAULT_STORAGE_KEY = DatabaseStorageKey.Persistent(
             unique = "foo",
             entitySchemaHash = "a1234",
-            persistent = true,
             dbName = "testdb"
         )
         private val DEFAULT_SCHEMA = Schema(

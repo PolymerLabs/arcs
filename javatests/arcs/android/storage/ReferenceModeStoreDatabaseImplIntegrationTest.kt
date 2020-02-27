@@ -65,8 +65,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
     private var hash = "123456abcdef"
     private var testKey = ReferenceModeStorageKey(
-        DatabaseStorageKey("entities", hash),
-        DatabaseStorageKey("set", hash)
+        DatabaseStorageKey.Persistent("entities", hash),
+        DatabaseStorageKey.Persistent("set", hash)
     )
     private var schema = Schema(
         listOf(SchemaName("person")),
@@ -113,7 +113,10 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         val actor = activeStore.crdtKey
         val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
-        val database = databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
+        val database = databaseFactory.getDatabase(
+            containerKey.dbName,
+            containerKey is DatabaseStorageKey.Persistent
+        )
 
         val capturedCollection = requireNotNull(
             database.get(containerKey, DatabaseData.Collection::class, schema)
@@ -216,12 +219,14 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
         val capturedPeople =
-            databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
-                .get(
-                    containerKey,
-                    DatabaseData.Collection::class,
-                    schema
-                ) as DatabaseData.Collection
+            databaseFactory.getDatabase(
+                containerKey.dbName,
+                containerKey is DatabaseStorageKey.Persistent
+            ).get(
+                containerKey,
+                DatabaseData.Collection::class,
+                schema
+            ) as DatabaseData.Collection
 
         assertThat(capturedPeople.values).isEqualTo(referenceCollection.consumerView)
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data

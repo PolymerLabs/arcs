@@ -14,7 +14,15 @@ package arcs.core.storage
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.Schema
-import arcs.core.storage.driver.*
+import arcs.core.storage.driver.DATABASE_DRIVER_PROTOCOL
+import arcs.core.storage.driver.DatabaseDriverProvider
+import arcs.core.storage.driver.DatabaseStorageKey
+import arcs.core.storage.driver.RAMDISK_DRIVER_PROTOCOL
+import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.driver.VOLATILE_DRIVER_PROTOCOL
+import arcs.core.storage.driver.VolatileDriverProvider
+import arcs.core.storage.driver.VolatileStorageKey
 import arcs.core.testutil.assertThrows
 import arcs.jvm.storage.database.testutil.MockDatabaseManager
 import com.google.common.truth.Truth.assertThat
@@ -95,7 +103,7 @@ class CapabilitiesResolverTest {
         assertThat(resolver1.createStorageKey(Capabilities.TiedToRuntime))
             .isInstanceOf(RamDiskStorageKey::class.java)
         assertThat(resolver1.createStorageKey(Capabilities.Persistent, "abc012"))
-            .isInstanceOf(DatabaseStorageKey::class.java)
+            .isInstanceOf(DatabaseStorageKey.Persistent::class.java)
 
         CapabilitiesResolver.reset()
         val resolver2 = CapabilitiesResolver(options)
