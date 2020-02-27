@@ -40,8 +40,11 @@ import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** Protocol to be used with the database driver. */
+/** Protocol to be used with the database driver for persistent databases. */
 const val DATABASE_DRIVER_PROTOCOL = "db"
+
+/** Protocol to be used with the database driver for in-memory databases. */
+const val MEMORY_DATABASE_DRIVER_PROTOCOL = "memdb"
 
 /**
  * Default database name for [DatabaseDriver] usage, and referencing using [DatabaseStorageKey]s.
@@ -49,13 +52,20 @@ const val DATABASE_DRIVER_PROTOCOL = "db"
 const val DATABASE_NAME_DEFAULT = "arcs"
 
 /** [StorageKey] implementation for a piece of data managed by the [DatabaseDriver]. */
-data class DatabaseStorageKey(
-    val unique: String,
-    val entitySchemaHash: String,
-    val persistent: Boolean = true,
-    val dbName: String = DATABASE_NAME_DEFAULT
-) : StorageKey(DATABASE_DRIVER_PROTOCOL) {
-    init {
+sealed class DatabaseStorageKey(
+    open val unique: String,
+    open val entitySchemaHash: String,
+    open val dbName: String,
+    protocol: String
+) : StorageKey(protocol) {
+    override fun toKeyString(): String = "$entitySchemaHash@$dbName/$unique"
+
+    override fun childKeyWithComponent(component: String): StorageKey = when (this) {
+        is Persistent -> Persistent("$unique/$component", entitySchemaHash, dbName)
+        is Memory -> Memory("$unique/$component", entitySchemaHash, dbName)
+    }
+
+    protected fun checkValidity() {
         require(DATABASE_NAME_PATTERN.matches(dbName)) {
             "$dbName is an invalid database name, must match the pattern: $DATABASE_NAME_PATTERN"
         }
@@ -65,25 +75,33 @@ data class DatabaseStorageKey(
         }
     }
 
-    override fun toKeyString(): String {
-        val persistenceVariant = if (persistent) VARIANT_PERSISTENT else VARIANT_IN_MEMORY
-        return "$entitySchemaHash@$dbName:$persistenceVariant/$unique"
+    /** [DatabaseStorageKey] for values to be stored on-disk. */
+    data class Persistent(
+        override val unique: String,
+        override val entitySchemaHash: String,
+        override val dbName: String = DATABASE_NAME_DEFAULT
+    ) : DatabaseStorageKey(unique, entitySchemaHash, dbName, DATABASE_DRIVER_PROTOCOL) {
+        init { checkValidity() }
+
+        override fun toString() = super.toString()
     }
 
-    override fun childKeyWithComponent(component: String): StorageKey =
-        copy(unique = "$unique/$component")
+    /** [DatabaseStorageKey] for values to be stored in-memory. */
+    data class Memory(
+        override val unique: String,
+        override val entitySchemaHash: String,
+        override val dbName: String = DATABASE_NAME_DEFAULT
+    ) : DatabaseStorageKey(unique, entitySchemaHash, dbName, MEMORY_DATABASE_DRIVER_PROTOCOL) {
+        init { checkValidity() }
 
-    override fun toString() = super.toString()
+        override fun toString() = super.toString()
+    }
 
     companion object {
         private val DATABASE_NAME_PATTERN = "[a-zA-Z][a-zA-Z0-1_-]*".toRegex()
         private val ENTITY_SCHEMA_HASH_PATTERN = "[a-fA-F0-9]+".toRegex()
-        private const val VARIANT_PERSISTENT = "persistent"
-        private const val VARIANT_IN_MEMORY = "in-memory"
-        /* ktlint-disable max-line-length */
         private val DB_STORAGE_KEY_PATTERN =
-            "^($ENTITY_SCHEMA_HASH_PATTERN)@($DATABASE_NAME_PATTERN):($VARIANT_PERSISTENT|$VARIANT_IN_MEMORY)/(.+)\$".toRegex()
-        /* ktlint-enable max-line-length */
+            "^($ENTITY_SCHEMA_HASH_PATTERN)@($DATABASE_NAME_PATTERN)/(.+)\$".toRegex()
 
         init {
             // When DatabaseStorageKey is imported, this will register its parser with the storage
@@ -94,19 +112,32 @@ data class DatabaseStorageKey(
         /** Registers the [DatabaseStorageKey] for parsing with the [StorageKeyParser]. */
         /* internal */
         fun registerParser() {
-            StorageKeyParser.addParser(DATABASE_DRIVER_PROTOCOL, ::fromString)
+            StorageKeyParser.addParser(DATABASE_DRIVER_PROTOCOL, ::persistentFromString)
+            StorageKeyParser.addParser(MEMORY_DATABASE_DRIVER_PROTOCOL, ::memoryFromString)
         }
 
-        /* internal */ fun fromString(rawKeyString: String): DatabaseStorageKey {
+        /* internal */
+        fun persistentFromString(rawKeyString: String): Persistent = fromString(rawKeyString)
+
+        /* internal */
+        fun memoryFromString(rawKeyString: String): Memory = fromString(rawKeyString)
+
+        private inline fun <reified T : DatabaseStorageKey> fromString(rawKeyString: String): T {
             val match = requireNotNull(DB_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
                 "Not a valid DatabaseStorageKey: $rawKeyString"
             }
 
             val entitySchemaHash = match.groupValues[1]
             val dbName = match.groupValues[2]
-            val persistent = match.groupValues[3] == "persistent"
-            val unique = match.groupValues[4]
-            return DatabaseStorageKey(unique, entitySchemaHash, persistent, dbName)
+            val unique = match.groupValues[3]
+
+            return when (T::class) {
+                Persistent::class -> Persistent(unique, entitySchemaHash, dbName)
+                Memory::class -> Memory(unique, entitySchemaHash, dbName)
+                else -> throw IllegalArgumentException(
+                    "Unsupported DatabaseStorageKey type: ${T::class}"
+                )
+            } as T
         }
     }
 }
@@ -160,7 +191,7 @@ object DatabaseDriverProvider : DriverProvider {
             databaseKey,
             dataClass,
             schemaLookup,
-            manager.getDatabase(databaseKey.dbName, databaseKey.persistent)
+            manager.getDatabase(databaseKey.dbName, databaseKey is DatabaseStorageKey.Persistent)
         ).register()
     }
 
@@ -171,12 +202,13 @@ object DatabaseDriverProvider : DriverProvider {
     fun configure(databaseManager: DatabaseManager, schemaLookup: (String) -> Schema?) = apply {
         this._manager = databaseManager
         this.schemaLookup = schemaLookup
+        DatabaseStorageKey.registerParser()
         DriverFactory.register(this)
         CapabilitiesResolver.registerKeyCreator(
             DATABASE_DRIVER_PROTOCOL,
             Capabilities.Persistent
         ) { storageKeyOptions, entitySchemaHash ->
-            DatabaseStorageKey(storageKeyOptions.arcId.toString(), entitySchemaHash, false)
+            DatabaseStorageKey.Persistent(storageKeyOptions.arcId.toString(), entitySchemaHash)
         }
     }
 
