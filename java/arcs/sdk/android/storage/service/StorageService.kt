@@ -141,7 +141,7 @@ class StorageService : ResurrectorService() {
             writer.println(
                 """
                     |Current Process Binder Stats:
-                    |  - ${map {(k, v) -> "$k: $v"}.joinToString("\n|  - ")}
+                    |  - ${map { (k, v) -> "$k: $v" }.joinToString("\n|  - ")}
                 """.trimMargin("|")
             )
         }
@@ -150,7 +150,7 @@ class StorageService : ResurrectorService() {
             writer.println(
                 """
                     |Process Memory Stats (KB):
-                    |  - ${map {(k, v) -> "${k.name}: $v"}.joinToString("\n|  - ")}
+                    |  - ${map { (k, v) -> "${k.name}: $v" }.joinToString("\n|  - ")}
                 """.trimMargin("|")
             )
         }
