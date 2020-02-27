@@ -20,7 +20,6 @@ import arcs.android.type.readType
 import arcs.android.type.writeType
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreOptions
@@ -33,7 +32,6 @@ data class ParcelableStoreOptions(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(crdtType.ordinal)
         parcel.writeString(actual.storageKey.toString())
-        parcel.writeInt(actual.existenceCriteria.ordinal)
         parcel.writeType(actual.type, flags)
         parcel.writeInt(actual.mode.ordinal)
         // Skip StoreOptions.baseStore.
@@ -47,7 +45,6 @@ data class ParcelableStoreOptions(
         override fun createFromParcel(parcel: Parcel): ParcelableStoreOptions {
             val crdtType = ParcelableCrdtType.values()[parcel.readInt()]
             val storageKey = StorageKeyParser.parse(requireNotNull(parcel.readString()))
-            val existenceCriteria = ExistenceCriteria.values()[parcel.readInt()]
             val type = requireNotNull(parcel.readType()) { "Could not extract Type from Parcel" }
             val mode = StorageMode.values()[parcel.readInt()]
             val versionToken = parcel.readString()
@@ -56,7 +53,6 @@ data class ParcelableStoreOptions(
             return ParcelableStoreOptions(
                 StoreOptions(
                     storageKey = storageKey,
-                    existenceCriteria = existenceCriteria,
                     type = type,
                     mode = mode,
                     baseStore = null, // Skip baseStore.

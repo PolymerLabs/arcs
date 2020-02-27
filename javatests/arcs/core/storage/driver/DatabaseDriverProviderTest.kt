@@ -21,7 +21,6 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.testutil.assertSuspendingThrows
@@ -96,7 +95,7 @@ class DatabaseDriverProviderTest {
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver(volatile, ExistenceCriteria.ShouldCreate, CrdtEntity.Data::class)
+            provider.getDriver(volatile, CrdtEntity.Data::class)
         }
     }
 
@@ -106,7 +105,7 @@ class DatabaseDriverProviderTest {
         val key = DatabaseStorageKey("foo", "1234a")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver(key, ExistenceCriteria.ShouldCreate, CrdtEntity.Data::class)
+            provider.getDriver(key, CrdtEntity.Data::class)
         }
     }
 
@@ -117,7 +116,7 @@ class DatabaseDriverProviderTest {
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver(key, ExistenceCriteria.ShouldExist, Int::class)
+            provider.getDriver(key, Int::class)
         }
     }
 
@@ -129,7 +128,6 @@ class DatabaseDriverProviderTest {
 
         val entityDriver = provider.getDriver(
             key,
-            ExistenceCriteria.ShouldExist,
             CrdtEntity.Data::class
         )
         assertThat(entityDriver).isInstanceOf(DatabaseDriver::class.java)
@@ -137,7 +135,6 @@ class DatabaseDriverProviderTest {
 
         val setDriver = provider.getDriver(
             key,
-            ExistenceCriteria.ShouldExist,
             CrdtSet.DataImpl::class
         )
         assertThat(setDriver).isInstanceOf(DatabaseDriver::class.java)
@@ -145,7 +142,6 @@ class DatabaseDriverProviderTest {
 
         val singletonDriver = provider.getDriver(
             key,
-            ExistenceCriteria.ShouldExist,
             CrdtSingleton.DataImpl::class
         )
         assertThat(singletonDriver).isInstanceOf(DatabaseDriver::class.java)

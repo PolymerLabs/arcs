@@ -26,7 +26,6 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
@@ -346,7 +345,6 @@ class DatabaseDriverTest {
     class DriverBuilder<Data : Any>(
         var dataClass: KClass<Data>,
         var database: Database,
-        var existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
         var storageKey: DatabaseStorageKey = DEFAULT_STORAGE_KEY,
         var schemaLookup: (String) -> Schema? = { DEFAULT_SCHEMA }
     ) {
@@ -355,7 +353,7 @@ class DatabaseDriverTest {
             set(value) { schemaLookup = createSchemaLookup(value) }
 
         suspend fun build(): DatabaseDriver<Data> =
-            DatabaseDriver(storageKey, existenceCriteria, dataClass, schemaLookup, database)
+            DatabaseDriver(storageKey, dataClass, schemaLookup, database)
                 .register()
 
         companion object {

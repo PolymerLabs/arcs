@@ -27,25 +27,22 @@ object DriverFactory {
         providers.value.any { it.willSupport(storageKey) }
 
     /**
-     * Fetches a [Driver] of type [Data] given its [storageKey] with specified [existenceCriteria].
+     * Fetches a [Driver] of type [Data] given its [storageKey].
      */
     suspend inline fun <reified Data : Any> getDriver(
-        storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria
-    ): Driver<Data>? = getDriver(storageKey, existenceCriteria, Data::class)
+        storageKey: StorageKey
+    ): Driver<Data>? = getDriver(storageKey, Data::class)
 
     /**
-     * Fetches a [Driver] of type [Data] (declared by [dataClass]) given its [storageKey] with
-     * specified [existenceCriteria].
+     * Fetches a [Driver] of type [Data] (declared by [dataClass]) given its [storageKey].
      */
     suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria,
         dataClass: KClass<Data>
     ): Driver<Data>? {
         return providers.value
             .find { it.willSupport(storageKey) }
-            ?.getDriver(storageKey, existenceCriteria, dataClass)
+            ?.getDriver(storageKey, dataClass)
     }
 
     /** Registers a new [DriverProvider]. */
@@ -63,10 +60,9 @@ interface DriverProvider {
     /** Returns whether or not the driver will support data keyed by the [storageKey]. */
     fun willSupport(storageKey: StorageKey): Boolean
 
-    /** Gets a [Driver] for the given [storageKey] with the specified [existenceCriteria]. */
+    /** Gets a [Driver] for the given [storageKey] and type [Data] (declared by [dataClass]). */
     suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria,
         dataClass: KClass<Data>
     ): Driver<Data>
 }

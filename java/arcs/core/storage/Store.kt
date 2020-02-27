@@ -41,7 +41,6 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     options: StoreOptions<Data, Op, ConsumerData>
 ) : IStore<Data, Op, ConsumerData> {
     override val storageKey: StorageKey = options.storageKey
-    override var existenceCriteria: ExistenceCriteria = options.existenceCriteria
     override val mode: StorageMode = options.mode
     override val type: Type = options.type
     private var activeStore: ActiveStore<Data, Op, ConsumerData>? = null
@@ -69,7 +68,6 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
         val options = StoreOptions(
             storageKey = storageKey,
-            existenceCriteria = existenceCriteria,
             type = type,
             mode = mode,
             baseStore = this,
@@ -79,7 +77,6 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         // If we were given a specific factory to use, use it; otherwise use the default factory.
         val activeStore = (activationFactory ?: getDefaultFactory()).invoke(options)
 
-        existenceCriteria = ExistenceCriteria.ShouldExist
         this.activeStore = activeStore
         return activeStore
     }

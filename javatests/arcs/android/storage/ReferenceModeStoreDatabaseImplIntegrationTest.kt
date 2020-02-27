@@ -28,7 +28,6 @@ import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
@@ -496,7 +495,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         return ReferenceModeStore.CONSTRUCTOR(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                ExistenceCriteria.MayExist,
                 CollectionType(EntityType(schema)),
                 StorageMode.ReferenceMode
             ),

@@ -16,7 +16,6 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import kotlin.reflect.KClass
@@ -75,13 +74,12 @@ class RamDiskDriverProvider : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria,
         dataClass: KClass<Data>
     ): Driver<Data> {
         require(willSupport(storageKey)) {
             "This provider does not support StorageKey: $storageKey"
         }
-        return VolatileDriver(storageKey, existenceCriteria, RamDisk.memory)
+        return VolatileDriver(storageKey, RamDisk.memory)
     }
 
     /*
