@@ -45,7 +45,7 @@ message ParticleProto {
 message HandleConnectionProto {
   // Refers to envelope.particle_specs.connections.name
   string name = 1;
-  // Refers to envelope.plan.handles.name
+  // Refers to envelope.recipe.handles.name
   string handle = 2;
 }
 
