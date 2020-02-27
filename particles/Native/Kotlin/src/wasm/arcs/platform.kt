@@ -228,6 +228,13 @@ actual open class DomParticleBase<Props, State> actual constructor(
             kotlinx.serialization.json.Json.nonstrict.stringify(serializer, rawData)
         )
     }
+
+    /**
+     * Updates a handle given its name with rawData.
+     */
+    actual fun onCreate() {
+        log("boo")
+    }
 }
 
 suspend fun <T> PromiseLike<T>.await(): T =

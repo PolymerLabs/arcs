@@ -872,9 +872,12 @@ export class WasmParticle extends Particle {
   // Ignored for wasm particles.
   async onHandleDesync(handle: Handle<CRDTTypeRecord>) {}
 
-  // async onCreate() {
-  //   this.exports._onCreate();
-  // }
+  async onCreate() {
+    // TODO(heimlich): not yet implemented in CPP
+    if (this.exports['_onCreate']) {
+      this.exports._onCreate(this.innerParticle);
+    }
+  }
 
   // Store API.
   //

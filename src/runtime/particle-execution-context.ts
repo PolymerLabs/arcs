@@ -287,6 +287,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       await this.assignHandle(particle, spec, id, handleMap, p);
       resolve();
       if (!reinstantiate) {
+        console.log("I'm going to creat it now")
         particle.onCreate();
       }
     }];

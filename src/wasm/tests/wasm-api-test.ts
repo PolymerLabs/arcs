@@ -541,23 +541,21 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         await arc.idle;
       };
 
-      await sendEvent('case1');
+      //await sendEvent('case1');
       assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Created!'});
 
       const serialization = await arc.serialize();
       arc.dispose();
 
-      const manifest = await Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
-        loader,
-        fileName: process.cwd() + '/manifest.arcs',
-        memoryProvider: new TestVolatileMemoryProvider()
-      });
+      const manifest = await manifestPromise;
 
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: await manifestPromise});
       await arc2.idle;
 
-      await sendEvent('case1');
-      assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Not Created!'});
+      const fooHandle2 = await singletonHandleForTest(arc2, stores.get('fooHandle'));
+
+      //await sendEvent('case1');
+      assert.deepStrictEqual(await fooHandle2.fetch(), {txt: 'Not created!'});
 
     });
   });

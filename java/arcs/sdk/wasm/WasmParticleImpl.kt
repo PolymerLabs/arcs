@@ -11,6 +11,8 @@
 
 package arcs.sdk.wasm
 
+import arcs.sdk.wasm.log
+
 /**
  * Base class for all wasm particles.
  */
@@ -173,5 +175,7 @@ abstract class WasmParticleImpl {
      */
     open fun onHandleSync(handle: WasmHandle, allSynced: Boolean) = Unit
 
-    open fun onCreate() = Unit
+    open fun onCreate() {
+        log("G'day!")
+    }
 }

@@ -11,14 +11,23 @@
 
 package arcs.sdk.wasm
 
+import arcs.sdk.wasm.log
+
 class OnCreateTest : AbstractOnCreateTest() {
     var s = "Not created!"
 
     override fun onCreate() {
         s = "Created!"
+        log("I've been created in KT!")
     }
 
-    override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
+    override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) {
+        log(s)
         handles.fooHandle.store(OnCreateTest_FooHandle(s))
     }
+
+//    override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
+//        log(s)
+//        handles.fooHandle.store(OnCreateTest_FooHandle(s))
+//    }
 }
