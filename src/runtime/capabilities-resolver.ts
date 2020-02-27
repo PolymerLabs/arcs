@@ -22,6 +22,7 @@ export type StorageKeyCreator = (options: StorageKeyOptions) => StorageKey;
 export type StorageKeyCreatorsMap =
     Map<string, {capabilities: Capabilities, create: StorageKeyCreator}>;
 
+// TODO(mmandlis): update to always return a ReferenceModeStorageKey.
 export class CapabilitiesResolver {
   private static defaultCreators: StorageKeyCreatorsMap = new Map();
   private static registeredCreators: StorageKeyCreatorsMap = new Map();

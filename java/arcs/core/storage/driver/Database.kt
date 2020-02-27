@@ -207,8 +207,11 @@ object DatabaseDriverProvider : DriverProvider {
         CapabilitiesResolver.registerKeyCreator(
             DATABASE_DRIVER_PROTOCOL,
             Capabilities.Persistent
-        ) { storageKeyOptions, entitySchemaHash ->
-            DatabaseStorageKey.Persistent(storageKeyOptions.arcId.toString(), entitySchemaHash)
+        ) { storageKeyOptions ->
+            DatabaseStorageKey.Persistent(
+                storageKeyOptions.location,
+                storageKeyOptions.entitySchema.hash
+            )
         }
     }
 
