@@ -28,8 +28,8 @@ import {Arc} from '../../runtime/arc.js';
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
-import { StorageProxy } from '../../runtime/storageNG/storage-proxy.js';
-import { handleNGFor, SingletonHandle } from '../../runtime/storageNG/handle.js';
+import {StorageProxy} from '../../runtime/storageNG/storage-proxy.js';
+import {handleNGFor, SingletonHandle} from '../../runtime/storageNG/handle.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -100,7 +100,6 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const recipe = arc.context.allRecipes.find(r => r.name === recipeName);
       if (!recipe) {
-        arc.context.allRecipes.forEach(r => console.log(r.name))
         throw new Error(`Test recipe '${recipeName}' not found`);
       }
       recipe.normalize();
