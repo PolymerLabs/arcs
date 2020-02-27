@@ -22,7 +22,6 @@ arcs_kt_jvm_library(
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/api",
-        "//java/arcs/core/storage/api:api-common",
     ],
     deps = [
         "//java/arcs/core/data",
@@ -31,7 +30,6 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
-        "//java/arcs/core/storage/api:api-common",
         "//java/arcs/core/storage/util",
         "//java/arcs/sdk/storage",
         "//third_party/kotlin/kotlinx_coroutines",

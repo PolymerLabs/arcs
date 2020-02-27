@@ -15,7 +15,6 @@ arcs_kt_library(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
-        "//java/arcs/core/storage/api:api-common",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/util",
