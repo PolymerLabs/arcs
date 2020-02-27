@@ -47,11 +47,16 @@ class AndroidEntityHandleManagerTest {
     lateinit var handleHolder: TestParticleHandles
 
     private val schema = Schema(
-        listOf(SchemaName("Person")), SchemaFields(
+        listOf(SchemaName("Person")),
+        SchemaFields(
             singletons = mapOf(
-                "name" to FieldType.Text, "age" to FieldType.Number, "is_cool" to FieldType.Boolean
-            ), collections = emptyMap()
-        ), "1234acf"
+                "name" to FieldType.Text,
+                "age" to FieldType.Number,
+                "is_cool" to FieldType.Boolean
+            ),
+            collections = emptyMap()
+        ),
+        "1234acf"
     )
 
     private val singletonKey = ReferenceModeStorageKey(
@@ -73,26 +78,26 @@ class AndroidEntityHandleManagerTest {
         handleHolder = TestParticleHandles()
     }
 
-    fun handleManagerTest(block: suspend TestCoroutineScope.(EntityHandleManager) -> Unit) =
-        runBlockingTest {
-            val scenario = ActivityScenario.launch(TestActivity::class.java)
+    fun handleManagerTest(
+        block: suspend TestCoroutineScope.(EntityHandleManager) -> Unit
+    ) = runBlockingTest {
+        val scenario = ActivityScenario.launch(TestActivity::class.java)
 
-            scenario.moveToState(Lifecycle.State.STARTED)
+        scenario.moveToState(Lifecycle.State.STARTED)
 
-            scenario.onActivity { activity ->
-                runBlocking {
-                    val hf = AndroidHandleManager(
-                        lifecycle = activity.lifecycle, context = activity,
-                        connectionFactory = DefaultConnectionFactory(
-                            activity, TestBindingDelegate(app)
-                        )
+        scenario.onActivity { activity ->
+            runBlocking {
+                val hf = AndroidHandleManager(
+                    lifecycle = activity.lifecycle, context = activity,
+                    connectionFactory = DefaultConnectionFactory(
+                        activity, TestBindingDelegate(app)
                     )
-                    this@runBlockingTest.block(EntityHandleManager(hf))
-                }
+                )
+                this@runBlockingTest.block(EntityHandleManager(hf))
             }
-
-            scenario.close()
         }
+       scenario.close()
+    }
 
     private fun expectHandleException(handleName: String, block: () -> Unit) {
         val e = assertThrows(NoSuchElementException::class, block)
