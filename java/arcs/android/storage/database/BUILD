@@ -12,9 +12,11 @@ kt_android_library(
         "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/android/crdt",
         "//java/arcs/android/crdt:version_map_android_proto",
+        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",
