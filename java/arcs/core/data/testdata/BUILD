@@ -6,8 +6,11 @@ load(
 licenses(["notice"])
 
 filegroup(
-    name = "encoded_manifest",
-    srcs = ["example.pb.bin"],
+    name = "examples",
+    srcs = glob(
+        ["*"],
+        exclude = ["BUILD"],
+    ),
     visibility = ["//visibility:public"],
 )
 

@@ -4,7 +4,7 @@ load(
 )
 load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
-    "android_proto_library",
+    "java_proto_library",
     "proto_library",
 )
 
@@ -48,7 +48,7 @@ proto_library(
     srcs = ["recipe.proto"],
 )
 
-android_proto_library(
-    name = "recipe_android_proto",
+java_proto_library(
+    name = "recipe_java_proto",
     deps = [":recipe_proto"],
 )
