@@ -13,9 +13,21 @@ import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator} from './id.js';
-import {HandleConnection as InterfaceInfoHandleConnection} from './type.js';
-import {Slot as InterfaceInfoSlot} from './type.js';
-import {Runnable} from './hot.js';
+import {
+  BigCollectionType,
+  CollectionType,
+  EntityType,
+  HandleConnection as InterfaceInfoHandleConnection,
+  InterfaceInfo,
+  InterfaceType,
+  ReferenceType,
+  SingletonType,
+  Slot as InterfaceInfoSlot,
+  SlotType,
+  Type,
+  TypeVariable
+} from './type.js';
+import {Dictionary, Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
@@ -33,9 +45,6 @@ import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Ttl} from './recipe/ttl.js';
 import {Schema} from './schema.js';
-import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
-import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {Store} from './storageNG/store.js';
@@ -305,40 +314,53 @@ export class Manifest {
   findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): UnifiedStore[] {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
-    function typePredicate(store: UnifiedStore) {
-      const resolvedType = type.resolvedType();
-      if (!resolvedType.isResolved()) {
-        return (type instanceof CollectionType) === (store.type instanceof CollectionType) &&
-          (type instanceof BigCollectionType) === (store.type instanceof BigCollectionType);
-      }
-
-      if (subtype) {
-        const [left, right] = Type.unwrapPair(store.type, resolvedType);
-        if (left instanceof EntityType && right instanceof EntityType) {
-          return left.entitySchema.isAtleastAsSpecificAs(right.entitySchema);
-        }
-        return false;
-      }
-
-      return TypeChecker.compareTypes({type: store.type}, {type});
-    }
     function tagPredicate(manifest: Manifest, store: UnifiedStore) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
-
-    const stores = [...this._findAll(manifest => manifest._stores.filter(store => typePredicate(store) && tagPredicate(manifest, store)))];
+    const stores = [...this._findAll(manifest => manifest._stores
+      .filter(store => this._typePredicate(store, type, subtype) && tagPredicate(manifest, store)))];
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => !!Handle.effectiveType(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'hosts' : 'reads writes'}]));
   }
+  findHandlesByType(type: Type, options = {tags: <string[]>[], fates: <string[]>[], subtype: false}): Handle[] {
+    const tags = options.tags || [];
+    const subtype = options.subtype || false;
+    const fates = options.fates || [];
+    function tagPredicate(handle: Handle) {
+      return tags.filter(tag => !handle.tags.includes(tag)).length === 0;
+    }
+    function fatePredicate(handle: Handle) {
+      return fates === [] || fates.includes(handle.fate);
+    }
+    return [...this._findAll(manifest => manifest._recipes
+      .flatMap(r => r.handles)
+      .filter(h => this._typePredicate(h, type, subtype) && tagPredicate(h) && fatePredicate(h)))];
+  }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
   }
-
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
+  }
+  _typePredicate <HasTypeProperty extends {type: Type}> (candidate: HasTypeProperty, type: Type, checkSubtype: boolean) {
+    const resolvedType = type.resolvedType();
+    if (!resolvedType.isResolved()) {
+      return (type instanceof CollectionType) === (candidate.type instanceof CollectionType) &&
+        (type instanceof BigCollectionType) === (candidate.type instanceof BigCollectionType);
+    }
+
+    if (checkSubtype) {
+      const [left, right] = Type.unwrapPair(candidate.type, resolvedType);
+      if (left instanceof EntityType && right instanceof EntityType) {
+        return left.entitySchema.isAtleastAsSpecificAs(right.entitySchema);
+      }
+      return false;
+    }
+
+    return TypeChecker.compareTypes({type: candidate.type}, {type});
   }
 
   generateID(subcomponent?: string): Id {

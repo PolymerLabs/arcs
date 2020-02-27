@@ -33,7 +33,7 @@ function generatePlans(resolutions: Resolution[]): string[] {
   return [''];
 }
 
-async function resolveManifest(manifest: Manifest): Promise<Resolution[]> {
+export async function resolveManifest(manifest: Manifest): Promise<Resolution[]> {
   const recipeResolver = new RecipeResolver(manifest);
   recipeResolver.resolve();
 
@@ -41,9 +41,9 @@ async function resolveManifest(manifest: Manifest): Promise<Resolution[]> {
 }
 
 class RecipeResolver {
-  readonly longRunningRecipes;
+  readonly longRunningRecipes: Recipe[];
   constructor(private manifest: Manifest) {
-    this.longRunningRecipes = manifest.recipes.filter(r => this.isLongRunning(r.triggers));
+    this.longRunningRecipes = manifest.allRecipes.filter(r => this.isLongRunning(r.triggers));
   }
 
   resolve() {
@@ -114,35 +114,37 @@ class RecipeResolver {
    * For every mapped handle, we need to find a `create` handle that matches by type and ID
    *  (ID may or may not be present). Need to use the fn `findStoresByType` on manifests to find a match
    *
-   *  When we find a match, we need to set the storage key on the mapped handle on the Found Create Handle (found via findStoresByType).
+   *  When we find a match, we need to set the storage key on the mapped handle on the Found Create Handle
+   *  (found via findStoresByType).
    *
-   * Likely don't have to support raw stores. If need to solve, check how runtime does this If need to solve, check how runtime does this.
+   * Likely don't have to support raw stores. If need to solve, check how runtime does this If need to solve, check how
+   * runtime does this.
    *
    * @throws when a mapped handle is associated with too many stores (ambiguous mapping).
    * @throws when a mapped handle isn't associated with any store (no matches found).
+   * @throws when handle is mapped to a handle from an ephemeral recipe.
    * @param recipe
    */
   matchKeysForMappedHandles(recipe: Recipe) {
     recipe.handles
       .filter(h => h.fate == 'map')
       .forEach(h => {
-        let matches = this.manifest.findStoresByType(h.type, {tags: h.tags, subtype: true});
+        let matches = this.manifest.findHandlesByType(h.type, {tags: h.tags, fates: ['create'], subtype: true});
         if (h.id) {
-          matches = matches.filter(store => store.id === h.id);
+          matches = matches.filter(matchHandle => matchHandle.id === h.id);
         }
-        // Ensure that the store originates from a `create` handle in a long-running-arc
-        matches = matches.filter(store => this.longRunningRecipes
-          .flatMap(r => r.handles)
-          .filter(h => h.fate == 'create')
-          .some(h => store.id === h.id)
-        );
 
         if (matches.length !== 1) {
-          const extra = matches.length > 1 ? 'Ambiguous handles' : 'No matching handles';
+          const extra = matches.length > 1 ? 'Ambiguous handles' : 'No matching handles found';
           throw Error(`Handle ${h.localName} mapped improperly: ${extra}.`);
         }
 
-        h.storageKey = matches[0].storageKey;
+        const match = matches[0];
+        if (!this.isLongRunning(match.recipe.triggers)) {
+          throw Error(`Handle ${h.localName} mapped to ephemeral handle ${match.localName}.`);
+        }
+
+        h.storageKey = match.storageKey;
       });
   }
 }
