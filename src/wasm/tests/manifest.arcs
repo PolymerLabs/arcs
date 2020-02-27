@@ -197,3 +197,15 @@ recipe EntitySlicingTest
     c2: reads colHandle
     c3: reads colHandle
     res: writes resHandle
+
+// -----------------------------------------------------------------------------------------------
+
+particle OnCreateTest in '$module.wasm'
+  root: consumes Slot
+  fooHandle: reads writes {txt: Text}
+
+recipe OnCreateTest
+  s1: slot 'rootslotid-root'
+  OnCreateTest
+    root: consumes s1
+    fooHandle: reads writes h3

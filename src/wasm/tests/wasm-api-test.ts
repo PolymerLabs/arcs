@@ -27,7 +27,7 @@ import {Arc} from '../../runtime/arc.js';
 // registered automatically).
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
-import { assertThrowsAsync } from '../../testing/test-util.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -98,6 +98,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const recipe = arc.context.allRecipes.find(r => r.name === recipeName);
       if (!recipe) {
+        arc.context.allRecipes.forEach(r => console.log(r.name))
         throw new Error(`Test recipe '${recipeName}' not found`);
       }
       recipe.normalize();
@@ -527,10 +528,10 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     it('onCreate() Wasm koala', async function() {
-      if(isCpp) {
-        this.skip()
+      if (isCpp) {
+        this.skip();
       }
-      
+
       const {arc, stores} = await setup('OnCreateTest');
       const fooHandle = await singletonHandleForTest(arc, stores.get('fooHandle'));
 
@@ -541,12 +542,12 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       };
 
       await sendEvent('case1');
-      assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Created!'})
-     
+      assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Created!'});
+
       const serialization = await arc.serialize();
       arc.dispose();
 
-      var manifest = await Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
+      const manifest = await Manifest.parse(`import 'src/wasm/tests/manifest.arcs'`, {
         loader,
         fileName: process.cwd() + '/manifest.arcs',
         memoryProvider: new TestVolatileMemoryProvider()
@@ -556,7 +557,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await arc2.idle;
 
       await sendEvent('case1');
-      assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Not Created!'})
+      assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Not Created!'});
 
     });
   });
