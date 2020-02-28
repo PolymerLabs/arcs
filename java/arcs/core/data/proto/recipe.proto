@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package arcs;
 
-option java_package = "arcs.core.data";
+option java_package = "arcs.core.data.proto";
 option java_multiple_files = true;
 
 // Holds a single plan and particle specs used by it.

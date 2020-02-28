@@ -1,4 +1,4 @@
-package arcs.core.data
+package arcs.core.data.proto
 
 import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
