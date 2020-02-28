@@ -42,7 +42,7 @@ export abstract class DatabaseStorageKey extends StorageKey {
   }
 
   static register() {
-    CapabilitiesResolver.registerDefaultKeyCreator(
+    CapabilitiesResolver.registerKeyCreator(
         PersistentDatabaseStorageKey.protocol,
         // TODO(mmandlis): add queryable, when #4794 lands
         Capabilities.persistent,
@@ -54,7 +54,7 @@ export abstract class DatabaseStorageKey extends StorageKey {
 
     // TODO(mmandlis): Register in-memory & queryable capabilities
     // with in-memory database storage key.
-    // CapabilitiesResolver.registerDefaultKeyCreator(
+    // CapabilitiesResolver.registerKeyCreator(
     //     MemoryDatabaseStorageKey.protocol,
     //     Capabilities.TBD
     //     ({arcId}: StorageKeyOptions) => new MemoryDatabaseStorageKey(arcId, '', ''));
