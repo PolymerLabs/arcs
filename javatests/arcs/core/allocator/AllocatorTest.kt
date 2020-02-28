@@ -26,13 +26,15 @@ import arcs.core.type.Type
 import arcs.jvm.host.ExplicitHostRegistry
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 @RunWith(JUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
@@ -64,6 +66,10 @@ open class AllocatorTest {
     open fun readingHost(): TestingHost = ReadingHost()
     open fun writingHost(): TestingHost = WritingHost()
     open fun storageCapability() = Capabilities.TiedToRuntime
+    open fun runAllocatorTest(
+        coroutineContext: CoroutineContext = EmptyCoroutineContext,
+        testBody: suspend TestCoroutineScope.() -> Unit
+    ) = runBlockingTest(coroutineContext, testBody)
 
     open suspend fun hostRegistry(): HostRegistry {
         val registry = ExplicitHostRegistry()
@@ -123,7 +129,7 @@ open class AllocatorTest {
      * [WritePerson] with associated handles and connections.
      */
     @Test
-    fun allocator_computePartitions() = runBlockingTest {
+    fun allocator_computePartitions() = runAllocatorTest {
         val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
@@ -145,7 +151,7 @@ open class AllocatorTest {
     }
 
     @Test
-    fun allocator_verifyStorageKeysCreated() = runBlockingTest {
+    fun allocator_verifyStorageKeysCreated() = runAllocatorTest {
         writeAndReadPersonPlan.particles.forEach {
             it.handles.forEach { (_, connection) ->
                 assertThat(connection.storageKey).isInstanceOf(CreateableStorageKey::class.java)
@@ -170,7 +176,7 @@ open class AllocatorTest {
     }
 
     @Test
-    fun allocator_verifyStorageKeysNotOverwritten() = runBlockingTest {
+    fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
         val idGenerator = Id.Generator.newSession()
         val testArcId = idGenerator.newArcId("Test")
         VolatileDriverProvider(testArcId)
@@ -196,7 +202,7 @@ open class AllocatorTest {
     }
 
     @Test
-    fun allocator_verifyArcHostStartCalled() = runBlockingTest {
+    fun allocator_verifyArcHostStartCalled() = runAllocatorTest {
         val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
@@ -218,7 +224,7 @@ open class AllocatorTest {
     }
 
     @Test
-    fun allocator_verifyUnknownParticleThrows() = runBlockingTest {
+    fun allocator_verifyUnknownParticleThrows() = runAllocatorTest {
         val allocator = Allocator(hostRegistry)
         val particle = Plan.Particle("UnknownParticle", "Unknown", mapOf())
 
@@ -229,7 +235,7 @@ open class AllocatorTest {
     }
 
     @Test
-    fun allocator_canStartArcInTwoExternalHosts() = runBlockingTest {
+    fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
             writeAndReadPersonPlan
@@ -273,7 +279,7 @@ open class AllocatorTest {
     }
 
     @Test
-    fun allocator_canStopArcInTwoExternalHosts() = runBlockingTest {
+    fun allocator_canStopArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
             writeAndReadPersonPlan
@@ -311,7 +317,7 @@ open class AllocatorTest {
     }
 
     @Test
-    fun allocator_restartArcInTwoExternalHosts() = runBlockingTest {
+    fun allocator_restartArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
             writeAndReadPersonPlan

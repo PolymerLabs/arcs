@@ -95,6 +95,8 @@ kt_android_library(
         "//javatests/arcs/core/host",
         "//third_party/java/androidx/appcompat",
         "//third_party/java/androidx/lifecycle",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
         "//third_party/java/robolectric",
     ],
 )

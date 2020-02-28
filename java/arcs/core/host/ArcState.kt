@@ -1,4 +1,3 @@
-package arcs.core.host
 /*
  * Copyright 2020 Google LLC.
  *
@@ -9,6 +8,7 @@ package arcs.core.host
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+package arcs.core.host
 
 /**
  * The current state of an [Arc] for a given [ArcHost]. An [Arc] may be in a different state

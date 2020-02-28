@@ -3,6 +3,7 @@ package arcs.android.host
 import android.content.Context
 import android.content.ServiceConnection
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.core.host.EntityHandleManager
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import org.robolectric.Robolectric
@@ -32,10 +33,6 @@ class TestBindingDelegate(val context: Context) :
     }
 
     override fun unbindStorageService(conn: ServiceConnection) {
-    }
-
-    companion object {
-        var delegate: TestBindingDelegate? = null
     }
 }
 

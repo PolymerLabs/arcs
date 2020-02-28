@@ -21,8 +21,7 @@ typealias ParticleConstructor = suspend () -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
 /**
- * Base helper class for [ArcHost] implementations to provide implementation of
- * registration.
+ * Base helper class for [ArcHost] implementations.
  *
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
