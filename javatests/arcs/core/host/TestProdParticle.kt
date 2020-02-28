@@ -1,5 +1,9 @@
 package arcs.core.host
 
-import arcs.sdk.Particle
+import arcs.sdk.BaseParticle
+import arcs.sdk.HandleHolderBase
 
-class TestProdParticle : Particle
+class TestProdParticle : BaseParticle() {
+    override val handles: HandleHolder = object : HandleHolderBase(mutableMapOf(), mutableMapOf()) {
+    }
+}

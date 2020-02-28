@@ -1,7 +1,7 @@
 package arcs.core.allocator
 
-import arcs.sdk.Particle
 import arcs.core.common.Id
+import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
@@ -9,126 +9,111 @@ import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.host.AbstractArcHost
+import arcs.core.data.SingletonType
+import arcs.core.host.ArcState
+import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
-import arcs.core.host.toIdentifierList
+import arcs.core.host.ParticleState
+import arcs.core.host.ReadPerson
+import arcs.core.host.WritePerson
+import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.type.Type
 import arcs.jvm.host.ExplicitHostRegistry
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.reflect.KClass
 
 @RunWith(JUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
-class AllocatorTest {
+open class AllocatorTest {
     /**
-     * A test recipe, two particles
-     * [WritePerson] writes a Person to a handle
-     * [ReadPerson] reads a Person from a handle
-     * [WritePerson] runs in [WritingHost]
-     * [ReadPerson] runs in [ReadingHost]
-     *
-     * Hand translated 'compilation' roughly equivalent to:
-     *
-     * schema Person { name: Text }
-     * particle ReadPerson in 'arcs.core.host.AllocatorTest.ReadPerson'
-     *   person: reads Person
-     *
-     * particle WritePerson in 'arcs.core.host.AllocatorTest.WritePerson'
-     *   person: writes Person
-     *
-     * recipe WriteAndReadPerson
-     *   recipePerson: create
-     *   WritePerson
-     *     person: writes recipePerson
-     *   ReadPerson
-     *     person: reads recipePerson
+     * Recipe hand translated from 'person.arcs'
      */
-    private val personSchema = Schema(
-        listOf(SchemaName("Person")),
-        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        "hash"
-    )
-
-    private val personEntityType = EntityType(personSchema)
-
-
-    class WritePerson : Particle
-    class ReadPerson : Particle
-
-    open class TestingHost(vararg particles: KClass<out Particle>) :
-        AbstractArcHost(particles.toIdentifierList()) {
-
-        var started = mutableListOf<Plan.Partition>()
-
-        override suspend fun startArc(partition: Plan.Partition) {
-            super.startArc(partition)
-            started.add(partition)
-        }
-
-        fun setup() {
-            started.clear()
-        }
-    }
-
-    class WritingHost : TestingHost(WritePerson::class)
-    class ReadingHost : TestingHost(ReadPerson::class)
-
+    private lateinit var recipePersonStorageKey: StorageKey
+    private lateinit var allocator: Allocator
+    private lateinit var hostRegistry: HostRegistry
     private lateinit var readPersonHandleConnection: Plan.HandleConnection
     private lateinit var writePersonHandleConnection: Plan.HandleConnection
     private lateinit var writePersonParticle: Plan.Particle
     private lateinit var readPersonParticle: Plan.Particle
     private lateinit var writeAndReadPersonPlan: Plan
-    private lateinit var hostRegistry: ExplicitHostRegistry
+    private val personSchema = Schema(
+        listOf(SchemaName("Person")),
+        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+        "42"
+    )
+    private var personEntityType: Type = SingletonType(EntityType(personSchema))
+
+    private lateinit var readingExternalHost: TestingHost
+    private lateinit var writingExternalHost: TestingHost
+
+    class WritingHost : TestingHost(WritePerson::class)
+    class ReadingHost : TestingHost(ReadPerson::class)
+
+    open fun readingHost(): TestingHost = ReadingHost()
+    open fun writingHost(): TestingHost = WritingHost()
+    open fun storageCapability() = Capabilities.TiedToRuntime
+
+    open suspend fun hostRegistry(): HostRegistry {
+        val registry = ExplicitHostRegistry()
+        registry.registerHost(readingExternalHost)
+        registry.registerHost(writingExternalHost)
+        return registry
+    }
 
     @Before
-    fun setUp() {
+    open fun setUp() {
         runBlocking {
-            hostRegistry = ExplicitHostRegistry()
-            hostRegistry.registerHost(ReadingHost())
-            hostRegistry.registerHost(WritingHost())
             RamDisk.clear()
+            RamDiskDriverProvider()
 
+            readingExternalHost = readingHost()
+            writingExternalHost = writingHost()
+
+            hostRegistry = hostRegistry()
+            allocator = Allocator(hostRegistry)
+
+            recipePersonStorageKey = CreateableStorageKey(
+                "recipePerson",
+                 storageCapability()
+            )
             writePersonHandleConnection =
-                Plan.HandleConnection(
-                    CreateableStorageKey("recipePerson"),
-                    personEntityType
+                Plan.HandleConnection(recipePersonStorageKey, personEntityType)
+
+            writePersonParticle =
+                Plan.Particle(
+                    "WritePerson",
+                    WritePerson::class.java.getCanonicalName()!!,
+                    mapOf("person" to writePersonHandleConnection)
                 )
 
-            writePersonParticle = Plan.Particle(
-                "WritePerson",
-                WritePerson::class.java.getCanonicalName()!!,
-                mapOf("recipePerson" to writePersonHandleConnection)
-            )
+            readPersonHandleConnection =
+                Plan.HandleConnection(recipePersonStorageKey, personEntityType)
 
-            readPersonHandleConnection = Plan.HandleConnection(
-                CreateableStorageKey("recipePerson"),
-                personEntityType
-            )
-
-            readPersonParticle = Plan.Particle(
-                "ReadPerson",
-                ReadPerson::class.java.getCanonicalName()!!,
-                mapOf("recipePerson" to readPersonHandleConnection)
-            )
+            readPersonParticle =
+                Plan.Particle(
+                    "ReadPerson",
+                    ReadPerson::class.java.getCanonicalName()!!,
+                    mapOf("person" to readPersonHandleConnection)
+                )
 
             writeAndReadPersonPlan = Plan(
                 listOf(writePersonParticle, readPersonParticle)
             )
 
-            hostRegistry.availableArcHosts().forEach {
-                if (it is TestingHost) {
-                    it.setup()
-                }
-            }
+            readingExternalHost.setup()
+            writingExternalHost.setup()
         }
     }
 
@@ -140,7 +125,10 @@ class AllocatorTest {
     @Test
     fun allocator_computePartitions() = runBlockingTest {
         val allocator = Allocator(hostRegistry)
-        val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
+        val arcId = allocator.startArcForPlan(
+            "readWritePerson",
+            writeAndReadPersonPlan
+        )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         assertThat(planPartitions).containsExactly(
             Plan.Partition(
@@ -164,28 +152,41 @@ class AllocatorTest {
             }
         }
         val allocator = Allocator(hostRegistry)
-        val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
+        val arcId = allocator.startArcForPlan(
+            "readWritePerson", writeAndReadPersonPlan
+        )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
-        planPartitions.flatMap { it.particles }.forEach {
-            particle -> particle.handles.forEach { (_, connection) ->
-                assertThat(connection.storageKey).isNotInstanceOf(CreateableStorageKey::class.java)
+        planPartitions.flatMap { it.particles }.forEach { particle ->
+            particle.handles.forEach { (_, connection) ->
+                assertThat(connection.storageKey).isNotInstanceOf(
+                    CreateableStorageKey::class.java
+                )
             }
         }
-        assertThat(readPersonHandleConnection.storageKey).isEqualTo(writePersonHandleConnection.storageKey)
+        assertThat(readPersonHandleConnection.storageKey).isEqualTo(
+            writePersonHandleConnection.storageKey
+        )
+
     }
 
     @Test
     fun allocator_verifyStorageKeysNotOverwritten() = runBlockingTest {
         val idGenerator = Id.Generator.newSession()
         val testArcId = idGenerator.newArcId("Test")
-        val testKey = VolatileStorageKey(testArcId, "test")
+        VolatileDriverProvider(testArcId)
+        val testKey = CapabilitiesResolver(
+            CapabilitiesResolver.CapabilitiesResolverOptions(testArcId)
+        ).createStorageKey(Capabilities.TiedToArc, personSchema, "readWritePerson")
 
         writeAndReadPersonPlan.particles.forEach { it ->
-            it.handles.getValue("recipePerson").storageKey = testKey
+            it.handles.getValue("person").storageKey = testKey!!
         }
 
         val allocator = Allocator(hostRegistry)
-        val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
+        val arcId = allocator.startArcForPlan(
+            "readWritePerson",
+            writeAndReadPersonPlan
+        )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach {
             particle -> particle.handles.forEach { (_, connection) ->
@@ -197,7 +198,10 @@ class AllocatorTest {
     @Test
     fun allocator_verifyArcHostStartCalled() = runBlockingTest {
         val allocator = Allocator(hostRegistry)
-        val arcId = allocator.startArcForPlan("readWritePerson", writeAndReadPersonPlan)
+        val arcId = allocator.startArcForPlan(
+            "readWritePerson",
+            writeAndReadPersonPlan
+        )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.forEach {
             val host = allocator.lookupArcHost(it.arcHost)
@@ -222,5 +226,132 @@ class AllocatorTest {
         assertSuspendingThrows(ParticleNotFoundException::class) {
             allocator.startArcForPlan("unknown", plan)
         }
+    }
+
+    @Test
+    fun allocator_canStartArcInTwoExternalHosts() = runBlockingTest {
+        val arcId = allocator.startArcForPlan(
+            "readWriteParticle",
+            writeAndReadPersonPlan
+        )
+        assertThat(readingExternalHost.started.size).isEqualTo(1)
+        assertThat(writingExternalHost.started.size).isEqualTo(1)
+
+        assertThat(allocator.getPartitionsFor(arcId)).contains(
+            readingExternalHost.started.first()
+        )
+        assertThat(allocator.getPartitionsFor(arcId)).contains(
+            writingExternalHost.started.first()
+        )
+
+        val readingContext = requireNotNull(
+            readingExternalHost.arcHostContext(arcId.toString())
+        )
+        val writingContext = requireNotNull(
+            writingExternalHost.arcHostContext(arcId.toString())
+        )
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+
+        val readPersonContext = requireNotNull(
+            readingContext.particles[readPersonParticle]
+        )
+
+        val writePersonContext = requireNotNull(
+            writingContext.particles[writePersonParticle]
+        )
+
+        assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
+        assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Started)
+
+        assertThat((writePersonContext.particle as WritePerson).createCalled).isTrue()
+        assertThat((writePersonContext.particle as WritePerson).wrote).isTrue()
+
+        assertThat((readPersonContext.particle as ReadPerson).createCalled).isTrue()
+        assertThat((readPersonContext.particle as ReadPerson).name).isEqualTo("John Wick")
+    }
+
+    @Test
+    fun allocator_canStopArcInTwoExternalHosts() = runBlockingTest {
+        val arcId = allocator.startArcForPlan(
+            "readWriteParticle",
+            writeAndReadPersonPlan
+        )
+
+        val readingContext = requireNotNull(
+            readingExternalHost.arcHostContext(arcId.toString())
+        )
+        val writingContext = requireNotNull(
+            writingExternalHost.arcHostContext(arcId.toString())
+        )
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+
+        readingExternalHost.stopArc(readingExternalHost.started.first())
+        writingExternalHost.stopArc(writingExternalHost.started.first())
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
+
+        val readPersonContext = requireNotNull(
+            readingContext.particles[readPersonParticle]
+        )
+
+        val writePersonContext = requireNotNull(
+            writingContext.particles[writePersonParticle]
+        )
+
+        assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Stopped)
+        assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Stopped)
+
+        assertThat((writePersonContext.particle as WritePerson).shutdownCalled).isTrue()
+        assertThat((readPersonContext.particle as ReadPerson).shutdownCalled).isTrue()
+    }
+
+    @Test
+    fun allocator_restartArcInTwoExternalHosts() = runBlockingTest {
+        val arcId = allocator.startArcForPlan(
+            "readWriteParticle",
+            writeAndReadPersonPlan
+        )
+
+        val readingContext = requireNotNull(
+            readingExternalHost.arcHostContext(arcId.toString())
+        )
+        val writingContext = requireNotNull(
+            writingExternalHost.arcHostContext(arcId.toString())
+        )
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+
+        readingExternalHost.stopArc(readingExternalHost.started.first())
+        writingExternalHost.stopArc(writingExternalHost.started.first())
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
+
+        readingExternalHost.startArc(readingExternalHost.started.first())
+        writingExternalHost.startArc(writingExternalHost.started.first())
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+
+        val readPersonContext = requireNotNull(
+            readingContext.particles[readPersonParticle]
+        )
+
+        val writePersonContext = requireNotNull(
+            writingContext.particles[writePersonParticle]
+        )
+
+        assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
+        assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Started)
+
+        // onCreate() not called a second time
+        assertThat((writePersonContext.particle as WritePerson).createCalled).isFalse()
+        assertThat((readPersonContext.particle as ReadPerson).createCalled).isFalse()
     }
 }

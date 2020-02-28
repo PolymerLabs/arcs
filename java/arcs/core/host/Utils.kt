@@ -1,5 +1,10 @@
 package arcs.core.host
 
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
+import arcs.core.data.Schema
+import arcs.core.data.SingletonType
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 /**
@@ -17,3 +22,19 @@ fun KClass<*>.className(): String {
         .substringBefore('<')
         .replace('$', '.')
 }
+
+fun Type.toSchema(): Schema {
+    when (this) {
+        is SingletonType<*> -> if (this.containedType is EntityType) {
+            return (this.containedType as EntityType).entitySchema
+        }
+        is CollectionType<*> -> if (this.collectionType is EntityType) {
+            return (this.collectionType as EntityType).entitySchema
+        }
+        is EntityType -> return this.entitySchema
+        else -> Unit
+    }
+    throw Exception("Can't get entitySchema of unknown type $this")
+}
+
+fun Type.toSchemaHash(): String = this.toSchema().hash

@@ -41,6 +41,8 @@ arcs_kt_android_test_suite(
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/android/storage/service/testutil",
+        "//javatests/arcs/core/allocator",
+        "//javatests/arcs/core/allocator:util",
         "//javatests/arcs/android/storage/handle:test_app",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
@@ -60,7 +62,9 @@ arcs_kt_android_test_suite(
 
 arcs_kt_schema(
     name = "schemas",
-    srcs = ["test.arcs"],
+    srcs = [
+        "test.arcs",
+    ],
     package = "arcs.android.host",
 )
 
@@ -71,17 +75,26 @@ kt_android_library(
         [
             "*Service.kt",
             "*Activity.kt",
-        ],
+        ] + ["TestBindingDelegate.kt"],
     ),
     manifest = "AndroidManifest.xml",
     deps = [
+        ":schemas",
+        "//java/arcs/android/crdt",
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
+        "//java/arcs/android/storage/handle",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/testutil",
         "//java/arcs/sdk",
+        "//java/arcs/sdk/android/storage",
+        "//java/arcs/sdk/android/storage/service",
+        "//javatests/arcs/core/allocator:util",
+        "//javatests/arcs/core/host",
         "//third_party/java/androidx/appcompat",
+        "//third_party/java/androidx/lifecycle",
+        "//third_party/java/robolectric",
     ],
 )

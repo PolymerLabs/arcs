@@ -54,7 +54,8 @@ class IntentArcHostAdapter(
     }
 
     override suspend fun isHostForParticle(particle: Plan.Particle): Boolean {
-        return registeredParticles().contains(ParticleIdentifier.from(particle.location))
+        val registeredParticles = registeredParticles()
+        return registeredParticles.contains(ParticleIdentifier.from(particle.location))
     }
 
     /**

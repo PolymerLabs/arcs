@@ -6,8 +6,6 @@ package arcs.core.host
  * in the future, and likely to house Android or Browser specific state, like application
  * context or browser global scope.
  */
-open class ExternalHost(vararg externalParticles: Particle) : AbstractArcHost() {
-    init {
-        externalParticles.forEach { registerParticle(it::class.toParticleIdentifier()) }
-    }
-}
+abstract class ExternalHost(
+    vararg externalParticles: ParticleRegistration
+) : AbstractArcHost(*externalParticles)

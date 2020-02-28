@@ -13,7 +13,6 @@ package arcs.jvm.host
 import arcs.core.host.ArcHost
 import arcs.core.host.Particle
 import arcs.core.host.ProdHost
-import arcs.core.host.toParticleIdentifier
 import kotlin.reflect.KClass
 
 /**
@@ -22,4 +21,4 @@ import kotlin.reflect.KClass
  */
 class JvmProdHost(
     vararg particles: KClass<out Particle>
-) : ProdHost(*particles.map { it.toParticleIdentifier() }.toTypedArray())
+) : ProdHost(*particles.toRegistrationList())

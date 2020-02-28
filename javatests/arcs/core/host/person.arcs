@@ -1,0 +1,17 @@
+schema Person
+  name: Text
+
+particle ReadPerson in 'arcs.core.host.ReadPerson'
+  person: reads Person
+
+particle WritePerson in 'arcs.core.host.WritePerson'
+  person: writes Person
+
+recipe PersonRecipe
+  recipePerson: create
+
+  WritePerson
+    person: writes recipePerson
+
+  ReadPerson
+    person: reads recipePerson

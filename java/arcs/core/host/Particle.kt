@@ -17,6 +17,15 @@ import arcs.core.storage.api.Handle
 interface Particle {
 
     /**
+     * This field contains a reference to all of the [Particle]'s handles that were declared in
+     * the manifest.
+     */
+    val handles: HandleHolder
+
+    /** Called the first time this [Particle] is instantiated in an [Arc]. */
+    suspend fun onCreate() = Unit
+
+    /**
      * React to handle updates.
      *
      * Called for handles when change events are received from the backing store.
@@ -35,4 +44,7 @@ interface Particle {
      * @param allSynced flag indicating if all handles are synchronized
      */
     suspend fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
+
+    /** Called when an [Arc] is shutdown. */
+    fun onShutdown() = Unit
 }

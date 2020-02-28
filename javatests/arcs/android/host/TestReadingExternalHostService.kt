@@ -1,38 +1,17 @@
 package arcs.android.host
 
-import android.app.Service
-import android.content.Intent
-import android.os.IBinder
-import arcs.android.sdk.host.ArcHostHelper
 import arcs.core.data.Plan
-import arcs.core.host.ExternalHost
-import arcs.sdk.Particle
+import arcs.core.host.ReadPerson
 
-class TestReadingExternalHostService : Service() {
-    class ReadPerson : Particle
+class TestReadingExternalHostService : TestExternalArcHostService(ReadingExternalHost()) {
 
-    private val arcHostHelper: ArcHostHelper by lazy {
-        ArcHostHelper(this, ReadingExternalHost)
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val result = super.onStartCommand(intent, flags, startId)
-        arcHostHelper.onStartCommand(intent)
-        return result
-    }
-
-    override fun onBind(intent: Intent?): IBinder? = null
-
-    companion object ReadingExternalHost : ExternalHost(ReadPerson()) {
-        val started: MutableList<Plan.Partition> = mutableListOf()
+    class ReadingExternalHost : TestingAndroidHost(ReadPerson::class) {
         override suspend fun startArc(partition: Plan.Partition) {
-            started += partition
+            super.startArc(partition)
         }
 
         override suspend fun stopArc(partition: Plan.Partition) {
-            started -= partition
+            super.stopArc(partition)
         }
-
-        fun reset() { started.clear() }
     }
 }
