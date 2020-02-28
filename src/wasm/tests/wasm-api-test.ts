@@ -535,15 +535,10 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const {arc, stores} = await setup('OnCreateTest');
       const fooHandle = await singletonHandleForTest(arc, stores.get('fooHandle'));
+      const outHandle = await singletonHandleForTest(arc, stores.get('outHandle'));
 
-      const sendEvent = async handler => {
-        await arc.idle;
-        arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
-        await arc.idle;
-      };
-
-      //await sendEvent('case1');
       assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Created!'});
+      assert.deepStrictEqual(await outHandle.fetch(), {txt: 'koalas'})
 
       const serialization = await arc.serialize();
       arc.dispose();

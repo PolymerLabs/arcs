@@ -16,6 +16,7 @@ class OnCreateTest : AbstractOnCreateTest() {
 
     override fun onCreate() {
         s = "Created!"
+        handles.outHandle.store(OnCreateTest_OutHandle("koalas"))
     }
 
     override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) {

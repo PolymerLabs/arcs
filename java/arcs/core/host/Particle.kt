@@ -35,4 +35,6 @@ interface Particle {
      * @param allSynced flag indicating if all handles are synchronized
      */
     suspend fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
+
+    suspend fun onCreate() = Unit
 }
