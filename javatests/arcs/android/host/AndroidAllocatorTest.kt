@@ -15,6 +15,7 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ActivityScenario.launch
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -30,6 +31,7 @@ import arcs.core.host.HostRegistry
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -56,15 +58,17 @@ class AndroidAllocatorTest : AllocatorTest() {
 
     override suspend fun hostRegistry(): HostRegistry {
         return AndroidManifestHostRegistry.createForTest(context) {
-            val readingComponentName =
-                TestReadingExternalHostService::class.toComponentName(context)
-            if (it.component?.equals(readingComponentName) == true) {
-                readingService.onStartCommand(it, 0, 0)
-            } else {
-                val writingComponentName =
-                    TestWritingExternalHostService::class.toComponentName(context)
-                if (it.component?.equals(writingComponentName) == true) {
-                    writingService.onStartCommand(it, 0, 0)
+            GlobalScope.launch(Dispatchers.Unconfined) {
+                val readingComponentName =
+                    TestReadingExternalHostService::class.toComponentName(context)
+                if (it.component?.equals(readingComponentName) == true) {
+                    readingService.onStartCommand(it, 0, 0)
+                } else {
+                    val writingComponentName =
+                        TestWritingExternalHostService::class.toComponentName(context)
+                    if (it.component?.equals(writingComponentName) == true) {
+                        writingService.onStartCommand(it, 0, 0)
+                    }
                 }
             }
         }
@@ -74,7 +78,7 @@ class AndroidAllocatorTest : AllocatorTest() {
     override fun writingHost() = writingService.arcHost
 
     // TODO: wire up some kind of mock persistent database?
-    override fun storageCapability() = Capabilities.TiedToRuntime
+    override val storageCapability = Capabilities.TiedToRuntime
 
     @Before
     override fun setUp() = runBlocking {

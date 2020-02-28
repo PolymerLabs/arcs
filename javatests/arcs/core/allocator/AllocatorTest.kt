@@ -60,12 +60,16 @@ open class AllocatorTest {
     private lateinit var readingExternalHost: TestingHost
     private lateinit var writingExternalHost: TestingHost
 
-    class WritingHost : TestingHost(WritePerson::class)
-    class ReadingHost : TestingHost(ReadPerson::class)
+    private class WritingHost : TestingHost(WritePerson::class)
+    private class ReadingHost : TestingHost(ReadPerson::class)
 
+    /** Return the [ArcHost] that contains [ReadPerson]. */
     open fun readingHost(): TestingHost = ReadingHost()
+
+    /** Return the [ArcHost] that contains [WritePerson]. */
     open fun writingHost(): TestingHost = WritingHost()
-    open fun storageCapability() = Capabilities.TiedToRuntime
+
+    open val storageCapability = Capabilities.TiedToRuntime
     open fun runAllocatorTest(
         coroutineContext: CoroutineContext = EmptyCoroutineContext,
         testBody: suspend TestCoroutineScope.() -> Unit
@@ -79,49 +83,42 @@ open class AllocatorTest {
     }
 
     @Before
-    open fun setUp() {
-        runBlocking {
-            RamDisk.clear()
-            RamDiskDriverProvider()
+    open fun setUp() = runBlocking {
+        RamDisk.clear()
+        RamDiskDriverProvider()
 
-            readingExternalHost = readingHost()
-            writingExternalHost = writingHost()
+        readingExternalHost = readingHost()
+        writingExternalHost = writingHost()
 
-            hostRegistry = hostRegistry()
-            allocator = Allocator(hostRegistry)
+        hostRegistry = hostRegistry()
+        allocator = Allocator(hostRegistry)
 
-            recipePersonStorageKey = CreateableStorageKey(
-                "recipePerson",
-                 storageCapability()
-            )
-            writePersonHandleConnection =
-                Plan.HandleConnection(recipePersonStorageKey, personEntityType)
+        recipePersonStorageKey = CreateableStorageKey(
+            "recipePerson", storageCapability
+        )
+        writePersonHandleConnection =
+            Plan.HandleConnection(recipePersonStorageKey, personEntityType)
 
-            writePersonParticle =
-                Plan.Particle(
-                    "WritePerson",
-                    WritePerson::class.java.getCanonicalName()!!,
-                    mapOf("person" to writePersonHandleConnection)
-                )
+        writePersonParticle = Plan.Particle(
+            "WritePerson", WritePerson::class.java.getCanonicalName()!!,
+            mapOf("person" to writePersonHandleConnection)
+        )
 
-            readPersonHandleConnection =
-                Plan.HandleConnection(recipePersonStorageKey, personEntityType)
+        readPersonHandleConnection = Plan.HandleConnection(recipePersonStorageKey, personEntityType)
 
-            readPersonParticle =
-                Plan.Particle(
-                    "ReadPerson",
-                    ReadPerson::class.java.getCanonicalName()!!,
-                    mapOf("person" to readPersonHandleConnection)
-                )
+        readPersonParticle = Plan.Particle(
+            "ReadPerson", ReadPerson::class.java.getCanonicalName()!!,
+            mapOf("person" to readPersonHandleConnection)
+        )
 
-            writeAndReadPersonPlan = Plan(
-                listOf(writePersonParticle, readPersonParticle)
-            )
+        writeAndReadPersonPlan = Plan(
+            listOf(writePersonParticle, readPersonParticle)
+        )
 
-            readingExternalHost.setup()
-            writingExternalHost.setup()
-        }
+        readingExternalHost.setup()
+        writingExternalHost.setup()
     }
+
 
     /**
      * Tests that the Recipe is properly partitioned so that [ReadingHost] contains only
@@ -136,15 +133,24 @@ open class AllocatorTest {
             writeAndReadPersonPlan
         )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
+
+        val readingHost = requireNotNull(hostRegistry.availableArcHosts().first {
+            it -> it.hostId.contains("Reading")
+        })
+
+        val writingHost = requireNotNull(hostRegistry.availableArcHosts().first {
+                it -> it.hostId.contains("Writing")
+        })
+
         assertThat(planPartitions).containsExactly(
             Plan.Partition(
                 arcId.toString(),
-                ReadingHost::class.java.canonicalName!!,
+                readingHost.hostId,
                 listOf(readPersonParticle)
             ),
             Plan.Partition(
                 arcId.toString(),
-                WritingHost::class.java.canonicalName!!,
+                writingHost.hostId,
                 listOf(writePersonParticle)
             )
         )
@@ -209,13 +215,22 @@ open class AllocatorTest {
             writeAndReadPersonPlan
         )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
+
+        val readingHost = requireNotNull(hostRegistry.availableArcHosts().first {
+                it -> it.hostId.contains("Reading")
+        })
+
+        val writingHost = requireNotNull(hostRegistry.availableArcHosts().first {
+                it -> it.hostId.contains("Writing")
+        })
+
         planPartitions.forEach {
             val host = allocator.lookupArcHost(it.arcHost)
-            when (host) {
-                is TestingHost ->
-                    assertThat(
-                        (allocator.lookupArcHost(it.arcHost) as TestingHost).started
-                    ).containsExactly(it)
+            when (host.hostId) {
+                readingHost.hostId ->
+                    assertThat(readingExternalHost.started).containsExactly(it)
+                writingHost.hostId ->
+                    assertThat(writingExternalHost.started).containsExactly(it)
                 else -> {
                     assert(false)
                 }

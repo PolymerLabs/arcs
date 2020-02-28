@@ -32,7 +32,6 @@ class TestBindingDelegate(val context: Context) :
         return true
     }
 
-    override fun unbindStorageService(conn: ServiceConnection) {
-    }
+    override fun unbindStorageService(conn: ServiceConnection) = Unit
 }
 

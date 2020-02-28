@@ -26,34 +26,38 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
 abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : ArcHost {
-    private val particles: MutableMap<ParticleIdentifier, ParticleConstructor> = mutableMapOf()
+    private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
+        mutableMapOf()
     private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
-
-    init {
-        initialParticles.toList().associateByTo(particles, { it.first }, { it.second })
-    }
-
     override val hostId = this::class.className()
 
+    init {
+        initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
+    }
+
     protected fun registerParticle(particle: ParticleIdentifier, constructor: ParticleConstructor) {
-        particles.put(particle, constructor)
+        particleConstructors.put(particle, constructor)
     }
 
     protected fun unregisterParticle(particle: ParticleIdentifier) {
-        particles.remove(particle)
+        particleConstructors.remove(particle)
     }
 
-    override suspend fun registeredParticles(): List<ParticleIdentifier> = particles.keys.toList()
+    override suspend fun registeredParticles(): List<ParticleIdentifier> = particleConstructors.keys.toList()
 
     // VisibleForTesting
     protected fun getArcHostContext(arcId: String) = runningArcs[arcId]
 
     /** Subclasses may override this to load persistent context state. */
-    protected suspend fun lookupOrCreateArcHostContext(partition: Plan.Partition): ArcHostContext =
+    open protected suspend fun lookupOrCreateArcHostContext(partition: Plan.Partition): ArcHostContext =
         runningArcs[partition.arcId] ?: ArcHostContext()
 
-    /** Subclasses may override this to store persistent context state. */
-    protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
+    /**
+     * Called to persist [ArcHostContext] after [context] for [arcId] has been modified.
+     *
+     * Subclasses may override this to store the [context] in a more persistent, durable location.
+     **/
+    open protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
         runningArcs[arcId] = context
     }
 
@@ -81,7 +85,12 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         updateArcHostContext(partition.arcId, context)
     }
 
-    suspend fun startParticle(spec: Plan.Particle, context: ArcHostContext): ParticleContext {
+    /**
+     * Instantiates a [Particle] by looking up an associated [ParticleConstructor], allocates
+     * all of the [Handle]s connected to it, and returns a [ParticleContext] indicating the
+     * current lifecycle state of the particle.
+     */
+    private suspend fun startParticle(spec: Plan.Particle, context: ArcHostContext): ParticleContext {
         val particle = instantiateParticle(ParticleIdentifier.from(spec.location))
 
         val particleContext = lookupParticleContextOrCreate(
@@ -98,18 +107,32 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         return particleContext
     }
 
+    /**
+     * Look up an existing [ParticleContext] in the current [ArcHostContext] if it exists for
+     * the specified [Plan.Particle] and [Particle], otherwise create and initialize a new
+     * [ParticleContext].
+     */
     fun lookupParticleContextOrCreate(
         context: ArcHostContext,
         spec: Plan.Particle,
         particle: Particle
     ) = context.particles[spec]?.copy(particle = particle) ?: ParticleContext(particle)
 
+    /**
+     * Invokes any necessary lifecycle methods for the current [ArcHostContext.arcState] and any
+     * [Particle]s it may refer to, and may alter the current [ArcState].
+     */
     suspend fun performLifecycleForContext(context: ArcHostContext) {
         for (particleContext in context.particles.values) {
             performParticleLifecycle(particleContext)
         }
     }
 
+    /**
+     * Invokes necessary [Particle] lifecycle methods given the current
+     * [ParticleContext.particleState], and changes that state if necessary. For example by
+     * insuring that [Particle.onCreate()], [Particle.onShutdown()] are properly called.
+     */
     suspend fun performParticleLifecycle(particleContext: ParticleContext) {
         if (particleContext.particleState == ParticleState.Instantiated) {
             particleContext.particle.onCreate()
@@ -139,13 +162,22 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         }
     }
 
-    suspend fun maybeRequestResurrection(context: ArcHostContext) {
+    /**
+     * Lookup [StorageKey]s used in the current [ArcHostContext] and potentially register them
+     * with a [ResurrectorService], so that this [ArcHost] is instructed to automatically
+     * restart in the event of a crash.
+     */
+    protected open suspend fun maybeRequestResurrection(context: ArcHostContext) {
         if (context.arcState == ArcState.NeverStarted) {
             // TODO: First time, request resurrection for context.
         }
     }
 
-    suspend fun maybeCancelResurrection(context: ArcHostContext) {
+    /**
+     * Inform [ResurrectorService] to cancel requests for resurrection for the [StorageKey]s in
+     * this [ArcHostContext].
+     */
+    protected open suspend fun maybeCancelResurrection(context: ArcHostContext) {
         // TODO: wire up resurrection cancellation
     }
 
@@ -153,7 +185,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Given a handle name, a [HandleConnection], and a [HandleHolder] construct an Entity
      * [Handle] of the right type.
      */
-    suspend fun createHandle(
+    private suspend fun createHandle(
         handleName: String,
         handleSpec: Plan.HandleConnection,
         holder: HandleHolder
@@ -172,7 +204,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 handleSpec.storageKey,
                 handleSpec.type.toSchema()
             )
-        else -> throw Exception("Unknown type ${handleSpec.type}")
+        else -> throw IllegalArgumentException("Unknown type ${handleSpec.type}")
     }
 
     override suspend fun stopArc(partition: Plan.Partition) {
@@ -188,11 +220,19 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         }
     }
 
-    suspend fun stopArcError(context: ArcHostContext, message: String) {
+    /**
+     * If an attempt to [ArcHost.stopArc] fails, this method should report the error message.
+     * For example, throw an exception or log.
+     */
+    private suspend fun stopArcError(context: ArcHostContext, message: String) {
         // TODO: decide how to propagate this
     }
 
-    suspend fun stopArcInternal(arcId: String, context: ArcHostContext) {
+    /**
+     * Stops an [Arc], stopping all running [Particle]s, cancelling pending resurrection requests,
+     * releasing [Handle]s, and modifying [ArcState] and [ParticleState] to stopped states.
+     */
+    private suspend fun stopArcInternal(arcId: String, context: ArcHostContext) {
         for (particleContext in context.particles.values) {
             stopParticle(particleContext)
         }
@@ -201,13 +241,20 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         updateArcHostContext(arcId, context)
     }
 
-    suspend fun stopParticle(context: ParticleContext) {
+    /**
+     * Shuts down a [Particle] by invoking its shutdown lifecycle methods, moving it to a
+     * [ParticleState.Stopped], and releasing any used [Handle]s.
+     */
+    private suspend fun stopParticle(context: ParticleContext) {
         context.particle.onShutdown()
         context.particleState = ParticleState.Stopped
         cleanupHandles(context.particle.handles)
     }
 
-    suspend fun cleanupHandles(handles: HandleHolder) {
+    /**
+     * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
+     */
+    private suspend fun cleanupHandles(handles: HandleHolder) {
         for ((name, handle) in handles.handles) {
             // TODO: disconnect/unregister handle
         }
@@ -230,9 +277,8 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     /**
      * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
      */
-    open fun entityHandleManager(): EntityHandleManager = EntityHandleManager(
-        HandleManager(platformTime())
-    )
+    open fun entityHandleManager(): EntityHandleManager =
+        EntityHandleManager(HandleManager(platformTime()))
 
     /**
      * Instantiate a [Particle] implementation for a given [ParticleIdentifier].
@@ -240,7 +286,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * @property identifier A [ParticleIdentifier] from a [ParticleSpec].
      */
     open suspend fun instantiateParticle(identifier: ParticleIdentifier): Particle {
-        return particles[identifier]?.invoke() ?: throw Exception(
+        return particleConstructors[identifier]?.invoke() ?: throw Exception(
             "Particle $identifier not found."
         )
     }

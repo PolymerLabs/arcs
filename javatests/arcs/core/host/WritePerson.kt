@@ -5,7 +5,7 @@ import arcs.sdk.Handle
 class WritePerson : AbstractWritePerson() {
     var wrote = false
     var createCalled = false
-    var shutdownCalled = false;
+    var shutdownCalled = false
 
     override suspend fun onCreate() {
         createCalled = true
