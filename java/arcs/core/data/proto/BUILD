@@ -1,8 +1,4 @@
 load(
-    "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_kt_library",
-)
-load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
     "java_proto_library",
     "proto_library",
