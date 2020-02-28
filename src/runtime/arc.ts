@@ -29,7 +29,7 @@ import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        RelationType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
+        TupleType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
@@ -546,8 +546,8 @@ export class Arc implements ArcInterface {
       return this.storesByKey.get(storageKey);
     }
 
-    if (type instanceof RelationType) {
-      type = new CollectionType(type);
+    if (type instanceof TupleType) {
+      throw new Error('Tuple type is not yet supported');
     }
 
     if (id == undefined) {

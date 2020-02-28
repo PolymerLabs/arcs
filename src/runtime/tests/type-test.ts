@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
-        ReferenceType, RelationType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
+        ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
 import {Entity} from '../entity.js';
 import {Refinement} from '../refiner.js';
 import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
@@ -21,7 +21,7 @@ import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
 //   TypeVariable      : TypeVariableInfo
 //   CollectionType    : Type
 //   BigCollectionType : Type
-//   RelationType      : [Type]
+//   TupleType         : [Type]
 //   InterfaceType     : InterfaceInfo
 //   SlotType          : SlotInfo
 //   ReferenceType     : Type
@@ -216,17 +216,17 @@ describe('types', () => {
       deepEqual(big3, big3.clone(new Map()));
     });
 
-    it('Relation', async () => {
+    it('Tuple', async () => {
       const entity   = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a');
       const col      = new CollectionType(entity);
-      const relation = new RelationType([entity, variable, col]);
-      deepEqual(relation.toLiteral(), {
-        tag: 'Relation',
+      const tuple = new TupleType([entity, variable, col]);
+      deepEqual(tuple.toLiteral(), {
+        tag: 'Tuple',
         data: [entity.toLiteral(), variable.toLiteral(), col.toLiteral()]
       });
-      deepEqual(relation, Type.fromLiteral(relation.toLiteral()));
-      deepEqual(relation, relation.clone(new Map()));
+      deepEqual(tuple, Type.fromLiteral(tuple.toLiteral()));
+      deepEqual(tuple, tuple.clone(new Map()));
     });
 
     it('Interface', async () => {
@@ -299,8 +299,8 @@ describe('types', () => {
 
       const handleInfo = new HandleType();
 
-      const relation   = new RelationType([reference, iface, handleInfo]);
-      const collection = new CollectionType(relation);
+      const tuple   = new TupleType([reference, iface, handleInfo]);
+      const collection = new CollectionType(tuple);
 
       deepEqual(collection, Type.fromLiteral(collection.toLiteral()));
       deepEqual(collection, collection.clone(new Map()));
