@@ -33,6 +33,7 @@ import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
+import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
 import java.io.FileDescriptor
 import java.io.PrintWriter
@@ -140,7 +141,16 @@ class StorageService : ResurrectorService() {
             writer.println(
                 """
                     |Current Process Binder Stats:
-                    |  - ${map {(k, v) -> "$k: $v"}.joinToString("\n|  - ")}
+                    |  - ${map { (k, v) -> "$k: $v" }.joinToString("\n|  - ")}
+                """.trimMargin("|")
+            )
+        }
+
+        MemoryStats.snapshot().run {
+            writer.println(
+                """
+                    |Process Memory Stats (KB):
+                    |  - ${map { (k, v) -> "${k.name}: $v" }.joinToString("\n|  - ")}
                 """.trimMargin("|")
             )
         }
