@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- import {StorageKey} from './storage-key.js';
+import {StorageKey} from './storage-key.js';
 
 export class ReferenceModeStorageKey extends StorageKey {
   constructor(public backingKey: StorageKey, public storageKey: StorageKey) {
