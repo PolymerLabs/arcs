@@ -182,7 +182,9 @@ export class Manifest {
   get allRecipes() {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
-
+  get allHandles() {
+    return [...new Set(this.allRecipes.flatMap(r => r.handles))];
+  }
   get activeRecipe() {
     return this._recipes.find(recipe => recipe.annotation === 'active');
   }
@@ -338,6 +340,9 @@ export class Manifest {
     return [...this._findAll(manifest => manifest._recipes
       .flatMap(r => r.handles)
       .filter(h => this._typePredicate(h, type, subtype) && tagPredicate(h) && fatePredicate(h)))];
+  }
+  findHandlesById(id: string): Handle[] {
+    return this.allHandles.filter(h => h.id === id);
   }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
