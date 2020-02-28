@@ -29,7 +29,7 @@ import {singletonHandleForTest, collectionHandleForTest, ramDiskStorageKeyPrefix
 import {handleNGFor, SingletonHandle, CollectionHandle} from '../storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
 import {Entity} from '../entity.js';
-import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 
@@ -196,6 +196,56 @@ describe('Arc new storage', () => {
     assert.instanceOf(refKey.backingKey, VolatileStorageKey);
     assert.instanceOf(refKey.storageKey, VolatileStorageKey);
     assert.isTrue(key.toString().includes(arc.id.toString()));
+  });
+
+  it('supports default capabilities if not specified', async () => {
+    DriverFactory.clearRegistrationsForTesting();
+    const loader = new Loader(null, {
+      '*': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {}
+        });
+    `});
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+    const manifest = await Manifest.parse(`
+      particle MyParticle in 'MyParticle.js'
+        thing: writes Thing {}
+      recipe Ephemeral
+        handle0: create
+        MyParticle
+          thing: handle0
+      @trigger
+        launch startup
+        arcId myLongRunningArc
+      recipe Long
+        handle0: create
+        MyParticle
+          thing: handle0
+        `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
+
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const ephemeralRecipe = manifest.recipes.find(r => r.name === 'Ephemeral');
+    assert.isTrue(ephemeralRecipe.normalize() && ephemeralRecipe.isResolved());
+    const ephemeralArc = runtime.newArc('test', ramDiskStorageKeyPrefixForTest());
+    await ephemeralArc.instantiate(ephemeralRecipe);
+    await ephemeralArc.idle;
+
+    assert.lengthOf(ephemeralArc.activeRecipe.handles, 1);
+    assert.instanceOf(
+        ephemeralArc.activeRecipe.handles[0].storageKey, VolatileStorageKey);
+    assert.isTrue(ephemeralArc.activeRecipe.handles[0].storageKey.toString()
+        .includes(ephemeralArc.id.toString()));
+
+    const longRecipe = manifest.recipes.find(r => r.name === 'Long');
+    assert.isTrue(longRecipe.normalize() && longRecipe.isResolved());
+    const longArc = runtime.newArc('test', ramDiskStorageKeyPrefixForTest());
+    await longArc.instantiate(longRecipe);
+    await longArc.idle;
+    assert.lengthOf(longArc.activeRecipe.handles, 1);
+    assert.instanceOf(longArc.activeRecipe.handles[0].storageKey, RamDiskStorageKey);
+    assert.isTrue(
+      longArc.activeRecipe.handles[0].storageKey.toString().includes(longArc.id.toString()));
   });
 });
 

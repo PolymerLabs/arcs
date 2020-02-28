@@ -118,7 +118,10 @@ describe('Runtime', () => {
     await volatileArc.instantiate(manifest.recipes[0]);
     assert.lengthOf(runtime.context.stores, 0);
 
-    await ramdiskArc.instantiate(manifest.recipes[0]);
+    const longRunningRecipe = manifest.recipes[0].clone();
+    longRunningRecipe.triggers.push([['launch', 'startup'], ['arcId', 'myLongRunningArc']]);
+    assert(longRunningRecipe.normalize() && longRunningRecipe.isResolved());
+    await ramdiskArc.instantiate(longRunningRecipe);
     assert.lengthOf(runtime.context.stores, 2);
 
     const volatileArc1 = runtime.runArc('test-arc-v1', volatileStorageKeyPrefixForTest());

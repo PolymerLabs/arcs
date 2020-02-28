@@ -458,8 +458,9 @@ export class Arc implements ArcInterface {
           ? new VolatileStorageKey(this.id, '').childKeyForHandle(storeId)
           : undefined;
 
-        const newStore = await this.createStoreInternal(type, /* name= */ null, storeId,
-            recipeHandle.tags, volatileKey, recipeHandle.capabilities, recipeHandle.ttl);
+        const newStore = await this.createStoreInternal(
+            type, /* name= */ null, storeId, recipeHandle.tags, volatileKey,
+            recipeHandle.getCapabilitiesWithDefault(), recipeHandle.ttl);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
@@ -555,7 +556,8 @@ export class Arc implements ArcInterface {
     }
 
     if (storageKey == undefined) {
-      if (capabilities && !capabilities.isEmpty()) {
+      if (capabilities) {
+        assert(!capabilities.isEmpty());
         storageKey = await this.capabilitiesResolver.createStorageKey(
             capabilities, type.getEntitySchema(), id);
       } else if (this.storageKey) {

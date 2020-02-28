@@ -147,6 +147,18 @@ export class Handle implements Comparable<Handle> {
     }
   }
 
+  getCapabilitiesWithDefault(): Capabilities {
+    if (this.capabilities && !this.capabilities.isEmpty()) {
+      return this.capabilities;
+    }
+    return this.defaultCapabilities();
+  }
+
+  defaultCapabilities(): Capabilities {
+    return this.recipe.isLongRunning
+        ? Capabilities.tiedToRuntime : Capabilities.tiedToArc;
+  }
+
   _finishNormalize() {
     for (const connection of this._connections) {
       assert(Object.isFrozen(connection), `Handle connection '${connection.name}' is not frozen.`);
