@@ -228,7 +228,6 @@ actual open class DomParticleBase<Props, State> actual constructor(
             kotlinx.serialization.json.Json.nonstrict.stringify(serializer, rawData)
         )
     }
-
 }
 
 suspend fun <T> PromiseLike<T>.await(): T =

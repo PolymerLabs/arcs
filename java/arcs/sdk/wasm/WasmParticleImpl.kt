@@ -173,5 +173,8 @@ abstract class WasmParticleImpl {
      */
     open fun onHandleSync(handle: WasmHandle, allSynced: Boolean) = Unit
 
+    /**
+     * Called when the particle is first created. This will not be called for subsequent reinstantiations.
+     */
     open fun onCreate() = Unit
 }

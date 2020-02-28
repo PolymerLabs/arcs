@@ -873,7 +873,7 @@ export class WasmParticle extends Particle {
   async onHandleDesync(handle: Handle<CRDTTypeRecord>) {}
 
   async onCreate() {
-    // TODO(heimlich): not yet implemented in CPP
+    // TODO(heimlich, 4798): not yet implemented in CPP
     if (this.exports['_onCreate']) {
       this.exports._onCreate(this.innerParticle);
     }

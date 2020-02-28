@@ -528,7 +528,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       ]);
     });
 
-    it('onCreate() Wasm koala', async function() {
+    it('onCreate() Wasm', async function() {
+      // TODO(heimlich, 4798) implement in C++
       if (isCpp) {
         this.skip();
       }
