@@ -13,6 +13,9 @@ package arcs.core.data.proto
 
 import arcs.core.data.PrimitiveType
 
+/**
+ * Converts a [PrimitiveTypeProto] protobuf instance into a native kotlin [PrimitiveType] instance.
+ */
 fun PrimitiveTypeProto.decode(): PrimitiveType =
     when (this) {
         PrimitiveTypeProto.TEXT -> PrimitiveType.Text
