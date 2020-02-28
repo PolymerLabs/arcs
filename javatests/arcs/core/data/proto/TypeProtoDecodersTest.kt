@@ -1,6 +1,6 @@
 package arcs.core.data.proto
 
-import arcs.core.data.PrimitiveType
+import arcs.core.data.*
 import arcs.core.testutil.assertThrows
 import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
@@ -22,5 +22,15 @@ class TypeProtoDecodersTest {
         assertThrows(IllegalArgumentException::class) { 
             PrimitiveTypeProto.UNRECOGNIZED.decode()
         }
+    }
+
+    @Test
+    fun decodesPrimitiveTypeAsFieldType() {
+        val textField = PrimitiveTypeProto.TEXT.decodeAsFieldType()
+        assertThat(textField.primitiveType).isEqualTo(PrimitiveType.Text)
+        val numberField = PrimitiveTypeProto.NUMBER.decodeAsFieldType()
+        assertThat(numberField.primitiveType).isEqualTo(PrimitiveType.Number)
+        val booleanField = PrimitiveTypeProto.BOOLEAN.decodeAsFieldType()
+        assertThat(booleanField.primitiveType).isEqualTo(PrimitiveType.Boolean)
     }
 }
