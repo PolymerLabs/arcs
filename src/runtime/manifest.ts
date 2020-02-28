@@ -183,7 +183,8 @@ export class Manifest {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
   get allHandles() {
-    return [...new Set(this.allRecipes.flatMap(r => r.handles))];
+    // Reduce is equivalent to flatMap
+    return [...new Set(this._findAll(manifest => manifest._recipes.reduce((acc, x) => acc.concat(x.handles), [])))];
   }
   get activeRecipe() {
     return this._recipes.find(recipe => recipe.annotation === 'active');
