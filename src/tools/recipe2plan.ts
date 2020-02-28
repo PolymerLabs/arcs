@@ -9,9 +9,16 @@
  */
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Recipe} from '../runtime/recipe/recipe.js';
+import {Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
-import {IdGenerator} from '../runtime/id.js';
+import {ArcId, IdGenerator} from '../runtime/id.js';
+import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
+import {Arc} from '../runtime/arc.js';
+import {SlotComposer} from '../runtime/slot-composer.js';
+import {Loader} from '../platform/loader-web.js';
+import {Store} from '../runtime/storageNG/store.js';
+import {Exists} from '../runtime/storageNG/drivers/driver.js';
+import {Handle} from '../runtime/recipe/handle.js';
 
 
 /** Reads a manifest and outputs generated Kotlin plans. */
@@ -19,49 +26,62 @@ export async function recipe2plan(path: string): Promise<string> {
 
   const manifest = await Runtime.parseFile(path);
 
-  const resolutions = await resolveManifest(manifest);
+  const recipes = new StorageKeyRecipeResolver(manifest).resolve();
 
-  const plans = generatePlans(resolutions);
+  const plans = await generatePlans(recipes);
 
   return plans.join('\n');
 }
 
-interface Resolution {
-}
 
-function generatePlans(resolutions: Resolution[]): string[] {
+async function generatePlans(resolutions: AsyncIterator<Recipe>): Promise<string[]> {
   return [''];
 }
 
-export async function resolveManifest(manifest: Manifest): Promise<Resolution[]> {
-  const recipeResolver = new RecipeResolver(manifest);
-  recipeResolver.resolve();
 
-  return [{}];
-}
-
-class RecipeResolver {
-  readonly longRunningRecipes: Recipe[];
+export class StorageKeyRecipeResolver {
   constructor(private manifest: Manifest) {
-    this.longRunningRecipes = manifest.allRecipes.filter(r => this.isLongRunning(r.triggers));
   }
 
-  resolve() {
-    for (const r of this.longRunningRecipes) {
-      r.normalize();
-      this._resolve(r);
+  /**
+   * 1. Resolves all recipes  with RecipeResolver, clone everything
+   * Later: If create handles are not tied to arc (volatile) and Don't have IDs, log a warning
+   * 2. assign keys, bikeshed name
+   * 3. normalize all recipes again
+   * 4. assert all are still resolved
+   * Ephemeral Arcs can map to long running.
+   */
+  // TODO(alxr) if create handles are not tied to arc (volatile) and don't have IDs, log a warning
+  async* resolve(): AsyncIterator<Recipe> {
+    for (const r of this.manifest.allRecipes) {
+      const arcId = IdGenerator.newSession().newArcId(this.getArcId(r.triggers));
+      if (arcId === null) {
+        throw Error(`ArcId is invalid.`);
+      }
+
+      const arc = new Arc({id: arcId, slotComposer: new SlotComposer(), loader: new Loader(), context: this.manifest});
+      const resolver = new CapabilitiesResolver({arcId});
+      this.createDummyStores(r, resolver);
+
+      const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
+      const rPrime = await (new RecipeResolver(arc).resolve(r, opts));
+      if (!rPrime) {
+        throw Error(`Recipe ${r.name} failed to resolve:\n` +
+                    [...opts.errors.values()].join('\n'))
+      }
+      this.assignStorageKeys(rPrime, resolver); // or resolve mapping
+      rPrime.normalize();
+      if (!rPrime.isResolved()) {
+        throw Error(`Recipe ${rPrime.name} did not properly resolve!`);
+      }
+      yield rPrime;
     }
   }
 
-  _resolve(recipe: Recipe) {
-    const arcId = IdGenerator.newSession().newArcId(this.getArcId(recipe.triggers));
-    if (arcId === null) return;
-
-    const resolver = new CapabilitiesResolver({arcId});
-
-    this.createKeysForCreatedHandles(recipe, resolver);
-    this.matchKeysForMappedHandles(recipe);
-
+  /** Create storage keys for create handles, matches them to map handles. */
+  assignStorageKeys(recipe: Recipe, resolver: CapabilitiesResolver) {
+    this.createKeysForCreateHandles(recipe, resolver);
+    this.matchKeysToHandles(recipe);
   }
 
 
@@ -99,15 +119,23 @@ class RecipeResolver {
   /**
    * Assigns storage keys to all create handles.
    *
-   * TODO(alxr) confirm with Maria how to configure storage keys correctly
-   *
    * @param recipe Should be a recipe for a long-running Arc
    * @param resolver CapabilitiesResolver should be associated with long-running-arc's ArcId.
    */
-  createKeysForCreatedHandles(recipe: Recipe, resolver: CapabilitiesResolver) {
+  createKeysForCreateHandles(recipe: Recipe, resolver: CapabilitiesResolver) {
     recipe.handles
       .filter(h => h.fate === 'create')
       .forEach(ch => ch.storageKey = resolver.createStorageKey(ch.capabilities));
+  }
+
+  createDummyStores(recipe: Recipe, resolver: CapabilitiesResolver) {
+    recipe.handles
+      .filter(h => h.fate === 'create')
+      .forEach(ch => {
+        const storageKey = resolver.createStorageKey(ch.capabilities);
+        const store = new Store({storageKey, exists: Exists.ShouldCreate, type: ch.type, id: ch.id});
+        this.manifest.registerStore(store, ch.tags);
+      });
   }
 
   /**
@@ -125,14 +153,13 @@ class RecipeResolver {
    * @throws when handle is mapped to a handle from an ephemeral recipe.
    * @param recipe
    */
-  matchKeysForMappedHandles(recipe: Recipe) {
+  // TODO: create handles need IDs if they are being mapped
+  matchKeysToHandles(recipe: Recipe) {
     recipe.handles
-      .filter(h => h.fate == 'map')
+      .filter(h => h.fate === 'map' || h.fate === 'copy')
       .forEach(h => {
-        let matches = this.manifest.findHandlesByType(h.type, {tags: h.tags, fates: ['create'], subtype: true});
-        if (h.id) {
-          matches = matches.filter(matchHandle => matchHandle.id === h.id);
-        }
+        const matches = this.manifest.findHandlesById(h.id)
+          .filter(h => h.fate === 'create');
 
         if (matches.length !== 1) {
           const extra = matches.length > 1 ? 'Ambiguous handles' : 'No matching handles found';
