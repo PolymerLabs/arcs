@@ -99,6 +99,11 @@ expect open class DomParticleBase<Props, State> constructor(
      * Should be overridden by particle developer.
      */
     open fun renderState(props: Props, state: State): State
+
+    /**
+     * Called when the particle is first created. This will not be called for subsequent reinstantiations.
+     */
+    open fun onCreate()
 }
 
 /**

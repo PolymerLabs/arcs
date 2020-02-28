@@ -170,6 +170,20 @@ recipe UnicodeTest
     res: writes h3
 
 // -----------------------------------------------------------------------------------------------
+schema FooHandle
+  txt: Text
+
+particle OnCreateTest in '$module.wasm'
+  root: consumes Slot
+  fooHandle: reads writes FooHandle
+
+recipe OnCreateTest
+  s1: slot 'rootslotid-root'
+  OnCreateTest
+    root: consumes s1
+    fooHandle: reads writes h3
+
+// -----------------------------------------------------------------------------------------------
 
 schema Slice
   num: Number
