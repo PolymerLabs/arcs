@@ -99,18 +99,6 @@ class AndroidAllocatorTest : AllocatorTest() {
 
         val activityJob = launch {
             scenario.onActivity { activity ->
-                TestExternalArcHostService.handleManager = EntityHandleManager(
-                    AndroidHandleManager(
-                        lifecycle = activity.lifecycle,
-                        context = activity,
-                        connectionFactory = DefaultConnectionFactory(
-                            activity,
-                            TestBindingDelegate(context)
-                        ),
-                        coroutineContext = this.coroutineContext
-                    )
-                )
-
                 runBlocking {
                     this@runBlockingTest.testBody()
                 }

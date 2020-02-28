@@ -1,17 +1,27 @@
 package arcs.android.host
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
 import arcs.android.sdk.host.ArcHostHelper
+import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.TestingHost
 import arcs.core.host.EntityHandleManager
 import arcs.sdk.Particle
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import kotlinx.coroutines.Dispatchers
 import kotlin.reflect.KClass
 
-open class TestExternalArcHostService(val arcHost: TestingHost) : Service() {
+open class TestExternalArcHostService(val arcHost: TestingAndroidHost) : Service() {
     val arcHostHelper: ArcHostHelper by lazy {
         ArcHostHelper(this, arcHost)
+    }
+
+    init {
+        arcHost.serviceContext = this
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -22,11 +32,25 @@ open class TestExternalArcHostService(val arcHost: TestingHost) : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    open class TestingAndroidHost(vararg particles: KClass<out Particle>) : TestingHost(*particles) {
-        override fun entityHandleManager() = handleManager
+    class FakeLifecycle : Lifecycle() {
+        override fun addObserver(p0: LifecycleObserver) = Unit
+        override fun removeObserver(p0: LifecycleObserver) = Unit
+        override fun getCurrentState(): State = State.CREATED
     }
 
-    companion object {
-        lateinit var handleManager: EntityHandleManager
+    open class TestingAndroidHost(vararg particles: KClass<out Particle>) : TestingHost(*particles) {
+        lateinit var serviceContext: Context
+
+        override fun entityHandleManager() = EntityHandleManager(
+            AndroidHandleManager(
+                serviceContext,
+                FakeLifecycle(),
+                Dispatchers.Default,
+                DefaultConnectionFactory(
+                    serviceContext,
+                    TestBindingDelegate(serviceContext)
+                )
+            )
+        )
     }
 }
