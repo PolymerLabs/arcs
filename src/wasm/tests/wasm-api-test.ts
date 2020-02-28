@@ -536,10 +536,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       const {arc, stores} = await setup('OnCreateTest');
       const fooHandle = await singletonHandleForTest(arc, stores.get('fooHandle'));
-      const outHandle = await singletonHandleForTest(arc, stores.get('outHandle'));
 
       assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Created!'});
-      assert.deepStrictEqual(await outHandle.fetch(), {txt: 'koalas'})
 
       const serialization = await arc.serialize();
       arc.dispose();

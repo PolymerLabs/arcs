@@ -101,7 +101,7 @@ expect open class DomParticleBase<Props, State> constructor(
     open fun renderState(props: Props, state: State): State
 
     /**
-     * Called when particle is created
+     * Called when the particle is first created. This will not be called for subsequent reinstantiations.
      */
     open fun onCreate()
 }
