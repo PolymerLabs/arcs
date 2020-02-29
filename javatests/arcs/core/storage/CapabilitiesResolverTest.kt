@@ -131,25 +131,37 @@ class CapabilitiesResolverTest {
         val ramdiskKey =
             resolver1.createStorageKey(Capabilities.TiedToRuntime, thingSchema, handleId)
         verifyStorageKey(ramdiskKey, RamDiskStorageKey::class.java)
-        assertThat(ramdiskKey).isEqualTo(resolver1.createStorageKey(
-            Capabilities.TiedToRuntime,
-            thingSchema,
-            handleId
-        ))
+        assertThat(ramdiskKey).isEqualTo(
+            resolver1.createStorageKey(
+                Capabilities.TiedToRuntime,
+                thingSchema,
+                handleId
+            )
+        )
 
         val persistentKey =
             resolver1.createStorageKey(Capabilities.Persistent, thingSchema, handleId)
         verifyStorageKey(persistentKey, DatabaseStorageKey::class.java)
-        assertThat(persistentKey)
-            .isEqualTo(resolver1.createStorageKey(Capabilities.Persistent, thingSchema, handleId))
+        assertThat(persistentKey).isEqualTo(
+            resolver1.createStorageKey(
+                Capabilities.Persistent,
+                thingSchema,
+                handleId
+            )
+        )
 
         CapabilitiesResolver.reset()
         val resolver2 = CapabilitiesResolver(options)
         val volatileKey =
             resolver2.createStorageKey(Capabilities.TiedToArc, thingSchema, handleId)
         verifyStorageKey(volatileKey, VolatileStorageKey::class.java)
-        assertThat(volatileKey)
-            .isEqualTo(resolver2.createStorageKey(Capabilities.TiedToArc, thingSchema, handleId))
+        assertThat(volatileKey).isEqualTo(
+            resolver2.createStorageKey(
+                Capabilities.TiedToArc,
+                thingSchema,
+                handleId
+            )
+        )
         assertThrows(IllegalArgumentException::class) {
             resolver2.createStorageKey(Capabilities.TiedToRuntime, thingSchema, handleId)
         }
