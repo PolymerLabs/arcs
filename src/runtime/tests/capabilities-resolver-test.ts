@@ -13,6 +13,7 @@ import {CapabilitiesResolver, StorageKeyOptions} from '../capabilities-resolver.
 import {Capabilities} from '../capabilities.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
+import {DatabaseStorageKey, PersistentDatabaseStorageKey} from '../storageNG/database-storage-key.js';
 import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {Runtime} from '../runtime.js';
@@ -44,6 +45,16 @@ describe('Capabilities Resolver', () => {
     const resolver4 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     assert.isTrue(resolver4.createStorageKey(Capabilities.tiedToArc) instanceof VolatileStorageKey);
     assert.throws(() => resolver4.createStorageKey(Capabilities.tiedToRuntime));
+  });
+
+  it('registers and creates database key', () => {
+    const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    assert.throws(() => resolver1.createStorageKey(Capabilities.persistent));
+    DatabaseStorageKey.register();
+
+    const resolver2 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    const key = resolver2.createStorageKey(Capabilities.persistent);
+    assert.instanceOf(key, PersistentDatabaseStorageKey);
   });
 
   it('fails for unsupported capabilities', () => {
