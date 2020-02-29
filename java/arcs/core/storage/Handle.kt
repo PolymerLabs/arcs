@@ -150,7 +150,7 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 singletons.values.forEach { it.injectDereferencer() }
                 collections.values.forEach { it.injectDereferencer() }
             }
-            is Collection<*> -> forEach { it.injectDereferencer() }
+            is Set<*> -> this.forEach { it.injectDereferencer() }
         }
         return this
     }
