@@ -106,7 +106,7 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /** Read value from the backing [StorageProxy]. */
     protected suspend fun value(): T {
         log.debug { "Fetching value." }
-        return storageProxy.getParticleView().injectActivationFactory()
+        return storageProxy.getParticleView().injectDereferencer()
     }
 
     /** Helper that subclasses can use to increment their version in a [VersionMap]. */
@@ -140,18 +140,17 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     /**
-     * Recursively inject the [referenceActivationFactory] into any [Reference]s in the receiving
-     * object.
+     * Recursively inject the [Dereferencer] into any [Reference]s in the receiving object.
      */
     @Suppress("UNCHECKED_CAST")
-    private fun <T> T.injectActivationFactory(): T {
+    private fun <T> T.injectDereferencer(): T {
         when (this) {
-            is Reference -> this.dereferencer = dereferencer
+            is Reference -> this.dereferencer = this@Handle.dereferencer
             is RawEntity -> {
-                singletons.values.forEach { it.injectActivationFactory() }
-                collections.values.forEach { it.injectActivationFactory() }
+                singletons.values.forEach { it.injectDereferencer() }
+                collections.values.forEach { it.injectDereferencer() }
             }
-            is Collection<*> -> forEach { it.injectActivationFactory() }
+            is Collection<*> -> forEach { it.injectDereferencer() }
         }
         return this
     }
