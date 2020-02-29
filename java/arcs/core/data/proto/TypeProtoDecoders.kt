@@ -31,3 +31,19 @@ fun PrimitiveTypeProto.decode(): PrimitiveType =
  * Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [FieldType] instance.
  */
 fun PrimitiveTypeProto.decodeAsFieldType(): FieldType.Primitive = FieldType.Primitive(decode())
+
+/**
+ * Converts a [TypeProto] protobuf instance into a Kotlin [FieldType] instance.
+ *
+ * @throws [IllegalArgumentexception] if the type cannot be converted to [FieldType].
+ */
+fun TypeProto.decodeAsFieldType(): FieldType =
+    when (getDataCase()) {
+        TypeProto.DataCase.PRIMITIVE -> getPrimitive().decodeAsFieldType()
+        TypeProto.DataCase.DATA_NOT_SET ->
+            throw IllegalArgumentException("Unknown data field in TypeProto.")
+        else ->
+            throw IllegalArgumentException(
+                "Cannot decode a ${getDataCase().name} type to a [FieldType].")
+    }
+
