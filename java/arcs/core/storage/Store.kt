@@ -12,11 +12,28 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtOperation
+import arcs.core.data.RawEntity
 import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.type.Type
+
+/**
+ * An interface defining a method that will create a particular [ActivateStore] instance
+ * based on provided [StoreOptions] of the same type.
+ *
+ * An implementation of this interface should be passed to the `activate` method
+ * of an inactive [Store].
+ */
+interface ActivationFactory<Data : CrdtData, Op : CrdtOperation, T> {
+    suspend operator fun invoke(options: StoreOptions<Data, Op, T>): ActiveStore<Data, Op, T>
+}
+
+/** Type-alias for an [ActivationFactory] to use when de-referencing [Reference]s. */
+typealias EntityActivationFactory =
+    ActivationFactory<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>
 
 /**
  * A representation of a store.

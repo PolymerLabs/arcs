@@ -13,6 +13,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 import kotlin.reflect.KClass
 
@@ -53,3 +54,26 @@ inline fun <reified Data, reified Op, reified ConsumerData> StoreConstructor(
     noinline constructor: suspend (StoreOptions<*, *, *>, KClass<*>) -> ActiveStore<*, *, *>
 ): StoreConstructor where Data : CrdtData, Op : CrdtOperation =
     StoreConstructor(Data::class, Op::class, ConsumerData::class, constructor)
+
+/**
+ * Modes for Storage.
+ *
+ * TODO: need actual, helpful kdoc for these.
+ */
+enum class StorageMode {
+    Direct,
+    Backing,
+    ReferenceMode,
+}
+
+/** Wrapper for options which will be used to construct a [Store]. */
+data class StoreOptions<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
+    val storageKey: StorageKey,
+    val type: Type,
+    val mode: StorageMode =
+        if (storageKey is ReferenceModeStorageKey) StorageMode.ReferenceMode
+        else StorageMode.Direct,
+    val baseStore: IStore<Data, Op, ConsumerData>? = null,
+    val versionToken: String? = null,
+    val model: Data? = null
+)
