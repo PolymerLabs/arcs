@@ -44,6 +44,7 @@ class ReferenceTest {
     val log = LogRule()
     private val collectionKey = RamDiskStorageKey("friends")
     private val backingKey = RamDiskStorageKey("people")
+    private val dereferencer = RawEntityDereferencer(Person.SCHEMA)
     /* ktlint-disable: max-line-length */
     private lateinit var directCollection: ActiveStore<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>, Set<Reference>>
     /* ktlint-enable: max-line-length */
@@ -111,9 +112,7 @@ class ReferenceTest {
 
         collectionItems.values.values.forEach {
             val ref = it.value
-            ref.dereferencer = RawEntityDereferencer(
-                Person.SCHEMA
-            )
+            ref.dereferencer = dereferencer
             val expectedPerson = expectedPeople[ref.id] ?: error("Bad reference: $ref")
             val dereferenced = ref.dereference(coroutineContext)
             val actualPerson = requireNotNull(dereferenced).toPerson()

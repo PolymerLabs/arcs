@@ -37,7 +37,7 @@ data class Reference(
         requireNotNull(dereferencer).dereference(this, coroutineContext)
 }
 
-/** Defines an object capable of de-referencing a [Reference] into a [RawEntity]. */
+/** Defines an object capable of de-referencing a [Reference]. */
 interface Dereferencer<T> {
     suspend fun dereference(
         reference: Reference,

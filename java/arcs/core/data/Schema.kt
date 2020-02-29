@@ -13,7 +13,6 @@ package arcs.core.data
 
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.VersionMap
-import arcs.core.data.Schema.Companion.hashCode
 import arcs.core.type.Type
 
 data class Schema(
@@ -50,8 +49,6 @@ data class Schema(
     }
 
     companion object {
-        const val HASH_DEALERS_CHOICE = "0"
-
         fun fromLiteral(@Suppress("UNUSED_PARAMETER") literal: arcs.core.common.Literal): Schema {
             TODO("Implement me.")
         }
