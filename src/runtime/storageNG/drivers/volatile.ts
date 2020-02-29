@@ -259,4 +259,4 @@ StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKe
 CapabilitiesResolver.registerDefaultKeyCreator(
     VolatileStorageKey.protocol,
     Capabilities.tiedToArc,
-    ({arcId}: StorageKeyOptions) => new VolatileStorageKey(arcId, '', ''));
+    (options: StorageKeyOptions) => new VolatileStorageKey(options.arcId, options.unique(), ''));
