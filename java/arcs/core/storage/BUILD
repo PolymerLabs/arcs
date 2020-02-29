@@ -61,6 +61,7 @@ arcs_kt_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
