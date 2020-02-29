@@ -40,6 +40,8 @@ fun PrimitiveTypeProto.decodeAsFieldType(): FieldType.Primitive = FieldType.Prim
 fun TypeProto.decodeAsFieldType(): FieldType =
     when (getDataCase()) {
         TypeProto.DataCase.PRIMITIVE -> getPrimitive().decodeAsFieldType()
+        // TODO: Handle FieldType.EntityRef. It is not clear how it is
+        // represented in the proto.
         TypeProto.DataCase.DATA_NOT_SET ->
             throw IllegalArgumentException("Unknown data field in TypeProto.")
         else ->
