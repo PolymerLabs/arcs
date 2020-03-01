@@ -160,7 +160,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
             } else {
                 consecutiveFailureCount = 0
                 // Instantiation succeeded, but we move to Created or Instantiated state based on past
-                if (particleState in succeededStates) {
+                if (particleState in alreadySucceededOnCreateStates) {
                     particleState = ParticleState.Created
                 } else {
                     particleState = ParticleState.Instantiated
@@ -194,7 +194,9 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
             }
         }
 
-        context.arcState = ArcState.Running
+        if (context.arcState != ArcState.Error) {
+            context.arcState = ArcState.Running
+        }
     }
 
     /**
@@ -214,7 +216,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
             }
         }
 
-        // Should only happen if host crashes and restarts
+        // Should only happen if host crashes, restarts, and last persisted state was Running
         if (particleContext.particleState == ParticleState.Started) {
             particleContext.particleState == ParticleState.Stopped
         }
@@ -241,13 +243,19 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     }
 
     /** States which are not safe to call onCreate() from, startup succeeded at least once. */
-    private val succeededStates = setOf(
+    private val alreadySucceededOnCreateStates = setOf(
         ParticleState.Created,
         ParticleState.Started,
         ParticleState.Stopped,
         ParticleState.Failed
     )
 
+    /**
+     * Move to [ParticleState.Failed] if this particle had previously successfully invoked
+     * [Particle.onCreate()], else move to [ParticleState.Failed_NeverStarted]. Increments
+     * consecutive failure count, and if it reaches maximum, transitions to
+     * [ParticleState.MaxFailed].
+     */
     private fun markParticleAsFailed(particleContext: ParticleContext) {
         particleContext.run {
             if (particleState == ParticleState.MaxFailed) {
@@ -255,7 +263,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
             }
 
             particleState =
-                if (particleState in succeededStates) ParticleState.Failed
+                if (particleState in alreadySucceededOnCreateStates) ParticleState.Failed
                 else ParticleState.Failed_NeverStarted
             consecutiveFailureCount++
 
