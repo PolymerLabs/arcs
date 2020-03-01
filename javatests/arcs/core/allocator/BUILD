@@ -33,8 +33,8 @@ arcs_kt_jvm_test_suite(
 
 arcs_kt_jvm_library(
     name = "util",
-    srcs = ["TestingHost.kt"],
     testonly = 1,
+    srcs = ["TestingHost.kt"],
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/host",

@@ -39,6 +39,7 @@ arcs_kt_jvm_library(
         ["*.kt"],
         exclude = ["*Test.kt"],
     ),
+    testonly = 1,
     deps = [
         ":schemas",
         "//java/arcs/core/data",
