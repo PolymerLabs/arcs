@@ -75,8 +75,7 @@ kt_android_library(
         [
             "*Service.kt",
             "*Activity.kt",
-            "TestBindingDelegate.kt",
-        ],
+        ] + ["TestBindingDelegate.kt"],
     ),
     manifest = "AndroidManifest.xml",
     deps = [
