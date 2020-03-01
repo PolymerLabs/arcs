@@ -57,21 +57,23 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     }
 
     /** Returns a list of all [ParticleIdentifier]s this [ArcHost] can instantiate. */
-    override suspend fun registeredParticles(): List<ParticleIdentifier> = particleConstructors.keys.toList()
+    override suspend fun registeredParticles(): List<ParticleIdentifier> =
+        particleConstructors.keys.toList()
 
     // VisibleForTesting
     protected fun getArcHostContext(arcId: String) = runningArcs[arcId]
 
     /** Subclasses may override this to load persistent context state. */
-    open protected suspend fun lookupOrCreateArcHostContext(partition: Plan.Partition): ArcHostContext =
-        runningArcs[partition.arcId] ?: ArcHostContext()
+    protected open suspend fun lookupOrCreateArcHostContext(
+        partition: Plan.Partition
+    ): ArcHostContext = runningArcs[partition.arcId] ?: ArcHostContext()
 
     /**
      * Called to persist [ArcHostContext] after [context] for [arcId] has been modified.
      *
      * Subclasses may override this to store the [context] in a more persistent, durable location.
      */
-    open protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
+    protected open suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
         runningArcs[arcId] = context
     }
 
@@ -119,7 +121,10 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * all of the [Handle]s connected to it, and returns a [ParticleContext] indicating the
      * current lifecycle state of the particle.
      */
-    private suspend fun startParticle(spec: Plan.Particle, context: ArcHostContext): ParticleContext {
+    private suspend fun startParticle(
+        spec: Plan.Particle,
+        context: ArcHostContext
+    ): ParticleContext {
         val particle = instantiateParticle(ParticleIdentifier.from(spec.location))
 
         var particleContext = lookupParticleContextOrCreate(
