@@ -11,24 +11,18 @@
 
 package arcs.android.host
 
-import android.app.Application
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
-import androidx.test.core.app.ActivityScenario.launch
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.sdk.host.toComponentName
-import arcs.android.storage.handle.AndroidHandleManager
 import arcs.android.storage.handle.R
 import arcs.android.storage.handle.TestActivity
-import arcs.core.allocator.AllocatorTest
+import arcs.core.allocator.AllocatorTestBase
 import arcs.core.data.Capabilities
-import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -42,13 +36,13 @@ import org.robolectric.Robolectric
 import kotlin.coroutines.CoroutineContext
 
 /**
- * These tests are the same as [AllocatorTest] but run with Android Services,
+ * These tests are the same as [AllocatorTestBase] but run with Android Services,
  * the real [ServiceStore], and a ramdisk.
  *
  */
 @RunWith(AndroidJUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
-open class AndroidAllocatorTest : AllocatorTest() {
+open class AndroidAllocatorTest : AllocatorTestBase() {
 
     protected lateinit var context: Context
     private lateinit var readingService: TestReadingExternalHostService

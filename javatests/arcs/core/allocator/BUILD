@@ -13,34 +13,37 @@ arcs_kt_jvm_test_suite(
     srcs = glob(["*Test.kt"]),
     package = "arcs.core.allocator",
     deps = [
-        ":util",
-        "//java/arcs/core/allocator",  # buildcleaner: keep
-        "//java/arcs/core/common",
-        "//java/arcs/core/data",
-        "//java/arcs/core/host",
-        "//java/arcs/core/storage/driver",
-        "//java/arcs/core/testutil",
-        "//java/arcs/jvm/host",
-        "//java/arcs/sdk",
-        "//javatests/arcs/core/host",
-        "//javatests/arcs/core/host:particle",
+        ":allocator-test-util",
         "//third_party/java/junit:junit-android",
-        "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
 
 arcs_kt_jvm_library(
-    name = "util",
+    name = "allocator-test-util",
     testonly = 1,
-    srcs = ["TestingHost.kt"],
+    srcs = [
+        "AllocatorTestBase.kt",
+        "TestingHost.kt",
+    ],
     deps = [
+        "//java/arcs/core/allocator",  # buildcleaner: keep
+        "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
+        "//java/arcs/core/storage",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/storage/driver",
+        "//java/arcs/core/testutil",
+        "//java/arcs/core/type",
+        "//java/arcs/core/util",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
+        "//javatests/arcs/core/host:particle",
+        "//third_party/java/junit:junit-android",
+        "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )

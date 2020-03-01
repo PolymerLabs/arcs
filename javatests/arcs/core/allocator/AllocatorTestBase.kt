@@ -39,7 +39,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 @RunWith(JUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
-open class AllocatorTest {
+open class AllocatorTestBase {
     /**
      * Recipe hand translated from 'person.arcs'
      */
