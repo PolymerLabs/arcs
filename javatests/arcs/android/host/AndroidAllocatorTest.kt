@@ -43,15 +43,14 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  * These tests are the same as [AllocatorTest] but run with Android Services,
- * the real [ServiceStore], and persistent database.
+ * the real [ServiceStore], and a ramdisk.
  *
- * TODO: Use [Capabilities.Persistent] on Integration test subclass with Emulator/Device?
  */
 @RunWith(AndroidJUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
-class AndroidAllocatorTest : AllocatorTest() {
+open class AndroidAllocatorTest : AllocatorTest() {
 
-    private lateinit var context: Context
+    protected lateinit var context: Context
     private lateinit var readingService: TestReadingExternalHostService
     private lateinit var writingService: TestWritingExternalHostService
 

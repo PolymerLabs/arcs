@@ -1,0 +1,51 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+package arcs.android.host
+
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
+import arcs.core.data.Capabilities
+import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.database.DatabaseManager
+import arcs.core.storage.driver.DatabaseDriverProvider
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Before
+import org.junit.runner.RunWith
+
+/**
+ * These tests are the same as [AndroidAllocatorTest] but run with [AndroidSqliteDatabaseManager]
+ * and [Capabilities.Persistent].
+ */
+@RunWith(AndroidJUnit4::class)
+@UseExperimental(ExperimentalCoroutinesApi::class)
+class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
+
+    override val storageCapability = Capabilities.Persistent
+    private lateinit var manager: DatabaseManager
+
+    @Before
+    override fun setUp() = runBlocking {
+        val returnVal = super.setUp()
+        manager = AndroidSqliteDatabaseManager(context)
+        val schemaMap = mapOf(personSchema.hash to personSchema)
+        DatabaseDriverProvider.configure(manager, schemaMap::get)
+        returnVal
+    }
+
+    @After
+    fun tearDown() {
+        // Workaround for this needing to be setup each time between tests.
+        CapabilitiesResolver.registeredCreators.remove("db")
+    }
+}

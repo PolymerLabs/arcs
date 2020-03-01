@@ -21,6 +21,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage",
+        "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/handle",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",

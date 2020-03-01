@@ -51,7 +51,7 @@ open class AllocatorTest {
     private lateinit var writePersonParticle: Plan.Particle
     private lateinit var readPersonParticle: Plan.Particle
     private lateinit var writeAndReadPersonPlan: Plan
-    private val personSchema = Schema(
+    protected val personSchema = Schema(
         listOf(SchemaName("Person")),
         SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
         "42"
