@@ -147,7 +147,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     const queryArgType: Primitive = refinement.getQueryParams().get('?');
     switch (queryArgType) {
       case 'Text': return 'String';
-      case 'Number': return 'Int';
+      case 'Number': return 'Double';
       case 'Boolean': return 'Boolean';
       default:
         throw new Error(`Unsupported query argument type: ${queryArgType}`);
