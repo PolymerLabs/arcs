@@ -18,8 +18,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.sdk.host.toComponentName
-import arcs.android.storage.handle.R
-import arcs.android.storage.handle.TestActivity
 import arcs.core.allocator.AllocatorTestBase
 import arcs.core.data.Capabilities
 import arcs.core.host.HostRegistry
