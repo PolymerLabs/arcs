@@ -144,7 +144,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     if (!refinement) {
       return null;
     }
-    const queryArgType: Primitive = refinement.getQueryNames().get('?');
+    const queryArgType: Primitive = refinement.getQueryParams().get('?');
     switch (queryArgType) {
       case 'Text': return 'String';
       case 'Number': return 'Int';

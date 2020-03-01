@@ -106,8 +106,8 @@ export class Refinement {
     return this.expression.getFieldNames();
   }
 
-  getQueryNames(): Map<string, Primitive> {
-    return this.expression.getQueryNames();
+  getQueryParams(): Map<string, Primitive> {
+    return this.expression.getQueryParams();
   }
 
   getTextPrimitives(): Set<string> {
@@ -173,7 +173,7 @@ export class Refinement {
 
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.applyOperator(data);
-    if (res === null && this.expression.getQueryNames().has('?')) {
+    if (res === null && this.expression.getQueryParams().has('?')) {
       return true;
     }
     if (typeof res !== 'boolean') {
@@ -248,7 +248,7 @@ abstract class RefinementExpression {
     return new Set<string>();
   }
 
-  getQueryNames(): Map<string, Primitive> {
+  getQueryParams(): Map<string, Primitive> {
     return new Map<string, Primitive>();
   }
 
@@ -447,9 +447,9 @@ export class BinaryExpression extends RefinementExpression {
     return new Set<string>([...fn1, ...fn2]);
   }
 
-  getQueryNames(): Map<string, Primitive> {
-    const fn1 = this.leftExpr.getQueryNames();
-    const fn2 = this.rightExpr.getQueryNames();
+  getQueryParams(): Map<string, Primitive> {
+    const fn1 = this.leftExpr.getQueryParams();
+    const fn2 = this.rightExpr.getQueryParams();
     return new Map<string, Primitive>([...fn1, ...fn2]);
   }
 
@@ -550,8 +550,8 @@ export class UnaryExpression extends RefinementExpression {
     return this.expr.getFieldNames();
   }
 
-  getQueryNames(): Map<string, Primitive> {
-    return this.expr.getQueryNames();
+  getQueryParams(): Map<string, Primitive> {
+    return this.expr.getQueryParams();
   }
 
   getTextPrimitives(): Set<string> {
@@ -663,7 +663,7 @@ export class QueryArgumentPrimitive extends RefinementExpression {
     return null;
   }
 
-  getQueryNames(): Map<string, Primitive> {
+  getQueryParams(): Map<string, Primitive> {
     return new Map<string, Primitive>([[this.value, this.evalType]]);
   }
 }
