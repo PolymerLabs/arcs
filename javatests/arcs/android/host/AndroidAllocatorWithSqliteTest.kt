@@ -15,7 +15,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.data.Capabilities
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -32,20 +31,22 @@ import org.junit.runner.RunWith
 class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
 
     override val storageCapability = Capabilities.Persistent
-    private lateinit var manager: DatabaseManager
+    private lateinit var manager: AndroidSqliteDatabaseManager
 
     @Before
     override fun setUp() = runBlocking {
-        val returnVal = super.setUp()
+        super.setUp()
         manager = AndroidSqliteDatabaseManager(context)
         val schemaMap = mapOf(personSchema.hash to personSchema)
         DatabaseDriverProvider.configure(manager, schemaMap::get)
-        returnVal
+        Unit
     }
 
     @After
     fun tearDown() {
         // Workaround for this needing to be setup each time between tests.
         CapabilitiesResolver.registeredCreators.remove("db")
+        // TODO: this leaks to mutex/lock issues
+        // manager.resetAll()
     }
 }

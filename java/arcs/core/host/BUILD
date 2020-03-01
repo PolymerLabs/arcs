@@ -18,6 +18,7 @@ arcs_kt_library(
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/util",
+        "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
