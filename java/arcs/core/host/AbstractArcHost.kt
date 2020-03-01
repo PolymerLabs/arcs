@@ -13,6 +13,8 @@ package arcs.core.host
 import arcs.core.data.CollectionType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
+import arcs.core.storage.api.Entity
+import arcs.core.storage.api.EntitySpec
 import arcs.core.storage.api.Handle
 import arcs.core.storage.handle.HandleManager
 import arcs.core.util.Time
@@ -20,8 +22,17 @@ import arcs.core.util.Time
 typealias ParticleConstructor = suspend () -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
+/** Maximum number of times a particle may fail to be started before giving up. */
+const val MAX_CONSECUTIVE_FAILURES = 5
+
 /**
  * Base helper class for [ArcHost] implementations.
+ *
+ * Subclasses of [AbstractArcHost] may provide  platform dependent functionality such as for
+ * (JS, Android, WASM). Another type of [ArcHost] are those specialized for different
+ * [Particle] execution environments within a platform such as isolatable [ArcHosts] (dev-mode
+ * and prod-mode), ArcHosts embedded into Android Services, and remote ArcHosts which run on
+ * other devices.
  *
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
@@ -35,14 +46,17 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
     }
 
+    /** Used by subclasses to register particles dynamically after [ArcHost] construction */
     protected fun registerParticle(particle: ParticleIdentifier, constructor: ParticleConstructor) {
         particleConstructors.put(particle, constructor)
     }
 
+    /** Used by subclasses to unregister particles dynamically after [ArcHost] construction. */
     protected fun unregisterParticle(particle: ParticleIdentifier) {
         particleConstructors.remove(particle)
     }
 
+    /** Returns a list of all [ParticleIdentifier]s this [ArcHost] can instantiate. */
     override suspend fun registeredParticles(): List<ParticleIdentifier> = particleConstructors.keys.toList()
 
     // VisibleForTesting
@@ -56,7 +70,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Called to persist [ArcHostContext] after [context] for [arcId] has been modified.
      *
      * Subclasses may override this to store the [context] in a more persistent, durable location.
-     **/
+     */
     open protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
         runningArcs[arcId] = context
     }
@@ -74,16 +88,31 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
             return
         }
 
-        for (particleSpec in partition.particles) {
+        partition.particles.forEach { particleSpec ->
             context.particles[particleSpec] = startParticle(particleSpec, context)
         }
 
+        // Call lifecycle methods given current state.
         performLifecycleForContext(context)
+
+        // If the platform supports resurrection, request it for this Arc's StorageKeys
         maybeRequestResurrection(context)
 
-        context.arcState = ArcState.Running
         updateArcHostContext(partition.arcId, context)
     }
+
+    // Used for FailureParticle
+    private object DummyHandleHolder : HandleHolder {
+        override val handles: Map<String, Handle> = mutableMapOf()
+        override val entitySpecs: Map<String, EntitySpec<out Entity>> = mutableMapOf()
+        override fun clear() = Unit
+    }
+
+    /** A placeholder no-op [Particle] for failures of instantiateParticle. */
+    private class FailureParticle(
+        val error: String,
+        override val handles: HandleHolder = DummyHandleHolder
+    ) : Particle
 
     /**
      * Instantiates a [Particle] by looking up an associated [ParticleConstructor], allocates
@@ -93,18 +122,51 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     private suspend fun startParticle(spec: Plan.Particle, context: ArcHostContext): ParticleContext {
         val particle = instantiateParticle(ParticleIdentifier.from(spec.location))
 
-        val particleContext = lookupParticleContextOrCreate(
+        var particleContext = lookupParticleContextOrCreate(
             context,
             spec,
             particle
         )
 
-        for (handleSpec in spec.handles) {
-            val handle = createHandle(handleSpec.key, handleSpec.value, particle.handles)
-            particleContext.handles[handleSpec.key] = handle
+        checkForParticleFailure(particleContext)
+
+        // Don't try anymore
+        if (particleContext.particleState == ParticleState.MaxFailed) {
+            return particleContext
+        }
+
+        spec.handles.forEach { handleSpec ->
+            try {
+                val handle = createHandle(handleSpec.key, handleSpec.value, particle.handles)
+                particleContext.handles[handleSpec.key] = handle
+            } catch (e: Exception) {
+                markParticleAsFailed(particleContext)
+                return@forEach
+            }
         }
 
         return particleContext
+    }
+
+    /**
+     * If [Particle] is not [FailureParticle] then instantiation succeeded and we can
+     * move back to a previous success state such as Instantiated or Created, otherwise
+     * move to a failure state.
+     */
+    private fun checkForParticleFailure(particleContext: ParticleContext) {
+        particleContext.run {
+            if (particle is FailureParticle) {
+                markParticleAsFailed(particleContext)
+            } else {
+                consecutiveFailureCount = 0
+                // Instantiation succeeded, but we move to Created or Instantiated state based on past
+                if (particleState in succeededStates) {
+                    particleState = ParticleState.Created
+                } else {
+                    particleState = ParticleState.Instantiated
+                }
+            }
+        }
     }
 
     /**
@@ -123,9 +185,16 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * [Particle]s it may refer to, and may alter the current [ArcState].
      */
     suspend fun performLifecycleForContext(context: ArcHostContext) {
-        for (particleContext in context.particles.values) {
+        context.particles.values.forEach { particleContext ->
             performParticleLifecycle(particleContext)
+            if (particleContext.particleState == ParticleState.Failed ||
+                particleContext.particleState == ParticleState.MaxFailed) {
+                context.arcState = ArcState.Error
+                return@forEach
+            }
         }
+
+        context.arcState = ArcState.Running
     }
 
     /**
@@ -135,14 +204,19 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      */
     suspend fun performParticleLifecycle(particleContext: ParticleContext) {
         if (particleContext.particleState == ParticleState.Instantiated) {
-            particleContext.particle.onCreate()
-            particleContext.particleState = ParticleState.Created
+            try {
+                // onCreate() must succeed, else we consider the particle startup failed
+                particleContext.particle.onCreate()
+                particleContext.particleState = ParticleState.Created
+            } catch (e: Exception) {
+                markParticleAsFailed(particleContext)
+                return
+            }
         }
 
-        // TODO: verify this won't be true if the host crashes
+        // Should only happen if host crashes and restarts
         if (particleContext.particleState == ParticleState.Started) {
-            // particle already started
-            return
+            particleContext.particleState == ParticleState.Stopped
         }
 
         // If we reach here, particle is being restarted
@@ -153,12 +227,41 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         // This is temporary until the BaseParticle PR lands and onStartup() API lands.
         // We force sync() calls in lieu of onStartup() API for demos
         if (particleContext.particleState == ParticleState.Created) {
-            for ((handleName, handle) in particleContext.handles) {
-                particleContext.run {
-                    particle.onHandleSync(handle, false)
+            try {
+                particleContext.handles.values.forEach { handle ->
+                    particleContext.run {
+                        particleContext.particle.onHandleSync(handle, false)
+                    }
                 }
+            } catch (e: Exception) {
+                markParticleAsFailed(particleContext)
             }
             particleContext.particleState = ParticleState.Started
+        }
+    }
+
+    /** States which are not safe to call onCreate() from, startup succeeded at least once. */
+    private val succeededStates = setOf(
+        ParticleState.Created,
+        ParticleState.Started,
+        ParticleState.Stopped,
+        ParticleState.Failed
+    )
+
+    private fun markParticleAsFailed(particleContext: ParticleContext) {
+        particleContext.run {
+            if (particleState == ParticleState.MaxFailed) {
+                return
+            }
+
+            particleState =
+                if (particleState in succeededStates) ParticleState.Failed
+                else ParticleState.Failed_NeverStarted
+            consecutiveFailureCount++
+
+            if (consecutiveFailureCount > MAX_CONSECUTIVE_FAILURES) {
+                particleState = ParticleState.MaxFailed
+            }
         }
     }
 
@@ -191,14 +294,14 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         holder: HandleHolder
     ) = when (handleSpec.type) {
         is SingletonType<*> ->
-            entityHandleManager().createSingletonHandle(
+            entityHandleManager.createSingletonHandle(
                 holder,
                 handleName,
                 handleSpec.storageKey,
                 handleSpec.type.toSchema()
             )
         is CollectionType<*> ->
-            entityHandleManager().createSetHandle(
+            entityHandleManager.createSetHandle(
                 holder,
                 handleName,
                 handleSpec.storageKey,
@@ -233,7 +336,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * releasing [Handle]s, and modifying [ArcState] and [ParticleState] to stopped states.
      */
     private suspend fun stopArcInternal(arcId: String, context: ArcHostContext) {
-        for (particleContext in context.particles.values) {
+        context.particles.values.forEach { particleContext ->
             stopParticle(particleContext)
         }
         maybeCancelResurrection(context)
@@ -246,10 +349,22 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * [ParticleState.Stopped], and releasing any used [Handle]s.
      */
     private suspend fun stopParticle(context: ParticleContext) {
-        context.particle.onShutdown()
+        try {
+            context.particle.onShutdown()
+        } catch (e: Exception) {
+            // TODO: Shutdown failed, how to handle?
+        }
+
+        // TODO: wait for all stores linked to handles to reach idle() state?
         context.particleState = ParticleState.Stopped
         cleanupHandles(context.particle.handles)
     }
+
+    /**
+     * Until Kotlin Multiplatform adds a common API for retrieving time, each platform that
+     * implements an [ArcHost] needs to supply an implementation of the [Time] interface.
+     */
+    abstract val platformTime: Time
 
     /**
      * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
@@ -258,27 +373,18 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         for ((name, handle) in handles.handles) {
             // TODO: disconnect/unregister handle
         }
-        (handles.handles as MutableMap).clear()
+        handles.clear()
     }
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =
         registeredParticles().contains(ParticleIdentifier.from(particle.location))
 
-    // TODO: hack workaround, replace with portable core version?
-    class TimeImpl : Time() {
-        override val currentTimeNanos: Long
-            get() = System.nanoTime()
-        override val currentTimeMillis: Long
-            get() = System.currentTimeMillis()
-    }
-
-    open fun platformTime(): Time = TimeImpl()
-
     /**
      * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
      */
-    open fun entityHandleManager(): EntityHandleManager =
-        EntityHandleManager(HandleManager(platformTime()))
+    open val entityHandleManager: EntityHandleManager by lazy {
+        EntityHandleManager(HandleManager(platformTime))
+    }
 
     /**
      * Instantiate a [Particle] implementation for a given [ParticleIdentifier].
@@ -286,7 +392,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * @property identifier A [ParticleIdentifier] from a [ParticleSpec].
      */
     open suspend fun instantiateParticle(identifier: ParticleIdentifier): Particle {
-        return particleConstructors[identifier]?.invoke() ?: throw Exception(
+        return particleConstructors[identifier]?.invoke() ?: FailureParticle(
             "Particle $identifier not found."
         )
     }

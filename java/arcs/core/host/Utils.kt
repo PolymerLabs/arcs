@@ -23,6 +23,14 @@ fun KClass<*>.className(): String {
         .replace('$', '.')
 }
 
+/** Returns a pair mapping [ParticleIdentifier] to [ParticleConstructor] */
+inline fun <reified T : Particle> (() -> T).toRegistration(): ParticleRegistration =
+    T::class.toParticleIdentifier() to suspend { this.invoke() }
+
+/**
+ * If this Type represents a [SingletonType], [CollectionType], or [EntityType], return the
+ * [Schema] used by the underlying [Entity] that this type represents.
+ */
 fun Type.toSchema(): Schema {
     when (this) {
         is SingletonType<*> -> if (this.containedType is EntityType) {
@@ -34,7 +42,11 @@ fun Type.toSchema(): Schema {
         is EntityType -> return this.entitySchema
         else -> Unit
     }
-    throw Exception("Can't get entitySchema of unknown type $this")
+    throw IllegalArgumentException("Can't get entitySchema of unknown type $this")
 }
 
+/**
+* If this Type represents a [SingletonType], [CollectionType], or [EntityType], return the
+* [Schema.hash] used by the underlying [Entity] that this type represents.
+*/
 fun Type.toSchemaHash(): String = this.toSchema().hash

@@ -2,12 +2,12 @@ package arcs.core.allocator
 
 import arcs.core.data.Plan
 import arcs.core.host.AbstractArcHost
-import arcs.jvm.host.toRegistrationList
-import arcs.sdk.Particle
-import kotlin.reflect.KClass
+import arcs.core.host.ParticleRegistration
+import arcs.core.util.Time
+import arcs.jvm.util.testutil.TimeImpl
 
-open class TestingHost(vararg particles: KClass<out Particle>) :
-    AbstractArcHost(*particles.toRegistrationList()) {
+open class TestingHost(vararg particles: ParticleRegistration) :
+    AbstractArcHost(*particles) {
 
     fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 
@@ -17,6 +17,8 @@ open class TestingHost(vararg particles: KClass<out Particle>) :
         super.startArc(partition)
         started.add(partition)
     }
+
+    override val platformTime: Time = TimeImpl()
 
     fun setup() {
         started.clear()

@@ -54,7 +54,6 @@ class AndroidAllocatorTest : AllocatorTest() {
     private lateinit var context: Context
     private lateinit var readingService: TestReadingExternalHostService
     private lateinit var writingService: TestWritingExternalHostService
-    private lateinit var app: Application
 
     override suspend fun hostRegistry(): HostRegistry {
         return AndroidManifestHostRegistry.createForTest(context) {

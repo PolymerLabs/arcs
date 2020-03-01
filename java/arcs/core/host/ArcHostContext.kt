@@ -14,7 +14,12 @@ import arcs.core.data.Plan
 import arcs.core.storage.api.Handle
 
 /**
- * Holds per-[Particle] context state needed by [ArcHost]
+ * Holds per-[Particle] context state needed by [ArcHost] to implement [Particle] lifecycle.
+ *
+ * @property particle currently instantiated [Particle] class
+ * @property handles handles a map of each handle created for this [Particle]
+ * @property particleState the current state the particle lifecycle is in
+ * @property consecutiveFailureCount how many times this particle failed to start in a row
  */
 data class ParticleContext(
     val particle: Particle,
@@ -25,7 +30,9 @@ data class ParticleContext(
 )
 
 /**
- * Runtime context state needed by the [ArcHost] on a per [ArcId] basis.
+ * Runtime context state needed by the [ArcHost] on a per [ArcId] basis. For each [Arc],
+ * maintains the state fo the arc, as well as a map of the [ParticleContext] information for
+ * each participating [Particle] in the [Arc].
  */
 data class ArcHostContext(
     var particles: MutableMap<Plan.Particle, ParticleContext> = mutableMapOf(),

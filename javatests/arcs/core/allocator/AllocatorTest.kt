@@ -16,6 +16,7 @@ import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
 import arcs.core.host.ReadPerson
 import arcs.core.host.WritePerson
+import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
@@ -60,8 +61,8 @@ open class AllocatorTest {
     private lateinit var readingExternalHost: TestingHost
     private lateinit var writingExternalHost: TestingHost
 
-    private class WritingHost : TestingHost(WritePerson::class)
-    private class ReadingHost : TestingHost(ReadPerson::class)
+    private class WritingHost : TestingHost(::WritePerson.toRegistration())
+    private class ReadingHost : TestingHost(::ReadPerson.toRegistration())
 
     /** Return the [ArcHost] that contains [ReadPerson]. */
     open fun readingHost(): TestingHost = ReadingHost()
@@ -134,13 +135,13 @@ open class AllocatorTest {
         )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
 
-        val readingHost = requireNotNull(hostRegistry.availableArcHosts().first {
-            it -> it.hostId.contains("Reading")
-        })
+        val readingHost = requireNotNull(
+            hostRegistry.availableArcHosts().first { it.hostId.contains("Reading") }
+        )
 
-        val writingHost = requireNotNull(hostRegistry.availableArcHosts().first {
-                it -> it.hostId.contains("Writing")
-        })
+        val writingHost = requireNotNull(
+            hostRegistry.availableArcHosts().first { it.hostId.contains("Writing") }
+        )
 
         assertThat(planPartitions).containsExactly(
             Plan.Partition(
@@ -216,13 +217,13 @@ open class AllocatorTest {
         )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
 
-        val readingHost = requireNotNull(hostRegistry.availableArcHosts().first {
-                it -> it.hostId.contains("Reading")
-        })
+        val readingHost = requireNotNull(
+            hostRegistry.availableArcHosts().first { it.hostId.contains("Reading") }
+        )
 
-        val writingHost = requireNotNull(hostRegistry.availableArcHosts().first {
-                it -> it.hostId.contains("Writing")
-        })
+        val writingHost = requireNotNull(
+            hostRegistry.availableArcHosts().first { it.hostId.contains("Writing") }
+        )
 
         planPartitions.forEach {
             val host = allocator.lookupArcHost(it.arcHost)

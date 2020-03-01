@@ -38,7 +38,13 @@ enum class ArcState {
      * [Deleted] implies [Stopped], but further more, subsequent attempts to restart this
      * [Arc] will fail, and potentially any data used by the [Arc] may be reclaimed.
      */
-    Deleted
+    Deleted,
+
+    /**
+     * The [Arc] could not be started for some reason, usually due to the failure of one of its
+     * [Particle]s to be instantiated properly.
+     */
+    Error,
 }
 
 /**
@@ -54,5 +60,18 @@ enum class ParticleState {
     /** onStart() has been successfully called. */
     Started,
     /** onStop() has been successfully called. */
-    Stopped
+    Stopped,
+    /**
+     * Previous attempt to start this particle failed, but it has previously started. In particular,
+     * we can transition from this state to [Started], but not [Created] since the [onCreate]
+     * lifecycle has already executed.
+     **/
+    Failed,
+    /**
+     * This particle has failed, but it has never succeeded yet. It is safe to transition to
+     * [Created] from this state.
+     **/
+    Failed_NeverStarted,
+    /** [Particle] has failed to start too many times and won't be started in this [Arc] anymore. */
+    MaxFailed,
 }

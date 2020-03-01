@@ -10,6 +10,7 @@ import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.TestingHost
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.ParticleRegistration
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import kotlinx.coroutines.Dispatchers
@@ -38,19 +39,18 @@ open class TestExternalArcHostService(val arcHost: TestingAndroidHost) : Service
         override fun getCurrentState(): State = State.CREATED
     }
 
-    open class TestingAndroidHost(vararg particles: KClass<out Particle>) : TestingHost(*particles) {
+    open class TestingAndroidHost(vararg particles: ParticleRegistration) : TestingHost(*particles) {
         lateinit var serviceContext: Context
 
-        override fun entityHandleManager() = EntityHandleManager(
-            AndroidHandleManager(
-                serviceContext,
-                FakeLifecycle(),
-                Dispatchers.Default,
-                DefaultConnectionFactory(
+        override val entityHandleManager: EntityHandleManager by lazy {
+            EntityHandleManager(
+                AndroidHandleManager(
                     serviceContext,
-                    TestBindingDelegate(serviceContext)
+                    FakeLifecycle(),
+                    Dispatchers.Default,
+                    DefaultConnectionFactory(serviceContext, TestBindingDelegate(serviceContext))
                 )
             )
-        )
+        }
     }
 }

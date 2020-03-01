@@ -44,6 +44,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/jvm/host",
+        "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//third_party/java/auto:auto_service",
     ],

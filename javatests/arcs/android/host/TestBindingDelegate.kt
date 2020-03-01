@@ -9,8 +9,9 @@ import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ServiceController
 
-class TestBindingDelegate(val context: Context) :
-    StorageServiceBindingDelegate {
+class TestBindingDelegate(
+    val context: Context
+) : StorageServiceBindingDelegate {
     var sc: ServiceController<StorageService>? = null
     override fun bindStorageService(
         conn: ServiceConnection,
@@ -18,7 +19,8 @@ class TestBindingDelegate(val context: Context) :
         options: ParcelableStoreOptions
     ): Boolean {
         val intent = StorageService.createBindIntent(
-            context, options
+            context,
+            options
         )
         if (sc == null) {
             sc = Robolectric.buildService(StorageService::class.java, intent).create().bind().also {

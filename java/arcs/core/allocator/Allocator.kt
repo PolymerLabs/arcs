@@ -70,11 +70,7 @@ class Allocator(val hostRegistry: HostRegistry) {
     suspend fun lookupArcHost(arcHost: String) =
         hostRegistry.availableArcHosts().filter { it ->
             it.hostId == arcHost
-        }.firstOrNull() ?: throwError(arcHost)
-
-    fun throwError(arcHost: String): Nothing {
-        throw ArcHostNotFoundException(arcHost)
-    }
+        }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
 
     /**
      * Persists [ArcId] and associoated [PlatPartition]s.

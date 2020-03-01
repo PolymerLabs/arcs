@@ -11,14 +11,17 @@
 package arcs.jvm.host
 
 import arcs.core.host.ArcHost
-import arcs.core.host.Particle
+import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
-import kotlin.reflect.KClass
+import arcs.core.util.Time
+import arcs.jvm.util.JvmTime
 
 /**
  * An [ArcHost] that runs isolatable particles that are expected to have no platform
  * dependencies directly on Android APIs.
  */
 class JvmProdHost(
-    vararg particles: KClass<out Particle>
-) : ProdHost(*particles.toRegistrationList())
+    vararg particles: ParticleRegistration
+) : ProdHost(*particles) {
+    override val platformTime: Time = JvmTime
+}
