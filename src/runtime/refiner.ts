@@ -27,6 +27,7 @@ export enum AtleastAsSpecific {
   UNKNOWN
 }
 
+// The variable name used for the query argument in generated Kotlin code.
 const KOTLIN_QUERY_ARGUMENT_NAME = 'query_argument';
 
 // Using 'any' because operators are type dependent and generically can only be applied to any.
