@@ -342,7 +342,7 @@ export class Manifest {
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
-  _typePredicate <HasTypeProperty extends {type: Type}> (candidate: HasTypeProperty, type: Type, checkSubtype: boolean) {
+  _typePredicate <HasTypeProperty extends {type: Type}>(candidate: HasTypeProperty, type: Type, checkSubtype: boolean) {
     const resolvedType = type.resolvedType();
     if (!resolvedType.isResolved()) {
       return (type instanceof CollectionType) === (candidate.type instanceof CollectionType) &&
