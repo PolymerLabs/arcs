@@ -19,6 +19,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
@@ -26,6 +27,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/testutil",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
+        "//java/arcs/jvm/util/testutil",
         "//javatests/arcs/core/storage",  # buildcleaner: keep
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito:mockito-android",

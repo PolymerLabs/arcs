@@ -22,7 +22,6 @@ import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
@@ -49,7 +48,6 @@ class StorageServiceTest {
         app = ApplicationProvider.getApplicationContext()
         storeOptions = StoreOptions(
             RamDiskStorageKey("count"),
-            ExistenceCriteria.MayExist,
             CountType()
         )
     }

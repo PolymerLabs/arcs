@@ -8,13 +8,16 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+package arcs.core.host
 
-package arcs.jvm.util.performance
-
-import arcs.core.util.performance.Timer
-
-/** Implementation of [Timer] for the JVM. */
-object JvmTimer : Timer() {
-    override val currentTimeNanos: Long
-        get() = System.nanoTime()
+/**
+ * Specifies the access mode for a [Handle].
+ */
+enum class HandleMode {
+    /** [Handle] is read only. */
+    Read,
+    /** [Handle] is write only. */
+    Write,
+    /** [Handle] is read-write. */
+    ReadWrite
 }

@@ -24,7 +24,6 @@ import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
@@ -50,7 +49,6 @@ class ServiceStoreTest {
     private lateinit var lifecycle: Lifecycle
     private val storeOptions = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(
         RamDiskStorageKey("myData"),
-        ExistenceCriteria.ShouldCreate,
         CountType()
     )
 

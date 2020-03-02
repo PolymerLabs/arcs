@@ -1,0 +1,89 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+package arcs.core.storage.handle
+
+import arcs.core.crdt.CrdtEntity
+import arcs.core.data.EntityType
+import arcs.core.data.RawEntity
+import arcs.core.data.Schema
+import arcs.core.storage.Dereferencer
+import arcs.core.storage.EntityActivationFactory
+import arcs.core.storage.ProxyCallback
+import arcs.core.storage.ProxyMessage
+import arcs.core.storage.Reference
+import arcs.core.storage.StorageMode
+import arcs.core.storage.Store
+import arcs.core.storage.StoreOptions
+import arcs.core.util.TaggedLog
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/**
+ * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
+ *
+ * [Handle] implementations should inject this into any [Reference] objects they encounter.
+ */
+class RawEntityDereferencer(
+    private val schema: Schema,
+    private val entityActivationFactory: EntityActivationFactory? = null
+) : Dereferencer<RawEntity> {
+    private val log = TaggedLog { "Dereferencer(${schema.names})" }
+
+    override suspend fun dereference(
+        reference: Reference,
+        coroutineContext: CoroutineContext
+    ): RawEntity? = withContext(coroutineContext) {
+        log.debug { "De-referencing $reference" }
+
+        val storageKey = reference.storageKey.childKeyWithComponent(reference.id)
+
+        val options = StoreOptions<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>(
+            storageKey,
+            EntityType(schema),
+            StorageMode.Direct
+        )
+
+        val store = Store(options).activate(entityActivationFactory)
+        val deferred = CompletableDeferred<RawEntity>()
+        var token = -1
+        token = store.on(
+            ProxyCallback { message ->
+                when (message) {
+                    is ProxyMessage.ModelUpdate<*, *, *> -> {
+                        deferred.complete((message.model as CrdtEntity.Data).toRawEntity())
+                        store.off(token)
+                    }
+                    is ProxyMessage.SyncRequest -> Unit
+                    is ProxyMessage.Operations -> Unit
+                }
+                true
+            }
+        )
+        launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
+
+        // Only return the item if we've actually managed to pull it out of the database.
+        deferred.await().takeIf { it matches schema }
+    }
+
+    private infix fun RawEntity.matches(schema: Schema): Boolean {
+        // Only allow empty to match if the Schema is also empty.
+        // TODO: Is this a correct assumption?
+        if (singletons.isEmpty() && collections.isEmpty())
+            return schema.fields.singletons.isEmpty() && schema.fields.collections.isEmpty()
+
+        // Return true if any of the RawEntity's fields are part of the Schema.
+        return (singletons.isEmpty() || singletons.keys.any { it in schema.fields.singletons }) &&
+            (collections.isEmpty() || collections.keys.any { it in schema.fields.collections })
+    }
+}

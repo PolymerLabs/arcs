@@ -9,11 +9,12 @@ package arcs.sdk
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
+import arcs.core.storage.api.toPrimitiveValue
 import arcs.core.data.RawEntity
 import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
 
-class GoldInternal1() : JvmEntity {
+class GoldInternal1() : Entity {
 
     override var internalId = ""
 
@@ -68,14 +69,14 @@ class GoldInternal1() : JvmEntity {
     override fun toString() = "GoldInternal1(val_ = $val_)"
 }
 
-class GoldInternal1_Spec() : JvmEntitySpec<GoldInternal1> {
+class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
 
     override fun create() = GoldInternal1()
 
     override fun deserialize(data: RawEntity): GoldInternal1 {
       // TODO: only handles singletons for now
       val rtn = create().copy(
-        val_ = (data.singletons["val_"] as? ReferencablePrimitive<String>?)?.value ?: ""
+        val_ = data.singletons["val_"].toPrimitiveValue(String::class, "")
       )
       rtn.internalId = data.id
       return rtn
@@ -88,7 +89,7 @@ typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
 
-class Gold_Data() : JvmEntity {
+class Gold_Data() : Entity {
 
     override var internalId = ""
 
@@ -176,17 +177,17 @@ class Gold_Data() : JvmEntity {
     override fun toString() = "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 }
 
-class Gold_Data_Spec() : JvmEntitySpec<Gold_Data> {
+class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 
     override fun create() = Gold_Data()
 
     override fun deserialize(data: RawEntity): Gold_Data {
       // TODO: only handles singletons for now
       val rtn = create().copy(
-        num = (data.singletons["num"] as? ReferencablePrimitive<Double>?)?.value ?: 0.0,
-        txt = (data.singletons["txt"] as? ReferencablePrimitive<String>?)?.value ?: "",
-        lnk = (data.singletons["lnk"] as? ReferencablePrimitive<String>?)?.value ?: "",
-        flg = (data.singletons["flg"] as? ReferencablePrimitive<Boolean>?)?.value ?: false
+        num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0),
+        txt = data.singletons["txt"].toPrimitiveValue(String::class, ""),
+        lnk = data.singletons["lnk"].toPrimitiveValue(String::class, ""),
+        flg = data.singletons["flg"].toPrimitiveValue(Boolean::class, false)
       )
       rtn.internalId = data.id
       return rtn
@@ -198,14 +199,16 @@ class Gold_Data_Spec() : JvmEntitySpec<Gold_Data> {
 class GoldHandles(
 
 ) : HandleHolderBase(
-        mutableMapOf(),
+        mutableMapOf<String, Handle>().withDefault {
+            key -> throw NoSuchElementException("Handle $key not initialized in Gold")
+        },
         mapOf(
             "data" to Gold_Data_Spec(),
             "alias" to Gold_Alias_Spec()
         )
     ) {
-    val data: ReadableSingleton<Gold_Data> by map
-    val alias: WritableSingleton<Gold_Alias> by map
+    val data: ReadableSingleton<Gold_Data> by handles
+    val alias: WritableSingleton<Gold_Alias> by handles
 }
 
 abstract class AbstractGold : BaseParticle() {

@@ -52,36 +52,30 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     @get:Rule
     val logRule = LogRule()
 
-    private lateinit var hash: String
-    private lateinit var testKey: ReferenceModeStorageKey
+    private var hash = "123456abcdef"
+    private var testKey = ReferenceModeStorageKey(
+        DatabaseStorageKey.Persistent("entities", hash),
+        DatabaseStorageKey.Persistent("set", hash)
+    )
+    private var schema = Schema(
+        listOf(SchemaName("person")),
+        SchemaFields(
+            singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+            collections = emptyMap()
+        ),
+        hash
+    )
     private lateinit var databaseFactory: MockDatabaseManager
-    private lateinit var schema: Schema
 
     @Before
-    fun setup() = runBlockingTest {
-        hash = "123456abcdef"
-
-        schema = Schema(
-            listOf(SchemaName("person")),
-            SchemaFields(
-                singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
-                collections = emptyMap()
-            ),
-            hash
-        )
-
-        testKey = ReferenceModeStorageKey(
-            DatabaseStorageKey("entities", hash),
-            DatabaseStorageKey("set", hash)
-        )
-
+    fun setUp() = runBlockingTest {
         DriverFactory.clearRegistrationsForTesting()
         databaseFactory = MockDatabaseManager()
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 
     @After
-    fun teardown() = CapabilitiesResolver.reset()
+    fun tearDown() = CapabilitiesResolver.reset()
 
     @Test
     fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
@@ -105,7 +99,10 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         val actor = activeStore.crdtKey
         val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
-        val database = databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
+        val database = databaseFactory.getDatabase(
+            containerKey.dbName,
+            containerKey is DatabaseStorageKey.Persistent
+        )
 
         val capturedCollection = requireNotNull(
             database.get(containerKey, DatabaseData.Collection::class, schema)
@@ -121,10 +118,11 @@ class ReferenceModeStoreDatabaseIntegrationTest {
             database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
         )
 
-        assertThat(capturedBob.entity.data).containsExactly(
-            "name", "bob",
-            "age", 42.0
+        assertThat(capturedBob.rawEntity.singletons).containsExactly(
+            "name", "bob".toReferencable(),
+            "age", 42.0.toReferencable()
         )
+        assertThat(capturedBob.rawEntity.collections).isEmpty()
     }
 
     @Test
@@ -206,12 +204,14 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
         val capturedPeople =
-            databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
-                .get(
-                    containerKey,
-                    DatabaseData.Collection::class,
-                    schema
-                ) as DatabaseData.Collection
+            databaseFactory.getDatabase(
+                containerKey.dbName,
+                containerKey is DatabaseStorageKey.Persistent
+            ).get(
+                containerKey,
+                DatabaseData.Collection::class,
+                schema
+            ) as DatabaseData.Collection
 
         assertThat(capturedPeople.values).isEqualTo(referenceCollection.consumerView)
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
@@ -436,7 +436,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                     assertThat(entityRecord.singletons["name"]?.id)
                         .isEqualTo("bob".toReferencable().id)
                     val age = requireNotNull(entityRecord.singletons["age"])
-                    assertThat(age.tryDereference()).isEqualTo(42.0.toReferencable())
+                    assertThat(age.unwrap()).isEqualTo(42.0.toReferencable())
                     job.complete()
                 } else {
                     job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
@@ -488,7 +488,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         return ReferenceModeStore.CONSTRUCTOR(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                ExistenceCriteria.MayExist,
                 CollectionType(EntityType(schema)),
                 StorageMode.ReferenceMode
             ),

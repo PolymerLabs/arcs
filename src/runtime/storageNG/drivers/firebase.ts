@@ -237,7 +237,7 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     CapabilitiesResolver.registerKeyCreator(
         FirebaseStorageKey.protocol,
         Capabilities.persistent,
-        ({arcId}: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, arcId.toString()));
+        (options: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, options.location()));
   }
 }
 

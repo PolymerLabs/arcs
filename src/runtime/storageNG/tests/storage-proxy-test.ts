@@ -51,7 +51,7 @@ describe('StorageProxy', async () => {
       id: 1
     });
     await storageProxy.idle();
-    assert.sameDeepMembers(handle.lastUpdate, [op, {A: 2}]);
+    assert.deepEqual(handle.lastUpdate, op);
   });
 
   it('does not notify keepSynced handles if desynced', async () => {
@@ -79,7 +79,7 @@ describe('StorageProxy', async () => {
     await storageProxy.idle();
     // Only handle2 is notified as the proxy is not synchronized.
     assert.isNull(handle1.lastUpdate);
-    assert.sameDeepMembers(handle2.lastUpdate, [op, {}]);
+    assert.deepEqual(handle2.lastUpdate, op);
   });
 
   it('will sync if desynced before returning the particle view', async () => {
@@ -90,9 +90,8 @@ describe('StorageProxy', async () => {
     const handle = new MockHandle<CRDTSingletonTypeRecord<Entity>>(storageProxy);
 
     // The first time we get the data, it will need to sync with the store.
-    const [result, versionMap] = await storageProxy.getParticleView();
+    const result = await storageProxy.getParticleView();
     assert.deepEqual(result, {id: 'e1'});
-    assert.deepEqual(versionMap, {A: 1});
     assert.deepEqual(
         mockStore.lastCapturedMessage,
         {type: ProxyMessageType.SyncRequest, id: 1});

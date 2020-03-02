@@ -16,6 +16,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.data.Schema
 import arcs.core.data.SingletonType
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
@@ -31,7 +32,6 @@ import arcs.core.type.Type
  * which it partitions into a set of [Plan.Partition] objects, one per participating
  * [ArcHost] according to [HostRegistry] entries.
  *
- * Each [Plan.Partition] lists a set of [HandleSpec] objects with [arcs.core.storage.StorageKey] and
  * [arcs.core.data.Schema], a set of [Particle]s to instantiate, and connections between each
  * [HandleSpec] and [Particle].
  */
@@ -116,12 +116,32 @@ class Allocator(val hostRegistry: HostRegistry) {
         storageKey: CreateableStorageKey,
         type: Type
     ): StorageKey =
-        CapabilitiesResolver(CapabilitiesResolver.StorageKeyOptions(arcId)).createStorageKey(
-            storageKey.capabilities, type.toSchemaHash()
-        )?.childKeyForHandle(idGenerator.newChildId(arcId, "").toString())
-            ?: throw Exception(
-                "Unable to create storage key $storageKey"
+        CapabilitiesResolver(CapabilitiesResolver.CapabilitiesResolverOptions(arcId))
+            .createStorageKey(
+                storageKey.capabilities,
+                toEntitySchema(type),
+                idGenerator.newChildId(arcId, "").toString()
             )
+        ?: throw Exception(
+            "Unable to create storage key $storageKey"
+        )
+
+    /**
+     * Retrieves [Schema] from the given [Type], if possible.
+     * TODO: declare a common interface.
+     */
+    private fun toEntitySchema(type: Type): Schema {
+        when (type) {
+            is SingletonType<*> -> if (type.containedType is EntityType) {
+                return (type.containedType as EntityType).entitySchema
+            }
+            is CollectionType<*> -> if (type.collectionType is EntityType) {
+                return (type.collectionType as EntityType).entitySchema
+            }
+            is EntityType -> return type.entitySchema
+        }
+        throw IllegalArgumentException("Can't retrieve entitySchema of unknown type $type")
+    }
 
     /**
      * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]
@@ -144,22 +164,8 @@ class Allocator(val hostRegistry: HostRegistry) {
      * mapping them to fully qualified Java classnames, and comparing them with the
      * [Particle.location].
      */
-    private suspend fun findArcHostByParticle(particle: arcs.core.data.Plan.Particle): ArcHost =
+    private suspend fun findArcHostByParticle(particle: Plan.Particle): ArcHost =
         hostRegistry.availableArcHosts()
             .firstOrNull { host -> host.isHostForParticle(particle) }
             ?: throw ParticleNotFoundException(particle)
-}
-
-private fun Type.toSchemaHash(): String {
-    when (this) {
-        is SingletonType<*> -> if (this.containedType is EntityType) {
-            return (this.containedType as EntityType).entitySchema.hash
-        }
-        is CollectionType<*> -> if (this.collectionType is EntityType) {
-            return (this.collectionType as EntityType).entitySchema.hash
-        }
-        is EntityType -> return this.entitySchema.hash
-        else -> Unit
-    }
-    throw Exception("Can't compute schemaHash of unknown type $this")
 }

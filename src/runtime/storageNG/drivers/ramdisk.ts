@@ -77,6 +77,6 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
     CapabilitiesResolver.registerKeyCreator(
         RamDiskStorageKey.protocol,
         Capabilities.tiedToRuntime,
-        ({arcId}: StorageKeyOptions) => new RamDiskStorageKey(arcId.toString()));
+        (options: StorageKeyOptions) => new RamDiskStorageKey(options.unique()));
     }
 }

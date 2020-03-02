@@ -2,6 +2,7 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_library",
     "arcs_kt_jvm_test_suite",
+    "arcs_kt_schema",
 )
 
 licenses(["notice"])
@@ -23,16 +24,28 @@ arcs_kt_jvm_test_suite(
     ],
 )
 
+arcs_kt_schema(
+    name = "schemas",
+    srcs = [
+        "person.arcs",
+        "test.arcs",
+    ],
+    package = "arcs.core.host",
+)
+
 arcs_kt_jvm_library(
     name = "particle",
+    testonly = 1,
     srcs = glob(
         ["*.kt"],
         exclude = ["*Test.kt"],
     ),
     deps = [
+        ":schemas",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/jvm/host",
+        "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//third_party/java/auto:auto_service",
     ],

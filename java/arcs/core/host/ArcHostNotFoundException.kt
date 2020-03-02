@@ -11,8 +11,6 @@
 
 package arcs.core.host
 
-import arcs.sdk.Particle
-
 /**
  * An [ArcHostNotFoundException] is thrown if a [Particle] has an annotation with
  * [TargetHost] that requests an [ArcHost] that is not registered with a [HostRegistry].

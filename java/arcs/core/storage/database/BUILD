@@ -13,6 +13,7 @@ arcs_kt_library(
     deps = [
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/util/performance",

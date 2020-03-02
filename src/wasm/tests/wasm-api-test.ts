@@ -27,6 +27,9 @@ import {Arc} from '../../runtime/arc.js';
 // registered automatically).
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
+import {StorageProxy} from '../../runtime/storageNG/storage-proxy.js';
+import {handleNGFor, SingletonHandle} from '../../runtime/storageNG/handle.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -523,6 +526,32 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         'c3:60,Larry,false',
         'c3:90,Curly,true',
       ]);
+    });
+
+    it('onCreate() Wasm', async function() {
+      // TODO(heimlich, 4798) implement in C++
+      if (isCpp) {
+        this.skip();
+      }
+
+      const {arc, stores} = await setup('OnCreateTest');
+      const fooHandle = await singletonHandleForTest(arc, stores.get('fooHandle'));
+
+      assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Created!'});
+
+      const serialization = await arc.serialize();
+      arc.dispose();
+
+      const manifest = await manifestPromise;
+
+      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
+      await arc2.idle;
+
+      const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);
+      const varStorageProxy2 = new StorageProxy('id', await arc2._stores[0].activate(), new SingletonType(fooClass.type), arc2._stores[0].storageKey.toString());
+      const fooHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+      assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({txt: 'Not created!'}));
+
     });
   });
 });

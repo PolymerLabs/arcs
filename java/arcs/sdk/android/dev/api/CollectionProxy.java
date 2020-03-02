@@ -282,8 +282,19 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
     }
 
     @Override
-    public Referencable tryDereference() {
+    public Referencable unwrap() {
       return this;
+    }
+
+
+    @Override
+    public long getExpirationTimestamp() {
+      throw new AssertionError("ModelEntry::setExpiration not implemented");
+    }
+
+    @Override
+    public void setExpirationTimestamp(long expirationTimestamp) {
+      throw new AssertionError("ModelEntry::setExpiration not implemented");
     }
   }
 

@@ -15,7 +15,6 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Callbacks
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskStorageKey
@@ -27,7 +26,9 @@ import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestBindingDelegate
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
@@ -94,23 +95,29 @@ class AndroidHandleManagerTest {
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
     }
 
-    fun handleManagerTest(block: suspend (HandleManager) -> Unit) {
+    fun handleManagerTest(
+        block: suspend TestCoroutineScope.(HandleManager) -> Unit
+    ) = runBlockingTest {
         val scenario = ActivityScenario.launch(TestActivity::class.java)
 
         scenario.moveToState(Lifecycle.State.STARTED)
 
-        scenario.onActivity { activity ->
-            runBlocking {
+        val activityJob = launch {
+            scenario.onActivity { activity ->
                 val hf = AndroidHandleManager(
                     lifecycle = activity.lifecycle,
                     context = activity,
-                    connectionFactory = DefaultConnectionFactory(activity, TestBindingDelegate(app))
+                    connectionFactory = DefaultConnectionFactory(activity, TestBindingDelegate(app)),
+                    coroutineContext = coroutineContext
                 )
-                block(hf)
+                runBlocking {
+                    this@runBlockingTest.block(hf)
+                }
+                scenario.close()
             }
         }
 
-        scenario.close()
+        activityJob.join()
     }
 
     @Test

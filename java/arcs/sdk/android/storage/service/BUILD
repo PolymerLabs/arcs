@@ -15,6 +15,7 @@ kt_android_library(
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/android/storage/ttl",
+        "//java/arcs/android/util",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",

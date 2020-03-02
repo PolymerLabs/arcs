@@ -74,6 +74,7 @@ export class StorageKeyRecipeResolver {
   /**
    * Produces resolved recipes with storage keys.
    *
+   * TODO(alxr): Apply to long-running recipes appropriately.
    * @throws Error if recipe fails to resolve on first or second pass.
    * @yields Resolved recipes with storage keys
    */
@@ -97,7 +98,7 @@ export class StorageKeyRecipeResolver {
   /**
    * Resolves unresolved recipe or normalizes resolved recipe.
    *
-   * @param recipe long-running recipe
+   * @param recipe long-running or ephemeral recipe
    * @param arc Arc is associated with input recipe
    * @param opts contains `errors` map for reporting.
    */
@@ -108,7 +109,6 @@ export class StorageKeyRecipeResolver {
 
     return await (new RecipeResolver(arc).resolve(recipe, opts));
   }
-
 
   /** @returns the arcId from annotations on the recipe when present. */
   getArcId(recipe: Recipe): string | null {
@@ -123,40 +123,19 @@ export class StorageKeyRecipeResolver {
     return null;
   }
 
-  /** Predicate determines if we should create storage keys on a recipe. */
-  isLongRunning(triggers: [string, string][][]): boolean {
-    let hasArcId = false;
-    let isLaunchedAtStartup = false;
-
-    for (const trigger of triggers) {
-      for (const pair of trigger) {
-        if (pair[0] === 'arcId') {
-          hasArcId = true;
-        }
-        if (pair[0] === 'launch' && pair[1] === 'startup') {
-          isLaunchedAtStartup = true;
-        }
-      }
-    }
-
-    return hasArcId && isLaunchedAtStartup;
-  }
-
   /**
    * Create stores with keys for all create handles.
    *
-   * @param recipe recipe should be long running.
+   * @param recipe should be long running.
    * @param arc Arc is associated with current recipe.
    */
-  createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
+  async createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
     const resolver = new CapabilitiesResolver({arcId: arc.id});
-    recipe.handles
-      .filter(h => h.fate === 'create')
-      .forEach(ch => {
-        const storageKey = resolver.createStorageKey(ch.capabilities);
-        const store = new Store({storageKey, exists: Exists.MayExist, type: ch.type, id: ch.id});
-        arc.context.registerStore(store, ch.tags);
-      });
+    for (const ch of recipe.handles.filter(h => h.fate === 'create')) {
+      const storageKey = await resolver.createStorageKey(ch.capabilities, ch.type.getEntitySchema(), ch.id);
+      const store = new Store({storageKey, exists: Exists.MayExist, type: ch.type, id: ch.id});
+      arc.context.registerStore(store, ch.tags);
+    }
   }
 
   /**
@@ -165,7 +144,7 @@ export class StorageKeyRecipeResolver {
    * @throws when a mapped handle is associated with too many stores (ambiguous mapping).
    * @throws when a mapped handle isn't associated with any store (no matches found).
    * @throws when handle is mapped to a handle from an ephemeral recipe.
-   * @param recipe
+   * @param recipe long-running or ephemeral recipe
    */
   matchKeysToHandles(recipe: Recipe) {
     recipe.handles
@@ -180,7 +159,7 @@ export class StorageKeyRecipeResolver {
         }
 
         const match = matches[0];
-        if (!this.isLongRunning(match.recipe.triggers)) {
+        if (!match.recipe.isLongRunning) {
           throw Error(`Handle ${h.localName} mapped to ephemeral handle ${match.localName}.`);
         }
 

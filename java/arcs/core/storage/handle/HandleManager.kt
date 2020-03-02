@@ -8,22 +8,26 @@ import arcs.core.data.EntityType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
-import arcs.core.storage.ExistenceCriteria
+import arcs.core.data.Ttl
+import arcs.core.storage.EntityActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.Store
+import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
  * This interface is a convenience for creating the two common types of activation factories
- * that are used: singletons of [RawEntity] and sets of [RawEntity]
+ * that are used: singletons of [RawEntity] and sets of [RawEntity], as well as an activation
+ * factory to use when dereferencing [Reference]s.
  *
  * An implementation of this interface can be provided to the constructor for [HandleFactory]
  */
 interface ActivationFactoryFactory {
+    fun dereferenceFactory(): EntityActivationFactory
     fun singletonFactory(): SingletonActivationFactory<RawEntity>
     fun setFactory(): SetActivationFactory<RawEntity>
 }
@@ -41,7 +45,10 @@ interface ActivationFactoryFactory {
  * you can provide your own ActivationFactoryFactory, which provides methods for creating
  * activations factories to create singleton-rawentity and set-rawentity [ActiveStore]s
  */
-class HandleManager(private val aff: ActivationFactoryFactory? = null) {
+class HandleManager(
+    private val time: Time,
+    private val aff: ActivationFactoryFactory? = null
+) {
     private val singletonProxiesMutex = Mutex()
     private val singletonProxies by guardedBy(
         singletonProxiesMutex,
@@ -62,11 +69,12 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         storageKey: StorageKey,
         schema: Schema,
         callbacks: SingletonCallbacks<RawEntity>? = null,
-        name: String = storageKey.toKeyString()
+        name: String = storageKey.toKeyString(),
+        ttl: Ttl = Ttl.Infinite,
+        canRead: Boolean = true
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
-            existenceCriteria = ExistenceCriteria.MayExist,
             type = SingletonType(EntityType(schema)),
             mode = StorageMode.ReferenceMode
         )
@@ -80,9 +88,15 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SingletonHandle(name, storageProxy, callbacks).also {
-            storageProxy.registerHandle(it)
-        }
+        return SingletonHandle(
+            name,
+            storageProxy,
+            callbacks,
+            ttl,
+            time,
+            canRead,
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+        ).also { storageProxy.registerHandle(it) }
     }
 
     /**
@@ -95,11 +109,12 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
         schema: Schema,
         callbacks: SetCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
-        refinement: Refinement<RawEntity>? = null
+        refinement: Refinement<RawEntity>? = null,
+        ttl: Ttl = Ttl.Infinite,
+        canRead: Boolean = true
     ): SetHandle<RawEntity> {
         val storeOptions = SetStoreOptions<RawEntity>(
             storageKey = storageKey,
-            existenceCriteria = ExistenceCriteria.MayExist,
             type = CollectionType(EntityType(schema)),
             mode = StorageMode.ReferenceMode
         )
@@ -110,8 +125,15 @@ class HandleManager(private val aff: ActivationFactoryFactory? = null) {
             }
         }
 
-        return SetHandle(name, storageProxy, callbacks, refinement).also {
-            storageProxy.registerHandle(it)
-        }
+        return SetHandle(
+            name,
+            storageProxy,
+            callbacks,
+            refinement,
+            ttl,
+            time,
+            canRead,
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+        ).also { storageProxy.registerHandle(it) }
     }
 }

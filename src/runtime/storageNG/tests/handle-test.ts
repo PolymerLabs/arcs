@@ -130,8 +130,8 @@ describe('CollectionHandle', async () => {
   it('respects canRead', async () => {
     const handle = await getCollectionHandle(barType, new MockParticle(), false, true);
     try {
-      await handle.fetchAll('A');
-      assert.fail('handle.fetchAll should not have succeeded');
+      await handle.fetch('A');
+      assert.fail('handle.fetch should not have succeeded');
     } catch (e) {
       assert.match(e.toString(), /Error: Handle not readable/);
     }
@@ -149,7 +149,7 @@ describe('CollectionHandle', async () => {
     Entity.mutate(entity, {value: 'something'});
     await handle.add(entity);
     await handle.add(newEntity('B'));
-    assert.deepEqual(await handle.fetchAll('A'), entity);
+    assert.deepEqual(await handle.fetch('A'), entity);
   });
 
   it('assigns IDs to entities with missing IDs', async () => {
@@ -191,7 +191,7 @@ describe('CollectionHandle', async () => {
     assert.isTrue(particle.onDesyncCalled);
   });
 
-    it('notifies particle of updates', async () => {
+  it('notifies particle of updates', async () => {
     const particle: MockParticle = new MockParticle();
     const handle = await getCollectionHandle(barType, particle);
     const op: CollectionOperation<SerializedEntity> = {
@@ -200,7 +200,7 @@ describe('CollectionHandle', async () => {
       actor: 'actor',
       clock: {'actor': 1}
     };
-    await handle.onUpdate(op, {'actor': 1, 'other': 2});
+    await handle.onUpdate(op);
     assert.equal(Entity.id(particle.lastUpdate.removed[0]), 'id');
     assert.isFalse(particle.lastUpdate.originator);
   });
@@ -215,18 +215,20 @@ describe('CollectionHandle', async () => {
       oldClock: {'actor': 1},
       newClock: {'actor': 1}
     };
-    await handle.onUpdate(op, {'actor': 1, 'other': 2});
+    await handle.onUpdate(op);
     assert.isTrue(particle.onSyncCalled);
   });
 
-  it('stores new version map', async () => {
+  it('uses the storage proxy clock', async () => {
     const handle = await getCollectionHandle(barType);
 
     const versionMap: VersionMap = {'actor': 1, 'other': 2};
-    // Make storageProxy return the defined version map.
-    handle.storageProxy.getParticleView = async () => {
-      return Promise.resolve([new Set(), versionMap]);
-    };
+    // Set the storageProxy version map.
+    await handle.storageProxy.onMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: {values: {}, version: versionMap},
+      id: 1
+    });
 
     // This will pull in the version map above.
     await handle.toList();
@@ -256,6 +258,15 @@ describe('CollectionHandle', async () => {
       notifyUpdate: true,
       notifyDesync: true,
     });
+  });
+
+  it('can fetchAll', async () => {
+    const handle = await getCollectionHandle(barType);
+    const A = newEntity('A');
+    const B = newEntity('B');
+    await handle.addMultiple([A, B]);
+    const s = await handle.fetchAll();
+    assert.deepEqual(s, new Set([A, B]));
   });
 });
 
@@ -308,19 +319,21 @@ describe('SingletonHandle', async () => {
       actor: 'actor',
       clock: {'actor': 1}
     };
-    await handle.onUpdate(op, {'actor': 1, 'other': 2});
+    await handle.onUpdate(op);
     assert.deepEqual(particle.lastUpdate, {data: {}, originator: false});
     assert.equal(Entity.id(particle.lastUpdate.data), 'id');
   });
 
-  it('stores new version map', async () => {
+  it('uses the storage proxy clock', async () => {
     const handle = await getSingletonHandle(barType);
 
     const versionMap: VersionMap = {'actor': 1, 'other': 2};
-    // Make storageProxy return the defined version map.
-    handle.storageProxy.getParticleView = async () => {
-      return Promise.resolve([{id: 'id', rawData: {}}, versionMap]);
-    };
+    // Set the storageProxy version map.
+    await handle.storageProxy.onMessage({
+      type: ProxyMessageType.ModelUpdate,
+      model: {values: {}, version: versionMap},
+      id: 1
+    });
 
     // This will pull in the version map above.
     await handle.fetch();

@@ -1,7 +1,9 @@
 package arcs.core.host
 
-import arcs.sdk.Particle
-import kotlin.reflect.KClass
+import arcs.jvm.util.testutil.TimeImpl
 
-class TestHost(vararg particles: KClass<out Particle>) :
-    AbstractArcHost(particles.toIdentifierList())
+class TestHost(
+    vararg particles: ParticleRegistration
+) : AbstractArcHost(*particles) {
+    override val platformTime = TimeImpl()
+}

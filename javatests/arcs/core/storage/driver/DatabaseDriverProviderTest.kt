@@ -21,7 +21,6 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.testutil.assertSuspendingThrows
@@ -54,7 +53,7 @@ class DatabaseDriverProviderTest {
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         assertThat(
-            DriverFactory.willSupport(DatabaseStorageKey("foo", "1234a"))
+            DriverFactory.willSupport(DatabaseStorageKey.Persistent("foo", "1234a"))
         ).isTrue()
     }
 
@@ -63,7 +62,7 @@ class DatabaseDriverProviderTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
         assertThat(provider.willSupport(key)).isTrue()
     }
 
@@ -86,7 +85,7 @@ class DatabaseDriverProviderTest {
     fun willSupport_returnsFalse_whenSchemaNotFound() = runBlockingTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
 
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
         assertThat(provider.willSupport(key)).isFalse()
     }
 
@@ -96,40 +95,39 @@ class DatabaseDriverProviderTest {
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver(volatile, ExistenceCriteria.ShouldCreate, CrdtEntity.Data::class)
+            provider.getDriver(volatile, CrdtEntity.Data::class)
         }
     }
 
     @Test
     fun getDriver_throwsOnInvalidKey_schemaNotFound() = runBlockingTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver(key, ExistenceCriteria.ShouldCreate, CrdtEntity.Data::class)
+            provider.getDriver(key, CrdtEntity.Data::class)
         }
     }
 
     @Test
     fun getDriver_throwsOnInvalidDataClass() = runBlockingTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         assertSuspendingThrows(IllegalArgumentException::class) {
-            provider.getDriver(key, ExistenceCriteria.ShouldExist, Int::class)
+            provider.getDriver(key, Int::class)
         }
     }
 
     @Test
     fun getDriver() = runBlockingTest {
         val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
-        val key = DatabaseStorageKey("foo", "1234a")
+        val key = DatabaseStorageKey.Persistent("foo", "1234a")
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         val entityDriver = provider.getDriver(
             key,
-            ExistenceCriteria.ShouldExist,
             CrdtEntity.Data::class
         )
         assertThat(entityDriver).isInstanceOf(DatabaseDriver::class.java)
@@ -137,7 +135,6 @@ class DatabaseDriverProviderTest {
 
         val setDriver = provider.getDriver(
             key,
-            ExistenceCriteria.ShouldExist,
             CrdtSet.DataImpl::class
         )
         assertThat(setDriver).isInstanceOf(DatabaseDriver::class.java)
@@ -145,7 +142,6 @@ class DatabaseDriverProviderTest {
 
         val singletonDriver = provider.getDriver(
             key,
-            ExistenceCriteria.ShouldExist,
             CrdtSingleton.DataImpl::class
         )
         assertThat(singletonDriver).isInstanceOf(DatabaseDriver::class.java)

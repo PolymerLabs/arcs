@@ -20,7 +20,6 @@ import {Arc} from '../../build/runtime/arc.js';
 import {IdGenerator} from '../../build/runtime/id.js';
 import {pecIndustry} from '../../build/platform/pec-industry-web.js';
 import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
-import {StorageProviderFactory} from '../../build/runtime/storage/storage-provider-factory.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';

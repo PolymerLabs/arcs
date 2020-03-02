@@ -13,21 +13,9 @@ import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator} from './id.js';
-import {
-  BigCollectionType,
-  CollectionType,
-  EntityType,
-  HandleConnection as InterfaceInfoHandleConnection,
-  InterfaceInfo,
-  InterfaceType,
-  ReferenceType,
-  SingletonType,
-  Slot as InterfaceInfoSlot,
-  SlotType,
-  Type,
-  TypeVariable
-} from './type.js';
-import {Dictionary, Runnable} from './hot.js';
+import {HandleConnection as InterfaceInfoHandleConnection} from './type.js';
+import {Slot as InterfaceInfoSlot} from './type.js';
+import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
@@ -45,6 +33,9 @@ import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Ttl} from './recipe/ttl.js';
 import {Schema} from './schema.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
+        ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
+import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
 import {Store} from './storageNG/store.js';
@@ -638,6 +629,12 @@ ${e.message}
             return;
           case 'singleton-type':
             node.model = new SingletonType(node.type.model);
+            return;
+          case 'tuple-type':
+            if (node.types.some(t => t.kind !== 'reference-type')) {
+              throw new ManifestError(node.location, 'Only tuples of references are supported.');
+            }
+            node.model = new TupleType(node.types.map(t => t.model));
             return;
           default:
             return;

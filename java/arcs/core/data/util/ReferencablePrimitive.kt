@@ -58,7 +58,7 @@ data class ReferencablePrimitive<T>(
          * If the given [ReferenceId] matches the type of `serialized` reference id created by
          * [ReferencablePrimitive], this will return an instance of [ReferencablePrimitive].
          */
-        fun tryDereference(id: ReferenceId): Referencable? {
+        fun unwrap(id: ReferenceId): Referencable? {
             val match = pattern.matchEntire(id) ?: return null
             val className = match.groups[1]?.value ?: return null
             val value = match.groups[2]?.value ?: return null

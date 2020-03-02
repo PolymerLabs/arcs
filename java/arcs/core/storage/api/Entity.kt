@@ -11,9 +11,16 @@
 
 package arcs.core.storage.api
 
+import arcs.core.common.Referencable
+import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencablePrimitive
+import kotlin.IllegalArgumentException
+import kotlin.reflect.KClass
+
 interface Entity {
     var internalId: String
     fun schemaHash(): String
+    fun serialize(): RawEntity
 }
 
 /**
@@ -24,4 +31,30 @@ interface Entity {
 interface EntitySpec<T : Entity> {
     /** Returns an empty new instance of [T]. */
     fun create(): T
+
+    /**
+     * Takes a [RawEntity] and convert it to concrete entity class [T].
+     *
+     * TODO: replace this with kotlinx.serialization
+     */
+    fun deserialize(data: RawEntity): T
+}
+
+/**
+ * Try to extract the primitive value from a [ReferencablePrimitive].
+ */
+@Suppress("UNCHECKED_CAST")
+fun <T : Any> Referencable?.toPrimitiveValue(
+    valueType: KClass<T>,
+    defaultValue: T
+): T {
+    if (this == null) {
+        return defaultValue
+    }
+    if (this is ReferencablePrimitive<*> && this.value!!::class == valueType) {
+        return (this as ReferencablePrimitive<T>).value
+    }
+    throw IllegalArgumentException(
+        "$this of type ${this::class} is not a ReferenceablePrimitive<$valueType>"
+    )
 }

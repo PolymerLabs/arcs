@@ -14,11 +14,15 @@ package arcs.core.storage.handle
 import arcs.core.common.Referencable
 import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
+import arcs.core.data.RawEntity
+import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
+import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
+import arcs.core.util.Time
 
 /** These typealiases are defined to clean up the class declaration below. */
 typealias SetData<T> = CrdtSet.Data<T>
@@ -40,8 +44,20 @@ class CollectionImpl<T : Referencable>(
     name: String,
     storageProxy: SetProxy<T>,
     callbacks: SetCallbacks<T>? = null,
-    private val refinement: Refinement<T>?
-) : SetBase<T>(name, storageProxy, callbacks) {
+    private val refinement: Refinement<T>? = null,
+    ttl: Ttl = Ttl.Infinite,
+    time: Time,
+    canRead: Boolean = true,
+    dereferencer: Dereferencer<RawEntity>? = null
+) : SetBase<T>(
+    name,
+    storageProxy,
+    callbacks,
+    ttl,
+    time,
+    canRead,
+    dereferencer = dereferencer
+) {
     /** Return the number of items in the storage proxy view of the collection. */
     suspend fun size(): Int = value().size
 
@@ -72,6 +88,10 @@ class CollectionImpl<T : Referencable>(
      */
     suspend fun store(entity: T): Boolean {
         log.debug { "Storing: $entity" }
+        if (!Ttl.Infinite.equals(ttl)) {
+            @Suppress("GoodTime") // use Instant
+            entity.expirationTimestamp = ttl.calculateExpiration(time)
+        }
         return storageProxy.applyOp(
             CrdtSet.Operation.Add(name, versionMap().increment(), entity)
         )

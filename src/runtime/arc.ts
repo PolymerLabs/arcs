@@ -29,7 +29,7 @@ import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
 import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        RelationType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
+        TupleType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
@@ -453,7 +453,7 @@ export class Arc implements ArcInterface {
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
-        const storeId = this.generateID().toString();
+        const storeId = recipeHandle.fate === 'create' && !!recipeHandle.id ? recipeHandle.id : this.generateID().toString();
         const volatileKey = recipeHandle.immediateValue
           ? new VolatileStorageKey(this.id, '').childKeyForHandle(storeId)
           : undefined;
@@ -546,8 +546,8 @@ export class Arc implements ArcInterface {
       return this.storesByKey.get(storageKey);
     }
 
-    if (type instanceof RelationType) {
-      type = new CollectionType(type);
+    if (type instanceof TupleType) {
+      throw new Error('Tuple type is not yet supported');
     }
 
     if (id == undefined) {
@@ -556,7 +556,8 @@ export class Arc implements ArcInterface {
 
     if (storageKey == undefined) {
       if (capabilities && !capabilities.isEmpty()) {
-        storageKey = this.capabilitiesResolver.createStorageKey(capabilities).childKeyForHandle(id);
+        storageKey = await this.capabilitiesResolver.createStorageKey(
+            capabilities, type.getEntitySchema(), id);
       } else if (this.storageKey) {
         storageKey = this.storageKey.childKeyForHandle(id);
       }

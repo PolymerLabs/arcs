@@ -20,7 +20,6 @@ import kotlin.reflect.KClass
 /** Base interface which all store implementations must extend from. */
 interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
     val storageKey: StorageKey
-    val existenceCriteria: ExistenceCriteria
     val mode: StorageMode
     val type: Type
 }
@@ -70,7 +69,6 @@ enum class StorageMode {
 /** Wrapper for options which will be used to construct a [Store]. */
 data class StoreOptions<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     val storageKey: StorageKey,
-    val existenceCriteria: ExistenceCriteria,
     val type: Type,
     val mode: StorageMode =
         if (storageKey is ReferenceModeStorageKey) StorageMode.ReferenceMode

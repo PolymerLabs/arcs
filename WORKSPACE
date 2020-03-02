@@ -193,6 +193,7 @@ maven_install(
         "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
         "com.google.auto.service:auto-service:" + AUTO_SERVICE_VERSION,
         "com.google.auto.service:auto-service-annotations:" + AUTO_SERVICE_VERSION,
+        "com.google.protobuf:protobuf-java:3.11.4",
         "com.google.truth:truth:1.0",
         "com.github.ajalt:clikt:" + CLIKT_VERSION,
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
