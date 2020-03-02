@@ -146,15 +146,15 @@ export class StorageKeyRecipeResolver {
 
         if (matches.length !== 1) {
           const extra = matches.length > 1 ? 'Ambiguous handles' : 'No matching handles found';
-          throw Error(`Handle ${h.localName} mapped improperly: ${extra}.`);
+          throw Error(`Handle ${h.id} mapped improperly: ${extra}.`);
         }
 
         const match = matches[0];
         if (!match.recipe.isLongRunning) {
-          throw Error(`Handle ${h.localName} mapped to ephemeral handle ${match.localName}.`);
+          throw Error(`Handle ${h.id} mapped to ephemeral handle ${match.id}.`);
         }
 
-        h.storageKey = match.storageKey;
+        // h.storageKey = match.storageKey;
       });
   }
 }

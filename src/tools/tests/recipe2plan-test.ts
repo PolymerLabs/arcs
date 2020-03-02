@@ -67,10 +67,11 @@ describe('recipe2plan', () => {
         data: reads data`);
 
     const resolver = new StorageKeyRecipeResolver(manifest);
+
     await assertThrowsAsync(async () => {
       // @ts-ignore
       for await (const it of resolver.resolve()) {
-        continue;
+        console.log('Should not be able to reach here');
       }
     });
   });
