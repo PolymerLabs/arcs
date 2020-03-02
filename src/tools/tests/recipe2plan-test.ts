@@ -13,12 +13,12 @@ import {StorageKeyRecipeResolver} from '../recipe2plan.js';
 import {assert} from '../../platform/chai-node.js';
 
 describe('recipe2plan', () => {
-  it('Long + Long: If ReadingRecipe is long running, it is a valid use case.', async () => {
+  it('Long + Long: If ReadingRecipe is long running, it is a valid use case', async () => {
     const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
 
-    // TODO(mmandlis): Resolve these types later
+    // TODO(alxr): Resolve these types later
     // particle Writer
     //   data: writes Product Thing {name: Text, price: Number}
 
@@ -48,12 +48,12 @@ describe('recipe2plan', () => {
     }
 
   });
-  it('Short + Short: If WritingRecipe is short lived, it is not valid.', () => {});
-  it('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid.', () => {});
-  it('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});
-  it('No arc id: If arcId of WritingRecipe is not there, it is not valid.', () => {});
-  it('No handleId: If id of handle in WritingRecipe is not provided, it is not valid.', () => {});
-  it('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid.', () => {});
-  it('Ambiguous handle + tag disambiguation: If there are 2 WritingRecipes creating the same handle but with different tags and mapping uses one of the tags, it is valid.', () => {});
-  it('No Handle: If there is no writing handle, it is not valid.', () => {});
+  it.skip('Short + Short: If WritingRecipe is short lived, it is not valid', () => {});
+  it.skip('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', () => {});
+  it.skip('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});
+  it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});
+  it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {});
+  it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {});
+  it.skip('Ambiguous handle + tag disambiguation: If there are 2 WritingRecipes creating the same handle but with different tags and mapping uses one of the tags, it is valid', () => {});
+  it.skip('No Handle: If there is no writing handle, it is not valid', () => {});
 });
