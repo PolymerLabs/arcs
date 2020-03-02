@@ -570,6 +570,7 @@ ParticleHandleConnectionType
   / BigCollectionType
   / ReferenceType
   / SlotType
+  / TupleType
   / type: SchemaInline whiteSpace? refinement:Refinement? 
   {
     type.refinement = refinement;
@@ -617,6 +618,15 @@ ReferenceType
     return toAstNode<AstNode.ReferenceType>({
       kind: 'reference-type',
       type,
+    });
+  }
+
+TupleType  "a tuple of types (e.g. (A, &B, [C]))"
+  = '(' eolPlusWhiteSpace? first:ParticleHandleConnectionType rest:(eolPlusWhiteSpace? ',' eolPlusWhiteSpace? ParticleHandleConnectionType)* eolPlusWhiteSpace? ',' ? eolPlusWhiteSpace? ')'
+  {
+    return toAstNode<AstNode.TupleType>({
+      kind: 'tuple-type',
+      types: [first].concat(rest.map(t => t[3])),
     });
   }
 
@@ -670,7 +680,7 @@ TypeName
   }
 
 TypeVariableList
-  = head:TypeVariable tail:(',' whiteSpace TypeVariable)*
+  = head:TypeVariable tail:(',' eolPlusWhiteSpace? TypeVariable)*
   {
     return [head, ...tail.map(a => a[2])];
   }
@@ -1558,5 +1568,7 @@ eolWhiteSpace "a group of new lines (and optionally comments)"
   = spaceChar* !.
   / spaceChar* '//' [^\n]* eolWhiteSpace
   / spaceChar* eol eolWhiteSpace?
+eolPlusWhiteSpace "eol plus trailing whitespace"
+  = eolWhiteSpace? whiteSpace?
 eol "a new line"
   = "\r"? "\n" "\r"?

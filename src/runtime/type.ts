@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Id} from './id.js';
 import {SlotInfo} from './slot-info.js';
 import {Predicate, Literal} from './hot.js';
 import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
@@ -683,7 +682,7 @@ export class BigCollectionType<T extends Type> extends Type {
 }
 
 export class TupleType extends Type {
-  private readonly tupleTypes: Type[];
+  readonly tupleTypes: Type[];
 
   constructor(tuple: Type[]) {
     super('Tuple');
