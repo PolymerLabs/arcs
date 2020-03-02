@@ -791,7 +791,8 @@ ${e.message}
     const items = {
       require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
       handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
-      byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RequireHandleSection>(),
+      syntheticHandles: recipeItems.filter(item => item.kind === 'synthetic-handle') as AstNode.RecipeSyntheticHandle[],
+      byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RecipeSyntheticHandle | AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
       requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
       particles: recipeItems.filter(item => item.kind === 'recipe-particle') as AstNode.RecipeParticle[],
@@ -841,6 +842,27 @@ ${e.message}
             item.annotation.parameter.count,
             Ttl.ttlUnitsFromString(item.annotation.parameter.units));
       }
+      items.byHandle.set(handle, item);
+    }
+
+    for (const item of items.syntheticHandles) {
+      const handle = recipe.newHandle();
+      handle.fate = 'join';
+      
+      if (item.name) {
+        assert(!items.byName.has(item.name), `duplicate handle name: ${item.name}`);
+        handle.localName = item.name;
+        items.byName.set(item.name, {item, handle});
+      }
+
+      for (const association of item.associations) {
+        const associatedItem = items.byName.get(association);
+        assert(associatedItem, `unrecognized name: ${association}`);
+        const associatedHandle = associatedItem && associatedItem.handle;
+        assert(associatedHandle, `only handles allowed to be joined: "${association}" is not a handle`);
+        handle.associateHandle(associatedHandle);
+      }
+
       items.byHandle.set(handle, item);
     }
 
