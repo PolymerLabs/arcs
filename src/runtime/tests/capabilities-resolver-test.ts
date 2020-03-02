@@ -21,6 +21,7 @@ import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {Runtime} from '../runtime.js';
 import {MockFirebaseStorageDriverProvider} from '../storageNG/testing/mock-firebase.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 
 describe('Capabilities Resolver', () => {
   type StorageKeyType = typeof VolatileStorageKey|typeof RamDiskStorageKey|typeof DatabaseStorageKey;
@@ -30,14 +31,6 @@ describe('Capabilities Resolver', () => {
     assert.instanceOf(refKey.backingKey, expectedType);
     assert.instanceOf(refKey.storageKey, expectedType);
   }
-  async function verifyThrows(promise: Promise<StorageKey>) {
-    try {
-      await promise;
-      assert.fail();
-    } catch (e) {
-      // do nothing.
-    }
-  }
   const schema = new Schema(['Thing'], {result: 'Text'});
   const handleId = 'h0';
 
@@ -45,10 +38,10 @@ describe('Capabilities Resolver', () => {
     const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     const key = await resolver1.createStorageKey(Capabilities.tiedToArc, schema, handleId);
     verifyStorageKey(key, VolatileStorageKey);
-    await verifyThrows(resolver1.createStorageKey(
+    await assertThrowsAsync(async () => await resolver1.createStorageKey(
         Capabilities.tiedToRuntime, schema, handleId));
-    await verifyThrows(
-        resolver1.createStorageKey(Capabilities.persistent, schema, handleId));
+    await assertThrowsAsync(async () => await resolver1.createStorageKey(
+        Capabilities.persistent, schema, handleId));
 
     const resolver2 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')},
         new Map([
@@ -56,8 +49,8 @@ describe('Capabilities Resolver', () => {
                 capabilities: Capabilities.tiedToRuntime,
                 create: (options: StorageKeyOptions) => new RamDiskStorageKey(options.unique())
     }]]));
-    await verifyThrows(
-        resolver2.createStorageKey(Capabilities.tiedToArc, schema, handleId));
+    await assertThrowsAsync(async () => await resolver2.createStorageKey(
+        Capabilities.tiedToArc, schema, handleId));
     verifyStorageKey(await resolver2.createStorageKey(
         Capabilities.tiedToRuntime, schema, handleId), RamDiskStorageKey);
 
@@ -78,14 +71,14 @@ describe('Capabilities Resolver', () => {
     const resolver5 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     verifyStorageKey(await resolver5.createStorageKey(
         Capabilities.tiedToArc, schema, handleId), VolatileStorageKey);
-    await verifyThrows(resolver5.createStorageKey(
+    await assertThrowsAsync(async () => await resolver5.createStorageKey(
         Capabilities.tiedToRuntime, schema, handleId));
 });
 
   it('registers and creates database key', async () => {
     const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
-    await verifyThrows(
-        resolver1.createStorageKey(Capabilities.persistent, schema, handleId));
+    await assertThrowsAsync(async () => await resolver1.createStorageKey(
+        Capabilities.persistent, schema, handleId));
     DatabaseStorageKey.register();
 
     const resolver2 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
@@ -95,10 +88,10 @@ describe('Capabilities Resolver', () => {
 
   it('fails for unsupported capabilities', async () => {
     const capabilitiesResolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
-    await verifyThrows(capabilitiesResolver.createStorageKey(
+    await assertThrowsAsync(async () => await capabilitiesResolver.createStorageKey(
         Capabilities.tiedToRuntime, schema, handleId));
 
-    await verifyThrows(capabilitiesResolver.createStorageKey(
+    await assertThrowsAsync(async () => await capabilitiesResolver.createStorageKey(
         new Capabilities(['persistent', 'tied-to-arc']), schema, handleId));
   });
 

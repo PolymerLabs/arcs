@@ -21,11 +21,12 @@ export type CapabilitiesResolverOptions = Readonly<{
 }>;
 
 export abstract class StorageKeyOptions {
-  constructor(public readonly arcId: ArcId,
-              public readonly schemaHash: string,
-              protected readonly schemaName: string = null) {}
-  abstract location():string;
-  abstract unique():string;
+  constructor(
+      public readonly arcId: ArcId,
+      public readonly schemaHash: string,
+      protected readonly schemaName: string = null) {}
+  abstract location(): string;
+  abstract unique(): string;
 }
 
 class ContainerStorageKeyOptions extends StorageKeyOptions {
