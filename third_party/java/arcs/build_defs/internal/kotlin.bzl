@@ -149,6 +149,7 @@ def arcs_kt_library(
       exports: List; Optional list of deps to export from this build rule.
       visibility: List; List of visibilities
       add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
+      testonly: Marks this target to be used only for tests.
     """
     _check_platforms(platforms)
 

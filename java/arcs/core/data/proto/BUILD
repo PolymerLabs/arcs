@@ -4,6 +4,7 @@ load(
 )
 load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
+    "java_lite_proto_library",
     "java_proto_library",
     "proto_library",
 )
@@ -18,7 +19,7 @@ arcs_kt_library(
         ["*.kt"],
     ),
     deps = [
-        ":recipe_java_lite_proto",
+        ":recipe_java_proto_lite",
         "//java/arcs/core/data",
     ],
 )
@@ -43,7 +44,7 @@ proto_library(
 )
 
 java_lite_proto_library(
-    name = "recipe_java_lite_proto",
+    name = "recipe_java_proto_lite",
     deps = [":recipe_proto"],
 )
 
