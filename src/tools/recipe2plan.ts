@@ -9,8 +9,8 @@
  */
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
-import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
+import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
+import {CapabilitiesResolver, StorageKeyOptions} from '../runtime/capabilities-resolver.js';
 import {ArcId, IdGenerator} from '../runtime/id.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {Arc} from '../runtime/arc.js';
@@ -19,6 +19,10 @@ import {Loader} from '../platform/loader-web.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
 import {Handle} from '../runtime/recipe/handle.js';
+import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
+import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../runtime/storageNG/drivers/ramdisk.js';
+import {Capabilities} from '../runtime/capabilities.js';
+import {ramDiskStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 
 
 /** Reads a manifest and outputs generated Kotlin plans. */
@@ -53,35 +57,43 @@ export class StorageKeyRecipeResolver {
    */
   // TODO(alxr) if create handles are not tied to arc (volatile) and don't have IDs, log a warning
   async* resolve(): AsyncIterator<Recipe> {
-    for (const r of this.manifest.allRecipes) {
-      const arcId = IdGenerator.newSession().newArcId(this.getArcId(r.triggers));
-      if (arcId === null) {
-        throw Error(`ArcId is invalid.`);
-      }
+    const loader = new Loader();
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+    // TODO(mmandlis): Use db key for persistent storage
+    CapabilitiesResolver.registerDefaultKeyCreator(
+      "persistent",
+      Capabilities.persistent,
+      ({arcId}: StorageKeyOptions) => new RamDiskStorageKey(arcId.toString())
+    );
 
-      const arc = new Arc({id: arcId, slotComposer: new SlotComposer(), loader: new Loader(), context: this.manifest});
-      const resolver = new CapabilitiesResolver({arcId});
-      this.createDummyStores(r, resolver);
+    const runtime = new Runtime({loader, context: this.manifest, memoryProvider});
 
+    for (const r of runtime.context.allRecipes) {
+      const arc = runtime.newArc(this.getArcId(r.triggers), ramDiskStorageKeyPrefixForTest());
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
-      const rPrime = await (new RecipeResolver(arc).resolve(r, opts));
+      const rPrime = await this.resolveOrNormalize(r, arc, opts);
       if (!rPrime) {
         throw Error(`Recipe ${r.name} failed to resolve:\n` +
                     [...opts.errors.values()].join('\n'))
       }
-      this.assignStorageKeys(rPrime, resolver); // or resolve mapping
+      this.createKeysForCreateHandles(rPrime, arc);
+      // this.matchKeysToHandles(rPrime);
       rPrime.normalize();
       if (!rPrime.isResolved()) {
-        throw Error(`Recipe ${rPrime.name} did not properly resolve!`);
+        throw Error(`Recipe ${rPrime.name} did not properly resolve!\n${rPrime.toString({showUnresolved: true})}`);
       }
       yield rPrime;
     }
   }
 
-  /** Create storage keys for create handles, matches them to map handles. */
-  assignStorageKeys(recipe: Recipe, resolver: CapabilitiesResolver) {
-    this.createKeysForCreateHandles(recipe, resolver);
-    this.matchKeysToHandles(recipe);
+  async resolveOrNormalize(recipe: Recipe, arc: Arc, opts?: IsValidOptions): Promise<Recipe | null> {
+    const normed = recipe.clone();
+    normed.normalize();
+    console.log(`is resolved:${normed.name}:${normed.isResolved()}`);
+    if(normed.isResolved()) return normed;
+
+    return await (new RecipeResolver(arc).resolve(recipe, opts));
   }
 
 
@@ -120,21 +132,28 @@ export class StorageKeyRecipeResolver {
    * Assigns storage keys to all create handles.
    *
    * @param recipe Should be a recipe for a long-running Arc
-   * @param resolver CapabilitiesResolver should be associated with long-running-arc's ArcId.
+   * @param arc
    */
-  createKeysForCreateHandles(recipe: Recipe, resolver: CapabilitiesResolver) {
-    recipe.handles
-      .filter(h => h.fate === 'create')
-      .forEach(ch => ch.storageKey = resolver.createStorageKey(ch.capabilities));
-  }
-
-  createDummyStores(recipe: Recipe, resolver: CapabilitiesResolver) {
+  createKeysForCreateHandles(recipe: Recipe, arc: Arc) {
+    const resolver = new CapabilitiesResolver({arcId: arc.id});
     recipe.handles
       .filter(h => h.fate === 'create')
       .forEach(ch => {
+        console.log(`${ch.localName}:${ch.id}:${ch.type}`);
         const storageKey = resolver.createStorageKey(ch.capabilities);
-        const store = new Store({storageKey, exists: Exists.ShouldCreate, type: ch.type, id: ch.id});
-        this.manifest.registerStore(store, ch.tags);
+        const store = new Store({storageKey, exists: Exists.MayExist, type: ch.type, id: ch.id});
+        arc.context.registerStore(store, ch.tags);
+        // ch.storageKey = storageKey;
+      });
+  }
+
+  createDummyStores(recipe: Recipe, arc: Arc) {
+    const resolver = new CapabilitiesResolver({arcId: arc.id});
+    recipe.handles
+      .forEach(h => {
+        const store = new Store({storageKey: ramDiskStorageKeyPrefixForTest()(arc.id),
+          exists: Exists.MayExist, type: h.type, id: h.id});
+        arc.context.registerStore(store, h.tags);
       });
   }
 

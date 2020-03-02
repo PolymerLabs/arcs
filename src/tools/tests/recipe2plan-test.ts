@@ -18,19 +18,26 @@ describe('recipe2plan', () => {
     particle Reader
       data: reads Thing {name: Text}
 
-    particle Writer
-       data: writes Product Thing {name: Text, price: Number}
+    // TODO(mmandlis): Resolve these types later
+    // particle Writer
+    //   data: writes Product Thing {name: Text, price: Number}
 
+    particle Writer
+       data: writes Thing {name: Text}
+    
     @trigger
       launch startup
       arcId myArcId
     recipe WritingRecipe
-      thing: create 'my-handle-id' #thing
+      thing: create persistent 'my-handle-id' 
       Writer
         data: writes thing
 
+    @trigger
+      launch startup
+      arcId otherArcId
     recipe ReadingRecipe
-      data: map *
+      data: map 'my-handle-id'
       Reader
         data: reads data`);
 
