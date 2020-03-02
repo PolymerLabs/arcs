@@ -59,16 +59,7 @@ export class StorageKeyRecipeResolver {
 
   constructor(context: Manifest) {
     const loader = new Loader();
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    // TODO(mmandlis): Use db key for persistent storage
-    CapabilitiesResolver.registerDefaultKeyCreator(
-      'persistent',
-      Capabilities.persistent,
-      ({arcId}: StorageKeyOptions) => new RamDiskStorageKey(arcId.toString())
-    );
-
-    this.runtime = new Runtime({loader, context, memoryProvider});
+    this.runtime = new Runtime({loader, context});
   }
 
   /**
