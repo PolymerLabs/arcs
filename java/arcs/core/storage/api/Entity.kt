@@ -14,8 +14,8 @@ package arcs.core.storage.api
 import arcs.core.common.Referencable
 import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencablePrimitive
-import kotlin.reflect.KClass
 import kotlin.IllegalArgumentException
+import kotlin.reflect.KClass
 
 interface Entity {
     var internalId: String
