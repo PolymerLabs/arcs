@@ -11,7 +11,10 @@
 
 package arcs.core.storage.api
 
+import arcs.core.common.Referencable
 import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencablePrimitive
+import kotlin.reflect.KClass
 
 interface Entity {
     var internalId: String
@@ -34,4 +37,22 @@ interface EntitySpec<T : Entity> {
      * TODO: replace this with kotlinx.serialization
      */
     fun deserialize(data: RawEntity): T
+}
+
+/**
+ * Try to extract the primitive value from a [ReferencablePrimitive].
+ */
+@Suppress("UNCHECKED_CAST")
+fun <T : Any> toPrimitiveValue(
+    ref: Referencable?,
+    valueType: KClass<T>,
+    defaultValue: T
+): T {
+    if (ref !is ReferencablePrimitive<*>) {
+        return defaultValue
+    }
+    if (ref.value != null && ref.value!!::class == valueType) {
+        return (ref as ReferencablePrimitive<T>).value
+    }
+    return defaultValue
 }

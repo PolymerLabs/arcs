@@ -11,6 +11,7 @@ arcs_kt_library(
     name = "api",
     srcs = glob(["*.kt"]),
     deps = [
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/data:rawentity",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
