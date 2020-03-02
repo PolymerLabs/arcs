@@ -15,19 +15,28 @@ package arcs.sdk
 typealias Handle = arcs.core.storage.api.Handle
 
 /** A singleton handle with read access. */
-typealias ReadableSingleton<T> = arcs.core.storage.api.ReadSingleton<T>
+typealias ReadSingleton<T> = arcs.core.storage.api.ReadSingleton<T>
 
 /** A singleton handle with write access. */
-typealias WritableSingleton<T> = arcs.core.storage.api.WriteSingleton<T>
+typealias WriteSingleton<T> = arcs.core.storage.api.WriteSingleton<T>
 
 /** A singleton handle with read and write access. */
 typealias ReadWriteSingleton<T> = arcs.core.storage.api.ReadWriteSingleton<T>
 
 /** A collection handle with read access. */
-typealias ReadableCollection<T> = arcs.core.storage.api.ReadCollection<T>
+typealias ReadCollection<T> = arcs.core.storage.api.ReadCollection<T>
 
 /** A collection handle with write access. */
-typealias WritableCollection<T> = arcs.core.storage.api.WriteCollection<T>
+typealias WriteCollection<T> = arcs.core.storage.api.WriteCollection<T>
+
+/** A collection handle with query access. */
+typealias QueryCollection<T, QueryArgs> = arcs.core.storage.api.QueryCollection<T, QueryArgs>
 
 /** A collection handle with read and write access. */
 typealias ReadWriteCollection<T> = arcs.core.storage.api.ReadWriteCollection<T>
+
+/** A collection handle with read and write access. */
+typealias ReadQueryCollection<T, QueryArgs> = arcs.core.storage.api.ReadQueryCollection<T, QueryArgs>
+
+/** A collection handle with read and write access. */
+typealias ReadWriteQueryCollection<T, QueryArgs> = arcs.core.storage.api.ReadWriteQueryCollection<T, QueryArgs>

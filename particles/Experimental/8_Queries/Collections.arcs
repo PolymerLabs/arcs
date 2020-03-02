@@ -1,0 +1,34 @@
+// Tutorial: Collections
+// Shows how to use an input list, and store data in a manifest file.
+
+
+// Imports contents of another manifest via a relative path from this manifest.
+import 'PeopleSchemas.arcs'
+
+// This is essentially a JSON file defined inside the manifest.
+resource PeopleData
+  start
+  [
+    {"name": "Jill", "age": 70},
+    {"name": "Jack", "age": 25},
+    {"name": "Little Jimmy", "age": 5},
+    {"name": "Benny", "age": 12},
+    {"name": "Jen", "age": 50}
+  ]
+
+// This data store contains a collection of entities rather than a single
+// entity, and is backed by the PeopleData resource defined above.
+store PeopleToGreetStore of [PersonDetails] in PeopleData
+
+particle Collections in 'Collections.wasm'
+  // The input is a collection of PersonDetails entities.
+  inputData: reads [PersonDetails {name, age}[age >= ?]]
+  root: consumes
+
+recipe CollectionRecipe
+  data: map PeopleToGreetStore
+
+  Collections
+    inputData: reads data
+
+  description `Kotlin Tutorial 8: Queries`

@@ -78,19 +78,27 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
       if (this.opts.wasm) {
         handleInterfaceType = `Wasm${handleConcreteType}Impl<${entityType}>`;
       } else {
-        switch (connection.direction) {
-          case 'reads writes':
-            handleInterfaceType = `ReadWrite${handleConcreteType}<${entityType}>`;
-            break;
-          case 'writes':
-            handleInterfaceType = `Writable${handleConcreteType}<${entityType}>`;
-            break;
-          case 'reads':
-            handleInterfaceType = `Readable${handleConcreteType}<${entityType}>`;
-            break;
-          default:
+        const handleInterfaces = [];
+        const typeArguments = [];
+
+        if (connection.isInput) {
+            handleInterfaces.push('Read');
+        }
+        if (connection.isOutput) {
+            handleInterfaces.push('Write');
+        }
+        if (connection.direction !== 'reads' &&
+            connection.direction !== 'writes' &&
+            connection.direction !== 'reads writes') {
             throw new Error(`Unsupported handle direction: ${connection.direction}`);
         }
+
+        typeArguments.push(entityType);
+        if (queryType) {
+            handleInterfaces.push('Query');
+            typeArguments.push(queryType);
+        }
+        handleInterfaceType = `${handleInterfaces.join('')}${handleConcreteType}<${typeArguments.join(', ')}>`;
       }
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
@@ -134,7 +142,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
 
   private getQueryType(connection: HandleConnectionSpec): string | null {
     if (!connection.type.isCollectionType()) {
-      return 'Unit';
+      return null;
     }
     const type = connection.type.collectionType;
     if (!(type instanceof EntityType)) {
