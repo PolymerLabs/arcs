@@ -11,6 +11,7 @@
 import {Manifest} from '../../runtime/manifest.js';
 import {StorageKeyRecipeResolver} from '../recipe2plan.js';
 import {assert} from '../../platform/chai-node.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 
 describe('recipe2plan', () => {
   it('Long + Long: If ReadingRecipe is long running, it is a valid use case', async () => {
@@ -46,9 +47,37 @@ describe('recipe2plan', () => {
     for await (const it of resolver.resolve()) {
       assert.isTrue(it.isResolved());
     }
-
   });
-  it.skip('Short + Short: If WritingRecipe is short lived, it is not valid', () => {});
+  it('Short + Short: If WritingRecipe is short lived, it is not valid', async () => {
+    const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    // TODO(alxr): Resolve these types later
+    // particle Writer
+    //   data: writes Product Thing {name: Text, price: Number}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+    await assertThrowsAsync(async () => {
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      // @ts-ignore
+      for await (const it of resolver.resolve()) {
+        continue;
+      }
+    })
+  });
   it.skip('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', () => {});
   it.skip('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});
   it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});
