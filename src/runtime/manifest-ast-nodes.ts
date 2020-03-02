@@ -378,7 +378,7 @@ export interface RecipeRequire extends BaseNode {
   items: RecipeItem[];
 }
 
-export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
+export type RecipeItem = RecipeParticle | RecipeHandle | RecipeSyntheticHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
 
 export const RELAXATION_KEYWORD = 'someof';
 
@@ -411,6 +411,12 @@ export interface RecipeHandle extends BaseNode {
   fate: Fate;
   capabilities: RecipeHandleCapability[];
   annotation: ParameterizedAnnotation|null;
+}
+
+export interface RecipeSyntheticHandle extends BaseNode {
+  kind: 'synthetic-handle';
+  name: string|null;
+  associations: string[];
 }
 
 export interface RecipeParticleSlotConnection extends BaseNode {
@@ -760,7 +766,7 @@ export function preSlandlesDirectionToDirection(direction: Direction, isOptional
 }
 
 export type SlotDirection = 'provides' | 'consumes';
-export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
+export type Fate = 'use' | 'create' | 'map' | 'copy' | 'join' | '?' | '`slot';
 
 export type ParticleHandleConnectionType = TypeVariable|CollectionType|
     BigCollectionType|ReferenceType|SlotType|SchemaInline|TypeName;
