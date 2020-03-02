@@ -263,7 +263,7 @@ describe('CollectionHandle', async () => {
   it('can fetchAll', async () => {
     const handle = await getCollectionHandle(barType);
     const A = newEntity('A');
-    const B = newEntity('B')
+    const B = newEntity('B');
     await handle.addMultiple([A, B]);
     const s = await handle.fetchAll();
     assert.deepEqual(s, new Set([A, B]));
