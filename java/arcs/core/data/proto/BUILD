@@ -43,7 +43,7 @@ proto_library(
     srcs = ["recipe.proto"],
 )
 
-java_lite_proto_library(
+android_proto_library(
     name = "recipe_java_proto_lite",
     deps = [":recipe_proto"],
 )
