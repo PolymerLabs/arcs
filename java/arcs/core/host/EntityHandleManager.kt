@@ -13,10 +13,10 @@ import arcs.core.storage.api.EntitySpec
 import arcs.core.storage.api.Handle
 import arcs.core.storage.api.ReadWriteCollection
 import arcs.core.storage.api.ReadWriteSingleton
-import arcs.core.storage.api.ReadableCollection
-import arcs.core.storage.api.ReadableSingleton
-import arcs.core.storage.api.WritableCollection
-import arcs.core.storage.api.WritableSingleton
+import arcs.core.storage.api.ReadCollection
+import arcs.core.storage.api.ReadSingleton
+import arcs.core.storage.api.WriteCollection
+import arcs.core.storage.api.WriteSingleton
 import arcs.core.storage.handle.CollectionImpl
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.SetData
@@ -37,7 +37,7 @@ typealias CollectionSenderCallbackAdapter<E> =
 
 /**
  * Wraps a [HandleManager] and creates [Entity] handles based on [HandleMode], such as
- * [ReadableSingleton] for [HandleMode.Read]. To obtain a [HandleHolder], use
+ * [ReadSingleton] for [HandleMode.Read]. To obtain a [HandleHolder], use
  * `arcs_kt_schema` on a manifest file to generate a `{ParticleName}Handles' class, and
  * invoke its default constructor, or obtain it from the [BaseParticle.handles] field.
  */
@@ -216,12 +216,12 @@ internal open class HandleEventBase<T, H : Handle> {
     }
 }
 
-internal open class ReadableSingletonHandleImpl<T : Entity>(
+internal open class ReadSingletonHandleImpl<T : Entity>(
     val entitySpec: EntitySpec<T>,
     val handleName: String,
     val storageHandle: SingletonHandle<RawEntity>,
     val sender: Sender
-) : HandleEventBase<T?, ReadableSingleton<T>>(), ReadableSingleton<T> {
+) : HandleEventBase<T?, ReadSingleton<T>>(), ReadSingleton<T> {
     init {
         storageHandle.callback = SingletonSenderCallbackAdapter(
             this::fetch,
@@ -242,11 +242,11 @@ internal open class ReadableSingletonHandleImpl<T : Entity>(
     }
 }
 
-internal class WritableSingletonHandleImpl<T : Entity>(
+internal class WriteSingletonHandleImpl<T : Entity>(
     val handleName: String,
     val storageHandle: SingletonHandle<RawEntity>,
     val idGenerator: Id.Generator
-) : WritableSingleton<T> {
+) : WriteSingleton<T> {
     override val name: String
         get() = handleName
 
@@ -265,24 +265,24 @@ internal class ReadWriteSingletonHandleImpl<T : Entity>(
     storageHandle: SingletonHandle<RawEntity>,
     idGenerator: Id.Generator,
     sender: Sender,
-    private val writableSingleton: WritableSingletonHandleImpl<T> = WritableSingletonHandleImpl(
+    private val writableSingleton: WriteSingletonHandleImpl<T> = WriteSingletonHandleImpl(
         handleName,
         storageHandle,
         idGenerator
     )
 ) : ReadWriteSingleton<T>,
-    ReadableSingletonHandleImpl<T>(entitySpec, handleName, storageHandle, sender),
-    WritableSingleton<T> by writableSingleton {
+    ReadSingletonHandleImpl<T>(entitySpec, handleName, storageHandle, sender),
+    WriteSingleton<T> by writableSingleton {
     override val name: String
         get() = writableSingleton.name
 }
 
-internal open class ReadableCollectionHandleImpl<T : Entity>(
+internal open class ReadCollectionHandleImpl<T : Entity>(
     val entitySpec: EntitySpec<T>,
     val handleName: String,
     val storageHandle: SetHandle<RawEntity>,
     val sender: Sender
-) : HandleEventBase<Set<T>, ReadableCollection<T>>(), ReadableCollection<T> {
+) : HandleEventBase<Set<T>, ReadCollection<T>>(), ReadCollection<T> {
     init {
         storageHandle.callback = CollectionSenderCallbackAdapter(
             this::fetchAll,
@@ -311,7 +311,7 @@ internal class WritableCollectionHandleImpl<T : Entity>(
     val handleName: String,
     val storageHandle: CollectionImpl<RawEntity>,
     val idGenerator: Id.Generator
-) : WritableCollection<T> {
+) : WriteCollection<T> {
     override val name: String
         get() = handleName
 
@@ -342,8 +342,8 @@ internal class ReadWriteCollectionHandleImpl<T : Entity>(
         idGenerator
     )
 ) : ReadWriteCollection<T>,
-    ReadableCollectionHandleImpl<T>(entitySpec, handleName, storageHandle, sender),
-    WritableCollection<T> by writableCollection {
+    ReadCollectionHandleImpl<T>(entitySpec, handleName, storageHandle, sender),
+    WriteCollection<T> by writableCollection {
     override val name: String
         get() = writableCollection.name
 }
@@ -396,13 +396,13 @@ private fun <T : Entity> createSingletonHandle(
             idGenerator,
             sender
         )
-        HandleMode.Read -> ReadableSingletonHandleImpl<T>(
+        HandleMode.Read -> ReadSingletonHandleImpl<T>(
             entitySpec,
             handleName,
             storageHandle,
             sender
         )
-        HandleMode.Write -> WritableSingletonHandleImpl<T>(
+        HandleMode.Write -> WriteSingletonHandleImpl<T>(
             handleName,
             storageHandle,
             idGenerator
@@ -426,7 +426,7 @@ private fun <T : Entity> createSetHandle(
             idGenerator,
             sender
         )
-        HandleMode.Read -> ReadableCollectionHandleImpl<T>(
+        HandleMode.Read -> ReadCollectionHandleImpl<T>(
             entitySpec,
             handleName,
             storageHandle,
