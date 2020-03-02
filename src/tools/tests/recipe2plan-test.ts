@@ -28,7 +28,7 @@ describe('recipe2plan', () => {
     
     @trigger
       launch startup
-      arcId myArcId
+      arcId writeArcId
     recipe WritingRecipe
       thing: create persistent 'my-handle-id' 
       Writer
@@ -36,7 +36,7 @@ describe('recipe2plan', () => {
 
     @trigger
       launch startup
-      arcId otherArcId
+      arcId readArcId
     recipe ReadingRecipe
       data: map 'my-handle-id'
       Reader
@@ -53,10 +53,6 @@ describe('recipe2plan', () => {
     particle Reader
       data: reads Thing {name: Text}
 
-    // TODO(alxr): Resolve these types later
-    // particle Writer
-    //   data: writes Product Thing {name: Text, price: Number}
-
     particle Writer
        data: writes Thing {name: Text}
     
@@ -70,15 +66,43 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
+    const resolver = new StorageKeyRecipeResolver(manifest);
+    await assertThrowsAsync(async () => {
+      // @ts-ignore
+      for await (const it of resolver.resolve()) {
+        continue;
+      }
+    });
+  });
+  it('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', async () => {
+    const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    @trigger
+      launch startup
+      arcId readArcId
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
     await assertThrowsAsync(async () => {
       const resolver = new StorageKeyRecipeResolver(manifest);
       // @ts-ignore
       for await (const it of resolver.resolve()) {
         continue;
       }
-    })
+    });
   });
-  it.skip('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', () => {});
   it.skip('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});
   it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});
   it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {});
