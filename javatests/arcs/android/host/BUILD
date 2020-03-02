@@ -21,6 +21,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage",
+        "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/handle",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
@@ -42,6 +43,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/android/storage/service/testutil",
         "//javatests/arcs/android/storage/handle:test_app",
+        "//javatests/arcs/core/allocator:allocator-test-util",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/android/androidx_test/runner/monitor",
@@ -60,7 +62,9 @@ arcs_kt_android_test_suite(
 
 arcs_kt_schema(
     name = "schemas",
-    srcs = ["test.arcs"],
+    srcs = [
+        "test.arcs",
+    ],
     package = "arcs.android.host",
 )
 
@@ -71,17 +75,29 @@ kt_android_library(
         [
             "*Service.kt",
             "*Activity.kt",
-        ],
+        ] + ["TestBindingDelegate.kt"],
     ),
     manifest = "AndroidManifest.xml",
     deps = [
+        ":schemas",
+        "//java/arcs/android/crdt",
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
+        "//java/arcs/android/storage",
+        "//java/arcs/android/storage/handle",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/testutil",
         "//java/arcs/sdk",
+        "//java/arcs/sdk/android/storage",
+        "//java/arcs/sdk/android/storage/service",
+        "//javatests/arcs/core/allocator:allocator-test-util",
+        "//javatests/arcs/core/host:particle",
         "//third_party/java/androidx/appcompat",
+        "//third_party/java/androidx/lifecycle",
+        "//third_party/java/robolectric",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )

@@ -164,22 +164,8 @@ class Allocator(val hostRegistry: HostRegistry) {
      * mapping them to fully qualified Java classnames, and comparing them with the
      * [Particle.location].
      */
-    private suspend fun findArcHostByParticle(particle: arcs.core.data.Plan.Particle): ArcHost =
+    private suspend fun findArcHostByParticle(particle: Plan.Particle): ArcHost =
         hostRegistry.availableArcHosts()
             .firstOrNull { host -> host.isHostForParticle(particle) }
             ?: throw ParticleNotFoundException(particle)
-}
-
-private fun Type.toSchemaHash(): String {
-    when (this) {
-        is SingletonType<*> -> if (this.containedType is EntityType) {
-            return (this.containedType as EntityType).entitySchema.hash
-        }
-        is CollectionType<*> -> if (this.collectionType is EntityType) {
-            return (this.collectionType as EntityType).entitySchema.hash
-        }
-        is EntityType -> return this.entitySchema.hash
-        else -> Unit
-    }
-    throw Exception("Can't compute schemaHash of unknown type $this")
 }

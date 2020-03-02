@@ -17,6 +17,20 @@ import arcs.core.storage.api.Handle
 interface Particle {
 
     /**
+     * This field contains a reference to all of the [Particle]'s handles that were declared in
+     * the manifest.
+     */
+    val handles: HandleHolder
+
+    /**
+     * Called the first time this [Particle] is instantiated in an [Arc].
+     *
+     * A typical example of the use of [onCreate] is to initiatize handles to default values needed
+     * before particle startup.
+     */
+    suspend fun onCreate() = Unit
+
+    /**
      * React to handle updates.
      *
      * Called for handles when change events are received from the backing store.
@@ -35,4 +49,13 @@ interface Particle {
      * @param allSynced flag indicating if all handles are synchronized
      */
     suspend fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
+
+    /**
+     *  Called when an [Arc] is shutdown.
+     *
+     *  Usually this method is unneeded, however if a platform-specific particle in an external
+     *  host is holding on to an expensive resource, for example a UI or service connection on
+     *  Android, thus method is provided as a way to release platform specific resources.
+     */
+    fun onShutdown() = Unit
 }

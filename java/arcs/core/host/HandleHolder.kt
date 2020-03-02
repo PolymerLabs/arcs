@@ -24,4 +24,6 @@ import arcs.core.storage.api.Handle
 interface HandleHolder {
     val handles: Map<String, Handle>
     val entitySpecs: Map<String, EntitySpec<out Entity>>
+    /** Erase all handle references from the holder. */
+    fun clear()
 }

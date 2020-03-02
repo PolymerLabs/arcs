@@ -11,5 +11,7 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/host",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/util",
+        "//java/arcs/jvm/util",
     ],
 )
