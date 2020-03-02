@@ -130,8 +130,8 @@ describe('CollectionHandle', async () => {
   it('respects canRead', async () => {
     const handle = await getCollectionHandle(barType, new MockParticle(), false, true);
     try {
-      await handle.fetchAll('A');
-      assert.fail('handle.fetchAll should not have succeeded');
+      await handle.fetch('A');
+      assert.fail('handle.fetch should not have succeeded');
     } catch (e) {
       assert.match(e.toString(), /Error: Handle not readable/);
     }
@@ -149,7 +149,7 @@ describe('CollectionHandle', async () => {
     Entity.mutate(entity, {value: 'something'});
     await handle.add(entity);
     await handle.add(newEntity('B'));
-    assert.deepEqual(await handle.fetchAll('A'), entity);
+    assert.deepEqual(await handle.fetch('A'), entity);
   });
 
   it('assigns IDs to entities with missing IDs', async () => {
@@ -191,7 +191,7 @@ describe('CollectionHandle', async () => {
     assert.isTrue(particle.onDesyncCalled);
   });
 
-    it('notifies particle of updates', async () => {
+  it('notifies particle of updates', async () => {
     const particle: MockParticle = new MockParticle();
     const handle = await getCollectionHandle(barType, particle);
     const op: CollectionOperation<SerializedEntity> = {
@@ -258,6 +258,15 @@ describe('CollectionHandle', async () => {
       notifyUpdate: true,
       notifyDesync: true,
     });
+  });
+
+  it('can fetchAll', async () => {
+    const handle = await getCollectionHandle(barType);
+    const A = newEntity('A');
+    const B = newEntity('B');
+    await handle.addMultiple([A, B]);
+    const s = await handle.fetchAll();
+    assert.deepEqual(s, new Set([A, B]));
   });
 });
 
