@@ -460,7 +460,8 @@ export class Arc implements ArcInterface {
 
         const newStore = await this.createStoreInternal(
             type, /* name= */ null, storeId, recipeHandle.tags, volatileKey,
-            recipeHandle.getCapabilitiesWithDefault(), recipeHandle.ttl);
+            recipeHandle.getCapabilitiesWithDefault(),
+            recipeHandle.ttl);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
@@ -535,8 +536,8 @@ export class Arc implements ArcInterface {
     handle._type = handle.mappedType;
   }
 
-  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: StorageKey): Promise<UnifiedStore> {
-    const store = await this.createStoreInternal(type, name, id, tags, storageKey);
+  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: StorageKey, capabilities?: Capabilities, ttl?: Ttl): Promise<UnifiedStore> {
+    const store = await this.createStoreInternal(type, name, id, tags, storageKey, capabilities, ttl);
     this.addStoreToRecipe(store);
     return store;
   }
@@ -582,8 +583,8 @@ export class Arc implements ArcInterface {
     if (storageKey instanceof ReferenceModeStorageKey) {
       const refContainedType = new ReferenceType(type.getContainedType());
       const refType = type.isSingleton ? new SingletonType(refContainedType) : new CollectionType(refContainedType);
-      await this.createStore(refType, name ? name + '_referenceContainer' : null, null, [], storageKey.storageKey);
-      await this.createStore(new CollectionType(type.getContainedType()), name ? name + '_backingStore' : null, null, [], storageKey.backingKey);
+      await this.createStore(refType, name ? name + '_referenceContainer' : null, null, [], storageKey.storageKey, capabilities, ttl);
+      await this.createStore(new CollectionType(type.getContainedType()), name ? name + '_backingStore' : null, null, [], storageKey.backingKey, capabilities, ttl);
     }
     return store;
   }

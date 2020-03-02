@@ -24,6 +24,7 @@ class FlagDefaults {
   static enforceRefinements = false;
   static useSlandles = false;
   static fieldRefinementsAllowed = false;
+  static defaultReferenceMode = false;
 }
 
 export class Flags extends FlagDefaults {
@@ -50,6 +51,11 @@ export class Flags extends FlagDefaults {
   // tslint:disable-next-line: no-any
   static withFieldRefinementsAllowed<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
     return Flags.withFlags({fieldRefinementsAllowed: true}, f);
+  }
+
+  // tslint:disable-next-line: no-any
+  static withDefaultReferenceMode<T, Args extends any[]>(f: (...args: Args) => Promise<T>): (...args: Args) => Promise<T> {
+    return Flags.withFlags({defaultReferenceMode: true}, f);
   }
 
   // For testing with a different set of flags to the default.

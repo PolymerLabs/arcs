@@ -11,6 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
+import {Flags} from '../flags.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {CallbackTracker} from '../testing/callback-tracker.js';
@@ -188,6 +189,36 @@ describe('Arc new storage', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
+    assert.lengthOf(arc.activeRecipe.handles, 1);
+    assert.instanceOf(arc.activeRecipe.handles[0].storageKey, VolatileStorageKey);
+  });
+
+  it('supports capabilities - storage protocol with reference mode', Flags.withDefaultReferenceMode(async () => {
+    DriverFactory.clearRegistrationsForTesting();
+    const loader = new Loader(null, {
+      '*': `
+        defineParticle(({Particle}) => {
+          return class extends Particle {}
+        });
+    `});
+    const memoryProvider = new TestVolatileMemoryProvider();
+    RamDiskStorageDriverProvider.register(memoryProvider);
+    const manifest = await Manifest.parse(`
+      schema Thing
+      particle MyParticle in 'MyParticle.js'
+        thing: writes Thing
+      recipe
+        handle0: create tied-to-arc
+        MyParticle
+          thing: handle0
+      `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test', ramDiskStorageKeyPrefixForTest());
+    await arc.instantiate(recipe);
+    await arc.idle;
+
     // Reference mode store and its backing and container stores.
     assert.lengthOf(arc.activeRecipe.handles, 3);
     const key = arc.activeRecipe.particles[0].connections['thing'].handle.storageKey;
@@ -196,7 +227,7 @@ describe('Arc new storage', () => {
     assert.instanceOf(refKey.backingKey, VolatileStorageKey);
     assert.instanceOf(refKey.storageKey, VolatileStorageKey);
     assert.isTrue(key.toString().includes(arc.id.toString()));
-  });
+  }));
 
   it('supports default capabilities if not specified', async () => {
     DriverFactory.clearRegistrationsForTesting();
@@ -1070,6 +1101,42 @@ describe('Arc', () => {
     assert.lengthOf(arc.activeRecipe.handles, 1);
     assert.equal(arc.activeRecipe.handles[0].id, 'mything');
   });
+
+  it('preserves create handle ids if specified - with reference mode', Flags.withDefaultReferenceMode(async () => {
+    const loader = new Loader(null, {
+      'a.js': `
+        defineParticle(({Particle}) => class Noop extends Particle {});
+      `
+    });
+
+    const memoryProvider = new TestVolatileMemoryProvider();
+    const manifest = await Manifest.parse(`
+        schema Thing
+        particle MyParticle in 'a.js'
+          thing: writes Thing
+        recipe
+          h0: create 'mything'
+          MyParticle
+            thing: writes h0
+        `, {memoryProvider});
+
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test0');
+    await arc.instantiate(manifest.recipes[0]);
+    assert.lengthOf(arc.activeRecipe.handles, 3);
+    const myThingHandle = arc.activeRecipe.handles.find(h => h.id === 'mything');
+    assert.isNotNull(myThingHandle);
+    assert.instanceOf(myThingHandle.storageKey, ReferenceModeStorageKey);
+    const refKey = myThingHandle.storageKey as ReferenceModeStorageKey;
+    assert.isNotNull(arc.activeRecipe.handles.find(
+        h => h.storageKey.toString() === refKey.backingKey.toString()));
+    assert.isNotNull(arc.activeRecipe.handles.find(
+        h => h.storageKey.toString() === refKey.storageKey.toString()));
+  }));
 });
 
 describe('Arc storage migration', () => {

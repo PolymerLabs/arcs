@@ -11,6 +11,7 @@ import {assert} from '../platform/assert-web.js';
 
 import {ArcId} from './id.js';
 import {Capabilities} from './capabilities.js';
+import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {Schema} from './schema.js';
@@ -115,12 +116,15 @@ export class CapabilitiesResolver {
     }
     const creator = this.creators.get([...protocols][0]);
     const schemaHash = await entitySchema.hash();
-    const backingKey = creator.create(new BackingStorageKeyOptions(
-        this.options.arcId, schemaHash, entitySchema.name));
     const containerKey = creator.create(new ContainerStorageKeyOptions(
         this.options.arcId, schemaHash, entitySchema.name));
-    return new ReferenceModeStorageKey(
-        backingKey, containerKey.childKeyForHandle(handleId));
+    const childKey = containerKey.childKeyForHandle(handleId);
+    if (!Flags.defaultReferenceMode) {
+      return childKey;
+    }
+    const backingKey = creator.create(new BackingStorageKeyOptions(
+      this.options.arcId, schemaHash, entitySchema.name));
+    return new ReferenceModeStorageKey(backingKey, childKey);
   }
 
   findStorageKeyProtocols(capabilities: Capabilities): Set<string> {
