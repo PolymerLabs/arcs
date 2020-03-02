@@ -120,7 +120,7 @@ export class StorageKeyRecipeResolver {
    * @param recipe should be long running.
    * @param arc Arc is associated with current recipe.
    */
-  async createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
+  createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
     const resolver = new CapabilitiesResolver({arcId: arc.id});
     for (const ch of recipe.handles.filter(h => h.fate === 'create')) {
       const storageKey = ramDiskStorageKeyPrefixForTest()(arc.id); // TODO: actually create the storage keys.
@@ -158,6 +158,5 @@ export class StorageKeyRecipeResolver {
       });
   }
 }
-
 
 
