@@ -66,7 +66,7 @@ interface ReadCollection<T : Entity> : Handle {
 /** A collection handle with read access. */
 interface QueryCollection<T : Entity, QueryArgs> : Handle {
     /** Returns a set with all the entities in the collection that match the associated query. */
-    suspend fun query(args : QueryArgs): Set<T>
+    suspend fun query(args: QueryArgs): Set<T>
 }
 
 /** A collection handle with write access. */
@@ -85,7 +85,9 @@ interface WriteCollection<T : Entity> : Handle {
 interface ReadWriteCollection<T : Entity> : ReadCollection<T>, WriteCollection<T>
 
 /** A collection handle with read and write access. */
-interface ReadQueryCollection<T : Entity, QueryArgs> : ReadCollection<T>, QueryCollection<T, QueryArgs>
+interface ReadQueryCollection<T : Entity, QueryArgs> :
+        ReadCollection<T>, QueryCollection<T, QueryArgs>
 
 /** A collection handle with read and write and query access. */
-interface ReadWriteQueryCollection<T : Entity, QueryArgs> : ReadCollection<T>, WriteCollection<T>, QueryCollection<T, QueryArgs>
+interface ReadWriteQueryCollection<T : Entity, QueryArgs> :
+        ReadCollection<T>, WriteCollection<T>, QueryCollection<T, QueryArgs>

@@ -15,9 +15,9 @@ package arcs.tutorials
  * Sample Kotlin-WASM Particle to use a JSON store.
  */
 class Collections : AbstractCollections() {
-    override fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
+    suspend fun populateModel(slotName: String, model: Map<String, Any>): Map<String, Any> {
         val peopleList = mutableListOf<Map<String, Comparable<*>?>>()
-        handles.inputData.query(18).forEach { people ->
+        handles.inputData.fetchAll().forEach { people ->
             peopleList.add(mapOf("name" to people.name, "age" to people.age))
         }
 
@@ -29,7 +29,7 @@ class Collections : AbstractCollections() {
         )
     }
 
-    override fun getTemplate(slotName: String): String {
+    fun getTemplate(slotName: String): String {
         return """Hello to everyone:
         <ul>{{inputData}}</ul>
 

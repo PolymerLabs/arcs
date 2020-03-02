@@ -206,8 +206,8 @@ class GoldHandles(
             "alias" to Gold_Alias_Spec()
         )
     ) {
-    val data: ReadableSingleton<Gold_Data> by handles
-    val alias: WritableSingleton<Gold_Alias> by handles
+    val data: ReadSingleton<Gold_Data> by handles
+    val alias: WriteSingleton<Gold_Alias> by handles
 }
 
 abstract class AbstractGold : BaseParticle() {

@@ -11,10 +11,10 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.api.Entity
 import arcs.core.storage.api.EntitySpec
 import arcs.core.storage.api.Handle
-import arcs.core.storage.api.ReadWriteCollection
-import arcs.core.storage.api.ReadWriteSingleton
 import arcs.core.storage.api.ReadCollection
 import arcs.core.storage.api.ReadSingleton
+import arcs.core.storage.api.ReadWriteCollection
+import arcs.core.storage.api.ReadWriteSingleton
 import arcs.core.storage.api.WriteCollection
 import arcs.core.storage.api.WriteSingleton
 import arcs.core.storage.handle.CollectionImpl

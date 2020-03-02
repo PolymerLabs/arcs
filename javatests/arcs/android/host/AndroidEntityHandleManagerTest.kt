@@ -18,10 +18,10 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
 import arcs.sdk.ReadWriteCollection
 import arcs.sdk.ReadWriteSingleton
-import arcs.sdk.ReadableCollection
-import arcs.sdk.ReadableSingleton
-import arcs.sdk.WritableCollection
-import arcs.sdk.WritableSingleton
+import arcs.sdk.ReadCollection
+import arcs.sdk.ReadSingleton
+import arcs.sdk.WriteCollection
+import arcs.sdk.WriteSingleton
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestBindingDelegate
 import com.google.common.truth.Truth.assertThat
@@ -168,8 +168,8 @@ class AndroidEntityHandleManagerTest {
             HandleMode.Write
         )
 
-        assertThat(writeHandle).isInstanceOf(WritableSingleton::class.java)
-        assertThat(writeHandle).isNotInstanceOf(ReadableSingleton::class.java)
+        assertThat(writeHandle).isInstanceOf(WriteSingleton::class.java)
+        assertThat(writeHandle).isNotInstanceOf(ReadSingleton::class.java)
         handleHolder.writeHandle.store(entity1)
 
         val readHandle = createSingletonHandle(
@@ -178,8 +178,8 @@ class AndroidEntityHandleManagerTest {
             HandleMode.Read
         )
 
-        assertThat(readHandle).isInstanceOf(ReadableSingleton::class.java)
-        assertThat(readHandle).isNotInstanceOf(WritableSingleton::class.java)
+        assertThat(readHandle).isInstanceOf(ReadSingleton::class.java)
+        assertThat(readHandle).isNotInstanceOf(WriteSingleton::class.java)
 
         val readBack = handleHolder.readHandle.fetch()
         assertThat(readBack).isEqualTo(entity1)
@@ -215,8 +215,8 @@ class AndroidEntityHandleManagerTest {
             HandleMode.Write
         )
 
-        assertThat(writeSetHandle).isInstanceOf(WritableCollection::class.java)
-        assertThat(writeSetHandle).isNotInstanceOf(ReadableCollection::class.java)
+        assertThat(writeSetHandle).isInstanceOf(WriteCollection::class.java)
+        assertThat(writeSetHandle).isNotInstanceOf(ReadCollection::class.java)
 
         handleHolder.writeSetHandle.store(entity1)
         handleHolder.writeSetHandle.store(entity2)
@@ -227,8 +227,8 @@ class AndroidEntityHandleManagerTest {
             HandleMode.Read
         )
 
-        assertThat(readSetHandle).isInstanceOf(ReadableCollection::class.java)
-        assertThat(readSetHandle).isNotInstanceOf(WritableCollection::class.java)
+        assertThat(readSetHandle).isInstanceOf(ReadCollection::class.java)
+        assertThat(readSetHandle).isNotInstanceOf(WriteCollection::class.java)
 
         val readBack = handleHolder.readSetHandle.fetchAll()
         assertThat(readBack).containsExactly(entity1, entity2)
