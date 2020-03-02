@@ -13,7 +13,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.data.proto",
     deps = [
         "//java/arcs/core/data",
-        "//java/arcs/core/data/proto",
+        "//java/arcs/core/data/proto:proto_for_test",
         "//java/arcs/core/data/proto:recipe_java_proto",
         "//java/arcs/core/testutil",
         "//java/arcs/repoutils",

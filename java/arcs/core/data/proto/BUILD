@@ -18,6 +18,20 @@ arcs_kt_library(
         ["*.kt"],
     ),
     deps = [
+        ":recipe_java_lite_proto",
+        "//java/arcs/core/data",
+    ],
+)
+
+# This target pulls in the java protobuf library, as opposed to the *java_lite*
+# protobuf library. The regular protobuf library is needed for tests.
+arcs_kt_library(
+    name = "proto_for_test",
+    testonly = 1,
+    srcs = glob(
+        ["*.kt"],
+    ),
+    deps = [
         ":recipe_java_proto",
         "//java/arcs/core/data",
     ],
@@ -26,6 +40,11 @@ arcs_kt_library(
 proto_library(
     name = "recipe_proto",
     srcs = ["recipe.proto"],
+)
+
+java_lite_proto_library(
+    name = "recipe_java_lite_proto",
+    deps = [":recipe_proto"],
 )
 
 java_proto_library(
