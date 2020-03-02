@@ -15,6 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencablePrimitive
 import kotlin.reflect.KClass
+import kotlin.IllegalArgumentException
 
 interface Entity {
     var internalId: String
@@ -43,16 +44,17 @@ interface EntitySpec<T : Entity> {
  * Try to extract the primitive value from a [ReferencablePrimitive].
  */
 @Suppress("UNCHECKED_CAST")
-fun <T : Any> toPrimitiveValue(
-    ref: Referencable?,
+fun <T : Any> Referencable?.toPrimitiveValue(
     valueType: KClass<T>,
     defaultValue: T
 ): T {
-    if (ref !is ReferencablePrimitive<*>) {
+    if (this == null) {
         return defaultValue
     }
-    if (ref.value != null && ref.value!!::class == valueType) {
-        return (ref as ReferencablePrimitive<T>).value
+    if (this is ReferencablePrimitive<*> && this.value!!::class == valueType) {
+        return (this as ReferencablePrimitive<T>).value
     }
-    return defaultValue
+    throw IllegalArgumentException(
+        "$this of type ${this::class} is not a ReferenceablePrimitive<$valueType>"
+    )
 }

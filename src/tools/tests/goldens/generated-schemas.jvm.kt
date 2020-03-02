@@ -76,7 +76,7 @@ class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
     override fun deserialize(data: RawEntity): GoldInternal1 {
       // TODO: only handles singletons for now
       val rtn = create().copy(
-        val_ = toPrimitiveValue(data.singletons["val_"], String::class, "")
+        val_ = data.singletons["val_"].toPrimitiveValue(String::class, "")
       )
       rtn.internalId = data.id
       return rtn
@@ -184,10 +184,10 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
     override fun deserialize(data: RawEntity): Gold_Data {
       // TODO: only handles singletons for now
       val rtn = create().copy(
-        num = toPrimitiveValue(data.singletons["num"], Double::class, 0.0),
-        txt = toPrimitiveValue(data.singletons["txt"], String::class, ""),
-        lnk = toPrimitiveValue(data.singletons["lnk"], String::class, ""),
-        flg = toPrimitiveValue(data.singletons["flg"], Boolean::class, false)
+        num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0),
+        txt = data.singletons["txt"].toPrimitiveValue(String::class, ""),
+        lnk = data.singletons["lnk"].toPrimitiveValue(String::class, ""),
+        flg = data.singletons["flg"].toPrimitiveValue(Boolean::class, false)
       )
       rtn.internalId = data.id
       return rtn

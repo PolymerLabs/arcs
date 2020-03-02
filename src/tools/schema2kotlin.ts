@@ -179,7 +179,7 @@ class KotlinGenerator implements ClassGenerator {
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
 
     this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
-    this.fieldDeserializes.push(`${fixed} = toPrimitiveValue(data.singletons["${fixed}"], ${type}::class, ${defaultVal})`);
+    this.fieldDeserializes.push(`${fixed} = data.singletons["${fixed}"].toPrimitiveValue(${type}::class, ${defaultVal})`);
     this.fieldsForToString.push(`${fixed} = $${fixed}`);
   }
 
