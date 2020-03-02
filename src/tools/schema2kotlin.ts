@@ -54,7 +54,7 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable\nimport arcs.core.data.util.ReferencablePrimitive'}
+${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.storage.api.toPrimitiveValue\nimport arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable\nimport arcs.core.data.util.ReferencablePrimitive'}
 `;
   }
 
@@ -179,7 +179,7 @@ class KotlinGenerator implements ClassGenerator {
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
 
     this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
-    this.fieldDeserializes.push(`${fixed} = (data.singletons["${fixed}"] as? ReferencablePrimitive<${type}>?)?.value ?: ${defaultVal}`);
+    this.fieldDeserializes.push(`${fixed} = data.singletons["${fixed}"].toPrimitiveValue(${type}::class, ${defaultVal})`);
     this.fieldsForToString.push(`${fixed} = $${fixed}`);
   }
 
