@@ -21,6 +21,7 @@ kt_android_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/storage:reference",
         "//third_party/java/jsr305_annotations",
     ],
 )

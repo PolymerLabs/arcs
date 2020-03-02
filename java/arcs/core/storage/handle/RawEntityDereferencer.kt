@@ -73,17 +73,18 @@ class RawEntityDereferencer(
         launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
 
         // Only return the item if we've actually managed to pull it out of the database.
-        deferred.await().takeIf { it matches schema }
+        deferred.await().takeIf { it matches schema }?.copy(id = reference.id)
     }
+}
 
-    private infix fun RawEntity.matches(schema: Schema): Boolean {
-        // Only allow empty to match if the Schema is also empty.
-        // TODO: Is this a correct assumption?
-        if (singletons.isEmpty() && collections.isEmpty())
-            return schema.fields.singletons.isEmpty() && schema.fields.collections.isEmpty()
+/* internal */
+infix fun RawEntity.matches(schema: Schema): Boolean {
+    // Only allow empty to match if the Schema is also empty.
+    // TODO: Is this a correct assumption?
+    if (singletons.isEmpty() && collections.isEmpty())
+        return schema.fields.singletons.isEmpty() && schema.fields.collections.isEmpty()
 
-        // Return true if any of the RawEntity's fields are part of the Schema.
-        return (singletons.isEmpty() || singletons.keys.any { it in schema.fields.singletons }) &&
-            (collections.isEmpty() || collections.keys.any { it in schema.fields.collections })
-    }
+    // Return true if any of the RawEntity's fields are part of the Schema.
+    return (singletons.isEmpty() || singletons.keys.any { it in schema.fields.singletons }) &&
+        (collections.isEmpty() || collections.keys.any { it in schema.fields.collections })
 }

@@ -271,7 +271,11 @@ class DatabaseDriver<Data : Any>(
                 )?.also {
                     dataAndVersion = when (it) {
                         is DatabaseData.Entity ->
-                            it.rawEntity.toCrdtEntityData(it.versionMap)
+                            it.rawEntity.toCrdtEntityData(it.versionMap) { refable ->
+                                // Use the storage reference if it is one.
+                                if (refable is Reference) refable
+                                else CrdtEntity.Reference.buildReference(refable)
+                            }
                         is DatabaseData.Singleton ->
                             it.reference.toCrdtSingletonData(it.versionMap)
                         is DatabaseData.Collection ->
@@ -361,7 +365,10 @@ class DatabaseDriver<Data : Any>(
         val actualData = when (data) {
             is DatabaseData.Singleton -> data.reference.toCrdtSingletonData(data.versionMap)
             is DatabaseData.Collection -> data.values.toCrdtSetData(data.versionMap)
-            is DatabaseData.Entity -> data.rawEntity.toCrdtEntityData(data.versionMap)
+            is DatabaseData.Entity -> data.rawEntity.toCrdtEntityData(data.versionMap) {
+                if (it is Reference) it
+                else CrdtEntity.Reference.buildReference(it)
+            }
         } as Data
 
         // Stash it locally.
