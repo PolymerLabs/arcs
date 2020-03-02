@@ -19,7 +19,7 @@ import {Exists} from '../runtime/storageNG/drivers/driver.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../runtime/storageNG/drivers/ramdisk.js';
 import {Capabilities} from '../runtime/capabilities.js';
-import {ramDiskStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
+import {ramDiskStorageKeyPrefixForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 
 
 /**
@@ -132,7 +132,7 @@ export class StorageKeyRecipeResolver {
   async createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
     const resolver = new CapabilitiesResolver({arcId: arc.id});
     for (const ch of recipe.handles.filter(h => h.fate === 'create')) {
-      const storageKey = await resolver.createStorageKey(ch.capabilities, ch.type.getEntitySchema(), ch.id);
+      const storageKey = ramDiskStorageKeyPrefixForTest()(arc.id); // TODO: actually create the storage keys.
       const store = new Store({storageKey, exists: Exists.MayExist, type: ch.type, id: ch.id});
       arc.context.registerStore(store, ch.tags);
     }
