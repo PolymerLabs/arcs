@@ -188,10 +188,14 @@ describe('Arc new storage', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.lengthOf(arc.activeRecipe.handles, 1);
-    assert.instanceOf(arc.activeRecipe.handles[0].storageKey, VolatileStorageKey);
-    assert.isTrue(
-        arc.activeRecipe.handles[0].storageKey.toString().includes(arc.id.toString()));
+    // Reference mode store and its backing and container stores.
+    assert.lengthOf(arc.activeRecipe.handles, 3);
+    const key = arc.activeRecipe.particles[0].connections['thing'].handle.storageKey;
+    assert.instanceOf(key, ReferenceModeStorageKey);
+    const refKey = key as ReferenceModeStorageKey;
+    assert.instanceOf(refKey.backingKey, VolatileStorageKey);
+    assert.instanceOf(refKey.storageKey, VolatileStorageKey);
+    assert.isTrue(key.toString().includes(arc.id.toString()));
   });
 });
 

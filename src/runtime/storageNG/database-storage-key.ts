@@ -46,18 +46,16 @@ export abstract class DatabaseStorageKey extends StorageKey {
         PersistentDatabaseStorageKey.protocol,
         // TODO(mmandlis): add queryable, when #4794 lands
         Capabilities.persistent,
-        // TODO(mmandlis): refactor StorageKeyOptions to be compatible with KT
-        // codebase, and use options.location instead of arcId.toString() here,
-        // and pass entitySchemaHash.
-        ({arcId}: StorageKeyOptions) =>
-            new PersistentDatabaseStorageKey(arcId.toString(), '42'));
+        (options: StorageKeyOptions) =>
+            new PersistentDatabaseStorageKey(options.location(), options.schemaHash));
 
     // TODO(mmandlis): Register in-memory & queryable capabilities
     // with in-memory database storage key.
     // CapabilitiesResolver.registerKeyCreator(
     //     MemoryDatabaseStorageKey.protocol,
     //     Capabilities.TBD
-    //     ({arcId}: StorageKeyOptions) => new MemoryDatabaseStorageKey(arcId, '', ''));
+    //     (options: StorageKeyOptions) =>
+    //         new MemoryDatabaseStorageKey(options.location(), options.schemaHash));
   }
 }
 
