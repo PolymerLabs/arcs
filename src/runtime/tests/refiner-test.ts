@@ -197,7 +197,7 @@ describe('dynamic refinements', () => {
         const ref = Refinement.fromAst(nameType.refinement, typeData);
         it('field names, query argument names and query argument types', () => {
             assert.sameMembers([...ref.expression.getFieldNames()], ['name'], 'should infer indexes from refinement');
-            assert.deepEqual(JSON.stringify([...ref.expression.getQueryNames()]), '[["?","Text"]]', 'should infer query args from refinement');
+            assert.deepEqual(JSON.stringify([...ref.expression.getQueryParams()]), '[["?","Text"]]', 'should infer query args from refinement');
 
             assert.strictEqual(ref.toString(), '[(name == ?)]');
         });
@@ -229,7 +229,7 @@ describe('dynamic refinements', () => {
 
         it('field names, query argument names and query argument types', () => {
             assert.sameMembers([...ref.expression.getFieldNames()], ['name', 'age'], 'should infer indexes from refinement');
-            assert.deepEqual(JSON.stringify([...ref.expression.getQueryNames()]), '[["?","Text"]]', 'should infer query args from refinement');
+            assert.deepEqual(JSON.stringify([...ref.expression.getQueryParams()]), '[["?","Text"]]', 'should infer query args from refinement');
 
             assert.strictEqual(ref.toString(), '[((name == ?) and (age > 10))]');
         });
