@@ -4,7 +4,7 @@ load(
 )
 load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
-    "java_lite_proto_library",
+    "android_proto_library",
     "java_proto_library",
     "proto_library",
 )
