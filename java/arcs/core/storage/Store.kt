@@ -12,9 +12,11 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtOperation
+import arcs.core.data.RawEntity
 import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.type.Type
 
@@ -28,6 +30,10 @@ import arcs.core.type.Type
 interface ActivationFactory<Data : CrdtData, Op : CrdtOperation, T> {
     suspend operator fun invoke(options: StoreOptions<Data, Op, T>): ActiveStore<Data, Op, T>
 }
+
+/** Type-alias for an [ActivationFactory] to use when de-referencing [Reference]s. */
+typealias EntityActivationFactory =
+    ActivationFactory<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>
 
 /**
  * A representation of a store.

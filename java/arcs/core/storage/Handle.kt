@@ -15,6 +15,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.data.RawEntity
 import arcs.core.data.Ttl
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -78,6 +79,7 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     /**  [time] contains platform appropriate time related implementation. */
     val time: Time,
+
     /**
      * [canRead] is whether this handle reads data so proxy can decide whether to keep its crdt
      * up to date.
@@ -88,7 +90,13 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * [canWrite] is whether this handle is writable. This can be used to enforce additional runtime
      * checks.
      */
-    val canWrite: Boolean = true
+    val canWrite: Boolean = true,
+
+    /**
+     * [Dereferencer] to assign to any [Reference]s which are given as return values from
+     * [value].
+     */
+    private val dereferencer: Dereferencer<RawEntity>? = null
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 
@@ -98,7 +106,7 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /** Read value from the backing [StorageProxy]. */
     protected suspend fun value(): T {
         log.debug { "Fetching value." }
-        return storageProxy.getParticleView()
+        return storageProxy.getParticleView().injectDereferencer()
     }
 
     /** Helper that subclasses can use to increment their version in a [VersionMap]. */
@@ -127,5 +135,23 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * This should be called by the [StorageProxy] this [Handle] has been registered with,
      * when the [StorageProxy] has detected that its local model is out of sync.
      */
-    internal fun onDesync() = callback?.onDesync(this)
+    internal fun onDesync() {
+        callback?.onDesync(this)
+    }
+
+    /**
+     * Recursively inject the [Dereferencer] into any [Reference]s in the receiving object.
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> T.injectDereferencer(): T {
+        when (this) {
+            is Reference -> this.dereferencer = this@Handle.dereferencer
+            is RawEntity -> {
+                singletons.values.forEach { it.injectDereferencer() }
+                collections.values.forEach { it.injectDereferencer() }
+            }
+            is Set<*> -> this.forEach { it.injectDereferencer() }
+        }
+        return this
+    }
 }

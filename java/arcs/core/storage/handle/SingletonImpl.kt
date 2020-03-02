@@ -13,9 +13,11 @@ package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.data.RawEntity
 import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
+import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
@@ -43,8 +45,17 @@ class SingletonImpl<T : Referencable>(
     callbacks: SingletonCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
-    canRead: Boolean = true
-) : SingletonBase<T>(name, storageProxy, callbacks, ttl, time, canRead) {
+    canRead: Boolean = true,
+    dereferencer: Dereferencer<RawEntity>? = null
+) : SingletonBase<T>(
+    name,
+    storageProxy,
+    callbacks,
+    ttl,
+    time,
+    canRead,
+    dereferencer = dereferencer
+) {
     /** Get the current value from the backing [StorageProxy]. */
     suspend fun fetch() = value()
 
