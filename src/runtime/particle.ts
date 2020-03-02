@@ -53,19 +53,13 @@ export class Particle {
   }
 
   /**
-   * Called after handles are synced, override to provide initial processing.
-   */
-  protected ready(): void {
-    this.onReady();
-  }
-
-  /**
    * Called after handles are writable, only on first initialization of particle.
    */
   onCreate(): void {}
 
   /**
-   * Called the first time all handles are synched.
+   * Called after handles are synced the first time, override to provide initial processing.
+   * This will be called after onCreate.
    */
   onReady(): void {}
 
@@ -100,7 +94,7 @@ export class Particle {
     this.onError = onException;
     if (!this._handlesToSync) {
       // onHandleSync is called IFF there are input handles, otherwise we are ready now
-      this.ready();
+      this.onReady();
     }
   }
 
@@ -129,7 +123,7 @@ export class Particle {
     await this.invokeSafely(async p => p.onHandleSync(handle, model), onException);
     // once we've synced each readable handle, we are ready to start
     if (--this._handlesToSync === 0) {
-      this.ready();
+      this.onReady();
     }
   }
 
