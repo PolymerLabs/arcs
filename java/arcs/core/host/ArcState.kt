@@ -65,12 +65,12 @@ enum class ParticleState {
      * Previous attempt to start this particle failed, but it has previously started. In particular,
      * we can transition from this state to [Started], but not [Created] since the [onCreate]
      * lifecycle has already executed.
-     **/
+     */
     Failed,
     /**
      * This particle has failed, but it has never succeeded yet. It is safe to transition to
      * [Created] from this state.
-     **/
+     */
     Failed_NeverStarted,
     /** [Particle] has failed to start too many times and won't be started in this [Arc] anymore. */
     MaxFailed,

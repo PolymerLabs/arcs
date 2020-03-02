@@ -34,6 +34,8 @@ class TestBindingDelegate(
         return true
     }
 
-    override fun unbindStorageService(conn: ServiceConnection) = Unit
+    override fun unbindStorageService(conn: ServiceConnection) {
+        sc?.destroy()
+    }
 }
 
