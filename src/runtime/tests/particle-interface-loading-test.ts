@@ -293,4 +293,75 @@ describe('particle interface loading', () => {
     const fooHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
+
+  it('onReady runs when handles are first synced', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        value: Text
+
+      particle UpdatingParticle in 'updating-particle.js'
+        innerFoo: reads writes Foo
+        bar: reads writes Foo
+      recipe
+        h0: use *
+        h1: use *
+        UpdatingParticle
+          innerFoo: h0
+          bar: h1
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    const loader = new Loader(null, {
+      'updating-particle.js': `
+        'use strict';
+        defineParticle(({Particle}) => {
+          return class extends Particle {
+            async onCreate() {
+              this.innerFooHandle = this.handles.get('innerFoo');
+              await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
+            }
+            async onReady() {
+              this.innerFooHandle = this.handles.get('innerFoo');
+              this.foo = await this.innerFooHandle.fetch()
+              if(this.foo.value == "Created!") {
+                  await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Ready!"}));
+              } else {
+                await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "onCreate was not called before onReady"}));
+              }
+              
+              this.barHandle = this.handles.get('bar');
+              this.bar = await this.barHandle.fetch();
+              if(this.bar.value == "Set!") {
+                await this.barHandle.set(new this.innerFooHandle.entityClass({value: "Ready!"}));
+              } else {
+                await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Handles were not ready in onCreate"}));
+              }
+            }
+          };
+        });
+      `
+    });
+    const id = ArcId.newForTest('test');
+    const storageKey = new VolatileStorageKey(id, 'unique');
+    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
+
+    const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
+    const fooStorageProxy = new StorageProxy('id', await fooStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
+    const fooHandle = await handleNGFor('crdt-key', fooStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
+    recipe.handles[0].mapToStorage(fooStore);
+
+    const barStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:1');
+    const barStorageProxy = new StorageProxy('id', await barStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
+    const barHandle = await handleNGFor('crdt-key', barStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
+    recipe.handles[1].mapToStorage(barStore);
+
+    await barHandle.set(new fooClass({value: 'Set!'}));
+
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await arc.idle;
+    assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Ready!'}));
+    assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Ready!'}));
+  });
 });

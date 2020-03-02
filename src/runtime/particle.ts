@@ -56,12 +56,18 @@ export class Particle {
    * Called after handles are synced, override to provide initial processing.
    */
   protected ready(): void {
+    this.onReady();
   }
 
   /**
    * Called after handles are writable, only on first initialization of particle.
    */
   onCreate(): void {}
+
+  /**
+   * Called the first time all handles are synched.
+   */
+  onReady(): void {}
 
   /**
    * This sets the capabilities for this particle.  This can only
