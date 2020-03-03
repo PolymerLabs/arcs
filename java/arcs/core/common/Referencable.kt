@@ -19,6 +19,11 @@ interface Referencable {
     /** Unique identifier of the Referencable object. */
     val id: ReferenceId
 
+    /** Creation timestamp (in millis) on the Referencable object. */
+    var creationTimestamp: Long
+        get() = TODO("not implemented")
+        set(@Suppress("UNUSED_PARAMETER") value) = TODO("not implemented")
+
     /** Expiration timestamp (in millis) on the Referencable object. */
     var expirationTimestamp: Long
         get() = TODO("not implemented")

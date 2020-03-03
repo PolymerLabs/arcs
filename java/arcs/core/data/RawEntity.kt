@@ -29,21 +29,34 @@ data class RawEntity(
     override fun unwrap(): Referencable {
         val entity = RawEntity(
             id = id,
+            creationTimestamp = creationTimestamp,
             expirationTimestamp = expirationTimestamp,
             singletons = singletons.mapValues { it.value?.unwrap() },
             collections = collections.mapValues {
                 it.value.map { item -> item.unwrap() }.toSet()
             }
         )
+        entity.creationTimestamp = creationTimestamp
         entity.expirationTimestamp = expirationTimestamp
         return entity
     }
 
+    /** Entity creation time (in millis). */
+    @Suppress("GoodTime") // use Instant
+    override var creationTimestamp: Long = UNINITIALIZED_TIMESTAMP
+        set(value) {
+            require(this.creationTimestamp == UNINITIALIZED_TIMESTAMP) {
+                "cannot override creationTimestamp $value"
+            }
+            @Suppress("GoodTime") // use Instant
+            field = value
+        }
+
     /** Entity expiration time (in millis). */
     @Suppress("GoodTime") // use Instant
-    override var expirationTimestamp: Long = NO_EXPIRATION
+    override var expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
         set(value) {
-            require(this.expirationTimestamp == NO_EXPIRATION) {
+            require(this.expirationTimestamp == UNINITIALIZED_TIMESTAMP) {
                 "cannot override expirationTimestamp $value"
             }
             @Suppress("GoodTime") // use Instant
@@ -62,7 +75,8 @@ data class RawEntity(
         id: ReferenceId = NO_REFERENCE_ID,
         singletonFields: Set<FieldName> = emptySet(),
         collectionFields: Set<FieldName> = emptySet(),
-        expirationTimestamp: Long = NO_EXPIRATION
+        creationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
     ) : this(
         id,
         singletonFields.associateWith { null },
@@ -73,7 +87,7 @@ data class RawEntity(
 
     companion object {
         const val NO_REFERENCE_ID = "NO REFERENCE ID"
-        const val NO_EXPIRATION: Long = -1
+        const val UNINITIALIZED_TIMESTAMP: Long = -1
     }
 }
 
@@ -81,9 +95,13 @@ fun RawEntity(
     id: String,
     singletons: Map<FieldName, Referencable?>,
     collections: Map<FieldName, Set<Referencable>>,
+    creationTimestamp: Long,
     expirationTimestamp: Long
 ) = RawEntity(
     id,
     singletons,
     collections
-).also { it.expirationTimestamp = expirationTimestamp }
+).also {
+    it.creationTimestamp = creationTimestamp
+    it.expirationTimestamp = expirationTimestamp
+}

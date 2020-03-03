@@ -170,20 +170,25 @@ class CollectionIntegrationTest {
     fun addElementsWithTtls() = runBlockingTest {
         val person = Person("John", 29, false)
         collectionA.store(person.toRawEntity())
+        val creationTimestampA = collectionA.fetchAll().first().creationTimestamp
+        assertThat(creationTimestampA).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(collectionA.fetchAll().first().expirationTimestamp)
-            .isEqualTo(RawEntity.NO_EXPIRATION)
+            .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
         val collectionC = CollectionImpl("collectionC", storageProxy, null, null, Ttl.Days(2), TimeImpl())
         storageProxy.registerHandle(collectionC)
         assertThat(collectionC.store(person.toRawEntity())).isTrue()
         val entityC = collectionC.fetchAll().first()
-        assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+        assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
+        assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
         val collectionD = CollectionImpl("collectionD", storageProxy, null, null, Ttl.Minutes(1), TimeImpl())
         storageProxy.registerHandle(collectionD)
         assertThat(collectionD.store(person.toRawEntity())).isTrue()
         val entityD = collectionD.fetchAll().first()
-        assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+        assertThat(entityD.creationTimestamp).isGreaterThan(creationTimestampA)
+        assertThat(entityD.creationTimestamp).isGreaterThan(entityC.creationTimestamp)
+        assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(entityC.expirationTimestamp).isGreaterThan(entityD.expirationTimestamp)
     }
 
