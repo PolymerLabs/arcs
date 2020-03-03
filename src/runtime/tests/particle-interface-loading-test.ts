@@ -399,8 +399,7 @@ describe('particle interface loading', () => {
                 s = s + " Not all handles were synced before onReady was called.";
               } 
               
-              await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))
-              
+              await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))    
             }
           };
         });

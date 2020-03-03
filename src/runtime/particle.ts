@@ -38,7 +38,7 @@ export class Particle {
   private _idleResolver: Runnable;
   private _busy = 0;
   private ready: boolean;
-  created: boolean;
+  private created: boolean;
 
   protected _handlesToSync: number;
 
@@ -74,6 +74,10 @@ export class Particle {
     if (this.ready) return;
     this.ready = true;
     this.onReady();
+  }
+
+  setCreated(): void {
+    this.created = true;
   }
 
   /**
