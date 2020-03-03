@@ -70,7 +70,8 @@ def arcs_kt_jvm_library(**kwargs):
     Args:
       **kwargs: Set of args to forward to kt_jvm_library
     """
-    constraints = kwargs.pop("constraints", ["android"])
+    add_android_constraints = kwargs.pop("add_android_constraints", True)
+    constraints = kwargs.pop("constraints", ["android"] if add_android_constraints else [])
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
     exports = kwargs.pop("exports", [])
     kotlincopts = kwargs.pop("kotlincopts", [])
@@ -134,7 +135,9 @@ def arcs_kt_library(
         deps = [],
         platforms = DEFAULT_LIBRARY_PLATFORMS,
         exports = None,
-        visibility = None):
+        visibility = None,
+        testonly = 0,
+        add_android_constraints = True):
     """Declares Kotlin library targets for multiple platforms.
 
     Args:
@@ -145,6 +148,8 @@ def arcs_kt_library(
           are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
       exports: List; Optional list of deps to export from this build rule.
       visibility: List; List of visibilities
+      add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
+      testonly: Marks this target to be used only for tests.
     """
     _check_platforms(platforms)
 
@@ -156,6 +161,7 @@ def arcs_kt_library(
             deps = [_to_jvm_dep(dep) for dep in deps],
             exports = exports,
             visibility = visibility,
+            add_android_constraints = add_android_constraints,
         )
 
     if "js" in platforms:
@@ -183,7 +189,8 @@ def arcs_kt_particles(
         srcs = [],
         deps = [],
         platforms = DEFAULT_PARTICLE_PLATFORMS,
-        visibility = None):
+        visibility = None,
+        add_android_constraints = True):
     """Performs final compilation of wasm and bundling if necessary.
 
     Args:
@@ -196,6 +203,7 @@ def arcs_kt_particles(
       platforms: List of platforms for which to compile. Valid options
           are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
       visibility: list of visibilities
+      add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
     """
     _check_platforms(platforms)
 
@@ -210,6 +218,7 @@ def arcs_kt_particles(
             srcs = srcs,
             deps = deps,
             visibility = visibility,
+            add_android_constraints = add_android_constraints,
         )
 
     if "js" in platforms:
