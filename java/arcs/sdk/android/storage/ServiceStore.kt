@@ -103,9 +103,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     @Suppress("UNCHECKED_CAST")
     override suspend fun getLocalData(): Data {
         val service = checkNotNull(storageService)
-        val channel = ParcelableProxyMessageChannel(
-            coroutineContext
-        )
+        val channel = ParcelableProxyMessageChannel(coroutineContext)
         service.getLocalData(channel)
         val flow = channel.asFlow()
         val modelUpdate =
@@ -140,12 +138,10 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             "Connection to StorageService is already alive."
         }
         val connection = connectionFactory(options, crdtType)
+        // Need to initiate the connection on the main thread.
         val service = connection.connectAsync().await()
 
-        val messageChannel =
-            ParcelableProxyMessageChannel(
-                coroutineContext
-            )
+        val messageChannel = ParcelableProxyMessageChannel(coroutineContext)
         serviceCallbackToken = withContext(coroutineContext) {
             service.registerCallback(messageChannel)
         }

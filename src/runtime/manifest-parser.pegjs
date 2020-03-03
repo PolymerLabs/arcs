@@ -836,6 +836,7 @@ RecipeNode
 RecipeItem
   = RecipeParticle
   / RecipeHandle
+  / RecipeSyntheticHandle
   / RequireHandleSection
   / RecipeRequire
   / RecipeSlot
@@ -1076,6 +1077,16 @@ RecipeHandle
       fate,
       capabilities: capabilities.map(c => c[1]),
       annotation: optional(annotation, s => s[1], null),
+    });
+  }
+
+RecipeSyntheticHandle
+  = name:NameWithColon? 'join' whiteSpace '(' whiteSpace? first:lowerIdent rest:(whiteSpace? ',' whiteSpace? lowerIdent)* ')' eolWhiteSpace
+  {
+    return toAstNode<AstNode.RecipeSyntheticHandle>({
+      kind: 'synthetic-handle',
+      name,
+      associations: [first].concat(rest.map(t => t[3])),
     });
   }
 

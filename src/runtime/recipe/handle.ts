@@ -36,6 +36,7 @@ export class Handle implements Comparable<Handle> {
   private _originalFate: Fate | null = null;
   private _originalId: string | null = null;
   private _connections: HandleConnection[] = [];
+  private _associatedHandles: Handle[] = [];
   private _mappedType: Type | undefined = undefined;
   private _storageKey: StorageKey | undefined = undefined;
   capabilities: Capabilities;
@@ -102,6 +103,7 @@ export class Handle implements Comparable<Handle> {
       // attached HandleConnection objects.
       handle._connections = [];
       handle._pattern = this._pattern;
+      handle._associatedHandles = this._associatedHandles.map(h => cloneMap.get(h) as Handle);
     }
     return handle;
   }
@@ -123,7 +125,7 @@ export class Handle implements Comparable<Handle> {
   _mergedFate(fates: Fate[]) {
     assert(fates.length > 0, `Cannot merge empty fates list`);
     // Merging handles only used in coalesce-recipe strategy, which is only done for use/create/? fates.
-    assert(!fates.includes('map') && !fates.includes('copy'), `Merging map/copy not supported yet`);
+    assert(!fates.some(f => f === 'map' || f === 'copy' || f === 'join'), `Merging map/copy/join not supported yet`);
 
     // If all fates were `use` keep their fate, otherwise set to `create`.
     return fates.every(fate => fate === 'use') ? 'use' : 'create';
@@ -206,6 +208,7 @@ export class Handle implements Comparable<Handle> {
   get localName() { return this._localName; }
   set localName(name: string) { this._localName = name; }
   get connections() { return this._connections; } // HandleConnection*
+  get associatedHandles() { return this._associatedHandles; }
   get storageKey() { return this._storageKey; }
   set storageKey(key: StorageKey) { this._storageKey = key; }
   get pattern() { return this._pattern; }
@@ -216,6 +219,7 @@ export class Handle implements Comparable<Handle> {
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
   get ttl() { return this._ttl; }
   set ttl(ttl: Ttl) { this._ttl = ttl; }
+  get isSynthetic() { return this.fate === 'join'; } // Join handles are the first type of synthetic handles, other may come.
 
   static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction, relaxed?: boolean}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
@@ -332,13 +336,17 @@ export class Handle implements Comparable<Handle> {
       // E.g. hostedParticle = ShowProduct
       return undefined;
     }
+    const getName = (h:Handle) => ((nameMap && nameMap.get(h)) || h.localName);
     // TODO: type? maybe output in a comment
     const result: string[] = [];
-    const name = (nameMap && nameMap.get(this)) || this.localName;
+    const name = getName(this);
     if (name) {
       result.push(`${name}:`);
     }
     result.push(this.fate);
+    if (this.associatedHandles.length) {
+      result.push(`(${this.associatedHandles.map(h => getName(h)).join(', ')})`);
+    }
     if (this.capabilities && !this.capabilities.isEmpty()) {
       result.push(this.capabilities.toString());
     }
@@ -375,5 +383,10 @@ export class Handle implements Comparable<Handle> {
 
   findConnectionByDirection(dir: Direction): HandleConnection|undefined {
     return this._connections.find(conn => conn.direction === dir);
+  }
+
+  associateHandle(handle: Handle) {
+    assert(this.fate === 'join');
+    this._associatedHandles.push(handle);
   }
 }

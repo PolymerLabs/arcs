@@ -1,3 +1,12 @@
+/**
+ * @license
+ * Copyright 2020 Google LLC.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Loader} from '../platform/loader-web.js';
@@ -62,7 +71,7 @@ export class StorageKeyRecipeResolver {
   /** Returns the arcId from annotations on the recipe when present. */
   getArcId(recipe: Recipe): string | null {
     for (const trigger of recipe.triggers) {
-      for (const [key, val]of trigger) {
+      for (const [key, val] of trigger) {
         if (key === 'arcId') {
           return val;
         }
