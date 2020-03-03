@@ -9,8 +9,8 @@
  */
 
 import {Manifest} from '../../runtime/manifest.js';
-import {StorageKeyRecipeResolver} from '../recipe2plan.js';
 import {assert} from '../../platform/chai-node.js';
+import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 
 describe('recipe2plan', () => {
   it('Long + Long: If ReadingRecipe is long running, it is a valid use case', async () => {
@@ -42,12 +42,11 @@ describe('recipe2plan', () => {
         data: reads data`);
 
     const resolver = new StorageKeyRecipeResolver(manifest);
-    // @ts-ignore
     for await (const it of resolver.resolve()) {
       assert.isTrue(it.isResolved());
     }
-
   });
+  // TODO(alxr): Flush out outlined unit tests
   it.skip('Short + Short: If WritingRecipe is short lived, it is not valid', () => {});
   it.skip('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', () => {});
   it.skip('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});

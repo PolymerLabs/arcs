@@ -311,8 +311,8 @@ export class Manifest {
     function tagPredicate(manifest: Manifest, store: UnifiedStore) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
-    const stores = [...this._findAll(manifest => manifest._stores
-      .filter(store => this._typePredicate(store, type, subtype) && tagPredicate(manifest, store)))];
+    const stores = [...this._findAll(manifest =>
+      manifest._stores.filter(store => this._typePredicate(store, type, subtype) && tagPredicate(manifest, store)))];
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
@@ -342,7 +342,7 @@ export class Manifest {
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
-  _typePredicate <HasTypeProperty extends {type: Type}>(candidate: HasTypeProperty, type: Type, checkSubtype: boolean) {
+  _typePredicate (candidate: {type: Type}, type: Type, checkSubtype: boolean) {
     const resolvedType = type.resolvedType();
     if (!resolvedType.isResolved()) {
       return (type instanceof CollectionType) === (candidate.type instanceof CollectionType) &&
