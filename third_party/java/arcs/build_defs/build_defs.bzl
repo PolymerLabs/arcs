@@ -44,9 +44,9 @@ arcs_kt_native_library = _arcs_kt_native_library
 
 arcs_kt_particles = _arcs_kt_particles
 
-arcs_kt_schema = _arcs_kt_schema
-
 arcs_kt_plan = _arcs_kt_plan
+
+arcs_kt_schema = _arcs_kt_schema
 
 arcs_manifest = _arcs_manifest
 

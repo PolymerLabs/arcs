@@ -27,7 +27,7 @@ load(
     "//third_party/java/arcs/build_defs/internal:kotlin_wasm_annotations.bzl",
     "kotlin_wasm_annotations",
 )
-load("//third_party/java/arcs/build_defs/internal:util.bzl", "output_name")
+load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load(
     "//tools/build_defs/kotlin:rules.bzl",
@@ -278,7 +278,7 @@ def arcs_kt_plan(name, src, deps = [], out = None, visibility = None):
       out: the name of the output artifact (a Kotlin file).
       visibility: list of visibilities
     """
-    outs = [out] if out != None else [output_name(name, ".kt")]
+    outs = [out] if out != None else [replace_arcs_suffix(src, ".kt")]
 
     sigh_command(
         name = name,
