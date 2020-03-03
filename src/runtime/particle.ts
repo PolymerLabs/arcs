@@ -37,6 +37,8 @@ export class Particle {
   private _idle: Promise<void> = Promise.resolve();
   private _idleResolver: Runnable;
   private _busy = 0;
+  private ready: boolean;
+  created: boolean;
 
   protected _handlesToSync: number;
 
@@ -50,18 +52,35 @@ export class Particle {
     if (this.spec.inputs.length === 0) {
       this.extraData = true;
     }
+    this.ready = false;
+    this.created = false;
+  }
+
+  callOnCreate(): void {
+    if (this.created) return;
+    this.created = true;
+    this.onCreate();
   }
 
   /**
    * Called after handles are writable, only on first initialization of particle.
    */
-  onCreate(): void {}
+  protected onCreate(): void {}
+
+  callOnReady(): void {
+    if (!this.created) {
+      this.callOnCreate();
+    }
+    if (this.ready) return;
+    this.ready = true;
+    this.onReady();
+  }
 
   /**
    * Called after handles are synced the first time, override to provide initial processing.
    * This will be called after onCreate.
    */
-  onReady(): void {}
+  protected onReady(): void {}
 
   /**
    * This sets the capabilities for this particle.  This can only
@@ -94,7 +113,7 @@ export class Particle {
     this.onError = onException;
     if (!this._handlesToSync) {
       // onHandleSync is called IFF there are input handles, otherwise we are ready now
-      this.onReady();
+      this.callOnReady();
     }
   }
 
@@ -123,7 +142,7 @@ export class Particle {
     await this.invokeSafely(async p => p.onHandleSync(handle, model), onException);
     // once we've synced each readable handle, we are ready to start
     if (--this._handlesToSync === 0) {
-      this.onReady();
+      this.callOnReady();
     }
   }
 

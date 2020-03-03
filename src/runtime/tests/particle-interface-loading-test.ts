@@ -294,6 +294,63 @@ describe('particle interface loading', () => {
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 
+  it('onReady sees overriden values in onCreate', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        value: Text
+
+      particle UpdatingParticle in 'updating-particle.js'
+        bar: reads writes Foo
+      recipe
+        h1: use *
+        UpdatingParticle
+          bar: h1
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    const loader = new Loader(null, {
+      'updating-particle.js': `
+        'use strict';
+        defineParticle(({Particle}) => {
+          var handlesSynced = 0;
+          return class extends Particle {
+            async onCreate() {
+              this.barHandle = this.handles.get('bar');
+              await this.barHandle.set(new this.barHandle.entityClass({value: "Created!"}));
+            }
+            
+            async onReady() {
+              this.barHandle = this.handles.get('bar');
+              this.bar = await this.barHandle.fetch();
+          
+              if(this.bar.value == "Created!") {
+                await this.barHandle.set(new this.barHandle.entityClass({value: "Ready!"}))
+              } else {
+                await this.barHandle.set(new this.barHandle.entityClass({value: "Handle not overriden by onCreate!"}))
+              }  
+            }
+          };
+        });
+      `
+    });
+    const id = ArcId.newForTest('test');
+    const storageKey = new VolatileStorageKey(id, 'unique');
+    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
+
+    const barStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:1');
+    const barStorageProxy = new StorageProxy('id', await barStore.activate(), new SingletonType(fooClass.type), barStore.storageKey.toString());
+    const barHandle = await handleNGFor('crdt-key', barStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
+    recipe.handles[0].mapToStorage(barStore);
+
+    await barHandle.set(new fooClass({value: 'Set!'}));
+
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await arc.idle;
+    assert.deepStrictEqual(await barHandle.fetch(), new fooClass({value: 'Ready!'}));
+  });
+
   it('onReady runs when handles are first synced', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
@@ -336,7 +393,7 @@ describe('particle interface loading', () => {
                 s = s + " onCreate was not called before onReady.";
               } 
               if (this.bar.value != "Set!") {
-                s = s + " onCreate was not called before onReady.";
+                s = s + " Read only handles not initialised in onReady";
               } 
               if (handlesSynced != 2) {
                 s = s + " Not all handles were synced before onReady was called.";
@@ -360,7 +417,7 @@ describe('particle interface loading', () => {
     recipe.handles[0].mapToStorage(fooStore);
 
     const barStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:1');
-    const barStorageProxy = new StorageProxy('id', await barStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
+    const barStorageProxy = new StorageProxy('id', await barStore.activate(), new SingletonType(fooClass.type), barStore.storageKey.toString());
     const barHandle = await handleNGFor('crdt-key', barStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
     recipe.handles[1].mapToStorage(barStore);
 
@@ -370,6 +427,55 @@ describe('particle interface loading', () => {
     await arc.instantiate(recipe);
     await arc.idle;
     assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Ready!'}));
-    assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Ready!'}));
+  });
+
+  it('onReady runs when there are no handles to sync', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        value: Text
+      particle UpdatingParticle in 'updating-particle.js'
+        innerFoo: writes Foo
+      recipe
+        h0: use *
+        UpdatingParticle
+          innerFoo: h0
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    const loader = new Loader(null, {
+      'updating-particle.js': `
+        'use strict';
+        defineParticle(({Particle}) => {
+          var created = false;
+          return class extends Particle {
+            async onCreate() {
+              created = true;
+            }
+            async onReady(handle, model) {
+              this.innerFooHandle = this.handles.get('innerFoo');
+              if (created) {
+                await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
+              } else {
+                await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Not created!"}));
+              }
+            }
+          };
+        });
+      `
+    });
+    const id = ArcId.newForTest('test');
+    const storageKey = new VolatileStorageKey(id, 'unique');
+    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
+
+    const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
+    const varStorageProxy = new StorageProxy('id', await fooStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
+    const fooHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
+    recipe.handles[0].mapToStorage(fooStore);
+
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await arc.idle;
+    assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Created!'}));
   });
 });
