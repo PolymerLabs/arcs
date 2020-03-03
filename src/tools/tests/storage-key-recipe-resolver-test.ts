@@ -71,7 +71,7 @@ describe('recipe2plan', () => {
       for await (const it of resolver.resolve()) {
         continue;
       }
-    }, Error, 'Handle my-handle-id mapped to ephemeral handle.');
+    }, Error, 'Handle data mapped to ephemeral handle thing.');
   });
   it('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', async () => {
     const manifest = await Manifest.parse(`\
@@ -99,7 +99,7 @@ describe('recipe2plan', () => {
       for await (const it of resolver.resolve()) {
         continue;
       }
-    }, Error, 'Handle my-handle-id mapped to ephemeral handle.');
+    }, Error, 'Handle data mapped to ephemeral handle thing.');
   });
   it('Long + Short: If WritingRecipe is long lived and Reading is short lived, it is valid', async () => {
     const manifest = await Manifest.parse(`\

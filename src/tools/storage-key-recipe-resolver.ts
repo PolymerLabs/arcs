@@ -32,7 +32,6 @@ export class StorageKeyRecipeResolver {
   /**
    * Produces resolved recipes with storage keys.
    *
-   * TODO(alxr): Apply to long-running recipes appropriately.
    * @throws Error if recipe fails to resolve on first or second pass.
    * @yields Resolved recipes with storage keys
    */
@@ -49,6 +48,7 @@ export class StorageKeyRecipeResolver {
       if (!resolved.isResolved()) {
         throw Error(`Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`);
       }
+      this.matchKeysToHandles(recipe);
       yield resolved;
     }
   }
