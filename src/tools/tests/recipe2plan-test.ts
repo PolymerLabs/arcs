@@ -67,7 +67,7 @@ describe('recipe2plan', () => {
 
 
     const resolver = new StorageKeyRecipeResolver(manifest);
-    assertThrowsAsync(async () => {
+    await assertThrowsAsync(async () => {
       for await (const it of resolver.resolve()) {
         continue;
       }
@@ -95,7 +95,7 @@ describe('recipe2plan', () => {
         data: reads data`);
 
     const resolver = new StorageKeyRecipeResolver(manifest);
-    assertThrowsAsync(async () => {
+    await assertThrowsAsync(async () => {
       for await (const it of resolver.resolve()) {
         continue;
       }
@@ -128,7 +128,39 @@ describe('recipe2plan', () => {
       assert.isTrue(it.isResolved());
     }
   });
-  it.skip('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});
+  it('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', async () => {
+
+    const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text, age: Number}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    @trigger
+      launch startup
+      arcId readArcId
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+    const resolver = new StorageKeyRecipeResolver(manifest);
+    // TODO: specify the correct error to be thrown
+    await assertThrowsAsync(async () => {
+      for await (const it of resolver.resolve()) {
+        continue;
+      }
+    });
+  });
   it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});
   it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {});
   it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {});

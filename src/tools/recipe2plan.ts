@@ -10,16 +10,13 @@
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../runtime/capabilities-resolver.js';
+import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {Arc} from '../runtime/arc.js';
 import {Loader} from '../platform/loader-web.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
-import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../runtime/storageNG/drivers/ramdisk.js';
-import {Capabilities} from '../runtime/capabilities.js';
-import {ramDiskStorageKeyPrefixForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
+import {ramDiskStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 
 
 /**
