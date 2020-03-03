@@ -112,7 +112,7 @@ export class StorageKeyRecipeResolver {
 
         if (matches.length === 0) {
           throw Error(`No matching handles found for ${handle.localName}.`);
-        } else if (matches.length >= 1) {
+        } else if (matches.length > 1) {
           throw Error(`More than one handle found for ${handle.localName}.`);
         }
 
