@@ -548,6 +548,7 @@ export class Recipe implements Cloneable<Recipe> {
     this._slots.forEach(cloneTheThing);
     this._connectionConstraints.forEach(cloneTheThing);
     this._obligations.forEach(cloneTheThing);
+    this.triggers.forEach(cloneTheThing);
     recipe.verbs = recipe.verbs.slice();
     if (this.search) {
       this.search._copyInto(recipe);
