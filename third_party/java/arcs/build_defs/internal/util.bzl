@@ -1,7 +1,7 @@
 """Shared utilities for Arcs internal rules"""
 
-def output_name(src, suffix = ""):
-    """Cleans up the given file name, and replaces the .arcs extension."""
+def replace_arcs_suffix(src, suffix = ""):
+    """Cleans up the given file name, and replaces the .arcs extension with the provided suffix."""
 
     # For references to files in other build targets, extract the filename:
     #   //src/wasm/tests:manifest.arcs -> manifest.arcs

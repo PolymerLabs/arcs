@@ -174,7 +174,7 @@ export class Manifest {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
   get allHandles() {
-    // Reduce is equivalent to flatMap
+    // TODO(#4820) Update `reduce` to use flatMap
     return [...new Set(this._findAll(manifest => manifest._recipes.reduce((acc, x) => acc.concat(x.handles), [])))];
   }
   get activeRecipe() {
@@ -311,8 +311,8 @@ export class Manifest {
     function tagPredicate(manifest: Manifest, store: UnifiedStore) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
-    const stores = [...this._findAll(manifest => manifest._stores
-      .filter(store => this._typePredicate(store, type, subtype) && tagPredicate(manifest, store)))];
+    const stores = [...this._findAll(manifest =>
+      manifest._stores.filter(store => this._typePredicate(store, type, subtype) && tagPredicate(manifest, store)))];
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
@@ -329,8 +329,9 @@ export class Manifest {
     function fatePredicate(handle: Handle) {
       return fates === [] || fates.includes(handle.fate);
     }
+    // TODO(#4820) Update `reduce` to use flatMap
     return [...this._findAll(manifest => manifest._recipes
-      .flatMap(r => r.handles)
+      .reduce((acc, r) => acc.concat(r.handles), [])
       .filter(h => this._typePredicate(h, type, subtype) && tagPredicate(h) && fatePredicate(h)))];
   }
   findHandlesById(id: string): Handle[] {
@@ -342,7 +343,7 @@ export class Manifest {
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
-  _typePredicate <HasTypeProperty extends {type: Type}>(candidate: HasTypeProperty, type: Type, checkSubtype: boolean) {
+  _typePredicate(candidate: {type: Type}, type: Type, checkSubtype: boolean) {
     const resolvedType = type.resolvedType();
     if (!resolvedType.isResolved()) {
       return (type instanceof CollectionType) === (candidate.type instanceof CollectionType) &&
@@ -848,7 +849,7 @@ ${e.message}
     for (const item of items.syntheticHandles) {
       const handle = recipe.newHandle();
       handle.fate = 'join';
-      
+
       if (item.name) {
         assert(!items.byName.has(item.name), `duplicate handle name: ${item.name}`);
         handle.localName = item.name;

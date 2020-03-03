@@ -27,7 +27,7 @@ load(
     "//third_party/java/arcs/build_defs/internal:kotlin_wasm_annotations.bzl",
     "kotlin_wasm_annotations",
 )
-load("//third_party/java/arcs/build_defs/internal:util.bzl", "output_name")
+load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load(
     "//tools/build_defs/kotlin:rules.bzl",
@@ -72,7 +72,8 @@ def arcs_kt_jvm_library(**kwargs):
     Args:
       **kwargs: Set of args to forward to kt_jvm_library
     """
-    constraints = kwargs.pop("constraints", ["android"])
+    add_android_constraints = kwargs.pop("add_android_constraints", True)
+    constraints = kwargs.pop("constraints", ["android"] if add_android_constraints else [])
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
     exports = kwargs.pop("exports", [])
     kotlincopts = kwargs.pop("kotlincopts", [])
@@ -136,7 +137,9 @@ def arcs_kt_library(
         deps = [],
         platforms = DEFAULT_LIBRARY_PLATFORMS,
         exports = None,
-        visibility = None):
+        visibility = None,
+        testonly = 0,
+        add_android_constraints = True):
     """Declares Kotlin library targets for multiple platforms.
 
     Args:
@@ -147,6 +150,8 @@ def arcs_kt_library(
           are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
       exports: List; Optional list of deps to export from this build rule.
       visibility: List; List of visibilities
+      add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
+      testonly: Marks this target to be used only for tests.
     """
     _check_platforms(platforms)
 
@@ -158,6 +163,7 @@ def arcs_kt_library(
             deps = [_to_jvm_dep(dep) for dep in deps],
             exports = exports,
             visibility = visibility,
+            add_android_constraints = add_android_constraints,
         )
 
     if "js" in platforms:
@@ -185,7 +191,8 @@ def arcs_kt_particles(
         srcs = [],
         deps = [],
         platforms = DEFAULT_PARTICLE_PLATFORMS,
-        visibility = None):
+        visibility = None,
+        add_android_constraints = True):
     """Performs final compilation of wasm and bundling if necessary.
 
     Args:
@@ -198,6 +205,7 @@ def arcs_kt_particles(
       platforms: List of platforms for which to compile. Valid options
           are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
       visibility: list of visibilities
+      add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
     """
     _check_platforms(platforms)
 
@@ -212,6 +220,7 @@ def arcs_kt_particles(
             srcs = srcs,
             deps = deps,
             visibility = visibility,
+            add_android_constraints = add_android_constraints,
         )
 
     if "js" in platforms:
@@ -268,28 +277,7 @@ def arcs_kt_particles(
             visibility = visibility,
         )
 
-def arcs_kt_plan(name, src, deps = [], out = None, visibility = None):
-    """Converts recipes in manifests into Kotlin Plans.
-
-    Args:
-      name: the name of the target to create
-      src: an Arcs manifest file
-      deps: list of dependencies (other manifests)
-      out: the name of the output artifact (a Kotlin file).
-      visibility: list of visibilities
-    """
-    outs = [out] if out != None else [output_name(name, ".kt")]
-
-    sigh_command(
-        name = name,
-        srcs = [src],
-        outs = outs,
-        deps = deps,
-        progress_message = "Producing Plans",
-        sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
-    )
-
-def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = [], data = []):
+def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = [], data = [], size = "small"):
     """Defines Kotlin Android test targets for a directory.
 
     Defines a Kotlin Android library (kt_android_library) for all of the sources
@@ -305,6 +293,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
       tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_android_library
       data: list of files available to the test at runtime
+      size: the size of the test, defaults to "small". Options are: "small", "medium", "large", etc.
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
@@ -325,13 +314,34 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
         class_name = src[:-3]
         android_local_test(
             name = class_name,
-            size = "small",
+            size = size,
             manifest = manifest,
             test_class = "%s.%s" % (package, class_name),
             tags = tags,
             deps = android_local_test_deps,
             data = data,
         )
+
+def arcs_kt_plan(name, src, deps = [], out = None, visibility = None):
+    """Converts recipes in manifests into Kotlin Plans.
+
+    Args:
+      name: the name of the target to create
+      src: an Arcs manifest file
+      deps: list of dependencies (other manifests)
+      out: the name of the output artifact (a Kotlin file).
+      visibility: list of visibilities
+    """
+    outs = [out] if out != None else [replace_arcs_suffix(src, ".kt")]
+
+    sigh_command(
+        name = name,
+        srcs = [src],
+        outs = outs,
+        deps = deps,
+        progress_message = "Producing Plans",
+        sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+    )
 
 def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], data = []):
     """Defines Kotlin JVM test targets for a directory.

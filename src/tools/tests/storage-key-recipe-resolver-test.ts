@@ -9,8 +9,8 @@
  */
 
 import {Manifest} from '../../runtime/manifest.js';
-import {StorageKeyRecipeResolver} from '../recipe2plan.js';
 import {assert} from '../../platform/chai-node.js';
+import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 
 describe('recipe2plan', () => {
@@ -123,7 +123,6 @@ describe('recipe2plan', () => {
         data: reads data`);
 
     const resolver = new StorageKeyRecipeResolver(manifest);
-
     for await (const it of resolver.resolve()) {
       assert.isTrue(it.isResolved());
     }
@@ -161,6 +160,7 @@ describe('recipe2plan', () => {
       }
     });
   });
+  // TODO(alxr): Flush out outlined unit tests
   it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});
   it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {});
   it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {});

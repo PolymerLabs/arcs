@@ -95,7 +95,12 @@ class DatabaseDriverTest {
             calledWithVersion = version
         }
 
-        assertThat(calledWithData).isEqualTo(entity.toCrdtEntityData(VersionMap()))
+        assertThat(calledWithData).isEqualTo(
+            entity.toCrdtEntityData(VersionMap()) {
+                if (it is Reference) it
+                else buildReference(it)
+            }
+        )
         assertThat(calledWithVersion).isEqualTo(1)
     }
 
