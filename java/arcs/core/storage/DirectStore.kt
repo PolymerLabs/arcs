@@ -92,7 +92,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         return when (message) {
             is ProxyMessage.SyncRequest -> {
                 callbacks.value[message.id]?.invoke(
-                    ProxyMessage.ModelUpdate(localModel.data, message.id)
+                    ProxyMessage.ModelUpdate(getLocalData(), message.id)
                 )
                 true
             }

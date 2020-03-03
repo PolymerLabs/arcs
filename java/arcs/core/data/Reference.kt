@@ -27,7 +27,7 @@ import kotlinx.coroutines.Dispatchers
  *
  * Developers can check the liveness of a [Reference] using either [isAlive] or [isDead].
  */
-interface Reference<T : Referencable> {
+interface Reference<T : Referencable> : arcs.core.crdt.CrdtEntity.Reference {
     /**
      * Fetches the actual [Entity] value being referenced from storage.
      *
