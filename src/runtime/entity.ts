@@ -22,7 +22,12 @@ import {Storable} from './storable.js';
 
 export type EntityRawData = {};
 
-export type SerializedEntity = {id: string, expirationTimestamp?: string, rawData: EntityRawData};
+export type SerializedEntity = {
+  id: string,
+  creationTimestamp: string,
+  expirationTimestamp?: string,
+  rawData: EntityRawData
+};
 
 /**
  * Represents mutable entity data. Instances will have mutable properties defined on them for all
@@ -61,6 +66,7 @@ class EntityInternals {
   private id?: string;
   private storageKey?: string;
   private userIDComponent?: string;
+  private creationTimestamp: string;
   private expirationTimestamp: string;
 
   // TODO: Only the Arc that "owns" this Entity should be allowed to mutate it.
@@ -96,6 +102,16 @@ class EntityInternals {
     return this.entityClass;
   }
 
+  getCreationTimestamp(): string {
+    if (this.id === undefined) {
+      throw new Error('entity has not yet been stored!');
+    }
+    if (this.creationTimestamp === undefined) {
+      throw new Error('entity has been stored but creation timestamp was not recorded against entity');
+    }
+    return this.creationTimestamp;
+  }
+
   isIdentified(): boolean {
     return this.id !== undefined;
   }
@@ -104,13 +120,16 @@ class EntityInternals {
     return this.expirationTimestamp !== undefined;
   }
 
-  identify(identifier: string, storageKey: string) {
+  identify(identifier: string, storageKey: string, creationTimestamp: string) {
     assert(!this.isIdentified(), 'identify() called on already identified entity');
     this.id = identifier;
     this.storageKey = storageKey;
+    this.creationTimestamp = creationTimestamp;
     const components = identifier.split(':');
     const uid = components.lastIndexOf('uid');
     this.userIDComponent = uid > 0 ? components.slice(uid+1).join(':') : '';
+    // debugger;
+    // this.setExpiration(Ttl.infinite);
   }
 
   createIdentity(parentId: Id, idGenerator: IdGenerator, storageKey: string, ttl: Ttl) {
@@ -125,9 +144,15 @@ class EntityInternals {
     }
     this.storageKey = storageKey;
     this.id = id;
+    this.setExpiration(ttl);
+  }
+
+  private setExpiration(ttl: Ttl) {
     assert(ttl, `ttl cannot be null`);
+    const now = new Date();
+    this.creationTimestamp = now.getTime().toString();
     if (!ttl.isInfinite) {
-      this.expirationTimestamp = ttl.calculateExpiration().getTime().toString();
+      this.expirationTimestamp = ttl.calculateExpiration(now).getTime().toString();
     }
   }
 
@@ -198,7 +223,11 @@ class EntityInternals {
   }
 
   serialize(): SerializedEntity {
-    const serializedEntity: SerializedEntity = {id: this.id, rawData: this.dataClone()};
+    const serializedEntity: SerializedEntity = {
+      id: this.id,
+      creationTimestamp: this.creationTimestamp,
+      rawData: this.dataClone()
+    };
     if (this.hasExpirationTimestamp()) {
       serializedEntity.expirationTimestamp = this.expirationTimestamp;
     }
@@ -317,6 +346,10 @@ export abstract class Entity implements Storable {
     return getInternals(entity).getId();
   }
 
+  static creationTimestamp(entity: Entity): string {
+    return getInternals(entity).getCreationTimestamp();
+  }
+
   static storageKey(entity: Entity): string {
     return getInternals(entity).getStorageKey();
   }
@@ -329,8 +362,8 @@ export abstract class Entity implements Storable {
     return getInternals(entity).isIdentified();
   }
 
-  static identify(entity: Entity, identifier: string, storageKey: string) {
-    getInternals(entity).identify(identifier, storageKey);
+  static identify(entity: Entity, identifier: string, storageKey: string, creationTimestamp: string) {
+    getInternals(entity).identify(identifier, storageKey, creationTimestamp);
     return entity;
   }
 

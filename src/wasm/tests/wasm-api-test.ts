@@ -67,7 +67,8 @@ async function createBackingEntity(arc: Arc, referenceType: ReferenceType, id: s
   const backingHandle1 = await singletonHandleForTest(arc, backingStore);
   const entity = await backingHandle1.setFromData(entityData);
   const entityId = Entity.id(entity);
-  const reference = new Reference({id: entityId, entityStorageKey: backingStorageKey.toString()}, referenceType, null);
+  const creationTimestamp = Entity.creationTimestamp(entity);
+  const reference = new Reference({id: entityId, creationTimestamp, entityStorageKey: backingStorageKey.toString()}, referenceType, null);
   return [entityId, reference];
 }
 

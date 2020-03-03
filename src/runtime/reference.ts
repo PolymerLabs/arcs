@@ -23,6 +23,8 @@ enum ReferenceMode {Unstored, Stored}
 export type SerializedReference = {
   id: string;
   entityStorageKey: string;
+  creationTimestamp: string;
+  // TODO(mmandlis): add expiration time here as well.
 };
 
 export class Reference implements Storable {
@@ -30,6 +32,7 @@ export class Reference implements Storable {
   public type: ReferenceType;
 
   protected readonly id: string;
+  private readonly creationTimestamp: string;
   private entityStorageKey: string;
   private readonly context: ChannelConstructor;
   private storageProxy: StorageProxy<CRDTTypeRecord> = null;
@@ -37,13 +40,14 @@ export class Reference implements Storable {
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
-  constructor(data: {id: string, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor) {
+  constructor(data: {id: string, creationTimestamp: string, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor) {
     this.id = data.id;
+    this.creationTimestamp = data.creationTimestamp;
     this.entityStorageKey = data.entityStorageKey;
     this.context = context;
     this.type = type;
     this[SYMBOL_INTERNALS] = {
-      serialize: () => ({id: this.id, rawData: this.dataClone()})
+      serialize: () => ({id: this.id, creationTimestamp: this.creationTimestamp, rawData: this.dataClone()})
     };
   }
 
@@ -73,7 +77,7 @@ export class Reference implements Storable {
   }
 
   dataClone(): SerializedReference {
-    return {entityStorageKey: this.entityStorageKey, id: this.id};
+    return {entityStorageKey: this.entityStorageKey, id: this.id, creationTimestamp: this.creationTimestamp};
   }
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
@@ -95,6 +99,7 @@ export abstract class ClientReference extends Reference {
     super(
       {
         id: Entity.id(entity),
+        creationTimestamp: Entity.creationTimestamp(entity),
         entityStorageKey: Entity.storageKey(entity)
       },
       new ReferenceType(Entity.entityClass(entity).type),
@@ -132,7 +137,7 @@ export abstract class ClientReference extends Reference {
  * Instead of statically depending on reference.ts, handle.ts defines a static makeReference method which is
  * dynamically populated here.
  */
-function makeReference(data: {id: string, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor): Reference {
+function makeReference(data: {id: string, creationTimestamp: string, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor): Reference {
  return new Reference(data, type, context);
 }
 

@@ -1763,8 +1763,8 @@ recipe SomeRecipe
     const entitySource = JSON.stringify(
       {root: {values:
         {
-          e1: {value: {id: 'e1', rawData: {someProp: 'someValue'}}, version: {u: 1}},
-          'entity-id': {value: {id: 'entity-id', rawData: {someProp: 'someValue2'}}, version: {u: 1}}
+          e1: {value: {id: 'e1', creationTimestamp: 'now', rawData: {someProp: 'someValue'}}, version: {u: 1}},
+          'entity-id': {value: {id: 'entity-id', creationTimestamp: 'earlier', rawData: {someProp: 'someValue2'}}, version: {u: 1}}
         }, version: {u: 1}
       }, locations: {}});
     const loader = new Loader(null, {
@@ -1781,9 +1781,11 @@ recipe SomeRecipe
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
         id: 'e1',
+        creationTimestamp: 'now',
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
+        creationTimestamp: 'earlier',
         rawData: {someProp: 'someValue2'},
       }
     ]);
@@ -1816,8 +1818,8 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         {
           "root": {
             "values": {
-              "eid2": {"value": {"id": "eid2", "rawData": {"someProp": "someValue"}}, "version": {"u": 1}},
-              "entity-id": {"value": {"id": "entity-id", "rawData": {"someProp": "someValue2"}}, "version": {"u": 1}}
+              "eid2": {"value": {"id": "eid2", "creationTimestamp": "now", "rawData": {"someProp": "someValue"}}, "version": {"u": 1}},
+              "entity-id": {"value": {"id": "entity-id", "creationTimestamp": "later", "rawData": {"someProp": "someValue2"}}, "version": {"u": 1}}
             },
             "version": {"u": 1}
           },
@@ -1834,9 +1836,11 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
         id: `eid2`,
+        creationTimestamp: 'now',
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
+        creationTimestamp: 'later',
         rawData: {someProp: 'someValue2'},
       }
     ]);

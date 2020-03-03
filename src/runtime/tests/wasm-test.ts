@@ -38,9 +38,9 @@ async function setup() {
 describe('wasm', () => {
   it('entity packaging supports primitive field types and references', async () => {
     const {fooClass, barType, encoder, decoder, typeMap} = await setup();
-    const ref = new Reference({id: 'i', entityStorageKey: 'k'}, new ReferenceType(barType), null);
+    const ref = new Reference({id: 'i', creationTimestamp: 't', entityStorageKey: 'k'}, new ReferenceType(barType), null);
     const foo = new fooClass({txt: 'abc', lnk: 'http://def', num: 37, flg: true, ref});
-    Entity.identify(foo, 'test', null);
+    Entity.identify(foo, 'test', null, null);
 
     typeMap.set(await barType.getEntitySchema().hash(), barType);
 
@@ -52,7 +52,7 @@ describe('wasm', () => {
   it('entity packaging supports partially assigned entity', async () => {
     const {fooClass, encoder, decoder} = await setup();
     const foo = new fooClass({txt: 'abc', num: -5.1});
-    Entity.identify(foo, '!test:foo:bar|', null);
+    Entity.identify(foo, '!test:foo:bar|', null, null);
 
     const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
@@ -62,7 +62,7 @@ describe('wasm', () => {
   it('entity packaging supports zero and empty values', async () => {
     const {fooClass, encoder, decoder} = await setup();
     const foo = new fooClass({txt: '', lnk: '', num: 0, flg: false});
-    Entity.identify(foo, 'te|st', null);
+    Entity.identify(foo, 'te|st', null, null);
 
     const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
@@ -72,7 +72,7 @@ describe('wasm', () => {
   it('entity packaging supports empty entity', async () => {
     const {fooClass, encoder, decoder} = await setup();
     const foo = new fooClass({});
-    Entity.identify(foo, 'te st', null);
+    Entity.identify(foo, 'te st', null, null);
 
     const encoded = await encoder.encodeSingleton(foo);
     const foo2 = decoder.decodeSingleton(encoded.view());
@@ -83,10 +83,10 @@ describe('wasm', () => {
     const {fooClass, barType, encoder, decoder, typeMap} = await setup();
     const make = (id, data) => {
       const foo = new fooClass(data);
-      Entity.identify(foo, id, null);
+      Entity.identify(foo, id, null, null);
       return foo;
     };
-    const ref = new Reference({id: 'r1', entityStorageKey: 'k1'}, new ReferenceType(barType), null);
+    const ref = new Reference({id: 'r1', creationTimestamp: 't1', entityStorageKey: 'k1'}, new ReferenceType(barType), null);
     const f1 = make('id1', {txt: 'abc', lnk: 'http://def', num: 9.2, flg: true, ref});
     const f2 = make('id2|two', {});
     const f3 = make('!id:3!', {txt: 'def', num: -7});
@@ -97,7 +97,7 @@ describe('wasm', () => {
     // Decoding of collections hasn't been implemented (yet?).
     assert.strictEqual(new TextDecoder().decode(encoded.view()),
       '3:' +
-      '110:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|ref:R2:r1|2:k1|' + hash + ':|' +
+      '115:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|ref:R2:r1|2:t1|2:k1|' + hash + ':|' +
       '10:7:id2|two|' +
       '29:6:!id:3!|txt:T3:def|num:N-7:|');
   });
@@ -115,7 +115,7 @@ describe('wasm', () => {
     const verify = (schema, value) => {
       const entityClass = Entity.createEntityClass(schema, null);
       const e = new entityClass({value});
-      Entity.identify(e, 'test', null);
+      Entity.identify(e, 'test', null, null);
       assertThrowsAsync(async () => {
         await StringEncoder.create(entityClass.type).encodeSingleton(e);
       }, 'not yet supported');

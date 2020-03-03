@@ -111,7 +111,11 @@ describe('references', () => {
     const entity = await backingHandle.setFromData({value: 'val1'});
 
     const refHandle = singletonHandle(await refStore.activate(), arc);
-    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: backingKey.toString()}, refStore.type.getContainedType() as ReferenceType, null));
+    await refHandle.set(new Reference({
+      id: Entity.id(entity),
+      creationTimestamp: Entity.creationTimestamp(entity),
+      entityStorageKey: backingKey.toString()
+    }, refStore.type.getContainedType() as ReferenceType, null));
     await arc.idle;
 
     const outStore = arc._stores.find(isSingletonEntityStore);
@@ -182,8 +186,8 @@ describe('references', () => {
     const entity2 = await handle2.setFromData({value: 'val2'});
 
     const refHandle = collectionHandle(await refStore.activate(), arc);
-    await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: backingKey1.toString()}, resType as ReferenceType, null));
-    await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: backingKey2.toString()}, resType as ReferenceType, null));
+    await refHandle.add(new Reference({id: Entity.id(entity1), creationTimestamp: Entity.creationTimestamp(entity1), entityStorageKey: backingKey1.toString()}, resType as ReferenceType, null));
+    await refHandle.add(new Reference({id: Entity.id(entity2), creationTimestamp: Entity.creationTimestamp(entity2), entityStorageKey: backingKey2.toString()}, resType as ReferenceType, null));
 
     await arc.idle;
 
@@ -309,7 +313,7 @@ describe('references', () => {
     const refStore = stores.find(entityHasName('Foo'));
 
     const refHandle = singletonHandle(await refStore.activate(), arc);
-    await refHandle.setFromData({result: {id: Entity.id(entity), entityStorageKey: Entity.storageKey(entity)}});
+    await refHandle.setFromData({result: {id: Entity.id(entity), creationTimestamp: Entity.creationTimestamp(entity), entityStorageKey: Entity.storageKey(entity)}});
     await arc.idle;
 
     const store = stores.find(entityHasName('Result'));
@@ -492,8 +496,8 @@ describe('references', () => {
     const refStore = arc._stores.filter(isSingletonEntityStore).find(entityHasName('Foo'));
     const refHandle = singletonHandle(await refStore.activate(), arc);
     await refHandle.setFromData({result: [
-      {id: Entity.id(entities[0]), entityStorageKey: Entity.storageKey(entities[0])},
-      {id: Entity.id(entities[1]), entityStorageKey: Entity.storageKey(entities[1])}
+      {id: Entity.id(entities[0]), creationTimestamp: Entity.creationTimestamp(entities[0]), entityStorageKey: Entity.storageKey(entities[0])},
+      {id: Entity.id(entities[1]), creationTimestamp: Entity.creationTimestamp(entities[1]), entityStorageKey: Entity.storageKey(entities[1])}
     ]});
 
     await arc.idle;
@@ -743,8 +747,8 @@ describe('reference mode store tests', () => {
 
     const handle = collectionHandle(await inputStore.activate(), arc);
     assert.strictEqual((handle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
-    await handle.add(Entity.identify(new handle.entityClass({value: 'what a result!'}), 'id:1', null));
-    await handle.add(Entity.identify(new handle.entityClass({value: 'what another result!'}), 'id:2', null));
+    await handle.add(Entity.identify(new handle.entityClass({value: 'what a result!'}), 'id:1', null, 'now'));
+    await handle.add(Entity.identify(new handle.entityClass({value: 'what another result!'}), 'id:2', null, 'now'));
 
     await arc.idle;
     const outputStore: SingletonEntityHandle = singletonHandle(await refStore.activate(), arc);
@@ -818,7 +822,7 @@ describe('reference mode store tests', () => {
     const inHandle: SingletonEntityHandle = singletonHandle(await refModeStore.activate(), arc);
     const entity = await inHandle.setFromData({value: 'val1'});
     const refHandle: SingletonReferenceHandle = singletonHandle(await refStore.activate(), arc);
-    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, refStore.type.getContainedType() as ReferenceType, null));
+    await refHandle.set(new Reference({id: Entity.id(entity), creationTimestamp: Entity.creationTimestamp(entity), entityStorageKey: refModeStore.storageKey.toString()}, refStore.type.getContainedType() as ReferenceType, null));
     await arc.idle;
 
     const outHandle = singletonHandle(await outStore.activate(), arc);

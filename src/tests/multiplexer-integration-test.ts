@@ -58,21 +58,21 @@ describe('Multiplexer', () => {
           renderRecipe: recipeOne,
           renderParticleSpec: showOneSpec
         }),
-        '1', null));
+        '1', null, null));
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({
           message: 'y',
           renderRecipe: recipeTwo,
           renderParticleSpec: showTwoSpec
         }),
-        '2', null));
+        '2', null, null));
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({
           message: 'z',
           renderRecipe: recipeOne,
           renderParticleSpec: showOneSpec
         }),
-        '3', null));
+        '3', null, null));
     // version could be set here, but doesn't matter for tests.
     const runtime = new Runtime({loader, context, memoryProvider});
     const arc = runtime.newArc('demo', storageKeyPrefixForTest());
@@ -112,7 +112,7 @@ describe('Multiplexer', () => {
       renderRecipe: recipeOne,
       renderParticleSpec: showOneSpec
     });
-    const entity = Entity.identify(entityClass, '4', null);
+    const entity = Entity.identify(entityClass, '4', null, null);
     await postsStore.add(entity);
     await arc.idle;
 

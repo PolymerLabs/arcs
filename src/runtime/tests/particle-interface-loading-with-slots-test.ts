@@ -53,8 +53,8 @@ describe('particle interface loading with slots', () => {
     await arc.instantiate(recipe);
     const inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0];
     const inHandle = await collectionHandleForTest(arc, inStore);
-    await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo1'}), 'subid-1', null));
-    await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo2'}), 'subid-2', null));
+    await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo1'}), 'subid-1', null, null));
+    await inHandle.add(Entity.identify(new inHandle.entityClass({value: 'foo2'}), 'subid-2', null, null));
     return inHandle;
   }
 
@@ -72,7 +72,7 @@ describe('particle interface loading with slots', () => {
     await observer.expectationsCompleted();
 
     // Add one more element.
-    await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3', null));
+    await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3', null, null));
     observer
        .newExpectations()
        .expectRenderSlot('SingleSlotParticle', 'annotation')
@@ -101,7 +101,7 @@ describe('particle interface loading with slots', () => {
        .newExpectations()
        .expectRenderSlot('SingleSlotParticle', 'annotation')
        ;
-    await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3', null));
+    await inStore.add(Entity.identify(new inStore.entityClass({value: 'foo3'}), 'subid-3', null, null));
     await arc.idle;
     await observer.expectationsCompleted();
   });
