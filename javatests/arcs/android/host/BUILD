@@ -9,16 +9,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-kt_android_library(
-    name = "test_app",
-    testonly = 1,
-    srcs = ["TestActivity.kt"],
-    manifest = ":AndroidManifest.xml",
-    deps = [
-        "//third_party/java/androidx/appcompat",
-    ],
-)
-
 arcs_kt_android_test_suite(
     name = "host",
     srcs = glob(["*Test.kt"]),
@@ -27,7 +17,6 @@ arcs_kt_android_test_suite(
     deps = [
         ":schemas",
         ":services",
-        ":test_app",
         "//java/arcs/android/crdt",
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
