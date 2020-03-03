@@ -24,10 +24,10 @@ data class ParcelableReference(override val actual: Reference) : ParcelableRefer
         parcel.writeString(actual.id)
         parcel.writeString(actual.storageKey.toString())
         actual.version?.let {
-            parcel.writeBoolean(true)
+            parcel.writeString("hasVersionMap")
             parcel.writeProto(it.toProto())
         } ?: {
-            parcel.writeBoolean(false)
+            parcel.writeString("noVersionMap")
         }()
     }
 
@@ -42,7 +42,9 @@ data class ParcelableReference(override val actual: Reference) : ParcelableRefer
             val storageKeyString = requireNotNull(parcel.readString()) {
                 "Required storageKey not found in parcel for ParcelableReference"
             }
-            val versionMap = if (parcel.readBoolean()) parcel.readVersionMap() else null
+            val versionMap = if (parcel.readString() == "hasVersionMap") {
+                parcel.readVersionMap()
+            } else null
 
             return ParcelableReference(
                 Reference(id, StorageKeyParser.parse(storageKeyString), versionMap)
