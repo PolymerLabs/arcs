@@ -829,7 +829,7 @@ ${e.message}
     for (const item of items.syntheticHandles) {
       const handle = recipe.newHandle();
       handle.fate = 'join';
-      
+
       if (item.name) {
         assert(!items.byName.has(item.name), `duplicate handle name: ${item.name}`);
         handle.localName = item.name;
