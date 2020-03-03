@@ -43,7 +43,7 @@ class RawEntityDereferencer(
     override suspend fun dereference(
         reference: Reference,
         coroutineContext: CoroutineContext
-    ): RawEntity? = withContext(coroutineContext) {
+    ): RawEntity? {
         log.debug { "De-referencing $reference" }
 
         val storageKey = reference.storageKey.childKeyWithComponent(reference.id)
@@ -70,10 +70,13 @@ class RawEntityDereferencer(
                 true
             }
         )
-        launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
 
-        // Only return the item if we've actually managed to pull it out of the database.
-        deferred.await().takeIf { it matches schema }?.copy(id = reference.id)
+        return withContext(coroutineContext) {
+            launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
+
+            // Only return the item if we've actually managed to pull it out of the database.
+            deferred.await().takeIf { it matches schema }?.copy(id = reference.id)
+        }
     }
 }
 
