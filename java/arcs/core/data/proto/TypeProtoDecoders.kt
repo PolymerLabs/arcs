@@ -13,7 +13,6 @@ package arcs.core.data.proto
 
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
-import arcs.core.type.Type
 
 /**
  * Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [PrimitiveType] instance.
@@ -48,4 +47,3 @@ fun TypeProto.decodeAsFieldType(): FieldType =
             throw IllegalArgumentException(
                 "Cannot decode a ${getDataCase().name} type to a [FieldType].")
     }
-
