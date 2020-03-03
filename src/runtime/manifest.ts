@@ -174,7 +174,7 @@ export class Manifest {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
   get allHandles() {
-    // Reduce is equivalent to flatMap
+    // TODO(#4820) Update `reduce` to use flatMap
     return [...new Set(this._findAll(manifest => manifest._recipes.reduce((acc, x) => acc.concat(x.handles), [])))];
   }
   get activeRecipe() {
@@ -329,8 +329,9 @@ export class Manifest {
     function fatePredicate(handle: Handle) {
       return fates === [] || fates.includes(handle.fate);
     }
+    // TODO(#4820) Update `reduce` to use flatMap
     return [...this._findAll(manifest => manifest._recipes
-      .flatMap(r => r.handles)
+      .reduce((acc, r) => acc.concat(r.handles), [])
       .filter(h => this._typePredicate(h, type, subtype) && tagPredicate(h) && fatePredicate(h)))];
   }
   findHandlesById(id: string): Handle[] {
