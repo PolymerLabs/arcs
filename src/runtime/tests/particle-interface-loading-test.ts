@@ -301,7 +301,7 @@ describe('particle interface loading', () => {
 
       particle UpdatingParticle in 'updating-particle.js'
         innerFoo: reads writes Foo
-        bar: reads writes Foo
+        bar: reads Foo
       recipe
         h0: use *
         h1: use *
@@ -315,27 +315,35 @@ describe('particle interface loading', () => {
       'updating-particle.js': `
         'use strict';
         defineParticle(({Particle}) => {
+          var handlesSynced = 0;
           return class extends Particle {
             async onCreate() {
               this.innerFooHandle = this.handles.get('innerFoo');
               await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
             }
+            onHandleSync(handle, model) {
+              handlesSynced += 1;
+            }
             async onReady() {
               this.innerFooHandle = this.handles.get('innerFoo');
               this.foo = await this.innerFooHandle.fetch()
-              if(this.foo.value == "Created!") {
-                  await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Ready!"}));
-              } else {
-                await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "onCreate was not called before onReady"}));
-              }
-              
+
               this.barHandle = this.handles.get('bar');
               this.bar = await this.barHandle.fetch();
-              if(this.bar.value == "Set!") {
-                await this.barHandle.set(new this.innerFooHandle.entityClass({value: "Ready!"}));
-              } else {
-                await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Handles were not ready in onCreate"}));
-              }
+
+              var s = "Ready!";
+              if(this.foo.value != "Created!") {
+                s = s + " onCreate was not called before onReady.";
+              } 
+              if (this.bar.value != "Set!") {
+                s = s + " onCreate was not called before onReady.";
+              } 
+              if (handlesSynced != 2) {
+                s = s + " Not all handles were synced before onReady was called.";
+              } 
+              
+              await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))
+              
             }
           };
         });
