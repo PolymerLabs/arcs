@@ -43,7 +43,6 @@ describe('recipe2plan', () => {
         data: reads data`);
 
     const resolver = new StorageKeyRecipeResolver(manifest);
-    // @ts-ignore
     for await (const it of resolver.resolve()) {
       assert.isTrue(it.isResolved());
     }
@@ -66,14 +65,13 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-    const resolver = new StorageKeyRecipeResolver(manifest);
 
-    await assertThrowsAsync(async () => {
-      // @ts-ignore
+    const resolver = new StorageKeyRecipeResolver(manifest);
+    assertThrowsAsync(async () => {
       for await (const it of resolver.resolve()) {
-        console.log('Should not be able to reach here');
+        continue;
       }
-    });
+    }, Error, 'Handle my-handle-id mapped to ephemeral handle.');
   });
   it('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', async () => {
     const manifest = await Manifest.parse(`\
@@ -96,13 +94,39 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-    await assertThrowsAsync(async () => {
-      const resolver = new StorageKeyRecipeResolver(manifest);
-      // @ts-ignore
+    const resolver = new StorageKeyRecipeResolver(manifest);
+    assertThrowsAsync(async () => {
       for await (const it of resolver.resolve()) {
         continue;
       }
-    });
+    }, Error, 'Handle my-handle-id mapped to ephemeral handle.');
+  });
+  it('Long + Short: If WritingRecipe is long lived and Reading is short lived, it is valid', async () => {
+    const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+    const resolver = new StorageKeyRecipeResolver(manifest);
+
+    for await (const it of resolver.resolve()) {
+      assert.isTrue(it.isResolved());
+    }
   });
   it.skip('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});
   it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});

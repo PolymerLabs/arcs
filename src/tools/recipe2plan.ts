@@ -45,7 +45,7 @@ export async function recipe2plan(path: string): Promise<string> {
  * @param resolutions A series of resolved recipes.
  * @return List of generated Kotlin plans
  */
-async function generatePlans(resolutions: AsyncIterator<Recipe>): Promise<string[]> {
+async function generatePlans(resolutions: AsyncGenerator<Recipe>): Promise<string[]> {
   // TODO Implement
   return [''];
 }
@@ -69,7 +69,7 @@ export class StorageKeyRecipeResolver {
    * @throws Error if recipe fails to resolve on first or second pass.
    * @yields Resolved recipes with storage keys
    */
-  async* resolve(): AsyncIterator<Recipe> {
+  async* resolve(): AsyncGenerator<Recipe> {
     for (const r of this.runtime.context.allRecipes) {
       const arc = this.runtime.newArc(this.getArcId(r), ramDiskStorageKeyPrefixForTest());
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
@@ -82,6 +82,7 @@ export class StorageKeyRecipeResolver {
       if (!resolved.isResolved()) {
         throw Error(`Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`);
       }
+      this.matchKeysToHandles(resolved);
       yield resolved;
     }
   }
@@ -151,7 +152,7 @@ export class StorageKeyRecipeResolver {
 
         const match = matches[0];
         if (!match.recipe.isLongRunning) {
-          throw Error(`Handle ${h.id} mapped to ephemeral handle ${match.id}.`);
+          throw Error(`Handle ${h.id} mapped to ephemeral handle.`);
         }
 
         // h.storageKey = match.storageKey;
