@@ -32,6 +32,7 @@ arcs_kt_library(
     srcs = glob(
         ["*.kt"],
     ),
+    add_android_constraints = False,
     deps = [
         ":recipe_java_proto",
         "//java/arcs/core/data",
