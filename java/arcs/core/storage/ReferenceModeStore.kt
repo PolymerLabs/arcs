@@ -28,6 +28,7 @@ import arcs.core.data.FieldName
 import arcs.core.data.RawEntity
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
+import arcs.core.storage.referencemode.BridgingOperation
 import arcs.core.storage.referencemode.Message
 import arcs.core.storage.referencemode.Message.EnqueuedFromBackingStore
 import arcs.core.storage.referencemode.Message.EnqueuedFromContainer
@@ -225,7 +226,15 @@ class ReferenceModeStore private constructor(
             is ProxyMessage.Operations -> {
                 proxyMessage.operations.toBridgingOps(backingStore.storageKey)
                     .all { op ->
-                        op.entityValue?.let { updateBackingStore(it) }
+                        op.entityValue?.let {
+                            if (op is BridgingOperation.RemoveFromSet) {
+                                // If this is a removal, we clear the entity rather than updating it
+                                // to the given value.
+                                clearEntityInBackingStore(it)
+                            } else {
+                                updateBackingStore(it)
+                            }
+                        }
                         val response = containerStore.onProxyMessage(
                             ProxyMessage.Operations(listOf(op.containerOp), 1)
                         )
@@ -396,6 +405,14 @@ class ReferenceModeStore private constructor(
         if (referencable !is RawEntity) return true
         val model = entityToModel(referencable)
         return backingStore.onProxyMessage(ProxyMessage.ModelUpdate(model, id = 1), referencable.id)
+    }
+
+    /** Clear the provided entity in the backing store. */
+    private suspend fun clearEntityInBackingStore(referencable: Referencable): Boolean {
+        if (referencable !is RawEntity) return true
+        val model = entityToModel(referencable)
+        val op = listOf(CrdtEntity.Operation.ClearAll(crdtKey, model.versionMap))
+        return backingStore.onProxyMessage(ProxyMessage.Operations(op, id = null), referencable.id)
     }
 
     /**

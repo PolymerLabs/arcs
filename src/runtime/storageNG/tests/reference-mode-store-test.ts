@@ -58,6 +58,11 @@ async function createReferenceModeStore() {
   });
 }
 
+// Load the model from the backing store and convert it to an entity.
+function loadEntityFromBackingStore(activeStore, id: string): SerializedEntity {
+  return activeStore['entityFromModel'](activeStore.backingStore.getLocalModel(id).getData(), id);
+}
+
 describe('Reference Mode Store', async () => {
 
   beforeEach(() => {
@@ -151,7 +156,6 @@ describe('Reference Mode Store', async () => {
     let capturedModel: CollectionData<Reference> = null;
     driver.send = async model => {capturedModel = model; return true;};
 
-    const collection = new MyEntityCollection();
     const entity = new MyEntity();
     entity.rawData.age = {id: '42', value: 42};
     entity.id = 'an-id';
@@ -160,8 +164,6 @@ describe('Reference Mode Store', async () => {
 
     const result = await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: 1});
     assert.isTrue(result);
-
-    collection.applyOperation(operation);
 
     const actor = activeStore['crdtKey'];
     const referenceCollection = new ReferenceCollection();
@@ -175,6 +177,47 @@ describe('Reference Mode Store', async () => {
     assert.deepEqual(capturedModel, referenceCollection.getData());
     const storedEntity = activeStore.backingStore.getLocalModel('an-id');
     assert.deepEqual(storedEntity.getData(), entityCRDT.getData());
+  });
+
+  it('clear entity in the backing store when they are removed from a collection', async () => {
+    DriverFactory.register(new MockStorageDriverProvider());
+
+    const activeStore = await createReferenceModeStore();
+
+    const entity = new MyEntity();
+    entity.rawData.age = {id: '42', value: 42};
+    entity.id = 'an-id';
+    entity.rawData.name = {id: 'bob'};
+
+    // Add Bob to a collection.
+    const addOperation: CollectionOperation<MyEntity> = {
+      type: CollectionOpTypes.Add,
+      clock: {me: 1},
+      actor: 'me',
+      added: entity
+    };
+    assert.isTrue(await activeStore.onProxyMessage(
+        {type: ProxyMessageType.Operations, operations: [addOperation], id: 1}));
+
+    // After adding, there is a corresponding entity in the backing store.
+    assert.deepEqual(loadEntityFromBackingStore(activeStore, 'an-id'), entity);
+
+    // Now remove it from the collection.
+    const deleteOp: CollectionOperation<MyEntity> = {
+      type: CollectionOpTypes.Remove,
+      clock: {me: 1},
+      actor: 'me',
+      removed: entity
+    };
+    assert.isTrue(await activeStore.onProxyMessage(
+        {type: ProxyMessageType.Operations, operations: [deleteOp], id: 1}));
+
+    // After removing, there corresponding entity in the backing store is now
+    // blank.
+    const storedEntity2 = loadEntityFromBackingStore(activeStore, 'an-id') as MyEntity;
+    assert.equal(storedEntity2.id, 'an-id');
+    assert.equal(storedEntity2.rawData.age, null);
+    assert.equal(storedEntity2.rawData.name, null);
   });
 
   it('will respond to a model request from a proxy with a model', async () => {
