@@ -128,8 +128,6 @@ class EntityInternals {
     const components = identifier.split(':');
     const uid = components.lastIndexOf('uid');
     this.userIDComponent = uid > 0 ? components.slice(uid+1).join(':') : '';
-    // debugger;
-    // this.setExpiration(Ttl.infinite);
   }
 
   createIdentity(parentId: Id, idGenerator: IdGenerator, storageKey: string, ttl: Ttl) {
