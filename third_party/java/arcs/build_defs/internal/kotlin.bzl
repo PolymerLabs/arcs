@@ -291,6 +291,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
       tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_android_library
       data: list of files available to the test at runtime
+      size: the size of the test, defaults to "small". Options are: "small", "medium", "large", etc.
     """
     if not srcs:
         srcs = native.glob(["*.kt"])

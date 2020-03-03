@@ -24,10 +24,10 @@ import arcs.core.storage.StorageMode
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import arcs.core.util.TaggedLog
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
 
 /**
  * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
