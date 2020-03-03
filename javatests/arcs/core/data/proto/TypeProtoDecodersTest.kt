@@ -62,4 +62,29 @@ class TypeProtoDecodersTest {
             checkPrimitive("""variable: { name: "Blah"}""", PrimitiveType.Text)
         }
     }
+
+    @Test
+    fun decodesEntityTypeProtoAsEntityType() {
+        val entityTypeProto = """
+        entity {
+          schema {
+            names: "Person"
+            fields: {
+              key: "name"
+              value: { primitive: TEXT }
+            }
+          }
+        }
+        """.trimIndent()
+        val entityType = parseTypeProtoText(entityTypeProto).decode()
+        val expectedSchema = Schema(
+            names = listOf(SchemaName("Person")),
+            fields = SchemaFields(singletons=mapOf("name" to FieldType.Text), collections=mapOf()),
+            hash = ""
+        )
+        when (entityType) {
+            is EntityType -> assertThat(entityType.entitySchema).isEqualTo(expectedSchema)
+            else -> fail("TypeProto should have been decoded to [EntityType].")
+        }
+    }
 }
