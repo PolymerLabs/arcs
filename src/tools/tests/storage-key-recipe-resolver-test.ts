@@ -128,7 +128,6 @@ describe('recipe2plan', () => {
     }
   });
   it('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', async () => {
-
     const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text, age: Number}
@@ -158,7 +157,7 @@ describe('recipe2plan', () => {
       for await (const it of resolver.resolve()) {
         continue;
       }
-    });
+    }, /Recipe ReadingRecipe failed to resolve:/);
   });
   // TODO(alxr): Flush out outlined unit tests
   it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});

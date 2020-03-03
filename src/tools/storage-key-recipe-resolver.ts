@@ -62,7 +62,8 @@ export class StorageKeyRecipeResolver {
    */
   async resolveOrNormalize(recipe: Recipe, arc: Arc, opts?: IsValidOptions): Promise<Recipe | null> {
     const normalized = recipe.clone();
-    normalized.normalize();
+    const successful = normalized.normalize(opts);
+    if (!successful) return null;
     if (normalized.isResolved()) return normalized;
 
     return await (new RecipeResolver(arc).resolve(recipe, opts));
