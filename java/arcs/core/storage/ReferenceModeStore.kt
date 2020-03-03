@@ -566,7 +566,10 @@ class ReferenceModeStore private constructor(
             entity,
             VersionMap(crdtKey to maxVersion),
             fieldVersionProvider
-        ) { CrdtEntity.ReferenceImpl(it.id) }
+        ) {
+            if (it is Reference) it
+            else CrdtEntity.Reference.buildReference(it)
+        }
     }
 
     companion object {

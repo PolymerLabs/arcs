@@ -57,6 +57,13 @@ describe('manifest parser', () => {
         h1: create 'my-id' #anotherTag @ttl(1h)
         h2: create @ttl ( 30m )`);
   });
+  it('parses recipes with a synthetic join handles', () => {
+    parse(`
+      recipe
+        people: map #folks
+        places: map #locations
+        pairs: join (people, places)`);
+  });
   it('parses recipe handles with capabilities', () => {
     parse(`
       recipe Thing

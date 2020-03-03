@@ -19,8 +19,10 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.util.Base64
 
 /** Converts the [RawEntity] into a [CrdtEntity.Data] model, at the given version. */
-fun RawEntity.toCrdtEntityData(versionMap: VersionMap): CrdtEntity.Data =
-    CrdtEntity.Data(versionMap.copy(), this) { CrdtEntity.ReferenceImpl(it.id) }
+fun RawEntity.toCrdtEntityData(
+    versionMap: VersionMap,
+    referenceBuilder: (Referencable) -> CrdtEntity.Reference = { CrdtEntity.ReferenceImpl(it.id) }
+): CrdtEntity.Data = CrdtEntity.Data(versionMap.copy(), this, referenceBuilder)
 
 private fun Any?.toReferencable(): Referencable {
     requireNotNull(this) { "Cannot create a referencable from a null value." }

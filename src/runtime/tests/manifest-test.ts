@@ -311,6 +311,43 @@ ${particleStr1}
 
     assert.notStrictEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
+  it('can parse a recipe with a synthetic join handle', async () => {
+    const manifest = await parseManifest(`
+      recipe
+        people: map #folks
+        other: map #products
+        pairs: join (people, places)
+        places: map #locations`);
+    const verify = (manifest: Manifest) => {
+      const [recipe] = manifest.recipes;
+      assert.lengthOf(recipe.handles, 4);
+      const people = recipe.handles.find(h => h.tags.includes('folks'));
+      assert.equal(people.fate, 'map');
+      const places = recipe.handles.find(h => h.tags.includes('locations'));
+      assert.equal(places.fate, 'map');
+
+      const pairs = recipe.handles.find(h => h.fate === 'join');
+      assert.equal(pairs.fate, 'join');
+      assert.lengthOf(pairs.associatedHandles, 2);
+
+      assert.include(pairs.associatedHandles, people);
+      assert.include(pairs.associatedHandles, places);
+    };
+    verify(manifest);
+    verify(await parseManifest(manifest.toString()));
+  });
+  it('fails to parse a recipe with an invalid synthetic join handle', async () => {
+    try {
+      await parseManifest(`
+        recipe
+          people: map #folks
+          things: map #products
+          pairs: join (people, locations)`);
+      assert.fail();
+    } catch (e) {
+      assert.include(e.message, 'unrecognized name: locations');
+    }
+  });
   it('supports recipes with constraints', async () => {
     const manifest = await parseManifest(`
       schema S
