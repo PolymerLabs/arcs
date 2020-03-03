@@ -24,10 +24,10 @@ import arcs.core.storage.StorageMode
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import arcs.core.util.TaggedLog
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 /**
  * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
@@ -43,7 +43,7 @@ class RawEntityDereferencer(
     override suspend fun dereference(
         reference: Reference,
         coroutineContext: CoroutineContext
-    ): RawEntity? = withContext(coroutineContext) {
+    ): RawEntity? {
         log.debug { "De-referencing $reference" }
 
         val storageKey = reference.storageKey.childKeyWithComponent(reference.id)
@@ -70,10 +70,13 @@ class RawEntityDereferencer(
                 true
             }
         )
-        launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
 
-        // Only return the item if we've actually managed to pull it out of the database.
-        deferred.await().takeIf { it matches schema }?.copy(id = reference.id)
+        return withContext(coroutineContext) {
+            launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
+
+            // Only return the item if we've actually managed to pull it out of the database.
+            deferred.await().takeIf { it matches schema }?.copy(id = reference.id)
+        }
     }
 }
 

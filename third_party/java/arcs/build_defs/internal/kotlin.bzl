@@ -275,7 +275,7 @@ def arcs_kt_particles(
             visibility = visibility,
         )
 
-def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = [], data = []):
+def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = [], data = [], size = "small"):
     """Defines Kotlin Android test targets for a directory.
 
     Defines a Kotlin Android library (kt_android_library) for all of the sources
@@ -311,7 +311,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
         class_name = src[:-3]
         android_local_test(
             name = class_name,
-            size = "small",
+            size = size,
             manifest = manifest,
             test_class = "%s.%s" % (package, class_name),
             tags = tags,

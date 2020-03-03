@@ -21,5 +21,6 @@ kt_android_library(
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/lifecycle",
         "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_android",
     ],
 )
