@@ -11,7 +11,6 @@
 import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
-import {SingletonStorageProvider, CollectionStorageProvider} from '../runtime/storage/storage-provider-base.js';
 import {Type} from '../runtime/type.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
 import {Store} from '../runtime/storageNG/store.js';

@@ -11,48 +11,88 @@ import {assert} from '../../platform/chai-web.js';
 import {ArcId} from '../id.js';
 import {CapabilitiesResolver, StorageKeyOptions} from '../capabilities-resolver.js';
 import {Capabilities} from '../capabilities.js';
+import {Schema} from '../schema.js';
+import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
+import {StorageKey} from '../storageNG/storage-key.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
+import {DatabaseStorageKey, PersistentDatabaseStorageKey} from '../storageNG/database-storage-key.js';
 import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {Runtime} from '../runtime.js';
 import {MockFirebaseStorageDriverProvider} from '../storageNG/testing/mock-firebase.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 
 describe('Capabilities Resolver', () => {
-  it('creates storage keys', () => {
+  type StorageKeyType = typeof VolatileStorageKey|typeof RamDiskStorageKey|typeof DatabaseStorageKey;
+  function verifyStorageKey(key: StorageKey, expectedType: StorageKeyType) {
+    assert.isTrue(key instanceof ReferenceModeStorageKey);
+    const refKey = key as ReferenceModeStorageKey;
+    assert.instanceOf(refKey.backingKey, expectedType);
+    assert.instanceOf(refKey.storageKey, expectedType);
+  }
+  const schema = new Schema(['Thing'], {result: 'Text'});
+  const handleId = 'h0';
+
+  it('creates storage keys', async () => {
     const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
-    assert.isTrue(resolver1.createStorageKey(Capabilities.tiedToArc) instanceof VolatileStorageKey);
-    assert.throws(() => resolver1.createStorageKey(Capabilities.tiedToRuntime));
-    assert.throws(() => resolver1.createStorageKey(Capabilities.persistent));
+    const key = await resolver1.createStorageKey(Capabilities.tiedToArc, schema, handleId);
+    verifyStorageKey(key, VolatileStorageKey);
+    await assertThrowsAsync(async () => await resolver1.createStorageKey(
+        Capabilities.tiedToRuntime, schema, handleId));
+    await assertThrowsAsync(async () => await resolver1.createStorageKey(
+        Capabilities.persistent, schema, handleId));
 
     const resolver2 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')},
         new Map([
             [RamDiskStorageKey.protocol, {
                 capabilities: Capabilities.tiedToRuntime,
-                create: ({arcId}: StorageKeyOptions) => new RamDiskStorageKey(arcId.toString())
+                create: (options: StorageKeyOptions) => new RamDiskStorageKey(options.unique())
     }]]));
-    assert.throws(() => resolver2.createStorageKey(Capabilities.tiedToArc));
-    assert.isTrue(resolver2.createStorageKey(Capabilities.tiedToRuntime) instanceof RamDiskStorageKey);
+    await assertThrowsAsync(async () => await resolver2.createStorageKey(
+        Capabilities.tiedToArc, schema, handleId));
+    verifyStorageKey(await resolver2.createStorageKey(
+        Capabilities.tiedToRuntime, schema, handleId), RamDiskStorageKey);
 
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const resolver3 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
-    assert.isTrue(resolver3.createStorageKey(Capabilities.tiedToArc) instanceof VolatileStorageKey);
-    assert.isTrue(resolver3.createStorageKey(Capabilities.tiedToRuntime) instanceof RamDiskStorageKey);
+    verifyStorageKey(await resolver3.createStorageKey(
+        Capabilities.tiedToArc, schema, handleId), VolatileStorageKey);
+    verifyStorageKey(await resolver3.createStorageKey(
+        Capabilities.tiedToRuntime, schema, handleId), RamDiskStorageKey);
+
+    DatabaseStorageKey.register();
+    const resolver4 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    verifyStorageKey(await resolver4.createStorageKey(
+        Capabilities.persistent, schema, handleId), DatabaseStorageKey);
 
     CapabilitiesResolver.reset();
-    const resolver4 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
-    assert.isTrue(resolver4.createStorageKey(Capabilities.tiedToArc) instanceof VolatileStorageKey);
-    assert.throws(() => resolver4.createStorageKey(Capabilities.tiedToRuntime));
+    const resolver5 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    verifyStorageKey(await resolver5.createStorageKey(
+        Capabilities.tiedToArc, schema, handleId), VolatileStorageKey);
+    await assertThrowsAsync(async () => await resolver5.createStorageKey(
+        Capabilities.tiedToRuntime, schema, handleId));
+});
+
+  it('registers and creates database key', async () => {
+    const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    await assertThrowsAsync(async () => await resolver1.createStorageKey(
+        Capabilities.persistent, schema, handleId));
+    DatabaseStorageKey.register();
+
+    const resolver2 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    const key = await resolver2.createStorageKey(Capabilities.persistent, schema, handleId);
+    verifyStorageKey(key, PersistentDatabaseStorageKey);
   });
 
-  it('fails for unsupported capabilities', () => {
+  it('fails for unsupported capabilities', async () => {
     const capabilitiesResolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
-    assert.throws(
-        () => capabilitiesResolver.createStorageKey(Capabilities.tiedToRuntime));
+    await assertThrowsAsync(async () => await capabilitiesResolver.createStorageKey(
+        Capabilities.tiedToRuntime, schema, handleId));
 
-    assert.throws(() => capabilitiesResolver.createStorageKey(
-        new Capabilities(['persistent', 'tied-to-arc'])));
+    await assertThrowsAsync(async () => await capabilitiesResolver.createStorageKey(
+        new Capabilities(['persistent', 'tied-to-arc']), schema, handleId));
   });
 
   it('verifies static creators', () => {
@@ -77,5 +117,7 @@ describe('Capabilities Resolver', () => {
     assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.tiedToArc)], ['volatile']);
     assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.tiedToRuntime)], ['ramdisk']);
     assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.persistent)], ['firebase']);
+    assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.queryable)], ['firebase']);
+    assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.persistentQueryable)], ['firebase']);
   });
 });

@@ -1,0 +1,79 @@
+# A proto encoding of the following recipe: 
+# """
+# external particle Writer
+#   data: writes Thing {name: Text}
+# 
+# external particle Reader
+#   data: reads Thing {name: Text}
+# 
+# recipe PassThrough
+#   thing: create
+#   Writer
+#     data: writes thing
+#   Reader
+#     data: reads thing
+# """
+
+recipe {
+  name: "PassThrough"
+  handles {
+    name: "thing"
+    fate: CREATE
+  }
+  particles {
+    spec_name: "Reader"
+    connections {
+      name: "data"
+      handle: "thing"
+    }
+  }
+  particles {
+    spec_name: "Writer"
+    connections {
+      name: "data"
+      handle: "thing"
+    }
+  }
+}
+
+particle_specs {
+  name: "Reader"
+  connections {
+    name: "data"
+    direction: READS
+    type {
+      entity {
+        schema {
+          names: "Thing"
+          fields {
+            key: "name"
+            value: {
+              primitive: TEXT
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+particle_specs {
+  name: "Writer"
+  connections {
+    name: "data"
+    direction: WRITES
+    type {
+      entity {
+        schema {
+          names: "Thing"
+          fields {
+            key: "name"
+            value: {
+              primitive: TEXT
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -24,6 +24,7 @@ import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.ttl.PeriodicCleanupTask
+import arcs.android.util.AndroidBinderStats
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
@@ -32,6 +33,7 @@ import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
+import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
 import java.io.FileDescriptor
 import java.io.PrintWriter
@@ -123,6 +125,36 @@ class StorageService : ResurrectorService() {
             """.trimMargin("|")
         )
 
+        // Dump current process global binder stats to understand contention in the thread pool,
+        // peak usage of shared binder memory, the number of pending transactions, etc.
+        // Hide the dump when failing to fetch the stats from the kernel binder driver.
+        mapOf(
+            "Memory high watermark (pages)" to "pages high watermark",
+            "Pending transactions" to "pending transactions",
+            "Requested threads" to "requested threads",
+            "Ready threads" to "ready threads"
+        ).run {
+            AndroidBinderStats.query(*values.toTypedArray()).iterator().let { stats ->
+                mapValues { stats.next() }
+            }
+        }.takeIf { it.any { (_, v) -> v.isNotEmpty() } }?.run {
+            writer.println(
+                """
+                    |Current Process Binder Stats:
+                    |  - ${map { (k, v) -> "$k: $v" }.joinToString("\n|  - ")}
+                """.trimMargin("|")
+            )
+        }
+
+        MemoryStats.snapshot().run {
+            writer.println(
+                """
+                    |Process Memory Stats (KB):
+                    |  - ${map { (k, v) -> "${k.name}: $v" }.joinToString("\n|  - ")}
+                """.trimMargin("|")
+            )
+        }
+
         writer.println()
 
         if (DatabaseDriverProvider.isConfigured) {
@@ -172,7 +204,7 @@ class StorageService : ResurrectorService() {
                 |$pad    Min: %.3f
                 |$pad    Max: %.3f
                 |
-                |${pad}Counts per measurement (name: average, standard deviation, min, max):
+                |$pad  Counts per measurement (name: average, standard deviation, min, max):
             """.trimMargin()
                 .format(
                     runtime.measurements,
@@ -186,12 +218,12 @@ class StorageService : ResurrectorService() {
             val stats = counters[counter]
             writer.println(
                 """
-                    |$pad  $counter:
-                    |$pad    %.2f, %.2f, %.2f, %.2f
+                    |$pad    ${counter.padEnd(35)}%.2f, %.2f, %.2f, %.2f
                 """.trimMargin("|")
-                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0, stats.max ?: 0)
+                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0.0, stats.max ?: 0.0)
             )
         }
+        writer.println()
     }
 
     companion object {
@@ -207,6 +239,7 @@ class StorageService : ResurrectorService() {
          */
         fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
             Intent(context, StorageService::class.java).apply {
+                action = storeOptions.actual.storageKey.toString()
                 putExtra(EXTRA_OPTIONS, storeOptions)
             }
     }

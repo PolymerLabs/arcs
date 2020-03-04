@@ -12,12 +12,17 @@
 package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
+import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
+import arcs.core.data.RawEntity
+import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
+import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
+import arcs.core.util.Time
 
 /** These typealiases are defined to clean up the class declaration below. */
 typealias SetData<T> = CrdtSet.Data<T>
@@ -38,8 +43,21 @@ typealias SetCallbacks<T> = Callbacks<SetData<T>, SetOp<T>, Set<T>>
 class CollectionImpl<T : Referencable>(
     name: String,
     storageProxy: SetProxy<T>,
-    callbacks: SetCallbacks<T>? = null
-) : SetBase<T>(name, storageProxy, callbacks) {
+    callbacks: SetCallbacks<T>? = null,
+    private val refinement: Refinement<T>? = null,
+    ttl: Ttl = Ttl.Infinite,
+    time: Time,
+    canRead: Boolean = true,
+    dereferencer: Dereferencer<RawEntity>? = null
+) : SetBase<T>(
+    name,
+    storageProxy,
+    callbacks,
+    ttl,
+    time,
+    canRead,
+    dereferencer = dereferencer
+) {
     /** Return the number of items in the storage proxy view of the collection. */
     suspend fun size(): Int = value().size
 
@@ -48,6 +66,15 @@ class CollectionImpl<T : Referencable>(
 
     /** Returns the values in the collection as a set. */
     suspend fun fetchAll(): Set<T> = value()
+
+    /** Returns the values in the collection that fit the requirement (as a set). */
+    suspend fun query(args: Any): Set<T> {
+        // Note: type checking for args is implemented in the refinement and code generated handle.
+        requireNotNull(refinement) {
+            "Invalid operation 'query' on collection $name which has no associated query"
+        }
+        return refinement.filterBy(value(), args)
+    }
 
     /**
      * Store a new entity in the collection.
@@ -61,8 +88,15 @@ class CollectionImpl<T : Referencable>(
      */
     suspend fun store(entity: T): Boolean {
         log.debug { "Storing: $entity" }
-        versionMap.increment()
-        return storageProxy.applyOp(CrdtSet.Operation.Add(name, versionMap, entity))
+        @Suppress("GoodTime") // use Instant
+        entity.creationTimestamp = requireNotNull(time).currentTimeMillis
+        if (!Ttl.Infinite.equals(ttl)) {
+            @Suppress("GoodTime") // use Instant
+            entity.expirationTimestamp = ttl.calculateExpiration(time)
+        }
+        return storageProxy.applyOp(
+            CrdtSet.Operation.Add(name, versionMap().increment(), entity)
+        )
     }
 
     /**
@@ -77,8 +111,10 @@ class CollectionImpl<T : Referencable>(
      */
     suspend fun clear(): Boolean {
         log.debug { "Clearing" }
-        return storageProxy.getParticleView().value.all {
-            storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, it))
+        return storageProxy.getParticleView().all {
+            storageProxy.applyOp(
+                CrdtSet.Operation.Remove(name, versionMap(), it)
+            )
         }
     }
 
@@ -93,6 +129,8 @@ class CollectionImpl<T : Referencable>(
      */
     suspend fun remove(entity: T): Boolean {
         log.debug { "Removing $entity" }
-        return storageProxy.applyOp(CrdtSet.Operation.Remove(name, versionMap, entity))
+        return storageProxy.applyOp(
+            CrdtSet.Operation.Remove(name, versionMap(), entity)
+        )
     }
 }

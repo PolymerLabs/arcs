@@ -57,7 +57,7 @@ class RamDiskBackingStoreIntegrationTest {
         val storageKey = RamDiskStorageKey("unique")
         val baseStore = Store<CrdtCount.Data, CrdtCount.Operation, Int>(
             StoreOptions(
-                storageKey, ExistenceCriteria.ShouldCreate, CountType(), StorageMode.Backing
+                storageKey, CountType(), StorageMode.Backing
             )
         )
         val store = baseStore.activate() as BackingStore<CrdtData, CrdtOperation, Any?>

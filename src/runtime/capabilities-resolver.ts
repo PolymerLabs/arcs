@@ -13,22 +13,56 @@ import {ArcId} from './id.js';
 import {Capabilities} from './capabilities.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {DriverFactory} from './storageNG/drivers/driver-factory.js';
+import {Schema} from './schema.js';
+import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 
-export type StorageKeyOptions = Readonly<{
+export type CapabilitiesResolverOptions = Readonly<{
   arcId: ArcId;
 }>;
+
+export abstract class StorageKeyOptions {
+  constructor(
+      public readonly arcId: ArcId,
+      public readonly schemaHash: string,
+      protected readonly schemaName: string = null) {}
+  abstract location(): string;
+  abstract unique(): string;
+}
+
+class ContainerStorageKeyOptions extends StorageKeyOptions {
+  constructor(arcId: ArcId, schemaHash: string, schemaName?: string) {
+    super(arcId, schemaHash, schemaName);
+  }
+
+  unique(): string { return ''; }
+  location(): string { return this.arcId.toString(); }
+}
+
+class BackingStorageKeyOptions extends StorageKeyOptions {
+  constructor(arcId: ArcId, schemaHash: string, schemaName?: string) {
+    super(arcId, schemaHash, schemaName);
+  }
+  unique(): string {
+    return this.schemaName && this.schemaName.length > 0
+        ? this.schemaName : this.schemaHash;
+  }
+  location(): string {
+    return this.unique();
+  }
+}
 
 export type StorageKeyCreator = (options: StorageKeyOptions) => StorageKey;
 export type StorageKeyCreatorsMap =
     Map<string, {capabilities: Capabilities, create: StorageKeyCreator}>;
 
+// TODO(mmandlis): update to always return a ReferenceModeStorageKey.
 export class CapabilitiesResolver {
   private static defaultCreators: StorageKeyCreatorsMap = new Map();
   private static registeredCreators: StorageKeyCreatorsMap = new Map();
 
   private creators: StorageKeyCreatorsMap;
 
-  constructor(public readonly options: StorageKeyOptions,
+  constructor(public readonly options: CapabilitiesResolverOptions,
               creators?: StorageKeyCreatorsMap) {
     if (creators) {
       // TBD: should defaultCreators be included as well here or not?
@@ -66,7 +100,10 @@ export class CapabilitiesResolver {
     CapabilitiesResolver.registeredCreators = new Map();
   }
 
-  createStorageKey(capabilities: Capabilities): StorageKey {
+  async createStorageKey(
+      capabilities: Capabilities,
+      entitySchema: Schema,
+      handleId: string): Promise<StorageKey> {
     // TODO: This is a naive and basic solution for picking the appropriate
     // storage key creator for the given capabilities. As more capabilities are
     // added the heuristics is to become more robust.
@@ -76,7 +113,14 @@ export class CapabilitiesResolver {
     } else if (protocols.size > 1) {
       console.warn(`Multiple storage key creators for ${capabilities.toString()}`);
     }
-    return this.creators.get([...protocols][0]).create(this.options);
+    const creator = this.creators.get([...protocols][0]);
+    const schemaHash = await entitySchema.hash();
+    const backingKey = creator.create(new BackingStorageKeyOptions(
+        this.options.arcId, schemaHash, entitySchema.name));
+    const containerKey = creator.create(new ContainerStorageKeyOptions(
+        this.options.arcId, schemaHash, entitySchema.name));
+    return new ReferenceModeStorageKey(
+        backingKey, containerKey.childKeyForHandle(handleId));
   }
 
   findStorageKeyProtocols(capabilities: Capabilities): Set<string> {

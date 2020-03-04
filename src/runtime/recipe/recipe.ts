@@ -540,7 +540,10 @@ export class Recipe implements Cloneable<Recipe> {
 
     recipe._name = this.name;
     recipe._verbs = recipe._verbs.concat(...this._verbs);
-    this._handles.forEach(cloneTheThing);
+
+    // Clone regular handles first, then synthetic ones, as synthetic can depend on regular.
+    this._handles.filter(h => !h.isSynthetic).forEach(cloneTheThing);
+    this._handles.filter(h => h.isSynthetic).forEach(cloneTheThing);
     this._particles.forEach(cloneTheThing);
     this._slots.forEach(cloneTheThing);
     this._connectionConstraints.forEach(cloneTheThing);
@@ -696,6 +699,12 @@ export class Recipe implements Cloneable<Recipe> {
       }
     }
     return slot;
+  }
+
+  get isLongRunning(): boolean {
+    return this.triggers.some(group =>
+        group.some(trigger => trigger[0] === 'launch' && trigger[1] === 'startup')
+        && group.some(trigger => trigger[0] === 'arcId' && !!trigger[1]));
   }
 }
 

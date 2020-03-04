@@ -566,7 +566,10 @@ class ReferenceModeStore private constructor(
             entity,
             VersionMap(crdtKey to maxVersion),
             fieldVersionProvider
-        ) { CrdtEntity.ReferenceImpl(it.id) }
+        ) {
+            if (it is Reference) it
+            else CrdtEntity.Reference.buildReference(it)
+        }
     }
 
     companion object {
@@ -601,7 +604,6 @@ class ReferenceModeStore private constructor(
                 val backingStore = BackingStore.CONSTRUCTOR(
                     StoreOptions(
                         storageKey = storageKey.backingKey,
-                        existenceCriteria = options.existenceCriteria,
                         type = type.containedType,
                         mode = StorageMode.Backing,
                         baseStore = options.baseStore
@@ -611,7 +613,6 @@ class ReferenceModeStore private constructor(
                 val containerStore = DirectStore.CONSTRUCTOR(
                     StoreOptions(
                         storageKey = storageKey.storageKey,
-                        existenceCriteria = options.existenceCriteria,
                         type = refType,
                         baseStore = options.baseStore,
                         versionToken = options.versionToken

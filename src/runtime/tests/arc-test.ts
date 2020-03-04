@@ -10,15 +10,13 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
-
 import {Id, ArcId, IdGenerator} from '../id.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
-import {BigCollectionStorageProvider, CollectionStorageProvider} from '../storage/storage-provider-base.js';
 import {CallbackTracker} from '../testing/callback-tracker.js';
 import {SlotComposer} from '../slot-composer.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
-import {ArcType, SingletonType} from '../type.js';
+import {SingletonType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
@@ -34,8 +32,6 @@ import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-// database providers are optional, these tests use these provider(s)
-import '../storage/firebase/firebase-provider.js';
 
 async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
   const loader = new Loader();
@@ -192,10 +188,14 @@ describe('Arc new storage', () => {
     await arc.instantiate(recipe);
     await arc.idle;
 
-    assert.lengthOf(arc.activeRecipe.handles, 1);
-    assert.instanceOf(arc.activeRecipe.handles[0].storageKey, VolatileStorageKey);
-    assert.isTrue(
-        arc.activeRecipe.handles[0].storageKey.toString().includes(arc.id.toString()));
+    // Reference mode store and its backing and container stores.
+    assert.lengthOf(arc.activeRecipe.handles, 3);
+    const key = arc.activeRecipe.particles[0].connections['thing'].handle.storageKey;
+    assert.instanceOf(key, ReferenceModeStorageKey);
+    const refKey = key as ReferenceModeStorageKey;
+    assert.instanceOf(refKey.backingKey, VolatileStorageKey);
+    assert.instanceOf(refKey.storageKey, VolatileStorageKey);
+    assert.isTrue(key.toString().includes(arc.id.toString()));
   });
 });
 
@@ -802,97 +802,6 @@ describe('Arc', () => {
     //assert.strictEqual(slotComposer.slotsCreated, 1);
   });
 
-  it.skip('serialization roundtrip preserves data for volatile stores', async () => {
-    const loader = new Loader(null, {
-      './manifest': `
-        schema Data
-          value: Text
-          size: Number
-
-        particle TestParticle in 'a.js'
-          var: reads Data
-          col: writes [Data]
-          big: reads writes BigCollection<Data>
-
-        recipe
-          handle0: use *
-          handle1: use *
-          handle2: use *
-          TestParticle
-            var: reads handle0
-            col: writes handle1
-            big: handle2
-      `,
-      './a.js': `
-        defineParticle(({Particle}) => class Noop extends Particle {});
-      `
-    });
-    const manifest = await Manifest.load('./manifest', loader);
-    const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
-    const id = Id.fromString('test');
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({id, storageKey, loader, context: manifest});
-
-    const varStore = await arc.createStore(dataClass.type, undefined, 'test:0');
-    const colStore = await arc.createStore(dataClass.type.collectionOf(), undefined, 'test:1') as CollectionStorageProvider;
-    const bigStore = await arc.createStore(dataClass.type.bigCollectionOf(), undefined, 'test:2') as BigCollectionStorageProvider;
-    const varHandle = await singletonHandleForTest(arc, varStore);
-
-    // TODO: Reference Mode: Deal With It (TM)
-    varStore.referenceMode = false;
-    colStore.referenceMode = false;
-
-    // Populate the stores, run the arc and get its serialization.
-    // TODO: the serialization roundtrip re-generates keys using the entity ids; we should keep the actual keys
-    await varHandle.set(new dataClass({value: 'v1'}));
-    await colStore.store({id: 'i2', rawData: {value: 'v2', size: 20}}, ['i2']);
-    await colStore.store({id: 'i3', rawData: {value: 'v3', size: 30}}, ['i3']);
-    await bigStore.store({id: 'i4', rawData: {value: 'v4', size: 40}}, ['i4']);
-    await bigStore.store({id: 'i5', rawData: {value: 'v5', size: 50}}, ['i5']);
-
-    const recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage(varStore);
-    recipe.handles[1].mapToStorage(colStore);
-    recipe.handles[2].mapToStorage(bigStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
-    await arc.idle;
-    const serialization = await arc.serialize();
-    arc.dispose();
-
-    // Grab a snapshot of the current state from each store, then clear them.
-    const varData = JSON.parse(JSON.stringify(await (await varStore.activate()).serializeContents()));
-    const colData = JSON.parse(JSON.stringify(await colStore.serializeContents()));
-    const bigData = JSON.parse(JSON.stringify(await bigStore.serializeContents()));
-
-    await varHandle.clear();
-
-    // TODO better casting...
-    colStore['clearItemsForTesting']();
-    bigStore['clearItemsForTesting']();
-
-    // Deserialize into a new arc.
-    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
-    const varStore2 = arc2.findStoreById(varStore.id);
-    const colStore2 = arc2.findStoreById(colStore.id) as CollectionStorageProvider;
-    const bigStore2 = arc2.findStoreById(bigStore.id) as BigCollectionStorageProvider;
-
-    // New storage providers should have been created.
-    assert.notStrictEqual(varStore2, varStore);
-    assert.notStrictEqual(colStore2, colStore);
-    assert.notStrictEqual(bigStore2, bigStore);
-
-    // The old ones should still be cleared.
-    assert.isNull(await varHandle.fetch());
-    assert.isEmpty(await colStore.toList());
-    assert.isEmpty((await bigStore.serializeContents()).model);
-
-    // The new ones should be populated from the serialized data.
-    assert.deepEqual(await (await varStore2.activate()).serializeContents(), varData);
-    assert.deepEqual(await colStore2.serializeContents(), colData);
-    assert.deepEqual(await bigStore2.serializeContents(), bigData);
-  });
-
   it('serializes immediate value handles correctly', async () => {
     const loader = new Loader(null, {
       './manifest': `
@@ -1081,6 +990,35 @@ describe('Arc', () => {
 
     arc2.dispose();
     assert.isEmpty(DriverFactory.providers);
+  });
+
+  it('preserves create handle ids if specified', async () => {
+    const loader = new Loader(null, {
+      'a.js': `
+        defineParticle(({Particle}) => class Noop extends Particle {});
+      `
+    });
+
+    const memoryProvider = new TestVolatileMemoryProvider();
+    const manifest = await Manifest.parse(`
+        schema Thing
+        particle MyParticle in 'a.js'
+          thing: writes Thing
+        recipe
+          h0: create 'mything'
+          MyParticle
+            thing: writes h0
+        `, {memoryProvider});
+
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test0');
+    await arc.instantiate(manifest.recipes[0]);
+    assert.lengthOf(arc.activeRecipe.handles, 1);
+    assert.equal(arc.activeRecipe.handles[0].id, 'mything');
   });
 });
 

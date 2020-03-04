@@ -1,4 +1,4 @@
-# This file is used for the travis CI.
+# This file is used for Arcs CI.
 
 FROM ubuntu:xenial
 

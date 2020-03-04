@@ -15,7 +15,10 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.data.RawEntity
+import arcs.core.data.Ttl
 import arcs.core.util.TaggedLog
+import arcs.core.util.Time
 
 /**
  * The [Callbacks] interface is a simple stand-in for the callbacks that a [Handle] might want to
@@ -69,7 +72,13 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     val storageProxy: StorageProxy<Data, Op, T>,
 
     /** [callback] contains optional Handle-owner provided callbacks to add behavior. */
-private val callback: Callbacks<Data, Op, T>? = null,
+    var callback: Callbacks<Data, Op, T>? = null,
+
+    /** [ttl] applied to the data in the [Handle]. */
+    val ttl: Ttl,
+
+    /**  [time] contains platform appropriate time related implementation. */
+    val time: Time,
 
     /**
      * [canRead] is whether this handle reads data so proxy can decide whether to keep its crdt
@@ -81,25 +90,29 @@ private val callback: Callbacks<Data, Op, T>? = null,
      * [canWrite] is whether this handle is writable. This can be used to enforce additional runtime
      * checks.
      */
-    val canWrite: Boolean = true
+    val canWrite: Boolean = true,
+
+    /**
+     * [Dereferencer] to assign to any [Reference]s which are given as return values from
+     * [value].
+     */
+    private val dereferencer: Dereferencer<RawEntity>? = null
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 
-    /** Local copy of the [VersionMap] for the backing CRDT. */
-    var versionMap = VersionMap()
-        protected set
+    /** Return the local copy of the [VersionMap] for the storage proxy CRDT. */
+    protected suspend fun versionMap() = storageProxy.getVersionMap()
 
-    /** Read value from the backing [StorageProxy], updating the internal clock copy. */
+    /** Read value from the backing [StorageProxy]. */
     protected suspend fun value(): T {
         log.debug { "Fetching value." }
-        val particleView = storageProxy.getParticleView()
-        this.versionMap = particleView.versionMap
-        return particleView.value
+        return storageProxy.getParticleView().injectDereferencer()
     }
 
-    /** Helper that subclasses can use to increment their version in the [VersionMap]. */
-    protected fun VersionMap.increment() {
+    /** Helper that subclasses can use to increment their version in a [VersionMap]. */
+    protected fun VersionMap.increment(): VersionMap {
         this[name]++
+        return this
     }
 
     /**
@@ -107,7 +120,6 @@ private val callback: Callbacks<Data, Op, T>? = null,
      * after a model update has been cleanly applied to the [StorageProxy]'s local copy.
      */
     internal fun onUpdate(op: Op) {
-        versionMap = op.clock.copy()
         callback?.onUpdate(this, op)
     }
 
@@ -115,8 +127,7 @@ private val callback: Callbacks<Data, Op, T>? = null,
      * This should be called by the [StorageProxy] this [Handle] has been registered with,
      * after a full sync has occurred.
      */
-    internal fun onSync(versionMap: VersionMap) {
-        this.versionMap = versionMap
+    internal fun onSync() {
         callback?.onSync(this)
     }
 
@@ -124,5 +135,23 @@ private val callback: Callbacks<Data, Op, T>? = null,
      * This should be called by the [StorageProxy] this [Handle] has been registered with,
      * when the [StorageProxy] has detected that its local model is out of sync.
      */
-    internal fun onDesync() = callback?.onDesync(this)
+    internal fun onDesync() {
+        callback?.onDesync(this)
+    }
+
+    /**
+     * Recursively inject the [Dereferencer] into any [Reference]s in the receiving object.
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> T.injectDereferencer(): T {
+        when (this) {
+            is Reference -> this.dereferencer = this@Handle.dereferencer
+            is RawEntity -> {
+                singletons.values.forEach { it.injectDereferencer() }
+                collections.values.forEach { it.injectDereferencer() }
+            }
+            is Set<*> -> this.forEach { it.injectDereferencer() }
+        }
+        return this
+    }
 }

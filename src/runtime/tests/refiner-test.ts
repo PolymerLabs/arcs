@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Range, Segment, Refinement, BinaryExpression, UnaryExpression, SQLExtracter, Polynomial, Fraction} from '../refiner.js';
+import {Range, Segment, Refinement, BinaryExpression, Multinomial, SQLExtracter, Fraction, Term} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -364,14 +364,14 @@ describe('normalisation', () => {
   it(`tests if expressions are rearranged 3`, Flags.withFieldRefinementsAllowed(async () => {
     const manifestAst1 = parse(`
         particle Foo
-            input: reads Something {num: Number [ (num+2)*(num+1)+3 > 4 ] }
+            input: reads Something {num: Number [ (num+2)*(num+1)+3 > 6 ] }
     `);
     const typeData = {'num': 'Number'};
     const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
     ref1.normalize();
     const manifestAst2 = parse(`
         particle Foo
-            input: reads Something {num: Number [ num*num + num*3 + 1 > 0 ] }
+            input: reads Something {num: Number [ num*3 + num*num > 1 ] }
     `);
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
     // normalized version of ref1 should be the same as ref2
@@ -393,6 +393,40 @@ describe('normalisation', () => {
     // normalized version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
   }));
+  it(`tests if expressions are rearranged 5`, () => {
+    const manifestAst1 = parse(`
+        particle Foo
+            input: reads Something {a: Number, b: Number } [3*(a+b) > a+2*b]
+    `);
+    const typeData = {'a': 'Number', 'b': 'Number'};
+    const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
+    ref1.normalize();
+    const manifestAst2 = parse(`
+        particle Foo
+            input: reads Something {a: Number, b: Number } [b + a*2 > 0]
+    `);
+    const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.refinement, typeData);
+    // normalized version of ref1 should be the same as ref2
+    assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+  });
+  it(`tests if expressions are rearranged 6`, () => {
+    const manifestAst1 = parse(`
+        particle Foo
+            input: reads Something {a: Number, b: Number } [2*(a+b) > a+2*b]
+    `);
+    const typeData = {'a': 'Number', 'b': 'Number'};
+    const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
+    ref1.normalize();
+    const manifestAst2 = parse(`
+        particle Foo
+            input: reads Something {a: Number, b: Number } [a > 0]
+    `);
+    const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.refinement, typeData);
+    console.log(ref1.toString());
+    console.log(`${ref2}`);
+    // normalized version of ref1 should be the same as ref2
+    assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+  });
 });
 
 describe('Range', () => {
@@ -487,7 +521,7 @@ describe('SQLExtracter', () => {
       `);
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = SQLExtracter.fromSchema(schema, 'table');
-      assert.strictEqual(query, 'SELECT * FROM table WHERE ((a + (b / 3)) > 100) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));');
+      assert.strictEqual(query, 'SELECT * FROM table WHERE ((b + (a * 3)) > 300) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));');
   }));
   it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -527,137 +561,285 @@ describe('SQLExtracter', () => {
   });
 });
 
-describe('Polynomial', () => {
-  it('tests coeffs getters, setters and degree works', () => {
-      let pn = new Polynomial([0, 1, 2]);       // 2a^2 + a
-      assert.deepEqual(pn.coeffs, [0, 1, 2]);
-      assert.strictEqual(pn.degree(), 2);
-      pn = new Polynomial([0, 1, 2, 0, 0, 0]);  // 2a^2 + a
-      assert.strictEqual(pn.degree(), 2);
-      pn = new Polynomial([0, 0, 0, 0]);        // 0
-      assert.deepEqual(pn.coeffs, [0]);
-      assert.strictEqual(pn.degree(), 0);
-      pn = new Polynomial([]);                  // 0
-      assert.deepEqual(pn.coeffs, [0]);
-      assert.strictEqual(pn.degree(), 0);
-      pn = new Polynomial();                    // 0
-      assert.deepEqual(pn.coeffs, [0]);
-      assert.strictEqual(pn.degree(), 0);
+describe('Fractions', () => {
+  it('tests fraction addition works', () => {
+    const a = new Term({'a': 1});         // a
+    const a2 = new Term({'a': 2});        // a^2
+    const cnst = new Term({});
+    let num1 = new Multinomial({
+        [a2.toKey()]: 1,                  // a^2
+        [a.toKey()]: 1,                   // a
+        [cnst.toKey()]: 9                 // 9
+    }); // a^2 + a + 9
+    const den1 = new Multinomial({
+      [a.toKey()]: 2,                     // 2a
+    }); // 2a
+    let frac1 = new Fraction(num1, den1); // (a^2+a+9)/2a
+    let num2 = new Multinomial({
+      [a.toKey()]: 1,                     // a
+      [cnst.toKey()]: 5                   // 5
+    }); // a+5
+    let den2 = new Multinomial({
+      [cnst.toKey()]: 3                   // 3
+    }); // 3
+    let frac2 = new Fraction(num2, den2); // (a+5)/3
+    let sum = Fraction.add(frac1, frac2); // (5a^2+13a+27)/6a
+    assert.deepEqual(sum.num.terms, {
+      [a2.toKey()]: 5,                    // a^2
+      [a.toKey()]: 13,                    // a
+      [cnst.toKey()]: 27                  // 9
+    });
+    assert.deepEqual(sum.den.terms, {
+      [a.toKey()]: 6                      // a
+    });
+    num1 = new Multinomial({
+      [a.toKey()]: 1,                     // a
+    }); // a
+    frac1 = new Fraction(num1);           // a/1
+    num2 = new Multinomial({
+      [cnst.toKey()]: 5                   // 5
+    }); // 5
+    den2 = new Multinomial({
+      [cnst.toKey()]: 9                   // 9
+    }); // 9
+    frac2 = new Fraction(num2, den2);     // 5/9
+    sum = Fraction.add(frac1, frac2);     // (9a+5)/9
+    assert.deepEqual(sum.num.terms, {
+      [a.toKey()]: 9,                     // 9a
+      [cnst.toKey()]: 5                   // 5
+    });
+    assert.deepEqual(sum.den.terms, {
+      [cnst.toKey()]: 9                   // 9
+    });
   });
-  it('tests polynomial addition works', () => {
-    let pn1 = new Polynomial([0, 1, 2]);        // 2a^2 + a
-    let pn2 = new Polynomial();                 // 0
-    let sum = Polynomial.add(pn1, pn2);         // 2a^2 + a
-    assert.deepEqual(sum.coeffs, [0, 1, 2]);
-    assert.strictEqual(sum.degree(), 2);
-    pn1 = new Polynomial([0, 1, 2]);            // 2a^2 + a
-    pn2 = new Polynomial([3, 2, 1]);            // a^2 + 2a + 3
-    sum = Polynomial.add(pn1, pn2);             // 3a^2 + 3a + 3
-    assert.deepEqual(sum.coeffs, [3, 3, 3]);
-    assert.strictEqual(sum.degree(), 2);
-    pn1 = new Polynomial([0, 1, 2]);            // 2a^2 + a
-    pn2 = new Polynomial([3, 0, 0, 0, 0]);      // 3
-    sum = Polynomial.add(pn1, pn2);             // 2a^2 + a + 3
-    assert.deepEqual(sum.coeffs, [3, 1, 2]);
-    assert.strictEqual(sum.degree(), 2);
+  it('tests fraction subtraction works', () => {
+    const a = new Term({'a': 1});                 // a
+    const a2 = new Term({'a': 2});                // a^2
+    const cnst = new Term({});
+    const num1 = new Multinomial({
+        [a2.toKey()]: 1,                          // a^2
+        [a.toKey()]: 1,                           // a
+        [cnst.toKey()]: 9                         // 9
+    }); // a^2 + a + 9
+    const den1 = new Multinomial({
+      [a.toKey()]: 2,                             // 2a
+    }); // 2a
+    const frac1 = new Fraction(num1, den1);       // (a^2+a+9)/2a
+    const num2 = new Multinomial({
+      [a.toKey()]: 1,                             // a
+      [cnst.toKey()]: 5                           // 5
+    }); // a+5
+    const den2 = new Multinomial({
+      [cnst.toKey()]: 3                           // 3
+    }); // 3
+    const frac2 = new Fraction(num2, den2);       // (a+5)/3
+    const sum = Fraction.subtract(frac1, frac2);  // (a^2-7a+27)/6a
+    assert.deepEqual(sum.num.terms, {
+      [a2.toKey()]: 1,                            // a^2
+      [a.toKey()]: -7,                            // -7a
+      [cnst.toKey()]: 27                          // 27
+    });
+    assert.deepEqual(sum.den.terms, {
+      [a.toKey()]: 6,                             // 6a
+    });
   });
-  it('tests polynomial negation works', () => {
-    const pn1 = new Polynomial([0, 1, 2]);      // 2a^2 + a
-    const neg = Polynomial.negate(pn1);         // -2a^2 -a
-    assert.deepEqual(neg.coeffs, [-0, -1, -2]);
-    assert.strictEqual(neg.degree(), 2);
+  it('tests fraction negation works', () => {
+    const a = new Term({'a': 1});                 // a
+    const a2 = new Term({'a': 2});                // a^2
+    const cnst = new Term({});
+    const num1 = new Multinomial({
+        [a2.toKey()]: 1,                          // a^2
+        [a.toKey()]: 1,                           // a
+        [cnst.toKey()]: 9                         // 9
+    }); // a^2 + a + 9
+    const den1 = new Multinomial({
+      [a.toKey()]: 2,                             // 2a
+    }); // 2a
+    const frac1 = new Fraction(num1, den1);       // (a^2+a+9)/2a
+    const neg = Fraction.negate(frac1);           // (-a^2-a+-9)/2a
+    assert.deepEqual(neg.num.terms, {
+        [a2.toKey()]: -1,                         // a^2
+        [a.toKey()]: -1,                          // a
+        [cnst.toKey()]: -9                        // 9
+    });
+    assert.deepEqual(neg.den.terms, {
+      [a.toKey()]: 2,  // 2a
+    });
   });
-  it('tests polynomial subtraction works', () => {
-    const pn1 = new Polynomial([0, 1]);         // a
-    const pn2 = new Polynomial([2, 2, 2]);      // 2a^2 + 2a + 2
-    const sub = Polynomial.subtract(pn1, pn2);  // -2a^2 -a -2
-    assert.deepEqual(sub.coeffs, [-2, -1, -2]);
-    assert.strictEqual(sub.degree(), 2);
+  it('tests fraction multiplication works', () => {
+    const a = new Term({'a': 1});                 // a
+    const a2 = new Term({'a': 2});                // a^2
+    const cnst = new Term({});
+    let num1 = new Multinomial({
+        [a.toKey()]: 1,                           // a
+        [cnst.toKey()]: 9                         // 9
+    }); // a + 9
+    const den1 = new Multinomial({
+      [a.toKey()]: 2,                             // 2a
+    }); // 2a
+    let frac1 = new Fraction(num1, den1);         // (a+9)/2a
+    const num2 = new Multinomial({
+      [a.toKey()]: 1,                             // a
+      [cnst.toKey()]: 5                           // 5
+    }); // a + 5
+    const den2 = new Multinomial({
+      [cnst.toKey()]: 3                           // 9
+    }); // a + 9
+    let frac2 = new Fraction(num2, den2);         // (a+5)/3
+    let sum = Fraction.multiply(frac1, frac2);    // (a^2+14a+45)/6a
+    assert.deepEqual(sum.num.terms, {
+      [a2.toKey()]: 1,                            // a^2
+      [a.toKey()]: 14,                            // 14a
+      [cnst.toKey()]: 45                          // 45
+    }); // a^2 + 14a + 45
+    assert.deepEqual(sum.den.terms, {
+      [a.toKey()]: 6,                             // 14a
+    });
+    num1 = new Multinomial({
+      [a2.toKey()]: 1,                            // a^2
+      [a.toKey()]: 1,                             // a
+    });
+    frac1 = new Fraction(num1);                   // (a^2+a)/1
+    frac2 = new Fraction();                       // 0 / 1
+    sum = Fraction.multiply(frac1, frac2);        // 0/1
+    assert.deepEqual(sum.num.terms, {});
+    assert.deepEqual(sum.den.terms, {
+      [cnst.toKey()]: 1                           // 1
+    });
   });
-  it('tests polynomial multiplication works', () => {
-    let pn1 = new Polynomial([0, 1, 2]);        // 2a^2 + a
-    let pn2 = new Polynomial();                 // 0
-    let prod = Polynomial.multiply(pn1, pn2);   // 0
-    assert.deepEqual(prod.coeffs, [0]);
-    assert.strictEqual(prod.degree(), 0);
-    pn1 = new Polynomial([9, 2]);               // 2a + 9
-    pn2 = new Polynomial([3, -2]);              // -2a + 3
-    prod = Polynomial.multiply(pn1, pn2);       // -4a^2 -12a + 27
-    assert.deepEqual(prod.coeffs, [27, -12, -4]);
-    assert.strictEqual(prod.degree(), 2);
-    pn1 = new Polynomial([3, -2]);              // -2a + 3
-    pn2 = new Polynomial([9, 2, 7, 11]);        // 11a^3 + 7a^2 + 2a + 9
-    prod = Polynomial.multiply(pn1, pn2);       // -22a^4 + 19a^3 + 17a^2 - 12a + 27
-    assert.deepEqual(prod.coeffs, [27, -12, 17, 19, -22]);
-    assert.strictEqual(prod.degree(), 4);
+  it('tests fraction division works', () => {
+    const a = new Term({'a': 1});                 // a
+    const a2 = new Term({'a': 2});                // a^2
+    const cnst = new Term({});
+    const num1 = new Multinomial({
+        [a.toKey()]: 1,                           // a
+        [cnst.toKey()]: 9                         // 9
+    }); // a + 9
+    const den1 = new Multinomial({
+      [a.toKey()]: 2,                             // 2a
+    }); // 2a
+    const frac1 = new Fraction(num1, den1);       // (a+9)/2a
+    const num2 = new Multinomial({
+      [a.toKey()]: 1,                             // a
+      [cnst.toKey()]: 5                           // 5
+    }); // a + 5
+    const den2 = new Multinomial({
+      [cnst.toKey()]: 3                           // 9
+    }); // a + 9
+    const frac2 = new Fraction(num2, den2);       // (a+5)/3
+    const sum = Fraction.divide(frac1, frac2);    // (3a+27)/(2a^2+10a)
+    assert.deepEqual(sum.num.terms, {
+      [a.toKey()]: 3,                             // 3a
+      [cnst.toKey()]: 27                          // 27
+    });
+    assert.deepEqual(sum.den.terms, {
+      [a2.toKey()]: 2,                            // 2a^2
+      [a.toKey()]: 10,                            // 10a
+    });
   });
 });
 
-describe('Fractions', () => {
-  it('tests fraction addition works', () => {
-    let num1 = new Polynomial([9, 1, 1]);
-    const den1 = new Polynomial([0, 2]);
-    let frac1 = new Fraction(num1, den1);       // (a^2+a+9)/2a
-    let num2 = new Polynomial([5, 1]);
-    let den2 = new Polynomial([3]);
-    let frac2 = new Fraction(num2, den2);       // (a+5)/3
-    let sum = Fraction.add(frac1, frac2);       // (5a^2+13a+27)/6a
-    assert.deepEqual(sum.num.coeffs, [27, 13, 5]);
-    assert.deepEqual(sum.den.coeffs, [0, 6]);
-    num1 = new Polynomial([0, 1]);
-    frac1 = new Fraction(num1);                 // a/1
-    num2 = new Polynomial([5]);
-    den2 = new Polynomial([9]);
-    frac2 = new Fraction(num2, den2);           // 0.55/1
-    sum = Fraction.add(frac1, frac2);           // (a+0.55)/1
-    assert.deepEqual(sum.num.coeffs, [5/9, 1]);
-    assert.deepEqual(sum.den.coeffs, [1]);
-  });
-  it('tests fraction subtraction works', () => {
-    const num1 = new Polynomial([9, 1, 1]);
-    const den1 = new Polynomial([0, 2]);
-    const frac1 = new Fraction(num1, den1);             // (a^2+a+9)/2a
-    const num2 = new Polynomial([5, 1]);
-    const den2 = new Polynomial([3]);
-    const frac2 = new Fraction(num2, den2);            // (a+5)/3
-    const sum = Fraction.subtract(frac1, frac2);       // (a^2-7a+27)/6a
-    assert.deepEqual(sum.num.coeffs, [27, -7, 1]);
-    assert.deepEqual(sum.den.coeffs, [0, 6]);
-  });
-  it('tests fraction negation works', () => {
-    const num1 = new Polynomial([9, 1, 1]);
-    const den1 = new Polynomial([0, 2]);
-    const frac1 = new Fraction(num1, den1);   // (a^2+a+9)/2a
-    const sum = Fraction.negate(frac1);       // (-a^2-a+-9)/2a
-    assert.deepEqual(sum.num.coeffs, [-9, -1, -1]);
-    assert.deepEqual(sum.den.coeffs, [0, 2]);
-  });
-  it('tests fraction multiplication works', () => {
-    let num1 = new Polynomial([9, 1]);
-    const den1 = new Polynomial([0, 2]);
-    let frac1 = new Fraction(num1, den1);             // (a+9)/2a
-    const num2 = new Polynomial([5, 1]);
-    const den2 = new Polynomial([3]);
-    let frac2 = new Fraction(num2, den2);            // (a+5)/3
-    let sum = Fraction.multiply(frac1, frac2);       // (a^2+14a+45)/6a
-    assert.deepEqual(sum.num.coeffs, [45, 14, 1]);
-    assert.deepEqual(sum.den.coeffs, [0, 6]);
-    num1 = new Polynomial([0, 1, 1]);
-    frac1 = new Fraction(num1);                     // (a^2+a)/1
-    frac2 = new Fraction();                         // 0 / 1
-    sum = Fraction.multiply(frac1, frac2);          // 0/1
-    assert.deepEqual(sum.num.coeffs, [0]);
-    assert.deepEqual(sum.den.coeffs, [1]);
-  });
-  it('tests fraction division works', () => {
-    const num1 = new Polynomial([9, 1]);
-    const den1 = new Polynomial([0, 2]);
-    const frac1 = new Fraction(num1, den1);            // (a+9)/2a
-    const num2 = new Polynomial([5, 1]);
-    const den2 = new Polynomial([3]);
-    const frac2 = new Fraction(num2, den2);            // (a+5)/3
-    const sum = Fraction.divide(frac1, frac2);         // (3a+9)/(2a^2+10a)
-    assert.deepEqual(sum.num.coeffs, [27, 3]);
-    assert.deepEqual(sum.den.coeffs, [0, 10, 2]);
+describe('Terms', () => {
+  it('tests to and from key', () => {
+    const term1 = new Term({'b': 1, 'a': 1});
+    const term2 = new Term({'a': 1, 'b': 1});
+    assert.strictEqual(term1.toKey(), term2.toKey());
+    assert.deepEqual(Term.fromKey(term1.toKey()), Term.fromKey(term2.toKey()));
   });
 });
+
+describe('Multinomials', () => {
+  it('tests multinomial setters and getters work', () => {
+    const aIb = new Term({'b': 1, 'a': 1});  // ab
+    const aIb2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const num = new Multinomial({
+        [aIb.toKey()]: 2,   // 2ab
+        [aIb2.toKey()]: 1,  // ab^2
+        [cnst.toKey()]: 5   // 5
+    }); // 2ab + ab^2 + 5
+    assert.deepEqual(num.terms, {
+        [aIb2.toKey()]: 1,  // ab^2
+        [cnst.toKey()]: 5,  // 5
+        [aIb.toKey()]: 2,   // 2ab
+    });
+  });
+  it('tests multinomial addition works', () => {
+    const aIb = new Term({'b': 1, 'a': 1}); // ab
+    const aIb2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const num1 = new Multinomial({
+        [aIb2.toKey()]: 2,  // 2ab^2
+        [cnst.toKey()]: 1   // 5
+    }); // 2ab^2 + 1
+    const num2 = new Multinomial({
+      [aIb.toKey()]: 2,   // 2ab
+      [aIb2.toKey()]: 1,  // ab^2
+      [cnst.toKey()]: 5   // 5
+    }); // 2ab + ab^2 + 5
+    const sum = Multinomial.add(num1, num2);      // 2ab + 3ab^2 + 5
+    assert.deepEqual(sum.terms, {
+      [aIb.toKey()]: 2,   // 2ab
+      [aIb2.toKey()]: 3,  // 3ab^2
+      [cnst.toKey()]: 6   // 6
+    });
+  });
+  it('tests multinomial negation works', () => {
+    const aIb2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const num1 = new Multinomial({
+        [aIb2.toKey()]: 2,  // 2ab^2
+        [cnst.toKey()]: 1   // 5
+    }); // 2ab^2 + 1
+    const sum = Multinomial.negate(num1);      // -2ab^2 - 1
+    assert.deepEqual(sum.terms, {
+      [aIb2.toKey()]: -2,  // -2ab^2
+      [cnst.toKey()]: -1   // -1
+    });
+  });
+  it('tests multinomial subtraction works', () => {
+    const aIb = new Term({'b': 1, 'a': 1}); // ab
+    const aIb2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const num1 = new Multinomial({
+        [aIb2.toKey()]: 2,  // 2ab^2
+        [cnst.toKey()]: 1   // 5
+    }); // 2ab^2 + 1
+    const num2 = new Multinomial({
+      [aIb.toKey()]: 2,   // 2ab
+      [aIb2.toKey()]: 2,  // 2ab^2
+      [cnst.toKey()]: 5   // 5
+    }); // 2ab + ab^2 + 5
+    const sum = Multinomial.subtract(num1, num2);      // -2ab - 4
+    assert.deepEqual(sum.terms, {
+      [aIb.toKey()]: -2,   // 2ab
+      [cnst.toKey()]: -4   // -4
+    });
+  });
+  it('tests multinomial multiplication works', () => {
+    const aIb = new Term({'b': 1, 'a': 1}); // ab
+    const aIb2 = new Term({'b': 2, 'a': 1}); // ab^2
+    const cnst = new Term({});
+    const a2Ib3 = new Term({'a': 2, 'b': 3});
+    const a2Ib4 = new Term({'a': 2, 'b': 4});
+    const num1 = new Multinomial({
+        [aIb2.toKey()]: 2,  // 2ab^2
+        [cnst.toKey()]: 1   // 1
+    }); // 2ab^2 + 1
+    const num2 = new Multinomial({
+      [aIb.toKey()]: 2,   // 2ab
+      [aIb2.toKey()]: 1,  // ab^2
+      [cnst.toKey()]: 5   // 5
+    }); // 2ab + ab^2 + 5
+    const sum = Multinomial.multiply(num1, num2);      // 4a^2b^3 + 2a^2b^4 + 11ab^2 + 2ab + 5
+    assert.deepEqual(sum.terms, {
+      [aIb.toKey()]: 2,     // 2ab
+      [aIb2.toKey()]: 11,   // 11ab^2
+      [cnst.toKey()]: 5,    // 5
+      [a2Ib3.toKey()]: 4,   // 4a^2b^3
+      [a2Ib4.toKey()]: 2,   // 2a^2b^4
+    });
+  });
+});
+
+

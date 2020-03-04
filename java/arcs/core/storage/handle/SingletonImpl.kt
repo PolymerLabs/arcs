@@ -13,11 +13,15 @@ package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.data.RawEntity
+import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
+import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
+import arcs.core.util.Time
 
 /** These typealiases are defined to clean up the class declaration below. */
 typealias SingletonProxy<T> = StorageProxy<SingletonData<T>, SingletonOp<T>, T?>
@@ -38,8 +42,20 @@ typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?
 class SingletonImpl<T : Referencable>(
     name: String,
     storageProxy: SingletonProxy<T>,
-    callbacks: SingletonCallbacks<T>? = null
-) : SingletonBase<T>(name, storageProxy, callbacks) {
+    callbacks: SingletonCallbacks<T>? = null,
+    ttl: Ttl = Ttl.Infinite,
+    time: Time,
+    canRead: Boolean = true,
+    dereferencer: Dereferencer<RawEntity>? = null
+) : SingletonBase<T>(
+    name,
+    storageProxy,
+    callbacks,
+    ttl,
+    time,
+    canRead,
+    dereferencer = dereferencer
+) {
     /** Get the current value from the backing [StorageProxy]. */
     suspend fun fetch() = value()
 
@@ -48,12 +64,20 @@ class SingletonImpl<T : Referencable>(
      * did not apply fully. Fetch the latest value and retry.
      * */
     suspend fun store(entity: T): Boolean {
-        versionMap.increment()
-        return storageProxy.applyOp(CrdtSingleton.Operation.Update(name, versionMap, entity))
+        @Suppress("GoodTime") // use Instant
+        entity.creationTimestamp = requireNotNull(time).currentTimeMillis
+        if (!Ttl.Infinite.equals(ttl)) {
+            @Suppress("GoodTime") // use Instant
+            entity.expirationTimestamp = ttl.calculateExpiration(time)
+        }
+        return storageProxy.applyOp(
+            CrdtSingleton.Operation.Update(
+                name,
+                versionMap().increment(),
+                entity
+            )
+        )
     }
-
-    /**TODO(heimlich): remove once all implementations use store. */
-    suspend fun set(entity: T): Boolean = store(entity)
 
     /**
      * Clears the value in the backing [StorageProxy]. If this returns `false`, your operation
@@ -63,6 +87,8 @@ class SingletonImpl<T : Referencable>(
         // Sync before clearing in order to get an updated versionMap. This ensures we can clear
         // values set by other actors.
         fetch()
-        return storageProxy.applyOp(CrdtSingleton.Operation.Clear(name, versionMap))
+        return storageProxy.applyOp(
+            CrdtSingleton.Operation.Clear(name, versionMap())
+        )
     }
 }

@@ -2,7 +2,8 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_library",
     "arcs_kt_native_library",
-    "kt_js_library",
+    # TODO: KotlinJS crashes (https://github.com/PolymerLabs/arcs/issues/4772)
+    #   "kt_js_library",
 )
 
 licenses(["notice"])
@@ -17,38 +18,44 @@ arcs_kt_jvm_library(
     ]),
     visibility = ["//visibility:public"],
     exports = [
+        "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
-        "//java/arcs/core/storage/api:api-common",
-        "//java/arcs/jvm/storage/api",
+        "//java/arcs/core/host",
+        "//java/arcs/core/storage/api",
     ],
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/host",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
-        "//java/arcs/core/storage/api:api-common",
-        "//java/arcs/jvm/storage/api",
+        "//java/arcs/core/storage/api",
+        "//java/arcs/core/storage/util",
         "//java/arcs/sdk/storage",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
 
-kt_js_library(
-    name = "sdk-js",
-    srcs = glob([
-        "*.kt",
-        "js/*.kt",
-    ]),
-    deps = [
-        "//java/arcs/core/crdt:crdt-js",
-        "//java/arcs/core/data:data-js",
-        "//java/arcs/core/storage:reference-js",
-        "//java/arcs/core/storage:storage_key-js",
-        "//java/arcs/core/storage/api:api-common-js",
-        "//java/arcs/sdk/storage:storage-js",
-    ],
-)
+# TODO: Reenable after https://github.com/PolymerLabs/arcs/issues/4772 fixed.
+# Temporarily disable because of Kotlin-JS compiler bug
+# See https://gist.github.com/cromwellian/8b62b883ce32c3590ec93476cd7d6503
+#kt_js_library(
+#    name = "sdk-js",
+#    srcs = glob([
+#        "*.kt",
+#        "js/*.kt",
+#    ]),
+#    deps = [
+#        "//java/arcs/core/crdt:crdt-js",
+#        "//java/arcs/core/data:data-js",
+#        "//java/arcs/core/host:host-js",
+#        "//java/arcs/core/storage:reference-js",
+#        "//java/arcs/core/storage:storage_key-js",
+#        "//java/arcs/core/storage/api:api-common-js",
+#        "//java/arcs/sdk/storage:storage-js",
+#    ],
+#)
 
 arcs_kt_native_library(
     name = "sdk-wasm",
@@ -70,7 +77,8 @@ arcs_kt_jvm_library(
     ],
     deps = [
         "//java/arcs/core/data",
-        "//java/arcs/core/storage/api:api-common",
+        "//java/arcs/core/host",
+        "//java/arcs/core/storage/api",
         "//java/arcs/sdk/storage",
     ],
 )

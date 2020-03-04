@@ -16,7 +16,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDiskStorageKey
@@ -32,7 +31,6 @@ class ParcelableStoreOptionsTest {
     fun parcelableRoundtrip_works() {
         val storeOptions = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(
             RamDiskStorageKey("test"),
-            ExistenceCriteria.MayExist,
             CountType(),
             StorageMode.Direct,
             versionToken = "Foo",
@@ -60,7 +58,6 @@ class ParcelableStoreOptionsTest {
                 RamDiskStorageKey("backing"),
                 RamDiskStorageKey("collection")
             ),
-            ExistenceCriteria.ShouldExist,
             CountType(),
             StorageMode.ReferenceMode
         )

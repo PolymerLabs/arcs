@@ -57,6 +57,13 @@ describe('manifest parser', () => {
         h1: create 'my-id' #anotherTag @ttl(1h)
         h2: create @ttl ( 30m )`);
   });
+  it('parses recipes with a synthetic join handles', () => {
+    parse(`
+      recipe
+        people: map #folks
+        places: map #locations
+        pairs: join (people, places)`);
+  });
   it('parses recipe handles with capabilities', () => {
     parse(`
       recipe Thing
@@ -389,6 +396,53 @@ describe('manifest parser', () => {
       particle Foo
         inRef: reads &Foo
         outRef: writes &Bar
+    `);
+  });
+  it('fails to parse an empty tuple', () => {
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads ()
+      `);
+    });
+  });
+  it('parses tuple with one type', () => {
+    parse(`
+      particle Foo
+        data: reads (Foo)
+    `);
+  });
+  it('parses tuple with two types', () => {
+    parse(`
+      particle Foo
+        data: writes ([Foo], &Bar {name: Text})
+    `);
+  });
+  it('fails to parse a tuple without separator between elements', () => {
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads (Foo{}Bar{})
+      `);
+    });
+  });
+  it('parses tuple with indented types and comments', () => {
+    parse(`
+      particle Foo
+        data: reads (
+          Foo, // First type
+          &Bar {name: Text}, // Second type
+          [Baz {photo: URL}] // Third type
+        )
+    `);
+  });
+  it('parses tuple with indented types and trailing comma', () => {
+    parse(`
+      particle Foo
+        data: reads (
+          &Foo,
+          &Bar,
+        )
     `);
   });
   it('parses refinement types in a schema', Flags.withFieldRefinementsAllowed(async () => {

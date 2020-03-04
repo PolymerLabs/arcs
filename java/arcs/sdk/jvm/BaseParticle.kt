@@ -11,14 +11,5 @@
 
 package arcs.sdk
 
-typealias JvmEntity = arcs.jvm.storage.api.JvmEntity
-typealias JvmEntitySpec<T> = arcs.jvm.storage.api.JvmEntitySpec<T>
-
 /** Implementation of [Particle] for the JVM. */
-abstract class BaseParticle : Particle {
-    /**
-     * This field contains a reference to all of the [Particle]'s handles that were declared in
-     * the manifest.
-     */
-    abstract val handles: HandleHolder
-}
+abstract class BaseParticle : Particle

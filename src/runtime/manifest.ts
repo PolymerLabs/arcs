@@ -32,11 +32,9 @@ import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Ttl} from './recipe/ttl.js';
-import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {HandleRetriever} from './storage/handle-retriever.js';
 import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
+        ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
 import {UnifiedStore} from './storageNG/unified-store.js';
@@ -129,16 +127,6 @@ interface ManifestLoadOptions {
   memoryProvider?: VolatileMemoryProvider;
 }
 
-export class ManifestHandleRetriever implements HandleRetriever {
-  async getHandlesFromManifest(content: string) : Promise<Handle[]> {
-    const manifest = await Manifest.parse(content, {});
-    if (!manifest.activeRecipe) {
-      return null;
-    }
-    return manifest.activeRecipe.handles || [];
-  }
-}
-
 export class Manifest {
   private _recipes: Recipe[] = [];
   private _imports: Manifest[] = [];
@@ -152,7 +140,6 @@ export class Manifest {
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
-  private _storageProviderFactory: StorageProviderFactory | undefined = undefined;
   private _meta = new ManifestMeta();
   private _resources = {};
   private storeManifestUrls: Map<string, string> = new Map();
@@ -186,7 +173,10 @@ export class Manifest {
   get allRecipes() {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
-
+  get allHandles() {
+    // TODO(#4820) Update `reduce` to use flatMap
+    return this.allRecipes.reduce((acc, x) => acc.concat(x.handles), []);
+  }
   get activeRecipe() {
     return this._recipes.find(recipe => recipe.annotation === 'active');
   }
@@ -226,11 +216,6 @@ export class Manifest {
     return this._resources;
   }
   applyMeta(section: {name: string} & {key: string, value: string}[]) {
-    if (this._storageProviderFactory !== undefined) {
-      assert(
-        section.name === this._meta.name || section.name == undefined,
-        `can't change manifest ID after storage is constructed`);
-    }
     this._meta.apply(section);
   }
   // TODO: newParticle, Schema, etc.
@@ -323,40 +308,57 @@ export class Manifest {
   findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): UnifiedStore[] {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
-    function typePredicate(store: UnifiedStore) {
-      const resolvedType = type.resolvedType();
-      if (!resolvedType.isResolved()) {
-        return (type instanceof CollectionType) === (store.type instanceof CollectionType) &&
-          (type instanceof BigCollectionType) === (store.type instanceof BigCollectionType);
-      }
-
-      if (subtype) {
-        const [left, right] = Type.unwrapPair(store.type, resolvedType);
-        if (left instanceof EntityType && right instanceof EntityType) {
-          return left.entitySchema.isAtleastAsSpecificAs(right.entitySchema);
-        }
-        return false;
-      }
-
-      return TypeChecker.compareTypes({type: store.type}, {type});
-    }
     function tagPredicate(manifest: Manifest, store: UnifiedStore) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
-
-    const stores = [...this._findAll(manifest => manifest._stores.filter(store => typePredicate(store) && tagPredicate(manifest, store)))];
+    const stores = [...this._findAll(manifest =>
+      manifest._stores.filter(store => this.typesMatch(store, type, subtype) && tagPredicate(manifest, store)))];
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => !!Handle.effectiveType(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'hosts' : 'reads writes'}]));
   }
+  findHandlesByType(type: Type, options = {tags: <string[]>[], fates: <string[]>[], subtype: false}): Handle[] {
+    const tags = options.tags || [];
+    const subtype = options.subtype || false;
+    const fates = options.fates || [];
+    function hasAllTags(handle: Handle) {
+      return tags.every(tag => handle.tags.includes(tag));
+    }
+    function matchesFate(handle: Handle) {
+      return fates === [] || fates.includes(handle.fate);
+    }
+    // TODO(#4820) Update `reduce` to use flatMap
+    return [...this.allRecipes
+      .reduce((acc, r) => acc.concat(r.handles), [])
+      .filter(h => this.typesMatch(h, type, subtype) && hasAllTags(h) && matchesFate(h))];
+  }
+  findHandlesById(id: string): Handle[] {
+    return this.allHandles.filter(h => h.id === id);
+  }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
   }
-
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
+  }
+  private typesMatch(candidate: {type: Type}, type: Type, checkSubtype: boolean) {
+    const resolvedType = type.resolvedType();
+    if (!resolvedType.isResolved()) {
+      return (type instanceof CollectionType) === (candidate.type instanceof CollectionType) &&
+        (type instanceof BigCollectionType) === (candidate.type instanceof BigCollectionType);
+    }
+
+    if (checkSubtype) {
+      const [left, right] = Type.unwrapPair(candidate.type, resolvedType);
+      if (left instanceof EntityType && right instanceof EntityType) {
+        return left.entitySchema.isAtleastAsSpecificAs(right.entitySchema);
+      }
+      return false;
+    }
+
+    return TypeChecker.compareTypes({type: candidate.type}, {type});
   }
 
   generateID(subcomponent?: string): Id {
@@ -629,6 +631,12 @@ ${e.message}
           case 'singleton-type':
             node.model = new SingletonType(node.type.model);
             return;
+          case 'tuple-type':
+            if (node.types.some(t => t.kind !== 'reference-type')) {
+              throw new ManifestError(node.location, 'Only tuples of references are supported.');
+            }
+            node.model = new TupleType(node.types.map(t => t.model));
+            return;
           default:
             return;
         }
@@ -784,7 +792,8 @@ ${e.message}
     const items = {
       require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
       handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
-      byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RequireHandleSection>(),
+      syntheticHandles: recipeItems.filter(item => item.kind === 'synthetic-handle') as AstNode.RecipeSyntheticHandle[],
+      byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RecipeSyntheticHandle | AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
       requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
       particles: recipeItems.filter(item => item.kind === 'recipe-particle') as AstNode.RecipeParticle[],
@@ -834,6 +843,27 @@ ${e.message}
             item.annotation.parameter.count,
             Ttl.ttlUnitsFromString(item.annotation.parameter.units));
       }
+      items.byHandle.set(handle, item);
+    }
+
+    for (const item of items.syntheticHandles) {
+      const handle = recipe.newHandle();
+      handle.fate = 'join';
+
+      if (item.name) {
+        assert(!items.byName.has(item.name), `duplicate handle name: ${item.name}`);
+        handle.localName = item.name;
+        items.byName.set(item.name, {item, handle});
+      }
+
+      for (const association of item.associations) {
+        const associatedItem = items.byName.get(association);
+        assert(associatedItem, `unrecognized name: ${association}`);
+        const associatedHandle = associatedItem && associatedItem.handle;
+        assert(associatedHandle, `only handles allowed to be joined: "${association}" is not a handle`);
+        handle.associateHandle(associatedHandle);
+      }
+
       items.byHandle.set(handle, item);
     }
 

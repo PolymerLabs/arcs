@@ -33,6 +33,7 @@ import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
 import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
+import {TupleType, CollectionType, ReferenceType} from '../type.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -309,6 +310,43 @@ ${particleStr1}
     const manifestB = await parseManifest(manifestText(67890), {fileName: 'the.manifest', memoryProvider});
 
     assert.notStrictEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
+  });
+  it('can parse a recipe with a synthetic join handle', async () => {
+    const manifest = await parseManifest(`
+      recipe
+        people: map #folks
+        other: map #products
+        pairs: join (people, places)
+        places: map #locations`);
+    const verify = (manifest: Manifest) => {
+      const [recipe] = manifest.recipes;
+      assert.lengthOf(recipe.handles, 4);
+      const people = recipe.handles.find(h => h.tags.includes('folks'));
+      assert.equal(people.fate, 'map');
+      const places = recipe.handles.find(h => h.tags.includes('locations'));
+      assert.equal(places.fate, 'map');
+
+      const pairs = recipe.handles.find(h => h.fate === 'join');
+      assert.equal(pairs.fate, 'join');
+      assert.lengthOf(pairs.associatedHandles, 2);
+
+      assert.include(pairs.associatedHandles, people);
+      assert.include(pairs.associatedHandles, places);
+    };
+    verify(manifest);
+    verify(await parseManifest(manifest.toString()));
+  });
+  it('fails to parse a recipe with an invalid synthetic join handle', async () => {
+    try {
+      await parseManifest(`
+        recipe
+          people: map #folks
+          things: map #products
+          pairs: join (people, locations)`);
+      assert.fail();
+    } catch (e) {
+      assert.include(e.message, 'unrecognized name: locations');
+    }
   });
   it('supports recipes with constraints', async () => {
     const manifest = await parseManifest(`
@@ -1985,7 +2023,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   });
 
   it('resolves manifest with recipe with search', async () => {
-    // TODO: support search tokens in manifest-parser.peg
+    // TODO: support search tokens in manifest-parser.pegjs
     const manifestSource = `
       recipe
         search \`Hello dear world\``;
@@ -2572,6 +2610,37 @@ resource SomeName
 
     assert.strictEqual(connections[3].name, 'dogsled');
     assert.deepEqual(connections[3].tags, ['multidog', 'winter', 'sled']);
+  });
+
+  it('can parse a particle with tuples', async () => {
+    const manifest = await parseManifest(`
+      particle P
+        foo: reads [(
+          &Bar {photo: URL},
+          &Baz {name: Text}
+        )]
+    `);
+    const [particle] = manifest.particles;
+    const [connection] = particle.handleConnections;
+    assert.strictEqual(connection.type.tag, 'Collection');
+    const collection = connection.type as CollectionType<TupleType>;
+    assert.strictEqual(collection.collectionType.tag, 'Tuple');
+    const tuple = collection.collectionType as TupleType;
+    assert.lengthOf(tuple.tupleTypes, 2);
+    assert.strictEqual(tuple.tupleTypes[0].tag, 'Reference');
+    assert.strictEqual(tuple.tupleTypes[1].tag, 'Reference');
+  });
+
+  it('parsing a particle with tuple of non reference fails', async () => {
+    try {
+      await parseManifest(`
+        particle P
+          foo: reads (Bar {photo: URL})
+      `);
+      assert.fail();
+    } catch (e) {
+      assert.include(e.message, 'Only tuples of references are supported');
+    }
   });
 
   it('can round-trip particles with tags', async () => {

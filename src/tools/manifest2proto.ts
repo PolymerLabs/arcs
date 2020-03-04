@@ -10,7 +10,7 @@
 import {Runtime} from '../runtime/runtime.js';
 import protobuf from 'protobufjs';
 
-const rootNamespace = protobuf.loadSync('./java/arcs/core/data/recipe.proto');
+const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/recipe.proto');
 const envelope = rootNamespace.lookupType('arcs.RecipeEnvelopeProto');
 
 export async function serialize2proto(path: string): Promise<Uint8Array> {

@@ -60,7 +60,7 @@ class RamDiskStoreIntegrationTest {
     @Test
     fun stores_sequenceOfModelAndOperationUpdates_asModels() = runBlockingTest {
         val storageKey = RamDiskStorageKey("unique")
-        val store = createStore(storageKey, ExistenceCriteria.ShouldCreate)
+        val store = createStore(storageKey)
         val activeStore = store.activate()
 
         val count = CrdtCount()
@@ -99,9 +99,9 @@ class RamDiskStoreIntegrationTest {
     @Test
     fun stores_operationUpdates_fromMultipleSources() = runBlockingTest {
         val storageKey = RamDiskStorageKey("unique")
-        val store1 = createStore(storageKey, ExistenceCriteria.ShouldCreate)
+        val store1 = createStore(storageKey)
         val activeStore1 = store1.activate()
-        val store2 = createStore(storageKey, ExistenceCriteria.ShouldExist)
+        val store2 = createStore(storageKey)
         val activeStore2 = store2.activate()
 
         val count1 = CrdtCount()
@@ -176,9 +176,9 @@ class RamDiskStoreIntegrationTest {
     @Suppress("UNCHECKED_CAST")
     fun store_operationUpdates_fromMultipleSources_withTimingDelays() = runBlockingTest {
         val storageKey = RamDiskStorageKey("unique")
-        val store1 = createStore(storageKey, ExistenceCriteria.ShouldCreate)
+        val store1 = createStore(storageKey)
         val activeStore1 = store1.activate() as DirectStore<CrdtData, CrdtOperation, Any>
-        val store2 = createStore(storageKey, ExistenceCriteria.ShouldExist)
+        val store2 = createStore(storageKey)
         val activeStore2 = store2.activate() as DirectStore<CrdtData, CrdtOperation, Any>
 
         assertThat(
@@ -225,13 +225,11 @@ class RamDiskStoreIntegrationTest {
 
     companion object {
         private fun createStore(
-            storageKey: StorageKey,
-            existenceCriteria: ExistenceCriteria
+            storageKey: StorageKey
         ): Store<CrdtCount.Data, CrdtCount.Operation, Int> {
             return Store(
                 StoreOptions(
                     storageKey,
-                    existenceCriteria,
                     type = CountType()
                 )
             )

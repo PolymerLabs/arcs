@@ -68,7 +68,7 @@ export class Reference implements Storable {
 
     await this.ensureStorageProxy();
 
-    this.entity = await this.handle.fetchAll(this.id);
+    this.entity = await this.handle.fetch(this.id);
     return this.entity;
   }
 
@@ -80,7 +80,7 @@ export class Reference implements Storable {
   static async retrieve(pec: ChannelConstructor, id: string, storageKey: string, entityType: EntityType, particleId: string) {
     const proxy = await pec.getStorageProxy(storageKey, entityType);
     const handle = handleNGFor(particleId, proxy, pec.idGenerator, null, true, true) as CollectionHandle<Entity>;
-    return await handle.fetchAll(id);
+    return await handle.fetch(id);
   }
 }
 

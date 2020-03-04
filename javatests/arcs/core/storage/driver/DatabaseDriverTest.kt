@@ -17,8 +17,6 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
 import arcs.core.crdt.extension.toCrdtEntityData
-import arcs.core.crdt.extension.toEntity
-import arcs.core.data.Entity
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -26,7 +24,6 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
@@ -76,11 +73,10 @@ class DatabaseDriverTest {
     @Test
     fun registerReceiver_withData_triggersReceiver() = runBlockingTest {
         val driver = buildDriver<CrdtEntity.Data>(database)
-        val entity = Entity(
+        val entity = RawEntity(
             "jason",
-            DEFAULT_SCHEMA,
-            mutableMapOf(
-                "name" to "Jason",
+            singletons = mapOf("name" to "Jason".toReferencable()),
+            collections = mapOf(
                 "phone_numbers" to setOf(
                     Reference(
                         ReferencablePrimitive(String::class, "555-5555").id,
@@ -90,7 +86,7 @@ class DatabaseDriverTest {
                 )
             )
         )
-        database.data[driver.storageKey] = DatabaseData.Entity(entity, 1, VersionMap())
+        database.data[driver.storageKey] = DatabaseData.Entity(entity, DEFAULT_SCHEMA,1, VersionMap())
 
         var calledWithData: CrdtEntity.Data? = null
         var calledWithVersion: Int? = null
@@ -99,7 +95,12 @@ class DatabaseDriverTest {
             calledWithVersion = version
         }
 
-        assertThat(calledWithData).isEqualTo(entity.toCrdtEntityData(VersionMap()))
+        assertThat(calledWithData).isEqualTo(
+            entity.toCrdtEntityData(VersionMap()) {
+                if (it is Reference) it
+                else buildReference(it)
+            }
+        )
         assertThat(calledWithVersion).isEqualTo(1)
     }
 
@@ -126,7 +127,7 @@ class DatabaseDriverTest {
 
         val databaseValue = checkNotNull(database.data[driver.storageKey] as? DatabaseData.Entity)
 
-        assertThat(databaseValue.entity).isEqualTo(entity.toEntity(DEFAULT_SCHEMA))
+        assertThat(databaseValue.rawEntity).isEqualTo(entity.toRawEntity())
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(entity.versionMap)
 
@@ -346,7 +347,6 @@ class DatabaseDriverTest {
     class DriverBuilder<Data : Any>(
         var dataClass: KClass<Data>,
         var database: Database,
-        var existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
         var storageKey: DatabaseStorageKey = DEFAULT_STORAGE_KEY,
         var schemaLookup: (String) -> Schema? = { DEFAULT_SCHEMA }
     ) {
@@ -355,7 +355,7 @@ class DatabaseDriverTest {
             set(value) { schemaLookup = createSchemaLookup(value) }
 
         suspend fun build(): DatabaseDriver<Data> =
-            DatabaseDriver(storageKey, existenceCriteria, dataClass, schemaLookup, database)
+            DatabaseDriver(storageKey, dataClass, schemaLookup, database)
                 .register()
 
         companion object {
@@ -375,10 +375,9 @@ class DatabaseDriverTest {
     ) = DriverBuilder(dataClass, database).apply(block).build()
 
     companion object {
-        private val DEFAULT_STORAGE_KEY = DatabaseStorageKey(
+        private val DEFAULT_STORAGE_KEY = DatabaseStorageKey.Persistent(
             unique = "foo",
             entitySchemaHash = "a1234",
-            persistent = true,
             dbName = "testdb"
         )
         private val DEFAULT_SCHEMA = Schema(

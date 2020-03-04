@@ -12,11 +12,10 @@ import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
-import {Type} from '../type.js';
 import {Capabilities} from '../capabilities.js';
-import {Flags} from '../flags.js';
 import {Entity} from '../entity.js';
 import {TtlUnits, Ttl} from '../recipe/ttl.js';
+import {Recipe} from '../recipe/recipe.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 
@@ -816,5 +815,56 @@ describe('recipe', () => {
     };
     verifyRecipeHandleCapabilities(recipe);
     verifyRecipeHandleCapabilities((await Manifest.parse(recipe.toString())).recipes[0]);
+  });
+  it('detects long running arc', async () => {
+    const recipes = (await Manifest.parse(`
+        recipe One
+        @trigger
+          key value
+        recipe Two
+        @trigger
+          launch startup
+          foo bar
+        recipe Four
+        @trigger
+          launch startup
+          arcId myLongRunningArc
+        recipe Four
+    `)).recipes;
+    assert.lengthOf(recipes, 4);
+    assert.isFalse(recipes[0].isLongRunning);
+    assert.isFalse(recipes[1].isLongRunning);
+    assert.isFalse(recipes[2].isLongRunning);
+    assert.isTrue(recipes[3].isLongRunning);
+  });
+  it('can normalize and clone a recipe with a synthetic join handle', async () => {
+    const [recipe] = (await Manifest.parse(`
+      recipe
+        people: map #folks
+        other: map #products
+        pairs: join (people, places)
+        places: map #locations`)).recipes;
+
+    const verify = (recipe: Recipe) => {
+      assert.lengthOf(recipe.handles, 4);
+      const people = recipe.handles.find(h => h.tags.includes('folks'));
+      assert.equal(people.fate, 'map');
+      const places = recipe.handles.find(h => h.tags.includes('locations'));
+      assert.equal(places.fate, 'map');
+
+      const pairs = recipe.handles.find(h => h.fate === 'join');
+      assert.equal(pairs.fate, 'join');
+      assert.lengthOf(pairs.associatedHandles, 2);
+
+      assert.include(pairs.associatedHandles, people);
+      assert.include(pairs.associatedHandles, places);
+    };
+
+    verify(recipe);
+
+    recipe.normalize();
+    verify(recipe);
+
+    verify(recipe.clone());
   });
 });

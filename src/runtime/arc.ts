@@ -28,8 +28,8 @@ import {Recipe, IsValidOptions} from './recipe/recipe.js';
 import {Slot} from './recipe/slot.js';
 import {compareComparables} from './recipe/comparable.js';
 import {SlotComposer} from './slot-composer.js';
-import {ArcType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        RelationType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
+import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
+        TupleType, ReferenceType, SingletonType, Type, TypeVariable} from './type.js';
 import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
@@ -242,12 +242,7 @@ export class Arc implements ArcInterface {
   // This does not directly use serialize() as callers may want to modify the
   // contents of the serialized arc before persisting.
   async persistSerialization(serialization: string): Promise<void> {
-    // TODO(shans): ensure implementation works once ArcType is available through new storage stack
-    const key = this.storageKey.childKeyForArcInfo();
-    const arcInfoType = new ArcType();
-    const store: SingletonEntityStore = new Store({storageKey: key, exists: Exists.MayExist, id: 'store', type: arcInfoType});
-    const handle = singletonHandle(await store.activate(), this);
-    await handle.set(arcInfoType.newInstance(this.id, serialization));
+    throw new Error('persistSerialization unimplemented, pending synthetic type support in new storage stack');
   }
 
   static async deserialize({serialization, pecFactories, slotComposer, loader, fileName, context, inspectorFactory}: DeserializeArcOptions): Promise<Arc> {
@@ -458,7 +453,7 @@ export class Arc implements ArcInterface {
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
-        const storeId = this.generateID().toString();
+        const storeId = recipeHandle.fate === 'create' && !!recipeHandle.id ? recipeHandle.id : this.generateID().toString();
         const volatileKey = recipeHandle.immediateValue
           ? new VolatileStorageKey(this.id, '').childKeyForHandle(storeId)
           : undefined;
@@ -551,8 +546,8 @@ export class Arc implements ArcInterface {
       return this.storesByKey.get(storageKey);
     }
 
-    if (type instanceof RelationType) {
-      type = new CollectionType(type);
+    if (type instanceof TupleType) {
+      throw new Error('Tuple type is not yet supported');
     }
 
     if (id == undefined) {
@@ -561,7 +556,8 @@ export class Arc implements ArcInterface {
 
     if (storageKey == undefined) {
       if (capabilities && !capabilities.isEmpty()) {
-        storageKey = this.capabilitiesResolver.createStorageKey(capabilities).childKeyForHandle(id);
+        storageKey = await this.capabilitiesResolver.createStorageKey(
+            capabilities, type.getEntitySchema(), id);
       } else if (this.storageKey) {
         storageKey = this.storageKey.childKeyForHandle(id);
       }

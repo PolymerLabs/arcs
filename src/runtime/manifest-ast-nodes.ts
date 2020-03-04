@@ -12,7 +12,7 @@ import {CheckType} from './particle-check.js';
 import {type} from 'os';
 
 /**
- * Complete set of tokens used by `manifest-parser.peg`. To use this you
+ * Complete set of tokens used by `manifest-parser.pegjs`. To use this you
  * need to follow some simple guidelines:
  *
  * - Most interfaces should extend `BaseNode`
@@ -71,6 +71,11 @@ export function isCollectionType(node: BaseNode): node is CollectionType {
 export interface ReferenceType extends BaseNode {
   kind: 'reference-type';
   type: ParticleHandleConnectionType;
+}
+
+export interface TupleType extends BaseNode {
+  kind: 'tuple-type';
+  types: ParticleHandleConnectionType[];
 }
 
 export interface TypeVariable extends BaseNode {
@@ -373,7 +378,7 @@ export interface RecipeRequire extends BaseNode {
   items: RecipeItem[];
 }
 
-export type RecipeItem = RecipeParticle | RecipeHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
+export type RecipeItem = RecipeParticle | RecipeHandle | RecipeSyntheticHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
 
 export const RELAXATION_KEYWORD = 'someof';
 
@@ -397,7 +402,7 @@ export interface ParticleConnectionTargetComponents extends BaseNode {
 
 export type RecipeHandleFate = string;
 
-export type RecipeHandleCapability = 'persistent' | 'tied-to-runtime' | 'tied-to-arc';
+export type RecipeHandleCapability = 'persistent' | 'queryable' | 'tied-to-runtime' | 'tied-to-arc';
 
 export interface RecipeHandle extends BaseNode {
   kind: 'handle';
@@ -406,6 +411,12 @@ export interface RecipeHandle extends BaseNode {
   fate: Fate;
   capabilities: RecipeHandleCapability[];
   annotation: ParameterizedAnnotation|null;
+}
+
+export interface RecipeSyntheticHandle extends BaseNode {
+  kind: 'synthetic-handle';
+  name: string|null;
+  associations: string[];
 }
 
 export interface RecipeParticleSlotConnection extends BaseNode {
@@ -755,7 +766,7 @@ export function preSlandlesDirectionToDirection(direction: Direction, isOptional
 }
 
 export type SlotDirection = 'provides' | 'consumes';
-export type Fate = 'use' | 'create' | 'map' | 'copy' | '?' | '`slot';
+export type Fate = 'use' | 'create' | 'map' | 'copy' | 'join' | '?' | '`slot';
 
 export type ParticleHandleConnectionType = TypeVariable|CollectionType|
     BigCollectionType|ReferenceType|SlotType|SchemaInline|TypeName;

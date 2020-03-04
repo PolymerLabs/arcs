@@ -27,12 +27,15 @@ import arcs.android.common.useTransaction
 import arcs.android.crdt.VersionMapProto
 import arcs.android.crdt.fromProto
 import arcs.android.crdt.toProto
+import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
-import arcs.core.data.Entity
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
@@ -40,11 +43,14 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabasePerformanceStatistics
+import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
-import arcs.jvm.util.performance.JvmTimer
+import arcs.core.util.performance.Timer
+import arcs.jvm.util.JvmTime
 import com.google.protobuf.ByteString
+import com.google.protobuf.InvalidProtocolBufferException
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
@@ -88,11 +94,16 @@ class DatabaseImpl(
     /* cursorFactory = */ null,
     DB_VERSION
 ) {
+    private val log = TaggedLog { this.toString() }
+
     // TODO: handle rehydrating from a snapshot.
     private val stats = DatabasePerformanceStatistics(
-        insertUpdate = PerformanceStatistics(JvmTimer, *DatabaseCounters.INSERT_UPDATE_COUNTERS),
-        get = PerformanceStatistics(JvmTimer, *DatabaseCounters.GET_COUNTERS),
-        delete = PerformanceStatistics(JvmTimer, *DatabaseCounters.DELETE_COUNTERS)
+        insertUpdate = PerformanceStatistics(
+            Timer(JvmTime),
+            *DatabaseCounters.INSERT_UPDATE_COUNTERS
+        ),
+        get = PerformanceStatistics(Timer(JvmTime), *DatabaseCounters.GET_COUNTERS),
+        delete = PerformanceStatistics(Timer(JvmTime), *DatabaseCounters.DELETE_COUNTERS)
     )
 
     private val schemaMutex = Mutex()
@@ -157,11 +168,12 @@ class DatabaseImpl(
     }
 
     @VisibleForTesting
+    @Suppress("UNCHECKED_CAST")
     fun getEntity(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Entity = readableDatabase.useTransaction {
+    ): DatabaseData.Entity? = readableDatabase.useTransaction {
         val db = this
         // Fetch the entity's type by storage key.
         counters?.increment(DatabaseCounters.GET_ENTITY_TYPE_BY_STORAGEKEY)
@@ -197,7 +209,8 @@ class DatabaseImpl(
             val fieldsById = fieldsByName.mapKeys { it.value.fieldId }
             // Populate the entity's field data from the database.
             counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUES)
-            val data = mutableMapOf<FieldName, Any?>()
+            val singletons = mutableMapOf<FieldName, Referencable?>()
+            val collections = mutableMapOf<FieldName, Set<Referencable>>()
             rawQuery(
                 "SELECT field_id, value_id FROM field_values WHERE entity_storage_key_id = ?",
                 arrayOf(storageKeyId.toString())
@@ -206,20 +219,33 @@ class DatabaseImpl(
                 val fieldValueId = it.getLong(1)
                 val field = fieldsById.getValue(fieldId)
                 // TODO: Don't do a separate query for every field.
-                data[field.fieldName] = getEntityFieldValue(fieldValueId, field, db, counters)
+                if (field.isCollection) {
+                    collections[field.fieldName] = getEntityFieldValue(
+                        fieldValueId,
+                        field,
+                        db,
+                        counters
+                    ) as Set<Referencable>
+                } else {
+                    singletons[field.fieldName] = getEntityFieldValue(
+                        fieldValueId,
+                        field,
+                        db,
+                        counters
+                    ) as Referencable
+                }
             }
             DatabaseData.Entity(
-                Entity(
+                RawEntity(
                     id = entityId,
-                    schema = schema,
-                    data = data
+                    singletons = singletons,
+                    collections = collections
                 ),
+                schema,
                 versionNumber,
                 versionMap
             )
-        } ?: throw IllegalArgumentException(
-            "Entity at storage key $storageKey does not exist."
-        )
+        }
     }
 
     private fun getEntityFieldValue(
@@ -267,14 +293,13 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Collection = readableDatabase.useTransaction {
+    ): DatabaseData.Collection? = readableDatabase.useTransaction {
         val db = this
         counters?.increment(DatabaseCounters.GET_COLLECTION_ID)
-        val (collectionId, versionMap, versionNumber) = requireNotNull(
+        val (collectionId, versionMap, versionNumber) =
             getCollectionMetadata(storageKey, DataType.Collection, db)
-        ) {
-            "Collection at storage key $storageKey does not exist."
-        }
+                ?: return@useTransaction null
+
         counters?.increment(DatabaseCounters.GET_COLLECTION_ENTRIES)
         val values = getCollectionReferenceEntries(collectionId, db)
         DatabaseData.Collection(
@@ -290,14 +315,13 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Singleton = readableDatabase.useTransaction {
+    ): DatabaseData.Singleton? = readableDatabase.useTransaction {
         val db = this
         counters?.increment(DatabaseCounters.GET_SINGLETON_ID)
-        val (collectionId, versionMap, versionNumber) = requireNotNull(
+        val (collectionId, versionMap, versionNumber) =
             getCollectionMetadata(storageKey, DataType.Singleton, db)
-        ) {
-            "Singleton at storage key $storageKey does not exist."
-        }
+                ?: return@useTransaction null
+
         counters?.increment(DatabaseCounters.GET_SINGLETON_ENTRIES)
         val values = getCollectionReferenceEntries(collectionId, db)
         require(values.size <= 1) {
@@ -332,7 +356,7 @@ class DatabaseImpl(
             }
         }
         // TODO: Return a proper database version number.
-        return@timeSuspending 1
+        return@timeSuspending data.databaseVersion
     }.also { newVersion ->
         clientFlow.filter { it.storageKey == storageKey }
             .onEach { it.onDatabaseUpdate(data, newVersion, originatingClientId) }
@@ -346,9 +370,9 @@ class DatabaseImpl(
         counters: Counters? = null
     ) = writableDatabase.useTransaction {
         val db = this
-        val entity = data.entity
+        val entity = data.rawEntity
         // Fetch/create the entity's type ID.
-        val schemaTypeId = getSchemaTypeId(entity.schema, db, counters)
+        val schemaTypeId = getSchemaTypeId(data.schema, db, counters)
         // Create a new ID for the storage key.
         val storageKeyId = createEntityStorageKeyId(
             storageKey,
@@ -365,7 +389,7 @@ class DatabaseImpl(
         val content = ContentValues().apply {
             put("entity_storage_key_id", storageKeyId)
         }
-        entity.data.forEach { (fieldName, fieldValue) ->
+        entity.allData.forEach { (fieldName, fieldValue) ->
             content.apply {
                 val field = fields.getValue(fieldName)
                 put("field_id", field.fieldId)
@@ -385,7 +409,7 @@ class DatabaseImpl(
                         )
                     }
                     isPrimitiveType(field.typeId) -> {
-                        getPrimitiveValueId(fieldValue, field.typeId, db, counters)
+                        getPrimitiveValueId(fieldValue as Referencable, field.typeId, db, counters)
                     }
                     else -> {
                         require(fieldValue is Reference) {
@@ -434,7 +458,7 @@ class DatabaseImpl(
         }
         // TODO: Don't do this one-by-one.
         val valueIds = if (isPrimitiveType(typeId)) {
-            elements.map { getPrimitiveValueId(it, typeId, db) }
+            elements.map { getPrimitiveValueId(it as Referencable, typeId, db) }
         } else {
             elements.map {
                 require(it is Reference) {
@@ -513,10 +537,7 @@ class DatabaseImpl(
         } else {
             // Collection already exists; delete all existing entries.
             val collectionId = metadata.collectionId
-            require(data.databaseVersion > metadata.versionNumber) {
-                "Given version (${data.databaseVersion}) must be greater than version in " +
-                    "database (${metadata.versionNumber}) when updating storage key $storageKey."
-            }
+            if (data.databaseVersion <= metadata.versionNumber) return@useTransaction
 
             // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
             when (dataType) {
@@ -896,18 +917,20 @@ class DatabaseImpl(
             return db.rawQuery(
                 "SELECT value_id FROM collection_entries WHERE collection_id = ?",
                 arrayOf(collectionId.toString())
-            ).map { it.getBoolean(0) }.toSet()
+            ).map { it.getBoolean(0).toReferencable() }.toSet()
         }
 
         // For strings and numbers, join against the appropriate primitive table.
         val (tableName, valueGetter) = when (typeId.toInt()) {
             PrimitiveType.Text.ordinal -> {
                 counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_TEXT)
-                TABLE_TEXT_PRIMITIVES to { cursor: Cursor -> cursor.getString(0) }
+                TABLE_TEXT_PRIMITIVES to { cursor: Cursor -> cursor.getString(0).toReferencable() }
             }
             PrimitiveType.Number.ordinal -> {
                 counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_NUMBER)
-                TABLE_NUMBER_PRIMITIVES to { cursor: Cursor -> cursor.getDouble(0) }
+                TABLE_NUMBER_PRIMITIVES to {
+                    cursor: Cursor -> cursor.getDouble(0).toReferencable()
+                }
             }
             else -> throw IllegalArgumentException("Not a primitive type ID: $typeId")
         }
@@ -978,11 +1001,15 @@ class DatabaseImpl(
      */
     @VisibleForTesting
     fun getPrimitiveValueId(
-        value: Any?,
+        primitiveValue: Referencable,
         typeId: TypeId,
         db: SQLiteDatabase,
         counters: Counters? = null
     ): FieldValueId {
+        require(primitiveValue is ReferencablePrimitive<*>) {
+            "Expected value to be a ReferencablePrimitive but was $primitiveValue."
+        }
+        val value = primitiveValue.value
         // TODO: Cache the most frequent values somehow.
         if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
             counters?.increment(DatabaseCounters.GET_BOOLEAN_VALUE_ID)
@@ -1045,8 +1072,8 @@ class DatabaseImpl(
             PrimitiveType.Boolean.ordinal -> {
                 counters?.increment(DatabaseCounters.GET_PRIMITIVE_VALUE_BOOLEAN)
                 when (valueId) {
-                    1L -> true
-                    0L -> false
+                    1L -> true.toReferencable()
+                    0L -> false.toReferencable()
                     else -> throw IllegalArgumentException(
                         "Expected $valueId to be a Boolean (0 or 1)."
                     )
@@ -1054,11 +1081,11 @@ class DatabaseImpl(
             }
             PrimitiveType.Text.ordinal -> {
                 counters?.increment(DatabaseCounters.GET_PRIMITIVE_VALUE_TEXT)
-                runSelectQuery(TABLE_TEXT_PRIMITIVES)
+                runSelectQuery(TABLE_TEXT_PRIMITIVES).toReferencable()
             }
             PrimitiveType.Number.ordinal -> {
                 counters?.increment(DatabaseCounters.GET_PRIMITIVE_VALUE_NUMBER)
-                runSelectQuery(TABLE_NUMBER_PRIMITIVES).toDouble()
+                runSelectQuery(TABLE_NUMBER_PRIMITIVES).toDouble().toReferencable()
             }
             else -> throw IllegalArgumentException("Not a primitive type ID: $typeId")
         }
@@ -1128,7 +1155,13 @@ class DatabaseImpl(
 
         val str = getString(column)
         val bytes = ByteString.copyFromUtf8(str)
-        val proto = VersionMapProto.parseFrom(bytes)
+        val proto: VersionMapProto
+        try {
+            proto = VersionMapProto.parseFrom(bytes)
+        } catch (e: InvalidProtocolBufferException) {
+            log.error(e) { "Parsing serialized VersionMap \"$str\"." }
+            throw e
+        }
         return fromProto(proto)
     }
 

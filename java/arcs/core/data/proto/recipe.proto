@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+package arcs;
+
+option java_package = "arcs.core.data.proto";
+option java_multiple_files = true;
+
+// Holds a single plan and particle specs used by it.
+message RecipeEnvelopeProto {
+  RecipeProto recipe = 1;
+  repeated ParticleSpecProto particle_specs = 2;
+}
+
+// Plan: A resolved recipe that can be instantiated.
+message RecipeProto {
+  // Optional recipe name.
+  string name = 1;
+  repeated HandleProto handles = 2;
+  repeated ParticleProto particles = 3;
+}
+
+// Recipe-level representation of a store.
+message HandleProto {
+  enum Fate {
+    CREATE = 0;
+    USE = 1;
+    MAP = 2;
+    COPY = 3;
+    JOIN = 4;
+  }
+
+  // Identifies a handle in a recipe.
+  string name = 1;
+  Fate fate = 2;
+  string storage_key = 3;
+  TypeProto type = 4;
+  // Only present for fate = JOIN handles.
+  repeated string associated_handles = 5;
+}
+
+// A single particle instance in a recipe.
+message ParticleProto {
+  // Refers to envelope.particle_specs.name
+  string spec_name = 1;
+  repeated HandleConnectionProto connections = 2;
+}
+
+// A connection between a handle instance and a particle instance.
+message HandleConnectionProto {
+  // Refers to envelope.particle_specs.connections.name
+  string name = 1;
+  // Refers to envelope.recipe.handles.name
+  string handle = 2;
+}
+
+// Defines a particle contract and links it with implementation.
+// A single spec can be instantiated multiple times in a recipe.
+message ParticleSpecProto {
+  // Identifies a particle spec in an envelope.
+  string name = 1;
+  repeated HandleConnectionSpecProto connections = 2;
+  // Location of the implementation.
+  string location = 3;
+}
+
+// Defines a single connection of a particle spec.
+message HandleConnectionSpecProto {
+  enum Direction {
+    READS = 0;
+    WRITES = 1;
+    READS_WRITES = 2;
+  }
+  // Identifies a connection in a particle spec.
+  string name = 1;
+  Direction direction = 2;
+  TypeProto type = 3;
+}
+
+// Representation of a type in Arcs.
+message TypeProto {
+  oneof data {
+    PrimitiveTypeProto primitive = 1;
+    EntityTypeProto entity = 2;
+    CollectionTypeProto collection = 3;
+    ReferenceTypeProto reference = 4;
+    TupleTypeProto tuple = 5;
+    TypeVariableProto variable = 6;
+  }
+  bool optional = 10;
+  RefinementExpressionProto refinement = 11;
+}
+
+enum PrimitiveTypeProto {
+  TEXT = 0;
+  NUMBER = 1;
+  BOOLEAN = 2;
+}
+
+message EntityTypeProto {
+  SchemaProto schema = 1;
+}
+
+message CollectionTypeProto {
+  TypeProto collection_type = 1;
+}
+
+message TupleTypeProto {
+  repeated TypeProto elements = 1;
+}
+
+message ReferenceTypeProto {
+  TypeProto referred_type = 1;
+}
+
+message TypeVariableProto {
+  // Identifies a type variable in a recipe or a particle spec.
+  // Type variables with the same name are linked together.
+  string name = 1;
+}
+
+message SchemaProto {
+  repeated string names = 1;
+  map<string, TypeProto> fields = 2;
+  string hash = 3;
+}
+
+enum OPERATOR {
+  AND = 0;
+  OR = 1;
+  LESS_THAN = 2;
+  GREATER_THAN = 3;
+  LESS_THAN_OR_EQUALS = 4;
+  GREATER_THAN_OR_EQUALS = 5;
+  ADD = 6;
+  SUBTRACT = 7;
+  MULTIPLY = 8;
+  DIVIDE = 9;
+  NOT = 10;
+  NEGATE = 11;
+  EQUALS = 12;
+  NOT_EQUALS = 13;
+}
+
+message RefinementExpressionProto {
+  oneof expression {
+    // E.g. "age > 18"
+    BinaryExpressionProto binary = 1;
+    // E.g. "-duration"
+    UnaryExpressionProto unary = 2;
+    // Name of a schema field.
+    string field = 3;
+    // Value to be substituted at query time.
+    // String value identifies a query argument in a refinement.
+    string query_argument = 4;
+    // E.g. 18
+    double number = 5;
+    // E.g. true
+    bool boolean = 6;
+    // E.g. "Sydney"
+    string text = 7;
+  }
+}
+
+message BinaryExpressionProto {
+  RefinementExpressionProto left_expr = 1;
+  RefinementExpressionProto right_expr = 2;
+  OPERATOR operator = 3;
+}
+
+message UnaryExpressionProto {
+  RefinementExpressionProto expr = 1;
+  OPERATOR operator = 2;
+}

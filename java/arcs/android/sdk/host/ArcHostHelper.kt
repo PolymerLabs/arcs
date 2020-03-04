@@ -64,7 +64,7 @@ import kotlinx.coroutines.launch
 class ArcHostHelper(
     private val service: Service,
     private val arcHost: ArcHost,
-    private val coroutineContext: CoroutineContext = Dispatchers.IO
+    private val coroutineContext: CoroutineContext = Dispatchers.Unconfined
 ) {
     private val job = Job() + coroutineContext + CoroutineName("ArcHostHelper")
 

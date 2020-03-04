@@ -2,11 +2,6 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_library",
 )
-load(
-    "//third_party/java/arcs/build_defs:native.oss.bzl",
-    "android_proto_library",
-    "proto_library",
-)
 
 licenses(["notice"])
 
@@ -32,6 +27,8 @@ arcs_kt_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
+        "//java/arcs/core/util",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
@@ -41,14 +38,4 @@ arcs_kt_library(
     deps = [
         "//java/arcs/core/common",
     ],
-)
-
-proto_library(
-    name = "recipe_proto",
-    srcs = ["recipe.proto"],
-)
-
-android_proto_library(
-    name = "recipe_android_proto",
-    deps = [":recipe_proto"],
 )

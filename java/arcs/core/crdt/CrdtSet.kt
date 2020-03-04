@@ -158,7 +158,7 @@ class CrdtSet<T : Referencable>(
 
         private fun <T : Referencable> Map<ReferenceId, DataValue<T>>.toStringRepr(): String =
             entries.joinToString(prefix = "{", postfix = "}") { (id, value) ->
-                "${ReferencablePrimitive.tryDereference(id) ?: id}=$value"
+                "${ReferencablePrimitive.unwrap(id) ?: id}=$value"
             }
     }
 

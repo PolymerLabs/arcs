@@ -11,6 +11,8 @@
 
 package arcs.core.data
 
+import arcs.core.util.Time
+
 /** A class containing retention policy information. */
 sealed class Ttl(count: Int, val isInfinite: Boolean = false) {
     val minutes: Int = count * when (this) {
@@ -30,6 +32,10 @@ sealed class Ttl(count: Int, val isInfinite: Boolean = false) {
         other is Ttl && minutes == other.minutes
 
     override fun hashCode(): Int = minutes.hashCode()
+
+    fun calculateExpiration(time: Time): Long =
+        if (isInfinite) RawEntity.UNINITIALIZED_TIMESTAMP
+        else requireNotNull(time).currentTimeMillis + (minutes * 60 * 1000)
 
     data class Minutes(val count: Int) : Ttl(count)
     data class Hours(val count: Int) : Ttl(count)

@@ -1172,13 +1172,16 @@ export class SQLExtracter {
   }
 }
 
-export class Fraction {
-  num: Polynomial;
-  den: Polynomial;
+// A constant is represented by an empty Term object, where there is no indeterminate.
+const CONSTANT = '{}';
 
-  constructor(n?: Polynomial, d?: Polynomial) {
-    this.num = n ? Polynomial.copyOf(n) : new Polynomial();
-    this.den = d ? Polynomial.copyOf(d) : new Polynomial([1]);
+export class Fraction {
+  num: Multinomial;
+  den: Multinomial;
+
+  constructor(n?: Multinomial, d?: Multinomial) {
+    this.num = n ? Multinomial.copyOf(n) : new Multinomial();
+    this.den = d ? Multinomial.copyOf(d) : new Multinomial({[CONSTANT]: 1});
     if (this.den.isZero()) {
       throw new Error('Division by zero.');
     }
@@ -1186,13 +1189,13 @@ export class Fraction {
   }
 
   static add(a: Fraction, b: Fraction): Fraction {
-    const den = Polynomial.multiply(a.den, b.den);
-    const num = Polynomial.add(Polynomial.multiply(a.num, b.den), Polynomial.multiply(b.num, a.den));
+    const den = Multinomial.multiply(a.den, b.den);
+    const num = Multinomial.add(Multinomial.multiply(a.num, b.den), Multinomial.multiply(b.num, a.den));
     return new Fraction(num, den);
   }
 
   static negate(a: Fraction): Fraction {
-    return new Fraction(Polynomial.negate(a.num), a.den);
+    return new Fraction(Multinomial.negate(a.num), a.den);
   }
 
   static subtract(a: Fraction, b: Fraction): Fraction {
@@ -1201,7 +1204,7 @@ export class Fraction {
   }
 
   static multiply(a: Fraction, b: Fraction): Fraction {
-    return new Fraction(Polynomial.multiply(a.num, b.num), Polynomial.multiply(a.den, b.den));
+    return new Fraction(Multinomial.multiply(a.num, b.num), Multinomial.multiply(a.den, b.den));
   }
 
   static divide(a: Fraction, b: Fraction): Fraction {
@@ -1211,12 +1214,21 @@ export class Fraction {
 
   reduce() {
     if (this.num.isZero()) {
-      this.den = new Polynomial([1]);
+      this.den = new Multinomial({[CONSTANT]: 1});
       return;
     }
-    if (this.num.isConstant() && this.den.isConstant()) {
-      this.num = new Polynomial([this.num.coeffs[0]/this.den.coeffs[0]]);
-      this.den = new Polynomial([1]);
+    if (this.num.isConstant() &&
+        this.den.isConstant() &&
+        Number.isInteger(this.num.terms[CONSTANT]) &&
+        Number.isInteger(this.den.terms[CONSTANT])
+    ) {
+      const gcd = (a: number, b: number) => {
+        a = Math.abs(a); b = Math.abs(b);
+        return b === 0 ? a : gcd(b, a%b);
+      };
+      const g = gcd(this.num.terms[CONSTANT], this.den.terms[CONSTANT]);
+      this.num = new Multinomial({[CONSTANT]: this.num.terms[CONSTANT]/g});
+      this.den = new Multinomial({[CONSTANT]: this.den.terms[CONSTANT]/g});
       return;
     }
     // TODO(ragdev): Fractions can be reduced further by factoring out the gcd of
@@ -1234,9 +1246,10 @@ export class Fraction {
       const fn = Fraction.fromExpression(expr.expr);
       return Fraction.updateGivenOp(expr.operator.op, [fn]);
     } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.NUMBER) {
-      return new Fraction(new Polynomial([0, 1], expr.value));
+      const term = new Term({[expr.value]: 1});
+      return new Fraction(new Multinomial({[term.toKey()]: 1}));
     } else if (expr instanceof NumberPrimitive) {
-      return new Fraction(new Polynomial([expr.value]));
+      return new Fraction(new Multinomial({[CONSTANT]: expr.value}));
     }
     throw new Error(`Cannot resolve expression: ${expr.toString()}`);
   }
@@ -1254,143 +1267,219 @@ export class Fraction {
   }
 }
 
-export class Polynomial {
-  private _coeffs: number[];
-  indeterminate?: string;
+export class Term {
+  private _indeterminates: Dictionary<number>;
 
-  constructor(coeffs: number[] = [0], variable?: string) {
-    this.coeffs = coeffs;
-    this.indeterminate = variable;
+  constructor(indeterminates: Dictionary<number> = {}) {
+    this.indeterminates = indeterminates;
   }
 
-  static copyOf(pn: Polynomial): Polynomial {
-    return new Polynomial(pn.coeffs, pn.indeterminate);
+  static copyOf(tm: Term): Term {
+    return new Term(tm.indeterminates);
   }
 
-  get coeffs(): number[] {
-    while (this._coeffs.length >= 1 && this._coeffs[this._coeffs.length - 1] === 0) {
-      this._coeffs.pop();
-    }
-    if (this._coeffs.length === 0) {
-      this._coeffs.push(0);
-    }
-    return this._coeffs;
-  }
-
-  set coeffs(cfs: number[]) {
-    this._coeffs = [...cfs];
-  }
-
-  degree(): number {
-    return this.coeffs.length - 1;
-  }
-
-  static assertCompatibility(a: Polynomial, b: Polynomial) {
-    if (a.indeterminate && b.indeterminate && a.indeterminate !== b.indeterminate) {
-      throw new Error('Incompatible polynomials');
-    }
-  }
-
-  static add(a: Polynomial, b: Polynomial): Polynomial {
-    Polynomial.assertCompatibility(a, b);
-    const sum = a.degree() > b.degree() ? Polynomial.copyOf(a) : Polynomial.copyOf(b);
-    const other = a.degree() > b.degree() ? b : a;
-    for (const [i, coeff] of other.coeffs.entries()) {
-      sum.coeffs[i] += coeff;
-    }
-    return sum;
-  }
-
-  static subtract(a: Polynomial, b: Polynomial): Polynomial {
-    Polynomial.assertCompatibility(a, b);
-    return Polynomial.add(a, Polynomial.negate(b));
-  }
-
-  static negate(a: Polynomial): Polynomial {
-    return new Polynomial(a.coeffs.map(co => -co), a.indeterminate);
-  }
-
-  static multiply(a: Polynomial, b: Polynomial): Polynomial {
-    Polynomial.assertCompatibility(a, b);
-    const deg = a.degree() + b.degree();
-    const coeffs = new Array(deg+1).fill(0);
-    for (let i = 0; i < coeffs.length; i += 1) {
-      for (let j = 0; j <= i; j += 1) {
-        if (j <= a.degree() && (i-j) <= b.degree()) {
-          coeffs[i] += a.coeffs[j]*b.coeffs[i-j];
-        }
+  get indeterminates(): Dictionary<number> {
+    for (const [indeterminate, power] of Object.entries(this._indeterminates)) {
+      if (power === 0) {
+        delete this._indeterminates[indeterminate];
       }
     }
-    return new Polynomial(coeffs, a.indeterminate || b.indeterminate);
+    return this._indeterminates;
   }
 
-  isZero(): boolean {
-    return this.isConstant() && this.coeffs[0] === 0;
+  set indeterminates(indtrms: Dictionary<number>) {
+    this._indeterminates = {...indtrms};
   }
 
-  isConstant(): boolean {
-    return this.degree() === 0;
+  toKey(): string {
+    // sort the indeterminates
+    const ordered = {};
+    const unordered = this.indeterminates;
+    Object.keys(unordered).sort().forEach((key) => {
+      ordered[key] = unordered[key];
+    });
+    return JSON.stringify(ordered);
   }
 
-  static inderminateToExpression(pow: number, fn: string): RefinementExpression {
-    if (pow < 0) {
-      throw new Error('Must have non-negative power.');
-    }
-    if (pow === 0) {
-      return new NumberPrimitive(1);
+  static fromKey(key: string): Term {
+    return new Term(JSON.parse(key));
+  }
+
+  static indeterminateToExpression(fn: string, pow: number): RefinementExpression {
+    if (pow <= 0) {
+      throw new Error('Must have positive power.');
     }
     if (pow === 1) {
       return new FieldNamePrimitive(fn, Primitive.NUMBER);
     }
     return new BinaryExpression(
-      Polynomial.inderminateToExpression(1, fn),
-      Polynomial.inderminateToExpression(pow-1, fn),
+      Term.indeterminateToExpression(fn, 1),
+      Term.indeterminateToExpression(fn, pow - 1),
       new RefinementOperator(Op.MUL));
   }
 
-  // returns ax^n + bx^n-1 + ... c  <op> 0
+  // assumes that term is not a constant i.e. not {}
+  toExpression(): RefinementExpression {
+    if (Object.keys(this.indeterminates).length === 0) {
+      throw new Error('Cannot convert an empty term to expression');
+    }
+    let expr = null;
+    for (const [indeterminate, power] of Object.entries(this.indeterminates)) {
+      const indtrExpr = Term.indeterminateToExpression(indeterminate, power);
+      expr = expr ? new BinaryExpression(expr, indtrExpr, new RefinementOperator(Op.MUL)) : indtrExpr;
+    }
+    return expr;
+  }
+}
+
+export class Multinomial {
+  private _terms: Dictionary<number>;
+
+  constructor(terms: Dictionary<number> = {}) {
+    this.terms = terms;
+  }
+
+  static copyOf(mn: Multinomial): Multinomial {
+    return new Multinomial(mn.terms);
+  }
+
+  get terms(): Dictionary<number> {
+    for (const [term, coeff] of Object.entries(this._terms)) {
+      if (coeff === 0) {
+        delete this._terms[term];
+      }
+    }
+    const ordered = {};
+    const unordered = this._terms;
+    Object.keys(unordered).sort().forEach((key) => {
+      ordered[key] = unordered[key];
+    });
+    this._terms = ordered;
+    return this._terms;
+  }
+
+  set terms(tms: Dictionary<number>) {
+    this._terms = {...tms};
+  }
+
+  static add(a: Multinomial, b: Multinomial): Multinomial {
+    const sum = Multinomial.copyOf(a);
+    for (const [term, coeff] of Object.entries(b.terms)) {
+      const val = (sum.terms[term] || 0) + coeff;
+      sum.terms[term] = val;
+    }
+    return sum;
+  }
+
+  static subtract(a: Multinomial, b: Multinomial): Multinomial {
+    return Multinomial.add(a, Multinomial.negate(b));
+  }
+
+  static negate(a: Multinomial): Multinomial {
+    const neg = Multinomial.copyOf(a);
+    for (const [term, coeff] of Object.entries(neg.terms)) {
+      neg.terms[term] = -coeff;
+    }
+    return neg;
+  }
+
+  static multiply(a: Multinomial, b: Multinomial): Multinomial {
+    const prod = new Multinomial();
+    for (const [aKey, acoeff] of Object.entries(a.terms)) {
+      for (const [bKey, bcoeff] of Object.entries(b.terms)) {
+        const tprod = Term.fromKey(aKey);
+        const bterm = Term.fromKey(bKey);
+        for (const [indeterminate, power] of Object.entries(bterm.indeterminates)) {
+          const val = power + (tprod.indeterminates[indeterminate] || 0);
+          tprod.indeterminates[indeterminate] = val;
+        }
+        const val = acoeff*bcoeff + (prod.terms[tprod.toKey()] || 0);
+        prod.terms[tprod.toKey()] = val;
+      }
+    }
+    return prod;
+  }
+
+  isZero(): boolean {
+    return Object.keys(this.terms).length === 0;
+  }
+
+  isConstant(): boolean {
+    return this.isZero() || (Object.keys(this.terms).length === 1 && this.terms.hasOwnProperty(CONSTANT));
+  }
+
+  getIndeterminates(): Set<string> {
+    const indeterminates = new Set<string>();
+    for (const tKey of Object.keys(this.terms)) {
+      const term = Term.fromKey(tKey);
+      for (const indeterminate of Object.keys(term.indeterminates)) {
+        indeterminates.add(indeterminate);
+      }
+    }
+    return indeterminates;
+  }
+
+  isUnivariate(): boolean {
+    return this.getIndeterminates().size === 1;
+  }
+
+  degree(): number {
+    let degree = 0;
+    for (const tKey of Object.keys(this.terms)) {
+      const term = Term.fromKey(tKey);
+      let sum = 0;
+      for (const power of Object.values(term.indeterminates)) {
+        sum += power;
+      }
+      degree = sum > degree ? sum : degree;
+    }
+    return degree;
+  }
+
+  // returns <multinomial> <op> CONSTANT
   toExpression(op: Op): RefinementExpression {
-    if (this.degree() === 0) {
+    if (this.isConstant()) {
       return new BinaryExpression(
-        new NumberPrimitive(this.coeffs[0]),
+        new NumberPrimitive(this.isZero() ? 0 : this.terms[CONSTANT]),
         new NumberPrimitive(0),
         new RefinementOperator(op));
     }
-    if (!this.indeterminate) {
-      throw new Error('FieldName not found!');
-    }
-    if (this.degree() === 1) {
-      // ax+b <op1> 0 => x <op2> -b/a
+    if (this.isUnivariate() && this.degree() === 1) {
       const operator = new RefinementOperator(op);
-      if (this.coeffs[1] < 0) {
+      const indeterminate = this.getIndeterminates().values().next().value;
+      // TODO(ragdev): Implement a neater way to get the leading coefficient
+      const leadingCoeff = this.terms[`{"${indeterminate}":1}`];
+      const cnst = this.terms[CONSTANT] || 0;
+      if (leadingCoeff < 0) {
         operator.flip();
       }
       return new BinaryExpression(
-        new FieldNamePrimitive(this.indeterminate, Primitive.NUMBER),
-        new NumberPrimitive(-this.coeffs[0]/this.coeffs[1]),
+        new FieldNamePrimitive(indeterminate, Primitive.NUMBER),
+        new NumberPrimitive(-cnst/leadingCoeff),
         operator);
     }
+    const termToExpression = (tKey: string, tCoeff: number) => {
+      const termExpr = Term.fromKey(tKey).toExpression();
+      if (tCoeff === 1) {
+        return termExpr;
+      }
+      return new BinaryExpression(
+        new NumberPrimitive(tCoeff),
+        termExpr,
+        new RefinementOperator(Op.MUL)
+      );
+    };
     let expr = null;
-    for (let i = this.coeffs.length - 1; i >= 0; i -= 1) {
-      if (this.coeffs[i] === 0) {
-        continue;
-      }
-      let termExpr = null;
-      if (i > 0) {
-        termExpr = Polynomial.inderminateToExpression(i, this.indeterminate);
-        if (Math.abs(this.coeffs[i]) !== 1) {
-          termExpr = new BinaryExpression(
-            new NumberPrimitive(this.coeffs[i]),
-            termExpr,
-            new RefinementOperator(Op.MUL)
-          );
-        }
+    let cnst = 0;
+    for (const [tKey, tCoeff] of Object.entries(this.terms)) {
+      if (tKey === CONSTANT) {
+        cnst = tCoeff;
       } else {
-        termExpr = new NumberPrimitive(this.coeffs[0]);
+        const termExpr = termToExpression(tKey, tCoeff);
+        expr = expr ? new BinaryExpression(expr, termExpr, new RefinementOperator(Op.ADD)) : termExpr;
       }
-      expr = expr ? new BinaryExpression(expr, termExpr, new RefinementOperator(Op.ADD)) : termExpr;
     }
-    return new BinaryExpression(expr, new NumberPrimitive(0), new RefinementOperator(op));
+    return new BinaryExpression(expr, new NumberPrimitive(-cnst), new RefinementOperator(op));
   }
 }
 

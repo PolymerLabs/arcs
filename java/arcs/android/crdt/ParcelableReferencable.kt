@@ -13,11 +13,12 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import android.os.Parcelable
+import arcs.android.crdt.ParcelableReferencable.Type
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencablePrimitive
-import java.lang.IllegalArgumentException
+import arcs.core.storage.Reference
 import javax.annotation.OverridingMethodsMustInvokeSuper
 
 /**
@@ -34,6 +35,7 @@ interface ParcelableReferencable : Parcelable {
         // TODO: Add other ParcelableReferencable subclasses.
         RawEntity(ParcelableRawEntity.CREATOR),
         CrdtEntityReferenceImpl(ParcelableCrdtEntity.ReferenceImpl),
+        StorageReferenceImpl(ParcelableReference.CREATOR),
         Primitive(ParcelableReferencablePrimitive.CREATOR);
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -56,6 +58,7 @@ interface ParcelableReferencable : Parcelable {
                 // TODO: Add other ParcelableReferencable subclasses.
                 is ParcelableRawEntity -> Type.RawEntity
                 is ParcelableCrdtEntity.ReferenceImpl -> Type.CrdtEntityReferenceImpl
+                is ParcelableReference -> Type.StorageReferenceImpl
                 is ParcelableReferencablePrimitive -> Type.Primitive
                 else -> throw IllegalArgumentException(
                     "Unsupported Referencable type: ${this.javaClass}"
@@ -71,6 +74,7 @@ interface ParcelableReferencable : Parcelable {
         operator fun invoke(actual: Referencable): ParcelableReferencable = when (actual) {
             // TODO: Add other ParcelableReferencable subclasses.
             is RawEntity -> ParcelableRawEntity(actual)
+            is Reference -> ParcelableReference(actual)
             is CrdtEntity.ReferenceImpl -> ParcelableCrdtEntity.ReferenceImpl(actual)
             is ReferencablePrimitive<*> -> ParcelableReferencablePrimitive(actual)
             else ->

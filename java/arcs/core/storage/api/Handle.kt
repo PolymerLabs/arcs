@@ -21,16 +21,19 @@ interface ReadableSingleton<T : Entity> : Handle {
     /** Returns the value of the singleton. */
     suspend fun fetch(): T?
 
-    fun onUpdate(action: (T?) -> Unit)
+    suspend fun onUpdate(action: (T?) -> Unit)
+
+    /** Assign a callback when the handle is synced. */
+    suspend fun onSync(action: (ReadableSingleton<T>) -> Unit)
+
+    /** Assign a callback when the handle is sdeynced. */
+    suspend fun onDesync(action: (ReadableSingleton<T>) -> Unit)
 }
 
 /** A singleton handle with write access. */
 interface WritableSingleton<T : Entity> : Handle {
     /** Sets the value of the singleton. */
     suspend fun store(entity: T)
-
-    /** TODO(heimlich): remove this once all particles are changed. */
-    suspend fun set(entity: T) = store(entity)
 
     /** Clears the value of the singleton. */
     suspend fun clear()
@@ -48,7 +51,13 @@ interface ReadableCollection<T : Entity> : Handle {
     suspend fun isEmpty(): Boolean
 
     /** Assign a callback when the collection is Updated. */
-    fun onUpdate(action: (Set<T>) -> Unit)
+    suspend fun onUpdate(action: (Set<T>) -> Unit)
+
+    /** Assign a callback when the collection handle is synced. */
+    suspend fun onSync(action: (ReadableCollection<T>) -> Unit)
+
+    /** Assign a callback when the collection handle is desynced. */
+    suspend fun onDesync(action: (ReadableCollection<T>) -> Unit)
 
     /** Returns a set with all the entities in the collection. */
     suspend fun fetchAll(): Set<T>

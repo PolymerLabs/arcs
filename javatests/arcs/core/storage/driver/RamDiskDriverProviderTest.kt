@@ -14,7 +14,6 @@ package arcs.core.storage.driver
 import arcs.core.common.ArcId
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -73,7 +72,7 @@ class RamDiskDriverProviderTest {
         val provider = RamDiskDriverProvider()
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
-        provider.getDriver(volatile, ExistenceCriteria.ShouldCreate, Int::class)
+        provider.getDriver(volatile, Int::class)
         Unit
     }
 
@@ -84,9 +83,9 @@ class RamDiskDriverProviderTest {
 
         val key = RamDiskStorageKey("foo")
 
-        val driver1 = provider1.getDriver(key, ExistenceCriteria.MayExist, Int::class)
-        val driver2 = provider1.getDriver(key, ExistenceCriteria.MayExist, Int::class)
-        val driver3 = provider2.getDriver(key, ExistenceCriteria.MayExist, Int::class)
+        val driver1 = provider1.getDriver(key, Int::class)
+        val driver2 = provider1.getDriver(key, Int::class)
+        val driver3 = provider2.getDriver(key, Int::class)
 
         var driver2Value: Int? = null
         var driver2Version: Int? = null

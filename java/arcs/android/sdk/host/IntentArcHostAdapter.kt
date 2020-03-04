@@ -53,9 +53,8 @@ class IntentArcHostAdapter(
         )
     }
 
-    override suspend fun isHostForParticle(particle: Plan.Particle): Boolean {
-        return registeredParticles().contains(ParticleIdentifier.from(particle.location))
-    }
+    override suspend fun isHostForParticle(particle: Plan.Particle) =
+        registeredParticles().contains(ParticleIdentifier.from(particle.location))
 
     /**
      * Asynchronously send an [ArcHost] command via [Intent] without waiting for return result.

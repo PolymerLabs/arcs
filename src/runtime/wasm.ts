@@ -872,6 +872,13 @@ export class WasmParticle extends Particle {
   // Ignored for wasm particles.
   async onHandleDesync(handle: Handle<CRDTTypeRecord>) {}
 
+  async onCreate() {
+    // TODO(heimlich, 4798): not yet implemented in CPP
+    if (this.exports['_onCreate']) {
+      this.exports._onCreate(this.innerParticle);
+    }
+  }
+
   // Store API.
   //
   // Each of these calls an async storage method, but we don't want to await them because returning

@@ -24,37 +24,84 @@ data class RawEntity(
      * Collection ([Set]) fields and the set of [ReferenceId]s referencing the values in those
      * collections.
      */
-    val collections: Map<FieldName, Set<Referencable>> = emptyMap(),
-    /** Indication of the timestamp when this entity expires. */
-    @Suppress("GoodTime") // use Instant
-    val expirationTimestamp: Long = NO_EXPIRATION
+    val collections: Map<FieldName, Set<Referencable>> = emptyMap()
 ) : Referencable {
-    override fun tryDereference(): Referencable {
-        return RawEntity(
+    override fun unwrap(): Referencable {
+        val entity = RawEntity(
             id = id,
+            creationTimestamp = creationTimestamp,
             expirationTimestamp = expirationTimestamp,
-            singletons = singletons.mapValues { it.value?.tryDereference() },
+            singletons = singletons.mapValues { it.value?.unwrap() },
             collections = collections.mapValues {
-                it.value.map { item -> item.tryDereference() }.toSet()
+                it.value.map { item -> item.unwrap() }.toSet()
             }
         )
+        entity.creationTimestamp = creationTimestamp
+        entity.expirationTimestamp = expirationTimestamp
+        return entity
     }
+
+    /** Entity creation time (in millis). */
+    @Suppress("GoodTime") // use Instant
+    override var creationTimestamp: Long = UNINITIALIZED_TIMESTAMP
+        set(value) {
+            require(this.creationTimestamp == UNINITIALIZED_TIMESTAMP) {
+                "cannot override creationTimestamp $value"
+            }
+            @Suppress("GoodTime") // use Instant
+            field = value
+        }
+
+    /** Entity expiration time (in millis). */
+    @Suppress("GoodTime") // use Instant
+    override var expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
+        set(value) {
+            require(this.expirationTimestamp == UNINITIALIZED_TIMESTAMP) {
+                "cannot override expirationTimestamp $value"
+            }
+            @Suppress("GoodTime") // use Instant
+            field = value
+        }
+
+    /** Iterates over of all field data (both singletons and collections). */
+    val allData: Sequence<Map.Entry<FieldName, Any?>>
+        get() = sequence {
+            yieldAll(singletons.asIterable())
+            yieldAll(collections.asIterable())
+        }
 
     /** Constructor for a [RawEntity] when only the field names are known. */
     constructor(
         id: ReferenceId = NO_REFERENCE_ID,
         singletonFields: Set<FieldName> = emptySet(),
         collectionFields: Set<FieldName> = emptySet(),
-        expirationTimestamp: Long = NO_EXPIRATION
+        creationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
     ) : this(
         id,
         singletonFields.associateWith { null },
-        collectionFields.associateWith { emptySet<Referencable>() },
-        expirationTimestamp
-    )
+        collectionFields.associateWith { emptySet<Referencable>() }
+    ) {
+        this.expirationTimestamp = expirationTimestamp
+    }
 
     companion object {
         const val NO_REFERENCE_ID = "NO REFERENCE ID"
-        const val NO_EXPIRATION: Long = -1
+        const val UNINITIALIZED_TIMESTAMP: Long = -1
     }
+}
+
+fun RawEntity(
+    id: String,
+    singletons: Map<FieldName, Referencable?>,
+    collections: Map<FieldName, Set<Referencable>>,
+    creationTimestamp: Long,
+    expirationTimestamp: Long
+) = RawEntity(
+    id,
+    singletons,
+    collections
+).also {
+    it.creationTimestamp = creationTimestamp
+    it.expirationTimestamp = expirationTimestamp
 }

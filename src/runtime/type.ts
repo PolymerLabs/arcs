@@ -9,9 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Id} from './id.js';
 import {SlotInfo} from './slot-info.js';
-import {ArcInfo} from './synthetic-types.js';
 import {Predicate, Literal} from './hot.js';
 import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
@@ -28,7 +26,7 @@ export interface TypeLiteral extends Literal {
   data?: any;
 }
 
-export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
+export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Tuple' |
   'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton';
 
 type TypeFromLiteral = (literal: TypeLiteral) => Type;
@@ -683,25 +681,24 @@ export class BigCollectionType<T extends Type> extends Type {
   }
 }
 
+export class TupleType extends Type {
+  readonly tupleTypes: Type[];
 
-export class RelationType extends Type {
-  private readonly relationEntities: Type[];
-
-  constructor(relation: Type[]) {
-    super('Relation');
-    this.relationEntities = relation;
+  constructor(tuple: Type[]) {
+    super('Tuple');
+    this.tupleTypes = tuple;
   }
 
-  get isRelation() {
+  get isTuple() {
     return true;
   }
 
   toLiteral(): TypeLiteral {
-    return {tag: this.tag, data: this.relationEntities.map(t => t.toLiteral())};
+    return {tag: this.tag, data: this.tupleTypes.map(t => t.toLiteral())};
   }
 
   toPrettyString(): string {
-    return JSON.stringify(this.relationEntities);
+    return JSON.stringify(this.tupleTypes);
   }
 }
 
@@ -931,26 +928,6 @@ export class ReferenceType extends Type {
     return this.referredType.crdtInstanceConstructor();
   }
 }
-
-
-export class ArcType extends Type {
-  constructor() {
-    super('Arc');
-  }
-
-  get isArc(): boolean {
-    return true;
-  }
-
-  newInstance(arcId: Id, serialization: string): ArcInfo {
-    return new ArcInfo(arcId, serialization);
-  }
-
-  toLiteral(): TypeLiteral {
-    return {tag: this.tag};
-  }
-}
-
 
 export class HandleType extends Type {
   constructor() {

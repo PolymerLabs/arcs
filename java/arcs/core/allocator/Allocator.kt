@@ -12,14 +12,19 @@ package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.common.Id
+import arcs.core.data.CollectionType
 import arcs.core.data.CreateableStorageKey
+import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.data.Schema
+import arcs.core.data.SingletonType
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.type.Type
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -27,7 +32,6 @@ import arcs.core.storage.driver.VolatileStorageKey
  * which it partitions into a set of [Plan.Partition] objects, one per participating
  * [ArcHost] according to [HostRegistry] entries.
  *
- * Each [Plan.Partition] lists a set of [HandleSpec] objects with [arcs.core.storage.StorageKey] and
  * [arcs.core.data.Schema], a set of [Particle]s to instantiate, and connections between each
  * [HandleSpec] and [Particle].
  */
@@ -77,8 +81,8 @@ class Allocator(val hostRegistry: HostRegistry) {
     }
 
     /**
-     * Finds [HandleSpec] instances which were unresolved at build time (null [StorageKey]) and
-     * attaches generated keys.
+     * Finds [HandleConnection] instances which were unresolved at build time
+     * [CreateableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
      */
     private fun createStorageKeysIfNecessary(arcId: ArcId, idGenerator: Id.Generator, plan: Plan) {
         val createdKeys: MutableMap<StorageKey, StorageKey> = mutableMapOf()
@@ -88,7 +92,12 @@ class Allocator(val hostRegistry: HostRegistry) {
                 spec.apply {
                     if (storageKey is CreateableStorageKey) {
                         if (!createdKeys.containsKey(storageKey)) {
-                            createdKeys[storageKey] = createStorageKey(arcId, idGenerator)
+                            createdKeys[storageKey] = createStorageKey(
+                                arcId,
+                                idGenerator,
+                                storageKey as CreateableStorageKey,
+                                type
+                            )
                         }
                         storageKey = createdKeys[storageKey]!!
                     }
@@ -103,13 +112,36 @@ class Allocator(val hostRegistry: HostRegistry) {
      */
     private fun createStorageKey(
         arcId: ArcId,
-        idGenerator: Id.Generator
-    ): StorageKey = VolatileStorageKey(
-            arcId,
-            idGenerator.newChildId(arcId, "").toString()
+        idGenerator: Id.Generator,
+        storageKey: CreateableStorageKey,
+        type: Type
+    ): StorageKey =
+        CapabilitiesResolver(CapabilitiesResolver.CapabilitiesResolverOptions(arcId))
+            .createStorageKey(
+                storageKey.capabilities,
+                toEntitySchema(type),
+                idGenerator.newChildId(arcId, "").toString()
+            )
+        ?: throw Exception(
+            "Unable to create storage key $storageKey"
         )
 
-    private fun isVolatileHandle(tags: Set<String>) = tags.contains("volatile")
+    /**
+     * Retrieves [Schema] from the given [Type], if possible.
+     * TODO: declare a common interface.
+     */
+    private fun toEntitySchema(type: Type): Schema {
+        when (type) {
+            is SingletonType<*> -> if (type.containedType is EntityType) {
+                return (type.containedType as EntityType).entitySchema
+            }
+            is CollectionType<*> -> if (type.collectionType is EntityType) {
+                return (type.collectionType as EntityType).entitySchema
+            }
+            is EntityType -> return type.entitySchema
+        }
+        throw IllegalArgumentException("Can't retrieve entitySchema of unknown type $type")
+    }
 
     /**
      * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]
@@ -132,7 +164,7 @@ class Allocator(val hostRegistry: HostRegistry) {
      * mapping them to fully qualified Java classnames, and comparing them with the
      * [Particle.location].
      */
-    private suspend fun findArcHostByParticle(particle: arcs.core.data.Plan.Particle): ArcHost =
+    private suspend fun findArcHostByParticle(particle: Plan.Particle): ArcHost =
         hostRegistry.availableArcHosts()
             .firstOrNull { host -> host.isHostForParticle(particle) }
             ?: throw ParticleNotFoundException(particle)

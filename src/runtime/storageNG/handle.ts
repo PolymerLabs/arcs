@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {UserException} from '../arc-exceptions.js';
-import {CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
+import {CRDTOperation, CRDTTypeRecord} from '../crdt/crdt.js';
 import {CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable} from '../crdt/crdt-collection.js';
 import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../crdt/crdt-singleton.js';
 import {Particle} from '../particle.js';
@@ -50,7 +50,6 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   storageProxy: StorageProxy<StorageType>;
   key: string;
   private readonly idGenerator: IdGenerator;
-  protected clock: VersionMap;
   options: HandleOptions;
   readonly canRead: boolean;
   readonly canWrite: boolean;
@@ -129,7 +128,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
       this.serializer = new ParticleSpecSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
 
-    this.clock = this.storageProxy.registerHandle(this);
+    this.storageProxy.registerHandle(this);
   }
 
   // `options` may contain any of:
@@ -148,7 +147,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     this.storageProxy.reportExceptionInHost(new UserException(exception, method, this.key, particle.spec.name));
   }
 
-  abstract onUpdate(update: StorageType['operation'], version: VersionMap): void;
+  abstract onUpdate(update: StorageType['operation']): void;
   abstract onSync(model: StorageType['consumerType']): void;
 
   async onDesync(): Promise<void> {
@@ -259,7 +258,7 @@ class ParticleSpecSerializer implements Serializer<ParticleSpec, Referenceable> 
 // TODO(shanestephens): we can't guarantee the safety of this stack (except by the Type instance matching) - do we need the T
 // parameter here?
 export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referenceable>> {
-  async fetchAll(id: string): Promise<T> {
+  async fetch(id: string): Promise<T> {
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
@@ -273,12 +272,13 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
     }
     this.serializer.ensureHasId(entity);
 
-    this.clock[this.key] = (this.clock[this.key] || 0) + 1;
+    const clock = this.storageProxy.versionCopy();
+    clock[this.key] = (clock[this.key] || 0) + 1;
     const op: CRDTOperation = {
       type: CollectionOpTypes.Add,
       added: this.serializer.serialize(entity),
       actor: this.key,
-      clock: this.clock,
+      clock,
     };
     return this.storageProxy.applyOp(op);
   }
@@ -305,7 +305,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
       type: CollectionOpTypes.Remove,
       removed: this.serializer.serialize(entity),
       actor: this.key,
-      clock: this.clock,
+      clock: this.storageProxy.versionCopy(),
     };
     return this.storageProxy.applyOp(op);
   }
@@ -320,7 +320,7 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
         type: CollectionOpTypes.Remove,
         removed: value,
         actor: this.key,
-        clock: this.clock,
+        clock: this.storageProxy.versionCopy(),
       };
       if (!this.storageProxy.applyOp(removeOp)) {
         return false;
@@ -338,9 +338,15 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
   }
 
   private async toCRDTList(): Promise<Referenceable[]> {
-    const [set, versionMap] = await this.storageProxy.getParticleView();
-    this.clock = versionMap;
-    return [...set];
+    return [...await this.storageProxy.getParticleView()];
+  }
+
+  async fetchAll(): Promise<Set<T>> {
+    if (!this.canRead) {
+      throw new Error('Handle not readable');
+    }
+    const list = await this.toCRDTList();
+    return new Set(list.map(entry => this.serializer.deserialize(entry, this.storageProxy.storageKey) as T));
   }
 
   /**
@@ -351,14 +357,12 @@ export class CollectionHandle<T> extends Handle<CRDTCollectionTypeRecord<Referen
    * if they do there is a risk that they will be reordered.
    */
 
-  async onUpdate(op: CollectionOperation<Referenceable>, version: VersionMap): Promise<void> {
+  async onUpdate(op: CollectionOperation<Referenceable>): Promise<void> {
     assert(this.canRead, 'onUpdate should not be called for non-readable handles');
-    this.clock = version;
     // FastForward cannot be expressed in terms of ordered added/removed, so pass a full model to
     // the particle.
     if (op.type === CollectionOpTypes.FastForward) {
-      const [set, versionMap] = this.storageProxy.getParticleViewAssumingSynchronized();
-      return this.onSync(set);
+      return this.onSync(this.storageProxy.getParticleViewAssumingSynchronized());
     }
     // Pass the change up to the particle.
     const update: {added?: Entity[], removed?: Entity[], originator: boolean} = {originator: ('actor' in op && this.key === op.actor)};
@@ -397,12 +401,13 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     }
     this.serializer.ensureHasId(entity);
 
-    this.clock[this.key] = (this.clock[this.key] || 0) + 1;
+    const clock = this.storageProxy.versionCopy();
+    clock[this.key] = (clock[this.key] || 0) + 1;
     const op: CRDTOperation = {
       type: SingletonOpTypes.Set,
       value: this.serializer.serialize(entity),
       actor: this.key,
-      clock: this.clock,
+      clock,
     };
     return this.storageProxy.applyOp(op);
   }
@@ -417,15 +422,16 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     if (!this.canWrite) {
       throw new Error('Handle not writeable');
     }
-    // Sync before clearing in order to get an updated versionMap. This ensures
-    // we can clear values set by other actors.
-    const [_, versionMap] = await this.storageProxy.getParticleView();
-    this.clock = versionMap;
+    // Sync the proxy before clearing in order to ensure we can clear values set by other actors.
+    // TODO: if we expose wether the storage proxy is synchronized to the handle,
+    // we could avoid introducing an unnecessary await here.
+    await this.storageProxy.getParticleView();
+
     // Issue clear op.
     const op: CRDTOperation = {
       type: SingletonOpTypes.Clear,
       actor: this.key,
-      clock: this.clock,
+      clock: this.storageProxy.versionCopy(),
     };
     return this.storageProxy.applyOp(op);
   }
@@ -434,8 +440,7 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
     if (!this.canRead) {
       throw new Error('Handle not readable');
     }
-    const [value, versionMap] = await this.storageProxy.getParticleView();
-    this.clock = versionMap;
+    const value = await this.storageProxy.getParticleView();
     return value == null ? null : this.serializer.deserialize(value, this.storageProxy.storageKey) as T;
   }
 
@@ -447,9 +452,8 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
    * if they do there is a risk that they will be reordered.
    */
 
-   async onUpdate(op: SingletonOperation<Referenceable>, version: VersionMap): Promise<void> {
+   async onUpdate(op: SingletonOperation<Referenceable>): Promise<void> {
     assert(this.canRead, 'onUpdate should not be called for non-readable handles');
-    this.clock = version;
     // Pass the change up to the particle.
     const update: {data?: Entity, originator: boolean} = {originator: (this.key === op.actor)};
     if (op.type === SingletonOpTypes.Set) {

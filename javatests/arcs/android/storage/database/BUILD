@@ -9,6 +9,7 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_android_test_suite(
     name = "database",
+    size = "medium",
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage.database",
     deps = [
@@ -16,6 +17,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/storage/database",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",

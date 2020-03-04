@@ -22,7 +22,8 @@ import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
-import arcs.jvm.util.performance.JvmTimer
+import arcs.core.util.performance.Timer
+import arcs.jvm.util.JvmTime
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
@@ -53,9 +54,9 @@ class MockDatabaseManager : DatabaseManager {
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class MockDatabase : Database {
     private val stats = DatabasePerformanceStatistics(
-        insertUpdate = PerformanceStatistics(JvmTimer),
-        get = PerformanceStatistics(JvmTimer),
-        delete = PerformanceStatistics(JvmTimer)
+        insertUpdate = PerformanceStatistics(Timer(JvmTime)),
+        get = PerformanceStatistics(Timer(JvmTime)),
+        delete = PerformanceStatistics(Timer(JvmTime))
     )
 
     private val clientMutex = Mutex()

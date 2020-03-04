@@ -24,7 +24,6 @@ import arcs.core.type.Type
 abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     options: StoreOptions<Data, Op, ConsumerData>
 ) : IStore<Data, Op, ConsumerData>, StorageCommunicationEndpointProvider<Data, Op, ConsumerData> {
-    override val existenceCriteria: ExistenceCriteria = options.existenceCriteria
     override val mode: StorageMode = options.mode
     override val storageKey: StorageKey = options.storageKey
     override val type: Type = options.type
