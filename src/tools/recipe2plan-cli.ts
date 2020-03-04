@@ -14,9 +14,9 @@ import {Runtime} from '../runtime/runtime.js';
 import {recipe2plan} from './recipe2plan.js';
 
 const opts = minimist(process.argv.slice(2), {
-  string: ['outdir', 'outfile'],
-  alias: {d: 'outdir', f: 'outfile'},
-  default: {outdir: '.'}
+  string: ['outdir', 'outfile', 'package'],
+  alias: {d: 'outdir', f: 'outfile', p: 'package'},
+  default: {outdir: '.', package: 'arcs.core.data'}
 });
 
 if (opts.help || opts._.length === 0) {
@@ -30,6 +30,7 @@ Description
 Options
   --outfile, -f output filename; required
   --outdir, -d  output directory; defaults to '.'
+  --package, -p kotlin package; defaults to 'arcs.core.data'
   --help        usage info
 `);
   process.exit(0);
@@ -56,7 +57,7 @@ async function main() {
     Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const plans = await recipe2plan(opts._[0]);
+    const plans = await recipe2plan(opts._[0], opts.package);
 
     const outPath = path.join(opts.outdir, opts.outfile);
     console.log(outPath);

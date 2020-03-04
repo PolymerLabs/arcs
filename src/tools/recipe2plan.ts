@@ -19,12 +19,12 @@ import {PlanGenerator} from './plan-generator.js';
  * @param path path/to/manifest.arcs
  * @return Generated Kotlin code.
  */
-export async function recipe2plan(path: string): Promise<string> {
+export async function recipe2plan(path: string, scope: string): Promise<string> {
   const manifest = await Runtime.parseFile(path);
 
   const recipes = new StorageKeyRecipeResolver(manifest).resolve();
 
-  const generator = new PlanGenerator(recipes);
+  const generator = new PlanGenerator(recipes, scope);
 
   return await generator.generate();
 }

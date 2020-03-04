@@ -24,7 +24,7 @@ export class PlanGenerator {
     return planOutline.join('\n');
   }
 
-  async _generate(): Promise<string[]>  {
+  private async _generate(): Promise<string[]>  {
     const plans = [];
 
     for await (const recipe of this.resolutions) {
@@ -39,7 +39,7 @@ class ${planName} : Plan(particles) {
     return plans;
   }
 
-  fileHeader(): string {
+  private fileHeader(): string {
     return `\
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
@@ -54,7 +54,7 @@ import arcs.core.data.*;
 `;
   }
 
-  fileFooter(): string {
+  private fileFooter(): string {
     return ``;
   }
 

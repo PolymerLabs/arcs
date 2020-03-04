@@ -322,7 +322,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             data = data,
         )
 
-def arcs_kt_plan(name, src, deps = [], out = None, visibility = None):
+def arcs_kt_plan(name, src, deps = [], package = 'arcs.core.data', out = None, visibility = None):
     """Converts recipes in manifests into Kotlin Plans.
 
     Args:
@@ -340,7 +340,7 @@ def arcs_kt_plan(name, src, deps = [], out = None, visibility = None):
         outs = outs,
         deps = deps,
         progress_message = "Producing Plans",
-        sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+        sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) --package " + package +  " {SRC}",
     )
 
 def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], data = []):
