@@ -68,7 +68,6 @@ class GoldInternal1() : WasmEntity {
 
 class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
 
-
     override fun create() = GoldInternal1()
 
 
@@ -203,7 +202,6 @@ class Gold_Data() : WasmEntity {
 }
 
 class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
-
 
     override fun create() = Gold_Data()
 

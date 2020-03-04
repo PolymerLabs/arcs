@@ -309,8 +309,8 @@ ${this.opts.wasm ? `
 }
 
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
-
 ${this.opts.wasm ? '' : `\
+
     companion object {
         val schema = ${this.leftPad(this.createSchema(schemaHash), 12, true)}
         
