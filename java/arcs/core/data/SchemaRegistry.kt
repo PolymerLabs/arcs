@@ -10,17 +10,20 @@
  */
 package arcs.core.data
 
+
+typealias SchemaHash = String
+
 /**
  * A registry for generated [Schema]s.
  */
 object SchemaRegistry {
-    private val schemas: MutableMap<String, Schema> = mutableMapOf()
+    private val schemas = mutableMapOf<SchemaHash, Schema>()
 
     /** Store a [Schema] in the registry. */
     fun register(schema: Schema) {
         schemas[schema.hash] = schema
     }
 
-    /** Given a schema hash as a [String], return the [Schema] for that hash, if it exists. */
-    fun fromHash(hash: String) = schemas[hash]
+    /** Given a [SchemaHash], return the [Schema] for that hash, if it exists. */
+    fun fromHash(hash: SchemaHash) = schemas[hash]
 }
