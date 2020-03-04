@@ -54,12 +54,9 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
+import arcs.sdk.Entity
 import arcs.core.data.*
 ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.storage.api.toPrimitiveValue\nimport arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable\nimport arcs.core.data.util.ReferencablePrimitive'}
-
-object SchemaRegistry {
-  var schemas: Map<String, Schema> = mutableMapOf()
-}
 `;
   }
 
@@ -299,11 +296,13 @@ ${this.opts.wasm ? `
 
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 
-    init {
-        SchemaRegistry.schemas += mapOf(
-            "${schemaHash}" to 
-${this.leftPad(this.createSchema(schemaHash), 12)}         
-        )
+    companion object {
+        init {
+            SchemaRegistry.schemas.plusAssign(mapOf(
+                "${schemaHash}" to 
+${this.leftPad(this.createSchema(schemaHash), 16)}         
+            ))
+        }
     }
     
     override fun create() = ${name}()

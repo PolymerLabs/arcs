@@ -9,6 +9,8 @@ package arcs.sdk
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
+import arcs.sdk.Entity
+import arcs.core.data.*
 import arcs.sdk.wasm.*
 
 class GoldInternal1() : WasmEntity {
@@ -66,7 +68,24 @@ class GoldInternal1() : WasmEntity {
     override fun toString() = "GoldInternal1(val_ = $val_)"
 }
 
+
 class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
+
+    companion object {
+        init {
+            SchemaRegistry.schemas.plusAssign(mapOf(
+                "485712110d89359a3e539dac987329cd2649d889" to
+                Schema(
+                    listOf(),
+                    SchemaFields(
+                        singletons = mapOf("val" to FieldType.Text),
+                        collections = emptyMap()
+                    ),
+                    "485712110d89359a3e539dac987329cd2649d889"
+                )
+            ))
+        }
+    }
 
     override fun create() = GoldInternal1()
 
@@ -201,7 +220,27 @@ class Gold_Data() : WasmEntity {
     override fun toString() = "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 }
 
+
 class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
+
+    companion object {
+        init {
+            SchemaRegistry.schemas.plusAssign(mapOf(
+                "d8058d336e472da47b289eafb39733f77eadb111" to
+                Schema(
+                    listOf(),
+                    SchemaFields(
+                        singletons = mapOf("num" to FieldType.Number,
+                            "txt" to FieldType.Text,
+                            "lnk" to FieldType.Text,
+                            "flg" to FieldType.Boolean),
+                        collections = emptyMap()
+                    ),
+                    "d8058d336e472da47b289eafb39733f77eadb111"
+                )
+            ))
+        }
+    }
 
     override fun create() = Gold_Data()
 
