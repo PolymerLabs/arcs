@@ -42,7 +42,7 @@ describe('recipe2plan', () => {
         data: reads data`);
 
     const resolver = new StorageKeyRecipeResolver(manifest);
-    for await (const it of resolver.resolve()) {
+    for  (const it of (await resolver.resolve())) {
       assert.isTrue(it.isResolved());
     }
   });

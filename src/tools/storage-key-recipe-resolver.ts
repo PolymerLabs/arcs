@@ -36,7 +36,8 @@ export class StorageKeyRecipeResolver {
    * @throws Error if recipe fails to resolve on first or second pass.
    * @yields Resolved recipes with storage keys
    */
-  async* resolve(): AsyncGenerator<Recipe> {
+  async resolve(): Promise<Recipe[]> {
+    const recipes = [];
     for (const recipe of this.runtime.context.allRecipes) {
       const arc = this.runtime.newArc(this.getArcId(recipe), ramDiskStorageKeyPrefixForTest());
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
@@ -49,8 +50,9 @@ export class StorageKeyRecipeResolver {
       if (!resolved.isResolved()) {
         throw Error(`Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`);
       }
-      yield resolved;
+      recipes.push(resolved)
     }
+    return recipes;
   }
 
   /**

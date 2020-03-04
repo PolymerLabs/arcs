@@ -21,7 +21,7 @@ import {StorageKeyRecipeResolver} from './storage-key-recipe-resolver.js';
 export async function recipe2plan(path: string): Promise<string> {
   const manifest = await Runtime.parseFile(path);
 
-  const recipes = new StorageKeyRecipeResolver(manifest).resolve();
+  const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
   const plans = await generatePlans(recipes);
 
@@ -35,7 +35,7 @@ export async function recipe2plan(path: string): Promise<string> {
  * @param resolutions A series of resolved recipes.
  * @return List of generated Kotlin plans
  */
-async function generatePlans(resolutions: AsyncIterator<Recipe>): Promise<string[]> {
+async function generatePlans(resolutions: Recipe[]): Promise<string[]> {
   // TODO Implement
   return [''];
 }
