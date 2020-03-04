@@ -14,7 +14,7 @@ import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 
 describe('recipe2plan', () => {
   describe('storage-key-recipe-resolver', () => {
-    it('Long + Long: If ReadingRecipe is long running, it is a valid use case', async () => {
+    it('Resolves mapping a handle from a long running arc into another long running arc', async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
