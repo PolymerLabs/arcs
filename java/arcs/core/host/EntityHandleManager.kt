@@ -40,11 +40,13 @@ typealias CollectionSenderCallbackAdapter<E> =
  * [ReadSingletonHandle] for [HandleMode.Read]. To obtain a [HandleHolder], use
  * `arcs_kt_schema` on a manifest file to generate a `{ParticleName}Handles' class, and
  * invoke its default constructor, or obtain it from the [BaseParticle.handles] field.
+ *
+ * TODO(cromwellian): Add support for creating Singleton/Set handles of [Reference]s.
  */
 class EntityHandleManager(val handleManager: HandleManager) {
     /**
-     * Creates and returns a new [SingletonHandle]. Will also populate the appropriate field inside
-     * the given [HandleHolder].
+     * Creates and returns a new [SingletonHandle] for managing an [Entity]. Will also populate the
+     * appropriate field inside the given [HandleHolder].
      *
      * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
@@ -65,15 +67,20 @@ class EntityHandleManager(val handleManager: HandleManager) {
     ) = createSdkHandle(
         handleHolder,
         handleName,
-        handleManager.singletonHandle(storageKey, schema, canRead = handleMode != HandleMode.Write),
+        handleManager.rawEntitySingletonHandle(
+            storageKey,
+            schema,
+            name = handleName,
+            canRead = handleMode != HandleMode.Write
+        ),
         handleMode,
         idGenerator,
         sender
     )
 
     /**
-     * Creates and returns a new [SetHandle]. Will also populate the appropriate field inside
-     * the given [HandleHolder].
+     * Creates and returns a new [SetHandle] for a set of [Entity]s. Will also populate the
+     * appropriate field inside the given [HandleHolder].
      *
      * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
@@ -94,7 +101,12 @@ class EntityHandleManager(val handleManager: HandleManager) {
     ) = createSdkHandle(
         handleHolder,
         handleName,
-        handleManager.setHandle(storageKey, schema, canRead = handleMode != HandleMode.Write),
+        handleManager.rawEntitySetHandle(
+            storageKey,
+            schema,
+            name = handleName,
+            canRead = handleMode != HandleMode.Write
+        ),
         handleMode,
         idGenerator,
         sender
