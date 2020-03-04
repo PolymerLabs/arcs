@@ -67,7 +67,7 @@ export class Particle {
 
   async callOnReady(): Promise<void> {
     if (!this.created) {
-      this.callOnCreate();
+      const createCalled = this.callOnCreate();
     }
     return this.onReady();
   }
@@ -78,7 +78,7 @@ export class Particle {
 
   /**
    * Called after handles are synced the first time, override to provide initial processing.
-   * This will be called after onCreate, but will not wait for onCreate to finish.
+   * This will be called after onCreate, but will not wait for onCreate to
    */
   protected async onReady(): Promise<void> {}
 
@@ -113,7 +113,7 @@ export class Particle {
     this.onError = onException;
     if (!this._handlesToSync) {
       // onHandleSync is called IFF there are input handles, otherwise we are ready now
-      this.callOnReady();
+      const readyCalled = this.callOnReady();
     }
   }
 
@@ -142,7 +142,7 @@ export class Particle {
     await this.invokeSafely(async p => p.onHandleSync(handle, model), onException);
     // once we've synced each readable handle, we are ready to start
     if (--this._handlesToSync === 0) {
-      this.callOnReady();
+      const readyCalled = this.callOnReady();
     }
   }
 

@@ -103,7 +103,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
     return setTimeout(done, 10);
   }
 
-  onReady() : Promise<void> {
+  async onReady() : Promise<void> {
     // ensure we `update()` at least once
     this._invalidate();
     return super.onReady();
