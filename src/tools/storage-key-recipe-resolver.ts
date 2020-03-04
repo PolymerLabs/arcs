@@ -49,7 +49,7 @@ export class StorageKeyRecipeResolver {
       if (!resolved.isResolved()) {
         throw Error(`Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`);
       }
-      recipes.push(resolved)
+      recipes.push(resolved);
     }
     return recipes;
   }
