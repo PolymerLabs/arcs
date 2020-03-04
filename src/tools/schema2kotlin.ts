@@ -11,7 +11,6 @@ import {Schema2Base, ClassGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import minimist from 'minimist';
-import {UnifiedStore} from '../runtime/storageNG/unified-store.js';
 
 // TODO: use the type lattice to generate interfaces
 
