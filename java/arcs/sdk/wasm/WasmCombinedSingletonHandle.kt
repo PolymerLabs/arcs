@@ -12,12 +12,11 @@
 package arcs.sdk.wasm
 
 /** [ReadWriteSingleton] implementation for WASM. */
-class WasmCombinedHandle<T : WasmEntity>(val handles: List<WasmSingletonImpl<T>>) {
+class WasmCombinedSingletonHandle<T : WasmEntity>(val handles: List<WasmSingletonImpl<T>>) {
 
-  fun onUpdate(action: (T?) -> Unit) {
-    this.handles.forEach{ handle ->
-      handle.onUpdate(action)
+    fun onUpdate(action: (T?) -> Unit) {
+        this.handles.forEach { handle ->
+            handle.onUpdate(action)
+        }
     }
-  }
-
 }

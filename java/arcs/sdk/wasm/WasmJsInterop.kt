@@ -250,10 +250,10 @@ fun log(msg: String) {
     flush()
 }
 
-fun combine(vararg handles: WasmSingletonImpl<*>) : WasmCombinedHandle<*> {
+fun combine(vararg handles: WasmSingletonImpl<*>): WasmCombinedSingletonHandle<*> {
     val l = mutableListOf<WasmSingletonImpl<WasmEntity>>()
     for (handle in handles) {
         l.add(handle as WasmSingletonImpl<WasmEntity>)
     }
-    return WasmCombinedHandle(l)
+    return WasmCombinedSingletonHandle(l)
 }
