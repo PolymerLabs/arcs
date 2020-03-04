@@ -154,8 +154,6 @@ export class KotlinGenerator implements ClassGenerator {
   singletonSchemaFields: string[] = [];
   collectionSchemaFields: string[] = [];
 
-  public schemaRegistry: string[];
-
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
   // TODO: allow optional fields in kotlin
