@@ -44,12 +44,12 @@ describe('recipe2plan', () => {
         data: reads data`);
 
       const resolver = new StorageKeyRecipeResolver(manifest);
-      for  (const it of (await resolver.resolve())) {
+      for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
-  });
-  it('Short + Short: If WritingRecipe is short lived, it is not valid', async () => {
-    const manifest = await Manifest.parse(`\
+    });
+    it('Short + Short: If WritingRecipe is short lived, it is not valid', async () => {
+      const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
 
@@ -67,15 +67,15 @@ describe('recipe2plan', () => {
         data: reads data`);
 
 
-    const resolver = new StorageKeyRecipeResolver(manifest);
-    await assertThrowsAsync(async () => {
-      for (const it of await resolver.resolve()) {
-        continue;
-      }
-    }, Error, 'Handle data mapped to ephemeral handle thing.');
-  });
-  it('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', async () => {
-    const manifest = await Manifest.parse(`\
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      await assertThrowsAsync(async () => {
+        for (const it of await resolver.resolve()) {
+          continue;
+        }
+      }, Error, 'Handle data mapped to ephemeral handle thing.');
+    });
+    it('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', async () => {
+      const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
 
@@ -95,15 +95,15 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-    const resolver = new StorageKeyRecipeResolver(manifest);
-    await assertThrowsAsync(async () => {
-      for (const it of await resolver.resolve()) {
-        continue;
-      }
-    }, Error, 'Handle data mapped to ephemeral handle thing.');
-  });
-  it('Long + Short: If WritingRecipe is long lived and Reading is short lived, it is valid', async () => {
-    const manifest = await Manifest.parse(`\
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      await assertThrowsAsync(async () => {
+        for (const it of await resolver.resolve()) {
+          continue;
+        }
+      }, Error, 'Handle data mapped to ephemeral handle thing.');
+    });
+    it('Long + Short: If WritingRecipe is long lived and Reading is short lived, it is valid', async () => {
+      const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
 
@@ -123,13 +123,13 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-    const resolver = new StorageKeyRecipeResolver(manifest);
-    for (const it of await resolver.resolve()) {
-      assert.isTrue(it.isResolved());
-    }
-  });
-  it('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', async () => {
-    const manifest = await Manifest.parse(`\
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      for (const it of await resolver.resolve()) {
+        assert.isTrue(it.isResolved());
+      }
+    });
+    it('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', async () => {
+      const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text, age: Number}
 
@@ -152,18 +152,24 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-    const resolver = new StorageKeyRecipeResolver(manifest);
-    // TODO: specify the correct error to be thrown
-    await assertThrowsAsync(async () => {
-      for (const it of await resolver.resolve()) {
-        continue;
-      }
-    }, /Recipe ReadingRecipe failed to resolve:/);
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      // TODO: specify the correct error to be thrown
+      await assertThrowsAsync(async () => {
+        for (const it of await resolver.resolve()) {
+          continue;
+        }
+      }, /Recipe ReadingRecipe failed to resolve:/);
+    });
+    // TODO(alxr): Flush out outlined unit tests
+    it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {
+    });
+    it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {
+    });
+    it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {
+    });
+    it.skip('Ambiguous handle + tag disambiguation: If there are 2 WritingRecipes creating the same handle but with different tags and mapping uses one of the tags, it is valid', () => {
+    });
+    it.skip('No Handle: If there is no writing handle, it is not valid', () => {
+    });
   });
-  // TODO(alxr): Flush out outlined unit tests
-  it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});
-  it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {});
-  it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {});
-  it.skip('Ambiguous handle + tag disambiguation: If there are 2 WritingRecipes creating the same handle but with different tags and mapping uses one of the tags, it is valid', () => {});
-  it.skip('No Handle: If there is no writing handle, it is not valid', () => {});
 });

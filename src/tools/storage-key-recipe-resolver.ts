@@ -49,7 +49,7 @@ export class StorageKeyRecipeResolver {
         throw Error(`Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`);
       }
       this.matchKeysToHandles(recipe);
-      recipes.push(resolved)
+      recipes.push(resolved);
     }
     return recipes;
   }
