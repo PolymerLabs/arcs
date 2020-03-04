@@ -138,7 +138,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
   }
 }
 
-class KotlinGenerator implements ClassGenerator {
+export class KotlinGenerator implements ClassGenerator {
   fields: string[] = [];
   fieldVals: string[] = [];
   setFields: string[] = [];
@@ -201,10 +201,19 @@ class KotlinGenerator implements ClassGenerator {
 
   }
 
-  private mapOf(items: string[], indent: number): string {
-    if (items.length === 0) return `emptyMap()`;
+  mapOf(items: string[]): string {
+    switch (items.length) {
+      case 0:
+        return `emptyMap()`;
+      case 1:
+        return `mapOf(${items[0]})`;
+      default:
+        return `\
+mapOf(
+${this.leftPad(items.join(',\n'), 4)}
+)`;
+    }
 
-    return `mapOf(${items.join(',\n' + ' '.repeat(indent))})`;
   }
 
   createSchema(schemaHash: string): string {
@@ -213,8 +222,8 @@ class KotlinGenerator implements ClassGenerator {
 Schema(
     listOf(${schemaNames.join(',\n' + ' '.repeat(8))}),
     SchemaFields(
-        singletons = ${this.mapOf(this.singletonSchemaFields, 12)},
-        collections = ${this.mapOf(this.collectionSchemaFields, 12)}
+        singletons = ${this.leftPad(this.mapOf(this.singletonSchemaFields), 8, true)},
+        collections = ${this.leftPad(this.mapOf(this.collectionSchemaFields), 8, true)}
     ),
     "${schemaHash}"
 )`;
