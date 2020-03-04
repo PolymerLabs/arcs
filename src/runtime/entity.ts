@@ -66,6 +66,7 @@ class EntityInternals {
   private id?: string;
   private storageKey?: string;
   private userIDComponent?: string;
+  // TODO(mmandlis): use Date for timestamp fields.
   private creationTimestamp: string;
   private expirationTimestamp: string;
 
