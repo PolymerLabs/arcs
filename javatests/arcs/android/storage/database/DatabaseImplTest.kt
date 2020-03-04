@@ -175,10 +175,14 @@ class DatabaseImplTest {
 
     @Test
     fun createEntityStorageKeyId_createsNewIds() = runBlockingTest {
+        val creationTimestamp = 99L
+        val expirationTimestamp = 999L
         assertThat(
             database.createEntityStorageKeyId(
                 DummyStorageKey("key1"),
                 "eid1",
+                creationTimestamp,
+                expirationTimestamp,
                 123L,
                 VERSION_MAP,
                 FIRST_VERSION_NUMBER,
@@ -190,6 +194,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key2"),
                 "eid2",
+                creationTimestamp,
+                expirationTimestamp,
                 123L,
                 VERSION_MAP,
                 FIRST_VERSION_NUMBER,
@@ -201,6 +207,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key3"),
                 "eid3",
+                creationTimestamp,
+                expirationTimestamp,
                 123L,
                 VERSION_MAP,
                 FIRST_VERSION_NUMBER,
@@ -212,11 +220,15 @@ class DatabaseImplTest {
     @Test
     fun createEntityStorageKeyId_replacesExistingIds() = runBlockingTest {
         // Insert keys for the first time.
+        val creationTimestamp = 99L
+        val expirationTimestamp = 999L
 
         assertThat(
             database.createEntityStorageKeyId(
                 DummyStorageKey("key1"),
                 "eid1",
+                creationTimestamp,
+                expirationTimestamp,
                 123L,
                 VERSION_MAP,
                 1,
@@ -228,6 +240,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key2"),
                 "eid2",
+                creationTimestamp,
+                expirationTimestamp,
                 123L,
                 VERSION_MAP,
                 1,
@@ -241,6 +255,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key1"),
                 "eid1",
+                creationTimestamp,
+                expirationTimestamp,
                 123L,
                 VERSION_MAP,
                 2,
@@ -252,6 +268,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key2"),
                 "eid2",
+                creationTimestamp,
+                expirationTimestamp,
                 123L,
                 VERSION_MAP,
                 2,
@@ -263,9 +281,13 @@ class DatabaseImplTest {
     @Test
     fun createEntityStorageKeyId_wrongEntityId() = runBlockingTest {
         val key = DummyStorageKey("key")
+        val creationTimestamp = 99L
+        val expirationTimestamp = 999L
         database.createEntityStorageKeyId(
             key,
             "correct-entity-id",
+            creationTimestamp,
+            expirationTimestamp,
             123L,
             VERSION_MAP,
             FIRST_VERSION_NUMBER,
@@ -276,6 +298,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 key,
                 "incorrect-entity-id",
+                creationTimestamp,
+                expirationTimestamp,
                 123L,
                 VERSION_MAP,
                 FIRST_VERSION_NUMBER,
@@ -292,12 +316,32 @@ class DatabaseImplTest {
     fun createEntityStorageKeyId_versionNumberMustBeLarger() = runBlockingTest {
         val key = DummyStorageKey("key")
         val entityId = "entity-id"
+        val creationTimestamp = 99L
+        val expirationTimestamp = 999L
         val typeId = 123L
-        database.createEntityStorageKeyId(key, entityId, typeId, VERSION_MAP, 10, db)
+        database.createEntityStorageKeyId(
+            key,
+            entityId,
+            creationTimestamp,
+            expirationTimestamp,
+            typeId,
+            VERSION_MAP,
+            10,
+            db
+        )
 
         // Same version number is rejected.
         val exception1 = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.createEntityStorageKeyId(key, entityId, typeId, VERSION_MAP, 10, db)
+            database.createEntityStorageKeyId(
+                key,
+                entityId,
+                creationTimestamp,
+                expirationTimestamp,
+                typeId,
+                VERSION_MAP,
+                10,
+                db
+            )
         }
         assertThat(exception1).hasMessageThat().isEqualTo(
             "Given version (10) must be greater than version in database (10) when updating " +
@@ -306,7 +350,16 @@ class DatabaseImplTest {
 
         // Smaller version number is rejected.
         val exception2 = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.createEntityStorageKeyId(key, entityId, typeId, VERSION_MAP, 9, db)
+            database.createEntityStorageKeyId(
+                key,
+                entityId,
+                creationTimestamp,
+                expirationTimestamp,
+                typeId,
+                VERSION_MAP,
+                9,
+                db
+            )
         }
         assertThat(exception2).hasMessageThat().isEqualTo(
             "Given version (9) must be greater than version in database (10) when updating " +
@@ -314,7 +367,16 @@ class DatabaseImplTest {
         )
 
         // Increasing version number is ok.
-        database.createEntityStorageKeyId(key, entityId, typeId, VERSION_MAP, 11, db)
+        database.createEntityStorageKeyId(
+            key,
+            entityId,
+            creationTimestamp,
+            expirationTimestamp,
+            typeId,
+            VERSION_MAP,
+            11,
+            db
+        )
     }
 
     @Test
@@ -477,6 +539,26 @@ class DatabaseImplTest {
         database.dumpTables("storage_keys", "entities", "fields", "field_values")
         val entityOut = database.getEntity(key, schema)
 
+        assertThat(entityOut).isEqualTo(entity)
+    }
+
+    @Test
+    fun insertAndGet_entity_withCreationAndExpiration() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val schema = newSchema(
+            "hash",
+            SchemaFields(singletons = mapOf("text" to FieldType.Text), collections = mapOf())
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity("entity", mapOf("text" to "abc".toReferencable()), mapOf(), 11L, 111L),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(key, entity)
+        database.dumpTables("storage_keys", "entities", "fields", "field_values")
+        val entityOut = database.getEntity(key, schema)
         assertThat(entityOut).isEqualTo(entity)
     }
 

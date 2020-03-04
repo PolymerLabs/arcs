@@ -184,6 +184,8 @@ class DatabaseImpl(
                     storage_keys.value_id,
                     storage_keys.data_type,
                     entities.entity_id,
+                    entities.creation_timestamp,
+                    entities.expiration_timestamp,
                     entities.version_map,
                     entities.version_number
                 FROM storage_keys
@@ -199,10 +201,12 @@ class DatabaseImpl(
             val storageKeyId = it.getLong(0)
             val schemaTypeId = it.getLong(1)
             val entityId = it.getString(3)
-            val versionMap = requireNotNull(it.getVersionMap(4)) {
+            val creationTimestamp = it.getLong(4)
+            val expirationTimestamp = it.getLong(5)
+            val versionMap = requireNotNull(it.getVersionMap(6)) {
                 "No VersionMap available for Entity at $storageKey"
             }
-            val versionNumber = it.getInt(5)
+            val versionNumber = it.getInt(7)
             // Fetch the entity's fields.
             counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
             val fieldsByName = getSchemaFields(schemaTypeId, db)
@@ -239,7 +243,9 @@ class DatabaseImpl(
                 RawEntity(
                     id = entityId,
                     singletons = singletons,
-                    collections = collections
+                    collections = collections,
+                    creationTimestamp = creationTimestamp,
+                    expirationTimestamp = expirationTimestamp
                 ),
                 schema,
                 versionNumber,
@@ -275,7 +281,12 @@ class DatabaseImpl(
         db: SQLiteDatabase
     ): Any = db.rawQuery(
         """
-            SELECT entity_id, backing_storage_key, version_map
+            SELECT
+                entity_id,
+                creation_timestamp,
+                expiration_timestamp,
+                backing_storage_key,
+                version_map
             FROM entity_refs
             WHERE id = ?
         """.trimIndent(),
@@ -283,8 +294,10 @@ class DatabaseImpl(
     ).forSingleResult {
         Reference(
             id = it.getString(0),
-            storageKey = StorageKeyParser.parse(it.getString(1)),
-            version = it.getVersionMap(2)
+            storageKey = StorageKeyParser.parse(it.getString(3)),
+            version = it.getVersionMap(4),
+            creationTimestamp = it.getLong(1),
+            expirationTimestamp = it.getLong(2)
         )
     } ?: throw IllegalArgumentException("Entity Reference with ID $entityRefId does not exist.")
 
@@ -377,6 +390,8 @@ class DatabaseImpl(
         val storageKeyId = createEntityStorageKeyId(
             storageKey,
             entity.id,
+            entity.creationTimestamp,
+            entity.expirationTimestamp,
             schemaTypeId,
             data.versionMap,
             data.databaseVersion,
@@ -749,6 +764,8 @@ class DatabaseImpl(
     suspend fun createEntityStorageKeyId(
         storageKey: StorageKey,
         entityId: String,
+        creationTimestamp: Long,
+        expirationTimestamp: Long,
         typeId: TypeId,
         versionMap: VersionMap,
         databaseVersion: Int,
@@ -759,7 +776,10 @@ class DatabaseImpl(
         counters?.increment(DatabaseCounters.GET_ENTITY_STORAGEKEY_ID)
         rawQuery(
             """
-                SELECT storage_keys.data_type, entities.entity_id, entities.version_number
+                SELECT
+                    storage_keys.data_type,
+                    entities.entity_id,
+                    entities.version_number
                 FROM storage_keys
                 LEFT JOIN entities ON storage_keys.id = entities.storage_key_id
                 WHERE storage_keys.storage_key = ?
@@ -806,6 +826,8 @@ class DatabaseImpl(
             ContentValues().apply {
                 put("storage_key_id", storageKeyId)
                 put("entity_id", entityId)
+                put("creation_timestamp", creationTimestamp)
+                put("expiration_timestamp", expirationTimestamp)
                 put("version_map", versionMap.toProtoLiteral())
                 put("version_number", databaseVersion)
             }
@@ -852,6 +874,8 @@ class DatabaseImpl(
                 null,
                 ContentValues().apply {
                     put("entity_id", reference.id)
+                    put("creation_timestamp", reference.creationTimestamp)
+                    put("expiration_timestamp", reference.expirationTimestamp)
                     put("backing_storage_key", reference.storageKey.toString())
                     reference.version?.let {
                         put("version_map", it.toProtoLiteral())
@@ -950,7 +974,12 @@ class DatabaseImpl(
         db: SQLiteDatabase
     ): Set<Reference> = db.rawQuery(
         """
-            SELECT entity_refs.entity_id, entity_refs.backing_storage_key, entity_refs.version_map
+            SELECT
+                entity_refs.entity_id,
+                entity_refs.creation_timestamp,
+                entity_refs.expiration_timestamp,
+                entity_refs.backing_storage_key,
+                entity_refs.version_map
             FROM collection_entries
             JOIN entity_refs ON collection_entries.value_id = entity_refs.id
             WHERE collection_entries.collection_id = ?
@@ -959,8 +988,10 @@ class DatabaseImpl(
     ).map {
         Reference(
             id = it.getString(0),
-            storageKey = StorageKeyParser.parse(it.getString(1)),
-            version = it.getVersionMap(2)
+            storageKey = StorageKeyParser.parse(it.getString(3)),
+            version = it.getVersionMap(4),
+            creationTimestamp = it.getString(1).toLong(),
+            expirationTimestamp = it.getString(2).toLong()
         )
     }.toSet()
 
@@ -1227,6 +1258,8 @@ class DatabaseImpl(
                 CREATE TABLE entities (
                     storage_key_id INTEGER NOT NULL PRIMARY KEY,
                     entity_id TEXT NOT NULL,
+                    creation_timestamp INTEGER NOT NULL,
+                    expiration_timestamp INTEGER NOT NULL,
                     -- Serialized VersionMapProto for the entity.
                     version_map TEXT NOT NULL,
                     -- Monotonically increasing version number for the entity.
@@ -1239,6 +1272,8 @@ class DatabaseImpl(
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                     -- The ID for the entity (Arcs string ID, not a row ID).
                     entity_id TEXT NOT NULL,
+                    creation_timestamp INTEGER NOT NULL,
+                    expiration_timestamp INTEGER,
                     -- The storage key for the backing store for this entity.
                     backing_storage_key TEXT NOT NULL,
                     -- Serialized VersionMapProto for the reference, if available.
