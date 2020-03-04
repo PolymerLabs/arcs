@@ -173,7 +173,10 @@ export class Manifest {
   get allRecipes() {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
-
+  get allHandles() {
+    // TODO(#4820) Update `reduce` to use flatMap
+    return this.allRecipes.reduce((acc, x) => acc.concat(x.handles), []);
+  }
   get activeRecipe() {
     return this._recipes.find(recipe => recipe.annotation === 'active');
   }
@@ -305,40 +308,57 @@ export class Manifest {
   findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): UnifiedStore[] {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
-    function typePredicate(store: UnifiedStore) {
-      const resolvedType = type.resolvedType();
-      if (!resolvedType.isResolved()) {
-        return (type instanceof CollectionType) === (store.type instanceof CollectionType) &&
-          (type instanceof BigCollectionType) === (store.type instanceof BigCollectionType);
-      }
-
-      if (subtype) {
-        const [left, right] = Type.unwrapPair(store.type, resolvedType);
-        if (left instanceof EntityType && right instanceof EntityType) {
-          return left.entitySchema.isAtleastAsSpecificAs(right.entitySchema);
-        }
-        return false;
-      }
-
-      return TypeChecker.compareTypes({type: store.type}, {type});
-    }
     function tagPredicate(manifest: Manifest, store: UnifiedStore) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
-
-    const stores = [...this._findAll(manifest => manifest._stores.filter(store => typePredicate(store) && tagPredicate(manifest, store)))];
+    const stores = [...this._findAll(manifest =>
+      manifest._stores.filter(store => this.typesMatch(store, type, subtype) && tagPredicate(manifest, store)))];
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => !!Handle.effectiveType(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'hosts' : 'reads writes'}]));
   }
+  findHandlesByType(type: Type, options = {tags: <string[]>[], fates: <string[]>[], subtype: false}): Handle[] {
+    const tags = options.tags || [];
+    const subtype = options.subtype || false;
+    const fates = options.fates || [];
+    function hasAllTags(handle: Handle) {
+      return tags.every(tag => handle.tags.includes(tag));
+    }
+    function matchesFate(handle: Handle) {
+      return fates === [] || fates.includes(handle.fate);
+    }
+    // TODO(#4820) Update `reduce` to use flatMap
+    return [...this.allRecipes
+      .reduce((acc, r) => acc.concat(r.handles), [])
+      .filter(h => this.typesMatch(h, type, subtype) && hasAllTags(h) && matchesFate(h))];
+  }
+  findHandlesById(id: string): Handle[] {
+    return this.allHandles.filter(h => h.id === id);
+  }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
   }
-
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
+  }
+  private typesMatch(candidate: {type: Type}, type: Type, checkSubtype: boolean) {
+    const resolvedType = type.resolvedType();
+    if (!resolvedType.isResolved()) {
+      return (type instanceof CollectionType) === (candidate.type instanceof CollectionType) &&
+        (type instanceof BigCollectionType) === (candidate.type instanceof BigCollectionType);
+    }
+
+    if (checkSubtype) {
+      const [left, right] = Type.unwrapPair(candidate.type, resolvedType);
+      if (left instanceof EntityType && right instanceof EntityType) {
+        return left.entitySchema.isAtleastAsSpecificAs(right.entitySchema);
+      }
+      return false;
+    }
+
+    return TypeChecker.compareTypes({type: candidate.type}, {type});
   }
 
   generateID(subcomponent?: string): Id {

@@ -12,6 +12,7 @@ load(
     _arcs_kt_library = "arcs_kt_library",
     _arcs_kt_native_library = "arcs_kt_native_library",
     _arcs_kt_particles = "arcs_kt_particles",
+    _arcs_kt_plan = "arcs_kt_plan",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:manifest.bzl",
@@ -42,6 +43,8 @@ arcs_kt_library = _arcs_kt_library
 arcs_kt_native_library = _arcs_kt_native_library
 
 arcs_kt_particles = _arcs_kt_particles
+
+arcs_kt_plan = _arcs_kt_plan
 
 arcs_kt_schema = _arcs_kt_schema
 
