@@ -34,7 +34,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -267,8 +266,8 @@ class AndroidHandleManagerTest : LifecycleOwner {
             entity1
         )
         secondHandle.store(entity1)
-        verify(testCallback1, times(1)).onUpdate(firstHandle, expectedAdd)
-        verify(testCallback2, times(1)).onUpdate(secondHandle, expectedAdd)
+        verify(testCallback1).onUpdate(firstHandle, expectedAdd)
+        verify(testCallback2).onUpdate(secondHandle, expectedAdd)
 
         firstHandle.remove(entity1)
         val expectedRemove = CrdtSet.Operation.Remove(
@@ -276,8 +275,8 @@ class AndroidHandleManagerTest : LifecycleOwner {
             testMapForKey(setKey),
             entity1
         )
-        verify(testCallback1, times(1)).onUpdate(firstHandle, expectedRemove)
-        verify(testCallback2, times(1)).onUpdate(secondHandle, expectedRemove)
+        verify(testCallback1).onUpdate(firstHandle, expectedRemove)
+        verify(testCallback2).onUpdate(secondHandle, expectedRemove)
     }
 
     @Test
@@ -300,25 +299,25 @@ class AndroidHandleManagerTest : LifecycleOwner {
             testMapForKey(singletonKey),
             entity1
         )
-        verify(testCallback1, times(1)).onUpdate(firstHandle, expectedAdd)
-        verify(testCallback2, times(1)).onUpdate(secondHandle, expectedAdd)
+        verify(testCallback1).onUpdate(firstHandle, expectedAdd)
+        verify(testCallback2).onUpdate(secondHandle, expectedAdd)
         firstHandle.clear()
 
         val expectedRemove = CrdtSingleton.Operation.Clear<RawEntity>(
             singletonKey.toKeyString(),
             testMapForKey(singletonKey)
         )
-        verify(testCallback1, times(1)).onUpdate(firstHandle, expectedRemove)
-        verify(testCallback2, times(1)).onUpdate(secondHandle, expectedRemove)
+        verify(testCallback1).onUpdate(firstHandle, expectedRemove)
+        verify(testCallback2).onUpdate(secondHandle, expectedRemove)
     }
 
     @Test
     fun set_syncOnRegister() = runBlocking<Unit> {
         val testCallback = mock<SetCallbacks<RawEntity>>()
         val firstHandle = handleManager.rawEntitySetHandle(setKey, schema, testCallback)
-        verify(testCallback, times(1)).onSync(firstHandle)
+        verify(testCallback).onSync(firstHandle)
         firstHandle.fetchAll()
-        verify(testCallback, times(1)).onSync(firstHandle)
+        verify(testCallback).onSync(firstHandle)
     }
 
     @Test
@@ -329,8 +328,8 @@ class AndroidHandleManagerTest : LifecycleOwner {
             schema = schema,
             callbacks = testCallback
         )
-        verify(testCallback, times(1)).onSync(firstHandle)
+        verify(testCallback).onSync(firstHandle)
         firstHandle.fetch()
-        verify(testCallback, times(1)).onSync(firstHandle)
+        verify(testCallback).onSync(firstHandle)
     }
 }
