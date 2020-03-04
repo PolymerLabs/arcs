@@ -1,0 +1,24 @@
+schema Thing Product
+  name: Text
+
+particle Reader
+  data: reads Thing {name: Text}
+
+particle Writer
+   data: writes Thing {name: Text}
+
+@trigger
+  launch startup
+  arcId writingArcId
+recipe WritingRecipe
+  thing: create persistent 'my-handle-id'
+  Writer
+    data: writes thing
+
+@trigger
+  launch startup
+  arcId readingArcId
+recipe ReadingRecipe
+  data: map 'my-handle-id'
+  Reader
+    data: reads data

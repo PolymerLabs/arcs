@@ -17,20 +17,19 @@ describe('recipe2plan', () => {
     async function * dummyGenerator (): AsyncGenerator<Recipe> {
       yield new Recipe();
     }
-    it('imports arcs.core.data when the package is different', async () => {
+    it('imports arcs.core.data when the package is different', () => {
       const generator = new PlanGenerator(dummyGenerator(), 'some.package');
 
-      const actual = await generator.generate();
+      const actual = generator.fileHeader();
 
       assert.include(actual, 'import arcs.core.data.*');
     });
-    it('does not import arcs.core.data when the package is the same', async () => {
+    it('does not import arcs.core.data when the package is the same', () => {
       const generator = new PlanGenerator(dummyGenerator(), 'arcs.core.data');
 
-      const actual = await generator.generate();
+      const actual = generator.fileHeader();
 
       assert.notInclude(actual, 'import arcs.core.data.*');
     });
-
   });
 });

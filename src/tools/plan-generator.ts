@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Recipe} from '../runtime/recipe/recipe.js';
+import {Type} from '../runtime/type.js';
 
 export class PlanGenerator {
   constructor(private resolutions: AsyncGenerator<Recipe>, private scope: string = 'arcs.core.data') {
@@ -28,7 +29,8 @@ export class PlanGenerator {
     const plans = [];
 
     for await (const recipe of this.resolutions) {
-      const planName = `${recipe.name}Plan`;
+      const planName = `${recipe.name.replace(/[rR]ecipe/, '')}Plan`;
+
       const plan = `\
 class ${planName} : Plan(particles) {
     val particles = listOf()
@@ -39,7 +41,33 @@ class ${planName} : Plan(particles) {
     return plans;
   }
 
-  private fileHeader(): string {
+  mapTypeToProperty(type: Type): string {
+    switch (type.tag) {
+      case 'Collection':
+        break;
+      case 'Entity':
+        break;
+      case 'Handle':
+        break;
+      case 'Reference':
+        break;
+      case 'Singleton':
+        break;
+      case 'TypeVariable':
+        break;
+      case 'Arc':
+      case 'BigCollection':
+      case 'Count':
+      case 'Interface':
+      case 'Slot':
+      case 'Tuple':
+      default:
+        throw Error(`Type of tag ${type.tag} is not supported.`);
+    }
+    return '';
+  }
+
+  fileHeader(): string {
     return `\
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
@@ -54,8 +82,26 @@ ${this.scope === 'arcs.core.data' ? '' : 'import arcs.core.data.*'}
 `;
   }
 
-  private fileFooter(): string {
+  fileFooter(): string {
     return ``;
+  }
+
+  private mapOf(items: Map<string, string>, indent: number): string {
+    if (items.size === 0) return 'mapOf()';
+
+    const mapping = [...items.entries()].map(([key, val]) => `"${key}" to ${val}`);
+
+    return `mapOf(${this.joinWithinLimit(mapping, indent)})`;
+  }
+
+  private joinWithinLimit(items: string[], indent: number, lineLength: number = 120): string {
+    for(const delim of [', ', '\n' + ' '.repeat(indent)]) {
+      const candidate = items.join(delim);
+      const maxLength = Math.max(...candidate.split('\n').map(line => line.length));
+      if (indent + maxLength <= lineLength) return candidate;
+    }
+
+    return items.join(', '); // Default: have poor formatting
   }
 
 }
