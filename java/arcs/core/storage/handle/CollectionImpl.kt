@@ -88,6 +88,8 @@ class CollectionImpl<T : Referencable>(
      */
     suspend fun store(entity: T): Boolean {
         log.debug { "Storing: $entity" }
+        @Suppress("GoodTime") // use Instant
+        entity.creationTimestamp = requireNotNull(time).currentTimeMillis
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant
             entity.expirationTimestamp = ttl.calculateExpiration(time)

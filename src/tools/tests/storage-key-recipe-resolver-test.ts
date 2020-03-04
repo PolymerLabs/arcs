@@ -13,8 +13,8 @@ import {assert} from '../../platform/chai-node.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 
 describe('recipe2plan', () => {
-  describe('recipe-resolver', () => {
-    it('Long + Long: If ReadingRecipe is long running, it is a valid use case', async () => {
+  describe('storage-key-recipe-resolver', () => {
+    it('Resolves mapping a handle from a long running arc into another long running arc', async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -43,7 +43,7 @@ describe('recipe2plan', () => {
         data: reads data`);
 
       const resolver = new StorageKeyRecipeResolver(manifest);
-      for await (const it of resolver.resolve()) {
+      for  (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
     });

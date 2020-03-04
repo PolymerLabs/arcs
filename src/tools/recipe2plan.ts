@@ -22,7 +22,7 @@ import {PlanGenerator} from './plan-generator.js';
 export async function recipe2plan(path: string, scope: string): Promise<string> {
   const manifest = await Runtime.parseFile(path);
 
-  const recipes = new StorageKeyRecipeResolver(manifest).resolve();
+  const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
   const generator = new PlanGenerator(recipes, scope);
 

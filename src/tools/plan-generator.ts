@@ -11,7 +11,7 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 
 export class PlanGenerator {
-  constructor(private resolutions: AsyncGenerator<Recipe>, private scope: string = 'arcs.core.data') {
+  constructor(private resolutions: Recipe[], private scope: string = 'arcs.core.data') {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
@@ -28,7 +28,7 @@ export class PlanGenerator {
   private async _generate(): Promise<string[]>  {
     const plans = [];
 
-    for await (const recipe of this.resolutions) {
+    for (const recipe of this.resolutions) {
       const planName = `${recipe.name.replace(/[rR]ecipe/, '')}Plan`;
 
       const plan = `\

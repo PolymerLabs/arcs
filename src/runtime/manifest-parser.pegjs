@@ -1064,6 +1064,7 @@ RecipeHandleFate
 
 RecipeHandleCapability
  = 'persistent'
+ / 'queryable'
  / 'tied-to-runtime'
  / 'tied-to-arc'
 

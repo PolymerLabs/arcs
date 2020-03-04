@@ -286,6 +286,15 @@ class CollectionProxy extends StorageProxy implements CollectionStore {
       return this;
     }
 
+    @Override
+    public long getCreationTimestamp() {
+      throw new AssertionError("ModelEntry::getCreationTimestamp not implemented");
+    }
+
+    @Override
+    public void setCreationTimestamp(long creationTimestamp) {
+      throw new AssertionError("ModelEntry::setCreationTimestamp not implemented");
+    }
 
     @Override
     public long getExpirationTimestamp() {

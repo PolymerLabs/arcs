@@ -175,7 +175,7 @@ export class Manifest {
   }
   get allHandles() {
     // TODO(#4820) Update `reduce` to use flatMap
-    return [...new Set(this._findAll(manifest => manifest._recipes.reduce((acc, x) => acc.concat(x.handles), [])))];
+    return this.allRecipes.reduce((acc, x) => acc.concat(x.handles), []);
   }
   get activeRecipe() {
     return this._recipes.find(recipe => recipe.annotation === 'active');
@@ -312,7 +312,7 @@ export class Manifest {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
     const stores = [...this._findAll(manifest =>
-      manifest._stores.filter(store => this._typePredicate(store, type, subtype) && tagPredicate(manifest, store)))];
+      manifest._stores.filter(store => this.typesMatch(store, type, subtype) && tagPredicate(manifest, store)))];
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
@@ -323,16 +323,16 @@ export class Manifest {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
     const fates = options.fates || [];
-    function tagPredicate(handle: Handle) {
-      return tags.filter(tag => !handle.tags.includes(tag)).length === 0;
+    function hasAllTags(handle: Handle) {
+      return tags.every(tag => handle.tags.includes(tag));
     }
-    function fatePredicate(handle: Handle) {
+    function matchesFate(handle: Handle) {
       return fates === [] || fates.includes(handle.fate);
     }
     // TODO(#4820) Update `reduce` to use flatMap
-    return [...this._findAll(manifest => manifest._recipes
+    return [...this.allRecipes
       .reduce((acc, r) => acc.concat(r.handles), [])
-      .filter(h => this._typePredicate(h, type, subtype) && tagPredicate(h) && fatePredicate(h)))];
+      .filter(h => this.typesMatch(h, type, subtype) && hasAllTags(h) && matchesFate(h))];
   }
   findHandlesById(id: string): Handle[] {
     return this.allHandles.filter(h => h.id === id);
@@ -343,7 +343,7 @@ export class Manifest {
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
-  _typePredicate(candidate: {type: Type}, type: Type, checkSubtype: boolean) {
+  private typesMatch(candidate: {type: Type}, type: Type, checkSubtype: boolean) {
     const resolvedType = type.resolvedType();
     if (!resolvedType.isResolved()) {
       return (type instanceof CollectionType) === (candidate.type instanceof CollectionType) &&
