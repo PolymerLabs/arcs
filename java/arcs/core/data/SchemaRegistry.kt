@@ -10,7 +10,6 @@
  */
 package arcs.core.data
 
-
 typealias SchemaHash = String
 
 /**
