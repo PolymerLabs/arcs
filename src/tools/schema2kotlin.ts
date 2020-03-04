@@ -315,6 +315,8 @@ ${this.opts.wasm ? '' : `\
             SchemaRegistry.register(schema)
         }
     }
+    
+    override fun schema() = schema
 `}
     override fun create() = ${name}()
     ${!this.opts.wasm ? `

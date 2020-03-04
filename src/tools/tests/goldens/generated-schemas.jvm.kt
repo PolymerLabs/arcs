@@ -87,6 +87,8 @@ class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
         }
     }
 
+    override fun schema() = schema
+
     override fun create() = GoldInternal1()
 
     override fun deserialize(data: RawEntity): GoldInternal1 {
@@ -214,6 +216,8 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
             SchemaRegistry.register(schema)
         }
     }
+
+    override fun schema() = schema
 
     override fun create() = Gold_Data()
 

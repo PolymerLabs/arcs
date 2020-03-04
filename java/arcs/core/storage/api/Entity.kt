@@ -13,6 +13,7 @@ package arcs.core.storage.api
 
 import arcs.core.common.Referencable
 import arcs.core.data.RawEntity
+import arcs.core.data.Schema
 import arcs.core.data.util.ReferencablePrimitive
 import kotlin.IllegalArgumentException
 import kotlin.reflect.KClass
@@ -38,6 +39,9 @@ interface EntitySpec<T : Entity> {
      * TODO: replace this with kotlinx.serialization
      */
     fun deserialize(data: RawEntity): T
+
+    /** Returns the corresponding [Schema] for the specified [Entity]. */
+    fun schema(): Schema
 }
 
 /**
