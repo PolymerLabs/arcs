@@ -121,6 +121,7 @@ message TypeVariableProto {
 message SchemaProto {
   repeated string names = 1;
   map<string, TypeProto> fields = 2;
+  string hash = 3;
 }
 
 enum OPERATOR {
