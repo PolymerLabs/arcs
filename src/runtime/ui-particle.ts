@@ -103,9 +103,10 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
     return setTimeout(done, 10);
   }
 
-  ready() {
+  onReady() : void {
     // ensure we `update()` at least once
     this._invalidate();
+    super.onReady();
   }
 
   async onHandleSync(handle: Handle<CRDTTypeRecord>, model): Promise<void> {
