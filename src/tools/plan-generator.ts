@@ -50,7 +50,7 @@ package ${this.scope}
 // GENERATED CODE -- DO NOT EDIT
 //
 
-import arcs.core.data.*;
+${this.scope === 'arcs.core.data' ? '' : 'import arcs.core.data.*'}
 `;
   }
 
