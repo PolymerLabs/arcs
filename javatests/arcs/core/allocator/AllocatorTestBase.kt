@@ -26,6 +26,7 @@ import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
 import arcs.jvm.host.ExplicitHostRegistry
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -73,8 +74,8 @@ open class AllocatorTestBase {
     open val storageCapability = Capabilities.TiedToRuntime
     open fun runAllocatorTest(
         coroutineContext: CoroutineContext = EmptyCoroutineContext,
-        testBody: suspend TestCoroutineScope.() -> Unit
-    ) = runBlockingTest(coroutineContext, testBody)
+        testBody: suspend CoroutineScope.() -> Unit
+    ) = runBlocking(coroutineContext) { testBody() }
 
     open suspend fun hostRegistry(): HostRegistry {
         val registry = ExplicitHostRegistry()

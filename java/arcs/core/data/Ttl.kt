@@ -34,7 +34,7 @@ sealed class Ttl(count: Int, val isInfinite: Boolean = false) {
     override fun hashCode(): Int = minutes.hashCode()
 
     fun calculateExpiration(time: Time): Long =
-        if (isInfinite) RawEntity.NO_EXPIRATION
+        if (isInfinite) RawEntity.UNINITIALIZED_TIMESTAMP
         else requireNotNull(time).currentTimeMillis + (minutes * 60 * 1000)
 
     data class Minutes(val count: Int) : Ttl(count)

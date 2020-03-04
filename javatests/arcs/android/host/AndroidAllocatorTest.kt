@@ -13,7 +13,6 @@ package arcs.android.host
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
-import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -26,12 +25,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
-import kotlin.coroutines.CoroutineContext
 
 /**
  * These tests are the same as [AllocatorTestBase] but run with Android Services,
@@ -81,25 +77,5 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
         readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
         writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
         super.setUp()
-    }
-
-    override fun runAllocatorTest(
-        coroutineContext: CoroutineContext,
-        testBody: suspend TestCoroutineScope.() -> Unit
-    ) = runBlockingTest(coroutineContext) {
-        val scenario = ActivityScenario.launch(TestActivity::class.java)
-
-        scenario.moveToState(Lifecycle.State.STARTED)
-
-        val activityJob = launch {
-            scenario.onActivity { activity ->
-                runBlocking {
-                    this@runBlockingTest.testBody()
-                }
-                scenario.close()
-            }
-        }
-
-        activityJob.join()
     }
 }

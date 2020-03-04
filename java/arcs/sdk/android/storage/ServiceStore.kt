@@ -142,12 +142,15 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         val service = connection.connectAsync().await()
 
         val messageChannel = ParcelableProxyMessageChannel(coroutineContext)
-        serviceCallbackToken = withContext(coroutineContext) {
-            service.registerCallback(messageChannel)
+
+        // Open subscription before attaching callback to make sure that we capture all messages
+        val subscription = messageChannel.openSubscription()
+        scope.launch {
+            subscription.consumeEach { handleMessageAndResultFromService(it) }
         }
 
-        scope.launch {
-            messageChannel.openSubscription().consumeEach { handleMessageAndResultFromService(it) }
+        serviceCallbackToken = withContext(coroutineContext) {
+            service.registerCallback(messageChannel)
         }
 
         this.serviceConnection = connection

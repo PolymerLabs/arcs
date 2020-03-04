@@ -117,5 +117,7 @@ describe('Capabilities Resolver', () => {
     assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.tiedToArc)], ['volatile']);
     assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.tiedToRuntime)], ['ramdisk']);
     assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.persistent)], ['firebase']);
+    assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.queryable)], ['firebase']);
+    assert.sameMembers([...resolver2.findStorageKeyProtocols(Capabilities.persistentQueryable)], ['firebase']);
   });
 });

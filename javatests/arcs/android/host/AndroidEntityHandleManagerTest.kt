@@ -2,7 +2,8 @@ package arcs.android.host
 
 import android.app.Application
 import androidx.lifecycle.Lifecycle
-import androidx.test.core.app.ActivityScenario
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -27,8 +28,6 @@ import arcs.sdk.android.storage.service.testutil.TestBindingDelegate
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,12 +37,15 @@ typealias Person = TestParticleInternal1
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
-class AndroidEntityHandleManagerTest {
+class AndroidEntityHandleManagerTest : LifecycleOwner {
     private lateinit var app: Application
+    private lateinit var lifecycle: LifecycleRegistry
+    override fun getLifecycle() = lifecycle
 
     val entity1 = Person("Jason", 21.0, false)
     val entity2 = Person("Jason", 22.0, true)
     lateinit var handleHolder: TestParticleHandles
+    private lateinit var handleManager: EntityHandleManager
 
     private val schema = Schema(
         listOf(SchemaName("Person")),
@@ -69,37 +71,24 @@ class AndroidEntityHandleManagerTest {
     @Before
     fun setUp() {
         app = ApplicationProvider.getApplicationContext()
-        app.setTheme(R.style.Theme_AppCompat);
+        lifecycle = LifecycleRegistry(this).apply {
+            setCurrentState(Lifecycle.State.CREATED)
+            setCurrentState(Lifecycle.State.STARTED)
+            setCurrentState(Lifecycle.State.RESUMED)
+        }
 
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
 
         handleHolder = TestParticleHandles()
-    }
 
-    fun handleManagerTest(
-        block: suspend TestCoroutineScope.(EntityHandleManager) -> Unit
-    ) = runBlockingTest {
-        val scenario = ActivityScenario.launch(TestActivity::class.java)
-
-        scenario.moveToState(Lifecycle.State.STARTED)
-
-        val activityJob = launch {
-            scenario.onActivity { activity ->
-                val hf = AndroidHandleManager(
-                    lifecycle = activity.lifecycle, context = activity,
-                    connectionFactory = DefaultConnectionFactory(
-                        activity, TestBindingDelegate(app), coroutineContext
-                    ),
-                    coroutineContext = coroutineContext
-                )
-                runBlocking {
-                    this@runBlockingTest.block(EntityHandleManager(hf))
-                }
-                scenario.close()
-            }
-        }
-        activityJob.join()
+        handleManager = EntityHandleManager(
+            AndroidHandleManager(
+                lifecycle = lifecycle,
+                context = app,
+                connectionFactory = DefaultConnectionFactory(app, TestBindingDelegate(app))
+            )
+        )
     }
 
     private fun expectHandleException(handleName: String, block: () -> Unit) {
@@ -110,7 +99,7 @@ class AndroidEntityHandleManagerTest {
     }
 
     @Test
-    fun handle_uninitializedThrowsException() = handleManagerTest {
+    fun handle_uninitializedThrowsException() = runBlocking {
         expectHandleException("writeHandle") {
             handleHolder.writeHandle
         }
@@ -161,7 +150,7 @@ class AndroidEntityHandleManagerTest {
     )
 
     @Test
-    fun singletonHandle_writeFollowedByReadWithOnUpdate() = handleManagerTest { handleManager ->
+    fun singletonHandle_writeFollowedByReadWithOnUpdate() = runBlocking {
         val writeHandle = createSingletonHandle(
             handleManager,
             "writeHandle",
@@ -208,7 +197,7 @@ class AndroidEntityHandleManagerTest {
     }
 
     @Test
-    fun setHandle_writeFollowedByReadWithOnUpdate() = handleManagerTest { handleManager ->
+    fun setHandle_writeFollowedByReadWithOnUpdate() = runBlocking<Unit> {
         val writeSetHandle = createSetHandle(
             handleManager,
             "writeSetHandle",

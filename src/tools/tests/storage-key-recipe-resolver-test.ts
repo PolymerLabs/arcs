@@ -14,8 +14,9 @@ import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 
 describe('recipe2plan', () => {
-  it('Long + Long: If ReadingRecipe is long running, it is a valid use case', async () => {
-    const manifest = await Manifest.parse(`\
+  describe('storage-key-recipe-resolver', () => {
+    it('Resolves mapping a handle from a long running arc into another long running arc', async () => {
+      const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
 
@@ -42,10 +43,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-    const resolver = new StorageKeyRecipeResolver(manifest);
-    for await (const it of resolver.resolve()) {
-      assert.isTrue(it.isResolved());
-    }
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      for  (const it of (await resolver.resolve())) {
+        assert.isTrue(it.isResolved());
+      }
   });
   it('Short + Short: If WritingRecipe is short lived, it is not valid', async () => {
     const manifest = await Manifest.parse(`\
@@ -68,7 +69,7 @@ describe('recipe2plan', () => {
 
     const resolver = new StorageKeyRecipeResolver(manifest);
     await assertThrowsAsync(async () => {
-      for await (const it of resolver.resolve()) {
+      for (const it of await resolver.resolve()) {
         continue;
       }
     }, Error, 'Handle data mapped to ephemeral handle thing.');
@@ -96,7 +97,7 @@ describe('recipe2plan', () => {
 
     const resolver = new StorageKeyRecipeResolver(manifest);
     await assertThrowsAsync(async () => {
-      for await (const it of resolver.resolve()) {
+      for (const it of await resolver.resolve()) {
         continue;
       }
     }, Error, 'Handle data mapped to ephemeral handle thing.');
@@ -123,7 +124,7 @@ describe('recipe2plan', () => {
         data: reads data`);
 
     const resolver = new StorageKeyRecipeResolver(manifest);
-    for await (const it of resolver.resolve()) {
+    for (const it of await resolver.resolve()) {
       assert.isTrue(it.isResolved());
     }
   });
@@ -154,7 +155,7 @@ describe('recipe2plan', () => {
     const resolver = new StorageKeyRecipeResolver(manifest);
     // TODO: specify the correct error to be thrown
     await assertThrowsAsync(async () => {
-      for await (const it of resolver.resolve()) {
+      for (const it of await resolver.resolve()) {
         continue;
       }
     }, /Recipe ReadingRecipe failed to resolve:/);
