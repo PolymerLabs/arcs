@@ -32,6 +32,7 @@ fun SchemaProto.decodeFields(): SchemaFields {
         when (type.getDataCase()) {
             TypeProto.DataCase.PRIMITIVE -> singletons[name] = type.decodeAsFieldType()
             // TODO: TypeProto.DataCase.COLLECTIONS
+            // TODO: TypeProto.DataCase.REFERENCE
             TypeProto.DataCase.DATA_NOT_SET ->
                 throw IllegalArgumentException("Unknown data field in TypeProto.")
             else ->
