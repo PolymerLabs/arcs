@@ -32,12 +32,14 @@ export class StorageKeyRecipeResolver {
   /**
    * Produces resolved recipes with storage keys.
    *
+   * TODO(#4818) Add passes to assign storage keys.
    * @throws Error if recipe fails to resolve on first or second pass.
    * @yields Resolved recipes with storage keys
    */
   async resolve(): Promise<Recipe[]> {
     const recipes = [];
     for (const recipe of this.runtime.context.allRecipes) {
+      this.validateHandles(recipe);
       const arc = this.runtime.newArc(this.getArcId(recipe), ramDiskStorageKeyPrefixForTest());
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
       const resolved = await this.tryResolve(recipe, arc, opts);
@@ -48,7 +50,6 @@ export class StorageKeyRecipeResolver {
       if (!resolved.isResolved()) {
         throw Error(`Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`);
       }
-      this.matchKeysToHandles(recipe);
       recipes.push(resolved);
     }
     return recipes;
@@ -98,14 +99,14 @@ export class StorageKeyRecipeResolver {
   }
 
   /**
-   * TODO(#4818) method to match `map` and `copy` fated handles with storage keys from `create` handles.
+   * Checks that handles are existent, disambiguous, and initiated by a long-running arc.
    *
-   * @throws when a mapped handle is associated with too many stores (ambiguous mapping).
-   * @throws when a mapped handle isn't associated with any store (no matches found).
-   * @throws when handle is mapped to a handle from an ephemeral recipe.
+   * @throws when a map or copy handle is associated with too many stores (ambiguous mapping).
+   * @throws when a map or copy handle isn't associated with any store (no matches found).
+   * @throws when a map or copy handle is associated with a handle from an ephemeral recipe.
    * @param recipe long-running or ephemeral recipe
    */
-  matchKeysToHandles(recipe: Recipe) {
+  validateHandles(recipe: Recipe) {
     recipe.handles
       .filter(h => h.fate === 'map' || h.fate === 'copy')
       .forEach(handle => {
@@ -122,8 +123,6 @@ export class StorageKeyRecipeResolver {
         if (!match.recipe.isLongRunning) {
           throw Error(`Handle ${handle.localName} mapped to ephemeral handle ${match.localName}.`);
         }
-
-        handle.storageKey = match.storageKey;
       });
   }
 }

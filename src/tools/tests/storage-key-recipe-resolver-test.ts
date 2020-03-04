@@ -15,7 +15,7 @@ import {assertThrowsAsync} from '../../testing/test-util.js';
 
 describe('recipe2plan', () => {
   describe('storage-key-recipe-resolver', () => {
-    it('Resolves mapping a handle from a long running arc into another long running arc', async () => {
+    it('resolves mapping a handle from a long running arc into another long running arc', async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -48,7 +48,7 @@ describe('recipe2plan', () => {
         assert.isTrue(it.isResolved());
       }
     });
-    it('Short + Short: If WritingRecipe is short lived, it is not valid', async () => {
+    it('fails to resolve mapping a handle from a short running arc into another short running arc', async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -74,7 +74,7 @@ describe('recipe2plan', () => {
         }
       }, Error, 'Handle data mapped to ephemeral handle thing.');
     });
-    it('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', async () => {
+    it('fails to resolve mapping a handle from a short running arc into a long running arc', async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -102,7 +102,7 @@ describe('recipe2plan', () => {
         }
       }, Error, 'Handle data mapped to ephemeral handle thing.');
     });
-    it('Long + Short: If WritingRecipe is long lived and Reading is short lived, it is valid', async () => {
+    it('resolves mapping a handle from a long running arc into a short running arc', async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -158,7 +158,7 @@ describe('recipe2plan', () => {
         for (const it of await resolver.resolve()) {
           continue;
         }
-      }, /Recipe ReadingRecipe failed to resolve:/);
+      });
     });
     // TODO(alxr): Flush out outlined unit tests
     it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {
