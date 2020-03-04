@@ -54,4 +54,4 @@ See [here](../../../particles/Native/Wasm) for a working example.
   
 # Test
 
-`./tools/bazelisk test //src/wasm:wasm-api-test`
+`./tools/bazelisk test //src/wasm/tests:wasm-api-test`

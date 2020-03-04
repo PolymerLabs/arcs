@@ -22,10 +22,12 @@ load(
     "java_library",
     "java_test",
 )
+load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load(
     "//third_party/java/arcs/build_defs/internal:kotlin_wasm_annotations.bzl",
     "kotlin_wasm_annotations",
 )
+load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load(
     "//tools/build_defs/kotlin:rules.bzl",
@@ -319,6 +321,27 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             deps = android_local_test_deps,
             data = data,
         )
+
+def arcs_kt_plan(name, src, deps = [], out = None, visibility = None):
+    """Converts recipes in manifests into Kotlin Plans.
+
+    Args:
+      name: the name of the target to create
+      src: an Arcs manifest file
+      deps: list of dependencies (other manifests)
+      out: the name of the output artifact (a Kotlin file).
+      visibility: list of visibilities
+    """
+    outs = [out] if out != None else [replace_arcs_suffix(src, ".kt")]
+
+    sigh_command(
+        name = name,
+        srcs = [src],
+        outs = outs,
+        deps = deps,
+        progress_message = "Producing Plans",
+        sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+    )
 
 def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], data = []):
     """Defines Kotlin JVM test targets for a directory.

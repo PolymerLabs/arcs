@@ -18,6 +18,7 @@ export class Capabilities {
   }
 
   get isPersistent() { return this.capabilities.has('persistent'); }
+  get isQueryable() { return this.capabilities.has('queryable'); }
   get isTiedToRuntime() { return this.capabilities.has('tied-to-runtime'); }
   get isTiedToArc() { return this.capabilities.has('tied-to-arc'); }
 
@@ -44,4 +45,6 @@ export class Capabilities {
   static readonly tiedToArc = new Capabilities(['tied-to-arc']);
   static readonly tiedToRuntime = new Capabilities(['tied-to-runtime']);
   static readonly persistent = new Capabilities(['persistent']);
+  static readonly queryable = new Capabilities(['queryable']);
+  static readonly persistentQueryable = new Capabilities(['persistent', 'queryable']);
 }

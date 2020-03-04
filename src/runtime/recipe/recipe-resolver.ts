@@ -211,7 +211,7 @@ export class RecipeResolver {
   // Attempts to run basic resolution on the given recipe. Returns a new
   // instance of the recipe normalized and resolved if possible. Returns null if
   // normalization or attempting to resolve slot connection fails.
-  async resolve(recipe: Recipe, options?: IsValidOptions) {
+  async resolve(recipe: Recipe, options?: IsValidOptions): Promise<Recipe | null> {
     recipe = recipe.clone();
     if (!recipe.normalize(options)) {
       console.warn(`could not normalize a recipe: ${
