@@ -13,15 +13,22 @@ import {Capabilities} from '../capabilities.js';
 describe('Capabilities', () => {
   it('verifies same capabilities', () => {
     assert.isTrue(Capabilities.persistent.isSame(Capabilities.persistent));
+    assert.isTrue(Capabilities.queryable.isSame(Capabilities.queryable));
+    assert.isTrue(Capabilities.persistentQueryable.isSame(
+        Capabilities.persistentQueryable));
     assert.isTrue(Capabilities.tiedToRuntime.isSame(Capabilities.tiedToRuntime));
     assert.isTrue(Capabilities.tiedToArc.isSame(Capabilities.tiedToArc));
 
     assert.isFalse(Capabilities.persistent.isSame(Capabilities.tiedToRuntime));
     assert.isFalse(Capabilities.tiedToRuntime.isSame(Capabilities.tiedToArc));
     assert.isFalse(Capabilities.tiedToArc.isSame(Capabilities.persistent));
+    assert.isFalse(Capabilities.queryable.isSame(Capabilities.persistentQueryable));
+
 
     assert.isTrue(new Capabilities(['persistent', 'tied-to-arc']).isSame(
         new Capabilities(['persistent', 'tied-to-arc'])));
+    assert.isTrue(new Capabilities(['persistent', 'queryable']).isSame(
+          Capabilities.persistentQueryable));
     assert.isFalse(new Capabilities(['persistent', 'tied-to-arc']).isSame(Capabilities.persistent));
     assert.isFalse(Capabilities.persistent.isSame(
       new Capabilities(['persistent', 'tied-to-arc'])));
@@ -29,12 +36,19 @@ describe('Capabilities', () => {
 
   it('verifies contained capabilities', () => {
     assert.isTrue(Capabilities.persistent.contains(Capabilities.persistent));
+    assert.isTrue(Capabilities.queryable.contains(Capabilities.queryable));
+    assert.isTrue(Capabilities.persistentQueryable.contains(Capabilities.persistentQueryable));
+    assert.isTrue(Capabilities.persistentQueryable.contains(Capabilities.persistent));
+    assert.isTrue(Capabilities.persistentQueryable.contains(Capabilities.queryable));
     assert.isTrue(Capabilities.tiedToRuntime.contains(Capabilities.tiedToRuntime));
     assert.isTrue(Capabilities.tiedToArc.contains(Capabilities.tiedToArc));
 
     assert.isFalse(Capabilities.persistent.contains(Capabilities.tiedToRuntime));
     assert.isFalse(Capabilities.tiedToRuntime.contains(Capabilities.tiedToArc));
     assert.isFalse(Capabilities.tiedToArc.contains(Capabilities.persistent));
+    assert.isFalse(Capabilities.persistent.contains(Capabilities.persistentQueryable));
+    assert.isFalse(Capabilities.queryable.contains(Capabilities.persistentQueryable));
+    assert.isFalse(Capabilities.queryable.contains(Capabilities.persistent));
 
     assert.isTrue(new Capabilities(['persistent', 'tied-to-arc']).contains(
         new Capabilities(['persistent', 'tied-to-arc'])));

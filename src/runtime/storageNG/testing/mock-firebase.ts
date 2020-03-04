@@ -355,7 +355,7 @@ export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
     const {projectId, domain, apiKey} = mockFirebaseStorageKeyOptions;
     CapabilitiesResolver.registerKeyCreator(
         'firebase',
-        Capabilities.persistent,
+        Capabilities.persistentQueryable,
         (options: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, options.location()));
 
   }

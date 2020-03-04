@@ -138,20 +138,25 @@ class SingletonIntegrationTest {
     fun addEntityWithTtl() = runBlockingTest {
         val person = Person("Jane", 29, false)
         assertThat(singletonA.store(person.toRawEntity())).isTrue()
+        val creationTimestampA = requireNotNull(singletonA.fetch()).creationTimestamp;
+        assertThat(creationTimestampA).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(requireNotNull(singletonA.fetch()).expirationTimestamp)
-            .isEqualTo(RawEntity.NO_EXPIRATION)
+            .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
         val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2), TimeImpl())
         storageProxy.registerHandle(singletonC)
         assertThat(singletonC.store(person.toRawEntity())).isTrue()
         val entityC = requireNotNull(singletonC.fetch())
-        assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+        assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
+        assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
         val singletonD = SingletonImpl("singletonD", storageProxy, null, Ttl.Minutes(1), TimeImpl())
         storageProxy.registerHandle(singletonD)
         assertThat(singletonD.store(person.toRawEntity())).isTrue()
         val entityD = requireNotNull(singletonD.fetch())
-        assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.NO_EXPIRATION)
+        assertThat(entityD.creationTimestamp).isGreaterThan(creationTimestampA)
+        assertThat(entityD.creationTimestamp).isGreaterThan(entityC.creationTimestamp)
+        assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(entityC.expirationTimestamp).isGreaterThan(entityD.expirationTimestamp)
     }
 
