@@ -66,13 +66,8 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-
       const resolver = new StorageKeyRecipeResolver(manifest);
-      await assertThrowsAsync(async () => {
-        for (const it of await resolver.resolve()) {
-          continue;
-        }
-      }, Error, 'Handle data mapped to ephemeral handle thing.');
+      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
     });
     it('fails to resolve mapping a handle from a short running arc into a long running arc', async () => {
       const manifest = await Manifest.parse(`\
@@ -96,11 +91,7 @@ describe('recipe2plan', () => {
         data: reads data`);
 
       const resolver = new StorageKeyRecipeResolver(manifest);
-      await assertThrowsAsync(async () => {
-        for (const it of await resolver.resolve()) {
-          continue;
-        }
-      }, Error, 'Handle data mapped to ephemeral handle thing.');
+      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
     });
     it('resolves mapping a handle from a long running arc into a short running arc', async () => {
       const manifest = await Manifest.parse(`\
@@ -154,11 +145,7 @@ describe('recipe2plan', () => {
 
       const resolver = new StorageKeyRecipeResolver(manifest);
       // TODO: specify the correct error to be thrown
-      await assertThrowsAsync(async () => {
-        for (const it of await resolver.resolve()) {
-          continue;
-        }
-      });
+      await assertThrowsAsync(resolver.resolve);
     });
     // TODO(alxr): Flush out outlined unit tests
     it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {
