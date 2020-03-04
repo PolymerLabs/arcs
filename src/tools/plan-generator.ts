@@ -9,6 +9,7 @@
  */
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
+import {Particle} from '../runtime/recipe/particle.js';
 
 export class PlanGenerator {
   constructor(private resolutions: Recipe[], private scope: string = 'arcs.core.data') {
@@ -31,17 +32,27 @@ export class PlanGenerator {
     for (const recipe of this.resolutions) {
       const planName = `${recipe.name.replace(/[rR]ecipe/, '')}Plan`;
 
+      const particles = recipe.particles.map(this.createParticle);
+
       const plan = `\
-class ${planName} : Plan(particles) {
-    val particles = listOf()
-}`;
+object ${planName} : Plan(listOf())`;
+
       plans.push(plan);
     }
 
     return plans;
   }
 
-  mapTypeToProperty(type: Type): string {
+  createParticle(particle: Particle): string {
+    return `\
+Particle(
+  ${particle.name},
+  ${particle.spec.implFile.replace('/', '.')}
+  mapOf()
+)`;
+  }
+
+  createType(type: Type): string {
     switch (type.tag) {
       case 'Collection':
         break;
