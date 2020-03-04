@@ -18,14 +18,14 @@ export class PlanGenerator {
   async generate(): Promise<string> {
     const planOutline = [
       this.fileHeader(),
-      (await this._generate()).join('\n'),
+      (await this.createPlans()).join('\n'),
       this.fileFooter()
     ];
 
     return planOutline.join('\n');
   }
 
-  private async _generate(): Promise<string[]>  {
+  private async createPlans(): Promise<string[]>  {
     const plans = [];
 
     for (const recipe of this.resolutions) {
@@ -103,5 +103,4 @@ ${this.scope === 'arcs.core.data' ? '' : 'import arcs.core.data.*'}
 
     return items.join(', '); // Default: have poor formatting
   }
-
 }
