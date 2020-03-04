@@ -70,7 +70,6 @@ class GoldInternal1() : Entity {
     override fun toString() = "GoldInternal1(val_ = $val_)"
 }
 
-
 class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
 
     companion object {
@@ -193,7 +192,6 @@ class Gold_Data() : Entity {
 
     override fun toString() = "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 }
-
 
 class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 

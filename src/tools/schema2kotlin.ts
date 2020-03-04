@@ -299,7 +299,6 @@ ${this.opts.wasm ? `
     override fun toString() = "${name}(${this.fieldsForToString.join(', ')})"
 }
 
-
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 
 ${this.opts.wasm ? '' : `\

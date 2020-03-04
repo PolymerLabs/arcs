@@ -16,10 +16,11 @@ package arcs.core.data
 object SchemaRegistry {
     private val schemas: MutableMap<String, Schema> = mutableMapOf()
 
-    internal fun register(schema: Schema) {
+    /** Store a [Schema] in the registry. */
+    fun register(schema: Schema) {
         schemas[schema.hash] = schema
     }
 
-    /** Given a schema hash as a String, return the schema for that has, if it exists. */
+    /** Given a schema hash as a [String], return the [Schema] for that hash, if it exists. */
     fun fromHash(hash: String) = schemas[hash]
 }

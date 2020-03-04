@@ -66,7 +66,6 @@ class GoldInternal1() : WasmEntity {
     override fun toString() = "GoldInternal1(val_ = $val_)"
 }
 
-
 class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
 
 
@@ -202,7 +201,6 @@ class Gold_Data() : WasmEntity {
 
     override fun toString() = "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 }
-
 
 class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
 
