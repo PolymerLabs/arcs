@@ -64,6 +64,8 @@ class SingletonImpl<T : Referencable>(
      * did not apply fully. Fetch the latest value and retry.
      * */
     suspend fun store(entity: T): Boolean {
+        @Suppress("GoodTime") // use Instant
+        entity.creationTimestamp = requireNotNull(time).currentTimeMillis
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant
             entity.expirationTimestamp = ttl.calculateExpiration(time)

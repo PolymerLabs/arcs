@@ -39,6 +39,7 @@ data class ParcelableRawEntity(
                 parcel.writeTypedObject(ParcelableReferencable(it), flags)
             }
         }
+        parcel.writeLong(actual.creationTimestamp)
         parcel.writeLong(actual.expirationTimestamp)
     }
 
@@ -68,9 +69,18 @@ data class ParcelableRawEntity(
             }
 
             @Suppress("GoodTime") // use Instant
+            val creationTimestamp = requireNotNull(parcel.readLong())
+
+            @Suppress("GoodTime") // use Instant
             val expirationTimestamp = requireNotNull(parcel.readLong())
 
-            val rawEntity = RawEntity(id, singletons, collections, expirationTimestamp)
+            val rawEntity = RawEntity(
+                id,
+                singletons,
+                collections,
+                creationTimestamp,
+                expirationTimestamp
+            )
             return ParcelableRawEntity(rawEntity)
         }
 
