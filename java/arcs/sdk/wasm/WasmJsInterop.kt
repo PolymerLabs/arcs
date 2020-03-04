@@ -249,3 +249,11 @@ fun log(msg: String) {
     write(msg.toWasmString())
     flush()
 }
+
+fun combine(vararg handles: WasmSingletonImpl<*>) : WasmCombinedHandle<*> {
+    val l = mutableListOf<WasmSingletonImpl<WasmEntity>>()
+    for (handle in handles) {
+        l.add(handle as WasmSingletonImpl<WasmEntity>)
+    }
+    return WasmCombinedHandle(l)
+}
