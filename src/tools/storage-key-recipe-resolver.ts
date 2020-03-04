@@ -41,12 +41,11 @@ export class StorageKeyRecipeResolver {
     for (const recipe of this.runtime.context.allRecipes) {
       const arc = this.runtime.newArc(this.getArcId(recipe), ramDiskStorageKeyPrefixForTest());
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
-      const resolved = await this.resolveOrNormalize(recipe, arc, opts);
+      const resolved = await this.tryResolve(recipe, arc, opts);
       if (!resolved) {
         throw Error(`Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
       }
       this.createStoresForCreateHandles(resolved, arc);
-      resolved.normalize();
       if (!resolved.isResolved()) {
         throw Error(`Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`);
       }
@@ -62,7 +61,7 @@ export class StorageKeyRecipeResolver {
    * @param arc Arc is associated with input recipe
    * @param opts contains `errors` map for reporting.
    */
-  async resolveOrNormalize(recipe: Recipe, arc: Arc, opts?: IsValidOptions): Promise<Recipe | null> {
+  async tryResolve(recipe: Recipe, arc: Arc, opts?: IsValidOptions): Promise<Recipe | null> {
     const normalized = recipe.clone();
     normalized.normalize();
     if (normalized.isResolved()) return normalized;
