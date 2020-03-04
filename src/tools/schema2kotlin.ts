@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator} from './schema2base.js';
+import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import minimist from 'minimist';
@@ -157,7 +157,7 @@ export class KotlinGenerator implements ClassGenerator {
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
   // TODO: allow optional fields in kotlin
-  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null, isCollection: boolean = false) {
+  addField({field, typeChar, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
     // TODO: support reference types in kotlin
     if (typeChar === 'R') return;
 
