@@ -113,7 +113,7 @@ class CppGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, readonly namespace: string) {}
 
-  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
+  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null, isCollection: boolean = false) {
     const fixed = fixName(field);
     const valid = `${field}_valid_`;
     let {type, defaultVal, isString} = typeMap[typeChar];

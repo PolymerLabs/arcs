@@ -28,10 +28,10 @@ const keywords = [
 ];
 
 const typeMap = {
-  'T': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`},
-  'U': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`},
-  'N': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0'},
-  'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
+  'T': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
+  'U': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
+  'N': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
+  'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
 };
 
 export class Schema2Kotlin extends Schema2Base {
@@ -54,6 +54,7 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
+import arcs.core.data.*
 ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.storage.api.toPrimitiveValue\nimport arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable\nimport arcs.core.data.util.ReferencablePrimitive'}
 `;
   }
@@ -144,11 +145,13 @@ class KotlinGenerator implements ClassGenerator {
   fieldSerializes: string[] = [];
   fieldDeserializes: string[] = [];
   fieldsForToString: string[] = [];
+  singletonSchemaFields: string[] = [];
+  collectionSchemaFields: string[] = [];
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
   // TODO: allow optional fields in kotlin
-  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
+  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null, isCollection: boolean = false) {
     // TODO: support reference types in kotlin
     if (typeChar === 'R') return;
 
@@ -181,6 +184,12 @@ class KotlinGenerator implements ClassGenerator {
     this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
     this.fieldDeserializes.push(`${fixed} = data.singletons["${fixed}"].toPrimitiveValue(${type}::class, ${defaultVal})`);
     this.fieldsForToString.push(`${fixed} = $${fixed}`);
+    if (isCollection) {
+      this.collectionSchemaFields.push(`"${field}" to ${typeMap[typeChar].schemaType}`);
+    } else {
+      this.singletonSchemaFields.push(`"${field}" to ${typeMap[typeChar].schemaType}`);
+    }
+
   }
 
   generate(schemaHash: string, fieldCount: number): string {
@@ -195,6 +204,8 @@ class KotlinGenerator implements ClassGenerator {
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
+
+    const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
 
     return `\
 
@@ -257,6 +268,21 @@ ${this.opts.wasm ? `
 
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 
+    companion object {
+        val schema = Schema(
+            listOf(${schemaNames.join('\n                ')}),
+            SchemaFields(
+                singletons = mapOf(
+                    ${this.singletonSchemaFields.join(',\n                    ')}
+                ),
+                collections = mapOf(
+                    ${this.collectionSchemaFields.join(',\n                    ')}
+                )
+            ),
+            "${schemaHash}"
+        ) 
+    }
+    
     override fun create() = ${name}()
     ${!this.opts.wasm ? `
     override fun deserialize(data: RawEntity): ${name} {
