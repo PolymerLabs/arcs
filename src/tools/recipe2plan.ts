@@ -28,6 +28,3 @@ export async function recipe2plan(path: string, scope: string): Promise<string> 
 
   return await generator.generate();
 }
-
-
-
