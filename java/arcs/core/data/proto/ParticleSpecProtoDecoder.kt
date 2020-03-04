@@ -13,6 +13,7 @@ package arcs.core.data.proto
 
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleConnectionSpec.Direction
+import arcs.core.data.ParticleSpec
 
 typealias DirectionProto = HandleConnectionSpecProto.Direction
 
@@ -31,4 +32,11 @@ fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
     name = getName(),
     direction = getDirection().decode(),
     type = getType().decode()
+)
+
+/** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */
+fun ParticleSpecProto.decode() = ParticleSpec(
+    name = getName(),
+    connections = getConnectionsList().map { it.decode() },
+    location = getLocation()
 )

@@ -24,6 +24,13 @@ fun decodeHandleConnectionSpecProto(protoText: String): HandleConnectionSpec {
     return builder.build().decode()
 }
 
+/** Decodes the given [ParticleSpecProto] text as [ParticleSpec]. */
+fun decodeParticleSpecProto(protoText: String): ParticleSpec {
+    val builder = ParticleSpecProto.newBuilder()
+    TextFormat.getParser().merge(protoText, builder)
+    return builder.build().decode()
+}
+
 @RunWith(JUnit4::class)
 class ParticleSpecProtoDecoderTest {
     @Test
@@ -70,5 +77,34 @@ class ParticleSpecProtoDecoderTest {
         assertThat(connectionSpec.name).isEqualTo("data")
         assertThat(connectionSpec.direction).isEqualTo(HandleConnectionSpec.Direction.READS)
         assertThat(connectionSpec.type).isEqualTo(EntityType(schema))
+    }
+
+    @Test
+    fun decodesParticleSpecProto() {
+        val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
+        val writeConnectionSpecProto = getHandleConnectionSpecProto("write", "WRITES", "Thing")
+        val readerSpecProto = """
+          name: "Reader"
+          connections { ${readConnectionSpecProto} }
+          location: "Everywhere"
+        """.trimIndent()
+        val readerSpec = decodeParticleSpecProto(readerSpecProto)
+        val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
+        assertThat(readerSpec.name).isEqualTo("Reader")
+        assertThat(readerSpec.location).isEqualTo("Everywhere")
+        assertThat(readerSpec.connections).isEqualTo(listOf(readConnectionSpec))
+
+        val readerWriterSpecProto = """
+          name: "ReaderWriter"
+          connections { ${readConnectionSpecProto} }
+          connections { ${writeConnectionSpecProto} }
+          location: "Nowhere"
+        """.trimIndent()
+        val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
+        val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
+        assertThat(readerWriterSpec.name).isEqualTo("ReaderWriter")
+        assertThat(readerWriterSpec.location).isEqualTo("Nowhere")
+        assertThat(readerWriterSpec.connections).isEqualTo(
+            listOf(readConnectionSpec, writeConnectionSpec))
     }
 }
