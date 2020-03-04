@@ -196,12 +196,11 @@ class PECOuterPortImpl extends PECOuterPort {
 
   async onBackingProxyMessage(store: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, entityId: string, callback: number) {
     if (!(store instanceof BackingStore)) {
-      this.onReportExceptionInHost(new SystemException(new Error('expected new-style store but found old-style store hooked up to new stack'), 'onProxyMessage', ''));
+      this.onReportExceptionInHost(new SystemException(new Error('expected BackingStore for onBackingProxyMessage'), 'onBackingProxyMessage', ''));
       return;
     }
     const res = await store.onProxyMessage(message, entityId);
     this.SimpleCallback(callback, res);
-
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {

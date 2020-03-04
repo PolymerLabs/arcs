@@ -169,12 +169,15 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           }
         }
         message.id = id;
+
+        // The presence of an entity id indicates the message should be sent to a Backing store. Proxy messages sent to
+        // Backing stores requires an entity id in order to redirect the message to the correct store.
         if (entityId != null) {
-          return  new Promise((resolve) =>
+          return new Promise(resolve =>
             pec.apiPort.BackingProxyMessage(storageProxy, message, entityId, ret => resolve(ret)));
         }
 
-        return new Promise((resolve) =>
+        return new Promise(resolve =>
           pec.apiPort.ProxyMessage(storageProxy, message, ret => resolve(ret)));
       },
 
