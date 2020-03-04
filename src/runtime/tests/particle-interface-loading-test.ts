@@ -26,7 +26,7 @@ import {singletonHandle, SingletonInterfaceStore, SingletonEntityStore} from '..
 async function mapHandleToStore(arc, recipe, classType, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
   const storageProxy = new StorageProxy('id', await store.activate(), new SingletonType(classType.type), store.storageKey.toString());
-   const handle = await handleNGFor('crdt-key', storageProxy, arc.idGenerator, null, true, true, classType.toString()) as SingletonHandle<Entity>;
+  const handle = await handleNGFor('crdt-key', storageProxy, arc.idGenerator, null, true, true, classType.toString()) as SingletonHandle<Entity>;
   recipe.handles[id].mapToStorage(store);
   return handle;
 }
@@ -261,9 +261,9 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var created = false;
           return class extends Particle {
-            async onCreate() {
+            onCreate() {
               this.innerFooHandle = this.handles.get('innerFoo');
-              await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
               created = true;
             }
             async onHandleSync(handle, model) {
@@ -318,9 +318,9 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var handlesSynced = 0;
           return class extends Particle {
-            async onCreate() {
+            onCreate() {
               this.barHandle = this.handles.get('bar');
-              await this.barHandle.set(new this.barHandle.entityClass({value: "Created!"}));
+              this.barHandle.set(new this.barHandle.entityClass({value: "Created!"}));
             }
             
             async onReady() {
@@ -374,9 +374,9 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var handlesSynced = 0;
           return class extends Particle {
-            async onCreate() {
+            onCreate() {
               this.innerFooHandle = this.handles.get('innerFoo');
-              await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
             }
             onHandleSync(handle, model) {
               handlesSynced += 1;
@@ -399,7 +399,7 @@ describe('particle interface loading', () => {
                 s = s + " Not all handles were synced before onReady was called.";
               } 
               
-              await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))    
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))    
             }
           };
         });
@@ -440,15 +440,15 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var created = false;
           return class extends Particle {
-            async onCreate() {
+            onCreate() {
               created = true;
             }
-            async onReady(handle, model) {
+            onReady(handle, model) {
               this.innerFooHandle = this.handles.get('innerFoo');
               if (created) {
-                await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
+                this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
               } else {
-                await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Not created!"}));
+                this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Not created!"}));
               }
             }
           };
