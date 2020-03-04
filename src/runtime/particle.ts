@@ -37,7 +37,6 @@ export class Particle {
   private _idle: Promise<void> = Promise.resolve();
   private _idleResolver: Runnable;
   private _busy = 0;
-  private ready: boolean;
   private created: boolean;
 
   protected _handlesToSync: number;
@@ -52,28 +51,25 @@ export class Particle {
     if (this.spec.inputs.length === 0) {
       this.extraData = true;
     }
-    this.ready = false;
     this.created = false;
   }
 
-  callOnCreate(): void {
+  async callOnCreate(): Promise<void> {
     if (this.created) return;
     this.created = true;
-    this.onCreate();
+    return this.onCreate();
   }
 
   /**
    * Called after handles are writable, only on first initialization of particle.
    */
-  protected onCreate(): void {}
+  protected async onCreate(): Promise<void> {}
 
-  callOnReady(): void {
+  async callOnReady(): Promise<void> {
     if (!this.created) {
       this.callOnCreate();
     }
-    if (this.ready) return;
-    this.ready = true;
-    this.onReady();
+    return this.onReady();
   }
 
   setCreated(): void {
@@ -82,9 +78,9 @@ export class Particle {
 
   /**
    * Called after handles are synced the first time, override to provide initial processing.
-   * This will be called after onCreate.
+   * This will be called after onCreate, but will not wait for onCreate to finish.
    */
-  protected onReady(): void {}
+  protected async onReady(): Promise<void> {}
 
   /**
    * This sets the capabilities for this particle.  This can only

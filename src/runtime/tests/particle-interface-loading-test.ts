@@ -23,6 +23,14 @@ import {handleNGFor, SingletonHandle} from '../storageNG/handle.js';
 import {Entity} from '../entity.js';
 import {singletonHandle, SingletonInterfaceStore, SingletonEntityStore} from '../storageNG/storage-ng.js';
 
+async function mapHandleToStore(arc, recipe, classType, id) {
+  const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
+  const storageProxy = new StorageProxy('id', await store.activate(), new SingletonType(classType.type), store.storageKey.toString());
+   const handle = await handleNGFor('crdt-key', storageProxy, arc.idGenerator, null, true, true, classType.toString()) as SingletonHandle<Entity>;
+  recipe.handles[id].mapToStorage(store);
+  return handle;
+}
+
 describe('particle interface loading', () => {
 
   it('loads interfaces into particles', async () => {
@@ -272,11 +280,7 @@ describe('particle interface loading', () => {
     const storageKey = new VolatileStorageKey(id, 'unique');
     const arc = new Arc({id, storageKey, loader, context: manifest});
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
-
-    const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
-    const varStorageProxy = new StorageProxy('id', await fooStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
-    const fooHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
-    recipe.handles[0].mapToStorage(fooStore);
+    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
 
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -338,11 +342,7 @@ describe('particle interface loading', () => {
     const arc = new Arc({id, storageKey, loader, context: manifest});
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
-    const barStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:1');
-    const barStorageProxy = new StorageProxy('id', await barStore.activate(), new SingletonType(fooClass.type), barStore.storageKey.toString());
-    const barHandle = await handleNGFor('crdt-key', barStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
-    recipe.handles[0].mapToStorage(barStore);
-
+    const barHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
     await barHandle.set(new fooClass({value: 'Set!'}));
 
     recipe.normalize();
@@ -410,15 +410,8 @@ describe('particle interface loading', () => {
     const arc = new Arc({id, storageKey, loader, context: manifest});
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
-    const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
-    const fooStorageProxy = new StorageProxy('id', await fooStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
-    const fooHandle = await handleNGFor('crdt-key', fooStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
-    recipe.handles[0].mapToStorage(fooStore);
-
-    const barStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:1');
-    const barStorageProxy = new StorageProxy('id', await barStore.activate(), new SingletonType(fooClass.type), barStore.storageKey.toString());
-    const barHandle = await handleNGFor('crdt-key', barStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
-    recipe.handles[1].mapToStorage(barStore);
+    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
+    const barHandle = await mapHandleToStore(arc, recipe, fooClass, 1);
 
     await barHandle.set(new fooClass({value: 'Set!'}));
 
@@ -467,10 +460,7 @@ describe('particle interface loading', () => {
     const arc = new Arc({id, storageKey, loader, context: manifest});
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
-    const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
-    const varStorageProxy = new StorageProxy('id', await fooStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
-    const fooHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
-    recipe.handles[0].mapToStorage(fooStore);
+    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
 
     recipe.normalize();
     await arc.instantiate(recipe);
