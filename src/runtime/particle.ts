@@ -78,7 +78,7 @@ export class Particle {
 
   /**
    * Called after handles are synced the first time, override to provide initial processing.
-   * This will be called after onCreate, but will not wait for onCreate to
+   * This will be called after onCreate, but will not wait for onCreate to finish.
    */
   protected async onReady(): Promise<void> {}
 
