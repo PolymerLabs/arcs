@@ -56,6 +56,10 @@ package ${this.scope}
 import arcs.sdk.*
 import arcs.core.data.*
 ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.storage.api.toPrimitiveValue\nimport arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable\nimport arcs.core.data.util.ReferencablePrimitive'}
+
+object SchemaRegistry {
+  var schemas: Map<String, Schema> = mutableMapOf()
+}
 `;
   }
 
@@ -148,6 +152,8 @@ class KotlinGenerator implements ClassGenerator {
   singletonSchemaFields: string[] = [];
   collectionSchemaFields: string[] = [];
 
+  public schemaRegistry: string[];
+
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
   // TODO: allow optional fields in kotlin
@@ -192,6 +198,32 @@ class KotlinGenerator implements ClassGenerator {
 
   }
 
+  private mapOf(items: string[], indent: number): string {
+    if (items.length === 0) return `emptyMap()`;
+
+    return `mapOf(${items.join(',\n' + ' '.repeat(indent))})`;
+  }
+
+  createSchema(schemaHash: string): string {
+    const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
+    return `\
+Schema(
+    listOf(${schemaNames.join(',\n' + ' '.repeat(8))}),
+    SchemaFields(
+        singletons = ${this.mapOf(this.singletonSchemaFields, 12)},
+        collections = ${this.mapOf(this.collectionSchemaFields, 12)}
+    ),
+    "${schemaHash}"
+)`;
+  }
+
+  leftPad(input: string, indent: number) {
+    return input
+      .split('\n')
+      .map(line => ' '.repeat(indent) + line)
+      .join('\n');
+  }
+
   generate(schemaHash: string, fieldCount: number): string {
     const {name, aliases} = this.node;
 
@@ -204,8 +236,6 @@ class KotlinGenerator implements ClassGenerator {
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
-
-    const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
 
     return `\
 
@@ -266,21 +296,14 @@ ${this.opts.wasm ? `
     override fun toString() = "${name}(${this.fieldsForToString.join(', ')})"
 }
 
+
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 
-    companion object {
-        val schema = Schema(
-            listOf(${schemaNames.join('\n                ')}),
-            SchemaFields(
-                singletons = mapOf(
-                    ${this.singletonSchemaFields.join(',\n                    ')}
-                ),
-                collections = mapOf(
-                    ${this.collectionSchemaFields.join(',\n                    ')}
-                )
-            ),
-            "${schemaHash}"
-        ) 
+    init {
+        SchemaRegistry.schemas += mapOf(
+            "${schemaHash}" to 
+${this.leftPad(this.createSchema(schemaHash), 12)}         
+        )
     }
     
     override fun create() = ${name}()
