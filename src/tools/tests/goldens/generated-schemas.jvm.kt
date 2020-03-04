@@ -11,10 +11,9 @@ package arcs.sdk
 import arcs.sdk.*
 import arcs.sdk.Entity
 import arcs.core.data.*
-import arcs.core.storage.api.toPrimitiveValue
-import arcs.core.data.RawEntity
 import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.storage.api.toPrimitiveValue
 
 class GoldInternal1() : Entity {
 

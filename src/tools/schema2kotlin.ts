@@ -54,9 +54,14 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
+${this.opts.wasm ?
+      `import arcs.sdk.wasm.*` :
+      `\
 import arcs.sdk.Entity
 import arcs.core.data.*
-${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.storage.api.toPrimitiveValue\nimport arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable\nimport arcs.core.data.util.ReferencablePrimitive'}
+import arcs.core.data.util.toReferencable
+import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.storage.api.toPrimitiveValue`}
 `;
   }
 
@@ -296,6 +301,7 @@ ${this.opts.wasm ? `
 
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 
+${this.opts.wasm ? '' : `\
     companion object {
         init {
             SchemaRegistry.schemas.plusAssign(mapOf(
@@ -304,7 +310,7 @@ ${this.leftPad(this.createSchema(schemaHash), 16)}
             ))
         }
     }
-    
+`}
     override fun create() = ${name}()
     ${!this.opts.wasm ? `
     override fun deserialize(data: RawEntity): ${name} {
