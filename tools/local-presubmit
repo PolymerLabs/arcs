@@ -23,3 +23,5 @@ set -x
 ./tools/sigh lint
 ./tools/sigh test --all
 
+# Temporary to check flakiness of test.
+./tools/bazelisk ${BAZELRC_OPTS} test //javatests/arcs/android/storage/database:DatabaseImplTest --runs_per_test=200
