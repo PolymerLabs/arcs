@@ -11,7 +11,7 @@
 
 package arcs.sdk.wasm
 
-/** [ReadWriteSingleton] implementation for WASM. */
+/** Combined Handle to allow events on multiple handles to trigger actions. */
 class WasmCombinedSingletonHandle<T : WasmEntity>(val handles: List<WasmSingletonImpl<T>>) {
 
     fun onUpdate(action: (T?) -> Unit) {
