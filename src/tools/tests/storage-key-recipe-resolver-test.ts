@@ -13,8 +13,9 @@ import {assert} from '../../platform/chai-node.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 
 describe('recipe2plan', () => {
-  it('Long + Long: If ReadingRecipe is long running, it is a valid use case', async () => {
-    const manifest = await Manifest.parse(`\
+  describe('storage-key-recipe-resolver', () => {
+    it('Long + Long: If ReadingRecipe is long running, it is a valid use case', async () => {
+      const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
 
@@ -41,18 +42,19 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-    const resolver = new StorageKeyRecipeResolver(manifest);
-    for  (const it of (await resolver.resolve())) {
-      assert.isTrue(it.isResolved());
-    }
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      for  (const it of (await resolver.resolve())) {
+        assert.isTrue(it.isResolved());
+      }
+    });
+    // TODO(alxr): Flush out outlined unit tests
+    it.skip('Short + Short: If WritingRecipe is short lived, it is not valid', () => {});
+    it.skip('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', () => {});
+    it.skip('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});
+    it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});
+    it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {});
+    it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {});
+    it.skip('Ambiguous handle + tag disambiguation: If there are 2 WritingRecipes creating the same handle but with different tags and mapping uses one of the tags, it is valid', () => {});
+    it.skip('No Handle: If there is no writing handle, it is not valid', () => {});
   });
-  // TODO(alxr): Flush out outlined unit tests
-  it.skip('Short + Short: If WritingRecipe is short lived, it is not valid', () => {});
-  it.skip('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', () => {});
-  it.skip('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});
-  it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});
-  it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {});
-  it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {});
-  it.skip('Ambiguous handle + tag disambiguation: If there are 2 WritingRecipes creating the same handle but with different tags and mapping uses one of the tags, it is valid', () => {});
-  it.skip('No Handle: If there is no writing handle, it is not valid', () => {});
 });
