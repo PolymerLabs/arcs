@@ -74,18 +74,17 @@ class GoldInternal1() : Entity {
 class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
 
     companion object {
+        val schema = Schema(
+                listOf(),
+                SchemaFields(
+                    singletons = mapOf("val" to FieldType.Text),
+                    collections = emptyMap()
+                ),
+                "485712110d89359a3e539dac987329cd2649d889"
+            )
+
         init {
-            SchemaRegistry.schemas.plusAssign(mapOf(
-                "485712110d89359a3e539dac987329cd2649d889" to
-                Schema(
-                    listOf(),
-                    SchemaFields(
-                        singletons = mapOf("val" to FieldType.Text),
-                        collections = emptyMap()
-                    ),
-                    "485712110d89359a3e539dac987329cd2649d889"
-                )
-            ))
+            SchemaRegistry.register(schema)
         }
     }
 
@@ -199,21 +198,20 @@ class Gold_Data() : Entity {
 class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 
     companion object {
+        val schema = Schema(
+                listOf(),
+                SchemaFields(
+                    singletons = mapOf("num" to FieldType.Number,
+                        "txt" to FieldType.Text,
+                        "lnk" to FieldType.Text,
+                        "flg" to FieldType.Boolean),
+                    collections = emptyMap()
+                ),
+                "d8058d336e472da47b289eafb39733f77eadb111"
+            )
+
         init {
-            SchemaRegistry.schemas.plusAssign(mapOf(
-                "d8058d336e472da47b289eafb39733f77eadb111" to
-                Schema(
-                    listOf(),
-                    SchemaFields(
-                        singletons = mapOf("num" to FieldType.Number,
-                            "txt" to FieldType.Text,
-                            "lnk" to FieldType.Text,
-                            "flg" to FieldType.Boolean),
-                        collections = emptyMap()
-                    ),
-                    "d8058d336e472da47b289eafb39733f77eadb111"
-                )
-            ))
+            SchemaRegistry.register(schema)
         }
     }
 

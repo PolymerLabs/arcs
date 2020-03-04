@@ -11,6 +11,7 @@ import {Schema2Base, ClassGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import minimist from 'minimist';
+import {UnifiedStore} from '../runtime/storageNG/unified-store.js';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -219,10 +220,10 @@ Schema(
 )`;
   }
 
-  leftPad(input: string, indent: number) {
+  leftPad(input: string, indent: number, skipFirst: boolean = false) {
     return input
       .split('\n')
-      .map(line => ' '.repeat(indent) + line)
+      .map((line: string, idx: number) => (idx === 0 && skipFirst) ? line : ' '.repeat(indent) + line)
       .join('\n');
   }
 
@@ -303,11 +304,10 @@ class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 
 ${this.opts.wasm ? '' : `\
     companion object {
+        val schema = ${this.leftPad(this.createSchema(schemaHash), 12, true)}
+        
         init {
-            SchemaRegistry.schemas.plusAssign(mapOf(
-                "${schemaHash}" to 
-${this.leftPad(this.createSchema(schemaHash), 16)}         
-            ))
+            SchemaRegistry.register(schema)
         }
     }
 `}
