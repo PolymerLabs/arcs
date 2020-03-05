@@ -17,14 +17,10 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 
-/**
- * Returns the names in the [SchemaProto] as List<SchemaName>.
- */
+/** Returns the names in the [SchemaProto] as List<SchemaName>. */
 fun SchemaProto.decodeNames(): List<SchemaName> = getNamesList().map { SchemaName(it) }
 
-/**
- * Returns the fields in the [SchemaProto] as a Kotlin [SchemaFields] instance.
- */
+/** Returns the fields in the [SchemaProto] as a Kotlin [SchemaFields] instance. */
 fun SchemaProto.decodeFields(): SchemaFields {
     val singletons = mutableMapOf<FieldName, FieldType>()
     val collections = mutableMapOf<FieldName, FieldType>()
@@ -43,8 +39,6 @@ fun SchemaProto.decodeFields(): SchemaFields {
     return SchemaFields(singletons, collections)
 }
 
-/**
- * Converts a [SchemaProto] proto instance into a Kotlin [Schema] instance.
- */
+/** Converts a [SchemaProto] proto instance into a Kotlin [Schema] instance. */
 fun SchemaProto.decode() = Schema(names = decodeNames(), fields = decodeFields(), hash = "")
 // TODO: hash

@@ -16,9 +16,7 @@ import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.type.Type
 
-/**
- * Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [PrimitiveType] instance.
- */
+/** Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [PrimitiveType] instance. */
 fun PrimitiveTypeProto.decode(): PrimitiveType =
     when (this) {
         PrimitiveTypeProto.TEXT -> PrimitiveType.Text
@@ -28,9 +26,7 @@ fun PrimitiveTypeProto.decode(): PrimitiveType =
             throw IllegalArgumentException("Unknown PrimitiveTypeProto value.")
     }
 
-/**
- * Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [FieldType] instance.
- */
+/** Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
 fun PrimitiveTypeProto.decodeAsFieldType(): FieldType.Primitive = FieldType.Primitive(decode())
 
 /**
@@ -50,14 +46,10 @@ fun TypeProto.decodeAsFieldType(): FieldType =
                 "Cannot decode a ${getDataCase().name} type to a [FieldType].")
     }
 
-/**
- * Converts a [EntityTypeProto] protobuf instance into a Kotlin [EntityType] instance.
- */
+/** Converts a [EntityTypeProto] protobuf instance into a Kotlin [EntityType] instance. */
 fun EntityTypeProto.decode() = EntityType(getSchema().decode())
 
-/**
- * Converts a [TypeProto] protobuf instance into a Kotlin [Type] instance.
- */
+/** Converts a [TypeProto] protobuf instance into a Kotlin [Type] instance. */
 fun TypeProto.decode(): Type =
     // TODO: optional, RefinementExpression.
     when (getDataCase()) {
@@ -70,5 +62,5 @@ fun TypeProto.decode(): Type =
             throw IllegalArgumentException("Unknown data field in TypeProto.")
         else ->
             throw IllegalArgumentException(
-                "Cannot decode a ${getDataCase().name} type to a [FieldType].")
+                "Cannot decode a ${getDataCase().name} type to a [Type].")
     }

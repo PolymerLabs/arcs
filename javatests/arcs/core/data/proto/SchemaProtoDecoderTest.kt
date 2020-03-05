@@ -13,9 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/**
- * Decodes the text proto [protoText] for [SchemaProto] as [Schema].
- */
+/** Decodes the text proto [protoText] for [SchemaProto] as [Schema]. */
 fun decodeSchemaProtoText(protoText: String): Schema {
     val builder = SchemaProto.newBuilder()
     TextFormat.getParser().merge(protoText, builder)
