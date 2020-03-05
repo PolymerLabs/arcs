@@ -19,7 +19,6 @@ import arcs.core.storage.StorageProxy
 import arcs.core.storage.Store
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
-import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -32,8 +31,8 @@ import kotlinx.coroutines.sync.withLock
  */
 interface ActivationFactoryFactory {
     fun dereferenceFactory(): EntityActivationFactory
-    fun <T : Referencable> singletonFactory(typeClass: KClass<T>): SingletonActivationFactory<T>
-    fun <T : Referencable> setFactory(typeClass: KClass<T>): SetActivationFactory<T>
+    fun <T : Referencable> singletonFactory(): SingletonActivationFactory<T>
+    fun <T : Referencable> setFactory(): SetActivationFactory<T>
 }
 
 /**
@@ -95,7 +94,7 @@ class HandleManager(
         val storageProxy = singletonProxiesMutex.withLock {
             singletonProxies.getOrPut(storageKey) {
                 SingletonProxy(
-                    Store(storeOptions).activate(aff?.singletonFactory(RawEntity::class)),
+                    Store(storeOptions).activate(aff?.singletonFactory()),
                     CrdtSingleton()
                 )
             }
@@ -158,7 +157,7 @@ class HandleManager(
         val storageProxy = singletonReferenceProxiesMutex.withLock {
             singletonReferenceProxies.getOrPut(storageKey) {
                 SingletonProxy(
-                    Store(storeOptions).activate(aff?.singletonFactory(Reference::class)),
+                    Store(storeOptions).activate(aff?.singletonFactory()),
                     CrdtSingleton()
                 )
             }
@@ -197,7 +196,7 @@ class HandleManager(
 
         val storageProxy = setProxiesMutex.withLock {
             setProxies.getOrPut(storageKey) {
-                SetProxy(Store(storeOptions).activate(aff?.setFactory(RawEntity::class)), CrdtSet())
+                SetProxy(Store(storeOptions).activate(aff?.setFactory()), CrdtSet())
             }
         }
 
@@ -262,7 +261,7 @@ class HandleManager(
         val storageProxy = setReferenceProxiesMutex.withLock {
             setReferenceProxies.getOrPut(storageKey) {
                 SetProxy(
-                    Store(storeOptions).activate(aff?.setFactory(Reference::class)),
+                    Store(storeOptions).activate(aff?.setFactory()),
                     CrdtSet()
                 )
             }
