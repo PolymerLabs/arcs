@@ -170,8 +170,8 @@ export class Refinement {
   toKTExpression(codeGenerator: CodeGenerator): string {
     this.normalize();
     const expr = this.expression.toKTExpression(codeGenerator);
-    const genFieldAsLocal = ([field_name, type]: [string, string]) => {
-        const fixed = codeGenerator.escapeIdentifier(field_name);
+    const genFieldAsLocal = ([fieldName, type]: [string, string]) => {
+        const fixed = codeGenerator.escapeIdentifier(fieldName);
         return `val ${fixed} = data.${fixed} as ${codeGenerator.typeFor(type)}`;
     };
 
