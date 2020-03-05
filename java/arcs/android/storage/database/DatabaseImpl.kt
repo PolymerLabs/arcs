@@ -351,7 +351,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         data: DatabaseData,
         originatingClientId: Int?
-    ): Int = stats.insertUpdate.timeSuspending { counters ->
+    ): Boolean = stats.insertUpdate.timeSuspending { counters ->
         when (data) {
             is DatabaseData.Entity -> {
                 counters.increment(DatabaseCounters.INSERTUPDATE_ENTITY)
@@ -366,12 +366,12 @@ class DatabaseImpl(
                 insertOrUpdate(storageKey, data, counters)
             }
         }
-        // TODO: Return a proper database version number.
-        return@timeSuspending data.databaseVersion
-    }.also { newVersion ->
-        clientFlow.filter { it.storageKey == storageKey }
-            .onEach { it.onDatabaseUpdate(data, newVersion, originatingClientId) }
-            .launchIn(CoroutineScope(coroutineContext))
+    }.also { success ->
+        if (success) {
+            clientFlow.filter { it.storageKey == storageKey }
+                .onEach { it.onDatabaseUpdate(data, data.databaseVersion, originatingClientId) }
+                .launchIn(CoroutineScope(coroutineContext))
+        }
     }
 
     @VisibleForTesting
@@ -379,7 +379,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         data: DatabaseData.Entity,
         counters: Counters? = null
-    ) = writableDatabase.useTransaction {
+    ): Boolean = writableDatabase.useTransaction {
         val db = this
         val entity = data.rawEntity
         // Fetch/create the entity's type ID.
@@ -395,7 +395,8 @@ class DatabaseImpl(
             data.databaseVersion,
             db,
             counters
-        )
+        ) ?: return@useTransaction false // Database has newer data. Don't apply the given op.
+
         // Insert the entity's field types.
         counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
         val fields = getSchemaFields(schemaTypeId, db)
@@ -452,6 +453,7 @@ class DatabaseImpl(
                     SQLiteDatabase.CONFLICT_REPLACE
                 )
             }
+            true
     }
 
     /**
@@ -505,7 +507,7 @@ class DatabaseImpl(
         data: DatabaseData.Collection,
         dataType: DataType,
         counters: Counters?
-    ) = writableDatabase.useTransaction {
+    ): Boolean = writableDatabase.useTransaction {
         val db = this
 
         // Fetch/create the entity's type ID.
@@ -560,7 +562,7 @@ class DatabaseImpl(
         } else {
             // Collection already exists; delete all existing entries.
             val collectionId = metadata.collectionId
-            if (data.databaseVersion <= metadata.versionNumber) return@useTransaction
+            if (data.databaseVersion <= metadata.versionNumber) return@useTransaction false
 
             // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
             when (dataType) {
@@ -612,6 +614,7 @@ class DatabaseImpl(
                     content.apply { put("value_id", referenceId) }
                 )
             }
+        true
     }
 
     @VisibleForTesting
@@ -619,7 +622,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         data: DatabaseData.Singleton,
         counters: Counters? = null
-    ) {
+    ): Boolean {
         // Convert Singleton into a a zero-or-one-element Collection.
         val set = mutableSetOf<Reference>()
         data.reference?.let { set.add(it) }
@@ -632,7 +635,7 @@ class DatabaseImpl(
             )
         }
         // Store the Collection as a Singleton.
-        insertOrUpdate(storageKey, collectionData, DataType.Singleton, counters)
+        return insertOrUpdate(storageKey, collectionData, DataType.Singleton, counters)
     }
 
     override suspend fun delete(
@@ -765,6 +768,9 @@ class DatabaseImpl(
     /**
      * Creates a new storage key ID for the given entity [StorageKey]. If one already exists, it and
      * all data for the existing entity are deleted first before creating a new one.
+     *
+     * @returns the new storage key ID for the entity if one was successfully created, or null
+     *     otherwise (e.g. if the given version number was too low)
      */
     @VisibleForTesting
     suspend fun createEntityStorageKeyId(
@@ -777,7 +783,7 @@ class DatabaseImpl(
         databaseVersion: Int,
         db: SQLiteDatabase,
         counters: Counters? = null
-    ): StorageKeyId = db.transaction {
+    ): StorageKeyId? = db.transaction {
         // TODO: Use an LRU cache.
         counters?.increment(DatabaseCounters.GET_ENTITY_STORAGEKEY_ID)
         rawQuery(
@@ -803,9 +809,8 @@ class DatabaseImpl(
                     "$storedEntityId."
             }
             val storedVersion = it.getInt(2)
-            require(databaseVersion > storedVersion) {
-                "Given version ($databaseVersion) must be greater than version in database " +
-                    "($storedVersion) when updating storage key $storageKey."
+            if (databaseVersion <= storedVersion) {
+                return@transaction null
             }
 
             // Remove the existing entity.
@@ -1220,6 +1225,7 @@ class DatabaseImpl(
         val isCollection: Boolean
     )
 
+    @VisibleForTesting
     data class CollectionMetadata(
         val collectionId: CollectionId,
         val versionMap: VersionMap,
