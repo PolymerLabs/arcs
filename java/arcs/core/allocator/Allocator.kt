@@ -12,6 +12,7 @@ package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.common.Id
+import arcs.core.common.toArcId
 import arcs.core.data.CollectionType
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
@@ -45,7 +46,7 @@ class Allocator(val hostRegistry: HostRegistry) {
      */
     suspend fun startArcForPlan(arcName: String, plan: Plan): ArcId {
         val idGenerator = Id.Generator.newSession()
-        val arcId = idGenerator.newArcId(arcName)
+        val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(arcName)
         // Any unresolved handles ('create' fate) need storage keys
         createStorageKeysIfNecessary(arcId, idGenerator, plan)
         val partitions = computePartitions(arcId, plan)

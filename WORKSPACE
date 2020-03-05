@@ -55,7 +55,7 @@ git_repository(
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
-KOTLIN_VERSION = "1.3.60"
+KOTLIN_VERSION = "1.3.70"
 
 KOTLINC_RELEASE_SHA = "12f97cff23ff8116904cb97a7ef4e3af5c3b8e5df9d9e63baa251d9a73b42fbb"
 
@@ -199,7 +199,7 @@ maven_install(
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
         "javax.inject:javax.inject:1",
         "junit:junit:4.11",
-        "org.jetbrains.kotlin:kotlin-reflect:1.3.61",
+        "org.jetbrains.kotlin:kotlin-reflect:1.3.70",
         "org.jetbrains.kotlinx:kotlinx-coroutines-android:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,

@@ -14,6 +14,7 @@ package arcs.android.host
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.data.Capabilities
+import arcs.core.data.SchemaRegistry
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.driver.DatabaseDriverProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,10 +38,10 @@ class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
 
     @Before
     override fun setUp() = runBlocking {
+        TestExternalArcHostService.TestingAndroidHost.testingCapability = Capabilities.Persistent
         super.setUp()
         manager = AndroidSqliteDatabaseManager(context)
-        val schemaMap = mapOf(personSchema.hash to personSchema)
-        DatabaseDriverProvider.configure(manager, schemaMap::get)
+        DatabaseDriverProvider.configure(manager, SchemaRegistry::get)
         Unit
     }
 

@@ -1,0 +1,26 @@
+
+schema HandleConnection
+  arcId: Text
+  particleName: Text
+  handleName: Text
+  storageKey: Text
+  mode: Text
+  type: Text
+  ttl: Number
+
+schema Particle
+  arcId: Text
+  particleName: Text
+  location: Text
+  particleState: Text
+  consecutiveFailures: Number
+
+schema ArcHostContext
+  arcId: Text
+  arcHost: Text
+  arcState: Text
+
+particle ArcHostParticle
+  arcHostContext: reads writes ArcHostContext
+  particles: reads writes [Particle]
+  handleConnections: reads writes [HandleConnection]
