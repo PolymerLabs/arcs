@@ -112,4 +112,19 @@ class ParticleSpecProtoDecoderTest {
         assertThat(readerWriterSpec.connections).isEqualTo(
             mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec))
     }
+
+    @Test
+    fun detectsDuplicateConnections() {
+        val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
+        val readerSpecProto = """
+          name: "Reader"
+          connections { ${readConnectionSpecProto} }
+          connections { ${readConnectionSpecProto} }
+          location: "Everywhere"
+        """.trimIndent()
+        val exception = assertThrows(IllegalArgumentException::class) {
+            decodeParticleSpecProto(readerSpecProto)
+        }
+        assertThat(exception).hasMessageThat().contains("Duplicate connection 'read'")
+    }
 }
