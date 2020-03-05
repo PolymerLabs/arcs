@@ -12,10 +12,16 @@ import {Manifest} from '../../runtime/manifest.js';
 import {assert} from '../../platform/chai-node.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
+import {DatabaseStorageKey} from '../../runtime/storageNG/database-storage-key.js';
+import {CapabilitiesResolver} from '../../runtime/capabilities-resolver.js';
+import {Flags} from '../../runtime/flags.js';
 
 describe('recipe2plan', () => {
   describe('storage-key-recipe-resolver', () => {
-    it('resolves mapping a handle from a long running arc into another long running arc', async () => {
+    beforeEach(() => DatabaseStorageKey.register());
+    afterEach(() => CapabilitiesResolver.reset());
+
+    it('resolves mapping a handle from a long running arc into another long running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -47,8 +53,9 @@ describe('recipe2plan', () => {
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
-    });
-    it('fails to resolve mapping a handle from a short running arc into another short running arc', async () => {
+    }));
+
+    it('fails to resolve mapping a handle from a short running arc into another short running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -68,8 +75,8 @@ describe('recipe2plan', () => {
 
       const resolver = new StorageKeyRecipeResolver(manifest);
       await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
-    });
-    it('fails to resolve mapping a handle from a short running arc into a long running arc', async () => {
+    }));
+    it('fails to resolve mapping a handle from a short running arc into a long running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -92,8 +99,8 @@ describe('recipe2plan', () => {
 
       const resolver = new StorageKeyRecipeResolver(manifest);
       await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
-    });
-    it('resolves mapping a handle from a long running arc into a short running arc', async () => {
+    }));
+    it('resolves mapping a handle from a long running arc into a short running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -118,8 +125,8 @@ describe('recipe2plan', () => {
       for (const it of await resolver.resolve()) {
         assert.isTrue(it.isResolved());
       }
-    });
-    it('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', async () => {
+    }));
+    it('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text, age: Number}
@@ -146,7 +153,7 @@ describe('recipe2plan', () => {
       const resolver = new StorageKeyRecipeResolver(manifest);
       // TODO: specify the correct error to be thrown
       await assertThrowsAsync(resolver.resolve);
-    });
+    }));
     // TODO(alxr): Flush out outlined unit tests
     it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {
     });

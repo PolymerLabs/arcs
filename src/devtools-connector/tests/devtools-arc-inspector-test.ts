@@ -17,11 +17,12 @@ import {Runtime} from '../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 
 import {Entity} from '../../runtime/entity.js';
+import {Flags} from '../../runtime/flags.js';
 
 describe('DevtoolsArcInspector', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
-  it('produces PEC Log messages on devtools channel', async () => {
+  it('produces PEC Log messages on devtools channel', Flags.withDefaultReferenceMode(async () => {
     const loader = new Loader(null, {
       'p.js': `defineParticle(({Particle}) => class P extends Particle {
         async setHandles(handles) {
@@ -60,8 +61,8 @@ describe('DevtoolsArcInspector', () => {
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
 
     assert.deepEqual(pecMsgBody, {
-      id: `!${sessionId}:demo:particle1`,
-      identifier: `!${sessionId}:demo:particle1`,
+      id: `!${sessionId}:demo:particle3`,
+      identifier: `!${sessionId}:demo:particle3`,
       reinstantiate: false,
       stores: {
         foo: 'fooStore'
@@ -84,5 +85,5 @@ describe('DevtoolsArcInspector', () => {
         }]
       }
     });
-  });
+  }));
 });

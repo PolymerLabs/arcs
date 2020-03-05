@@ -19,6 +19,7 @@ import {ArcId} from '../id.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
+import {Flags} from '../flags.js';
 
 // tslint:disable-next-line: no-any
 function unsafe<T>(value: T): any { return value; }
@@ -79,7 +80,7 @@ describe('Runtime', () => {
     runtime.runArc('other-test-arc', volatileStorageKeyPrefixForTest());
     assert.hasAllKeys(runtime.arcById, ['test-arc', 'other-test-arc']);
   });
-  it('registers and unregisters stores', async () => {
+  it('registers and unregisters stores', Flags.withDefaultReferenceMode(async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const context = await Manifest.parse(``, {memoryProvider});
@@ -142,5 +143,5 @@ describe('Runtime', () => {
     assert.lengthOf(runtime.context.stores, 2);
     assert.isTrue(runtime.context.stores.map(s => s.storageKey).includes(
         volatileArc2.activeRecipe.handles[0].storageKey));
-  });
+  }));
 });
