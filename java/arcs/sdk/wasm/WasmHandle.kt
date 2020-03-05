@@ -29,9 +29,9 @@ abstract class WasmHandleEvents<T>(
     particle: WasmParticleImpl,
     name: String
 ) : WasmHandle(name, particle) {
-    protected val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
+    protected val onUpdateActions: MutableList<(T) -> Unit> = mutableListOf()
 
-    fun onUpdate(action: (T?) -> Unit) {
+    fun onUpdate(action: (T) -> Unit) {
         onUpdateActions.add(action)
     }
 }
