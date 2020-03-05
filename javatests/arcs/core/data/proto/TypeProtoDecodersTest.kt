@@ -13,9 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/**
- * Parses a given proto text as [TypeProto].
- */
+/** Parses a given proto text as [TypeProto]. */
 fun parseTypeProtoText(protoText: String): TypeProto {
     val builder = TypeProto.newBuilder()
     TextFormat.getParser().merge(protoText, builder)
