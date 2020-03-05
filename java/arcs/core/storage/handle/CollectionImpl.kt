@@ -69,11 +69,13 @@ class CollectionImpl<T : Referencable>(
 
     /** Returns the values in the collection that fit the requirement (as a set). */
     suspend fun query(args: Any): Set<T> {
-        val results = value().filter {it ->
+        val results = value().filter { it ->
             if (it is RawEntity) {
                 schema.query(it, args)
             } else {
-                throw IllegalArgumentException("Cannot query non entity typed collection $name")
+                throw IllegalArgumentException(
+                    "Cannot query non entity typed collection $name"
+                )
             }
         }
         return results.toSet()

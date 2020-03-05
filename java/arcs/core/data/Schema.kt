@@ -29,8 +29,13 @@ data class Schema(
      * method.
      */
     val hash: String,
-    val refinement: Refinement = {_: RawEntity -> true},
-    val query: Query = {_: RawEntity, _: Any -> throw IllegalArgumentException("Attempted to query a collection with no associated query.")}
+    val refinement: Refinement = { _: RawEntity -> true },
+    val query: Query = {
+        _: RawEntity, _: Any ->
+            throw IllegalArgumentException(
+                "Attempted to query a collection with no associated query."
+            )
+        }
 ) {
     val name: SchemaName?
         get() = names.firstOrNull()
