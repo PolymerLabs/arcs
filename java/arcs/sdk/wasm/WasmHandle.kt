@@ -23,6 +23,18 @@ abstract class WasmHandle(
 
     abstract fun sync(encoded: ByteArray)
     abstract fun update(added: ByteArray, removed: ByteArray)
+
+}
+
+abstract class WasmHandleEvents<T>(
+  particle: WasmParticleImpl,
+  name: String
+) : WasmHandle(name, particle) {
+    protected val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
+
+    fun onUpdate(action: (T?) -> Unit) {
+        onUpdateActions.add(action)
+    }
 }
 
 abstract class WasmHandleEvents<T>(

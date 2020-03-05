@@ -16,7 +16,7 @@ class WasmSingletonImpl<T : WasmEntity>(
     particle: WasmParticleImpl,
     name: String,
     private val entitySpec: WasmEntitySpec<T>
-) : WasmHandleEvents<T?>(particle, name) {
+) : WasmHandleEvents<T>(particle, name){
 
     private var entity: T? = null
 
