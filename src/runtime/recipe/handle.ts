@@ -39,7 +39,7 @@ export class Handle implements Comparable<Handle> {
   private _associatedHandles: Handle[] = [];
   private _mappedType: Type | undefined = undefined;
   private _storageKey: StorageKey | undefined = undefined;
-  capabilities: Capabilities;
+  capabilities: Capabilities = Capabilities.empty;
   private _pattern: string | undefined = undefined;
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
@@ -97,7 +97,7 @@ export class Handle implements Comparable<Handle> {
       handle._mappedType = this._mappedType;
       handle._storageKey = this._storageKey;
       handle._immediateValue = this._immediateValue;
-      handle.capabilities = this.capabilities ? this.capabilities.clone() : undefined;
+      handle.capabilities = this.capabilities.clone();
       handle._ttl = this._ttl;
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
@@ -347,7 +347,7 @@ export class Handle implements Comparable<Handle> {
     if (this.associatedHandles.length) {
       result.push(`(${this.associatedHandles.map(h => getName(h)).join(', ')})`);
     }
-    if (this.capabilities && !this.capabilities.isEmpty()) {
+    if (!this.capabilities.isEmpty()) {
       result.push(this.capabilities.toString());
     }
     if (this.id) {
