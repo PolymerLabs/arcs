@@ -42,6 +42,7 @@ export class Capabilities {
     return [...this.capabilities].sort().join(' ');
   }
 
+  static readonly empty = new Capabilities([]);
   static readonly tiedToArc = new Capabilities(['tied-to-arc']);
   static readonly tiedToRuntime = new Capabilities(['tied-to-runtime']);
   static readonly persistent = new Capabilities(['persistent']);

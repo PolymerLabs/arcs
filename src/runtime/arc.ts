@@ -89,7 +89,7 @@ export class Arc implements ArcInterface {
   // storage keys for referenced handles
   private storageKeys: Dictionary<StorageKey> = {};
   public readonly storageKey?:  StorageKey;
-  private readonly capabilitiesResolver: CapabilitiesResolver;
+  private readonly capabilitiesResolver?: CapabilitiesResolver;
   // Map from each store to a set of tags. public for debug access
   public readonly storeTags = new Map<UnifiedStore, Set<string>>();
   // Map from each store to its description (originating in the manifest).
@@ -131,7 +131,7 @@ export class Arc implements ArcInterface {
     this.peh = new ParticleExecutionHost({slotComposer, arc: this, ports});
     this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
     DriverFactory.register(this.volatileStorageDriverProvider);
-    this.capabilitiesResolver = capabilitiesResolver || new CapabilitiesResolver({arcId: this.id});
+    this.capabilitiesResolver = capabilitiesResolver;
   }
 
   get loader(): Loader {
@@ -534,13 +534,14 @@ export class Arc implements ArcInterface {
     handle._type = handle.mappedType;
   }
 
-  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: StorageKey): Promise<UnifiedStore> {
-    const store = await this.createStoreInternal(type, name, id, tags, storageKey);
+  async createStore(type: Type, name?: string, id?: string, tags?: string[], storageKey?: StorageKey, capabilities?: Capabilities): Promise<UnifiedStore> {
+    const store = await this.createStoreInternal(type, name, id, tags, storageKey, capabilities);
     this.addStoreToRecipe(store);
     return store;
   }
 
-  private async createStoreInternal(type: Type, name?: string, id?: string, tags?: string[], storageKey?: StorageKey, capabilities?: Capabilities, ttl?: Ttl): Promise<UnifiedStore> {
+  private async createStoreInternal(type: Type, name: string, id: string, tags: string[],
+      storageKey: StorageKey, capabilities: Capabilities = Capabilities.empty, ttl?: Ttl): Promise<UnifiedStore> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
     if (this.storesByKey.has(storageKey)) {
       return this.storesByKey.get(storageKey);
@@ -555,7 +556,7 @@ export class Arc implements ArcInterface {
     }
 
     if (storageKey == undefined) {
-      if (capabilities && !capabilities.isEmpty()) {
+      if (this.capabilitiesResolver) {
         storageKey = await this.capabilitiesResolver.createStorageKey(
             capabilities, type.getEntitySchema(), id);
       } else if (this.storageKey) {

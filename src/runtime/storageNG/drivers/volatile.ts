@@ -260,3 +260,7 @@ CapabilitiesResolver.registerDefaultKeyCreator(
     VolatileStorageKey.protocol,
     Capabilities.tiedToArc,
     (options: StorageKeyOptions) => new VolatileStorageKey(options.arcId, options.unique(), ''));
+CapabilitiesResolver.registerDefaultKeyCreator(
+    VolatileStorageKey.protocol,
+    Capabilities.empty,
+    (options: StorageKeyOptions) => new VolatileStorageKey(options.arcId, options.unique(), ''));
