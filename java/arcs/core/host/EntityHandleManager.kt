@@ -25,7 +25,6 @@ import arcs.core.storage.handle.SetHandle
 import arcs.core.storage.handle.SetOp
 import arcs.core.storage.handle.SingletonData
 import arcs.core.storage.handle.SingletonHandle
-import arcs.core.storage.handle.SingletonImpl
 import arcs.core.storage.handle.SingletonOp
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -44,46 +43,11 @@ typealias CollectionSenderCallbackAdapter<E> =
  *
  * TODO(cromwellian): Add support for creating Singleton/Set handles of [Reference]s.
  */
-class EntityHandleManager(val handleManager: HandleManager) {
-    /**
-     * Creates and returns a new [SingletonHandle] for managing an [Entity]. Will also populate the
-     * appropriate field inside the given [HandleHolder].
-     *
-     * @property handleHolder contains handle and entitySpec declarations
-     * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
-     * @property storageKey a [StorageKey]
-     * @property schema the [Schema] for this [StorageKey]
-     * @property handleMode whether a handle is Read,Write, or ReadWrite (default)
-     * @property sender block used to execute callback lambdas
-     * @property idGenerator used to generate unique IDs for newly stored entities.
-     */
-    suspend fun createSingletonHandle(
-        handleHolder: HandleHolder,
-        handleName: String,
-        storageKey: StorageKey,
-        schema: Schema,
-        handleMode: HandleMode = HandleMode.ReadWrite,
-        idGenerator: Id.Generator = Id.Generator.newSession(),
-        sender: Sender = ::defaultSender
-    ) = createSdkHandle(
-        handleHolder,
-        handleName,
-        handleManager.rawEntitySingletonHandle(
-            storageKey,
-            schema,
-            name = handleName,
-            canRead = handleMode != HandleMode.Write
-        ),
-        handleMode,
-        idGenerator,
-        sender
-    )
+class EntityHandleManager(private val handleManager: HandleManager) {
 
     /**
-     * Creates and returns a new [SetHandle] for a set of [Entity]s. Will also populate the
-     * appropriate field inside the given [HandleHolder].
+     * Creates and returns a new [SingletonHandle] for managing an [Entity].
      *
-     * @property handleHolder contains handle and entitySpec declarations
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
      * @property storageKey a [StorageKey]
      * @property schema the [Schema] for this [StorageKey]
@@ -91,27 +55,87 @@ class EntityHandleManager(val handleManager: HandleManager) {
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
-    suspend fun createSetHandle(
-        handleHolder: HandleHolder,
+    suspend fun <T : Entity> createSingletonHandle(
+        entitySpec: EntitySpec<T>,
         handleName: String,
         storageKey: StorageKey,
         schema: Schema,
         handleMode: HandleMode = HandleMode.ReadWrite,
         idGenerator: Id.Generator = Id.Generator.newSession(),
         sender: Sender = ::defaultSender
-    ) = createSdkHandle(
-        handleHolder,
-        handleName,
-        handleManager.rawEntitySetHandle(
+    ): Handle {
+        val storageHandle = handleManager.singletonHandle(
             storageKey,
             schema,
-            name = handleName,
             canRead = handleMode != HandleMode.Write
-        ),
-        handleMode,
-        idGenerator,
-        sender
-    )
+        )
+        return when (handleMode) {
+            HandleMode.ReadWrite -> ReadWriteSingletonHandleImpl(
+                entitySpec,
+                handleName,
+                storageHandle,
+                idGenerator,
+                sender
+            )
+            HandleMode.Read -> ReadSingletonHandleImpl(
+                entitySpec,
+                handleName,
+                storageHandle,
+                sender
+            )
+            HandleMode.Write -> WriteSingletonHandleImpl<T>(
+                handleName,
+                storageHandle,
+                idGenerator
+            )
+        }
+    }
+
+    /**
+     * Creates and returns a new [SetHandle] for a set of [Entity]s.
+     *
+     * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
+     * @property storageKey a [StorageKey]
+     * @property schema the [Schema] for this [StorageKey]
+     * @property handleMode whether a handle is Read,Write, or ReadWrite (default)
+     * @property sender block used to execute callback lambdas
+     * @property idGenerator used to generate unique IDs for newly stored entities.
+     */
+    suspend fun <T : Entity> createSetHandle(
+        entitySpec: EntitySpec<T>,
+        handleName: String,
+        storageKey: StorageKey,
+        schema: Schema,
+        handleMode: HandleMode = HandleMode.ReadWrite,
+        idGenerator: Id.Generator = Id.Generator.newSession(),
+        sender: Sender = ::defaultSender
+    ): Handle {
+        val storageHandle = handleManager.setHandle(
+            storageKey,
+            schema,
+            canRead = handleMode != HandleMode.Write
+        )
+        return when (handleMode) {
+            HandleMode.ReadWrite -> ReadWriteCollectionHandleImpl(
+                entitySpec,
+                handleName,
+                storageHandle,
+                idGenerator,
+                sender
+            )
+            HandleMode.Read -> ReadCollectionHandleImpl(
+                entitySpec,
+                handleName,
+                storageHandle,
+                sender
+            )
+            HandleMode.Write -> WriteCollectionHandleImpl<T>(
+                handleName,
+                storageHandle,
+                idGenerator
+            )
+        }
+    }
 
     /**
      * Same-thread non-blocking dispatch. Note that this may lead to concurrency problems on
@@ -122,80 +146,6 @@ class EntityHandleManager(val handleManager: HandleManager) {
         GlobalScope.launch {
             block()
         }
-    }
-
-    /**
-     * Create a [Handle] given a [StorageHandle] and a [EntitySpec] definition.
-     *
-     * @property entitySpec used to deserialize [RawEntity] types into [Entity]
-     * @property handleName readable name for the handle, usually from a recipe
-     * @property storageHandle a [StorageHandle] usually obtained thru [HandleManager]
-     * @property handleMode whether a handle is Read,Write, or ReadWrite (default)
-     * @property sender block used to execute callback lambdas
-     * @property idGenerator used to generate unique IDs for newly stored entities.
-     */
-    private fun <T : Entity> createSdkHandle(
-        entitySpec: EntitySpec<T>,
-        handleName: String,
-        storageHandle: StorageHandle<*, *, *>,
-        handleMode: HandleMode,
-        idGenerator: Id.Generator,
-        sender: Sender
-    ): Handle {
-        return when (storageHandle) {
-            is SingletonHandle<*> -> createSingletonHandle(
-                entitySpec,
-                handleName,
-                storageHandle as SingletonHandle<RawEntity>,
-                handleMode,
-                idGenerator,
-                sender
-            )
-            is SetHandle<*> -> createSetHandle(
-                entitySpec,
-                handleName,
-                storageHandle as SetHandle<RawEntity>,
-                handleMode,
-                idGenerator,
-                sender
-            )
-            else -> throw Exception("Unknown storage handle type ${storageHandle::class}")
-        }
-    }
-
-    /**
-     * Create a [Handle] given a [StorageHandle] and a [HandleHolder] with [EntitySpec] definitions.
-     *
-     * @property handleHolder contains handle and entitySpec declarations
-     * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
-     * @property storageHandle a [StorageHandle] usually obtained thru [HandleManager]
-     * @property handleMode whether a handle is Read,Write, or ReadWrite (default)
-     * @property sender block used to execute callback lambdas
-     * @property idGenerator used to generate unique IDs for newly stored entities.
-     */
-    private fun createSdkHandle(
-        handleHolder: HandleHolder,
-        handleName: String,
-        storageHandle: StorageHandle<*, *, *>,
-        handleMode: HandleMode,
-        idGenerator: Id.Generator,
-        sender: Sender
-    ): Handle {
-        val entitySpec: EntitySpec<*>? =
-            handleHolder.entitySpecs[handleName] as? EntitySpec<*>
-        val handle = createSdkHandle(
-            entitySpec ?: throw IllegalArgumentException(
-                "No EntitySpec found for $handleName on HandleHolder ${handleHolder::class}"
-            ),
-            handleName,
-            storageHandle,
-            handleMode,
-            idGenerator,
-            sender
-        )
-        val handleMap = handleHolder.handles as MutableMap<String, Handle>
-        handleMap.put(handleName, handle)
-        return handle
     }
 }
 
@@ -233,19 +183,17 @@ internal open class ReadSingletonHandleImpl<T : Entity>(
     val entitySpec: EntitySpec<T>,
     val handleName: String,
     val storageHandle: SingletonHandle<RawEntity>,
-    val sender: Sender
+    sender: Sender
 ) : HandleEventBase<T?, ReadSingletonHandle<T>>(), ReadSingletonHandle<T> {
     init {
         storageHandle.callback = SingletonSenderCallbackAdapter(
             this::fetch,
-            this::invokeUpdate,
+            this::fireUpdate,
             this::fireSync,
             this::fireDesync,
             sender
         )
     }
-
-    private suspend fun invokeUpdate(entity: T?): Unit = fireUpdate(entity)
 
     override val name: String
         get() = handleName
@@ -257,14 +205,16 @@ internal open class ReadSingletonHandleImpl<T : Entity>(
 
 internal class WriteSingletonHandleImpl<T : Entity>(
     val handleName: String,
-    val storageHandle: SingletonHandle<RawEntity>,
-    val idGenerator: Id.Generator
+    private val storageHandle: SingletonHandle<RawEntity>,
+    private val idGenerator: Id.Generator
 ) : WriteSingletonHandle<T> {
     override val name: String
         get() = handleName
 
     override suspend fun store(entity: T) {
-        storageHandle.store(entity.serialize())
+        storageHandle.store(
+            entity.ensureIdentified(idGenerator, handleName).serialize()
+        )
     }
 
     override suspend fun clear() {
@@ -291,22 +241,20 @@ internal class ReadWriteSingletonHandleImpl<T : Entity>(
 }
 
 internal open class ReadCollectionHandleImpl<T : Entity>(
-    val entitySpec: EntitySpec<T>,
+    private val entitySpec: EntitySpec<T>,
     val handleName: String,
-    val storageHandle: SetHandle<RawEntity>,
-    val sender: Sender
+    private val storageHandle: SetHandle<RawEntity>,
+    sender: Sender
 ) : HandleEventBase<Set<T>, ReadCollectionHandle<T>>(), ReadCollectionHandle<T> {
     init {
         storageHandle.callback = CollectionSenderCallbackAdapter(
             this::fetchAll,
-            this::invokeUpdate,
+            this::fireUpdate,
             this::fireSync,
             this::fireDesync,
             sender
         )
     }
-
-    private suspend fun invokeUpdate(set: Set<T>) = fireUpdate(set)
 
     override val name: String
         get() = handleName
@@ -322,8 +270,8 @@ internal open class ReadCollectionHandleImpl<T : Entity>(
 
 internal class WriteCollectionHandleImpl<T : Entity>(
     val handleName: String,
-    val storageHandle: CollectionImpl<RawEntity>,
-    val idGenerator: Id.Generator
+    private val storageHandle: CollectionImpl<RawEntity>,
+    private val idGenerator: Id.Generator
 ) : WriteCollectionHandle<T> {
     override val name: String
         get() = handleName
@@ -390,66 +338,6 @@ class SenderCallbackAdapter<Data : CrdtData, Op : CrdtOperationAtTime, T, E>(
 
     override fun onDesync(handle: StorageHandle<Data, Op, T>) = invokeWithSender {
         desyncCallback.invoke()
-    }
-}
-
-private fun <T : Entity> createSingletonHandle(
-    entitySpec: EntitySpec<T>,
-    handleName: String,
-    storageHandle: SingletonImpl<RawEntity>,
-    handleMode: HandleMode,
-    idGenerator: Id.Generator,
-    sender: Sender
-): Handle {
-    return when (handleMode) {
-        HandleMode.ReadWrite -> ReadWriteSingletonHandleImpl<T>(
-            entitySpec,
-            handleName,
-            storageHandle,
-            idGenerator,
-            sender
-        )
-        HandleMode.Read -> ReadSingletonHandleImpl<T>(
-            entitySpec,
-            handleName,
-            storageHandle,
-            sender
-        )
-        HandleMode.Write -> WriteSingletonHandleImpl<T>(
-            handleName,
-            storageHandle,
-            idGenerator
-        )
-    }
-}
-
-private fun <T : Entity> createSetHandle(
-    entitySpec: EntitySpec<T>,
-    handleName: String,
-    storageHandle: CollectionImpl<RawEntity>,
-    handleMode: HandleMode,
-    idGenerator: Id.Generator,
-    sender: Sender
-): Handle {
-    return when (handleMode) {
-        HandleMode.ReadWrite -> ReadWriteCollectionHandleImpl<T>(
-            entitySpec,
-            handleName,
-            storageHandle,
-            idGenerator,
-            sender
-        )
-        HandleMode.Read -> ReadCollectionHandleImpl<T>(
-            entitySpec,
-            handleName,
-            storageHandle,
-            sender
-        )
-        HandleMode.Write -> WriteCollectionHandleImpl<T>(
-            handleName,
-            storageHandle,
-            idGenerator
-        )
     }
 }
 
