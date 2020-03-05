@@ -169,21 +169,7 @@ export class Refinement {
 
   toKTExpression(codeGenerator: CodeGenerator): string {
     this.normalize();
-    const expr = this.expression.toKTExpression(codeGenerator);
-    const genFieldAsLocal = ([fieldName, type]: [string, string]) => {
-        const fixed = codeGenerator.escapeIdentifier(fieldName);
-        return `val ${fixed} = data.${fixed} as ${codeGenerator.typeFor(type)}`;
-    };
-
-    const genQueryArgAsLocal = ([_, type]: [string, string]) => {
-        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = query_arg as ${codeGenerator.typeFor(type)}`;
-    };
-
-    const fields = [...this.expression.getFieldParams()].map(genFieldAsLocal);
-    const querysArgs = [...this.expression.getQueryParams()].map(genQueryArgAsLocal);
-    const locals = [...fields, ...querysArgs];
-    const body = `${locals.join('\n')}\nreturn ${expr}`;
-    return body;
+    return this.expression.toKTExpression(codeGenerator);
   }
 
   toSQLExpression(codeGenerator: CodeGenerator): string {
@@ -1316,17 +1302,37 @@ export class SQLExtracter {
 
 export class KTExtracter {
   static fromSchema(schema: Schema, codeGenerator: CodeGenerator): string {
+    const genFieldAsLocal = (fieldName: string) => {
+      const type = schema.fields[fieldName].type;
+      const fixed = codeGenerator.escapeIdentifier(fieldName);
+      return `val ${fixed} = data.${fixed} as ${codeGenerator.typeFor(type)}`;
+    };
+
+    const genQueryArgAsLocal = ([_, type]: [string, string]) => {
+        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = query_arg as ${codeGenerator.typeFor(type)}`;
+    };
+
+    const fieldNames = new Set<string>();
     const filterTerms = [];
     if (schema.refinement) {
+      [...schema.refinement.getFieldParams().keys()].forEach(name => fieldNames.add(name));
       filterTerms.push(schema.refinement.toKTExpression(codeGenerator));
     }
     for (const field of Object.values(schema.fields)) {
       if (field.refinement) {
+        [...field.refinement.getFieldParams().keys()].forEach(name => fieldNames.add(name));
         filterTerms.push(field.refinement.toKTExpression(codeGenerator));
       }
     }
 
-    return `${filterTerms.join(' && ')}`;
+    const locals = [...fieldNames].map(genFieldAsLocal);
+    if (schema.refinement) {
+      const querysArgs = [...schema.refinement.getQueryParams()].map(genQueryArgAsLocal);
+      locals.push(...querysArgs);
+    }
+    const expr = filterTerms.length > 0 ? `${filterTerms.join(' && ')}` : 'true';
+
+    return `${locals.map(x => `${x}\n`).join('')}return ${expr}`;
   }
 }
 

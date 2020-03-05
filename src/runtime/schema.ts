@@ -45,7 +45,7 @@ export class Schema {
     const fNs = this.refinement && this.refinement.getFieldParams();
     // if the schema level refinement is univariate, propogate it to the appropriate field
     if (fNs && fNs.size === 1 && Flags.fieldRefinementsAllowed) {
-      const [fN, _type] = fNs.values().next().value;
+      const fN = fNs.keys().next().value;
       fields[fN].refinement = Refinement.intersectionOf(fields[fN].refinement, this.refinement);
       this.refinement = null;
     }

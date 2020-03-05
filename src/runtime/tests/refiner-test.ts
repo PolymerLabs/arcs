@@ -228,7 +228,7 @@ describe('dynamic refinements', () => {
         const ref = Refinement.fromAst(contacts.type.type.refinement, typeData);
 
         it('field names, query argument names and query argument types', () => {
-            assert.deepEqual(JSON.stringify([...ref.expression.getFieldParams()]), '[["name","Text"],["age", "Number"]]', 'should infer indexes from refinement');
+            assert.deepEqual(JSON.stringify([...ref.expression.getFieldParams()]), '[["name","Text"],["age","Number"]]', 'should infer indexes from refinement');
             assert.deepEqual(JSON.stringify([...ref.expression.getQueryParams()]), '[["?","Text"]]', 'should infer query args from refinement');
 
             assert.strictEqual(ref.toString(), '[((name == ?) and (age > 10))]');
@@ -572,7 +572,7 @@ describe('SQLExtracter', () => {
 
 describe('KTExtracter', () => {
   const escaper = {
-    escapeIdentifier: (name: string) => `value.${name}`,
+    escapeIdentifier: (name: string) => name,
     typeFor: (type: string) => type
   };
   it('tests can create queries from refinement expressions involving math expressions', Flags.withFieldRefinementsAllowed(async () => {
@@ -582,7 +582,8 @@ describe('KTExtracter', () => {
       `);
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = KTExtracter.fromSchema(schema, escaper);
-      assert.strictEqual(query, '((value.a + (value.b / 3)) > 100) && ((value.a > 3) && (!(value.a == 100))) && ((value.b > 20) && (value.b < 100))');
+      assert.strictEqual(query,
+        'val a = data.a as Number\nval b = data.b as Number\nreturn ((b + (a * 3)) > 300) && ((a > 3) && (!(a == 100))) && ((b > 20) && (b < 100))');
   }));
   it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -592,8 +593,8 @@ describe('KTExtracter', () => {
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
     //TODO(cypher1): Implement some simple boolean simplifications.
-    //This should simplify to, '(!value.a) && value.b'
-    assert.strictEqual(query, '(value.b || value.a) && (!value.a) && value.b');
+    //This should simplify to, 'return (!a) && b'
+    assert.strictEqual(query, 'val a = data.a as Boolean\nval b = data.b as Boolean\nreturn (b || a) && (!a) && b');
   }));
   it('tests can create queries where field refinement is null', async () => {
     const manifest = await Manifest.parse(`
@@ -602,7 +603,7 @@ describe('KTExtracter', () => {
     `);
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
-    assert.strictEqual(query, '(value.b && value.a)');
+    assert.strictEqual(query, 'val a = data.a as Boolean\nval b = data.b as Boolean\nreturn (b && a)');
   });
   it('tests can create queries where schema refinement is null', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -611,7 +612,7 @@ describe('KTExtracter', () => {
     `);
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
-    assert.strictEqual(query, '(!value.a) && value.b');
+    assert.strictEqual(query, 'val a = data.a as Boolean\nval b = data.b as Boolean\nreturn (!a) && b');
   }));
   it('tests can create queries where there is no refinement', async () => {
     const manifest = await Manifest.parse(`
@@ -620,7 +621,7 @@ describe('KTExtracter', () => {
     `);
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
-    assert.strictEqual(query, '');
+    assert.strictEqual(query, 'return true');
   });
 });
 
