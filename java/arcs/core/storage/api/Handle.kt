@@ -63,6 +63,12 @@ interface ReadCollectionHandle<T : Entity> : Handle {
     suspend fun fetchAll(): Set<T>
 }
 
+/** A collection handle with read access. */
+interface QueryCollectionHandle<T : Entity, QueryArgs> : Handle {
+    /** Returns a set with all the entities in the collection that match the associated query. */
+    suspend fun query(args: QueryArgs): Set<T>
+}
+
 /** A collection handle with write access. */
 interface WriteCollectionHandle<T : Entity> : Handle {
     /** Adds the given [entity] to the collection. */
@@ -77,3 +83,11 @@ interface WriteCollectionHandle<T : Entity> : Handle {
 
 /** A collection handle with read and write access. */
 interface ReadWriteCollectionHandle<T : Entity> : ReadCollectionHandle<T>, WriteCollectionHandle<T>
+
+/** A collection handle with read and write access. */
+interface ReadQueryCollectionHandle<T : Entity, QueryArgs> :
+        ReadCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
+
+/** A collection handle with read and write and query access. */
+interface ReadWriteQueryCollectionHandle<T : Entity, QueryArgs> :
+        ReadCollectionHandle<T>, WriteCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>

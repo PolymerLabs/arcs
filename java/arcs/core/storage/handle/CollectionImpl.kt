@@ -12,9 +12,9 @@
 package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
-import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
+import arcs.core.data.Schema
 import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
@@ -42,9 +42,9 @@ typealias SetCallbacks<T> = Callbacks<SetData<T>, SetOp<T>, Set<T>>
  */
 class CollectionImpl<T : Referencable>(
     name: String,
+    val schema: Schema,
     storageProxy: SetProxy<T>,
     callbacks: SetCallbacks<T>? = null,
-    private val refinement: Refinement<T>? = null,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
     canRead: Boolean = true,
@@ -69,11 +69,14 @@ class CollectionImpl<T : Referencable>(
 
     /** Returns the values in the collection that fit the requirement (as a set). */
     suspend fun query(args: Any): Set<T> {
-        // Note: type checking for args is implemented in the refinement and code generated handle.
-        requireNotNull(refinement) {
-            "Invalid operation 'query' on collection $name which has no associated query"
+        val results = value().filter {it ->
+            if (it is RawEntity) {
+                schema.query(it, args)
+            } else {
+                throw IllegalArgumentException("Cannot query non entity typed collection $name")
+            }
         }
-        return refinement.filterBy(value(), args)
+        return results.toSet()
     }
 
     /**
@@ -90,6 +93,11 @@ class CollectionImpl<T : Referencable>(
         log.debug { "Storing: $entity" }
         @Suppress("GoodTime") // use Instant
         entity.creationTimestamp = requireNotNull(time).currentTimeMillis
+        if (entity is RawEntity && !schema.refinement(entity)) {
+            throw IllegalArgumentException(
+                "Invalid entity stored to handle $name (failed refinement)"
+            )
+        }
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant
             entity.expirationTimestamp = ttl.calculateExpiration(time)

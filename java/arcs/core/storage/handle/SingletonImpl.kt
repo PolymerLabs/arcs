@@ -14,6 +14,7 @@ package arcs.core.storage.handle
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.RawEntity
+import arcs.core.data.Schema
 import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Callbacks
@@ -41,6 +42,7 @@ typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?
  */
 class SingletonImpl<T : Referencable>(
     name: String,
+    val schema: Schema,
     storageProxy: SingletonProxy<T>,
     callbacks: SingletonCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
@@ -66,6 +68,11 @@ class SingletonImpl<T : Referencable>(
     suspend fun store(entity: T): Boolean {
         @Suppress("GoodTime") // use Instant
         entity.creationTimestamp = requireNotNull(time).currentTimeMillis
+        if (entity is RawEntity && !schema.refinement(entity)) {
+            throw IllegalArgumentException(
+                "Invalid entity stored to handle $name (failed refinement)"
+            )
+        }
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant
             entity.expirationTimestamp = ttl.calculateExpiration(time)

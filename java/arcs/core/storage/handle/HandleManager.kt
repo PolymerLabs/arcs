@@ -1,7 +1,6 @@
 package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
-import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.CollectionType
@@ -102,6 +101,7 @@ class HandleManager(
 
         return SingletonHandle(
             name,
+            schema,
             storageProxy,
             callbacks,
             ttl,
@@ -184,7 +184,6 @@ class HandleManager(
         schema: Schema,
         callbacks: SetCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
-        refinement: Refinement<RawEntity>? = null,
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
     ): SetHandle<RawEntity> {
@@ -202,9 +201,9 @@ class HandleManager(
 
         return SetHandle(
             name,
+            schema,
             storageProxy,
             callbacks,
-            refinement,
             ttl,
             time,
             canRead,
@@ -226,7 +225,6 @@ class HandleManager(
         schema: Schema,
         callbacks: SetCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
-        refinement: Refinement<RawEntity>? = null,
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
     ): SetHandle<RawEntity> = rawEntitySetHandle(
