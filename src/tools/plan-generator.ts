@@ -10,10 +10,10 @@
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
+import {Manifest} from '../runtime/manifest.js';
 
 export class PlanGenerator {
-  constructor(private resolutions: Recipe[], private scope: string = 'arcs.core.data') {
-  }
+  constructor(private resolutions: Recipe[], private manifest: Manifest, private scope: string = 'arcs.core.data') {}
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
   async generate(): Promise<string> {
@@ -35,7 +35,9 @@ export class PlanGenerator {
       const particles = recipe.particles.map(this.createParticle);
 
       const plan = `\
-object ${planName} : Plan(listOf())`;
+object ${planName} : Plan(listOf(
+${particles.join('\n,')}
+))`;
 
       plans.push(plan);
     }
@@ -44,11 +46,14 @@ object ${planName} : Plan(listOf())`;
   }
 
   createParticle(particle: Particle): string {
+    const spec = particle.spec;
+    const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
+
     return `\
 Particle(
-  ${particle.name},
-  ${particle.spec.implFile.replace('/', '.')}
-  mapOf()
+    ${particle.name},
+    "${location}",
+    mapOf()
 )`;
   }
 
@@ -95,23 +100,5 @@ ${this.scope === 'arcs.core.data' ? '' : 'import arcs.core.data.*'}
 
   fileFooter(): string {
     return ``;
-  }
-
-  private mapOf(items: Map<string, string>, indent: number): string {
-    if (items.size === 0) return 'mapOf()';
-
-    const mapping = [...items.entries()].map(([key, val]) => `"${key}" to ${val}`);
-
-    return `mapOf(${this.joinWithinLimit(mapping, indent)})`;
-  }
-
-  private joinWithinLimit(items: string[], indent: number, lineLength: number = 120): string {
-    for(const delim of [', ', '\n' + ' '.repeat(indent)]) {
-      const candidate = items.join(delim);
-      const maxLength = Math.max(...candidate.split('\n').map(line => line.length));
-      if (indent + maxLength <= lineLength) return candidate;
-    }
-
-    return items.join(', '); // Default: have poor formatting
   }
 }
