@@ -79,7 +79,7 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
                 name = genrule_name,
                 src = src,
                 out = out,
-                deps = deps,
+                deps = deps + ["//java/arcs/core/data"],
                 wasm = wasm,
                 language_flag = "--kotlin",
                 language_name = "Kotlin",
