@@ -24,6 +24,7 @@ class FlagDefaults {
   static enforceRefinements = false;
   static useSlandles = false;
   static fieldRefinementsAllowed = false;
+  // TODO(#4843): temporary avoid using reference-mode-store in tests.
   static defaultReferenceMode = false;
 }
 
