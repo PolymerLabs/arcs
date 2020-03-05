@@ -11,10 +11,11 @@
 import {Manifest} from '../../runtime/manifest.js';
 import {assert} from '../../platform/chai-node.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 
 describe('recipe2plan', () => {
   describe('storage-key-recipe-resolver', () => {
-    it('Resolves mapping a handle from a long running arc into another long running arc', async () => {
+    it('resolves mapping a handle from a long running arc into another long running arc', async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
@@ -28,7 +29,7 @@ describe('recipe2plan', () => {
     
     @trigger
       launch startup
-      arcId myArcId
+      arcId writeArcId
     recipe WritingRecipe
       thing: create persistent 'my-handle-id' 
       Writer
@@ -36,25 +37,126 @@ describe('recipe2plan', () => {
 
     @trigger
       launch startup
-      arcId otherArcId
+      arcId readArcId
     recipe ReadingRecipe
       data: map 'my-handle-id'
       Reader
         data: reads data`);
 
       const resolver = new StorageKeyRecipeResolver(manifest);
-      for  (const it of (await resolver.resolve())) {
+      for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
     });
+    it('fails to resolve mapping a handle from a short running arc into another short running arc', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
+    });
+    it('fails to resolve mapping a handle from a short running arc into a long running arc', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    @trigger
+      launch startup
+      arcId readArcId
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
+    });
+    it('resolves mapping a handle from a long running arc into a short running arc', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      for (const it of await resolver.resolve()) {
+        assert.isTrue(it.isResolved());
+      }
+    });
+    it('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text, age: Number}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    @trigger
+      launch startup
+      arcId readArcId
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      // TODO: specify the correct error to be thrown
+      await assertThrowsAsync(resolver.resolve);
+    });
     // TODO(alxr): Flush out outlined unit tests
-    it.skip('Short + Short: If WritingRecipe is short lived, it is not valid', () => {});
-    it.skip('Short + Long: If WritingRecipe is short lived and Reading is long lived, it is not valid', () => {});
-    it.skip('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', () => {});
-    it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {});
-    it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {});
-    it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {});
-    it.skip('Ambiguous handle + tag disambiguation: If there are 2 WritingRecipes creating the same handle but with different tags and mapping uses one of the tags, it is valid', () => {});
-    it.skip('No Handle: If there is no writing handle, it is not valid', () => {});
+    it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {
+    });
+    it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {
+    });
+    it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {
+    });
+    it.skip('Ambiguous handle + tag disambiguation: If there are 2 WritingRecipes creating the same handle but with different tags and mapping uses one of the tags, it is valid', () => {
+    });
+    it.skip('No Handle: If there is no writing handle, it is not valid', () => {
+    });
   });
 });
