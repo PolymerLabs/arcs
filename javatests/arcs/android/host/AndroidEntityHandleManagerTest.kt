@@ -23,8 +23,7 @@ import arcs.sdk.ReadCollectionHandle
 import arcs.sdk.ReadSingletonHandle
 import arcs.sdk.WriteCollectionHandle
 import arcs.sdk.WriteSingletonHandle
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
-import arcs.sdk.android.storage.service.testutil.TestBindingDelegate
+import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -86,7 +85,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             AndroidHandleManager(
                 lifecycle = lifecycle,
                 context = app,
-                connectionFactory = DefaultConnectionFactory(app, TestBindingDelegate(app))
+                connectionFactory = TestConnectionFactory(app)
             )
         )
     }

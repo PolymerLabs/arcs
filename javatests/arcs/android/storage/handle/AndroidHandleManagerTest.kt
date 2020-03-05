@@ -26,8 +26,7 @@ import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.SetCallbacks
 import arcs.core.storage.handle.SingletonCallbacks
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
-import arcs.sdk.android.storage.service.testutil.TestBindingDelegate
+import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
 import kotlinx.coroutines.runBlocking
@@ -113,7 +112,7 @@ class AndroidHandleManagerTest : LifecycleOwner {
         handleManager = AndroidHandleManager(
             lifecycle = lifecycle,
             context = app,
-            connectionFactory = DefaultConnectionFactory(app, TestBindingDelegate(app))
+            connectionFactory = TestConnectionFactory(app)
         )
     }
 

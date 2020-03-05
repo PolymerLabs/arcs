@@ -6,35 +6,38 @@ import arcs.android.storage.ParcelableStoreOptions
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.robolectric.Robolectric
-import org.robolectric.android.controller.ServiceController
+
+/**
+ * Create a [ConnectionFactory] that creates service bindings using a [Robolectric] service
+ * instances.
+ */
+@Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
+@UseExperimental(ExperimentalCoroutinesApi::class)
+fun TestConnectionFactory(ctx: Context) = DefaultConnectionFactory(ctx, TestBindingDelegate(ctx))
 
 /**
  * This TestBindingDelegate can be used in tests with [DefaultConnectionFactory] in order to
  * successfully bind with [StorageService] when using Robolectric.
  */
 class TestBindingDelegate(private val context: Context) : StorageServiceBindingDelegate {
-    var sc: ServiceController<StorageService>? = null
+    private val serviceController by lazy {
+        Robolectric.buildService(StorageService::class.java, null).create()
+    }
+
     override fun bindStorageService(
         conn: ServiceConnection,
         flags: Int,
         options: ParcelableStoreOptions
     ): Boolean {
-        val intent = StorageService.createBindIntent(
-            context,
-            options
-        )
-        sc = Robolectric.buildService(StorageService::class.java, intent)
-            .create()
-            .bind()
-            .also {
-                val binder = it.get().onBind(intent)
-                conn.onServiceConnected(null, binder)
-            }
+        val intent = StorageService.createBindIntent(context, options)
+        val binder = serviceController.get().onBind(intent)
+        conn.onServiceConnected(null, binder)
         return true
     }
 
     override fun unbindStorageService(conn: ServiceConnection) {
-        sc?.destroy()
+        serviceController.destroy()
     }
 }
