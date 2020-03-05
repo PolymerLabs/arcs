@@ -251,6 +251,4 @@ fun log(msg: String) {
 }
 
 fun <T, U> combine(handle1: WasmHandleEvents<T>, handle2: WasmHandleEvents<U>):
-    WasmTupleHandle<T, U> {
-    return WasmTupleHandle(handle1, handle2)
-}
+    WasmTupleHandle<T, U> = WasmTupleHandle(handle1, handle2)
