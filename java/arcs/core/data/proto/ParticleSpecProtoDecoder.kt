@@ -39,12 +39,10 @@ fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */
 fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
     val connections = mutableMapOf<String, HandleConnectionSpec>()
-    for (connection in getConnectionsList()) {
-        val oldValue = connections.put(connection.name, connection.decode())
-        if (oldValue != null) {
-            throw IllegalArgumentException(
-                "Duplicate connection '${connection.name}' when " +
-                "decoding ParticleSpecProto '${name}'")
+    connectionsList.forEach {
+        val oldValue = connections.put(it.name, it.decode())
+        require (oldValue == null) {
+            "Duplicate connection '${it.name}' when decoding ParticleSpecProto '${name}'"
         }
     }
     ParticleSpec(name, connections, location)

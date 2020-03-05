@@ -11,6 +11,13 @@
 
 package arcs.core.data
 
+/**
+ * This class contains metadata about a [Particle] in a [Recipe].
+ *
+ * @property name the name of the particle.
+ * @property connections all the handle connections of the particle indexed by the connection name.
+ * @property location the location of the implementation.
+ */
 data class ParticleSpec(
     val name: String,
     val connections: Map<String, HandleConnectionSpec>,
