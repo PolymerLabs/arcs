@@ -268,8 +268,6 @@ class DatabaseImpl(
             counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_PRIMITIVE)
             getPrimitiveValue(fieldValueId, field.typeId, db, counters)
         }
-        // TODO: This should look for a "singleton" collection entry. Maybe use the primitive
-        //  case first, then the else can handle collections and singletons of references.
         else -> {
             counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_REFERENCE)
             getReferenceValue(fieldValueId, db)
@@ -631,17 +629,15 @@ class DatabaseImpl(
         storageKey: StorageKey,
         originatingClientId: Int?
     ) = writableDatabase.use {
-        delete(storageKey, originatingClientId, it)
+        delete(storageKey, it)
     }.also {
         clientFlow.filter { it.storageKey == storageKey }
             .onEach { it.onDatabaseDelete(originatingClientId) }
             .launchIn(CoroutineScope(coroutineContext))
     }
 
-    @Suppress("UNUSED_PARAMETER") // TODO: use originatingClientId
     suspend fun delete(
         storageKey: StorageKey,
-        originatingClientId: Int?,
         db: SQLiteDatabase
     ): Unit = stats.delete.timeSuspending { counters ->
         db.transaction {
