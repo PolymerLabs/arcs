@@ -12,7 +12,7 @@
 package arcs.sdk.wasm
 
 /** Combined Handle to allow events on multiple handles to trigger actions. */
-class WasmCombinedSingletonHandle<T, U>(
+class WasmTupleHandle<T, U>(
     val handle1: WasmHandleEvents<T>,
     val handle2: WasmHandleEvents<U>
 ) {

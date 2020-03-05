@@ -250,6 +250,6 @@ fun log(msg: String) {
     flush()
 }
 
-fun<T, U> combine(handle1: WasmHandleEvents<T>, handle2: WasmHandleEvents<U>): WasmCombinedSingletonHandle<T, U> {
-    return WasmCombinedSingletonHandle(handle1, handle2)
+fun<T, U> combine(handle1: WasmHandleEvents<T>, handle2: WasmHandleEvents<U>): WasmTupleHandle<T, U> {
+    return WasmTupleHandle(handle1, handle2)
 }
