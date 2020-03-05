@@ -15,7 +15,7 @@ class TTTHumanPlayer : AbstractTTTHumanPlayer() {
 
     init {
         handles.events.onUpdate { events ->
-            if(events != null && events.size > 0) {
+            if(events.size > 0) {
                 val event = events.sortedBy { it.time }.last()
                 if (event.type == "move") {
                     handles.myMove.store(TTTHumanPlayer_MyMove(event.move))
