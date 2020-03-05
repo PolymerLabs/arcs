@@ -11,10 +11,8 @@ import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.TestingHost
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
-import arcs.sdk.Particle
-import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.Dispatchers
-import kotlin.reflect.KClass
 
 open class TestExternalArcHostService(val arcHost: TestingAndroidHost) : Service() {
     val arcHostHelper: ArcHostHelper by lazy {
@@ -48,7 +46,7 @@ open class TestExternalArcHostService(val arcHost: TestingAndroidHost) : Service
                     serviceContext,
                     FakeLifecycle(),
                     Dispatchers.Default,
-                    DefaultConnectionFactory(serviceContext, TestBindingDelegate(serviceContext))
+                    TestConnectionFactory(serviceContext)
                 )
             )
         }
