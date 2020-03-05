@@ -18,6 +18,7 @@ import {StorageProxy} from './storage-proxy.js';
 import {Store} from './store.js';
 import {Producer} from '../hot.js';
 import {ChannelConstructor} from '../channel-constructor.js';
+import {BackingStorageProxy} from './backing-storage-proxy.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -29,9 +30,10 @@ export enum StorageMode {Direct, Backing, ReferenceMode}
 
 export enum ProxyMessageType {SyncRequest, ModelUpdate, Operations}
 
-export type ProxyMessage<T extends CRDTTypeRecord> = {type: ProxyMessageType.SyncRequest, id?: number} |
-  {type: ProxyMessageType.ModelUpdate, model: T['data'], id?: number} |
-  {type: ProxyMessageType.Operations, operations: T['operation'][], id?: number};
+export type ProxyMessage<T extends CRDTTypeRecord> =
+  {type: ProxyMessageType.SyncRequest, id?: number, muxId?: string} |
+  {type: ProxyMessageType.ModelUpdate, model: T['data'], id?: number, muxId?: string} |
+  {type: ProxyMessageType.Operations, operations: T['operation'][], id?: number, muxId?: string};
 
 export type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => Promise<boolean>;
 
@@ -59,12 +61,12 @@ export type StoreConstructor = {
 export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   setCallback(callback: ProxyCallback<T>): void;
   reportExceptionInHost(exception: PropagatedException): void;
-  onProxyMessage(message: ProxyMessage<T>, entityId?: string): Promise<boolean>;
+  onProxyMessage(message: ProxyMessage<T>): Promise<boolean>;
   getChannelConstructor: Producer<ChannelConstructor>;
 }
 
 export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> {
-  getStorageEndpoint(storageProxy: StorageProxy<T>): StorageCommunicationEndpoint<T>;
+  getStorageEndpoint(storageProxy: StorageProxy<T> | BackingStorageProxy<T>): StorageCommunicationEndpoint<T>;
 }
 
 // A representation of an active store. Subclasses of this class provide specific

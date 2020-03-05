@@ -29,6 +29,7 @@ import {workerPool} from './worker-pool.js';
 import {Ttl} from './recipe/ttl.js';
 import {Handle} from './storageNG/handle.js';
 import {BackingStore} from './storageNG/backing-store.js';
+import {BackingStorageProxy} from './storageNG/backing-storage-proxy.js';
 
 type StorageProxy = StorageProxyNG<CRDTTypeRecord>;
 
@@ -539,8 +540,9 @@ export abstract class PECOuterPort extends APIPort {
   AwaitIdle(@Direct version: number) {}
 
   abstract onRegister(handle: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
+  abstract onBackingRegister(handle: BackingStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
   abstract onProxyMessage(handle: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
-  abstract onBackingProxyMessage(handle: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, entityId: string, callback: number);
+  abstract onBackingProxyMessage(handle: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
@@ -599,15 +601,18 @@ export abstract class PECInnerPort extends APIPort {
   Register(
     @Mapped handle: StorageProxy,
     @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
+    @LocalMapped idCallback: Consumer<number>): void  {}
+  BackingRegister(
+    @Mapped handle: BackingStorageProxy<CRDTTypeRecord>,
+    @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
     @LocalMapped idCallback: Consumer<number>): void {}
   ProxyMessage(
     @Mapped handle: StorageProxy,
     @Direct message: ProxyMessage<CRDTTypeRecord>,
-    @LocalMapped callback: Consumer<Promise<boolean>>): void {}
+    @LocalMapped callback: Consumer<Promise<boolean>>): void  {}
   BackingProxyMessage(
-    @Mapped handle: StorageProxy,
+    @Mapped handle: BackingStorageProxy<CRDTTypeRecord>,
     @Direct message: ProxyMessage<CRDTTypeRecord>,
-    @Direct entityId: string,
     @LocalMapped callback: Consumer<Promise<boolean>>): void {}
 
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}

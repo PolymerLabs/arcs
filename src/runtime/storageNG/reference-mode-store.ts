@@ -36,7 +36,7 @@ enum ReferenceModeUpdateSource {Container, BackingStore, StorageProxy}
 
 type PreEnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRecord, RefContainer extends CRDTTypeRecord> =
   {from: ReferenceModeUpdateSource.StorageProxy, message: ProxyMessage<Container>} |
-  {from: ReferenceModeUpdateSource.BackingStore, message: ProxyMessage<Entity>, muxId: string} |
+  {from: ReferenceModeUpdateSource.BackingStore, message: ProxyMessage<Entity>} |
   {from: ReferenceModeUpdateSource.Container, message: ProxyMessage<RefContainer>};
 type EnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRecord, RefContainer extends CRDTTypeRecord> =
   PreEnqueuedMessage<Container, Entity, RefContainer> & {promise: Consumer<boolean>};
@@ -195,8 +195,8 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
     return this.enqueue({from: ReferenceModeUpdateSource.Container, message});
   }
 
-  async onBackingStore(message: ProxyMessage<CRDTEntityTypeRecord<S, C>>, muxId: string) {
-    return this.enqueue({from: ReferenceModeUpdateSource.BackingStore, message, muxId});
+  async onBackingStore(message: ProxyMessage<CRDTEntityTypeRecord<S, C>>) {
+    return this.enqueue({from: ReferenceModeUpdateSource.BackingStore, message});
   }
 
   async onProxyMessage(message: ProxyMessage<Container>): Promise<boolean> {
@@ -228,7 +228,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
           nextMessage.promise(await this.handleProxyMessage(nextMessage.message));
           break;
         case ReferenceModeUpdateSource.BackingStore:
-          nextMessage.promise(await this.handleBackingStore(nextMessage.message, nextMessage.muxId));
+          nextMessage.promise(await this.handleBackingStore(nextMessage.message));
           break;
         case ReferenceModeUpdateSource.Container:
           nextMessage.promise(await this.handleContainerStore(nextMessage.message));
@@ -314,13 +314,13 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
    * Syncs should never occur as operation/model updates to the backing store are generated
    * by this ReferenceModeStore object and hence should never be out-of-order.
    */
-  private async handleBackingStore(message: ProxyMessage<CRDTEntityTypeRecord<S, C>>, muxId: string) {
+  private async handleBackingStore(message: ProxyMessage<CRDTEntityTypeRecord<S, C>>) {
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
-        this.holdQueue.processID(muxId, message.model.version);
+        this.holdQueue.processID(message.muxId, message.model.version);
         break;
       case ProxyMessageType.Operations:
-        this.holdQueue.processID(muxId, message.operations[message.operations.length - 1].clock);
+        this.holdQueue.processID(message.muxId, message.operations[message.operations.length - 1].clock);
         break;
       case ProxyMessageType.SyncRequest:
         throw new Error('Unexpected SyncRequest from backing store');
@@ -575,14 +575,14 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
    */
   private async updateBackingStore(entity: Entity) {
     const model = this.entityToModel(entity);
-    return this.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model, id: 1}, entity.id);
+    return this.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model, id: 1, muxId: entity.id});
   }
 
   /* Clear the entity in the backing store. */
   private async clearEntityInBackingStore(entity: Entity) {
     const model = this.entityToModel(entity);
     const op: EntityOperation<S, C> = {type: EntityOpTypes.ClearAll, actor: this.crdtKey, clock: model.version};
-    return this.backingStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [op]}, entity.id);
+    return this.backingStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [op], muxId: entity.id});
   }
 
   private newBackingInstance() {

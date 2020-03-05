@@ -9,13 +9,12 @@
  */
 
 import {CRDTTypeRecord} from '../crdt/crdt.js';
-import {ProxyMessage} from './store.js';
+import {ProxyMessage, ProxyCallback} from './store.js';
 import {StorageKey} from './storage-key.js';
 import {DirectStore} from './direct-store.js';
 import {Dictionary} from '../hot.js';
 import {StoreConstructorOptions} from './store-interface.js';
-
-export type MultiplexedProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>, muxId: string) => Promise<boolean>;
+import {assert} from '../../platform/assert-web.js';
 
 type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore<T>, id: number} | {type: 'pending', promise: Promise<{type: 'record', store: DirectStore<T>, id: number}>};
 /**
@@ -26,7 +25,7 @@ export class BackingStore<T extends CRDTTypeRecord>  {
   storageKey: StorageKey;
 
   private stores: Dictionary<StoreRecord<T>> = {};
-  private callbacks = new Map<number, MultiplexedProxyCallback<T>>();
+  private callbacks = new Map<number, ProxyCallback<T>>();
   private nextCallbackId = 1;
   private options: StoreConstructorOptions<T>;
 
@@ -35,7 +34,7 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     this.options = options;
   }
 
-  on(callback: MultiplexedProxyCallback<T>): number {
+  on(callback: ProxyCallback<T>): number {
     this.callbacks.set(this.nextCallbackId, callback);
     return this.nextCallbackId++;
   }
@@ -69,10 +68,11 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     return record;
   }
 
-  async onProxyMessage(message: ProxyMessage<T>, muxId: string): Promise<boolean> {
-    let storeRecord = this.stores[muxId];
+  async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
+    assert(message.muxId != null);
+    let storeRecord = this.stores[message.muxId];
     if (storeRecord == null) {
-      storeRecord = await this.setupStore(muxId);
+      storeRecord = await this.setupStore(message.muxId);
     }
     if (storeRecord.type === 'pending') {
       storeRecord = await storeRecord.promise;
@@ -97,6 +97,7 @@ export class BackingStore<T extends CRDTTypeRecord>  {
   }
 
   async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<boolean> {
-    return Promise.all([...this.callbacks.values()].map(callback => callback(message, muxId))).then(a => a.reduce((a, b) => a && b));
+    message.muxId = muxId;
+    return Promise.all([...this.callbacks.values()].map(callback => callback(message))).then(a => a.reduce((a, b) => a && b));
   }
 }

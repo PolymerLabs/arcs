@@ -30,6 +30,7 @@ import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './recipe/ttl.js';
 import {Handle} from './storageNG/handle.js';
+import {BackingStorageProxy} from './storageNG/backing-storage-proxy.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -169,11 +170,12 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     return this.idGenerator.newChildId(this.pecId).toString();
   }
 
-  getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
+  getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord> | BackingStorageProxy<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
     const pec = this;
     let idPromise: Promise<number> = null;
     let id: number = null;
-    return {
+    if (storageProxy instanceof StorageProxy) {
+      return {
       async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>, entityId?: string): Promise<boolean> {
         if (idPromise == null) {
           throw new Error('onProxyMessage called without first calling setCallback!');
@@ -185,29 +187,56 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           }
         }
         message.id = id;
+        return  new Promise((resolve) =>
+            pec.apiPort.ProxyMessage(storageProxy, message, ret => resolve(ret)));
+        },
 
-        // The presence of an entity id indicates the message should be sent to a Backing store. Proxy messages sent to
-        // Backing stores requires an entity id in order to redirect the message to the correct store.
-        if (entityId != null) {
-          return new Promise(resolve =>
-            pec.apiPort.BackingProxyMessage(storageProxy, message, entityId, ret => resolve(ret)));
+        setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
+          idPromise = new Promise<number>((resolve) =>
+          pec.apiPort.Register(storageProxy, callback, retId => resolve(retId)));
+        },
+        reportExceptionInHost(exception: PropagatedException): void {
+          pec.apiPort.ReportExceptionInHost(exception);
+        },
+        getChannelConstructor(): ChannelConstructor {
+          return pec;
         }
+      };
+    } else if (storageProxy instanceof BackingStorageProxy) {
+      return {
+        async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
+          if (idPromise == null) {
+            throw new Error('onProxyMessage called without first calling setCallback!');
+          }
+          if (id == null) {
+            id = await idPromise;
+            if (id == null) {
+              throw new Error('undefined id received .. somehow');
+            }
+          }
+          message.id = id;
 
-        return new Promise(resolve =>
-          pec.apiPort.ProxyMessage(storageProxy, message, ret => resolve(ret)));
-      },
+          // The presence of an entity id indicates the message should be sent to a Backing store. Proxy messages sent to
+          // Backing stores requires an entity id in order to redirect the message to the correct store.
+          assert(message.muxId != null);
+          return  new Promise((resolve) =>
+            pec.apiPort.BackingProxyMessage(storageProxy, message, ret => resolve(ret)));
+        },
 
-      setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
-        idPromise = new Promise<number>((resolve) =>
-          pec.apiPort.Register(storageProxy, x => storageProxy.onMessage(x), retId => resolve(retId)));
-      },
-      reportExceptionInHost(exception: PropagatedException): void {
-        pec.apiPort.ReportExceptionInHost(exception);
-      },
-      getChannelConstructor(): ChannelConstructor {
-        return pec;
-      }
-    };
+        setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
+          idPromise = new Promise<number>((resolve) =>
+            pec.apiPort.BackingRegister(storageProxy, callback, retId => resolve(retId)));
+        },
+        reportExceptionInHost(exception: PropagatedException): void {
+          pec.apiPort.ReportExceptionInHost(exception);
+        },
+        getChannelConstructor(): ChannelConstructor {
+          return pec;
+        }
+      };
+    } else {
+      throw new Error('Invalid Proxy');
+    }
   }
 
   reportExceptionInHost(exception: PropagatedException): void {

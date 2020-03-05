@@ -183,6 +183,14 @@ class PECOuterPortImpl extends PECOuterPort {
     this.SimpleCallback(idCallback, id);
   }
 
+  async onBackingRegister(store: BackingStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
+    const id = store.on(async data => {
+      this.SimpleCallback(messagesCallback, data);
+      return Promise.resolve(true);
+    });
+    this.SimpleCallback(idCallback, id);
+  }
+
   async onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number) {
     // Need an ActiveStore here in order to forward messages. Calling
     // .activate() should generally be a no-op.
@@ -194,12 +202,12 @@ class PECOuterPortImpl extends PECOuterPort {
     this.SimpleCallback(callback, res);
   }
 
-  async onBackingProxyMessage(store: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, entityId: string, callback: number) {
+  async onBackingProxyMessage(store: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number) {
     if (!(store instanceof BackingStore)) {
       this.onReportExceptionInHost(new SystemException(new Error('expected BackingStore for onBackingProxyMessage'), 'onBackingProxyMessage', ''));
       return;
     }
-    const res = await store.onProxyMessage(message, entityId);
+    const res = await store.onProxyMessage(message);
     this.SimpleCallback(callback, res);
   }
 
