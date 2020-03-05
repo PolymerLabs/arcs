@@ -474,7 +474,6 @@ class DatabaseImplTest {
         )
 
         database.insertOrUpdate(key, entity)
-        database.dumpTables("storage_keys", "entities", "fields", "field_values")
         val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity)
