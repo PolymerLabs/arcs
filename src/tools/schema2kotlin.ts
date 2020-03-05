@@ -11,7 +11,7 @@ import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import minimist from 'minimist';
-import {leftPad, mapOf} from './kotlin-generation-utils.js';
+import {leftPad, KotlinGenerationUtils} from './kotlin-generation-utils.js';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -34,6 +34,8 @@ const typeMap = {
   'N': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
   'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
 };
+
+const ktUtils = new KotlinGenerationUtils();
 
 export class Schema2Kotlin extends Schema2Base {
   // test-KOTLIN.file_Name.arcs -> TestKotlinFileName.kt
@@ -205,8 +207,8 @@ export class KotlinGenerator implements ClassGenerator {
 Schema(
     listOf(${schemaNames.join(',\n' + ' '.repeat(8))}),
     SchemaFields(
-        singletons = ${leftPad(mapOf(this.singletonSchemaFields), 8, true)},
-        collections = ${leftPad(mapOf(this.collectionSchemaFields), 8, true)}
+        singletons = ${leftPad(ktUtils.mapOf(this.singletonSchemaFields), 8, true)},
+        collections = ${leftPad(ktUtils.mapOf(this.collectionSchemaFields), 8, true)}
     ),
     "${schemaHash}"
 )`;
