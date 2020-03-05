@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator} from './schema2base.js';
+import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Type} from '../runtime/type.js';
@@ -113,7 +113,7 @@ class CppGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, readonly namespace: string) {}
 
-  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
+  addField({field, typeChar, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
     const fixed = fixName(field);
     const valid = `${field}_valid_`;
     let {type, defaultVal, isString} = typeMap[typeChar];

@@ -9,10 +9,11 @@ package arcs.sdk
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-import arcs.core.storage.api.toPrimitiveValue
-import arcs.core.data.RawEntity
+import arcs.sdk.Entity
+import arcs.core.data.*
 import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.storage.api.toPrimitiveValue
 
 class GoldInternal1() : Entity {
 
@@ -70,6 +71,23 @@ class GoldInternal1() : Entity {
 }
 
 class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
+
+    companion object {
+        val schema = Schema(
+            listOf(),
+            SchemaFields(
+                singletons = mapOf("val" to FieldType.Text),
+                collections = emptyMap()
+            ),
+            "485712110d89359a3e539dac987329cd2649d889"
+        )
+
+        init {
+            SchemaRegistry.register(schema)
+        }
+    }
+
+    override fun schema() = schema
 
     override fun create() = GoldInternal1()
 
@@ -178,6 +196,28 @@ class Gold_Data() : Entity {
 }
 
 class Gold_Data_Spec() : EntitySpec<Gold_Data> {
+
+    companion object {
+        val schema = Schema(
+            listOf(),
+            SchemaFields(
+                singletons = mapOf(
+                    "num" to FieldType.Number,
+                    "txt" to FieldType.Text,
+                    "lnk" to FieldType.Text,
+                    "flg" to FieldType.Boolean
+                ),
+                collections = emptyMap()
+            ),
+            "d8058d336e472da47b289eafb39733f77eadb111"
+        )
+
+        init {
+            SchemaRegistry.register(schema)
+        }
+    }
+
+    override fun schema() = schema
 
     override fun create() = Gold_Data()
 
