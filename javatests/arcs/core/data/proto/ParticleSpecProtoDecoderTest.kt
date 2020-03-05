@@ -92,7 +92,7 @@ class ParticleSpecProtoDecoderTest {
         val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
         assertThat(readerSpec.name).isEqualTo("Reader")
         assertThat(readerSpec.location).isEqualTo("Everywhere")
-        assertThat(readerSpec.connections).isEqualTo(listOf(readConnectionSpec))
+        assertThat(readerSpec.connections).isEqualTo(mapOf("read" to readConnectionSpec))
 
         val readerWriterSpecProto = """
           name: "ReaderWriter"
@@ -105,6 +105,6 @@ class ParticleSpecProtoDecoderTest {
         assertThat(readerWriterSpec.name).isEqualTo("ReaderWriter")
         assertThat(readerWriterSpec.location).isEqualTo("Nowhere")
         assertThat(readerWriterSpec.connections).isEqualTo(
-            listOf(readConnectionSpec, writeConnectionSpec))
+            mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec))
     }
 }

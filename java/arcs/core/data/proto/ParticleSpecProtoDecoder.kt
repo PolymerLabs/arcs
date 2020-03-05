@@ -37,6 +37,6 @@ fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */
 fun ParticleSpecProto.decode() = ParticleSpec(
     name = getName(),
-    connections = getConnectionsList().map { it.decode() },
+    connections = getConnectionsList().map { it.getName() to it.decode() }.toMap(),
     location = getLocation()
 )
