@@ -18,11 +18,11 @@ class WasmTupleHandle<T, U>(
 ) {
 
     fun onUpdate(action: (T?, U?) -> Unit) {
-        this.handle1.onUpdate{ e ->
+        this.handle1.onUpdate { e ->
             action(e, handle2.getEntity())
         }
 
-        this.handle2.onUpdate{ e ->
+        this.handle2.onUpdate { e ->
             action(handle1.getEntity(), e)
         }
     }

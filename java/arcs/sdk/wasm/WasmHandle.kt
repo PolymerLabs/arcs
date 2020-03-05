@@ -35,7 +35,7 @@ abstract class WasmHandleEvents<T>(
         onUpdateActions.add(action)
     }
 
-    abstract fun getEntity() : T
+    abstract fun getEntity(): T
 }
 
 abstract class WasmHandleEvents<T>(
