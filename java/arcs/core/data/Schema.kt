@@ -19,7 +19,7 @@ import arcs.core.type.Type
 typealias Refinement = (data: RawEntity) -> Boolean
 
 /** Returns true if the RawEntity data matches the query predicate (given a query argument)*/
-typealias Query = (data: RawEntity, query_arg: Any) -> Boolean
+typealias Query = (data: RawEntity, queryArg: Any) -> Boolean
 
 data class Schema(
     val names: List<SchemaName>,
@@ -29,13 +29,8 @@ data class Schema(
      * method.
      */
     val hash: String,
-    val refinement: Refinement = { _: RawEntity -> true },
-    val query: Query = {
-        _: RawEntity, _: Any ->
-            throw IllegalArgumentException(
-                "Attempted to query a collection with no associated query."
-            )
-        }
+    val refinement: Refinement = { _ -> true },
+    val query: Query? = null
 ) {
     val name: SchemaName?
         get() = names.firstOrNull()

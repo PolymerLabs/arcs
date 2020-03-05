@@ -42,7 +42,7 @@ typealias SetCallbacks<T> = Callbacks<SetData<T>, SetOp<T>, Set<T>>
  */
 class CollectionImpl<T : Referencable>(
     name: String,
-    val schema: Schema,
+    private val schema: Schema,
     storageProxy: SetProxy<T>,
     callbacks: SetCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
@@ -69,14 +69,14 @@ class CollectionImpl<T : Referencable>(
 
     /** Returns the values in the collection that fit the requirement (as a set). */
     suspend fun query(args: Any): Set<T> {
-        val results = value().filter { it ->
-            if (it is RawEntity) {
-                schema.query(it, args)
-            } else {
-                throw IllegalArgumentException(
-                    "Cannot query non entity typed collection $name"
-                )
+        val results = value().filter {
+            require(it is RawEntity) {
+                "Cannot query non entity typed collection $name"
             }
+            val query = requireNotNull(schema.query) {
+                "Attempted to query collection $name with no associated query."
+            }
+            query(it, args)
         }
         return results.toSet()
     }
@@ -95,10 +95,8 @@ class CollectionImpl<T : Referencable>(
         log.debug { "Storing: $entity" }
         @Suppress("GoodTime") // use Instant
         entity.creationTimestamp = requireNotNull(time).currentTimeMillis
-        if (entity is RawEntity && !schema.refinement(entity)) {
-            throw IllegalArgumentException(
-                "Invalid entity stored to handle $name (failed refinement)"
-            )
+        require(entity !is RawEntity || schema.refinement(entity)) {
+            "Invalid entity stored to handle $name (failed refinement)"
         }
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant

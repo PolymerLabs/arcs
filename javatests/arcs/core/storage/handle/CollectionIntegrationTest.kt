@@ -57,7 +57,7 @@ class CollectionIntegrationTest {
     @get:Rule
     val logRule = LogRule()
 
-    private lateinit var test_store: Store<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
+    private lateinit var testStore: Store<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
     private lateinit var storageProxy:
         StorageProxy<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
     private lateinit var collectionA: CollectionImpl<RawEntity>
@@ -67,8 +67,8 @@ class CollectionIntegrationTest {
     fun setUp() = runBlocking {
         RamDiskDriverProvider()
 
-        test_store = Store(STORE_OPTIONS)
-        storageProxy = StorageProxy(test_store.activate(), CrdtSet<RawEntity>())
+        testStore = Store(STORE_OPTIONS)
+        storageProxy = StorageProxy(testStore.activate(), CrdtSet<RawEntity>())
 
         collectionA = CollectionImpl("collectionA", SCHEMA_A, storageProxy, null, Ttl.Infinite, TimeImpl())
         storageProxy.registerHandle(collectionA)

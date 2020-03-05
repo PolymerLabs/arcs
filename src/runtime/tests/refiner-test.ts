@@ -573,7 +573,7 @@ describe('SQLExtracter', () => {
 describe('KTExtracter', () => {
   const escaper = {
     escapeIdentifier: (name: string) => name,
-    typeFor: (type: string) => type
+    typeFor: (type: string) => type === 'Number' ? 'Double' : type
   };
   it('tests can create queries from refinement expressions involving math expressions', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await Manifest.parse(`
@@ -583,7 +583,7 @@ describe('KTExtracter', () => {
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = KTExtracter.fromSchema(schema, escaper);
       assert.strictEqual(query,
-        'val a = data.a as Number\nval b = data.b as Number\nreturn ((b + (a * 3)) > 300) && ((a > 3) && (!(a == 100))) && ((b > 20) && (b < 100))');
+        'val a = data.a as Double\nval b = data.b as Double\nreturn ((b + (a * 3)) > 300) && ((a > 3) && (!(a == 100))) && ((b > 20) && (b < 100))');
   }));
   it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`

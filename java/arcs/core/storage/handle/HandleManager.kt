@@ -165,6 +165,7 @@ class HandleManager(
 
         return SingletonHandle(
             name,
+            schema,
             storageProxy,
             callbacks,
             ttl,
@@ -217,7 +218,7 @@ class HandleManager(
     /* ktlint-disable max-line-length */
     @Deprecated(
         "Use rawEntitySetHandle instead",
-        replaceWith = ReplaceWith("this.rawEntitySetHandle(storageKey, schema, callbacks, name, refinement, ttl, canRead)")
+        replaceWith = ReplaceWith("this.rawEntitySetHandle(storageKey, schema, callbacks, name, ttl, canRead)")
     )
     /* ktlint-enable max-line-length */
     suspend fun setHandle(
@@ -232,7 +233,6 @@ class HandleManager(
         schema,
         callbacks,
         name,
-        refinement,
         ttl,
         canRead
     )
@@ -241,7 +241,6 @@ class HandleManager(
      * Creates a new [SetHandle] which manages a singleton of type: [Reference], where the
      * [Reference] is expected to *reference* a [RawEntity] described by the provided [Schema].
      */
-    // TODO: support refinement here.
     suspend fun referenceSetHandle(
         storageKey: StorageKey,
         schema: Schema,
@@ -267,10 +266,9 @@ class HandleManager(
 
         return SetHandle(
             name = name,
+            schema = schema,
             storageProxy = storageProxy,
             callbacks = callbacks,
-            // TODO: figure out how to support refinements with references.
-            refinement = null,
             ttl = ttl,
             time = time,
             canRead = canRead,

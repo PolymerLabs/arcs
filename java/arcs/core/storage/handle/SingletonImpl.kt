@@ -42,7 +42,7 @@ typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?
  */
 class SingletonImpl<T : Referencable>(
     name: String,
-    val schema: Schema,
+    private val schema: Schema,
     storageProxy: SingletonProxy<T>,
     callbacks: SingletonCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
@@ -68,10 +68,8 @@ class SingletonImpl<T : Referencable>(
     suspend fun store(entity: T): Boolean {
         @Suppress("GoodTime") // use Instant
         entity.creationTimestamp = requireNotNull(time).currentTimeMillis
-        if (entity is RawEntity && !schema.refinement(entity)) {
-            throw IllegalArgumentException(
-                "Invalid entity stored to handle $name (failed refinement)"
-            )
+        require(entity !is RawEntity || schema.refinement(entity)) {
+            "Invalid entity stored to handle $name (failed refinement)"
         }
         if (!Ttl.Infinite.equals(ttl)) {
             @Suppress("GoodTime") // use Instant
