@@ -72,6 +72,7 @@ describe('API channel', function() {
       onArcCreateHandle() {}
       onArcCreateSlot() {}
       onArcMapHandle() {}
+      onBackingProxyMessage() {}
       onConstructInnerArc() {}
       onGetBackingStore() {}
       onHandleClear() {}

@@ -10,6 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Arc} from '../arc.js';
+import {Flags} from '../flags.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
@@ -162,7 +163,7 @@ describe('Arc new storage', () => {
     assert.deepEqual(refVarData, d4);
   });
 
-  it('supports capabilities - storage protocol', async () => {
+  it('supports capabilities - storage protocol', Flags.withDefaultReferenceMode(async () => {
     DriverFactory.clearRegistrationsForTesting();
     const loader = new Loader(null, {
       '*': `
@@ -196,7 +197,7 @@ describe('Arc new storage', () => {
     assert.instanceOf(refKey.backingKey, VolatileStorageKey);
     assert.instanceOf(refKey.storageKey, VolatileStorageKey);
     assert.isTrue(key.toString().includes(arc.id.toString()));
-  });
+  }));
 });
 
 const doSetup = async () => setup(arcId => new VolatileStorageKey(arcId, ''));

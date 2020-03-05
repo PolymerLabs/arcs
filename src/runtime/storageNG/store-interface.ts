@@ -60,7 +60,7 @@ export type StoreConstructor = {
 export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   setCallback(callback: ProxyCallback<T>): void;
   reportExceptionInHost(exception: PropagatedException): void;
-  onProxyMessage(message: ProxyMessage<T>): Promise<boolean>;
+  onProxyMessage(message: ProxyMessage<T>, entityId?: string): Promise<boolean>;
   getChannelConstructor: Producer<ChannelConstructor>;
 }
 

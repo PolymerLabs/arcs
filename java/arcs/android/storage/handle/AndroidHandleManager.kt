@@ -3,6 +3,7 @@ package arcs.android.storage.handle
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import arcs.android.crdt.ParcelableCrdtType
+import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.data.RawEntity
 import arcs.core.storage.EntityActivationFactory
@@ -57,7 +58,7 @@ fun AndroidHandleManager(
          * Create an [ActivationFactory] that will create [ServiceStore] instances that can manage
          * singleton [RawEntities]
          */
-        override fun singletonFactory() = SingletonServiceStoreFactory<RawEntity>(
+        override fun <T : Referencable> singletonFactory() = SingletonServiceStoreFactory<T>(
             context,
             lifecycle,
             ParcelableCrdtType.Singleton,
@@ -69,7 +70,7 @@ fun AndroidHandleManager(
          * Create a ActivationFactory that will create [ServiceStore] instances that can manage
          * sets of [RawEntities]
          */
-        override fun setFactory() = SetServiceStoreFactory<RawEntity>(
+        override fun <T : Referencable> setFactory() = SetServiceStoreFactory<T>(
             context,
             lifecycle,
             ParcelableCrdtType.Set,

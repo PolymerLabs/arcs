@@ -9,6 +9,7 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {ArcId} from '../id.js';
+import {Flags} from '../flags.js';
 import {CapabilitiesResolver, StorageKeyOptions} from '../capabilities-resolver.js';
 import {Capabilities} from '../capabilities.js';
 import {Schema} from '../schema.js';
@@ -34,21 +35,22 @@ describe('Capabilities Resolver', () => {
   const schema = new Schema(['Thing'], {result: 'Text'});
   const handleId = 'h0';
 
-  it('creates storage keys', async () => {
+  it('creates storage keys', Flags.withDefaultReferenceMode(async () => {
     const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     const key = await resolver1.createStorageKey(Capabilities.tiedToArc, schema, handleId);
     verifyStorageKey(key, VolatileStorageKey);
+    await assertThrowsAsync(async () => await resolver1.createStorageKey(
+        Capabilities.empty, schema, handleId));
     await assertThrowsAsync(async () => await resolver1.createStorageKey(
         Capabilities.tiedToRuntime, schema, handleId));
     await assertThrowsAsync(async () => await resolver1.createStorageKey(
         Capabilities.persistent, schema, handleId));
 
-    const resolver2 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')},
-        new Map([
-            [RamDiskStorageKey.protocol, {
-                capabilities: Capabilities.tiedToRuntime,
-                create: (options: StorageKeyOptions) => new RamDiskStorageKey(options.unique())
-    }]]));
+    const resolver2 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')}, [{
+        protocol: RamDiskStorageKey.protocol,
+        capabilities: Capabilities.tiedToRuntime,
+        create: (options: StorageKeyOptions) => new RamDiskStorageKey(options.unique())
+    }]);
     await assertThrowsAsync(async () => await resolver2.createStorageKey(
         Capabilities.tiedToArc, schema, handleId));
     verifyStorageKey(await resolver2.createStorageKey(
@@ -67,15 +69,23 @@ describe('Capabilities Resolver', () => {
     verifyStorageKey(await resolver4.createStorageKey(
         Capabilities.persistent, schema, handleId), DatabaseStorageKey);
 
-    CapabilitiesResolver.reset();
-    const resolver5 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
-    verifyStorageKey(await resolver5.createStorageKey(
-        Capabilities.tiedToArc, schema, handleId), VolatileStorageKey);
-    await assertThrowsAsync(async () => await resolver5.createStorageKey(
-        Capabilities.tiedToRuntime, schema, handleId));
-});
+    const resolver5 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')}, [{
+        protocol: VolatileStorageKey.protocol,
+        capabilities: Capabilities.empty,
+        create: (options: StorageKeyOptions) => new VolatileStorageKey(options.arcId, options.unique(), options.unique())
+    }]);
+    verifyStorageKey(await resolver4.createStorageKey(
+        Capabilities.empty, schema, handleId), VolatileStorageKey);
 
-  it('registers and creates database key', async () => {
+    CapabilitiesResolver.reset();
+    const resolver6 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    verifyStorageKey(await resolver6.createStorageKey(
+        Capabilities.tiedToArc, schema, handleId), VolatileStorageKey);
+    await assertThrowsAsync(async () => await resolver6.createStorageKey(
+        Capabilities.tiedToRuntime, schema, handleId));
+  }));
+
+  it('registers and creates database key', Flags.withDefaultReferenceMode(async () => {
     const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     await assertThrowsAsync(async () => await resolver1.createStorageKey(
         Capabilities.persistent, schema, handleId));
@@ -84,21 +94,21 @@ describe('Capabilities Resolver', () => {
     const resolver2 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     const key = await resolver2.createStorageKey(Capabilities.persistent, schema, handleId);
     verifyStorageKey(key, PersistentDatabaseStorageKey);
-  });
+  }));
 
-  it('fails for unsupported capabilities', async () => {
+  it('fails for unsupported capabilities', Flags.withDefaultReferenceMode(async () => {
     const capabilitiesResolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     await assertThrowsAsync(async () => await capabilitiesResolver.createStorageKey(
         Capabilities.tiedToRuntime, schema, handleId));
 
     await assertThrowsAsync(async () => await capabilitiesResolver.createStorageKey(
         new Capabilities(['persistent', 'tied-to-arc']), schema, handleId));
-  });
+  }));
 
   it('verifies static creators', () => {
-    assert.equal(CapabilitiesResolver.getDefaultCreators().size, 1);
-    assert.isTrue(
-        CapabilitiesResolver.getDefaultCreators().has(VolatileStorageKey.protocol));
+    assert.equal(CapabilitiesResolver.getDefaultCreators().length, 2);
+    assert.isTrue(CapabilitiesResolver.getDefaultCreators().every(
+        ({protocol}) => protocol === VolatileStorageKey.protocol));
   });
 
   it('finds storage key protocols for capabilities', () => {

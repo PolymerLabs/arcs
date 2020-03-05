@@ -11,6 +11,7 @@ import {assert} from '../platform/assert-web.js';
 
 import {ArcId} from './id.js';
 import {Capabilities} from './capabilities.js';
+import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {Schema} from './schema.js';
@@ -52,52 +53,49 @@ class BackingStorageKeyOptions extends StorageKeyOptions {
 }
 
 export type StorageKeyCreator = (options: StorageKeyOptions) => StorageKey;
-export type StorageKeyCreatorsMap =
-    Map<string, {capabilities: Capabilities, create: StorageKeyCreator}>;
+export type StorageKeyCreatorInfo =
+    {protocol: string, capabilities: Capabilities, create: StorageKeyCreator};
 
 // TODO(mmandlis): update to always return a ReferenceModeStorageKey.
 export class CapabilitiesResolver {
-  private static defaultCreators: StorageKeyCreatorsMap = new Map();
-  private static registeredCreators: StorageKeyCreatorsMap = new Map();
+  private static defaultCreators: Set<StorageKeyCreatorInfo> = new Set();
+  private static registeredCreators: Set<StorageKeyCreatorInfo> = new Set();
 
-  private creators: StorageKeyCreatorsMap;
+  private creators: StorageKeyCreatorInfo[];
 
   constructor(public readonly options: CapabilitiesResolverOptions,
-              creators?: StorageKeyCreatorsMap) {
+              creators?: StorageKeyCreatorInfo[]) {
     if (creators) {
       // TBD: should defaultCreators be included as well here or not?
-      this.creators = new Map(creators);
+      this.creators = [...creators];
     } else {
       this.creators = CapabilitiesResolver.getDefaultCreators();
-      for (const [protocol, {capabilities, create}] of CapabilitiesResolver.registeredCreators.entries()) {
-        this.creators.set(protocol, {capabilities, create});
+      for (const {protocol, capabilities, create} of CapabilitiesResolver.registeredCreators) {
+        this.creators.push({protocol, capabilities, create});
       }
     }
   }
 
-  static getDefaultCreators(): StorageKeyCreatorsMap {
-    return new Map(CapabilitiesResolver.defaultCreators);
+  static getDefaultCreators(): StorageKeyCreatorInfo[] {
+    return [...CapabilitiesResolver.defaultCreators];
   }
 
   static registerDefaultKeyCreator(
       protocol: string,
       capabilities: Capabilities,
       create: StorageKeyCreator): void {
-        CapabilitiesResolver.defaultCreators.set(protocol, {capabilities, create});
+        CapabilitiesResolver.defaultCreators.add({protocol, capabilities, create});
   }
 
   static registerKeyCreator(
       protocol: string,
       capabilities: Capabilities,
       create: StorageKeyCreator): void {
-    if (CapabilitiesResolver.registeredCreators.get(protocol)) {
-      throw new Error(`Key creator for protocol ${protocol} already registered.`);
-    }
-    CapabilitiesResolver.registeredCreators.set(protocol, {capabilities, create});
+    CapabilitiesResolver.registeredCreators.add({protocol, capabilities, create});
   }
 
   static reset() {
-    CapabilitiesResolver.registeredCreators = new Map();
+    CapabilitiesResolver.registeredCreators = new Set();
   }
 
   async createStorageKey(
@@ -113,21 +111,24 @@ export class CapabilitiesResolver {
     } else if (protocols.size > 1) {
       console.warn(`Multiple storage key creators for ${capabilities.toString()}`);
     }
-    const creator = this.creators.get([...protocols][0]);
+    const creator = this.creators.find(({protocol, create}) => protocol === [...protocols][0]);
     const schemaHash = await entitySchema.hash();
-    const backingKey = creator.create(new BackingStorageKeyOptions(
-        this.options.arcId, schemaHash, entitySchema.name));
     const containerKey = creator.create(new ContainerStorageKeyOptions(
+        this.options.arcId, schemaHash, entitySchema.name));
+    if (!Flags.defaultReferenceMode) {
+      return containerKey.childKeyForHandle(handleId);
+    }
+    const backingKey = creator.create(new BackingStorageKeyOptions(
         this.options.arcId, schemaHash, entitySchema.name));
     return new ReferenceModeStorageKey(
         backingKey, containerKey.childKeyForHandle(handleId));
   }
 
-  findStorageKeyProtocols(capabilities: Capabilities): Set<string> {
+  findStorageKeyProtocols(inCapabilities: Capabilities): Set<string> {
     const protocols: Set<string> = new Set();
-    for (const protocol of this.creators.keys()) {
-      if (this.creators.get(protocol).capabilities.contains(capabilities)) {
-        protocols.add(protocol);
+    for (const {protocol, capabilities} of this.creators) {
+      if (capabilities.contains(inCapabilities)) {
+          protocols.add(protocol);
       }
     }
     return protocols;
