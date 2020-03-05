@@ -81,7 +81,12 @@ export class Schema {
       fields[key] = updateField(this.fields[key]);
     }
 
-    return {names: this.names, fields, description: this.description, refinement: this.refinement && this.refinement.toLiteral()};
+    return {
+      names: this.names,
+      fields,
+      description: this.description,
+      refinement: this.refinement && this.refinement.toLiteral()
+    };
   }
 
   // TODO(cypher1): This should only be an ident used in manifest parsing.
