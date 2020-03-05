@@ -19,7 +19,6 @@ import android.os.ResultReceiver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.sdk.host.createGetRegisteredParticlesIntent
 import arcs.android.sdk.host.createStartArcHostIntent
 import arcs.android.sdk.host.createStopArcHostIntent
 import arcs.android.sdk.host.toComponentName
@@ -31,6 +30,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
+import arcs.core.data.HandleMode
 import arcs.core.host.ParticleIdentifier
 import arcs.core.storage.driver.VolatileStorageKey
 import arcs.core.util.guardedBy
@@ -129,7 +129,8 @@ class ArcHostHelperTest {
 
         val connection = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
-            EntityType(personSchema)
+            EntityType(personSchema),
+            HandleMode.ReadWrite
         )
 
         val particleSpec = Plan.Particle(

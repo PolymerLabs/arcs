@@ -20,6 +20,7 @@ import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.HandleMode
 import arcs.core.storage.driver.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -39,11 +40,13 @@ class ParcelablePlanPartitionTest {
     fun PlanPartition_parcelableRoundTrip_works() {
         val handleConnection = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            HandleMode.ReadWrite,
             EntityType(personSchema)
         )
 
         val handleConnection2 = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar2"),
+            HandleMode.ReadWrite,
             EntityType(personSchema)
         )
 

@@ -3,6 +3,7 @@ package arcs.core.host
 import arcs.core.common.Id
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.storage.Callbacks
@@ -61,7 +62,8 @@ class EntityHandleManager(val handleManager: HandleManager) {
         handleName: String,
         storageKey: StorageKey,
         schema: Schema,
-        handleMode: HandleMode = HandleMode.ReadWrite,
+        handleMode: HandleMode = HandleMode
+            .ReadWrite,
         idGenerator: Id.Generator = Id.Generator.newSession(),
         sender: Sender = ::defaultSender
     ) = createSdkHandle(
@@ -95,7 +97,8 @@ class EntityHandleManager(val handleManager: HandleManager) {
         handleName: String,
         storageKey: StorageKey,
         schema: Schema,
-        handleMode: HandleMode = HandleMode.ReadWrite,
+        handleMode: HandleMode = HandleMode
+            .ReadWrite,
         idGenerator: Id.Generator = Id.Generator.newSession(),
         sender: Sender = ::defaultSender
     ) = createSdkHandle(

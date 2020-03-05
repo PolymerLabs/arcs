@@ -20,6 +20,7 @@ import arcs.core.data.Plan.HandleConnection
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.HandleMode
 import arcs.core.storage.driver.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -39,6 +40,7 @@ class ParcelableHandleConnectionTest {
     fun handleConnection_parcelableRoundTrip_works() {
         val handleConnection = HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            HandleMode.ReadWrite,
             EntityType(personSchema)
         )
 

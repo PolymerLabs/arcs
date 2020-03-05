@@ -311,14 +311,16 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 holder,
                 handleName,
                 handleSpec.storageKey,
-                handleSpec.type.toSchema()
+                handleSpec.type.toSchema(),
+                handleSpec.mode
             )
         is CollectionType<*> ->
             entityHandleManager.createSetHandle(
                 holder,
                 handleName,
                 handleSpec.storageKey,
-                handleSpec.type.toSchema()
+                handleSpec.type.toSchema(),
+                handleSpec.mode
             )
         else -> throw IllegalArgumentException("Unknown type ${handleSpec.type}")
     }

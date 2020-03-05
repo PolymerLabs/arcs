@@ -11,6 +11,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.host.ArcState
+import arcs.core.data.HandleMode
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
@@ -29,8 +30,6 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -99,14 +98,18 @@ open class AllocatorTestBase {
             "recipePerson", storageCapability
         )
         writePersonHandleConnection =
-            Plan.HandleConnection(recipePersonStorageKey, personEntityType)
+            Plan.HandleConnection(recipePersonStorageKey, HandleMode.Write, personEntityType)
 
         writePersonParticle = Plan.Particle(
             "WritePerson", WritePerson::class.java.getCanonicalName()!!,
             mapOf("person" to writePersonHandleConnection)
         )
 
-        readPersonHandleConnection = Plan.HandleConnection(recipePersonStorageKey, personEntityType)
+        readPersonHandleConnection = Plan.HandleConnection(
+            recipePersonStorageKey,
+            HandleMode.Read,
+            personEntityType
+        )
 
         readPersonParticle = Plan.Particle(
             "ReadPerson", ReadPerson::class.java.getCanonicalName()!!,
