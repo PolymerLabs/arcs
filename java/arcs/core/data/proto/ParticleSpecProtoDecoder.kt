@@ -14,6 +14,8 @@ package arcs.core.data.proto
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleConnectionSpec.Direction
 import arcs.core.data.ParticleSpec
+import arcs.core.util.Result
+import arcs.core.util.resultOf
 
 typealias DirectionProto = HandleConnectionSpecProto.Direction
 
@@ -35,8 +37,7 @@ fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
 )
 
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */
-fun ParticleSpecProto.decode() = ParticleSpec(
-    name = getName(),
-    connections = getConnectionsList().map { it.getName() to it.decode() }.toMap(),
-    location = getLocation()
-)
+fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
+    val connections = getConnectionsList().map { it.getName() to it.decode() }.toMap()
+    ParticleSpec(name = getName(), connections = connections, location = getLocation())
+}
