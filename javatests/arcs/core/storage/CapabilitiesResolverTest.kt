@@ -69,10 +69,16 @@ class CapabilitiesResolverTest {
         val resolver = CapabilitiesResolver(options)
         assertThat(resolver.findStorageKeyProtocols(Capabilities.TiedToArc))
             .containsExactly(VOLATILE_DRIVER_PROTOCOL)
+        assertThat(resolver.findStorageKeyProtocols(Capabilities.Empty))
+            .containsExactly(VOLATILE_DRIVER_PROTOCOL)
         assertThat(resolver.findStorageKeyProtocols(Capabilities.TiedToRuntime)).isEmpty()
         assertThat(resolver.findStorageKeyProtocols(Capabilities.Persistent)).isEmpty()
         verifyStorageKey(
             resolver.createStorageKey(Capabilities.TiedToArc, thingSchema, handleId),
+            VolatileStorageKey::class.java
+        )
+        verifyStorageKey(
+            resolver.createStorageKey(Capabilities.Empty, thingSchema, handleId),
             VolatileStorageKey::class.java
         )
         assertThrows(IllegalArgumentException::class) {
@@ -96,14 +102,19 @@ class CapabilitiesResolverTest {
     @Test
     fun capabilitiesResolver_createsStorageKeysCtor() {
         val options = CapabilitiesResolver.CapabilitiesResolverOptions(ArcId.newForTest("test"))
-        val ramDiskCreator: Pair<Capabilities, StorageKeyCreator> = Capabilities.TiedToRuntime to
-            { storageKeyOptions -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) }
         val resolver = CapabilitiesResolver(
             options,
-            mutableMapOf(RAMDISK_DRIVER_PROTOCOL to ramDiskCreator)
+            mutableListOf(CapabilitiesResolver.StorageKeyCreatorInfo(
+                RAMDISK_DRIVER_PROTOCOL,
+                Capabilities.TiedToRuntime,
+                { storageKeyOptions -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) }
+            ))
         )
         assertThrows(IllegalArgumentException::class) {
             resolver.createStorageKey(Capabilities.TiedToArc, thingSchema, handleId)
+        }
+        assertThrows(IllegalArgumentException::class) {
+            resolver.createStorageKey(Capabilities.Empty, thingSchema, handleId)
         }
         verifyStorageKey(
             resolver.createStorageKey(Capabilities.TiedToRuntime, thingSchema, handleId),
@@ -120,12 +131,18 @@ class CapabilitiesResolverTest {
         val resolver1 = CapabilitiesResolver(options)
         assertThat(resolver1.findStorageKeyProtocols(Capabilities.TiedToArc))
             .containsExactly(VOLATILE_DRIVER_PROTOCOL)
+        assertThat(resolver1.findStorageKeyProtocols(Capabilities.Empty))
+            .containsExactly(VOLATILE_DRIVER_PROTOCOL)
         assertThat(resolver1.findStorageKeyProtocols(Capabilities.TiedToRuntime))
             .containsExactly(RAMDISK_DRIVER_PROTOCOL)
         assertThat(resolver1.findStorageKeyProtocols(Capabilities.Persistent))
             .containsExactly(DATABASE_DRIVER_PROTOCOL)
         verifyStorageKey(
             resolver1.createStorageKey(Capabilities.TiedToArc, thingSchema, handleId),
+            VolatileStorageKey::class.java
+        )
+        verifyStorageKey(
+            resolver1.createStorageKey(Capabilities.Empty, thingSchema, handleId),
             VolatileStorageKey::class.java
         )
         val ramdiskKey =
@@ -169,25 +186,25 @@ class CapabilitiesResolverTest {
 
     @Test
     fun capabilitiesResolver_staticCreators() {
-        assertThat(CapabilitiesResolver.defaultCreators).hasSize(1);
+        assertThat(CapabilitiesResolver.defaultCreators).hasSize(2);
         assertThat(CapabilitiesResolver.registeredCreators).isEmpty()
 
         CapabilitiesResolver.registerDefaultKeyCreator(
             "test1",
             Capabilities.TiedToRuntime
         ) { storageKeyOptions -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) }
-        assertThat(CapabilitiesResolver.defaultCreators).hasSize(2);
+        assertThat(CapabilitiesResolver.defaultCreators).hasSize(3);
         assertThat(CapabilitiesResolver.registeredCreators).isEmpty()
 
         CapabilitiesResolver.registerKeyCreator(
             "test2",
             Capabilities.Persistent
         ) { storageKeyOptions -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) }
-        assertThat(CapabilitiesResolver.defaultCreators).hasSize(2);
+        assertThat(CapabilitiesResolver.defaultCreators).hasSize(3);
         assertThat(CapabilitiesResolver.registeredCreators).hasSize(1)
 
         CapabilitiesResolver.reset()
-        assertThat(CapabilitiesResolver.defaultCreators).hasSize(2);
+        assertThat(CapabilitiesResolver.defaultCreators).hasSize(3);
         assertThat(CapabilitiesResolver.registeredCreators).isEmpty()
     }
 }
