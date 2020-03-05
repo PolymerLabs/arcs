@@ -195,7 +195,6 @@ export class KotlinGenerator implements ClassGenerator {
     } else {
       this.singletonSchemaFields.push(`"${field}" to ${typeMap[typeChar].schemaType}`);
     }
-
   }
 
   mapOf(items: string[]): string {

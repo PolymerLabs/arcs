@@ -24,5 +24,5 @@ object SchemaRegistry {
     }
 
     /** Given a [SchemaHash], return the [Schema] for that hash, if it exists. */
-    fun fromHash(hash: SchemaHash) = schemas[hash]
+    operator fun get(hash: SchemaHash) = schemas[hash]
 }
