@@ -42,10 +42,10 @@ export class Schema {
     this.names = names;
     this.fields = {};
     this.refinement = options.refinement || null;
-    const fNs = this.refinement && this.refinement.getFieldNames();
+    const fNs = this.refinement && this.refinement.getFieldParams();
     // if the schema level refinement is univariate, propogate it to the appropriate field
     if (fNs && fNs.size === 1 && Flags.fieldRefinementsAllowed) {
-      const fN = fNs.values().next().value;
+      const [fN, _type] = fNs.values().next().value;
       fields[fN].refinement = Refinement.intersectionOf(fields[fN].refinement, this.refinement);
       this.refinement = null;
     }
@@ -63,21 +63,25 @@ export class Schema {
 
   toLiteral() {
     const fields = {};
-    const updateField = field => {
-      if (field.kind === 'schema-reference') {
-        const schema = field.schema;
+    const updateField = fieldType => {
+      if (fieldType.kind === 'schema-reference') {
+        const schema = fieldType.schema;
         return {kind: 'schema-reference', schema: {kind: schema.kind, model: schema.model.toLiteral()}};
-      } else if (field.kind === 'schema-collection') {
-        return {kind: 'schema-collection', schema: updateField(field.schema)};
+      } else if (fieldType.kind === 'schema-collection') {
+        return {kind: 'schema-collection', schema: updateField(fieldType.schema)};
       } else {
-        return field;
+        const fieldLiteralType = {...fieldType};
+        if (fieldType.refinement) {
+          fieldLiteralType.refinement = fieldType.refinement.toLiteral();
+        }
+        return fieldLiteralType;
       }
     };
     for (const key of Object.keys(this.fields)) {
       fields[key] = updateField(this.fields[key]);
     }
 
-    return {names: this.names, fields, description: this.description, refinement: this.refinement};
+    return {names: this.names, fields, description: this.description, refinement: this.refinement && this.refinement.toLiteral()};
   }
 
   // TODO(cypher1): This should only be an ident used in manifest parsing.
