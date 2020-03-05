@@ -12,11 +12,18 @@
 package arcs.sdk.wasm
 
 /** Combined Handle to allow events on multiple handles to trigger actions. */
-class WasmCombinedSingletonHandle<T : WasmEntity>(val handles: List<WasmSingletonImpl<T>>) {
+class WasmCombinedSingletonHandle<T, U>(
+    val handle1: WasmHandleEvents<T>,
+    val handle2: WasmHandleEvents<U>
+) {
 
-    fun onUpdate(action: (T?) -> Unit) {
-        this.handles.forEach { handle ->
-            handle.onUpdate(action)
+    fun onUpdate(action: (T?, U?) -> Unit) {
+        this.handle1.onUpdate{ e ->
+            action(e, handle2.getEntity())
+        }
+
+        this.handle2.onUpdate{ e ->
+            action(handle1.getEntity(), e)
         }
     }
 }

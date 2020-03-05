@@ -20,7 +20,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
             x = 1
         }
 
-        combine(handles.inHandle, handles.ioHandle).onUpdate{ entity ->
+        combine(handles.inHandle, handles.ioHandle).onUpdate{ _, _ ->
             combinedUpdates++
         }
     }

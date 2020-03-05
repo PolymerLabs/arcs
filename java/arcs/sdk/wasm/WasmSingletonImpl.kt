@@ -46,4 +46,6 @@ class WasmSingletonImpl<T : WasmEntity>(
             action(entity)
         }
     }
+
+    override fun getEntity() : T? = entity
 }
