@@ -36,7 +36,7 @@ export class KotlinGenerationUtils {
    * @param emptyName alternative name for the function with empty arguments.
    */
   applyFun(name: string, args: string[], emptyName: string = name): string {
-    if (args.length == 0) return `${emptyName}()`;
+    if (args.length === 0) return `${emptyName}()`;
     return `${name}(${this.joinWithIndents(args)})`;
   }
 
@@ -72,7 +72,6 @@ export class KotlinGenerationUtils {
     return '\n' + leftPad(leftPad(items.join(',\n'), this.pref.indent), lineStart) + '\n';
   }
 }
-
 
 /** Everyone's favorite NPM module, install not required. */
 export function leftPad(input: string, indent: number, skipFirst: boolean = false) {
