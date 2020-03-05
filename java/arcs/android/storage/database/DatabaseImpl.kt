@@ -438,7 +438,7 @@ class DatabaseImpl(
                     content,
                     SQLiteDatabase.CONFLICT_REPLACE
                 )
-        }
+            }
     }
 
     /**
