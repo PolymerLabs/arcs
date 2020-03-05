@@ -283,10 +283,10 @@ class DatabaseImpl(
         """
             SELECT
                 entity_id,
-                creation_timestamp,
-                expiration_timestamp,
                 backing_storage_key,
-                version_map
+                version_map,
+                creation_timestamp,
+                expiration_timestamp
             FROM entity_refs
             WHERE id = ?
         """.trimIndent(),
@@ -294,10 +294,10 @@ class DatabaseImpl(
     ).forSingleResult {
         Reference(
             id = it.getString(0),
-            storageKey = StorageKeyParser.parse(it.getString(3)),
-            version = it.getVersionMap(4),
-            creationTimestamp = it.getLong(1),
-            expirationTimestamp = it.getLong(2)
+            storageKey = StorageKeyParser.parse(it.getString(1)),
+            version = it.getVersionMap(2),
+            creationTimestamp = it.getLong(3),
+            expirationTimestamp = it.getLong(4)
         )
     } ?: throw IllegalArgumentException("Entity Reference with ID $entityRefId does not exist.")
 
@@ -1273,7 +1273,7 @@ class DatabaseImpl(
                     -- The ID for the entity (Arcs string ID, not a row ID).
                     entity_id TEXT NOT NULL,
                     creation_timestamp INTEGER NOT NULL,
-                    expiration_timestamp INTEGER,
+                    expiration_timestamp INTEGER NOT NULL,
                     -- The storage key for the backing store for this entity.
                     backing_storage_key TEXT NOT NULL,
                     -- Serialized VersionMapProto for the reference, if available.

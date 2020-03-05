@@ -175,14 +175,12 @@ class DatabaseImplTest {
 
     @Test
     fun createEntityStorageKeyId_createsNewIds() = runBlockingTest {
-        val creationTimestamp = 99L
-        val expirationTimestamp = 999L
         assertThat(
             database.createEntityStorageKeyId(
                 DummyStorageKey("key1"),
                 "eid1",
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 123L,
                 VERSION_MAP,
                 FIRST_VERSION_NUMBER,
@@ -194,8 +192,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key2"),
                 "eid2",
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 123L,
                 VERSION_MAP,
                 FIRST_VERSION_NUMBER,
@@ -207,8 +205,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key3"),
                 "eid3",
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 123L,
                 VERSION_MAP,
                 FIRST_VERSION_NUMBER,
@@ -220,15 +218,13 @@ class DatabaseImplTest {
     @Test
     fun createEntityStorageKeyId_replacesExistingIds() = runBlockingTest {
         // Insert keys for the first time.
-        val creationTimestamp = 99L
-        val expirationTimestamp = 999L
 
         assertThat(
             database.createEntityStorageKeyId(
                 DummyStorageKey("key1"),
                 "eid1",
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 123L,
                 VERSION_MAP,
                 1,
@@ -240,8 +236,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key2"),
                 "eid2",
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 123L,
                 VERSION_MAP,
                 1,
@@ -255,8 +251,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key1"),
                 "eid1",
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 123L,
                 VERSION_MAP,
                 2,
@@ -268,8 +264,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 DummyStorageKey("key2"),
                 "eid2",
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 123L,
                 VERSION_MAP,
                 2,
@@ -281,13 +277,11 @@ class DatabaseImplTest {
     @Test
     fun createEntityStorageKeyId_wrongEntityId() = runBlockingTest {
         val key = DummyStorageKey("key")
-        val creationTimestamp = 99L
-        val expirationTimestamp = 999L
         database.createEntityStorageKeyId(
             key,
             "correct-entity-id",
-            creationTimestamp,
-            expirationTimestamp,
+            CREATION_TIMESTAMP,
+            EXPIRATION_TIMESTAMP,
             123L,
             VERSION_MAP,
             FIRST_VERSION_NUMBER,
@@ -298,8 +292,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 key,
                 "incorrect-entity-id",
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 123L,
                 VERSION_MAP,
                 FIRST_VERSION_NUMBER,
@@ -316,14 +310,12 @@ class DatabaseImplTest {
     fun createEntityStorageKeyId_versionNumberMustBeLarger() = runBlockingTest {
         val key = DummyStorageKey("key")
         val entityId = "entity-id"
-        val creationTimestamp = 99L
-        val expirationTimestamp = 999L
         val typeId = 123L
         database.createEntityStorageKeyId(
             key,
             entityId,
-            creationTimestamp,
-            expirationTimestamp,
+            CREATION_TIMESTAMP,
+            EXPIRATION_TIMESTAMP,
             typeId,
             VERSION_MAP,
             10,
@@ -335,8 +327,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 key,
                 entityId,
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 typeId,
                 VERSION_MAP,
                 10,
@@ -353,8 +345,8 @@ class DatabaseImplTest {
             database.createEntityStorageKeyId(
                 key,
                 entityId,
-                creationTimestamp,
-                expirationTimestamp,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
                 typeId,
                 VERSION_MAP,
                 9,
@@ -370,8 +362,8 @@ class DatabaseImplTest {
         database.createEntityStorageKeyId(
             key,
             entityId,
-            creationTimestamp,
-            expirationTimestamp,
+            CREATION_TIMESTAMP,
+            EXPIRATION_TIMESTAMP,
             typeId,
             VERSION_MAP,
             11,
@@ -1342,6 +1334,10 @@ class DatabaseImplTest {
         private val TEXT_TYPE_ID = PrimitiveType.Text.ordinal.toLong()
         private val BOOLEAN_TYPE_ID = PrimitiveType.Boolean.ordinal.toLong()
         private val NUMBER_TYPE_ID = PrimitiveType.Number.ordinal.toLong()
+
+        private val CREATION_TIMESTAMP = 99L
+        private val EXPIRATION_TIMESTAMP = 999L
+
     }
 }
 
