@@ -12,6 +12,7 @@ import {Capabilities} from '../capabilities.js';
 
 describe('Capabilities', () => {
   it('verifies same capabilities', () => {
+    assert.isTrue(Capabilities.empty.isSame(Capabilities.empty));
     assert.isTrue(Capabilities.persistent.isSame(Capabilities.persistent));
     assert.isTrue(Capabilities.queryable.isSame(Capabilities.queryable));
     assert.isTrue(Capabilities.persistentQueryable.isSame(
@@ -19,12 +20,13 @@ describe('Capabilities', () => {
     assert.isTrue(Capabilities.tiedToRuntime.isSame(Capabilities.tiedToRuntime));
     assert.isTrue(Capabilities.tiedToArc.isSame(Capabilities.tiedToArc));
 
+    assert.isFalse(Capabilities.empty.isSame(Capabilities.persistent));
     assert.isFalse(Capabilities.persistent.isSame(Capabilities.tiedToRuntime));
     assert.isFalse(Capabilities.tiedToRuntime.isSame(Capabilities.tiedToArc));
     assert.isFalse(Capabilities.tiedToArc.isSame(Capabilities.persistent));
     assert.isFalse(Capabilities.queryable.isSame(Capabilities.persistentQueryable));
 
-
+    assert.isTrue(new Capabilities([]).isSame(new Capabilities([])));
     assert.isTrue(new Capabilities(['persistent', 'tied-to-arc']).isSame(
         new Capabilities(['persistent', 'tied-to-arc'])));
     assert.isTrue(new Capabilities(['persistent', 'queryable']).isSame(
@@ -35,6 +37,7 @@ describe('Capabilities', () => {
   });
 
   it('verifies contained capabilities', () => {
+    assert.isTrue(Capabilities.empty.contains(Capabilities.empty));
     assert.isTrue(Capabilities.persistent.contains(Capabilities.persistent));
     assert.isTrue(Capabilities.queryable.contains(Capabilities.queryable));
     assert.isTrue(Capabilities.persistentQueryable.contains(Capabilities.persistentQueryable));
@@ -43,6 +46,8 @@ describe('Capabilities', () => {
     assert.isTrue(Capabilities.tiedToRuntime.contains(Capabilities.tiedToRuntime));
     assert.isTrue(Capabilities.tiedToArc.contains(Capabilities.tiedToArc));
 
+    assert.isFalse(Capabilities.empty.contains(Capabilities.persistent));
+    assert.isFalse(Capabilities.persistent.contains(Capabilities.empty));
     assert.isFalse(Capabilities.persistent.contains(Capabilities.tiedToRuntime));
     assert.isFalse(Capabilities.tiedToRuntime.contains(Capabilities.tiedToArc));
     assert.isFalse(Capabilities.tiedToArc.contains(Capabilities.persistent));

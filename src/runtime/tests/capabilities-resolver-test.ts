@@ -40,6 +40,8 @@ describe('Capabilities Resolver', () => {
     const key = await resolver1.createStorageKey(Capabilities.tiedToArc, schema, handleId);
     verifyStorageKey(key, VolatileStorageKey);
     await assertThrowsAsync(async () => await resolver1.createStorageKey(
+        Capabilities.empty, schema, handleId));
+    await assertThrowsAsync(async () => await resolver1.createStorageKey(
         Capabilities.tiedToRuntime, schema, handleId));
     await assertThrowsAsync(async () => await resolver1.createStorageKey(
         Capabilities.persistent, schema, handleId));
@@ -67,11 +69,19 @@ describe('Capabilities Resolver', () => {
     verifyStorageKey(await resolver4.createStorageKey(
         Capabilities.persistent, schema, handleId), DatabaseStorageKey);
 
+    const resolver5 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')}, [{
+        protocol: VolatileStorageKey.protocol,
+        capabilities: Capabilities.empty,
+        create: (options: StorageKeyOptions) => new VolatileStorageKey(options.arcId, options.unique(), options.unique())
+    }]);
+    verifyStorageKey(await resolver4.createStorageKey(
+        Capabilities.empty, schema, handleId), VolatileStorageKey);
+
     CapabilitiesResolver.reset();
-    const resolver5 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
-    verifyStorageKey(await resolver5.createStorageKey(
+    const resolver6 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
+    verifyStorageKey(await resolver6.createStorageKey(
         Capabilities.tiedToArc, schema, handleId), VolatileStorageKey);
-    await assertThrowsAsync(async () => await resolver5.createStorageKey(
+    await assertThrowsAsync(async () => await resolver6.createStorageKey(
         Capabilities.tiedToRuntime, schema, handleId));
   }));
 

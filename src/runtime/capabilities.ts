@@ -35,6 +35,9 @@ export class Capabilities {
   }
 
   contains(other: Capabilities): boolean {
+    if (other.isEmpty()) {
+      return this.isEmpty();
+    }
     return [...other.capabilities].every(c => this.capabilities.has(c));
   }
 
