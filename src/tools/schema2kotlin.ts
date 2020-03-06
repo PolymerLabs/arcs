@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator} from './schema2base.js';
+import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import minimist from 'minimist';
@@ -28,10 +28,10 @@ const keywords = [
 ];
 
 const typeMap = {
-  'T': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`},
-  'U': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`},
-  'N': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0'},
-  'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
+  'T': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
+  'U': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
+  'N': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
+  'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
 };
 
 export class Schema2Kotlin extends Schema2Base {
@@ -54,7 +54,14 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.storage.api.toPrimitiveValue\nimport arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable\nimport arcs.core.data.util.ReferencablePrimitive'}
+${this.opts.wasm ?
+      `import arcs.sdk.wasm.*` :
+      `\
+import arcs.sdk.Entity
+import arcs.core.data.*
+import arcs.core.data.util.toReferencable
+import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.storage.api.toPrimitiveValue`}
 `;
   }
 
@@ -128,7 +135,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
   }
 }
 
-class KotlinGenerator implements ClassGenerator {
+export class KotlinGenerator implements ClassGenerator {
   fields: string[] = [];
   fieldVals: string[] = [];
   setFields: string[] = [];
@@ -142,11 +149,13 @@ class KotlinGenerator implements ClassGenerator {
   fieldSerializes: string[] = [];
   fieldDeserializes: string[] = [];
   fieldsForToString: string[] = [];
+  singletonSchemaFields: string[] = [];
+  collectionSchemaFields: string[] = [];
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
   // TODO: allow optional fields in kotlin
-  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
+  addField({field, typeChar, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
     // TODO: support reference types in kotlin
     if (typeChar === 'R') return;
 
@@ -179,6 +188,46 @@ class KotlinGenerator implements ClassGenerator {
     this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
     this.fieldDeserializes.push(`${fixed} = data.singletons["${fixed}"].toPrimitiveValue(${type}::class, ${defaultVal})`);
     this.fieldsForToString.push(`${fixed} = $${fixed}`);
+    if (isCollection) {
+      this.collectionSchemaFields.push(`"${field}" to ${typeMap[typeChar].schemaType}`);
+    } else {
+      this.singletonSchemaFields.push(`"${field}" to ${typeMap[typeChar].schemaType}`);
+    }
+  }
+
+  mapOf(items: string[]): string {
+    switch (items.length) {
+      case 0:
+        return `emptyMap()`;
+      case 1:
+        return `mapOf(${items[0]})`;
+      default:
+        return `\
+mapOf(
+${this.leftPad(items.join(',\n'), 4)}
+)`;
+    }
+
+  }
+
+  createSchema(schemaHash: string): string {
+    const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
+    return `\
+Schema(
+    listOf(${schemaNames.join(',\n' + ' '.repeat(8))}),
+    SchemaFields(
+        singletons = ${this.leftPad(this.mapOf(this.singletonSchemaFields), 8, true)},
+        collections = ${this.leftPad(this.mapOf(this.collectionSchemaFields), 8, true)}
+    ),
+    "${schemaHash}"
+)`;
+  }
+
+  leftPad(input: string, indent: number, skipFirst: boolean = false) {
+    return input
+      .split('\n')
+      .map((line: string, idx: number) => (idx === 0 && skipFirst) ? line : ' '.repeat(indent) + line)
+      .join('\n');
   }
 
   generate(schemaHash: string, fieldCount: number): string {
@@ -254,7 +303,18 @@ ${this.opts.wasm ? `
 }
 
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
+${this.opts.wasm ? '' : `\
 
+    companion object {
+        val schema = ${this.leftPad(this.createSchema(schemaHash), 8, true)}
+        
+        init {
+            SchemaRegistry.register(schema)
+        }
+    }
+    
+    override fun schema() = schema
+`}
     override fun create() = ${name}()
     ${!this.opts.wasm ? `
     override fun deserialize(data: RawEntity): ${name} {

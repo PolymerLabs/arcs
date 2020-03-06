@@ -9,9 +9,8 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Schema} from '../../runtime/schema.js';
 import {Dictionary} from '../../runtime/hot.js';
-import {Schema2Base, ClassGenerator} from '../schema2base.js';
+import {Schema2Base, ClassGenerator, AddFieldOptions} from '../schema2base.js';
 import {SchemaNode} from '../schema2graph.js';
 import {Schema2Cpp} from '../schema2cpp.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
@@ -32,7 +31,7 @@ class Schema2Mock extends Schema2Base {
     const collector = {count: 0, adds: []};
     this.res[node.name] = collector;
     return {
-      addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
+      addField({field, typeChar, isOptional, refClassName}: AddFieldOptions) {
         const refInfo = refClassName ? `<${refClassName}>` : '';
         collector.adds.push(field + ':' + typeChar + refInfo + (isOptional ? '?' : ''));
       },
