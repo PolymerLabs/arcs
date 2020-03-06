@@ -1,7 +1,6 @@
 package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
-import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.CollectionType
@@ -107,7 +106,8 @@ class HandleManager(
             ttl,
             time,
             canRead,
-            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
+            schema = schema
         ).also { storageProxy.registerHandle(it) }
     }
 
@@ -170,7 +170,8 @@ class HandleManager(
             ttl,
             time,
             canRead,
-            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
+            schema = schema
         ).also { storageProxy.registerHandle(it) }
     }
 
@@ -184,7 +185,6 @@ class HandleManager(
         schema: Schema,
         callbacks: SetCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
-        refinement: Refinement<RawEntity>? = null,
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
     ): SetHandle<RawEntity> {
@@ -204,11 +204,11 @@ class HandleManager(
             name,
             storageProxy,
             callbacks,
-            refinement,
             ttl,
             time,
             canRead,
-            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
+            schema = schema
         ).also { storageProxy.registerHandle(it) }
     }
 
@@ -218,7 +218,7 @@ class HandleManager(
     /* ktlint-disable max-line-length */
     @Deprecated(
         "Use rawEntitySetHandle instead",
-        replaceWith = ReplaceWith("this.rawEntitySetHandle(storageKey, schema, callbacks, name, refinement, ttl, canRead)")
+        replaceWith = ReplaceWith("this.rawEntitySetHandle(storageKey, schema, callbacks, name, ttl, canRead)")
     )
     /* ktlint-enable max-line-length */
     suspend fun setHandle(
@@ -226,7 +226,6 @@ class HandleManager(
         schema: Schema,
         callbacks: SetCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
-        refinement: Refinement<RawEntity>? = null,
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
     ): SetHandle<RawEntity> = rawEntitySetHandle(
@@ -234,7 +233,6 @@ class HandleManager(
         schema,
         callbacks,
         name,
-        refinement,
         ttl,
         canRead
     )
@@ -243,7 +241,6 @@ class HandleManager(
      * Creates a new [SetHandle] which manages a singleton of type: [Reference], where the
      * [Reference] is expected to *reference* a [RawEntity] described by the provided [Schema].
      */
-    // TODO: support refinement here.
     suspend fun referenceSetHandle(
         storageKey: StorageKey,
         schema: Schema,
@@ -271,12 +268,11 @@ class HandleManager(
             name = name,
             storageProxy = storageProxy,
             callbacks = callbacks,
-            // TODO: figure out how to support refinements with references.
-            refinement = null,
             ttl = ttl,
             time = time,
             canRead = canRead,
-            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
+            schema = schema
         ).also { storageProxy.registerHandle(it) }
     }
 }

@@ -15,6 +15,12 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.VersionMap
 import arcs.core.type.Type
 
+/** Returns true if the RawEntity data matches the refinement predicate */
+typealias Refinement = (data: RawEntity) -> Boolean
+
+/** Returns true if the RawEntity data matches the query predicate (given a query argument)*/
+typealias Query = (data: RawEntity, queryArg: Any) -> Boolean
+
 data class Schema(
     val names: List<SchemaName>,
     val fields: SchemaFields,
@@ -22,7 +28,9 @@ data class Schema(
      * The hash code for the schema (note that this is not the same as this object's [hashCode]
      * method.
      */
-    val hash: String
+    val hash: String,
+    val refinement: Refinement = { _ -> true },
+    val query: Query? = null
 ) {
     val name: SchemaName?
         get() = names.firstOrNull()
