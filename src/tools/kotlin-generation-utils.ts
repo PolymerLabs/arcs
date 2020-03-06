@@ -57,7 +57,7 @@ export class KotlinGenerationUtils {
 
   /** Formats `setOf` with correct indentation and defaults. */
   setOf(args: string[]): string {
-    return this.applyFun('setOf', args, 'setList');
+    return this.applyFun('setOf', args, 'emptySet');
   }
 
   /**
