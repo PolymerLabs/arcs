@@ -61,6 +61,10 @@ class CapabilitiesResolver(
         override val location: String = unique
     }
 
+    /**
+     * Information mapping store capabilities to a corresponding storage protocol and creator
+     * method.
+     */
     data class StorageKeyCreatorInfo(
         val protocol: String,
         val capabilities: Capabilities,
@@ -84,8 +88,8 @@ class CapabilitiesResolver(
             log.warning { "Multiple storage key creators for $capabilities" }
         }
         val create = creators.first().create
-        val backingKey = create.invoke(BackingStorageKeyOptions(options.arcId, entitySchema))
-        val storageKey = create.invoke(ContainerStorageKeyOptions(options.arcId, entitySchema))
+        val backingKey = create(BackingStorageKeyOptions(options.arcId, entitySchema))
+        val storageKey = create(ContainerStorageKeyOptions(options.arcId, entitySchema))
         return ReferenceModeStorageKey(backingKey, storageKey.childKeyForHandle(handleId))
     }
 

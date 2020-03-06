@@ -38,7 +38,7 @@ data class Capabilities(val capabilities: Set<Capability>) {
 
     companion object {
         /** Helper constants with useful capability variants. */
-        val Empty: Capabilities = Capabilities(setOf<Capability>())
+        val Empty: Capabilities = Capabilities(emptySet())
         val Persistent: Capabilities = Capabilities(setOf<Capability>(Capability.Persistent))
         val TiedToRuntime: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToRuntime))
         val TiedToArc: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToArc))
