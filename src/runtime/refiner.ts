@@ -28,7 +28,7 @@ export enum AtleastAsSpecific {
 }
 
 // The variable name used for the query argument in generated Kotlin code.
-const KOTLIN_QUERY_ARGUMENT_NAME = 'query_argument';
+const KOTLIN_QUERY_ARGUMENT_NAME = 'queryArgument';
 
 interface CodeGenerator {
   escapeIdentifier(name: string): string;
@@ -1309,7 +1309,7 @@ export class KTExtracter {
     };
 
     const genQueryArgAsLocal = ([_, type]: [string, string]) => {
-        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = query_arg as ${codeGenerator.typeFor(type)}`;
+        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = queryArg as ${codeGenerator.typeFor(type)}`;
     };
 
     const fieldNames = new Set<string>();
