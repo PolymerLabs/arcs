@@ -66,9 +66,9 @@ class SingletonIntegrationTest {
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSingleton<RawEntity>())
 
-        singletonA = SingletonImpl("singletonA", storageProxy, null, Ttl.Infinite, TimeImpl(), schema=SCHEMA)
+        singletonA = SingletonImpl("singletonA", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA)
         storageProxy.registerHandle(singletonA)
-        singletonB = SingletonImpl("singletonB", storageProxy, null, Ttl.Infinite, TimeImpl(), schema=SCHEMA)
+        singletonB = SingletonImpl("singletonB", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA)
         storageProxy.registerHandle(singletonB)
         Unit
     }
@@ -143,14 +143,14 @@ class SingletonIntegrationTest {
         assertThat(requireNotNull(singletonA.fetch()).expirationTimestamp)
             .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2), TimeImpl(), schema=SCHEMA)
+        val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2), TimeImpl(), schema = SCHEMA)
         storageProxy.registerHandle(singletonC)
-        assertThat(singletonC.store(person.toRawEntity())).isTrue()
+        assertThat(singletonC.store(person.toRawEntity())).isTruwritee()
         val entityC = requireNotNull(singletonC.fetch())
         assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val singletonD = SingletonImpl("singletonD", storageProxy, null, Ttl.Minutes(1), TimeImpl(), schema=SCHEMA)
+        val singletonD = SingletonImpl("singletonD", storageProxy, null, Ttl.Minutes(1), TimeImpl(), schema = SCHEMA)
         storageProxy.registerHandle(singletonD)
         assertThat(singletonD.store(person.toRawEntity())).isTrue()
         val entityD = requireNotNull(singletonD.fetch())

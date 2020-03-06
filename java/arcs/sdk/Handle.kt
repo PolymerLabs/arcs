@@ -38,8 +38,8 @@ typealias ReadWriteCollectionHandle<T> = arcs.core.storage.api.ReadWriteCollecti
 
 /** A collection handle with read and query access. */
 typealias ReadQueryCollectionHandle<T, QueryArgs> =
-        arcs.core.storage.api.ReadQueryCollectionHandle<T, QueryArgs>
+    arcs.core.storage.api.ReadQueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with read, write and query access. */
 typealias ReadWriteQueryCollectionHandle<T, QueryArgs> =
-        arcs.core.storage.api.ReadWriteQueryCollectionHandle<T, QueryArgs>
+    arcs.core.storage.api.ReadWriteQueryCollectionHandle<T, QueryArgs>

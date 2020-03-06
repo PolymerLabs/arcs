@@ -84,10 +84,10 @@ interface WriteCollectionHandle<T : Entity> : Handle {
 /** A collection handle with read and write access. */
 interface ReadWriteCollectionHandle<T : Entity> : ReadCollectionHandle<T>, WriteCollectionHandle<T>
 
-/** A collection handle with read and write access. */
+/** A collection handle with read and query access. */
 interface ReadQueryCollectionHandle<T : Entity, QueryArgs> :
-        ReadCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
+    ReadCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with read, write and query access. */
 interface ReadWriteQueryCollectionHandle<T : Entity, QueryArgs> :
-        ReadCollectionHandle<T>, WriteCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
+    ReadCollectionHandle<T>, WriteCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
