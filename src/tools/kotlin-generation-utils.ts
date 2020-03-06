@@ -70,7 +70,12 @@ export class KotlinGenerationUtils {
   joinWithIndents(items: string[], extraIndent: number = 0): string {
     const candidate = items.join(', ');
     if (extraIndent + candidate.length <= this.pref.lineLength) return candidate;
-    return `\n${leftPad(items.join(',\n'), this.pref.indent)}\n`;
+    return `\n${this.indent(items.join(',\n'))}\n`;
+  }
+
+  /** Indent a codeblock with the preferred indentation. */
+  indent(block: string): string  {
+    return leftPad(block, this.pref.indent);
   }
 }
 

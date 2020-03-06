@@ -11,7 +11,7 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {Manifest} from '../runtime/manifest.js';
-import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils, KT_DEFAULT, leftPad} from './kotlin-generation-utils.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -38,8 +38,9 @@ export class PlanGenerator {
       const particles = recipe.particles.map(this.createParticle);
 
       const plan = `\
-object ${planName} : Plan(${ktUtils.listOf(particles)})`;
-
+object ${planName} : Plan(
+${ktUtils.indent(ktUtils.listOf(particles))}
+)`;
       plans.push(plan);
     }
 
