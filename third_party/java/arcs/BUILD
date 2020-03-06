@@ -13,4 +13,3 @@ alias(
     name = "arcs-wasm",
     actual = "//java/arcs/sdk:sdk-wasm",
 )
-

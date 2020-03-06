@@ -92,4 +92,3 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
         platforms = ["jvm", "wasm"],
         deps = ARCS_SDK_DEPS,
     )
-
