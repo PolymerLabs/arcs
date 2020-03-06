@@ -20,8 +20,3 @@ alias(
     actual = "//java/arcs/core/data",
 )
 
-# Arcs Datatypes for WebAssembly.
-alias(
-    name = "arcs-core-data-wasm",
-    actual = "//java/arcs/core/data",
-)
