@@ -34,4 +34,6 @@ abstract class WasmHandleEvents<T>(
     fun onUpdate(action: (T) -> Unit) {
         onUpdateActions.add(action)
     }
+
+    abstract fun getContent(): T
 }
