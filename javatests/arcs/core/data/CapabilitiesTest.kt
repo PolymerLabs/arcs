@@ -21,12 +21,15 @@ import org.junit.runners.JUnit4
 class CapabilitiesTest {
     @Test
     fun capabilities_verifiesContains() {
+        assertThat(Capabilities.Empty.contains(Capabilities.Empty)).isTrue()
         assertThat(Capabilities.Persistent.contains(Capabilities.Persistent)).isTrue()
         assertThat(Capabilities.Persistent in Capabilities.Persistent).isTrue()
         assertThat(Capabilities.Persistent !in Capabilities.Persistent).isFalse()
         assertThat(Capabilities.TiedToRuntime.contains(Capabilities.TiedToRuntime)).isTrue()
         assertThat(Capabilities.TiedToArc.contains(Capabilities.TiedToArc)).isTrue()
 
+        assertThat(Capabilities.Empty.contains(Capabilities.Persistent)).isFalse()
+        assertThat(Capabilities.Persistent.contains(Capabilities.Empty)).isFalse()
         assertThat(Capabilities.Persistent.contains(Capabilities.TiedToRuntime)).isFalse()
         assertThat(Capabilities.TiedToRuntime.contains(Capabilities.TiedToArc)).isFalse()
         assertThat(Capabilities.TiedToArc.contains(Capabilities.Persistent)).isFalse()
