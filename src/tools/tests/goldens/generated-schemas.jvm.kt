@@ -236,17 +236,13 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 }
 
 
-class GoldHandles(
-
-) : HandleHolderBase(
-        mutableMapOf<String, Handle>().withDefault {
-            key -> throw NoSuchElementException("Handle $key not initialized in Gold")
-        },
-        mapOf(
-            "data" to Gold_Data_Spec(),
-            "alias" to Gold_Alias_Spec()
-        )
-    ) {
+class GoldHandles : HandleHolderBase(
+    "Gold",
+    mapOf(
+        "data" to Gold_Data_Spec(),
+        "alias" to Gold_Alias_Spec()
+    )
+) {
     val data: ReadSingletonHandle<Gold_Data> by handles
     val alias: WriteSingletonHandle<Gold_Alias> by handles
 }

@@ -25,7 +25,7 @@ interface Particle {
     /**
      * Called the first time this [Particle] is instantiated in an [Arc].
      *
-     * A typical example of the use of [onCreate] is to initiatize handles to default values needed
+     * A typical example of the use of [onCreate] is to initialize handles to default values needed
      * before particle startup.
      */
     suspend fun onCreate() = Unit

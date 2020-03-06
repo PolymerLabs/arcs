@@ -103,9 +103,7 @@ import arcs.core.storage.api.toPrimitiveValue`}
 
     }
     return `
-class ${particleName}Handles(
-   ${this.getBaseParticleDecl()}
-) ${this.getExtendsClause(specDecls, particleName)} {
+${this.getHandlesClassDecl(particleName, specDecls)} {
     ${handleDecls.join('\n    ')} 
 }
 
@@ -115,19 +113,19 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
 `;
   }
 
-  private getExtendsClause(entitySpecs, particleName): string {
-    return this.opts.wasm ? '' : `: HandleHolderBase(
-        mutableMapOf<String, Handle>().withDefault { 
-            key -> throw NoSuchElementException("Handle $key not initialized in ${particleName}")
-        },
-        mapOf(
-            ${entitySpecs.join(',\n            ')}
-        )
-    )`;
-  }
-
-  private getBaseParticleDecl(): string {
-    return this.opts.wasm ? 'particle: WasmParticleImpl' : '';
+  private getHandlesClassDecl(particleName: string, entitySpecs: string[]): string {
+    if (this.opts.wasm) {
+      return `class ${particleName}Handles(
+    particle: WasmParticleImpl
+)`;
+    } else {
+      return `class ${particleName}Handles : HandleHolderBase(
+    "${particleName}",
+    mapOf(
+        ${entitySpecs.join(',\n        ')}
+    )
+)`;
+    }
   }
 
   private getType(type: string): string {

@@ -16,7 +16,7 @@ class WritePerson : AbstractWritePerson() {
         shutdownCalled = true
     }
 
-    override suspend fun onHandleSync(handle: Handle, allSync: Boolean) {
+    override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
         handles.person.store(WritePerson_Person("John Wick"))
         wrote = true
     }

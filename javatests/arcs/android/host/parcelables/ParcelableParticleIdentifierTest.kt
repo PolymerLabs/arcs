@@ -26,10 +26,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ParcelableParticleIdentifierTest {
     class TestParticle : Particle {
-        override val handles: HandleHolder =
-            object : HandleHolderBase(mutableMapOf(), mutableMapOf()) {
-
-            }
+        override val handles: HandleHolder = HandleHolderBase("TestParticle", emptyMap())
     }
 
     @Test
