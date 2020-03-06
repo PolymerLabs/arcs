@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable} from '../type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, TupleType} from '../type.js';
 import {Direction} from '../manifest-ast-nodes.js';
 
 export interface TypeListInfo {
@@ -24,7 +24,24 @@ export class TypeChecker {
 
   // NOTE: you almost definitely don't want to call this function, if you think
   // you do, talk to shans@.
-  private static getResolution(candidate: Type, options: TypeCheckOptions) {
+  private static getResolution(candidate: Type, options: TypeCheckOptions): Type | null {
+    if (candidate.isCollectionType()) {
+      const resolution = TypeChecker.getResolution(candidate.collectionType, options);
+      return (resolution !== null) ? resolution.collectionOf() : null;
+    }
+    if (candidate.isBigCollectionType()) {
+      const resolution = TypeChecker.getResolution(candidate.bigCollectionType, options);
+      return (resolution !== null) ? resolution.bigCollectionOf() : null;
+    }
+    if (candidate.isReferenceType()) {
+      const resolution = TypeChecker.getResolution(candidate.referredType, options);
+      return (resolution !== null) ? resolution.referenceTo() : null;
+    }
+    if (candidate.isTupleType()) {
+      const resolutions = candidate.innerTypes.map(t => TypeChecker.getResolution(t, options));
+      return resolutions.every(r => r !== null) ? new TupleType(resolutions) : null;
+    }
+
     if (!(candidate instanceof TypeVariable)) {
       return candidate;
     }
@@ -95,18 +112,7 @@ export class TypeChecker {
       }
     }
 
-    const candidate = baseType.resolvedType();
-
-    if (candidate.isCollectionType()) {
-      const resolution = TypeChecker.getResolution(candidate.collectionType, options);
-      return (resolution !== null) ? resolution.collectionOf() : null;
-    }
-    if (candidate.isBigCollectionType()) {
-      const resolution = TypeChecker.getResolution(candidate.bigCollectionType, options);
-      return (resolution !== null) ? resolution.bigCollectionOf() : null;
-    }
-
-    return TypeChecker.getResolution(candidate, options);
+    return TypeChecker.getResolution(baseType.resolvedType(), options);
   }
 
   static _tryMergeTypeVariable(base: Type, onto: Type, options: {typeErrors?: string[]} = {}): Type {
@@ -150,9 +156,23 @@ export class TypeChecker {
   }
 
   static _tryMergeConstraints(handleType: Type, {type, relaxed, direction}: TypeListInfo, options: {typeErrors?: string[]} = {}): boolean {
-    let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
+    const [handleInnerTypes, connectionInnerTypes] = Type.tryUnwrapMulti(handleType.resolvedType(), type.resolvedType());
+    // If both handle and connection are matching type containers with multiple arguments,
+    // merge constraints pairwaise for all inner types.
+    if (handleInnerTypes != null) {
+      if (handleInnerTypes.length !== connectionInnerTypes.length) return false;
+      for (let i = 0; i < handleInnerTypes.length; i++) {
+        if (!this._tryMergeConstraints(handleInnerTypes[i], {type: connectionInnerTypes[i], relaxed, direction}, options)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    const [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
+
     if (primitiveHandleType instanceof TypeVariable) {
-      while (primitiveConnectionType.isTypeContainer()) {
+      if (primitiveConnectionType.isTypeContainer()) {
         if (primitiveHandleType.variable.resolution != null
             || primitiveHandleType.variable.canReadSubset != null
             || primitiveHandleType.variable.canWriteSuperset != null) {
@@ -162,21 +182,21 @@ export class TypeChecker {
         // If this is an undifferentiated variable then we need to create structure to match against. That's
         // allowed because this variable could represent anything, and it needs to represent this structure
         // in order for type resolution to succeed.
-        const newVar = TypeVariable.make('a');
         if (primitiveConnectionType instanceof CollectionType) {
-          primitiveHandleType.variable.resolution = new CollectionType(newVar);
+          primitiveHandleType.variable.resolution = new CollectionType(TypeVariable.make('a'));
         } else if (primitiveConnectionType instanceof BigCollectionType) {
-          primitiveHandleType.variable.resolution = new BigCollectionType(newVar);
+          primitiveHandleType.variable.resolution = new BigCollectionType(TypeVariable.make('a'));
+        } else if (primitiveConnectionType instanceof ReferenceType) {
+          primitiveHandleType.variable.resolution = new ReferenceType(TypeVariable.make('a'));
+        } else if (primitiveConnectionType instanceof TupleType) {
+          primitiveHandleType.variable.resolution = new TupleType(
+            primitiveConnectionType.innerTypes.map((_, idx) => TypeVariable.make(`a${idx}`)));
         } else {
-          primitiveHandleType.variable.resolution = new ReferenceType(newVar);
+          throw new TypeError(`Unrecognized type container: ${primitiveConnectionType.tag}`);
         }
 
-        const unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
-        [primitiveHandleType, primitiveConnectionType] = unwrap;
-        if (!(primitiveHandleType instanceof TypeVariable)) {
-          // This should never happen, and the guard above is just here so we type-check.
-          throw new TypeError('unwrapping a wrapped TypeVariable somehow didn\'t become a TypeVariable');
-        }
+        // Call recursively to unwrap and merge constraints of potentially multiple type variables (e.g. for tuples).
+        return this._tryMergeConstraints(primitiveHandleType.resolvedType(), {type: primitiveConnectionType, relaxed, direction}, options);
       }
 
       if (direction === 'writes' || direction === 'reads writes' || direction === '`provides') {
