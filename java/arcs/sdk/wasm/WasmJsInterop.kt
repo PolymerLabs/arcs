@@ -252,3 +252,95 @@ fun log(msg: String) {
 
 fun <T, U> combine(handle1: WasmHandleEvents<T>, handle2: WasmHandleEvents<U>):
     WasmTupleHandle<T, U> = WasmTupleHandle(handle1, handle2)
+
+fun <T, U, V> combine(
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    handle3: WasmHandleEvents<V>
+): WasmTripleHandle<T, U, V> = WasmTripleHandle(handle1, handle2, handle3)
+
+fun <T, U, V, W> combine(
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    handle3: WasmHandleEvents<V>,
+    handle4: WasmHandleEvents<W>
+): WasmQuadHandle<T, U, V, W> = WasmQuadHandle(handle1, handle2, handle3, handle4)
+
+fun<T, U, V, W, X> combine(
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    handle3: WasmHandleEvents<V>,
+    handle4: WasmHandleEvents<W>,
+    handle5: WasmHandleEvents<X>
+): WasmQuinHandle<T, U, V, W, X> = WasmQuinHandle(handle1, handle2, handle3, handle4, handle5)
+
+fun<T, U, V, W, X, Y> combine(
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    handle3: WasmHandleEvents<V>,
+    handle4: WasmHandleEvents<W>,
+    handle5: WasmHandleEvents<X>,
+    handle6: WasmHandleEvents<Y>
+): WasmSixHandle<T, U, V, W, X, Y> =
+    WasmSixHandle(handle1, handle2, handle3, handle4, handle5, handle6)
+
+fun<T, U, V, W, X, Y, Z> combine(
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    handle3: WasmHandleEvents<V>,
+    handle4: WasmHandleEvents<W>,
+    handle5: WasmHandleEvents<X>,
+    handle6: WasmHandleEvents<Y>,
+    handle7: WasmHandleEvents<Z>
+): WasmSeptHandle<T, U, V, W, X, Y, Z> =
+    WasmSeptHandle(handle1, handle2, handle3, handle4, handle5, handle6, handle7)
+
+fun<T, U, V, W, X, Y, Z, A> combine(
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    handle3: WasmHandleEvents<V>,
+    handle4: WasmHandleEvents<W>,
+    handle5: WasmHandleEvents<X>,
+    handle6: WasmHandleEvents<Y>,
+    handle7: WasmHandleEvents<Z>,
+    handle8: WasmHandleEvents<A>
+): WasmOctHandle<T, U, V, W, X, Y, Z, A> =
+    WasmOctHandle(handle1, handle2, handle3, handle4, handle5, handle6, handle7, handle8)
+
+fun<T, U, V, W, X, Y, Z, A, B> combine(
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    handle3: WasmHandleEvents<V>,
+    handle4: WasmHandleEvents<W>,
+    handle5: WasmHandleEvents<X>,
+    handle6: WasmHandleEvents<Y>,
+    handle7: WasmHandleEvents<Z>,
+    handle8: WasmHandleEvents<A>,
+    handle9: WasmHandleEvents<B>
+): WasmNovHandle<T, U, V, W, X, Y, Z, A, B> =
+    WasmNovHandle(handle1, handle2, handle3, handle4, handle5, handle6, handle7, handle8, handle9)
+
+fun<T, U, V, W, X, Y, Z, A, B, C> combine(
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    handle3: WasmHandleEvents<V>,
+    handle4: WasmHandleEvents<W>,
+    handle5: WasmHandleEvents<X>,
+    handle6: WasmHandleEvents<Y>,
+    handle7: WasmHandleEvents<Z>,
+    handle8: WasmHandleEvents<A>,
+    handle9: WasmHandleEvents<B>,
+    handle10: WasmHandleEvents<C>
+): WasmDecHandle<T, U, V, W, X, Y, Z, A, B, C> =
+    WasmDecHandle(
+        handle1,
+        handle2,
+        handle3,
+        handle4,
+        handle5,
+        handle6,
+        handle7,
+        handle8,
+        handle9,
+        handle10
+    )
