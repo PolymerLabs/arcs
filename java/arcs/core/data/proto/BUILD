@@ -21,6 +21,7 @@ arcs_kt_library(
     deps = [
         ":recipe_java_proto_lite",
         "//java/arcs/core/data",
+        "//java/arcs/core/type",
     ],
 )
 
