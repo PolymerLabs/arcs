@@ -201,12 +201,7 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
         val schema = Schema(
             listOf(),
             SchemaFields(
-                singletons = mapOf(
-                    "num" to FieldType.Number,
-                    "txt" to FieldType.Text,
-                    "lnk" to FieldType.Text,
-                    "flg" to FieldType.Boolean
-                ),
+                singletons = mapOf("num" to FieldType.Number, "txt" to FieldType.Text, "lnk" to FieldType.Text, "flg" to FieldType.Boolean),
                 collections = emptyMap()
             ),
             "d8058d336e472da47b289eafb39733f77eadb111"
