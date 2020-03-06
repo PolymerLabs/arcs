@@ -69,7 +69,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
     @Before
     fun setUp() = runBlockingTest {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
         databaseFactory = MockDatabaseManager()
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }

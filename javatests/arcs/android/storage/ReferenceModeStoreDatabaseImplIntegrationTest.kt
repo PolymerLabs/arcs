@@ -79,7 +79,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
     @Before
     fun setUp() = runBlockingTest {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
         databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }

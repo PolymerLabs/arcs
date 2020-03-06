@@ -47,12 +47,12 @@ class StoreTest {
 
     @Before
     fun setup() {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
     }
 
     @After
     fun teardown() {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
     }
 
     @Test(expected = CrdtException::class)

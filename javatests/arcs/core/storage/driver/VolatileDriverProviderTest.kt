@@ -40,7 +40,7 @@ class VolatileDriverProviderTest {
 
     @After
     fun tearDown() {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
     }
 
     @Test

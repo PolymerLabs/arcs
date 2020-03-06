@@ -11,6 +11,7 @@ kt_android_library(
     deps = [
         "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util",
