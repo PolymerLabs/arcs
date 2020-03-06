@@ -152,7 +152,6 @@ class WasmQuinHandle<T, U, V, W, X>(
                 e
             )
         }
-
     }
 }
 
@@ -236,7 +235,6 @@ class WasmSixHandle<T, U, V, W, X, Y>(
                 e
             )
         }
-
     }
 }
 
@@ -438,16 +436,16 @@ class WasmOctHandle<T, U, V, W, X, Y, Z, A>(
         }
 
         handle7.onUpdate { e ->
-          action(
-              handle1.getContent(),
-              handle2.getContent(),
-              handle3.getContent(),
-              handle4.getContent(),
-              handle5.getContent(),
-              handle6.getContent(),
-              e,
-              handle8.getContent()
-          )
+            action(
+                handle1.getContent(),
+                handle2.getContent(),
+                handle3.getContent(),
+                handle4.getContent(),
+                handle5.getContent(),
+                handle6.getContent(),
+                e,
+                handle8.getContent()
+            )
         }
 
         handle8.onUpdate { e ->
@@ -568,17 +566,17 @@ class WasmNovHandle<T, U, V, W, X, Y, Z, A, B>(
         }
 
         handle7.onUpdate { e ->
-          action(
-              handle1.getContent(),
-              handle2.getContent(),
-              handle3.getContent(),
-              handle4.getContent(),
-              handle5.getContent(),
-              handle6.getContent(),
-              e,
-              handle8.getContent(),
-              handle9.getContent()
-          )
+            action(
+                handle1.getContent(),
+                handle2.getContent(),
+                handle3.getContent(),
+                handle4.getContent(),
+                handle5.getContent(),
+                handle6.getContent(),
+                e,
+                handle8.getContent(),
+                handle9.getContent()
+            )
         }
 
         handle8.onUpdate { e ->
@@ -721,18 +719,18 @@ class WasmDecHandle<T, U, V, W, X, Y, Z, A, B, C>(
         }
 
         handle7.onUpdate { e ->
-          action(
-              handle1.getContent(),
-              handle2.getContent(),
-              handle3.getContent(),
-              handle4.getContent(),
-              handle5.getContent(),
-              handle6.getContent(),
-              e,
-              handle8.getContent(),
-              handle9.getContent(),
-              handle10.getContent()
-          )
+            action(
+                handle1.getContent(),
+                handle2.getContent(),
+                handle3.getContent(),
+                handle4.getContent(),
+                handle5.getContent(),
+                handle6.getContent(),
+                e,
+                handle8.getContent(),
+                handle9.getContent(),
+                handle10.getContent()
+            )
         }
 
         handle8.onUpdate { e ->
@@ -781,4 +779,3 @@ class WasmDecHandle<T, U, V, W, X, Y, Z, A, B, C>(
         }
     }
 }
-

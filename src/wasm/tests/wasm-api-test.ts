@@ -580,7 +580,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await handle8.set(new handle8.entityClass({num6: 1.0}));
       await handle9.set(new handle9.entityClass({num7: 1.0}));
       await handle10.set(new handle10.entityClass({num8: 1.0}));
-      
+
       const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
 
       const sendEvent = async handler => {
