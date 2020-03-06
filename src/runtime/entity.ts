@@ -24,7 +24,8 @@ export type EntityRawData = {};
 
 export type SerializedEntity = {
   id: string,
-  creationTimestamp: string,
+  // TODO(#4861): creationTimestamp shouldn't be optional
+  creationTimestamp?: string,
   expirationTimestamp?: string,
   rawData: EntityRawData
 };
@@ -117,11 +118,14 @@ class EntityInternals {
     return this.id !== undefined;
   }
 
+  hasCreationTimestamp(): boolean {
+    return this.creationTimestamp !== undefined;
+  }
   hasExpirationTimestamp(): boolean {
     return this.expirationTimestamp !== undefined;
   }
 
-  identify(identifier: string, storageKey: string, creationTimestamp: string) {
+  identify(identifier: string, storageKey: string, creationTimestamp?: string) {
     assert(!this.isIdentified(), 'identify() called on already identified entity');
     this.id = identifier;
     this.storageKey = storageKey;
@@ -224,9 +228,11 @@ class EntityInternals {
   serialize(): SerializedEntity {
     const serializedEntity: SerializedEntity = {
       id: this.id,
-      creationTimestamp: this.creationTimestamp,
       rawData: this.dataClone()
     };
+    if (this.hasCreationTimestamp()) {
+      serializedEntity.creationTimestamp = this.creationTimestamp;
+    }
     if (this.hasExpirationTimestamp()) {
       serializedEntity.expirationTimestamp = this.expirationTimestamp;
     }
@@ -345,8 +351,9 @@ export abstract class Entity implements Storable {
     return getInternals(entity).getId();
   }
 
-  static creationTimestamp(entity: Entity): string {
-    return getInternals(entity).getCreationTimestamp();
+  static creationTimestamp(entity: Entity): string | null {
+    return getInternals(entity).hasCreationTimestamp()
+        ? getInternals(entity).getCreationTimestamp() : null;
   }
 
   static storageKey(entity: Entity): string {
@@ -361,7 +368,7 @@ export abstract class Entity implements Storable {
     return getInternals(entity).isIdentified();
   }
 
-  static identify(entity: Entity, identifier: string, storageKey: string, creationTimestamp: string) {
+  static identify(entity: Entity, identifier: string, storageKey: string, creationTimestamp?: string) {
     getInternals(entity).identify(identifier, storageKey, creationTimestamp);
     return entity;
   }

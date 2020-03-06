@@ -23,7 +23,8 @@ enum ReferenceMode {Unstored, Stored}
 export type SerializedReference = {
   id: string;
   entityStorageKey: string;
-  creationTimestamp: string;
+  // TODO(#4861): creationTimestamp shouldn't be optional.
+  creationTimestamp?: string;
   // TODO(mmandlis): add expiration time here as well.
 };
 
@@ -40,7 +41,7 @@ export class Reference implements Storable {
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
-  constructor(data: {id: string, creationTimestamp: string, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor) {
+  constructor(data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor) {
     this.id = data.id;
     this.creationTimestamp = data.creationTimestamp;
     this.entityStorageKey = data.entityStorageKey;
@@ -137,7 +138,7 @@ export abstract class ClientReference extends Reference {
  * Instead of statically depending on reference.ts, handle.ts defines a static makeReference method which is
  * dynamically populated here.
  */
-function makeReference(data: {id: string, creationTimestamp: string, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor): Reference {
+function makeReference(data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor): Reference {
  return new Reference(data, type, context);
 }
 

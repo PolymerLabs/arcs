@@ -137,7 +137,7 @@ export abstract class StringEncoder {
 
   async encodeCollection(entities: Storable[]): Promise<DynamicBuffer> {
     const bufs: DynamicBuffer[] = [];
-    let len = 11;  // for 'num-entities:' prefix
+    let len = 10;  // for 'num-entities:' prefix
     for (const entity of entities) {
       const buf = await this.encodeSingleton(entity);
       bufs.push(buf);
@@ -191,11 +191,9 @@ export abstract class StringEncoder {
   protected async encodeReference(buf: DynamicBuffer, ref: Reference) {
     const entityType = ref.type.referredType as EntityType;
     assert(entityType instanceof EntityType);
-    const {id, creationTimestamp, entityStorageKey: storageKey} = ref.dataClone();
+    const {id, entityStorageKey: storageKey} = ref.dataClone();
     const hash = await entityType.getEntitySchema().hash();
     buf.addUnicode(id);
-    buf.addAscii('|');
-    buf.addUnicode(creationTimestamp);
     buf.addAscii('|');
     buf.addUnicode(storageKey);
     buf.addAscii('|', hash + ':');
@@ -390,10 +388,6 @@ export abstract class StringDecoder {
     const id = this.chomp(ilen);
     this.validate('|');
 
-    const clen = Number(this.upTo(':'));
-    const creationTimestamp = this.chomp(clen);
-    this.validate('|');
-
     const klen = Number(this.upTo(':'));
     const storageKey = this.chomp(klen);
     this.validate('|');
@@ -403,7 +397,7 @@ export abstract class StringDecoder {
     if (!entityType) {
       throw new Error(`Packaged entity decoding fail: invalid schema hash '${schemaHash}' for reference '${id}|${storageKey}'`);
     }
-    return new Reference({id, creationTimestamp, entityStorageKey: storageKey}, new ReferenceType(entityType), this.pec);
+    return new Reference({id, entityStorageKey: storageKey}, new ReferenceType(entityType), this.pec);
   }
 }
 
@@ -424,7 +418,7 @@ class EntityDecoder extends StringDecoder {
     }
     const entity = new (Entity.createEntityClass(this.schema, null))(data);
     if (id !== '') {
-      Entity.identify(entity, id, null, null);
+      Entity.identify(entity, id, null);
     }
     return entity;
   }
