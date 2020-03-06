@@ -12,4 +12,3 @@ package arcs.core.host
 
 // TODO: Prevent G3 breakage, remove after internal dependencies refactored to new location.
 typealias HandleMode = arcs.core.data.HandleMode
-
