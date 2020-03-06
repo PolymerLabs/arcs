@@ -15,19 +15,19 @@ package arcs.sdk
 typealias Handle = arcs.core.storage.api.Handle
 
 /** A singleton handle with read access. */
-typealias ReadableSingleton<T> = arcs.core.storage.api.ReadableSingleton<T>
+typealias ReadSingletonHandle<T> = arcs.core.storage.api.ReadSingletonHandle<T>
 
 /** A singleton handle with write access. */
-typealias WritableSingleton<T> = arcs.core.storage.api.WritableSingleton<T>
+typealias WriteSingletonHandle<T> = arcs.core.storage.api.WriteSingletonHandle<T>
 
 /** A singleton handle with read and write access. */
-typealias ReadWriteSingleton<T> = arcs.core.storage.api.ReadWriteSingleton<T>
+typealias ReadWriteSingletonHandle<T> = arcs.core.storage.api.ReadWriteSingletonHandle<T>
 
 /** A collection handle with read access. */
-typealias ReadableCollection<T> = arcs.core.storage.api.ReadableCollection<T>
+typealias ReadCollectionHandle<T> = arcs.core.storage.api.ReadCollectionHandle<T>
 
 /** A collection handle with write access. */
-typealias WritableCollection<T> = arcs.core.storage.api.WritableCollection<T>
+typealias WriteCollectionHandle<T> = arcs.core.storage.api.WriteCollectionHandle<T>
 
 /** A collection handle with read and write access. */
-typealias ReadWriteCollection<T> = arcs.core.storage.api.ReadWriteCollection<T>
+typealias ReadWriteCollectionHandle<T> = arcs.core.storage.api.ReadWriteCollectionHandle<T>

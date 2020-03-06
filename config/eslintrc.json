@@ -35,8 +35,8 @@
       ]
     ],
 
-    "no-trailing-spaces": 1,
-    "eol-last": 1,
+    "no-trailing-spaces": "error",
+    "eol-last": "error",
 
     // Things we do, but probably shouldn't.
     "no-console": "off",
@@ -70,7 +70,6 @@
     "linebreak-style": "off",
     "no-multi-spaces": "off",
     "keyword-spacing": [1, {"before": true, "after": true}],
-    "no-constant-condition": "off",
 
     // Always require .js extension for imported files, but not for node packages.
     "import/extensions": [1, "always", {"ignorePackages": true}]

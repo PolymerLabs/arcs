@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
@@ -99,6 +100,13 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val dereferencer: Dereferencer<RawEntity>? = null
 ) {
     protected val log = TaggedLog { "Handle($name)" }
+
+    /** Creates a [Reference] for a given [Referencable] and backing [StorageKey]. */
+    fun createReference(referencable: Referencable, backingKey: StorageKey): Reference {
+        return Reference(referencable.id, backingKey, null).also {
+            it.dereferencer = dereferencer
+        }
+    }
 
     /** Return the local copy of the [VersionMap] for the storage proxy CRDT. */
     protected suspend fun versionMap() = storageProxy.getVersionMap()

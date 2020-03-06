@@ -9,6 +9,7 @@ kt_android_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/android/crdt",
+        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/storage/handle",
