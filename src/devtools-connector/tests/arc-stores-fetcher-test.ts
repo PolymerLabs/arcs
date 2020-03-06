@@ -18,13 +18,12 @@ import {SingletonType} from '../../runtime/type.js';
 import {singletonHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 
 import {Entity} from '../../runtime/entity.js';
-import {Flags} from '../../runtime/flags.js';
 
 describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
 
-  it('allows fetching a list of arc stores', Flags.withDefaultReferenceMode(async () => {
+  it('allows fetching a list of arc stores', async () => {
     const context = await Manifest.parse(`
       schema Foo
         value: Text`);
@@ -53,48 +52,46 @@ describe('ArcStoresFetcher', () => {
     // We don't assert on it in this test.
     delete results[0].messageBody.arcStores[0].type.innerType.entitySchema.fields.value.location;
 
-    assert.lengthOf(results[0].messageBody.arcStores, 3);
-    // TODO: add contextStores to the test.
-    assert.lengthOf(results[0].messageBody.contextStores, 0);
-
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
-    const entityId = '!' + sessionId + ':demo:test-proxy4:5';
+    const entityId = '!' + sessionId + ':demo:test-proxy2:3';
     const creationTimestamp = Entity.creationTimestamp(fooEntity);
 
-    const arcStoreFoo = {
-      id: 'fooStoreId',
-      name: 'fooStoreName',
-      tags: ['awesome', 'arcs'],
-      storage: fooStore.storageKey,
-      type: {
-        innerType: {
-          tag: 'Entity',
-          entitySchema: {
-            description: {},
-            fields: {
-              value: {
-                kind: 'schema-primitive',
-                refinement: null,
-                type: 'Text'
-              }
+    assert.deepEqual(results[0].messageBody, {
+      arcStores: [{
+        id: 'fooStoreId',
+        name: 'fooStoreName',
+        tags: ['awesome', 'arcs'],
+        storage: fooStore.storageKey,
+        type: {
+          innerType: {
+            tag: 'Entity',
+            entitySchema: {
+              description: {},
+              fields: {
+                value: {
+                  kind: 'schema-primitive',
+                  refinement: null,
+                  type: 'Text'
+                }
+              },
+              hashStr: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+              names: ['Foo'],
+              refinement: null,
             },
-            hashStr: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
-            names: ['Foo'],
-            refinement: null,
           },
+          tag: 'Singleton',
         },
-        tag: 'Singleton',
-      },
-      description: undefined,
-      value: {id: entityId, creationTimestamp, rawData: {value: 'persistence is useful'}}
-    };
+        description: undefined,
+        value: {id: entityId, creationTimestamp, rawData: {value: 'persistence is useful'}}
+      }],
+      // Context stores from manifests have been moved to a temporary StorageStub implementation,
+      // StorageStub does not allow for fetching value. Let's add a test for context store after
+      // storage migration is done.
+      contextStores: []
+    });
+  });
 
-    assert.deepEqual(results[0].messageBody.arcStores[0], arcStoreFoo);
-    assert.equal(results[0].messageBody.arcStores[1].name, 'fooStoreName_referenceContainer');
-    assert.equal(results[0].messageBody.arcStores[2].name, 'fooStoreName_backingStore');
-  }));
-
-  it('sends updates on value changes', Flags.withDefaultReferenceMode(async () => {
+  it('sends updates on value changes', async () => {
     const loader = new Loader(null, {
       'p.js': `defineParticle(({Particle}) => class P extends Particle {
         async setHandles(handles) {
@@ -128,10 +125,9 @@ describe('ArcStoresFetcher', () => {
 
     const results = DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'store-value-changed');
-    assert.lengthOf(results, 2);
+    assert.lengthOf(results, 1);
 
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
-<<<<<<< HEAD
     const store = await arc.findStoreById(arc.activeRecipe.handles[0].id).activate();
     // TODO(mmandlis): there should be a better way!
     const creationTimestamp = Object.values((await store.serializeContents()).values)[0]['value']['creationTimestamp'];
@@ -140,18 +136,10 @@ describe('ArcStoresFetcher', () => {
       value: {
         id: `!${sessionId}:demo:1:3`,
         creationTimestamp,
-=======
-    assert.sameMembers(Object.keys(results[0].messageBody), ['id', 'value']);
-    assert.sameMembers(Object.keys(results[0].messageBody['value']), ['id', 'storageKey', 'version']);
-    assert.deepEqual(results[1].messageBody, {
-      id: `!${sessionId}:demo:1`,
-      value: {
-        id: `!${sessionId}:demo:1:5`,
->>>>>>> fix some tests using reference mode stores
         rawData: {
           value: 'FooBar'
         }
       }
     });
-  }));
+  });
 });
