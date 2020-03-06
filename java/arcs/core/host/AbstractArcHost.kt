@@ -36,7 +36,7 @@ const val MAX_CONSECUTIVE_FAILURES = 5
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
 abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : ArcHost {
-    private val log = TaggedLog { "ArcHost" }
+    private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
     private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
@@ -334,7 +334,6 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
 
     override suspend fun stopArc(partition: Plan.Partition) {
         val arcId = partition.arcId
-        lookupOrCreateArcHostContext(partition)
         runningArcs[partition.arcId]?.let { context ->
             when (context.arcState) {
                 ArcState.Running -> stopArcInternal(arcId, context)
