@@ -15,6 +15,7 @@ package arcs.sdk.wasm
 class SingletonApiTest : AbstractSingletonApiTest() {
     var x = 0;
     var combinedUpdates = 0;
+
     init{
         handles.inHandle.onUpdate{
             x = 1

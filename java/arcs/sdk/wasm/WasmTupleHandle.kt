@@ -11,18 +11,22 @@
 
 package arcs.sdk.wasm
 
-/** Combined Handle to allow events on multiple handles to trigger actions. */
+/** Combined Handle to allow events on two handles to trigger actions. */
 class WasmTupleHandle<T, U>(
     val handle1: WasmHandleEvents<T>,
     val handle2: WasmHandleEvents<U>
 ) {
 
+    /**
+     * Trigger a callback when either of the handles updates. The callback will receive the latest
+     * entities from both handles.
+     * */
     fun onUpdate(action: (T?, U?) -> Unit) {
-        this.handle1.onUpdate { e ->
+        handle1.onUpdate { e ->
             action(e, handle2.getContent())
         }
 
-        this.handle2.onUpdate { e ->
+        handle2.onUpdate { e ->
             action(handle1.getContent(), e)
         }
     }
