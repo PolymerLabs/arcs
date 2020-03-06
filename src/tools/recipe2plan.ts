@@ -24,7 +24,7 @@ export async function recipe2plan(path: string, scope: string): Promise<string> 
 
   const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
-  const generator = new PlanGenerator(recipes, manifest, scope);
+  const generator = new PlanGenerator(recipes, scope);
 
-  return await generator.generate();
+  return generator.generate();
 }

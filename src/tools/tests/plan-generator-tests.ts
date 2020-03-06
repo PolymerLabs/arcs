@@ -16,14 +16,14 @@ import {Manifest} from '../../runtime/manifest.js';
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
     it('imports arcs.core.data when the package is different', () => {
-      const generator = new PlanGenerator([], new Manifest({id: 'test'}), 'some.package');
+      const generator = new PlanGenerator([], 'some.package');
 
       const actual = generator.fileHeader();
 
       assert.include(actual, 'import arcs.core.data.*');
     });
     it('does not import arcs.core.data when the package is the same', () => {
-      const generator = new PlanGenerator([], new Manifest({id: 'test'}), 'arcs.core.data');
+      const generator = new PlanGenerator([], 'arcs.core.data');
 
       const actual = generator.fileHeader();
 

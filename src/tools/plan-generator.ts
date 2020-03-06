@@ -10,10 +10,7 @@
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {Manifest} from '../runtime/manifest.js';
-import {KotlinGenerationUtils, KT_DEFAULT, leftPad} from './kotlin-generation-utils.js';
-import {HandleConnectionSpec} from '../runtime/particle-spec.js';
-import {Handle} from '../runtime/recipe/handle.js';
+import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
 
@@ -26,36 +23,36 @@ export class PlanGeneratorError extends Error {
   }
 }
 
+/** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
-  constructor(private resolutions: Recipe[], private manifest: Manifest, private scope: string = 'arcs.core.data') {}
+  constructor(private resolutions: Recipe[], private scope: string = 'arcs.core.data') {
+  }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
-  async generate(): Promise<string> {
+  generate(): string {
     const planOutline = [
       this.fileHeader(),
-      (await this.createPlans()).join('\n'),
+      this.createPlans().join('\n'),
       this.fileFooter()
     ];
 
     return planOutline.join('\n');
   }
 
-  private async createPlans(): Promise<string[]>  {
-    const plans = [];
-
-    for (const recipe of this.resolutions) {
+  /** Converts a resolved recipe into a `Plan` object. */
+  createPlans(): string[] {
+    return this.resolutions.map(recipe => {
       const planName = `${recipe.name.replace(/[rR]ecipe/, '')}Plan`;
 
       const particles = recipe.particles.map((p) => this.createParticle(p));
 
       const start = `object ${planName} : `;
       const plan = `${start}${ktUtils.applyFun('Plan', particles, 'Plan', start.length)}`;
-      plans.push(plan);
-    }
-
-    return plans;
+      return plan;
+    });
   }
 
+  /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */
   createParticle(particle: Particle): string {
     const spec = particle.spec;
     const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
@@ -69,6 +66,7 @@ export class PlanGenerator {
     return ktUtils.applyFun('Particle', [particleName, locationArg, ktUtils.mapOf(connectionMappings)]);
   }
 
+  /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   createHandleConnection(connection: HandleConnection): string {
     const storageKey = this.createStorageKey(connection.handle.storageKey);
     let mode;
@@ -91,10 +89,13 @@ export class PlanGenerator {
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl]);
   }
 
+  /** Generates a Kotlin `StorageKey` from a StorageKey. */
   createStorageKey(storageKey: StorageKey | undefined): string {
     return `StorageKeyParser.parse("${(storageKey || '').toString()}")`;
   }
 
+  /** Generates a Kotlin `core.arc.type.Type` from a Type. */
+  // TODO(alxr): Implement
   createType(type: Type): string {
     switch (type.tag) {
       case 'Collection':
@@ -120,6 +121,7 @@ export class PlanGenerator {
     }
     return 'null';
   }
+
   fileHeader(): string {
     return `\
 /* ktlint-disable */
