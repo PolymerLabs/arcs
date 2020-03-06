@@ -8,7 +8,16 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
+package arcs.core.data
 
-// TODO: Prevent G3 breakage, remove after internal dependencies refactored to new location.
-typealias HandleMode = arcs.core.data.HandleMode
+/**
+ * Specifies the access mode for a [Handle].
+ */
+enum class HandleMode {
+    /** [Handle] is read only. */
+    Read,
+    /** [Handle] is write only. */
+    Write,
+    /** [Handle] is read-write. */
+    ReadWrite
+}

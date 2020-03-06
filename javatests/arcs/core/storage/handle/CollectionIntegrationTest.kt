@@ -12,7 +12,6 @@
 package arcs.core.storage.handle
 
 import arcs.core.common.ReferenceId
-import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -22,6 +21,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.Ttl
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageMode
@@ -57,7 +57,7 @@ class CollectionIntegrationTest {
     @get:Rule
     val logRule = LogRule()
 
-    private lateinit var store: Store<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
+    private lateinit var testStore: Store<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
     private lateinit var storageProxy:
         StorageProxy<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
     private lateinit var collectionA: CollectionImpl<RawEntity>
@@ -67,14 +67,12 @@ class CollectionIntegrationTest {
     fun setUp() = runBlocking {
         RamDiskDriverProvider()
 
-        val queryByAge = Refinement { value: RawEntity, args: Any -> value.singletons.get("age") == (args as Int).toReferencable()};
+        testStore = Store(STORE_OPTIONS)
+        storageProxy = StorageProxy(testStore.activate(), CrdtSet<RawEntity>())
 
-        store = Store(STORE_OPTIONS)
-        storageProxy = StorageProxy(store.activate(), CrdtSet<RawEntity>())
-
-        collectionA = CollectionImpl("collectionA", storageProxy, null, null, Ttl.Infinite, TimeImpl())
+        collectionA = CollectionImpl("collectionA", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA_A)
         storageProxy.registerHandle(collectionA)
-        collectionB = CollectionImpl("collectionB", storageProxy, null, queryByAge, Ttl.Infinite, TimeImpl())
+        collectionB = CollectionImpl("collectionB", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA_B)
         storageProxy.registerHandle(collectionB)
         Unit
     }
@@ -93,7 +91,7 @@ class CollectionIntegrationTest {
 
     @Test
     fun addingElementToA_showsUpInB() = runBlockingTest {
-        val person = Person("Miles", 55, true)
+        val person = Person("Miles", 55.0, true)
 
         assertThat(collectionA.store(person.toRawEntity())).isTrue()
         assertThat(collectionA.fetchAll()).containsExactly(person.toRawEntity())
@@ -102,25 +100,41 @@ class CollectionIntegrationTest {
 
     @Test
     fun addingElementsToA_showsUpInQueryOnB() = runBlockingTest {
-        val miles = Person("Miles", 55, true, emptySet())
-        val jason = Person("Jason", 35, false, setOf("Watson"))
+        val miles = Person("Miles", 55.0, true, emptySet())
+        val jason = Person("Jason", 35.0, false, setOf("Watson"))
 
         collectionA.store(miles.toRawEntity())
         collectionA.store(jason.toRawEntity())
 
         assertThat(collectionA.fetchAll()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
         // Ensure that the query argument is being used.
-        assertThat(collectionB.query(55)).containsExactly(miles.toRawEntity())
-        assertThat(collectionB.query(35)).containsExactly(jason.toRawEntity())
+        assertThat(collectionB.query(55.0)).containsExactly(miles.toRawEntity())
+        assertThat(collectionB.query(35.0)).containsExactly(jason.toRawEntity())
 
         // Ensure that an empty set of results can be returned.
-        assertThat(collectionB.query(60)).containsExactly()
+        assertThat(collectionB.query(60.0)).containsExactly()
+    }
+
+    @Test
+    fun dataConsideredInvalidByRefinementThrows() = runBlockingTest {
+        val miles = Person("Miles", 55.0, true, emptySet())
+        val jason = Person("Jason", 35.0, false, setOf("Watson"))
+        val timeTraveler = Person("the Doctor", -900.0, false, setOf("Watson"))
+
+        collectionA.store(miles.toRawEntity())
+        collectionA.store(jason.toRawEntity())
+
+        assertThat(collectionA.fetchAll()).containsExactly(miles.toRawEntity(), jason.toRawEntity())
+
+        assertSuspendingThrows(IllegalArgumentException::class) {
+            collectionA.store(timeTraveler.toRawEntity())
+        }
     }
 
     @Test
     fun queryingWithoutAQueryThrows() = runBlockingTest {
-        val miles = Person("Miles", 55, true, emptySet())
-        val jason = Person("Jason", 35, false, setOf("Watson"))
+        val miles = Person("Miles", 55.0, true, emptySet())
+        val jason = Person("Jason", 35.0, false, setOf("Watson"))
 
         collectionA.store(miles.toRawEntity())
         collectionA.store(jason.toRawEntity())
@@ -133,8 +147,8 @@ class CollectionIntegrationTest {
 
     @Test
     fun removingElementFromA_isRemovedFromB() = runBlockingTest {
-        val miles = Person("Miles", 55, true, emptySet())
-        val jason = Person("Jason", 35, false, setOf("Watson"))
+        val miles = Person("Miles", 55.0, true, emptySet())
+        val jason = Person("Jason", 35.0, false, setOf("Watson"))
 
         collectionA.store(miles.toRawEntity())
         collectionB.store(jason.toRawEntity())
@@ -151,13 +165,13 @@ class CollectionIntegrationTest {
 
     @Test
     fun clearingElementsFromA_clearsThemFromB() = runBlockingTest {
-        collectionA.store(Person("a", 1, true, setOf("a")).toRawEntity())
-        collectionA.store(Person("b", 2, false, emptySet()).toRawEntity())
-        collectionA.store(Person("c", 3, true).toRawEntity())
-        collectionA.store(Person("d", 4, false, setOf("d")).toRawEntity())
-        collectionA.store(Person("e", 5, true).toRawEntity())
-        collectionA.store(Person("f", 6, false).toRawEntity())
-        collectionA.store(Person("g", 7, true).toRawEntity())
+        collectionA.store(Person("a", 1.0, true, setOf("a")).toRawEntity())
+        collectionA.store(Person("b", 2.0, false, emptySet()).toRawEntity())
+        collectionA.store(Person("c", 3.0, true).toRawEntity())
+        collectionA.store(Person("d", 4.0, false, setOf("d")).toRawEntity())
+        collectionA.store(Person("e", 5.0, true).toRawEntity())
+        collectionA.store(Person("f", 6.0, false).toRawEntity())
+        collectionA.store(Person("g", 7.0, true).toRawEntity())
 
         assertThat(collectionB.fetchAll()).hasSize(7)
 
@@ -168,21 +182,21 @@ class CollectionIntegrationTest {
 
     @Test
     fun addElementsWithTtls() = runBlockingTest {
-        val person = Person("John", 29, false)
+        val person = Person("John", 29.0, false)
         collectionA.store(person.toRawEntity())
         val creationTimestampA = collectionA.fetchAll().first().creationTimestamp
         assertThat(creationTimestampA).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(collectionA.fetchAll().first().expirationTimestamp)
             .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val collectionC = CollectionImpl("collectionC", storageProxy, null, null, Ttl.Days(2), TimeImpl())
+        val collectionC = CollectionImpl("collectionC", storageProxy, null, Ttl.Days(2), TimeImpl(), schema = SCHEMA_A)
         storageProxy.registerHandle(collectionC)
         assertThat(collectionC.store(person.toRawEntity())).isTrue()
         val entityC = collectionC.fetchAll().first()
         assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val collectionD = CollectionImpl("collectionD", storageProxy, null, null, Ttl.Minutes(1), TimeImpl())
+        val collectionD = CollectionImpl("collectionD", storageProxy, null, Ttl.Minutes(1), TimeImpl(), schema = SCHEMA_B)
         storageProxy.registerHandle(collectionD)
         assertThat(collectionD.store(person.toRawEntity())).isTrue()
         val entityD = collectionD.fetchAll().first()
@@ -194,7 +208,7 @@ class CollectionIntegrationTest {
 
     private data class Person(
         val name: String,
-        val age: Int,
+        val age: Double,
         val isCool: Boolean,
         val pets: Set<String> = setOf("Fido")
     ) {
@@ -217,7 +231,14 @@ class CollectionIntegrationTest {
             storageKey = RamDiskStorageKey("entity_collection")
         )
 
-        private val SCHEMA = Schema(
+        private val refinementAgeGtZero = { value: RawEntity ->
+            (value.singletons["age"] as ReferencablePrimitive<Double>?)!!.value > 0
+        }
+        private val queryByAge = { value: RawEntity, args: Any ->
+            value.singletons["age"] == (args as Double).toReferencable()
+        }
+
+        private val SCHEMA_A = Schema(
             listOf(SchemaName("Person")),
             SchemaFields(
                 singletons = mapOf(
@@ -229,13 +250,31 @@ class CollectionIntegrationTest {
                     "pets" to FieldType.Text
                 )
             ),
-            "1234acf"
+            "1234acf",
+            refinement = refinementAgeGtZero
+        )
+
+        private val SCHEMA_B = Schema(
+            listOf(SchemaName("Person")),
+            SchemaFields(
+                singletons = mapOf(
+                    "name" to FieldType.Text,
+                    "age" to FieldType.Number,
+                    "is_cool" to FieldType.Boolean
+                ),
+                collections = mapOf(
+                    "pets" to FieldType.Text
+                )
+            ),
+            "1234acf",
+            refinement = refinementAgeGtZero,
+            query = queryByAge
         )
 
         private val STORE_OPTIONS =
             StoreOptions<EntityCollectionData, EntityCollectionOp, EntityCollectionView>(
                 storageKey = STORAGE_KEY,
-                type = CollectionType(EntityType(SCHEMA)),
+                type = CollectionType(EntityType(SCHEMA_A)),
                 mode = StorageMode.ReferenceMode
             )
     }

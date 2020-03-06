@@ -13,10 +13,9 @@ package arcs.core.host
 import arcs.core.data.CollectionType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
-import arcs.core.storage.api.Entity
-import arcs.core.storage.api.EntitySpec
 import arcs.core.storage.api.Handle
 import arcs.core.storage.handle.HandleManager
+import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 
 typealias ParticleConstructor = suspend () -> Particle
@@ -37,6 +36,7 @@ const val MAX_CONSECUTIVE_FAILURES = 5
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
 abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : ArcHost {
+    private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
     private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
@@ -105,8 +105,12 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
 
     // Used for FailureParticle
     private object DummyHandleHolder : HandleHolder {
-        override val handles: Map<String, Handle> = mutableMapOf()
-        override val entitySpecs: Map<String, EntitySpec<out Entity>> = mutableMapOf()
+        override fun getHandle(handleName: String) = throw NotImplementedError()
+
+        override fun getEntitySpec(handleName: String) = throw NotImplementedError()
+
+        override fun setHandle(handleName: String, handle: Handle) = Unit
+
         override fun clear() = Unit
     }
 
@@ -145,6 +149,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 val handle = createHandle(handleSpec.key, handleSpec.value, particle.handles)
                 particleContext.handles[handleSpec.key] = handle
             } catch (e: Exception) {
+                log.error(e) { "Error creating Handle." }
                 markParticleAsFailed(particleContext)
                 return@forEach
             }
@@ -189,7 +194,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Invokes any necessary lifecycle methods for the current [ArcHostContext.arcState] and any
      * [Particle]s it may refer to, and may alter the current [ArcState].
      */
-    suspend fun performLifecycleForContext(context: ArcHostContext) {
+    private suspend fun performLifecycleForContext(context: ArcHostContext) {
         context.particles.values.forEach { particleContext ->
             performParticleLifecycle(particleContext)
             if (particleContext.particleState == ParticleState.Failed ||
@@ -209,13 +214,14 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * [ParticleContext.particleState], and changes that state if necessary. For example by
      * insuring that [Particle.onCreate()], [Particle.onShutdown()] are properly called.
      */
-    suspend fun performParticleLifecycle(particleContext: ParticleContext) {
+    private suspend fun performParticleLifecycle(particleContext: ParticleContext) {
         if (particleContext.particleState == ParticleState.Instantiated) {
             try {
                 // onCreate() must succeed, else we consider the particle startup failed
                 particleContext.particle.onCreate()
                 particleContext.particleState = ParticleState.Created
             } catch (e: Exception) {
+                log.error(e) { "Failure in particle during onCreate." }
                 markParticleAsFailed(particleContext)
                 return
             }
@@ -241,6 +247,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                     }
                 }
             } catch (e: Exception) {
+                log.error(e) { "Failure in particle during onHandleSync." }
                 markParticleAsFailed(particleContext)
             }
             particleContext.particleState = ParticleState.Started
@@ -308,24 +315,25 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     ) = when (handleSpec.type) {
         is SingletonType<*> ->
             entityHandleManager.createSingletonHandle(
-                holder,
+                holder.getEntitySpec(handleName),
                 handleName,
                 handleSpec.storageKey,
-                handleSpec.type.toSchema()
+                handleSpec.type.toSchema(),
+                handleSpec.mode
             )
         is CollectionType<*> ->
             entityHandleManager.createSetHandle(
-                holder,
+                holder.getEntitySpec(handleName),
                 handleName,
                 handleSpec.storageKey,
-                handleSpec.type.toSchema()
+                handleSpec.type.toSchema(),
+                handleSpec.mode
             )
         else -> throw IllegalArgumentException("Unknown type ${handleSpec.type}")
-    }
+    }.also { holder.setHandle(handleName, it) }
 
     override suspend fun stopArc(partition: Plan.Partition) {
         val arcId = partition.arcId
-        val context = lookupOrCreateArcHostContext(partition)
         runningArcs[partition.arcId]?.let { context ->
             when (context.arcState) {
                 ArcState.Running -> stopArcInternal(arcId, context)
@@ -365,6 +373,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         try {
             context.particle.onShutdown()
         } catch (e: Exception) {
+            log.error(e) { "Failure in particle during onShutdown." }
             // TODO: Shutdown failed, how to handle?
         }
 
@@ -383,9 +392,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
      */
     private suspend fun cleanupHandles(handles: HandleHolder) {
-        for ((name, handle) in handles.handles) {
-            // TODO: disconnect/unregister handle
-        }
+        // TODO: disconnect/unregister handles
         handles.clear()
     }
 

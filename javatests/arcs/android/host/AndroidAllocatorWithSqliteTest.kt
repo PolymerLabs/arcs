@@ -47,7 +47,7 @@ class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
     @After
     fun tearDown() {
         // Workaround for this needing to be setup each time between tests.
-        CapabilitiesResolver.registeredCreators.remove("db")
+        CapabilitiesResolver.reset()
         // TODO: this leaks to mutex/lock issues
         // manager.resetAll()
     }

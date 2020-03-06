@@ -249,3 +249,6 @@ fun log(msg: String) {
     write(msg.toWasmString())
     flush()
 }
+
+fun <T, U> combine(handle1: WasmHandleEvents<T>, handle2: WasmHandleEvents<U>):
+    WasmTupleHandle<T, U> = WasmTupleHandle(handle1, handle2)

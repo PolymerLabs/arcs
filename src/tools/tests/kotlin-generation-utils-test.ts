@@ -85,5 +85,16 @@ mapOf(
    "k" to "l"
 )`, actual);
     });
+    it('creates a multi-line map due to starting indent', () => {
+      const actual = ktUtils.mapOf([
+        `"a" to "b"`,
+        `"b" to "c"`,
+      ], 90);
+      assert.strictEqual(`\
+mapOf(
+    "a" to "b",
+    "b" to "c"
+)`, actual);
+    });
   });
 });

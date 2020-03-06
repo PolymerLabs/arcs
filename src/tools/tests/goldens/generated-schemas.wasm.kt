@@ -263,8 +263,8 @@ class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
 
 
 class GoldHandles(
-   particle: WasmParticleImpl
-)  {
+    particle: WasmParticleImpl
+) {
     val data: WasmSingletonImpl<Gold_Data> = WasmSingletonImpl(particle, "data", Gold_Data_Spec())
     val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl(particle, "alias", Gold_Alias_Spec())
 }

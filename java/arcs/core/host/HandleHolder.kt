@@ -22,8 +22,15 @@ import arcs.core.storage.api.Handle
  * @property entitySpecs Key is a handle name, value is the corresponding [EntitySpec].
  */
 interface HandleHolder {
-    val handles: Map<String, Handle>
-    val entitySpecs: Map<String, EntitySpec<out Entity>>
-    /** Erase all handle references from the holder. */
+    /** Returns the [Handle] for the given handle name. */
+    fun getHandle(handleName: String): Handle
+
+    /** Returns the [EntitySpec] for the given handle name. */
+    fun getEntitySpec(handleName: String): EntitySpec<out Entity>
+
+    /** Sets the given [Handle]. */
+    fun setHandle(handleName: String, handle: Handle)
+
+    /** Erase all handle references from the [HandleHolder]. */
     fun clear()
 }

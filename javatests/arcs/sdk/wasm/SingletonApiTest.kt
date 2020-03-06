@@ -11,11 +11,18 @@
 
 package arcs.sdk.wasm
 
+
 class SingletonApiTest : AbstractSingletonApiTest() {
     var x = 0;
+    var combinedUpdates = 0;
+
     init{
         handles.inHandle.onUpdate{
-            x = 1;
+            x = 1
+        }
+
+        combine(handles.inHandle, handles.ioHandle).onUpdate{ _, _ ->
+            combinedUpdates++
         }
     }
 
@@ -73,6 +80,13 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                 if (handles.ioHandle.fetch() == null) {
                     handles.errors.store(
                         SingletonApiTest_Errors(msg = "case4: populated handle should not be null")
+                    )
+                }
+                if (combinedUpdates != 5) {
+                    handles.errors.store(
+                      SingletonApiTest_Errors(
+                        msg = "combine(inHandle, ioHandle) called ${combinedUpdates} times, expected 5"
+                      )
                     )
                 }
             }

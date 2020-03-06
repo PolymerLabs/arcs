@@ -31,6 +31,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
+import arcs.core.data.HandleMode
 import arcs.core.host.ParticleIdentifier
 import arcs.core.storage.driver.VolatileStorageKey
 import arcs.core.util.guardedBy
@@ -129,6 +130,7 @@ class ArcHostHelperTest {
 
         val connection = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            HandleMode.ReadWrite,
             EntityType(personSchema)
         )
 
