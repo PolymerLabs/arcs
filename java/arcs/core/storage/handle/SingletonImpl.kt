@@ -42,13 +42,13 @@ typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?
  */
 class SingletonImpl<T : Referencable>(
     name: String,
-    private val schema: Schema,
     storageProxy: SingletonProxy<T>,
     callbacks: SingletonCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
     canRead: Boolean = true,
-    dereferencer: Dereferencer<RawEntity>? = null
+    dereferencer: Dereferencer<RawEntity>? = null,
+    private val schema: Schema
 ) : SingletonBase<T>(
     name,
     storageProxy,

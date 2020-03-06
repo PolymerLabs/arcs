@@ -101,13 +101,13 @@ class HandleManager(
 
         return SingletonHandle(
             name,
-            schema,
             storageProxy,
             callbacks,
             ttl,
             time,
             canRead,
-            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
+            schema = schema
         ).also { storageProxy.registerHandle(it) }
     }
 
@@ -165,13 +165,13 @@ class HandleManager(
 
         return SingletonHandle(
             name,
-            schema,
             storageProxy,
             callbacks,
             ttl,
             time,
             canRead,
-            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
+            schema = schema
         ).also { storageProxy.registerHandle(it) }
     }
 
@@ -202,13 +202,13 @@ class HandleManager(
 
         return SetHandle(
             name,
-            schema,
             storageProxy,
             callbacks,
             ttl,
             time,
             canRead,
-            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
+            schema = schema
         ).also { storageProxy.registerHandle(it) }
     }
 
@@ -266,13 +266,13 @@ class HandleManager(
 
         return SetHandle(
             name = name,
-            schema = schema,
             storageProxy = storageProxy,
             callbacks = callbacks,
             ttl = ttl,
             time = time,
             canRead = canRead,
-            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
+            schema = schema
         ).also { storageProxy.registerHandle(it) }
     }
 }

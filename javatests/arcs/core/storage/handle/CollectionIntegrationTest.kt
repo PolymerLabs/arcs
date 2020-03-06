@@ -70,9 +70,9 @@ class CollectionIntegrationTest {
         testStore = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(testStore.activate(), CrdtSet<RawEntity>())
 
-        collectionA = CollectionImpl("collectionA", SCHEMA_A, storageProxy, null, Ttl.Infinite, TimeImpl())
+        collectionA = CollectionImpl("collectionA", storageProxy, null, Ttl.Infinite, TimeImpl(), schema=SCHEMA_A)
         storageProxy.registerHandle(collectionA)
-        collectionB = CollectionImpl("collectionB", SCHEMA_B, storageProxy, null, Ttl.Infinite, TimeImpl())
+        collectionB = CollectionImpl("collectionB", storageProxy, null, Ttl.Infinite, TimeImpl(), schema=SCHEMA_B)
         storageProxy.registerHandle(collectionB)
         Unit
     }
@@ -189,14 +189,14 @@ class CollectionIntegrationTest {
         assertThat(collectionA.fetchAll().first().expirationTimestamp)
             .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val collectionC = CollectionImpl("collectionC", SCHEMA_A, storageProxy, null, Ttl.Days(2), TimeImpl())
+        val collectionC = CollectionImpl("collectionC", storageProxy, null, Ttl.Days(2), TimeImpl(), schema=SCHEMA_A)
         storageProxy.registerHandle(collectionC)
         assertThat(collectionC.store(person.toRawEntity())).isTrue()
         val entityC = collectionC.fetchAll().first()
         assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val collectionD = CollectionImpl("collectionD", SCHEMA_B, storageProxy, null, Ttl.Minutes(1), TimeImpl())
+        val collectionD = CollectionImpl("collectionD", storageProxy, null, Ttl.Minutes(1), TimeImpl(), schema=SCHEMA_B)
         storageProxy.registerHandle(collectionD)
         assertThat(collectionD.store(person.toRawEntity())).isTrue()
         val entityD = collectionD.fetchAll().first()

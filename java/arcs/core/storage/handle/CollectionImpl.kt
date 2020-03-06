@@ -42,13 +42,13 @@ typealias SetCallbacks<T> = Callbacks<SetData<T>, SetOp<T>, Set<T>>
  */
 class CollectionImpl<T : Referencable>(
     name: String,
-    private val schema: Schema,
     storageProxy: SetProxy<T>,
     callbacks: SetCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
     canRead: Boolean = true,
-    dereferencer: Dereferencer<RawEntity>? = null
+    dereferencer: Dereferencer<RawEntity>? = null,
+    private val schema: Schema
 ) : SetBase<T>(
     name,
     storageProxy,
