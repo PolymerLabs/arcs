@@ -1092,7 +1092,7 @@ describe('Arc storage migration', () => {
     const getStoreValue = (storeContents, index, expectedLength) => {
       assert.lengthOf(Object.keys(storeContents['values']), expectedLength);
       const value = Object.values(storeContents['values'])[index]['value'];
-      assert.sameMembers(Object.keys(value), ['id', 'rawData', 'expirationTimestamp']);
+      assert.sameMembers(Object.keys(value), ['id', 'rawData', 'creationTimestamp', 'expirationTimestamp']);
       assert.isTrue(value.id.length > 0);
       return value;
     };

@@ -77,7 +77,7 @@ let Bar: EntityClass;
 
 function newEntity(id: string) {
   const bar = new Bar({});
-  Entity.identify(bar, id, null);
+  Entity.identify(bar, id, null, null);
   return bar;
 }
 
@@ -196,7 +196,7 @@ describe('CollectionHandle', async () => {
     const handle = await getCollectionHandle(barType, particle);
     const op: CollectionOperation<SerializedEntity> = {
       type: CollectionOpTypes.Remove,
-      removed: {id: 'id', rawData: {}},
+      removed: {id: 'id', creationTimestamp: 'now', rawData: {}},
       actor: 'actor',
       clock: {'actor': 1}
     };
@@ -211,7 +211,7 @@ describe('CollectionHandle', async () => {
     const op: CollectionOperation<SerializedEntity> = {
       type: CollectionOpTypes.FastForward,
       added: [],
-      removed: [{id: 'id', rawData: {}}],
+      removed: [{id: 'id', creationTimestamp: 'now', rawData: {}}],
       oldClock: {'actor': 1},
       newClock: {'actor': 1}
     };
@@ -315,7 +315,7 @@ describe('SingletonHandle', async () => {
     const handle = await getSingletonHandle(barType, particle);
     const op: SingletonOperation<SerializedEntity> = {
       type: SingletonOpTypes.Set,
-      value: {id: 'id', rawData: {}},
+      value: {id: 'id', creationTimestamp: 'now', rawData: {}},
       actor: 'actor',
       clock: {'actor': 1}
     };

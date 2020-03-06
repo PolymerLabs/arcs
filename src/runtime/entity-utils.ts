@@ -113,11 +113,13 @@ function sanitizeEntry(type, value, name, context: ChannelConstructor) {
       // Setting value as Reference (Particle side). This will enforce that the type provided for
       // the handle matches the type of the reference.
       return value;
-    } else if ((value as {id}).id && (value as {entityStorageKey}).entityStorageKey) {
+    } else if ((value as {id}).id &&
+               (!value['creationTimestamp'] || (value as {creationTimestamp}).creationTimestamp) &&
+               (value as {entityStorageKey}).entityStorageKey) {
       // Setting value from raw data (Channel side).
       // TODO(shans): This can't enforce type safety here as there isn't any type data available.
       // Maybe this is OK because there's type checking on the other side of the channel?
-      return new Reference(value as {id, entityStorageKey}, new ReferenceType(type.schema.model), context);
+      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.schema.model), context);
     } else {
       throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
     }
