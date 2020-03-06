@@ -67,7 +67,7 @@ class CapabilitiesResolver(
         val create: StorageKeyCreator
     )
 
-    /* Creates and returns a [StorageKey] corresponding to the given [Capabilities]. */
+    /** Creates and returns a [StorageKey] corresponding to the given [Capabilities]. */
     fun createStorageKey(
         capabilities: Capabilities,
         entitySchema: Schema,
@@ -76,26 +76,26 @@ class CapabilitiesResolver(
         // TODO: This is a naive and basic solution for picking the appropriate
         // storage key creator for the given capabilities. As more capabilities are
         // added the heuristics will become more robust.
-        val infos = findCreatorInfos(capabilities)
-        require(infos.isNotEmpty()) {
+        val creators = findCreators(capabilities)
+        require(creators.isNotEmpty()) {
             "Cannot create a suitable storage key for $capabilities"
         }
-        if (infos.size > 1) {
+        if (creators.size > 1) {
             log.warning { "Multiple storage key creators for $capabilities" }
         }
-        val create = infos.first().create
+        val create = creators.first().create
         val backingKey = create.invoke(BackingStorageKeyOptions(options.arcId, entitySchema))
         val storageKey = create.invoke(ContainerStorageKeyOptions(options.arcId, entitySchema))
         return ReferenceModeStorageKey(backingKey, storageKey.childKeyForHandle(handleId))
     }
 
-    /* Returns list of protocols corresponding to the given [Capabilities]. */
+    /** Returns list of protocols corresponding to the given [Capabilities]. */
     /* internal */ fun findStorageKeyProtocols(capabilities: Capabilities): List<String> {
-        return findCreatorInfos(capabilities).map { it.protocol }
+        return findCreators(capabilities).map { it.protocol }
     }
 
-    /* Returns list of creator info corresponding to the given [Capabilities]. */
-    /* internal */ fun findCreatorInfos(capabilities: Capabilities): List<StorageKeyCreatorInfo> {
+    /** Returns list of creator info corresponding to the given [Capabilities]. */
+    /* internal */ fun findCreators(capabilities: Capabilities): List<StorageKeyCreatorInfo> {
         return creators.filter { creator -> capabilities in creator.capabilities }
     }
 
@@ -103,7 +103,7 @@ class CapabilitiesResolver(
         /* internal */ val defaultCreators: MutableList<StorageKeyCreatorInfo> = mutableListOf()
         /* internal */ val registeredCreators: MutableList<StorageKeyCreatorInfo> = mutableListOf()
 
-        /* Registers a default [StorageKey] creator for the given protocol and [Capabilities]. */
+        /** Registers a default [StorageKey] creator for the given protocol and [Capabilities]. */
         fun registerDefaultKeyCreator(
             protocol: String,
             capabilities: Capabilities,
@@ -114,7 +114,7 @@ class CapabilitiesResolver(
             )
         }
 
-        /* Registers a [StorageKey] creator for the given protocol and [Capabilities]. */
+        /** Registers a [StorageKey] creator for the given protocol and [Capabilities]. */
         fun registerKeyCreator(
             protocol: String,
             capabilities: Capabilities,
@@ -138,5 +138,5 @@ class CapabilitiesResolver(
     }
 }
 
-/* A method for generating [StorageKey] for the given parameters. */
+/** A method for generating [StorageKey] for the given parameters. */
 typealias StorageKeyCreator = (options: CapabilitiesResolver.StorageKeyOptions) -> StorageKey
