@@ -198,6 +198,41 @@ export class KotlinGenerator implements ClassGenerator {
     }
   }
 
+  mapOf(items: string[]): string {
+    switch (items.length) {
+      case 0:
+        return `emptyMap()`;
+      case 1:
+        return `mapOf(${items[0]})`;
+      default:
+        return `\
+mapOf(
+${this.leftPad(items.join(',\n'), 4)}
+)`;
+    }
+
+  }
+
+  createSchema(schemaHash: string): string {
+    const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
+    return `\
+Schema(
+    listOf(${schemaNames.join(',\n' + ' '.repeat(8))}),
+    SchemaFields(
+        singletons = ${this.leftPad(this.mapOf(this.singletonSchemaFields), 8, true)},
+        collections = ${this.leftPad(this.mapOf(this.collectionSchemaFields), 8, true)}
+    ),
+    "${schemaHash}"
+)`;
+  }
+
+  leftPad(input: string, indent: number, skipFirst: boolean = false) {
+    return input
+      .split('\n')
+      .map((line: string, idx: number) => (idx === 0 && skipFirst) ? line : ' '.repeat(indent) + line)
+      .join('\n');
+  }
+
 
   createSchema(schemaHash: string): string {
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
@@ -289,7 +324,7 @@ class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 ${this.opts.wasm ? '' : `\
 
     companion object {
-        val schema = ${leftPad(this.createSchema(schemaHash), 8, true)}
+        val schema = ${this.leftPad(this.createSchema(schemaHash), 8, true)}
         
         init {
             SchemaRegistry.register(schema)
