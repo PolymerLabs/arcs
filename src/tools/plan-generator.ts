@@ -85,16 +85,41 @@ export class PlanGenerator {
       default:
         throw new PlanGeneratorError(`HandleConnection direction '${connection.direction}' is not supported.`)
     }
-    const type = '';
+    const type = this.createType(connection.type);
     const ttl = 'null';
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl]);
   }
 
   createStorageKey(storageKey: StorageKey | undefined): string {
-    return `StorageKeyParser.parse("${(storageKey || '').toString()})"`;
+    return `StorageKeyParser.parse("${(storageKey || '').toString()}")`;
   }
 
+  createType(type: Type): string {
+    switch (type.tag) {
+      case 'Collection':
+        break;
+      case 'Entity':
+        break;
+      case 'Handle':
+        break;
+      case 'Reference':
+        break;
+      case 'Singleton':
+        break;
+      case 'TypeVariable':
+        break;
+      case 'Arc':
+      case 'BigCollection':
+      case 'Count':
+      case 'Interface':
+      case 'Slot':
+      case 'Tuple':
+      default:
+        throw Error(`Type of ${type.tag} is not supported.`);
+    }
+    return 'null';
+  }
   fileHeader(): string {
     return `\
 /* ktlint-disable */
