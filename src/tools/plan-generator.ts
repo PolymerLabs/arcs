@@ -12,6 +12,7 @@ import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {Manifest} from '../runtime/manifest.js';
 import {KotlinGenerationUtils, KT_DEFAULT, leftPad} from './kotlin-generation-utils.js';
+import {HandleConnectionSpec} from '../runtime/particle-spec.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -51,12 +52,21 @@ ${ktUtils.indent(ktUtils.listOf(particles))}
     const spec = particle.spec;
     const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
 
+    const connectionMappings = [...spec.handleConnectionMap.entries()]
+      .map(([key, val]) => `"${key}" to ${this.createHandleConnection()}`);
+
+    console.log(connectionMappings);
+
     return `\
 Particle(
     "${particle.name}",
     "${location}",
     ${ktUtils.mapOf([])} 
 )`;
+  }
+
+  createHandleConnection(connection?: HandleConnectionSpec): string {
+    return `${ktUtils.applyFun('HandleConnection', [])}`;
   }
 
   createType(type: Type): string {
@@ -80,7 +90,7 @@ Particle(
       case 'Slot':
       case 'Tuple':
       default:
-        throw Error(`Type of tag ${type.tag} is not supported.`);
+        throw Error(`Type of ${type.tag} is not supported.`);
     }
     return '';
   }
