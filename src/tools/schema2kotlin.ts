@@ -204,8 +204,8 @@ export class KotlinGenerator implements ClassGenerator {
 Schema(
     listOf(${schemaNames.join(',\n' + ' '.repeat(8))}),
     SchemaFields(
-        singletons = ${leftPad(ktUtils.mapOf(this.singletonSchemaFields), 8, true)},
-        collections = ${leftPad(ktUtils.mapOf(this.collectionSchemaFields), 8, true)}
+        singletons = ${leftPad(ktUtils.mapOf(this.singletonSchemaFields, 30), 8, true)},
+        collections = ${leftPad(ktUtils.mapOf(this.collectionSchemaFields, 30), 8, true)}
     ),
     "${schemaHash}"
 )`;
