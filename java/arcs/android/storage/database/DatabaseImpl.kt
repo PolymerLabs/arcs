@@ -799,7 +799,7 @@ class DatabaseImpl(
             }
 
             // Remove the existing entity.
-            this@DatabaseImpl.delete(storageKey, null, db)
+            this@DatabaseImpl.delete(storageKey, db)
         }
 
         // Insert storage key.
