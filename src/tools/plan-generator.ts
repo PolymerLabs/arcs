@@ -81,7 +81,7 @@ export class PlanGenerator {
         mode = 'HandleMode.ReadWrite';
         break;
       default:
-        throw new PlanGeneratorError(`HandleConnection direction '${connection.direction}' is not supported.`)
+        throw new PlanGeneratorError(`HandleConnection direction '${connection.direction}' is not supported.`);
     }
     const type = this.createType(connection.type);
     const ttl = 'null';
