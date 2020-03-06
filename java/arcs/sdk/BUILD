@@ -22,6 +22,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/data",
     ],
     deps = [
         "//java/arcs/core/data",

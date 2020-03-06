@@ -7,8 +7,6 @@ load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix")
 load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library")
 
-ARCS_DATA_DEPS = ["//third_party/java/arcs:arcs-core-data"]
-
 def _run_schema2wasm(
         name,
         src,
@@ -91,13 +89,7 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
     arcs_kt_library(
         name = name,
         srcs = outs,
-        platforms = ["jvm"],
-        deps = ARCS_SDK_DEPS + ARCS_DATA_DEPS,
-    )
-
-    arcs_kt_library(
-        name = name,
-        srcs = outs,
-        platforms = ["wasm"],
+        platforms = ["jvm", "wasm"],
         deps = ARCS_SDK_DEPS,
     )
+

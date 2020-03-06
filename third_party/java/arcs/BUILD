@@ -14,9 +14,3 @@ alias(
     actual = "//java/arcs/sdk:sdk-wasm",
 )
 
-# Arcs Datatypes for the JVM.
-alias(
-    name = "arcs-core-data",
-    actual = "//java/arcs/core/data",
-)
-
