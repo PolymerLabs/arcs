@@ -328,10 +328,9 @@ ${particleStr1}
 
       const pairs = recipe.handles.find(h => h.fate === 'join');
       assert.equal(pairs.fate, 'join');
-      assert.lengthOf(pairs.associatedHandles, 2);
-
-      assert.include(pairs.associatedHandles, people);
-      assert.include(pairs.associatedHandles, places);
+      assert.lengthOf(pairs.joinedHandles, 2);
+      assert.include(pairs.joinedHandles, people);
+      assert.include(pairs.joinedHandles, places);
     };
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
@@ -347,6 +346,92 @@ ${particleStr1}
     } catch (e) {
       assert.include(e.message, 'unrecognized name: locations');
     }
+  });
+  it('can resolve a recipe with a synthetic join handle', async () => {
+    const manifest = await parseManifest(`
+      particle JoinReader
+        data: reads [(
+          &Person {name: Text},
+          &Place {address: Text}
+        )]
+      recipe
+        people: map 'people'
+        places: map 'places'
+        pairs: join (people, places)
+        JoinReader
+          data: reads pairs`);
+    const [recipe] = manifest.recipes;
+    assert.isTrue(recipe.normalize());
+
+    const peopleHandle = recipe.handles.find(h => h.id === 'people');
+    peopleHandle.type.maybeEnsureResolved();
+    assert.equal(peopleHandle.type.resolvedType().toString(), '[Person {name: Text}]');
+
+    const placesHandle = recipe.handles.find(h => h.id === 'places');
+    placesHandle.type.maybeEnsureResolved();
+    assert.equal(placesHandle.type.resolvedType().toString(), '[Place {address: Text}]');
+
+    assert.isTrue(recipe.isResolved());
+  });
+  it('can resolve a recipe with a synthetic join handle and multiple readers', async () => {
+    const manifest = await parseManifest(`
+      particle PeopleReader
+        people: reads [Person {age: Number, name: Text}]
+      particle PlaceReader
+        places: reads [Place {address: Text}]
+      particle JoinReaderOne
+        data: reads [(
+          &Person {name: Text},
+          &Place {address: Text}
+        )]
+      particle JoinReaderTwo
+        data: reads [(
+          &Person {phoneNumber: Text},
+          &Place {latitude: Number, longitude: Number}
+        )]
+      recipe
+        people: map 'people'
+        places: map 'places'
+        pairs: join (people, places)
+        PeopleReader
+          people: people
+        JoinReaderOne
+          data: pairs
+        JoinReaderTwo
+          data: pairs`);
+    const [recipe] = manifest.recipes;
+    assert.isTrue(recipe.normalize());
+
+    const peopleHandle = recipe.handles.find(h => h.id === 'people');
+    peopleHandle.type.maybeEnsureResolved();
+    assert.equal(peopleHandle.type.resolvedType().toString(),
+        '[Person {age: Number, name: Text, phoneNumber: Text}]');
+
+    const placesHandle = recipe.handles.find(h => h.id === 'places');
+    placesHandle.type.maybeEnsureResolved();
+    assert.equal(placesHandle.type.resolvedType().toString(),
+        '[Place {address: Text, latitude: Number, longitude: Number}]');
+
+    assert.isTrue(recipe.isResolved());
+  });
+  it('does not allow writing to a synthetic join handle', async () => {
+    const manifest = await parseManifest(`
+      particle JoinReader
+        data: writes [(
+          &Person {name: Text},
+          &Place {address: Text}
+        )]
+      recipe
+        people: map 'folks'
+        places: map 'places'
+        pairs: join (people, places)
+        JoinReader
+          data: writes pairs`);
+    const [recipe] = manifest.recipes;
+    const options = {errors: new Map()};
+    assert.isFalse(recipe.normalize(options), 'expected type error');
+    const errors = [...options.errors.values()];
+    assert.sameMembers(errors, [`Invalid fate 'join' for handle 'pairs: join (people, places)'; it is used for 'writes' JoinReader::data connection`]);
   });
   it('supports recipes with constraints', async () => {
     const manifest = await parseManifest(`
