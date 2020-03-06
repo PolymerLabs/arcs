@@ -47,5 +47,5 @@ class WasmSingletonImpl<T : WasmEntity>(
         }
     }
 
-    override fun getEntity(): T? = entity
+    override fun getContent(): T? = fetch()
 }
