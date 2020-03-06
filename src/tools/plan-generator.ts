@@ -13,8 +13,18 @@ import {Particle} from '../runtime/recipe/particle.js';
 import {Manifest} from '../runtime/manifest.js';
 import {KotlinGenerationUtils, KT_DEFAULT, leftPad} from './kotlin-generation-utils.js';
 import {HandleConnectionSpec} from '../runtime/particle-spec.js';
+import {Handle} from '../runtime/recipe/handle.js';
+import {HandleConnection} from '../runtime/recipe/handle-connection.js';
+import {StorageKey} from '../runtime/storageNG/storage-key.js';
 
 const ktUtils = new KotlinGenerationUtils();
+
+export class PlanGeneratorError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PlanGeneratorError';
+  }
+}
 
 export class PlanGenerator {
   constructor(private resolutions: Recipe[], private manifest: Manifest, private scope: string = 'arcs.core.data') {}
@@ -36,12 +46,10 @@ export class PlanGenerator {
     for (const recipe of this.resolutions) {
       const planName = `${recipe.name.replace(/[rR]ecipe/, '')}Plan`;
 
-      const particles = recipe.particles.map(this.createParticle);
+      const particles = recipe.particles.map((p) => this.createParticle(p));
 
-      const plan = `\
-object ${planName} : Plan(
-${ktUtils.indent(ktUtils.listOf(particles))}
-)`;
+      const start = `object ${planName} : `;
+      const plan = `${start}${ktUtils.applyFun('Plan', particles, 'Plan', start.length)}`;
       plans.push(plan);
     }
 
@@ -52,47 +60,39 @@ ${ktUtils.indent(ktUtils.listOf(particles))}
     const spec = particle.spec;
     const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
 
-    const connectionMappings = [...spec.handleConnectionMap.entries()]
-      .map(([key, val]) => `"${key}" to ${this.createHandleConnection()}`);
+    const particleName = `"${particle.name}"`;
+    const locationArg = `"${location}"`;
 
-    console.log(connectionMappings);
+    const connectionMappings = [...Object.entries(particle.connections)]
+      .map(([key, conn]) => `"${key}" to ${this.createHandleConnection(conn)}`);
 
-    return `\
-Particle(
-    "${particle.name}",
-    "${location}",
-    ${ktUtils.mapOf([])} 
-)`;
+    return ktUtils.applyFun('Particle', [particleName, locationArg, ktUtils.mapOf(connectionMappings)]);
   }
 
-  createHandleConnection(connection?: HandleConnectionSpec): string {
-    return `${ktUtils.applyFun('HandleConnection', [])}`;
-  }
-
-  createType(type: Type): string {
-    switch (type.tag) {
-      case 'Collection':
+  createHandleConnection(connection: HandleConnection): string {
+    const storageKey = this.createStorageKey(connection.handle.storageKey);
+    let mode;
+    switch (connection.direction) {
+      case 'reads':
+        mode = 'HandleMode.Read';
         break;
-      case 'Entity':
+      case 'writes':
+        mode = 'HandleMode.Write';
         break;
-      case 'Handle':
+      case 'reads writes':
+        mode = 'HandleMode.ReadWrite';
         break;
-      case 'Reference':
-        break;
-      case 'Singleton':
-        break;
-      case 'TypeVariable':
-        break;
-      case 'Arc':
-      case 'BigCollection':
-      case 'Count':
-      case 'Interface':
-      case 'Slot':
-      case 'Tuple':
       default:
-        throw Error(`Type of ${type.tag} is not supported.`);
+        throw new PlanGeneratorError(`HandleConnection direction '${connection.direction}' is not supported.`)
     }
-    return '';
+    const type = '';
+    const ttl = 'null';
+
+    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl]);
+  }
+
+  createStorageKey(storageKey: StorageKey | undefined): string {
+    return `StorageKeyParser.parse("${(storageKey || '').toString()})"`;
   }
 
   fileHeader(): string {
@@ -107,6 +107,7 @@ package ${this.scope}
 //
 
 ${this.scope === 'arcs.core.data' ? '' : 'import arcs.core.data.*'}
+import arcs.core.storage.*
 `;
   }
 
