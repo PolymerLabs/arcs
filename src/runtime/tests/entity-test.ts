@@ -62,9 +62,10 @@ describe('Entity', () => {
     // Mutation APIs are tested below.
     const e = new entityClass({txt: 'abc', num: 56});
     assert.isFalse(Entity.isIdentified(e));
-    Entity.identify(e, 'id1', null);
+    Entity.identify(e, 'id1', null, 'now');
     assert.isTrue(Entity.isIdentified(e));
     assert.strictEqual(Entity.id(e), 'id1');
+    assert.strictEqual(Entity.creationTimestamp(e), 'now');
 
     const e2 = new entityClass({txt: 'abc'});
     assert.isFalse(Entity.isIdentified(e2));
@@ -73,7 +74,7 @@ describe('Entity', () => {
     assert.strictEqual(Entity.id(e2), '!s:id2:0');
 
     assert.deepEqual(Entity.dataClone(e), {txt: 'abc', num: 56});
-    assert.deepEqual(Entity.serialize(e), {id: 'id1', rawData: {txt: 'abc', num: 56}});
+    assert.deepEqual(Entity.serialize(e), {id: 'id1', creationTimestamp: 'now', rawData: {txt: 'abc', num: 56}});
     assert.strictEqual(Entity.entityClass(e), entityClass);
 
     // Static methods
@@ -99,7 +100,7 @@ describe('Entity', () => {
     const entityClass = Entity.createEntityClass(schema, null);
     const data = {id: 'schema-id', mutable: false, schema: 'url', type: 81, toLiteral: 23, makeImmutable: 'make'};
     const e = new entityClass(data);
-    Entity.identify(e, 'arcs-id', null);
+    Entity.identify(e, 'arcs-id', null, null);
 
     // Reading the schema fields should match the input data fields.
     assert.strictEqual(e.id, 'schema-id');
@@ -140,7 +141,7 @@ describe('Entity', () => {
       union: 'def',
       tuple: ['ghi', 12]
     });
-    Entity.identify(e, '!test:uid:u0', null);
+    Entity.identify(e, '!test:uid:u0', null, null);
     const fields = JSON.stringify(e);
     const internals = JSON.stringify(e[SYMBOL_INTERNALS]);
 

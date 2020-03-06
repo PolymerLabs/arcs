@@ -33,7 +33,8 @@ describe('ArcStoresFetcher', () => {
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
     const fooHandle = await singletonHandleForTest(arc, fooStore);
-    await fooHandle.set(new foo({value: 'persistence is useful'}));
+    const fooEntity = new foo({value: 'persistence is useful'});
+    await fooHandle.set(fooEntity);
 
     assert.isEmpty(DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'fetch-stores-result'));
@@ -53,6 +54,7 @@ describe('ArcStoresFetcher', () => {
 
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
     const entityId = '!' + sessionId + ':demo:test-proxy2:3';
+    const creationTimestamp = Entity.creationTimestamp(fooEntity);
 
     assert.deepEqual(results[0].messageBody, {
       arcStores: [{
@@ -80,7 +82,7 @@ describe('ArcStoresFetcher', () => {
           tag: 'Singleton',
         },
         description: undefined,
-        value: {id: entityId, rawData: {value: 'persistence is useful'}}
+        value: {id: entityId, creationTimestamp, rawData: {value: 'persistence is useful'}}
       }],
       // Context stores from manifests have been moved to a temporary StorageStub implementation,
       // StorageStub does not allow for fetching value. Let's add a test for context store after
@@ -126,10 +128,14 @@ describe('ArcStoresFetcher', () => {
     assert.lengthOf(results, 1);
 
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
+    const store = await arc.findStoreById(arc.activeRecipe.handles[0].id).activate();
+    // TODO(mmandlis): there should be a better way!
+    const creationTimestamp = Object.values((await store.serializeContents()).values)[0]['value']['creationTimestamp'];
     assert.deepEqual(results[0].messageBody, {
       id: `!${sessionId}:demo:1`,
       value: {
         id: `!${sessionId}:demo:1:3`,
+        creationTimestamp,
         rawData: {
           value: 'FooBar'
         }
