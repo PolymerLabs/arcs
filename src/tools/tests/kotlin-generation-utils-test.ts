@@ -89,7 +89,7 @@ mapOf(
       const actual = ktUtils.mapOf([
         `"a" to "b"`,
         `"b" to "c"`,
-      ], 110);
+      ], 90);
       assert.strictEqual(`\
 mapOf(
     "a" to "b",

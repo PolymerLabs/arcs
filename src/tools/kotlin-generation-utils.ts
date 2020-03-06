@@ -19,7 +19,7 @@ export interface KotlinPreferences {
 /**
  * Default language formatting settings.
  */
-export const KT_DEFAULT: KotlinPreferences = {indent: 4, lineLength: 120};
+export const KT_DEFAULT: KotlinPreferences = {indent: 4, lineLength: 100};
 
 /**
  * Collection of utilities for generating Kotlin code.
