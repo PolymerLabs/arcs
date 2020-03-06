@@ -91,6 +91,13 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
     arcs_kt_library(
         name = name,
         srcs = outs,
-        platforms = ["jvm", "wasm"],
+        platforms = ["jvm"],
         deps = ARCS_SDK_DEPS + ARCS_DATA_DEPS,
+    )
+
+    arcs_kt_library(
+        name = name,
+        srcs = outs,
+        platforms = ["wasm"],
+        deps = ARCS_SDK_DEPS,
     )
