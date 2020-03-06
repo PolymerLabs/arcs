@@ -145,7 +145,7 @@ class SingletonIntegrationTest {
 
         val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2), TimeImpl(), schema = SCHEMA)
         storageProxy.registerHandle(singletonC)
-        assertThat(singletonC.store(person.toRawEntity())).isTruwritee()
+        assertThat(singletonC.store(person.toRawEntity())).isTrue()
         val entityC = requireNotNull(singletonC.fetch())
         assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)

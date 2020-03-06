@@ -48,7 +48,7 @@ class SingletonImpl<T : Referencable>(
     time: Time,
     canRead: Boolean = true,
     dereferencer: Dereferencer<RawEntity>? = null,
-    private val schema: Schema
+    private val schema: Schema? = null
 ) : SingletonBase<T>(
     name,
     storageProxy,
@@ -68,7 +68,7 @@ class SingletonImpl<T : Referencable>(
     suspend fun store(entity: T): Boolean {
         @Suppress("GoodTime") // use Instant
         entity.creationTimestamp = requireNotNull(time).currentTimeMillis
-        require(entity !is RawEntity || schema.refinement(entity)) {
+        require(entity !is RawEntity || schema == null || schema.refinement(entity)) {
             "Invalid entity stored to handle $name (failed refinement)"
         }
         if (!Ttl.Infinite.equals(ttl)) {

@@ -48,7 +48,7 @@ class CollectionImpl<T : Referencable>(
     time: Time,
     canRead: Boolean = true,
     dereferencer: Dereferencer<RawEntity>? = null,
-    private val schema: Schema
+    private val schema: Schema? = null
 ) : SetBase<T>(
     name,
     storageProxy,
@@ -73,7 +73,7 @@ class CollectionImpl<T : Referencable>(
             require(it is RawEntity) {
                 "Cannot query non entity typed collection $name"
             }
-            val query = requireNotNull(schema.query) {
+            val query = requireNotNull(schema?.query) {
                 "Attempted to query collection $name with no associated query."
             }
             query(it, args)
@@ -95,7 +95,7 @@ class CollectionImpl<T : Referencable>(
         log.debug { "Storing: $entity" }
         @Suppress("GoodTime") // use Instant
         entity.creationTimestamp = requireNotNull(time).currentTimeMillis
-        require(entity !is RawEntity || schema.refinement(entity)) {
+        require(entity !is RawEntity || schema == null || schema.refinement(entity)) {
             "Invalid entity stored to handle $name (failed refinement)"
         }
         if (!Ttl.Infinite.equals(ttl)) {
