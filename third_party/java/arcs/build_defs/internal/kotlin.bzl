@@ -384,22 +384,22 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], dat
 
 register_extension_info(
     extension = arcs_kt_android_test_suite,
-    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
 )
 
 register_extension_info(
     extension = arcs_kt_jvm_library,
-    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
 )
 
 register_extension_info(
     extension = arcs_kt_jvm_test_suite,
-    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
 )
 
 register_extension_info(
     extension = arcs_kt_library,
-    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
 )
 
 register_extension_info(
@@ -409,7 +409,7 @@ register_extension_info(
 
 register_extension_info(
     extension = arcs_kt_particles,
-    label_regex_for_dep = "{extension_name}\\-kt_DO_NOT_DEPEND_JVM",
+    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
 )
 
 def _check_platforms(platforms):
