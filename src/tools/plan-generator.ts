@@ -11,6 +11,9 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {Manifest} from '../runtime/manifest.js';
+import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
+
+const ktUtils = new KotlinGenerationUtils();
 
 export class PlanGenerator {
   constructor(private resolutions: Recipe[], private manifest: Manifest, private scope: string = 'arcs.core.data') {}
@@ -35,9 +38,7 @@ export class PlanGenerator {
       const particles = recipe.particles.map(this.createParticle);
 
       const plan = `\
-object ${planName} : Plan(listOf(
-${particles.join('\n,')}
-))`;
+object ${planName} : Plan(${ktUtils.listOf(particles)})`;
 
       plans.push(plan);
     }
@@ -51,9 +52,9 @@ ${particles.join('\n,')}
 
     return `\
 Particle(
-    ${particle.name},
+    "${particle.name}",
     "${location}",
-    mapOf()
+    ${ktUtils.mapOf([])} 
 )`;
   }
 
