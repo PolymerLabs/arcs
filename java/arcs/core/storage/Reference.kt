@@ -68,7 +68,7 @@ interface Dereferencer<T> {
 }
 
 /** Converts any [Referencable] object into a reference-mode-friendly [Reference] object. */
-fun Referencable.toReference(storageKey: StorageKey, version: VersionMap) =
+fun Referencable.toReference(storageKey: StorageKey, version: VersionMap? = null) =
     Reference(id, storageKey, version)
 
 fun Reference(

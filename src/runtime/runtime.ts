@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
-import {CapabilitiesResolver, StorageKeyCreatorsMap} from './capabilities-resolver.js';
+import {CapabilitiesResolver, StorageKeyCreatorInfo} from './capabilities-resolver.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -46,7 +46,7 @@ export type RuntimeArcOptions = Readonly<{
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
-  storageKeyCreators?: StorageKeyCreatorsMap;
+  storageKeyCreators?: StorageKeyCreatorInfo[];
 }>;
 
 type SpawnArgs = {

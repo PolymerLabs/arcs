@@ -16,10 +16,9 @@ class WasmCollectionImpl<T : WasmEntity>(
     particle: WasmParticleImpl,
     name: String,
     private val entitySpec: WasmEntitySpec<T>
-) : WasmHandle(name, particle) {
+) : WasmHandleEvents<Set<T>>(particle, name) {
 
     private val entities: MutableMap<String, T> = mutableMapOf()
-    private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
 
     val size: Int
         get() = entities.size
@@ -44,10 +43,6 @@ class WasmCollectionImpl<T : WasmEntity>(
             }
         }
         notifyOnUpdateActions()
-    }
-
-    fun onUpdate(action: (Set<T>) -> Unit) {
-        onUpdateActions.add(action)
     }
 
     fun isEmpty() = entities.isEmpty()

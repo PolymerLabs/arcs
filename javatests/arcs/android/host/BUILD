@@ -64,7 +64,7 @@ kt_android_library(
         [
             "*Service.kt",
             "*Activity.kt",
-        ] + ["TestBindingDelegate.kt"],
+        ],
     ),
     manifest = "AndroidManifest.xml",
     deps = [
@@ -81,6 +81,7 @@ kt_android_library(
         "//java/arcs/sdk",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
+        "//java/arcs/sdk/android/storage/service/testutil",
         "//javatests/arcs/core/allocator:allocator-test-util",
         "//javatests/arcs/core/host:particle",
         "//third_party/java/androidx/appcompat",

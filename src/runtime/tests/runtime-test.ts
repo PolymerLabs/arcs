@@ -92,8 +92,8 @@ describe('Runtime', () => {
           t3: writes [Thing]
         recipe
           t1: create
-          t2: create * #volatile
-          t3: create #things
+          t2: create *
+          t3: create tied-to-runtime #things
           MyParticle
             t1: writes t1
             t2: writes t2
@@ -116,7 +116,7 @@ describe('Runtime', () => {
     assert.equal(runtime.context, volatileArc.context);
 
     await volatileArc.instantiate(manifest.recipes[0]);
-    assert.lengthOf(runtime.context.stores, 0);
+    assert.lengthOf(runtime.context.stores, 1);
 
     await ramdiskArc.instantiate(manifest.recipes[0]);
     assert.lengthOf(runtime.context.stores, 2);

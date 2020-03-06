@@ -1,15 +1,18 @@
 package arcs.core.storage.handle
 
+import arcs.core.common.Referencable
 import arcs.core.common.Refinement
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.RawEntity
+import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.storage.EntityActivationFactory
+import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
@@ -28,8 +31,8 @@ import kotlinx.coroutines.sync.withLock
  */
 interface ActivationFactoryFactory {
     fun dereferenceFactory(): EntityActivationFactory
-    fun singletonFactory(): SingletonActivationFactory<RawEntity>
-    fun setFactory(): SetActivationFactory<RawEntity>
+    fun <T : Referencable> singletonFactory(): SingletonActivationFactory<T>
+    fun <T : Referencable> setFactory(): SetActivationFactory<T>
 }
 
 /**
@@ -54,18 +57,27 @@ class HandleManager(
         singletonProxiesMutex,
         mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
     )
+    private val singletonReferenceProxiesMutex = Mutex()
+    private val singletonReferenceProxies by guardedBy(
+        singletonReferenceProxiesMutex,
+        mutableMapOf<StorageKey, SingletonProxy<Reference>>()
+    )
     private val setProxiesMutex = Mutex()
     private val setProxies by guardedBy(
         setProxiesMutex,
         mutableMapOf<StorageKey, SetProxy<RawEntity>>()
     )
+    private val setReferenceProxiesMutex = Mutex()
+    private val setReferenceProxies by guardedBy(
+        setReferenceProxiesMutex,
+        mutableMapOf<StorageKey, SetProxy<Reference>>()
+    )
 
     /**
-     * Create a new SingletonHandle backed by an Android [ServiceStore]
-     *
-     * The SingletonHandle will represent an Entity specified by the provided [Schema]
+     * Creates a new [SingletonHandle] which manages a singleton of type: [RawEntity], described by
+     * the provided [Schema].
      */
-    suspend fun singletonHandle(
+    suspend fun rawEntitySingletonHandle(
         storageKey: StorageKey,
         schema: Schema,
         callbacks: SingletonCallbacks<RawEntity>? = null,
@@ -100,11 +112,74 @@ class HandleManager(
     }
 
     /**
+     * @deprecated use [rawEntitySingletonHandle] instead.
+     */
+    /* ktlint-disable max-line-length */
+    @Deprecated(
+        "Use rawEntitySingletonHandle instead",
+        replaceWith = ReplaceWith("this.rawEntitySingletonHandle(storageKey, schema, callbacks, name, ttl, canRead)")
+    )
+    /* ktlint-enable max-line-length */
+    suspend fun singletonHandle(
+        storageKey: StorageKey,
+        schema: Schema,
+        callbacks: SingletonCallbacks<RawEntity>? = null,
+        name: String = storageKey.toKeyString(),
+        ttl: Ttl = Ttl.Infinite,
+        canRead: Boolean = true
+    ): SingletonHandle<RawEntity> = rawEntitySingletonHandle(
+        storageKey,
+        schema,
+        callbacks,
+        name,
+        ttl,
+        canRead
+    )
+
+    /**
+     * Creates a new [SingletonHandle] which manages a singleton of type: [Reference], where the
+     * [Reference] is expected to *reference* a [RawEntity] described by the provided [Schema].
+     */
+    suspend fun referenceSingletonHandle(
+        storageKey: StorageKey,
+        schema: Schema,
+        callbacks: SingletonCallbacks<Reference>? = null,
+        name: String = storageKey.toKeyString(),
+        ttl: Ttl = Ttl.Infinite,
+        canRead: Boolean = true
+    ): SingletonHandle<Reference> {
+        val storeOptions = SingletonStoreOptions<Reference>(
+            storageKey = storageKey,
+            type = SingletonType(ReferenceType(EntityType(schema))),
+            mode = StorageMode.Direct
+        )
+
+        val storageProxy = singletonReferenceProxiesMutex.withLock {
+            singletonReferenceProxies.getOrPut(storageKey) {
+                SingletonProxy(
+                    Store(storeOptions).activate(aff?.singletonFactory()),
+                    CrdtSingleton()
+                )
+            }
+        }
+
+        return SingletonHandle(
+            name,
+            storageProxy,
+            callbacks,
+            ttl,
+            time,
+            canRead,
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+        ).also { storageProxy.registerHandle(it) }
+    }
+
+    /**
      * Create a new [SetHandle] backed by an Android [ServiceStore]
      *
      * The SetHandle will represent an Entity specified by the provided [Schema]
      */
-    suspend fun setHandle(
+    suspend fun rawEntitySetHandle(
         storageKey: StorageKey,
         schema: Schema,
         callbacks: SetCallbacks<RawEntity>? = null,
@@ -133,6 +208,74 @@ class HandleManager(
             ttl,
             time,
             canRead,
+            dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
+        ).also { storageProxy.registerHandle(it) }
+    }
+
+    /**
+     * @deprecated Use [rawEntitySetHandle] instead.
+     */
+    /* ktlint-disable max-line-length */
+    @Deprecated(
+        "Use rawEntitySetHandle instead",
+        replaceWith = ReplaceWith("this.rawEntitySetHandle(storageKey, schema, callbacks, name, refinement, ttl, canRead)")
+    )
+    /* ktlint-enable max-line-length */
+    suspend fun setHandle(
+        storageKey: StorageKey,
+        schema: Schema,
+        callbacks: SetCallbacks<RawEntity>? = null,
+        name: String = storageKey.toKeyString(),
+        refinement: Refinement<RawEntity>? = null,
+        ttl: Ttl = Ttl.Infinite,
+        canRead: Boolean = true
+    ): SetHandle<RawEntity> = rawEntitySetHandle(
+        storageKey,
+        schema,
+        callbacks,
+        name,
+        refinement,
+        ttl,
+        canRead
+    )
+
+    /**
+     * Creates a new [SetHandle] which manages a singleton of type: [Reference], where the
+     * [Reference] is expected to *reference* a [RawEntity] described by the provided [Schema].
+     */
+    // TODO: support refinement here.
+    suspend fun referenceSetHandle(
+        storageKey: StorageKey,
+        schema: Schema,
+        callbacks: SetCallbacks<Reference>? = null,
+        name: String = storageKey.toKeyString(),
+        ttl: Ttl = Ttl.Infinite,
+        canRead: Boolean = true
+    ): SetHandle<Reference> {
+        val storeOptions = SetStoreOptions<Reference>(
+            storageKey = storageKey,
+            type = CollectionType(ReferenceType(EntityType(schema))),
+            mode = StorageMode.Direct
+        )
+
+        val storageProxy = setReferenceProxiesMutex.withLock {
+            setReferenceProxies.getOrPut(storageKey) {
+                SetProxy(
+                    Store(storeOptions).activate(aff?.setFactory()),
+                    CrdtSet()
+                )
+            }
+        }
+
+        return SetHandle(
+            name = name,
+            storageProxy = storageProxy,
+            callbacks = callbacks,
+            // TODO: figure out how to support refinements with references.
+            refinement = null,
+            ttl = ttl,
+            time = time,
+            canRead = canRead,
             dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory())
         ).also { storageProxy.registerHandle(it) }
     }

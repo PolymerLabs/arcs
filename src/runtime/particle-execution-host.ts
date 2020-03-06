@@ -31,6 +31,7 @@ import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
+import {BackingStore} from './storageNG/backing-store.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
@@ -190,6 +191,15 @@ class PECOuterPortImpl extends PECOuterPort {
       return;
     }
     const res = await (await store.activate()).onProxyMessage(message);
+    this.SimpleCallback(callback, res);
+  }
+
+  async onBackingProxyMessage(store: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, entityId: string, callback: number) {
+    if (!(store instanceof BackingStore)) {
+      this.onReportExceptionInHost(new SystemException(new Error('expected BackingStore for onBackingProxyMessage'), 'onBackingProxyMessage', ''));
+      return;
+    }
+    const res = await store.onProxyMessage(message, entityId);
     this.SimpleCallback(callback, res);
   }
 
