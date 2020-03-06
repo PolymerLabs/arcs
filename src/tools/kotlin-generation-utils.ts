@@ -70,7 +70,7 @@ export class KotlinGenerationUtils {
   joinWithIndents(items: string[], extraIndent: number = 0): string {
     const candidate = items.join(', ');
     if (extraIndent + candidate.length <= this.pref.lineLength) return candidate;
-    return '\n' + leftPad(items.join(',\n'), this.pref.indent) + '\n';
+    return `\n${leftPad(items.join(',\n'), this.pref.indent)}\n`;
   }
 }
 
