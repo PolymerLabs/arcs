@@ -20,14 +20,12 @@ class WasmTupleHandle<T, U>(
     /**
      * Trigger a callback when either of the handles updates. The callback will receive the latest
      * entities from both handles.
-     * */
+     */
     fun onUpdate(action: (T?, U?) -> Unit) {
-        handle1.onUpdate { e ->
-            action(e, handle2.getContent())
-        }
-
-        handle2.onUpdate { e ->
-            action(handle1.getContent(), e)
+        listOf(handle1, handle2).forEach { handle ->
+            handle.onUpdate {
+                action(handle1.getContent(), handle2.getContent())
+            }
         }
     }
 }
@@ -42,18 +40,12 @@ class WasmTripleHandle<T, U, V>(
     /**
      * Trigger a callback when any of the handles updates. The callback will receive the latest
      * entities from all handles.
-     * */
+     */
     fun onUpdate(action: (T?, U?, V?) -> Unit) {
-        handle1.onUpdate { e ->
-            action(e, handle2.getContent(), handle3.getContent())
-        }
-
-        handle2.onUpdate { e ->
-            action(handle1.getContent(), e, handle3.getContent())
-        }
-
-        handle3.onUpdate { e ->
-            action(handle1.getContent(), handle2.getContent(), e)
+        listOf(handle1, handle2, handle3).forEach { handle ->
+            handle.onUpdate {
+                action(handle1.getContent(), handle2.getContent(), handle3.getContent())
+            }
         }
     }
 }
@@ -69,22 +61,17 @@ class WasmQuadHandle<T, U, V, W>(
     /**
      * Trigger a callback when any of the handles updates. The callback will receive the latest
      * entities from all handles.
-     * */
+     */
     fun onUpdate(action: (T?, U?, V?, W?) -> Unit) {
-        handle1.onUpdate { e ->
-            action(e, handle2.getContent(), handle3.getContent(), handle4.getContent())
-        }
-
-        handle2.onUpdate { e ->
-            action(handle1.getContent(), e, handle3.getContent(), handle4.getContent())
-        }
-
-        handle3.onUpdate { e ->
-            action(handle1.getContent(), handle2.getContent(), e, handle4.getContent())
-        }
-
-        handle4.onUpdate { e ->
-            action(handle1.getContent(), handle2.getContent(), handle3.getContent(), e)
+        listOf(handle1, handle2, handle3, handle4).forEach { handle ->
+            handle.onUpdate {
+                action(
+                    handle1.getContent(),
+                    handle2.getContent(),
+                    handle3.getContent(),
+                    handle4.getContent()
+                )
+            }
         }
     }
 }
@@ -101,56 +88,18 @@ class WasmQuinHandle<T, U, V, W, X>(
     /**
      * Trigger a callback when any of the handles updates. The callback will receive the latest
      * entities from all handles.
-     * */
+     */
     fun onUpdate(action: (T?, U?, V?, W?, X?) -> Unit) {
-        handle1.onUpdate { e ->
-            action(
-                e,
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent()
-            )
-        }
-
-        handle2.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                e,
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent()
-            )
-        }
-
-        handle3.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                e,
-                handle4.getContent(),
-                handle5.getContent()
-            )
-        }
-
-        handle4.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                e,
-                handle5.getContent()
-            )
-        }
-
-        handle5.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                e
-            )
+        listOf(handle1, handle2, handle3, handle4, handle5).forEach { handle ->
+            handle.onUpdate {
+                action(
+                    handle1.getContent(),
+                    handle2.getContent(),
+                    handle3.getContent(),
+                    handle4.getContent(),
+                    handle5.getContent()
+                )
+            }
         }
     }
 }
@@ -168,72 +117,19 @@ class WasmSixHandle<T, U, V, W, X, Y>(
     /**
      * Trigger a callback when any of the handles updates. The callback will receive the latest
      * entities from all handles.
-     * */
+     */
     fun onUpdate(action: (T?, U?, V?, W?, X?, Y?) -> Unit) {
-        handle1.onUpdate { e ->
-            action(
-                e,
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent()
-            )
-        }
-
-        handle2.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                e,
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent()
-            )
-        }
-
-        handle3.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                e,
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent()
-            )
-        }
-
-        handle4.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                e,
-                handle5.getContent(),
-                handle6.getContent()
-            )
-        }
-
-        handle5.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                e,
-                handle6.getContent()
-            )
-        }
-
-        handle6.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                e
-            )
+        listOf(handle1, handle2, handle3, handle4, handle5, handle6).forEach { handle ->
+            handle.onUpdate {
+                action(
+                    handle1.getContent(),
+                    handle2.getContent(),
+                    handle3.getContent(),
+                    handle4.getContent(),
+                    handle5.getContent(),
+                    handle6.getContent()
+                )
+            }
         }
     }
 }
@@ -252,90 +148,20 @@ class WasmSeptHandle<T, U, V, W, X, Y, Z>(
     /**
      * Trigger a callback when any of the handles updates. The callback will receive the latest
      * entities from all handles.
-     * */
+     */
     fun onUpdate(action: (T?, U?, V?, W?, X?, Y?, Z?) -> Unit) {
-        handle1.onUpdate { e ->
-            action(
-                e,
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent()
-            )
-        }
-
-        handle2.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                e,
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent()
-            )
-        }
-
-        handle3.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                e,
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent()
-            )
-        }
-
-        handle4.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                e,
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent()
-            )
-        }
-
-        handle5.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                e,
-                handle6.getContent(),
-                handle7.getContent()
-            )
-        }
-
-        handle6.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                e,
-                handle7.getContent()
-            )
-        }
-
-        handle7.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                e
-            )
+        listOf(handle1, handle2, handle3, handle4, handle5, handle6, handle7).forEach { handle ->
+            handle.onUpdate {
+                action(
+                    handle1.getContent(),
+                    handle2.getContent(),
+                    handle3.getContent(),
+                    handle4.getContent(),
+                    handle5.getContent(),
+                    handle6.getContent(),
+                    handle7.getContent()
+                )
+            }
         }
     }
 }
@@ -355,110 +181,30 @@ class WasmOctHandle<T, U, V, W, X, Y, Z, A>(
     /**
      * Trigger a callback when any of the handles updates. The callback will receive the latest
      * entities from all handles.
-     * */
+     */
     fun onUpdate(action: (T?, U?, V?, W?, X?, Y?, Z?, A?) -> Unit) {
-        handle1.onUpdate { e ->
-            action(
-                e,
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent()
-            )
-        }
-
-        handle2.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                e,
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent()
-            )
-        }
-
-        handle3.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                e,
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent()
-            )
-        }
-
-        handle4.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                e,
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent()
-            )
-        }
-
-        handle5.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                e,
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent()
-            )
-        }
-
-        handle6.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                e,
-                handle7.getContent(),
-                handle8.getContent()
-            )
-        }
-
-        handle7.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                e,
-                handle8.getContent()
-            )
-        }
-
-        handle8.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                e
-            )
+        listOf(
+            handle1,
+            handle2,
+            handle3,
+            handle4,
+            handle5,
+            handle6,
+            handle7,
+            handle8
+        ).forEach { handle ->
+            handle.onUpdate {
+                action(
+                    handle1.getContent(),
+                    handle2.getContent(),
+                    handle3.getContent(),
+                    handle4.getContent(),
+                    handle5.getContent(),
+                    handle6.getContent(),
+                    handle7.getContent(),
+                    handle8.getContent()
+                )
+            }
         }
     }
 }
@@ -479,132 +225,32 @@ class WasmNovHandle<T, U, V, W, X, Y, Z, A, B>(
     /**
      * Trigger a callback when any of the handles updates. The callback will receive the latest
      * entities from all handles.
-     * */
+     */
     fun onUpdate(action: (T?, U?, V?, W?, X?, Y?, Z?, A?, B?) -> Unit) {
-        handle1.onUpdate { e ->
-            action(
-                e,
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent()
-            )
-        }
-
-        handle2.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                e,
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent()
-            )
-        }
-
-        handle3.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                e,
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent()
-            )
-        }
-
-        handle4.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                e,
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent()
-            )
-        }
-
-        handle5.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                e,
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent()
-            )
-        }
-
-        handle6.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                e,
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent()
-            )
-        }
-
-        handle7.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                e,
-                handle8.getContent(),
-                handle9.getContent()
-            )
-        }
-
-        handle8.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                e,
-                handle9.getContent()
-            )
-        }
-
-        handle9.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                e
-            )
+        listOf(
+            handle1,
+            handle2,
+            handle3,
+            handle4,
+            handle5,
+            handle6,
+            handle7,
+            handle8,
+            handle9
+        ).forEach { handle ->
+            handle.onUpdate {
+                action(
+                    handle1.getContent(),
+                    handle2.getContent(),
+                    handle3.getContent(),
+                    handle4.getContent(),
+                    handle5.getContent(),
+                    handle6.getContent(),
+                    handle7.getContent(),
+                    handle8.getContent(),
+                    handle9.getContent()
+                )
+            }
         }
     }
 }
@@ -626,156 +272,34 @@ class WasmDecHandle<T, U, V, W, X, Y, Z, A, B, C>(
     /**
      * Trigger a callback when any of the handles updates. The callback will receive the latest
      * entities from all handles.
-     * */
+     */
     fun onUpdate(action: (T?, U?, V?, W?, X?, Y?, Z?, A?, B?, C?) -> Unit) {
-        handle1.onUpdate { e ->
-            action(
-                e,
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent(),
-                handle10.getContent()
-            )
-        }
-
-        handle2.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                e,
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent(),
-                handle10.getContent()
-            )
-        }
-
-        handle3.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                e,
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent(),
-                handle10.getContent()
-            )
-        }
-
-        handle4.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                e,
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent(),
-                handle10.getContent()
-            )
-        }
-
-        handle5.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                e,
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent(),
-                handle10.getContent()
-            )
-        }
-
-        handle6.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                e,
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent(),
-                handle10.getContent()
-            )
-        }
-
-        handle7.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                e,
-                handle8.getContent(),
-                handle9.getContent(),
-                handle10.getContent()
-            )
-        }
-
-        handle8.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                e,
-                handle9.getContent(),
-                handle10.getContent()
-            )
-        }
-
-        handle9.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                e,
-                handle10.getContent()
-            )
-        }
-
-        handle10.onUpdate { e ->
-            action(
-                handle1.getContent(),
-                handle2.getContent(),
-                handle3.getContent(),
-                handle4.getContent(),
-                handle5.getContent(),
-                handle6.getContent(),
-                handle7.getContent(),
-                handle8.getContent(),
-                handle9.getContent(),
-                e
-            )
+        listOf(
+            handle1,
+            handle2,
+            handle3,
+            handle4,
+            handle5,
+            handle6,
+            handle7,
+            handle8,
+            handle9,
+            handle10
+        ).forEach { handle ->
+            handle.onUpdate {
+                action(
+                    handle1.getContent(),
+                    handle2.getContent(),
+                    handle3.getContent(),
+                    handle4.getContent(),
+                    handle5.getContent(),
+                    handle6.getContent(),
+                    handle7.getContent(),
+                    handle8.getContent(),
+                    handle9.getContent(),
+                    handle10.getContent()
+                )
+            }
         }
     }
 }

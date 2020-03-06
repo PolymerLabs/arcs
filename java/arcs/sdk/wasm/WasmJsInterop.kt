@@ -250,15 +250,18 @@ fun log(msg: String) {
     flush()
 }
 
+/** Get a combined handle to call events on. */
 fun <T, U> combine(handle1: WasmHandleEvents<T>, handle2: WasmHandleEvents<U>):
     WasmTupleHandle<T, U> = WasmTupleHandle(handle1, handle2)
 
+/** Get a combined handle to call events on. */
 fun <T, U, V> combine(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
     handle3: WasmHandleEvents<V>
 ): WasmTripleHandle<T, U, V> = WasmTripleHandle(handle1, handle2, handle3)
 
+/** Get a combined handle to call events on. */
 fun <T, U, V, W> combine(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
@@ -266,6 +269,7 @@ fun <T, U, V, W> combine(
     handle4: WasmHandleEvents<W>
 ): WasmQuadHandle<T, U, V, W> = WasmQuadHandle(handle1, handle2, handle3, handle4)
 
+/** Get a combined handle to call events on. */
 fun <T, U, V, W, X> combine(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
@@ -274,6 +278,7 @@ fun <T, U, V, W, X> combine(
     handle5: WasmHandleEvents<X>
 ): WasmQuinHandle<T, U, V, W, X> = WasmQuinHandle(handle1, handle2, handle3, handle4, handle5)
 
+/** Get a combined handle to call events on. */
 fun <T, U, V, W, X, Y> combine(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
@@ -284,6 +289,7 @@ fun <T, U, V, W, X, Y> combine(
 ): WasmSixHandle<T, U, V, W, X, Y> =
     WasmSixHandle(handle1, handle2, handle3, handle4, handle5, handle6)
 
+/** Get a combined handle to call events on. */
 fun <T, U, V, W, X, Y, Z> combine(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
@@ -295,6 +301,7 @@ fun <T, U, V, W, X, Y, Z> combine(
 ): WasmSeptHandle<T, U, V, W, X, Y, Z> =
     WasmSeptHandle(handle1, handle2, handle3, handle4, handle5, handle6, handle7)
 
+/** Get a combined handle to call events on. */
 fun <T, U, V, W, X, Y, Z, A> combine(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
@@ -307,6 +314,7 @@ fun <T, U, V, W, X, Y, Z, A> combine(
 ): WasmOctHandle<T, U, V, W, X, Y, Z, A> =
     WasmOctHandle(handle1, handle2, handle3, handle4, handle5, handle6, handle7, handle8)
 
+/** Get a combined handle to call events on. */
 fun <T, U, V, W, X, Y, Z, A, B> combine(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
@@ -320,6 +328,7 @@ fun <T, U, V, W, X, Y, Z, A, B> combine(
 ): WasmNovHandle<T, U, V, W, X, Y, Z, A, B> =
     WasmNovHandle(handle1, handle2, handle3, handle4, handle5, handle6, handle7, handle8, handle9)
 
+/** Get a combined handle to call events on. */
 fun <T, U, V, W, X, Y, Z, A, B, C> combine(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
