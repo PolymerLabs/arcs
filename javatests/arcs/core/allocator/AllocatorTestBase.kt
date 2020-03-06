@@ -26,6 +26,8 @@ import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
 import arcs.jvm.host.ExplicitHostRegistry
+import arcs.sdk.ReadSingletonHandle
+import arcs.sdk.WriteSingletonHandle
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -291,11 +293,22 @@ open class AllocatorTestBase {
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
         assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Started)
 
-        assertThat((writePersonContext.particle as WritePerson).createCalled).isTrue()
-        assertThat((writePersonContext.particle as WritePerson).wrote).isTrue()
+        writePersonContext.particle.let { particle ->
+            particle as WritePerson
+            assertThat(particle.handles.person).isInstanceOf(WriteSingletonHandle::class.java)
+            assertThat(particle.handles.person).isNotInstanceOf(ReadSingletonHandle::class.java)
+            assertThat(particle.createCalled).isTrue()
+            assertThat(particle.wrote).isTrue()
+        }
 
-        assertThat((readPersonContext.particle as ReadPerson).createCalled).isTrue()
-        assertThat((readPersonContext.particle as ReadPerson).name).isEqualTo("John Wick")
+
+        readPersonContext.particle.let { particle ->
+            particle as ReadPerson
+            assertThat(particle.handles.person).isInstanceOf(ReadSingletonHandle::class.java)
+            assertThat(particle.handles.person).isNotInstanceOf(WriteSingletonHandle::class.java)
+            assertThat(particle.createCalled).isTrue()
+            assertThat(particle.name).isEqualTo("John Wick")
+        }
     }
 
     @Test

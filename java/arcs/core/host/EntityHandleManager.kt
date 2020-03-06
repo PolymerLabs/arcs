@@ -62,8 +62,7 @@ class EntityHandleManager(val handleManager: HandleManager) {
         handleName: String,
         storageKey: StorageKey,
         schema: Schema,
-        handleMode: HandleMode = HandleMode
-            .ReadWrite,
+        handleMode: HandleMode = HandleMode.ReadWrite,
         idGenerator: Id.Generator = Id.Generator.newSession(),
         sender: Sender = ::defaultSender
     ) = createSdkHandle(
@@ -97,8 +96,7 @@ class EntityHandleManager(val handleManager: HandleManager) {
         handleName: String,
         storageKey: StorageKey,
         schema: Schema,
-        handleMode: HandleMode = HandleMode
-            .ReadWrite,
+        handleMode: HandleMode = HandleMode.ReadWrite,
         idGenerator: Id.Generator = Id.Generator.newSession(),
         sender: Sender = ::defaultSender
     ) = createSdkHandle(
