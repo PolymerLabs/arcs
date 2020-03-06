@@ -285,7 +285,7 @@ class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 ${this.opts.wasm ? '' : `\
 
     companion object {
-        val schema = ${this.leftPad(this.createSchema(schemaHash), 8, true)}
+        val schema = ${leftPad(this.createSchema(schemaHash), 8, true)}
         
         init {
             SchemaRegistry.register(schema)
