@@ -307,7 +307,7 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun createEntityStorageKeyId_versionNumberMustBeLarger() = runBlockingTest {
+    fun createEntityStorageKeyId_versionNumberMustBeOneLarger() = runBlockingTest {
         val key = DummyStorageKey("key")
         val entityId = "entity-id"
         val typeId = 123L
@@ -351,7 +351,21 @@ class DatabaseImplTest {
             )
         ).isNull()
 
-        // Increasing version number is ok.
+        // Increasing version number by more than 1 is rejected.
+        assertThat(
+            database.createEntityStorageKeyId(
+                key,
+                entityId,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
+                typeId,
+                VERSION_MAP,
+                12,
+                db
+            )
+        ).isNull()
+
+        // Increasing version number by 1 is ok.
         val newStorageKeyId = database.createEntityStorageKeyId(
             key,
             entityId,
@@ -363,6 +377,8 @@ class DatabaseImplTest {
             db
         )
         assertThat(newStorageKeyId).isNotNull()
+        // TODO: If the storage key is the same, there's no need to delete the old one and create a
+        // new one.
         assertThat(newStorageKeyId).isNotEqualTo(originalStorageKeyId)
     }
 

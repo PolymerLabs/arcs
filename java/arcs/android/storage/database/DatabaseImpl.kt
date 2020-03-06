@@ -562,7 +562,9 @@ class DatabaseImpl(
         } else {
             // Collection already exists; delete all existing entries.
             val collectionId = metadata.collectionId
-            if (data.databaseVersion <= metadata.versionNumber) return@useTransaction false
+            if (data.databaseVersion != metadata.versionNumber + 1) {
+                return@useTransaction false
+            }
 
             // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
             when (dataType) {
@@ -809,7 +811,7 @@ class DatabaseImpl(
                     "$storedEntityId."
             }
             val storedVersion = it.getInt(2)
-            if (databaseVersion <= storedVersion) {
+            if (databaseVersion != storedVersion + 1) {
                 return@transaction null
             }
 
