@@ -13,7 +13,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.HandleMode
+import arcs.core.data.HandleMode
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows

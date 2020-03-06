@@ -3,6 +3,7 @@ package arcs.core.host
 import arcs.core.common.Id
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.storage.Callbacks

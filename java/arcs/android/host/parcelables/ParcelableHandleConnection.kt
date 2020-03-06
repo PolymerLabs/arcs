@@ -15,6 +15,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import arcs.android.type.readType
 import arcs.android.type.writeType
+import arcs.core.data.HandleMode
 import arcs.core.data.Plan
 import arcs.core.storage.StorageKeyParser
 
@@ -25,6 +26,7 @@ data class ParcelableHandleConnection(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.storageKey.toString())
         parcel.writeType(actual.type, flags)
+        parcel.writeInt(actual.mode.ordinal)
     }
 
     override fun describeContents(): Int = 0
@@ -38,8 +40,16 @@ data class ParcelableHandleConnection(
                 "No name found in Parcel"
             }
 
+            val handleModeOrdinal = requireNotNull(parcel.readInt()) {
+                "No handleMode found in Parcel"
+            }
+
+            val handleMode = requireNotNull(HandleMode.values().getOrNull(handleModeOrdinal)) {
+                "HandleMode ordinal unknown value $handleModeOrdinal"
+            }
+
             return ParcelableHandleConnection(
-                Plan.HandleConnection(StorageKeyParser.parse(storageKeyString), type)
+                Plan.HandleConnection(StorageKeyParser.parse(storageKeyString), handleMode, type)
             )
         }
 
