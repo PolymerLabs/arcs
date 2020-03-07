@@ -54,10 +54,10 @@ interface ReadCollectionHandle<T : Entity> : Handle {
     suspend fun onUpdate(action: (Set<T>) -> Unit)
 
     /** Assign a callback when the collection handle is synced. */
-    suspend fun onSync(action: (ReadCollectionHandle<T>) -> Unit)
+    suspend fun onSync(action: () -> Unit)
 
     /** Assign a callback when the collection handle is desynced. */
-    suspend fun onDesync(action: (ReadCollectionHandle<T>) -> Unit)
+    suspend fun onDesync(action: () -> Unit)
 
     /** Returns a set with all the entities in the collection. */
     suspend fun fetchAll(): Set<T>
