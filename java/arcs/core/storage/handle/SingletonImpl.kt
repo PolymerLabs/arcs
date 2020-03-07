@@ -17,7 +17,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
-import arcs.core.storage.Callbacks
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
@@ -32,7 +31,6 @@ typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
 typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<T>, T?>
 typealias SingletonHandle<T> = SingletonImpl<T>
 typealias SingletonActivationFactory<T> = ActivationFactory<SingletonData<T>, SingletonOp<T>, T?>
-typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?>
 
 /**
  * Singleton [Handle] implementation for the runtime.
@@ -43,7 +41,6 @@ typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?
 class SingletonImpl<T : Referencable>(
     name: String,
     storageProxy: SingletonProxy<T>,
-    callbacks: SingletonCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
     canRead: Boolean = true,
@@ -52,7 +49,6 @@ class SingletonImpl<T : Referencable>(
 ) : SingletonBase<T>(
     name,
     storageProxy,
-    callbacks,
     ttl,
     time,
     canRead,

@@ -17,7 +17,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
-import arcs.core.storage.Callbacks
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
@@ -32,7 +31,6 @@ typealias SetHandle<T> = CollectionImpl<T>
 typealias SetActivationFactory<T> = ActivationFactory<SetData<T>, SetOp<T>, Set<T>>
 typealias SetProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 typealias SetBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
-typealias SetCallbacks<T> = Callbacks<SetData<T>, SetOp<T>, Set<T>>
 
 /**
  * Collection Handle implementation for the runtime.
@@ -43,7 +41,6 @@ typealias SetCallbacks<T> = Callbacks<SetData<T>, SetOp<T>, Set<T>>
 class CollectionImpl<T : Referencable>(
     name: String,
     storageProxy: SetProxy<T>,
-    callbacks: SetCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
     canRead: Boolean = true,
@@ -52,7 +49,6 @@ class CollectionImpl<T : Referencable>(
 ) : SetBase<T>(
     name,
     storageProxy,
-    callbacks,
     ttl,
     time,
     canRead,
