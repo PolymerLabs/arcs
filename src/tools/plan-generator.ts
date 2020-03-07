@@ -10,9 +10,10 @@
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils, quote} from './kotlin-generation-utils.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
+import {Direction} from '../runtime/manifest-ast-nodes.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -25,14 +26,14 @@ export class PlanGeneratorError extends Error {
 
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
-  constructor(private resolutions: Recipe[], private scope: string = 'arcs.core.data') {
+  constructor(private resolvedRecipes: Recipe[], private scope: string = 'arcs.core.data') {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
   generate(): string {
     const planOutline = [
       this.fileHeader(),
-      this.createPlans().join('\n'),
+      ...this.createPlans(),
       this.fileFooter()
     ];
 
@@ -41,14 +42,13 @@ export class PlanGenerator {
 
   /** Converts a resolved recipe into a `Plan` object. */
   createPlans(): string[] {
-    return this.resolutions.map(recipe => {
-      const planName = `${recipe.name.replace(/[rR]ecipe/, '')}Plan`;
+    return this.resolvedRecipes.map(recipe => {
+      const planName = `${recipe.name}Plan`;
 
       const particles = recipe.particles.map((p) => this.createParticle(p));
 
       const start = `object ${planName} : `;
-      const plan = `${start}${ktUtils.applyFun('Plan', particles, 'Plan', start.length)}`;
-      return plan;
+      return `${start}${ktUtils.applyFun('Plan', particles, 'Plan', start.length)}`;
     });
   }
 
@@ -57,36 +57,35 @@ export class PlanGenerator {
     const spec = particle.spec;
     const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
 
-    const particleName = `"${particle.name}"`;
-    const locationArg = `"${location}"`;
-
-    const connectionMappings = [...Object.entries(particle.connections)]
+    const connectionMappings = Object.entries(particle.connections)
       .map(([key, conn]) => `"${key}" to ${this.createHandleConnection(conn)}`);
 
-    return ktUtils.applyFun('Particle', [particleName, locationArg, ktUtils.mapOf(connectionMappings)]);
+    return ktUtils.applyFun('Particle', [
+      quote(particle.name),
+      quote(location),
+      ktUtils.mapOf(connectionMappings)
+    ]);
   }
 
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   createHandleConnection(connection: HandleConnection): string {
     const storageKey = this.createStorageKey(connection.handle.storageKey);
-    let mode;
-    switch (connection.direction) {
-      case 'reads':
-        mode = 'HandleMode.Read';
-        break;
-      case 'writes':
-        mode = 'HandleMode.Write';
-        break;
-      case 'reads writes':
-        mode = 'HandleMode.ReadWrite';
-        break;
-      default:
-        throw new PlanGeneratorError(`HandleConnection direction '${connection.direction}' is not supported.`);
-    }
+    const mode = this.createDirection(connection.direction);
     const type = this.createType(connection.type);
     const ttl = 'null';
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl]);
+  }
+
+  /** Generates a Kotlin `HandleMode` from a Direction. */
+  createDirection(direction: Direction): string {
+    switch (direction) {
+      case 'reads': return 'HandleMode.Read';
+      case 'writes': return 'HandleMode.Write';
+      case 'reads writes': return 'HandleMode.ReadWrite';
+      default: throw new PlanGeneratorError(
+        `HandleConnection direction '${direction}' is not supported.`);
+    }
   }
 
   /** Generates a Kotlin `StorageKey` from a StorageKey. */

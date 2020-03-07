@@ -1,6 +1,3 @@
-schema Thing Product
-  name: Text
-
 particle Reader
   data: reads Thing {name: Text}
 

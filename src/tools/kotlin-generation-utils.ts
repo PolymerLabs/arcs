@@ -87,3 +87,6 @@ export function leftPad(input: string, indent: number, skipFirst: boolean = fals
     .join('\n');
 }
 
+/** Format a Kotlin string. */
+export function quote(s: string) { return `"${s}"`; }
+

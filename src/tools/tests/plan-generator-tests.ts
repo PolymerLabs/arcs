@@ -9,9 +9,7 @@
  */
 
 import {PlanGenerator} from '../plan-generator.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
 import {assert} from '../../platform/chai-node.js';
-import {Manifest} from '../../runtime/manifest.js';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
