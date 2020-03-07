@@ -48,7 +48,7 @@ export class PlanGenerator {
       const particles = recipe.particles.map((p) => this.createParticle(p));
 
       const start = `object ${planName} : `;
-      return `${start}${ktUtils.applyFun('Plan', particles, start.length)}`;
+      return `${start}${ktUtils.applyFun('Plan', [ktUtils.listOf(particles)], start.length)}`;
     });
   }
 
