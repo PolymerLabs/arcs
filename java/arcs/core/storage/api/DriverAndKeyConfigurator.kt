@@ -40,7 +40,7 @@ object DriverAndKeyConfigurator {
         // Register volatile driver providers for every ArcId
         arcIds.forEach { VolatileDriverProvider(it) }
         RamDiskDriverProvider()
-        // Only register the database driver provider if a database was provided.
+        // Only register the database driver provider if a database manager was provided.
         databaseManager?.let {
             DatabaseDriverProvider.configure(it, SchemaRegistry::get)
         }
