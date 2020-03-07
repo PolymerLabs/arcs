@@ -29,10 +29,10 @@ export class PlanGenerator {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
-  generate(): string {
+  async generate(): Promise<string> {
     const planOutline = [
       this.fileHeader(),
-      this.createPlans().join('\n'),
+      (await this.createPlans()).join('\n'),
       this.fileFooter()
     ];
 
@@ -40,34 +40,41 @@ export class PlanGenerator {
   }
 
   /** Converts a resolved recipe into a `Plan` object. */
-  createPlans(): string[] {
-    return this.resolutions.map(recipe => {
+  async createPlans(): Promise<string[]> {
+    const plans = [];
+    for (const recipe of this.resolutions) {
       const planName = `${recipe.name.replace(/[rR]ecipe/, '')}Plan`;
 
-      const particles = recipe.particles.map((p) => this.createParticle(p));
+      const particles = [];
+      for (const particle of recipe.particles) {
+        particles.push(await this.createParticle(particle));
+      }
 
       const start = `object ${planName} : `;
       const plan = `${start}${ktUtils.applyFun('Plan', particles, 'Plan', start.length)}`;
-      return plan;
-    });
+      plans.push(plan);
+    }
+    return plans;
   }
 
   /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */
-  createParticle(particle: Particle): string {
+  async createParticle(particle: Particle): Promise<string> {
     const spec = particle.spec;
     const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
 
     const particleName = `"${particle.name}"`;
     const locationArg = `"${location}"`;
 
-    const connectionMappings = [...Object.entries(particle.connections)]
-      .map(([key, conn]) => `"${key}" to ${this.createHandleConnection(conn)}`);
+    const connectionMappings = [];
+    for (const [key, conn] of Object.entries(particle.connections)) {
+      connectionMappings.push(`"${key}" to ${await this.createHandleConnection(conn)}`);
+    }
 
     return ktUtils.applyFun('Particle', [particleName, locationArg, ktUtils.mapOf(connectionMappings)]);
   }
 
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
-  createHandleConnection(connection: HandleConnection): string {
+  async createHandleConnection(connection: HandleConnection): Promise<string> {
     const storageKey = this.createStorageKey(connection.handle.storageKey);
     let mode;
     switch (connection.direction) {
@@ -83,7 +90,7 @@ export class PlanGenerator {
       default:
         throw new PlanGeneratorError(`HandleConnection direction '${connection.direction}' is not supported.`);
     }
-    const type = this.createType(connection.type);
+    const type = await this.createType(connection.type);
     const ttl = 'null';
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl]);
@@ -95,31 +102,28 @@ export class PlanGenerator {
   }
 
   /** Generates a Kotlin `core.arc.type.Type` from a Type. */
-  // TODO(alxr): Implement
-  createType(type: Type): string {
+  async createType(type: Type): Promise<string> {
     switch (type.tag) {
       case 'Collection':
-        break;
+        return ktUtils.applyFun('CollectionType', [await this.createType(type.getContainedType())]);
+      case 'Count':
+        return ktUtils.applyFun('CountType', [await this.createType(type.getContainedType())]);
       case 'Entity':
-        break;
-      case 'Handle':
-        break;
+        return ktUtils.applyFun('EntityType', [`SchemaRegistry["${await type.getEntitySchema().hash()}"]`])
       case 'Reference':
-        break;
+        return ktUtils.applyFun('ReferenceType', [await this.createType(type.getContainedType())]);
       case 'Singleton':
-        break;
+        return ktUtils.applyFun('SingletonType', [await this.createType(type.getContainedType())]);
       case 'TypeVariable':
-        break;
       case 'Arc':
       case 'BigCollection':
-      case 'Count':
+      case 'Handle':
       case 'Interface':
       case 'Slot':
       case 'Tuple':
       default:
         throw Error(`Type of ${type.tag} is not supported.`);
     }
-    return 'null';
   }
 
   fileHeader(): string {
