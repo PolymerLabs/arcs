@@ -27,6 +27,7 @@ import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator.configure
  * ```kotlin
  * override fun onCreate() {
  *     DriverAndKeyConfigurator.configure(
+ *         this,
  *         "myArcId1",
  *         "myArcId2",
  *         // ...
