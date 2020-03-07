@@ -39,10 +39,19 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 ) {
     private val log = TaggedLog { "StorageProxy" }
 
-    private val handlesMutex = Mutex()
-
-    private val readHandles: MutableSet<Handle<Data, Op, T>>
-        by guardedBy(handlesMutex, mutableSetOf())
+    private val callbackMutex = Mutex()
+    private val onUpdateActions by guardedBy(
+        callbackMutex,
+        mutableMapOf<String, MutableList<(T)->Unit>>()
+    )
+    private val onSyncActions by guardedBy(
+        callbackMutex,
+        mutableMapOf<String, MutableList<() -> Unit>>()
+    )
+    private val onDesyncActions by guardedBy(
+        callbackMutex,
+        mutableMapOf<String, MutableList<() -> Unit>>()
+    )
 
     private val syncMutex = Mutex()
     private val crdt: CrdtModel<Data, Op, T>
@@ -55,32 +64,40 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val store = storeEndpointProvider.getStorageEndpoint()
     private val storeListenerId = store.setCallback(ProxyCallback(::onMessage))
 
-    /**
-     * Connects a [Handle]. If the handle is readable, it will receive the configured callbacks.
-     */
-    suspend fun registerHandle(handle: Handle<Data, Op, T>) {
-        // non-readers don't get callbacks, return early
-        if (!handle.canRead) return
-
-        log.debug { "Registering handle: $handle" }
-
-        val firstReader = handlesMutex.withLock {
-            readHandles.add(handle)
-            readHandles.size == 1
+    /** Add a [Handle] `onUpdate` action, associated with a [Handle] name. */
+    suspend fun addOnUpdate(handleName: String, action: (value: T) -> Unit) {
+        callbackMutex.withLock {
+            onUpdateActions.getOrPut(handleName) { mutableListOf() }.add(action)
         }
+    }
 
-        val hasSynced = syncMutex.withLock { isSynchronized }
+    /** Add a [Handle] `onSync` action, associated with a [Handle] name. */
+    suspend fun addOnSync(handleName: String, action: () -> Unit) {
+        callbackMutex.withLock {
+            onSyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
+        }
+    }
 
-        if (firstReader) requestSynchronization()
-        else if (hasSynced) coroutineScope { launch { handle.onSync() } }
+    /** Add a [Handle] `onDesync` action, associated with a [Handle] name. */
+    suspend fun addOnDesync(handleName: String, action: () -> Unit) {
+        callbackMutex.withLock {
+            onDesyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
+        }
     }
 
     /**
-     * Disconnects a handle so it no longer receives callbacks.
+     *  Removal all `onUpdate`, `onSync`, and `onDesync` callbacks associated with the provided
+     * `handleName`.
+     *
+     * A [Handle] that is being removed from active usage should make sure to trigger this method
+     * on its associated [StorageProxy].
      */
-    suspend fun deregisterHandle(handle: Handle<Data, Op, T>) {
-        log.debug { "Unregistering handle: $handle" }
-        handlesMutex.withLock { readHandles.remove(handle) }
+    suspend fun removeCallbacksForName(handleName: String) {
+        callbackMutex.withLock {
+            onUpdateActions.remove(handleName)
+            onSyncActions.remove(handleName)
+            onDesyncActions.remove(handleName)
+        }
     }
 
     /**
@@ -89,7 +106,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      */
     suspend fun applyOp(op: Op): Boolean {
         log.debug { "Applying operation: $op" }
-        val localSuccess = syncMutex.withLock { crdt.applyOperation(op) }
+        val (localSuccess, value) = syncMutex.withLock {
+            crdt.applyOperation(op) to crdt.consumerView
+        }
         if (!localSuccess) return false
 
         val msg = ProxyMessage.Operations<Data, Op, T>(listOf(op), null)
@@ -101,7 +120,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             requestSynchronization()
         }
 
-        notifyUpdate(listOf(op))
+        notifyUpdate(value)
 
         return true
     }
@@ -185,7 +204,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
                 // Notify our handles of an update if these operations came from elsewhere.
                 if (message.id != storeListenerId) {
-                    notifyUpdate(message.operations)
+                    notifyUpdate(value)
                 }
             }
             is ProxyMessage.SyncRequest -> {
@@ -199,28 +218,23 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         return true
     }
 
-    private suspend fun notifyUpdate(ops: List<Op>) = forEachHandle { handle ->
-        ops.forEach {
-            handle.onUpdate(it)
-        }
-    }
-
-    private suspend fun notifySync() = forEachHandle {
-        it.onSync()
-    }
-
-    private suspend fun notifyDesync() = forEachHandle { it.onDesync() }
-
-    private suspend inline fun forEachHandle(crossinline block: (Handle<Data, Op, T>) -> Unit) {
-        val handlesToNotify = handlesMutex.withLock { readHandles.toSet() }
-
-        // suspends until all handles have completed (in parallel)
+    /** Safely make a copy of the specified action set, and launch each action on a coroutine */
+    private suspend fun <FT : Function<Unit>> applyCallbacks(
+        actions: () -> Map<String, List<FT>>,
+        block: (FT) -> Unit
+    ) = callbackMutex.withLock {
         coroutineScope {
-            handlesToNotify.forEach { handle ->
-                launch { block(handle) }
+            actions().values.flatten().forEach { action ->
+                launch {
+                    block(action)
+                }
             }
         }
     }
+
+    private suspend fun notifyUpdate(data: T) = applyCallbacks(::onUpdateActions) { it(data) }
+    private suspend fun notifySync() = applyCallbacks(::onSyncActions) { it() }
+    private suspend fun notifyDesync() = applyCallbacks(::onDesyncActions) { it() }
 
     private suspend fun requestSynchronization(): Boolean {
         val msg = ProxyMessage.SyncRequest<Data, Op, T>(null)

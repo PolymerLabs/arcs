@@ -83,7 +83,6 @@ class RemovalManagerTest {
         singletonHandle = hm.rawEntitySingletonHandle(
             singletonKey,
             schema,
-            null,
             "name1",
             Ttl.Minutes(5)
         )
@@ -91,7 +90,6 @@ class RemovalManagerTest {
         collectionHandle = hm.rawEntityCollectionHandle(
             setKey,
             schema,
-            null,
             "name2",
             Ttl.Hours(2)
         )
