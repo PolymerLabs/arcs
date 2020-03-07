@@ -89,7 +89,6 @@ class HandleManager(
     suspend fun rawEntitySingletonHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: SingletonCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
@@ -112,39 +111,13 @@ class HandleManager(
         return SingletonHandle(
             name,
             storageProxy,
-            callbacks,
             ttl,
             time,
             canRead,
             dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
             schema = schema
-        ).also { storageProxy.registerHandle(it) }
+        )
     }
-
-    /**
-     * @deprecated use [rawEntitySingletonHandle] instead.
-     */
-    /* ktlint-disable max-line-length */
-    @Deprecated(
-        "Use rawEntitySingletonHandle instead",
-        replaceWith = ReplaceWith("this.rawEntitySingletonHandle(storageKey, schema, callbacks, name, ttl, canRead)")
-    )
-    /* ktlint-enable max-line-length */
-    suspend fun singletonHandle(
-        storageKey: StorageKey,
-        schema: Schema,
-        callbacks: SingletonCallbacks<RawEntity>? = null,
-        name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite,
-        canRead: Boolean = true
-    ): SingletonHandle<RawEntity> = rawEntitySingletonHandle(
-        storageKey,
-        schema,
-        callbacks,
-        name,
-        ttl,
-        canRead
-    )
 
     /**
      * Creates a new [SingletonHandle] which manages a singleton of type: [Reference], where the
@@ -153,7 +126,6 @@ class HandleManager(
     suspend fun referenceSingletonHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: SingletonCallbacks<Reference>? = null,
         name: String = storageKey.toKeyString(),
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
@@ -176,13 +148,12 @@ class HandleManager(
         return SingletonHandle(
             name,
             storageProxy,
-            callbacks,
             ttl,
             time,
             canRead,
             dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
             schema = schema
-        ).also { storageProxy.registerHandle(it) }
+        )
     }
 
     /**
@@ -193,7 +164,6 @@ class HandleManager(
     suspend fun rawEntityCollectionHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: CollectionCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
@@ -213,39 +183,13 @@ class HandleManager(
         return CollectionHandle(
             name,
             storageProxy,
-            callbacks,
             ttl,
             time,
             canRead,
             dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
             schema = schema
-        ).also { storageProxy.registerHandle(it) }
+        )
     }
-
-    /**
-     * @deprecated Use [rawEntityCollectionHandle] instead.
-     */
-    /* ktlint-disable max-line-length */
-    @Deprecated(
-        "Use rawEntityCollectionHandle instead",
-        replaceWith = ReplaceWith("this.rawEntityCollectionHandle(storageKey, schema, callbacks, name, ttl, canRead)")
-    )
-    /* ktlint-enable max-line-length */
-    suspend fun collectionHandle(
-        storageKey: StorageKey,
-        schema: Schema,
-        callbacks: CollectionCallbacks<RawEntity>? = null,
-        name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite,
-        canRead: Boolean = true
-    ): CollectionHandle<RawEntity> = rawEntityCollectionHandle(
-        storageKey,
-        schema,
-        callbacks,
-        name,
-        ttl,
-        canRead
-    )
 
     /**
      * Creates a new [CollectionHandle] which manages a singleton of type: [Reference], where the
@@ -254,7 +198,6 @@ class HandleManager(
     suspend fun referenceCollectionHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: CollectionCallbacks<Reference>? = null,
         name: String = storageKey.toKeyString(),
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
@@ -277,12 +220,11 @@ class HandleManager(
         return CollectionHandle(
             name = name,
             storageProxy = storageProxy,
-            callbacks = callbacks,
             ttl = ttl,
             time = time,
             canRead = canRead,
             dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
             schema = schema
-        ).also { storageProxy.registerHandle(it) }
+        )
     }
 }
