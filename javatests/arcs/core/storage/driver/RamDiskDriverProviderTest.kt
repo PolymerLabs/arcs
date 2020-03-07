@@ -27,7 +27,7 @@ import org.junit.runners.JUnit4
 class RamDiskDriverProviderTest {
     @After
     fun teardown() {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
         CapabilitiesResolver.reset()
     }
 

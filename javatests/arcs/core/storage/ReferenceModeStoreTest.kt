@@ -73,12 +73,12 @@ class ReferenceModeStoreTest {
             "hash"
         )
 
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
     }
 
     @After
     fun teardown() {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
     }
 
     @Test

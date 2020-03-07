@@ -14,6 +14,10 @@ arcs_kt_library(
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/storage",
+        "//java/arcs/core/storage/database",
+        "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/referencemode",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

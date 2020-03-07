@@ -42,7 +42,7 @@ class DatabaseDriverProviderTest {
     @After
     fun tearDown() {
         databaseManager = null
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
         schemaHashLookup.clear()
         CapabilitiesResolver.reset()
     }

@@ -48,7 +48,7 @@ class RamDiskBackingStoreIntegrationTest {
     @After
     fun teardown() {
         RamDisk.clear()
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
     }
 
     @Suppress("UNCHECKED_CAST")

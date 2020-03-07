@@ -52,7 +52,7 @@ object DriverFactory {
     fun unregister(driverProvider: DriverProvider) = providers.update { it - setOf(driverProvider) }
 
     /** Reset the driver registration to an empty set. For use in tests only. */
-    fun clearRegistrationsForTesting() = providers.lazySet(setOf())
+    fun clearRegistrations() = providers.lazySet(setOf())
 }
 
 /** Provider of information on the [Driver] and characteristics of the storage behind it. */
