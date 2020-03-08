@@ -139,7 +139,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         }
         val connection = connectionFactory(options, crdtType)
         // Need to initiate the connection on the main thread.
-        val service = connection.connectAsync().await()
+        val service = IStorageService.Stub.asInterface(connection.connectAsync().await())
 
         val messageChannel = ParcelableProxyMessageChannel(coroutineContext)
 

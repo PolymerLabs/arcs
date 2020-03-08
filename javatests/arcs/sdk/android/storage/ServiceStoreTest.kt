@@ -131,7 +131,7 @@ class ServiceStoreTest {
         override fun bindStorageService(
             conn: ServiceConnection,
             flags: Int,
-            options: ParcelableStoreOptions
+            options: ParcelableStoreOptions?
         ): Boolean {
             conn.onServiceConnected(ComponentName("asdf", "asdf"), service)
             return true

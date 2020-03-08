@@ -23,6 +23,7 @@ import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
+import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.storage.ProxyMessage
@@ -76,6 +77,11 @@ class StorageService : ResurrectorService() {
 
     override fun onBind(intent: Intent): IBinder? {
         log.debug { "onBind: $intent" }
+
+        if (intent.action == MANAGER_ACTION) {
+            return StorageServiceManager(coroutineContext, stats)
+        }
+
         val parcelableOptions = requireNotNull(
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
@@ -228,6 +234,7 @@ class StorageService : ResurrectorService() {
 
     companion object {
         private const val EXTRA_OPTIONS = "storeOptions"
+        private const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
 
         init {
             // TODO: Remove this, the Allocator should be responsible for setting up providers.
@@ -241,6 +248,15 @@ class StorageService : ResurrectorService() {
             Intent(context, StorageService::class.java).apply {
                 action = storeOptions.actual.storageKey.toString()
                 putExtra(EXTRA_OPTIONS, storeOptions)
+            }
+
+        /**
+         * Creates an [Intent] to use to get a [IStorageServiceManager] binding to the
+         * [StorageService].
+         */
+        fun createStorageManagerBindIntent(context: Context): Intent =
+            Intent(context, StorageService::class.java).apply {
+                action = MANAGER_ACTION
             }
     }
 }

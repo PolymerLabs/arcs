@@ -80,7 +80,7 @@ class StorageServiceConnectionTest {
         assertThat(connection.isConnected).isFalse()
 
         // Resolve the deferred, so we don't have a dangling job.
-        (deferred as CompletableDeferred).complete(serviceMock)
+        (deferred as CompletableDeferred).complete(serviceMock.asBinder())
     }
 
     @Test
