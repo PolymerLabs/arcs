@@ -3,7 +3,11 @@ load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_library", "ar
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
-API_SRCS = ["HandleHolder.kt", "Particle.kt"]
+
+API_SRCS = [
+    "HandleHolder.kt",
+    "Particle.kt",
+]
 
 arcs_kt_schema(
     name = "schemas",
@@ -18,12 +22,15 @@ arcs_kt_library(
     srcs = API_SRCS,
     deps = [
         "//java/arcs/core/storage/api",
-    ]
+    ],
 )
 
 arcs_kt_library(
     name = "host",
-    srcs = glob(["*.kt"], exclude = API_SRCS),
+    srcs = glob(
+        ["*.kt"],
+        exclude = API_SRCS,
+    ),
     deps = [
         ":api",
         ":schemas",
