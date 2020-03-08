@@ -80,7 +80,11 @@ class DefaultStorageServiceBindingDelegate(
         flags: Int,
         options: ParcelableStoreOptions?
     ): Boolean {
-        return context.bindService(StorageService.createBindIntent(context, options!!), conn, flags)
+        val options = requireNotNull(options) {
+            "ParcelableStoreOptions are required when binding to the StorageService from a " +
+                                "ServiceStore."
+        }
+        return context.bindService(StorageService.createBindIntent(context, options), conn, flags)
     }
 
     override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)

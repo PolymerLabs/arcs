@@ -21,10 +21,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Tests for [StorageServiceManagerBindingContext]. */
+/** Tests for [StorageServiceManager]. */
 @RunWith(AndroidJUnit4::class)
-class StorageServiceManagerBindingContextTest {
-    private suspend fun buildContext() = StorageServiceManagerBindingContext(
+class StorageServiceManagerTest {
+    private suspend fun buildContext() = StorageServiceManager(
         coroutineContext,
         BindingContextStatsImpl()
     )

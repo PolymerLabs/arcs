@@ -1,4 +1,4 @@
-  /*
+/*
  * Copyright 2019 Google LLC.
  *
  * This code may only be used under the BSD style license found at

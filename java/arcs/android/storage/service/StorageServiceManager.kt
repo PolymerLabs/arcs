@@ -14,10 +14,10 @@ package arcs.android.storage.service
 import kotlin.coroutines.CoroutineContext
 
 /**
- * A [StorageServiceManagerBindingContext] is used by a client of the [StorageService] to manage
+ * A [StorageServiceManager] is used by a client of the [StorageService] to manage
  * data stored within the [StorageService].
  */
-class StorageServiceManagerBindingContext(
+class StorageServiceManager(
     /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
     parentCoroutineContext: CoroutineContext,
     /** Sink to use for recording statistics about accessing data. */
