@@ -82,9 +82,9 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
             val connectionEntities = handles.handleConnections.fetchAll()
 
             // This arc has never been serialized before
-            if (arcStateEntity == null
-                || particleEntities.isEmpty()
-                || connectionEntities.isEmpty()) {
+            if (arcStateEntity == null ||
+                particleEntities.isEmpty() ||
+                connectionEntities.isEmpty()) {
                 return null
             }
 
@@ -180,18 +180,20 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
             throw NoSuchElementException("""
                 Can't create Type $tag for Handle $handleName and ${particle::class}. This usually
                 occurs because this the Particle or ArcHost implementation has changed since
-                the last time this arc for serialized.
+                the last time this arc for serialized. ${nse.message}
             """.trimIndent())
         }
     }
 
     /**
      * When recipe2plan is finished, the 'Plan' to serialize/deserialize ArcHost information
-     * will mostly be code-genned, and this method will mostly go away, in combination with
+     * will be code-genned, and this method will mostly go away, in combination with
      * the move away from denormalized schemas to schema definitions using references.
      */
     fun createArcHostContextPersistencePlan(
-        capability: Capabilities, arcId: String, hostId: String
+        capability: Capabilities,
+        arcId: String,
+        hostId: String
     ): Plan.Partition {
         val resolver = CapabilitiesResolver(
             CapabilitiesResolver.CapabilitiesResolverOptions(arcId.toArcId())
@@ -251,4 +253,3 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
         )
     }
 }
-
