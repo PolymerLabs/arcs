@@ -237,10 +237,13 @@ class DatabaseImpl(
         db.rawQuery(
             """
                 SELECT
-                    t.name,
-                    t.is_collection,
-                    t.type_id,
-                    t.value_id,
+                    fields.name,
+                    fields.is_collection,
+                    fields.type_id,
+                    CASE
+                        WHEN fields.is_collection = 0 THEN field_values.value_id
+                        ELSE collection_entries.value_id
+                    END AS field_value_id,
                     text_primitive_values.value,
                     number_primitive_values.value,
                     entity_refs.entity_id,
@@ -248,34 +251,24 @@ class DatabaseImpl(
                     entity_refs.version_map,
                     entity_refs.creation_timestamp,
                     entity_refs.expiration_timestamp
-                FROM (
-                    SELECT
-                        fields.name,
-                        fields.type_id,
-                        fields.is_collection,
-                        CASE
-                            WHEN fields.is_collection = 0 THEN field_values.value_id
-                            ELSE collection_entries.value_id
-                        END AS value_id
-                    FROM storage_keys
-                    LEFT JOIN entities
-                        ON entities.storage_key_id = storage_keys.id
-                    LEFT JOIN fields
-                        ON fields.parent_type_id = storage_keys.value_id
-                    LEFT JOIN field_values
-                        ON field_values.entity_storage_key_id = storage_keys.id
-                        AND field_values.field_id = fields.id
-                    LEFT JOIN collection_entries
-                        ON fields.is_collection = 1
-                        AND collection_entries.collection_id = field_values.value_id
-                    WHERE storage_keys.id = ?
-                ) AS t
+                FROM storage_keys
+                LEFT JOIN entities
+                    ON entities.storage_key_id = storage_keys.id
+                LEFT JOIN fields
+                    ON fields.parent_type_id = storage_keys.value_id
+                LEFT JOIN field_values
+                    ON field_values.entity_storage_key_id = storage_keys.id
+                    AND field_values.field_id = fields.id
+                LEFT JOIN collection_entries
+                    ON fields.is_collection = 1
+                    AND collection_entries.collection_id = field_values.value_id
                 LEFT JOIN number_primitive_values
-                    ON t.type_id = 1 AND number_primitive_values.id = t.value_id
+                    ON fields.type_id = 1 AND number_primitive_values.id = field_value_id
                 LEFT JOIN text_primitive_values
-                    ON t.type_id = 2 AND text_primitive_values.id = t.value_id  
+                    ON fields.type_id = 2 AND text_primitive_values.id = field_value_id
                 LEFT JOIN entity_refs
-                    ON t.type_id > 2 AND entity_refs.id = t.value_id
+                    ON fields.type_id > 2 AND entity_refs.id = field_value_id
+                WHERE storage_keys.id = ?
             """.trimIndent(),
             arrayOf(storageKeyId.toString())
         ).forEach {
