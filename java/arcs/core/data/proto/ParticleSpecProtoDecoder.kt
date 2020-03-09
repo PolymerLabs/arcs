@@ -41,8 +41,8 @@ fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
     val connections = mutableMapOf<String, HandleConnectionSpec>()
     connectionsList.forEach {
         val oldValue = connections.put(it.name, it.decode())
-        require (oldValue == null) {
-            "Duplicate connection '${it.name}' when decoding ParticleSpecProto '${name}'"
+        require(oldValue == null) {
+            "Duplicate connection '${it.name}' when decoding ParticleSpecProto '$name'"
         }
     }
     ParticleSpec(name, connections, location)
