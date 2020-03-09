@@ -16,7 +16,7 @@ import {recipe2plan} from './recipe2plan.js';
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile', 'package'],
   alias: {d: 'outdir', f: 'outfile', p: 'package'},
-  default: {outdir: '.', package: 'arcs.core.data'}
+  default: {outdir: '.'}
 });
 
 if (opts.help || opts._.length === 0) {
@@ -30,7 +30,7 @@ Description
 Options
   --outfile, -f output filename; required
   --outdir, -d  output directory; defaults to '.'
-  --package, -p kotlin package; defaults to 'arcs.core.data'
+  --package, -p kotlin package.
   --help        usage info
 `);
   process.exit(0);
@@ -38,6 +38,12 @@ Options
 
 if (!opts.outfile) {
   console.error(`Parameter --outfile is required.`);
+  process.exit(1);
+}
+
+
+if (!opts.package) {
+  console.error(`Parameter --package is required.`);
   process.exit(1);
 }
 

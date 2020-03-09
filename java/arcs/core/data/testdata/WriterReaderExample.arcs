@@ -1,6 +1,3 @@
-schema Thing Product
-  name: Text
-
 particle Reader
   data: reads Thing {name: Text}
 
@@ -10,7 +7,7 @@ particle Writer
 @trigger
   launch startup
   arcId writingArcId
-recipe WritingRecipe
+recipe Ingestion
   thing: create persistent 'my-handle-id'
   Writer
     data: writes thing
@@ -18,7 +15,7 @@ recipe WritingRecipe
 @trigger
   launch startup
   arcId readingArcId
-recipe ReadingRecipe
+recipe Consumption
   data: map 'my-handle-id'
   Reader
     data: reads data

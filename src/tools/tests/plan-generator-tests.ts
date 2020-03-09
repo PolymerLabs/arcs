@@ -10,7 +10,6 @@
 
 import {PlanGenerator} from '../plan-generator.js';
 import {assert} from '../../platform/chai-node.js';
-import {Manifest} from '../../runtime/manifest.js';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {

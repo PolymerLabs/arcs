@@ -322,14 +322,14 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             data = data,
         )
 
-def arcs_kt_plan(name, src, deps = [], package = "arcs.core.data", out = None, visibility = None):
+def arcs_kt_plan(name, src, package, deps = [], out = None, visibility = None):
     """Converts recipes in manifests into Kotlin Plans.
 
     Args:
       name: the name of the target to create
       src: an Arcs manifest file
+      package: name of kotlin package for generated file
       deps: list of dependencies (other manifests)
-      package: name of kotlin package for generated file (default: 'arcs.core.data')
       out: the name of the output artifact (a Kotlin file).
       visibility: list of visibilities
     """
@@ -340,7 +340,7 @@ def arcs_kt_plan(name, src, deps = [], package = "arcs.core.data", out = None, v
         srcs = [src],
         outs = outs,
         deps = deps,
-        progress_message = "Producing Plans",
+        progress_message = "Generating Plans",
         sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) --package " + package + " {SRC}",
     )
 

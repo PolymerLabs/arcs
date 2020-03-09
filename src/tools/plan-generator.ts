@@ -10,9 +10,10 @@
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
+import {Direction} from '../runtime/manifest-ast-nodes.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -25,14 +26,14 @@ export class PlanGeneratorError extends Error {
 
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
-  constructor(private resolutions: Recipe[], private scope: string = 'arcs.core.data') {
+  constructor(private resolvedRecipes: Recipe[], private scope: string) {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
   async generate(): Promise<string> {
     const planOutline = [
       this.fileHeader(),
-      (await this.createPlans()).join('\n'),
+      ...(await this.createPlans()),
       this.fileFooter()
     ];
 
@@ -42,8 +43,8 @@ export class PlanGenerator {
   /** Converts a resolved recipe into a `Plan` object. */
   async createPlans(): Promise<string[]> {
     const plans = [];
-    for (const recipe of this.resolutions) {
-      const planName = `${recipe.name.replace(/[rR]ecipe/, '')}Plan`;
+    for (const recipe of this.resolvedRecipes) {
+      const planName = `${recipe.name}Plan`;
 
       const particles = [];
       for (const particle of recipe.particles) {
@@ -62,38 +63,37 @@ export class PlanGenerator {
     const spec = particle.spec;
     const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
 
-    const particleName = `"${particle.name}"`;
-    const locationArg = `"${location}"`;
-
     const connectionMappings = [];
     for (const [key, conn] of Object.entries(particle.connections)) {
       connectionMappings.push(`"${key}" to ${await this.createHandleConnection(conn)}`);
     }
 
-    return ktUtils.applyFun('Particle', [particleName, locationArg, ktUtils.mapOf(connectionMappings)]);
+    return ktUtils.applyFun('Particle', [
+      quote(particle.name),
+      quote(location),
+      ktUtils.mapOf(connectionMappings, 12)
+    ]);
   }
 
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   async createHandleConnection(connection: HandleConnection): Promise<string> {
     const storageKey = this.createStorageKey(connection.handle.storageKey);
-    let mode;
-    switch (connection.direction) {
-      case 'reads':
-        mode = 'HandleMode.Read';
-        break;
-      case 'writes':
-        mode = 'HandleMode.Write';
-        break;
-      case 'reads writes':
-        mode = 'HandleMode.ReadWrite';
-        break;
-      default:
-        throw new PlanGeneratorError(`HandleConnection direction '${connection.direction}' is not supported.`);
-    }
-    const type = await this.createType(connection.type);
+    const mode = this.createDirection(connection.direction);
+    const type = this.createType(connection.type);
     const ttl = 'null';
 
-    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl]);
+    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], 24);
+  }
+
+  /** Generates a Kotlin `HandleMode` from a Direction. */
+  createDirection(direction: Direction): string {
+    switch (direction) {
+      case 'reads': return 'HandleMode.Read';
+      case 'writes': return 'HandleMode.Write';
+      case 'reads writes': return 'HandleMode.ReadWrite';
+      default: throw new PlanGeneratorError(
+        `HandleConnection direction '${direction}' is not supported.`);
+    }
   }
 
   /** Generates a Kotlin `StorageKey` from a StorageKey. */
@@ -137,8 +137,8 @@ package ${this.scope}
 // GENERATED CODE -- DO NOT EDIT
 //
 
-${this.scope === 'arcs.core.data' ? '' : 'import arcs.core.data.*'}
-import arcs.core.storage.*
+${tryImport('arcs.core.data.*', this.scope)}
+${tryImport('arcs.core.storage.*', this.scope)}
 `;
   }
 
