@@ -90,3 +90,8 @@ export function leftPad(input: string, indent: number, skipFirst: boolean = fals
 /** Format a Kotlin string. */
 export function quote(s: string) { return `"${s}"`; }
 
+/** Produces import statement if target is not within the same package. */
+export function tryImport(importName: string, packageName: string): string {
+  const nonWild = importName.replace('.*', '');
+  return packageName === nonWild ? '' : `import ${importName}`;
+}

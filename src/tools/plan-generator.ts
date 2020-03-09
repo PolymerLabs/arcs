@@ -10,7 +10,7 @@
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {KotlinGenerationUtils, quote} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
@@ -132,8 +132,8 @@ package ${this.scope}
 // GENERATED CODE -- DO NOT EDIT
 //
 
-${this.scope === 'arcs.core.data' ? '' : 'import arcs.core.data.*'}
-import arcs.core.storage.*
+${tryImport('arcs.core.data.*', this.scope)}
+${tryImport('arcs.core.storage.*', this.scope)}
 `;
   }
 
