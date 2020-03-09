@@ -395,7 +395,7 @@ class DatabaseImpl(
             data.databaseVersion,
             db,
             counters
-        ) ?: return@useTransaction false // Database has newer data. Don't apply the given op.
+        ) ?: return@transaction false // Database has newer data. Don't apply the given op.
 
         // Insert the entity's field types.
         counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
