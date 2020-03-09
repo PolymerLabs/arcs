@@ -15,7 +15,7 @@ describe('recipe2plan', () => {
   it('generates plans from recipes in a manifest', async () => {
     assert.deepStrictEqual(
       await recipe2plan('java/arcs/core/data/testdata/WriterReaderExample.arcs', 'arcs.core.data.testdata'),
-      fs.readFileSync('java/arcs/core/data/testdata/WriterReaderExample.kt', 'utf8')
+      fs.readFileSync('src/tools/tests/goldens/WriterReaderExample.kt', 'utf8')
     );
   });
 });
