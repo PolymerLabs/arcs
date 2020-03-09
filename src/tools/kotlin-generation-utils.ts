@@ -33,32 +33,32 @@ export class KotlinGenerationUtils {
    *
    * @param name name of the function
    * @param args list of arguments to the function
-   * @param emptyName alternative name for the function with empty arguments.
    * @param startIndent (optional) starting indentation level.
+   * @param emptyName alternative name for the function with empty arguments.
    */
-  applyFun(name: string, args: string[], emptyName: string = name, startIndent: number = 0): string {
+  applyFun(name: string, args: string[], startIndent: number = 0, emptyName: string = name): string {
     if (args.length === 0) return `${emptyName}()`;
     return `${name}(${this.joinWithIndents(args, startIndent + name.length + 2)})`;
   }
 
   /** Formats `mapOf` with correct indentation and defaults. */
   mapOf(args: string[], startIndent: number = 0): string {
-    return this.applyFun('mapOf', args, 'emptyMap', startIndent);
+    return this.applyFun('mapOf', args, startIndent, 'emptyMap');
   }
 
   /** Formats `mutableMapOf` with correct indentation and defaults. */
   mutableMapOf(args: string[], startIndent: number = 0): string {
-    return this.applyFun('mutableMapOf', args, 'mutableMapOf', startIndent);
+    return this.applyFun('mutableMapOf', args, startIndent, 'mutableMapOf');
   }
 
   /** Formats `listOf` with correct indentation and defaults. */
   listOf(args: string[], startIndent: number = 0): string {
-    return this.applyFun('listOf', args, 'emptyList', startIndent);
+    return this.applyFun('listOf', args, startIndent, 'emptyList');
   }
 
   /** Formats `setOf` with correct indentation and defaults. */
   setOf(args: string[], startIndent: number = 0): string {
-    return this.applyFun('setOf', args, 'emptySet', startIndent);
+    return this.applyFun('setOf', args, startIndent, 'emptySet');
   }
 
   /**
@@ -70,7 +70,12 @@ export class KotlinGenerationUtils {
   joinWithIndents(items: string[], extraIndent: number = 0): string {
     const candidate = items.join(', ');
     if (extraIndent + candidate.length <= this.pref.lineLength) return candidate;
-    return `\n${leftPad(items.join(',\n'), this.pref.indent)}\n`;
+    return `\n${this.indent(items.join(',\n'))}\n`;
+  }
+
+  /** Indent a codeblock with the preferred indentation. */
+  indent(block: string): string  {
+    return leftPad(block, this.pref.indent);
   }
 }
 
@@ -82,3 +87,11 @@ export function leftPad(input: string, indent: number, skipFirst: boolean = fals
     .join('\n');
 }
 
+/** Format a Kotlin string. */
+export function quote(s: string) { return `"${s}"`; }
+
+/** Produces import statement if target is not within the same package. */
+export function tryImport(importName: string, packageName: string): string {
+  const nonWild = importName.replace('.*', '');
+  return packageName === nonWild ? '' : `import ${importName}`;
+}

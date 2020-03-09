@@ -1,0 +1,21 @@
+particle Reader
+  data: reads Thing {name: Text}
+
+particle Writer
+   data: writes Thing {name: Text}
+
+@trigger
+  launch startup
+  arcId writingArcId
+recipe Ingestion
+  thing: create persistent 'my-handle-id'
+  Writer
+    data: writes thing
+
+@trigger
+  launch startup
+  arcId readingArcId
+recipe Consumption
+  data: map 'my-handle-id'
+  Reader
+    data: reads data

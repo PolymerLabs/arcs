@@ -8,35 +8,23 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Runtime} from '../runtime/runtime.js';
-import {Recipe} from '../runtime/recipe/recipe.js';
 import {StorageKeyRecipeResolver} from './storage-key-recipe-resolver.js';
+import {PlanGenerator} from './plan-generator.js';
 
 
 /**
  * Generates Kotlin Plans from recipes in an arcs manifest.
  *
  * @param path path/to/manifest.arcs
+ * @param scope kotlin package name
  * @return Generated Kotlin code.
  */
-export async function recipe2plan(path: string): Promise<string> {
+export async function recipe2plan(path: string, scope: string): Promise<string> {
   const manifest = await Runtime.parseFile(path);
 
   const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
-  const plans = await generatePlans(recipes);
+  const generator = new PlanGenerator(recipes, scope);
 
-  return plans.join('\n');
+  return generator.generate();
 }
-
-
-/**
- * Converts each resolved recipes into a Kotlin Plan class.
- *
- * @param resolutions A series of resolved recipes.
- * @return List of generated Kotlin plans
- */
-async function generatePlans(resolutions: Recipe[]): Promise<string[]> {
-  // TODO Implement
-  return [''];
-}
-

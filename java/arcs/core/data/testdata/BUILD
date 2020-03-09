@@ -23,6 +23,7 @@ arcs_manifest_proto(
 
 arcs_kt_plan(
     name = "example_plan",
-    src = "Example.arcs",
+    src = "WriterReaderExample.arcs",
+    package = "arcs.core.data.testdata",
     visibility = ["//visibility:public"],
 )

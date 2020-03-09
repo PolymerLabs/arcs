@@ -14,8 +14,8 @@ import {Runtime} from '../runtime/runtime.js';
 import {recipe2plan} from './recipe2plan.js';
 
 const opts = minimist(process.argv.slice(2), {
-  string: ['outdir', 'outfile'],
-  alias: {d: 'outdir', f: 'outfile'},
+  string: ['outdir', 'outfile', 'package'],
+  alias: {d: 'outdir', f: 'outfile', p: 'package'},
   default: {outdir: '.'}
 });
 
@@ -30,6 +30,7 @@ Description
 Options
   --outfile, -f output filename; required
   --outdir, -d  output directory; defaults to '.'
+  --package, -p kotlin package.
   --help        usage info
 `);
   process.exit(0);
@@ -37,6 +38,12 @@ Options
 
 if (!opts.outfile) {
   console.error(`Parameter --outfile is required.`);
+  process.exit(1);
+}
+
+
+if (!opts.package) {
+  console.error(`Parameter --package is required.`);
   process.exit(1);
 }
 
@@ -56,7 +63,7 @@ async function main() {
     Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const plans = await recipe2plan(opts._[0]);
+    const plans = await recipe2plan(opts._[0], opts.package);
 
     const outPath = path.join(opts.outdir, opts.outfile);
     console.log(outPath);
