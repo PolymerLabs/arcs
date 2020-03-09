@@ -1305,11 +1305,11 @@ export class KTExtracter {
     const genFieldAsLocal = (fieldName: string) => {
       const type = schema.fields[fieldName].type;
       const fixed = codeGenerator.escapeIdentifier(fieldName);
-      return `val ${fixed} = data.${fixed} as ${codeGenerator.typeFor(type)}`;
+      return `val ${fixed} = data.singletons["${fieldName}"] as ${codeGenerator.typeFor(type)}`;
     };
 
     const genQueryArgAsLocal = ([_, type]: [string, string]) => {
-        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = queryArg as ${codeGenerator.typeFor(type)}`;
+        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = queryArgs as ${codeGenerator.typeFor(type)}`;
     };
 
     const fieldNames = new Set<string>();
@@ -1332,7 +1332,7 @@ export class KTExtracter {
     }
     const expr = filterTerms.length > 0 ? `${filterTerms.join(' && ')}` : 'true';
 
-    return `${locals.map(x => `${x}\n`).join('')}return ${expr}`;
+    return `${locals.map(x => `${x}\n`).join('')}${expr}`;
   }
 }
 

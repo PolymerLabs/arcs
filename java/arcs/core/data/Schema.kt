@@ -19,7 +19,7 @@ import arcs.core.type.Type
 typealias Refinement = (data: RawEntity) -> Boolean
 
 /** Returns true if the RawEntity data matches the query predicate (given a query argument)*/
-typealias Query = (data: RawEntity, queryArg: Any) -> Boolean
+typealias Query = (data: RawEntity, queryArgs: Any) -> Boolean
 
 data class Schema(
     val names: List<SchemaName>,
