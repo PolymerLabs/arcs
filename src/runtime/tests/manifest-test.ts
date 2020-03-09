@@ -2630,9 +2630,9 @@ resource SomeName
     const collection = connection.type as CollectionType<TupleType>;
     assert.strictEqual(collection.collectionType.tag, 'Tuple');
     const tuple = collection.collectionType as TupleType;
-    assert.lengthOf(tuple.tupleTypes, 2);
-    assert.strictEqual(tuple.tupleTypes[0].tag, 'Reference');
-    assert.strictEqual(tuple.tupleTypes[1].tag, 'Reference');
+    assert.lengthOf(tuple.innerTypes, 2);
+    assert.strictEqual(tuple.innerTypes[0].tag, 'Reference');
+    assert.strictEqual(tuple.innerTypes[1].tag, 'Reference');
   });
 
   it('parsing a particle with tuple of non reference fails', async () => {
