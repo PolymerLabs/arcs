@@ -16,6 +16,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Base64
 import androidx.annotation.VisibleForTesting
 import arcs.android.common.bindBoolean
 import arcs.android.common.forEach
@@ -49,7 +50,6 @@ import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
-import com.google.protobuf.ByteString
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
@@ -1183,15 +1183,17 @@ class DatabaseImpl(
         }
     }
 
-    /** Returns a string representation of the [VersionMapProto] for this [VersionMap]. */
-    private fun VersionMap.toProtoLiteral() = toProto().toByteString().toStringUtf8()
+    /** Returns a base-64 string representation of the [VersionMapProto] for this [VersionMap]. */
+    // TODO: Find a way to store raw bytes as BLOBs, rather than having to base-64 encode.
+    private fun VersionMap.toProtoLiteral() =
+        Base64.encodeToString(toProto().toByteArray(), Base64.DEFAULT)
 
     /** Parses a [VersionMap] out of the [Cursor] for the given column. */
     private fun Cursor.getVersionMap(column: Int): VersionMap? {
         if (isNull(column)) return null
 
         val str = getString(column)
-        val bytes = ByteString.copyFromUtf8(str)
+        val bytes = Base64.decode(str, Base64.DEFAULT)
         val proto: VersionMapProto
         try {
             proto = VersionMapProto.parseFrom(bytes)
