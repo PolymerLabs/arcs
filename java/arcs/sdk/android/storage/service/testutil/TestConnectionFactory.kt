@@ -29,9 +29,9 @@ class TestBindingDelegate(private val context: Context) : StorageServiceBindingD
     override fun bindStorageService(
         conn: ServiceConnection,
         flags: Int,
-        options: ParcelableStoreOptions
+        options: ParcelableStoreOptions?
     ): Boolean {
-        val intent = StorageService.createBindIntent(context, options)
+        val intent = StorageService.createBindIntent(context, options!!)
         val binder = serviceController.get().onBind(intent)
         conn.onServiceConnected(null, binder)
         return true

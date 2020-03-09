@@ -25,9 +25,7 @@ import arcs.android.common.transaction
 import arcs.android.common.useTransaction
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
-import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.core.storage.driver.VolatileStorageKey
-import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.api.DriverAndKeyConfigurator
 
 /**
  * Database abstraction layer for resurrection.
@@ -44,10 +42,7 @@ class DbHelper(
 ) {
     init {
         // Pre-initialize parsers.
-        // TODO: Make a master storage key parsing initializer in arcs.core.storage.
-        RamDiskStorageKey.registerParser()
-        VolatileStorageKey.registerParser()
-        ReferenceModeStorageKey.registerParser()
+        DriverAndKeyConfigurator.configureKeyParsers()
     }
 
     override fun onCreate(db: SQLiteDatabase) {

@@ -16,6 +16,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Base64
 import androidx.annotation.VisibleForTesting
 import arcs.android.common.bindBoolean
 import arcs.android.common.forEach
@@ -49,7 +50,6 @@ import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
-import com.google.protobuf.ByteString
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
@@ -351,7 +351,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         data: DatabaseData,
         originatingClientId: Int?
-    ): Int = stats.insertUpdate.timeSuspending { counters ->
+    ): Boolean = stats.insertUpdate.timeSuspending { counters ->
         when (data) {
             is DatabaseData.Entity -> {
                 counters.increment(DatabaseCounters.INSERTUPDATE_ENTITY)
@@ -366,12 +366,12 @@ class DatabaseImpl(
                 insertOrUpdate(storageKey, data, counters)
             }
         }
-        // TODO: Return a proper database version number.
-        return@timeSuspending data.databaseVersion
-    }.also { newVersion ->
-        clientFlow.filter { it.storageKey == storageKey }
-            .onEach { it.onDatabaseUpdate(data, newVersion, originatingClientId) }
-            .launchIn(CoroutineScope(coroutineContext))
+    }.also { success ->
+        if (success) {
+            clientFlow.filter { it.storageKey == storageKey }
+                .onEach { it.onDatabaseUpdate(data, data.databaseVersion, originatingClientId) }
+                .launchIn(CoroutineScope(coroutineContext))
+        }
     }
 
     @VisibleForTesting
@@ -379,7 +379,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         data: DatabaseData.Entity,
         counters: Counters? = null
-    ) = writableDatabase.useTransaction {
+    ): Boolean = writableDatabase.useTransaction {
         val db = this
         val entity = data.rawEntity
         // Fetch/create the entity's type ID.
@@ -395,53 +395,65 @@ class DatabaseImpl(
             data.databaseVersion,
             db,
             counters
-        )
+        ) ?: return@useTransaction false // Database has newer data. Don't apply the given op.
+
         // Insert the entity's field types.
         counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
         val fields = getSchemaFields(schemaTypeId, db)
         val content = ContentValues().apply {
             put("entity_storage_key_id", storageKeyId)
         }
-        entity.allData.forEach { (fieldName, fieldValue) ->
-            content.apply {
-                val field = fields.getValue(fieldName)
-                put("field_id", field.fieldId)
-                val valueId = when {
-                    field.isCollection -> {
-                        if (fieldValue == null) return@forEach
-                        require(fieldValue is Set<*>) {
-                            "Collection fields must be of type Set. Instead found " +
-                                "${fieldValue::class}."
-                        }
-                        if (fieldValue.isEmpty()) return@forEach
-                        insertFieldCollection(
-                            fieldValue,
-                            field.typeId,
-                            db,
-                            counters
-                        )
-                    }
-                    isPrimitiveType(field.typeId) -> {
-                        getPrimitiveValueId(fieldValue as Referencable, field.typeId, db, counters)
-                    }
-                    else -> {
-                        require(fieldValue is Reference) {
-                            "Expected field value to be a Reference but was $fieldValue."
-                        }
-                        getEntityReferenceId(fieldValue, db, counters)
-                    }
-                }
-                put("value_id", valueId)
+        entity.allData
+            .filter { (_, fieldValue) ->
+                // If a field value is null, we don't write it to the database.
+                fieldValue != null
             }
+            .forEach { (fieldName, fieldValue) ->
+                content.apply {
+                    val field = fields.getValue(fieldName)
+                    put("field_id", field.fieldId)
+                    val valueId = when {
+                        field.isCollection -> {
+                            if (fieldValue == null) return@forEach
+                            require(fieldValue is Set<*>) {
+                                "Collection fields must be of type Set. Instead found " +
+                                    "${fieldValue::class}."
+                            }
+                            if (fieldValue.isEmpty()) return@forEach
+                            insertFieldCollection(
+                                fieldValue,
+                                field.typeId,
+                                db,
+                                counters
+                            )
+                        }
+                        isPrimitiveType(field.typeId) -> {
+                            getPrimitiveValueId(
+                                fieldValue as Referencable,
+                                field.typeId,
+                                db,
+                                counters
+                            )
+                        }
+                        else -> {
+                            require(fieldValue is Reference) {
+                                "Expected field value to be a Reference but was $fieldValue."
+                            }
+                            getEntityReferenceId(fieldValue, db, counters)
+                        }
+                    }
+                    put("value_id", valueId)
+                }
 
-            counters?.increment(DatabaseCounters.UPDATE_ENTITY_FIELD_VALUE)
-            insertWithOnConflict(
-                TABLE_FIELD_VALUES,
-                null,
-                content,
-                SQLiteDatabase.CONFLICT_REPLACE
-            )
-        }
+                counters?.increment(DatabaseCounters.UPDATE_ENTITY_FIELD_VALUE)
+                insertWithOnConflict(
+                    TABLE_FIELD_VALUES,
+                    null,
+                    content,
+                    SQLiteDatabase.CONFLICT_REPLACE
+                )
+            }
+            true
     }
 
     /**
@@ -495,7 +507,7 @@ class DatabaseImpl(
         data: DatabaseData.Collection,
         dataType: DataType,
         counters: Counters?
-    ) = writableDatabase.useTransaction {
+    ): Boolean = writableDatabase.useTransaction {
         val db = this
 
         // Fetch/create the entity's type ID.
@@ -550,7 +562,9 @@ class DatabaseImpl(
         } else {
             // Collection already exists; delete all existing entries.
             val collectionId = metadata.collectionId
-            if (data.databaseVersion <= metadata.versionNumber) return@useTransaction
+            if (data.databaseVersion != metadata.versionNumber + 1) {
+                return@useTransaction false
+            }
 
             // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
             when (dataType) {
@@ -602,6 +616,7 @@ class DatabaseImpl(
                     content.apply { put("value_id", referenceId) }
                 )
             }
+        true
     }
 
     @VisibleForTesting
@@ -609,7 +624,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         data: DatabaseData.Singleton,
         counters: Counters? = null
-    ) {
+    ): Boolean {
         // Convert Singleton into a a zero-or-one-element Collection.
         val set = mutableSetOf<Reference>()
         data.reference?.let { set.add(it) }
@@ -622,7 +637,7 @@ class DatabaseImpl(
             )
         }
         // Store the Collection as a Singleton.
-        insertOrUpdate(storageKey, collectionData, DataType.Singleton, counters)
+        return insertOrUpdate(storageKey, collectionData, DataType.Singleton, counters)
     }
 
     override suspend fun delete(
@@ -755,6 +770,9 @@ class DatabaseImpl(
     /**
      * Creates a new storage key ID for the given entity [StorageKey]. If one already exists, it and
      * all data for the existing entity are deleted first before creating a new one.
+     *
+     * @returns the new storage key ID for the entity if one was successfully created, or null
+     *     otherwise (e.g. if the given version number was too low)
      */
     @VisibleForTesting
     suspend fun createEntityStorageKeyId(
@@ -767,7 +785,7 @@ class DatabaseImpl(
         databaseVersion: Int,
         db: SQLiteDatabase,
         counters: Counters? = null
-    ): StorageKeyId = db.transaction {
+    ): StorageKeyId? = db.transaction {
         // TODO: Use an LRU cache.
         counters?.increment(DatabaseCounters.GET_ENTITY_STORAGEKEY_ID)
         rawQuery(
@@ -793,9 +811,8 @@ class DatabaseImpl(
                     "$storedEntityId."
             }
             val storedVersion = it.getInt(2)
-            require(databaseVersion > storedVersion) {
-                "Given version ($databaseVersion) must be greater than version in database " +
-                    "($storedVersion) when updating storage key $storageKey."
+            if (databaseVersion != storedVersion + 1) {
+                return@transaction null
             }
 
             // Remove the existing entity.
@@ -1173,15 +1190,17 @@ class DatabaseImpl(
         }
     }
 
-    /** Returns a string representation of the [VersionMapProto] for this [VersionMap]. */
-    private fun VersionMap.toProtoLiteral() = toProto().toByteString().toStringUtf8()
+    /** Returns a base-64 string representation of the [VersionMapProto] for this [VersionMap]. */
+    // TODO: Find a way to store raw bytes as BLOBs, rather than having to base-64 encode.
+    private fun VersionMap.toProtoLiteral() =
+        Base64.encodeToString(toProto().toByteArray(), Base64.DEFAULT)
 
     /** Parses a [VersionMap] out of the [Cursor] for the given column. */
     private fun Cursor.getVersionMap(column: Int): VersionMap? {
         if (isNull(column)) return null
 
         val str = getString(column)
-        val bytes = ByteString.copyFromUtf8(str)
+        val bytes = Base64.decode(str, Base64.DEFAULT)
         val proto: VersionMapProto
         try {
             proto = VersionMapProto.parseFrom(bytes)
@@ -1208,6 +1227,7 @@ class DatabaseImpl(
         val isCollection: Boolean
     )
 
+    @VisibleForTesting
     data class CollectionMetadata(
         val collectionId: CollectionId,
         val versionMap: VersionMap,

@@ -256,6 +256,33 @@ object ParcelableCrdtEntity {
             }
         }
 
+        /** Parcelable variant of [CrdtEntity.Operation.ClearAll]. */
+        data class ClearAll(
+            override val actual: CrdtEntity.Operation.ClearAll
+        ) : Operation(OpType.ClearAll) {
+            override fun describeContents(): Int = 0
+
+            override fun writeToParcel(parcel: Parcel, flags: Int) {
+                super.writeToParcel(parcel, flags)
+                parcel.writeProto(actual.clock.toProto())
+                parcel.writeString(actual.actor)
+            }
+
+            companion object CREATOR : Parcelable.Creator<ClearAll> {
+                override fun createFromParcel(parcel: Parcel): ClearAll {
+                    val clock =
+                        requireNotNull(parcel.readVersionMap()) {
+                            "VersionMap not found in parcel when reading " +
+                                "ParcelableCrdtEntity.Operation.ClearAll"
+                        }
+                    val actor = requireNotNull(parcel.readString())
+                    return ClearAll(CrdtEntity.Operation.ClearAll(actor, clock))
+                }
+
+                override fun newArray(size: Int): Array<ClearAll?> = arrayOfNulls(size)
+            }
+        }
+
         companion object CREATOR : Parcelable.Creator<Operation> {
             override fun createFromParcel(parcel: Parcel): Operation =
                 when (OpType.values()[parcel.readInt()]) {
@@ -263,6 +290,7 @@ object ParcelableCrdtEntity {
                     OpType.ClearSingleton -> ClearSingleton.createFromParcel(parcel)
                     OpType.AddToSet -> AddToSet.createFromParcel(parcel)
                     OpType.RemoveFromSet -> RemoveFromSet.createFromParcel(parcel)
+                    OpType.ClearAll -> ClearAll.createFromParcel(parcel)
                 }
 
             override fun newArray(size: Int): Array<Operation?> = arrayOfNulls(size)
@@ -276,6 +304,7 @@ object ParcelableCrdtEntity {
         ClearSingleton,
         AddToSet,
         RemoveFromSet,
+        ClearAll,
     }
 }
 
@@ -292,4 +321,5 @@ fun CrdtEntity.Operation.toParcelable():
             ParcelableCrdtEntity.Operation.ClearSingleton(this)
         is CrdtEntity.Operation.AddToSet -> ParcelableCrdtEntity.Operation.AddToSet(this)
         is CrdtEntity.Operation.RemoveFromSet -> ParcelableCrdtEntity.Operation.RemoveFromSet(this)
+        is CrdtEntity.Operation.ClearAll -> ParcelableCrdtEntity.Operation.ClearAll(this)
     }

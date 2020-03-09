@@ -50,16 +50,19 @@ export type EntityInternalModel<S extends Identified, C extends Identified> =
     version: VersionMap
   };
 
-export enum EntityOpTypes {Set, Clear, Add, Remove}
+export enum EntityOpTypes {Set, Clear, Add, Remove, ClearAll}
 
 type SetOp<Singleton, Field extends keyof Singleton> = {type: EntityOpTypes.Set, field: Field, value: Singleton[Field], actor: string, clock: VersionMap};
 type AddOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Add, field: Field, added: Collection[Field], actor: string, clock: VersionMap};
 type RemoveOp<Collection, Field extends keyof Collection> = {type: EntityOpTypes.Remove, field: Field, removed: Collection[Field], actor: string, clock: VersionMap};
+type ClearAllOp = {type: EntityOpTypes.ClearAll, actor: string, clock: VersionMap};
+
 export type EntityOperation<S, C> =
   SetOp<S, keyof S> |
   {type: EntityOpTypes.Clear, field: keyof S, actor: string, clock: VersionMap} |
   AddOp<C, keyof C> |
-  RemoveOp<C, keyof C>;
+  RemoveOp<C, keyof C> |
+  ClearAllOp;
 
 export interface CRDTEntityTypeRecord<S extends Identified, C extends Identified> extends CRDTTypeRecord {
   data: EntityData<S, C>;
@@ -163,7 +166,7 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
         }
         throw new Error(`Invalid field: ${op.field} does not exist`);
       }
-    } else {
+    } else if (op.type === EntityOpTypes.Add || op.type === EntityOpTypes.Remove) {
       if (!this.model.collections[op.field]) {
         if (this.model.singletons[op.field as keyof S]) {
           throw new Error(`Can't apply ${op.type === EntityOpTypes.Add ? 'Add' : 'Remove'} operation to singleton field ${op.field}`);
@@ -182,6 +185,8 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
           return this.model.collections[op.field].applyOperation({...op, type: CollectionOpTypes.Add});
         case EntityOpTypes.Remove:
           return this.model.collections[op.field].applyOperation({...op, type: CollectionOpTypes.Remove});
+        case EntityOpTypes.ClearAll:
+          return this.clear(op.actor);
         default:
           throw new Error(`Unexpected op ${op} for Entity CRDT`);
       }
@@ -193,6 +198,26 @@ export class CRDTEntity<S extends Identified, C extends Identified> implements E
       return true;
     }
     return false;
+  }
+
+  // Clear all fields.
+  clear(actor: string): boolean {
+    Object.values(this.model.singletons).forEach(field =>
+      field.applyOperation({
+        type: SingletonOpTypes.Clear,
+        actor,
+        clock: this.model.version,
+    }));
+
+    Object.values(this.model.collections).forEach(field =>
+      field.getParticleView().forEach(value =>
+        field.applyOperation({
+          type: CollectionOpTypes.Remove,
+          removed: value,
+          actor,
+          clock: this.model.version,
+        })));
+    return true;
   }
 
   getData(): EntityData<S, C> {

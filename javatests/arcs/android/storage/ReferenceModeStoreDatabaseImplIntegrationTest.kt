@@ -79,7 +79,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
     @Before
     fun setUp() = runBlockingTest {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
         databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
@@ -235,6 +235,45 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         // Check that the stored bob's collection data is equal to the expected bob's collection
         // data (empty)
         assertThat(storedBob.collections).isEqualTo(bobEntity.data.collections)
+    }
+
+    @Test
+    fun removeOpClearsBackingEntity() = runBlockingTest {
+        val activeStore = createReferenceModeStore()
+        val actor = activeStore.crdtKey
+        val bob = createPersonEntity("an-id", "bob", 42)
+
+        // Add Bob to collection.
+        val addOp = RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
+        ).isTrue()
+        // Bob was added to the backing store.
+        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
+
+        // Remove Bob from the collection.
+        val deleteOp = RefModeStoreOp.SetRemove(actor, VersionMap(actor to 1), bob)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(deleteOp), id = 1))
+        ).isTrue()
+
+        // Check the backing store Bob has been cleared.
+        val storedBob2 = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
+
+        // Check the DB.
+        val backingKey = activeStore.backingStore.storageKey as DatabaseStorageKey
+        val database = databaseFactory.getDatabase(
+            backingKey.dbName,
+            backingKey is DatabaseStorageKey.Persistent
+        )
+        val bobKey = backingKey.childKeyWithComponent("an-id")
+        val capturedBob = requireNotNull(
+            database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
+        )
+        // Name and age have been cleared (they are not in field list).
+        assertThat(capturedBob.rawEntity).isEqualTo(RawEntity(RawEntity.NO_REFERENCE_ID))
     }
 
     @Test
@@ -408,7 +447,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                     "t1" to t1Ref
                 )
             ),
-            1
+            3
         )
         driver.receiver!!(
             CrdtSet.DataImpl(
@@ -419,7 +458,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                     "t2" to t2Ref
                 )
             ),
-            2
+            4
         )
 
         activeStore.idle()
@@ -513,6 +552,14 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         singletons = mapOf(
             "name" to name.toReferencable(),
             "age" to age.toReferencable()
+        )
+    )
+
+    private fun createEmptyPersonEntity(id: ReferenceId): RawEntity = RawEntity(
+        id = id,
+        singletons = mapOf(
+            "name" to null,
+            "age" to null
         )
     )
 

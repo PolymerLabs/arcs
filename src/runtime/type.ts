@@ -52,6 +52,17 @@ export abstract class Type {
     return [type1, type2];
   }
 
+  static tryUnwrapMulti(type1: Type, type2: Type): [Type[], Type[]] {
+    [type1, type2] = this.unwrapPair(type1, type2);
+    if (type1.tag === type2.tag) {
+      const contained1 = type1.getContainedTypes();
+      if (contained1 !== null) {
+        return [contained1, type2.getContainedTypes()];
+      }
+    }
+    return [null, null];
+  }
+
   /** Tests whether two types' constraints are compatible with each other. */
   static canMergeConstraints(type1: Type, type2: Type): boolean {
     return Type._canMergeCanReadSubset(type1, type2) && Type._canMergeCanWriteSuperset(type1, type2);
@@ -111,6 +122,14 @@ export abstract class Type {
     return this instanceof BigCollectionType;
   }
 
+  isReferenceType(): this is ReferenceType {
+    return this instanceof ReferenceType;
+  }
+
+  isTupleType(): this is TupleType {
+    return this instanceof TupleType;
+  }
+
   isResolved(): boolean {
     // TODO: one of these should not exist.
     return !this.hasUnresolvedVariable;
@@ -133,6 +152,10 @@ export abstract class Type {
   }
 
   getContainedType(): Type|null {
+    return null;
+  }
+
+  getContainedTypes(): Type[]|null {
     return null;
   }
 
@@ -160,6 +183,10 @@ export abstract class Type {
     return false;
   }
 
+  get isTuple(): boolean {
+    return false;
+  }
+
   collectionOf() {
     return new CollectionType(this);
   }
@@ -170,6 +197,10 @@ export abstract class Type {
 
   bigCollectionOf() {
     return new BigCollectionType(this);
+  }
+
+  referenceTo() {
+    return new ReferenceType(this);
   }
 
   resolvedType(): Type {
@@ -682,23 +713,72 @@ export class BigCollectionType<T extends Type> extends Type {
 }
 
 export class TupleType extends Type {
-  readonly tupleTypes: Type[];
+  readonly innerTypes: Type[];
 
   constructor(tuple: Type[]) {
     super('Tuple');
-    this.tupleTypes = tuple;
+    this.innerTypes = tuple;
   }
 
-  get isTuple() {
+  get isTuple(): boolean {
     return true;
   }
 
+  isTypeContainer(): boolean {
+    return true;
+  }
+
+  getContainedTypes(): Type[]|null {
+    return this.innerTypes;
+  }
+
+  get canWriteSuperset() {
+    return new TupleType(this.innerTypes.map(t => t.canWriteSuperset));
+  }
+
+  get canReadSubset() {
+    return new TupleType(this.innerTypes.map(t => t.canReadSubset));
+  }
+
+  resolvedType() {
+    let returnSelf = true;
+    const resolvedinnerTypes = [];
+    for (const t of this.innerTypes) {
+      const resolved = t.resolvedType();
+      if (resolved !== t) returnSelf = false;
+      resolvedinnerTypes.push(resolved);
+    }
+    if (returnSelf) return this;
+    return new TupleType(resolvedinnerTypes);
+  }
+
+  _canEnsureResolved(): boolean {
+    return this.innerTypesSatisfy((type) => type.canEnsureResolved());
+  }
+
+  maybeEnsureResolved(): boolean {
+    return this.innerTypesSatisfy((type) => type.maybeEnsureResolved());
+  }
+
+  _isAtleastAsSpecificAs(other: TupleType): boolean {
+    if (this.innerTypes.length !== other.innerTypes.length) return false;
+    return this.innerTypesSatisfy((type, idx) => type.isAtleastAsSpecificAs(other.innerTypes[idx]));
+  }
+
+  private innerTypesSatisfy(predicate: ((type: Type, idx: number) => boolean)): boolean {
+    return this.innerTypes.reduce((result: boolean, type: Type, idx: number) => result && predicate(type, idx), true);
+  }
+
   toLiteral(): TypeLiteral {
-    return {tag: this.tag, data: this.tupleTypes.map(t => t.toLiteral())};
+    return {tag: this.tag, data: this.innerTypes.map(t => t.toLiteral())};
+  }
+
+  toString(options = undefined ): string {
+    return `(${this.innerTypes.map(t => t.toString(options)).join(', ')})`;
   }
 
   toPrettyString(): string {
-    return JSON.stringify(this.tupleTypes);
+    return 'Tuple of ' + this.innerTypes.map(t => t.toPrettyString()).join(', ');
   }
 }
 

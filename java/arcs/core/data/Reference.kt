@@ -33,13 +33,13 @@ interface Reference<T : Referencable> : arcs.core.crdt.CrdtEntity.Reference {
      *
      * Returns `null` if this [Reference] is no longer alive.
      */
-    suspend fun dereference(coroutineContext: CoroutineContext = Dispatchers.IO): T?
+    suspend fun dereference(coroutineContext: CoroutineContext = Dispatchers.Default): T?
 
     /** Returns whether or not the [Entity] being referenced still exists. */
-    suspend fun isAlive(coroutineContext: CoroutineContext = Dispatchers.IO): Boolean =
+    suspend fun isAlive(coroutineContext: CoroutineContext = Dispatchers.Default): Boolean =
         dereference(coroutineContext) != null
 
     /** Returns whether or not the [Entity] being referenced has been removed from storage. */
-    suspend fun isDead(coroutineContext: CoroutineContext = Dispatchers.IO): Boolean =
+    suspend fun isDead(coroutineContext: CoroutineContext = Dispatchers.Default): Boolean =
         !isAlive(coroutineContext)
 }

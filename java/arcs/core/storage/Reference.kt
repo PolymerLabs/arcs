@@ -63,7 +63,7 @@ data class Reference(
 interface Dereferencer<T> {
     suspend fun dereference(
         reference: Reference,
-        coroutineContext: CoroutineContext = Dispatchers.IO
+        coroutineContext: CoroutineContext = Dispatchers.Default
     ): T?
 }
 
