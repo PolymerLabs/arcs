@@ -447,7 +447,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                     "t1" to t1Ref
                 )
             ),
-            1
+            3
         )
         driver.receiver!!(
             CrdtSet.DataImpl(
@@ -458,7 +458,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                     "t2" to t2Ref
                 )
             ),
-            2
+            4
         )
 
         activeStore.idle()

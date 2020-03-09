@@ -307,11 +307,11 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun createEntityStorageKeyId_versionNumberMustBeLarger() = runBlockingTest {
+    fun createEntityStorageKeyId_versionNumberMustBeOneLarger() = runBlockingTest {
         val key = DummyStorageKey("key")
         val entityId = "entity-id"
         val typeId = 123L
-        database.createEntityStorageKeyId(
+        val originalStorageKeyId = database.createEntityStorageKeyId(
             key,
             entityId,
             CREATION_TIMESTAMP,
@@ -321,9 +321,10 @@ class DatabaseImplTest {
             10,
             db
         )
+        assertThat(originalStorageKeyId).isNotNull()
 
         // Same version number is rejected.
-        val exception1 = assertSuspendingThrows(IllegalArgumentException::class) {
+        assertThat(
             database.createEntityStorageKeyId(
                 key,
                 entityId,
@@ -334,14 +335,10 @@ class DatabaseImplTest {
                 10,
                 db
             )
-        }
-        assertThat(exception1).hasMessageThat().isEqualTo(
-            "Given version (10) must be greater than version in database (10) when updating " +
-                "storage key dummy://key."
-        )
+        ).isNull()
 
         // Smaller version number is rejected.
-        val exception2 = assertSuspendingThrows(IllegalArgumentException::class) {
+        assertThat(
             database.createEntityStorageKeyId(
                 key,
                 entityId,
@@ -352,14 +349,24 @@ class DatabaseImplTest {
                 9,
                 db
             )
-        }
-        assertThat(exception2).hasMessageThat().isEqualTo(
-            "Given version (9) must be greater than version in database (10) when updating " +
-                "storage key dummy://key."
-        )
+        ).isNull()
 
-        // Increasing version number is ok.
-        database.createEntityStorageKeyId(
+        // Increasing version number by more than 1 is rejected.
+        assertThat(
+            database.createEntityStorageKeyId(
+                key,
+                entityId,
+                CREATION_TIMESTAMP,
+                EXPIRATION_TIMESTAMP,
+                typeId,
+                VERSION_MAP,
+                12,
+                db
+            )
+        ).isNull()
+
+        // Increasing version number by 1 is ok.
+        val newStorageKeyId = database.createEntityStorageKeyId(
             key,
             entityId,
             CREATION_TIMESTAMP,
@@ -369,6 +376,10 @@ class DatabaseImplTest {
             11,
             db
         )
+        assertThat(newStorageKeyId).isNotNull()
+        // TODO: If the storage key is the same, there's no need to delete the old one and create a
+        // new one.
+        assertThat(newStorageKeyId).isNotEqualTo(originalStorageKeyId)
     }
 
     @Test
@@ -956,15 +967,13 @@ class DatabaseImplTest {
                 Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1))
             ),
             schema = newSchema("hash"),
-            databaseVersion = 1,
+            databaseVersion = 2,
             versionMap = VERSION_MAP
         )
-        val oldVersion = database.insertOrUpdate(key, collection)
+        assertThat(database.insertOrUpdate(key, collection)).isTrue()
 
-        // TODO - DatabaseImpl should return the last version when an insert/update could not be
-        //  applied.
-        assertThat(database.insertOrUpdate(key, collection.copy(databaseVersion = oldVersion - 1)))
-            .isEqualTo(oldVersion - 1)
+        assertThat(database.insertOrUpdate(key, collection.copy(databaseVersion = 1)))
+            .isFalse()
     }
 
     @Test
@@ -1040,20 +1049,18 @@ class DatabaseImplTest {
         val singleton = DatabaseData.Singleton(
             reference = Reference("ref", DummyStorageKey("backing"), VersionMap("ref" to 1)),
             schema = newSchema("hash"),
-            databaseVersion = 1,
+            databaseVersion = 2,
             versionMap = VERSION_MAP
         )
-        val oldVersion = database.insertOrUpdate(key, singleton, originatingClientId = null)
+        assertThat(database.insertOrUpdate(key, singleton, originatingClientId = null)).isTrue()
 
-        // TODO - DatabaseImpl should return the last version when an insert/update could not be
-        //  applied.
         assertThat(
             database.insertOrUpdate(
                 key,
-                singleton.copy(databaseVersion = oldVersion - 1),
+                singleton.copy(databaseVersion = 1),
                 originatingClientId = null
             )
-        ).isEqualTo(oldVersion - 1)
+        ).isFalse()
     }
 
     @Test

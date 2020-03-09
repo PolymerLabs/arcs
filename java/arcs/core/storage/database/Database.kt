@@ -34,7 +34,7 @@ interface Database {
         storageKey: StorageKey,
         data: DatabaseData,
         originatingClientId: Int? = null
-    ): Int
+    ): Boolean
 
     /** Fetches the data at [storageKey] from the database. */
     suspend fun get(

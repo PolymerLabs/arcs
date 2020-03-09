@@ -346,7 +346,7 @@ class DatabaseDriver<Data : Any>(
         }
 
         // Store the prepped data.
-        return (database.insertOrUpdate(storageKey, databaseData, clientId) == version).also {
+        return database.insertOrUpdate(storageKey, databaseData, clientId).also {
             // If the update was successful, update our local data/version.
             if (it) localDataMutex.withLock {
                 localData = data

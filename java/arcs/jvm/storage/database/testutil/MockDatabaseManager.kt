@@ -11,7 +11,6 @@
 
 package arcs.jvm.storage.database.testutil
 
-import arcs.core.crdt.VersionMap
 import arcs.core.data.Schema
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
@@ -73,10 +72,11 @@ open class MockDatabase : Database {
         storageKey: StorageKey,
         data: DatabaseData,
         originatingClientId: Int?
-    ): Int = stats.insertUpdate.timeSuspending {
+    ): Boolean = stats.insertUpdate.timeSuspending {
         val (version, isNew) = dataMutex.withLock {
             val oldData = this.data[storageKey]
-            if (oldData?.databaseVersion != data.databaseVersion) {
+            // Must be exactly old version + 1, or have no previous version.
+            if (oldData == null || data.databaseVersion == oldData.databaseVersion + 1) {
                 this.data[storageKey] = data
                 data.databaseVersion to true
             } else {
@@ -90,7 +90,7 @@ open class MockDatabase : Database {
                 .launchIn(CoroutineScope(coroutineContext))
         }
 
-        return@timeSuspending version
+        isNew
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -99,18 +99,7 @@ open class MockDatabase : Database {
         dataType: KClass<out DatabaseData>,
         schema: Schema
     ): DatabaseData? = stats.get.timeSuspending {
-        val dataVal = dataMutex.withLock { data[storageKey] }
-
-        if (dataVal != null) return@timeSuspending dataVal
-
-        return@timeSuspending when (dataType) {
-            DatabaseData.Singleton::class ->
-                DatabaseData.Singleton(null, schema, -1, VersionMap())
-            DatabaseData.Collection::class ->
-                DatabaseData.Collection(emptySet(), schema, -1, VersionMap())
-            DatabaseData.Entity::class -> null
-            else -> throw IllegalArgumentException("Illegal type.")
-        }
+        dataMutex.withLock { data[storageKey] }
     }
 
     override suspend fun delete(storageKey: StorageKey, originatingClientId: Int?) =
