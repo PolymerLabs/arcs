@@ -58,7 +58,8 @@ export type ArcOptions = Readonly<{
   stub?: boolean
   inspectorFactory?: ArcInspectorFactory,
   ports?: MessagePort[],
-  capabilitiesResolver?: CapabilitiesResolver
+  capabilitiesResolver?: CapabilitiesResolver,
+  modality?: Modality
 }>;
 
 type DeserializeArcOptions = Readonly<{
@@ -80,6 +81,7 @@ export class Arc implements ArcInterface {
   public readonly isStub: boolean;
   private _activeRecipe = new Recipe();
   private _recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
+  public _modality: Modality;
   // Public for debug access
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
@@ -109,12 +111,13 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({id, context, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory} : ArcOptions) {
+  constructor({id, context, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality} : ArcOptions) {
     this._context = context;
+    this.modality = modality;
     // TODO: pecFactories should not be optional. update all callers and fix here.
     this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
 
-    // TODO(sjmiles): FIXME: currently some UiBrokers need to recover arc from composer in order to forward events
+    // TODO(sjmiles): currently some UiBrokers need to recover arc from composer in order to forward events
     if (slotComposer && !slotComposer['arc']) {
       slotComposer['arc'] = this;
     }
@@ -138,14 +141,24 @@ export class Arc implements ArcInterface {
     return this._loader;
   }
 
+  set modality(modality: Modality) {
+    this._modality = modality;
+  }
+
   get modality(): Modality {
-    if (this.peh.slotComposer && this.peh.slotComposer.modality) {
-      return this.peh.slotComposer.modality;
+    let modalities = [];
+    if (this._modality) {
+      modalities.push(this._modality);
     }
+    // TODO(sjmiles): Modality rules are unclear. Seems to me the Arc should declare it's own modality
+    // but many tests fail without these conditionals. Note that a Modality can represent a set of modalities.
     if (!this.activeRecipe.isEmpty()) {
-      return this.activeRecipe.modality;
+      modalities.push(this.activeRecipe.modality);
     }
-    return Modality.union(this.context.allRecipes.map(recipe => recipe.modality));
+    if (!modalities.length) {
+      modalities = this.context.allRecipes.map(recipe => recipe.modality);
+    }
+    return Modality.union(modalities);
   }
 
   dispose(): void {
@@ -564,7 +577,6 @@ export class Arc implements ArcInterface {
       }
     }
 
-    // TODO(sjmiles): use `volatile` for volatile stores
     const hasVolatileTag = (tags: string[]) => tags && tags.includes('volatile');
     if (storageKey == undefined || hasVolatileTag(tags)) {
       storageKey = new VolatileStorageKey(this.id, id);
