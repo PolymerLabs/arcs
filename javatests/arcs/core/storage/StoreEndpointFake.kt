@@ -15,10 +15,13 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T>:
     private var callbacks = mutableListOf<ProxyCallback<Data, Op, T>>()
     private var proxyMessages = mutableListOf<ProxyMessage<Data, Op, T>>()
 
-    override fun setCallback(callback: ProxyCallback<Data, Op, T>) {
+    override fun setCallback(callback: ProxyCallback<Data, Op, T>): Int {
         // must be blocking since the storage impl is. Unlikely to be heavily contended.
-        runBlocking {
-            mutex.withLock { callbacks.add(callback) }
+        return runBlocking {
+            mutex.withLock {
+                callbacks.add(callback)
+                callbacks.size
+            }
         }
     }
 

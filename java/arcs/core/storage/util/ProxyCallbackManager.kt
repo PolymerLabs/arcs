@@ -13,88 +13,16 @@ package arcs.core.storage.util
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.storage.ProxyCallback
-import arcs.core.storage.ProxyMessage
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
-/** Thread-safe manager of a collection of [ProxyCallback]s. */
-class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    private val mutex = Mutex()
-    val nextCallbackToken = atomic(1)
-    /* internal */ val callbacks = mutableMapOf<Int, ProxyCallback<Data, Op, ConsumerData>>()
+/**
+ * Implementation of [AbstractProxyCallbackManager] where each callback is given a token from an
+ * increasing source.
+ */
+class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData> :
+    AbstractProxyCallbackManager<Data, Op, ConsumerData>() {
+    /* internal */ val nextCallbackToken = atomic(1)
 
-    /** Adds a [ProxyCallback] to the collection, and returns its token. */
-    fun register(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val token = nextCallbackToken.getAndIncrement()
-        callbacks[token] = proxyCallback
-        mutex.unlock()
-        return token
-    }
-
-    /** Removes the callback with the given [callbackToken] from the collection. */
-    fun unregister(callbackToken: Int) {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        callbacks.remove(callbackToken)
-        mutex.unlock()
-    }
-
-    /** Gets a particular [ProxyCallback] by its [callbackToken]. */
-    fun getCallback(callbackToken: Int?): ProxyCallback<Data, Op, ConsumerData>? {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val res = callbacks[callbackToken]
-        mutex.unlock()
-        return res
-    }
-
-    /**
-     * Notifies all registered [ProxyCallbackManager] of a [message].
-     *
-     * Optionally: you may specify [exceptTo] to omit sending to a particular callback. (with token
-     * value == [exceptTo])
-     */
-    suspend fun send(
-        message: ProxyMessage<Data, Op, ConsumerData>,
-        exceptTo: Int? = null
-    ): Boolean {
-        val targets = mutex.withLock {
-            if (exceptTo == null) {
-                callbacks.values.toList()
-            } else {
-                callbacks.filter { it.key != exceptTo }.values.toList()
-            }
-        }
-        // Call our targets outside of the mutex so we don't deadlock if a callback leads to another
-        // registration.
-        return targets.fold(true) { success, callback ->
-            success && callback(message)
-        }
-    }
-
-    /**
-     * Notifies all multiplexed [ProxyCallback]s registered of a [message] for a particular [muxId].
-     *
-     * Optionally: you may specify [exceptTo] to omit sending to a particular callback. (with token
-     * value == [exceptTo])
-     */
-    suspend fun sendMultiplexed(
-        message: ProxyMessage<Data, Op, ConsumerData>,
-        muxId: String,
-        exceptTo: Int? = null
-    ): Boolean {
-        val targets = mutex.withLock {
-            if (exceptTo == null) {
-                ArrayList(callbacks.values)
-            } else {
-                ArrayList(callbacks.filter { it.key != exceptTo }.values)
-            }
-        }
-        // Call our targets outside of the mutex so we don't deadlock if a callback leads to another
-        // registration.
-        return targets.fold(true) { success, callback ->
-            success && callback(message, muxId)
-        }
-    }
+    override fun getNextToken(currentlyUsedTokens: Set<Int>): Int =
+        nextCallbackToken.getAndIncrement()
 }

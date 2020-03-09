@@ -17,7 +17,9 @@ import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -51,10 +53,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         by guardedBy(syncMutex, false)
 
     private val store = storeEndpointProvider.getStorageEndpoint()
-
-    init {
-        store.setCallback(ProxyCallback(::onMessage))
-    }
+    private val storeListenerId = store.setCallback(ProxyCallback(::onMessage))
 
     /**
      * Connects a [Handle]. If the handle is readable, it will receive the configured callbacks.
@@ -172,13 +171,22 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
                 if (applyFailures) {
                     notifyDesync()
-                    requestSynchronization()
-                    return true
+                    // Before we return, let's issue a request for synchronization on a new
+                    // coroutine. It can't be done on this current coroutine because the response
+                    // we give here is being waited-on downstream, and we could end up dead-locking
+                    // if requestSynchronization ends up needing a result from this to continue
+                    // (which is what happens with the StorageService).
+                    CoroutineScope(coroutineContext).launch { requestSynchronization() }
+                    return false
                 }
 
                 // all ops from storage applied cleanly so resolve waiting syncs
                 futuresToResolve.forEach { it.complete(value) }
-                notifyUpdate(message.operations)
+
+                // Notify our handles of an update if these operations came from elsewhere.
+                if (message.id != storeListenerId) {
+                    notifyUpdate(message.operations)
+                }
             }
             is ProxyMessage.SyncRequest -> {
                 // storage wants our latest state

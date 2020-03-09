@@ -30,12 +30,15 @@ import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.util.ProxyCallbackManager
+import arcs.core.storage.util.RandomProxyCallbackManager
 import arcs.core.storage.util.SendQueue
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageServiceConnection
+import java.time.Instant
+import java.util.UUID
 import kotlin.coroutines.CoroutineContext
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -92,7 +95,10 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null
-    private val proxyCallbacks = ProxyCallbackManager<Data, Op, ConsumerData>()
+    private val proxyCallbacks = RandomProxyCallbackManager<Data, Op, ConsumerData>(
+        UUID.randomUUID().toString(),
+        Random(Instant.now().toEpochMilli())
+    )
     private var serviceCallbackToken: Int = -1
     private val sendQueue = SendQueue()
 
@@ -125,9 +131,20 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
         sendQueue.enqueue {
-            service.sendProxyMessage(message.toParcelable(crdtType), result)
+            val messageToSend = when (message) {
+                // Store implementations only send their ModelUpdate messages to the thing that
+                // sent them the sync request, so we need to ensure they send it to us, instead of
+                // trying to send it to the storage proxy itself (the originator of the
+                // SyncRequest), because for the StorageService in particular: this fails - since
+                // the storage proxy doesn't directly listen to the storage service (and thus, its
+                // listener id won't exist in the StorageService-side ActiveStore).
+                is ProxyMessage.SyncRequest -> message.copy(id = serviceCallbackToken)
+                else -> message
+            }
+            service.sendProxyMessage(messageToSend.toParcelable(crdtType), result)
         }
-        return result.await()
+        // Just return false if the message couldn't be applied.
+        return try { result.await() } catch (e: CrdtException) { false }
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -146,7 +163,9 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         // Open subscription before attaching callback to make sure that we capture all messages
         val subscription = messageChannel.openSubscription()
         scope.launch {
-            subscription.consumeEach { handleMessageAndResultFromService(it) }
+            subscription.consumeEach {
+                handleMessageAndResultFromService(it)
+            }
         }
 
         serviceCallbackToken = withContext(coroutineContext) {
@@ -174,7 +193,9 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             ) { "Could not cast ProxyMessage to required type." }
 
             sendQueue.enqueue {
-                messageAndResult.result.complete(proxyCallbacks.send(actualMessage))
+                val proxyResult = proxyCallbacks.send(actualMessage)
+
+                messageAndResult.result.complete(proxyResult)
             }
         } catch (e: Exception) {
             messageAndResult.result.completeExceptionally(e)

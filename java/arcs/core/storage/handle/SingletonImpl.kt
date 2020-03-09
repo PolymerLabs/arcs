@@ -66,6 +66,8 @@ class SingletonImpl<T : Referencable>(
      * did not apply fully. Fetch the latest value and retry.
      * */
     suspend fun store(entity: T): Boolean {
+        log.debug { "storing $entity" }
+
         @Suppress("GoodTime") // use Instant
         entity.creationTimestamp = requireNotNull(time).currentTimeMillis
         require(entity !is RawEntity || schema == null || schema.refinement(entity)) {
