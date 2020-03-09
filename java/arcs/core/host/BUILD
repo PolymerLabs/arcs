@@ -4,11 +4,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-API_SRCS = [
-    "HandleHolder.kt",
-    "Particle.kt",
-]
-
 arcs_kt_schema(
     name = "schemas",
     srcs = [
@@ -18,26 +13,15 @@ arcs_kt_schema(
 )
 
 arcs_kt_library(
-    name = "api",
-    srcs = API_SRCS,
-    deps = [
-        "//java/arcs/core/storage/api",
-    ],
-)
-
-arcs_kt_library(
     name = "host",
-    srcs = glob(
-        ["*.kt"],
-        exclude = API_SRCS,
-    ),
+    srcs = glob(["*.kt"]),
     deps = [
-        ":api",
         ":schemas",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/host/api",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",

@@ -1,3 +1,4 @@
+// These schema definitions are used to store a de-normalized version of ArcHostContext via ArcHostContextParticle
 
 schema HandleConnection
   arcId: Text

@@ -19,7 +19,7 @@ import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.toArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.HostRegistry
-import arcs.core.host.Particle
+import arcs.core.host.api.Particle
 
 /**
  * A [HostRegistry] that discovers available [ArcHost] services by using [PackageManager] to

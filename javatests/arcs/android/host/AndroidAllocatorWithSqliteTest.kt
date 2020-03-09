@@ -17,6 +17,7 @@ import arcs.core.data.Capabilities
 import arcs.core.data.SchemaRegistry
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.driver.DatabaseDriverProvider
+import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -28,7 +29,7 @@ import org.junit.runner.RunWith
  * These tests are the same as [AndroidAllocatorTest] but run with [AndroidSqliteDatabaseManager]
  * and [Capabilities.Persistent].
  */
-@Ignore("2% Flaky (runs_per_test=100) on TAP, disabled for now.")
+//@Ignore("2% Flaky (runs_per_test=100) on TAP, disabled for now.")
 @RunWith(AndroidJUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
 class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
@@ -40,8 +41,7 @@ class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
     override fun setUp() = runBlocking {
         TestExternalArcHostService.TestingAndroidHost.testingCapability = Capabilities.Persistent
         super.setUp()
-        manager = AndroidSqliteDatabaseManager(context)
-        DatabaseDriverProvider.configure(manager, SchemaRegistry::get)
+        AndroidDriverAndKeyConfigurator.configure(context)
         Unit
     }
 

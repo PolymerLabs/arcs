@@ -22,6 +22,6 @@ open class TestingHost(vararg particles: ParticleRegistration) :
 
     fun setup() {
         started.clear()
-        runningArcs.clear()
+        clearCache()
     }
 }
