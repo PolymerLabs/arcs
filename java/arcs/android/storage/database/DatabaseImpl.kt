@@ -1112,43 +1112,6 @@ class DatabaseImpl(
         }
     }
 
-    @VisibleForTesting
-    fun getPrimitiveValue(
-        valueId: FieldValueId,
-        typeId: TypeId,
-        db: SQLiteDatabase,
-        counters: Counters? = null
-    ): Any {
-        // TODO: Cache the most frequent values somehow.
-        fun runSelectQuery(tableName: String) = db.rawQuery(
-            "SELECT value FROM $tableName WHERE id = ?",
-            arrayOf(valueId.toString())
-        ).forSingleResult { it.getString(0) }
-            ?: throw IllegalArgumentException("Unknown primitive with ID $valueId.")
-
-        return when (typeId.toInt()) {
-            PrimitiveType.Boolean.ordinal -> {
-                counters?.increment(DatabaseCounters.GET_PRIMITIVE_VALUE_BOOLEAN)
-                when (valueId) {
-                    1L -> true.toReferencable()
-                    0L -> false.toReferencable()
-                    else -> throw IllegalArgumentException(
-                        "Expected $valueId to be a Boolean (0 or 1)."
-                    )
-                }
-            }
-            PrimitiveType.Text.ordinal -> {
-                counters?.increment(DatabaseCounters.GET_PRIMITIVE_VALUE_TEXT)
-                runSelectQuery(TABLE_TEXT_PRIMITIVES).toReferencable()
-            }
-            PrimitiveType.Number.ordinal -> {
-                counters?.increment(DatabaseCounters.GET_PRIMITIVE_VALUE_NUMBER)
-                runSelectQuery(TABLE_NUMBER_PRIMITIVES).toDouble().toReferencable()
-            }
-            else -> throw IllegalArgumentException("Not a primitive type ID: $typeId")
-        }
-    }
-
     /** Returns the type ID for the given [fieldType] if known, otherwise throws. */
     private fun getTypeId(
         fieldType: FieldType,
