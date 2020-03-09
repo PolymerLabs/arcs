@@ -38,12 +38,18 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val log = TaggedLog { "StorageProxy" }
 
     private val callbackMutex = Mutex()
-    private val onUpdateActions: MutableList<(T) -> Unit>
-        by guardedBy(callbackMutex, mutableListOf())
-    private val onSyncActions: MutableList<() -> Unit>
-        by guardedBy(callbackMutex, mutableListOf())
-    private val onDesyncActions: MutableList<() -> Unit>
-        by guardedBy(callbackMutex, mutableListOf())
+    private val onUpdateActions by guardedBy(
+        callbackMutex,
+        mutableMapOf<String, MutableList<(T)->Unit>>()
+    )
+    private val onSyncActions by guardedBy(
+        callbackMutex,
+        mutableMapOf<String, MutableList<() -> Unit>>()
+    )
+    private val onDesyncActions by guardedBy(
+        callbackMutex,
+        mutableMapOf<String, MutableList<() -> Unit>>()
+    )
 
     private val syncMutex = Mutex()
     private val crdt: CrdtModel<Data, Op, T>
@@ -59,21 +65,29 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         store.setCallback(ProxyCallback(::onMessage))
     }
 
-    suspend fun addOnUpdate(action: (value: T) -> Unit) {
+    suspend fun addOnUpdate(handleName: String, action: (value: T) -> Unit) {
         callbackMutex.withLock {
-            onUpdateActions.add(action)
+            onUpdateActions.getOrPut(handleName) { mutableListOf() }.add(action)
         }
     }
 
-    suspend fun addOnSync(action: () -> Unit) {
+    suspend fun addOnSync(handleName: String, action: () -> Unit) {
         callbackMutex.withLock {
-            onSyncActions.add(action)
+            onSyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
         }
     }
 
-    suspend fun addOnDesync(action: () -> Unit) {
+    suspend fun addOnDesync(handleName: String, action: () -> Unit) {
         callbackMutex.withLock {
-            onDesyncActions.add(action)
+            onDesyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
+        }
+    }
+
+    suspend fun removeCallbacksForName(handleName: String) {
+        callbackMutex.withLock {
+            onUpdateActions.remove(handleName)
+            onSyncActions.remove(handleName)
+            onDesyncActions.remove(handleName)
         }
     }
 
@@ -187,15 +201,15 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     private suspend fun notifyUpdate(data: T) = callbackMutex.withLock {
-        onUpdateActions.toSet()
+        onUpdateActions.values.flatMap { it.toSet() }
     }.forEach { coroutineScope { launch { it(data) } } }
 
     private suspend fun notifySync() = callbackMutex.withLock {
-        onSyncActions.toSet()
+        onSyncActions.values.flatMap { it.toSet() }
     }.forEach { coroutineScope { launch { it() } } }
 
     private suspend fun notifyDesync() = callbackMutex.withLock {
-        onDesyncActions.toSet()
+        onDesyncActions.values.flatMap { it.toSet() }
     }.forEach { coroutineScope { launch { it() } } }
 
     private suspend fun requestSynchronization(): Boolean {

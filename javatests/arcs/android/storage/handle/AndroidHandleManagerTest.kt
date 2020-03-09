@@ -30,6 +30,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoMoreInteractions
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
@@ -253,11 +254,12 @@ class AndroidHandleManagerTest : LifecycleOwner {
     // These interface defintions prevent the problem.
     interface OnUpdate<T> : Function1<T, Unit>
     interface OnSync : Function0<Unit>
+
     @Test
     fun set_onHandleUpdate() = runBlocking<Unit> {
-        val firstHandle = handleManager.rawEntitySetHandle(setKey, schema)
+        val firstHandle = handleManager.rawEntitySetHandle(setKey, schema, "handle1")
         val testOnUpdate1 = mock<OnUpdate<Set<RawEntity>>>().also { firstHandle.addOnUpdate(it::invoke) }
-        val secondHandle = handleManager.rawEntitySetHandle(setKey, schema)
+        val secondHandle = handleManager.rawEntitySetHandle(setKey, schema, "handle2")
         val testOnUpdate2 = mock<OnUpdate<Set<RawEntity>>>().also { secondHandle.addOnUpdate(it::invoke) }
 
         secondHandle.store(entity1)
@@ -268,20 +270,29 @@ class AndroidHandleManagerTest : LifecycleOwner {
 
         verify(testOnUpdate1).invoke(emptySet<RawEntity>())
         verify(testOnUpdate2).invoke(emptySet<RawEntity>())
+
+
+        // `removeAllCallbacks` works, and only removes the callbacks for the specified handle.
+        firstHandle.removeAllCallbacks()
+        secondHandle.store(entity2)
+        //verify(testOnUpdate1).invoke(setOf(entity2))
+        verify(testOnUpdate2).invoke(setOf(entity2))
     }
 
     @Test
     fun singleton_OnHandleUpdate() = runBlocking<Unit> {
         val firstHandle = handleManager.rawEntitySingletonHandle(
             storageKey = singletonKey,
-            schema = schema
+            schema = schema,
+            name = "handle1"
         )
         val testOnUpdate1 = mock<OnUpdate<RawEntity?>>().also { firstHandle.addOnUpdate(it::invoke) }
         val secondHandle = handleManager.rawEntitySingletonHandle(
             storageKey = singletonKey,
-            schema = schema
+            schema = schema,
+            name = "handle2"
         )
-        val testOnUpdate2 = mock<OnUpdate<RawEntity?>>().also { firstHandle.addOnUpdate(it::invoke) }
+        val testOnUpdate2 = mock<OnUpdate<RawEntity?>>().also { secondHandle.addOnUpdate(it::invoke) }
 
         secondHandle.store(entity1)
         verify(testOnUpdate1).invoke(entity1)
@@ -290,6 +301,12 @@ class AndroidHandleManagerTest : LifecycleOwner {
 
         verify(testOnUpdate1).invoke(null)
         verify(testOnUpdate2).invoke(null)
+
+        // `removeAllCallbacks` works, and only removes the callbacks for the specified handle.
+        firstHandle.removeAllCallbacks()
+        secondHandle.store(entity2)
+        verifyNoMoreInteractions(testOnUpdate1)
+        verify(testOnUpdate2).invoke(entity2)
     }
 
     @Test

@@ -140,6 +140,10 @@ internal open class ReadSingletonHandleImpl<T : Entity>(
     override suspend fun onDesync(action: (ReadSingletonHandle<T>) -> Unit) {
         storageHandle.addOnDesync { action(this) }
     }
+
+    override suspend fun removeAllCallbacks() {
+        storageHandle.removeAllCallbacks()
+    }
 }
 
 internal class WriteSingletonHandleImpl<T : Entity>(
@@ -206,6 +210,10 @@ internal open class ReadCollectionHandleImpl<T : Entity>(
     }
 
     override suspend fun onDesync(action: () -> Unit) { }
+
+    override suspend fun removeAllCallbacks() {
+        storageHandle.removeAllCallbacks()
+    }
 }
 
 internal class WriteCollectionHandleImpl<T : Entity>(
