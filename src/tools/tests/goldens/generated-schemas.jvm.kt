@@ -15,21 +15,17 @@ import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.storage.api.toPrimitiveValue
 
-class GoldInternal1() : Entity {
+class GoldInternal1(
+        val_: String = ""
+    ) : Entity {
 
     override var internalId = ""
 
-    var val_ = ""
+    var val_ = val_
         get() = field
         private set(_value) {
             field = _value
         }
-
-    constructor(
-        val_: String = ""
-    ) : this() {
-        this.val_ = val_
-    }
 
     fun copy(
         val_: String = this.val_
@@ -42,17 +38,17 @@ class GoldInternal1() : Entity {
     }
 
     override fun equals(other: Any?): Boolean {
-      if (this === other) {
-        return true
-      }
-
-      if (other is GoldInternal1) {
-        if (internalId != "") {
-          return internalId == other.internalId
+        if (this === other) {
+            return true
         }
-        return toString() == other.toString()
-      }
-      return false;
+
+        if (other is GoldInternal1) {
+            if (internalId != "") {
+                return internalId == other.internalId
+            }
+            return toString() == other.toString()
+        }
+        return false;
     }
 
     override fun hashCode(): Int =
@@ -111,35 +107,29 @@ typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
 
-class Gold_QCollection() : Entity {
-
-    override var internalId = ""
-
-    var name = ""
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var age = 0.0
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var lastCall = 0.0
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-
-    constructor(
+class Gold_QCollection(
         name: String = "",
         age: Double = 0.0,
         lastCall: Double = 0.0
-    ) : this() {
-        this.name = name
-        this.age = age
-        this.lastCall = lastCall
-    }
+    ) : Entity {
+
+    override var internalId = ""
+
+    var name = name
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var age = age
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var lastCall = lastCall
+        get() = field
+        private set(_value) {
+            field = _value
+        }
 
     fun copy(
         name: String = this.name,
@@ -158,17 +148,17 @@ class Gold_QCollection() : Entity {
     }
 
     override fun equals(other: Any?): Boolean {
-      if (this === other) {
-        return true
-      }
-
-      if (other is Gold_QCollection) {
-        if (internalId != "") {
-          return internalId == other.internalId
+        if (this === other) {
+            return true
         }
-        return toString() == other.toString()
-      }
-      return false;
+
+        if (other is Gold_QCollection) {
+            if (internalId != "") {
+                return internalId == other.internalId
+            }
+            return toString() == other.toString()
+        }
+        return false;
     }
 
     override fun hashCode(): Int =
@@ -236,42 +226,35 @@ class Gold_QCollection_Spec() : EntitySpec<Gold_QCollection> {
 }
 
 
-class Gold_Data() : Entity {
-
-    override var internalId = ""
-
-    var num = 0.0
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var txt = ""
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var lnk = ""
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var flg = false
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-
-    constructor(
+class Gold_Data(
         num: Double = 0.0,
         txt: String = "",
         lnk: String = "",
         flg: Boolean = false
-    ) : this() {
-        this.num = num
-        this.txt = txt
-        this.lnk = lnk
-        this.flg = flg
-    }
+    ) : Entity {
+
+    override var internalId = ""
+
+    var num = num
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var txt = txt
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var lnk = lnk
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var flg = flg
+        get() = field
+        private set(_value) {
+            field = _value
+        }
 
     fun copy(
         num: Double = this.num,
@@ -293,17 +276,17 @@ class Gold_Data() : Entity {
     }
 
     override fun equals(other: Any?): Boolean {
-      if (this === other) {
-        return true
-      }
-
-      if (other is Gold_Data) {
-        if (internalId != "") {
-          return internalId == other.internalId
+        if (this === other) {
+            return true
         }
-        return toString() == other.toString()
-      }
-      return false;
+
+        if (other is Gold_Data) {
+            if (internalId != "") {
+                return internalId == other.internalId
+            }
+            return toString() == other.toString()
+        }
+        return false;
     }
 
     override fun hashCode(): Int =
