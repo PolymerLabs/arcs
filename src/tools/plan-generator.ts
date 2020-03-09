@@ -26,7 +26,7 @@ export class PlanGeneratorError extends Error {
 
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
-  constructor(private resolvedRecipes: Recipe[], private scope: string = 'arcs.core.data') {
+  constructor(private resolvedRecipes: Recipe[], private scope: string) {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
@@ -45,7 +45,7 @@ export class PlanGenerator {
     return this.resolvedRecipes.map(recipe => {
       const planName = `${recipe.name}Plan`;
 
-      const particles = recipe.particles.map((p) => this.createParticle(p));
+      const particles = recipe.particles.map(p => this.createParticle(p));
 
       const start = `object ${planName} : `;
       return `${start}${ktUtils.applyFun('Plan', [ktUtils.listOf(particles)], start.length)}`;
