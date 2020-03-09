@@ -22,7 +22,6 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.common.forEach
 import arcs.android.common.map
 import arcs.android.common.transaction
-import arcs.android.common.useTransaction
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -54,7 +53,7 @@ class DbHelper(
     /**
      * Stores a [ResurrectionRequest] in the database.
      */
-    fun registerRequest(request: ResurrectionRequest) = writableDatabase.useTransaction {
+    fun registerRequest(request: ResurrectionRequest) = writableDatabase.transaction {
         val requestContent = ContentValues()
             .apply {
                 put("component_package", request.componentName.packageName)
@@ -101,7 +100,7 @@ class DbHelper(
     }
 
     /** Unregisters a [component] for resurrection. */
-    fun unregisterRequest(component: ComponentName) = writableDatabase.useTransaction {
+    fun unregisterRequest(component: ComponentName) = writableDatabase.transaction {
         val componentArgs = arrayOf(component.packageName, component.className)
         execSQL(
             """
@@ -124,7 +123,7 @@ class DbHelper(
      */
     fun getRegistrations(): List<ResurrectionRequest> {
         val notifiersByComponentName = mutableMapOf<ComponentName, MutableList<StorageKey>>()
-        return readableDatabase.useTransaction {
+        return readableDatabase.transaction {
             rawQuery(
                 """
                     SELECT 
@@ -178,7 +177,7 @@ class DbHelper(
 
     /** Resets the registrations by deleting everything from the database. */
     fun reset() {
-        writableDatabase.useTransaction {
+        writableDatabase.transaction {
             execSQL("DELETE FROM requested_notifiers")
             execSQL("DELETE FROM resurrection_requests")
         }
