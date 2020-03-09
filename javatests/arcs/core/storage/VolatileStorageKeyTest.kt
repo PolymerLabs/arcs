@@ -1,4 +1,4 @@
-package arcs.core.storage.driver
+package arcs.core.storage
 
 import arcs.core.common.ArcId
 import arcs.core.storage.StorageKeyParser

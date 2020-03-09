@@ -12,59 +12,15 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
-import arcs.core.common.toArcId
-import arcs.core.data.Capabilities
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.VolatileStorageKey
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
-
-/** Protocol to be used with the volatile driver. */
-const val VOLATILE_DRIVER_PROTOCOL = "volatile"
-
-/** Storage key for a piece of data kept in the volatile driver. */
-data class VolatileStorageKey(
-    /** Id of the arc where this key was created. */
-    val arcId: ArcId,
-    /** Unique identifier for this particular key. */
-    val unique: String
-) : StorageKey(VOLATILE_DRIVER_PROTOCOL) {
-    override fun toKeyString(): String = "$arcId/$unique"
-
-    override fun childKeyWithComponent(component: String): StorageKey =
-        VolatileStorageKey(arcId, "$unique/$component")
-
-    override fun toString(): String = super.toString()
-
-    companion object {
-        private val VOLATILE_STORAGE_KEY_PATTERN = "^([^/]+)/(.*)\$".toRegex()
-
-        init {
-            // When VolatileStorageKey is imported, this will register its parser with the storage
-            // key parsers.
-            StorageKeyParser.addParser(VOLATILE_DRIVER_PROTOCOL, ::fromString)
-        }
-
-        fun registerParser() {
-            StorageKeyParser.addParser(VOLATILE_DRIVER_PROTOCOL, ::fromString)
-        }
-
-        private fun fromString(rawKeyString: String): VolatileStorageKey {
-            val match =
-                requireNotNull(VOLATILE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                    "Not a valid VolatileStorageKey: $rawKeyString"
-                }
-
-            return VolatileStorageKey(match.groupValues[1].toArcId(), match.groupValues[2])
-        }
-    }
-}
 
 /** [DriverProvider] of [VolatileDriver]s for an arc. */
 data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
@@ -72,18 +28,6 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 
     init {
         DriverFactory.register(this)
-        CapabilitiesResolver.registerDefaultKeyCreator(
-            VOLATILE_DRIVER_PROTOCOL,
-            Capabilities.TiedToArc
-        ) { storageKeyOptions ->
-            VolatileStorageKey(storageKeyOptions.arcId, storageKeyOptions.unique)
-        }
-        CapabilitiesResolver.registerDefaultKeyCreator(
-            VOLATILE_DRIVER_PROTOCOL,
-            Capabilities.Empty
-        ) { storageKeyOptions ->
-            VolatileStorageKey(storageKeyOptions.arcId, storageKeyOptions.unique)
-        }
     }
 
     override fun willSupport(storageKey: StorageKey): Boolean =

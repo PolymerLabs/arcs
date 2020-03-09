@@ -21,7 +21,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.Plan
 import arcs.core.data.HandleMode
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

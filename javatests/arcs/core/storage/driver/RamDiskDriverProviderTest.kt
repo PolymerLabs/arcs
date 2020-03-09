@@ -15,6 +15,7 @@ import arcs.core.common.ArcId
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
+import arcs.core.storage.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After

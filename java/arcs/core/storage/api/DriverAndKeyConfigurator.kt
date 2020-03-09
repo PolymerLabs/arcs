@@ -21,7 +21,7 @@ import arcs.core.storage.driver.DatabaseStorageKey
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.driver.VolatileDriverProvider
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 
 /**
