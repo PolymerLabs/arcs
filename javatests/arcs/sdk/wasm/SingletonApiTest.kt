@@ -11,6 +11,8 @@
 
 package arcs.sdk.wasm
 
+import arcs.sdk.wasm.combineUpdates
+
 
 class SingletonApiTest : AbstractSingletonApiTest() {
     var x = 0;
@@ -21,7 +23,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
             x = 1
         }
 
-        combine(handles.inHandle, handles.ioHandle).onUpdate{ _, _ ->
+        combineUpdates(handles.inHandle, handles.ioHandle){ _, _ ->
             combinedUpdates++
         }
     }
