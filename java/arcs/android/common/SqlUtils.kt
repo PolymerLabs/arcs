@@ -88,14 +88,22 @@ inline fun <T> Cursor.forSingleResult(block: (Cursor) -> T?): T? = use {
  * Returns the value of the requested column as a boolean. The column data must be a long with value
  * either 0 or 1.
  */
-fun Cursor.getBoolean(columnIndex: Int) = getLong(columnIndex).toBoolean()
+fun Cursor.getBoolean(i: Int) = getLong(i).toBoolean()
+
+/** Returns a nullable [String] from the requested column. */
+fun Cursor.getNullableString(i: Int) = if (isNull(i)) null else getString(i)
+
+/** Returns a nullable [Double] from the requested column. */
+fun Cursor.getNullableDouble(i: Int) = if (isNull(i)) null else getDouble(i)
+
+/** Returns a nullable [Boolean] from the requested column. */
+fun Cursor.getNullableBoolean(i: Int) = if (isNull(i)) null else getBoolean(i)
 
 /**
  * Bind a boolean value to this statement. The value will be converted to a long with value either 0
  * or 1.
  */
-fun SQLiteProgram.bindBoolean(columnIndex: Int, value: Boolean) =
-    bindLong(columnIndex, value.toLong())
+fun SQLiteProgram.bindBoolean(i: Int, value: Boolean) = bindLong(i, value.toLong())
 
 private fun Long.toBoolean() = when (this) {
     0L -> false

@@ -16,6 +16,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
+import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
@@ -736,6 +737,30 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun insertAndGet_entity_singletonField_isMissing() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text),
+                collections = mapOf()
+            )
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity("entity", mapOf()),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(key, entity)
+        val entityOut = database.getEntity(key, schema)
+        assertThat(entityOut!!.rawEntity.singletons).containsExactly("text", null)
+    }
+
+    @Test
     fun insertAndGet_entity_singletonField_isNull() = runBlockingTest {
         val key = DummyStorageKey("key")
         val childSchema = newSchema("child")
@@ -756,7 +781,7 @@ class DatabaseImplTest {
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut!!.rawEntity.singletons).isEmpty()
+        assertThat(entityOut).isEqualTo(entity)
     }
 
     @Test
@@ -783,7 +808,10 @@ class DatabaseImplTest {
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut!!.rawEntity.collections).isEmpty()
+        assertThat(entityOut!!.rawEntity.collections).containsExactly(
+            "texts", emptySet<Referencable>(),
+            "refs", emptySet<Referencable>()
+        )
     }
 
     @Test
@@ -813,7 +841,7 @@ class DatabaseImplTest {
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut!!.rawEntity.collections).isEmpty()
+        assertThat(entityOut).isEqualTo(entity)
     }
 
     @Test

@@ -22,6 +22,9 @@ import arcs.android.common.bindBoolean
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
+import arcs.android.common.getNullableBoolean
+import arcs.android.common.getNullableDouble
+import arcs.android.common.getNullableString
 import arcs.android.common.map
 import arcs.android.common.transaction
 import arcs.android.common.useTransaction
@@ -181,7 +184,6 @@ class DatabaseImpl(
             """
                 SELECT
                     storage_keys.id,
-                    storage_keys.value_id,
                     storage_keys.data_type,
                     entities.entity_id,
                     entities.creation_timestamp,
@@ -194,52 +196,20 @@ class DatabaseImpl(
             """.trimIndent(),
             arrayOf(storageKey.toString())
         ).forSingleResult {
-            val dataType = DataType.values()[it.getInt(2)]
+            val dataType = DataType.values()[it.getInt(1)]
             require(dataType == DataType.Entity) {
                 "Expected storage key $storageKey to be an Entity but was a $dataType."
             }
             val storageKeyId = it.getLong(0)
-            val schemaTypeId = it.getLong(1)
-            val entityId = it.getString(3)
-            val creationTimestamp = it.getLong(4)
-            val expirationTimestamp = it.getLong(5)
-            val versionMap = requireNotNull(it.getVersionMap(6)) {
+            val entityId = it.getString(2)
+            val creationTimestamp = it.getLong(3)
+            val expirationTimestamp = it.getLong(4)
+            val versionMap = requireNotNull(it.getVersionMap(5)) {
                 "No VersionMap available for Entity at $storageKey"
             }
-            val versionNumber = it.getInt(7)
-            // Fetch the entity's fields.
-            counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
-            val fieldsByName = getSchemaFields(schemaTypeId, db)
-            val fieldsById = fieldsByName.mapKeys { it.value.fieldId }
-            // Populate the entity's field data from the database.
-            counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUES)
-            val singletons = mutableMapOf<FieldName, Referencable?>()
-            val collections = mutableMapOf<FieldName, Set<Referencable>>()
-            rawQuery(
-                "SELECT field_id, value_id FROM field_values WHERE entity_storage_key_id = ?",
-                arrayOf(storageKeyId.toString())
-            ).forEach {
-                val fieldId = it.getLong(0)
-                val fieldValueId = it.getLong(1)
-                val field = fieldsById.getValue(fieldId)
-                // TODO: Don't do a separate query for every field.
-                if (field.isCollection) {
-                    collections[field.fieldName] = getEntityFieldValue(
-                        fieldValueId,
-                        field,
-                        db,
-                        counters
-                    ) as Set<Referencable>
-                } else {
-                    singletons[field.fieldName] = getEntityFieldValue(
-                        fieldValueId,
-                        field,
-                        db,
-                        counters
-                    ) as Referencable
-                }
-            }
-            DatabaseData.Entity(
+            val versionNumber = it.getInt(6)
+            val (singletons, collections) = getEntityFields(storageKeyId, counters, db)
+            return DatabaseData.Entity(
                 RawEntity(
                     id = entityId,
                     singletons = singletons,
@@ -254,50 +224,94 @@ class DatabaseImpl(
         }
     }
 
-    private fun getEntityFieldValue(
-        fieldValueId: FieldValueId,
-        field: SchemaField,
-        db: SQLiteDatabase,
-        counters: Counters?
-    ): Any = when {
-        field.isCollection -> {
-            counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_COLLECTION)
-            getCollectionEntries(fieldValueId, field.typeId, db, counters)
-        }
-        isPrimitiveType(field.typeId) -> {
-            counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_PRIMITIVE)
-            getPrimitiveValue(fieldValueId, field.typeId, db, counters)
-        }
-        else -> {
-            counters?.increment(DatabaseCounters.GET_ENTITY_FIELD_VALUE_REFERENCE)
-            getReferenceValue(fieldValueId, db)
-        }
-    }
-
-    private fun getReferenceValue(
-        entityRefId: FieldValueId,
+    /** Returns the singleton and collection fields for the entity at the given storage key ID. */
+    private fun getEntityFields(
+        storageKeyId: StorageKeyId,
+        counters: Counters?,
         db: SQLiteDatabase
-    ): Any = db.rawQuery(
-        """
-            SELECT
-                entity_id,
-                backing_storage_key,
-                version_map,
-                creation_timestamp,
-                expiration_timestamp
-            FROM entity_refs
-            WHERE id = ?
-        """.trimIndent(),
-        arrayOf(entityRefId.toString())
-    ).forSingleResult {
-        Reference(
-            id = it.getString(0),
-            storageKey = StorageKeyParser.parse(it.getString(1)),
-            version = it.getVersionMap(2),
-            creationTimestamp = it.getLong(3),
-            expirationTimestamp = it.getLong(4)
-        )
-    } ?: throw IllegalArgumentException("Entity Reference with ID $entityRefId does not exist.")
+    ): Pair<Map<FieldName, Referencable?>, Map<FieldName, Set<Referencable>>> {
+        counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
+        val singletons = mutableMapOf<FieldName, Referencable?>()
+        val collections = mutableMapOf<FieldName, MutableSet<Referencable>>()
+
+        db.rawQuery(
+            """
+                SELECT
+                    t.name,
+                    t.is_collection,
+                    t.type_id,
+                    t.value_id,
+                    text_primitive_values.value,
+                    number_primitive_values.value,
+                    entity_refs.entity_id,
+                    entity_refs.backing_storage_key,
+                    entity_refs.version_map,
+                    entity_refs.creation_timestamp,
+                    entity_refs.expiration_timestamp
+                FROM (
+                    SELECT
+                        fields.name,
+                        fields.type_id,
+                        fields.is_collection,
+                        CASE
+                            WHEN fields.is_collection = 0 THEN field_values.value_id
+                            ELSE collection_entries.value_id
+                        END AS value_id
+                    FROM storage_keys
+                    LEFT JOIN entities
+                        ON entities.storage_key_id = storage_keys.id
+                    LEFT JOIN fields
+                        ON fields.parent_type_id = storage_keys.value_id
+                    LEFT JOIN field_values
+                        ON field_values.entity_storage_key_id = storage_keys.id
+                        AND field_values.field_id = fields.id
+                    LEFT JOIN collection_entries
+                        ON fields.is_collection = 1
+                        AND collection_entries.collection_id = field_values.value_id
+                    WHERE storage_keys.id = ?
+                ) AS t
+                LEFT JOIN number_primitive_values
+                    ON t.type_id = 1 AND number_primitive_values.id = t.value_id
+                LEFT JOIN text_primitive_values
+                    ON t.type_id = 2 AND text_primitive_values.id = t.value_id  
+                LEFT JOIN entity_refs
+                    ON t.type_id > 2 AND entity_refs.id = t.value_id
+            """.trimIndent(),
+            arrayOf(storageKeyId.toString())
+        ).forEach {
+            // Artifact of all the LEFT JOINs. If the entity is empty, there can be a single
+            // row full of NULLs. Just skip it if null.
+            val fieldName = it.getNullableString(0) ?: return@forEach
+            val isCollection = it.getBoolean(1)
+            val typeId = it.getInt(2)
+
+            val value: Referencable? = when (typeId) {
+                PrimitiveType.Boolean.ordinal -> it.getNullableBoolean(3)?.toReferencable()
+                PrimitiveType.Text.ordinal -> it.getNullableString(4)?.toReferencable()
+                PrimitiveType.Number.ordinal -> it.getNullableDouble(5)?.toReferencable()
+                else -> if (it.isNull(6)) {
+                    null
+                } else {
+                    Reference(
+                        id = it.getString(6),
+                        storageKey = StorageKeyParser.parse(it.getString(7)),
+                        version = it.getVersionMap(8),
+                        creationTimestamp = it.getLong(9),
+                        expirationTimestamp = it.getLong(10)
+                    )
+                }
+            }
+
+            if (isCollection) {
+                // Ensure we create the collection even if the element to add is null.
+                val collection = collections.getOrPut(fieldName) { mutableSetOf() }
+                value?.let { x -> collection.add(x) }
+            } else {
+                singletons[fieldName] = value
+            }
+        }
+        return singletons to collections
+    }
 
     @VisibleForTesting
     fun getCollection(
@@ -1167,26 +1181,30 @@ class DatabaseImpl(
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+    fun dumpCursor(cursor: Cursor) {
+        val header = cursor.columnNames.joinToString(" | ", "| ", " |")
+        val border = "-".repeat(header.length)
+        println(border)
+        println(header)
+        println(border)
+
+        while (cursor.moveToNext()) {
+            println((0 until cursor.columnCount).joinToString(" | ", "| ", " |") { col ->
+                when (cursor.getType(col)) {
+                    Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(col).toString()
+                    else -> if (cursor.isNull(col)) "NULL" else cursor.getString(col)
+                }
+            })
+        }
+        println(border)
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     fun dumpTables(vararg tableNames: String, db: SQLiteDatabase? = null) {
         tableNames.forEach { tableName ->
             println("\nDumping table \"$tableName\":")
-            (db ?: readableDatabase).rawQuery("SELECT * FROM $tableName", arrayOf()).use { cursor ->
-                val header = cursor.columnNames.joinToString(" | ", "| ", " |")
-                val border = "-".repeat(header.length)
-                println(border)
-                println(header)
-                println(border)
-
-                while (cursor.moveToNext()) {
-                    println((0 until cursor.columnCount).joinToString(" | ", "| ", " |") { col ->
-                        when (cursor.getType(col)) {
-                            Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(col).toString()
-                            else -> cursor.getString(col)
-                        }
-                    })
-                }
-                println(border)
-            }
+            (db ?: readableDatabase).rawQuery("SELECT * FROM $tableName", arrayOf())
+                .use { dumpCursor(it) }
         }
     }
 
