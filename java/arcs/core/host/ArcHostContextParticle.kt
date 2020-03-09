@@ -179,8 +179,8 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
         } catch (nse: NoSuchElementException) {
             throw NoSuchElementException("""
                 Can't create Type $tag for Handle $handleName and ${particle::class}. This usually
-                occurs because this the Particle or ArcHost implementation has changed since
-                the last time this arc for serialized. ${nse.message}
+                occurs because the Particle or ArcHost implementation has changed since
+                the last time this arc was serialized. ${nse.message}
             """.trimIndent())
         }
     }
