@@ -177,11 +177,9 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
 export class KotlinGenerator implements ClassGenerator {
   fields: string[] = [];
   fieldVals: string[] = [];
-  setFields: string[] = [];
   encode: string[] = [];
   decode: string[] = [];
   fieldsReset: string[] = [];
-  getUnsetFields: string[] = [];
   fieldsForCopyDecl: string[] = [];
   fieldsForCopy: string[] = [];
   setFieldsToDefaults: string[] = [];
@@ -212,13 +210,12 @@ export class KotlinGenerator implements ClassGenerator {
 
     this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
     this.fieldVals.push(
-      `var ${fixed} = ${defaultVal}\n` +
+      `var ${fixed} = ${fixed}\n` +
       `        get() = field\n` +
       `        private set(_value) {\n` +
       `            field = _value\n` +
       `        }`
     );
-    this.setFields.push(`this.${fixed} = ${fixed}`);
     this.fieldsReset.push(
       `${fixed} = ${defaultVal}`,
     );
@@ -289,17 +286,13 @@ Schema(
 
     return `\
 
-class ${name}() : ${this.getType('Entity')} {
+class ${name}(${withFields(`
+        ${this.fields.join(',\n        ')}
+    `)}) : ${this.getType('Entity')} {
 
     override var internalId = ""
 
     ${withFields(`${this.fieldVals.join('\n    ')}`)}
-
-    ${withFields(`constructor(
-        ${this.fields.join(',\n        ')}
-    ) : this() {
-        ${this.setFields.join('\n        ')}
-    }`)}
 
     fun copy(
         ${this.fieldsForCopyDecl.join(',\n        ')}
