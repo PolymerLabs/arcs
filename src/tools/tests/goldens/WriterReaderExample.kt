@@ -15,7 +15,9 @@ object WritingRecipePlan : Plan(
         Particle(
             "Writer",
             "",
-            mapOf("data" to HandleConnection(StorageKeyParser.parse(""), HandleMode.Write, null, null))
+            mapOf(
+                "data" to HandleConnection(StorageKeyParser.parse(""), HandleMode.Write, null, null)
+            )
         )
     )
 )
@@ -24,7 +26,14 @@ object ReadingRecipePlan : Plan(
         Particle(
             "Reader",
             "",
-            mapOf("data" to HandleConnection(StorageKeyParser.parse("ramdisk://"), HandleMode.Read, null, null))
+            mapOf(
+                "data" to HandleConnection(
+                    StorageKeyParser.parse("ramdisk://"),
+                    HandleMode.Read,
+                    null,
+                    null
+                )
+            )
         )
     )
 )

@@ -63,7 +63,7 @@ export class PlanGenerator {
     return ktUtils.applyFun('Particle', [
       quote(particle.name),
       quote(location),
-      ktUtils.mapOf(connectionMappings)
+      ktUtils.mapOf(connectionMappings, 12)
     ]);
   }
 
@@ -74,7 +74,7 @@ export class PlanGenerator {
     const type = this.createType(connection.type);
     const ttl = 'null';
 
-    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl]);
+    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], 24);
   }
 
   /** Generates a Kotlin `HandleMode` from a Direction. */
