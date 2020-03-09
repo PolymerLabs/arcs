@@ -24,7 +24,6 @@ import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
 import arcs.android.common.map
 import arcs.android.common.transaction
-import arcs.android.common.useTransaction
 import arcs.android.crdt.VersionMapProto
 import arcs.android.crdt.fromProto
 import arcs.android.crdt.toProto
@@ -173,7 +172,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Entity? = readableDatabase.useTransaction {
+    ): DatabaseData.Entity? = readableDatabase.transaction {
         val db = this
         // Fetch the entity's type by storage key.
         counters?.increment(DatabaseCounters.GET_ENTITY_TYPE_BY_STORAGEKEY)
@@ -304,12 +303,12 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Collection? = readableDatabase.useTransaction {
+    ): DatabaseData.Collection? = readableDatabase.transaction {
         val db = this
         counters?.increment(DatabaseCounters.GET_COLLECTION_ID)
         val (collectionId, versionMap, versionNumber) =
             getCollectionMetadata(storageKey, DataType.Collection, db)
-                ?: return@useTransaction null
+                ?: return@transaction null
 
         counters?.increment(DatabaseCounters.GET_COLLECTION_ENTRIES)
         val values = getCollectionReferenceEntries(collectionId, db)
@@ -326,12 +325,12 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Singleton? = readableDatabase.useTransaction {
+    ): DatabaseData.Singleton? = readableDatabase.transaction {
         val db = this
         counters?.increment(DatabaseCounters.GET_SINGLETON_ID)
         val (collectionId, versionMap, versionNumber) =
             getCollectionMetadata(storageKey, DataType.Singleton, db)
-                ?: return@useTransaction null
+                ?: return@transaction null
 
         counters?.increment(DatabaseCounters.GET_SINGLETON_ENTRIES)
         val values = getCollectionReferenceEntries(collectionId, db)
@@ -379,7 +378,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         data: DatabaseData.Entity,
         counters: Counters? = null
-    ): Boolean = writableDatabase.useTransaction {
+    ): Boolean = writableDatabase.transaction {
         val db = this
         val entity = data.rawEntity
         // Fetch/create the entity's type ID.
@@ -507,7 +506,7 @@ class DatabaseImpl(
         data: DatabaseData.Collection,
         dataType: DataType,
         counters: Counters?
-    ): Boolean = writableDatabase.useTransaction {
+    ): Boolean = writableDatabase.transaction {
         val db = this
 
         // Fetch/create the entity's type ID.
@@ -563,7 +562,7 @@ class DatabaseImpl(
             // Collection already exists; delete all existing entries.
             val collectionId = metadata.collectionId
             if (data.databaseVersion != metadata.versionNumber + 1) {
-                return@useTransaction false
+                return@transaction false
             }
 
             // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
@@ -699,7 +698,7 @@ class DatabaseImpl(
 
     /** Deletes everything from the database. */
     fun reset() {
-        writableDatabase.useTransaction {
+        writableDatabase.transaction {
             execSQL("DELETE FROM collection_entries")
             execSQL("DELETE FROM collections")
             execSQL("DELETE FROM entities")
