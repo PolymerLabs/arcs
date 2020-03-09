@@ -10,6 +10,7 @@
  */
 package arcs.core.host
 
+import arcs.core.host.api.Particle
 import kotlin.reflect.KClass
 
 /**

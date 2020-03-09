@@ -11,14 +11,16 @@
 
 package arcs.sdk
 
+import arcs.core.host.api.Particle
+
 /**
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
  * used by [Particle]s.
  */
-typealias HandleHolder = arcs.core.host.HandleHolder
+typealias HandleHolder = arcs.core.host.api.HandleHolder
 
 /** Base interface for all particles. */
-typealias Particle = arcs.core.host.Particle
+typealias Particle = Particle
 
 /**
  * Base class used by `schema2kotlin` code-generator tool to generate a class containing all

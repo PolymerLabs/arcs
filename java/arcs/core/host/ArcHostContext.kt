@@ -11,6 +11,7 @@
 package arcs.core.host
 
 import arcs.core.data.Plan
+import arcs.core.host.api.Particle
 import arcs.core.storage.api.Handle
 
 /**

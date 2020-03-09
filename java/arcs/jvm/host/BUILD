@@ -10,7 +10,7 @@ arcs_kt_jvm_library(
     disable_lint_checks = ["NewApi"],
     deps = [
         "//java/arcs/core/host",
-        "//java/arcs/core/host:api",
+        "//java/arcs/core/host/api",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/util",
         "//java/arcs/jvm/util",

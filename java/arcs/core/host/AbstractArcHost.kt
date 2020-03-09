@@ -14,6 +14,8 @@ import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
+import arcs.core.host.api.HandleHolder
+import arcs.core.host.api.Particle
 import arcs.core.storage.api.Handle
 import arcs.core.storage.handle.HandleManager
 import arcs.core.util.TaggedLog
@@ -41,12 +43,16 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
     /** In memory cache of [ArcHostContext] state. */
-    protected val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
+    // TODO: change to LRU cache
+    private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
     override val hostId = this::class.className()
 
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
     }
+
+    // VisibleForTesting
+    protected fun clearCache() = runningArcs.clear()
 
     /** Used by subclasses to register particles dynamically after [ArcHost] construction */
     protected fun registerParticle(particle: ParticleIdentifier, constructor: ParticleConstructor) {
