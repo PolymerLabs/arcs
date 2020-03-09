@@ -17,6 +17,7 @@ import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
+import arcs.core.storage.VolatileStorageKey
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
@@ -83,6 +84,8 @@ open class AllocatorTestBase {
     open fun setUp() = runBlocking {
         RamDisk.clear()
         RamDiskDriverProvider()
+
+        VolatileStorageKey.registerKeyCreator()
 
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()
