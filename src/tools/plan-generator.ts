@@ -52,7 +52,7 @@ export class PlanGenerator {
       }
 
       const start = `object ${planName} : `;
-      const plan = `${start}${ktUtils.applyFun('Plan', particles, 'Plan', start.length)}`;
+      const plan = `${start}${ktUtils.applyFun('Plan', particles, start.length)}`;
       plans.push(plan);
     }
     return plans;
@@ -79,7 +79,7 @@ export class PlanGenerator {
   async createHandleConnection(connection: HandleConnection): Promise<string> {
     const storageKey = this.createStorageKey(connection.handle.storageKey);
     const mode = this.createDirection(connection.direction);
-    const type = this.createType(connection.type);
+    const type = await this.createType(connection.type);
     const ttl = 'null';
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], 24);

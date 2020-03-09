@@ -10,10 +10,11 @@
 
 import {PlanGenerator} from '../plan-generator.js';
 import {assert} from '../../platform/chai-node.js';
+import {Manifest} from '../../runtime/manifest.js';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
-    const emptyGenerator = new PlanGenerator([]);
+    const emptyGenerator = new PlanGenerator([], '');
     it('imports arcs.core.data when the package is different', () => {
       const generator = new PlanGenerator([], 'some.package');
 
