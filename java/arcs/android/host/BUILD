@@ -12,6 +12,7 @@ kt_android_library(
     deps = [
         "//java/arcs/android/host/parcelables",
         "//java/arcs/android/sdk/host",
+        "//java/arcs/android/sdk/host:api",
         "//java/arcs/android/type",
         "//java/arcs/core/common",
         "//java/arcs/core/host",
