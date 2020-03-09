@@ -113,6 +113,138 @@ typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
 
+class Gold_QCollection() : WasmEntity {
+
+    override var internalId = ""
+
+    var name = ""
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var age = 0.0
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var lastCall = 0.0
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+
+    constructor(
+        name: String = "",
+        age: Double = 0.0,
+        lastCall: Double = 0.0
+    ) : this() {
+        this.name = name
+        this.age = age
+        this.lastCall = lastCall
+    }
+
+    fun copy(
+        name: String = this.name,
+        age: Double = this.age,
+        lastCall: Double = this.lastCall
+    ) = Gold_QCollection(
+        name = name,
+        age = age,
+        lastCall = lastCall
+    )
+
+    fun reset() {
+        name = ""
+        age = 0.0
+        lastCall = 0.0
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) {
+        return true
+      }
+
+      if (other is Gold_QCollection) {
+        if (internalId != "") {
+          return internalId == other.internalId
+        }
+        return toString() == other.toString()
+      }
+      return false;
+    }
+
+    override fun hashCode(): Int =
+      if (internalId != "") internalId.hashCode() else toString().hashCode()
+
+    override fun schemaHash() = "f72d6bee9c5b13d2133e2af89a5ed591d670ee74"
+
+    override fun encodeEntity(): NullTermByteArray {
+        val encoder = StringEncoder()
+        encoder.encode("", internalId)
+        name.let { encoder.encode("name:T", name) }
+        age.let { encoder.encode("age:N", age) }
+        lastCall.let { encoder.encode("lastCall:N", lastCall) }
+        return encoder.toNullTermByteArray()
+    }
+
+    override fun toString() = "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall)"
+}
+
+class Gold_QCollection_Spec() : WasmEntitySpec<Gold_QCollection> {
+
+    override fun create() = Gold_QCollection()
+
+
+    override fun decode(encoded: ByteArray): Gold_QCollection? {
+        if (encoded.isEmpty()) return null
+
+        val decoder = StringDecoder(encoded)
+        val internalId = decoder.decodeText()
+        decoder.validate("|")
+
+        var name = ""
+        var age = 0.0
+        var lastCall = 0.0
+        var i = 0
+        while (i < 3 && !decoder.done()) {
+            val _name = decoder.upTo(':').toUtf8String()
+            when (_name) {
+                "name" -> {
+                    decoder.validate("T")
+                    name = decoder.decodeText()
+                }
+                "age" -> {
+                    decoder.validate("N")
+                    age = decoder.decodeNum()
+                }
+                "lastCall" -> {
+                    decoder.validate("N")
+                    lastCall = decoder.decodeNum()
+                }
+                else -> {
+                    // Ignore unknown fields until type slicing is fully implemented.
+                    when (decoder.chomp(1).toUtf8String()) {
+                        "T", "U" -> decoder.decodeText()
+                        "N" -> decoder.decodeNum()
+                        "B" -> decoder.decodeBool()
+                    }
+                    i--
+                }
+            }
+            decoder.validate("|")
+            i++
+        }
+        val _rtn = create().copy(
+            name = name,
+            age = age,
+            lastCall = lastCall
+        )
+        _rtn.internalId = internalId
+        return _rtn
+    }
+}
+
+
 class Gold_Data() : WasmEntity {
 
     override var internalId = ""
@@ -266,6 +398,7 @@ class GoldHandles(
     particle: WasmParticleImpl
 ) {
     val data: WasmSingletonImpl<Gold_Data> = WasmSingletonImpl(particle, "data", Gold_Data_Spec())
+    val qCollection: WasmCollectionImpl<Gold_QCollection> = WasmCollectionImpl(particle, "qCollection", Gold_QCollection_Spec())
     val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl(particle, "alias", Gold_Alias_Spec())
 }
 

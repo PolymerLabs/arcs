@@ -3,4 +3,5 @@
 
 particle Gold
   data: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &{val: Text}}
+  qCollection: reads [People {name: Text, age: Number, lastCall: Number}[lastCall < 3*24*60*60 and name == ?]]
   alias: writes {val: Text}

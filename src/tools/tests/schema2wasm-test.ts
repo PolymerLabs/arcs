@@ -31,9 +31,16 @@ class Schema2Mock extends Schema2Base {
     const collector = {count: 0, adds: []};
     this.res[node.name] = collector;
     return {
+      escapeIdentifier(name: string): string {
+        return name;
+      },
+
       addField({field, typeChar, isOptional, refClassName}: AddFieldOptions) {
         const refInfo = refClassName ? `<${refClassName}>` : '';
         collector.adds.push(field + ':' + typeChar + refInfo + (isOptional ? '?' : ''));
+      },
+
+      generatePredicates() {
       },
 
       generate(schemaHash: string, fieldCount: number): string {

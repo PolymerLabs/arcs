@@ -79,8 +79,12 @@ class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
                 singletons = mapOf("val" to FieldType.Text),
                 collections = emptyMap()
             ),
-            "485712110d89359a3e539dac987329cd2649d889"
-        )
+            "485712110d89359a3e539dac987329cd2649d889",
+            refinement = { _ ->
+                true
+            },
+            query = null
+          )
 
         init {
             SchemaRegistry.register(schema)
@@ -106,6 +110,131 @@ typealias Gold_Data_Ref = GoldInternal1
 typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
+
+class Gold_QCollection() : Entity {
+
+    override var internalId = ""
+
+    var name = ""
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var age = 0.0
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var lastCall = 0.0
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+
+    constructor(
+        name: String = "",
+        age: Double = 0.0,
+        lastCall: Double = 0.0
+    ) : this() {
+        this.name = name
+        this.age = age
+        this.lastCall = lastCall
+    }
+
+    fun copy(
+        name: String = this.name,
+        age: Double = this.age,
+        lastCall: Double = this.lastCall
+    ) = Gold_QCollection(
+        name = name,
+        age = age,
+        lastCall = lastCall
+    )
+
+    fun reset() {
+        name = ""
+        age = 0.0
+        lastCall = 0.0
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) {
+        return true
+      }
+
+      if (other is Gold_QCollection) {
+        if (internalId != "") {
+          return internalId == other.internalId
+        }
+        return toString() == other.toString()
+      }
+      return false;
+    }
+
+    override fun hashCode(): Int =
+      if (internalId != "") internalId.hashCode() else toString().hashCode()
+
+    override fun schemaHash() = "f72d6bee9c5b13d2133e2af89a5ed591d670ee74"
+
+    override fun serialize() = RawEntity(
+        internalId,
+        mapOf(
+            "name" to name.toReferencable(),
+            "age" to age.toReferencable(),
+            "lastCall" to lastCall.toReferencable()
+        )
+    )
+
+    override fun toString() = "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall)"
+}
+
+class Gold_QCollection_Spec() : EntitySpec<Gold_QCollection> {
+
+    companion object {
+        val schema = Schema(
+            listOf(SchemaName("People")),
+            SchemaFields(
+                singletons = mapOf(
+                    "name" to FieldType.Text,
+                    "age" to FieldType.Number,
+                    "lastCall" to FieldType.Number
+                ),
+                collections = emptyMap()
+            ),
+            "f72d6bee9c5b13d2133e2af89a5ed591d670ee74",
+            refinement = { _ ->
+                true
+            },
+            query = { data, queryArgs ->
+                val lastCall = data.singletons["lastCall"] as Double
+                val name = data.singletons["name"] as String
+                val queryArgument = queryArgs as String
+                ((lastCall < 259200) && (name == queryArgument))
+            }
+          )
+
+        init {
+            SchemaRegistry.register(schema)
+        }
+    }
+
+    override fun schema() = schema
+
+    override fun create() = Gold_QCollection()
+
+    override fun deserialize(data: RawEntity): Gold_QCollection {
+      // TODO: only handles singletons for now
+      val rtn = create().copy(
+        name = data.singletons["name"].toPrimitiveValue(String::class, ""),
+        age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0),
+        lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0)
+      )
+      rtn.internalId = data.id
+      return rtn
+    }
+
+}
+
 
 class Gold_Data() : Entity {
 
@@ -209,8 +338,12 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
                 ),
                 collections = emptyMap()
             ),
-            "d8058d336e472da47b289eafb39733f77eadb111"
-        )
+            "d8058d336e472da47b289eafb39733f77eadb111",
+            refinement = { _ ->
+                true
+            },
+            query = null
+          )
 
         init {
             SchemaRegistry.register(schema)
@@ -240,10 +373,12 @@ class GoldHandles : HandleHolderBase(
     "Gold",
     mapOf(
         "data" to Gold_Data_Spec(),
+        "qCollection" to Gold_QCollection_Spec(),
         "alias" to Gold_Alias_Spec()
     )
 ) {
     val data: ReadSingletonHandle<Gold_Data> by handles
+    val qCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
     val alias: WriteSingletonHandle<Gold_Alias> by handles
 }
 
