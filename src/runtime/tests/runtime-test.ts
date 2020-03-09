@@ -117,30 +117,30 @@ describe('Runtime', () => {
     assert.equal(runtime.context, volatileArc.context);
 
     await volatileArc.instantiate(manifest.recipes[0]);
-    assert.lengthOf(runtime.context.stores, 1);
+    assert.lengthOf(runtime.context.stores, 3);
 
     await ramdiskArc.instantiate(manifest.recipes[0]);
-    assert.lengthOf(runtime.context.stores, 2);
+    assert.lengthOf(runtime.context.stores, 6);
 
     const volatileArc1 = runtime.runArc('test-arc-v1', volatileStorageKeyPrefixForTest());
     const recipe1 = await runtime.resolveRecipe(volatileArc1, manifest.recipes[1]);
     assert.isTrue(recipe1 && recipe1.isResolved());
     await volatileArc1.instantiate(recipe1);
-    assert.lengthOf(runtime.context.stores, 2);
+    assert.lengthOf(runtime.context.stores, 6);
     volatileArc1.dispose();
-    assert.lengthOf(runtime.context.stores, 2);
+    assert.lengthOf(runtime.context.stores, 6);
 
     volatileArc.dispose();
-    assert.lengthOf(runtime.context.stores, 2);
+    assert.lengthOf(runtime.context.stores, 6);
 
     ramdiskArc.dispose();
-    assert.lengthOf(runtime.context.stores, 2);
+    assert.lengthOf(runtime.context.stores, 6);
 
     const volatileArc2 = runtime.runArc('test-arc-v2', volatileStorageKeyPrefixForTest());
     const recipe2 = await runtime.resolveRecipe(volatileArc2, manifest.recipes[1]);
     assert.isTrue(recipe2 && recipe2.isResolved());
     await volatileArc2.instantiate(recipe2);
-    assert.lengthOf(runtime.context.stores, 2);
+    assert.lengthOf(runtime.context.stores, 6);
     assert.isTrue(runtime.context.stores.map(s => s.storageKey).includes(
         volatileArc2.activeRecipe.handles[0].storageKey));
   }));

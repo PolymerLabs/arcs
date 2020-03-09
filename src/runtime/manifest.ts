@@ -1318,11 +1318,6 @@ ${e.message}
     // Only register stores that have non-volatile storage key and don't have a
     // #volatile tag.
     if (!this.findStoreById(store.id) && !this.isVolatileStore(store, tags)) {
-      if (Flags.defaultReferenceMode && !(store.storageKey instanceof ReferenceModeStorageKey)) {
-        // Note: skip adding backing and container stores to context, if using reference-mode stores.
-        // TODO: there must be a better way!
-        return;
-      }
       this._addStore(store, tags);
     }
   }
