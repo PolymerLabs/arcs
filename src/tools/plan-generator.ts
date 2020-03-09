@@ -52,7 +52,7 @@ export class PlanGenerator {
       }
 
       const start = `object ${planName} : `;
-      const plan = `${start}${ktUtils.applyFun('Plan', particles, start.length)}`;
+      const plan = `${start}${ktUtils.applyFun('Plan', [ktUtils.listOf(particles)], start.length)}`;
       plans.push(plan);
     }
     return plans;
