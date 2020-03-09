@@ -305,22 +305,22 @@ class ${name}(${withFields(`
     }
 
     override fun equals(other: Any?): Boolean {
-      if (this === other) {
-        return true
-      }
-      
-      if (other is ${name}) {
-        if (internalId != "") {
-          return internalId == other.internalId
+        if (this === other) {
+            return true
         }
-        return toString() == other.toString()
-      }  
-      return false;
+
+        if (other is ${name}) {
+            if (internalId != "") {
+                return internalId == other.internalId
+            }
+            return toString() == other.toString()
+        }
+        return false;
     }
-    
+
     override fun hashCode(): Int =
       if (internalId != "") internalId.hashCode() else toString().hashCode()
-        
+
     override fun schemaHash() = "${schemaHash}"
 ${this.opts.wasm ? `
     override fun encodeEntity(): NullTermByteArray {
