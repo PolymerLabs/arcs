@@ -9,7 +9,10 @@
  */
 import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
-import {ParticleSpec} from '../runtime/particle-spec.js';
+import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
+import {EntityType, CollectionType} from '../runtime/type.js';
+import {Primitive} from '../runtime/refiner.js';
+import {Refinement, KTExtracter} from '../runtime/refiner.js';
 import minimist from 'minimist';
 import {leftPad, KotlinGenerationUtils} from './kotlin-generation-utils.js';
 
@@ -34,6 +37,16 @@ const typeMap = {
   'N': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
   'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
 };
+
+function typeFor(name: string): string {
+  switch (name) {
+    case 'Text': return 'String';
+    case 'URL': return 'String';
+    case 'Number': return 'Double';
+    case 'Boolean': return 'Boolean';
+    default: throw new Error(`Unhandled type '${name}' for kotlin.`);
+  }
+}
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -83,19 +96,25 @@ import arcs.core.storage.api.toPrimitiveValue`}
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       let handleInterfaceType: string;
       if (this.opts.wasm) {
-        handleInterfaceType = `Wasm${handleConcreteType}Impl<${entityType}>`;
+        handleInterfaceType = this.getType(`${handleConcreteType}Impl<${entityType}>`);
       } else {
         if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
             throw new Error(`Unsupported handle direction: ${connection.direction}`);
         }
         const handleInterfaces: string[] = [];
+        const typeArguments: string[] = [entityType];
         if (connection.direction === 'reads' || connection.direction === 'reads writes') {
           handleInterfaces.push('Read');
         }
         if (connection.direction === 'writes' || connection.direction === 'reads writes') {
           handleInterfaces.push('Write');
         }
-        handleInterfaceType = `${handleInterfaces.join('')}${handleConcreteType}Handle<${entityType}>`;
+        const queryType = this.getQueryType(connection);
+        if (queryType) {
+          handleInterfaces.push('Query');
+          typeArguments.push(queryType);
+        }
+        handleInterfaceType = this.getType(`${handleInterfaces.join('')}${handleConcreteType}Handle<${typeArguments.join(', ')}>`);
       }
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
@@ -107,13 +126,32 @@ import arcs.core.storage.api.toPrimitiveValue`}
     }
     return `
 ${this.getHandlesClassDecl(particleName, specDecls)} {
-    ${handleDecls.join('\n    ')} 
+    ${handleDecls.join('\n    ')}
 }
 
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: ${particleName}Handles = ${particleName}Handles(${this.opts.wasm ? 'this' : ''})
 }
 `;
+  }
+
+  private getQueryType(connection: HandleConnectionSpec): string {
+    if (!(connection.type instanceof CollectionType)) {
+      return null;
+    }
+    const handleType = connection.type.getContainedType();
+    if (!(handleType instanceof EntityType)) {
+      return null;
+    }
+    const refinement = handleType.entitySchema.refinement;
+    if (!refinement) {
+      return null;
+    }
+    const type = refinement.getQueryParams().get('?');
+    if (!type) {
+      return null;
+    }
+    return typeFor(type);
   }
 
   private getHandlesClassDecl(particleName: string, entitySpecs: string[]): string {
@@ -153,7 +191,16 @@ export class KotlinGenerator implements ClassGenerator {
   singletonSchemaFields: string[] = [];
   collectionSchemaFields: string[] = [];
 
+  refinement = '{ _ ->\n        true\n    }';
+  query = 'null'; // TODO(cypher1): Support multiple queries.
+
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
+
+  escapeIdentifier(name: string): string {
+    // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and 'final_' are keywords).
+    // TODO(cypher1): Check for name overlaps (e.g. 'final' and 'final_' should not be escaped to the same identifier.
+    return name + (keywords.includes(name) ? '_' : '');
+  }
 
   // TODO: allow optional fields in kotlin
   addField({field, typeChar, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
@@ -161,7 +208,7 @@ export class KotlinGenerator implements ClassGenerator {
     if (typeChar === 'R') return;
 
     const {type, decodeFn, defaultVal} = typeMap[typeChar];
-    const fixed = field + (keywords.includes(field) ? '_' : '');
+    const fixed = this.escapeIdentifier(field);
 
     this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
     this.fieldVals.push(
@@ -205,8 +252,26 @@ Schema(
         singletons = ${leftPad(ktUtils.mapOf(this.singletonSchemaFields, 30), 8, true)},
         collections = ${leftPad(ktUtils.mapOf(this.collectionSchemaFields, 30), 8, true)}
     ),
-    "${schemaHash}"
-)`;
+    "${schemaHash}",
+    refinement = ${this.refinement},
+    query = ${this.query}
+  )`;
+  }
+
+  typeFor(name: string): string {
+    return typeFor(name);
+  }
+
+  generatePredicates() {
+    const expression = KTExtracter.fromSchema(this.node.schema, this);
+    const refinement = this.node.schema.refinement;
+    const queryType = refinement.getQueryParams().get('?');
+    const lines = expression.split('\n').join('\n        ');
+    if (queryType) {
+      this.query = `{ data, queryArgs ->\n        ${lines}\n    }`;
+    } else {
+      this.refinement = `{ data ->\n        ${lines}\n    }`;
+    }
   }
 
   generate(schemaHash: string, fieldCount: number): string {

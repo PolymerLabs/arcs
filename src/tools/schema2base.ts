@@ -12,6 +12,7 @@ import path from 'path';
 import minimist from 'minimist';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
+import {Refinement} from '../runtime/refiner.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
@@ -25,6 +26,8 @@ export type AddFieldOptions = Readonly<{
 
 export interface ClassGenerator {
   addField(opts: AddFieldOptions): void;
+  escapeIdentifier(ident: string): string;
+  generatePredicates(): void;
   generate(schemaHash: string, fieldCount: number): string;
 }
 
@@ -103,6 +106,9 @@ export abstract class Schema2Base {
           } else {
             throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
           }
+        }
+        if (node.schema.refinement) {
+          generator.generatePredicates();
         }
         classes.push(generator.generate(await node.schema.hash(), fields.length));
       }

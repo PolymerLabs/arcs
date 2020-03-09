@@ -11,6 +11,7 @@ import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Type} from '../runtime/type.js';
+import {Refinement} from '../runtime/refiner.js';
 
 // https://en.cppreference.com/w/cpp/keyword
 // [...document.getElementsByClassName('wikitable')[0].getElementsByTagName('code')].map(x => x.innerHTML);
@@ -95,10 +96,6 @@ protected:
   }
 }
 
-function fixName(field: string): string {
-  return (keywords.includes(field) ? '_' : '') + field;
-}
-
 class CppGenerator implements ClassGenerator {
   fields: string[] = [];
   api: string[] = [];
@@ -113,8 +110,14 @@ class CppGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, readonly namespace: string) {}
 
+  escapeIdentifier(name: string): string {
+    // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and '_final' are keywords).
+    // TODO(cypher1): Check for name overlaps (e.g. 'final' and '_final' should not be escaped to the same identifier.
+    return (keywords.includes(name) ? '_' : '') + name;
+  }
+
   addField({field, typeChar, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
-    const fixed = fixName(field);
+    const fixed = this.escapeIdentifier(field);
     const valid = `${field}_valid_`;
     let {type, defaultVal, isString} = typeMap[typeChar];
     if (typeChar === 'R') {
@@ -175,6 +178,9 @@ class CppGenerator implements ClassGenerator {
 
     // For convenience, don't include unset required fields in the entity_to_str output.
     this.stringify.push(`if (entity.${valid}) printer.add("${field}: ", entity.${field}_);`);
+  }
+
+  generatePredicates() {
   }
 
   generate(schemaHash: string, fieldCount: number): string {
