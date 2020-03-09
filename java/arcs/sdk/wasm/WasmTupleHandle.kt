@@ -11,7 +11,6 @@
 
 package arcs.sdk.wasm
 
-<<<<<<< HEAD
 fun <T, U> combineUpdates(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
@@ -21,7 +20,6 @@ fun <T, U> combineUpdates(
     handles.forEach { handle ->
         handle.onUpdate {
             action(handle1.getContent(), handle2.getContent())
-=======
 fun<T, U> combineUpdates(
     handle1: WasmHandleEvents<T>, 
     handle2: WasmHandleEvents<U>,
@@ -31,6 +29,16 @@ fun<T, U> combineUpdates(
             handle.onUpdate {
                 action(handle1.getContent(), handle2.getContent())
             }
->>>>>>> Move to combineUpdate()
+
+fun <T, U> combineUpdates(
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    action: (T, U) -> Unit
+) {
+    val handles = listOf(handle1, handle2)
+    handles.forEach { handle ->
+        handle.onUpdate {
+            action(handle1.getContent(), handle2.getContent())
         }
     }
+}
