@@ -12,10 +12,10 @@ import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingl
 import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOperation, CRDTCollection, CollectionOperationAdd, CollectionOperationRemove} from '../crdt/crdt-collection.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode, StoreConstructorOptions} from './store-interface.js';
 import {BackingStore} from './backing-store.js';
-import {CRDTEntityTypeRecord, CRDTEntity, EntityData} from '../crdt/crdt-entity.js';
+import {CRDTEntityTypeRecord, CRDTEntity, EntityData, EntityOperation, EntityOpTypes} from '../crdt/crdt-entity.js';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
-import {CRDTData, VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
+import {VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Type, CollectionType, ReferenceType, SingletonType} from '../type.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
@@ -351,7 +351,12 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
           const entity = this.operationElement<Entity>(operation);
           let reference: Reference = null;
           if (entity) {
-            await this.updateBackingStore(entity);
+            if (operation.type===CollectionOpTypes.Remove) {
+              // If an entity is removed from a collection, we also clear the backing store.
+              await this.clearEntityInBackingStore(entity);
+            } else {
+              await this.updateBackingStore(entity);
+            }
             const version = this.backingStore.getLocalModel(entity.id).getData().version;
             reference = {id: entity.id, storageKey: this.backingStore.storageKey, version};
           }
@@ -571,6 +576,13 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
   private async updateBackingStore(entity: Entity) {
     const model = this.entityToModel(entity);
     return this.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model, id: 1}, entity.id);
+  }
+
+  /* Clear the entity in the backing store. */
+  private async clearEntityInBackingStore(entity: Entity) {
+    const model = this.entityToModel(entity);
+    const op: EntityOperation<S, C> = {type: EntityOpTypes.ClearAll, actor: this.crdtKey, clock: model.version};
+    return this.backingStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [op]}, entity.id);
   }
 
   private newBackingInstance() {

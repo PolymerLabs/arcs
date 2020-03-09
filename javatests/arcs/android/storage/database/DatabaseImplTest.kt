@@ -725,6 +725,30 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun insertAndGet_entity_singletonField_isNull() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text),
+                collections = mapOf()
+            )
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity("entity", mapOf("text" to null)),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(key, entity)
+        val entityOut = database.getEntity(key, schema)
+        assertThat(entityOut!!.rawEntity.singletons).isEmpty()
+    }
+
+    @Test
     fun insertAndGet_entity_collectionFields_areMissing() = runBlockingTest {
         val key = DummyStorageKey("key")
         val childSchema = newSchema("child")

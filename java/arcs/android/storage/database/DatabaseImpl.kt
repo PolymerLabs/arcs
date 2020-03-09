@@ -402,46 +402,56 @@ class DatabaseImpl(
         val content = ContentValues().apply {
             put("entity_storage_key_id", storageKeyId)
         }
-        entity.allData.forEach { (fieldName, fieldValue) ->
-            content.apply {
-                val field = fields.getValue(fieldName)
-                put("field_id", field.fieldId)
-                val valueId = when {
-                    field.isCollection -> {
-                        if (fieldValue == null) return@forEach
-                        require(fieldValue is Set<*>) {
-                            "Collection fields must be of type Set. Instead found " +
-                                "${fieldValue::class}."
-                        }
-                        if (fieldValue.isEmpty()) return@forEach
-                        insertFieldCollection(
-                            fieldValue,
-                            field.typeId,
-                            db,
-                            counters
-                        )
-                    }
-                    isPrimitiveType(field.typeId) -> {
-                        getPrimitiveValueId(fieldValue as Referencable, field.typeId, db, counters)
-                    }
-                    else -> {
-                        require(fieldValue is Reference) {
-                            "Expected field value to be a Reference but was $fieldValue."
-                        }
-                        getEntityReferenceId(fieldValue, db, counters)
-                    }
-                }
-                put("value_id", valueId)
+        entity.allData
+            .filter { (_, fieldValue) ->
+                // If a field value is null, we don't write it to the database.
+                fieldValue != null
             }
+            .forEach { (fieldName, fieldValue) ->
+                content.apply {
+                    val field = fields.getValue(fieldName)
+                    put("field_id", field.fieldId)
+                    val valueId = when {
+                        field.isCollection -> {
+                            if (fieldValue == null) return@forEach
+                            require(fieldValue is Set<*>) {
+                                "Collection fields must be of type Set. Instead found " +
+                                    "${fieldValue::class}."
+                            }
+                            if (fieldValue.isEmpty()) return@forEach
+                            insertFieldCollection(
+                                fieldValue,
+                                field.typeId,
+                                db,
+                                counters
+                            )
+                        }
+                        isPrimitiveType(field.typeId) -> {
+                            getPrimitiveValueId(
+                                fieldValue as Referencable,
+                                field.typeId,
+                                db,
+                                counters
+                            )
+                        }
+                        else -> {
+                            require(fieldValue is Reference) {
+                                "Expected field value to be a Reference but was $fieldValue."
+                            }
+                            getEntityReferenceId(fieldValue, db, counters)
+                        }
+                    }
+                    put("value_id", valueId)
+                }
 
-            counters?.increment(DatabaseCounters.UPDATE_ENTITY_FIELD_VALUE)
-            insertWithOnConflict(
-                TABLE_FIELD_VALUES,
-                null,
-                content,
-                SQLiteDatabase.CONFLICT_REPLACE
-            )
-        }
+                counters?.increment(DatabaseCounters.UPDATE_ENTITY_FIELD_VALUE)
+                insertWithOnConflict(
+                    TABLE_FIELD_VALUES,
+                    null,
+                    content,
+                    SQLiteDatabase.CONFLICT_REPLACE
+                )
+            }
     }
 
     /**
