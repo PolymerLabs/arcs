@@ -583,7 +583,10 @@ describe('KTExtracter', () => {
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = KTExtracter.fromSchema(schema, escaper);
       assert.strictEqual(query,
-        'val a = data.singletons["a"] as Double\nval b = data.singletons["b"] as Double\n((b + (a * 3)) > 300) && ((a > 3) && (!(a == 100))) && ((b > 20) && (b < 100))');
+        `\
+val a = data.singletons["a"] as Double
+val b = data.singletons["b"] as Double
+((b + (a * 3)) > 300) && ((a > 3) && (!(a == 100))) && ((b > 20) && (b < 100))`);
   }));
   it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -594,7 +597,10 @@ describe('KTExtracter', () => {
     const query = KTExtracter.fromSchema(schema, escaper);
     //TODO(cypher1): Implement some simple boolean simplifications.
     //This should simplify to, '(!a) && b'
-    assert.strictEqual(query, 'val a = data.singletons["a"] as Boolean\nval b = data.singletons["b"] as Boolean\n(b || a) && (!a) && b');
+    assert.strictEqual(query, `\
+val a = data.singletons["a"] as Boolean
+val b = data.singletons["b"] as Boolean
+(b || a) && (!a) && b`);
   }));
   it('tests can create queries where field refinement is null', async () => {
     const manifest = await Manifest.parse(`
@@ -603,7 +609,10 @@ describe('KTExtracter', () => {
     `);
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
-    assert.strictEqual(query, 'val a = data.singletons["a"] as Boolean\nval b = data.singletons["b"] as Boolean\n(b && a)');
+    assert.strictEqual(query, `\
+val a = data.singletons["a"] as Boolean
+val b = data.singletons["b"] as Boolean
+(b && a)`);
   });
   it('tests can create queries where schema refinement is null', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -612,7 +621,10 @@ describe('KTExtracter', () => {
     `);
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
-    assert.strictEqual(query, 'val a = data.singletons["a"] as Boolean\nval b = data.singletons["b"] as Boolean\n(!a) && b');
+    assert.strictEqual(query, `\
+val a = data.singletons["a"] as Boolean
+val b = data.singletons["b"] as Boolean
+(!a) && b`);
   }));
   it('tests can create queries where there is no refinement', async () => {
     const manifest = await Manifest.parse(`

@@ -11,10 +11,9 @@ import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
 import {EntityType, CollectionType} from '../runtime/type.js';
-import {Primitive} from '../runtime/refiner.js';
-import {Refinement, KTExtracter} from '../runtime/refiner.js';
+import {KTExtracter} from '../runtime/refiner.js';
 import minimist from 'minimist';
-import {leftPad, KotlinGenerationUtils} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -96,7 +95,7 @@ import arcs.core.storage.api.toPrimitiveValue`}
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       let handleInterfaceType: string;
       if (this.opts.wasm) {
-        handleInterfaceType = this.getType(`${handleConcreteType}Impl<${entityType}>`);
+        handleInterfaceType = this.prefixTypeForRuntime(`${handleConcreteType}Impl<${entityType}>`);
       } else {
         if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
             throw new Error(`Unsupported handle direction: ${connection.direction}`);
@@ -114,10 +113,10 @@ import arcs.core.storage.api.toPrimitiveValue`}
           handleInterfaces.push('Query');
           typeArguments.push(queryType);
         }
-        handleInterfaceType = this.getType(`${handleInterfaces.join('')}${handleConcreteType}Handle<${typeArguments.join(', ')}>`);
+        handleInterfaceType = this.prefixTypeForRuntime(`${handleInterfaces.join('')}${handleConcreteType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`);
       }
       if (this.opts.wasm) {
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.prefixTypeForRuntime(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
       } else {
         specDecls.push(`"${handleName}" to ${entityType}_Spec()`);
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
@@ -162,14 +161,12 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     } else {
       return `class ${particleName}Handles : HandleHolderBase(
     "${particleName}",
-    mapOf(
-        ${entitySpecs.join(',\n        ')}
-    )
+    mapOf(${ktUtils.joinWithIndents(entitySpecs, 8, 2)})
 )`;
     }
   }
 
-  private getType(type: string): string {
+  private prefixTypeForRuntime(type: string): string {
     return this.opts.wasm ? `Wasm${type}` : type;
   }
 }
@@ -189,7 +186,7 @@ export class KotlinGenerator implements ClassGenerator {
   singletonSchemaFields: string[] = [];
   collectionSchemaFields: string[] = [];
 
-  refinement = '{ _ ->\n        true\n    }';
+  refinement = `{ _ -> true }`;
   query = 'null'; // TODO(cypher1): Support multiple queries.
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
@@ -244,12 +241,12 @@ export class KotlinGenerator implements ClassGenerator {
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
     return `\
 Schema(
-    listOf(${schemaNames.join(',\n' + ' '.repeat(8))}),
+    listOf(${ktUtils.joinWithIndents(schemaNames, 8)}),
     SchemaFields(
         singletons = ${leftPad(ktUtils.mapOf(this.singletonSchemaFields, 30), 8, true)},
         collections = ${leftPad(ktUtils.mapOf(this.collectionSchemaFields, 30), 8, true)}
     ),
-    "${schemaHash}",
+    ${quote(schemaHash)},
     refinement = ${this.refinement},
     query = ${this.query}
   )`;
@@ -263,11 +260,15 @@ Schema(
     const expression = KTExtracter.fromSchema(this.node.schema, this);
     const refinement = this.node.schema.refinement;
     const queryType = refinement.getQueryParams().get('?');
-    const lines = expression.split('\n').join('\n        ');
+    const lines = leftPad(expression, 8);
     if (queryType) {
-      this.query = `{ data, queryArgs ->\n        ${lines}\n    }`;
+      this.query = `{ data, queryArgs ->
+        ${lines}
+    }`;
     } else {
-      this.refinement = `{ data ->\n        ${lines}\n    }`;
+      this.refinement = `{ data ->
+        ${lines}
+    }`;
     }
   }
 
@@ -284,21 +285,21 @@ Schema(
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
 
+    const classDef = `class ${name}(`;
+    const classInterface = `) : ${this.prefixTypeForRuntime('Entity')} {`;
+
+    const constructorArguments =
+      withFields(ktUtils.joinWithIndents(this.fields, classDef.length+classInterface.length, 1));
+
     return `\
 
-class ${name}(${withFields(`
-        ${this.fields.join(',\n        ')}
-    `)}) : ${this.getType('Entity')} {
+${classDef}${constructorArguments}${classInterface}
 
     override var internalId = ""
 
     ${withFields(`${this.fieldVals.join('\n    ')}`)}
 
-    fun copy(
-        ${this.fieldsForCopyDecl.join(',\n        ')}
-    ) = ${name}(
-        ${this.fieldsForCopy.join(', \n        ')}
-    )
+    fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 2)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 2)})
 
     fun reset() {
         ${withFields(`${this.fieldsReset.join('\n        ')}`)}
@@ -310,16 +311,16 @@ class ${name}(${withFields(`
         }
 
         if (other is ${name}) {
-            if (internalId != "") {
+            if (internalId.isNotEmpty()) {
                 return internalId == other.internalId
             }
             return toString() == other.toString()
-        }
+       }
         return false;
     }
 
     override fun hashCode(): Int =
-      if (internalId != "") internalId.hashCode() else toString().hashCode()
+        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
     override fun schemaHash() = "${schemaHash}"
 ${this.opts.wasm ? `
@@ -331,36 +332,22 @@ ${this.opts.wasm ? `
     }` : `
     override fun serialize() = RawEntity(
         internalId,
-        mapOf(
-            ${this.fieldSerializes.join(',\n            ')}
-        )
+        mapOf(${ktUtils.joinWithIndents(this.fieldSerializes, 15, 3)})
     )`}
 
-    override fun toString() = "${name}(${this.fieldsForToString.join(', ')})"
+    override fun toString() =
+      "${name}(${this.fieldsForToString.join(', ')})"
 }
 
-class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
-${this.opts.wasm ? '' : `\
+class ${name}_Spec() : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
 
-    companion object {
-        val schema = ${leftPad(this.createSchema(schemaHash), 8, true)}
-        
-        init {
-            SchemaRegistry.register(schema)
-        }
-    }
-    
-    override fun schema() = schema
-`}
     override fun create() = ${name}()
     ${!this.opts.wasm ? `
     override fun deserialize(data: RawEntity): ${name} {
-      // TODO: only handles singletons for now
-      val rtn = create().copy(
-        ${withFields(`${this.fieldDeserializes.join(', \n        ')}`)}
-      )
-      rtn.internalId = data.id
-      return rtn
+        // TODO: only handles singletons for now
+        val rtn = create().copy(${withFields(`${ktUtils.joinWithIndents(this.fieldDeserializes, 32, 2)}`)})
+        rtn.internalId = data.id
+        return rtn
     }` : ''}
 ${this.opts.wasm ? `
     override fun decode(encoded: ByteArray): ${name}? {
@@ -390,17 +377,26 @@ ${this.opts.wasm ? `
             i++
         }`)}
         val _rtn = create().copy(
-            ${this.fieldsForCopy.join(', \n            ')}
+            ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
         )
         _rtn.internalId = internalId
         return _rtn
-    }` : ''}
+    }` : ''}${this.opts.wasm ? '' : `
+    override fun schema() = SCHEMA
+
+    companion object {
+        val SCHEMA = ${leftPad(this.createSchema(schemaHash), 8, true)}
+
+        init {
+            SchemaRegistry.register(SCHEMA)
+        }
+    }`}
 }
 
 ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
   }
 
-  private getType(type: string): string {
+  private prefixTypeForRuntime(type: string): string {
     return this.opts.wasm ? `Wasm${type}` : `${type}`;
   }
 }

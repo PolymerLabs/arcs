@@ -181,6 +181,8 @@ class CppGenerator implements ClassGenerator {
   }
 
   generatePredicates() {
+    // TODO(cypher1): Generate refinements and predicates for cpp
+    // https://github.com/PolymerLabs/arcs/issues/4884
   }
 
   generate(schemaHash: string, fieldCount: number): string {
