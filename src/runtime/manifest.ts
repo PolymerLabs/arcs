@@ -1329,7 +1329,8 @@ ${e.message}
 
   isVolatileStore(store: UnifiedStore, tags: string[]): boolean {
     if ((store.storageKey as StorageKey).protocol === VolatileStorageKey.protocol) return true;
-    if ((store.storageKey as StorageKey).protocol === ReferenceModeStorageKey.protocol &&
+    if (store.storageKey.protocol === ReferenceModeStorageKey.protocol &&
+        (store.storageKey as ReferenceModeStorageKey).backingKey.protocol === VolatileStorageKey.protocol &&
         (store.storageKey as ReferenceModeStorageKey).storageKey.protocol === VolatileStorageKey.protocol) {
       return true;
     }

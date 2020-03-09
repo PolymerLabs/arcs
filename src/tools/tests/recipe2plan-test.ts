@@ -10,12 +10,21 @@
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {recipe2plan} from '../recipe2plan.js';
+import {CapabilitiesResolver, StorageKeyOptions} from '../../runtime/capabilities-resolver.js';
+import {RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {Capabilities} from '../../runtime/capabilities.js';
+import {Flags} from '../../runtime/flags.js';
 
 describe('recipe2plan', () => {
-  it('generates plans from recipes in a manifest', async () => {
+  it('generates plans from recipes in a manifest', Flags.withDefaultReferenceMode(async () => {
+    CapabilitiesResolver.registerKeyCreator(
+        RamDiskStorageKey.protocol,
+        Capabilities.persistent,
+        (options: StorageKeyOptions) => new RamDiskStorageKey(options.unique()));
+
     assert.deepStrictEqual(
       await recipe2plan('java/arcs/core/data/testdata/WriterReaderExample.arcs', 'arcs.core.data.testdata'),
       fs.readFileSync('src/tools/tests/goldens/WriterReaderExample.kt', 'utf8')
     );
-  });
+  }));
 });
