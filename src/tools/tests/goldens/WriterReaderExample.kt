@@ -10,7 +10,7 @@ package arcs.core.data.testdata
 import arcs.core.data.*
 import arcs.core.storage.*
 
-object WritingRecipePlan : Plan(
+object IngestionPlan : Plan(
     listOf(
         Particle(
             "Writer",
@@ -21,7 +21,7 @@ object WritingRecipePlan : Plan(
         )
     )
 )
-object ReadingRecipePlan : Plan(
+object ConsumptionPlan : Plan(
     listOf(
         Particle(
             "Reader",
