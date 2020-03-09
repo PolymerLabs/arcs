@@ -9,6 +9,7 @@
  */
 import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
+import {upperFirst} from './kotlin-generation-utils.js';
 
 export class SchemaNode {
   schema: Schema;
@@ -55,7 +56,7 @@ export class SchemaGraph {
     for (const connection of this.particleSpec.connections) {
       const schema = connection.type.getEntitySchema();
       if (schema) {
-        this.createNodes(schema, `${this.particleSpec.name}_${this.upperFirst(connection.name)}`);
+        this.createNodes(schema, `${this.particleSpec.name}_${upperFirst(connection.name)}`);
       }
     }
 
@@ -101,7 +102,7 @@ export class SchemaGraph {
       if (nestedSchema) {
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, name + '_' + this.upperFirst(field));
+        const nestedNode = this.createNodes(nestedSchema, name + '_' + upperFirst(field));
         node.refs.set(field, nestedNode);
       }
     }
@@ -135,10 +136,6 @@ export class SchemaGraph {
       child.parents.push(node);
       this.process(child);
     }
-  }
-
-  private upperFirst(s: string): string {
-    return s[0].toUpperCase() + s.slice(1);
   }
 
   // Traverses the graph to yield schemas in the order in which they should be generated.
