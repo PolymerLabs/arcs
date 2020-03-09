@@ -29,7 +29,7 @@ import org.junit.runner.RunWith
  * These tests are the same as [AndroidAllocatorTest] but run with [AndroidSqliteDatabaseManager]
  * and [Capabilities.Persistent].
  */
-//@Ignore("2% Flaky (runs_per_test=100) on TAP, disabled for now.")
+@Ignore("2% Flaky (runs_per_test=100) on TAP, disabled for now.")
 @RunWith(AndroidJUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
 class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
