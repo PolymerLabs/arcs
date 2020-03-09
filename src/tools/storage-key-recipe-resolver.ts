@@ -29,6 +29,8 @@ export class StorageKeyRecipeResolver {
   constructor(context: Manifest) {
     const loader = new Loader();
     this.runtime = new Runtime({loader, context});
+    // TODO(#4818) call DatabaseStorageKey.register() to register storage key
+    // creator for `perstent` capability.
   }
 
   /**
@@ -42,6 +44,7 @@ export class StorageKeyRecipeResolver {
     const recipes = [];
     for (const recipe of this.runtime.context.allRecipes) {
       this.validateHandles(recipe);
+      // TODO(#4818): use the arcId of the long running arc annotation in the recipe, if present.
       const arc = this.runtime.newArc(this.getArcId(recipe), ramDiskStorageKeyPrefixForTest());
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
       const resolved = await this.tryResolve(recipe, arc, opts);
