@@ -11,6 +11,7 @@ import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Type} from '../runtime/type.js';
+import {Dictionary} from '../runtime/hot.js';
 
 // https://en.cppreference.com/w/cpp/keyword
 // [...document.getElementsByClassName('wikitable')[0].getElementsByTagName('code')].map(x => x.innerHTML);
@@ -28,13 +29,27 @@ const keywords = [
   'xor', 'xor_eq'
 ];
 
-const typeMap = {
-  'T': {type: 'std::string', defaultVal: ' = ""',    isString: true},
-  'U': {type: 'URL',         defaultVal: ' = ""',    isString: true},
-  'N': {type: 'double',      defaultVal: ' = 0',     isString: false},
-  'B': {type: 'bool',        defaultVal: ' = false', isString: false},
-  'R': {type: '',            defaultVal: ' = {}',    isString: false},
+export interface CppTypeInfo {
+  type: string;
+  defaultVal: string;
+  isString: boolean;
+}
+
+const typeMap: Dictionary<CppTypeInfo> = {
+'Text': {type: 'std::string', defaultVal: ' = ""',    isString: true},
+'URL': {type: 'URL',          defaultVal: ' = ""',    isString: true},
+'Number': {type: 'double',    defaultVal: ' = 0',     isString: false},
+'Boolean': {type: 'bool',     defaultVal: ' = false', isString: false},
+'Reference': {type: '',       defaultVal: ' = {}',    isString: false},
 };
+
+function getTypeInfo(name: string): CppTypeInfo {
+  const info = typeMap[name];
+  if (!info) {
+    throw new Error(`Unhandled type '${name}' for kotlin.`);
+  }
+  return info;
+}
 
 export class Schema2Cpp extends Schema2Base {
   // test-CPP.file_Name.arcs -> test-cpp-file-name.h
@@ -95,10 +110,6 @@ protected:
   }
 }
 
-function fixName(field: string): string {
-  return (keywords.includes(field) ? '_' : '') + field;
-}
-
 class CppGenerator implements ClassGenerator {
   fields: string[] = [];
   api: string[] = [];
@@ -113,11 +124,17 @@ class CppGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, readonly namespace: string) {}
 
-  addField({field, typeChar, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
-    const fixed = fixName(field);
+  escapeIdentifier(name: string): string {
+    // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and '_final' are keywords).
+    // TODO(cypher1): Check for name overlaps (e.g. 'final' and '_final' should not be escaped to the same identifier.
+    return (keywords.includes(name) ? '_' : '') + name;
+  }
+
+  addField({field, typeName, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
+    const fixed = this.escapeIdentifier(field);
     const valid = `${field}_valid_`;
-    let {type, defaultVal, isString} = typeMap[typeChar];
-    if (typeChar === 'R') {
+    let {type, defaultVal, isString} = getTypeInfo(typeName);
+    if (typeName === 'Reference') {
       type = `Ref<${refClassName}>`;
     }
 
@@ -125,7 +142,7 @@ class CppGenerator implements ClassGenerator {
                      `bool ${valid} = false;`,
                      ``);
 
-    if (typeChar === 'R') {
+    if (typeName === 'Reference') {
       this.api.push(`const ${type}& ${fixed}() const { return ${field}_; }`,
                     `void set_${field}(const ${refClassName}& value) { internal::Accessor::bind(&${field}_, value); }`);
     } else {
@@ -145,7 +162,7 @@ class CppGenerator implements ClassGenerator {
                     `clone.${valid} = entity.${valid};`);
 
     this.decode.push(`} else if (name == "${field}") {`,
-                     `  decoder.validate("${typeChar}");`,
+                     `  decoder.validate("${typeName[0]}");`,
                      `  decoder.decode(entity->${field}_);`,
                      `  entity->${valid} = true;`);
 
@@ -171,10 +188,23 @@ class CppGenerator implements ClassGenerator {
 
     const ifValid = isOptional ? `if (entity.${valid}) ` : '';
     this.hash.push(`${ifValid}internal::hash_combine(h, entity.${field}_);`);
-    this.encode.push(`${ifValid}encoder.encode("${field}:${typeChar}", entity.${field}_);`);
+    this.encode.push(`${ifValid}encoder.encode("${field}:${typeName[0]}", entity.${field}_);`);
 
     // For convenience, don't include unset required fields in the entity_to_str output.
     this.stringify.push(`if (entity.${valid}) printer.add("${field}: ", entity.${field}_);`);
+  }
+
+  typeFor(name: string): string {
+    return getTypeInfo(name).type;
+  }
+
+  defaultValFor(name: string): string {
+    return getTypeInfo(name).defaultVal;
+  }
+
+  generatePredicates() {
+    // TODO(cypher1): Generate refinements and predicates for cpp
+    // https://github.com/PolymerLabs/arcs/issues/4884
   }
 
   generate(schemaHash: string, fieldCount: number): string {

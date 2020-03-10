@@ -67,15 +67,15 @@ export class KotlinGenerationUtils {
    * @param items strings to join
    * @param extraIndent (optional) add other indentation when calculating line limits.
    */
-  joinWithIndents(items: string[], extraIndent: number = 0): string {
+  joinWithIndents(items: string[], extraIndent: number = 0, numberOfIndents: number = 1): string {
     const candidate = items.join(', ');
     if (extraIndent + candidate.length <= this.pref.lineLength) return candidate;
-    return `\n${this.indent(items.join(',\n'))}\n`;
+    return `\n${this.indent(items.join(',\n'), numberOfIndents)}\n${this.indent('', numberOfIndents-1)}`;
   }
 
   /** Indent a codeblock with the preferred indentation. */
-  indent(block: string): string  {
-    return leftPad(block, this.pref.indent);
+  indent(block: string, numberOfIndents: number = 1): string  {
+    return leftPad(block, this.pref.indent * numberOfIndents);
   }
 }
 

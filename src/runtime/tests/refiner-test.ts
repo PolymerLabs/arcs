@@ -521,7 +521,8 @@ describe('Range', () => {
 describe('SQLExtracter', () => {
   const escaper = {
     escapeIdentifier: (name: string) => name,
-    typeFor: (type: string) => type
+    typeFor: (type: string) => null,
+    defaultValFor: (_type: string) => null
   };
   it('tests can create queries from refinement expressions involving math expressions', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await Manifest.parse(`
@@ -573,7 +574,8 @@ describe('SQLExtracter', () => {
 describe('KTExtracter', () => {
   const escaper = {
     escapeIdentifier: (name: string) => name,
-    typeFor: (type: string) => type === 'Number' ? 'Double' : type
+    typeFor: (type: string) => type === 'Number' ? 'Double' : type,
+    defaultValFor: (type: string) => ({'Number': '0.0', 'Boolean': 'false', 'Text': '""'}[type])
   };
   it('tests can create queries from refinement expressions involving math expressions', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await Manifest.parse(`
@@ -583,7 +585,10 @@ describe('KTExtracter', () => {
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = KTExtracter.fromSchema(schema, escaper);
       assert.strictEqual(query,
-        'val a = data.a as Double\nval b = data.b as Double\nreturn ((b + (a * 3)) > 300) && ((a > 3) && (!(a == 100))) && ((b > 20) && (b < 100))');
+        `\
+val a = data.singletons["a"].toPrimitiveValue(Double::class, 0.0)
+val b = data.singletons["b"].toPrimitiveValue(Double::class, 0.0)
+((b + (a * 3)) > 300) && ((a > 3) && (!(a == 100))) && ((b > 20) && (b < 100))`);
   }));
   it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -593,8 +598,11 @@ describe('KTExtracter', () => {
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
     //TODO(cypher1): Implement some simple boolean simplifications.
-    //This should simplify to, 'return (!a) && b'
-    assert.strictEqual(query, 'val a = data.a as Boolean\nval b = data.b as Boolean\nreturn (b || a) && (!a) && b');
+    //This should simplify to, '(!a) && b'
+    assert.strictEqual(query, `\
+val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
+val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
+(b || a) && (!a) && b`);
   }));
   it('tests can create queries where field refinement is null', async () => {
     const manifest = await Manifest.parse(`
@@ -603,7 +611,10 @@ describe('KTExtracter', () => {
     `);
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
-    assert.strictEqual(query, 'val a = data.a as Boolean\nval b = data.b as Boolean\nreturn (b && a)');
+    assert.strictEqual(query, `\
+val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
+val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
+(b && a)`);
   });
   it('tests can create queries where schema refinement is null', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -612,7 +623,10 @@ describe('KTExtracter', () => {
     `);
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
-    assert.strictEqual(query, 'val a = data.a as Boolean\nval b = data.b as Boolean\nreturn (!a) && b');
+    assert.strictEqual(query, `\
+val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
+val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
+(!a) && b`);
   }));
   it('tests can create queries where there is no refinement', async () => {
     const manifest = await Manifest.parse(`
@@ -621,7 +635,7 @@ describe('KTExtracter', () => {
     `);
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
-    assert.strictEqual(query, 'return true');
+    assert.strictEqual(query, 'true');
   });
 });
 
