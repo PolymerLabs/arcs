@@ -33,6 +33,7 @@ const KOTLIN_QUERY_ARGUMENT_NAME = 'queryArgument';
 interface CodeGenerator {
   escapeIdentifier(name: string): string;
   typeFor(name: string): string;
+  defaultValFor(name: string): string;
 }
 
 
@@ -1305,7 +1306,7 @@ export class KTExtracter {
     const genFieldAsLocal = (fieldName: string) => {
       const type = schema.fields[fieldName].type;
       const fixed = codeGenerator.escapeIdentifier(fieldName);
-      return `val ${fixed} = data.singletons["${fieldName}"] as ${codeGenerator.typeFor(type)}`;
+      return `val ${fixed} = data.singletons["${fieldName}"].toPrimitiveValue(${codeGenerator.typeFor(type)}::class, ${codeGenerator.defaultValFor(type)})`;
     };
 
     const genQueryArgAsLocal = ([_, type]: [string, string]) => {

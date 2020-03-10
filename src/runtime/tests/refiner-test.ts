@@ -521,7 +521,8 @@ describe('Range', () => {
 describe('SQLExtracter', () => {
   const escaper = {
     escapeIdentifier: (name: string) => name,
-    typeFor: (type: string) => type
+    typeFor: (type: string) => null,
+    defaultValFor: (_type: string) => null
   };
   it('tests can create queries from refinement expressions involving math expressions', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await Manifest.parse(`
@@ -573,7 +574,8 @@ describe('SQLExtracter', () => {
 describe('KTExtracter', () => {
   const escaper = {
     escapeIdentifier: (name: string) => name,
-    typeFor: (type: string) => type === 'Number' ? 'Double' : type
+    typeFor: (type: string) => type === 'Number' ? 'Double' : type,
+    defaultValFor: (type: string) => ({'Number': '0.0', 'Boolean': 'false', 'Text': '""'}[type])
   };
   it('tests can create queries from refinement expressions involving math expressions', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await Manifest.parse(`

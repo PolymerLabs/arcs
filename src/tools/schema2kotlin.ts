@@ -12,6 +12,7 @@ import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
 import {EntityType, CollectionType} from '../runtime/type.js';
 import {KTExtracter} from '../runtime/refiner.js';
+import {Dictionary} from '../runtime/hot.js';
 import minimist from 'minimist';
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
 
@@ -30,21 +31,26 @@ const keywords = [
   'suspend', 'tailrec', 'vararg', 'it', 'internalId'
 ];
 
-const typeMap = {
-  'T': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-  'U': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-  'N': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
-  'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
+export interface KotlinTypeInfo {
+  type: string;
+  decodeFn: string;
+  defaultVal: string;
+  schemaType: string;
+}
+
+const typeMap: Dictionary<KotlinTypeInfo> = {
+  'Text': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
+  'URL': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
+  'Number': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
+  'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
 };
 
-function typeFor(name: string): string {
-  switch (name) {
-    case 'Text': return 'String';
-    case 'URL': return 'String';
-    case 'Number': return 'Double';
-    case 'Boolean': return 'Boolean';
-    default: throw new Error(`Unhandled type '${name}' for kotlin.`);
+function getTypeInfo(name: string): KotlinTypeInfo {
+  const info = typeMap[name];
+  if (!info) {
+    throw new Error(`Unhandled type '${name}' for kotlin.`);
   }
+  return info;
 }
 
 const ktUtils = new KotlinGenerationUtils();
@@ -56,7 +62,7 @@ export class Schema2Kotlin extends Schema2Base {
     return parts.map(part => part[0].toUpperCase() + part.slice(1)).join('') + '.kt';
   }
 
-  fileHeader(outName: string): string {
+  fileHeader(_outName: string): string {
     return `\
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
@@ -150,7 +156,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     if (!type) {
       return null;
     }
-    return typeFor(type);
+    return getTypeInfo(type).type;
   }
 
   private getHandlesClassDecl(particleName: string, entitySpecs: string[]): string {
@@ -198,11 +204,11 @@ export class KotlinGenerator implements ClassGenerator {
   }
 
   // TODO: allow optional fields in kotlin
-  addField({field, typeChar, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
+  addField({field, typeName, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
     // TODO: support reference types in kotlin
-    if (typeChar === 'R') return;
+    if (typeName === 'Reference') return;
 
-    const {type, decodeFn, defaultVal} = typeMap[typeChar];
+    const {type, decodeFn, defaultVal} = getTypeInfo(typeName);
     const fixed = this.escapeIdentifier(field);
 
     this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
@@ -221,19 +227,19 @@ export class KotlinGenerator implements ClassGenerator {
     this.setFieldsToDefaults.push(`var ${fixed} = ${defaultVal}`);
 
     this.decode.push(`"${field}" -> {`,
-                     `    decoder.validate("${typeChar}")`,
+                     `    decoder.validate("${typeName[0]}")`,
                      `    ${fixed} = decoder.${decodeFn}`,
                      `}`);
 
-    this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeChar}", ${fixed}) }`);
+    this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeName[0]}", ${fixed}) }`);
 
     this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
     this.fieldDeserializes.push(`${fixed} = data.singletons["${fixed}"].toPrimitiveValue(${type}::class, ${defaultVal})`);
     this.fieldsForToString.push(`${fixed} = $${fixed}`);
     if (isCollection) {
-      this.collectionSchemaFields.push(`"${field}" to ${typeMap[typeChar].schemaType}`);
+      this.collectionSchemaFields.push(`"${field}" to ${getTypeInfo(typeName).schemaType}`);
     } else {
-      this.singletonSchemaFields.push(`"${field}" to ${typeMap[typeChar].schemaType}`);
+      this.singletonSchemaFields.push(`"${field}" to ${getTypeInfo(typeName).schemaType}`);
     }
   }
 
@@ -253,7 +259,11 @@ Schema(
   }
 
   typeFor(name: string): string {
-    return typeFor(name);
+    return getTypeInfo(name).type;
+  }
+
+  defaultValFor(name: string): string {
+    return getTypeInfo(name).defaultVal;
   }
 
   generatePredicates() {

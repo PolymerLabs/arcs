@@ -35,9 +35,9 @@ class Schema2Mock extends Schema2Base {
         return name;
       },
 
-      addField({field, typeChar, isOptional, refClassName}: AddFieldOptions) {
+      addField({field, typeName, isOptional, refClassName}: AddFieldOptions) {
         const refInfo = refClassName ? `<${refClassName}>` : '';
-        collector.adds.push(field + ':' + typeChar + refInfo + (isOptional ? '?' : ''));
+        collector.adds.push(field + ':' + typeName[0] + refInfo + (isOptional ? '?' : ''));
       },
 
       generatePredicates() {
