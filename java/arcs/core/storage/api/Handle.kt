@@ -9,6 +9,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
+
 package arcs.core.storage.api
 
 /** Base interface for all handle classes. */
@@ -26,8 +28,11 @@ interface ReadSingletonHandle<T : Entity> : Handle {
     /** Assign a callback when the handle is synced. */
     suspend fun onSync(action: (ReadSingletonHandle<T>) -> Unit)
 
-    /** Assign a callback when the handle is sdeynced. */
+    /** Assign a callback when the handle is desynced. */
     suspend fun onDesync(action: (ReadSingletonHandle<T>) -> Unit)
+
+    /** Remove any attached callbacks for this [Handle]. */
+    suspend fun removeAllCallbacks()
 }
 
 /** A singleton handle with write access. */
@@ -54,13 +59,16 @@ interface ReadCollectionHandle<T : Entity> : Handle {
     suspend fun onUpdate(action: (Set<T>) -> Unit)
 
     /** Assign a callback when the collection handle is synced. */
-    suspend fun onSync(action: (ReadCollectionHandle<T>) -> Unit)
+    suspend fun onSync(action: () -> Unit)
 
     /** Assign a callback when the collection handle is desynced. */
-    suspend fun onDesync(action: (ReadCollectionHandle<T>) -> Unit)
+    suspend fun onDesync(action: () -> Unit)
 
     /** Returns a set with all the entities in the collection. */
     suspend fun fetchAll(): Set<T>
+
+    /** Remove any attached callbacks for this [Handle]. */
+    suspend fun removeAllCallbacks()
 }
 
 /** A collection handle with read access. */

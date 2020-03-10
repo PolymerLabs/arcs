@@ -22,30 +22,6 @@ import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 
 /**
- * The [Callbacks] interface is a simple stand-in for the callbacks that a [Handle] might want to
- * use to signal information back to a subscriber (like a handle).
- */
-interface Callbacks<Data : CrdtData, Op : CrdtOperationAtTime, T> {
-    /**
-     * [onUpdate] is called when a diff is received from storage, or from a handle. Handles can
-     * be notified for their own writes.
-     * This method is not called for every change! A model sync will call [onSync] instead.
-     * Do not depend on seeing every update via this callback.
-     */
-    fun onUpdate(handle: Handle<Data, Op, T>, op: Op) = Unit
-
-    /**
-     * [onSync] is called when the proxy is synced from its backing [Store].
-     */
-    fun onSync(handle: Handle<Data, Op, T>) = Unit
-
-    /**
-     * [onDesync] is called when the proxy realizes it is out of sync with its backing [Store].
-     */
-    fun onDesync(handle: Handle<Data, Op, T>) = Unit
-}
-
-/**
  * Base implementation of Arcs handles on the runtime.
  *
  * A handle is in charge of translating SDK data operations into the appropriate CRDT operation,
@@ -71,9 +47,6 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /** [name] is the unique name for this handle, used to track state in the [VersionMap]. */
     val name: String,
     val storageProxy: StorageProxy<Data, Op, T>,
-
-    /** [callback] contains optional Handle-owner provided callbacks to add behavior. */
-    var callback: Callbacks<Data, Op, T>? = null,
 
     /** [ttl] applied to the data in the [Handle]. */
     val ttl: Ttl,
@@ -101,6 +74,25 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 
+    /** Add an action to be performed whenever the contents of the [Handle]'s data changes. */
+    suspend fun addOnUpdate(action: (value: T) -> Unit) {
+        storageProxy.addOnUpdate(name, action)
+    }
+
+    /** Add an action to be performed whenever the [Handle] becomes synchronized. */
+    suspend fun addOnSync(action: () -> Unit) { storageProxy.addOnSync(name, action) }
+
+    /** Add an action to be performed whenever the [Handle] becomes de-synchronized. */
+    suspend fun addOnDesync(action: () -> Unit) { storageProxy.addOnDesync(name, action) }
+
+    /**
+     * Remove any `onUpdate` `onSync`, or `onDesync` callbacks that this [Handle] has registered
+     * with its [StorageProxy].
+     */
+    suspend fun removeAllCallbacks() {
+        storageProxy.removeCallbacksForName(name)
+    }
+
     /** Creates a [Reference] for a given [Referencable] and backing [StorageKey]. */
     fun createReference(referencable: Referencable, backingKey: StorageKey): Reference {
         return Reference(referencable.id, backingKey, null).also {
@@ -121,30 +113,6 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     protected fun VersionMap.increment(): VersionMap {
         this[name]++
         return this
-    }
-
-    /**
-     * This should be called by the [StorageProxy] this [Handle] has been registered with,
-     * after a model update has been cleanly applied to the [StorageProxy]'s local copy.
-     */
-    internal fun onUpdate(op: Op) {
-        callback?.onUpdate(this, op)
-    }
-
-    /**
-     * This should be called by the [StorageProxy] this [Handle] has been registered with,
-     * after a full sync has occurred.
-     */
-    internal fun onSync() {
-        callback?.onSync(this)
-    }
-
-    /**
-     * This should be called by the [StorageProxy] this [Handle] has been registered with,
-     * when the [StorageProxy] has detected that its local model is out of sync.
-     */
-    internal fun onDesync() {
-        callback?.onDesync(this)
     }
 
     /**
