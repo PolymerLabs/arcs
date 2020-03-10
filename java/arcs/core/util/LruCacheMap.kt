@@ -12,7 +12,7 @@
 package arcs.core.util
 
 /**
- * An extremely simple [MutableMap] with an LRU policy. Leverages [LinkedHashMap] to main
+ * An extremely simple [MutableMap] with an LRU policy. Leverages [LinkedHashMap] to maintain
  * order and remove oldest entries which are the first entries returned from the iterator.
  *
  * @property capacity the maximum capacity of the cache.
@@ -23,6 +23,7 @@ class LruCacheMap<K, V>(
     private val backingMap: LinkedHashMap<K, V> = linkedMapOf(),
     val onEvict: ((K, V) -> Unit)? = null
 ) : MutableMap<K, V> by backingMap {
+
     override fun put(key: K, value: V): V? {
         val previousValue = backingMap.get(key)
         if (backingMap.size >= capacity) {
@@ -43,6 +44,7 @@ class LruCacheMap<K, V>(
 
     override fun get(key: K): V? {
         val value = backingMap.get(key)?.let {
+            // remove and put moves entry to end of internal linked list
             backingMap.remove(key)
             backingMap.put(key, it)
         }
