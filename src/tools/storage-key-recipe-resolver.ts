@@ -8,11 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
+import {Id} from '../runtime/id.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Loader} from '../platform/loader-web.js';
 import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
-import {ramDiskStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
+import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {Arc} from '../runtime/arc.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
@@ -36,7 +37,6 @@ export class StorageKeyRecipeResolver {
   /**
    * Produces resolved recipes with storage keys.
    *
-   * TODO(#4818) Add passes to assign storage keys.
    * @throws Error if recipe fails to resolve on first or second pass.
    * @yields Resolved recipes with storage keys
    */
@@ -44,8 +44,9 @@ export class StorageKeyRecipeResolver {
     const recipes = [];
     for (const recipe of this.runtime.context.allRecipes) {
       this.validateHandles(recipe);
-      // TODO(#4818): use the arcId of the long running arc annotation in the recipe, if present.
-      const arc = this.runtime.newArc(this.getArcId(recipe), ramDiskStorageKeyPrefixForTest());
+      const arcId = this.findLongRunningArcId(recipe);
+      const arc = this.runtime.newArc(
+          arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
       const resolved = await this.tryResolve(recipe, arc, opts);
       if (!resolved) {
@@ -76,13 +77,15 @@ export class StorageKeyRecipeResolver {
     return await (new RecipeResolver(arc).resolve(recipe, opts));
   }
 
-  /** Returns the arcId from annotations on the recipe when present. */
-  getArcId(recipe: Recipe): string | null {
-    for (const trigger of recipe.triggers) {
-      for (const [key, val] of trigger) {
-        if (key === 'arcId') {
-          return val;
-        }
+  isLongRunning(recipe: Recipe): boolean {
+    return !!this.findLongRunningArcId(recipe);
+  }
+
+  findLongRunningArcId(recipe: Recipe): string | null {
+    for (const group of recipe.triggers) {
+      if (recipe.getTrigger(group, 'launch') === 'startup' &&
+          !!recipe.getTrigger(group, 'arcId')) {
+        return recipe.getTrigger(group, 'arcId');
       }
     }
     return null;
@@ -131,7 +134,7 @@ export class StorageKeyRecipeResolver {
         }
 
         const match = matches[0];
-        if (!match.recipe.isLongRunning) {
+        if (!this.isLongRunning(match.recipe)) {
           throw Error(`Handle ${handle.localName} mapped to ephemeral handle ${match.localName}.`);
         }
       });
