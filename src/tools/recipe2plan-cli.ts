@@ -64,9 +64,7 @@ async function main() {
     Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const plans = await Flags.withDefaultReferenceMode(async () => {
-      return await recipe2plan(opts._[0], opts.package);
-    })();
+    const plans: string = await recipe2plan(opts._[0], opts.package);
 
     const outPath = path.join(opts.outdir, opts.outfile);
     console.log(outPath);
