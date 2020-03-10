@@ -163,7 +163,11 @@ public:
   Gold_QCollection(const T& other) :
     name_(other.name()), name_valid_(other.has_name()),
     age_(other.age()), age_valid_(other.has_age()),
-    lastCall_(other.lastCall()), lastCall_valid_(other.has_lastCall())
+    lastCall_(other.lastCall()), lastCall_valid_(other.has_lastCall()),
+    address_(other.address()), address_valid_(other.has_address()),
+    favoriteColor_(other.favoriteColor()), favoriteColor_valid_(other.has_favoriteColor()),
+    birthDayMonth_(other.birthDayMonth()), birthDayMonth_valid_(other.has_birthDayMonth()),
+    birthDayDOM_(other.birthDayDOM()), birthDayDOM_valid_(other.has_birthDayDOM())
   {}
 
   const std::string& name() const { return name_; }
@@ -174,6 +178,18 @@ public:
 
   double lastCall() const { return lastCall_; }
   void set_lastCall(double value) { lastCall_ = value; lastCall_valid_ = true; }
+
+  const std::string& address() const { return address_; }
+  void set_address(const std::string& value) { address_ = value; address_valid_ = true; }
+
+  const std::string& favoriteColor() const { return favoriteColor_; }
+  void set_favoriteColor(const std::string& value) { favoriteColor_ = value; favoriteColor_valid_ = true; }
+
+  double birthDayMonth() const { return birthDayMonth_; }
+  void set_birthDayMonth(double value) { birthDayMonth_ = value; birthDayMonth_valid_ = true; }
+
+  double birthDayDOM() const { return birthDayDOM_; }
+  void set_birthDayDOM(double value) { birthDayDOM_ = value; birthDayDOM_valid_ = true; }
 
   // Equality ops compare internal ids and all data fields.
   // Use arcs::fields_equal() to compare only the data fields.
@@ -197,6 +213,22 @@ public:
     } else if (a.lastCall_ != b.lastCall_) {
       return a.lastCall_ < b.lastCall_;
     }
+    if (0) {
+    } else if (int cmp = a.address_.compare(b.address_)) {
+      return cmp < 0;
+    }
+    if (0) {
+    } else if (int cmp = a.favoriteColor_.compare(b.favoriteColor_)) {
+      return cmp < 0;
+    }
+    if (0) {
+    } else if (a.birthDayMonth_ != b.birthDayMonth_) {
+      return a.birthDayMonth_ < b.birthDayMonth_;
+    }
+    if (0) {
+    } else if (a.birthDayDOM_ != b.birthDayDOM_) {
+      return a.birthDayDOM_ < b.birthDayDOM_;
+    }
     return false;
   }
 
@@ -205,8 +237,8 @@ protected:
   Gold_QCollection(const Gold_QCollection&) = default;
   Gold_QCollection& operator=(const Gold_QCollection&) = default;
 
-  static const char* _schema_hash() { return "f72d6bee9c5b13d2133e2af89a5ed591d670ee74"; }
-  static const int _field_count = 3;
+  static const char* _schema_hash() { return "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa"; }
+  static const int _field_count = 7;
 
   std::string name_ = "";
   bool name_valid_ = false;
@@ -216,6 +248,18 @@ protected:
 
   double lastCall_ = 0;
   bool lastCall_valid_ = false;
+
+  std::string address_ = "";
+  bool address_valid_ = false;
+
+  std::string favoriteColor_ = "";
+  bool favoriteColor_valid_ = false;
+
+  double birthDayMonth_ = 0;
+  bool birthDayMonth_valid_ = false;
+
+  double birthDayDOM_ = 0;
+  bool birthDayDOM_valid_ = false;
 
   std::string _internal_id_;
 
@@ -234,6 +278,14 @@ inline Gold_QCollection internal::Accessor::clone_entity(const Gold_QCollection&
   clone.age_valid_ = entity.age_valid_;
   clone.lastCall_ = entity.lastCall_;
   clone.lastCall_valid_ = entity.lastCall_valid_;
+  clone.address_ = entity.address_;
+  clone.address_valid_ = entity.address_valid_;
+  clone.favoriteColor_ = entity.favoriteColor_;
+  clone.favoriteColor_valid_ = entity.favoriteColor_valid_;
+  clone.birthDayMonth_ = entity.birthDayMonth_;
+  clone.birthDayMonth_valid_ = entity.birthDayMonth_valid_;
+  clone.birthDayDOM_ = entity.birthDayDOM_;
+  clone.birthDayDOM_valid_ = entity.birthDayDOM_valid_;
   return clone;
 }
 
@@ -244,6 +296,10 @@ inline size_t internal::Accessor::hash_entity(const Gold_QCollection& entity) {
   internal::hash_combine(h, entity.name_);
   internal::hash_combine(h, entity.age_);
   internal::hash_combine(h, entity.lastCall_);
+  internal::hash_combine(h, entity.address_);
+  internal::hash_combine(h, entity.favoriteColor_);
+  internal::hash_combine(h, entity.birthDayMonth_);
+  internal::hash_combine(h, entity.birthDayDOM_);
   return h;
 }
 
@@ -251,7 +307,11 @@ template<>
 inline bool internal::Accessor::fields_equal(const Gold_QCollection& a, const Gold_QCollection& b) {
   return (a.name_ == b.name_) &&
          (a.age_ == b.age_) &&
-         (a.lastCall_ == b.lastCall_);
+         (a.lastCall_ == b.lastCall_) &&
+         (a.address_ == b.address_) &&
+         (a.favoriteColor_ == b.favoriteColor_) &&
+         (a.birthDayMonth_ == b.birthDayMonth_) &&
+         (a.birthDayDOM_ == b.birthDayDOM_);
 }
 
 inline bool Gold_QCollection::operator==(const Gold_QCollection& other) const {
@@ -267,6 +327,10 @@ inline std::string internal::Accessor::entity_to_str(const Gold_QCollection& ent
   if (entity.name_valid_) printer.add("name: ", entity.name_);
   if (entity.age_valid_) printer.add("age: ", entity.age_);
   if (entity.lastCall_valid_) printer.add("lastCall: ", entity.lastCall_);
+  if (entity.address_valid_) printer.add("address: ", entity.address_);
+  if (entity.favoriteColor_valid_) printer.add("favoriteColor: ", entity.favoriteColor_);
+  if (entity.birthDayMonth_valid_) printer.add("birthDayMonth: ", entity.birthDayMonth_);
+  if (entity.birthDayDOM_valid_) printer.add("birthDayDOM: ", entity.birthDayDOM_);
   return printer.result(join);
 }
 
@@ -291,6 +355,22 @@ inline void internal::Accessor::decode_entity(Gold_QCollection* entity, const ch
       decoder.validate("N");
       decoder.decode(entity->lastCall_);
       entity->lastCall_valid_ = true;
+    } else if (name == "address") {
+      decoder.validate("T");
+      decoder.decode(entity->address_);
+      entity->address_valid_ = true;
+    } else if (name == "favoriteColor") {
+      decoder.validate("T");
+      decoder.decode(entity->favoriteColor_);
+      entity->favoriteColor_valid_ = true;
+    } else if (name == "birthDayMonth") {
+      decoder.validate("N");
+      decoder.decode(entity->birthDayMonth_);
+      entity->birthDayMonth_valid_ = true;
+    } else if (name == "birthDayDOM") {
+      decoder.validate("N");
+      decoder.decode(entity->birthDayDOM_);
+      entity->birthDayDOM_valid_ = true;
     } else {
       // Ignore unknown fields until type slicing is fully implemented.
       std::string typeChar = decoder.chomp(1);
@@ -317,6 +397,10 @@ inline std::string internal::Accessor::encode_entity(const Gold_QCollection& ent
   encoder.encode("name:T", entity.name_);
   encoder.encode("age:N", entity.age_);
   encoder.encode("lastCall:N", entity.lastCall_);
+  encoder.encode("address:T", entity.address_);
+  encoder.encode("favoriteColor:T", entity.favoriteColor_);
+  encoder.encode("birthDayMonth:N", entity.birthDayMonth_);
+  encoder.encode("birthDayDOM:N", entity.birthDayDOM_);
   return encoder.result();
 }
 

@@ -11,9 +11,7 @@ package arcs.sdk
 import arcs.sdk.*
 import arcs.sdk.wasm.*
 
-class GoldInternal1(
-        val_: String = ""
-    ) : WasmEntity {
+class GoldInternal1(val_: String = "") : WasmEntity {
 
     override var internalId = ""
 
@@ -23,11 +21,7 @@ class GoldInternal1(
             field = _value
         }
 
-    fun copy(
-        val_: String = this.val_
-    ) = GoldInternal1(
-        val_ = val_
-    )
+    fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
 
     fun reset() {
         val_ = ""
@@ -39,16 +33,16 @@ class GoldInternal1(
         }
 
         if (other is GoldInternal1) {
-            if (internalId != "") {
+            if (internalId.isNotEmpty()) {
                 return internalId == other.internalId
             }
             return toString() == other.toString()
-        }
+       }
         return false;
     }
 
     override fun hashCode(): Int =
-      if (internalId != "") internalId.hashCode() else toString().hashCode()
+        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
     override fun schemaHash() = "485712110d89359a3e539dac987329cd2649d889"
 
@@ -59,7 +53,8 @@ class GoldInternal1(
         return encoder.toNullTermByteArray()
     }
 
-    override fun toString() = "GoldInternal1(val_ = $val_)"
+    override fun toString() =
+      "GoldInternal1(val_ = $val_)"
 }
 
 class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
@@ -110,10 +105,14 @@ typealias Gold_Alias = GoldInternal1
 typealias Gold_Alias_Spec = GoldInternal1_Spec
 
 class Gold_QCollection(
-        name: String = "",
-        age: Double = 0.0,
-        lastCall: Double = 0.0
-    ) : WasmEntity {
+    name: String = "",
+    age: Double = 0.0,
+    lastCall: Double = 0.0,
+    address: String = "",
+    favoriteColor: String = "",
+    birthDayMonth: Double = 0.0,
+    birthDayDOM: Double = 0.0
+) : WasmEntity {
 
     override var internalId = ""
 
@@ -132,21 +131,53 @@ class Gold_QCollection(
         private set(_value) {
             field = _value
         }
+    var address = address
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var favoriteColor = favoriteColor
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var birthDayMonth = birthDayMonth
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var birthDayDOM = birthDayDOM
+        get() = field
+        private set(_value) {
+            field = _value
+        }
 
     fun copy(
         name: String = this.name,
         age: Double = this.age,
-        lastCall: Double = this.lastCall
+        lastCall: Double = this.lastCall,
+        address: String = this.address,
+        favoriteColor: String = this.favoriteColor,
+        birthDayMonth: Double = this.birthDayMonth,
+        birthDayDOM: Double = this.birthDayDOM
     ) = Gold_QCollection(
         name = name,
         age = age,
-        lastCall = lastCall
+        lastCall = lastCall,
+        address = address,
+        favoriteColor = favoriteColor,
+        birthDayMonth = birthDayMonth,
+        birthDayDOM = birthDayDOM
     )
 
     fun reset() {
         name = ""
         age = 0.0
         lastCall = 0.0
+        address = ""
+        favoriteColor = ""
+        birthDayMonth = 0.0
+        birthDayDOM = 0.0
     }
 
     override fun equals(other: Any?): Boolean {
@@ -155,18 +186,18 @@ class Gold_QCollection(
         }
 
         if (other is Gold_QCollection) {
-            if (internalId != "") {
+            if (internalId.isNotEmpty()) {
                 return internalId == other.internalId
             }
             return toString() == other.toString()
-        }
+       }
         return false;
     }
 
     override fun hashCode(): Int =
-      if (internalId != "") internalId.hashCode() else toString().hashCode()
+        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
-    override fun schemaHash() = "f72d6bee9c5b13d2133e2af89a5ed591d670ee74"
+    override fun schemaHash() = "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa"
 
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
@@ -174,10 +205,15 @@ class Gold_QCollection(
         name.let { encoder.encode("name:T", name) }
         age.let { encoder.encode("age:N", age) }
         lastCall.let { encoder.encode("lastCall:N", lastCall) }
+        address.let { encoder.encode("address:T", address) }
+        favoriteColor.let { encoder.encode("favoriteColor:T", favoriteColor) }
+        birthDayMonth.let { encoder.encode("birthDayMonth:N", birthDayMonth) }
+        birthDayDOM.let { encoder.encode("birthDayDOM:N", birthDayDOM) }
         return encoder.toNullTermByteArray()
     }
 
-    override fun toString() = "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall)"
+    override fun toString() =
+      "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
 }
 
 class Gold_QCollection_Spec() : WasmEntitySpec<Gold_QCollection> {
@@ -195,8 +231,12 @@ class Gold_QCollection_Spec() : WasmEntitySpec<Gold_QCollection> {
         var name = ""
         var age = 0.0
         var lastCall = 0.0
+        var address = ""
+        var favoriteColor = ""
+        var birthDayMonth = 0.0
+        var birthDayDOM = 0.0
         var i = 0
-        while (i < 3 && !decoder.done()) {
+        while (i < 7 && !decoder.done()) {
             val _name = decoder.upTo(':').toUtf8String()
             when (_name) {
                 "name" -> {
@@ -210,6 +250,22 @@ class Gold_QCollection_Spec() : WasmEntitySpec<Gold_QCollection> {
                 "lastCall" -> {
                     decoder.validate("N")
                     lastCall = decoder.decodeNum()
+                }
+                "address" -> {
+                    decoder.validate("T")
+                    address = decoder.decodeText()
+                }
+                "favoriteColor" -> {
+                    decoder.validate("T")
+                    favoriteColor = decoder.decodeText()
+                }
+                "birthDayMonth" -> {
+                    decoder.validate("N")
+                    birthDayMonth = decoder.decodeNum()
+                }
+                "birthDayDOM" -> {
+                    decoder.validate("N")
+                    birthDayDOM = decoder.decodeNum()
                 }
                 else -> {
                     // Ignore unknown fields until type slicing is fully implemented.
@@ -225,9 +281,15 @@ class Gold_QCollection_Spec() : WasmEntitySpec<Gold_QCollection> {
             i++
         }
         val _rtn = create().copy(
+
             name = name,
             age = age,
-            lastCall = lastCall
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM
+
         )
         _rtn.internalId = internalId
         return _rtn
@@ -236,11 +298,11 @@ class Gold_QCollection_Spec() : WasmEntitySpec<Gold_QCollection> {
 
 
 class Gold_Data(
-        num: Double = 0.0,
-        txt: String = "",
-        lnk: String = "",
-        flg: Boolean = false
-    ) : WasmEntity {
+    num: Double = 0.0,
+    txt: String = "",
+    lnk: String = "",
+    flg: Boolean = false
+) : WasmEntity {
 
     override var internalId = ""
 
@@ -270,12 +332,7 @@ class Gold_Data(
         txt: String = this.txt,
         lnk: String = this.lnk,
         flg: Boolean = this.flg
-    ) = Gold_Data(
-        num = num,
-        txt = txt,
-        lnk = lnk,
-        flg = flg
-    )
+    ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg)
 
     fun reset() {
         num = 0.0
@@ -290,16 +347,16 @@ class Gold_Data(
         }
 
         if (other is Gold_Data) {
-            if (internalId != "") {
+            if (internalId.isNotEmpty()) {
                 return internalId == other.internalId
             }
             return toString() == other.toString()
-        }
+       }
         return false;
     }
 
     override fun hashCode(): Int =
-      if (internalId != "") internalId.hashCode() else toString().hashCode()
+        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
     override fun schemaHash() = "d8058d336e472da47b289eafb39733f77eadb111"
 
@@ -313,7 +370,8 @@ class Gold_Data(
         return encoder.toNullTermByteArray()
     }
 
-    override fun toString() = "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
+    override fun toString() =
+      "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 }
 
 class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
@@ -366,10 +424,7 @@ class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
             i++
         }
         val _rtn = create().copy(
-            num = num,
-            txt = txt,
-            lnk = lnk,
-            flg = flg
+            num = num, txt = txt, lnk = lnk, flg = flg
         )
         _rtn.internalId = internalId
         return _rtn
