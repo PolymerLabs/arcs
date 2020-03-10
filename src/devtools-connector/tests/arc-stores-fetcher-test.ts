@@ -15,9 +15,10 @@ import {devtoolsArcInspectorFactory} from '../devtools-arc-inspector.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {SingletonType} from '../../runtime/type.js';
-import {singletonHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
+import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 
 import {Entity} from '../../runtime/entity.js';
+import {SingletonEntityStore, ActiveSingletonEntityStore, handleForStore} from '../../runtime/storageNG/storage-ng.js';
 
 describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());
@@ -32,7 +33,7 @@ describe('ArcStoresFetcher', () => {
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
-    const fooHandle = await singletonHandleForTest(arc, fooStore);
+    const fooHandle = await handleForStore(fooStore, arc);
     const fooEntity = new foo({value: 'persistence is useful'});
     await fooHandle.set(fooEntity);
 
@@ -53,7 +54,7 @@ describe('ArcStoresFetcher', () => {
     delete results[0].messageBody.arcStores[0].type.innerType.entitySchema.fields.value.location;
 
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
-    const entityId = '!' + sessionId + ':demo:test-proxy2:3';
+    const entityId = '!' + sessionId + ':fooStoreId:2';
     const creationTimestamp = Entity.creationTimestamp(fooEntity);
 
     assert.deepEqual(results[0].messageBody, {
@@ -128,7 +129,7 @@ describe('ArcStoresFetcher', () => {
     assert.lengthOf(results, 1);
 
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
-    const store = await arc.findStoreById(arc.activeRecipe.handles[0].id).activate();
+    const store = await arc.findStoreById(arc.activeRecipe.handles[0].id).activate() as ActiveSingletonEntityStore;
     // TODO(mmandlis): there should be a better way!
     const creationTimestamp = Object.values((await store.serializeContents()).values)[0]['value']['creationTimestamp'];
     assert.deepEqual(results[0].messageBody, {

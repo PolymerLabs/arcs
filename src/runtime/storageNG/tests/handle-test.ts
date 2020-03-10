@@ -16,19 +16,21 @@ import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
 import {CollectionType, EntityType, SingletonType, Type} from '../../type.js';
-import {CollectionHandle, SingletonHandle, handleNGFor} from '../handle.js';
+import {CollectionHandle, SingletonHandle} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
+import {CRDTEntityCollection, CollectionEntityStore} from '../storage-ng.js';
 
 
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<CollectionHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const handle = handleNGFor(
+  const store = new MockStore<CRDTEntityCollection>() as unknown as CollectionEntityStore;
+  const handle = new CollectionHandle(
       'me',
       new StorageProxy(
           'id',
@@ -51,7 +53,7 @@ async function getCollectionHandle(primitiveType: Type, particle?: MockParticle,
 async function getSingletonHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
     Promise<SingletonHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const handle = handleNGFor(
+  const handle = new SingletonHandle(
       'me',
       new StorageProxy(
           'id',

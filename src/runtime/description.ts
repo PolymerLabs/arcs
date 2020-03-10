@@ -10,16 +10,15 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
-import {UnifiedStore} from './storageNG/unified-store.js';
+import {AbstractStore} from './storageNG/abstract-store.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
 import {Particle} from './recipe/particle.js';
 import {Relevance} from './relevance.js';
-import {EntityType, InterfaceType} from './type.js';
+import {EntityType, InterfaceType, SingletonType, CollectionType} from './type.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
 import {Dictionary} from './hot.js';
-import {StorageProxy} from './storageNG/storage-proxy.js';
-import {SingletonHandle, CollectionHandle, handleNGFor} from './storageNG/handle.js';
+import {handleForStore, CollectionEntityStore, SingletonEntityStore, SingletonInterfaceStore} from './storageNG/storage-ng.js';
 
 export class Description {
   private constructor(
@@ -141,11 +140,9 @@ export class Description {
   private static async _getPatternByNameFromDescriptionHandle(particle: Particle, arc: Arc): Promise<Dictionary<string>> {
     const descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
-      const descStore = arc.findStoreById(descriptionConn.handle.id);
+      const descStore = arc.findStoreById(descriptionConn.handle.id) as CollectionEntityStore;
       if (descStore) {
-        const descProxy = new StorageProxy('', await descStore.activate(), descStore.type, descStore.storageKey.toString());
-        const descHandle = handleNGFor('', descProxy, null, null, true, false) as CollectionHandle<{key: string, value: string}>;
-
+        const descHandle = await handleForStore(descStore, arc);
         const descByName: Dictionary<string> = {};
         for (const d of await descHandle.toList()) {
           descByName[d.key] = d.value;
@@ -156,28 +153,26 @@ export class Description {
     return {};
   }
 
-  private static async _prepareStoreValue(store: UnifiedStore): Promise<DescriptionValue|undefined> {
+  private static async _prepareStoreValue(store: AbstractStore): Promise<DescriptionValue|undefined> {
     if (!store) {
       return undefined;
     }
-
-    const proxy = new StorageProxy('id', await store.activate(), store.type, store.storageKey.toString());
-    const handle = handleNGFor('', proxy, null, null, true, true);
-    if (handle instanceof SingletonHandle) {
-      if (handle.type.getContainedType() instanceof EntityType) {
-        const entityValue = await handle.fetch();
-        if (entityValue) {
-          const schema = store.type.getEntitySchema();
-          const valueDescription = schema ? schema.description.value : undefined;
-          return {entityValue, valueDescription};
-        }
-      } else if (handle.type.getContainedType() instanceof InterfaceType) {
-        const interfaceValue = await handle.fetch();
-        if (interfaceValue) {
-          return {interfaceValue};
-        }
+    if (store.type instanceof SingletonType && store.type.getContainedType() instanceof EntityType) {
+      const handle = await handleForStore(store as SingletonEntityStore, {generateID: null, idGenerator: null});
+      const entityValue = await handle.fetch();
+      if (entityValue) {
+        const schema = store.type.getEntitySchema();
+        const valueDescription = schema ? schema.description.value : undefined;
+        return {entityValue, valueDescription};
       }
-    } else if (handle instanceof CollectionHandle) {
+    } else if (store.type instanceof SingletonType && store.type.getContainedType() instanceof InterfaceType) {
+      const handle = await handleForStore(store as SingletonInterfaceStore, {generateID: null, idGenerator: null});
+      const interfaceValue = await handle.fetch();
+      if (interfaceValue) {
+        return {interfaceValue};
+      }
+    } else if (store.type instanceof CollectionType) {
+      const handle = await handleForStore(store as CollectionEntityStore, {generateID: null, idGenerator: null});
       const values = await handle.toList();
       if (values && values.length > 0) {
         return {collectionValues: values};

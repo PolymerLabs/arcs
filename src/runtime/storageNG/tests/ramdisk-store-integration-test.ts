@@ -19,7 +19,7 @@ import {CountType} from '../../type.js';
 import {StorageKey} from '../storage-key.js';
 
 function createStore(storageKey: StorageKey, exists: Exists): Store<CRDTCountTypeRecord> {
-  return new Store({storageKey, exists, type: new CountType(), id: 'an-id'});
+  return new Store(new CountType(), {storageKey, exists, id: 'an-id'});
 }
 
 describe('RamDisk + Store Integration', async () => {

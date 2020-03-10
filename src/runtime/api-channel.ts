@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
-import {UnifiedStore} from './storageNG/unified-store.js';
+import {AbstractStore} from './storageNG/abstract-store.js';
 import {ArcInspector} from './arc-inspector.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
@@ -529,9 +529,9 @@ export abstract class PECOuterPort extends APIPort {
   }
 
   @NoArgs Stop() {}
-  DefineHandle(@RedundantInitializer store: UnifiedStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
-  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>, @Direct reinstantiate: boolean) {}
-  ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, UnifiedStore>) {}
+  DefineHandle(@RedundantInitializer store: AbstractStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
+  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>, @Direct reinstantiate: boolean) {}
+  ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>) {}
   ReloadParticles(@OverridingInitializer particles: recipeParticle.Particle[], @List(MappingType.Direct) ids: string[]) {}
 
   UIEvent(@Mapped particle: recipeParticle.Particle, @Direct slotName: string, @Direct event: {}) {}
@@ -545,13 +545,13 @@ export abstract class PECOuterPort extends APIPort {
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
   abstract onGetBackingStore(callback: number, storageKey: string, type: Type);
-  GetBackingStoreCallback(@Initializer store: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
+  GetBackingStoreCallback(@Initializer store: AbstractStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
 
   abstract onConstructInnerArc(callback: number, particle: recipeParticle.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
 
   abstract onArcCreateHandle(callback: number, arc: {}, type: Type, name: string);
-  CreateHandleCallback(@Initializer handle: UnifiedStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
+  CreateHandleCallback(@Initializer handle: AbstractStore, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string) {}
   abstract onArcMapHandle(callback: number, arc: Arc, handle: recipeHandle.Handle);
   MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
