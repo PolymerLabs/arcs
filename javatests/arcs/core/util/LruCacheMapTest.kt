@@ -10,53 +10,50 @@ import org.junit.runners.JUnit4
 class LruCacheMapTest {
 
     @Test
-    fun lruCache_neverExceeds_Capacity() {
-        val capacity = 5
-        val cache = LruCacheMap<String, String>(capacity)
+    fun lruCache_neverExceeds_capacity() {
+        val cache = LruCacheMap<String, String>(5)
 
-        for (x in 1..(capacity * 2)) {
+        for (x in 1..10) {
             cache.put("key$x", "value$x")
-            assertThat(cache.size).isLessThan(capacity + 1)
+            assertThat(cache.size).isAtMost(10)
         }
     }
 
     @Test
     fun lruCache_containsOnly_newestEntries() {
-        val capacity = 5
-        val cache = LruCacheMap<String, String>(capacity)
+        val cache = LruCacheMap<String, String>(5)
 
-        for (x in 1..(capacity * 2)) {
+        for (x in 1..10) {
             cache.put("key$x", "value$x")
         }
 
-        for (x in 1..capacity) {
-            assertThat(cache).doesNotContainEntry("key$x", "value$x")
+        for (x in 1..5) {
+            assertThat(cache).doesNotContainKey("key$x")
         }
 
-        for (x in (capacity + 1)..(capacity * 2)) {
+        for (x in 6..10) {
             assertThat(cache).containsEntry("key$x", "value$x")
         }
     }
 
     @Test
     fun lruCache_calls_onEvict_for_evictedEntries() {
-        val capacity = 5
         val shouldBeEvicted: MutableMap<String, String> = mutableMapOf()
 
-        for (x in 1..capacity) {
+        for (x in 1..5) {
             shouldBeEvicted.put("key$x", "value$x")
         }
 
-        val cache = LruCacheMap<String, String>(capacity) { key, value ->
+        val cache = LruCacheMap<String, String>(5) { key, value ->
             assertThat(key).isIn(shouldBeEvicted.keys)
             assertThat(value).isIn(shouldBeEvicted.values)
         }
 
-        for (x in 1..(capacity * 2)) {
+        for (x in 1..10) {
             cache.put("key$x", "value$x")
         }
 
-        for (x in (capacity + 1)..(capacity * 2)) {
+        for (x in 6..10) {
             assertThat(cache).containsEntry("key$x", "value$x")
         }
     }
