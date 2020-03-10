@@ -16,7 +16,12 @@ object IngestionPlan : Plan(
             "Writer",
             "",
             mapOf(
-                "data" to HandleConnection(StorageKeyParser.parse(""), HandleMode.Write, null, null)
+                "data" to HandleConnection(
+                    StorageKeyParser.parse(""),
+                    HandleMode.Write,
+                    EntityType(Writer_Data_Spec.schema),
+                    null
+                )
             )
         )
     )
@@ -30,7 +35,7 @@ object ConsumptionPlan : Plan(
                 "data" to HandleConnection(
                     StorageKeyParser.parse("ramdisk://"),
                     HandleMode.Read,
-                    null,
+                    EntityType(Reader_Data_Spec.schema),
                     null
                 )
             )

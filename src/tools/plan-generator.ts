@@ -10,10 +10,12 @@
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils, quote, tryImport, upperFirst} from './kotlin-generation-utils.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
+import {Schema} from '../runtime/schema.js';
+import {Dictionary} from '../runtime/hot.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -26,6 +28,8 @@ export class PlanGeneratorError extends Error {
 
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
+  private specRegistry: Dictionary<string> = {};
+
   constructor(private resolvedRecipes: Recipe[], private scope: string) {
   }
 
@@ -48,6 +52,7 @@ export class PlanGenerator {
 
       const particles = [];
       for (const particle of recipe.particles) {
+        this.collectParticleConnectionSpecs(particle);
         particles.push(await this.createParticle(particle));
       }
 
@@ -73,6 +78,14 @@ export class PlanGenerator {
       quote(location),
       ktUtils.mapOf(connectionMappings, 12)
     ]);
+  }
+
+  async collectParticleConnectionSpecs(particle: Particle): Promise<void> {
+    for (const connection of particle.spec.connections) {
+      const specName = `${particle.spec.name}_${upperFirst(connection.name)}_Spec`;
+      const schemaHash = await connection.type.getEntitySchema().hash();
+      this.specRegistry[schemaHash] = specName;
+    }
   }
 
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
@@ -109,7 +122,7 @@ export class PlanGenerator {
       case 'Count':
         return ktUtils.applyFun('CountType', [await this.createType(type.getContainedType())]);
       case 'Entity':
-        return ktUtils.applyFun('EntityType', [`SchemaRegistry["${await type.getEntitySchema().hash()}"]`])
+        return ktUtils.applyFun('EntityType', [`${this.specRegistry[await type.getEntitySchema().hash()]}.schema`]);
       case 'Reference':
         return ktUtils.applyFun('ReferenceType', [await this.createType(type.getContainedType())]);
       case 'Singleton':
