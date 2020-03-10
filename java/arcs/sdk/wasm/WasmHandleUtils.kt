@@ -21,7 +21,7 @@ package arcs.sdk.wasm
 fun <T, U> combineUpdates(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
-    action: (T?, U?) -> Unit
+    action: (T, U) -> Unit
 ) {
     val handles = listOf(handle1, handle2)
     handles.forEach { handle ->
@@ -31,13 +31,12 @@ fun <T, U> combineUpdates(
     }
 }
 
-private fun<T> WasmHandleEvents<T>.getContent() : T? {
-    when(this) {
+private fun <T> WasmHandleEvents<T>.getContent(): T {
+    when (this) {
         is WasmSingletonImpl<*> -> this.fetch()
         is WasmCollectionImpl<*> -> this.fetchAll()
-        else -> throw IllegalArgumentException(
-            "Unexpected child of WasmHandleEvents"
-        )
     }
-    return null
+    throw IllegalArgumentException(
+        "Unexpected child of WasmHandleEvents"
+    )
 }
