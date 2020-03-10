@@ -37,19 +37,10 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 ) {
     private val log = TaggedLog { "StorageProxy" }
 
-    private val callbackMutex = Mutex()
-    private val onUpdateActions by guardedBy(
-        callbackMutex,
-        mutableMapOf<String, MutableList<(T)->Unit>>()
-    )
-    private val onSyncActions by guardedBy(
-        callbackMutex,
-        mutableMapOf<String, MutableList<() -> Unit>>()
-    )
-    private val onDesyncActions by guardedBy(
-        callbackMutex,
-        mutableMapOf<String, MutableList<() -> Unit>>()
-    )
+    private val handlesMutex = Mutex()
+
+    private val readHandles: MutableSet<Handle<Data, Op, T>>
+        by guardedBy(handlesMutex, mutableSetOf())
 
     private val syncMutex = Mutex()
     private val crdt: CrdtModel<Data, Op, T>
@@ -65,30 +56,32 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         store.setCallback(ProxyCallback(::onMessage))
     }
 
-    suspend fun addOnUpdate(handleName: String, action: (value: T) -> Unit) {
-        callbackMutex.withLock {
-            onUpdateActions.getOrPut(handleName) { mutableListOf() }.add(action)
+    /**
+     * Connects a [Handle]. If the handle is readable, it will receive the configured callbacks.
+     */
+    suspend fun registerHandle(handle: Handle<Data, Op, T>) {
+        // non-readers don't get callbacks, return early
+        if (!handle.canRead) return
+
+        log.debug { "Registering handle: $handle" }
+
+        val firstReader = handlesMutex.withLock {
+            readHandles.add(handle)
+            readHandles.size == 1
         }
+
+        val hasSynced = syncMutex.withLock { isSynchronized }
+
+        if (firstReader) requestSynchronization()
+        else if (hasSynced) coroutineScope { launch { handle.onSync() } }
     }
 
-    suspend fun addOnSync(handleName: String, action: () -> Unit) {
-        callbackMutex.withLock {
-            onSyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
-        }
-    }
-
-    suspend fun addOnDesync(handleName: String, action: () -> Unit) {
-        callbackMutex.withLock {
-            onDesyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
-        }
-    }
-
-    suspend fun removeCallbacksForName(handleName: String) {
-        callbackMutex.withLock {
-            onUpdateActions.remove(handleName)
-            onSyncActions.remove(handleName)
-            onDesyncActions.remove(handleName)
-        }
+    /**
+     * Disconnects a handle so it no longer receives callbacks.
+     */
+    suspend fun deregisterHandle(handle: Handle<Data, Op, T>) {
+        log.debug { "Unregistering handle: $handle" }
+        handlesMutex.withLock { readHandles.remove(handle) }
     }
 
     /**
@@ -97,9 +90,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      */
     suspend fun applyOp(op: Op): Boolean {
         log.debug { "Applying operation: $op" }
-        val (localSuccess, value) = syncMutex.withLock {
-            crdt.applyOperation(op) to crdt.consumerView
-        }
+        val localSuccess = syncMutex.withLock { crdt.applyOperation(op) }
         if (!localSuccess) return false
 
         val msg = ProxyMessage.Operations<Data, Op, T>(listOf(op), null)
@@ -111,7 +102,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             requestSynchronization()
         }
 
-        notifyUpdate(value)
+        notifyUpdate(listOf(op))
 
         return true
     }
@@ -187,7 +178,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
                 // all ops from storage applied cleanly so resolve waiting syncs
                 futuresToResolve.forEach { it.complete(value) }
-                notifyUpdate(value)
+                notifyUpdate(message.operations)
             }
             is ProxyMessage.SyncRequest -> {
                 // storage wants our latest state
@@ -200,17 +191,28 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         return true
     }
 
-    private suspend fun notifyUpdate(data: T) = callbackMutex.withLock {
-        onUpdateActions.values.flatMap { it.toSet() }
-    }.forEach { coroutineScope { launch { it(data) } } }
+    private suspend fun notifyUpdate(ops: List<Op>) = forEachHandle { handle ->
+        ops.forEach {
+            handle.onUpdate(it)
+        }
+    }
 
-    private suspend fun notifySync() = callbackMutex.withLock {
-        onSyncActions.values.flatMap { it.toSet() }
-    }.forEach { coroutineScope { launch { it() } } }
+    private suspend fun notifySync() = forEachHandle {
+        it.onSync()
+    }
 
-    private suspend fun notifyDesync() = callbackMutex.withLock {
-        onDesyncActions.values.flatMap { it.toSet() }
-    }.forEach { coroutineScope { launch { it() } } }
+    private suspend fun notifyDesync() = forEachHandle { it.onDesync() }
+
+    private suspend inline fun forEachHandle(crossinline block: (Handle<Data, Op, T>) -> Unit) {
+        val handlesToNotify = handlesMutex.withLock { readHandles.toSet() }
+
+        // suspends until all handles have completed (in parallel)
+        coroutineScope {
+            handlesToNotify.forEach { handle ->
+                launch { block(handle) }
+            }
+        }
+    }
 
     private suspend fun requestSynchronization(): Boolean {
         val msg = ProxyMessage.SyncRequest<Data, Op, T>(null)
