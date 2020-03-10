@@ -12,8 +12,8 @@ import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
-import {StorageKey} from '../runtime/storageNG/storage-key.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
+import {Handle} from '../runtime/recipe/handle.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -69,7 +69,7 @@ export class PlanGenerator {
 
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   createHandleConnection(connection: HandleConnection): string {
-    const storageKey = this.createStorageKey(connection.handle.storageKey);
+    const storageKey = this.createStorageKey(connection.handle);
     const mode = this.createDirection(connection.direction);
     const type = this.createType(connection.type);
     const ttl = 'null';
@@ -88,9 +88,12 @@ export class PlanGenerator {
     }
   }
 
-  /** Generates a Kotlin `StorageKey` from a StorageKey. */
-  createStorageKey(storageKey: StorageKey | undefined): string {
-    return `StorageKeyParser.parse("${(storageKey || '').toString()}")`;
+  /** Generates a Kotlin `StorageKey` from a recipe Handle. */
+  createStorageKey(handle: Handle): string {
+    switch (handle.fate) {
+      case 'create': return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id)]);
+      default: return `StorageKeyParser.parse("${(handle.storageKey || '').toString()}")`;
+    }
   }
 
   /** Generates a Kotlin `core.arc.type.Type` from a Type. */
