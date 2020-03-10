@@ -275,7 +275,7 @@ class AndroidHandleManagerTest : LifecycleOwner {
         // `removeAllCallbacks` works, and only removes the callbacks for the specified handle.
         firstHandle.removeAllCallbacks()
         secondHandle.store(entity2)
-        //verify(testOnUpdate1).invoke(setOf(entity2))
+        verifyNoMoreInteractions(testOnUpdate1)
         verify(testOnUpdate2).invoke(setOf(entity2))
     }
 

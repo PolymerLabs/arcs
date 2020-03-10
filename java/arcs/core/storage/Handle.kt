@@ -74,15 +74,15 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 
-    /** Add an action to be performed whenever the contents of the [Handle]'s data changes*/
+    /** Add an action to be performed whenever the contents of the [Handle]'s data changes. */
     suspend fun addOnUpdate(action: (value: T) -> Unit) {
         storageProxy.addOnUpdate(name, action)
     }
 
-    /** Add an action to be performed whenever the [Handle] becomes synchronized */
+    /** Add an action to be performed whenever the [Handle] becomes synchronized. */
     suspend fun addOnSync(action: () -> Unit) { storageProxy.addOnSync(name, action) }
 
-    /** Add an action to be performed whenever the [Handle] becomes de-synchronized */
+    /** Add an action to be performed whenever the [Handle] becomes de-synchronized. */
     suspend fun addOnDesync(action: () -> Unit) { storageProxy.addOnDesync(name, action) }
 
     /**

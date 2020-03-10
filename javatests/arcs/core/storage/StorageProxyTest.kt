@@ -88,7 +88,7 @@ class StorageProxyTest {
         assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(modelUpdate)
     }
 
-    /** Test that when store application of an op fails, synchronization is triggered */
+    /** Test that when store application of an op fails, synchronization is triggered. */
     @Test
     fun failedApplyOpTriggersSync() = runBlockingTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
@@ -98,7 +98,7 @@ class StorageProxyTest {
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
         // Store op will fail
-        fakeStoreEndpoint.proxyMessageReturn = false
+        fakeStoreEndpoint.onProxyMessageReturn = false
         assertThat(storageProxy.applyOp(mockCrdtOperation)).isTrue()
         val syncReq = ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
         val opReq = ProxyMessage.Operations<CrdtData, CrdtOperation, String> (

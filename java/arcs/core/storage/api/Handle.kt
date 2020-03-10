@@ -28,10 +28,10 @@ interface ReadSingletonHandle<T : Entity> : Handle {
     /** Assign a callback when the handle is synced. */
     suspend fun onSync(action: (ReadSingletonHandle<T>) -> Unit)
 
-    /** Assign a callback when the handle is sdeynced. */
+    /** Assign a callback when the handle is desynced. */
     suspend fun onDesync(action: (ReadSingletonHandle<T>) -> Unit)
 
-    /** Remove any attached callbacks for this [Handle] */
+    /** Remove any attached callbacks for this [Handle]. */
     suspend fun removeAllCallbacks()
 }
 
@@ -67,7 +67,7 @@ interface ReadCollectionHandle<T : Entity> : Handle {
     /** Returns a set with all the entities in the collection. */
     suspend fun fetchAll(): Set<T>
 
-    /** Remove any attached callbacks for this [Handle] */
+    /** Remove any attached callbacks for this [Handle]. */
     suspend fun removeAllCallbacks()
 }
 
