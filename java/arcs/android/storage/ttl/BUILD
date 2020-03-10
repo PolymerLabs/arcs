@@ -8,7 +8,9 @@ kt_android_library(
     name = "ttl",
     srcs = glob(["*.kt"]),
     deps = [
+        "//java/arcs/core/storage/ttl",
         "//java/arcs/core/util",
+        "//java/arcs/jvm/util",
         "//third_party/java/androidx/work",
     ],
 )
