@@ -72,9 +72,9 @@ abstract class WasmHandleEvents<T>(
  * @action callback
  */
 fun <T, U> combineUpdates(
-        handle1: WasmHandleEvents<T>,
-        handle2: WasmHandleEvents<U>,
-        action: (T, U) -> Unit
+    handle1: WasmHandleEvents<T>,
+    handle2: WasmHandleEvents<U>,
+    action: (T, U) -> Unit
 ) {
     handle1.combineUpdates(handle2, action)
 }
