@@ -345,7 +345,7 @@ class ${name}_Spec() : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
     ${!this.opts.wasm ? `
     override fun deserialize(data: RawEntity): ${name} {
         // TODO: only handles singletons for now
-        val rtn = create().copy(${withFields(`${ktUtils.joinWithIndents(this.fieldDeserializes, 32, 2)}`)})
+        val rtn = create().copy(${withFields(`${ktUtils.joinWithIndents(this.fieldDeserializes, 32, 3)}`)})
         rtn.internalId = data.id
         return rtn
     }` : ''}

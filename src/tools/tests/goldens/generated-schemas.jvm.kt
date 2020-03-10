@@ -214,14 +214,14 @@ class Gold_QCollection_Spec() : EntitySpec<Gold_QCollection> {
     override fun deserialize(data: RawEntity): Gold_QCollection {
         // TODO: only handles singletons for now
         val rtn = create().copy(
-        name = data.singletons["name"].toPrimitiveValue(String::class, ""),
-        age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0),
-        lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0),
-        address = data.singletons["address"].toPrimitiveValue(String::class, ""),
-        favoriteColor = data.singletons["favoriteColor"].toPrimitiveValue(String::class, ""),
-        birthDayMonth = data.singletons["birthDayMonth"].toPrimitiveValue(Double::class, 0.0),
-        birthDayDOM = data.singletons["birthDayDOM"].toPrimitiveValue(Double::class, 0.0)
-    )
+            name = data.singletons["name"].toPrimitiveValue(String::class, ""),
+            age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0),
+            lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0),
+            address = data.singletons["address"].toPrimitiveValue(String::class, ""),
+            favoriteColor = data.singletons["favoriteColor"].toPrimitiveValue(String::class, ""),
+            birthDayMonth = data.singletons["birthDayMonth"].toPrimitiveValue(Double::class, 0.0),
+            birthDayDOM = data.singletons["birthDayDOM"].toPrimitiveValue(Double::class, 0.0)
+        )
         rtn.internalId = data.id
         return rtn
     }
@@ -344,11 +344,11 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
     override fun deserialize(data: RawEntity): Gold_Data {
         // TODO: only handles singletons for now
         val rtn = create().copy(
-        num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0),
-        txt = data.singletons["txt"].toPrimitiveValue(String::class, ""),
-        lnk = data.singletons["lnk"].toPrimitiveValue(String::class, ""),
-        flg = data.singletons["flg"].toPrimitiveValue(Boolean::class, false)
-    )
+            num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0),
+            txt = data.singletons["txt"].toPrimitiveValue(String::class, ""),
+            lnk = data.singletons["lnk"].toPrimitiveValue(String::class, ""),
+            flg = data.singletons["flg"].toPrimitiveValue(Boolean::class, false)
+        )
         rtn.internalId = data.id
         return rtn
     }
