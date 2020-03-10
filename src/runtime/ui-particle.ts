@@ -98,7 +98,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
         this.doneBusy();
       }
     };
-    // superclass uses Promise.resolve(), we use a short timeout herer for a wider debounce
+    // superclass uses Promise.resolve(), we use a short timeout here for a wider debounce
     return setTimeout(done, 10);
   }
 
