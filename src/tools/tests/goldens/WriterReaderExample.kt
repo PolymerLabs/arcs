@@ -33,7 +33,7 @@ object ConsumptionPlan : Plan(
             "",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse("db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!228758327805841:writingArcId/handle/my-handle-id"),
+                    StorageKeyParser.parse("db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id"),
                     HandleMode.Read,
                     null,
                     null

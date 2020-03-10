@@ -18,14 +18,16 @@ import {RecipeIndex} from '../recipe-index.js';
 import {Id, ArcId} from '../../runtime/id.js';
 import {Planner} from '../planner.js';
 import {Suggestion} from '../plan/suggestion.js';
+import {Modality} from '../../runtime/modality.js';
 
 export class StrategyTestHelper {
-  static createTestArc(context: Manifest, options: {arcId?: Id, modalityName?: string, loader?: Loader} = {}) {
+  static createTestArc(context: Manifest, options: {arcId?: Id, modality?: Modality, loader?: Loader} = {}) {
     return new Arc({
       id: options.arcId || ArcId.newForTest('test-arc'),
       loader: options.loader || new Loader(),
-      context,
-      slotComposer: new SlotComposer()
+      slotComposer: new SlotComposer(),
+      modality: options.modality,
+      context
     });
   }
   static createTestStrategyArgs(arc: Arc, args?) {
