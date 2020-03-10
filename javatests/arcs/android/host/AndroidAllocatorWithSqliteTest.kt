@@ -14,9 +14,7 @@ package arcs.android.host
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.data.Capabilities
-import arcs.core.data.SchemaRegistry
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
