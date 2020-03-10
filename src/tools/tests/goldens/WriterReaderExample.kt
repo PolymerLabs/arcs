@@ -19,7 +19,7 @@ object IngestionPlan : Plan(
                 "data" to HandleConnection(
                     StorageKeyParser.parse(""),
                     HandleMode.Write,
-                    EntityType(Writer_Data_Spec.schema),
+                    EntityType(Writer_Data_Spec.SCHEMA),
                     null
                 )
             )
@@ -33,9 +33,9 @@ object ConsumptionPlan : Plan(
             "",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse("reference-mode://{ramdisk://Thing}{ramdisk:///handle/my-handle-id}"),
+                    StorageKeyParser.parse("db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!434901111933123:writingArcId/handle/my-handle-id"),
                     HandleMode.Read,
-                    EntityType(Reader_Data_Spec.schema),
+                    EntityType(Reader_Data_Spec.SCHEMA),
                     null
                 )
             )

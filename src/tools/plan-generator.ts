@@ -122,7 +122,7 @@ export class PlanGenerator {
       case 'Count':
         return ktUtils.applyFun('CountType', [await this.createType(type.getContainedType())]);
       case 'Entity':
-        return ktUtils.applyFun('EntityType', [`${this.specRegistry[await type.getEntitySchema().hash()]}.schema`]);
+        return ktUtils.applyFun('EntityType', [`${this.specRegistry[await type.getEntitySchema().hash()]}.SCHEMA`]);
       case 'Reference':
         return ktUtils.applyFun('ReferenceType', [await this.createType(type.getContainedType())]);
       case 'Singleton':
