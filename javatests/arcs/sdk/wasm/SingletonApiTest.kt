@@ -23,7 +23,6 @@ class SingletonApiTest : AbstractSingletonApiTest() {
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
             "case1" -> {
-                log("Hellow world")
                 if (handles.ioHandle.fetch() == null) {
                     handles.errors.store(
                         SingletonApiTest_Errors(msg = "case1: populated handle should not be null")
