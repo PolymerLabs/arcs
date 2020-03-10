@@ -8,6 +8,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtSet
+import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
@@ -21,6 +23,8 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.driver.VolatileEntry
 import arcs.core.storage.handle.HandleManager
+import arcs.core.storage.handle.SetCallbacks
+import arcs.core.storage.handle.SingletonCallbacks
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
@@ -30,7 +34,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoMoreInteractions
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
@@ -125,7 +128,6 @@ class AndroidHandleManagerTest : LifecycleOwner {
         val singleton2Handle = handleManager.rawEntitySingletonHandle(
             storageKey = storageKey1, schema = schema
         )
-
         val storageKey2 = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("entity2"))
         val singleton2Handle2 = handleManager.rawEntitySingletonHandle(
             storageKey = storageKey2, schema = schema
@@ -165,7 +167,7 @@ class AndroidHandleManagerTest : LifecycleOwner {
     }
 
     @Test
-    fun singleton_createReferenceHandle() = runBlocking {
+    fun testCreateReferenceSingletonHandle() = runBlocking {
         val singletonHandle = handleManager.referenceSingletonHandle(singletonRefKey, schema)
         val entity1Ref = singletonHandle.createReference(entity1, backingKey)
         singletonHandle.store(entity1Ref)
@@ -197,7 +199,7 @@ class AndroidHandleManagerTest : LifecycleOwner {
     }
 
     @Test
-    fun set_createReferenceHandle() = runBlocking {
+    fun testCreateReferenceSetHandle() = runBlocking {
         val setHandle = handleManager.referenceSetHandle(singletonRefKey, schema)
         val entity1Ref = setHandle.createReference(entity1, backingKey)
         val entity2Ref = setHandle.createReference(entity2, backingKey)
@@ -250,95 +252,83 @@ class AndroidHandleManagerTest : LifecycleOwner {
 
     private fun testMapForKey(key: StorageKey) = VersionMap(key.toKeyString() to 1)
 
-    // Mocking Function1<T, Unit> causes [ClassCastException
-    // These interface defintions prevent the problem.
-    interface OnUpdate<T> : Function1<T, Unit>
-    interface OnSync : Function0<Unit>
-
     @Test
     fun set_onHandleUpdate() = runBlocking<Unit> {
-        val firstHandle = handleManager.rawEntitySetHandle(setKey, schema, "handle1")
-        val testOnUpdate1 = mock<OnUpdate<Set<RawEntity>>>().also { firstHandle.addOnUpdate(it::invoke) }
-        val secondHandle = handleManager.rawEntitySetHandle(setKey, schema, "handle2")
-        val testOnUpdate2 = mock<OnUpdate<Set<RawEntity>>>().also { secondHandle.addOnUpdate(it::invoke) }
+        val testCallback1 = mock<SetCallbacks<RawEntity>>()
+        val testCallback2 = mock<SetCallbacks<RawEntity>>()
+        val firstHandle = handleManager.rawEntitySetHandle(setKey, schema, testCallback1)
+        val secondHandle = handleManager.rawEntitySetHandle(setKey, schema, testCallback2)
 
+        val expectedAdd = CrdtSet.Operation.Add(
+            setKey.toKeyString(),
+            testMapForKey(setKey),
+            entity1
+        )
         secondHandle.store(entity1)
-        verify(testOnUpdate1).invoke(setOf(entity1))
-        verify(testOnUpdate2).invoke(setOf(entity1))
+        verify(testCallback1).onUpdate(firstHandle, expectedAdd)
+        verify(testCallback2).onUpdate(secondHandle, expectedAdd)
 
         firstHandle.remove(entity1)
-
-        verify(testOnUpdate1).invoke(emptySet<RawEntity>())
-        verify(testOnUpdate2).invoke(emptySet<RawEntity>())
-
-
-        // `removeAllCallbacks` works, and only removes the callbacks for the specified handle.
-        firstHandle.removeAllCallbacks()
-        secondHandle.store(entity2)
-        verifyNoMoreInteractions(testOnUpdate1)
-        verify(testOnUpdate2).invoke(setOf(entity2))
+        val expectedRemove = CrdtSet.Operation.Remove(
+            setKey.toKeyString(),
+            testMapForKey(setKey),
+            entity1
+        )
+        verify(testCallback1).onUpdate(firstHandle, expectedRemove)
+        verify(testCallback2).onUpdate(secondHandle, expectedRemove)
     }
 
     @Test
     fun singleton_OnHandleUpdate() = runBlocking<Unit> {
+        val testCallback1 = mock<SingletonCallbacks<RawEntity>>()
+        val testCallback2 = mock<SingletonCallbacks<RawEntity>>()
         val firstHandle = handleManager.rawEntitySingletonHandle(
             storageKey = singletonKey,
             schema = schema,
-            name = "handle1"
+            callbacks = testCallback1
         )
-        val testOnUpdate1 = mock<OnUpdate<RawEntity?>>().also { firstHandle.addOnUpdate(it::invoke) }
         val secondHandle = handleManager.rawEntitySingletonHandle(
             storageKey = singletonKey,
             schema = schema,
-            name = "handle2"
+            callbacks = testCallback2
         )
-        val testOnUpdate2 = mock<OnUpdate<RawEntity?>>().also { secondHandle.addOnUpdate(it::invoke) }
-
         secondHandle.store(entity1)
-        verify(testOnUpdate1).invoke(entity1)
-        verify(testOnUpdate2).invoke(entity1)
+        val expectedAdd = CrdtSingleton.Operation.Update(
+            singletonKey.toKeyString(),
+            testMapForKey(singletonKey),
+            entity1
+        )
+        verify(testCallback1).onUpdate(firstHandle, expectedAdd)
+        verify(testCallback2).onUpdate(secondHandle, expectedAdd)
         firstHandle.clear()
 
-        verify(testOnUpdate1).invoke(null)
-        verify(testOnUpdate2).invoke(null)
-
-        // `removeAllCallbacks` works, and only removes the callbacks for the specified handle.
-        firstHandle.removeAllCallbacks()
-        secondHandle.store(entity2)
-        verifyNoMoreInteractions(testOnUpdate1)
-        verify(testOnUpdate2).invoke(entity2)
+        val expectedRemove = CrdtSingleton.Operation.Clear<RawEntity>(
+            singletonKey.toKeyString(),
+            testMapForKey(singletonKey)
+        )
+        verify(testCallback1).onUpdate(firstHandle, expectedRemove)
+        verify(testCallback2).onUpdate(secondHandle, expectedRemove)
     }
 
     @Test
     fun set_syncOnRegister() = runBlocking<Unit> {
-        val firstHandle = handleManager.rawEntitySetHandle(setKey, schema)
-        val testOnSync = mock<OnSync>().also { firstHandle.addOnSync(it::invoke) }
+        val testCallback = mock<SetCallbacks<RawEntity>>()
+        val firstHandle = handleManager.rawEntitySetHandle(setKey, schema, testCallback)
+        verify(testCallback).onSync(firstHandle)
         firstHandle.fetchAll()
-        verify(testOnSync).invoke()
+        verify(testCallback).onSync(firstHandle)
     }
 
     @Test
     fun singleton_syncOnRegister() = runBlocking<Unit> {
+        val testCallback = mock<SingletonCallbacks<RawEntity>>()
         val firstHandle = handleManager.rawEntitySingletonHandle(
             storageKey = setKey,
-            schema = schema
+            schema = schema,
+            callbacks = testCallback
         )
-        val testOnSync = mock<OnSync>().also { firstHandle.addOnSync(it::invoke) }
+        verify(testCallback).onSync(firstHandle)
         firstHandle.fetch()
-        verify(testOnSync).invoke()
-    }
-
-
-    @Test
-    fun set_laterHandleWrite() = runBlocking<Unit> {
-        val firstHandle = handleManager.rawEntitySetHandle(setKey, schema)
-        firstHandle.store(entity1)
-        val testOnUpdate1 = mock<OnUpdate<Set<RawEntity>>>().also { firstHandle.addOnUpdate(it::invoke) }
-
-        // Create a second handle and make sure that writes succeed from the start
-        val secondHandle = handleManager.rawEntitySetHandle(setKey, schema)
-        secondHandle.store(entity2)
-
-        verify(testOnUpdate1).invoke(setOf(entity1, entity2))
+        verify(testCallback).onSync(firstHandle)
     }
 }
