@@ -95,3 +95,8 @@ export function tryImport(importName: string, packageName: string): string {
   const nonWild = importName.replace('.*', '');
   return packageName === nonWild ? '' : `import ${importName}`;
 }
+
+/** Coalesces input string such that the first character is upper case. */
+export function upperFirst(s: string): string {
+  return s[0].toUpperCase() + s.slice(1);
+}
