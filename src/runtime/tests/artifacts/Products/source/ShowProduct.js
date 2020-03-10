@@ -91,8 +91,7 @@ ${styles}
       </div>
     </div>
     <div col1>
-      <!-- TODO(sjmiles): why is there a 'src' attribute here? -->
-      <div thumb style="{{styleBackground}}" src="{{resolvedImage}}" >
+      <div thumb xen:style="{{styleBackground}}">
     </div>
   </div>
   </div>
@@ -109,11 +108,9 @@ ${styles}
     render({product}) {
       if (product) {
         const resolvedImage = resolver ? resolver(product.image) : product.image;
-        return Object.assign({
-          resolvedImage,
+        return Object.assign(product, {
           styleBackground: `background-image:url(${resolvedImage})`
-        },
-        product);
+        });
       }
     }
   };

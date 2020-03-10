@@ -56,7 +56,7 @@ const isQualifiedUrl = (s: string) =>/^https?:\/\//.test(s);
 export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
-  // TODO(sjmiles): fix needed in hotreload-integration-test to restore specifiers
+  // TODO(sjmiles): fix needed in hotreload-integration-test to restore access specifiers
   /*protected readonly*/ staticMap: {};
   constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
     // ensure urlMap is valued if user passed in something nullish
@@ -70,7 +70,7 @@ export abstract class LoaderBase {
   flushCaches(): void {
     // as needed
   }
-  // TODO(sjmiles): XXX and XXXBinary methods are forked for type-safety (is there a way to be more DRY?)
+  // load[Resource|Static] and loadBinary[Resource|Static] methods are forked for type-safety (can we DRY?)
   async loadResource(file: string): Promise<string> {
     const content = this.loadStatic(file);
     if (content) {
@@ -178,8 +178,6 @@ export abstract class LoaderBase {
   }
   private resolvePath(path: string) {
     let resolved: string = path;
-    // TODO(sjmiles): inefficient
-    // find longest key in urlMap that is a prefix of path
     const macro = this.findUrlMapMacro(path);
     if (macro) {
       const config = this.urlMap[macro];
@@ -192,9 +190,11 @@ export abstract class LoaderBase {
     return resolved;
   }
   private findUrlMapMacro(path: string): string {
-    // TODO(sjmiles): inefficient
     // find longest key in urlMap that is a prefix of path
-    return Object.keys(this.urlMap).sort((a, b) => b.length - a.length).find(k => isString(path) && (path.slice(0, k.length) === k));
+    return Object.keys(this.urlMap)
+        .sort((a, b) => b.length - a.length)
+        .find(k => isString(path) && (path.slice(0, k.length) === k))
+        ;
   }
   private resolveConfiguredPath(path: string, macro: string, config) {
     return [

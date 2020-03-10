@@ -391,7 +391,7 @@ export class Manifest {
   }
 
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
-    // TODO(sjmiles): allow `context` for including an existing manifest in the import list
+    // allow `context` for including an existing manifest in the import list
     let {fileName, loader, registry, context, memoryProvider} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
@@ -468,7 +468,7 @@ ${e.message}
     const manifest = new Manifest({id});
     manifest._fileName = fileName;
 
-    // TODO(sjmiles): optionally include pre-existing context
+    // include (optional) pre-existing context
     if (context) {
       manifest._imports.push(context);
     }

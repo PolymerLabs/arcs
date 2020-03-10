@@ -77,15 +77,12 @@ export class SlotComposer {
 
   observeSlots(slotObserver) {
     this['slotObserver'] = slotObserver;
-    // TODO(sjmiles): this is weird, fix
     slotObserver.dispatch = (pid, eventlet) => {
       console.log('slot-composer dispatch for pid', pid, eventlet);
       this.sendEvent(pid, eventlet);
     };
   }
 
-  // TODO(sjmiles): maybe better implemented as a slot dispose (arc dispose?) notification to
-  // let client code clean up (so `slotObserver` details [like dispose()] can be hidden here)
   disposeObserver() {
     const observer = this['slotObserver'];
     if (observer) {
@@ -118,8 +115,7 @@ export class SlotComposer {
           containerSlotId: container.targetSlot.id,
         });
       }
-      // Set modality according to particle spec
-      // TODO(sjmiles): in the short term, Particle may also include modality hints in `content`
+      // Set modality according to particle spec.
       const modality = particle.recipe.modality;
       if (!modality.all) {
         Object.assign(packet, {

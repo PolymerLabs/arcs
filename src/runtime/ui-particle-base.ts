@@ -28,7 +28,6 @@ export class UiParticleBase extends Particle {
    * Override if necessary, to modify superclass config.
    */
   get config(): UiParticleConfig {
-    // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
       handleNames: this.spec.inputs.map(i => i.name),
       // TODO(mmandlis): this.spec needs to be replaced with a particle-spec loaded from
