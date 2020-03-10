@@ -13,10 +13,10 @@ package arcs.sdk.wasm
 
 class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
     ::SpecialSchemaFieldsTest_Errors,
-    SpecialSchemaFieldsTest_Errors_Spec()
+    SpecialSchemaFieldsTest_Errors
 ) {
     private val unused = WasmSingletonImpl(
-        this, "fields", SpecialSchemaFieldsTest_Fields_Spec()
+        this, "fields", SpecialSchemaFieldsTest_Fields
     )
 
     /** Run tests on particle initialization */

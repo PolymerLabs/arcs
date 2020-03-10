@@ -14,7 +14,6 @@ package arcs.sdk.wasm
 /** Wasm-specific extensions to the base [Entity] interface. */
 interface WasmEntity {
     var internalId: String
-    fun schemaHash(): String
     fun encodeEntity(): NullTermByteArray
 }
 

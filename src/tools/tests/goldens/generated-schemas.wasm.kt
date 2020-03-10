@@ -44,8 +44,6 @@ class GoldInternal1(val_: String = "") : WasmEntity {
     override fun hashCode(): Int =
         if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
-    override fun schemaHash() = "485712110d89359a3e539dac987329cd2649d889"
-
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
         encoder.encode("", internalId)
@@ -55,54 +53,52 @@ class GoldInternal1(val_: String = "") : WasmEntity {
 
     override fun toString() =
       "GoldInternal1(val_ = $val_)"
-}
 
-class GoldInternal1_Spec() : WasmEntitySpec<GoldInternal1> {
-
-    override fun create() = GoldInternal1()
+    companion object : WasmEntitySpec<GoldInternal1> {
 
 
-    override fun decode(encoded: ByteArray): GoldInternal1? {
-        if (encoded.isEmpty()) return null
+        override fun create() = GoldInternal1()
 
-        val decoder = StringDecoder(encoded)
-        val internalId = decoder.decodeText()
-        decoder.validate("|")
+        override fun decode(encoded: ByteArray): GoldInternal1? {
+            if (encoded.isEmpty()) return null
 
-        var val_ = ""
-        var i = 0
-        while (i < 1 && !decoder.done()) {
-            val _name = decoder.upTo(':').toUtf8String()
-            when (_name) {
-                "val" -> {
-                    decoder.validate("T")
-                    val_ = decoder.decodeText()
-                }
-                else -> {
-                    // Ignore unknown fields until type slicing is fully implemented.
-                    when (decoder.chomp(1).toUtf8String()) {
-                        "T", "U" -> decoder.decodeText()
-                        "N" -> decoder.decodeNum()
-                        "B" -> decoder.decodeBool()
-                    }
-                    i--
-                }
-            }
+            val decoder = StringDecoder(encoded)
+            val internalId = decoder.decodeText()
             decoder.validate("|")
-            i++
+
+            var val_ = ""
+            var i = 0
+            while (i < 1 && !decoder.done()) {
+                val _name = decoder.upTo(':').toUtf8String()
+                when (_name) {
+                    "val" -> {
+                        decoder.validate("T")
+                        val_ = decoder.decodeText()
+                    }
+                    else -> {
+                        // Ignore unknown fields until type slicing is fully implemented.
+                        when (decoder.chomp(1).toUtf8String()) {
+                            "T", "U" -> decoder.decodeText()
+                            "N" -> decoder.decodeNum()
+                            "B" -> decoder.decodeBool()
+                        }
+                        i--
+                    }
+                }
+                decoder.validate("|")
+                i++
+            }
+            val _rtn = create().copy(
+                val_ = val_
+            )
+            _rtn.internalId = internalId
+            return _rtn
         }
-        val _rtn = create().copy(
-            val_ = val_
-        )
-        _rtn.internalId = internalId
-        return _rtn
     }
 }
 
 typealias Gold_Data_Ref = GoldInternal1
-typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
-typealias Gold_Alias_Spec = GoldInternal1_Spec
 
 class Gold_QCollection(
     name: String = "",
@@ -197,8 +193,6 @@ class Gold_QCollection(
     override fun hashCode(): Int =
         if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
-    override fun schemaHash() = "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa"
-
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
         encoder.encode("", internalId)
@@ -214,73 +208,72 @@ class Gold_QCollection(
 
     override fun toString() =
       "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
-}
 
-class Gold_QCollection_Spec() : WasmEntitySpec<Gold_QCollection> {
-
-    override fun create() = Gold_QCollection()
+    companion object : WasmEntitySpec<Gold_QCollection> {
 
 
-    override fun decode(encoded: ByteArray): Gold_QCollection? {
-        if (encoded.isEmpty()) return null
+        override fun create() = Gold_QCollection()
 
-        val decoder = StringDecoder(encoded)
-        val internalId = decoder.decodeText()
-        decoder.validate("|")
+        override fun decode(encoded: ByteArray): Gold_QCollection? {
+            if (encoded.isEmpty()) return null
 
-        var name = ""
-        var age = 0.0
-        var lastCall = 0.0
-        var address = ""
-        var favoriteColor = ""
-        var birthDayMonth = 0.0
-        var birthDayDOM = 0.0
-        var i = 0
-        while (i < 7 && !decoder.done()) {
-            val _name = decoder.upTo(':').toUtf8String()
-            when (_name) {
-                "name" -> {
-                    decoder.validate("T")
-                    name = decoder.decodeText()
-                }
-                "age" -> {
-                    decoder.validate("N")
-                    age = decoder.decodeNum()
-                }
-                "lastCall" -> {
-                    decoder.validate("N")
-                    lastCall = decoder.decodeNum()
-                }
-                "address" -> {
-                    decoder.validate("T")
-                    address = decoder.decodeText()
-                }
-                "favoriteColor" -> {
-                    decoder.validate("T")
-                    favoriteColor = decoder.decodeText()
-                }
-                "birthDayMonth" -> {
-                    decoder.validate("N")
-                    birthDayMonth = decoder.decodeNum()
-                }
-                "birthDayDOM" -> {
-                    decoder.validate("N")
-                    birthDayDOM = decoder.decodeNum()
-                }
-                else -> {
-                    // Ignore unknown fields until type slicing is fully implemented.
-                    when (decoder.chomp(1).toUtf8String()) {
-                        "T", "U" -> decoder.decodeText()
-                        "N" -> decoder.decodeNum()
-                        "B" -> decoder.decodeBool()
-                    }
-                    i--
-                }
-            }
+            val decoder = StringDecoder(encoded)
+            val internalId = decoder.decodeText()
             decoder.validate("|")
-            i++
-        }
-        val _rtn = create().copy(
+
+            var name = ""
+            var age = 0.0
+            var lastCall = 0.0
+            var address = ""
+            var favoriteColor = ""
+            var birthDayMonth = 0.0
+            var birthDayDOM = 0.0
+            var i = 0
+            while (i < 7 && !decoder.done()) {
+                val _name = decoder.upTo(':').toUtf8String()
+                when (_name) {
+                    "name" -> {
+                        decoder.validate("T")
+                        name = decoder.decodeText()
+                    }
+                    "age" -> {
+                        decoder.validate("N")
+                        age = decoder.decodeNum()
+                    }
+                    "lastCall" -> {
+                        decoder.validate("N")
+                        lastCall = decoder.decodeNum()
+                    }
+                    "address" -> {
+                        decoder.validate("T")
+                        address = decoder.decodeText()
+                    }
+                    "favoriteColor" -> {
+                        decoder.validate("T")
+                        favoriteColor = decoder.decodeText()
+                    }
+                    "birthDayMonth" -> {
+                        decoder.validate("N")
+                        birthDayMonth = decoder.decodeNum()
+                    }
+                    "birthDayDOM" -> {
+                        decoder.validate("N")
+                        birthDayDOM = decoder.decodeNum()
+                    }
+                    else -> {
+                        // Ignore unknown fields until type slicing is fully implemented.
+                        when (decoder.chomp(1).toUtf8String()) {
+                            "T", "U" -> decoder.decodeText()
+                            "N" -> decoder.decodeNum()
+                            "B" -> decoder.decodeBool()
+                        }
+                        i--
+                    }
+                }
+                decoder.validate("|")
+                i++
+            }
+            val _rtn = create().copy(
 
             name = name,
             age = age,
@@ -290,9 +283,10 @@ class Gold_QCollection_Spec() : WasmEntitySpec<Gold_QCollection> {
             birthDayMonth = birthDayMonth,
             birthDayDOM = birthDayDOM
 
-        )
-        _rtn.internalId = internalId
-        return _rtn
+            )
+            _rtn.internalId = internalId
+            return _rtn
+        }
     }
 }
 
@@ -358,8 +352,6 @@ class Gold_Data(
     override fun hashCode(): Int =
         if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
-    override fun schemaHash() = "d8058d336e472da47b289eafb39733f77eadb111"
-
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
         encoder.encode("", internalId)
@@ -372,62 +364,62 @@ class Gold_Data(
 
     override fun toString() =
       "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
-}
 
-class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
-
-    override fun create() = Gold_Data()
+    companion object : WasmEntitySpec<Gold_Data> {
 
 
-    override fun decode(encoded: ByteArray): Gold_Data? {
-        if (encoded.isEmpty()) return null
+        override fun create() = Gold_Data()
 
-        val decoder = StringDecoder(encoded)
-        val internalId = decoder.decodeText()
-        decoder.validate("|")
+        override fun decode(encoded: ByteArray): Gold_Data? {
+            if (encoded.isEmpty()) return null
 
-        var num = 0.0
-        var txt = ""
-        var lnk = ""
-        var flg = false
-        var i = 0
-        while (i < 5 && !decoder.done()) {
-            val _name = decoder.upTo(':').toUtf8String()
-            when (_name) {
-                "num" -> {
-                    decoder.validate("N")
-                    num = decoder.decodeNum()
-                }
-                "txt" -> {
-                    decoder.validate("T")
-                    txt = decoder.decodeText()
-                }
-                "lnk" -> {
-                    decoder.validate("U")
-                    lnk = decoder.decodeText()
-                }
-                "flg" -> {
-                    decoder.validate("B")
-                    flg = decoder.decodeBool()
-                }
-                else -> {
-                    // Ignore unknown fields until type slicing is fully implemented.
-                    when (decoder.chomp(1).toUtf8String()) {
-                        "T", "U" -> decoder.decodeText()
-                        "N" -> decoder.decodeNum()
-                        "B" -> decoder.decodeBool()
-                    }
-                    i--
-                }
-            }
+            val decoder = StringDecoder(encoded)
+            val internalId = decoder.decodeText()
             decoder.validate("|")
-            i++
+
+            var num = 0.0
+            var txt = ""
+            var lnk = ""
+            var flg = false
+            var i = 0
+            while (i < 5 && !decoder.done()) {
+                val _name = decoder.upTo(':').toUtf8String()
+                when (_name) {
+                    "num" -> {
+                        decoder.validate("N")
+                        num = decoder.decodeNum()
+                    }
+                    "txt" -> {
+                        decoder.validate("T")
+                        txt = decoder.decodeText()
+                    }
+                    "lnk" -> {
+                        decoder.validate("U")
+                        lnk = decoder.decodeText()
+                    }
+                    "flg" -> {
+                        decoder.validate("B")
+                        flg = decoder.decodeBool()
+                    }
+                    else -> {
+                        // Ignore unknown fields until type slicing is fully implemented.
+                        when (decoder.chomp(1).toUtf8String()) {
+                            "T", "U" -> decoder.decodeText()
+                            "N" -> decoder.decodeNum()
+                            "B" -> decoder.decodeBool()
+                        }
+                        i--
+                    }
+                }
+                decoder.validate("|")
+                i++
+            }
+            val _rtn = create().copy(
+                num = num, txt = txt, lnk = lnk, flg = flg
+            )
+            _rtn.internalId = internalId
+            return _rtn
         }
-        val _rtn = create().copy(
-            num = num, txt = txt, lnk = lnk, flg = flg
-        )
-        _rtn.internalId = internalId
-        return _rtn
     }
 }
 
@@ -435,9 +427,9 @@ class Gold_Data_Spec() : WasmEntitySpec<Gold_Data> {
 class GoldHandles(
     particle: WasmParticleImpl
 ) {
-    val data: WasmSingletonImpl<Gold_Data> = WasmSingletonImpl(particle, "data", Gold_Data_Spec())
-    val qCollection: WasmCollectionImpl<Gold_QCollection> = WasmCollectionImpl(particle, "qCollection", Gold_QCollection_Spec())
-    val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl(particle, "alias", Gold_Alias_Spec())
+    val data: WasmSingletonImpl<Gold_Data> = WasmSingletonImpl(particle, "data", Gold_Data)
+    val qCollection: WasmCollectionImpl<Gold_QCollection> = WasmCollectionImpl(particle, "qCollection", Gold_QCollection)
+    val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl(particle, "alias", Gold_Alias)
 }
 
 abstract class AbstractGold : WasmParticleImpl() {

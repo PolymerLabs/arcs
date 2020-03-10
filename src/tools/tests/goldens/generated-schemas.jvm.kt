@@ -48,8 +48,6 @@ class GoldInternal1(val_: String = "") : Entity {
     override fun hashCode(): Int =
         if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
-    override fun schemaHash() = "485712110d89359a3e539dac987329cd2649d889"
-
     override fun serialize() = RawEntity(
         internalId,
         mapOf("val" to val_.toReferencable())
@@ -57,23 +55,10 @@ class GoldInternal1(val_: String = "") : Entity {
 
     override fun toString() =
       "GoldInternal1(val_ = $val_)"
-}
 
-class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
+    companion object : EntitySpec<GoldInternal1> {
 
-    override fun create() = GoldInternal1()
-
-    override fun deserialize(data: RawEntity): GoldInternal1 {
-        // TODO: only handles singletons for now
-        val rtn = create().copy(val_ = data.singletons["val_"].toPrimitiveValue(String::class, ""))
-        rtn.internalId = data.id
-        return rtn
-    }
-
-    override fun schema() = SCHEMA
-
-    companion object {
-        val SCHEMA = Schema(
+        override val SCHEMA = Schema(
             listOf(),
             SchemaFields(
                 singletons = mapOf("val" to FieldType.Text),
@@ -82,18 +67,23 @@ class GoldInternal1_Spec() : EntitySpec<GoldInternal1> {
             "485712110d89359a3e539dac987329cd2649d889",
             refinement = { _ -> true },
             query = null
-          )
+        ).also { SchemaRegistry.register(it) }
 
-        init {
-            SchemaRegistry.register(SCHEMA)
+        override fun create() = GoldInternal1()
+
+        override fun deserialize(data: RawEntity): GoldInternal1 {
+            // TODO: only handles singletons for now
+            val rtn = create().copy(
+                val_ = data.singletons["val_"].toPrimitiveValue(String::class, "")
+            )
+            rtn.internalId = data.id
+            return rtn
         }
     }
 }
 
 typealias Gold_Data_Ref = GoldInternal1
-typealias Gold_Data_Ref_Spec = GoldInternal1_Spec
 typealias Gold_Alias = GoldInternal1
-typealias Gold_Alias_Spec = GoldInternal1_Spec
 
 class Gold_QCollection(
     name: String = "",
@@ -188,8 +178,6 @@ class Gold_QCollection(
     override fun hashCode(): Int =
         if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
-    override fun schemaHash() = "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa"
-
     override fun serialize() = RawEntity(
         internalId,
         mapOf(
@@ -205,31 +193,10 @@ class Gold_QCollection(
 
     override fun toString() =
       "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
-}
 
-class Gold_QCollection_Spec() : EntitySpec<Gold_QCollection> {
+    companion object : EntitySpec<Gold_QCollection> {
 
-    override fun create() = Gold_QCollection()
-
-    override fun deserialize(data: RawEntity): Gold_QCollection {
-        // TODO: only handles singletons for now
-        val rtn = create().copy(
-            name = data.singletons["name"].toPrimitiveValue(String::class, ""),
-            age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0),
-            lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0),
-            address = data.singletons["address"].toPrimitiveValue(String::class, ""),
-            favoriteColor = data.singletons["favoriteColor"].toPrimitiveValue(String::class, ""),
-            birthDayMonth = data.singletons["birthDayMonth"].toPrimitiveValue(Double::class, 0.0),
-            birthDayDOM = data.singletons["birthDayDOM"].toPrimitiveValue(Double::class, 0.0)
-        )
-        rtn.internalId = data.id
-        return rtn
-    }
-
-    override fun schema() = SCHEMA
-
-    companion object {
-        val SCHEMA = Schema(
+        override val SCHEMA = Schema(
             listOf(SchemaName("People")),
             SchemaFields(
                 singletons = mapOf(
@@ -251,10 +218,23 @@ class Gold_QCollection_Spec() : EntitySpec<Gold_QCollection> {
                 val queryArgument = queryArgs as String
                 ((lastCall < 259200) && (name == queryArgument))
             }
-          )
+        ).also { SchemaRegistry.register(it) }
 
-        init {
-            SchemaRegistry.register(SCHEMA)
+        override fun create() = Gold_QCollection()
+
+        override fun deserialize(data: RawEntity): Gold_QCollection {
+            // TODO: only handles singletons for now
+            val rtn = create().copy(
+                name = data.singletons["name"].toPrimitiveValue(String::class, ""),
+                age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0),
+                lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0),
+                address = data.singletons["address"].toPrimitiveValue(String::class, ""),
+                favoriteColor = data.singletons["favoriteColor"].toPrimitiveValue(String::class, ""),
+                birthDayMonth = data.singletons["birthDayMonth"].toPrimitiveValue(Double::class, 0.0),
+                birthDayDOM = data.singletons["birthDayDOM"].toPrimitiveValue(Double::class, 0.0)
+            )
+            rtn.internalId = data.id
+            return rtn
         }
     }
 }
@@ -321,8 +301,6 @@ class Gold_Data(
     override fun hashCode(): Int =
         if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
-    override fun schemaHash() = "d8058d336e472da47b289eafb39733f77eadb111"
-
     override fun serialize() = RawEntity(
         internalId,
         mapOf(
@@ -335,28 +313,10 @@ class Gold_Data(
 
     override fun toString() =
       "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
-}
 
-class Gold_Data_Spec() : EntitySpec<Gold_Data> {
+    companion object : EntitySpec<Gold_Data> {
 
-    override fun create() = Gold_Data()
-
-    override fun deserialize(data: RawEntity): Gold_Data {
-        // TODO: only handles singletons for now
-        val rtn = create().copy(
-            num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0),
-            txt = data.singletons["txt"].toPrimitiveValue(String::class, ""),
-            lnk = data.singletons["lnk"].toPrimitiveValue(String::class, ""),
-            flg = data.singletons["flg"].toPrimitiveValue(Boolean::class, false)
-        )
-        rtn.internalId = data.id
-        return rtn
-    }
-
-    override fun schema() = SCHEMA
-
-    companion object {
-        val SCHEMA = Schema(
+        override val SCHEMA = Schema(
             listOf(),
             SchemaFields(
                 singletons = mapOf(
@@ -370,10 +330,20 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
             "d8058d336e472da47b289eafb39733f77eadb111",
             refinement = { _ -> true },
             query = null
-          )
+        ).also { SchemaRegistry.register(it) }
 
-        init {
-            SchemaRegistry.register(SCHEMA)
+        override fun create() = Gold_Data()
+
+        override fun deserialize(data: RawEntity): Gold_Data {
+            // TODO: only handles singletons for now
+            val rtn = create().copy(
+                num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0),
+                txt = data.singletons["txt"].toPrimitiveValue(String::class, ""),
+                lnk = data.singletons["lnk"].toPrimitiveValue(String::class, ""),
+                flg = data.singletons["flg"].toPrimitiveValue(Boolean::class, false)
+            )
+            rtn.internalId = data.id
+            return rtn
         }
     }
 }
@@ -381,11 +351,7 @@ class Gold_Data_Spec() : EntitySpec<Gold_Data> {
 
 class GoldHandles : HandleHolderBase(
     "Gold",
-    mapOf(
-        "data" to Gold_Data_Spec(),
-        "qCollection" to Gold_QCollection_Spec(),
-        "alias" to Gold_Alias_Spec()
-    )
+    mapOf("data" to Gold_Data, "qCollection" to Gold_QCollection, "alias" to Gold_Alias)
 ) {
     val data: ReadSingletonHandle<Gold_Data> by handles
     val qCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
