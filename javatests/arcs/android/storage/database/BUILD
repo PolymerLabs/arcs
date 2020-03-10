@@ -15,6 +15,7 @@ arcs_kt_android_test_suite(
     deps = [
         "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/android/storage/database",
+        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
