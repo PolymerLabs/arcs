@@ -10,10 +10,11 @@
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils, quote, tryImport, upperFirst} from './kotlin-generation-utils.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
+import {Dictionary} from '../runtime/hot.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -26,14 +27,16 @@ export class PlanGeneratorError extends Error {
 
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
+  private specRegistry: Dictionary<string> = {};
+
   constructor(private resolvedRecipes: Recipe[], private scope: string) {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
-  generate(): string {
+  async generate(): Promise<string> {
     const planOutline = [
       this.fileHeader(),
-      ...this.createPlans(),
+      ...(await this.createPlans()),
       this.fileFooter()
     ];
 
@@ -41,24 +44,33 @@ export class PlanGenerator {
   }
 
   /** Converts a resolved recipe into a `Plan` object. */
-  createPlans(): string[] {
-    return this.resolvedRecipes.map(recipe => {
+  async createPlans(): Promise<string[]> {
+    const plans: string[] = [];
+    for (const recipe of this.resolvedRecipes) {
       const planName = `${recipe.name}Plan`;
 
-      const particles = recipe.particles.map(p => this.createParticle(p));
+      const particles: string[] = [];
+      for (const particle of recipe.particles) {
+        await this.collectParticleConnectionSpecs(particle);
+        particles.push(await this.createParticle(particle));
+      }
 
       const start = `object ${planName} : `;
-      return `${start}${ktUtils.applyFun('Plan', [ktUtils.listOf(particles)], start.length)}`;
-    });
+      const plan = `${start}${ktUtils.applyFun('Plan', [ktUtils.listOf(particles)], start.length)}`;
+      plans.push(plan);
+    }
+    return plans;
   }
 
   /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */
-  createParticle(particle: Particle): string {
+  async createParticle(particle: Particle): Promise<string> {
     const spec = particle.spec;
     const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
 
-    const connectionMappings = Object.entries(particle.connections)
-      .map(([key, conn]) => `"${key}" to ${this.createHandleConnection(conn)}`);
+    const connectionMappings: string[] = [];
+    for (const [key, conn] of Object.entries(particle.connections)) {
+      connectionMappings.push(`"${key}" to ${await this.createHandleConnection(conn)}`);
+    }
 
     return ktUtils.applyFun('Particle', [
       quote(particle.name),
@@ -67,11 +79,20 @@ export class PlanGenerator {
     ]);
   }
 
+  /** Aggregate mapping of schema hashes and schema properties from particle connections */
+  async collectParticleConnectionSpecs(particle: Particle): Promise<void> {
+    for (const connection of particle.spec.connections) {
+      const specName = [particle.spec.name, upperFirst(connection.name), 'Spec'].join('_');
+      const schemaHash = await connection.type.getEntitySchema().hash();
+      this.specRegistry[schemaHash] = specName;
+    }
+  }
+
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
-  createHandleConnection(connection: HandleConnection): string {
+  async createHandleConnection(connection: HandleConnection): Promise<string> {
     const storageKey = this.createStorageKey(connection.handle.storageKey);
     const mode = this.createDirection(connection.direction);
-    const type = this.createType(connection.type);
+    const type = await this.createType(connection.type);
     const ttl = 'null';
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], 24);
@@ -94,31 +115,28 @@ export class PlanGenerator {
   }
 
   /** Generates a Kotlin `core.arc.type.Type` from a Type. */
-  // TODO(alxr): Implement
-  createType(type: Type): string {
+  async createType(type: Type): Promise<string> {
     switch (type.tag) {
       case 'Collection':
-        break;
+        return ktUtils.applyFun('CollectionType', [await this.createType(type.getContainedType())]);
+      case 'Count':
+        return ktUtils.applyFun('CountType', [await this.createType(type.getContainedType())]);
       case 'Entity':
-        break;
-      case 'Handle':
-        break;
+        return ktUtils.applyFun('EntityType', [`${this.specRegistry[await type.getEntitySchema().hash()]}.SCHEMA`]);
       case 'Reference':
-        break;
+        return ktUtils.applyFun('ReferenceType', [await this.createType(type.getContainedType())]);
       case 'Singleton':
-        break;
+        return ktUtils.applyFun('SingletonType', [await this.createType(type.getContainedType())]);
       case 'TypeVariable':
-        break;
       case 'Arc':
       case 'BigCollection':
-      case 'Count':
+      case 'Handle':
       case 'Interface':
       case 'Slot':
       case 'Tuple':
       default:
         throw Error(`Type of ${type.tag} is not supported.`);
     }
-    return 'null';
   }
 
   fileHeader(): string {

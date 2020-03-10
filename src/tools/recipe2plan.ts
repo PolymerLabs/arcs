@@ -10,6 +10,7 @@
 import {Runtime} from '../runtime/runtime.js';
 import {StorageKeyRecipeResolver} from './storage-key-recipe-resolver.js';
 import {PlanGenerator} from './plan-generator.js';
+import {Flags} from '../runtime/flags.js';
 
 
 /**
@@ -20,11 +21,13 @@ import {PlanGenerator} from './plan-generator.js';
  * @return Generated Kotlin code.
  */
 export async function recipe2plan(path: string, scope: string): Promise<string> {
-  const manifest = await Runtime.parseFile(path);
+  return await Flags.withDefaultReferenceMode(async () => {
+    const manifest = await Runtime.parseFile(path);
 
-  const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
+    const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
-  const generator = new PlanGenerator(recipes, scope);
+    const generator = new PlanGenerator(recipes, scope);
 
-  return generator.generate();
+    return generator.generate();
+  })();
 }
