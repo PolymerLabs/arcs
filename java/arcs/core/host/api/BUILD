@@ -1,4 +1,4 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_library", "arcs_kt_schema")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_library")
 
 licenses(["notice"])
 
