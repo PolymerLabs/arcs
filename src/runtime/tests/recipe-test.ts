@@ -816,27 +816,6 @@ describe('recipe', () => {
     verifyRecipeHandleCapabilities(recipe);
     verifyRecipeHandleCapabilities((await Manifest.parse(recipe.toString())).recipes[0]);
   });
-  it('detects long running arc', async () => {
-    const recipes = (await Manifest.parse(`
-        recipe One
-        @trigger
-          key value
-        recipe Two
-        @trigger
-          launch startup
-          foo bar
-        recipe Four
-        @trigger
-          launch startup
-          arcId myLongRunningArc
-        recipe Four
-    `)).recipes;
-    assert.lengthOf(recipes, 4);
-    assert.isFalse(recipes[0].isLongRunning);
-    assert.isFalse(recipes[1].isLongRunning);
-    assert.isFalse(recipes[2].isLongRunning);
-    assert.isTrue(recipes[3].isLongRunning);
-  });
   it('can normalize and clone a recipe with a synthetic join handle', async () => {
     const [recipe] = (await Manifest.parse(`
       recipe

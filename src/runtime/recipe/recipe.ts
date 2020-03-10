@@ -700,12 +700,6 @@ export class Recipe implements Cloneable<Recipe> {
     }
     return slot;
   }
-
-  get isLongRunning(): boolean {
-    return this.triggers.some(group =>
-        group.some(trigger => trigger[0] === 'launch' && trigger[1] === 'startup')
-        && group.some(trigger => trigger[0] === 'arcId' && !!trigger[1]));
-  }
 }
 
 export class RequireSection extends Recipe {

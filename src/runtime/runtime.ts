@@ -14,7 +14,7 @@ import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
 import {CapabilitiesResolver, StorageKeyCreatorInfo} from './capabilities-resolver.js';
 import {RuntimeCacheService} from './runtime-cache.js';
-import {IdGenerator, ArcId} from './id.js';
+import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
@@ -28,6 +28,7 @@ import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
+import {Modality} from './modality.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -40,6 +41,7 @@ export type RuntimeOptions = Readonly<{
 }>;
 
 export type RuntimeArcOptions = Readonly<{
+  id?: Id;
   pecFactories?: PecFactory[];
   speculative?: boolean;
   innerArc?: boolean;
@@ -47,6 +49,7 @@ export type RuntimeArcOptions = Readonly<{
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
   storageKeyCreators?: StorageKeyCreatorInfo[];
+  modality?: Modality;
 }>;
 
 type SpawnArgs = {
@@ -111,9 +114,6 @@ export class Runtime {
     const loader = new Loader(map);
     const pecFactory = pecIndustry(loader);
     const memoryProvider = new SimpleVolatileMemoryProvider();
-    // TODO(sjmiles): SlotComposer type shenanigans are temporary pending complete replacement
-    // of SlotComposer by SlotComposer. Also it's weird that `new Runtime(..., SlotComposer, ...)`
-    // doesn't bother tslint at all when done in other modules.
     const runtime = new Runtime({
       loader,
       composerClass: SlotComposer,
@@ -176,7 +176,7 @@ export class Runtime {
   // How best to provide default storage to an arc given whatever we decide?
   newArc(name: string, storageKeyPrefix?: ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
     const {loader, context} = this;
-    const id = IdGenerator.newSession().newArcId(name);
+    const id = (options && options.id) || IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id}, options ? options.storageKeyCreators : undefined);
     let storageKey : StorageKey;

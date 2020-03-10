@@ -21,6 +21,43 @@ describe('recipe2plan', () => {
     beforeEach(() => DatabaseStorageKey.register());
     afterEach(() => CapabilitiesResolver.reset());
 
+    it('detects long running arc', async () => {
+      const manifest = (await Manifest.parse(`
+          recipe Zero
+          @trigger
+            key value
+          recipe One
+          @trigger
+            launch startup
+            foo bar
+          recipe Two
+          @trigger
+            arcId notLongRunningArc
+            foo bar
+          recipe Three
+          @trigger
+            launch startup
+            arcId myLongRunningArc
+          recipe Four
+      `));
+      assert.lengthOf(manifest.recipes, 5);
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      assert.isFalse(resolver.isLongRunning(manifest.recipes[0]));
+      assert.isNull(resolver.findLongRunningArcId(manifest.recipes[0]));
+
+      assert.isNull(resolver.findLongRunningArcId(manifest.recipes[1]));
+      assert.isFalse(resolver.isLongRunning(manifest.recipes[1]));
+
+      assert.isNull(resolver.findLongRunningArcId(manifest.recipes[2]));
+      assert.isFalse(resolver.isLongRunning(manifest.recipes[2]));
+
+      assert.isNull(resolver.findLongRunningArcId(manifest.recipes[3]));
+      assert.isFalse(resolver.isLongRunning(manifest.recipes[3]));
+
+      assert.equal(resolver.findLongRunningArcId(manifest.recipes[4]), 'myLongRunningArc');
+      assert.isTrue(resolver.isLongRunning(manifest.recipes[4]));
+    });
+
     it('resolves mapping a handle from a long running arc into another long running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
