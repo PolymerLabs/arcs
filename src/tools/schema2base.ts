@@ -17,7 +17,7 @@ import {ParticleSpec} from '../runtime/particle-spec.js';
 
 export type AddFieldOptions = Readonly<{
   field: string;
-  typeChar: string;
+  typeName: string;
   isOptional?: boolean;
   refClassName?: string;
   isCollection?: boolean;
@@ -25,6 +25,8 @@ export type AddFieldOptions = Readonly<{
 
 export interface ClassGenerator {
   addField(opts: AddFieldOptions): void;
+  escapeIdentifier(ident: string): string;
+  generatePredicates(): void;
   generate(schemaHash: string, fieldCount: number): string;
 }
 
@@ -86,12 +88,12 @@ export abstract class Schema2Base {
         for (const [field, descriptor] of fields) {
           if (descriptor.kind === 'schema-primitive') {
             if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
-              generator.addField({field, typeChar: descriptor.type[0]});
+              generator.addField({field, typeName: descriptor.type});
             } else {
               throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
             }
           } else if (descriptor.kind === 'schema-reference') {
-            generator.addField({field, typeChar: 'R', refClassName: node.refs.get(field).name});
+            generator.addField({field, typeName: 'Reference', refClassName: node.refs.get(field).name});
           } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
             // TODO: support collections of references
           } else if (descriptor.kind === 'schema-collection') {
@@ -99,10 +101,13 @@ export abstract class Schema2Base {
             if (!['Text', 'URL', 'Number', 'Boolean'].includes(schema.type)) {
               throw new Error(`Schema type '${schema.type}' for field '${field}' is not supported`);
             }
-            generator.addField({field, typeChar: schema.type[0], isCollection: true});
+            generator.addField({field, typeName: schema.type, isCollection: true});
           } else {
             throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
           }
+        }
+        if (node.schema.refinement) {
+          generator.generatePredicates();
         }
         classes.push(generator.generate(await node.schema.hash(), fields.length));
       }
