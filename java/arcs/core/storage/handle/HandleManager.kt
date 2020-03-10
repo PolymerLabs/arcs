@@ -11,6 +11,8 @@
 package arcs.core.storage.handle
 
 import arcs.core.common.Referencable
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.CollectionType

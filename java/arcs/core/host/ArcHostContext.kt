@@ -36,5 +36,6 @@ data class ParticleContext(
  */
 data class ArcHostContext(
     var particles: MutableMap<Plan.Particle, ParticleContext> = mutableMapOf(),
-    var arcState: ArcState = ArcState.NeverStarted
+    var arcState: ArcState = ArcState.NeverStarted,
+    val handleManager: EntityHandleManager
 )

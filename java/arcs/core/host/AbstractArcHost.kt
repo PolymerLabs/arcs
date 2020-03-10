@@ -66,7 +66,8 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     /** Subclasses may override this to load persistent context state. */
     protected open suspend fun lookupOrCreateArcHostContext(
         partition: Plan.Partition
-    ): ArcHostContext = runningArcs[partition.arcId] ?: ArcHostContext()
+    ): ArcHostContext =
+        runningArcs[partition.arcId] ?: ArcHostContext(handleManager = entityHandleManager())
 
     /**
      * Called to persist [ArcHostContext] after [context] for [arcId] has been modified.
@@ -144,10 +145,10 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
             return particleContext
         }
 
-        spec.handles.forEach { handleSpec ->
+        spec.handles.forEach { (handleName, handleConnection) ->
             try {
-                val handle = createHandle(handleSpec.key, handleSpec.value, particle.handles)
-                particleContext.handles[handleSpec.key] = handle
+                val handle = createHandle(context.handleManager, handleName, handleConnection, particle.handles)
+                particleContext.handles[handleName] = handle
             } catch (e: Exception) {
                 log.error(e) { "Error creating Handle." }
                 markParticleAsFailed(particleContext)
@@ -309,12 +310,13 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * [Handle] of the right type.
      */
     private suspend fun createHandle(
+        handleManager: EntityHandleManager,
         handleName: String,
         handleSpec: Plan.HandleConnection,
         holder: HandleHolder
     ) = when (handleSpec.type) {
         is SingletonType<*> ->
-            entityHandleManager.createSingletonHandle(
+            handleManager.createSingletonHandle(
                 holder.getEntitySpec(handleName),
                 handleName,
                 handleSpec.storageKey,
@@ -322,7 +324,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 handleSpec.mode
             )
         is CollectionType<*> ->
-            entityHandleManager.createSetHandle(
+            handleManager.createSetHandle(
                 holder.getEntitySpec(handleName),
                 handleName,
                 handleSpec.storageKey,
@@ -400,11 +402,9 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         registeredParticles().contains(ParticleIdentifier.from(particle.location))
 
     /**
-     * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
+     * Return a new instance of [EntityHandleManager] to be used to create [Handle]s.
      */
-    open val entityHandleManager: EntityHandleManager by lazy {
-        EntityHandleManager(HandleManager(platformTime))
-    }
+    open fun entityHandleManager() = EntityHandleManager(HandleManager(platformTime))
 
     /**
      * Instantiate a [Particle] implementation for a given [ParticleIdentifier].
