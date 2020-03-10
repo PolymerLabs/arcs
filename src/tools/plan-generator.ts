@@ -14,6 +14,7 @@ import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
+import {Ttl, TtlUnits} from '../runtime/recipe/ttl.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -72,7 +73,7 @@ export class PlanGenerator {
     const storageKey = this.createStorageKey(connection.handle.storageKey);
     const mode = this.createDirection(connection.direction);
     const type = this.createType(connection.type);
-    const ttl = 'null';
+    const ttl = this.createTtl(connection.handle.ttl);
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], 24);
   }
@@ -80,17 +81,32 @@ export class PlanGenerator {
   /** Generates a Kotlin `HandleMode` from a Direction. */
   createDirection(direction: Direction): string {
     switch (direction) {
-      case 'reads': return 'HandleMode.Read';
-      case 'writes': return 'HandleMode.Write';
-      case 'reads writes': return 'HandleMode.ReadWrite';
-      default: throw new PlanGeneratorError(
-        `HandleConnection direction '${direction}' is not supported.`);
+      case 'reads':
+        return 'HandleMode.Read';
+      case 'writes':
+        return 'HandleMode.Write';
+      case 'reads writes':
+        return 'HandleMode.ReadWrite';
+      default:
+        throw new PlanGeneratorError(
+          `HandleConnection direction '${direction}' is not supported.`);
     }
   }
 
   /** Generates a Kotlin `StorageKey` from a StorageKey. */
   createStorageKey(storageKey: StorageKey | undefined): string {
     return `StorageKeyParser.parse("${(storageKey || '').toString()}")`;
+  }
+
+  /** Generates a Kotlin `Ttl` from a Ttl. */
+  createTtl(ttl: Ttl): string {
+    if (ttl.isInfinite) return 'Ttl.Infinite';
+    const args = [ttl.count.toString()];
+    switch (ttl.units) {
+      case TtlUnits.Day: return ktUtils.applyFun('Ttl.Days', args);
+      case TtlUnits.Hour: return ktUtils.applyFun('Ttl.Hours', args);
+      case TtlUnits.Minute: return ktUtils.applyFun('Ttl.Minutes', args);
+    }
   }
 
   /** Generates a Kotlin `core.arc.type.Type` from a Type. */
