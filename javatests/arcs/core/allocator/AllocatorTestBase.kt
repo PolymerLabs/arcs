@@ -51,7 +51,7 @@ open class AllocatorTestBase {
     private lateinit var readPersonParticle: Plan.Particle
     private lateinit var writeAndReadPersonPlan: Plan
 
-    protected val personSchema = ReadPerson_Person_Spec.schema
+    protected val personSchema = ReadPerson_Person_Spec.SCHEMA
     private var personEntityType: Type = SingletonType(EntityType(personSchema))
 
     private lateinit var readingExternalHost: TestingHost
@@ -277,11 +277,11 @@ open class AllocatorTestBase {
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
         val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle]
+            readingContext.particles[readPersonParticle.particleName]
         )
 
         val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle]
+            writingContext.particles[writePersonParticle.particleName]
         )
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
@@ -329,11 +329,11 @@ open class AllocatorTestBase {
         assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
 
         val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle]
+            readingContext.particles[readPersonParticle.particleName]
         )
 
         val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle]
+            writingContext.particles[writePersonParticle.particleName]
         )
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Stopped)
@@ -373,11 +373,11 @@ open class AllocatorTestBase {
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
         val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle]
+            readingContext.particles[readPersonParticle.particleName]
         )
 
         val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle]
+            writingContext.particles[writePersonParticle.particleName]
         )
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
@@ -431,11 +431,11 @@ open class AllocatorTestBase {
         assertThat(writingContextAfter.arcState).isEqualTo(ArcState.Running)
 
         val readPersonContext = requireNotNull(
-            readingContextAfter.particles[readPersonParticle]
+            readingContextAfter.particles[readPersonParticle.particleName]
         )
 
         val writePersonContext = requireNotNull(
-            writingContextAfter.particles[writePersonParticle]
+            writingContextAfter.particles[writePersonParticle.particleName]
         )
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)

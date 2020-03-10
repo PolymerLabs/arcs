@@ -18,6 +18,7 @@ import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.api.Handle
 import arcs.core.storage.handle.HandleManager
+import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 
@@ -43,8 +44,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
     /** In memory cache of [ArcHostContext] state. */
-    // TODO: change to LRU cache
-    private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
+    private val runningArcs: MutableMap<String, ArcHostContext> = LruCacheMap()
     override val hostId = this::class.className()
 
     init {
@@ -141,7 +141,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         }
 
         partition.particles.forEach { particleSpec ->
-            context.particles[particleSpec] = startParticle(particleSpec, context)
+            context.particles[particleSpec.particleName] = startParticle(particleSpec, context)
         }
 
         // Call lifecycle methods given current state.
@@ -238,7 +238,10 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         context: ArcHostContext,
         spec: Plan.Particle,
         particle: Particle
-    ) = context.particles[spec]?.copy(particle = particle) ?: ParticleContext(particle)
+    ) = context.particles[spec.particleName]?.copy(particle = particle) ?: ParticleContext(
+        particle,
+        spec
+    )
 
     /**
      * Invokes any necessary lifecycle methods for the current [ArcHostContext.arcState] and any

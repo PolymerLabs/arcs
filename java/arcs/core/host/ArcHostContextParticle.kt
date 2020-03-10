@@ -15,6 +15,7 @@ import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.data.Plan.HandleConnection
 import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.host.api.Particle
@@ -37,10 +38,10 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
     suspend fun writeArcHostContext(arcId: String, hostId: String, context: ArcHostContext) {
         try {
             val connections = context.particles.flatMap {
-                it.key.handles.map { handle ->
+                it.value.planParticle.handles.map { handle ->
                     ArcHostParticle_HandleConnections(
                         arcId = arcId,
-                        particleName = it.key.particleName,
+                        particleName = it.key,
                         handleName = handle.key,
                         storageKey = handle.value.storageKey.toString(),
                         mode = handle.value.mode.name,
@@ -53,8 +54,8 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
             val particles = context.particles.map {
                 ArcHostParticle_Particles(
                     arcId = arcId,
-                    particleName = it.key.particleName,
-                    location = it.key.location,
+                    particleName = it.key,
+                    location = it.value.planParticle.location,
                     particleState = it.value.particleState.name,
                     consecutiveFailures = it.value.consecutiveFailureCount.toDouble()
                 )
@@ -119,14 +120,15 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
 
             // construct a map from Plan.Particle to ParticleContext
             val particles = particleEntities.map {
-                Plan.Particle(
-                    it.particleName,
-                    it.location,
-                    createHandlesMap(handleConnections, it, arcId)
-                ) to ParticleContext(
+                it.particleName to ParticleContext(
                     requireNotNull(instantiatedParticles[it.particleName]) {
                         "${it.particleName} not instantiable for $arcId and $hostId"
                     },
+                    Plan.Particle(
+                        it.particleName,
+                        it.location,
+                        createHandlesMap(handleConnections, it, arcId)
+                    ),
                     mutableMapOf(),
                     ParticleState.valueOf(it.particleState),
                     it.consecutiveFailures.toInt()
@@ -146,7 +148,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
 
     data class NamedHandleConnection(
         val handleName: String,
-        val handleConnection: Plan.HandleConnection
+        val handleConnection: HandleConnection
     )
     data class ParticleConnection(val particleName: String, val connection: NamedHandleConnection)
 
@@ -154,7 +156,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
         handleConnections: Map<String, List<ParticleConnection>>,
         it: ArcHostParticle_Particles,
         arcId: String
-    ): Map<String, Plan.HandleConnection> {
+    ): Map<String, HandleConnection> {
         return handleConnections[it.particleName]?.associateBy(
             { it.connection.handleName },
             { it.connection.handleConnection }
@@ -171,7 +173,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
     ): NamedHandleConnection {
         return NamedHandleConnection(
             entity.handleName,
-            Plan.HandleConnection(
+            HandleConnection(
                 StorageKeyParser.parse(entity.storageKey),
                 HandleMode.valueOf(entity.mode),
                 fromTag(
@@ -228,19 +230,19 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
         // Because we don't have references/collections support yet, we use 3 handles/schemas
         val arcStateKey = resolver.createStorageKey(
             capability,
-            ArcHostParticle_ArcHostContext_Spec.schema,
+            ArcHostParticle_ArcHostContext_Spec.SCHEMA,
             "${hostId}_arcState"
         )
 
         val particlesStateKey = resolver.createStorageKey(
             capability,
-            ArcHostParticle_Particles_Spec.schema,
+            ArcHostParticle_Particles_Spec.SCHEMA,
             "${hostId}_arcState_particles"
         )
 
         val handleConnectionsKey = resolver.createStorageKey(
             capability,
-            ArcHostParticle_HandleConnections_Spec.schema,
+            ArcHostParticle_HandleConnections_Spec.SCHEMA,
             "${hostId}_arcState_handleConnections"
         )
 
@@ -252,25 +254,25 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
                     "ArcHostContextParticle",
                     ArcHostContextParticle::class.toParticleIdentifier().id,
                     mapOf(
-                        "arcHostContext" to Plan.HandleConnection(
+                        "arcHostContext" to HandleConnection(
                             arcStateKey!!,
                             HandleMode.ReadWrite,
                             SingletonType(
-                                EntityType(ArcHostParticle_ArcHostContext_Spec.schema)
+                                EntityType(ArcHostParticle_ArcHostContext_Spec.SCHEMA)
                             )
                         ),
-                        "particles" to Plan.HandleConnection(
+                        "particles" to HandleConnection(
                             particlesStateKey!!,
                             HandleMode.ReadWrite,
                             CollectionType(
-                                EntityType(ArcHostParticle_Particles_Spec.schema)
+                                EntityType(ArcHostParticle_Particles_Spec.SCHEMA)
                             )
                         ),
-                        "handleConnections" to Plan.HandleConnection(
+                        "handleConnections" to HandleConnection(
                             handleConnectionsKey!!,
                             HandleMode.ReadWrite,
                             CollectionType(
-                                EntityType(ArcHostParticle_HandleConnections_Spec.schema)
+                                EntityType(ArcHostParticle_HandleConnections_Spec.SCHEMA)
                             )
                         )
                     )
