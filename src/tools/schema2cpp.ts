@@ -36,11 +36,11 @@ export interface CppTypeInfo {
 }
 
 const typeMap: Dictionary<CppTypeInfo> = {
-  'Text':      {type: 'std::string',  defaultVal: ' = ""',    isString: true},
-  'URL':       {type: 'URL',          defaultVal: ' = ""',    isString: true},
-  'Number':    {type: 'double',       defaultVal: ' = 0',     isString: false},
-  'Boolean':   {type: 'bool',         defaultVal: ' = false', isString: false},
-  'Reference': {type: '',             defaultVal: ' = {}',    isString: false},
+'Text': {type: 'std::string', defaultVal: ' = ""',    isString: true},
+'URL': {type: 'URL',          defaultVal: ' = ""',    isString: true},
+'Number': {type: 'double',    defaultVal: ' = 0',     isString: false},
+'Boolean': {type: 'bool',     defaultVal: ' = false', isString: false},
+'Reference': {type: '',       defaultVal: ' = {}',    isString: false},
 };
 
 function getTypeInfo(name: string): CppTypeInfo {

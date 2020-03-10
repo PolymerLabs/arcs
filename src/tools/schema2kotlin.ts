@@ -273,11 +273,11 @@ Schema(
     const lines = leftPad(expression, 8);
     if (queryType) {
       this.query = `{ data, queryArgs ->
-        ${lines}
+${lines}
     }`;
     } else {
       this.refinement = `{ data ->
-        ${lines}
+${lines}
     }`;
     }
   }

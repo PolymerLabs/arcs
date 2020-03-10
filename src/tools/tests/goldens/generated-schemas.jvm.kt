@@ -246,8 +246,8 @@ class Gold_QCollection_Spec() : EntitySpec<Gold_QCollection> {
             "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
             refinement = { _ -> true },
             query = { data, queryArgs ->
-                        val lastCall = data.singletons["lastCall"] as Double
-                val name = data.singletons["name"] as String
+                val lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0)
+                val name = data.singletons["name"].toPrimitiveValue(String::class, "")
                 val queryArgument = queryArgs as String
                 ((lastCall < 259200) && (name == queryArgument))
             }
