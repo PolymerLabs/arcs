@@ -14,7 +14,7 @@ import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
 import {CapabilitiesResolver, StorageKeyCreatorInfo} from './capabilities-resolver.js';
 import {RuntimeCacheService} from './runtime-cache.js';
-import {IdGenerator, ArcId} from './id.js';
+import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
@@ -41,6 +41,7 @@ export type RuntimeOptions = Readonly<{
 }>;
 
 export type RuntimeArcOptions = Readonly<{
+  id?: Id;
   pecFactories?: PecFactory[];
   speculative?: boolean;
   innerArc?: boolean;
@@ -175,7 +176,7 @@ export class Runtime {
   // How best to provide default storage to an arc given whatever we decide?
   newArc(name: string, storageKeyPrefix?: ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
     const {loader, context} = this;
-    const id = IdGenerator.newSession().newArcId(name);
+    const id = (options && options.id) || IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id}, options ? options.storageKeyCreators : undefined);
     let storageKey : StorageKey;
