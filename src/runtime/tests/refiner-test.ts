@@ -586,8 +586,8 @@ describe('KTExtracter', () => {
       const query: string = KTExtracter.fromSchema(schema, escaper);
       assert.strictEqual(query,
         `\
-val a = data.singletons["a"] as Double
-val b = data.singletons["b"] as Double
+val a = data.singletons["a"].toPrimitiveValue(Double::class, 0.0)
+val b = data.singletons["b"].toPrimitiveValue(Double::class, 0.0)
 ((b + (a * 3)) > 300) && ((a > 3) && (!(a == 100))) && ((b > 20) && (b < 100))`);
   }));
   it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
@@ -600,8 +600,8 @@ val b = data.singletons["b"] as Double
     //TODO(cypher1): Implement some simple boolean simplifications.
     //This should simplify to, '(!a) && b'
     assert.strictEqual(query, `\
-val a = data.singletons["a"] as Boolean
-val b = data.singletons["b"] as Boolean
+val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
+val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
 (b || a) && (!a) && b`);
   }));
   it('tests can create queries where field refinement is null', async () => {
@@ -612,8 +612,8 @@ val b = data.singletons["b"] as Boolean
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
     assert.strictEqual(query, `\
-val a = data.singletons["a"] as Boolean
-val b = data.singletons["b"] as Boolean
+val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
+val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
 (b && a)`);
   });
   it('tests can create queries where schema refinement is null', Flags.withFieldRefinementsAllowed(async () => {
@@ -624,8 +624,8 @@ val b = data.singletons["b"] as Boolean
     const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
     const query = KTExtracter.fromSchema(schema, escaper);
     assert.strictEqual(query, `\
-val a = data.singletons["a"] as Boolean
-val b = data.singletons["b"] as Boolean
+val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
+val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
 (!a) && b`);
   }));
   it('tests can create queries where there is no refinement', async () => {
