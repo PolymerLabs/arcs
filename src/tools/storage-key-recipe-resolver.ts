@@ -7,6 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import {assert} from '../platform/assert-web.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Loader} from '../platform/loader-web.js';
@@ -17,6 +18,8 @@ import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
+import {TypeVariable} from '../runtime/type.js';
+import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
 
 /**
  * Responsible for resolving recipes with storage keys.
@@ -27,6 +30,7 @@ export class StorageKeyRecipeResolver {
   constructor(context: Manifest) {
     const loader = new Loader();
     this.runtime = new Runtime({loader, context});
+    DatabaseStorageKey.register();
   }
 
   /**
@@ -40,13 +44,14 @@ export class StorageKeyRecipeResolver {
     const recipes = [];
     for (const recipe of this.runtime.context.allRecipes) {
       this.validateHandles(recipe);
+      // TODO(#4818): use the arcId of the long running arc annotation in the recipe, if present.
       const arc = this.runtime.newArc(this.getArcId(recipe), ramDiskStorageKeyPrefixForTest());
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
       const resolved = await this.tryResolve(recipe, arc, opts);
       if (!resolved) {
         throw Error(`Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
       }
-      this.createStoresForCreateHandles(resolved, arc);
+      await this.createStoresForCreateHandles(resolved, arc);
       if (!resolved.isResolved()) {
         throw Error(`Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`);
       }
@@ -89,10 +94,16 @@ export class StorageKeyRecipeResolver {
    * @param recipe should be long running.
    * @param arc Arc is associated with current recipe.
    */
-  createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
+  async createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
     const resolver = new CapabilitiesResolver({arcId: arc.id});
     for (const createHandle of recipe.handles.filter(h => h.fate === 'create')) {
-      const storageKey = ramDiskStorageKeyPrefixForTest()(arc.id); // TODO(#4818) create the storage keys.
+      if (createHandle.type instanceof TypeVariable && !createHandle.type.isResolved()) {
+        // TODO(mmandlis): should already be resolved.
+        assert(createHandle.type.maybeEnsureResolved());
+        assert(createHandle.type.isResolved());
+      }
+      const storageKey = await resolver.createStorageKey(
+          createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
       const store = new Store({storageKey, exists: Exists.MayExist, type: createHandle.type, id: createHandle.id});
       arc.context.registerStore(store, createHandle.tags);
     }
