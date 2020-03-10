@@ -553,5 +553,48 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({txt: 'Not created!'}));
 
     });
+
+    it('multiple handles onUpdate', async function() {
+          if (isCpp) {
+            this.skip();
+          }
+          const {arc, stores} = await setup('CombineUpdatesTest');
+          const handle1 = await singletonHandleForTest(arc, stores.get('handle1'));
+          const handle2 = await collectionHandleForTest(arc, stores.get('handle2'));
+          const handle3 = await singletonHandleForTest(arc, stores.get('handle3'));
+          const handle4 = await singletonHandleForTest(arc, stores.get('handle4'));
+          const handle5 = await singletonHandleForTest(arc, stores.get('handle5'));
+          const handle6 = await singletonHandleForTest(arc, stores.get('handle6'));
+          const handle7 = await singletonHandleForTest(arc, stores.get('handle7'));
+          const handle8 = await singletonHandleForTest(arc, stores.get('handle8'));
+          const handle9 = await singletonHandleForTest(arc, stores.get('handle9'));
+          const handle10 = await singletonHandleForTest(arc, stores.get('handle10'));
+
+          await handle1.set(new handle1.entityClass({num: 1.0}));
+          await handle2.add(new handle2.entityClass({num: 1.0}));
+          await handle3.set(new handle3.entityClass({num1: 1.0}));
+          await handle4.set(new handle4.entityClass({num2: 1.0}));
+          await handle5.set(new handle5.entityClass({num3: 1.0}));
+          await handle6.set(new handle6.entityClass({num4: 1.0}));
+          await handle7.set(new handle7.entityClass({num5: 1.0}));
+          await handle8.set(new handle8.entityClass({num6: 1.0}));
+          await handle9.set(new handle9.entityClass({num7: 1.0}));
+          await handle10.set(new handle10.entityClass({num8: 1.0}));
+
+          const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
+
+          const sendEvent = async handler => {
+            await arc.idle;
+            arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+            await arc.idle;
+          };
+
+          await sendEvent('checkEvents');
+
+          const errors = (await errHandle.toList()).map(e => e.msg);
+          if (errors.length > 0) {
+            assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
+          }
+        });
   });
 });
