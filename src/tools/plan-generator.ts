@@ -51,7 +51,7 @@ export class PlanGenerator {
 
       const particles: string[] = [];
       for (const particle of recipe.particles) {
-        this.collectParticleConnectionSpecs(particle);
+        await this.collectParticleConnectionSpecs(particle);
         particles.push(await this.createParticle(particle));
       }
 
