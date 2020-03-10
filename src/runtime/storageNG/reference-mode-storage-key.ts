@@ -11,8 +11,9 @@
 import {StorageKey} from './storage-key.js';
 
 export class ReferenceModeStorageKey extends StorageKey {
+  public static readonly protocol = 'reference-mode';
   constructor(public backingKey: StorageKey, public storageKey: StorageKey) {
-    super('reference-mode');
+    super(ReferenceModeStorageKey.protocol);
   }
 
   embedKey(key: StorageKey) {

@@ -33,7 +33,7 @@ object ConsumptionPlan : Plan(
             "",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse("ramdisk://"),
+                    StorageKeyParser.parse("reference-mode://{ramdisk://Thing}{ramdisk:///handle/my-handle-id}"),
                     HandleMode.Read,
                     EntityType(Reader_Data_Spec.schema),
                     null

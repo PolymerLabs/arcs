@@ -24,12 +24,14 @@ import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {VolatileStorageKey, VolatileDriver} from '../storageNG/drivers/volatile.js';
 import {StorageKey} from '../storageNG/storage-key.js';
 import {Store} from '../storageNG/store.js';
+import {ReferenceModeStore} from '../storageNG/reference-mode-store.js';
+import {BackingStore} from '../storageNG/backing-store.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {DirectStore} from '../storageNG/direct-store.js';
 import {singletonHandleForTest, collectionHandleForTest, ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {handleNGFor, SingletonHandle, CollectionHandle} from '../storageNG/handle.js';
 import {StorageProxy as StorageProxyNG} from '../storageNG/storage-proxy.js';
-import {Entity} from '../entity.js';
+import {Entity, SerializedEntity} from '../entity.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
@@ -993,7 +995,7 @@ describe('Arc', () => {
     assert.isEmpty(DriverFactory.providers);
   });
 
-  it('preserves create handle ids if specified', async () => {
+  it('preserves create handle ids if specified', Flags.withDefaultReferenceMode(async () => {
     const loader = new Loader(null, {
       'a.js': `
         defineParticle(({Particle}) => class Noop extends Particle {});
@@ -1018,21 +1020,32 @@ describe('Arc', () => {
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
     const arc = runtime.newArc('test0');
     await arc.instantiate(manifest.recipes[0]);
-    assert.lengthOf(arc.activeRecipe.handles, 1);
-    assert.equal(arc.activeRecipe.handles[0].id, 'mything');
-  });
+    assert.lengthOf(arc.activeRecipe.handles, 3);
+    const myThingHandle = arc.activeRecipe.handles.find(h => h.id === 'mything');
+    assert.isNotNull(myThingHandle);
+    assert.instanceOf(myThingHandle.storageKey, ReferenceModeStorageKey);
+    const refKey = myThingHandle.storageKey as ReferenceModeStorageKey;
+    assert.isNotNull(arc.activeRecipe.handles.find(
+        h => h.storageKey.toString() === refKey.backingKey.toString()));
+    assert.isNotNull(arc.activeRecipe.handles.find(
+        h => h.storageKey.toString() === refKey.storageKey.toString()));
+  }));
 });
 
 describe('Arc storage migration', () => {
-  it('supports new StorageKey type', async () => {
+  it('supports new StorageKey type', Flags.withDefaultReferenceMode(async () => {
     const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
     const fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     assert.instanceOf(fooStore, Store);
     const activeStore = await fooStore.activate();
-    assert.instanceOf(activeStore, DirectStore);
-    const directStore = activeStore as DirectStore<CRDTTypeRecord>;
+    assert.instanceOf(activeStore, ReferenceModeStore);
+    assert.instanceOf(activeStore['backingStore'], BackingStore);
+    const backingStore = activeStore['containerStore'] as DirectStore<CRDTTypeRecord>;
+    assert.instanceOf(backingStore.driver, VolatileDriver);
+    assert.instanceOf(activeStore['containerStore'], DirectStore);
+    const directStore = activeStore['containerStore'] as DirectStore<CRDTTypeRecord>;
     assert.instanceOf(directStore.driver, VolatileDriver);
-  });
+  }));
 
   it('sets ttl on create entities', async () => {
     const id = ArcId.newForTest('test');

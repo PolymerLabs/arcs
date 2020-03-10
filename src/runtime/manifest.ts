@@ -42,10 +42,12 @@ import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {VolatileMemoryProvider} from './storageNG/drivers/volatile.js';
+import {VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {Refinement} from './refiner.js';
 import {Capabilities} from './capabilities.js';
+import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
+import {Flags} from './flags.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -1315,11 +1317,20 @@ ${e.message}
   registerStore(store: UnifiedStore, tags: string[]): void {
     // Only register stores that have non-volatile storage key and don't have a
     // #volatile tag.
-    if (!this.findStoreById(store.id) &&
-        (store.storageKey as StorageKey).protocol !== 'volatile' &&
-        !tags.includes('volatile')) {
+    if (!this.findStoreById(store.id) && !this.isVolatileStore(store, tags)) {
       this._addStore(store, tags);
     }
+  }
+
+  isVolatileStore(store: UnifiedStore, tags: string[]): boolean {
+    if ((store.storageKey as StorageKey).protocol === VolatileStorageKey.protocol) return true;
+    if (store.storageKey.protocol === ReferenceModeStorageKey.protocol &&
+        (store.storageKey as ReferenceModeStorageKey).backingKey.protocol === VolatileStorageKey.protocol &&
+        (store.storageKey as ReferenceModeStorageKey).storageKey.protocol === VolatileStorageKey.protocol) {
+      return true;
+    }
+    if (tags.includes('volatile')) return true;
+    return false;
   }
 
   toString(options: {recursive?: boolean, showUnresolved?: boolean, hideFields?: boolean} = {}): string {
