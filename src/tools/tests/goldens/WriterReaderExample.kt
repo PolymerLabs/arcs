@@ -17,7 +17,7 @@ object IngestionPlan : Plan(
             "",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse(""),
+                    CreateableStorageKey("my-handle-id"),
                     HandleMode.Write,
                     EntityType(Writer_Data_Spec.SCHEMA),
                     null
