@@ -816,25 +816,6 @@ describe('recipe', () => {
     verifyRecipeHandleCapabilities(recipe);
     verifyRecipeHandleCapabilities((await Manifest.parse(recipe.toString())).recipes[0]);
   });
-  it('finds trigger', async () => {
-    const recipe = (await Manifest.parse(`
-        @trigger
-          key1 value1
-          key2 value2
-        @trigger
-          key3 value3
-        recipe
-    `)).recipes[0];
-    assert.lengthOf(recipe.triggers, 2);
-    const group0 = recipe.triggers[0];
-    const group1 = recipe.triggers[1];
-    assert.equal(recipe.getTrigger(group0, 'key1'), 'value1');
-    assert.equal(recipe.getTrigger(group0, 'key2'), 'value2');
-    assert.isNull(recipe.getTrigger(group0, 'key3'));
-    assert.isNull(recipe.getTrigger(group1, 'key1'));
-    assert.isNull(recipe.getTrigger(group1, 'key2'));
-    assert.equal(recipe.getTrigger(group1, 'key3'), 'value3');
-  });
   it('can normalize and clone a recipe with a synthetic join handle', async () => {
     const [recipe] = (await Manifest.parse(`
       recipe

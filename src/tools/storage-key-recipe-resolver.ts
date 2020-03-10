@@ -82,10 +82,15 @@ export class StorageKeyRecipeResolver {
   }
 
   findLongRunningArcId(recipe: Recipe): string | null {
+    const getTrigger = (group: [string, string][], name: string): string | null => {
+      const trigger = group.find(([key, _]) => key === name);
+      return trigger ? trigger[1] : null;
+    };
+
     for (const group of recipe.triggers) {
-      if (recipe.getTrigger(group, 'launch') === 'startup' &&
-          !!recipe.getTrigger(group, 'arcId')) {
-        return recipe.getTrigger(group, 'arcId');
+      if (getTrigger(group, 'launch') === 'startup' &&
+          !!getTrigger(group, 'arcId')) {
+        return getTrigger(group, 'arcId');
       }
     }
     return null;

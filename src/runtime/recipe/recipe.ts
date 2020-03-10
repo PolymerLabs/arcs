@@ -700,11 +700,6 @@ export class Recipe implements Cloneable<Recipe> {
     }
     return slot;
   }
-
-  getTrigger(group: [string, string][], name: string): string | null {
-    const trigger = group.find(([key, _]) => key === name);
-    return trigger ? trigger[1] : null;
-  }
 }
 
 export class RequireSection extends Recipe {
