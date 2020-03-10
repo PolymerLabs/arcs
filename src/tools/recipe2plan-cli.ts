@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
 import {recipe2plan} from './recipe2plan.js';
+import {Flags} from '../runtime/flags.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile', 'package'],
@@ -63,7 +64,9 @@ async function main() {
     Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const plans = await recipe2plan(opts._[0], opts.package);
+    const plans = await Flags.withDefaultReferenceMode(async () => {
+      return await recipe2plan(opts._[0], opts.package);
+    })();
 
     const outPath = path.join(opts.outdir, opts.outfile);
     console.log(outPath);
