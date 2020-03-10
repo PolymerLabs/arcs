@@ -111,10 +111,11 @@ export class PlanGenerator {
 
   /** Generates a Kotlin `StorageKey` from a recipe Handle. */
   createStorageKey(handle: Handle): string {
-    switch (handle.fate) {
-      case 'create': return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id)]);
-      default: return `StorageKeyParser.parse("${(handle.storageKey || '').toString()}")`;
+    const storageKey = handle.storageKey;
+    if (!storageKey && handle.fate === 'create') {
+      return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id)]);
     }
+    return ktUtils.applyFun('StorageKeyParser.parse', [(storageKey || '').toString()]);
   }
 
   /** Generates a Kotlin `core.arc.type.Type` from a Type. */
