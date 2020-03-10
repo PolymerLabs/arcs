@@ -56,7 +56,7 @@ export class SchemaGraph {
     for (const connection of this.particleSpec.connections) {
       const schema = connection.type.getEntitySchema();
       if (schema) {
-        this.createNodes(schema, `${this.particleSpec.name}_${upperFirst(connection.name)}`);
+        this.createNodes(schema, [this.particleSpec.name, upperFirst(connection.name)].join('_'));
       }
     }
 
@@ -102,7 +102,7 @@ export class SchemaGraph {
       if (nestedSchema) {
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, name + '_' + upperFirst(field));
+        const nestedNode = this.createNodes(nestedSchema, [name, upperFirst(field)].join('_'));
         node.refs.set(field, nestedNode);
       }
     }

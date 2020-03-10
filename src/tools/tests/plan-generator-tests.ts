@@ -14,7 +14,7 @@ import {Manifest} from '../../runtime/manifest.js';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
-    let emptyGenerator;
+    let emptyGenerator: PlanGenerator;
     beforeEach(() => {
       emptyGenerator = new PlanGenerator([], '');
     });

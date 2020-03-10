@@ -45,11 +45,11 @@ export class PlanGenerator {
 
   /** Converts a resolved recipe into a `Plan` object. */
   async createPlans(): Promise<string[]> {
-    const plans = [];
+    const plans: string[] = [];
     for (const recipe of this.resolvedRecipes) {
       const planName = `${recipe.name}Plan`;
 
-      const particles = [];
+      const particles: string[] = [];
       for (const particle of recipe.particles) {
         this.collectParticleConnectionSpecs(particle);
         particles.push(await this.createParticle(particle));
@@ -67,7 +67,7 @@ export class PlanGenerator {
     const spec = particle.spec;
     const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
 
-    const connectionMappings = [];
+    const connectionMappings: string[] = [];
     for (const [key, conn] of Object.entries(particle.connections)) {
       connectionMappings.push(`"${key}" to ${await this.createHandleConnection(conn)}`);
     }
@@ -82,7 +82,7 @@ export class PlanGenerator {
   /** Aggregate mapping of schema hashes and schema properties from particle connections */
   async collectParticleConnectionSpecs(particle: Particle): Promise<void> {
     for (const connection of particle.spec.connections) {
-      const specName = `${particle.spec.name}_${upperFirst(connection.name)}_Spec`;
+      const specName = [particle.spec.name, upperFirst(connection.name), 'Spec'].join('_');
       const schemaHash = await connection.type.getEntitySchema().hash();
       this.specRegistry[schemaHash] = specName;
     }
