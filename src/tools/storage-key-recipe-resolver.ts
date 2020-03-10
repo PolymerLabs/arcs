@@ -19,6 +19,7 @@ import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
 import {TypeVariable} from '../runtime/type.js';
+import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
 
 /**
  * Responsible for resolving recipes with storage keys.
@@ -29,8 +30,7 @@ export class StorageKeyRecipeResolver {
   constructor(context: Manifest) {
     const loader = new Loader();
     this.runtime = new Runtime({loader, context});
-    // TODO(#4818) call DatabaseStorageKey.register() to register storage key
-    // creator for `perstent` capability.
+    DatabaseStorageKey.register();
   }
 
   /**

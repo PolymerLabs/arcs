@@ -19,6 +19,7 @@ describe('recipe2plan', () => {
   it('generates plans from recipes in a manifest', Flags.withDefaultReferenceMode(async () => {
     // TODO(#4818): remove this, when StorageKeyRecipeResolver ctor registers
     // DatabaseStrorageKey
+    CapabilitiesResolver.reset();
     CapabilitiesResolver.registerKeyCreator(
         RamDiskStorageKey.protocol,
         Capabilities.persistent,
