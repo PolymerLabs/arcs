@@ -47,7 +47,6 @@ import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {Refinement} from './refiner.js';
 import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
-import {Flags} from './flags.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -1323,7 +1322,7 @@ ${e.message}
   }
 
   isVolatileStore(store: UnifiedStore, tags: string[]): boolean {
-    if ((store.storageKey as StorageKey).protocol === VolatileStorageKey.protocol) return true;
+    if (store.storageKey.protocol === VolatileStorageKey.protocol) return true;
     if (store.storageKey.protocol === ReferenceModeStorageKey.protocol &&
         (store.storageKey as ReferenceModeStorageKey).backingKey.protocol === VolatileStorageKey.protocol &&
         (store.storageKey as ReferenceModeStorageKey).storageKey.protocol === VolatileStorageKey.protocol) {
