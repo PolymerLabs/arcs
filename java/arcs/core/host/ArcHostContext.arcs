@@ -1,24 +1,32 @@
 // These schema definitions are used to store a de-normalized version of ArcHostContext via ArcHostContextParticle
 
+// Represents a de-normalized Map<String, Plan.HandleConnection>
 schema HandleConnection
   arcId: Text
   particleName: Text
   handleName: Text
   storageKey: Text
+  // HandleMode enum name
   mode: Text
+  // Type.Tag enum name
   type: Text
+  // Ttl object's count field in minutes
   ttl: Number
 
+// Represents a de-normalized ParticleContext
 schema Particle
   arcId: Text
   particleName: Text
   location: Text
+  // ParticleState enum name
   particleState: Text
   consecutiveFailures: Number
 
+// Represents the ArcHostContext
 schema ArcHostContext
   arcId: Text
   arcHost: Text
+  // ArcState enum name
   arcState: Text
 
 particle ArcHostParticle
