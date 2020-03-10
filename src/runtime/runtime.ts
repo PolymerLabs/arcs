@@ -28,6 +28,7 @@ import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
+import {Modality} from './modality.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -47,6 +48,7 @@ export type RuntimeArcOptions = Readonly<{
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
   storageKeyCreators?: StorageKeyCreatorInfo[];
+  modality?: Modality;
 }>;
 
 type SpawnArgs = {
@@ -111,9 +113,6 @@ export class Runtime {
     const loader = new Loader(map);
     const pecFactory = pecIndustry(loader);
     const memoryProvider = new SimpleVolatileMemoryProvider();
-    // TODO(sjmiles): SlotComposer type shenanigans are temporary pending complete replacement
-    // of SlotComposer by SlotComposer. Also it's weird that `new Runtime(..., SlotComposer, ...)`
-    // doesn't bother tslint at all when done in other modules.
     const runtime = new Runtime({
       loader,
       composerClass: SlotComposer,
