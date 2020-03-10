@@ -702,7 +702,7 @@ export class Recipe implements Cloneable<Recipe> {
   }
 
   getTrigger(group: [string, string][], name: string): string | null {
-    const trigger = group.find(t => t[0] === name);
+    const trigger = group.find(([key, _]) => key === name);
     return trigger ? trigger[1] : null;
   }
 }

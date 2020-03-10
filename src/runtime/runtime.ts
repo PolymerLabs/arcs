@@ -177,7 +177,7 @@ export class Runtime {
   // How best to provide default storage to an arc given whatever we decide?
   newArc(name: string, storageKeyPrefix?: ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
     const {loader, context} = this;
-    const id = options && options.id ? options.id : IdGenerator.newSession().newArcId(name);
+    const id = (options && options.id) || IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
     const capabilitiesResolver = new CapabilitiesResolver({arcId: id}, options ? options.storageKeyCreators : undefined);
     let storageKey : StorageKey;
