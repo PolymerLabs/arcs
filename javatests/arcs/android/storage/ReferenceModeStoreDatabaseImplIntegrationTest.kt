@@ -272,8 +272,16 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         val capturedBob = requireNotNull(
             database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
         )
-        // Name and age have been cleared (they are not in field list).
-        assertThat(capturedBob.rawEntity).isEqualTo(RawEntity(RawEntity.NO_REFERENCE_ID))
+        // Name and age have been cleared (their values are null).
+        assertThat(capturedBob.rawEntity).isEqualTo(
+            RawEntity(
+                RawEntity.NO_REFERENCE_ID,
+                singletons = mapOf(
+                    "age" to null,
+                    "name" to null
+                )
+            )
+        )
     }
 
     @Test

@@ -16,6 +16,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
+import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
@@ -383,108 +384,6 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getPrimitiveValue_boolean() = runBlockingTest {
-        // Test value -> ID.
-        assertThat(database.getPrimitiveValueId(true.toReferencable(), BOOLEAN_TYPE_ID, db))
-            .isEqualTo(1)
-        assertThat(database.getPrimitiveValueId(false.toReferencable(), BOOLEAN_TYPE_ID, db))
-            .isEqualTo(0)
-
-        val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId("not a bool".toReferencable(), BOOLEAN_TYPE_ID, db)
-        }
-        assertThat(exception1).hasMessageThat().isEqualTo("Expected value to be a Boolean.")
-
-        // Test ID -> value.
-        assertThat(database.getPrimitiveValue(1, BOOLEAN_TYPE_ID, db))
-            .isEqualTo(true.toReferencable())
-        assertThat(database.getPrimitiveValue(0, BOOLEAN_TYPE_ID, db))
-            .isEqualTo(false.toReferencable())
-
-        val exception2 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValue(2, BOOLEAN_TYPE_ID, db)
-        }
-        assertThat(exception2).hasMessageThat().isEqualTo("Expected 2 to be a Boolean (0 or 1).")
-    }
-
-    @Test
-    fun getPrimitiveValue_text() = runBlockingTest {
-        // Test value -> ID.
-        assertThat(database.getPrimitiveValueId("aaa".toReferencable(), TEXT_TYPE_ID, db))
-            .isEqualTo(1)
-        assertThat(database.getPrimitiveValueId("bbb".toReferencable(), TEXT_TYPE_ID, db))
-            .isEqualTo(2)
-        assertThat(database.getPrimitiveValueId("ccc".toReferencable(), TEXT_TYPE_ID, db))
-            .isEqualTo(3)
-        assertThat(database.getPrimitiveValueId("aaa".toReferencable(), TEXT_TYPE_ID, db))
-            .isEqualTo(1)
-
-        val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId(123.0.toReferencable(), TEXT_TYPE_ID, db)
-        }
-        assertThat(exception1).hasMessageThat().isEqualTo("Expected value to be a String.")
-
-        // Test ID -> value.
-        assertThat(database.getPrimitiveValue(1, TEXT_TYPE_ID, db))
-            .isEqualTo("aaa".toReferencable())
-        assertThat(database.getPrimitiveValue(2, TEXT_TYPE_ID, db))
-            .isEqualTo("bbb".toReferencable())
-        assertThat(database.getPrimitiveValue(3, TEXT_TYPE_ID, db))
-            .isEqualTo("ccc".toReferencable())
-
-        val exception2 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValue(4, TEXT_TYPE_ID, db)
-        }
-        assertThat(exception2).hasMessageThat().isEqualTo("Unknown primitive with ID 4.")
-    }
-
-    @Test
-    fun getPrimitiveValue_number() = runBlockingTest {
-        // Test value -> ID.
-        assertThat(database.getPrimitiveValueId(111.0.toReferencable(), NUMBER_TYPE_ID, db))
-            .isEqualTo(1)
-        assertThat(database.getPrimitiveValueId(222.0.toReferencable(), NUMBER_TYPE_ID, db))
-            .isEqualTo(2)
-        assertThat(database.getPrimitiveValueId(333.0.toReferencable(), NUMBER_TYPE_ID, db))
-            .isEqualTo(3)
-        assertThat(database.getPrimitiveValueId(111.0.toReferencable(), NUMBER_TYPE_ID, db))
-            .isEqualTo(1)
-
-        val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId("not a number".toReferencable(), NUMBER_TYPE_ID, db)
-        }
-        assertThat(exception1).hasMessageThat().isEqualTo("Expected value to be a Double.")
-
-        // Test ID -> value.
-        assertThat(database.getPrimitiveValue(1, NUMBER_TYPE_ID, db))
-            .isEqualTo(111.0.toReferencable())
-        assertThat(database.getPrimitiveValue(2, NUMBER_TYPE_ID, db))
-            .isEqualTo(222.0.toReferencable())
-        assertThat(database.getPrimitiveValue(3, NUMBER_TYPE_ID, db))
-            .isEqualTo(333.0.toReferencable())
-
-        val exception2 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValue(4, NUMBER_TYPE_ID, db)
-        }
-        assertThat(exception2).hasMessageThat().isEqualTo("Unknown primitive with ID 4.")
-    }
-
-    @Test
-    fun getPrimitiveValue_unknownTypeId() = runBlockingTest {
-        // Test value -> ID.
-        val exception1 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValueId("aaa".toReferencable(), 987654L, db)
-        }
-        assertThat(exception1).hasMessageThat().isEqualTo("Not a primitive type ID: 987654")
-
-        // Test ID -> value.
-        val exception2 = assertThrows(IllegalArgumentException::class) {
-            database.getPrimitiveValue(1, 987654L, db)
-        }
-        assertThat(exception2).hasMessageThat().isEqualTo("Not a primitive type ID: 987654")
-    }
-
-    @Test
     fun insertAndGet_entity_newEmptyEntity() = runBlockingTest {
         val key = DummyStorageKey("key")
         val schema = newSchema("hash")
@@ -736,6 +635,30 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun insertAndGet_entity_singletonField_isMissing() = runBlockingTest {
+        val key = DummyStorageKey("key")
+        val childSchema = newSchema("child")
+        database.getSchemaTypeId(childSchema, db)
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text),
+                collections = mapOf()
+            )
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity("entity", mapOf()),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(key, entity)
+        val entityOut = database.getEntity(key, schema)
+        assertThat(entityOut!!.rawEntity.singletons).containsExactly("text", null)
+    }
+
+    @Test
     fun insertAndGet_entity_singletonField_isNull() = runBlockingTest {
         val key = DummyStorageKey("key")
         val childSchema = newSchema("child")
@@ -756,7 +679,7 @@ class DatabaseImplTest {
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut!!.rawEntity.singletons).isEmpty()
+        assertThat(entityOut).isEqualTo(entity)
     }
 
     @Test
@@ -783,7 +706,10 @@ class DatabaseImplTest {
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut!!.rawEntity.collections).isEmpty()
+        assertThat(entityOut!!.rawEntity.collections).containsExactly(
+            "texts", emptySet<Referencable>(),
+            "refs", emptySet<Referencable>()
+        )
     }
 
     @Test
@@ -813,7 +739,7 @@ class DatabaseImplTest {
 
         database.insertOrUpdate(key, entity)
         val entityOut = database.getEntity(key, schema)
-        assertThat(entityOut!!.rawEntity.collections).isEmpty()
+        assertThat(entityOut).isEqualTo(entity)
     }
 
     @Test
