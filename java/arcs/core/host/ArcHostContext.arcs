@@ -1,3 +1,5 @@
+meta
+  namespace: arcs.core.host
 // These schema definitions are used to store a de-normalized version of ArcHostContext via ArcHostContextParticle
 
 // Represents a de-normalized Map<String, Plan.HandleConnection>

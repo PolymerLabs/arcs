@@ -1,5 +1,7 @@
 // Tutorial: Basic Templates
 // Shows how to use templates to render data. This recipe has the exact same structure as the Hello World tutorial, only the JS is different.
+meta
+  namespace: arcs.tutorials
 
 particle BasicTemplate in 'BasicTemplate.wasm'
   root: consumes

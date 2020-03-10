@@ -1,3 +1,6 @@
+meta
+  namespace: arcs.core.host
+
 schema Person
   name: Text
 

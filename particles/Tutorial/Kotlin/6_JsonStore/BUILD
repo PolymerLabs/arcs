@@ -15,7 +15,6 @@ arcs_manifest(
 arcs_kt_schema(
     name = "store_schemas",
     srcs = ["JsonStore.arcs"],
-    package = "arcs.tutorials",
     deps = [":shared_people_schemas"],
 )
 

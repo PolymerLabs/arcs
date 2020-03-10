@@ -30,7 +30,6 @@ arcs_kt_schema(
         "person.arcs",
         "test.arcs",
     ],
-    package = "arcs.core.host",
 )
 
 arcs_kt_jvm_library(

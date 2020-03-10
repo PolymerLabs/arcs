@@ -1,7 +1,7 @@
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
 
-package arcs.sdk
+package arcs.golden
 
 //
 // GENERATED CODE -- DO NOT EDIT

@@ -1,3 +1,6 @@
+meta
+  namespace: arcs.core.data.testdata
+
 particle Reader
   data: reads Thing {name: Text}
 

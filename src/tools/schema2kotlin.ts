@@ -67,7 +67,7 @@ export class Schema2Kotlin extends Schema2Base {
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
 
-package ${this.scope}
+package ${this.namespace}
 
 //
 // GENERATED CODE -- DO NOT EDIT

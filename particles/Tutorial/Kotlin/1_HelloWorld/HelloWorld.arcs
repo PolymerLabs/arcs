@@ -1,5 +1,7 @@
 // Tutorial: Hello World
 // Defines a really simple particle that just prints out "Hello, world!"
+meta
+  namespace: arcs.tutorials
 
 // Defines the Hello World particle, and links it to the Kotlin source code in file hello-world.js.
 particle HelloWorld in 'HelloWorld.wasm'
