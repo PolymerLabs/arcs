@@ -60,8 +60,6 @@ class Allocator(val hostRegistry: HostRegistry) {
      */
     suspend fun stopArc(arcId: ArcId ) {
         val partitions = readPartitionMap(arcId) ?: return
-        // Store computed partitions for later
-        writePartitionMap(arcId, partitions)
         stopPlanPartitionsOnHosts(partitions)
     }
 
