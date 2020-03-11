@@ -11,6 +11,7 @@
 import {PlanGenerator} from '../plan-generator.js';
 import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
+import {Ttl, TtlUnits} from '../../runtime/recipe/ttl.js';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
@@ -82,6 +83,16 @@ describe('recipe2plan', () => {
       assert.notInclude(actual, 'SingletonType');
       assert.include(actual, 'CollectionType');
       assert.include(actual, 'ReferenceType');
+    });
+    it('can create Infinite Ttl objects', () => {
+      const ttl = Ttl.infinite;
+      const actual = emptyGenerator.createTtl(ttl);
+      assert.deepStrictEqual(actual, 'Ttl.Infinite');
+    });
+    it('can create Ttls at a valid time resolution', () => {
+      const ttl = new Ttl(30, TtlUnits.Day);
+      const actual = emptyGenerator.createTtl(ttl);
+      assert.deepStrictEqual(actual, 'Ttl.Days(30)');
     });
   });
 });
