@@ -22,7 +22,7 @@ import {ArcId} from '../../runtime/id.js';
 
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
-import {EntityType} from '../../runtime/type.js';
+import {EntityType, SingletonType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
 
@@ -932,7 +932,7 @@ describe('Automatic resolution', () => {
       `,
       async (arc, manifest) => {
         const thing = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-        await arc.createStore(thing.type, undefined, 'test:1');
+        await arc.createStore(new SingletonType(thing.type), undefined, 'test:1');
       }
     );
 

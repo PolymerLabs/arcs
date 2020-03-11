@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {RecipeUtil, DirectionCounts} from '../../runtime/recipe/recipe-util.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
+import {AbstractStore} from '../../runtime/storageNG/abstract-store.js';
 
 export class AssignHandles extends Strategy {
   async generate(inputParams) {
@@ -94,8 +94,8 @@ export class AssignHandles extends Strategy {
     }(StrategizerWalker.Permuted), this);
   }
 
-  getMappableStores(fate, type, tags: string[], counts: DirectionCounts): Map<UnifiedStore, string> {
-    const stores: Map<UnifiedStore, string> = new Map();
+  getMappableStores(fate, type, tags: string[], counts: DirectionCounts): Map<AbstractStore, string> {
+    const stores: Map<AbstractStore, string> = new Map();
 
     if (fate === 'use' || fate === '?') {
       this.arc.findStoresByType(type, {tags}).forEach(store => stores.set(store, 'use'));

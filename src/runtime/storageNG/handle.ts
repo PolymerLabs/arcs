@@ -39,7 +39,7 @@ interface Serializer<T, Serialized> {
 // The following must return a Reference, but we are trying to break the cyclic
 // dependency between this file and reference.ts, so we lose a little bit of type safety
 // to do that.
-type ReferenceMaker = (data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor) => ReferenceInt;
+type ReferenceMaker = (data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) => ReferenceInt;
 
 /**
  * Base class for Handles.
@@ -123,7 +123,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     } else if (this.type.getContainedType() instanceof EntityType) {
       this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => {this.createIdentityFor(e);}, this.storageProxy.getChannelConstructor());
     } else if (this.type.getContainedType() instanceof ReferenceType) {
-      this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType, this.storageProxy.getChannelConstructor());
+      this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType<EntityType>, this.storageProxy.getChannelConstructor());
     } else {
       this.serializer = new ParticleSpecSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
@@ -211,7 +211,7 @@ interface ReferenceInt {
 }
 
 class ReferenceSerializer implements Serializer<ReferenceInt, ReferenceSer> {
-  constructor(private readonly type: ReferenceType, private readonly context: ChannelConstructor) {}
+  constructor(private readonly type: ReferenceType<EntityType>, private readonly context: ChannelConstructor) {}
 
   serialize(reference: ReferenceInt): ReferenceSer {
     return reference.dataClone();
@@ -477,20 +477,4 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
           e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
     }
   }
-}
-
-export function handleNGFor<T extends CRDTTypeRecord>(key: string,
-      storageProxy: StorageProxy<T>,
-      idGenerator: IdGenerator,
-      particle: Particle,
-      canRead: boolean,
-      canWrite: boolean,
-      name?: string): Handle<T> {
-  return new (storageProxy.type.handleConstructor<T>())(key,
-          storageProxy,
-          idGenerator,
-          particle,
-          canRead,
-          canWrite,
-          name);
 }

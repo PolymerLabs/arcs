@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException, SystemException} from './arc-exceptions.js';
-import {UnifiedStore} from './storageNG/unified-store.js';
+import {AbstractStore} from './storageNG/abstract-store.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
@@ -20,7 +20,7 @@ import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
-import {Type} from './type.js';
+import {Type, EntityType, ReferenceType, InterfaceType, SingletonType} from './type.js';
 import {Services} from './services.js';
 import {floatingPromiseToAudit} from './util.js';
 import {Arc} from './arc.js';
@@ -97,7 +97,7 @@ export class ParticleExecutionHost {
     this.getPort(particle).UIEvent(particle, slotName, event);
   }
 
-  instantiate(particle: Particle, stores: Map<string, UnifiedStore>, reinstantiate: boolean): void {
+  instantiate(particle: Particle, stores: Map<string, AbstractStore>, reinstantiate: boolean): void {
     this.particles.push(particle);
     const apiPort = this.choosePortForParticle(particle);
     stores.forEach((store, name) => {
@@ -111,7 +111,7 @@ export class ParticleExecutionHost {
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores, reinstantiate);
   }
 
-  reinstantiate(particle: Particle, stores: Map<string, UnifiedStore>): void {
+  reinstantiate(particle: Particle, stores: Map<string, AbstractStore>): void {
     assert(this.particles.find(p => p === particle),
            `Cannot reinstantiate nonexistent particle ${particle.name}`);
     this.apiPorts.forEach(apiPort => { apiPort.clear(); });
@@ -215,7 +215,7 @@ class PECOuterPortImpl extends PECOuterPort {
     const key = StorageKeyParser.parse(storageKey);
     // TODO(shanestephens): We could probably register the active store here, but at the moment onRegister and onProxyMessage both
     // expect to be able to do activation
-    const storeBase = new Store({id: storageKey, exists: Exists.MayExist, storageKey: key, type});
+    const storeBase = new Store(type, {id: storageKey, exists: Exists.MayExist, storageKey: key});
     this.GetBackingStoreCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
   }
 
@@ -230,6 +230,12 @@ class PECOuterPortImpl extends PECOuterPort {
     // created handles for inner arcs must always be volatile to prevent storage
     // in firebase.
     const storageKey = new VolatileStorageKey(arc.id, String(Math.random()));
+
+    // TODO(shanestephens): Remove this once singleton types are expressed directly in recipes.
+    if (type instanceof EntityType || type instanceof ReferenceType || type instanceof InterfaceType) {
+      type = new SingletonType(type);
+    }
+
     const store = await arc.createStore(type, name, null, [], storageKey);
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
@@ -302,7 +308,12 @@ class PECOuterPortImpl extends PECOuterPort {
               // TODO(shans): restrict these to only the handles that are listed on the particle.
               for (const handle of recipe0.handles) {
                 if (!arc.findStoreById(handle.id)) {
-                  await arc.createStore(handle.type, handle.localName, handle.id, handle.tags, handle.storageKey);
+                  let type = handle.type;
+                  // TODO(shanestephens): Remove this once singleton types are expressed directly in recipes.
+                  if (type instanceof EntityType || type instanceof InterfaceType || type instanceof ReferenceType) {
+                    type = new SingletonType(type);
+                  }
+                  await arc.createStore(type, handle.localName, handle.id, handle.tags, handle.storageKey);
                 }
               }
 

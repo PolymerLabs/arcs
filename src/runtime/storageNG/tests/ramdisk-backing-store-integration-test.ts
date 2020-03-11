@@ -35,7 +35,7 @@ describe('RamDisk + Backing Store Integration', async () => {
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
-    const baseStore = new Store<CRDTCountTypeRecord>({storageKey, exists: Exists.ShouldCreate, type: new CountType(), id: 'base-store-id'});
+    const baseStore = new Store<CRDTCountTypeRecord>(new CountType(), {storageKey, exists: Exists.ShouldCreate, id: 'base-store-id'});
     const store = await BackingStore.construct<CRDTCountTypeRecord>({
       storageKey,
       exists: Exists.ShouldCreate,

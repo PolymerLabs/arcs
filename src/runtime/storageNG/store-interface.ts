@@ -15,7 +15,6 @@ import {Type} from '../type.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {StorageProxy} from './storage-proxy.js';
-import {UnifiedActiveStore} from './unified-store.js';
 import {Store} from './store.js';
 import {Producer} from '../hot.js';
 import {ChannelConstructor} from '../channel-constructor.js';
@@ -71,7 +70,7 @@ export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> 
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
 export abstract class ActiveStore<T extends CRDTTypeRecord>
-    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T>, UnifiedActiveStore {
+    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T> {
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: Type;
@@ -95,7 +94,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
   // tslint:disable-next-line no-any
   abstract async serializeContents(): Promise<T['data']>;
 
-  async cloneFrom(store: UnifiedActiveStore): Promise<void> {
+  async cloneFrom(store: ActiveStore<T>): Promise<void> {
     // TODO(shans): work out what ID to use for messages that aren't from an established
     // channel, like these.
     assert(store instanceof ActiveStore);

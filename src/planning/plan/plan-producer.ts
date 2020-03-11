@@ -20,7 +20,7 @@ import {StrategyDerived} from '../strategizer.js';
 import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
 import {PlannerInspector} from '../planner-inspector.js';
-import {singletonHandle, ActiveSingletonEntityStore, SingletonEntityHandle} from '../../runtime/storageNG/storage-ng.js';
+import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storageNG/storage-ng.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -65,7 +65,7 @@ export class PlanProducer {
     this.searchStore = searchStore;
     this.inspector = inspector;
     if (this.searchStore) {
-      this.handle = singletonHandle(this.searchStore, this.arc);
+      this.handle = handleForActiveStore(this.searchStore, this.arc);
       this.searchStoreCallbackId = this.searchStore.on(() => this.onSearchChanged());
     }
     this.debug = debug;

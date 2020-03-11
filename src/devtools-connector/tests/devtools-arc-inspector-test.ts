@@ -18,6 +18,7 @@ import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js'
 
 import {Entity} from '../../runtime/entity.js';
 import {Flags} from '../../runtime/flags.js';
+import {SingletonType} from '../../runtime/type.js';
 
 describe('DevtoolsArcInspector', () => {
   before(() => DevtoolsForTests.ensureStub());
@@ -44,7 +45,7 @@ describe('DevtoolsArcInspector', () => {
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
-    const fooStore = await arc.createStore(foo.type, undefined, 'fooStore');
+    const fooStore = await arc.createStore(new SingletonType(foo.type), undefined, 'fooStore');
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
