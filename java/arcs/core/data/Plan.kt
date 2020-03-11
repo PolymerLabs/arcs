@@ -39,7 +39,7 @@ open class Plan(
         var storageKey: StorageKey,
         val mode: HandleMode,
         val type: Type,
-        val ttl: Ttl? = null
+        val ttl: Ttl = Ttl.Infinite
     )
 
     /**
