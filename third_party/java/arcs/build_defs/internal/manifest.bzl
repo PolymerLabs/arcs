@@ -1,7 +1,11 @@
 """Arcs manifest bundling rules."""
 
+load(":util.bzl", "replace_arcs_suffix")
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix")
+load(
+    "//third_party/java/arcs/build_defs/internal:tools.oss.bzl",
+    "arcs_manifest_parse_test",
+)
 
 def arcs_manifest(name, srcs, deps = [], visibility = None):
     """Bundles .arcs manifest files with their particle implementations.
@@ -27,15 +31,10 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
         visibility = visibility,
     )
 
-    test_args = " ".join(["--src $(location %s)" % src for src in srcs])
-
-    sigh_command(
-        name = name + "_test",
-        srcs = all_files,
-        sigh_cmd = "run manifestChecker " + test_args,
-        deps = [name],
-        progress_message = "Checking Arcs manifest",
-        execute = False,
+    arcs_manifest_parse_test(
+        name = name + "_parse_test",
+        srcs = srcs,
+        deps = all_files,
     )
 
 def arcs_manifest_json(name, srcs = [], deps = [], out = None, visibility = None):
