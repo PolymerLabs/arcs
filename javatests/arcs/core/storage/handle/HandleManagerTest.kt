@@ -12,8 +12,8 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.Reference
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.driver.VolatileEntry
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Log
 import arcs.jvm.util.testutil.TimeImpl

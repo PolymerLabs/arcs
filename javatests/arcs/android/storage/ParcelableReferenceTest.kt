@@ -19,7 +19,7 @@ import arcs.android.crdt.writeReference
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.storage.Reference
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test

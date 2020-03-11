@@ -8,17 +8,11 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_library(
-    name = "api",
+    name = "keys",
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/data",
-        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
-        "//java/arcs/core/storage/database",
-        "//java/arcs/core/storage/driver",
-        "//java/arcs/core/storage/keys",
-        "//java/arcs/core/storage/referencemode",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

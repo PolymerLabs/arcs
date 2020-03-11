@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage.driver
+package arcs.core.storage.keys
 
 import arcs.core.storage.StorageKeyParser
 import arcs.core.testutil.assertThrows

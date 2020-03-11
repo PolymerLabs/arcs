@@ -34,6 +34,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/common/resurrection",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/keys",
         "//java/arcs/core/testutil",
         "//java/arcs/sdk/android/storage",
         "//third_party/android/androidx_test/core",

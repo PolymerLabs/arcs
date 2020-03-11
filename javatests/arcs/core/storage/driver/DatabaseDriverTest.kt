@@ -28,6 +28,7 @@ import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.MockDatabase

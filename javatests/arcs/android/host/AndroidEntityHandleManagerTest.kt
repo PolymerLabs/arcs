@@ -14,7 +14,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.EntityHandleManager
 import arcs.core.data.HandleMode
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
 import arcs.sdk.ReadWriteCollectionHandle

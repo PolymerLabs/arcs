@@ -25,7 +25,7 @@ import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.sdk.android.storage.ResurrectionHelper
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay

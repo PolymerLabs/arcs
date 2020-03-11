@@ -17,18 +17,14 @@ import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.driver.DATABASE_DRIVER_PROTOCOL
-import arcs.core.storage.driver.DatabaseDriverProvider
-import arcs.core.storage.driver.DatabaseStorageKey
-import arcs.core.storage.driver.RAMDISK_DRIVER_PROTOCOL
-import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.core.storage.driver.VOLATILE_DRIVER_PROTOCOL
-import arcs.core.storage.driver.VolatileDriverProvider
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.keys.DATABASE_DRIVER_PROTOCOL
+import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.RAMDISK_DRIVER_PROTOCOL
+import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.keys.VOLATILE_DRIVER_PROTOCOL
+import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
-import arcs.jvm.storage.database.testutil.MockDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
@@ -48,7 +44,7 @@ class CapabilitiesResolverTest {
 
     @Before
     fun setUp() {
-        VolatileDriverProvider(ArcId.newForTest("test"))
+        VolatileStorageKey.registerKeyCreator()
     }
 
     @After
@@ -124,8 +120,8 @@ class CapabilitiesResolverTest {
 
     @Test
     fun capabilitiesResolver_createsStorageKeys() {
-        RamDisk.clear()
-        DatabaseDriverProvider.configure(MockDatabaseManager(), mapOf<String, Schema>()::get)
+        RamDiskStorageKey.registerKeyCreator()
+        DatabaseStorageKey.registerKeyCreator()
         val options =
             CapabilitiesResolver.CapabilitiesResolverOptions(ArcId.newForTest("test"))
         val resolver1 = CapabilitiesResolver(options)
@@ -133,6 +129,7 @@ class CapabilitiesResolverTest {
             .containsExactly(VOLATILE_DRIVER_PROTOCOL)
         assertThat(resolver1.findStorageKeyProtocols(Capabilities.Empty))
             .containsExactly(VOLATILE_DRIVER_PROTOCOL)
+
         assertThat(resolver1.findStorageKeyProtocols(Capabilities.TiedToRuntime))
             .containsExactly(RAMDISK_DRIVER_PROTOCOL)
         assertThat(resolver1.findStorageKeyProtocols(Capabilities.Persistent))
@@ -186,7 +183,7 @@ class CapabilitiesResolverTest {
 
     @Test
     fun capabilitiesResolver_staticCreators() {
-        assertThat(CapabilitiesResolver.defaultCreators).hasSize(2);
+        assertThat(CapabilitiesResolver.defaultCreators).hasSize(2)
         assertThat(CapabilitiesResolver.registeredCreators).isEmpty()
 
         CapabilitiesResolver.registerDefaultKeyCreator(
