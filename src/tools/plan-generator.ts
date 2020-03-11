@@ -80,10 +80,10 @@ export class PlanGenerator {
     ]);
   }
 
-  /** Aggregate mapping of schema hashes and schema properties from particle connections */
+  /** Aggregate mapping of schema hashes and schema properties from particle connections. */
   async collectParticleConnectionSpecs(particle: Particle): Promise<void> {
     for (const connection of particle.spec.connections) {
-      const specName = [particle.spec.name, upperFirst(connection.name), 'Spec'].join('_');
+      const specName = [particle.spec.name, upperFirst(connection.name)].join('_');
       const schemaHash = await connection.type.getEntitySchema().hash();
       this.specRegistry[schemaHash] = specName;
     }
