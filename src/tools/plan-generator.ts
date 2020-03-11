@@ -118,11 +118,15 @@ export class PlanGenerator {
   /** Generates a Kotlin `Ttl` from a Ttl. */
   createTtl(ttl: Ttl): string {
     if (ttl.isInfinite) return 'Ttl.Infinite';
-    const args = [ttl.count.toString()];
-    switch (ttl.units) {
-      case TtlUnits.Day: return ktUtils.applyFun('Ttl.Days', args);
-      case TtlUnits.Hour: return ktUtils.applyFun('Ttl.Hours', args);
-      case TtlUnits.Minute: return ktUtils.applyFun('Ttl.Minutes', args);
+    return ktUtils.applyFun(this.createTtlUnit(ttl.units), [ttl.count.toString()]);
+  }
+
+  /** Translate TtlUnits to Kotlin Ttl Units. */
+  createTtlUnit(ttlUnits: TtlUnits): string {
+    switch (ttlUnits) {
+      case TtlUnits.Minute: return `Ttl.Minutes`;
+      case TtlUnits.Hour: return `Ttl.Hours`;
+      case TtlUnits.Day: return `Ttl.Days`;
     }
   }
 
