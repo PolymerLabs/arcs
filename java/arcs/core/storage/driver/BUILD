@@ -19,6 +19,7 @@ arcs_kt_library(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util",

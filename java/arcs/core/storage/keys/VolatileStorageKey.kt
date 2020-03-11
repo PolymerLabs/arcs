@@ -8,12 +8,14 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
-package arcs.core.storage
+package arcs.core.storage.keys
 
 import arcs.core.common.ArcId
 import arcs.core.common.toArcId
 import arcs.core.data.Capabilities
+import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
 
 /** Protocol to be used with the volatile driver. */
 const val VOLATILE_DRIVER_PROTOCOL = "volatile"

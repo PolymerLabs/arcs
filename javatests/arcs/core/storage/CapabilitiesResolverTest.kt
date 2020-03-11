@@ -23,9 +23,8 @@ import arcs.core.storage.driver.DatabaseStorageKey
 import arcs.core.storage.driver.RAMDISK_DRIVER_PROTOCOL
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskStorageKey
-import arcs.core.storage.driver.VolatileDriverProvider
-import arcs.core.storage.VolatileStorageKey
-import arcs.core.storage.VOLATILE_DRIVER_PROTOCOL
+import arcs.core.storage.keys.VOLATILE_DRIVER_PROTOCOL
+import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
 import arcs.jvm.storage.database.testutil.MockDatabaseManager

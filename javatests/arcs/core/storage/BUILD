@@ -22,6 +22,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
