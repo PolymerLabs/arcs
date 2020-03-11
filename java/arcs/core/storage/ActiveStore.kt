@@ -59,14 +59,7 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
             override suspend fun onProxyMessage(
                 message: ProxyMessage<Data, Op, ConsumerData>
-            ): Boolean {
-                val messageCopy: ProxyMessage<Data, Op, ConsumerData> = when (message) {
-                    is ProxyMessage.SyncRequest -> ProxyMessage.SyncRequest(id)
-                    is ProxyMessage.ModelUpdate -> ProxyMessage.ModelUpdate(message.model, id)
-                    is ProxyMessage.Operations -> ProxyMessage.Operations(message.operations, id)
-                }
-                return this@ActiveStore.onProxyMessage(messageCopy)
-            }
+            ) = this@ActiveStore.onProxyMessage(message.withId(id!!))
         }
     }
 

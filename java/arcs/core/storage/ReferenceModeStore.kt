@@ -156,9 +156,11 @@ class ReferenceModeStore private constructor(
 
     override fun off(callbackToken: Int) = callbacks.unregister(callbackToken)
 
+    var bsId = 0
+    var csId = 0
     private fun registerStoreCallbacks() {
-        backingStore.on(backingStoreCallback)
-        containerStore.on(containerStoreCallback)
+        bsId = backingStore.on(backingStoreCallback)
+        csId = containerStore.on(containerStoreCallback)
     }
 
     /*
@@ -236,7 +238,7 @@ class ReferenceModeStore private constructor(
                             }
                         }
                         val response = containerStore.onProxyMessage(
-                            ProxyMessage.Operations(listOf(op.containerOp), 1)
+                            ProxyMessage.Operations(listOf(op.containerOp), csId)
                         )
                         if (response) {
                             sendQueue.enqueue {
@@ -259,7 +261,7 @@ class ReferenceModeStore private constructor(
                             containerStore.onProxyMessage(
                                 ProxyMessage.ModelUpdate(
                                     newModelsResult.value.collectionModel.data,
-                                    id = 1
+                                    id = csId
                                 )
                             )
                             sendQueue.enqueue {
@@ -276,8 +278,7 @@ class ReferenceModeStore private constructor(
                     constructPendingIdsAndModel(containerStore.localModel.data)
 
                 suspend fun sender() {
-                    callbacks.getCallback(requireNotNull(proxyMessage.id))
-                        ?.invoke(
+                    callbacks.getCallback(requireNotNull(proxyMessage.id))?.invoke(
                             ProxyMessage.ModelUpdate(model() as RefModeStoreData, proxyMessage.id)
                         )
                 }
@@ -404,7 +405,7 @@ class ReferenceModeStore private constructor(
     private suspend fun updateBackingStore(referencable: Referencable): Boolean {
         if (referencable !is RawEntity) return true
         val model = entityToModel(referencable)
-        return backingStore.onProxyMessage(ProxyMessage.ModelUpdate(model, id = 1), referencable.id)
+        return backingStore.onProxyMessage(ProxyMessage.ModelUpdate(model, id = bsId), referencable.id)
     }
 
     /** Clear the provided entity in the backing store. */
@@ -412,7 +413,7 @@ class ReferenceModeStore private constructor(
         if (referencable !is RawEntity) return true
         val model = entityToModel(referencable)
         val op = listOf(CrdtEntity.Operation.ClearAll(crdtKey, model.versionMap))
-        return backingStore.onProxyMessage(ProxyMessage.Operations(op, id = null), referencable.id)
+        return backingStore.onProxyMessage(ProxyMessage.Operations(op, id = bsId), referencable.id)
     }
 
     /**

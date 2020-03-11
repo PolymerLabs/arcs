@@ -59,7 +59,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private var pendingDriverModels = atomic(listOf<PendingDriverModel<Data>>())
     private var version = atomic(0)
     private var state: AtomicRef<State<Data>> = atomic(State.Idle(idleDeferred, driver))
-    private val nextCallbackToken = atomic(1)
+    private val nextCallbackToken = atomic(hashCode())
     private val callbacks = atomic(mapOf<Int, ProxyCallback<Data, Op, T>>())
 
     override suspend fun idle() = state.value.idle()

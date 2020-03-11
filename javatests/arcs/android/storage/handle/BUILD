@@ -28,6 +28,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//java/arcs/core/util/testutil",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/android/storage/service/testutil",

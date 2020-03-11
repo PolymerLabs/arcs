@@ -124,8 +124,9 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
+        // TODO - not sure about collapsing to serviceCallbackToken here
         sendQueue.enqueue {
-            service.sendProxyMessage(message.toParcelable(crdtType), result)
+            service.sendProxyMessage(message.withId(serviceCallbackToken).toParcelable(crdtType), result)
         }
         return result.await()
     }
@@ -145,12 +146,13 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
         // Open subscription before attaching callback to make sure that we capture all messages
         val subscription = messageChannel.openSubscription()
-        scope.launch {
-            subscription.consumeEach { handleMessageAndResultFromService(it) }
-        }
 
         serviceCallbackToken = withContext(coroutineContext) {
             service.registerCallback(messageChannel)
+        }
+
+        scope.launch {
+            subscription.consumeEach { handleMessageAndResultFromService(it) }
         }
 
         this.serviceConnection = connection

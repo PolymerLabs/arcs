@@ -20,9 +20,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** Thread-safe manager of a collection of [ProxyCallback]s. */
-class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>() {
     private val mutex = Mutex()
-    val nextCallbackToken = atomic(1)
+    val nextCallbackToken = atomic(hashCode())
     /* internal */ val callbacks = mutableMapOf<Int, ProxyCallback<Data, Op, ConsumerData>>()
 
     /** Adds a [ProxyCallback] to the collection, and returns its token. */
