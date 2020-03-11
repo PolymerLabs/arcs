@@ -18,6 +18,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/keys",
         "//java/arcs/core/type",
         "//java/arcs/sdk",
         "//third_party/android/androidx_test/core",
