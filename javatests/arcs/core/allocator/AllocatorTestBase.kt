@@ -12,7 +12,7 @@ import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
 import arcs.core.host.ReadPerson
-import arcs.core.host.ReadPerson_Person_Spec
+import arcs.core.host.ReadPerson_Person
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
@@ -52,7 +52,7 @@ open class AllocatorTestBase {
     private lateinit var readPersonParticle: Plan.Particle
     private lateinit var writeAndReadPersonPlan: Plan
 
-    protected val personSchema = ReadPerson_Person_Spec.SCHEMA
+    protected val personSchema = ReadPerson_Person.SCHEMA
     private var personEntityType: Type = SingletonType(EntityType(personSchema))
 
     private lateinit var readingExternalHost: TestingHost
