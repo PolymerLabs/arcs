@@ -121,7 +121,7 @@ export class PlanGenerator {
     return ktUtils.applyFun(this.createTtlUnit(ttl.units), [ttl.count.toString()]);
   }
 
-  /** Translate TtlUnits to Kotlin Ttl Units. */
+  /** Translates TtlUnits to Kotlin Ttl case classes. */
   createTtlUnit(ttlUnits: TtlUnits): string {
     switch (ttlUnits) {
       case TtlUnits.Minute: return `Ttl.Minutes`;
