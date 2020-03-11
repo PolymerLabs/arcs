@@ -322,8 +322,7 @@ open class AllocatorTestBase {
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
-        readingExternalHost.stopArc(readingExternalHost.started.first())
-        writingExternalHost.stopArc(writingExternalHost.started.first())
+        allocator.stopArc(arcId)
 
         assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
