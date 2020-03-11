@@ -127,6 +127,10 @@ export class StorageKeyRecipeResolver {
    */
   validateHandles(recipe: Recipe) {
     recipe.handles
+      .filter(h => h.fate === 'create' && !h.capabilities.isTiedToArc && !h.id)
+      .forEach(h => console.warn(`Create handle '${h.localName}' should have an id.`));
+
+    recipe.handles
       .filter(h => h.fate === 'map' || h.fate === 'copy')
       .forEach(handle => {
         const matches = this.runtime.context.findHandlesById(handle.id)
