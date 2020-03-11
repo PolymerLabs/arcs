@@ -14,7 +14,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {Type} from '../runtime/type.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
 import {Store} from '../runtime/storageNG/store.js';
-import {UnifiedStore} from '../runtime/storageNG/unified-store.js';
+import {AbstractStore} from '../runtime/storageNG/abstract-store.js';
 
 type Result = {
   name: string,
@@ -61,7 +61,7 @@ export class ArcStoresFetcher {
   }
 
   private async listStores() {
-    const find = (manifest: Manifest): [UnifiedStore, string[]][] => {
+    const find = (manifest: Manifest): [AbstractStore, string[]][] => {
       let tags = [...manifest.storeTags];
       if (manifest.imports) {
         manifest.imports.forEach(imp => tags = tags.concat(find(imp)));
@@ -74,7 +74,7 @@ export class ArcStoresFetcher {
     };
   }
 
-  private async digestStores(stores: [UnifiedStore, string[] | Set<string>][]) {
+  private async digestStores(stores: [AbstractStore, string[] | Set<string>][]) {
     const result: Result[] = [];
     for (const [store, tags] of stores) {
       result.push({
@@ -91,7 +91,7 @@ export class ArcStoresFetcher {
   }
 
   // tslint:disable-next-line: no-any
-  private async dereference(store: UnifiedStore): Promise<any> {
+  private async dereference(store: AbstractStore): Promise<any> {
     // TODO(shanestephens): Replace this with handle-based reading
     if (store instanceof Store) {
       // tslint:disable-next-line: no-any

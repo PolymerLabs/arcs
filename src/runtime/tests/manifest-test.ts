@@ -22,7 +22,6 @@ import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore} f
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {Store} from '../storageNG/store.js';
-import {collectionHandleForTest} from '../testing/handle-for-test.js';
 import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
 import {digest} from '../../platform/digest-web.js';
@@ -33,7 +32,8 @@ import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
 import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
-import {TupleType, CollectionType, ReferenceType} from '../type.js';
+import {TupleType, CollectionType} from '../type.js';
+import {ActiveCollectionEntityStore, handleForActiveStore} from '../storageNG/storage-ng.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -1774,9 +1774,9 @@ recipe SomeRecipe
     const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider});
     const storageStub = manifest.findStoreByName('Store0');
     assert(storageStub);
-    const store = await storageStub.activate();
+    const store = await storageStub.activate() as ActiveCollectionEntityStore;
     assert(store);
-    const handle = await collectionHandleForTest(manifest, store.baseStore);
+    const handle = handleForActiveStore(store, manifest);
 
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
@@ -1828,9 +1828,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest', memoryProvider});
-    const store = (await manifest.findStoreByName('Store0').activate());
+    const store = (await manifest.findStoreByName('Store0').activate()) as ActiveCollectionEntityStore;
     assert(store);
-    const handle = await collectionHandleForTest(manifest, store.baseStore);
+    const handle = handleForActiveStore(store, manifest);
 
     // TODO(shans): address as part of storage refactor
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [

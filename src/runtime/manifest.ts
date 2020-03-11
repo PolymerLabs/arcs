@@ -37,7 +37,7 @@ import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceT
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
 import {ClaimIsTag} from './particle-claim.js';
-import {UnifiedStore} from './storageNG/unified-store.js';
+import {AbstractStore} from './storageNG/abstract-store.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Exists} from './storageNG/drivers/driver.js';
@@ -47,7 +47,6 @@ import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {Refinement} from './refiner.js';
 import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
-import {Flags} from './flags.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -135,9 +134,9 @@ export class Manifest {
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
-  private _stores: UnifiedStore[] = [];
+  private _stores: AbstractStore[] = [];
   private _interfaces = <InterfaceInfo[]>[];
-  storeTags: Map<UnifiedStore, string[]> = new Map();
+  storeTags: Map<AbstractStore, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
@@ -202,7 +201,7 @@ export class Manifest {
   get fileName() {
     return this._fileName;
   }
-  get stores(): UnifiedStore[] {
+  get stores(): AbstractStore[] {
     return this._stores;
   }
   get allStores() {
@@ -223,7 +222,7 @@ export class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
 
-  _addStore(store: UnifiedStore, tags: string[]) {
+  _addStore(store: AbstractStore, tags: string[]) {
     this._stores.push(store);
     this.storeTags.set(store, tags ? tags : []);
     return store;
@@ -252,7 +251,7 @@ export class Manifest {
     if (typeof storageKey === 'string') {
       storageKey = StorageKeyParser.parse(storageKey);
     }
-    const store = new Store({...opts, storageKey, exists: Exists.MayExist});
+    const store = new Store(opts.type, {...opts, storageKey, exists: Exists.MayExist});
     return this._addStore(store, opts.tags);
   }
 
@@ -301,16 +300,16 @@ export class Manifest {
   findStoreById(id: string) {
     return this._find(manifest => manifest._stores.find(store => store.id === id));
   }
-  findStoreTags(store: UnifiedStore) : Set<string> {
+  findStoreTags(store: AbstractStore) : Set<string> {
     return new Set(this._find(manifest => manifest.storeTags.get(store)));
   }
   findManifestUrlForHandleId(id: string) {
     return this._find(manifest => manifest.storeManifestUrls.get(id));
   }
-  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): UnifiedStore[] {
+  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): AbstractStore[] {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
-    function tagPredicate(manifest: Manifest, store: UnifiedStore) {
+    function tagPredicate(manifest: Manifest, store: AbstractStore) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
     const stores = [...this._findAll(manifest =>
@@ -1314,7 +1313,7 @@ ${e.message}
   }
 
   // TODO: This is a temporary method to allow sharing stores with other Arcs.
-  registerStore(store: UnifiedStore, tags: string[]): void {
+  registerStore(store: AbstractStore, tags: string[]): void {
     // Only register stores that have non-volatile storage key and don't have a
     // #volatile tag.
     if (!this.findStoreById(store.id) && !this.isVolatileStore(store, tags)) {
@@ -1322,8 +1321,8 @@ ${e.message}
     }
   }
 
-  isVolatileStore(store: UnifiedStore, tags: string[]): boolean {
-    if ((store.storageKey as StorageKey).protocol === VolatileStorageKey.protocol) return true;
+  isVolatileStore(store: AbstractStore, tags: string[]): boolean {
+    if (store.storageKey.protocol === VolatileStorageKey.protocol) return true;
     if (store.storageKey.protocol === ReferenceModeStorageKey.protocol &&
         (store.storageKey as ReferenceModeStorageKey).backingKey.protocol === VolatileStorageKey.protocol &&
         (store.storageKey as ReferenceModeStorageKey).storageKey.protocol === VolatileStorageKey.protocol) {

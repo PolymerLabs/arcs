@@ -12,33 +12,33 @@ import {Comparable, compareStrings} from '../recipe/comparable.js';
 import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {ProxyCallback, StorageCommunicationEndpointProvider} from './store.js';
 import {ClaimIsTag} from '../particle-claim.js';
-import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore} from './storage-ng.js';
+import {ActiveStore} from './store-interface.js';
+import {CRDTTypeRecord} from '../crdt/crdt.js';
 
-export function isSingletonInterfaceStore(store: UnifiedStore): store is SingletonInterfaceStore {
+export function isSingletonInterfaceStore(store: AbstractStore): store is SingletonInterfaceStore {
   return (store.type.isSingleton && store.type.getContainedType().isInterface);
 }
 
-export function isSingletonEntityStore(store: UnifiedStore): store is SingletonEntityStore {
+export function isSingletonEntityStore(store: AbstractStore): store is SingletonEntityStore {
   return (store.type.isSingleton && store.type.getContainedType().isEntity);
 }
 
-export function isCollectionEntityStore(store: UnifiedStore): store is CollectionEntityStore {
+export function isCollectionEntityStore(store: AbstractStore): store is CollectionEntityStore {
   return (store.type.isCollection && store.type.getContainedType().isEntity);
 }
 
-export function isSingletonReferenceStore(store: UnifiedStore): store is SingletonReferenceStore {
+export function isSingletonReferenceStore(store: AbstractStore): store is SingletonReferenceStore {
   return (store.type.isSingleton && store.type.getContainedType().isReference);
 }
 
-export function isCollectionReferenceStore(store: UnifiedStore): store is CollectionReferenceStore {
+export function isCollectionReferenceStore(store: AbstractStore): store is CollectionReferenceStore {
   return (store.type.isCollection && store.type.getContainedType().isReference);
 }
 
 export function entityHasName(name: string) {
-  return (store: UnifiedStore) =>
+  return (store: AbstractStore) =>
     store.type.getContainedType().isEntity && store.type.getContainedType().getEntitySchema().names.includes(name);
 }
 
@@ -57,12 +57,13 @@ export function entityHasName(name: string) {
  * Once the old-style stores are deleted, this class can be merged into the new
  * Store class.
  */
-export abstract class UnifiedStore implements Comparable<UnifiedStore> {
+export abstract class AbstractStore implements Comparable<AbstractStore> {
   // TODO: Once the old storage stack is gone, this should only be of type
   // StorageKey, and can be moved into StoreInfo.
   abstract storageKey: StorageKey;
   abstract versionToken: string;
   abstract referenceMode: boolean;
+  abstract type: Type;
 
   storeInfo: StoreInfo;
 
@@ -74,13 +75,12 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
   get id() { return this.storeInfo.id; }
   get apiChannelMappingId() { return this.id; }
   get name() { return this.storeInfo.name; }
-  get type() { return this.storeInfo.type; }
   get originalId() { return this.storeInfo.originalId; }
   get source() { return this.storeInfo.source; }
   get description() { return this.storeInfo.description; }
   get claims() { return this.storeInfo.claims; }
 
-  abstract activate(): Promise<UnifiedActiveStore>;
+  abstract activate(): Promise<ActiveStore<CRDTTypeRecord>>;
 
   // TODO: Delete this method when the old-style storage is deleted.
   reportExceptionInHost(exception: PropagatedException): void {
@@ -88,7 +88,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
     throw exception;
   }
 
-  _compareTo(other: UnifiedStore): number {
+  _compareTo(other: AbstractStore): number {
     let cmp: number;
     cmp = compareStrings(this.name, other.name);
     if (cmp !== 0) return cmp;
@@ -111,7 +111,7 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
     if (info.name) {
       handleStr.push(`${info.name}`);
     }
-    handleStr.push(`of ${info.type.toString()}`);
+    handleStr.push(`of ${this.type.toString()}`);
     if (info.id) {
       handleStr.push(`'${info.id}'`);
     }
@@ -147,30 +147,10 @@ export abstract class UnifiedStore implements Comparable<UnifiedStore> {
   }
 }
 
-export interface UnifiedActiveStore extends StorageCommunicationEndpointProvider<CRDTTypeRecord> {
-  /** The UnifiedStore instance from which this store was activated. */
-  readonly baseStore: UnifiedStore;
-
-  // TODO(shans): toLiteral is currently used in _serializeStore, during recipe serialization. It's used when volatile
-  // stores need to be written out as resources into the manifest. Problem is, it expects a particular CRDT model shape;
-  // for new storage we probably need to extract the model from the store instead and have the CRDT directly produce a
-  // JSON representation for insertion into the serialization.
-  // tslint:disable-next-line no-any
-  serializeContents(): Promise<any>;
-
-  cloneFrom(store: UnifiedActiveStore): Promise<void>;
-  modelForSynchronization(): Promise<{}>;
-
-  // TODO: Make this match the type of the `on` method in ActiveStore.
-  on(callback: ProxyCallback<null>): number;
-  off(callback: number): void;
-}
-
 /** Assorted properties about a store. */
 export type StoreInfo = {
   readonly id: string;
   name?: string;  // TODO: Find a way to make this readonly.
-  readonly type: Type;
   readonly originalId?: string;
   readonly source?: string;
   readonly origin?: 'file' | 'resource' | 'storage';

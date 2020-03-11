@@ -122,7 +122,7 @@ export abstract class Type {
     return this instanceof BigCollectionType;
   }
 
-  isReferenceType(): this is ReferenceType {
+  isReferenceType(): this is ReferenceType<Type> {
     return this instanceof ReferenceType;
   }
 
@@ -933,10 +933,10 @@ export class SlotType extends Type {
 }
 
 
-export class ReferenceType extends Type {
-  readonly referredType: Type;
+export class ReferenceType<T extends Type> extends Type {
+  readonly referredType: T;
 
-  constructor(reference: Type) {
+  constructor(reference: T) {
     super('Reference');
     if (reference == null) {
       throw new Error('invalid type! Reference types must include a referenced type declaration');
@@ -948,7 +948,7 @@ export class ReferenceType extends Type {
     return true;
   }
 
-  getContainedType(): Type {
+  getContainedType(): T {
     return this.referredType;
   }
 
@@ -984,8 +984,8 @@ export class ReferenceType extends Type {
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ReferenceType {
-    return new ReferenceType(this.referredType._cloneWithResolutions(variableMap));
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ReferenceType<T> {
+    return new ReferenceType<T>(this.referredType._cloneWithResolutions(variableMap) as T);
   }
 
   toLiteral(): TypeLiteral {

@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Dictionary} from '../hot.js';
-import {UnifiedStore} from '../storageNG/unified-store.js';
+import {AbstractStore} from '../storageNG/abstract-store.js';
 
 /**
  * Simple class to verify callbacks used in the Arcs storage APIs.
@@ -29,7 +29,7 @@ export class CallbackTracker {
 
   private constructor(public expectedEvents: number) {}
 
-  static async create(store: UnifiedStore, expectedEvents = 0): Promise<CallbackTracker> {
+  static async create(store: AbstractStore, expectedEvents = 0): Promise<CallbackTracker> {
     const tracker = new CallbackTracker(expectedEvents);
     const activeStore = await store.activate();
     activeStore.on(async val => tracker.changeEvent(val));

@@ -10,9 +10,6 @@
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {recipe2plan} from '../recipe2plan.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../../runtime/capabilities-resolver.js';
-import {RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
-import {Capabilities} from '../../runtime/capabilities.js';
 import {Flags} from '../../runtime/flags.js';
 
 describe('recipe2plan', () => {

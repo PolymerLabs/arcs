@@ -22,7 +22,7 @@ import {CRDTTypeRecord} from '../../crdt/crdt.js';
 let testKey: StorageKey;
 
 function createStore(): Store<CRDTTypeRecord> {
-  return new Store({storageKey: testKey, exists: Exists.ShouldCreate, type: new CountType(), id: 'an-id'});
+  return new Store(new CountType(), {storageKey: testKey, exists: Exists.ShouldCreate, id: 'an-id'});
 }
 
 describe('Store', async () => {

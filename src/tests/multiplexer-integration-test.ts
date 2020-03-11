@@ -15,10 +15,12 @@ import {Runtime} from '../runtime/runtime.js';
 import {SlotTestObserver} from '../runtime/testing/slot-test-observer.js';
 import {Loader} from '../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
-import {collectionHandleForTest, storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
+import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
 import {DriverFactory} from '../runtime/storageNG/drivers/driver-factory.js';
+import {CollectionEntityStore, handleForStore} from '../runtime/storageNG/storage-ng.js';
+import {isCollectionEntityStore} from '../runtime/storageNG/abstract-store.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {
@@ -50,8 +52,8 @@ describe('Multiplexer', () => {
       post: reads v1
       item: consumes s1`;
 
-    const postsHandle =
-        await collectionHandleForTest(context, context.stores[0]);
+    const thePostsStore = context.stores.find(isCollectionEntityStore);
+    const postsHandle = await handleForStore(thePostsStore, context);
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({
           message: 'x',
@@ -106,14 +108,15 @@ describe('Multiplexer', () => {
       .expectRenderSlot('ShowTwo', 'item')
       ;
 
-    const postsStore = await collectionHandleForTest(arc, arc.findStoreById(arc.activeRecipe.handles[0].id));
-    const entityClass = new postsStore.entityClass({
+    const postsStore = arc.findStoreById(arc.activeRecipe.handles[0].id) as CollectionEntityStore;
+    const postsHandle2 = await handleForStore(postsStore, arc);
+    const entityClass = new postsHandle.entityClass({
       message: 'w',
       renderRecipe: recipeOne,
       renderParticleSpec: showOneSpec
     });
     const entity = Entity.identify(entityClass, '4', null, null);
-    await postsStore.add(entity);
+    await postsHandle2.add(entity);
     await arc.idle;
 
     DriverFactory.clearRegistrationsForTesting();

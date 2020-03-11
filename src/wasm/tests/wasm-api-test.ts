@@ -11,25 +11,22 @@ import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
+import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
-import {RuntimeCacheService} from '../../runtime/runtime-cache.js';
-import {ReferenceType, SingletonType} from '../../runtime/type.js';
+import {ReferenceType, SingletonType, EntityType, CollectionType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
-import {Store} from '../../runtime/storageNG/store.js';
 import {Exists} from '../../runtime/storageNG/drivers/driver.js';
 import {Reference} from '../../runtime/reference.js';
 import {Arc} from '../../runtime/arc.js';
+import {SingletonEntityStore, CollectionEntityStore, SingletonReferenceStore, CollectionReferenceStore, newStore, handleForStore} from '../../runtime/storageNG/storage-ng.js';
+import {isSingletonEntityStore} from '../../runtime/storageNG/abstract-store.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
 import '../../services/clock-service.js';
 import '../../services/random-service.js';
-import {assertThrowsAsync} from '../../testing/test-util.js';
-import {StorageProxy} from '../../runtime/storageNG/storage-proxy.js';
-import {handleNGFor, SingletonHandle} from '../../runtime/storageNG/handle.js';
 
 class TestLoader extends Loader {
   constructor(readonly testDir: string) {
@@ -55,16 +52,15 @@ const testMap = {
   'Kotlin': '../../javatests/arcs/sdk/wasm',
 };
 
-async function createBackingEntity(arc: Arc, referenceType: ReferenceType, id: string, entityData: {}): Promise<[string, Reference|{}]> {
+async function createBackingEntity(arc: Arc, referenceType: ReferenceType<EntityType>, id: string, entityData: {}): Promise<[string, Reference]> {
   const backingStorageKey = new VolatileStorageKey(arc.id, '', id);
   const baseType = referenceType.getContainedType();
-  const backingStore = new Store({
+  const backingStore = newStore(new SingletonType(baseType), {
     id: 'backing1',
     storageKey: backingStorageKey,
-    type: new SingletonType(baseType),
     exists: Exists.MayExist,
   });
-  const backingHandle1 = await singletonHandleForTest(arc, backingStore);
+  const backingHandle1 = await handleForStore(backingStore, arc);
   const entity = await backingHandle1.setFromData(entityData);
   const entityId = Entity.id(entity);
   const reference = new Reference({id: entityId, entityStorageKey: backingStorageKey.toString()}, referenceType, null);
@@ -117,9 +113,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     it('onHandleSync / onHandleUpdate', async () => {
       const {arc, stores} = await setup('HandleSyncUpdateTest');
-      const sng = await singletonHandleForTest(arc, stores.get('sng'));
-      const col = await collectionHandleForTest(arc, stores.get('col'));
-      const res = await collectionHandleForTest(arc, stores.get('res'));
+      const sng = await handleForStore(stores.get('sng') as SingletonEntityStore, arc);
+      const col = await handleForStore(stores.get('col') as CollectionEntityStore, arc);
+      const res = await handleForStore(stores.get('res') as CollectionEntityStore, arc);
 
       // onHandleSync: txt = 'sync:<handle-name>:<all-synced>'
       // The order in which handles are synchronized isn't guaranteed, so allow for either result.
@@ -142,7 +138,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await col.remove(e);
       await arc.idle;
 
-      assert.deepStrictEqual(await res.toList(), [
+      assert.deepStrictEqual(await res.toList() as {}[], [
         {txt: 'update:sng', num: 3},
         {txt: 'update:col', num: 7},
         {txt: 'update:sng', num: -1},
@@ -153,15 +149,15 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     // TODO(sjmiles, #4762): Enable this test.
     it.skip('getTemplate / populateModel / renderSlot', async () => {
       const {arc, stores, slotObserver} = await setup('RenderTest');
-      const flags = await singletonHandleForTest(arc, stores.get('flags'));
+      const flags = await handleForStore(stores.get('flags') as SingletonEntityStore, arc);
 
-      await flags.set(new flags.entityClass({template: false, model: true}));
+      await flags.setFromData({template: false, model: true});
       await arc.idle;
 
-      await flags.set(new flags.entityClass({template: true, model: false}));
+      await flags.setFromData({template: true, model: false});
       await arc.idle;
 
-      await flags.set(new flags.entityClass({template: true, model: true}));
+      await flags.setFromData({template: true, model: true});
       await arc.idle;
 
       // TODO(sjmiles): modify slotTestObserver to capture similar information
@@ -178,9 +174,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     // TODO(sjmiles, #4762): Enable this test.
     it.skip('autoRender', async () => {
       const {arc, stores, slotObserver} = await setup('AutoRenderTest');
-      const data = await singletonHandleForTest(arc, stores.get('data'));
+      const data = await handleForStore(stores.get('data') as SingletonEntityStore, arc);
 
-      await data.set(new data.entityClass({txt: 'update'}));
+      await data.setFromData({txt: 'update'});
       await arc.idle;
 
       // TODO(sjmiles): modify slotTestObserver to capture similar information
@@ -195,24 +191,24 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     it('fireEvent', async () => {
       const {arc, stores} = await setup('EventsTest');
-      const output = await singletonHandleForTest(arc, stores.get('output'));
+      const output = await handleForStore(stores.get('output') as SingletonEntityStore, arc);
 
       const particle = arc.activeRecipe.particles[0];
       arc.peh.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
-      assert.deepStrictEqual(await output.fetch(), {txt: 'event:root:icanhazclick:fooBar'});
+      assert.deepStrictEqual(await output.fetch() as {}, {txt: 'event:root:icanhazclick:fooBar'});
     });
 
     it('serviceRequest / serviceResponse / resolveUrl', async () => {
       const {arc, stores} = await setup('ServicesTest');
-      const output = await collectionHandleForTest(arc, stores.get('output'));
+      const output = await handleForStore(stores.get('output') as CollectionEntityStore, arc);
 
       const results = await output.toList();
       assert.lengthOf(results, 4);
 
       const resolve = results.shift();
-      assert.deepStrictEqual(resolve, {call: 'resolveUrl', tag: '', payload: 'RESOLVED($resolve-me)'});
+      assert.deepStrictEqual(resolve as {}, {call: 'resolveUrl', tag: '', payload: 'RESOLVED($resolve-me)'});
 
       for (const tag of ['first', 'second']) {
         const random = results.shift();
@@ -240,7 +236,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     prefix('entity class API', async () => {
       const {arc, stores} = await setup('EntityClassApiTest');
-      const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
+      const errHandle = await handleForStore(stores.get('errors') as CollectionEntityStore, arc);
       const errors = (await errHandle.toList()).map(e => e.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
@@ -249,7 +245,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     prefix('special schema fields', async () => {
       const {arc, stores} = await setup('SpecialSchemaFieldsTest');
-      const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
+      const errHandle = await handleForStore(stores.get('errors') as CollectionEntityStore, arc);
       const errors = (await errHandle.toList()).map(e => e.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
@@ -262,7 +258,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         return;
       }
       const {arc, stores} = await setup('ReferenceClassApiTest');
-      const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
+      const errHandle = await handleForStore(stores.get('errors') as CollectionEntityStore, arc);
       const errors = (await errHandle.toList()).map(e => e.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
@@ -272,10 +268,10 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     // TODO - check that writing to read-only handles throws and vice versa
     it('singleton storage API', async () => {
       const {arc, stores} = await setup('SingletonApiTest');
-      const inHandle = await singletonHandleForTest(arc, stores.get('inHandle'));
-      const outHandle = await singletonHandleForTest(arc, stores.get('outHandle'));
-      const ioHandle = await singletonHandleForTest(arc, stores.get('ioHandle'));
-      const errors = await collectionHandleForTest(arc, stores.get('errors'));
+      const inHandle = await handleForStore(stores.get('inHandle') as SingletonEntityStore, arc);
+      const outHandle = await handleForStore(stores.get('outHandle') as SingletonEntityStore, arc);
+      const ioHandle = await handleForStore(stores.get('ioHandle') as SingletonEntityStore, arc);
+      const errors = await handleForStore(stores.get('errors') as CollectionEntityStore, arc);
 
       const sendEvent = async handler => {
         await arc.idle;
@@ -293,19 +289,19 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // in.get(), out.set()
       await inHandle.set(new inHandle.entityClass({num: 4}));
       await sendEvent('case2');
-      assert.deepStrictEqual(await outHandle.fetch(), {num: 8, txt: ''});
+      assert.deepStrictEqual(await outHandle.fetch() as {}, {num: 8, txt: ''});
 
       // io.get()/set()
       await ioHandle.set(new ioHandle.entityClass({num: 4}));
       await sendEvent('case3');
-      assert.deepStrictEqual(await ioHandle.fetch(), {num: 12, txt: ''});
+      assert.deepStrictEqual(await ioHandle.fetch() as {}, {num: 12, txt: ''});
 
       // set() on out/io with pre-cleared stores
       await outHandle.clear();
       await ioHandle.clear();
       await sendEvent('case4');
-      assert.deepStrictEqual(await outHandle.fetch(), {num: 0, txt: 'out'});
-      assert.deepStrictEqual(await ioHandle.fetch(), {num: 0, txt: 'io'});
+      assert.deepStrictEqual(await outHandle.fetch() as {}, {num: 0, txt: 'out'});
+      assert.deepStrictEqual(await ioHandle.fetch() as {}, {num: 0, txt: 'io'});
 
       // Check that the null/non-null state of handles was correct.
       assert.deepStrictEqual((await errors.toList()).map(e => e.msg), []);
@@ -313,9 +309,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     it('collection storage API', async () => {
       const {arc, stores} = await setup('CollectionApiTest');
-      const inHandle = await collectionHandleForTest(arc, stores.get('inHandle'));
-      const outHandle = await collectionHandleForTest(arc, stores.get('outHandle'));
-      const ioHandle = await collectionHandleForTest(arc, stores.get('ioHandle'));
+      const inHandle = await handleForStore(stores.get('inHandle') as CollectionEntityStore, arc);
+      const outHandle = await handleForStore(stores.get('outHandle') as CollectionEntityStore, arc);
+      const ioHandle = await handleForStore(stores.get('ioHandle') as CollectionEntityStore, arc);
 
       const sendEvent = async handler => {
         await arc.idle;
@@ -333,7 +329,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // in.empty(), in.size(), out.store()
       await inHandle.add(new inHandle.entityClass({num: 3}));
       await sendEvent('case2');
-      assert.deepStrictEqual(await outHandle.toList(), [{flg: false, txt: '', num: 1}]);
+      assert.deepStrictEqual(await outHandle.toList() as {}[], [{flg: false, txt: '', num: 1}]);
 
       // out.remove() - clears entity stored as the previous result
       await sendEvent('case3');
@@ -342,7 +338,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // in.begin(), in.end() and iterator methods
       // TODO(alxr): Extract out to be a C++ specific test case
       await sendEvent('case4');
-      assert.deepStrictEqual(await outHandle.toList(), [
+      assert.deepStrictEqual(await outHandle.toList() as {}[], [
         {txt: 'num: 3', num: 6, flg: true},
         {txt: 'eq', num: 0, flg: false},
         {txt: 'ne', num: 0, flg: true},
@@ -354,7 +350,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await ioHandle.add(new ioHandle.entityClass({num: 2, txt: 'z'}));
       await outHandle.clear();
       await sendEvent('case5');
-      assert.deepStrictEqual(await outHandle.toList(), [
+      assert.deepStrictEqual(await outHandle.toList() as {}[], [
         {num: 4, txt: '', flg: false},    // store() an entity in addition to the 3 above
         {num: 3, txt: '', flg: false},    // remove() the entity
         {num: 0, txt: 'x', flg: false},   // ranged loop over the 3 entities above, using num to sort
@@ -371,9 +367,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         this.skip();
       }
       const {arc, stores} = await setup('ReferenceHandlesTest');
-      const sng = await singletonHandleForTest(arc, stores.get('sng'));
-      const col = await collectionHandleForTest(arc, stores.get('col'));
-      const res = await collectionHandleForTest(arc, stores.get('res'));
+      const sng = await handleForStore(stores.get('sng') as SingletonReferenceStore, arc);
+      const col = await handleForStore(stores.get('col') as CollectionReferenceStore, arc);
+      const res = await handleForStore(stores.get('res') as CollectionEntityStore, arc);
 
       assert.instanceOf(sng.type, SingletonType);
       assert.instanceOf(sng.type.getContainedType(), ReferenceType);
@@ -386,7 +382,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await res.clear();
 
       // onHandleUpdate tests populated references handles.
-      const referenceType = sng.type.getContainedType() as ReferenceType;
+      const referenceType = sng.type.getContainedType() as ReferenceType<EntityType>;
       const [entityId1, reference1] = await createBackingEntity(arc, referenceType, 'id1', {num: 6, txt: 'ok'});
       const [entityId2, reference2] = await createBackingEntity(arc, referenceType, 'id2', {num: 7, txt: 'ko'});
 
@@ -425,9 +421,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         this.skip();
       }
       const {arc, stores} = await setup('SchemaReferenceFieldsTest');
-      const input = await singletonHandleForTest(arc, stores.get('input'));
-      const output = await singletonHandleForTest(arc, stores.get('output'));
-      const res = await collectionHandleForTest(arc, stores.get('res'));
+      const input = await handleForStore(stores.get('input') as SingletonEntityStore, arc);
+      const output = await handleForStore(stores.get('output') as SingletonEntityStore, arc);
+      const res = await handleForStore(stores.get('res') as CollectionEntityStore, arc);
 
       // Uninitialised reference fields.
       await input.set(new input.entityClass({num: 5}));
@@ -464,9 +460,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     it('unicode strings', async () => {
       const {arc, stores} = await setup('UnicodeTest');
-      const sng = await singletonHandleForTest(arc, stores.get('sng'));
-      const col = await collectionHandleForTest(arc, stores.get('col'));
-      const res = await collectionHandleForTest(arc, stores.get('res'));
+      const sng = await handleForStore(stores.get('sng') as SingletonEntityStore, arc);
+      const col = await handleForStore(stores.get('col') as CollectionEntityStore, arc);
+      const res = await handleForStore(stores.get('res') as CollectionEntityStore, arc);
 
       // 'pass' tests passthrough of unicode data in entities.
       const pass = 'A:₤⛲ℜ|あ表⏳:Z';
@@ -476,7 +472,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       // 'src' is set directly by the particle.
       const val = {pass, src: 'åŗċş 🌈'};
-      assert.deepStrictEqual(await res.toList(), [val, val]);
+      assert.deepStrictEqual(await res.toList() as {}[], [val, val]);
     });
 
     it('entity slicing', async () => {
@@ -489,16 +485,16 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
 
       const sliceClass = Entity.createEntityClass(manifest.findSchemaByName('Slice'), null);
-      const sngStore = await arc.createStore(sliceClass.type, undefined, 'test:0');
+      const sngStore = await arc.createStore(new SingletonType(sliceClass.type), undefined, 'test:0');
       const colStore = await arc.createStore(sliceClass.type.collectionOf(), undefined, 'test:1');
 
-      const resType = manifest.findParticleByName('EntitySlicingTest').getConnectionByName('res').type;
+      const resType = manifest.findParticleByName('EntitySlicingTest').getConnectionByName('res').type as CollectionType<EntityType>;
       const resStore = await arc.createStore(resType, undefined, 'test:2');
 
-      const sng = await singletonHandleForTest(arc, sngStore);
+      const sng = await handleForStore(sngStore, arc);
       await sng.set(new sng.entityClass({num: 159, txt: 'Charlie', flg: true}));
 
-      const col = await collectionHandleForTest(arc, colStore);
+      const col = await handleForStore(colStore, arc);
       await col.add(new col.entityClass({num: 30, txt: 'Moe', flg: false}));
       await col.add(new col.entityClass({num: 60, txt: 'Larry', flg: false}));
       await col.add(new col.entityClass({num: 90, txt: 'Curly', flg: true}));
@@ -511,7 +507,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await arc.instantiate(recipe);
       await arc.idle;
 
-      const res = await collectionHandleForTest(arc, resStore);
+      const res = await handleForStore(resStore, arc);
       assert.sameMembers((await res.toList()).map(e => e.val), [
         's1:159',
         's2:159,Charlie',
@@ -535,9 +531,9 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       }
 
       const {arc, stores} = await setup('OnCreateTest');
-      const fooHandle = await singletonHandleForTest(arc, stores.get('fooHandle'));
+      const fooHandle = await handleForStore(stores.get('fooHandle') as SingletonEntityStore, arc);
 
-      assert.deepStrictEqual(await fooHandle.fetch(), {txt: 'Created!'});
+      assert.deepStrictEqual(await fooHandle.fetch() as {}, {txt: 'Created!'});
 
       const serialization = await arc.serialize();
       arc.dispose();
@@ -548,8 +544,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await arc2.idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);
-      const varStorageProxy2 = new StorageProxy('id', await arc2._stores[0].activate(), new SingletonType(fooClass.type), arc2._stores[0].storageKey.toString());
-      const fooHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+      const fooHandle2 = await handleForStore(arc2._stores.find(isSingletonEntityStore), arc);
       assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({txt: 'Not created!'}));
 
     });

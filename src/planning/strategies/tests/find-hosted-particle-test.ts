@@ -17,8 +17,8 @@ import {InterfaceType} from '../../../runtime/type.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
-import {singletonHandle, SingletonInterfaceHandle} from '../../../runtime/storageNG/storage-ng.js';
-import {isSingletonInterfaceStore} from '../../../runtime/storageNG/unified-store.js';
+import {SingletonInterfaceHandle, handleForStore} from '../../../runtime/storageNG/storage-ng.js';
+import {isSingletonInterfaceStore} from '../../../runtime/storageNG/abstract-store.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);
@@ -174,7 +174,7 @@ describe('FindHostedParticle', () => {
     assert.isEmpty(arc._stores);
     await arc.instantiate(outRecipe);
     const particleSpecStore = arc._stores.find(isSingletonInterfaceStore);
-    const handle: SingletonInterfaceHandle = singletonHandle(await particleSpecStore.activate(), arc);
+    const handle = await handleForStore(particleSpecStore, arc);
     const particleSpec = await handle.fetch();
     // TODO(shans): fix this by putting an id field on particleSpec, or by having a ParticleSpec subclass
     // for storing.

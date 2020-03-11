@@ -14,9 +14,9 @@ import {ReferenceType, EntityType} from './type.js';
 import {Entity, SerializedEntity} from './entity.js';
 import {StorageProxy} from './storageNG/storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
-import {CollectionHandle, Handle, handleNGFor} from './storageNG/handle.js';
+import {CollectionHandle, Handle} from './storageNG/handle.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {CRDTTypeRecord} from './crdt/crdt.js';
+import {CRDTEntityCollection} from './storageNG/storage-ng.js';
 
 enum ReferenceMode {Unstored, Stored}
 
@@ -30,18 +30,18 @@ export type SerializedReference = {
 
 export class Reference implements Storable {
   public entity: Entity|null = null;
-  public type: ReferenceType;
+  public type: ReferenceType<EntityType>;
 
   protected readonly id: string;
   private readonly creationTimestamp: string;
   private entityStorageKey: string;
   private readonly context: ChannelConstructor;
-  private storageProxy: StorageProxy<CRDTTypeRecord> = null;
+  private storageProxy: StorageProxy<CRDTEntityCollection> = null;
   protected handle: CollectionHandle<Entity>|null = null;
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
-  constructor(data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor) {
+  constructor(data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) {
     this.id = data.id;
     this.creationTimestamp = data.creationTimestamp;
     this.entityStorageKey = data.entityStorageKey;
@@ -54,8 +54,8 @@ export class Reference implements Storable {
 
   protected async ensureStorageProxy(): Promise<void> {
     if (this.storageProxy == null) {
-      this.storageProxy = await this.context.getStorageProxy(this.entityStorageKey, this.type.referredType);
-      this.handle = handleNGFor(this.context.generateID(), this.storageProxy, this.context.idGenerator, null, true, true) as CollectionHandle<Entity>;
+      this.storageProxy = await this.context.getStorageProxy(this.entityStorageKey, this.type.referredType) as StorageProxy<CRDTEntityCollection>;
+      this.handle = new CollectionHandle(this.context.generateID(), this.storageProxy, this.context.idGenerator, null, true, true);
       if (this.entityStorageKey) {
         assert(this.entityStorageKey === this.storageProxy.storageKey, `reference's storageKey differs from the storageKey of established channel.`);
       } else {
@@ -83,8 +83,8 @@ export class Reference implements Storable {
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
   static async retrieve(pec: ChannelConstructor, id: string, storageKey: string, entityType: EntityType, particleId: string) {
-    const proxy = await pec.getStorageProxy(storageKey, entityType);
-    const handle = handleNGFor(particleId, proxy, pec.idGenerator, null, true, true) as CollectionHandle<Entity>;
+    const proxy = await pec.getStorageProxy(storageKey, entityType) as StorageProxy<CRDTEntityCollection>;
+    const handle = new CollectionHandle<Entity>(particleId, proxy, pec.idGenerator, null, true, true);
     return await handle.fetch(id);
   }
 }
@@ -138,8 +138,8 @@ export abstract class ClientReference extends Reference {
  * Instead of statically depending on reference.ts, handle.ts defines a static makeReference method which is
  * dynamically populated here.
  */
-function makeReference(data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType, context: ChannelConstructor): Reference {
- return new Reference(data, type, context);
+function makeReference(data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor): Reference {
+  return new Reference(data, type, context);
 }
 
 Handle.makeReference = makeReference;

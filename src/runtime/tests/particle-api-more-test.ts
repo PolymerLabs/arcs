@@ -9,30 +9,30 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {SlotComposer} from '../slot-composer.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {Arc} from '../arc.js';
-import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../testing/handle-for-test.js';
+import {storageKeyPrefixForTest} from '../testing/handle-for-test.js';
+import {SingletonEntityStore, CollectionEntityStore, SingletonEntityHandle, CollectionEntityHandle, handleForStore} from '../storageNG/storage-ng.js';
 
 //
 // TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax
 // doesn't end up on the store, and searching by type or tags is hard (?)
 //
 const getSingletonData = async (arc: Arc, index: number) => {
-  const store = arc._stores[index];
+  const store = arc._stores[index] as SingletonEntityStore;
   assert.ok(store, `failed to find store[${index}]`);
-  const handle = await singletonHandleForTest(arc, store);
+  const handle: SingletonEntityHandle = await handleForStore(store, arc);
   const data = await handle.fetch();
   assert.ok(data, `store[${index}] was empty`);
   return data;
 };
 
 const getCollectionData = async (arc: Arc, index: number) => {
-  const store = arc._stores[index];
+  const store = arc._stores[index] as CollectionEntityStore;
   assert.ok(store, `failed to find store[${index}]`);
-  const handle = await collectionHandleForTest(arc, store);
+  const handle: CollectionEntityHandle = await handleForStore(store, arc);
   const data = await handle.toList();
   assert.ok(data, `store[${index}] was empty`);
   return data;

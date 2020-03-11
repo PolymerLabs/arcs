@@ -143,7 +143,7 @@ export class ParticleOutput implements Edge {
       assert(false, 'Must be a Reference.');
     }
     const particleNode = this.start;
-    const outRef = this.type as ReferenceType;
+    const outRef = this.type as ReferenceType<Type>;
 
     const result: Edge[] = [];
 
@@ -186,7 +186,7 @@ export function createParticleNodes(particles: Particle[]) {
  * @param canBeReference controls whether a reference type is allowed to be the
  *     source of the output reference
  */
-function isTypeCompatibleWithReference(type: Type, target: ReferenceType, canBeReference: boolean) {
+function isTypeCompatibleWithReference(type: Type, target: ReferenceType<Type>, canBeReference: boolean) {
   switch (type.tag) {
     case 'Entity':
       if (TypeChecker.compareTypes({type, direction: 'reads'}, {type: target.getContainedType(), direction: 'writes'})) {
@@ -223,7 +223,7 @@ function isTypeCompatibleWithReference(type: Type, target: ReferenceType, canBeR
  * sub-entities).
  */
 // tslint:disable-next-line: no-any
-function isSchemaFieldCompatibleWithReference(field: any, target: ReferenceType) {
+function isSchemaFieldCompatibleWithReference(field: any, target: ReferenceType<Type>) {
   switch (field.kind) {
     case 'schema-reference': {
       const referencedType = field.schema.model as Type;

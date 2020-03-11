@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {UnifiedStore} from './storageNG/unified-store.js';
+import {AbstractStore} from './storageNG/abstract-store.js';
 import {InterfaceType} from './type.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -30,9 +30,9 @@ import {VolatileMemory, VolatileStorageKey} from './storageNG/drivers/volatile.j
 export interface ArcInterface {
   activeRecipe: Recipe;
   id: Id;
-  storeTags: Map<UnifiedStore, Set<string>>;
+  storeTags: Map<AbstractStore, Set<string>>;
   context: Manifest;
-  _stores: UnifiedStore[];
+  _stores: AbstractStore[];
   storageKey?: string | StorageKey;
   volatileMemory: VolatileMemory;
 }
@@ -85,7 +85,7 @@ ${this.arc.activeRecipe.toString()}`;
     return serialization;
   }
 
-  private async _serializeStore(store: UnifiedStore, name: string): Promise<void> {
+  private async _serializeStore(store: AbstractStore, name: string): Promise<void> {
     const type = store.type.getContainedType() || store.type;
     if (type instanceof InterfaceType) {
       this.interfaces += type.interfaceInfo.toString() + '\n';
