@@ -14,6 +14,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
+import arcs.core.host.api.Particle
 import arcs.core.type.Type
 import kotlin.reflect.KClass
 

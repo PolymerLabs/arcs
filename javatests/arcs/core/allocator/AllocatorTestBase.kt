@@ -4,18 +4,15 @@ import arcs.core.common.Id
 import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
-import arcs.core.data.FieldType
+import arcs.core.data.HandleMode
 import arcs.core.data.Plan
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.host.ArcState
-import arcs.core.data.HandleMode
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
 import arcs.core.host.ReadPerson
+import arcs.core.host.ReadPerson_Person_Spec
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
@@ -53,11 +50,8 @@ open class AllocatorTestBase {
     private lateinit var writePersonParticle: Plan.Particle
     private lateinit var readPersonParticle: Plan.Particle
     private lateinit var writeAndReadPersonPlan: Plan
-    protected val personSchema = Schema(
-        listOf(SchemaName("Person")),
-        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        "42"
-    )
+
+    protected val personSchema = ReadPerson_Person_Spec.SCHEMA
     private var personEntityType: Type = SingletonType(EntityType(personSchema))
 
     private lateinit var readingExternalHost: TestingHost
@@ -283,11 +277,11 @@ open class AllocatorTestBase {
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
         val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle]
+            readingContext.particles[readPersonParticle.particleName]
         )
 
         val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle]
+            writingContext.particles[writePersonParticle.particleName]
         )
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
@@ -335,11 +329,11 @@ open class AllocatorTestBase {
         assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
 
         val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle]
+            readingContext.particles[readPersonParticle.particleName]
         )
 
         val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle]
+            writingContext.particles[writePersonParticle.particleName]
         )
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Stopped)
@@ -379,11 +373,69 @@ open class AllocatorTestBase {
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
         val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle]
+            readingContext.particles[readPersonParticle.particleName]
         )
 
         val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle]
+            writingContext.particles[writePersonParticle.particleName]
+        )
+
+        assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
+        assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Started)
+
+        // onCreate() not called a second time
+        assertThat((writePersonContext.particle as WritePerson).createCalled).isFalse()
+        assertThat((readPersonContext.particle as ReadPerson).createCalled).isFalse()
+    }
+
+    @Test
+    fun allocator_restartCrashedArcInTwoExternalHosts() = runAllocatorTest {
+        val arcId = allocator.startArcForPlan(
+            "readWriteParticle",
+            writeAndReadPersonPlan
+        )
+
+        val readingContext = requireNotNull(
+            readingExternalHost.arcHostContext(arcId.toString())
+        )
+        val writingContext = requireNotNull(
+            writingExternalHost.arcHostContext(arcId.toString())
+        )
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+
+        readingExternalHost.stopArc(readingExternalHost.started.first())
+        writingExternalHost.stopArc(writingExternalHost.started.first())
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
+
+        // This erases the internally held-in-memory-cache ArcHost state simulating a crash
+        readingExternalHost.setup()
+        writingExternalHost.setup()
+
+        allocator.startArcForPlan(
+            "readWriteParticle",
+            Plan(writeAndReadPersonPlan.particles, arcId.toString())
+        )
+
+        val readingContextAfter = requireNotNull(
+            readingExternalHost.arcHostContext(arcId.toString())
+        )
+        val writingContextAfter = requireNotNull(
+            writingExternalHost.arcHostContext(arcId.toString())
+        )
+
+        assertThat(readingContextAfter.arcState).isEqualTo(ArcState.Running)
+        assertThat(writingContextAfter.arcState).isEqualTo(ArcState.Running)
+
+        val readPersonContext = requireNotNull(
+            readingContextAfter.particles[readPersonParticle.particleName]
+        )
+
+        val writePersonContext = requireNotNull(
+            writingContextAfter.particles[writePersonParticle.particleName]
         )
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)

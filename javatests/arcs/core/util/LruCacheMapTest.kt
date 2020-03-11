@@ -10,6 +10,13 @@ import org.junit.runners.JUnit4
 class LruCacheMapTest {
 
     @Test
+    fun lruCache_get_works() {
+        val cache = LruCacheMap<String, String>(5)
+        cache.put("foo", "bar")
+        assertThat(cache.get("foo")).isEqualTo("bar")
+    }
+
+    @Test
     fun lruCache_neverExceeds_capacity() {
         val cache = LruCacheMap<String, String>(5)
 

@@ -13,8 +13,7 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.host.HandleHolder
-import arcs.core.host.ParticleIdentifier
+import arcs.core.host.api.HandleHolder
 import arcs.core.host.toParticleIdentifier
 import arcs.sdk.HandleHolderBase
 import arcs.sdk.Particle

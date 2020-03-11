@@ -47,6 +47,7 @@ class LruCacheMap<K, V>(
             // remove and put moves entry to end of internal linked list
             backingMap.remove(key)
             backingMap.put(key, it)
+            it
         }
         return value
     }

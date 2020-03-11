@@ -11,6 +11,7 @@
 package arcs.core.host
 
 import arcs.core.data.Plan
+import arcs.core.host.api.Particle
 import arcs.core.storage.api.Handle
 
 /**
@@ -23,6 +24,7 @@ import arcs.core.storage.api.Handle
  */
 data class ParticleContext(
     val particle: Particle,
+    val planParticle: Plan.Particle,
     val handles: MutableMap<String, Handle> = mutableMapOf(),
     var particleState: ParticleState = ParticleState.Instantiated,
     /** Used to detect infinite-crash loop particles */
@@ -35,6 +37,6 @@ data class ParticleContext(
  * each participating [Particle] in the [Arc].
  */
 data class ArcHostContext(
-    var particles: MutableMap<Plan.Particle, ParticleContext> = mutableMapOf(),
+    var particles: MutableMap<String, ParticleContext> = mutableMapOf(),
     var arcState: ArcState = ArcState.NeverStarted
 )

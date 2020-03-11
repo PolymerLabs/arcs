@@ -8,7 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
+package arcs.core.host.api
 
 import arcs.core.storage.api.Handle
 

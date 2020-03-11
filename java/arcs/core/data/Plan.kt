@@ -19,7 +19,8 @@ import arcs.core.type.Type
  */
 open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
-    val particles: List<Particle>
+    val particles: List<Particle>,
+    val arcId: String? = null
 ) {
     /**
      * A [Particle] consists of the information neccessary to instantiate a particle
