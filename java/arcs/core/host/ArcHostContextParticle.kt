@@ -195,7 +195,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
      */
     fun fromTag(arcId: String, particle: Particle, tag: String, handleName: String): Type {
         try {
-            val schema = particle.handles.getEntitySpec(handleName).schema()
+            val schema = particle.handles.getEntitySpec(handleName).SCHEMA
             return when (Tag.valueOf(tag)) {
                 Tag.Singleton -> SingletonType(EntityType(schema))
                 Tag.Collection -> CollectionType(EntityType(schema))
@@ -230,19 +230,19 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
         // Because we don't have references/collections support yet, we use 3 handles/schemas
         val arcStateKey = resolver.createStorageKey(
             capability,
-            ArcHostParticle_ArcHostContext_Spec.SCHEMA,
+            ArcHostParticle_ArcHostContext.SCHEMA,
             "${hostId}_arcState"
         )
 
         val particlesStateKey = resolver.createStorageKey(
             capability,
-            ArcHostParticle_Particles_Spec.SCHEMA,
+            ArcHostParticle_Particles.SCHEMA,
             "${hostId}_arcState_particles"
         )
 
         val handleConnectionsKey = resolver.createStorageKey(
             capability,
-            ArcHostParticle_HandleConnections_Spec.SCHEMA,
+            ArcHostParticle_HandleConnections.SCHEMA,
             "${hostId}_arcState_handleConnections"
         )
 
@@ -258,21 +258,21 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
                             arcStateKey!!,
                             HandleMode.ReadWrite,
                             SingletonType(
-                                EntityType(ArcHostParticle_ArcHostContext_Spec.SCHEMA)
+                                EntityType(ArcHostParticle_ArcHostContext.SCHEMA)
                             )
                         ),
                         "particles" to HandleConnection(
                             particlesStateKey!!,
                             HandleMode.ReadWrite,
                             CollectionType(
-                                EntityType(ArcHostParticle_Particles_Spec.SCHEMA)
+                                EntityType(ArcHostParticle_Particles.SCHEMA)
                             )
                         ),
                         "handleConnections" to HandleConnection(
                             handleConnectionsKey!!,
                             HandleMode.ReadWrite,
                             CollectionType(
-                                EntityType(ArcHostParticle_HandleConnections_Spec.SCHEMA)
+                                EntityType(ArcHostParticle_HandleConnections.SCHEMA)
                             )
                         )
                     )

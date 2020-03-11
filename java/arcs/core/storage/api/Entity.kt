@@ -20,7 +20,6 @@ import kotlin.reflect.KClass
 
 interface Entity {
     var internalId: String
-    fun schemaHash(): String
     fun serialize(): RawEntity
 }
 
@@ -40,8 +39,8 @@ interface EntitySpec<T : Entity> {
      */
     fun deserialize(data: RawEntity): T
 
-    /** Returns the corresponding [Schema] for the specified [Entity]. */
-    fun schema(): Schema
+    /** The corresponding [Schema] for the specified [Entity]. */
+    val SCHEMA: Schema
 }
 
 /**

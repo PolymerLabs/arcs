@@ -46,7 +46,7 @@ describe('recipe2plan', () => {
       await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
       const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
 
-      assert.include(actual, 'EntityType(A_Data_Spec.SCHEMA)');
+      assert.include(actual, 'EntityType(A_Data.SCHEMA)');
       assert.notInclude(actual, 'SingletonType');
     });
     it('creates valid types that are derived from other types (via nesting)', async () => {
@@ -62,7 +62,7 @@ describe('recipe2plan', () => {
       await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
       const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
 
-      assert.include(actual, 'EntityType(A_Data_Spec.SCHEMA)');
+      assert.include(actual, 'EntityType(A_Data.SCHEMA)');
       assert.notInclude(actual, 'SingletonType');
       assert.include(actual, 'CollectionType');
     });
@@ -79,7 +79,7 @@ describe('recipe2plan', () => {
       await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
       const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
 
-      assert.include(actual, 'EntityType(A_Data_Spec.SCHEMA)');
+      assert.include(actual, 'EntityType(A_Data.SCHEMA)');
       assert.notInclude(actual, 'SingletonType');
       assert.include(actual, 'CollectionType');
       assert.include(actual, 'ReferenceType');

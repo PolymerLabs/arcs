@@ -122,9 +122,9 @@ import arcs.core.storage.api.toPrimitiveValue`}
         handleInterfaceType = this.prefixTypeForRuntime(`${handleInterfaces.join('')}${handleConcreteType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`);
       }
       if (this.opts.wasm) {
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.prefixTypeForRuntime(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.prefixTypeForRuntime(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType})`);
       } else {
-        specDecls.push(`"${handleName}" to ${entityType}_Spec()`);
+        specDecls.push(`"${handleName}" to ${entityType}`);
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
       }
 
@@ -255,7 +255,7 @@ Schema(
     ${quote(schemaHash)},
     refinement = ${this.refinement},
     query = ${this.query}
-  )`;
+)`;
   }
 
   typeFor(name: string): string {
@@ -285,12 +285,7 @@ ${lines}
   generate(schemaHash: string, fieldCount: number): string {
     const {name, aliases} = this.node;
 
-    const typeDecls: string[] = [];
-    aliases.forEach(alias => {
-      typeDecls.push(
-          `typealias ${alias} = ${name}`,
-          `typealias ${alias}_Spec = ${name}_Spec`);
-    });
+    const typeDecls = aliases.map(alias => `typealias ${alias} = ${name}`);
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
@@ -331,8 +326,6 @@ ${classDef}${constructorArguments}${classInterface}
 
     override fun hashCode(): Int =
         if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
-
-    override fun schemaHash() = "${schemaHash}"
 ${this.opts.wasm ? `
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
@@ -347,60 +340,52 @@ ${this.opts.wasm ? `
 
     override fun toString() =
       "${name}(${this.fieldsForToString.join(', ')})"
-}
 
-class ${name}_Spec() : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
+    companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
+        ${this.opts.wasm ? '' : `
+        override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 8, true)}.also { SchemaRegistry.register(it) }`}
 
-    override fun create() = ${name}()
-    ${!this.opts.wasm ? `
-    override fun deserialize(data: RawEntity): ${name} {
-        // TODO: only handles singletons for now
-        val rtn = create().copy(${withFields(`${ktUtils.joinWithIndents(this.fieldDeserializes, 32, 3)}`)})
-        rtn.internalId = data.id
-        return rtn
-    }` : ''}
-${this.opts.wasm ? `
-    override fun decode(encoded: ByteArray): ${name}? {
-        if (encoded.isEmpty()) return null
-
-        val decoder = StringDecoder(encoded)
-        val internalId = decoder.decodeText()
-        decoder.validate("|")
-        ${withFields(`
-        ${this.setFieldsToDefaults.join('\n        ')}
-        var i = 0
-        while (i < ${fieldCount} && !decoder.done()) {
-            val _name = decoder.upTo(':').toUtf8String()
-            when (_name) {
-                ${this.decode.join('\n                ')}
-                else -> {
-                    // Ignore unknown fields until type slicing is fully implemented.
-                    when (decoder.chomp(1).toUtf8String()) {
-                        "T", "U" -> decoder.decodeText()
-                        "N" -> decoder.decodeNum()
-                        "B" -> decoder.decodeBool()
-                    }
-                    i--
-                }
-            }
+        override fun create() = ${name}()
+        ${!this.opts.wasm ? `
+        override fun deserialize(data: RawEntity): ${name} {
+            // TODO: only handles singletons for now
+            val rtn = create().copy(${withFields(`${ktUtils.joinWithIndents(this.fieldDeserializes, 36, 4)}`)})
+            rtn.internalId = data.id
+            return rtn
+        }` : `
+        override fun decode(encoded: ByteArray): ${name}? {
+            if (encoded.isEmpty()) return null
+    
+            val decoder = StringDecoder(encoded)
+            val internalId = decoder.decodeText()
             decoder.validate("|")
-            i++
-        }`)}
-        val _rtn = create().copy(
-            ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
-        )
-        _rtn.internalId = internalId
-        return _rtn
-    }` : ''}${this.opts.wasm ? '' : `
-    override fun schema() = SCHEMA
-
-    companion object {
-        val SCHEMA = ${leftPad(this.createSchema(schemaHash), 8, true)}
-
-        init {
-            SchemaRegistry.register(SCHEMA)
-        }
-    }`}
+            ${withFields(`
+            ${this.setFieldsToDefaults.join('\n            ')}
+            var i = 0
+            while (i < ${fieldCount} && !decoder.done()) {
+                val _name = decoder.upTo(':').toUtf8String()
+                when (_name) {
+                    ${this.decode.join('\n                    ')}
+                    else -> {
+                        // Ignore unknown fields until type slicing is fully implemented.
+                        when (decoder.chomp(1).toUtf8String()) {
+                            "T", "U" -> decoder.decodeText()
+                            "N" -> decoder.decodeNum()
+                            "B" -> decoder.decodeBool()
+                        }
+                        i--
+                    }
+                }
+                decoder.validate("|")
+                i++
+            }`)}
+            val _rtn = create().copy(
+                ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
+            )
+            _rtn.internalId = internalId
+            return _rtn
+        }`}
+    }
 }
 
 ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
