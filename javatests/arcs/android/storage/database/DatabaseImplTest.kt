@@ -23,6 +23,7 @@ import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
@@ -1073,6 +1074,36 @@ class DatabaseImplTest {
         assertThat(exception2).hasMessageThat().isEqualTo(
             "Expected storage key dummy://singleton to be an Entity but was a Singleton."
         )
+    }
+
+    @Test
+    fun insertAndGet_roundTrip_double() = runBlockingTest {
+        val largeDouble = 12345678901234567890.0
+        val storageKey = DummyStorageKey("entity")
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("x" to FieldType.Number),
+                collections = emptyMap()
+            )
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                singletons = mapOf("x" to largeDouble.toReferencable())
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdate(storageKey, entity)
+        val entityOut = database.getEntity(storageKey, schema)
+
+        assertThat(entityOut).isEqualTo(entity)
+        val x = entityOut!!.rawEntity.singletons["x"]
+        assertThat(x).isInstanceOf(ReferencablePrimitive::class.java)
+        assertThat((x as ReferencablePrimitive<*>).value).isEqualTo(largeDouble)
     }
 
     @Test
