@@ -115,8 +115,12 @@ class DatabaseImpl(
     private val clientMutex = Mutex()
     private var nextClientId by guardedBy(clientMutex, 1)
     private val clients by guardedBy(clientMutex, mutableMapOf<Int, DatabaseClient>())
-    private val clientFlow: Flow<DatabaseClient> =
-        flow { clientMutex.withLock { clients.values }.forEach { emit(it) } }
+    private val clientFlow: Flow<DatabaseClient> = flow {
+        clientMutex.withLock {
+            // Make a copy of the values to prevent ConcurrentModificationExceptions.
+            clients.values.toList()
+        }.forEach { emit(it) }
+    }
 
     override fun onCreate(db: SQLiteDatabase) = db.transaction {
         CREATE.forEach(db::execSQL)
@@ -362,27 +366,27 @@ class DatabaseImpl(
         when (data) {
             is DatabaseData.Entity -> {
                 counters.increment(DatabaseCounters.INSERTUPDATE_ENTITY)
-                insertOrUpdate(storageKey, data, counters)
+                insertOrUpdateEntity(storageKey, data, counters)
             }
             is DatabaseData.Collection -> {
                 counters.increment(DatabaseCounters.INSERTUPDATE_COLLECTION)
-                insertOrUpdate(storageKey, data, DataType.Collection, counters)
+                insertOrUpdateCollection(storageKey, data, DataType.Collection, counters)
             }
             is DatabaseData.Singleton -> {
                 counters.increment(DatabaseCounters.INSERTUPDATE_SINGLETON)
-                insertOrUpdate(storageKey, data, counters)
+                insertOrUpdateSingleton(storageKey, data, counters)
             }
         }
     }.also { success ->
         if (success) {
-            clientFlow.filter { it.storageKey == storageKey }
-                .onEach { it.onDatabaseUpdate(data, data.databaseVersion, originatingClientId) }
-                .launchIn(CoroutineScope(coroutineContext))
+            notifyClients(storageKey) {
+                it.onDatabaseUpdate(data, data.databaseVersion, originatingClientId)
+            }
         }
     }
 
     @VisibleForTesting
-    suspend fun insertOrUpdate(
+    suspend fun insertOrUpdateEntity(
         storageKey: StorageKey,
         data: DatabaseData.Entity,
         counters: Counters? = null
@@ -466,7 +470,7 @@ class DatabaseImpl(
     /**
      * Inserts a new collection into the database. Can contain primitives or references. Will create
      * and return a new collection ID for the collection. For entity field collections only (handle
-     * collections should use [insertOrUpdate]).
+     * collections should use [insertOrUpdateCollection]).
      */
     private fun insertFieldCollection(
         elements: Set<*>,
@@ -509,7 +513,7 @@ class DatabaseImpl(
     }
 
     @VisibleForTesting
-    suspend fun insertOrUpdate(
+    suspend fun insertOrUpdateCollection(
         storageKey: StorageKey,
         data: DatabaseData.Collection,
         dataType: DataType,
@@ -627,7 +631,7 @@ class DatabaseImpl(
     }
 
     @VisibleForTesting
-    suspend fun insertOrUpdate(
+    suspend fun insertOrUpdateSingleton(
         storageKey: StorageKey,
         data: DatabaseData.Singleton,
         counters: Counters? = null
@@ -644,7 +648,7 @@ class DatabaseImpl(
             )
         }
         // Store the Collection as a Singleton.
-        return insertOrUpdate(storageKey, collectionData, DataType.Singleton, counters)
+        return insertOrUpdateCollection(storageKey, collectionData, DataType.Singleton, counters)
     }
 
     override suspend fun delete(
@@ -652,11 +656,7 @@ class DatabaseImpl(
         originatingClientId: Int?
     ) = writableDatabase.use {
         delete(storageKey, it)
-    }.also {
-        clientFlow.filter { it.storageKey == storageKey }
-            .onEach { it.onDatabaseDelete(originatingClientId) }
-            .launchIn(CoroutineScope(coroutineContext))
-    }
+    }.also { notifyClients(storageKey) { it.onDatabaseDelete(originatingClientId) } }
 
     suspend fun delete(
         storageKey: StorageKey,
@@ -1134,6 +1134,15 @@ class DatabaseImpl(
             typeMap[hash] = id
         }
         return typeMap
+    }
+
+    private suspend fun notifyClients(
+        storageKey: StorageKey,
+        action: suspend (DatabaseClient) -> Unit
+    ) {
+        clientFlow.filter { it.storageKey == storageKey }
+            .onEach(action)
+            .launchIn(CoroutineScope(coroutineContext))
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
