@@ -20,7 +20,7 @@ object IngestionPlan : Plan(
                     StorageKeyParser.parse(""),
                     HandleMode.Write,
                     EntityType(Writer_Data_Spec.SCHEMA),
-                    Ttl.Infinite
+                    Ttl.Days(20)
                 )
             )
         )

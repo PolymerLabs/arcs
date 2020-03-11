@@ -8,7 +8,7 @@ particle Writer
   launch startup
   arcId writingArcId
 recipe Ingestion
-  thing: create persistent 'my-handle-id'
+  thing: create persistent 'my-handle-id' @ttl(20d)
   Writer
     data: writes thing
 
