@@ -18,6 +18,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/common",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/keys",
+        "//java/arcs/core/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
     ],

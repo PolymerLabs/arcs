@@ -17,16 +17,14 @@ import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.driver.DATABASE_DRIVER_PROTOCOL
-import arcs.core.storage.driver.DatabaseDriverProvider
-import arcs.core.storage.driver.DatabaseStorageKey
+import arcs.core.storage.keys.DATABASE_DRIVER_PROTOCOL
+import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RAMDISK_DRIVER_PROTOCOL
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VOLATILE_DRIVER_PROTOCOL
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
-import arcs.jvm.storage.database.testutil.MockDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
@@ -123,7 +121,7 @@ class CapabilitiesResolverTest {
     @Test
     fun capabilitiesResolver_createsStorageKeys() {
         RamDiskStorageKey.registerKeyCreator()
-        DatabaseDriverProvider.configure(MockDatabaseManager(), mapOf<String, Schema>()::get)
+        DatabaseStorageKey.registerKeyCreator()
         val options =
             CapabilitiesResolver.CapabilitiesResolverOptions(ArcId.newForTest("test"))
         val resolver1 = CapabilitiesResolver(options)

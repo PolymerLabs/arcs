@@ -12,7 +12,7 @@
 package arcs.sdk.storage
 
 import arcs.core.storage.StorageKeyParser
-import arcs.core.storage.driver.DatabaseStorageKey
+import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
