@@ -127,6 +127,7 @@ export class PlanGenerator {
       case TtlUnits.Minute: return `Ttl.Minutes`;
       case TtlUnits.Hour: return `Ttl.Hours`;
       case TtlUnits.Day: return `Ttl.Days`;
+      default: return `Ttl.Infinite`;
     }
   }
 
