@@ -17,7 +17,7 @@ import android.os.PersistableBundle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.ActivityTestRule
 import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule

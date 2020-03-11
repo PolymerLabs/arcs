@@ -21,8 +21,8 @@ import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.driver.VolatileEntry
+import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineStart

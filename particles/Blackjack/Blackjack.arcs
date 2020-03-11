@@ -1,3 +1,6 @@
+meta
+  namespace: arcs.tutorials.blackjack
+
 // Encodes a card from 0 to 51. -1 indicates an invalid (or joker).
 schema Card
   value: Number

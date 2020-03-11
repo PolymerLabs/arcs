@@ -14,7 +14,6 @@ def _run_schema2wasm(
         out,
         language_name,
         language_flag,
-        package,
         wasm):
     """Generates source code for the given .arcs schema file.
 
@@ -41,12 +40,10 @@ def _run_schema2wasm(
                    ("--wasm " if wasm else "") +
                    "--outdir $(dirname {OUT}) " +
                    "--outfile $(basename {OUT}) " +
-                   "--package " + package + " " +
                    "{SRC}",
     )
 
-# TODO: Specify the appropriate c++ package name, given the new repo structure
-def arcs_cc_schema(name, src, deps = [], out = None, package = "arcs"):
+def arcs_cc_schema(name, src, deps = [], out = None):
     """Generates a C++ header file for the given .arcs schema file."""
     _run_schema2wasm(
         name = name + "_genrule",
@@ -56,17 +53,15 @@ def arcs_cc_schema(name, src, deps = [], out = None, package = "arcs"):
         language_flag = "--cpp",
         language_name = "C++",
         wasm = False,
-        package = package,
     )
 
-def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
+def arcs_kt_schema(name, srcs, deps = []):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
       deps: list of imported manifests
-      package: package name to use for the generated source code
     """
     outs = []
     for src in srcs:
@@ -83,7 +78,6 @@ def arcs_kt_schema(name, srcs, deps = [], package = "arcs.sdk"):
                 wasm = wasm,
                 language_flag = "--kotlin",
                 language_name = "Kotlin",
-                package = package,
             )
 
     arcs_kt_library(

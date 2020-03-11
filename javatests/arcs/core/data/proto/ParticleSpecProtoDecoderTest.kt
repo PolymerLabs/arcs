@@ -3,6 +3,7 @@ package arcs.core.data.proto
 import arcs.core.data.*
 import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
+import arcs.core.util.Result
 import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.Message.Builder
@@ -28,7 +29,11 @@ fun decodeHandleConnectionSpecProto(protoText: String): HandleConnectionSpec {
 fun decodeParticleSpecProto(protoText: String): ParticleSpec {
     val builder = ParticleSpecProto.newBuilder()
     TextFormat.getParser().merge(protoText, builder)
-    return builder.build().decode()
+    val result = builder.build().decode()
+    return when (result) {
+        is Result.Ok -> result.value
+        is Result.Err -> throw result.thrown
+    }
 }
 
 @RunWith(JUnit4::class)
@@ -92,7 +97,7 @@ class ParticleSpecProtoDecoderTest {
         val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
         assertThat(readerSpec.name).isEqualTo("Reader")
         assertThat(readerSpec.location).isEqualTo("Everywhere")
-        assertThat(readerSpec.connections).isEqualTo(listOf(readConnectionSpec))
+        assertThat(readerSpec.connections).isEqualTo(mapOf("read" to readConnectionSpec))
 
         val readerWriterSpecProto = """
           name: "ReaderWriter"
@@ -105,6 +110,21 @@ class ParticleSpecProtoDecoderTest {
         assertThat(readerWriterSpec.name).isEqualTo("ReaderWriter")
         assertThat(readerWriterSpec.location).isEqualTo("Nowhere")
         assertThat(readerWriterSpec.connections).isEqualTo(
-            listOf(readConnectionSpec, writeConnectionSpec))
+            mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec))
+    }
+
+    @Test
+    fun detectsDuplicateConnections() {
+        val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
+        val readerSpecProto = """
+          name: "Reader"
+          connections { ${readConnectionSpecProto} }
+          connections { ${readConnectionSpecProto} }
+          location: "Everywhere"
+        """.trimIndent()
+        val exception = assertThrows(IllegalArgumentException::class) {
+            decodeParticleSpecProto(readerSpecProto)
+        }
+        assertThat(exception).hasMessageThat().contains("Duplicate connection 'read'")
     }
 }

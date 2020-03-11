@@ -9,6 +9,7 @@ import androidx.lifecycle.LifecycleObserver
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.TestingHost
+import arcs.core.data.Capabilities
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
@@ -49,6 +50,12 @@ open class TestExternalArcHostService(val arcHost: TestingAndroidHost) : Service
                     TestConnectionFactory(serviceContext)
                 )
             )
+        }
+
+        override val arcHostContextCapability = testingCapability
+
+        companion object {
+            var testingCapability = Capabilities.TiedToRuntime
         }
     }
 }

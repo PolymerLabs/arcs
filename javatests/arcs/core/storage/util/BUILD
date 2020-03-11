@@ -17,6 +17,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/util",
         "//third_party/java/junit:junit-android",

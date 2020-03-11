@@ -27,6 +27,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/testutil",
         "//java/arcs/core/util",
@@ -54,7 +55,6 @@ arcs_kt_schema(
     srcs = [
         "test.arcs",
     ],
-    package = "arcs.android.host",
 )
 
 kt_android_library(

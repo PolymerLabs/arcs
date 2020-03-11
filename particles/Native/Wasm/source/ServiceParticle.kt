@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.test
+package arcs
 
 import arcs.sdk.Utils.log
 

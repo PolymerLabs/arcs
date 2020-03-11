@@ -23,6 +23,7 @@ import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
@@ -394,7 +395,7 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        database.insertOrUpdate(key, entity)
+        database.insertOrUpdateEntity(key, entity)
         val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity)
@@ -437,7 +438,7 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        database.insertOrUpdate(key, entity)
+        database.insertOrUpdateEntity(key, entity)
         val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity)
@@ -457,8 +458,7 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        database.insertOrUpdate(key, entity)
-        database.dumpTables("storage_keys", "entities", "fields", "field_values")
+        database.insertOrUpdateEntity(key, entity)
         val entityOut = database.getEntity(key, schema)
         assertThat(entityOut).isEqualTo(entity)
     }
@@ -523,11 +523,11 @@ class DatabaseImplTest {
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
-        database.insertOrUpdate(DummyStorageKey("alice-key"), alice)
-        database.insertOrUpdate(DummyStorageKey("bob-key"), bob)
-        database.insertOrUpdate(DummyStorageKey("charlie-key"), charlie)
+        database.insertOrUpdateEntity(DummyStorageKey("alice-key"), alice)
+        database.insertOrUpdateEntity(DummyStorageKey("bob-key"), bob)
+        database.insertOrUpdateEntity(DummyStorageKey("charlie-key"), charlie)
 
-        database.insertOrUpdate(key, parentEntity)
+        database.insertOrUpdateEntity(key, parentEntity)
         val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(parentEntity)
@@ -627,8 +627,8 @@ class DatabaseImplTest {
             VersionMap("actor" to 2)
         )
 
-        database.insertOrUpdate(key, entity1)
-        database.insertOrUpdate(key, entity2)
+        database.insertOrUpdateEntity(key, entity1)
+        database.insertOrUpdateEntity(key, entity2)
         val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity2)
@@ -653,7 +653,7 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        database.insertOrUpdate(key, entity)
+        database.insertOrUpdateEntity(key, entity)
         val entityOut = database.getEntity(key, schema)
         assertThat(entityOut!!.rawEntity.singletons).containsExactly("text", null)
     }
@@ -677,7 +677,7 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        database.insertOrUpdate(key, entity)
+        database.insertOrUpdateEntity(key, entity)
         val entityOut = database.getEntity(key, schema)
         assertThat(entityOut).isEqualTo(entity)
     }
@@ -704,7 +704,7 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        database.insertOrUpdate(key, entity)
+        database.insertOrUpdateEntity(key, entity)
         val entityOut = database.getEntity(key, schema)
         assertThat(entityOut!!.rawEntity.collections).containsExactly(
             "texts", emptySet<Referencable>(),
@@ -737,7 +737,7 @@ class DatabaseImplTest {
             VERSION_MAP
         )
 
-        database.insertOrUpdate(key, entity)
+        database.insertOrUpdateEntity(key, entity)
         val entityOut = database.getEntity(key, schema)
         assertThat(entityOut).isEqualTo(entity)
     }
@@ -755,7 +755,7 @@ class DatabaseImplTest {
         )
 
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.insertOrUpdate(
+            database.insertOrUpdateEntity(
                 DummyStorageKey("key"),
                 DatabaseData.Entity(
                     RawEntity(
@@ -787,7 +787,7 @@ class DatabaseImplTest {
         )
 
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.insertOrUpdate(
+            database.insertOrUpdateEntity(
                 DummyStorageKey("key"),
                 DatabaseData.Entity(
                     RawEntity(
@@ -918,7 +918,7 @@ class DatabaseImplTest {
             versionMap = VERSION_MAP
         )
 
-        database.insertOrUpdate(key, inputSingleton)
+        database.insertOrUpdateSingleton(key, inputSingleton)
         val outputSingleton = database.getSingleton(key, schema)
 
         assertThat(outputSingleton).isEqualTo(inputSingleton)
@@ -936,7 +936,7 @@ class DatabaseImplTest {
             versionMap = VERSION_MAP
         )
 
-        database.insertOrUpdate(singletonKey, inputSingleton)
+        database.insertOrUpdateSingleton(singletonKey, inputSingleton)
         val outputSingleton = database.getSingleton(singletonKey, schema)
 
         assertThat(outputSingleton).isEqualTo(inputSingleton)
@@ -953,19 +953,19 @@ class DatabaseImplTest {
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
-        database.insertOrUpdate(singletonKey, inputSingleton1)
+        database.insertOrUpdateSingleton(singletonKey, inputSingleton1)
 
         // Test can change reference.
         val inputSingleton2 = inputSingleton1.copy(
             reference = Reference("new-ref", backingKey, VersionMap("new-ref" to 2)),
             databaseVersion = 2
         )
-        database.insertOrUpdate(singletonKey, inputSingleton2)
+        database.insertOrUpdateSingleton(singletonKey, inputSingleton2)
         assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton2)
 
         // Test can clear value.
         val inputSingleton3 = inputSingleton2.copy(reference = null, databaseVersion = 3)
-        database.insertOrUpdate(singletonKey, inputSingleton3)
+        database.insertOrUpdateSingleton(singletonKey, inputSingleton3)
         assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton3)
     }
 
@@ -1004,7 +1004,7 @@ class DatabaseImplTest {
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
-        database.insertOrUpdate(entityKey, entity)
+        database.insertOrUpdateEntity(entityKey, entity)
 
         val exception1 = assertThrows(IllegalArgumentException::class) {
             database.getCollection(entityKey, schema)
@@ -1058,7 +1058,7 @@ class DatabaseImplTest {
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
-        database.insertOrUpdate(singletonKey, singleton)
+        database.insertOrUpdateSingleton(singletonKey, singleton)
 
         val exception1 = assertThrows(IllegalArgumentException::class) {
             database.getCollection(singletonKey, schema)
@@ -1076,6 +1076,36 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun insertAndGet_roundTrip_double() = runBlockingTest {
+        val largeDouble = 12345678901234567890.0
+        val storageKey = DummyStorageKey("entity")
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("x" to FieldType.Number),
+                collections = emptyMap()
+            )
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                singletons = mapOf("x" to largeDouble.toReferencable())
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdateEntity(storageKey, entity)
+        val entityOut = database.getEntity(storageKey, schema)
+
+        assertThat(entityOut).isEqualTo(entity)
+        val x = entityOut!!.rawEntity.singletons["x"]
+        assertThat(x).isInstanceOf(ReferencablePrimitive::class.java)
+        assertThat((x as ReferencablePrimitive<*>).value).isEqualTo(largeDouble)
+    }
+
+    @Test
     fun delete_entity_getsRemoved() = runBlockingTest {
         val entityKey = DummyStorageKey("entity")
         val schema = newSchema("hash")
@@ -1085,7 +1115,7 @@ class DatabaseImplTest {
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
-        database.insertOrUpdate(entityKey, entity)
+        database.insertOrUpdateEntity(entityKey, entity)
 
         database.delete(entityKey)
 
@@ -1106,8 +1136,8 @@ class DatabaseImplTest {
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
-        database.insertOrUpdate(keyToKeep, entity)
-        database.insertOrUpdate(keyToDelete, entity)
+        database.insertOrUpdateEntity(keyToKeep, entity)
+        database.insertOrUpdateEntity(keyToDelete, entity)
 
         database.delete(keyToDelete)
 
@@ -1168,7 +1198,7 @@ class DatabaseImplTest {
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
-        database.insertOrUpdate(singletonKey, singleton)
+        database.insertOrUpdateSingleton(singletonKey, singleton)
 
         database.delete(singletonKey)
 
@@ -1186,8 +1216,8 @@ class DatabaseImplTest {
         val schema = newSchema("hash")
         val reference = Reference("ref1", backingKey, VersionMap("ref1" to 1))
         val singleton = DatabaseData.Singleton(reference, schema, 1, VERSION_MAP)
-        database.insertOrUpdate(keyToKeep, singleton)
-        database.insertOrUpdate(keyToDelete, singleton)
+        database.insertOrUpdateSingleton(keyToKeep, singleton)
+        database.insertOrUpdateSingleton(keyToDelete, singleton)
 
         database.delete(keyToDelete)
 
@@ -1257,6 +1287,53 @@ class DatabaseImplTest {
             assertThat(clientB.updates).isEmpty()
             assertThat(clientB.deletes).isEmpty()
         }
+    }
+
+    @Test
+    fun canAddAndRemoveClientsDuringClientCallback() = runBlockingTest {
+        val storageKey = DummyStorageKey("entity")
+        val schema = newSchema("hash")
+        val entity = DatabaseData.Entity(
+            RawEntity("entity", emptyMap(), emptyMap()),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val otherClient = FakeDatabaseClient(storageKey)
+        val testClient = object : DatabaseClient {
+            override val storageKey = storageKey
+            var updateWasCalled = false
+            var deleteWasCalled = false
+            var extraClientId: Int? = null
+
+            override suspend fun onDatabaseUpdate(
+                data: DatabaseData,
+                version: Int,
+                originatingClientId: Int?
+            ) {
+                updateWasCalled = true
+                extraClientId = database.addClient(otherClient)
+            }
+
+            override suspend fun onDatabaseDelete(originatingClientId: Int?) {
+                deleteWasCalled = true
+                database.removeClient(extraClientId!!)
+            }
+        }
+
+        // Add a bunch of fake clients before and after the one we're testing.
+        repeat(5) { database.addClient(FakeDatabaseClient(storageKey)) }
+        database.addClient(testClient)
+        repeat(5) { database.addClient(FakeDatabaseClient(storageKey)) }
+
+        // Issue an update and check it worked.
+        database.insertOrUpdate(storageKey, entity)
+        assertThat(testClient.updateWasCalled).isTrue()
+        assertThat(testClient.extraClientId).isNotNull()
+
+        // Issue a delete and check it worked.
+        database.delete(storageKey, originatingClientId = null)
+        assertThat(testClient.deleteWasCalled).isTrue()
     }
 
     private fun newSchema(

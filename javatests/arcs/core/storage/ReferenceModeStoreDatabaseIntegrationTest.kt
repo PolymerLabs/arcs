@@ -26,7 +26,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
-import arcs.core.storage.driver.DatabaseStorageKey
+import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput

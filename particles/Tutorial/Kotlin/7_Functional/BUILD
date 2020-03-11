@@ -15,7 +15,6 @@ arcs_manifest(
 arcs_kt_schema(
     name = "functional_schemas",
     srcs = ["Functional.arcs"],
-    package = "arcs.tutorials",
     deps = [":shared_people_schemas"],
 )
 

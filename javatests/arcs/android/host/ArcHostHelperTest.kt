@@ -33,7 +33,7 @@ import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
 import arcs.core.data.HandleMode
 import arcs.core.host.ParticleIdentifier
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.guardedBy
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi

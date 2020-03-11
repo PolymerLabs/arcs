@@ -24,8 +24,6 @@ See [this](../../../particles/Native/Wasm) or [this](../../../particles/Tutorial
       name = "example_schema",
       # Input source.
       src = "example.arcs",
-      # Optionally, specify package where entities will reside.
-      package = "arcs.example",
   )
   ```
 - Write your Kotlin particle(s): See [this Kotlin tutorial](../../../particles/Tutorial/Kotlin) for greater detail.

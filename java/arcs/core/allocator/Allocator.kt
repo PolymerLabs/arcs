@@ -12,6 +12,7 @@ package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.common.Id
+import arcs.core.common.toArcId
 import arcs.core.data.CollectionType
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
@@ -45,7 +46,7 @@ class Allocator(val hostRegistry: HostRegistry) {
      */
     suspend fun startArcForPlan(arcName: String, plan: Plan): ArcId {
         val idGenerator = Id.Generator.newSession()
-        val arcId = idGenerator.newArcId(arcName)
+        val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(arcName)
         // Any unresolved handles ('create' fate) need storage keys
         createStorageKeysIfNecessary(arcId, idGenerator, plan)
         val partitions = computePartitions(arcId, plan)
@@ -53,6 +54,14 @@ class Allocator(val hostRegistry: HostRegistry) {
         writePartitionMap(arcId, partitions)
         startPlanPartitionsOnHosts(partitions)
         return arcId
+    }
+
+    /**
+     * Stop an Arc given its [ArcId].
+     */
+    suspend fun stopArc(arcId: ArcId) {
+        val partitions = readPartitionMap(arcId) ?: return
+        stopPlanPartitionsOnHosts(partitions)
     }
 
     // VisibleForTesting
@@ -66,6 +75,12 @@ class Allocator(val hostRegistry: HostRegistry) {
     private suspend fun startPlanPartitionsOnHosts(partitions: List<Plan.Partition>) =
         partitions.forEach { partition -> lookupArcHost(partition.arcHost).startArc(partition) }
 
+    /**
+     * Asks each [ArcHost] to stop an Arc given a [ArcId].
+     */
+    private suspend fun stopPlanPartitionsOnHosts(partitions: List<Plan.Partition>) =
+        partitions.forEach { partition -> lookupArcHost(partition.arcHost).stopArc(partition) }
+
     // VisibleForTesting
     suspend fun lookupArcHost(arcHost: String) =
         hostRegistry.availableArcHosts().filter { it ->
@@ -73,10 +88,18 @@ class Allocator(val hostRegistry: HostRegistry) {
         }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
 
     /**
-     * Persists [ArcId] and associoated [PlatPartition]s.
+     * Persists [ArcId] and associated [PlanPartition]s.
      */
     private fun writePartitionMap(arcId: ArcId, partitions: List<Plan.Partition>) {
         partitionMap[arcId] = partitions
+        // TODO(cromwellian): implement actual persistence that survives reboot?
+    }
+
+    /**
+     * Reads associated [PlanPartition]s with an [ArcId] .
+     */
+    private fun readPartitionMap(arcId: ArcId): List<Plan.Partition>? {
+        return partitionMap[arcId]
         // TODO(cromwellian): implement actual persistence that survives reboot?
     }
 

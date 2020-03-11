@@ -1,5 +1,7 @@
 // Tutorial: Render Slots
 // Creates two particles, and renders one inside the other using render slots.
+meta
+  namespace: arcs.tutorials
 
 // The "parent" particle. It provides a slot for another particle to be rendered inside it.
 particle ParentParticle in 'RenderSlots.wasm'

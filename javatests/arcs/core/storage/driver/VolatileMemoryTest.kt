@@ -12,6 +12,7 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
+import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

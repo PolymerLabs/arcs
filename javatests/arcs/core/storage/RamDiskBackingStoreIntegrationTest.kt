@@ -20,7 +20,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.data.CountType
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.atomicfu.atomic

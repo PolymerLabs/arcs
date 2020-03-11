@@ -12,8 +12,8 @@ import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {KotlinGenerationUtils, quote, tryImport, upperFirst} from './kotlin-generation-utils.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
-import {StorageKey} from '../runtime/storageNG/storage-key.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
+import {Handle} from '../runtime/recipe/handle.js';
 import {Ttl, TtlUnits} from '../runtime/recipe/ttl.js';
 import {Dictionary} from '../runtime/hot.js';
 
@@ -30,7 +30,7 @@ export class PlanGeneratorError extends Error {
 export class PlanGenerator {
   private specRegistry: Dictionary<string> = {};
 
-  constructor(private resolvedRecipes: Recipe[], private scope: string) {
+  constructor(private resolvedRecipes: Recipe[], private namespace: string) {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
@@ -91,7 +91,7 @@ export class PlanGenerator {
 
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   async createHandleConnection(connection: HandleConnection): Promise<string> {
-    const storageKey = this.createStorageKey(connection.handle.storageKey);
+    const storageKey = this.createStorageKey(connection.handle);
     const mode = this.createDirection(connection.direction);
     const type = await this.createType(connection.type);
     const ttl = this.createTtl(connection.handle.ttl);
@@ -110,9 +110,15 @@ export class PlanGenerator {
     }
   }
 
-  /** Generates a Kotlin `StorageKey` from a StorageKey. */
-  createStorageKey(storageKey: StorageKey | undefined): string {
-    return `StorageKeyParser.parse("${(storageKey || '').toString()}")`;
+  /** Generates a Kotlin `StorageKey` from a recipe Handle. */
+  createStorageKey(handle: Handle): string {
+    if (handle.storageKey) {
+      return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
+    }
+    if (handle.fate === 'create') {
+      return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id)]);
+    }
+    throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
   }
 
   /** Generates a Kotlin `Ttl` from a Ttl. */
@@ -161,14 +167,14 @@ export class PlanGenerator {
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
 
-package ${this.scope}
+package ${this.namespace}
 
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 
-${tryImport('arcs.core.data.*', this.scope)}
-${tryImport('arcs.core.storage.*', this.scope)}
+${tryImport('arcs.core.data.*', this.namespace)}
+${tryImport('arcs.core.storage.*', this.namespace)}
 `;
   }
 

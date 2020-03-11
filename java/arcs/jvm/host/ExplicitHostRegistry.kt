@@ -12,7 +12,7 @@ package arcs.jvm.host
 
 import arcs.core.host.ArcHost
 import arcs.core.host.HostRegistry
-import arcs.core.host.Particle
+import arcs.core.host.api.Particle
 
 /**
  * A [HostRegistry] that discovers the available [ArcHost]s available on this platform by using

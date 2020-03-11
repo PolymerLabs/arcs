@@ -1,6 +1,7 @@
 // Tutorial Demo
 // Shows how to use Arcs features to create a tic-tac-toe game.
-
+meta
+  namespace: arcs.tutorials.tictactoe
 
 schema Person
   name: Text

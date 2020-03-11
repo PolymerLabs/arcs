@@ -12,6 +12,7 @@
 export class ManifestMeta {
   storageKey: string|null;
   name: string|null;
+  namespace: string|null;
 
   constructor() {
     this.storageKey = null;
