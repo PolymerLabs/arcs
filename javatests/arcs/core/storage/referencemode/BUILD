@@ -16,6 +16,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
