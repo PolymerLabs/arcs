@@ -1,11 +1,11 @@
 """Arcs manifest bundling rules."""
 
-load(":util.bzl", "replace_arcs_suffix")
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load(
     "//third_party/java/arcs/build_defs/internal:tools.oss.bzl",
     "arcs_manifest_parse_test",
 )
+load(":util.bzl", "replace_arcs_suffix")
 
 def arcs_manifest(name, srcs, deps = [], visibility = None):
     """Bundles .arcs manifest files with their particle implementations.
