@@ -23,7 +23,7 @@ import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi

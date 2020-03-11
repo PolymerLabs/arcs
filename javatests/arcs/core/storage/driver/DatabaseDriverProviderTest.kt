@@ -22,6 +22,7 @@ import arcs.core.data.SchemaName
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.testutil.assertSuspendingThrows

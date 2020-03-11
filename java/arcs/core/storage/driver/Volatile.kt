@@ -16,6 +16,7 @@ import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog

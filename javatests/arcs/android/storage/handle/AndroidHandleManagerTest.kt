@@ -20,11 +20,11 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.driver.VolatileEntry
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.SetCallbacks
 import arcs.core.storage.handle.SingletonCallbacks
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat

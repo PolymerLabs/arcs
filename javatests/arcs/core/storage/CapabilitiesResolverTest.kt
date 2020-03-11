@@ -20,9 +20,8 @@ import arcs.core.data.SchemaName
 import arcs.core.storage.driver.DATABASE_DRIVER_PROTOCOL
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.DatabaseStorageKey
-import arcs.core.storage.driver.RAMDISK_DRIVER_PROTOCOL
-import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RAMDISK_DRIVER_PROTOCOL
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VOLATILE_DRIVER_PROTOCOL
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -123,7 +122,7 @@ class CapabilitiesResolverTest {
 
     @Test
     fun capabilitiesResolver_createsStorageKeys() {
-        RamDisk.clear()
+        RamDiskStorageKey.registerKeyCreator()
         DatabaseDriverProvider.configure(MockDatabaseManager(), mapOf<String, Schema>()::get)
         val options =
             CapabilitiesResolver.CapabilitiesResolverOptions(ArcId.newForTest("test"))

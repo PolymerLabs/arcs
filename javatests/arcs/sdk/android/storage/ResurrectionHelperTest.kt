@@ -22,7 +22,7 @@ import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGI
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_NOTIFIERS
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_PACKAGE_NAME
 import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test

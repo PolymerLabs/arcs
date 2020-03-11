@@ -21,7 +21,7 @@ import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
