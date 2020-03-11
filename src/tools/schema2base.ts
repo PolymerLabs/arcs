@@ -31,11 +31,10 @@ export interface ClassGenerator {
 }
 
 export abstract class Schema2Base {
-  scope: string;
+  namespace: string;
 
   constructor(readonly opts: minimist.ParsedArgs) {
     Runtime.init('../..');
-    this.scope = this.opts.package || 'arcs.sdk';
   }
 
   async call() {
@@ -60,6 +59,12 @@ export abstract class Schema2Base {
     if (manifest.errors.some(e => e.severity !== 'warning')) {
       return;
     }
+
+    this.namespace = manifest.meta.namespace;
+    if (!this.namespace) {
+      throw new Error(`Namespace is required in '${src}' for code generation.`);
+    }
+
     const classes = await this.processManifest(manifest);
     if (classes.length === 0) {
       console.warn(`Could not find any particle connections with schemas in '${src}'`);

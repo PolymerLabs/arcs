@@ -54,7 +54,6 @@ arcs_kt_schema(
     srcs = [
         "test.arcs",
     ],
-    package = "arcs.android.host",
 )
 
 kt_android_library(

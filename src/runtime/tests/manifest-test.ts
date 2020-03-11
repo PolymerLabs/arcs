@@ -606,6 +606,16 @@ ${particleStr1}
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
   });
+  it('parses meta namespace section', async () => {
+    const manifest = await parseManifest(`
+      meta
+        name: 'Awesome Arc'
+        namespace: com.some.namespace  
+      particle P
+        data: writes * {name: Text, age: Number}
+    `);
+    assert.equal(manifest.meta.namespace, 'com.some.namespace');
+  });
   describe('refinement types', async () => {
     it('can construct manifest containing schema with refinement types', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await parseManifest(`

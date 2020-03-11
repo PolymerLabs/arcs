@@ -188,6 +188,12 @@ export interface MetaStorageKey extends BaseNode {
   kind: 'storageKey';
 }
 
+export interface MetaNamespace extends BaseNode {
+  key: 'namespace';
+  value: string;
+  kind: 'namespace';
+}
+
 export type MetaItem = MetaStorageKey | MetaName;
 
 export interface Particle extends BaseNode {
@@ -772,7 +778,7 @@ export type ParticleHandleConnectionType = TypeVariable|CollectionType|
     BigCollectionType|ReferenceType|SlotType|SchemaInline|TypeName;
 
 // Note that ManifestStorage* are not here, as they do not have 'kind'
-export type All = Import|Meta|MetaName|MetaStorageKey|Particle|ParticleHandleConnection|
+export type All = Import|Meta|MetaName|MetaStorageKey|MetaNamespace|Particle|ParticleHandleConnection|
     ParticleInterface|RecipeHandle|Resource|Interface|InterfaceArgument|InterfaceInterface|
     InterfaceSlot;
 

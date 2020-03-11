@@ -29,7 +29,7 @@ export class PlanGeneratorError extends Error {
 export class PlanGenerator {
   private specRegistry: Dictionary<string> = {};
 
-  constructor(private resolvedRecipes: Recipe[], private scope: string) {
+  constructor(private resolvedRecipes: Recipe[], private namespace: string) {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
@@ -150,14 +150,14 @@ export class PlanGenerator {
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
 
-package ${this.scope}
+package ${this.namespace}
 
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 
-${tryImport('arcs.core.data.*', this.scope)}
-${tryImport('arcs.core.storage.*', this.scope)}
+${tryImport('arcs.core.data.*', this.namespace)}
+${tryImport('arcs.core.storage.*', this.namespace)}
 `;
   }
 

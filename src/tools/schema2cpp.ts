@@ -75,7 +75,7 @@ export class Schema2Cpp extends Schema2Base {
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
-    return new CppGenerator(node, this.scope.replace(/\./g, '::'));
+    return new CppGenerator(node, this.namespace.replace(/\./g, '::'));
   }
 
   generateParticleClass(particle: ParticleSpec): string {

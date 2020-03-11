@@ -1,3 +1,5 @@
+meta
+  namespace: arcs.android.host
 
 schema Person
   name: Text

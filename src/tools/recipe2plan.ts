@@ -11,6 +11,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {StorageKeyRecipeResolver} from './storage-key-recipe-resolver.js';
 import {PlanGenerator} from './plan-generator.js';
 import {Flags} from '../runtime/flags.js';
+import {assert} from '../platform/assert-node.js';
 
 
 /**
@@ -20,13 +21,14 @@ import {Flags} from '../runtime/flags.js';
  * @param scope kotlin package name
  * @return Generated Kotlin code.
  */
-export async function recipe2plan(path: string, scope: string): Promise<string> {
+export async function recipe2plan(path: string): Promise<string> {
   return await Flags.withDefaultReferenceMode(async () => {
     const manifest = await Runtime.parseFile(path);
 
+    assert(manifest.meta.namespace, `Namespace is required in '${path}' for code generation.`);
     const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
-    const generator = new PlanGenerator(recipes, scope);
+    const generator = new PlanGenerator(recipes, manifest.meta.namespace);
 
     return generator.generate();
   })();

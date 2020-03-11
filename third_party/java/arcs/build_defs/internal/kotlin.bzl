@@ -246,6 +246,8 @@ def arcs_kt_particles(
             kotlin_wasm_annotations(
                 name = particle + "-wasm-annotations",
                 particle = particle,
+                # TODO: Package name should be parsed from the
+                # Arcs manifest, instead of being passed explicitly.
                 package = package,
                 out = wasm_annotations_file,
             )
@@ -322,13 +324,12 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             data = data,
         )
 
-def arcs_kt_plan(name, src, package, deps = [], out = None, visibility = None):
+def arcs_kt_plan(name, src, deps = [], out = None, visibility = None):
     """Converts recipes in manifests into Kotlin Plans.
 
     Args:
       name: the name of the target to create
       src: an Arcs manifest file
-      package: name of kotlin package for generated file
       deps: list of dependencies (other manifests)
       out: the name of the output artifact (a Kotlin file).
       visibility: list of visibilities
@@ -341,7 +342,7 @@ def arcs_kt_plan(name, src, package, deps = [], out = None, visibility = None):
         outs = outs,
         deps = deps,
         progress_message = "Generating Plans",
-        sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) --package " + package + " {SRC}",
+        sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
     )
 
 def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], data = []):

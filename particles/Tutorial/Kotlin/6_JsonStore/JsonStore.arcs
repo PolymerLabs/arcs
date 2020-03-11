@@ -1,5 +1,7 @@
 // Tutorial: JSON Store
 // Loads data stored in a JSON file.
+meta
+  namespace: arcs.tutorials
 
 // Imports contents of another manifest via a relative path from this manifest.
 import 'PeopleSchemas.arcs'

@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.test
+package arcs
 
 import arcs.sdk.wasm.WasmHandle
 import arcs.sdk.Utils.abort

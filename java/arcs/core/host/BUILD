@@ -9,7 +9,6 @@ arcs_kt_schema(
     srcs = [
         "ArcHostContext.arcs",
     ],
-    package = "arcs.core.host",
 )
 
 arcs_kt_library(

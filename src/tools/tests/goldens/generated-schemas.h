@@ -6,7 +6,7 @@
 #error arcs.h must be included before entity class headers
 #endif
 
-namespace arcs {
+namespace arcs::golden {
 
 // Aliased as Gold_Data_Ref, Gold_Alias
 class GoldInternal1 {
@@ -139,7 +139,7 @@ inline std::string internal::Accessor::encode_entity(const GoldInternal1& entity
   return encoder.result();
 }
 
-}  // namespace arcs
+}  // namespace arcs::golden
 
 // For STL unordered associative containers. Entities will need to be std::move()-inserted.
 template<>
@@ -149,7 +149,7 @@ struct std::hash<arcs::GoldInternal1> {
   }
 };
 
-namespace arcs {
+namespace arcs::golden {
 
 class Gold_QCollection {
 public:
@@ -404,7 +404,7 @@ inline std::string internal::Accessor::encode_entity(const Gold_QCollection& ent
   return encoder.result();
 }
 
-}  // namespace arcs
+}  // namespace arcs::golden
 
 // For STL unordered associative containers. Entities will need to be std::move()-inserted.
 template<>
@@ -414,7 +414,7 @@ struct std::hash<arcs::Gold_QCollection> {
   }
 };
 
-namespace arcs {
+namespace arcs::golden {
 
 class Gold_Data {
 public:
@@ -627,7 +627,7 @@ inline std::string internal::Accessor::encode_entity(const Gold_Data& entity) {
   return encoder.result();
 }
 
-}  // namespace arcs
+}  // namespace arcs::golden
 
 // For STL unordered associative containers. Entities will need to be std::move()-inserted.
 template<>

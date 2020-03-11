@@ -9,7 +9,6 @@ licenses(["notice"])
 arcs_kt_schema(
     name = "blackjack_schemas",
     srcs = ["Blackjack.arcs"],
-    package = "arcs.tutorials.blackjack",
 )
 
 arcs_kt_particles(
