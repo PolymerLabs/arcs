@@ -115,7 +115,7 @@ export class PlanGenerator {
     if (!storageKey && handle.fate === 'create') {
       return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id)]);
     }
-    return ktUtils.applyFun('StorageKeyParser.parse', [(storageKey || '').toString()]);
+    return ktUtils.applyFun('StorageKeyParser.parse', [quote((storageKey || '').toString())]);
   }
 
   /** Generates a Kotlin `core.arc.type.Type` from a Type. */
