@@ -12,6 +12,7 @@ arcs_kt_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/common",
+        "//java/arcs/core/data",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_coroutines",
