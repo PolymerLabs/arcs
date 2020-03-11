@@ -34,7 +34,7 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
     arcs_manifest_parse_test(
         name = name + "_parse_test",
         srcs = srcs,
-        deps = all_files,
+        deps = deps,
     )
 
 def arcs_manifest_json(name, srcs = [], deps = [], out = None, visibility = None):
