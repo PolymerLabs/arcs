@@ -31,8 +31,7 @@ fun <T, U> combineUpdates(
     }
 }
 
-
-private fun<T> WasmHandleEvents<T>.getContent(): T = when(this) {
+private fun <T> WasmHandleEvents<T>.getContent(): T = when (this) {
     is WasmCollectionImpl<*> -> this.fetchAll() as T
     is WasmSingletonImpl<*> -> this.fetch() as T
     else -> throw IllegalArgumentException("Unknown WasmHandleEvents type found")
