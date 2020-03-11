@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -71,7 +72,7 @@ class ProxyCallbackManagerTest {
             true
         }
 
-        val shouldBeReceivedByRegistered = makeMessage("bar", 1)
+        val shouldBeReceivedByRegistered = makeMessage("bar", 2)
 
         manager.register(registeringCallback)
 
@@ -96,7 +97,7 @@ class ProxyCallbackManagerTest {
                 true
             }
 
-        val shouldBeReceivedByRegistered = makeMessage("bar", 1)
+        val shouldBeReceivedByRegistered = makeMessage("bar", 2)
 
         manager.register(registeringCallback)
 

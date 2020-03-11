@@ -71,15 +71,15 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     ): Boolean {
         val targets = mutex.withLock {
             if (exceptTo == null) {
-                callbacks.values.toList()
+                callbacks.toList()
             } else {
-                callbacks.filter { it.key != exceptTo }.values.toList()
+                callbacks.filter { it.key != exceptTo }.toList()
             }
         }
         // Call our targets outside of the mutex so we don't deadlock if a callback leads to another
         // registration.
         return targets.fold(true) { success, callback ->
-            success && callback(message)
+            success && callback.second(message.withId(callback.first))
         }
     }
 

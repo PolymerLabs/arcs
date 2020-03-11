@@ -19,6 +19,7 @@ import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
 import arcs.core.storage.ProxyMessage.SyncRequest
 import arcs.core.storage.util.ProxyCallbackManager
+import arcs.core.storage.util.RandomProxyCallbackManager
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch

@@ -22,6 +22,13 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /** [Type] of the message. */
     internal open val type: Type
 ) {
+
+    fun withId(id: Int): ProxyMessage<Data, Op, ConsumerData> = when (this) {
+        is SyncRequest -> copy(id = id)
+        is ModelUpdate -> copy(id = id)
+        is Operations -> copy(id = id)
+    }
+
     /** A request to sync data with the store. */
     data class SyncRequest<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         override val id: Int?,
