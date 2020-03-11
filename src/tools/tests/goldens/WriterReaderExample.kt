@@ -20,7 +20,7 @@ object IngestionPlan : Plan(
                     CreateableStorageKey("my-handle-id"),
                     HandleMode.Write,
                     EntityType(Writer_Data_Spec.SCHEMA),
-                    null
+                    Ttl.Days(20)
                 )
             )
         )
@@ -38,7 +38,7 @@ object ConsumptionPlan : Plan(
                     ),
                     HandleMode.Read,
                     EntityType(Reader_Data_Spec.SCHEMA),
-                    null
+                    Ttl.Infinite
                 )
             )
         )

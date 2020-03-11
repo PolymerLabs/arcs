@@ -14,6 +14,7 @@ import {KotlinGenerationUtils, quote, tryImport, upperFirst} from './kotlin-gene
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
+import {Ttl, TtlUnits} from '../runtime/recipe/ttl.js';
 import {Dictionary} from '../runtime/hot.js';
 
 const ktUtils = new KotlinGenerationUtils();
@@ -93,7 +94,7 @@ export class PlanGenerator {
     const storageKey = this.createStorageKey(connection.handle);
     const mode = this.createDirection(connection.direction);
     const type = await this.createType(connection.type);
-    const ttl = 'null';
+    const ttl = this.createTtl(connection.handle.ttl);
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], 24);
   }
@@ -118,6 +119,22 @@ export class PlanGenerator {
       return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id)]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
+  }
+
+  /** Generates a Kotlin `Ttl` from a Ttl. */
+  createTtl(ttl: Ttl): string {
+    if (ttl.isInfinite) return 'Ttl.Infinite';
+    return ktUtils.applyFun(this.createTtlUnit(ttl.units), [ttl.count.toString()]);
+  }
+
+  /** Translates TtlUnits to Kotlin Ttl case classes. */
+  createTtlUnit(ttlUnits: TtlUnits): string {
+    switch (ttlUnits) {
+      case TtlUnits.Minute: return `Ttl.Minutes`;
+      case TtlUnits.Hour: return `Ttl.Hours`;
+      case TtlUnits.Day: return `Ttl.Days`;
+      default: return `Ttl.Infinite`;
+    }
   }
 
   /** Generates a Kotlin `core.arc.type.Type` from a Type. */
