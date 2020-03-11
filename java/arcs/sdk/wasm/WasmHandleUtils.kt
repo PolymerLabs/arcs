@@ -26,33 +26,14 @@ fun <T, U> combineUpdates(
     val handles = listOf(handle1, handle2)
     handles.forEach { handle ->
         handle.onUpdate {
-            handle1.getContent()
-            handle2.getContent()
-            log("yo yo yo")
             action(handle1.getContent(), handle2.getContent())
         }
     }
 }
 
 
-private fun<T> WasmHandleEvents<T>.getContent(): T {
-    val c = this::class.simpleName!!
-    log(c)
-    if (c == "WasmCollectionImpl") {
-        val h = this as WasmCollectionImpl<*>
-        return h.fetchAll() as T
-    }
-    else {
-        val h = this as WasmSingletonImpl<*>
-        return h.fetch() as T
-    }
+private fun<T> WasmHandleEvents<T>.getContent(): T = when(this) {
+    is WasmCollectionImpl<*> -> this.fetchAll() as T
+    is WasmSingletonImpl<*> -> this.fetch() as T
+    else -> throw IllegalArgumentException("Unknown WasmHandleEvents type found")
 }
-
-//    when(this) {
-//
-//    is WasmCollectionImpl<*, T> -> this.fetchAll()
-//    is WasmSingletonImpl<*> -> this.fetch()
-//    else -> throw IllegalArgumentException(
-//        "Could not convert $this to Boolean, expected 0 or 1."
-//    )
-//}
