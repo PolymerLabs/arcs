@@ -195,7 +195,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
      */
     fun fromTag(arcId: String, particle: Particle, tag: String, handleName: String): Type {
         try {
-            val schema = particle.handles.getEntitySpec(handleName).schema()
+            val schema = particle.handles.getEntitySpec(handleName).SCHEMA
             return when (Tag.valueOf(tag)) {
                 Tag.Singleton -> SingletonType(EntityType(schema))
                 Tag.Collection -> CollectionType(EntityType(schema))
