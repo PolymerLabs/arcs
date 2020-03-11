@@ -8,3 +8,17 @@ def replace_arcs_suffix(src, suffix = ""):
     if src.startswith("//"):
         src = src.split(":")[1]
     return src.replace(".arcs", "").replace("_", "-").replace(".", "-") + suffix
+
+def merge_lists(*lists):
+    """Merges the given lists, ignoring duplicate entries.
+
+    Args:
+      *lists: lists of strings to merge
+    Returns:
+      A list of strings
+    """
+    result = {}
+    for x in lists:
+        for elem in x:
+            result[elem] = 1
+    return result.keys()

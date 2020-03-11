@@ -23,17 +23,14 @@ load(
     "java_test",
 )
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load(
-    "//third_party/java/arcs/build_defs/internal:kotlin_wasm_annotations.bzl",
-    "kotlin_wasm_annotations",
-)
-load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load(
     "//tools/build_defs/kotlin:rules.bzl",
     "kt_android_library",
     "kt_jvm_library",
 )
+load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
+load(":util.bzl", "merge_lists", "replace_arcs_suffix")
 
 ARCS_SDK_DEPS = ["//third_party/java/arcs"]
 _WASM_SUFFIX = "-wasm"
@@ -77,10 +74,10 @@ def arcs_kt_jvm_library(**kwargs):
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
     exports = kwargs.pop("exports", [])
     kotlincopts = kwargs.pop("kotlincopts", [])
-    kwargs["kotlincopts"] = _merge_lists(kotlincopts, KOTLINC_OPTS)
+    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS)
     if not IS_BAZEL:
         kwargs["constraints"] = constraints
-        kwargs["disable_lint_checks"] = _merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
+        kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
 
     if exports:
         # kt_jvm_library doesn't support the "exports" property. Instead, we
@@ -113,7 +110,7 @@ def arcs_kt_native_library(**kwargs):
       **kwargs: Set of args to forward to kt_native_library
     """
     kotlincopts = kwargs.pop("kotlincopts", [])
-    kwargs["kotlincopts"] = _merge_lists(kotlincopts, KOTLINC_OPTS)
+    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS)
     kt_native_library(**kwargs)
 
 def arcs_kt_js_library(**kwargs):
@@ -128,7 +125,7 @@ def arcs_kt_js_library(**kwargs):
         return
 
     kotlincopts = kwargs.pop("kotlincopts", [])
-    kwargs["kotlincopts"] = _merge_lists(kotlincopts, KOTLINC_OPTS)
+    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS)
     kt_js_library(**kwargs)
 
 def arcs_kt_library(
@@ -426,13 +423,6 @@ def _check_platforms(platforms):
                 platform,
                 ", ".join(ALL_PLATFORMS),
             )
-
-def _merge_lists(*lists):
-    result = {}
-    for x in lists:
-        for elem in x:
-            result[elem] = 1
-    return result.keys()
 
 def _to_jvm_dep(dep):
     return dep

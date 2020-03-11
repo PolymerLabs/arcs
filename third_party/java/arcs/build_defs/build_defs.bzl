@@ -26,6 +26,10 @@ load(
     _arcs_cc_schema = "arcs_cc_schema",
     _arcs_kt_schema = "arcs_kt_schema",
 )
+load(
+    "//third_party/java/arcs/build_defs/internal:tools.oss.bzl",
+    _arcs_manifest_parse_test = "arcs_manifest_parse_test",
+)
 load(":sigh.bzl", "sigh_command")
 
 # Re-export rules from various other files.
@@ -53,6 +57,8 @@ arcs_manifest = _arcs_manifest
 arcs_manifest_bundle = _arcs_manifest_bundle
 
 arcs_manifest_json = _arcs_manifest_json
+
+arcs_manifest_parse_test = _arcs_manifest_parse_test
 
 arcs_manifest_proto = _arcs_manifest_proto
 
