@@ -102,15 +102,11 @@ export class PlanGenerator {
   /** Generates a Kotlin `HandleMode` from a Direction. */
   createDirection(direction: Direction): string {
     switch (direction) {
-      case 'reads':
-        return 'HandleMode.Read';
-      case 'writes':
-        return 'HandleMode.Write';
-      case 'reads writes':
-        return 'HandleMode.ReadWrite';
-      default:
-        throw new PlanGeneratorError(
-          `HandleConnection direction '${direction}' is not supported.`);
+      case 'reads': return 'HandleMode.Read';
+      case 'writes': return 'HandleMode.Write';
+      case 'reads writes': return 'HandleMode.ReadWrite';
+      default: throw new PlanGeneratorError(
+        `HandleConnection direction '${direction}' is not supported.`);
     }
   }
 
