@@ -334,15 +334,22 @@ def arcs_kt_plan(name, src, deps = [], out = None, visibility = None):
       out: the name of the output artifact (a Kotlin file).
       visibility: list of visibilities
     """
-    outs = [out] if out != None else [replace_arcs_suffix(src, ".kt")]
+    outs = [out] if out != None else [replace_arcs_suffix(src, "_GeneratedPlan.kt")]
 
     sigh_command(
-        name = name,
+        name = name + "_GeneratedPlan",
         srcs = [src],
         outs = outs,
         deps = deps,
         progress_message = "Generating Plans",
         sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+    )
+
+    arcs_kt_library(
+        name = name,
+        srcs = outs,
+        platforms = ["jvm"],
+        deps = ARCS_SDK_DEPS + deps,
     )
 
 def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], data = []):
