@@ -22,6 +22,7 @@ arcs_kt_library(
         ":recipe_java_proto_lite",
         "//java/arcs/core/data",
         "//java/arcs/core/type",
+        "//java/arcs/core/util",
     ],
 )
 
