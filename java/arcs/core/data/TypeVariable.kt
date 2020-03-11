@@ -23,7 +23,7 @@ data class TypeVariable(val name: String) : Type {
 
     override fun toString(options: Type.ToStringOptions) = "${this.tag}($name)"
 
-    /** [Literal] representation of the name.. */
+    /** [Literal] representation of the name. */
     data class LiteralName(val name: String) : arcs.core.common.Literal
 
     /** [TypeLiteral] representation of a [TypeVariable]. */
