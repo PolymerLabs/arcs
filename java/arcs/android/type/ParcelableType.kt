@@ -18,6 +18,7 @@ import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
+import arcs.core.data.TypeVariable
 import arcs.core.type.Tag
 import arcs.core.type.Type
 
@@ -112,6 +113,24 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
         }
     }
 
+    /** [Parcelable] variant of [arcs.core.data.TypeVariable]. */
+    data class TypeVariable(
+        override val actual: arcs.core.data.TypeVariable
+    ) : ParcelableType(actual) {
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
+            parcel.writeString(actual.name)
+        }
+
+        companion object CREATOR : Parcelable.Creator<TypeVariable> {
+            override fun createFromParcel(parcel: Parcel) = TypeVariable(
+                actual = TypeVariable(requireNotNull(parcel.readString()))
+            )
+
+            override fun newArray(size: Int): Array<TypeVariable?> = arrayOfNulls(size)
+        }
+    }
+
     companion object CREATOR : Parcelable.Creator<ParcelableType> {
         override fun createFromParcel(parcel: Parcel): ParcelableType =
             when (Tag.values()[parcel.readInt()]) {
@@ -120,6 +139,7 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
                 Tag.Entity -> EntityType.createFromParcel(parcel)
                 Tag.Reference -> ReferenceType.createFromParcel(parcel)
                 Tag.Singleton -> SingletonType.createFromParcel(parcel)
+                Tag.TypeVariable -> TypeVariable.createFromParcel(parcel)
             }
 
         override fun newArray(size: Int): Array<ParcelableType?> = arrayOfNulls(size)
@@ -133,6 +153,7 @@ fun Type.toParcelable(): ParcelableType = when (tag) {
     Tag.Entity -> ParcelableType.EntityType(this as EntityType)
     Tag.Reference -> ParcelableType.ReferenceType(this as ReferenceType<*>)
     Tag.Singleton -> ParcelableType.SingletonType(this as SingletonType<*>)
+    Tag.TypeVariable -> ParcelableType.TypeVariable(this as TypeVariable)
 }
 
 /** Writes a [Type] to the [Parcel]. */
