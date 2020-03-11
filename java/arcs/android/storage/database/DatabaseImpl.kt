@@ -492,7 +492,7 @@ class DatabaseImpl(
         val content = ContentValues().apply {
             put("collection_id", collectionId)
         }
-        // TODO: Don't do this one-by-one.
+        // TODO(#4889): Don't do this one-by-one.
         val valueIds = if (isPrimitiveType(typeId)) {
             elements.map { getPrimitiveValueId(it as Referencable, typeId, db) }
         } else {
@@ -577,7 +577,8 @@ class DatabaseImpl(
                 return@transaction false
             }
 
-            // TODO: Don't blindly delete everything and re-insert: only insert/remove the diff.
+            // TODO(#4889): Don't blindly delete everything and re-insert: only insert/remove the
+            // diff.
             when (dataType) {
                 DataType.Collection ->
                     counters?.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
@@ -608,7 +609,7 @@ class DatabaseImpl(
         val content = ContentValues().apply {
             put("collection_id", collectionId)
         }
-        // TODO: Don't do this one-by-one.
+        // TODO(#4889): Don't do this one-by-one.
         data.values
             .map {
                 getEntityReferenceId(it, db)
@@ -793,7 +794,7 @@ class DatabaseImpl(
         db: SQLiteDatabase,
         counters: Counters? = null
     ): StorageKeyId? = db.transaction {
-        // TODO: Use an LRU cache.
+        // TODO(#4889): Use an LRU cache.
         counters?.increment(DatabaseCounters.GET_ENTITY_STORAGEKEY_ID)
         rawQuery(
             """
@@ -1029,7 +1030,7 @@ class DatabaseImpl(
         schemaTypeId: TypeId,
         db: SQLiteDatabase
     ): Map<FieldName, SchemaField> {
-        // TODO: Use an LRU cache.
+        // TODO(#4889): Use an LRU cache.
         val fields = mutableMapOf<FieldName, SchemaField>()
         db.rawQuery(
             "SELECT name, id, type_id, is_collection FROM fields WHERE parent_type_id = ?",
@@ -1061,7 +1062,7 @@ class DatabaseImpl(
             "Expected value to be a ReferencablePrimitive but was $primitiveValue."
         }
         val value = primitiveValue.value
-        // TODO: Cache the most frequent values somehow.
+        // TODO(#4889): Cache the most frequent values somehow.
         if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
             counters?.increment(DatabaseCounters.GET_BOOLEAN_VALUE_ID)
             return when (value) {
@@ -1174,7 +1175,7 @@ class DatabaseImpl(
     }
 
     /** Returns a base-64 string representation of the [VersionMapProto] for this [VersionMap]. */
-    // TODO: Find a way to store raw bytes as BLOBs, rather than having to base-64 encode.
+    // TODO(#4889): Find a way to store raw bytes as BLOBs, rather than having to base-64 encode.
     private fun VersionMap.toProtoLiteral() =
         Base64.encodeToString(toProto().toByteArray(), Base64.DEFAULT)
 
@@ -1220,7 +1221,6 @@ class DatabaseImpl(
     companion object {
         private const val DB_VERSION = 1
 
-        // TODO: Add constants for column names?
         private const val TABLE_STORAGE_KEYS = "storage_keys"
         private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
         private const val TABLE_COLLECTIONS = "collections"
