@@ -58,7 +58,7 @@ class Allocator(val hostRegistry: HostRegistry) {
     /**
      * Stop an Arc given its [ArcId].
      */
-    suspend fun stopArc(arcId: ArcId ) {
+    suspend fun stopArc(arcId: ArcId) {
         val partitions = readPartitionMap(arcId) ?: return
         stopPlanPartitionsOnHosts(partitions)
     }
@@ -97,11 +97,10 @@ class Allocator(val hostRegistry: HostRegistry) {
     /**
      * Reads associated [PlanPartition]s with an [ArcId] .
      */
-    private fun readPartitionMap(arcId: ArcId) : List<Plan.Partition>? {
+    private fun readPartitionMap(arcId: ArcId): List<Plan.Partition>? {
         return partitionMap[arcId]
         // TODO(cromwellian): implement actual persistence that survives reboot?
     }
-
 
     /**
      * Finds [HandleConnection] instances which were unresolved at build time
