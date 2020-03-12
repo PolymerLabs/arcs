@@ -814,6 +814,23 @@ function runTests(args: string[]): boolean {
           runner.abort();
           throw reason;
         });
+        const testTitles = new Map();
+        beforeEach(function () {
+          const title = this.currentTest.title;
+          testTitles.set(title, (testTitles.get(title) || 0) + 1);
+        });
+        after(function () {
+          let header = true;
+          for (let title of testTitles.keys()) {
+            if (testTitles.get(title) > 1) {
+              if (header) {
+                header = false;
+                console.warn(\`WARNING: Test names re-used:\`);
+              }
+              console.warn(\`    \${title}\`);
+            }
+          }
+        });
       })();
     `;
     const runnerFile = path.join(tempDir, 'runner.js');
