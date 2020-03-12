@@ -12,7 +12,7 @@
 package arcs.core.storage.ttl
 
 import arcs.core.common.Referencable
-import arcs.core.data.RawEntity
+import arcs.core.data.TimeRange
 import arcs.core.storage.handle.SetHandle
 import arcs.core.storage.handle.SingletonHandle
 import arcs.core.util.Time
@@ -22,18 +22,9 @@ import arcs.core.util.Time
  * for example, removal of expired data.
  */
 abstract class RemovalManager(val time: Time) {
-
-    data class TimeRange(val startMillis: Long?, val endMillis: Long?) {
-        fun inRange(timeMillis: Long): Boolean {
-            return timeMillis != RawEntity.UNINITIALIZED_TIMESTAMP &&
-                (startMillis?.let { timeMillis > startMillis } ?: true) &&
-                (endMillis?.let { timeMillis < endMillis } ?: true)
-        }
-    }
-
     /** Removes all expired items from the given singleton handle. */
     suspend fun <T : Referencable> removeExpired(handle: SingletonHandle<T>) {
-        handle.fetch()?.takeIf { it.expirationTimestamp > time.currentTimeMillis }
+        handle.fetch()?.takeIf { it.expirationTimestamp < time.currentTimeMillis }
             ?.let { handle.clear() }
     }
 
@@ -49,7 +40,7 @@ abstract class RemovalManager(val time: Time) {
     suspend fun <T : Referencable> removeExpired(handle: SetHandle<T>) {
         val nowMillis = time.currentTimeMillis
         handle.fetchAll().forEach { data ->
-            takeIf { data.expirationTimestamp > nowMillis }?.apply { handle.remove(data) }
+            takeIf { data.expirationTimestamp < nowMillis }?.apply { handle.remove(data) }
         }
     }
 
