@@ -123,7 +123,7 @@ describe('recipe2plan', () => {
       }
     });
     it('creates a stable create handle name from resolved recipes when the id is missing', async () => {
-      const manifest = await Manifest.parse(`\ 
+      const manifest = await Manifest.parse(`\
      particle A
        data: writes Thing {num: Number}
        
