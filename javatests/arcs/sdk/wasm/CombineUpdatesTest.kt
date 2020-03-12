@@ -31,12 +31,12 @@ class CombineUpdatesTest : AbstractCombineUpdatesTest() {
             "checkEvents" -> {
                 if (singleHandleCount != 1) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Single Handle OnUpdate called ${singleHandleCount} times")
+                        CombineUpdatesTest_Errors(msg = "Single Handle OnUpdate called ${singleHandleCount} times.")
                     )
                 }
                 if (doubleHandleCount != 2) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Tuple Handle OnUpdate called ${doubleHandleCount} times")
+                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 2 Handles called ${doubleHandleCount} times.")
                     )
                 }
             }
