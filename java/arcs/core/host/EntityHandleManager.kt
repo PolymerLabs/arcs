@@ -28,11 +28,10 @@ import arcs.core.storage.api.ReadWriteCollectionHandle
 import arcs.core.storage.api.ReadWriteSingletonHandle
 import arcs.core.storage.api.WriteCollectionHandle
 import arcs.core.storage.api.WriteSingletonHandle
-import arcs.core.storage.handle.CollectionImpl
+import arcs.core.storage.handle.CollectionData
+import arcs.core.storage.handle.CollectionHandle
+import arcs.core.storage.handle.CollectionOp
 import arcs.core.storage.handle.HandleManager
-import arcs.core.storage.handle.SetData
-import arcs.core.storage.handle.SetHandle
-import arcs.core.storage.handle.SetOp
 import arcs.core.storage.handle.SingletonData
 import arcs.core.storage.handle.SingletonHandle
 import arcs.core.storage.handle.SingletonOp
@@ -43,7 +42,7 @@ typealias Sender = (block: suspend () -> Unit) -> Unit
 typealias SingletonSenderCallbackAdapter<E> =
     SenderCallbackAdapter<SingletonData<RawEntity>, SingletonOp<RawEntity>, RawEntity?, E?>
 typealias CollectionSenderCallbackAdapter<E> =
-    SenderCallbackAdapter<SetData<RawEntity>, SetOp<RawEntity>, Set<RawEntity>, E>
+    SenderCallbackAdapter<CollectionData<RawEntity>, CollectionOp<RawEntity>, Set<RawEntity>, E>
 
 /**
  * Wraps a [HandleManager] and creates [Entity] handles based on [HandleMode], such as
@@ -102,7 +101,7 @@ class EntityHandleManager(private val handleManager: HandleManager) {
     }
 
     /**
-     * Creates and returns a new [SetHandle] for a set of [Entity]s.
+     * Creates and returns a new [CollectionHandle] for a set of [Entity]s.
      *
      * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
      * @property storageKey a [StorageKey]
@@ -111,7 +110,7 @@ class EntityHandleManager(private val handleManager: HandleManager) {
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
-    suspend fun <T : Entity> createSetHandle(
+    suspend fun <T : Entity> createCollectionHandle(
         entitySpec: EntitySpec<T>,
         handleName: String,
         storageKey: StorageKey,
@@ -120,7 +119,7 @@ class EntityHandleManager(private val handleManager: HandleManager) {
         idGenerator: Id.Generator = Id.Generator.newSession(),
         sender: Sender = ::defaultSender
     ): Handle {
-        val storageHandle = handleManager.setHandle(
+        val storageHandle = handleManager.collectionHandle(
             storageKey,
             schema,
             canRead = handleMode != HandleMode.Write
@@ -253,7 +252,7 @@ internal class ReadWriteSingletonHandleImpl<T : Entity>(
 internal open class ReadCollectionHandleImpl<T : Entity>(
     private val entitySpec: EntitySpec<T>,
     val handleName: String,
-    private val storageHandle: SetHandle<RawEntity>,
+    private val storageHandle: CollectionHandle<RawEntity>,
     sender: Sender
 ) : HandleEventBase<Set<T>, ReadCollectionHandle<T>>(), ReadCollectionHandle<T> {
     init {
@@ -280,7 +279,7 @@ internal open class ReadCollectionHandleImpl<T : Entity>(
 
 internal class WriteCollectionHandleImpl<T : Entity>(
     val handleName: String,
-    private val storageHandle: CollectionImpl<RawEntity>,
+    private val storageHandle: CollectionHandle<RawEntity>,
     private val idGenerator: Id.Generator
 ) : WriteCollectionHandle<T> {
     override val name: String
@@ -304,7 +303,7 @@ internal class WriteCollectionHandleImpl<T : Entity>(
 internal class ReadWriteCollectionHandleImpl<T : Entity>(
     entitySpec: EntitySpec<T>,
     handleName: String,
-    storageHandle: CollectionImpl<RawEntity>,
+    storageHandle: CollectionHandle<RawEntity>,
     idGenerator: Id.Generator,
     sender: Sender,
     private val writableCollection: WriteCollectionHandleImpl<T> = WriteCollectionHandleImpl(

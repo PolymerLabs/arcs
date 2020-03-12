@@ -41,7 +41,7 @@ import kotlinx.coroutines.sync.withLock
 interface ActivationFactoryFactory {
     fun dereferenceFactory(): EntityActivationFactory
     fun <T : Referencable> singletonFactory(): SingletonActivationFactory<T>
-    fun <T : Referencable> setFactory(): SetActivationFactory<T>
+    fun <T : Referencable> setFactory(): CollectionActivationFactory<T>
 }
 
 /**
@@ -74,12 +74,12 @@ class HandleManager(
     private val setProxiesMutex = Mutex()
     private val setProxies by guardedBy(
         setProxiesMutex,
-        mutableMapOf<StorageKey, SetProxy<RawEntity>>()
+        mutableMapOf<StorageKey, CollectionProxy<RawEntity>>()
     )
     private val setReferenceProxiesMutex = Mutex()
     private val setReferenceProxies by guardedBy(
         setReferenceProxiesMutex,
-        mutableMapOf<StorageKey, SetProxy<Reference>>()
+        mutableMapOf<StorageKey, CollectionProxy<Reference>>()
     )
 
     /**
@@ -186,19 +186,19 @@ class HandleManager(
     }
 
     /**
-     * Create a new [SetHandle] backed by an Android [ServiceStore]
+     * Create a new [CollectionHandle] backed by an Android [ServiceStore]
      *
-     * The SetHandle will represent an Entity specified by the provided [Schema]
+     * The CollectionHandle will represent an Entity specified by the provided [Schema]
      */
-    suspend fun rawEntitySetHandle(
+    suspend fun rawEntityCollectionHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: SetCallbacks<RawEntity>? = null,
+        callbacks: CollectionCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
-    ): SetHandle<RawEntity> {
-        val storeOptions = SetStoreOptions<RawEntity>(
+    ): CollectionHandle<RawEntity> {
+        val storeOptions = CollectionStoreOptions<RawEntity>(
             storageKey = storageKey,
             type = CollectionType(EntityType(schema)),
             mode = StorageMode.ReferenceMode
@@ -206,11 +206,11 @@ class HandleManager(
 
         val storageProxy = setProxiesMutex.withLock {
             setProxies.getOrPut(storageKey) {
-                SetProxy(Store(storeOptions).activate(aff?.setFactory()), CrdtSet())
+                CollectionProxy(Store(storeOptions).activate(aff?.setFactory()), CrdtSet())
             }
         }
 
-        return SetHandle(
+        return CollectionHandle(
             name,
             storageProxy,
             callbacks,
@@ -223,22 +223,22 @@ class HandleManager(
     }
 
     /**
-     * @deprecated Use [rawEntitySetHandle] instead.
+     * @deprecated Use [rawEntityCollectionHandle] instead.
      */
     /* ktlint-disable max-line-length */
     @Deprecated(
-        "Use rawEntitySetHandle instead",
-        replaceWith = ReplaceWith("this.rawEntitySetHandle(storageKey, schema, callbacks, name, ttl, canRead)")
+        "Use rawEntityCollectionHandle instead",
+        replaceWith = ReplaceWith("this.rawEntityCollectionHandle(storageKey, schema, callbacks, name, ttl, canRead)")
     )
     /* ktlint-enable max-line-length */
-    suspend fun setHandle(
+    suspend fun collectionHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: SetCallbacks<RawEntity>? = null,
+        callbacks: CollectionCallbacks<RawEntity>? = null,
         name: String = storageKey.toKeyString(),
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
-    ): SetHandle<RawEntity> = rawEntitySetHandle(
+    ): CollectionHandle<RawEntity> = rawEntityCollectionHandle(
         storageKey,
         schema,
         callbacks,
@@ -248,18 +248,18 @@ class HandleManager(
     )
 
     /**
-     * Creates a new [SetHandle] which manages a singleton of type: [Reference], where the
+     * Creates a new [CollectionHandle] which manages a singleton of type: [Reference], where the
      * [Reference] is expected to *reference* a [RawEntity] described by the provided [Schema].
      */
-    suspend fun referenceSetHandle(
+    suspend fun referenceCollectionHandle(
         storageKey: StorageKey,
         schema: Schema,
-        callbacks: SetCallbacks<Reference>? = null,
+        callbacks: CollectionCallbacks<Reference>? = null,
         name: String = storageKey.toKeyString(),
         ttl: Ttl = Ttl.Infinite,
         canRead: Boolean = true
-    ): SetHandle<Reference> {
-        val storeOptions = SetStoreOptions<Reference>(
+    ): CollectionHandle<Reference> {
+        val storeOptions = CollectionStoreOptions<Reference>(
             storageKey = storageKey,
             type = CollectionType(ReferenceType(EntityType(schema))),
             mode = StorageMode.Direct
@@ -267,14 +267,14 @@ class HandleManager(
 
         val storageProxy = setReferenceProxiesMutex.withLock {
             setReferenceProxies.getOrPut(storageKey) {
-                SetProxy(
+                CollectionProxy(
                     Store(storeOptions).activate(aff?.setFactory()),
                     CrdtSet()
                 )
             }
         }
 
-        return SetHandle(
+        return CollectionHandle(
             name = name,
             storageProxy = storageProxy,
             callbacks = callbacks,

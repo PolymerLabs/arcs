@@ -30,7 +30,6 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
@@ -56,8 +55,8 @@ class SingletonIntegrationTest {
     private lateinit var store: Store<EntitySingletonData, EntitySingletonOp, EntitySingletonView>
     private lateinit var storageProxy:
         StorageProxy<EntitySingletonData, EntitySingletonOp, EntitySingletonView>
-    private lateinit var singletonA: SingletonImpl<RawEntity>
-    private lateinit var singletonB: SingletonImpl<RawEntity>
+    private lateinit var singletonA: SingletonHandle<RawEntity>
+    private lateinit var singletonB: SingletonHandle<RawEntity>
 
     @Before
     fun setUp() = runBlocking {
@@ -66,9 +65,9 @@ class SingletonIntegrationTest {
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSingleton<RawEntity>())
 
-        singletonA = SingletonImpl("singletonA", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA)
+        singletonA = SingletonHandle("singletonA", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA)
         storageProxy.registerHandle(singletonA)
-        singletonB = SingletonImpl("singletonB", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA)
+        singletonB = SingletonHandle("singletonB", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA)
         storageProxy.registerHandle(singletonB)
         Unit
     }
@@ -143,14 +142,14 @@ class SingletonIntegrationTest {
         assertThat(requireNotNull(singletonA.fetch()).expirationTimestamp)
             .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val singletonC = SingletonImpl("singletonC", storageProxy, null, Ttl.Days(2), TimeImpl(), schema = SCHEMA)
+        val singletonC = SingletonHandle("singletonC", storageProxy, null, Ttl.Days(2), TimeImpl(), schema = SCHEMA)
         storageProxy.registerHandle(singletonC)
         assertThat(singletonC.store(person.toRawEntity())).isTrue()
         val entityC = requireNotNull(singletonC.fetch())
         assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val singletonD = SingletonImpl("singletonD", storageProxy, null, Ttl.Minutes(1), TimeImpl(), schema = SCHEMA)
+        val singletonD = SingletonHandle("singletonD", storageProxy, null, Ttl.Minutes(1), TimeImpl(), schema = SCHEMA)
         storageProxy.registerHandle(singletonD)
         assertThat(singletonD.store(person.toRawEntity())).isTrue()
         val entityD = requireNotNull(singletonD.fetch())

@@ -18,9 +18,9 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.data.RawEntity
 import arcs.core.storage.EntityActivationFactory
 import arcs.core.storage.handle.ActivationFactoryFactory
+import arcs.core.storage.handle.CollectionData
+import arcs.core.storage.handle.CollectionOp
 import arcs.core.storage.handle.HandleManager
-import arcs.core.storage.handle.SetData
-import arcs.core.storage.handle.SetOp
 import arcs.core.storage.handle.SingletonData
 import arcs.core.storage.handle.SingletonOp
 import arcs.jvm.util.JvmTime
@@ -33,7 +33,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 typealias SingletonServiceStoreFactory<T> =
     ServiceStoreFactory<SingletonData<T>, SingletonOp<T>, T?>
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-typealias SetServiceStoreFactory<T> = ServiceStoreFactory<SetData<T>, SetOp<T>, Set<T>>
+typealias SetServiceStoreFactory<T> =
+    ServiceStoreFactory<CollectionData<T>, CollectionOp<T>, Set<T>>
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 typealias EntityServiceStoreFactory =
     ServiceStoreFactory<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>
