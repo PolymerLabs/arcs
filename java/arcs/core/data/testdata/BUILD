@@ -29,7 +29,7 @@ arcs_kt_schema(
 
 arcs_kt_plan(
     name = "example_plan",
-    src = "WriterReaderExample.arcs",
+    srcs = ["WriterReaderExample.arcs"],
     visibility = ["//visibility:public"],
     deps = [":example_schema"],
 )

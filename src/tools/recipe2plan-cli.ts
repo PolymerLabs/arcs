@@ -41,8 +41,6 @@ if (!opts.outfile) {
   process.exit(1);
 }
 
-
-// TODO(alxr): Support generation from multiple manifests
 if (opts._.length > 1) {
   console.error(`Only a single manifest is allowed`);
   process.exit(1);

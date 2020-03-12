@@ -324,26 +324,29 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             data = data,
         )
 
-def arcs_kt_plan(name, src, deps = [], out = None, visibility = None):
+def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
     """Converts recipes in manifests into Kotlin Plans.
 
     Args:
       name: the name of the target to create
-      src: an Arcs manifest file
+      srcs: list of Arcs manifest files
       deps: list of dependencies (other manifests)
-      out: the name of the output artifact (a Kotlin file).
       visibility: list of visibilities
     """
-    outs = [out] if out != None else [replace_arcs_suffix(src, "_GeneratedPlan.kt")]
+    outs = []
 
-    sigh_command(
-        name = name + "_GeneratedPlan",
-        srcs = [src],
-        outs = outs,
-        deps = deps,
-        progress_message = "Generating Plans",
-        sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
-    )
+    for src in srcs:
+        genrule_name = replace_arcs_suffix(src, "_GeneratedPlan")
+        out = replace_arcs_suffix(src, "_GeneratedPlan.kt")
+        outs.append(out)
+        sigh_command(
+            name = genrule_name,
+            srcs = [src],
+            outs = [out],
+            deps = deps,
+            progress_message = "Generating Kotlin Plans",
+            sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+        )
 
     arcs_kt_library(
         name = name,
