@@ -16,8 +16,6 @@ import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Ttl, TtlUnits} from '../runtime/recipe/ttl.js';
 import {Dictionary} from '../runtime/hot.js';
-import {digest} from '../platform/digest-web.js';
-import {IdGenerator} from '../runtime/id.js';
 import {Random} from '../runtime/random.js';
 
 const ktUtils = new KotlinGenerationUtils();
