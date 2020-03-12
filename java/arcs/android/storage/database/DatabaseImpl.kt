@@ -721,6 +721,12 @@ class DatabaseImpl(
         }
     }
 
+    override suspend fun getAllStorageKeys(): Set<StorageKey> {
+        return readableDatabase
+            .rawQuery("SELECT storage_keys.storage_key FROM storage_keys", emptyArray())
+            .map { StorageKeyParser.parse(it.getString(0)) }.toSet()
+    }
+
     @VisibleForTesting
     suspend fun getSchemaTypeId(
         schema: Schema,

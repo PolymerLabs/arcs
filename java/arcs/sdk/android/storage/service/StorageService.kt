@@ -79,7 +79,7 @@ class StorageService : ResurrectorService() {
         log.debug { "onBind: $intent" }
 
         if (intent.action == MANAGER_ACTION) {
-            return StorageServiceManager(coroutineContext, stats)
+            return StorageServiceManager(coroutineContext)
         }
 
         val parcelableOptions = requireNotNull(

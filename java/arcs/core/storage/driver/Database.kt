@@ -90,6 +90,10 @@ object DatabaseDriverProvider : DriverProvider {
         ).register()
     }
 
+    override suspend fun getAllStorageKeys(): Set<StorageKey> {
+        return manager.getAllStorageKeys()
+    }
+
     /**
      * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
      * with the [DriverFactory].
@@ -178,7 +182,7 @@ class DatabaseDriver<Data : Any>(
         log.debug {
             """
                 registerReceiver($token) - calling receiver(
-                    $pendingReceiverData, 
+                    $pendingReceiverData,
                     $pendingReceiverVersion
                 )
             """.trimIndent()
@@ -191,7 +195,7 @@ class DatabaseDriver<Data : Any>(
         log.debug {
             """
                 send(
-                    $data, 
+                    $data,
                     $version
                 )
             """.trimIndent()
@@ -269,8 +273,8 @@ class DatabaseDriver<Data : Any>(
         log.debug {
             """
                 onDatabaseUpdate(
-                    $data, 
-                    version: $version, 
+                    $data,
+                    version: $version,
                     originatingClientId: $originatingClientId
                 )
             """.trimIndent()

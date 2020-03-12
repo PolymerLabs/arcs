@@ -53,6 +53,11 @@ object DriverFactory {
 
     /** Reset the driver registration to an empty set. For use in tests only. */
     fun clearRegistrations() = providers.lazySet(setOf())
+
+    /** Return the set of all storage keys that each DriverProvider has seen. */
+    suspend fun getAllStorageKeys(): Set<StorageKey> {
+        return providers.value.flatMap { it.getAllStorageKeys() }.toSet()
+    }
 }
 
 /** Provider of information on the [Driver] and characteristics of the storage behind it. */
@@ -65,4 +70,7 @@ interface DriverProvider {
         storageKey: StorageKey,
         dataClass: KClass<Data>
     ): Driver<Data>
+
+    /** Returns all storage keys for which a driver has been created. */
+    suspend fun getAllStorageKeys(): Set<StorageKey>
 }

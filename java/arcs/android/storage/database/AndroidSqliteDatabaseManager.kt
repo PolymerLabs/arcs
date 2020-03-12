@@ -12,6 +12,7 @@
 package arcs.android.storage.database
 
 import android.content.Context
+import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
@@ -38,6 +39,12 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
         mutex.withLock { dbCache.mapValues { it.value.snapshotStatistics() } }
 
     suspend fun resetAll() = mutex.withLock {
+        // TODO: this should reset all existing databases (including those not in dbCache).
         dbCache.forEach { (_, db) -> db.reset() }
+    }
+
+    override suspend fun getAllStorageKeys(): Set<StorageKey> {
+        // TODO: this should check all existing databases (including those not in dbCache).
+        return dbCache.flatMap { (_, db) -> db.getAllStorageKeys() }.toSet()
     }
 }
