@@ -16,7 +16,7 @@ node_repositories(
     yarn_version = "1.13.0",
 )
 
-# Java deps from Maven.
+# Java deps from Maven. This has to be declare before rules_kotlin
 
 RULES_JVM_EXTERNAL_TAG = "2.10"
 
@@ -30,140 +30,6 @@ http_archive(
 )
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
-
-# These appear to be needed by KotlincWorker
-http_archive(
-    name = "rules_proto",
-    sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
-    strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
-        "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
-    ],
-)
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-rules_proto_dependencies()
-rules_proto_toolchains()
-
-# Install Emscripten via the emsdk.
-
-load("//build_defs/emscripten:repo.bzl", "emsdk_repo")
-
-emsdk_repo()
-
-# Install the Kotlin-Native compiler
-
-load("//build_defs/kotlin_native:repo.bzl", "kotlin_native_repo")
-
-kotlin_native_repo()
-
-# Android SDK
-
-android_sdk_repository(
-    name = "androidsdk",
-    api_level = 29,
-)
-
-http_archive(
-    name = "build_bazel_rules_android",
-    sha256 = "cd06d15dd8bb59926e4d65f9003bfc20f9da4b2519985c27e190cddc8b7a7806",
-    strip_prefix = "rules_android-0.1.1",
-    urls = ["https://github.com/bazelbuild/rules_android/archive/v0.1.1.zip"],
-)
-
-# Kotlin
-
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
-git_repository(
-    name = "io_bazel_rules_kotlin",
-    commit = "3d92e4c2998805c61a87be01b027f1c89da974d0",
-    remote = "https://github.com/cromwellian/rules_kotlin.git",
-    shallow_since = "1578612474 -0800",
-)
-
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
-load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
-
-KOTLIN_VERSION = "1.3.70"
-
-KOTLINC_RELEASE_SHA = "12f97cff23ff8116904cb97a7ef4e3af5c3b8e5df9d9e63baa251d9a73b42fbb"
-
-KOTLINC_RELEASE = {
-    "urls": [
-        "https://github.com/JetBrains/kotlin/releases/download/v{v}/kotlin-compiler-{v}.zip".format(v = KOTLIN_VERSION),
-    ],
-    "sha256": KOTLINC_RELEASE_SHA,
-}
-kt_download_local_dev_dependencies()
-kotlin_repositories(compiler_release = KOTLINC_RELEASE)
-
-register_toolchains("//third_party/java/arcs/build_defs/internal:kotlin_toolchain")
-
-# Robolectric
-
-http_archive(
-    name = "robolectric",
-    sha256 = "2ee850ca521288db72b0dedb9ecbda55b64d11c470435a882f8daf615091253d",
-    strip_prefix = "robolectric-bazel-4.1",
-    urls = ["https://github.com/robolectric/robolectric-bazel/archive/4.1.tar.gz"],
-)
-
-load("@robolectric//bazel:robolectric.bzl", "robolectric_repositories")
-
-robolectric_repositories()
-
-# Python
-
-http_archive(
-    name = "rules_python",
-    sha256 = "aa96a691d3a8177f3215b14b0edc9641787abaaa30363a080165d06ab65e1161",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
-)
-
-load("@rules_python//python:repositories.bzl", "py_repositories")
-
-py_repositories()
-
-# Protobuf
-
-# Note: using the gRPC protobuf rules, since they seem to be the most
-# comprehensive and best documented:
-# https://github.com/rules-proto-grpc/rules_proto_grpc
-
-http_archive(
-    name = "rules_proto_grpc",
-    sha256 = "5f0f2fc0199810c65a2de148a52ba0aff14d631d4e8202f41aff6a9d590a471b",
-    strip_prefix = "rules_proto_grpc-1.0.2",
-    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/1.0.2.tar.gz"],
-)
-
-load(
-    "@rules_proto_grpc//android:repositories.bzl",
-    rules_proto_grpc_android_repos = "android_repos",
-)
-
-rules_proto_grpc_android_repos()
-
-load("@io_grpc_grpc_java//:repositories.bzl", "grpc_java_repositories")
-
-grpc_java_repositories(
-    omit_bazel_skylib = True,
-    omit_com_google_protobuf = True,
-    omit_com_google_protobuf_javalite = True,
-    omit_net_zlib = True,
-)
-
-load(
-    "@rules_proto_grpc//:repositories.bzl",
-    "rules_proto_grpc_repos",
-    "rules_proto_grpc_toolchains",
-)
-
-rules_proto_grpc_toolchains()
-
-rules_proto_grpc_repos()
-
 
 ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
 
@@ -236,3 +102,142 @@ maven_install(
         "https://repo1.maven.org/maven2",
     ],
 )
+
+# @rules_proto is used by KotlincWorker and must be declared before rules_kotlin
+
+http_archive(
+    name = "rules_proto",
+    sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
+    strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+    ],
+)
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+
+rules_proto_dependencies()
+
+rules_proto_toolchains()
+
+# Install Emscripten via the emsdk.
+
+load("//build_defs/emscripten:repo.bzl", "emsdk_repo")
+
+emsdk_repo()
+
+# Install the Kotlin-Native compiler
+
+load("//build_defs/kotlin_native:repo.bzl", "kotlin_native_repo")
+
+kotlin_native_repo()
+
+# Android SDK
+
+android_sdk_repository(
+    name = "androidsdk",
+    api_level = 29,
+)
+
+http_archive(
+    name = "build_bazel_rules_android",
+    sha256 = "cd06d15dd8bb59926e4d65f9003bfc20f9da4b2519985c27e190cddc8b7a7806",
+    strip_prefix = "rules_android-0.1.1",
+    urls = ["https://github.com/bazelbuild/rules_android/archive/v0.1.1.zip"],
+)
+
+# Kotlin
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "io_bazel_rules_kotlin",
+    commit = "3d92e4c2998805c61a87be01b027f1c89da974d0",
+    remote = "https://github.com/cromwellian/rules_kotlin.git",
+    shallow_since = "1578612474 -0800",
+)
+
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
+load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
+
+KOTLIN_VERSION = "1.3.70"
+
+KOTLINC_RELEASE_SHA = "12f97cff23ff8116904cb97a7ef4e3af5c3b8e5df9d9e63baa251d9a73b42fbb"
+
+KOTLINC_RELEASE = {
+    "urls": [
+        "https://github.com/JetBrains/kotlin/releases/download/v{v}/kotlin-compiler-{v}.zip".format(v = KOTLIN_VERSION),
+    ],
+    "sha256": KOTLINC_RELEASE_SHA,
+}
+
+kt_download_local_dev_dependencies()
+
+kotlin_repositories(compiler_release = KOTLINC_RELEASE)
+
+register_toolchains("//third_party/java/arcs/build_defs/internal:kotlin_toolchain")
+
+# Robolectric
+
+http_archive(
+    name = "robolectric",
+    sha256 = "2ee850ca521288db72b0dedb9ecbda55b64d11c470435a882f8daf615091253d",
+    strip_prefix = "robolectric-bazel-4.1",
+    urls = ["https://github.com/robolectric/robolectric-bazel/archive/4.1.tar.gz"],
+)
+
+load("@robolectric//bazel:robolectric.bzl", "robolectric_repositories")
+
+robolectric_repositories()
+
+# Python
+
+http_archive(
+    name = "rules_python",
+    sha256 = "aa96a691d3a8177f3215b14b0edc9641787abaaa30363a080165d06ab65e1161",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
+)
+
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
+# Protobuf
+
+# Note: using the gRPC protobuf rules, since they seem to be the most
+# comprehensive and best documented:
+# https://github.com/rules-proto-grpc/rules_proto_grpc
+
+http_archive(
+    name = "rules_proto_grpc",
+    sha256 = "5f0f2fc0199810c65a2de148a52ba0aff14d631d4e8202f41aff6a9d590a471b",
+    strip_prefix = "rules_proto_grpc-1.0.2",
+    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/1.0.2.tar.gz"],
+)
+
+load(
+    "@rules_proto_grpc//android:repositories.bzl",
+    rules_proto_grpc_android_repos = "android_repos",
+)
+
+rules_proto_grpc_android_repos()
+
+load("@io_grpc_grpc_java//:repositories.bzl", "grpc_java_repositories")
+
+grpc_java_repositories(
+    omit_bazel_skylib = True,
+    omit_com_google_protobuf = True,
+    omit_com_google_protobuf_javalite = True,
+    omit_net_zlib = True,
+)
+
+load(
+    "@rules_proto_grpc//:repositories.bzl",
+    "rules_proto_grpc_repos",
+    "rules_proto_grpc_toolchains",
+)
+
+rules_proto_grpc_toolchains()
+
+rules_proto_grpc_repos()
