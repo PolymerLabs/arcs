@@ -25,6 +25,7 @@ export async function recipe2plan(path: string): Promise<string> {
     const manifest = await Runtime.parseFile(path);
 
     assert(manifest.meta.namespace, `Namespace is required in '${path}' for code generation.`);
+
     const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
     const generator = new PlanGenerator(recipes, manifest.meta.namespace);

@@ -539,6 +539,7 @@ export class Recipe implements Cloneable<Recipe> {
     };
 
     recipe._name = this.name;
+    recipe.triggers = this.triggers;
     recipe._verbs = recipe._verbs.concat(...this._verbs);
 
     // Clone regular handles first, then synthetic ones, as synthetic can depend on regular.

@@ -10,7 +10,7 @@
 
 import {Manifest} from '../../runtime/manifest.js';
 import {assert} from '../../platform/chai-node.js';
-import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
+import {findLongRunningArcId, isLongRunning, StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {DatabaseStorageKey} from '../../runtime/storageNG/database-storage-key.js';
 import {CapabilitiesResolver} from '../../runtime/capabilities-resolver.js';
@@ -41,20 +41,20 @@ describe('recipe2plan', () => {
       `));
       assert.lengthOf(manifest.recipes, 5);
       const resolver = new StorageKeyRecipeResolver(manifest);
-      assert.isFalse(resolver.isLongRunning(manifest.recipes[0]));
-      assert.isNull(resolver.findLongRunningArcId(manifest.recipes[0]));
+      assert.isFalse(isLongRunning(manifest.recipes[0]));
+      assert.isNull(findLongRunningArcId(manifest.recipes[0]));
 
-      assert.isNull(resolver.findLongRunningArcId(manifest.recipes[1]));
-      assert.isFalse(resolver.isLongRunning(manifest.recipes[1]));
+      assert.isNull(findLongRunningArcId(manifest.recipes[1]));
+      assert.isFalse(isLongRunning(manifest.recipes[1]));
 
-      assert.isNull(resolver.findLongRunningArcId(manifest.recipes[2]));
-      assert.isFalse(resolver.isLongRunning(manifest.recipes[2]));
+      assert.isNull(findLongRunningArcId(manifest.recipes[2]));
+      assert.isFalse(isLongRunning(manifest.recipes[2]));
 
-      assert.isNull(resolver.findLongRunningArcId(manifest.recipes[3]));
-      assert.isFalse(resolver.isLongRunning(manifest.recipes[3]));
+      assert.isNull(findLongRunningArcId(manifest.recipes[3]));
+      assert.isFalse(isLongRunning(manifest.recipes[3]));
 
-      assert.equal(resolver.findLongRunningArcId(manifest.recipes[4]), 'myLongRunningArc');
-      assert.isTrue(resolver.isLongRunning(manifest.recipes[4]));
+      assert.equal(findLongRunningArcId(manifest.recipes[4]), 'myLongRunningArc');
+      assert.isTrue(isLongRunning(manifest.recipes[4]));
     });
     it('resolves mapping a handle from a long running arc into another long running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\

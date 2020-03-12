@@ -24,7 +24,8 @@ object IngestionPlan : Plan(
                 )
             )
         )
-    )
+    ),
+    "writingArcId"
 )
 object ConsumptionPlan : Plan(
     listOf(
@@ -42,5 +43,6 @@ object ConsumptionPlan : Plan(
                 )
             )
         )
-    )
+    ),
+    "readingArcId"
 )

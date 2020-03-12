@@ -44,7 +44,7 @@ export class StorageKeyRecipeResolver {
     const recipes = [];
     for (const recipe of this.runtime.context.recipes) {
       this.validateHandles(recipe);
-      const arcId = this.findLongRunningArcId(recipe);
+      const arcId = findLongRunningArcId(recipe);
       const arc = this.runtime.newArc(
           arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
@@ -75,25 +75,6 @@ export class StorageKeyRecipeResolver {
     if (normalized.isResolved()) return normalized;
 
     return await (new RecipeResolver(arc).resolve(recipe, opts));
-  }
-
-  isLongRunning(recipe: Recipe): boolean {
-    return !!this.findLongRunningArcId(recipe);
-  }
-
-  findLongRunningArcId(recipe: Recipe): string | null {
-    const getTrigger = (group: [string, string][], name: string): string | null => {
-      const trigger = group.find(([key, _]) => key === name);
-      return trigger ? trigger[1] : null;
-    };
-
-    for (const group of recipe.triggers) {
-      if (getTrigger(group, 'launch') === 'startup' &&
-          !!getTrigger(group, 'arcId')) {
-        return getTrigger(group, 'arcId');
-      }
-    }
-    return null;
   }
 
   /**
@@ -139,9 +120,30 @@ export class StorageKeyRecipeResolver {
         }
 
         const match = matches[0];
-        if (!this.isLongRunning(match.recipe)) {
+        if (!isLongRunning(match.recipe)) {
           throw Error(`Handle ${handle.localName} mapped to ephemeral handle ${match.localName}.`);
         }
       });
   }
+}
+
+/** Returns true if input recipe is for a long-running arc.*/
+export function isLongRunning(recipe: Recipe): boolean {
+  return !!findLongRunningArcId(recipe);
+}
+
+/** Returns arcId for long-running arcs, null otherwise. */
+export function findLongRunningArcId(recipe: Recipe): string | null {
+  const getTrigger = (group: [string, string][], name: string): string | null => {
+    const trigger = group.find(([key, _]) => key === name);
+    return trigger ? trigger[1] : null;
+  };
+
+  for (const group of recipe.triggers) {
+    if (getTrigger(group, 'launch') === 'startup' &&
+      !!getTrigger(group, 'arcId')) {
+      return getTrigger(group, 'arcId');
+    }
+  }
+  return null;
 }
