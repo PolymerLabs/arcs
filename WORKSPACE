@@ -16,6 +16,35 @@ node_repositories(
     yarn_version = "1.13.0",
 )
 
+# Java deps from Maven.
+
+RULES_JVM_EXTERNAL_TAG = "2.10"
+
+RULES_JVM_EXTERNAL_SHA = "1bbf2e48d07686707dd85357e9a94da775e1dbd7c464272b3664283c9c716d26"
+
+http_archive(
+    name = "rules_jvm_external",
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+# These appear to be needed by KotlincWorker
+http_archive(
+    name = "rules_proto",
+    sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
+    strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+    ],
+)
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+rules_proto_dependencies()
+rules_proto_toolchains()
+
 # Install Emscripten via the emsdk.
 
 load("//build_defs/emscripten:repo.bzl", "emsdk_repo")
@@ -48,14 +77,15 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "4f29ff058ebd7b49ece683f61c148e65b80806b3",
+    commit = "3d92e4c2998805c61a87be01b027f1c89da974d0",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
     shallow_since = "1578612474 -0800",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
+load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
 
-KOTLIN_VERSION = "1.3.60"
+KOTLIN_VERSION = "1.3.70"
 
 KOTLINC_RELEASE_SHA = "12f97cff23ff8116904cb97a7ef4e3af5c3b8e5df9d9e63baa251d9a73b42fbb"
 
@@ -65,7 +95,7 @@ KOTLINC_RELEASE = {
     ],
     "sha256": KOTLINC_RELEASE_SHA,
 }
-
+kt_download_local_dev_dependencies()
 kotlin_repositories(compiler_release = KOTLINC_RELEASE)
 
 register_toolchains("//third_party/java/arcs/build_defs/internal:kotlin_toolchain")
@@ -134,20 +164,6 @@ rules_proto_grpc_toolchains()
 
 rules_proto_grpc_repos()
 
-# Java deps from Maven.
-
-RULES_JVM_EXTERNAL_TAG = "2.10"
-
-RULES_JVM_EXTERNAL_SHA = "1bbf2e48d07686707dd85357e9a94da775e1dbd7c464272b3664283c9c716d26"
-
-http_archive(
-    name = "rules_jvm_external",
-    sha256 = RULES_JVM_EXTERNAL_SHA,
-    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
-    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
-)
-
-load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
 
