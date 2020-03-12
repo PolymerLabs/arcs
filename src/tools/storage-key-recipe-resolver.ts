@@ -38,7 +38,7 @@ export class StorageKeyRecipeResolver {
    * Produces resolved recipes with storage keys.
    *
    * @throws Error if recipe fails to resolve on first or second pass.
-   * @returns Resolved Recipe (with Storage Keys).
+   * @returns Resolved Recipes (with Storage Keys).
    */
   async resolve(): Promise<Recipe[]> {
     const recipes = [];
@@ -126,10 +126,6 @@ export class StorageKeyRecipeResolver {
    * @param recipe long-running or ephemeral recipe
    */
   validateHandles(recipe: Recipe) {
-    recipe.handles
-      .filter(h => h.fate === 'create' && !h.capabilities.isTiedToArc && !h.id)
-      .forEach(h => console.warn(`Create handle '${h.localName}' should have an id.`));
-
     recipe.handles
       .filter(h => h.fate === 'map' || h.fate === 'copy')
       .forEach(handle => {

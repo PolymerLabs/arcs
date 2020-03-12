@@ -117,12 +117,12 @@ export class PlanGenerator {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
     }
     if (handle.fate === 'create') {
-      return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id || this.createHandleName())]);
+      return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id || this.createRandomHandleId())]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
   }
 
-  createHandleName(): string {
+  createRandomHandleId(): string {
     const rand = Math.floor(Random.next() * Math.pow(2, 50));
     return `handle/${rand}`;
   }
