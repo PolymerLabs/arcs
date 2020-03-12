@@ -1,4 +1,4 @@
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+qload("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # NodeJS
 
@@ -163,7 +163,7 @@ load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_d
 
 KOTLIN_VERSION = "1.3.70"
 
-KOTLINC_RELEASE_SHA = "12f97cff23ff8116904cb97a7ef4e3af5c3b8e5df9d9e63baa251d9a73b42fbb"
+KOTLINC_RELEASE_SHA = "709d782ff707a633278bac4c63bab3026b768e717f8aaf62de1036c994bc89c7"
 
 KOTLINC_RELEASE = {
     "urls": [
