@@ -123,7 +123,6 @@ open class AllocatorTestBase {
         writingExternalHost.setup()
     }
 
-
     /**
      * Tests that the Recipe is properly partitioned so that [ReadingHost] contains only
      * [ReadPerson] with associated handles and connections, and [WritingHost] contains only
@@ -343,6 +342,9 @@ open class AllocatorTestBase {
 
         assertThat((writePersonContext.particle as WritePerson).shutdownCalled).isTrue()
         assertThat((readPersonContext.particle as ReadPerson).shutdownCalled).isTrue()
+
+        assertThat(readingExternalHost.isIdle).isTrue()
+        assertThat(writingExternalHost.isIdle).isTrue()
     }
 
     @Test

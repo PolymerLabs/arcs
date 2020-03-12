@@ -18,6 +18,8 @@ open class TestingHost(vararg particles: ParticleRegistration) :
         started.add(partition)
     }
 
+    val isIdle = isArcHostIdle
+    
     override val platformTime: Time = TimeImpl()
 
     fun setup() {

@@ -44,15 +44,31 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
     /** In memory cache of [ArcHostContext] state. */
-    private val runningArcs: MutableMap<String, ArcHostContext> = LruCacheMap()
+    private val contextCache: MutableMap<String, ArcHostContext> = LruCacheMap()
+
+    /** Arcs currently running in memory. */
+    private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
+
     override val hostId = this::class.className()
 
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
     }
 
+    /**
+     * Determines if [arcId] is currently running. It's state must be [ArcState.Running] and
+     * it must be memory resident (not serialized and dormant).
+     */
+    protected fun isRunning(arcId: String) = runningArcs[arcId]?.arcState == ArcState.Running
+
+    /**
+     * This property is true if this [ArcHost] has no running, memory resident arcs, e.g.
+     * running [Particle]s with active connected [Handle]s.
+     */
+    protected val isArcHostIdle = runningArcs.isEmpty()
+
     // VisibleForTesting
-    protected fun clearCache() = runningArcs.clear()
+    protected fun clearCache() = contextCache.clear()
 
     /** Used by subclasses to register particles dynamically after [ArcHost] construction */
     protected fun registerParticle(particle: ParticleIdentifier, constructor: ParticleConstructor) {
@@ -69,22 +85,26 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         particleConstructors.keys.toList()
 
     // VisibleForTesting
-    protected fun getArcHostContext(arcId: String) = runningArcs[arcId]
+    protected fun getArcHostContext(arcId: String) = contextCache[arcId]
 
     protected suspend fun lookupOrCreateArcHostContext(
         partition: Plan.Partition
     ): ArcHostContext = lookupArcHostContext(partition.arcId) ?: ArcHostContext()
 
     protected suspend fun lookupArcHostContext(arcId: String) =
-        runningArcs[arcId] ?: readContextFromStorage(arcId)
+        contextCache[arcId] ?: readContextFromStorage(arcId)
 
     /**
      * Called to persist [ArcHostContext] after [context] for [arcId] has been modified.
-     *
      */
     protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
-        runningArcs[arcId] = context
+        contextCache[arcId] = context
         writeContextToStorage(arcId, context)
+        if (context.arcState == ArcState.Running) {
+            runningArcs[arcId] = context
+        } else {
+            runningArcs.remove(arcId)
+        }
     }
 
     /**
@@ -113,7 +133,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         createArcHostContextParticle(arcId).let {
             it.readArcHostContext(arcId, hostId, this::instantiateParticle)
         }?.also {
-            runningArcs[arcId] = it
+            contextCache[arcId] = it
         }
 
     /**
@@ -131,7 +151,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         val context = lookupOrCreateArcHostContext(partition)
 
         // Arc is already currently running, don't restart it
-        if (context.arcState == ArcState.Running) {
+        if (isRunning(partition.arcId)) {
             return
         }
 
@@ -387,7 +407,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
 
     override suspend fun stopArc(partition: Plan.Partition) {
         val arcId = partition.arcId
-        runningArcs[partition.arcId]?.let { context ->
+        contextCache[partition.arcId]?.let { context ->
             when (context.arcState) {
                 ArcState.Running -> stopArcInternal(arcId, context)
                 ArcState.NeverStarted -> stopArcError(context, "Arc $arcId was never started")
