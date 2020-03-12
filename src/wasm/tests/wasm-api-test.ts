@@ -587,9 +587,21 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
           await sendEvent('checkEvents');
 
           const errors = (await errHandle.toList()).map(e => e.msg);
-          if (errors.length > 0) {
-            assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
-          }
+
+          const expectedErrors = [
+            `Single Handle OnUpdate called 1 times.`,
+            `Calling combineUpdates with 2 Handles called 2 times.`,
+            `Calling combineUpdates with 2 Handles called 2 times.`,
+            `Calling combineUpdates with 3 Handles called 3 times.`,
+            `Calling combineUpdates with 4 Handles called 4 times.`,
+            `Calling combineUpdates with 5 Handles called 5 times.`,
+            `Calling combineUpdates with 6 Handles called 6 times.`,
+            `Calling combineUpdates with 7 Handles called 7 times.`,
+            `Calling combineUpdates with 8 Handles called 8 times.`,
+            `Calling combineUpdates with 9 Handles called 9 times.`,
+            `Calling combineUpdates with 10 Handles called 10 times.`,
+          ];
+          assert.deepStrictEqual(errors, expectedErrors);
         });
   });
 });

@@ -113,57 +113,57 @@ class CombineUpdatesTest : AbstractCombineUpdatesTest() {
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
         when (eventName) {
             "checkEvents" -> {
-                if (singleHandleCount != 1) {
+                if (singleHandleCount == 1) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Single Handle OnUpdate called ${singleHandleCount} times.")
                     )
                 }
-                if (doubleHandleCount != 2) {
+                if (doubleHandleCount == 2) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 2 Handles called ${doubleHandleCount} times.")
                     )
                 }
-                if (doubleHandleCount != 2) {
+                if (doubleHandleCount == 2) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 2 Handles called ${doubleHandleCount} times.")
                     )
                 }
-                if (tripleHandleCount != 3) {
+                if (tripleHandleCount == 3) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 3 Handles called ${tripleHandleCount} times.")
                     )
                 }
-                if (quadHandleCount != 4) {
+                if (quadHandleCount == 4) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 4 Handles called ${quadHandleCount} times.")
                     )
                 }
-                if (quinHandleCount != 5) {
+                if (quinHandleCount == 5) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 5 Handles called ${quinHandleCount} times.")
                     )
                 }
-                if (sixHandleCount != 6) {
+                if (sixHandleCount == 6) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 6 Handles called ${sixHandleCount} times.")
                     )
                 }
-                if (septHandleCount != 7) {
+                if (septHandleCount == 7) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 7 Handles called ${septHandleCount} times.")
                     )
                 }
-                if (octHandleCount != 8) {
+                if (octHandleCount == 8) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 8 Handles called ${octHandleCount} times.")
                     )
                 }
-                if (novHandleCount != 9) {
+                if (novHandleCount == 9) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 9 Handles called ${novHandleCount} times.")
                     )
                 }
-                if (decHandleCount != 10) {
+                if (decHandleCount == 10) {
                     handles.errors.store(
                         CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 10 Handles called ${decHandleCount} times.")
                     )
