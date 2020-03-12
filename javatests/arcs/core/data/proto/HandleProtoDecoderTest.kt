@@ -38,7 +38,7 @@ class HandleProtoDecoderTest {
         val handle = handleProto.decodeAsHandleConnection(HandleMode.Write)
         assertThat(handle.storageKey).isEqualTo(StorageKeyParser.parse(storageKey))
         assertThat(handle.mode).isEqualTo(HandleMode.Write)
-        assertThat(handle.type).isEqualTo(TypeVariable("~notype_thing"))
+        assertThat(handle.type).isEqualTo(TypeVariable("notype_thing"))
         assertThat(handle.ttl).isEqualTo(null)
     }
 

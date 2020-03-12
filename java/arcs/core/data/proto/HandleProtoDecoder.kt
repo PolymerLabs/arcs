@@ -25,6 +25,6 @@ fun HandleProto.decodeAsHandleConnection(mode: HandleMode) = HandleConnection(
     // TODO(bgogul): name, fate, associatedHandles, ttl,
     storageKey = StorageKeyParser.parse(storageKey),
     mode = mode,
-    type = if (hasType()) type.decode() else TypeVariable("~$name"),
+    type = if (hasType()) type.decode() else TypeVariable("$name"),
     ttl = null
 )
