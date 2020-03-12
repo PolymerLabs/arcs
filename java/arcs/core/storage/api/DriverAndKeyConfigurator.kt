@@ -58,8 +58,12 @@ object DriverAndKeyConfigurator {
         StorageKeyParser.reset()
 
         VolatileStorageKey.registerParser()
+        VolatileStorageKey.registerKeyCreator()
         RamDiskStorageKey.registerParser()
+        RamDiskStorageKey.registerKeyCreator()
         DatabaseStorageKey.registerParser()
+        DatabaseStorageKey.registerKeyCreator()
+        // ReferenceModeStorageKey has no key creator.
         ReferenceModeStorageKey.registerParser()
     }
 }
