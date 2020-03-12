@@ -32,8 +32,10 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DR
         private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
 
         init {
-            // When RamDiskStorageKey is imported, this will register its parser with the storage
-            // key parsers.
+            // When RamDiskStorageKey is used for the first time, this will register its key parser.
+            // If you want to use the parser in other cases (e.g., tests), you will have to call
+            // RamDiskStorageKey.registerParser(). Alternatively, to register the parsers for all
+            // the supported protocols use [DriverAndKeyConfigurator.configureKeyParsers].
             StorageKeyParser.addParser(RAMDISK_DRIVER_PROTOCOL, ::fromString)
         }
 
