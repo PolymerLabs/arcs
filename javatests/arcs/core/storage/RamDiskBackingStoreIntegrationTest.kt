@@ -82,12 +82,14 @@ class RamDiskBackingStoreIntegrationTest {
         val muxId = atomic<String?>(null)
         var job = Job()
 
-        val id2 = store.on(MultiplexedProxyCallback { m, eventId ->
-            message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
-            muxId.value = eventId
-            job.complete()
-            return@MultiplexedProxyCallback true
-        })
+        val id2 = store.on(
+            MultiplexedProxyCallback { m, eventId ->
+                message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
+                muxId.value = eventId
+                job.complete()
+                return@MultiplexedProxyCallback true
+            }
+        )
 
         store.onProxyMessage(ProxyMessage.SyncRequest(id2), "thing0")
         job.join()

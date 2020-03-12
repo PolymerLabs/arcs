@@ -22,3 +22,6 @@ additional_languages:
   android
 
 java_language_level: 8
+
+build_flags:
+  --nostamp

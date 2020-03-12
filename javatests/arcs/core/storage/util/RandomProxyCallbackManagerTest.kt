@@ -31,7 +31,7 @@ class RandomProxyCallbackManagerTest {
             "2::test".hashCode()
         )
         val expected = "3::test".hashCode()
-        val actual = manager.getNextToken(used)
+        val actual = manager.tokenGenerator(used)
         assertThat(actual).isEqualTo(expected)
     }
 

@@ -48,8 +48,6 @@ class DeferredResultTest {
             deferredResult.onResult(CrdtException("Uh oh!").toParcelable())
         }
 
-        assertSuspendingThrows(CrdtException::class) {
-            deferredResult.await()
-        }
+        assertThat(deferredResult.await()).isFalse()
     }
 }
