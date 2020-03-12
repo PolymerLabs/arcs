@@ -827,7 +827,7 @@ function runTests(args: string[]): boolean {
                 header = false;
                 console.warn(\`WARNING: Test names re-used:\`);
               }
-              console.warn(\`    \${title}\`);
+              console.warn(\`    \${title} x\${testTitles.get(title)}\`);
             }
           }
         });
