@@ -556,9 +556,25 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
           const {arc, stores} = await setup('CombineUpdatesTest');
           const handle1 = await handleForStore(stores.get('handle1') as SingletonEntityStore, arc);
           const handle2 = await handleForStore(stores.get('handle2') as CollectionEntityStore, arc);
+          const handle3 = await handleForStore(stores.get('handle3') as SingletonEntityStore, arc);
+          const handle4 = await handleForStore(stores.get('handle4') as SingletonEntityStore, arc);
+          const handle5 = await handleForStore(stores.get('handle5') as SingletonEntityStore, arc);
+          const handle6 = await handleForStore(stores.get('handle6') as SingletonEntityStore, arc);
+          const handle7 = await handleForStore(stores.get('handle7') as SingletonEntityStore, arc);
+          const handle8 = await handleForStore(stores.get('handle8') as SingletonEntityStore, arc);
+          const handle9 = await handleForStore(stores.get('handle9') as SingletonEntityStore, arc);
+          const handle10 = await handleForStore(stores.get('handle10') as SingletonEntityStore, arc);
 
           await handle1.set(new handle1.entityClass({num: 1.0}));
           await handle2.add(new handle2.entityClass({num: 1.0}));
+          await handle3.set(new handle3.entityClass({num3: 1.0}));
+          await handle4.set(new handle4.entityClass({num4: 1.0}));
+          await handle5.set(new handle5.entityClass({num5: 1.0}));
+          await handle6.set(new handle6.entityClass({num6: 1.0}));
+          await handle7.set(new handle7.entityClass({num7: 1.0}));
+          await handle8.set(new handle8.entityClass({num8: 1.0}));
+          await handle9.set(new handle9.entityClass({num9: 1.0}));
+          await handle10.set(new handle10.entityClass({num10: 1.0}));
 
           const errHandle = await handleForStore(stores.get('errors') as CollectionEntityStore, arc);
 
@@ -571,9 +587,21 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
           await sendEvent('checkEvents');
 
           const errors = (await errHandle.toList()).map(e => e.msg);
-          if (errors.length > 0) {
-            assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
-          }
+
+          const expectedErrors = [
+            `Single Handle OnUpdate called 1 times.`,
+            `Calling combineUpdates with 2 Handles called 2 times.`,
+            `Calling combineUpdates with 2 Handles called 2 times.`,
+            `Calling combineUpdates with 3 Handles called 3 times.`,
+            `Calling combineUpdates with 4 Handles called 4 times.`,
+            `Calling combineUpdates with 5 Handles called 5 times.`,
+            `Calling combineUpdates with 6 Handles called 6 times.`,
+            `Calling combineUpdates with 7 Handles called 7 times.`,
+            `Calling combineUpdates with 8 Handles called 8 times.`,
+            `Calling combineUpdates with 9 Handles called 9 times.`,
+            `Calling combineUpdates with 10 Handles called 10 times.`,
+          ];
+          assert.deepStrictEqual(errors, expectedErrors);
         });
   });
 });
