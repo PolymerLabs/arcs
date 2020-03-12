@@ -158,8 +158,8 @@ git_repository(
     shallow_since = "1578612474 -0800",
 )
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
 KOTLIN_VERSION = "1.3.70"
 
