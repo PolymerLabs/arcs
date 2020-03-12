@@ -696,6 +696,8 @@ class ReferenceModeStoreTest {
             storageKey: StorageKey,
             dataClass: KClass<Data>
         ): Driver<Data> = MockDriver(storageKey)
+
+        override suspend fun getAllStorageKeys(): Set<StorageKey> = setOf()
     }
 
     private class MockDriver<T : Any>(

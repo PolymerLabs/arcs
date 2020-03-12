@@ -11,6 +11,8 @@
 
 package arcs.core.storage.database
 
+import arcs.core.storage.StorageKey
+
 /**
  * Defines an abstract factory capable of instantiating (or re-using, when necessary) a [Database].
  */
@@ -34,6 +36,9 @@ interface DatabaseManager {
      */
     suspend fun snapshotStatistics():
         Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot>
+
+    /* Returns the set of storage keys in all known databases. */
+    suspend fun getAllStorageKeys(): Set<StorageKey>
 }
 
 /** Identifier for an individual [Database] instance. */

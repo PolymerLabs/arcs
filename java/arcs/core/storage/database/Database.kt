@@ -46,6 +46,9 @@ interface Database {
     /** Removes everything associated with the given [storageKey] from the database. */
     suspend fun delete(storageKey: StorageKey, originatingClientId: Int? = null)
 
+    /** Returns all storage keys stored in this database. */
+    suspend fun getAllStorageKeys(): Set<StorageKey>
+
     /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
     suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot
 

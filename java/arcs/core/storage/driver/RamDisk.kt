@@ -44,6 +44,8 @@ class RamDiskDriverProvider : DriverProvider {
         return VolatileDriver(storageKey, RamDisk.memory)
     }
 
+    override suspend fun getAllStorageKeys(): Set<StorageKey> = RamDisk.memory.keys()
+
     /*
      * These ensure that if/when RamDiskDriverProvider is placed in a set, or used as a key for a
      * map, it's only used once.

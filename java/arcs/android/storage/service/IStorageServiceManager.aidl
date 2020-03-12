@@ -24,5 +24,5 @@ interface IStorageServiceManager {
     void clearAll(IResultCallback resultCallback);
 
     /** Clear all arcs data created within the provided time window. */
-    void clearDataBetween(int clearingArea, long startTimeMillis, long endTimeMillis, IResultCallback resultCallback);
+    void clearDataBetween(long startTimeMillis, long endTimeMillis, IResultCallback resultCallback);
 }

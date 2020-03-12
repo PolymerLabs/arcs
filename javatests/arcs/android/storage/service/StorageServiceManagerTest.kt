@@ -14,7 +14,6 @@ package arcs.android.storage.service
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.coroutineContext
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.runBlocking
@@ -24,19 +23,16 @@ import org.junit.runner.RunWith
 /** Tests for [StorageServiceManager]. */
 @RunWith(AndroidJUnit4::class)
 class StorageServiceManagerTest {
-    private suspend fun buildContext() = StorageServiceManager(
-        coroutineContext,
-        BindingContextStatsImpl()
-    )
+    private suspend fun buildManager() = StorageServiceManager(coroutineContext)
 
     @Test
-    fun sendProxyMessage_propagatesToTheStore() = runBlocking {
-        val bindingContext = buildContext()
+    fun clearAll_clearsAllData() = runBlocking {
+        val manager = buildManager()
         val deferredResult = DeferredResult(coroutineContext)
-        bindingContext.clearAll(deferredResult)
+        manager.clearAll(deferredResult)
 
         assertThat(deferredResult.await()).isTrue()
-
+        // TODO: verify all data is cleared.
         coroutineContext[Job.Key]?.cancelChildren()
         Unit
     }

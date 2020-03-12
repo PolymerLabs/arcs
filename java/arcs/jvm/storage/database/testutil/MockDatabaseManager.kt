@@ -48,6 +48,10 @@ class MockDatabaseManager : DatabaseManager {
     override suspend fun snapshotStatistics():
         Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
         mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
+
+    override suspend fun getAllStorageKeys(): Set<StorageKey> {
+        return cache.flatMap { (_, db) -> db.getAllStorageKeys() }.toSet()
+    }
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -109,6 +113,8 @@ open class MockDatabase : Database {
                 .launchIn(CoroutineScope(coroutineContext))
             Unit
         }
+
+    override suspend fun getAllStorageKeys() = data.keys
 
     override suspend fun snapshotStatistics() = stats.snapshot()
 

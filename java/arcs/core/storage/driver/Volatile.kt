@@ -43,6 +43,8 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         ) { "This provider does not support storageKey: $storageKey" }
         return VolatileDriver(storageKey, arcMemory)
     }
+
+    override suspend fun getAllStorageKeys(): Set<StorageKey> = arcMemory.keys()
 }
 
 /** [Driver] implementation for an in-memory store of data. */
@@ -145,6 +147,8 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     operator fun <Data : Any> get(key: StorageKey): VolatileEntry<Data>? = synchronized(lock) {
         entries[key] as VolatileEntry<Data>?
     }
+
+    fun keys(): Set<StorageKey> = synchronized(lock) { entries.keys }
 
     /**
      * Sets the value at the provided [key] to the given [VolatileEntry] and returns the old value,
