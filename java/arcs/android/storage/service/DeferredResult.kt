@@ -13,6 +13,7 @@ package arcs.android.storage.service
 
 import arcs.android.crdt.ParcelableCrdtException
 import arcs.core.crdt.CrdtException
+import arcs.core.util.Log
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
@@ -29,7 +30,10 @@ class DeferredResult(context: CoroutineContext) :
         if (exception == null) {
             complete(true)
         } else {
-            completeExceptionally(CrdtException(exception.message ?: "Unknown error"))
+            Log.warning(CrdtException(exception.message ?: "Unknown error")) {
+                "Result was unsuccessful"
+            }
+            complete(false)
         }
     }
 }

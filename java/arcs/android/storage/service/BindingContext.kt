@@ -52,7 +52,7 @@ class BindingContext(
     parentCoroutineContext: CoroutineContext,
     /** Sink to use for recording statistics about accessing data. */
     private val bindingContextStatisticsSink: BindingContextStatisticsSink,
-    /** Callback to trigger when a proxy message has been received and send to the store. */
+    /** Callback to trigger when a proxy message has been received and sent to the store. */
     private val onProxyMessage: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
 ) : IStorageService.Stub() {
     @VisibleForTesting

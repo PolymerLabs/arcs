@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -15,20 +15,30 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
+import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** Thread-safe manager of a collection of [ProxyCallback]s. */
-class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+/**
+ * Thread-safe base manager for [ProxyCallback]s.
+ *
+ * Implementations can define how they wish their callback tokens to be generated.
+ */
+class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
+    /**
+     * Generates a token [Int] to be assigned to an incoming [ProxyCallback].
+     */
+    /* internal */
+    val tokenGenerator: (currentlyUsedTokens: Set<Int>) -> Int
+) {
     private val mutex = Mutex()
-    val nextCallbackToken = atomic(1)
     /* internal */ val callbacks = mutableMapOf<Int, ProxyCallback<Data, Op, ConsumerData>>()
 
     /** Adds a [ProxyCallback] to the collection, and returns its token. */
     fun register(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
         while (!mutex.tryLock()) { /* Wait. */ }
-        val token = nextCallbackToken.getAndIncrement()
+        val token = tokenGenerator(callbacks.keys)
         callbacks[token] = proxyCallback
         mutex.unlock()
         return token
@@ -97,4 +107,36 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
             success && callback(message, muxId)
         }
     }
+}
+
+/**
+ * Creates a [ProxyCallbackManager] where each callback is given a token from an increasing source.
+ */
+/* ktlint-disable max-line-length */
+fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallbackManager(): ProxyCallbackManager<Data, Op, ConsumerData> {
+    val nextCallbackToken = atomic(0)
+    return ProxyCallbackManager { nextCallbackToken.incrementAndGet() }
+}
+/* ktlint-enable max-line-length */
+
+/**
+ * Creates a [ProxyCallbackManager] which is preferable to the regular [ProxyCallbackManager]
+ * in situations where more than one host is connecting to the store at a time.
+ *
+ * @param baseData a salt of sorts, used to help in making callback IDs more unique across hosts.
+ * @param random source of randomness to use when generating callback IDs.
+ */
+fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> RandomProxyCallbackManager(
+    baseData: String,
+    random: Random
+): ProxyCallbackManager<Data, Op, ConsumerData> = ProxyCallbackManager { currentlyUsedTokens ->
+    var unique = random.nextInt()
+    var tokenString = "$unique::$baseData"
+
+    while (tokenString.hashCode() in currentlyUsedTokens) {
+        unique = random.nextInt()
+        tokenString = "$unique::$baseData"
+    }
+
+    tokenString.hashCode()
 }

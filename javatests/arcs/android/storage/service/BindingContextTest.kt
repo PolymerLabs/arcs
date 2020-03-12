@@ -161,10 +161,7 @@ class BindingContextTest {
     @Test
     fun unregisterCallback_unregistersCallbackFromStore() = runBlocking {
         val bindingContext = buildContext()
-        val callback =
-            ParcelableProxyMessageChannel(
-                coroutineContext
-            )
+        val callback = ParcelableProxyMessageChannel(coroutineContext)
         val token = bindingContext.registerCallback(callback)
 
         bindingContext.unregisterCallback(token)

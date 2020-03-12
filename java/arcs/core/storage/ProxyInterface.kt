@@ -100,7 +100,7 @@ fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> MultiplexedProxyCallback
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */
 interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    fun setCallback(callback: ProxyCallback<Data, Op, ConsumerData>)
+    fun setCallback(callback: ProxyCallback<Data, Op, ConsumerData>): Int
     suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 }
 

@@ -26,11 +26,13 @@ import arcs.core.storage.handle.SetCallbacks
 import arcs.core.storage.handle.SingletonCallbacks
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.testutil.LogRule
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.verify
@@ -38,6 +40,9 @@ import org.mockito.Mockito.verify
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class AndroidHandleManagerTest : LifecycleOwner {
+    @get:Rule
+    val log = LogRule()
+
     private lateinit var lifecycle: LifecycleRegistry
     override fun getLifecycle() = lifecycle
 

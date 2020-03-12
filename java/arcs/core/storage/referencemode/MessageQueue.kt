@@ -13,7 +13,9 @@ package arcs.core.storage.referencemode
 
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -39,7 +41,7 @@ class MessageQueue(
 
         val deferred = CompletableDeferred<Boolean>(coroutineContext[Job.Key])
         mutex.withLock { queue += message.toEnqueued(deferred) }
-        drainQueue()
+        CoroutineScope(coroutineContext).launch { drainQueue() }
         return deferred.await()
     }
 

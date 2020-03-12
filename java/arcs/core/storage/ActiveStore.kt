@@ -53,9 +53,8 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return object : StorageCommunicationEndpoint<Data, Op, ConsumerData> {
             var id: Int? = null
 
-            override fun setCallback(callback: ProxyCallback<Data, Op, ConsumerData>) {
-                id = on(callback)
-            }
+            override fun setCallback(callback: ProxyCallback<Data, Op, ConsumerData>): Int =
+                on(callback).also { id = it }
 
             override suspend fun onProxyMessage(
                 message: ProxyMessage<Data, Op, ConsumerData>
