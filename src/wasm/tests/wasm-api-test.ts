@@ -554,13 +554,13 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
             this.skip();
           }
           const {arc, stores} = await setup('CombineUpdatesTest');
-          const handle1 = await singletonHandleForTest(arc, stores.get('handle1'));
-          const handle2 = await collectionHandleForTest(arc, stores.get('handle2'));
+          const handle1 = await handleForStore(stores.get('handle1') as SingletonEntityStore, arc);
+          const handle2 = await handleForStore(stores.get('handle2') as CollectionEntityStore, arc);
 
           await handle1.set(new handle1.entityClass({num: 1.0}));
           await handle2.add(new handle2.entityClass({num: 1.0}));
 
-          const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
+          const errHandle = await handleForStore(stores.get('errors') as CollectionEntityStore, arc);
 
           const sendEvent = async handler => {
             await arc.idle;
