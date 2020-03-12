@@ -151,9 +151,6 @@ class BindingContextTest {
         val heardMessage = callback.asFlow().first()
         heardMessage.result.complete(true)
 
-        // The received message should have id == the token of the receiver.
-        assertThat(heardMessage.message.actual.id).isEqualTo(token)
-
         val operations = heardMessage.message.actual as ProxyMessage.Operations
         assertThat(operations.operations).isEqualTo(message.operations)
     }

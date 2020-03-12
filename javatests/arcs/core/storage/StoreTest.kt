@@ -30,6 +30,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Assert.fail
@@ -125,11 +126,13 @@ class StoreTest {
 
         val sentSyncRequest = atomic(false)
         val deferred = CompletableDeferred<Unit>(coroutineContext[Job.Key])
+        var cbid = 0
         val callback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
             return@ProxyCallback when (message) {
                 is ProxyMessage.Operations -> {
                     assertThat(sentSyncRequest.getAndSet(true)).isFalse()
-                    activeStore.onProxyMessage(ProxyMessage.SyncRequest(message.id))
+                    // Make sure to request sync on this callback ID
+                    activeStore.onProxyMessage(ProxyMessage.SyncRequest(cbid))
                     true
                 }
                 is ProxyMessage.ModelUpdate -> {
@@ -146,7 +149,7 @@ class StoreTest {
         }
 
         // Set up the callback
-        activeStore.on(callback)
+        cbid = activeStore.on(callback)
         // Send our op.
         activeStore.onProxyMessage(ProxyMessage.Operations(listOf(op), 2))
 
@@ -192,11 +195,9 @@ class StoreTest {
 
         val listenerFinished = CompletableDeferred<Unit>(coroutineContext[Job.Key])
 
-        var id: Int = -1
-        id = activeStore.on(ProxyCallback { message ->
+        activeStore.on(ProxyCallback { message ->
             if (message is ProxyMessage.Operations) {
                 assertThat(message.operations.size).isEqualTo(1)
-                assertThat(message.id).isEqualTo(id)
                 assertThat(message.operations[0])
                     .isEqualTo(CrdtCount.Operation.MultiIncrement("me", 0 to 1, delta = 1))
                 listenerFinished.complete(Unit)
