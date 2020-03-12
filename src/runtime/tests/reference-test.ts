@@ -815,4 +815,84 @@ describe('reference mode store tests', () => {
     const value = await outHandle.fetch();
     assert.deepStrictEqual(value as {}, {value: 'val1'});
   });
+
+  it('exposes a dereference API to particles for collection handles', async () => {
+    const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
+    const loader = new Loader(null, {
+      './manifest': `
+        schema Result
+          value: Text
+
+        particle Dereferencer in 'dereferencer.js'
+          inResult: reads [&Result]
+          outResult: writes [Result]
+
+        recipe
+          handle0: use 'input:1'
+          handle1: use 'output:1'
+          Dereferencer
+            inResult: reads handle0
+            outResult: writes handle1
+      `,
+      './dereferencer.js': `
+        defineParticle(({Particle}) => {
+          return class Dereferencer extends Particle {
+            setHandles(handles) {
+              this.output = handles.get('outResult');
+            }
+
+            async onHandleUpdate(handle, update) {
+              if (handle.name == 'inResult') {
+                for (const ref of update.added) {
+                  await ref.dereference();
+                  this.output.add(ref.entity);
+                }
+              }
+            }
+          }
+        });
+      `
+    });
+    const memoryProvider = new TestVolatileMemoryProvider();
+
+    const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
+    const runtime = new Runtime({loader, context: manifest, memoryProvider});
+    const arc = runtime.newArc('test', storageKeyPrefix);
+    const recipe = manifest.recipes[0];
+    const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
+
+    const refModeStore1 = await arc.createStore(new SingletonType(result.type), undefined, 'test:1');
+    const refModeStore2 = await arc.createStore(new SingletonType(result.type), undefined, 'test:2');
+    const inputStore = await arc.createStore(
+      new CollectionType(new ReferenceType(result.type)),
+      undefined,
+      'input:1',
+      undefined,
+      new VolatileStorageKey(arc.id, 'inputStore')
+    );
+    const outputStore = await arc.createStore(new CollectionType(result.type), undefined, 'output:1');
+
+    recipe.handles[0].mapToStorage(inputStore);
+    recipe.handles[1].mapToStorage(outputStore);
+
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    const handle1 = await handleForStore(refModeStore1, arc);
+    const handle2 = await handleForStore(refModeStore2, arc);
+    const entity1 = await handle1.setFromData({value: 'val1'});
+    const entity2 = await handle2.setFromData({value: 'val2'});
+
+    const refHandle = await handleForStore(inputStore, arc);
+    await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: refModeStore1.storageKey.toString()}, storeType(inputStore).getContainedType(), null));
+    await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: refModeStore2.storageKey.toString()}, storeType(inputStore).getContainedType(), null));
+
+    await arc.idle;
+
+    const outHandle = await handleForStore(outputStore, arc);
+    const values = await outHandle.toList();
+    assert.deepStrictEqual(values as {}[], [{value: 'val1'}, {value: 'val2'}]);
+  });
 });
