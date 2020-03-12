@@ -1,6 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_kt_plan",
+    #"arcs_kt_plan",
     "arcs_kt_schema",
     "arcs_manifest_proto",
 )
@@ -27,9 +27,10 @@ arcs_kt_schema(
     srcs = ["WriterReaderExample.arcs"],
 )
 
-arcs_kt_plan(
-    name = "example_plan",
-    srcs = ["WriterReaderExample.arcs"],
-    visibility = ["//visibility:public"],
-    deps = [":example_schema"],
-)
+# Temporarily disabled until fixed in all environments
+#arcs_kt_plan(
+#    name = "example_plan",
+#    srcs = ["WriterReaderExample.arcs"],
+#    visibility = ["//visibility:public"],
+#    deps = [":example_schema"],
+#)
