@@ -33,14 +33,16 @@ abstract class RemovalManager(val time: Time) {
         handle: SingletonHandle<T>,
         timeRange: TimeRange
     ) {
-        handle.fetch()?.takeIf { timeRange.inRange(it.creationTimestamp) }
-            ?.let { handle.clear() } }
+        handle.fetch()?.takeIf { timeRange.inRange(it.creationTimestamp) }?.let {
+            handle.clear()
+        }
+    }
 
     /** Removes all expired items from the given collection handle. */
     suspend fun <T : Referencable> removeExpired(handle: SetHandle<T>) {
         val nowMillis = time.currentTimeMillis
-        handle.fetchAll().forEach { data ->
-            takeIf { data.expirationTimestamp < nowMillis }?.apply { handle.remove(data) }
+        handle.fetchAll().forEach {
+            it.takeIf { it.expirationTimestamp < nowMillis }?.let { handle.remove(it) }
         }
     }
 
@@ -49,8 +51,8 @@ abstract class RemovalManager(val time: Time) {
         handle: SetHandle<T>,
         timeRange: TimeRange
     ) {
-        handle.fetchAll().forEach { data ->
-            takeIf { timeRange.inRange(data.creationTimestamp) }?.apply { handle.remove(data) }
+        handle.fetchAll().forEach {
+            it.takeIf { timeRange.inRange(it.creationTimestamp) }?.apply { handle.remove(it) }
         }
     }
 }
