@@ -1,6 +1,7 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_plan",
+    "arcs_kt_schema",
     "arcs_manifest_proto",
 )
 
@@ -21,8 +22,14 @@ arcs_manifest_proto(
     visibility = ["//visibility:public"],
 )
 
+arcs_kt_schema(
+    name = "example_schema",
+    srcs = ["WriterReaderExample.arcs"],
+)
+
 arcs_kt_plan(
     name = "example_plan",
-    src = "WriterReaderExample.arcs",
+    srcs = ["WriterReaderExample.arcs"],
     visibility = ["//visibility:public"],
+    deps = [":example_schema"],
 )

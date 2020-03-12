@@ -20,7 +20,6 @@ describe('recipe2plan', () => {
   describe('storage-key-recipe-resolver', () => {
     beforeEach(() => DatabaseStorageKey.register());
     afterEach(() => CapabilitiesResolver.reset());
-
     it('detects long running arc', async () => {
       const manifest = (await Manifest.parse(`
           recipe Zero
@@ -57,12 +56,10 @@ describe('recipe2plan', () => {
       assert.equal(resolver.findLongRunningArcId(manifest.recipes[4]), 'myLongRunningArc');
       assert.isTrue(resolver.isLongRunning(manifest.recipes[4]));
     });
-
     it('resolves mapping a handle from a long running arc into another long running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
-
     // TODO(alxr): Resolve these types later
     // particle Writer
     //   data: writes Product Thing {name: Text, price: Number}
@@ -91,7 +88,6 @@ describe('recipe2plan', () => {
         assert.isTrue(it.isResolved());
       }
     }));
-
     it('fails to resolve mapping a handle from a short running arc into another short running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
@@ -191,14 +187,92 @@ describe('recipe2plan', () => {
       // TODO: specify the correct error to be thrown
       await assertThrowsAsync(resolver.resolve);
     }));
-    // TODO(alxr): Flush out outlined unit tests
-    it.skip('No arc id: If arcId of WritingRecipe is not there, it is not valid', () => {
+    it('fails to resolve when a ingestion recipe has no arcId', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    @trigger
+      launch startup
+      arcId readArcId
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
     });
-    it.skip('No handleId: If id of handle in WritingRecipe is not provided, it is not valid', () => {
+    it('fails to resolve when an ingestion recipe uses a create handle with no Id', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent
+      Writer
+        data: writes thing
+
+    @trigger
+      launch startup
+      arcId readArcId
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'No matching handles found for data.');
     });
-    it.skip('Ambiguous handle: If there are 2 WritingRecipes creating the same handle, it is not valid', () => {
-    });
-    it.skip('Ambiguous handle + tag disambiguation: If there are 2 WritingRecipes creating the same handle but with different tags and mapping uses one of the tags, it is valid', () => {
+    it('fails to resolve recipes that have an ambiguous mapping to handles', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+        
+    @trigger
+      launch startup
+      arcId writeArcId2
+    recipe WritingRecipe2
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    @trigger
+      launch startup
+      arcId readArcId
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'More than one handle found for data.');
     });
     it.skip('No Handle: If there is no writing handle, it is not valid', () => {
     });

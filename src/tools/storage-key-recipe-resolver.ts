@@ -38,7 +38,7 @@ export class StorageKeyRecipeResolver {
    * Produces resolved recipes with storage keys.
    *
    * @throws Error if recipe fails to resolve on first or second pass.
-   * @yields Resolved recipes with storage keys
+   * @returns Resolved recipes (with Storage Keys).
    */
   async resolve(): Promise<Recipe[]> {
     const recipes = [];

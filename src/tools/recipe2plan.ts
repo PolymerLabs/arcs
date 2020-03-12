@@ -18,7 +18,6 @@ import {assert} from '../platform/assert-node.js';
  * Generates Kotlin Plans from recipes in an arcs manifest.
  *
  * @param path path/to/manifest.arcs
- * @param scope kotlin package name
  * @return Generated Kotlin code.
  */
 export async function recipe2plan(path: string): Promise<string> {
