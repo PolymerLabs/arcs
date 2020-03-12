@@ -16,6 +16,9 @@ import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Ttl, TtlUnits} from '../runtime/recipe/ttl.js';
 import {Dictionary} from '../runtime/hot.js';
+import {digest} from '../platform/digest-web.js';
+import {IdGenerator} from '../runtime/id.js';
+import {Random} from '../runtime/random.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -66,8 +69,8 @@ export class PlanGenerator {
   /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */
   async createParticle(particle: Particle): Promise<string> {
     const spec = particle.spec;
-    const location = (spec && (spec.implBlobUrl || (spec.implFile && spec.implFile.replace('/', '.')))) || '';
-
+    const locationFromFile = (spec.implFile && spec.implFile.substring(spec.implFile.lastIndexOf('/') + 1));
+    const location = (spec && (spec.implBlobUrl || locationFromFile)) || '';
     const connectionMappings: string[] = [];
     for (const [key, conn] of Object.entries(particle.connections)) {
       connectionMappings.push(`"${key}" to ${await this.createHandleConnection(conn)}`);
@@ -116,9 +119,14 @@ export class PlanGenerator {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
     }
     if (handle.fate === 'create') {
-      return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id)]);
+      return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id || this.createHandleName())]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
+  }
+
+  createHandleName(): string {
+    const rand = Math.floor(Random.next() * Math.pow(2, 50));
+    return `handle/${rand}`;
   }
 
   /** Generates a Kotlin `Ttl` from a Ttl. */
