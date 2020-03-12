@@ -31,9 +31,8 @@ abstract class WasmHandleEvents<T>(
 ) : WasmHandle(name, particle) {
     protected val onUpdateActions: MutableList<(T) -> Unit> = mutableListOf()
 
+    /** Assign a function to be called when the handle is updated. */
     fun onUpdate(action: (T) -> Unit) {
         onUpdateActions.add(action)
     }
-
-    abstract fun getContent(): T
 }

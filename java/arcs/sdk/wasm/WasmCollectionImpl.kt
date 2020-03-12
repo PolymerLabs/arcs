@@ -85,6 +85,4 @@ class WasmCollectionImpl<T : WasmEntity>(
             action(s)
         }
     }
-
-    override fun getContent(): Set<T> = fetchAll()
 }

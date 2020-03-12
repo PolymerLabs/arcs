@@ -215,3 +215,20 @@ recipe OnCreateTest
   OnCreateTest
     root: consumes s1
     fooHandle: reads writes h3
+
+// -----------------------------------------------------------------------------------------------
+
+particle CombineUpdatesTest in '$module.wasm'
+  root: consumes Slot
+  handle1: reads writes {num: Number}
+  handle2: reads writes [{num: Number}]
+  errors: writes [{msg: Text}]
+
+recipe CombineUpdatesTest
+  s1: slot 'rootslotid-root'
+  CombineUpdatesTest
+    root: consumes s1
+    handle1: reads writes h1
+    handle2: reads writes h2
+    errors: writes h11
+

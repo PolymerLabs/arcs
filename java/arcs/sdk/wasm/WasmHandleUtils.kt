@@ -11,6 +11,13 @@
 
 package arcs.sdk.wasm
 
+/**
+ * Receive a callback when either handle is updated.
+ *
+ * @handle1 The first handle the callback will be assigned to
+ * @handle2 The second handle the callback will be assigned to
+ * @action callback
+ */
 fun <T, U> combineUpdates(
     handle1: WasmHandleEvents<T>,
     handle2: WasmHandleEvents<U>,
@@ -22,4 +29,10 @@ fun <T, U> combineUpdates(
             action(handle1.getContent(), handle2.getContent())
         }
     }
+}
+
+private fun <T> WasmHandleEvents<T>.getContent(): T = when (this) {
+    is WasmCollectionImpl<*> -> this.fetchAll() as T
+    is WasmSingletonImpl<*> -> this.fetch() as T
+    else -> throw IllegalArgumentException("Unknown WasmHandleEvents type found")
 }

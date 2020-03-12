@@ -548,5 +548,32 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({txt: 'Not created!'}));
 
     });
+
+    it('multiple handles onUpdate', async function() {
+          if (isCpp) {
+            this.skip();
+          }
+          const {arc, stores} = await setup('CombineUpdatesTest');
+          const handle1 = await singletonHandleForTest(arc, stores.get('handle1'));
+          const handle2 = await collectionHandleForTest(arc, stores.get('handle2'));
+
+          await handle1.set(new handle1.entityClass({num: 1.0}));
+          await handle2.add(new handle2.entityClass({num: 1.0}));
+
+          const errHandle = await collectionHandleForTest(arc, stores.get('errors'));
+
+          const sendEvent = async handler => {
+            await arc.idle;
+            arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+            await arc.idle;
+          };
+
+          await sendEvent('checkEvents');
+
+          const errors = (await errHandle.toList()).map(e => e.msg);
+          if (errors.length > 0) {
+            assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
+          }
+        });
   });
 });
