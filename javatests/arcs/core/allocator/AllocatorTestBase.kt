@@ -291,17 +291,14 @@ open class AllocatorTestBase {
 
         writePersonContext.particle.let { particle ->
             particle as WritePerson
-            assertThat(particle.handles.person).isInstanceOf(WriteSingletonHandle::class.java)
-            assertThat(particle.handles.person).isNotInstanceOf(ReadSingletonHandle::class.java)
+            assertThat(particle.handles.person.mode).isEqualTo(HandleMode.Write)
             assertThat(particle.createCalled).isTrue()
             assertThat(particle.wrote).isTrue()
         }
 
-
         readPersonContext.particle.let { particle ->
             particle as ReadPerson
-            assertThat(particle.handles.person).isInstanceOf(ReadSingletonHandle::class.java)
-            assertThat(particle.handles.person).isNotInstanceOf(WriteSingletonHandle::class.java)
+            assertThat(particle.handles.person.mode).isEqualTo(HandleMode.Read)
             assertThat(particle.createCalled).isTrue()
             assertThat(particle.name).isEqualTo("John Wick")
         }

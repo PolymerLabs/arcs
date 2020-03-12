@@ -19,5 +19,13 @@ enum class HandleMode {
     /** [Handle] is write only. */
     Write,
     /** [Handle] is read-write. */
-    ReadWrite
+    ReadWrite;
+
+    /** True if reading is supported by this mode. */
+    val canRead: Boolean
+        get() = this != Write
+
+    /** True if writing is supported by this mode. */
+    val canWrite: Boolean
+        get() = this != Read
 }

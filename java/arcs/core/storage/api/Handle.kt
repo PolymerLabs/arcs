@@ -11,9 +11,20 @@
 
 package arcs.core.storage.api
 
+import arcs.core.data.HandleMode
+
 /** Base interface for all handle classes. */
 interface Handle {
     val name: String
+
+    /** Indicates whether this handle is read-only, write-only, or read-write. */
+    val mode: HandleMode
+
+    /** Assign a callback when the handle is synced. */
+    fun onSync(action: () -> Unit)
+
+    /** Assign a callback when the handle is desynced. */
+    fun onDesync(action: () -> Unit)
 }
 
 /** A singleton handle with read access. */
@@ -21,13 +32,7 @@ interface ReadSingletonHandle<T : Entity> : Handle {
     /** Returns the value of the singleton. */
     suspend fun fetch(): T?
 
-    suspend fun onUpdate(action: (T?) -> Unit)
-
-    /** Assign a callback when the handle is synced. */
-    suspend fun onSync(action: (ReadSingletonHandle<T>) -> Unit)
-
-    /** Assign a callback when the handle is sdeynced. */
-    suspend fun onDesync(action: (ReadSingletonHandle<T>) -> Unit)
+    fun onUpdate(action: (T?) -> Unit)
 }
 
 /** A singleton handle with write access. */
@@ -50,17 +55,11 @@ interface ReadCollectionHandle<T : Entity> : Handle {
     /** Returns true if the collection is empty. */
     suspend fun isEmpty(): Boolean
 
-    /** Assign a callback when the collection is Updated. */
-    suspend fun onUpdate(action: (Set<T>) -> Unit)
-
-    /** Assign a callback when the collection handle is synced. */
-    suspend fun onSync(action: (ReadCollectionHandle<T>) -> Unit)
-
-    /** Assign a callback when the collection handle is desynced. */
-    suspend fun onDesync(action: (ReadCollectionHandle<T>) -> Unit)
-
     /** Returns a set with all the entities in the collection. */
     suspend fun fetchAll(): Set<T>
+
+    /** Assign a callback when the collection is Updated. */
+    fun onUpdate(action: (Set<T>) -> Unit)
 }
 
 /** A collection handle with read access. */

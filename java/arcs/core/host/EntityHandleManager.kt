@@ -11,38 +11,24 @@
 package arcs.core.host
 
 import arcs.core.common.Id
-import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.storage.Callbacks
-import arcs.core.storage.Handle as StorageHandle
+import arcs.core.storage.LambdaCallbacks
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.Entity
 import arcs.core.storage.api.EntitySpec
 import arcs.core.storage.api.Handle
-import arcs.core.storage.api.ReadCollectionHandle
 import arcs.core.storage.api.ReadSingletonHandle
 import arcs.core.storage.api.ReadWriteCollectionHandle
 import arcs.core.storage.api.ReadWriteSingletonHandle
-import arcs.core.storage.api.WriteCollectionHandle
-import arcs.core.storage.api.WriteSingletonHandle
-import arcs.core.storage.handle.CollectionData
 import arcs.core.storage.handle.CollectionHandle
-import arcs.core.storage.handle.CollectionOp
 import arcs.core.storage.handle.HandleManager
-import arcs.core.storage.handle.SingletonData
 import arcs.core.storage.handle.SingletonHandle
-import arcs.core.storage.handle.SingletonOp
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-typealias Sender = (block: suspend () -> Unit) -> Unit
-typealias SingletonSenderCallbackAdapter<E> =
-    SenderCallbackAdapter<SingletonData<RawEntity>, SingletonOp<RawEntity>, RawEntity?, E?>
-typealias CollectionSenderCallbackAdapter<E> =
-    SenderCallbackAdapter<CollectionData<RawEntity>, CollectionOp<RawEntity>, Set<RawEntity>, E>
+private typealias Sender = (block: suspend () -> Unit) -> Unit
 
 /**
  * Wraps a [HandleManager] and creates [Entity] handles based on [HandleMode], such as
@@ -57,93 +43,55 @@ class EntityHandleManager(private val handleManager: HandleManager) {
     /**
      * Creates and returns a new [SingletonHandle] for managing an [Entity].
      *
-     * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
+     * @property mode indicates whether the handle is allowed to read or write
+     * @property name name for the handle
      * @property storageKey a [StorageKey]
      * @property schema the [Schema] for this [StorageKey]
-     * @property handleMode whether a handle is Read,Write, or ReadWrite (default)
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
     suspend fun <T : Entity> createSingletonHandle(
+        mode: HandleMode,
+        name: String,
         entitySpec: EntitySpec<T>,
-        handleName: String,
         storageKey: StorageKey,
         schema: Schema,
-        handleMode: HandleMode = HandleMode.ReadWrite,
         idGenerator: Id.Generator = Id.Generator.newSession(),
         sender: Sender = ::defaultSender
-    ): Handle {
+    ): SingletonHandleAdapter<T> {
         val storageHandle = handleManager.singletonHandle(
             storageKey,
             schema,
-            canRead = handleMode != HandleMode.Write
+            canRead = mode.canRead
         )
-        return when (handleMode) {
-            HandleMode.ReadWrite -> ReadWriteSingletonHandleImpl(
-                entitySpec,
-                handleName,
-                storageHandle,
-                idGenerator,
-                sender
-            )
-            HandleMode.Read -> ReadSingletonHandleImpl(
-                entitySpec,
-                handleName,
-                storageHandle,
-                sender
-            )
-            HandleMode.Write -> WriteSingletonHandleImpl<T>(
-                handleName,
-                storageHandle,
-                idGenerator
-            )
-        }
+        return SingletonHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator, sender)
     }
 
     /**
      * Creates and returns a new [CollectionHandle] for a set of [Entity]s.
      *
-     * @property handleName name for the handle, must be present in [HandleHolder.entitySpecs]
+     * @property mode indicates whether the handle is allowed to read or write
+     * @property name name for the handle
      * @property storageKey a [StorageKey]
      * @property schema the [Schema] for this [StorageKey]
-     * @property handleMode whether a handle is Read,Write, or ReadWrite (default)
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
     suspend fun <T : Entity> createCollectionHandle(
+        mode: HandleMode,
+        name: String,
         entitySpec: EntitySpec<T>,
-        handleName: String,
         storageKey: StorageKey,
         schema: Schema,
-        handleMode: HandleMode = HandleMode.ReadWrite,
         idGenerator: Id.Generator = Id.Generator.newSession(),
         sender: Sender = ::defaultSender
-    ): Handle {
+    ): CollectionHandleAdapter<T> {
         val storageHandle = handleManager.collectionHandle(
             storageKey,
             schema,
-            canRead = handleMode != HandleMode.Write
+            canRead = mode.canRead
         )
-        return when (handleMode) {
-            HandleMode.ReadWrite -> ReadWriteCollectionHandleImpl(
-                entitySpec,
-                handleName,
-                storageHandle,
-                idGenerator,
-                sender
-            )
-            HandleMode.Read -> ReadCollectionHandleImpl(
-                entitySpec,
-                handleName,
-                storageHandle,
-                sender
-            )
-            HandleMode.Write -> WriteCollectionHandleImpl<T>(
-                handleName,
-                storageHandle,
-                idGenerator
-            )
-        }
+        return CollectionHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator, sender)
     }
 
     /**
@@ -158,195 +106,159 @@ class EntityHandleManager(private val handleManager: HandleManager) {
     }
 }
 
-internal open class HandleEventBase<T, H : Handle> {
-    protected val onUpdateActions: MutableList<(T) -> Unit> = mutableListOf()
-    protected val onSyncActions: MutableList<(H) -> Unit> = mutableListOf()
-    protected val onDesyncActions: MutableList<(H) -> Unit> = mutableListOf()
+/** Base functionality common to all read/write singleton and collection handles. */
+sealed class HandleAdapter(
+    override val mode: HandleMode,
+    override val name: String
+) : Handle {
+    private val onSyncActions: MutableList<() -> Unit> = mutableListOf()
+    private val onDesyncActions: MutableList<() -> Unit> = mutableListOf()
 
-    suspend fun onUpdate(action: (T) -> Unit) {
-        onUpdateActions.add(action)
-    }
-
-    suspend fun onSync(action: (H) -> Unit) {
+    override fun onSync(action: () -> Unit) {
         onSyncActions.add(action)
     }
 
-    suspend fun onDesync(action: (H) -> Unit) {
-        onDesyncActions.add(action)
+    override fun onDesync(action: () -> Unit) {
+        onSyncActions.add(action)
     }
 
-    protected suspend fun fireUpdate(value: T) {
-        onUpdateActions.forEach { action -> action(value) }
+    protected fun fireSync() {
+        onSyncActions.forEach { it() }
     }
 
-    protected suspend fun fireSync() {
-        onSyncActions.forEach { action -> action(this as H) }
+    protected fun fireDesync() {
+        onDesyncActions.forEach { it() }
     }
 
-    protected suspend fun fireDesync() {
-        onDesyncActions.forEach { action -> action(this as H) }
+    protected fun checkCanRead() {
+        if (!mode.canRead) {
+            throw IllegalArgumentException("Handle does not support reads.")
+        }
+    }
+
+    protected fun checkCanWrite() {
+        if (!mode.canWrite) {
+            throw IllegalArgumentException("Handle does not support writes.")
+        }
     }
 }
 
-internal open class ReadSingletonHandleImpl<T : Entity>(
-    val entitySpec: EntitySpec<T>,
-    val handleName: String,
-    val storageHandle: SingletonHandle<RawEntity>,
-    sender: Sender
-) : HandleEventBase<T?, ReadSingletonHandle<T>>(), ReadSingletonHandle<T> {
+/** Wraps [SingletonHandle] and makes it suitable for use in the SDK with [Entity]s. */
+class SingletonHandleAdapter<T : Entity>(
+    mode: HandleMode,
+    name: String,
+    private val entitySpec: EntitySpec<T>,
+    private val storageHandle: SingletonHandle<RawEntity>,
+    private val idGenerator: Id.Generator,
+    private val sender: Sender
+) : HandleAdapter(mode, name), ReadWriteSingletonHandle<T> {
     init {
-        storageHandle.callback = SingletonSenderCallbackAdapter(
-            this::fetch,
-            this::fireUpdate,
-            this::fireSync,
-            this::fireDesync,
-            sender
+        storageHandle.callback = LambdaCallbacks(
+            onSync = this::fireSync,
+            onDesync = this::fireDesync,
+            onUpdate = this::fireUpdate
         )
     }
 
-    override val name: String
-        get() = handleName
-
-    override suspend fun fetch(): T? = storageHandle.fetch()?.let {
-        rawEntity -> entitySpec.deserialize(rawEntity)
-    }
-}
-
-internal class WriteSingletonHandleImpl<T : Entity>(
-    val handleName: String,
-    private val storageHandle: SingletonHandle<RawEntity>,
-    private val idGenerator: Id.Generator
-) : WriteSingletonHandle<T> {
-    override val name: String
-        get() = handleName
+    private val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
 
     override suspend fun store(entity: T) {
+        checkCanWrite()
         storageHandle.store(
-            entity.ensureIdentified(idGenerator, handleName).serialize()
+            entity.ensureIdentified(idGenerator, name).serialize()
         )
     }
 
     override suspend fun clear() {
+        checkCanWrite()
         storageHandle.clear()
     }
+
+    override suspend fun fetch(): T? {
+        checkCanRead()
+        return storageHandle.fetch()?.let { rawEntity ->
+            entitySpec.deserialize(rawEntity)
+        }
+    }
+
+    override fun onUpdate(action: (T?) -> Unit) {
+        checkCanRead()
+        onUpdateActions.add(action)
+    }
+
+    private fun fireUpdate() {
+        checkCanRead()
+        sender {
+            val value = fetch()
+            onUpdateActions.forEach { it(value) }
+        }
+    }
 }
 
-internal class ReadWriteSingletonHandleImpl<T : Entity>(
-    entitySpec: EntitySpec<T>,
-    handleName: String,
-    storageHandle: SingletonHandle<RawEntity>,
-    idGenerator: Id.Generator,
-    sender: Sender,
-    private val writableSingleton: WriteSingletonHandleImpl<T> = WriteSingletonHandleImpl(
-        handleName,
-        storageHandle,
-        idGenerator
-    )
-) : ReadWriteSingletonHandle<T>,
-    ReadSingletonHandleImpl<T>(entitySpec, handleName, storageHandle, sender),
-    WriteSingletonHandle<T> by writableSingleton {
-    override val name: String
-        get() = writableSingleton.name
-}
-
-internal open class ReadCollectionHandleImpl<T : Entity>(
+/** Wraps [CollectionHandle] and makes it suitable for use in the SDK with [Entity]s. */
+class CollectionHandleAdapter<T : Entity>(
+    mode: HandleMode,
+    name: String,
     private val entitySpec: EntitySpec<T>,
-    val handleName: String,
     private val storageHandle: CollectionHandle<RawEntity>,
-    sender: Sender
-) : HandleEventBase<Set<T>, ReadCollectionHandle<T>>(), ReadCollectionHandle<T> {
+    private val idGenerator: Id.Generator,
+    private val sender: Sender
+) : HandleAdapter(mode, name), ReadWriteCollectionHandle<T> {
     init {
-        storageHandle.callback = CollectionSenderCallbackAdapter(
-            this::fetchAll,
-            this::fireUpdate,
-            this::fireSync,
-            this::fireDesync,
-            sender
+        storageHandle.callback = LambdaCallbacks(
+            onSync = this::fireSync,
+            onDesync = this::fireDesync,
+            onUpdate = this::fireUpdate
         )
     }
 
-    override val name: String
-        get() = handleName
+    private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
 
-    override suspend fun size(): Int = fetchAll().size
+    override suspend fun size(): Int {
+        checkCanRead()
+        return fetchAll().size
+    }
 
-    override suspend fun isEmpty() = fetchAll().isEmpty()
+    override suspend fun isEmpty(): Boolean {
+        checkCanRead()
+        return fetchAll().isEmpty()
+    }
 
-    override suspend fun fetchAll(): Set<T> = storageHandle.fetchAll().map {
-        entitySpec.deserialize(it)
-    }.toSet()
-}
+    override suspend fun fetchAll(): Set<T> {
+        checkCanRead()
+        return storageHandle.fetchAll().map {
+            entitySpec.deserialize(it)
+        }.toSet()
+    }
 
-internal class WriteCollectionHandleImpl<T : Entity>(
-    val handleName: String,
-    private val storageHandle: CollectionHandle<RawEntity>,
-    private val idGenerator: Id.Generator
-) : WriteCollectionHandle<T> {
-    override val name: String
-        get() = handleName
+    override fun onUpdate(action: (Set<T>) -> Unit) {
+        checkCanRead()
+        onUpdateActions.add(action)
+    }
+
+    private fun fireUpdate() {
+        checkCanRead()
+        sender {
+            val values = fetchAll()
+            onUpdateActions.forEach { it(values) }
+        }
+    }
 
     override suspend fun store(entity: T) {
+        checkCanWrite()
         storageHandle.store(
-            entity.ensureIdentified(idGenerator, handleName).serialize()
+            entity.ensureIdentified(idGenerator, name).serialize()
         )
     }
 
     override suspend fun clear() {
+        checkCanWrite()
         storageHandle.clear()
     }
 
     override suspend fun remove(entity: T) {
+        checkCanWrite()
         storageHandle.remove(entity.serialize())
-    }
-}
-
-internal class ReadWriteCollectionHandleImpl<T : Entity>(
-    entitySpec: EntitySpec<T>,
-    handleName: String,
-    storageHandle: CollectionHandle<RawEntity>,
-    idGenerator: Id.Generator,
-    sender: Sender,
-    private val writableCollection: WriteCollectionHandleImpl<T> = WriteCollectionHandleImpl(
-        handleName,
-        storageHandle,
-        idGenerator
-    )
-) : ReadWriteCollectionHandle<T>,
-    ReadCollectionHandleImpl<T>(entitySpec, handleName, storageHandle, sender),
-    WriteCollectionHandle<T> by writableCollection {
-    override val name: String
-        get() = writableCollection.name
-}
-
-/**
- * Adapts [StorageHandle] [Callbacks] events into SDK callbacks. All events are dispatched
- * via a [Sender], which can enforce appropriate levels of concurrency.
- */
-class SenderCallbackAdapter<Data : CrdtData, Op : CrdtOperationAtTime, T, E>(
-    private val fetchFunc: suspend () -> E,
-    private val updateCallback: (suspend (E) -> Unit),
-    private val syncCallback: (suspend () -> Unit),
-    private val desyncCallback: (suspend () -> Unit),
-    private val sender: Sender
-) : Callbacks<Data, Op, T> {
-
-    /**
-     * Used to ensure serialized invocations of [Handle] events. This can be per-[Handle],
-     * per-[Particle], per-[Arc], depending on the [Sender] used. Typically, it will be
-     * per-[Particle] when handles are hosted inside of a [Particle]
-     */
-    private fun invokeWithSender(block: suspend () -> Unit) = sender(block)
-
-    override fun onUpdate(handle: StorageHandle<Data, Op, T>, op: Op) = invokeWithSender {
-        updateCallback.invoke(fetchFunc())
-    }
-
-    override fun onSync(handle: StorageHandle<Data, Op, T>) = invokeWithSender {
-        syncCallback.invoke()
-    }
-
-    override fun onDesync(handle: StorageHandle<Data, Op, T>) = invokeWithSender {
-        desyncCallback.invoke()
     }
 }
 
