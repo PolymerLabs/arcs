@@ -22,6 +22,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
+import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -117,6 +118,24 @@ class ParcelableTypeTest {
         }
 
         assertThat(unmarshalled).isEqualTo(singletonType)
+    }
+
+    @Test
+    fun parcelableRoundtrip_works_forTypeVariable() {
+        val typeVariable = TypeVariable("a")
+
+        val marshalled = with(Parcel.obtain()) {
+            writeType(typeVariable, 0)
+            marshall()
+        }
+
+        val unmarshalled = with(Parcel.obtain()) {
+            unmarshall(marshalled, 0, marshalled.size)
+            setDataPosition(0)
+            readType()
+        }
+
+        assertThat(unmarshalled).isEqualTo(typeVariable)
     }
 
     private val entitySchema = Schema(

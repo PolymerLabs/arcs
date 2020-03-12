@@ -25,5 +25,5 @@ enum class Tag {
     // Tuple,
     Singleton,
     // Slot,
-    // TypeVariable,
+    TypeVariable,
 }

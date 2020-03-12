@@ -14,6 +14,7 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/repoutils",
