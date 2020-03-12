@@ -1107,16 +1107,16 @@ class DatabaseImplTest {
 
     @Test
     fun getAllStorageKeys_returnsAllKeys() = runBlockingTest {
-      val entityKey = DummyStorageKey("entity")
-      val entity = DatabaseData.Entity(
-          rawEntity = RawEntity("entity", singletons = emptyMap(), collections = emptyMap()),
-          schema = newSchema("hash"),
-          databaseVersion = 1,
-          versionMap = VERSION_MAP
-      )
-      database.insertOrUpdateEntity(entityKey, entity)
+        val entityKey = DummyStorageKey("entity")
+        val entity = DatabaseData.Entity(
+            rawEntity = RawEntity("entity", singletons = emptyMap(), collections = emptyMap()),
+            schema = newSchema("hash"),
+            databaseVersion = 1,
+            versionMap = VERSION_MAP
+        )
+        database.insertOrUpdateEntity(entityKey, entity)
 
-      assertThat(database.getAllStorageKeys()).containsExactly(entityKey)
+        assertThat(database.getAllStorageKeys()).containsExactly(entityKey)
     }
 
     @Test
