@@ -29,6 +29,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",  # buildcleaner: keep
         "//java/arcs/core/testutil",
+        "//java/arcs/core/type",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/storage/database/testutil",
         "//java/arcs/jvm/util/testutil",
