@@ -21,6 +21,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/testutil",
+        "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/storage/database/testutil",

@@ -340,7 +340,7 @@ class StoreTest {
         val provider = mock<DriverProvider> {
             on { willSupport(testKey) }.thenReturn(true)
         }
-        whenever(provider.getDriver(any(), eq(CrdtCount.Data::class))).thenReturn(driver)
+        whenever(provider.getDriver(any(), eq(CrdtCount.Data::class), any())).thenReturn(driver)
 
         DriverFactory.register(provider)
 

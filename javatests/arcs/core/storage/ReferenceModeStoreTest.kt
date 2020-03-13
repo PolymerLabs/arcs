@@ -693,7 +693,8 @@ class ReferenceModeStoreTest {
 
         override suspend fun <Data : Any> getDriver(
             storageKey: StorageKey,
-            dataClass: KClass<Data>
+            dataClass: KClass<Data>,
+            type: Type
         ): Driver<Data> = MockDriver(storageKey)
 
         override suspend fun getAllStorageKeys(): Map<StorageKey, Type> = mapOf()

@@ -15,6 +15,8 @@ import arcs.core.common.ArcId
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.type.Tag
+import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -76,7 +78,8 @@ class VolatileDriverProviderTest {
         val driver =
             fooProvider.getDriver(
                 VolatileStorageKey(arcIdFoo, "myfoo"),
-                Int::class
+                Int::class,
+                DummyType
             )
 
         assertThat(driver).isNotNull()
@@ -87,9 +90,16 @@ class VolatileDriverProviderTest {
     fun getAllStorageKeys_retunsAllStorageKeys() = runBlocking<Unit> {
         val storageKey1 = VolatileStorageKey(arcIdFoo, "myfoo")
         val storageKey2 = VolatileStorageKey(arcIdFoo, "myfoo2")
-        fooProvider.getDriver(storageKey1, Int::class)
-        fooProvider.getDriver(storageKey2, Int::class)
+        fooProvider.getDriver(storageKey1, Int::class, DummyType)
+        fooProvider.getDriver(storageKey2, Int::class, DummyType)
 
         assertThat(fooProvider.getAllStorageKeys().keys).containsExactly(storageKey1, storageKey2)
+    }
+
+    companion object {
+        object DummyType: Type {
+            override val tag = Tag.Count
+            override fun toLiteral() = throw UnsupportedOperationException("")
+        }
     }
 }

@@ -12,11 +12,6 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
@@ -42,31 +37,24 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        dataClass: KClass<Data>
+        dataClass: KClass<Data>,
+        type: Type
     ): Driver<Data> {
         require(
             willSupport(storageKey)
         ) { "This provider does not support storageKey: $storageKey" }
-        return VolatileDriver(storageKey, arcMemory)
+        return VolatileDriver(storageKey, type, arcMemory)
     }
 
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        // TODO: keep track of and return the actual schema type.
-        val type = EntityType(
-            Schema(
-                listOf<SchemaName>(),
-                SchemaFields(emptyMap(), emptyMap()),
-                ""
-            )
-        )
-        // TODO(mmandlis): distinguish between singleton and collection type.
-        return arcMemory.keys().map { it to CollectionType(type) }.toMap()
+        return arcMemory.getAllStorageKeys()
     }
 }
 
 /** [Driver] implementation for an in-memory store of data. */
 /* internal */ class VolatileDriver<Data : Any>(
     override val storageKey: StorageKey,
+    private val type: Type,
     private val memory: VolatileMemory
 ) : Driver<Data> {
     private val log = TaggedLog { this.toString() }
@@ -94,6 +82,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 
         // Add the data to the memory.
         memory[storageKey] = dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
+        memory.registerDriver(storageKey, type)
         log.debug { "Created" }
     }
 
@@ -148,6 +137,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 /* internal */ class VolatileMemory {
     private val lock = Any()
     private val entries = mutableMapOf<StorageKey, VolatileEntry<*>>()
+    private val typeByStorageKey = mutableMapOf<StorageKey, Type>()
 
     /** Current token. Will be updated with every call to [set]. */
     var token: String = Random.nextInt().toString()
@@ -166,6 +156,12 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     }
 
     fun keys(): Set<StorageKey> = synchronized(lock) { entries.keys }
+
+    fun registerDriver(key: StorageKey, type: Type) = synchronized(lock) {
+        typeByStorageKey[key] = type
+    }
+
+    fun getAllStorageKeys(): Map<StorageKey, Type> = synchronized(lock) { typeByStorageKey }
 
     /**
      * Sets the value at the provided [key] to the given [VolatileEntry] and returns the old value,

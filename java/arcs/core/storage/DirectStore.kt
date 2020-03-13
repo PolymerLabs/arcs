@@ -414,7 +414,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             type: CrdtModelType<Data, Op, T>
         ): DirectStore<Data, Op, T> {
             val driver = CrdtException.requireNotNull(
-                DriverFactory.getDriver<Data>(options.storageKey)
+                DriverFactory.getDriver<Data>(options.storageKey, options.type)
             ) { "No driver exists to support storage key ${options.storageKey}" }
 
             return DirectStore(options.copy(type = type), type.createCrdtModel(), driver)
@@ -434,7 +434,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 CrdtException.requireNotNull(
                     DriverFactory.getDriver(
                         options.storageKey,
-                        dataClass as KClass<out CrdtData>
+                        dataClass as KClass<out CrdtData>,
+                        options.type
                     )
                 ) { "No driver exists to support storage key ${options.storageKey}" }
 

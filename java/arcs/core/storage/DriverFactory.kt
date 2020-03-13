@@ -31,19 +31,21 @@ object DriverFactory {
      * Fetches a [Driver] of type [Data] given its [storageKey].
      */
     suspend inline fun <reified Data : Any> getDriver(
-        storageKey: StorageKey
-    ): Driver<Data>? = getDriver(storageKey, Data::class)
+        storageKey: StorageKey,
+        type: Type
+    ): Driver<Data>? = getDriver(storageKey, Data::class, type)
 
     /**
      * Fetches a [Driver] of type [Data] (declared by [dataClass]) given its [storageKey].
      */
     suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        dataClass: KClass<Data>
+        dataClass: KClass<Data>,
+        type: Type
     ): Driver<Data>? {
         return providers.value
             .find { it.willSupport(storageKey) }
-            ?.getDriver(storageKey, dataClass)
+            ?.getDriver(storageKey, dataClass, type)
     }
 
     /** Registers a new [DriverProvider]. */
@@ -71,7 +73,8 @@ interface DriverProvider {
     /** Gets a [Driver] for the given [storageKey] and type [Data] (declared by [dataClass]). */
     suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        dataClass: KClass<Data>
+        dataClass: KClass<Data>,
+        type: Type
     ): Driver<Data>
 
     /** Returns a map of [StorageKey] to [Type] for which a driver has been created. */

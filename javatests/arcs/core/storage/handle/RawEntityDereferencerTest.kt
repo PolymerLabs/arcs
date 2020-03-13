@@ -15,6 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtEntity.Reference.Companion.buildReference
 import arcs.core.crdt.VersionMap
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -83,8 +84,8 @@ class RawEntityDereferencerTest {
         RamDiskDriverProvider()
         RamDisk.clear()
 
-        aliceDriver = DriverFactory.getDriver(backingKey.childKeyWithComponent("aliceId"))!!
-        bobDriver = DriverFactory.getDriver(backingKey.childKeyWithComponent("bobId"))!!
+        aliceDriver = DriverFactory.getDriver(backingKey.childKeyWithComponent("aliceId"), EntityType(schema))!!
+        bobDriver = DriverFactory.getDriver(backingKey.childKeyWithComponent("bobId"), EntityType(schema))!!
 
         aliceDriver.send(CrdtEntity.Data(VersionMap("alice" to 1), alice, referenceBuilder), 1)
         bobDriver.send(CrdtEntity.Data(VersionMap("bob" to 1), bob, referenceBuilder), 1)
