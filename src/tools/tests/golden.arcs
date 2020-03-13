@@ -5,7 +5,11 @@ meta
 
 particle Gold
   data: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &{val: Text}}
+
   // These are People that have a lastCall value less than three (24 hour) days ago
   // lastCall represents the time since last phone call to/from this contact (in seconds)
   qCollection: reads [People {name: Text, age: Number, lastCall: Number, address: Text, favoriteColor: Text, birthDayMonth: Number, birthDayDOM: Number}[lastCall < 3*24*60*60 and name == ?]]
+
   alias: writes {val: Text}
+
+  collection: reads {num: Number}

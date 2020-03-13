@@ -416,6 +416,145 @@ struct std::hash<arcs::Gold_QCollection> {
 
 namespace arcs::golden {
 
+class Gold_Collection {
+public:
+  // Entities must be copied with arcs::clone_entity(), which will exclude the internal id.
+  // Move operations are ok (and will include the internal id).
+  Gold_Collection() = default;
+  Gold_Collection(Gold_Collection&&) = default;
+  Gold_Collection& operator=(Gold_Collection&&) = default;
+
+  template<typename T>
+  Gold_Collection(const T& other) :
+    num_(other.num()), num_valid_(other.has_num())
+  {}
+
+  double num() const { return num_; }
+  void set_num(double value) { num_ = value; num_valid_ = true; }
+
+  // Equality ops compare internal ids and all data fields.
+  // Use arcs::fields_equal() to compare only the data fields.
+  bool operator==(const Gold_Collection& other) const;
+  bool operator!=(const Gold_Collection& other) const { return !(*this == other); }
+
+  // For STL containers.
+  friend bool operator<(const Gold_Collection& a, const Gold_Collection& b) {
+    if (int cmp = a._internal_id_.compare(b._internal_id_)) {
+      return cmp < 0;
+    }
+    if (0) {
+    } else if (a.num_ != b.num_) {
+      return a.num_ < b.num_;
+    }
+    return false;
+  }
+
+protected:
+  // Allow private copying for use in Handles.
+  Gold_Collection(const Gold_Collection&) = default;
+  Gold_Collection& operator=(const Gold_Collection&) = default;
+
+  static const char* _schema_hash() { return "1032e45209f910286cfb898c43a1c3ca7d07aea6"; }
+  static const int _field_count = 1;
+
+  double num_ = 0;
+  bool num_valid_ = false;
+
+  std::string _internal_id_;
+
+  friend class Singleton<Gold_Collection>;
+  friend class Collection<Gold_Collection>;
+  friend class Ref<Gold_Collection>;
+  friend class internal::Accessor;
+};
+
+template<>
+inline Gold_Collection internal::Accessor::clone_entity(const Gold_Collection& entity) {
+  Gold_Collection clone;
+  clone.num_ = entity.num_;
+  clone.num_valid_ = entity.num_valid_;
+  return clone;
+}
+
+template<>
+inline size_t internal::Accessor::hash_entity(const Gold_Collection& entity) {
+  size_t h = 0;
+  internal::hash_combine(h, entity._internal_id_);
+  internal::hash_combine(h, entity.num_);
+  return h;
+}
+
+template<>
+inline bool internal::Accessor::fields_equal(const Gold_Collection& a, const Gold_Collection& b) {
+  return (a.num_ == b.num_);
+}
+
+inline bool Gold_Collection::operator==(const Gold_Collection& other) const {
+  return _internal_id_ == other._internal_id_ && fields_equal(*this, other);
+}
+
+template<>
+inline std::string internal::Accessor::entity_to_str(const Gold_Collection& entity, const char* join, bool with_id) {
+  internal::StringPrinter printer;
+  if (with_id) {
+    printer.addId(entity._internal_id_);
+  }
+  if (entity.num_valid_) printer.add("num: ", entity.num_);
+  return printer.result(join);
+}
+
+template<>
+inline void internal::Accessor::decode_entity(Gold_Collection* entity, const char* str) {
+  if (str == nullptr) return;
+  internal::StringDecoder decoder(str);
+  decoder.decode(entity->_internal_id_);
+  decoder.validate("|");
+  for (int i = 0; !decoder.done() && i < Gold_Collection::_field_count; i++) {
+    std::string name = decoder.upTo(':');
+    if (0) {
+    } else if (name == "num") {
+      decoder.validate("N");
+      decoder.decode(entity->num_);
+      entity->num_valid_ = true;
+    } else {
+      // Ignore unknown fields until type slicing is fully implemented.
+      std::string typeChar = decoder.chomp(1);
+      if (typeChar == "T" || typeChar == "U") {
+        std::string s;
+        decoder.decode(s);
+      } else if (typeChar == "N") {
+        double d;
+        decoder.decode(d);
+      } else if (typeChar == "B") {
+        bool b;
+        decoder.decode(b);
+      }
+      i--;
+    }
+    decoder.validate("|");
+  }
+}
+
+template<>
+inline std::string internal::Accessor::encode_entity(const Gold_Collection& entity) {
+  internal::StringEncoder encoder;
+  encoder.encode("", entity._internal_id_);
+  encoder.encode("num:N", entity.num_);
+  return encoder.result();
+}
+
+}  // namespace arcs::golden
+
+// For STL unordered associative containers. Entities will need to be std::move()-inserted.
+template<>
+struct std::hash<arcs::Gold_Collection> {
+  size_t operator()(const arcs::Gold_Collection& entity) const {
+    return arcs::hash_entity(entity);
+  }
+};
+
+namespace arcs::golden {
+
 class Gold_Data {
 public:
   // Entities must be copied with arcs::clone_entity(), which will exclude the internal id.
@@ -642,6 +781,7 @@ protected:
   arcs::Singleton<arcs::Gold_Data> data_{this, "data"};
   arcs::Collection<arcs::Gold_QCollection> qCollection_{this, "qCollection"};
   arcs::Singleton<arcs::Gold_Alias> alias_{this, "alias"};
+  arcs::Singleton<arcs::Gold_Collection> collection_{this, "collection"};
 };
 
 #endif
