@@ -31,5 +31,8 @@ arcs_kt_plan(
     name = "example_plan",
     srcs = ["WriterReaderExample.arcs"],
     visibility = ["//visibility:public"],
-    deps = [":example_schema"],
+    deps = [
+        ":example_schema",
+        "//java/arcs/core/storage:storage_key",
+    ],
 )
