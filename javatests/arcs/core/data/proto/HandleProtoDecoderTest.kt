@@ -1,6 +1,7 @@
 package arcs.core.data.proto
 
-import arcs.core.data.*
+import arcs.core.data.HandleMode
+import arcs.core.data.TypeVariable
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.testutil.assertThrows
