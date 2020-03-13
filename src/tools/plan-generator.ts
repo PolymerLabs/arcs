@@ -187,7 +187,7 @@ package ${this.namespace}
 //
 
 ${tryImport('arcs.core.data.*', this.namespace)}
-${tryImport('arcs.core.storage.*', this.namespace)}
+${tryImport('arcs.core.storage.StorageKeyParser', this.namespace)}
 `;
   }
 
