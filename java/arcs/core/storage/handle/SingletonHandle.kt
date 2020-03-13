@@ -30,7 +30,6 @@ typealias SingletonBase<T> = Handle<SingletonData<T>, SingletonOp<T>, T?>
 typealias SingletonData<T> = CrdtSingleton.Data<T>
 typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
 typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<T>, T?>
-typealias SingletonHandle<T> = SingletonImpl<T>
 typealias SingletonActivationFactory<T> = ActivationFactory<SingletonData<T>, SingletonOp<T>, T?>
 typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?>
 
@@ -40,7 +39,7 @@ typealias SingletonCallbacks<T> = Callbacks<SingletonData<T>, SingletonOp<T>, T?
  * It provides methods that can generate the appropriate operations to send to a
  * backing [StorageProxy].
  */
-class SingletonImpl<T : Referencable>(
+class SingletonHandle<T : Referencable>(
     name: String,
     storageProxy: SingletonProxy<T>,
     callbacks: SingletonCallbacks<T>? = null,

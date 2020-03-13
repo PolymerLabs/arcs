@@ -164,27 +164,27 @@ class HandleManagerTest {
     }
 
     @Test
-    fun testCreateSetHandle() = handleManagerTest { hm ->
-        val setHandle = hm.rawEntitySetHandle(setKey, schema)
-        setHandle.store(entity1)
-        setHandle.store(entity2)
+    fun testCreateCollectionHandle() = handleManagerTest { hm ->
+        val collectionHandle = hm.rawEntityCollectionHandle(setKey, schema)
+        collectionHandle.store(entity1)
+        collectionHandle.store(entity2)
 
         // Now read back from a different handle
-        val readbackHandle = hm.rawEntitySetHandle(setKey, schema)
+        val readbackHandle = hm.rawEntityCollectionHandle(setKey, schema)
         val readBack = readbackHandle.fetchAll()
         assertThat(readBack).containsExactly(entity1, entity2)
     }
 
     @Test
-    fun testCreateReferenceSetHandle() = handleManagerTest { hm ->
-        val setHandle = hm.referenceSetHandle(singletonRefKey, schema)
-        val entity1Ref = setHandle.createReference(entity1, backingKey)
-        val entity2Ref = setHandle.createReference(entity2, backingKey)
-        setHandle.store(entity1Ref)
-        setHandle.store(entity2Ref)
+    fun testCreateReferenceCollectionHandle() = handleManagerTest { hm ->
+        val collectionHandle = hm.referenceCollectionHandle(singletonRefKey, schema)
+        val entity1Ref = collectionHandle.createReference(entity1, backingKey)
+        val entity2Ref = collectionHandle.createReference(entity2, backingKey)
+        collectionHandle.store(entity1Ref)
+        collectionHandle.store(entity2Ref)
 
         // Now read back from a different handle
-        val readbackHandle = hm.referenceSetHandle(singletonRefKey, schema)
+        val readbackHandle = hm.referenceCollectionHandle(singletonRefKey, schema)
         val readBack = readbackHandle.fetchAll()
         assertThat(readBack).containsExactly(entity1Ref, entity2Ref)
 
@@ -228,12 +228,12 @@ class HandleManagerTest {
     }
 
     @Test
-    fun testDereferencingFromSetHandleEntity() = handleManagerTest { hm ->
-        val setHandle = hm.rawEntitySetHandle(setKey, schema)
-        setHandle.store(entity1)
-        setHandle.store(entity2)
+    fun testDereferencingFromCollectionHandleEntity() = handleManagerTest { hm ->
+        val collectionHandle = hm.rawEntityCollectionHandle(setKey, schema)
+        collectionHandle.store(entity1)
+        collectionHandle.store(entity2)
 
-        val secondHandle = hm.rawEntitySetHandle(setKey, schema)
+        val secondHandle = hm.rawEntityCollectionHandle(setKey, schema)
         secondHandle.fetchAll().also { assertThat(it).hasSize(2) }.forEach { entity ->
             val expectedBestFriend = if (entity.id == "entity1") entity2 else entity1
             val actualBestFriend = (entity.singletons["best_friend"] as Reference)

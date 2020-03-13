@@ -395,7 +395,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 handleSpec.mode
             )
         is CollectionType<*> ->
-            entityHandleManager.createSetHandle(
+            entityHandleManager.createCollectionHandle(
                 holder.getEntitySpec(handleName),
                 handleName,
                 handleSpec.storageKey,

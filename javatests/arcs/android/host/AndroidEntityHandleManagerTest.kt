@@ -111,16 +111,16 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             handleHolder.readWriteHandle
         }
 
-        expectHandleException("writeSetHandle") {
-            handleHolder.writeSetHandle
+        expectHandleException("writeCollectionHandle") {
+            handleHolder.writeCollectionHandle
         }
 
-        expectHandleException("readSetHandle") {
-            handleHolder.readSetHandle
+        expectHandleException("readCollectionHandle") {
+            handleHolder.readCollectionHandle
         }
 
-        expectHandleException("readWriteSetHandle") {
-            handleHolder.readWriteSetHandle
+        expectHandleException("readWriteCollectionHandle") {
+            handleHolder.readWriteCollectionHandle
         }
     }
 
@@ -173,39 +173,39 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
     @Test
     fun setHandle_writeFollowedByReadWithOnUpdate() = runBlocking<Unit> {
-        val writeSetHandle = createSetHandle(
+        val writeCollectionHandle = createCollectionHandle(
             handleManager,
-            "writeSetHandle",
+            "writeCollectionHandle",
             HandleMode.Write
         )
 
-        assertThat(writeSetHandle).isInstanceOf(WriteCollectionHandle::class.java)
-        assertThat(writeSetHandle).isNotInstanceOf(ReadCollectionHandle::class.java)
+        assertThat(writeCollectionHandle).isInstanceOf(WriteCollectionHandle::class.java)
+        assertThat(writeCollectionHandle).isNotInstanceOf(ReadCollectionHandle::class.java)
 
-        handleHolder.writeSetHandle.store(entity1)
-        handleHolder.writeSetHandle.store(entity2)
+        handleHolder.writeCollectionHandle.store(entity1)
+        handleHolder.writeCollectionHandle.store(entity2)
 
-        val readSetHandle = createSetHandle(
+        val readCollectionHandle = createCollectionHandle(
             handleManager,
-            "readSetHandle",
+            "readCollectionHandle",
             HandleMode.Read
         )
 
-        assertThat(readSetHandle).isInstanceOf(ReadCollectionHandle::class.java)
-        assertThat(readSetHandle).isNotInstanceOf(WriteCollectionHandle::class.java)
+        assertThat(readCollectionHandle).isInstanceOf(ReadCollectionHandle::class.java)
+        assertThat(readCollectionHandle).isNotInstanceOf(WriteCollectionHandle::class.java)
 
-        val readBack = handleHolder.readSetHandle.fetchAll()
+        val readBack = handleHolder.readCollectionHandle.fetchAll()
         assertThat(readBack).containsExactly(entity1, entity2)
 
-        val readWriteSetHandle = createSetHandle(
+        val readWriteCollectionHandle = createCollectionHandle(
             handleManager,
-            "readWriteSetHandle",
+            "readWriteCollectionHandle",
             HandleMode.ReadWrite
         )
 
-        assertThat(readWriteSetHandle).isInstanceOf(ReadWriteCollectionHandle::class.java)
+        assertThat(readWriteCollectionHandle).isInstanceOf(ReadWriteCollectionHandle::class.java)
 
-        val readBack2 = handleHolder.readWriteSetHandle.fetchAll()
+        val readBack2 = handleHolder.readWriteCollectionHandle.fetchAll()
         assertThat(readBack2).containsExactly(entity1, entity2)
 
         val entity3 = entity2.copy(name = "Ray")
@@ -213,10 +213,10 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         val updatedEntities: Set<Person> = suspendCoroutine { continuation ->
             // Verify callbacks work
             launch {
-                handleHolder.readWriteSetHandle.onUpdate {
+                handleHolder.readWriteCollectionHandle.onUpdate {
                     continuation.resume(it)
                 }
-                handleHolder.writeSetHandle.store(entity3)
+                handleHolder.writeCollectionHandle.store(entity3)
             }
         }
         assertThat(updatedEntities).containsExactly(entity1, entity2, entity3)
@@ -234,11 +234,11 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleMode
     ).also { handleHolder.setHandle(handleName, it) }
 
-    private suspend fun createSetHandle(
+    private suspend fun createCollectionHandle(
         handleManager: EntityHandleManager,
         handleName: String,
         handleMode: HandleMode
-    ) = handleManager.createSetHandle(
+    ) = handleManager.createCollectionHandle(
         handleHolder.getEntitySpec(handleName),
         handleName,
         setKey,
