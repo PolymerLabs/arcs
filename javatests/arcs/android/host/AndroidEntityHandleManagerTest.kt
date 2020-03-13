@@ -16,12 +16,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.data.HandleMode
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.assertThrows
-import arcs.sdk.ReadCollectionHandle
-import arcs.sdk.ReadSingletonHandle
-import arcs.sdk.WriteCollectionHandle
-import arcs.sdk.WriteSingletonHandle
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.launch
@@ -31,7 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.coroutines.experimental.suspendCoroutine
 
-typealias Person = TestParticleInternal1
+private typealias Person = TestParticleInternal1
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
@@ -62,8 +57,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         backingKey = RamDiskStorageKey("single-back"), storageKey = RamDiskStorageKey("single-ent")
     )
 
-    private val setKey = ReferenceModeStorageKey(
-        backingKey = RamDiskStorageKey("set-back"), storageKey = RamDiskStorageKey("set-ent")
+    private val collectionKey = ReferenceModeStorageKey(
+        backingKey = RamDiskStorageKey("collection-back"), storageKey = RamDiskStorageKey("collection-ent")
     )
 
     @Before
@@ -237,7 +232,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleMode,
         handleName,
         handleHolder.getEntitySpec(handleName),
-        setKey,
+        collectionKey,
         schema
     ).also { handleHolder.setHandle(handleName, it) }
 }

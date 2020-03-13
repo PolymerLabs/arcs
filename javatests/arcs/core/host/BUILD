@@ -16,6 +16,7 @@ arcs_kt_jvm_test_suite(
     deps = [
         ":particle",  # buildcleaner: keep
         "//java/arcs/core/host",
+        "//java/arcs/core/testutil",
         "//java/arcs/jvm/host",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
