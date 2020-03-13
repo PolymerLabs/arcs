@@ -33,7 +33,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 typealias SingletonServiceStoreFactory<T> =
     ServiceStoreFactory<SingletonData<T>, SingletonOp<T>, T?>
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-typealias SetServiceStoreFactory<T> =
+typealias CollectionServiceStoreFactory<T> =
     ServiceStoreFactory<CollectionData<T>, CollectionOp<T>, Set<T>>
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 typealias EntityServiceStoreFactory =
@@ -81,7 +81,7 @@ fun AndroidHandleManager(
          * Create a ActivationFactory that will create [ServiceStore] instances that can manage
          * sets of [RawEntities]
          */
-        override fun <T : Referencable> setFactory() = SetServiceStoreFactory<T>(
+        override fun <T : Referencable> setFactory() = CollectionServiceStoreFactory<T>(
             context,
             lifecycle,
             ParcelableCrdtType.Set,

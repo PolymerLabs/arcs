@@ -111,34 +111,34 @@ sealed class HandleAdapter(
     override val mode: HandleMode,
     override val name: String
 ) : Handle {
-    private val onSyncActions: MutableList<() -> Unit> = mutableListOf()
-    private val onDesyncActions: MutableList<() -> Unit> = mutableListOf()
+    private val onSyncActions: MutableList<(Handle) -> Unit> = mutableListOf()
+    private val onDesyncActions: MutableList<(Handle) -> Unit> = mutableListOf()
 
-    override fun onSync(action: () -> Unit) {
+    override fun onSync(action: (Handle) -> Unit) {
         onSyncActions.add(action)
     }
 
-    override fun onDesync(action: () -> Unit) {
+    override fun onDesync(action: (Handle) -> Unit) {
         onSyncActions.add(action)
     }
 
     protected fun fireSync() {
-        onSyncActions.forEach { it() }
+        onSyncActions.forEach { it(this) }
     }
 
     protected fun fireDesync() {
-        onDesyncActions.forEach { it() }
+        onDesyncActions.forEach { it(this) }
     }
 
     protected fun checkCanRead() {
         if (!mode.canRead) {
-            throw IllegalArgumentException("Handle does not support reads.")
+            throw IllegalArgumentException("Handle $name does not support reads.")
         }
     }
 
     protected fun checkCanWrite() {
         if (!mode.canWrite) {
-            throw IllegalArgumentException("Handle does not support writes.")
+            throw IllegalArgumentException("Handle $name does not support writes.")
         }
     }
 }

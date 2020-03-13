@@ -21,10 +21,10 @@ interface Handle {
     val mode: HandleMode
 
     /** Assign a callback when the handle is synced. */
-    fun onSync(action: () -> Unit)
+    fun onSync(action: (Handle) -> Unit)
 
     /** Assign a callback when the handle is desynced. */
-    fun onDesync(action: () -> Unit)
+    fun onDesync(action: (Handle) -> Unit)
 }
 
 /** A singleton handle with read access. */
