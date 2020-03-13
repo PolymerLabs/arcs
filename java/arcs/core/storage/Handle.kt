@@ -46,6 +46,22 @@ interface Callbacks<Data : CrdtData, Op : CrdtOperationAtTime, T> {
 }
 
 /**
+ * Basic wrapper around [Callbacks] which lets you supply lambdas for each method instead of
+ * implementing the whole interface yourself.
+ */
+class LambdaCallbacks<Data : CrdtData, Op : CrdtOperationAtTime, T>(
+    private val onSync: () -> Unit,
+    private val onDesync: () -> Unit,
+    private val onUpdate: (() -> Unit)?
+) : Callbacks<Data, Op, T> {
+    override fun onSync(handle: Handle<Data, Op, T>) = onSync()
+
+    override fun onDesync(handle: Handle<Data, Op, T>) = onDesync()
+
+    override fun onUpdate(handle: Handle<Data, Op, T>, op: Op) { onUpdate?.let { it() } }
+}
+
+/**
  * Base implementation of Arcs handles on the runtime.
  *
  * A handle is in charge of translating SDK data operations into the appropriate CRDT operation,

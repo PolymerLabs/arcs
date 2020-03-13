@@ -378,7 +378,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     }
 
     /**
-     * Given a handle name, a [HandleConnection], and a [HandleHolder] construct an Entity
+     * Given a handle name, a [Plan.HandleConnection], and a [HandleHolder] construct an Entity
      * [Handle] of the right type.
      */
     private suspend fun createHandle(
@@ -388,19 +388,19 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     ) = when (handleSpec.type) {
         is SingletonType<*> ->
             entityHandleManager.createSingletonHandle(
-                holder.getEntitySpec(handleName),
+                handleSpec.mode,
                 handleName,
+                holder.getEntitySpec(handleName),
                 handleSpec.storageKey,
-                handleSpec.type.toSchema(),
-                handleSpec.mode
+                handleSpec.type.toSchema()
             )
         is CollectionType<*> ->
             entityHandleManager.createCollectionHandle(
-                holder.getEntitySpec(handleName),
+                handleSpec.mode,
                 handleName,
+                holder.getEntitySpec(handleName),
                 handleSpec.storageKey,
-                handleSpec.type.toSchema(),
-                handleSpec.mode
+                handleSpec.type.toSchema()
             )
         else -> throw IllegalArgumentException("Unknown type ${handleSpec.type}")
     }.also { holder.setHandle(handleName, it) }
