@@ -8,7 +8,7 @@ package arcs.core.data.testdata
 //
 
 import arcs.core.data.*
-import arcs.core.storage.*
+import arcs.core.storage.StorageKeyParser
 
 object IngestionPlan : Plan(
     listOf(
