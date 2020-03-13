@@ -24,7 +24,6 @@ import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.StorageServiceManager
-import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Store
@@ -36,6 +35,7 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
+import arcs.sdk.android.storage.ttl.PeriodicCleanupTask
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
