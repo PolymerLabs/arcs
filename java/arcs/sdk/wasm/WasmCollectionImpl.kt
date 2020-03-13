@@ -39,7 +39,7 @@ class WasmCollectionImpl<T : WasmEntity>(
                 val chunk = chomp(len)
                 // TODO: just get the id, no need to decode the full entity
                 val entity = requireNotNull(entitySpec.decode(chunk))
-                entities.remove(entity.internalId)
+                entities.remove(entity.entityId)
             }
         }
         notifyOnUpdateActions()
@@ -49,14 +49,14 @@ class WasmCollectionImpl<T : WasmEntity>(
 
     fun store(entity: T) {
         val encoded = entity.encodeEntity()
-        WasmRuntimeClient.collectionStore(particle, this, encoded)?.let { entity.internalId = it }
-        entities[entity.internalId] = entity
+        WasmRuntimeClient.collectionStore(particle, this, encoded)?.let { entity.entityId = it }
+        entities[entity.entityId] = entity
     }
 
     fun remove(entity: T) {
-        entities[entity.internalId]?.let {
+        entities[entity.entityId]?.let {
             val encoded = it.encodeEntity()
-            entities.remove(entity.internalId)
+            entities.remove(entity.entityId)
             WasmRuntimeClient.collectionRemove(particle, this, encoded)
         }
         notifyOnUpdateActions()
@@ -68,7 +68,7 @@ class WasmCollectionImpl<T : WasmEntity>(
                 val len = getInt(':')
                 val chunk = chomp(len)
                 val entity = requireNotNull(entitySpec.decode(chunk))
-                entities[entity.internalId] = entity
+                entities[entity.entityId] = entity
             }
         }
     }

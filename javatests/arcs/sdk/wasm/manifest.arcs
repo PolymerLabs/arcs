@@ -79,8 +79,8 @@ recipe EntityClassApiTest
 // -----------------------------------------------------------------------------------------------
 
 particle SpecialSchemaFieldsTest in '$module.wasm'
-  // 'internal_id' is for C++; 'internalId' is for Kotlin
-  fields: reads {for: Text, internal_id: Number, internalId: Number}
+  // 'internal_id' is for C++; 'entityId' is for Kotlin
+  fields: reads {for: Text, internal_id: Number, entityId: Number}
   errors: writes [{msg: Text}]
 
 recipe SpecialSchemaFieldsTest

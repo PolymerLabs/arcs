@@ -13,46 +13,30 @@ import arcs.sdk.wasm.*
 
 class GoldInternal1(val_: String = "") : WasmEntity {
 
-    override var internalId = ""
-
     var val_ = val_
         get() = field
         private set(_value) {
             field = _value
         }
 
+    override var entityId = ""
+
     fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
 
+
     fun reset() {
-        val_ = ""
+      val_ = ""
     }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-
-        if (other is GoldInternal1) {
-            if (internalId.isNotEmpty()) {
-                return internalId == other.internalId
-            }
-            return toString() == other.toString()
-       }
-        return false;
-    }
-
-    override fun hashCode(): Int =
-        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
-        encoder.encode("", internalId)
+        encoder.encode("", entityId)
         val_.let { encoder.encode("val:T", val_) }
         return encoder.toNullTermByteArray()
     }
 
     override fun toString() =
-      "GoldInternal1(val_ = $val_)"
+        "GoldInternal1(val_ = $val_)"
 
     companion object : WasmEntitySpec<GoldInternal1> {
 
@@ -63,7 +47,7 @@ class GoldInternal1(val_: String = "") : WasmEntity {
             if (encoded.isEmpty()) return null
 
             val decoder = StringDecoder(encoded)
-            val internalId = decoder.decodeText()
+            val entityId = decoder.decodeText()
             decoder.validate("|")
 
             var val_ = ""
@@ -91,7 +75,7 @@ class GoldInternal1(val_: String = "") : WasmEntity {
             val _rtn = create().copy(
                 val_ = val_
             )
-            _rtn.internalId = internalId
+            _rtn.entityId = entityId
             return _rtn
         }
     }
@@ -109,8 +93,6 @@ class Gold_QCollection(
     birthDayMonth: Double = 0.0,
     birthDayDOM: Double = 0.0
 ) : WasmEntity {
-
-    override var internalId = ""
 
     var name = name
         get() = field
@@ -148,6 +130,8 @@ class Gold_QCollection(
             field = _value
         }
 
+    override var entityId = ""
+
     fun copy(
         name: String = this.name,
         age: Double = this.age,
@@ -166,8 +150,9 @@ class Gold_QCollection(
         birthDayDOM = birthDayDOM
     )
 
+
     fun reset() {
-        name = ""
+      name = ""
         age = 0.0
         lastCall = 0.0
         address = ""
@@ -176,26 +161,9 @@ class Gold_QCollection(
         birthDayDOM = 0.0
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-
-        if (other is Gold_QCollection) {
-            if (internalId.isNotEmpty()) {
-                return internalId == other.internalId
-            }
-            return toString() == other.toString()
-       }
-        return false;
-    }
-
-    override fun hashCode(): Int =
-        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
-
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
-        encoder.encode("", internalId)
+        encoder.encode("", entityId)
         name.let { encoder.encode("name:T", name) }
         age.let { encoder.encode("age:N", age) }
         lastCall.let { encoder.encode("lastCall:N", lastCall) }
@@ -207,7 +175,7 @@ class Gold_QCollection(
     }
 
     override fun toString() =
-      "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
+        "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
 
     companion object : WasmEntitySpec<Gold_QCollection> {
 
@@ -218,7 +186,7 @@ class Gold_QCollection(
             if (encoded.isEmpty()) return null
 
             val decoder = StringDecoder(encoded)
-            val internalId = decoder.decodeText()
+            val entityId = decoder.decodeText()
             decoder.validate("|")
 
             var name = ""
@@ -284,7 +252,7 @@ class Gold_QCollection(
             birthDayDOM = birthDayDOM
 
             )
-            _rtn.internalId = internalId
+            _rtn.entityId = entityId
             return _rtn
         }
     }
@@ -293,46 +261,30 @@ class Gold_QCollection(
 
 class Gold_Collection(num: Double = 0.0) : WasmEntity {
 
-    override var internalId = ""
-
     var num = num
         get() = field
         private set(_value) {
             field = _value
         }
 
+    override var entityId = ""
+
     fun copy(num: Double = this.num) = Gold_Collection(num = num)
 
+
     fun reset() {
-        num = 0.0
+      num = 0.0
     }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-
-        if (other is Gold_Collection) {
-            if (internalId.isNotEmpty()) {
-                return internalId == other.internalId
-            }
-            return toString() == other.toString()
-       }
-        return false;
-    }
-
-    override fun hashCode(): Int =
-        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
-        encoder.encode("", internalId)
+        encoder.encode("", entityId)
         num.let { encoder.encode("num:N", num) }
         return encoder.toNullTermByteArray()
     }
 
     override fun toString() =
-      "Gold_Collection(num = $num)"
+        "Gold_Collection(num = $num)"
 
     companion object : WasmEntitySpec<Gold_Collection> {
 
@@ -343,7 +295,7 @@ class Gold_Collection(num: Double = 0.0) : WasmEntity {
             if (encoded.isEmpty()) return null
 
             val decoder = StringDecoder(encoded)
-            val internalId = decoder.decodeText()
+            val entityId = decoder.decodeText()
             decoder.validate("|")
 
             var num = 0.0
@@ -371,7 +323,7 @@ class Gold_Collection(num: Double = 0.0) : WasmEntity {
             val _rtn = create().copy(
                 num = num
             )
-            _rtn.internalId = internalId
+            _rtn.entityId = entityId
             return _rtn
         }
     }
@@ -384,8 +336,6 @@ class Gold_Data(
     lnk: String = "",
     flg: Boolean = false
 ) : WasmEntity {
-
-    override var internalId = ""
 
     var num = num
         get() = field
@@ -408,6 +358,8 @@ class Gold_Data(
             field = _value
         }
 
+    override var entityId = ""
+
     fun copy(
         num: Double = this.num,
         txt: String = this.txt,
@@ -415,33 +367,17 @@ class Gold_Data(
         flg: Boolean = this.flg
     ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg)
 
+
     fun reset() {
-        num = 0.0
+      num = 0.0
         txt = ""
         lnk = ""
         flg = false
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-
-        if (other is Gold_Data) {
-            if (internalId.isNotEmpty()) {
-                return internalId == other.internalId
-            }
-            return toString() == other.toString()
-       }
-        return false;
-    }
-
-    override fun hashCode(): Int =
-        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
-
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
-        encoder.encode("", internalId)
+        encoder.encode("", entityId)
         num.let { encoder.encode("num:N", num) }
         txt.let { encoder.encode("txt:T", txt) }
         lnk.let { encoder.encode("lnk:U", lnk) }
@@ -450,7 +386,7 @@ class Gold_Data(
     }
 
     override fun toString() =
-      "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
+        "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 
     companion object : WasmEntitySpec<Gold_Data> {
 
@@ -461,7 +397,7 @@ class Gold_Data(
             if (encoded.isEmpty()) return null
 
             val decoder = StringDecoder(encoded)
-            val internalId = decoder.decodeText()
+            val entityId = decoder.decodeText()
             decoder.validate("|")
 
             var num = 0.0
@@ -504,7 +440,7 @@ class Gold_Data(
             val _rtn = create().copy(
                 num = num, txt = txt, lnk = lnk, flg = flg
             )
-            _rtn.internalId = internalId
+            _rtn.entityId = entityId
             return _rtn
         }
     }

@@ -15,46 +15,18 @@ import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.storage.api.toPrimitiveValue
 
-class GoldInternal1(val_: String = "") : Entity {
+class GoldInternal1(val_: String = "") : EntityBase("GoldInternal1", SCHEMA) {
 
-    override var internalId = ""
+    var val_: String
+        get() = super.getSingletonValue("val") as String? ?: ""
+        private set(_value) = super.setSingletonValue("val", _value)
 
-    var val_ = val_
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+    init {
+        this.val_ = val_
+    }
 
     fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
 
-    fun reset() {
-        val_ = ""
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-
-        if (other is GoldInternal1) {
-            if (internalId.isNotEmpty()) {
-                return internalId == other.internalId
-            }
-            return toString() == other.toString()
-       }
-        return false;
-    }
-
-    override fun hashCode(): Int =
-        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
-
-    override fun serialize() = RawEntity(
-        internalId,
-        mapOf("val" to val_.toReferencable())
-    )
-
-    override fun toString() =
-      "GoldInternal1(val_ = $val_)"
 
     companion object : EntitySpec<GoldInternal1> {
 
@@ -71,14 +43,8 @@ class GoldInternal1(val_: String = "") : Entity {
 
         override fun create() = GoldInternal1()
 
-        override fun deserialize(data: RawEntity): GoldInternal1 {
-            // TODO: only handles singletons for now
-            val rtn = create().copy(
-                val_ = data.singletons["val_"].toPrimitiveValue(String::class, "")
-            )
-            rtn.internalId = data.id
-            return rtn
-        }
+        // TODO: only handles singletons for now
+        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
     }
 }
 
@@ -93,45 +59,39 @@ class Gold_QCollection(
     favoriteColor: String = "",
     birthDayMonth: Double = 0.0,
     birthDayDOM: Double = 0.0
-) : Entity {
+) : EntityBase("Gold_QCollection", SCHEMA) {
 
-    override var internalId = ""
+    var name: String
+        get() = super.getSingletonValue("name") as String? ?: ""
+        private set(_value) = super.setSingletonValue("name", _value)
+    var age: Double
+        get() = super.getSingletonValue("age") as Double? ?: 0.0
+        private set(_value) = super.setSingletonValue("age", _value)
+    var lastCall: Double
+        get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
+        private set(_value) = super.setSingletonValue("lastCall", _value)
+    var address: String
+        get() = super.getSingletonValue("address") as String? ?: ""
+        private set(_value) = super.setSingletonValue("address", _value)
+    var favoriteColor: String
+        get() = super.getSingletonValue("favoriteColor") as String? ?: ""
+        private set(_value) = super.setSingletonValue("favoriteColor", _value)
+    var birthDayMonth: Double
+        get() = super.getSingletonValue("birthDayMonth") as Double? ?: 0.0
+        private set(_value) = super.setSingletonValue("birthDayMonth", _value)
+    var birthDayDOM: Double
+        get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
+        private set(_value) = super.setSingletonValue("birthDayDOM", _value)
 
-    var name = name
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var age = age
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var lastCall = lastCall
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var address = address
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var favoriteColor = favoriteColor
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var birthDayMonth = birthDayMonth
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var birthDayDOM = birthDayDOM
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+    init {
+        this.name = name
+        this.age = age
+        this.lastCall = lastCall
+        this.address = address
+        this.favoriteColor = favoriteColor
+        this.birthDayMonth = birthDayMonth
+        this.birthDayDOM = birthDayDOM
+    }
 
     fun copy(
         name: String = this.name,
@@ -151,48 +111,6 @@ class Gold_QCollection(
         birthDayDOM = birthDayDOM
     )
 
-    fun reset() {
-        name = ""
-        age = 0.0
-        lastCall = 0.0
-        address = ""
-        favoriteColor = ""
-        birthDayMonth = 0.0
-        birthDayDOM = 0.0
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-
-        if (other is Gold_QCollection) {
-            if (internalId.isNotEmpty()) {
-                return internalId == other.internalId
-            }
-            return toString() == other.toString()
-       }
-        return false;
-    }
-
-    override fun hashCode(): Int =
-        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
-
-    override fun serialize() = RawEntity(
-        internalId,
-        mapOf(
-            "name" to name.toReferencable(),
-            "age" to age.toReferencable(),
-            "lastCall" to lastCall.toReferencable(),
-            "address" to address.toReferencable(),
-            "favoriteColor" to favoriteColor.toReferencable(),
-            "birthDayMonth" to birthDayMonth.toReferencable(),
-            "birthDayDOM" to birthDayDOM.toReferencable()
-        )
-    )
-
-    override fun toString() =
-      "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
 
     companion object : EntitySpec<Gold_QCollection> {
 
@@ -222,64 +140,24 @@ class Gold_QCollection(
 
         override fun create() = Gold_QCollection()
 
-        override fun deserialize(data: RawEntity): Gold_QCollection {
-            // TODO: only handles singletons for now
-            val rtn = create().copy(
-                name = data.singletons["name"].toPrimitiveValue(String::class, ""),
-                age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0),
-                lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0),
-                address = data.singletons["address"].toPrimitiveValue(String::class, ""),
-                favoriteColor = data.singletons["favoriteColor"].toPrimitiveValue(String::class, ""),
-                birthDayMonth = data.singletons["birthDayMonth"].toPrimitiveValue(Double::class, 0.0),
-                birthDayDOM = data.singletons["birthDayDOM"].toPrimitiveValue(Double::class, 0.0)
-            )
-            rtn.internalId = data.id
-            return rtn
-        }
+        // TODO: only handles singletons for now
+        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
     }
 }
 
 
-class Gold_Collection(num: Double = 0.0) : Entity {
+class Gold_Collection(num: Double = 0.0) : EntityBase("Gold_Collection", SCHEMA) {
 
-    override var internalId = ""
+    var num: Double
+        get() = super.getSingletonValue("num") as Double? ?: 0.0
+        private set(_value) = super.setSingletonValue("num", _value)
 
-    var num = num
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+    init {
+        this.num = num
+    }
 
     fun copy(num: Double = this.num) = Gold_Collection(num = num)
 
-    fun reset() {
-        num = 0.0
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-
-        if (other is Gold_Collection) {
-            if (internalId.isNotEmpty()) {
-                return internalId == other.internalId
-            }
-            return toString() == other.toString()
-       }
-        return false;
-    }
-
-    override fun hashCode(): Int =
-        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
-
-    override fun serialize() = RawEntity(
-        internalId,
-        mapOf("num" to num.toReferencable())
-    )
-
-    override fun toString() =
-      "Gold_Collection(num = $num)"
 
     companion object : EntitySpec<Gold_Collection> {
 
@@ -296,14 +174,8 @@ class Gold_Collection(num: Double = 0.0) : Entity {
 
         override fun create() = Gold_Collection()
 
-        override fun deserialize(data: RawEntity): Gold_Collection {
-            // TODO: only handles singletons for now
-            val rtn = create().copy(
-                num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0)
-            )
-            rtn.internalId = data.id
-            return rtn
-        }
+        // TODO: only handles singletons for now
+        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
     }
 }
 
@@ -313,30 +185,27 @@ class Gold_Data(
     txt: String = "",
     lnk: String = "",
     flg: Boolean = false
-) : Entity {
+) : EntityBase("Gold_Data", SCHEMA) {
 
-    override var internalId = ""
+    var num: Double
+        get() = super.getSingletonValue("num") as Double? ?: 0.0
+        private set(_value) = super.setSingletonValue("num", _value)
+    var txt: String
+        get() = super.getSingletonValue("txt") as String? ?: ""
+        private set(_value) = super.setSingletonValue("txt", _value)
+    var lnk: String
+        get() = super.getSingletonValue("lnk") as String? ?: ""
+        private set(_value) = super.setSingletonValue("lnk", _value)
+    var flg: Boolean
+        get() = super.getSingletonValue("flg") as Boolean? ?: false
+        private set(_value) = super.setSingletonValue("flg", _value)
 
-    var num = num
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var txt = txt
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var lnk = lnk
-        get() = field
-        private set(_value) {
-            field = _value
-        }
-    var flg = flg
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+    init {
+        this.num = num
+        this.txt = txt
+        this.lnk = lnk
+        this.flg = flg
+    }
 
     fun copy(
         num: Double = this.num,
@@ -345,42 +214,6 @@ class Gold_Data(
         flg: Boolean = this.flg
     ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg)
 
-    fun reset() {
-        num = 0.0
-        txt = ""
-        lnk = ""
-        flg = false
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-
-        if (other is Gold_Data) {
-            if (internalId.isNotEmpty()) {
-                return internalId == other.internalId
-            }
-            return toString() == other.toString()
-       }
-        return false;
-    }
-
-    override fun hashCode(): Int =
-        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
-
-    override fun serialize() = RawEntity(
-        internalId,
-        mapOf(
-            "num" to num.toReferencable(),
-            "txt" to txt.toReferencable(),
-            "lnk" to lnk.toReferencable(),
-            "flg" to flg.toReferencable()
-        )
-    )
-
-    override fun toString() =
-      "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 
     companion object : EntitySpec<Gold_Data> {
 
@@ -402,17 +235,8 @@ class Gold_Data(
 
         override fun create() = Gold_Data()
 
-        override fun deserialize(data: RawEntity): Gold_Data {
-            // TODO: only handles singletons for now
-            val rtn = create().copy(
-                num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0),
-                txt = data.singletons["txt"].toPrimitiveValue(String::class, ""),
-                lnk = data.singletons["lnk"].toPrimitiveValue(String::class, ""),
-                flg = data.singletons["flg"].toPrimitiveValue(Boolean::class, false)
-            )
-            rtn.internalId = data.id
-            return rtn
-        }
+        // TODO: only handles singletons for now
+        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
     }
 }
 
