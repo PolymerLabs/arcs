@@ -17,6 +17,7 @@ import {Handle} from '../runtime/recipe/handle.js';
 import {Ttl, TtlUnits} from '../runtime/recipe/ttl.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Random} from '../runtime/random.js';
+import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -50,6 +51,7 @@ export class PlanGenerator {
     const plans: string[] = [];
     for (const recipe of this.resolvedRecipes) {
       const planName = `${recipe.name}Plan`;
+      const arcId = findLongRunningArcId(recipe);
 
       const particles: string[] = [];
       for (const particle of recipe.particles) {
@@ -57,8 +59,13 @@ export class PlanGenerator {
         particles.push(await this.createParticle(particle));
       }
 
+      const planArgs = [ktUtils.listOf(particles)];
+      if (arcId) {
+        planArgs.push(quote(arcId));
+      }
+
       const start = `object ${planName} : `;
-      const plan = `${start}${ktUtils.applyFun('Plan', [ktUtils.listOf(particles)], start.length)}`;
+      const plan = `${start}${ktUtils.applyFun('Plan', planArgs, start.length)}`;
       plans.push(plan);
     }
     return plans;
