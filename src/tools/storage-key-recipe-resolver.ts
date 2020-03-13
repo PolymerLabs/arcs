@@ -127,7 +127,7 @@ export class StorageKeyRecipeResolver {
   }
 }
 
-/** Returns true if input recipe is for a long-running arc.*/
+/** Returns true if input recipe is for a long-running arc. */
 export function isLongRunning(recipe: Recipe): boolean {
   return !!findLongRunningArcId(recipe);
 }
