@@ -16,6 +16,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 /**
@@ -47,7 +48,7 @@ interface Database {
     suspend fun delete(storageKey: StorageKey, originatingClientId: Int? = null)
 
     /** Returns all storage keys stored in this database. */
-    suspend fun getAllStorageKeys(): Set<StorageKey>
+    suspend fun getAllStorageKeys(): Map<StorageKey, Type>
 
     /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
     suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot

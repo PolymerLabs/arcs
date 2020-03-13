@@ -11,11 +11,17 @@
 
 package arcs.core.storage.driver
 
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 /**
@@ -44,7 +50,17 @@ class RamDiskDriverProvider : DriverProvider {
         return VolatileDriver(storageKey, RamDisk.memory)
     }
 
-    override suspend fun getAllStorageKeys(): Set<StorageKey> = RamDisk.memory.keys()
+    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
+        // TODO: keep track of and return the actual schema type.
+        val type = EntityType(
+            Schema(
+                listOf<SchemaName>(),
+                SchemaFields(emptyMap(), emptyMap()),
+                ""
+            )
+        )
+        return RamDisk.memory.keys().map { it to CollectionType(type) }.toMap()
+    }
 
     /*
      * These ensure that if/when RamDiskDriverProvider is placed in a set, or used as a key for a

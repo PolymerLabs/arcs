@@ -17,6 +17,7 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
+import arcs.core.type.Type
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,8 +44,10 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
         dbCache.forEach { (_, db) -> db.reset() }
     }
 
-    override suspend fun getAllStorageKeys(): Set<StorageKey> {
+    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
         // TODO: this should check all existing databases (including those not in dbCache).
-        return dbCache.flatMap { (_, db) -> db.getAllStorageKeys() }.toSet()
+        val all = mutableMapOf<StorageKey, Type>()
+        dbCache.forEach { (_, db) -> all.putAll(db.getAllStorageKeys()) }
+        return all
     }
 }

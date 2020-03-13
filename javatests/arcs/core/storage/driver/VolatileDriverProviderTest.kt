@@ -90,6 +90,6 @@ class VolatileDriverProviderTest {
         fooProvider.getDriver(storageKey1, Int::class)
         fooProvider.getDriver(storageKey2, Int::class)
 
-        assertThat(fooProvider.getAllStorageKeys()).containsExactly(storageKey1, storageKey2)
+        assertThat(fooProvider.getAllStorageKeys().keys).containsExactly(storageKey1, storageKey2)
     }
 }
