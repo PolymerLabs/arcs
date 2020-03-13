@@ -240,6 +240,74 @@ class Gold_QCollection(
 }
 
 
+class Gold_Collection(num: Double = 0.0) : Entity {
+
+    override var internalId = ""
+
+    var num = num
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+
+    fun copy(num: Double = this.num) = Gold_Collection(num = num)
+
+    fun reset() {
+        num = 0.0
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
+        }
+
+        if (other is Gold_Collection) {
+            if (internalId.isNotEmpty()) {
+                return internalId == other.internalId
+            }
+            return toString() == other.toString()
+       }
+        return false;
+    }
+
+    override fun hashCode(): Int =
+        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
+
+    override fun serialize() = RawEntity(
+        internalId,
+        mapOf("num" to num.toReferencable())
+    )
+
+    override fun toString() =
+      "Gold_Collection(num = $num)"
+
+    companion object : EntitySpec<Gold_Collection> {
+
+        override val SCHEMA = Schema(
+            listOf(),
+            SchemaFields(
+                singletons = mapOf("num" to FieldType.Number),
+                collections = emptyMap()
+            ),
+            "1032e45209f910286cfb898c43a1c3ca7d07aea6",
+            refinement = { _ -> true },
+            query = null
+        ).also { SchemaRegistry.register(it) }
+
+        override fun create() = Gold_Collection()
+
+        override fun deserialize(data: RawEntity): Gold_Collection {
+            // TODO: only handles singletons for now
+            val rtn = create().copy(
+                num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0)
+            )
+            rtn.internalId = data.id
+            return rtn
+        }
+    }
+}
+
+
 class Gold_Data(
     num: Double = 0.0,
     txt: String = "",
@@ -351,11 +419,17 @@ class Gold_Data(
 
 class GoldHandles : HandleHolderBase(
     "Gold",
-    mapOf("data" to Gold_Data, "qCollection" to Gold_QCollection, "alias" to Gold_Alias)
+    mapOf(
+        "data" to Gold_Data,
+        "qCollection" to Gold_QCollection,
+        "alias" to Gold_Alias,
+        "collection" to Gold_Collection
+    )
 ) {
     val data: ReadSingletonHandle<Gold_Data> by handles
     val qCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
     val alias: WriteSingletonHandle<Gold_Alias> by handles
+    val collection: ReadSingletonHandle<Gold_Collection> by handles
 }
 
 abstract class AbstractGold : BaseParticle() {
