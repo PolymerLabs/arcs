@@ -17,6 +17,8 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.type.Tag
+import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -74,7 +76,7 @@ class RamDiskDriverProviderTest {
         val provider = RamDiskDriverProvider()
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
-        provider.getDriver(volatile, Int::class)
+        provider.getDriver(volatile, Int::class, DummyType)
         Unit
     }
 
@@ -85,9 +87,9 @@ class RamDiskDriverProviderTest {
 
         val key = RamDiskStorageKey("foo")
 
-        val driver1 = provider1.getDriver(key, Int::class)
-        val driver2 = provider1.getDriver(key, Int::class)
-        val driver3 = provider2.getDriver(key, Int::class)
+        val driver1 = provider1.getDriver(key, Int::class, DummyType)
+        val driver2 = provider1.getDriver(key, Int::class, DummyType)
+        val driver3 = provider2.getDriver(key, Int::class, DummyType)
 
         var driver2Value: Int? = null
         var driver2Version: Int? = null
@@ -116,9 +118,16 @@ class RamDiskDriverProviderTest {
         val provider = RamDiskDriverProvider()
         val storageKey1 = RamDiskStorageKey("foo")
         val storageKey2 = RamDiskStorageKey("foo2")
-        provider.getDriver(storageKey1, Int::class)
-        provider.getDriver(storageKey2, Int::class)
+        provider.getDriver(storageKey1, Int::class, DummyType)
+        provider.getDriver(storageKey2, Int::class, DummyType)
 
         assertThat(provider.getAllStorageKeys().keys).containsExactly(storageKey1, storageKey2)
+    }
+
+    companion object {
+        object DummyType: Type {
+            override val tag = Tag.Count
+            override fun toLiteral() = throw UnsupportedOperationException("")
+        }
     }
 }

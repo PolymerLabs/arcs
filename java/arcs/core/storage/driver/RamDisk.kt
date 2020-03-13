@@ -42,12 +42,13 @@ class RamDiskDriverProvider : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        dataClass: KClass<Data>
+        dataClass: KClass<Data>,
+        type: Type
     ): Driver<Data> {
         require(willSupport(storageKey)) {
             "This provider does not support StorageKey: $storageKey"
         }
-        return VolatileDriver(storageKey, RamDisk.memory)
+        return VolatileDriver(storageKey, type, RamDisk.memory)
     }
 
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {

@@ -66,7 +66,8 @@ object DatabaseDriverProvider : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        dataClass: KClass<Data>
+        dataClass: KClass<Data>,
+        type: Type
     ): Driver<Data> {
         val databaseKey = requireNotNull(storageKey as? DatabaseStorageKey) {
             "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
