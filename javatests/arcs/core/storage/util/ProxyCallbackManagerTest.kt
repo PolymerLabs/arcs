@@ -71,7 +71,7 @@ class ProxyCallbackManagerTest {
             true
         }
 
-        val shouldBeReceivedByRegistered = makeMessage("bar", 1)
+        val shouldBeReceivedByRegistered = makeMessage("bar", 2)
 
         manager.register(registeringCallback)
 
@@ -96,7 +96,7 @@ class ProxyCallbackManagerTest {
                 true
             }
 
-        val shouldBeReceivedByRegistered = makeMessage("bar", 1)
+        val shouldBeReceivedByRegistered = makeMessage("bar", 2)
 
         manager.register(registeringCallback)
 

@@ -387,11 +387,9 @@ class ReferenceModeStoreTest {
         activeStore.backingStore
             .onProxyMessage(ProxyMessage.ModelUpdate(bobCrdt.data, id = 1), "an-id")
 
-        var id = -1
         val job = Job(coroutineContext[Job.Key])
-        id = activeStore.on(ProxyCallback {
+        activeStore.on(ProxyCallback {
             if (it is ProxyMessage.ModelUpdate) {
-                assertThat(it.id).isEqualTo(id)
                 it.model.values.assertEquals(bobCollection.data.values)
                 job.complete()
                 return@ProxyCallback true

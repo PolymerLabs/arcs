@@ -20,13 +20,13 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.DirectStore.State.Name.AwaitingDriverModel
 import arcs.core.storage.DirectStore.State.Name.AwaitingResponse
 import arcs.core.storage.DirectStore.State.Name.Idle
+import arcs.core.storage.util.ProxyCallbackManager
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
-import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 
@@ -59,23 +59,18 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private var pendingDriverModels = atomic(listOf<PendingDriverModel<Data>>())
     private var version = atomic(0)
     private var state: AtomicRef<State<Data>> = atomic(State.Idle(idleDeferred, driver))
-    private val nextCallbackToken = atomic(1)
-    private val callbacks = atomic(mapOf<Int, ProxyCallback<Data, Op, T>>())
+    private val proxyManager = ProxyCallbackManager<Data, Op, T>()
 
     override suspend fun idle() = state.value.idle()
 
     override suspend fun getLocalData(): Data = synchronized(this) { localModel.data }
 
     override fun on(callback: ProxyCallback<Data, Op, T>): Int {
-        val token = nextCallbackToken.getAndIncrement()
-        callbacks.update { it + (token to callback) }
-        return token
+        return proxyManager.register(callback)
     }
 
     override fun off(callbackToken: Int) {
-        callbacks.update { callbackMap ->
-            return@update callbackMap - callbackToken
-        }
+        return proxyManager.unregister(callbackToken)
     }
 
     /**
@@ -91,7 +86,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     ): Boolean {
         return when (message) {
             is ProxyMessage.SyncRequest -> {
-                callbacks.value[message.id]?.invoke(
+                proxyManager.getCallback(message.id)?.invoke(
                     ProxyMessage.ModelUpdate(getLocalData(), message.id)
                 )
                 true
@@ -103,7 +98,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                     }
 
                 if (failure) {
-                    callbacks.value[message.id]?.invoke(ProxyMessage.SyncRequest(message.id))
+                    proxyManager.getCallback(message.id)?.invoke(
+                        ProxyMessage.SyncRequest(message.id)
+                    )
                     false
                 } else {
                     if (message.operations.isNotEmpty()) {
@@ -145,7 +142,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     ) {
         if (modelChange.isEmpty() && otherChange?.isEmpty() == true) return
 
-        deliverCallbacks(modelChange, messageFromDriver = false, channel = channel)
+        deliverCallbacks(modelChange, source = channel)
         updateStateAndAct(
             noDriverSideChanges(modelChange, otherChange, false),
             version,
@@ -181,7 +178,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 log.debug { "OtherChange: $otherChange" }
                 theVersion = version
                 if (modelChange.isEmpty() && otherChange.isEmpty()) return@forEach
-                deliverCallbacks(modelChange, messageFromDriver = true, channel = 0)
+                deliverCallbacks(modelChange, null)
                 noDriverSideChanges =
                     noDriverSideChanges && noDriverSideChanges(
                         modelChange,
@@ -219,21 +216,19 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     private suspend fun deliverCallbacks(
         thisChange: CrdtChange<Data, Op>,
-        messageFromDriver: Boolean,
-        channel: Int?
+        source: Int?
     ) {
-        when {
-            thisChange is CrdtChange.Operations && thisChange.ops.isNotEmpty() -> {
-                callbacks.value.filter { messageFromDriver || channel != it.key }
-                    .forEach { (id, callback) ->
-                        callback(ProxyMessage.Operations(thisChange.ops, id))
-                    }
+        when (thisChange) {
+            is CrdtChange.Operations -> {
+                proxyManager.send(
+                    message = ProxyMessage.Operations(thisChange.ops, source),
+                    exceptTo = source
+                )
             }
-            thisChange is CrdtChange.Data -> {
-                callbacks.value.filter { messageFromDriver || channel != it.key }
-                    .forEach { (id, callback) ->
-                        callback(ProxyMessage.ModelUpdate(thisChange.data, id))
-                    }
+            is CrdtChange.Data -> {
+                proxyManager.send(
+                    message = ProxyMessage.ModelUpdate(thisChange.data, source),
+                    exceptTo = source)
             }
         }
     }
