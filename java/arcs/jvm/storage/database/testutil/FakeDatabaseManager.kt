@@ -23,12 +23,16 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
+import arcs.core.storage.database.DatabaseManifest
+import arcs.core.storage.database.DatabaseManifestEntry
 import arcs.core.storage.database.DatabasePerformanceStatistics
+import arcs.core.storage.database.MutableDatabaseManifest
 import arcs.core.type.Type
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
+import java.time.Instant
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
@@ -40,15 +44,19 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** [DatabaseManager] which generates mockito mocks of [Database] objects. */
-class MockDatabaseManager : DatabaseManager {
+/** [DatabaseManager] which generates fake [Database] objects. */
+class FakeDatabaseManager : DatabaseManager {
     private val mutex = Mutex()
     private val cache: MutableMap<DatabaseIdentifier, Database>
         by guardedBy(mutex, mutableMapOf())
 
+    private val _manifest = FakeDatabaseManifest()
+    override val manifest: DatabaseManifest = _manifest
+
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
+        _manifest.register(name, persistent)
         cache[name to persistent]
-            ?: MockDatabase().also { cache[name to persistent] = it }
+            ?: FakeDatabase().also { cache[name to persistent] = it }
     }
 
     override suspend fun snapshotStatistics():
@@ -63,7 +71,7 @@ class MockDatabaseManager : DatabaseManager {
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-open class MockDatabase : Database {
+open class FakeDatabase : Database {
     private val stats = DatabasePerformanceStatistics(
         insertUpdate = PerformanceStatistics(Timer(JvmTime)),
         get = PerformanceStatistics(Timer(JvmTime)),
@@ -150,4 +158,29 @@ open class MockDatabase : Database {
         clients.remove(identifier)
         Unit
     }
+}
+
+class FakeDatabaseManifest : MutableDatabaseManifest {
+    private val entries = mutableSetOf<DatabaseManifestEntry>()
+
+    @Synchronized
+    override fun register(databaseName: String, isPersistent: Boolean): DatabaseManifestEntry {
+        val now = Instant.now().toEpochMilli()
+        entries.find { it.name == databaseName && it.isPersistent == isPersistent }?.let {
+            entries.remove(it)
+            return it.copy(lastAccessed = now).also { entry -> entries.add(entry) }
+        }
+        return DatabaseManifestEntry(databaseName, isPersistent, now, now)
+    }
+
+    @Synchronized
+    override fun fetchAll(): List<DatabaseManifestEntry> = entries.toList()
+
+    @Synchronized
+    override fun fetchAllCreatedIn(timeRange: LongRange): List<DatabaseManifestEntry> =
+        fetchAll().filter { it.created in timeRange }
+
+    @Synchronized
+    override fun fetchAllAccessedIn(timeRange: LongRange): List<DatabaseManifestEntry> =
+        fetchAll().filter { it.lastAccessed in timeRange }
 }

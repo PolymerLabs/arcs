@@ -31,7 +31,7 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.storage.database.testutil.MockDatabase
+import arcs.jvm.storage.database.testutil.FakeDatabase
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.test.runBlockingTest
@@ -49,11 +49,11 @@ class DatabaseDriverTest {
     @get:Rule
     val logRule = LogRule()
 
-    private lateinit var database: MockDatabase
+    private lateinit var database: FakeDatabase
 
     @Before
     fun setUp() {
-        database = MockDatabase()
+        database = FakeDatabase()
     }
 
     @Test
