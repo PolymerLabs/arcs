@@ -16,6 +16,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SingletonType
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
@@ -55,7 +56,7 @@ class MockDatabaseManager : DatabaseManager {
         mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
 
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        val all: MutableMap<StorageKey, Type> = mutableMapOf()
+        val all = mutableMapOf<StorageKey, Type>()
         cache.forEach { (_, db) -> all.putAll(db.getAllStorageKeys()) }
         return all
     }
@@ -122,12 +123,19 @@ open class MockDatabase : Database {
         }
 
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        val type = EntityType(Schema(
-            listOf<SchemaName>(),
-            SchemaFields(emptyMap(), emptyMap()),
-            ""
-        ))
-        return data.keys.map { it to CollectionType(type) }.toMap()
+        val entityType = EntityType(
+            Schema(
+                listOf<SchemaName>(),
+                SchemaFields(emptyMap(), emptyMap()),
+                ""
+            )
+        )
+        return data.keys.map {
+            val type =
+                if (data[it] is DatabaseData.Singleton) SingletonType(entityType)
+                else CollectionType(entityType)
+            it to type
+        }.toMap()
     }
 
     override suspend fun snapshotStatistics() = stats.snapshot()

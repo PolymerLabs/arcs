@@ -57,6 +57,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
             SchemaFields(emptyMap(), emptyMap()),
             ""
         ))
+        // TODO(mmandlis): distinguish between singleton and collection type.
         return arcMemory.keys().map { it to CollectionType(type) }.toMap()
     }
 }

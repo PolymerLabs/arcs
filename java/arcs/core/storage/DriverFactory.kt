@@ -57,7 +57,7 @@ object DriverFactory {
 
     /** Return the map of storage keys to a correponding type that each DriverProvider has seen. */
     suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        val all: MutableMap<StorageKey, Type> = mutableMapOf()
+        val all = mutableMapOf<StorageKey, Type>()
         providers.value.forEach { all.putAll(it.getAllStorageKeys()) }
         return all
     }
@@ -74,6 +74,6 @@ interface DriverProvider {
         dataClass: KClass<Data>
     ): Driver<Data>
 
-    /** Returns a msp of storage key to type for which a driver has been created. */
+    /** Returns a map of [StorageKey] to [Type] for which a driver has been created. */
     suspend fun getAllStorageKeys(): Map<StorageKey, Type>
 }

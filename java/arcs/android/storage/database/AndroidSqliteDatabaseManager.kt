@@ -46,7 +46,7 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
 
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
         // TODO: this should check all existing databases (including those not in dbCache).
-        val all: MutableMap<StorageKey, Type> = mutableMapOf()
+        val all = mutableMapOf<StorageKey, Type>()
         dbCache.forEach { (_, db) -> all.putAll(db.getAllStorageKeys()) }
         return all
     }

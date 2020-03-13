@@ -52,11 +52,13 @@ class RamDiskDriverProvider : DriverProvider {
 
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
         // TODO: keep track of and return the actual schema type.
-        val type = EntityType(Schema(
-            listOf<SchemaName>(),
-            SchemaFields(emptyMap(), emptyMap()),
-            ""
-        ))
+        val type = EntityType(
+            Schema(
+                listOf<SchemaName>(),
+                SchemaFields(emptyMap(), emptyMap()),
+                ""
+            )
+        )
         return RamDisk.memory.keys().map { it to CollectionType(type) }.toMap()
     }
 

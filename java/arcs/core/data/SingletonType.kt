@@ -31,8 +31,8 @@ data class SingletonType<T : Type>(override val containedType: T) :
         Referencable?> {
     override val tag = Tag.Singleton
 
-    override val entitySchema: Schema?
-        get() = (containedType as? EntitySchemaProviderType)?.entitySchema
+    override val entitySchema: Schema? =
+        (containedType as? EntitySchemaProviderType)?.entitySchema
 
     override val crdtModelDataClass: KClass<*> = CrdtSingleton.DataImpl::class
 

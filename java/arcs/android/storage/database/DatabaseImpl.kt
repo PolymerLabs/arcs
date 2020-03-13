@@ -743,16 +743,19 @@ class DatabaseImpl(
             .forEach {
                 val storageKey = StorageKeyParser.parse(it.getString(0))
                 // TODO: keep track of and return the actual schema type.
-                val eType: Type = EntityType(Schema(
-                    listOf<SchemaName>(),
-                    SchemaFields(emptyMap(), emptyMap()),
-                    ""
-                ))
+                val eType: Type = EntityType(
+                    Schema(
+                        listOf<SchemaName>(),
+                        SchemaFields(emptyMap(), emptyMap()),
+                        ""
+                    )
+                )
                 val type = when (DataType.values()[it.getInt(1)]) {
                     DataType.Singleton -> SingletonType(eType)
                     DataType.Collection -> CollectionType(eType)
                     else -> throw UnsupportedOperationException(
-                        "Unsupported data type $it.getInt(1).")
+                        "Unsupported data type $it.getInt(1)."
+                    )
                 }
                 res[storageKey] = type
             }
