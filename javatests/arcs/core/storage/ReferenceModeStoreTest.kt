@@ -34,6 +34,7 @@ import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -697,7 +698,7 @@ class ReferenceModeStoreTest {
             dataClass: KClass<Data>
         ): Driver<Data> = MockDriver(storageKey)
 
-        override suspend fun getAllStorageKeys(): Set<StorageKey> = setOf()
+        override suspend fun getAllStorageKeys(): Map<StorageKey, Type> = mapOf()
     }
 
     private class MockDriver<T : Any>(

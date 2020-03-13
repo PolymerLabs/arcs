@@ -24,11 +24,15 @@ import kotlin.reflect.KClass
 data class SingletonType<T : Type>(override val containedType: T) :
     Type,
     Type.TypeContainer<T>,
+    EntitySchemaProviderType,
     CrdtModelType<
         CrdtSingleton.Data<Referencable>,
         CrdtSingleton.IOperation<Referencable>,
         Referencable?> {
     override val tag = Tag.Singleton
+
+    override val entitySchema: Schema?
+        get() = (containedType as? EntitySchemaProviderType)?.entitySchema
 
     override val crdtModelDataClass: KClass<*> = CrdtSingleton.DataImpl::class
 

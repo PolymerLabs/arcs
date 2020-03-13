@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -54,9 +55,11 @@ object DriverFactory {
     /** Reset the driver registration to an empty set. For use in tests only. */
     fun clearRegistrations() = providers.lazySet(setOf())
 
-    /** Return the set of all storage keys that each DriverProvider has seen. */
-    suspend fun getAllStorageKeys(): Set<StorageKey> {
-        return providers.value.flatMap { it.getAllStorageKeys() }.toSet()
+    /** Return the map of storage keys to a correponding type that each DriverProvider has seen. */
+    suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
+        val all: MutableMap<StorageKey, Type> = mutableMapOf()
+        providers.value.forEach { all.putAll(it.getAllStorageKeys()) }
+        return all
     }
 }
 
@@ -71,6 +74,6 @@ interface DriverProvider {
         dataClass: KClass<Data>
     ): Driver<Data>
 
-    /** Returns all storage keys for which a driver has been created. */
-    suspend fun getAllStorageKeys(): Set<StorageKey>
+    /** Returns a msp of storage key to type for which a driver has been created. */
+    suspend fun getAllStorageKeys(): Map<StorageKey, Type>
 }

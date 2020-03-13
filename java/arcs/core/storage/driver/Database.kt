@@ -30,6 +30,7 @@ import arcs.core.storage.referencemode.toCrdtSetData
 import arcs.core.storage.referencemode.toCrdtSingletonData
 import arcs.core.storage.referencemode.toReferenceSet
 import arcs.core.storage.referencemode.toReferenceSingleton
+import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
@@ -90,7 +91,7 @@ object DatabaseDriverProvider : DriverProvider {
         ).register()
     }
 
-    override suspend fun getAllStorageKeys(): Set<StorageKey> {
+    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
         return manager.getAllStorageKeys()
     }
 

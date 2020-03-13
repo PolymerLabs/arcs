@@ -119,6 +119,6 @@ class RamDiskDriverProviderTest {
         provider.getDriver(storageKey1, Int::class)
         provider.getDriver(storageKey2, Int::class)
 
-        assertThat(provider.getAllStorageKeys()).containsExactly(storageKey1, storageKey2)
+        assertThat(provider.getAllStorageKeys().keys).containsExactly(storageKey1, storageKey2)
     }
 }

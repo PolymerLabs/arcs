@@ -11,7 +11,11 @@
 
 package arcs.jvm.storage.database.testutil
 
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
@@ -19,6 +23,7 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics
+import arcs.core.type.Type
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
@@ -49,8 +54,10 @@ class MockDatabaseManager : DatabaseManager {
         Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
         mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
 
-    override suspend fun getAllStorageKeys(): Set<StorageKey> {
-        return cache.flatMap { (_, db) -> db.getAllStorageKeys() }.toSet()
+    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
+        val all: MutableMap<StorageKey, Type> = mutableMapOf()
+        cache.forEach { (_, db) -> all.putAll(db.getAllStorageKeys()) }
+        return all
     }
 }
 
@@ -114,7 +121,14 @@ open class MockDatabase : Database {
             Unit
         }
 
-    override suspend fun getAllStorageKeys() = data.keys
+    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
+        val type = EntityType(Schema(
+            listOf<SchemaName>(),
+            SchemaFields(emptyMap(), emptyMap()),
+            ""
+        ))
+        return data.keys.map { it to CollectionType(type) }.toMap()
+    }
 
     override suspend fun snapshotStatistics() = stats.snapshot()
 

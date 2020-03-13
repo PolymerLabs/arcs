@@ -1110,13 +1110,23 @@ class DatabaseImplTest {
         val entityKey = DummyStorageKey("entity")
         val entity = DatabaseData.Entity(
             rawEntity = RawEntity("entity", singletons = emptyMap(), collections = emptyMap()),
-            schema = newSchema("hash"),
+            schema = newSchema("hashentity"),
             databaseVersion = 1,
             versionMap = VERSION_MAP
         )
         database.insertOrUpdateEntity(entityKey, entity)
 
-        assertThat(database.getAllStorageKeys()).containsExactly(entityKey)
+        val singletonKey = DummyStorageKey("singleton")
+        val backingKey = DummyStorageKey("backing")
+        val singleton = DatabaseData.Singleton(
+            reference = Reference("ref1", backingKey, VersionMap("ref1" to 1)),
+            schema = newSchema("hashsingleton"),
+            databaseVersion = 1,
+            versionMap = VERSION_MAP
+        )
+        database.insertOrUpdateSingleton(singletonKey, singleton)
+
+        assertThat(database.getAllStorageKeys().keys).containsExactly(singletonKey)
     }
 
     @Test

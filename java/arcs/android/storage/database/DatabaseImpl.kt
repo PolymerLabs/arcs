@@ -32,11 +32,16 @@ import arcs.android.crdt.fromProto
 import arcs.android.crdt.toProto
 import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
+import arcs.core.data.SingletonType
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
@@ -46,6 +51,7 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabasePerformanceStatistics
+import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
@@ -721,10 +727,36 @@ class DatabaseImpl(
         }
     }
 
-    override suspend fun getAllStorageKeys(): Set<StorageKey> {
-        return readableDatabase
-            .rawQuery("SELECT storage_keys.storage_key FROM storage_keys", emptyArray())
-            .map { StorageKeyParser.parse(it.getString(0)) }.toSet()
+    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
+        val res: MutableMap<StorageKey, Type> = mutableMapOf()
+        readableDatabase
+            .rawQuery(
+                """
+                    SELECT
+                        storage_keys.storage_key,
+                        storage_keys.data_type
+                    FROM collections
+                    LEFT JOIN storage_keys ON collections.id = storage_keys.value_id
+                """.trimIndent(),
+                emptyArray()
+            )
+            .forEach {
+                val storageKey = StorageKeyParser.parse(it.getString(0))
+                // TODO: keep track of and return the actual schema type.
+                val eType: Type = EntityType(Schema(
+                    listOf<SchemaName>(),
+                    SchemaFields(emptyMap(), emptyMap()),
+                    ""
+                ))
+                val type = when (DataType.values()[it.getInt(1)]) {
+                    DataType.Singleton -> SingletonType(eType)
+                    DataType.Collection -> CollectionType(eType)
+                    else -> throw UnsupportedOperationException(
+                        "Unsupported data type $it.getInt(1).")
+                }
+                res[storageKey] = type
+            }
+        return res
     }
 
     @VisibleForTesting
