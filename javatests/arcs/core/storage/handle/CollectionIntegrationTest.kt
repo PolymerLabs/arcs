@@ -11,7 +11,6 @@
 
 package arcs.core.storage.handle
 
-import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -32,9 +31,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.assertThrows
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
@@ -60,8 +57,8 @@ class CollectionIntegrationTest {
     private lateinit var testStore: Store<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
     private lateinit var storageProxy:
         StorageProxy<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
-    private lateinit var collectionA: CollectionImpl<RawEntity>
-    private lateinit var collectionB: CollectionImpl<RawEntity>
+    private lateinit var collectionA: CollectionHandle<RawEntity>
+    private lateinit var collectionB: CollectionHandle<RawEntity>
 
     @Before
     fun setUp() = runBlocking {
@@ -70,9 +67,9 @@ class CollectionIntegrationTest {
         testStore = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(testStore.activate(), CrdtSet<RawEntity>())
 
-        collectionA = CollectionImpl("collectionA", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA_A)
+        collectionA = CollectionHandle("collectionA", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA_A)
         storageProxy.registerHandle(collectionA)
-        collectionB = CollectionImpl("collectionB", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA_B)
+        collectionB = CollectionHandle("collectionB", storageProxy, null, Ttl.Infinite, TimeImpl(), schema = SCHEMA_B)
         storageProxy.registerHandle(collectionB)
         Unit
     }
@@ -189,14 +186,14 @@ class CollectionIntegrationTest {
         assertThat(collectionA.fetchAll().first().expirationTimestamp)
             .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val collectionC = CollectionImpl("collectionC", storageProxy, null, Ttl.Days(2), TimeImpl(), schema = SCHEMA_A)
+        val collectionC = CollectionHandle("collectionC", storageProxy, null, Ttl.Days(2), TimeImpl(), schema = SCHEMA_A)
         storageProxy.registerHandle(collectionC)
         assertThat(collectionC.store(person.toRawEntity())).isTrue()
         val entityC = collectionC.fetchAll().first()
         assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val collectionD = CollectionImpl("collectionD", storageProxy, null, Ttl.Minutes(1), TimeImpl(), schema = SCHEMA_B)
+        val collectionD = CollectionHandle("collectionD", storageProxy, null, Ttl.Minutes(1), TimeImpl(), schema = SCHEMA_B)
         storageProxy.registerHandle(collectionD)
         assertThat(collectionD.store(person.toRawEntity())).isTrue()
         val entityD = collectionD.fetchAll().first()

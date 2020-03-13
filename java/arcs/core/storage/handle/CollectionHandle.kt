@@ -25,14 +25,14 @@ import arcs.core.storage.StoreOptions
 import arcs.core.util.Time
 
 /** These typealiases are defined to clean up the class declaration below. */
-typealias SetData<T> = CrdtSet.Data<T>
-typealias SetOp<T> = CrdtSet.IOperation<T>
-typealias SetStoreOptions<T> = StoreOptions<SetData<T>, SetOp<T>, Set<T>>
-typealias SetHandle<T> = CollectionImpl<T>
-typealias SetActivationFactory<T> = ActivationFactory<SetData<T>, SetOp<T>, Set<T>>
-typealias SetProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
-typealias SetBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
-typealias SetCallbacks<T> = Callbacks<SetData<T>, SetOp<T>, Set<T>>
+typealias CollectionData<T> = CrdtSet.Data<T>
+typealias CollectionOp<T> = CrdtSet.IOperation<T>
+typealias CollectionStoreOptions<T> = StoreOptions<CollectionData<T>, CollectionOp<T>, Set<T>>
+typealias CollectionActivationFactory<T> =
+    ActivationFactory<CollectionData<T>, CollectionOp<T>, Set<T>>
+typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+typealias CollectionBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+typealias CollectionCallbacks<T> = Callbacks<CollectionData<T>, CollectionOp<T>, Set<T>>
 
 /**
  * Collection Handle implementation for the runtime.
@@ -40,16 +40,16 @@ typealias SetCallbacks<T> = Callbacks<SetData<T>, SetOp<T>, Set<T>>
  * It provides methods that can generate the appropriate operations to send to a
  * backing storage proxy.
  */
-class CollectionImpl<T : Referencable>(
+class CollectionHandle<T : Referencable>(
     name: String,
-    storageProxy: SetProxy<T>,
-    callbacks: SetCallbacks<T>? = null,
+    storageProxy: CollectionProxy<T>,
+    callbacks: CollectionCallbacks<T>? = null,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
     canRead: Boolean = true,
     dereferencer: Dereferencer<RawEntity>? = null,
     private val schema: Schema? = null
-) : SetBase<T>(
+) : CollectionBase<T>(
     name,
     storageProxy,
     callbacks,

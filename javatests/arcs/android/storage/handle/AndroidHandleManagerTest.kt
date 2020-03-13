@@ -22,7 +22,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.VolatileEntry
 import arcs.core.storage.handle.HandleManager
-import arcs.core.storage.handle.SetCallbacks
+import arcs.core.storage.handle.CollectionCallbacks
 import arcs.core.storage.handle.SingletonCallbacks
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -158,11 +158,11 @@ class AndroidHandleManagerTest : LifecycleOwner {
 
     @Test
     fun set_dereferenceEntity () = runBlocking {
-        val setHandle = handleManager.rawEntitySetHandle(setKey, schema)
-        setHandle.store(entity1)
-        setHandle.store(entity2)
+        val collectionHandle = handleManager.rawEntityCollectionHandle(setKey, schema)
+        collectionHandle.store(entity1)
+        collectionHandle.store(entity2)
 
-        val secondHandle = handleManager.rawEntitySetHandle(setKey, schema)
+        val secondHandle = handleManager.rawEntityCollectionHandle(setKey, schema)
         secondHandle.fetchAll().also { assertThat(it).hasSize(2) }.forEach { entity ->
             val expectedBestFriend = if (entity.id == "entity1") entity2 else entity1
             val actualBestFriend = (entity.singletons["best_friend"] as Reference)
@@ -204,15 +204,15 @@ class AndroidHandleManagerTest : LifecycleOwner {
     }
 
     @Test
-    fun testCreateReferenceSetHandle() = runBlocking {
-        val setHandle = handleManager.referenceSetHandle(singletonRefKey, schema)
-        val entity1Ref = setHandle.createReference(entity1, backingKey)
-        val entity2Ref = setHandle.createReference(entity2, backingKey)
-        setHandle.store(entity1Ref)
-        setHandle.store(entity2Ref)
+    fun testCreateReferenceCollectionHandle() = runBlocking {
+        val collectionHandle = handleManager.referenceCollectionHandle(singletonRefKey, schema)
+        val entity1Ref = collectionHandle.createReference(entity1, backingKey)
+        val entity2Ref = collectionHandle.createReference(entity2, backingKey)
+        collectionHandle.store(entity1Ref)
+        collectionHandle.store(entity2Ref)
 
         // Now read back from a different handle
-        val readbackHandle = handleManager.referenceSetHandle(singletonRefKey, schema)
+        val readbackHandle = handleManager.referenceCollectionHandle(singletonRefKey, schema)
         val readBack = readbackHandle.fetchAll()
         assertThat(readBack).containsExactly(entity1Ref, entity2Ref)
 
@@ -259,10 +259,10 @@ class AndroidHandleManagerTest : LifecycleOwner {
 
     @Test
     fun set_onHandleUpdate() = runBlocking<Unit> {
-        val testCallback1 = mock<SetCallbacks<RawEntity>>()
-        val testCallback2 = mock<SetCallbacks<RawEntity>>()
-        val firstHandle = handleManager.rawEntitySetHandle(setKey, schema, testCallback1)
-        val secondHandle = handleManager.rawEntitySetHandle(setKey, schema, testCallback2)
+        val testCallback1 = mock<CollectionCallbacks<RawEntity>>()
+        val testCallback2 = mock<CollectionCallbacks<RawEntity>>()
+        val firstHandle = handleManager.rawEntityCollectionHandle(setKey, schema, testCallback1)
+        val secondHandle = handleManager.rawEntityCollectionHandle(setKey, schema, testCallback2)
 
         val expectedAdd = CrdtSet.Operation.Add(
             setKey.toKeyString(),
@@ -317,8 +317,8 @@ class AndroidHandleManagerTest : LifecycleOwner {
 
     @Test
     fun set_syncOnRegister() = runBlocking<Unit> {
-        val testCallback = mock<SetCallbacks<RawEntity>>()
-        val firstHandle = handleManager.rawEntitySetHandle(setKey, schema, testCallback)
+        val testCallback = mock<CollectionCallbacks<RawEntity>>()
+        val firstHandle = handleManager.rawEntityCollectionHandle(setKey, schema, testCallback)
         verify(testCallback).onSync(firstHandle)
         firstHandle.fetchAll()
         verify(testCallback).onSync(firstHandle)

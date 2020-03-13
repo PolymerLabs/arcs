@@ -16,7 +16,7 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.handle.HandleManager
-import arcs.core.storage.handle.SetHandle
+import arcs.core.storage.handle.CollectionHandle
 import arcs.core.storage.handle.SingletonHandle
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -74,7 +74,7 @@ class RemovalManagerTest {
 
     private val hmTime = FakeTimeImpl(1234567L)
     private lateinit var singletonHandle: SingletonHandle<RawEntity>
-    private lateinit var collectionHandle: SetHandle<RawEntity>
+    private lateinit var collectionHandle: CollectionHandle<RawEntity>
 
     @Before
     fun setup() = handleManagerTest { hm ->
@@ -88,7 +88,7 @@ class RemovalManagerTest {
             Ttl.Minutes(5)
         )
 
-        collectionHandle = hm.rawEntitySetHandle(
+        collectionHandle = hm.rawEntityCollectionHandle(
             setKey,
             schema,
             null,

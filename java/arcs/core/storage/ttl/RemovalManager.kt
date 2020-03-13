@@ -13,7 +13,7 @@ package arcs.core.storage.ttl
 
 import arcs.core.common.Referencable
 import arcs.core.data.TimeRange
-import arcs.core.storage.handle.SetHandle
+import arcs.core.storage.handle.CollectionHandle
 import arcs.core.storage.handle.SingletonHandle
 import arcs.core.util.Time
 
@@ -39,7 +39,7 @@ abstract class RemovalManager(val time: Time) {
     }
 
     /** Removes all expired items from the given collection handle. */
-    suspend fun <T : Referencable> removeExpired(handle: SetHandle<T>) {
+    suspend fun <T : Referencable> removeExpired(handle: CollectionHandle<T>) {
         val nowMillis = time.currentTimeMillis
         handle.fetchAll().forEach {
             it.takeIf { it.expirationTimestamp < nowMillis }?.let { handle.remove(it) }
@@ -48,7 +48,7 @@ abstract class RemovalManager(val time: Time) {
 
     /** Removes all items newer than the given time from the given collection handle. */
     suspend fun <T : Referencable> removeCreatedBetween(
-        handle: SetHandle<T>,
+        handle: CollectionHandle<T>,
         timeRange: TimeRange
     ) {
         handle.fetchAll().forEach {

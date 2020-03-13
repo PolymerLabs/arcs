@@ -38,8 +38,8 @@ data class VolatileStorageKey(
         private val VOLATILE_STORAGE_KEY_PATTERN = "^([^/]+)/(.*)\$".toRegex()
 
         init {
-            // When VolatileStorageKey is imported, this will register its parser with the storage
-            // key parsers.
+            // When VolatileStorageKey is instantiated, this will register its parser with the
+            // storage key parsers.
             registerParser()
         }
 
