@@ -31,7 +31,10 @@ class CombineUpdatesTest : AbstractCombineUpdatesTest() {
         combineUpdates(
             handles.handle1,
             handles.handle2
-        ) { _, _ -> doubleHandleCount++ }
+        ) { _, c ->
+            val num = c.elementAtOrNull(0)?.num
+            doubleHandleCount++
+        }
 
         combineUpdates(
             handles.handle1,
@@ -107,7 +110,18 @@ class CombineUpdatesTest : AbstractCombineUpdatesTest() {
             handles.handle8,
             handles.handle9,
             handles.handle10
-        ) { _, _, _, _, _, _, _, _, _, _ -> decHandleCount++ }
+        ) { e1, c, e3, e4, e5, e6, e7, e8, e9, e10 ->
+            val num1 = e1?.num
+            val num3 = e3?.num3
+            val num4 = e4?.num4
+            val num5 = e5?.num5
+            val num6 = e6?.num6
+            val num7 = e7?.num7
+            val num8 = e8?.num8
+            val num9 = e9?.num9
+            val num10 = e10?.num10
+            decHandleCount++
+        }
     }
 
     override fun fireEvent(slotName: String, eventName: String, eventData: Map<String, String>) {
