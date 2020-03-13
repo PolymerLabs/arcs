@@ -15,9 +15,15 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.host",
     deps = [
         ":particle",  # buildcleaner: keep
+        ":schemas",
         "//java/arcs/core/host",
+        "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/handle",
+        "//java/arcs/core/storage/keys",
+        "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/testutil",
         "//java/arcs/jvm/host",
+        "//java/arcs/jvm/util/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
