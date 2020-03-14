@@ -84,10 +84,12 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
      * is stored in de-normalized format.
      */
     suspend fun readArcHostContext(
-        arcId: String,
+        arcHostContext: ArcHostContext,
         hostId: String,
         instantiateParticle: suspend (ParticleIdentifier) -> Particle
     ): ArcHostContext? {
+        val arcId = arcHostContext.arcId
+
         try {
             val arcStateEntity = handles.arcHostContext.fetch()
             val particleEntities = handles.particles.fetchAll()
@@ -136,10 +138,10 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
             }.associateBy({ it.first }, { it.second })
 
             return ArcHostContext(
+                arcId,
                 particles.toMutableMap(),
-                arcStateEntity?.let {
-                    ArcState.valueOf(it.arcState)
-                } ?: ArcState.NeverStarted
+                ArcState.valueOf(arcStateEntity.arcState),
+                entityHandleManager = arcHostContext.entityHandleManager
             )
         } catch (e: Exception) {
             throw IllegalStateException("Unable to deserialize $arcId for $hostId", e)
@@ -201,7 +203,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
                 Tag.Collection -> CollectionType(EntityType(schema))
                 Tag.Entity -> EntityType(schema)
                 else -> throw IllegalArgumentException(
-                    "Illegal Tag $tag when deserializing ArcHostContext"
+                    "Illegal Tag $tag when deserializing ArcHostContext with ArcId $arcId"
                 )
             }
         } catch (e: NoSuchElementException) {

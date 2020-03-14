@@ -11,6 +11,7 @@
 package arcs.core.host
 
 import arcs.core.common.Id
+import arcs.core.common.toArcId
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -38,7 +39,11 @@ private typealias Sender = (block: suspend () -> Unit) -> Unit
  *
  * TODO(cromwellian): Add support for creating Singleton/Set handles of [Reference]s.
  */
-class EntityHandleManager(private val handleManager: HandleManager) {
+class EntityHandleManager(
+    private val handleManager: HandleManager,
+    private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
+    private val hostId: String = "nohost"
+) {
 
     /**
      * Creates and returns a new [SingletonHandle] for managing an [Entity].
@@ -62,7 +67,11 @@ class EntityHandleManager(private val handleManager: HandleManager) {
         val storageHandle = handleManager.singletonHandle(
             storageKey,
             schema,
-            canRead = mode.canRead
+            canRead = mode.canRead,
+            name = idGenerator.newChildId(
+                idGenerator.newChildId(arcId.toArcId(), hostId),
+                name
+            ).toString()
         )
         return SingletonHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator, sender)
     }
@@ -89,7 +98,11 @@ class EntityHandleManager(private val handleManager: HandleManager) {
         val storageHandle = handleManager.collectionHandle(
             storageKey,
             schema,
-            canRead = mode.canRead
+            canRead = mode.canRead,
+            name = idGenerator.newChildId(
+                idGenerator.newChildId(arcId.toArcId(), hostId),
+                name
+            ).toString()
         )
         return CollectionHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator, sender)
     }
