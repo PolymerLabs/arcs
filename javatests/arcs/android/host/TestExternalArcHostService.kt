@@ -41,16 +41,16 @@ open class TestExternalArcHostService(val arcHost: TestingAndroidHost) : Service
     open class TestingAndroidHost(vararg particles: ParticleRegistration) : TestingHost(*particles) {
         lateinit var serviceContext: Context
 
-        override val entityHandleManager: EntityHandleManager by lazy {
-            EntityHandleManager(
-                AndroidHandleManager(
-                    serviceContext,
-                    FakeLifecycle(),
-                    Dispatchers.Default,
-                    TestConnectionFactory(serviceContext)
-                )
-            )
-        }
+        override fun entityHandleManager(arcId: String) = EntityHandleManager(
+            AndroidHandleManager(
+                serviceContext,
+                FakeLifecycle(),
+                Dispatchers.Default,
+                TestConnectionFactory(serviceContext)
+            ),
+            arcId,
+            hostId
+        )
 
         override val arcHostContextCapability = testingCapability
 

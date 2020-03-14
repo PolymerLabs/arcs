@@ -37,6 +37,8 @@ data class ParticleContext(
  * each participating [Particle] in the [Arc].
  */
 data class ArcHostContext(
+    var arcId: String,
     var particles: MutableMap<String, ParticleContext> = mutableMapOf(),
-    var arcState: ArcState = ArcState.NeverStarted
+    var arcState: ArcState = ArcState.NeverStarted,
+    var entityHandleManager: EntityHandleManager
 )
