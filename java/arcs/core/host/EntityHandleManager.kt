@@ -175,6 +175,9 @@ class SingletonHandleAdapter<T : Entity>(
 
     private val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
 
+    // VisibleForTesting
+    val actorName = storageHandle.name
+
     override suspend fun store(entity: T) {
         checkCanWrite()
         storageHandle.store(
@@ -226,6 +229,9 @@ class CollectionHandleAdapter<T : Entity>(
     }
 
     private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
+
+    // VisibleForTesting
+    val actorName = storageHandle.name
 
     override suspend fun size(): Int {
         checkCanRead()

@@ -14,6 +14,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.EntityHandleManager
 import arcs.core.data.HandleMode
+import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
@@ -63,6 +64,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
     @Before
     fun setUp() {
+        RamDisk.clear()
         app = ApplicationProvider.getApplicationContext()
         lifecycle = LifecycleRegistry(this).apply {
             setCurrentState(Lifecycle.State.CREATED)
@@ -210,6 +212,39 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             }
         }
         assertThat(updatedEntities).containsExactly(entity1, entity2, entity3)
+    }
+
+    @Test
+    fun handle_nameIsGloballyUnique() = runBlocking<Unit> {
+
+        val shandle1 = createSingletonHandle(
+            handleManager,
+            "writeHandle",
+            HandleMode.Write
+        )
+
+        val chandle1 = createCollectionHandle(
+            handleManager,
+            "writeCollectionHandle",
+            HandleMode.Write
+        )
+
+        handleHolder.clear()
+
+        val shandle2 = createSingletonHandle(
+            handleManager,
+            "writeHandle",
+            HandleMode.Write
+        )
+
+        val chandle2 = createCollectionHandle(
+            handleManager,
+            "writeCollectionHandle",
+            HandleMode.Write
+        )
+
+        assertThat(shandle1.actorName).isNotEqualTo(shandle2.actorName)
+        assertThat(chandle1.actorName).isNotEqualTo(chandle2.actorName)
     }
 
     private suspend fun createSingletonHandle(
