@@ -21,6 +21,30 @@ typealias Direction = HandleConnectionSpec.Direction
 
 @RunWith(JUnit4::class)
 class ParticleProtoDecoderTest {
+    // The test environment.
+    var ramdiskStorageKey = "ramdisk://something"
+    val thingHandleProto = HandleProto
+        .newBuilder()
+        .setName("thing")
+        .setFate(HandleProto.Fate.CREATE)
+        .setStorageKey(ramdiskStorageKey)
+        .build()
+    val readConnectionSpec = HandleConnectionSpec("data", Direction.READS, TypeVariable("data"))
+    val readerSpec = ParticleSpec("Reader", mapOf("data" to readConnectionSpec), "ReaderLocation")
+    val writeConnectionSpec = HandleConnectionSpec("data", Direction.WRITES, TypeVariable("data"))
+    val writerSpec = ParticleSpec("Writer", mapOf("data" to writeConnectionSpec), "WriterLocation")
+    val readerWriterSpec = ParticleSpec(
+        "ReaderWriter",
+        mapOf("write" to writeConnectionSpec, "read" to readConnectionSpec),
+        "ReaderWriterLocation"
+    )
+    val context = DecodingContext(
+        particleSpecs = mapOf(
+            "Reader" to readerSpec, "Writer" to writerSpec, "ReaderWriter" to readerWriterSpec
+        ),
+        handleProtos = mapOf("thing" to thingHandleProto)
+    )
+
     @Before
     fun setupTest() {
         RamDiskStorageKey.registerParser()
@@ -91,7 +115,46 @@ class ParticleProtoDecoderTest {
         val readConnection = readConnectionProto.decode(readerSpec, context)
         assertThat(particle.particleName).isEqualTo("Reader")
         assertThat(particle.location).isEqualTo(readerSpec.location)
-        assertThat(particle.handles).isEqualTo(mapOf("thing" to readConnection))
+        assertThat(particle.handles).isEqualTo(mapOf("data" to readConnection))
+    }
+
+    @Test
+    fun decodesParticleProtoWithMultipleConnections() {
+        val readConnectionProto = HandleConnectionProto
+            .newBuilder()
+            .setName("read")
+            .setHandle("thing")
+            .build()
+        val writeConnectionProto = HandleConnectionProto
+            .newBuilder()
+            .setName("write")
+            .setHandle("thing")
+            .build()
+        val particleProto = ParticleProto
+            .newBuilder()
+            .setSpecName("ReaderWriter")
+            .addConnections(readConnectionProto)
+            .addConnections(writeConnectionProto)
+            .build()
+        val particle = particleProto.decode(context)
+        val readConnection = readConnectionProto.decode(readerWriterSpec, context)
+        val writeConnection = writeConnectionProto.decode(readerWriterSpec, context)
+        assertThat(particle.particleName).isEqualTo("ReaderWriter")
+        assertThat(particle.location).isEqualTo(readerWriterSpec.location)
+        assertThat(particle.handles)
+            .isEqualTo(mapOf("read" to readConnection, "write" to writeConnection))
+    }
+
+    @Test
+    fun decodesParticleProtoWithNoConnections() {
+        val emptyParticleProto = ParticleProto
+            .newBuilder()
+            .setSpecName("Reader")
+            .build()
+        val particle = emptyParticleProto.decode(context)
+        assertThat(particle.particleName).isEqualTo("Reader")
+        assertThat(particle.location).isEqualTo(readerSpec.location)
+        assertThat(particle.handles).isEmpty()
     }
 
     @Test
@@ -105,22 +168,5 @@ class ParticleProtoDecoderTest {
         }
         assertThat(exception).hasMessageThat().contains("ParticleSpec 'NonExistent' not found")
     }
-
-    // The test environment.
-    var ramdiskStorageKey = "ramdisk://something"
-    val thingHandleProto = HandleProto
-        .newBuilder()
-        .setName("thing")
-        .setFate(HandleProto.Fate.CREATE)
-        .setStorageKey(ramdiskStorageKey)
-        .build()
-    val readConnectionSpec = HandleConnectionSpec("data", Direction.READS, TypeVariable("data"))
-    val readerSpec = ParticleSpec("Reader", mapOf("data" to readConnectionSpec), "ReaderLocation")
-    val writeConnectionSpec = HandleConnectionSpec("data", Direction.WRITES, TypeVariable("data"))
-    val writerSpec = ParticleSpec("Writer", mapOf("data" to writeConnectionSpec), "WriterLocation")
-    val context = DecodingContext(
-        particleSpecs = mapOf("Reader" to readerSpec, "Writer" to writerSpec),
-        handleProtos = mapOf("thing" to thingHandleProto)
-    )
 }
 

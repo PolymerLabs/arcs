@@ -29,11 +29,11 @@ fun HandleConnectionProto.decode(
     context: DecodingContext
 ): HandleConnection {
     val handleSpec = particleSpec.connections[name]
-    require(handleSpec != null) {
+    requireNotNull(handleSpec) {
         "HandleConnectionSpec '$name' not found in ParticleSpec '${particleSpec.name}'."
     }
     val handleProto = context.handleProtos[handle]
-    require(handleProto != null) {
+    requireNotNull(handleProto) {
         "HandleProto for '$handle' not found when decoding ParticleProto '${particleSpec.name}'."
     }
     val handleMode = when (handleSpec.direction) {
@@ -47,11 +47,11 @@ fun HandleConnectionProto.decode(
 /** Converts a [ParticleProto] into a [Particle]. */
 fun ParticleProto.decode(context: DecodingContext): Particle {
     val particleSpec = context.particleSpecs[specName]
-    require(particleSpec != null) {
+    requireNotNull(particleSpec) {
         "ParticleSpec '$specName' not found in decoding context."
     }
     val handleConnections = connectionsList.map {
-        it.handle to it.decode(particleSpec, context)
+        it.name to it.decode(particleSpec, context)
     }.toMap()
     return Particle(specName, particleSpec.location, handleConnections)
 }
