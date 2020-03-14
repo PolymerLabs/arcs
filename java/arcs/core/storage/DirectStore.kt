@@ -20,7 +20,8 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.DirectStore.State.Name.AwaitingDriverModel
 import arcs.core.storage.DirectStore.State.Name.AwaitingResponse
 import arcs.core.storage.DirectStore.State.Name.Idle
-import arcs.core.storage.util.ProxyCallbackManager
+import arcs.core.storage.util.RandomProxyCallbackManager
+import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
@@ -59,7 +60,10 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private var pendingDriverModels = atomic(listOf<PendingDriverModel<Data>>())
     private var version = atomic(0)
     private var state: AtomicRef<State<Data>> = atomic(State.Idle(idleDeferred, driver))
-    private val proxyManager = ProxyCallbackManager<Data, Op, T>()
+    private val proxyManager = RandomProxyCallbackManager<Data, Op, T>(
+        "direct",
+        Random
+    )
 
     override suspend fun idle() = state.value.idle()
 

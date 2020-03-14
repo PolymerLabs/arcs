@@ -18,7 +18,8 @@ import arcs.core.data.ReferenceType
 import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
 import arcs.core.storage.ProxyMessage.SyncRequest
-import arcs.core.storage.util.ProxyCallbackManager
+import arcs.core.storage.util.RandomProxyCallbackManager
+import arcs.core.util.Random
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -37,7 +38,10 @@ class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
 ) : ActiveStore<Data, Op, T>(options) {
     private val storeMutex = Mutex()
     /* internal */ val stores = mutableMapOf<String, StoreRecord<Data, Op, T>>()
-    private val callbacks = ProxyCallbackManager<Data, Op, T>()
+    private val callbacks = RandomProxyCallbackManager<Data, Op, T>(
+        "backing",
+        Random
+    )
 
     @Deprecated(
         "Use getLocalData(muxId) instead",

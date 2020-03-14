@@ -133,8 +133,6 @@ class BindingContextTest {
         val callback = ParcelableProxyMessageChannel(coroutineContext)
         val token = bindingContext.registerCallback(callback)
 
-        assertThat(token).isEqualTo(1)
-
         // Now send a message directly to the store, and see if we hear it from our callback.
         val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
             listOf(

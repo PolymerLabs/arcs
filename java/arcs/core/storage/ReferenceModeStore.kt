@@ -44,7 +44,7 @@ import arcs.core.storage.referencemode.toBridgingData
 import arcs.core.storage.referencemode.toBridgingOp
 import arcs.core.storage.referencemode.toBridgingOps
 import arcs.core.storage.referencemode.toReferenceModeMessage
-import arcs.core.storage.util.ProxyCallbackManager
+import arcs.core.storage.util.RandomProxyCallbackManager
 import arcs.core.storage.util.SendQueue
 import arcs.core.type.Type
 import arcs.core.util.Random
@@ -96,7 +96,10 @@ class ReferenceModeStore private constructor(
      * Registered callbacks to Storage Proxies.
      */
     private val callbacks =
-        ProxyCallbackManager<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>()
+        RandomProxyCallbackManager<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+            "reference",
+            Random
+        )
     /**
      * A queue of send Runnables. Some of these may be blocked on entities becoming available in the
      * backing store.
@@ -235,15 +238,9 @@ class ReferenceModeStore private constructor(
                                 updateBackingStore(it)
                             }
                         }
-                        val response = containerStore.onProxyMessage(
-                            ProxyMessage.Operations(listOf(op.containerOp), 1)
+                        containerStore.onProxyMessage(
+                            ProxyMessage.Operations(listOf(op.containerOp), proxyMessage.id)
                         )
-                        if (response) {
-                            sendQueue.enqueue {
-                                callbacks.send(proxyMessage, requireNotNull(proxyMessage.id))
-                            }
-                            true
-                        } else false
                     }
             }
             is ProxyMessage.ModelUpdate -> {
