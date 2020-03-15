@@ -73,10 +73,10 @@ open class Lens<Subject, Focus>(
     private val setter: (Subject, Focus) -> Subject
 ) {
     /** Invokes a getter on the [Subject] and returns a [Focus] value. */
-    fun get(target: Subject) : Focus = getter(target)
+    fun get(target: Subject): Focus = getter(target)
 
     /** Invokes a setter on the [Subject] with the given [Focus] value and returns a new [Subject]. */
-    fun set(target: Subject, value: Focus) : Subject = setter(target, value)
+    fun set(target: Subject, value: Focus): Subject = setter(target, value)
 
     /**
      * Applies a function to the value of invoking [get] on the [Subject], and then invokes
@@ -90,10 +90,10 @@ open class Lens<Subject, Focus>(
      * Allows two or more [Lens] to be composed and chained so that a deeply nested immutable
      * data structure can be elegantly updated. Returns a new [Lens].
      */
-    fun <Parent> comp(parentLens: Lens<Parent, Subject>) : Lens<Parent, Focus> =
+    fun <Parent> comp(parentLens: Lens<Parent, Subject>): Lens<Parent, Focus> =
         object : Lens<Parent, Focus>(
-            { parent : Parent -> get(parentLens.get(parent)) },
-            { parent : Parent, focus: Focus ->
+            { parent: Parent -> get(parentLens.get(parent)) },
+            { parent: Parent, focus: Focus ->
                 parentLens.mod(parent) { target: Subject ->
                     set(target, focus)
                 }
