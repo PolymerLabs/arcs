@@ -1,18 +1,72 @@
 package arcs.core.util
 
 /**
- * A miniature lightweight "Optics" utility for Arcs. Mostly used to modifying immutable graph
+ * A miniature lightweight "Optics" utility for Arcs. Mostly used for modifying immutable graph
  * data structures used by the [Allocator].
  *
- * A lens is an kind of optic in functional programming that allows immutable data structures to
+ * # Lens
+ * A lens is a kind of optic in functional programming that allows immutable data structures to
  * be updated compactly and elegantly. A [Lens] is constructed around a data structure and
  * allows its focus target (e.g. field member of a type) to be fetched, modified, or set.
  *
+ * A [Lens] can be created easily by the [lens] function around a reference to a property, followed
+ * by a code block to copy-construct a class with the modification.
+ *
+ * ## Example
+ * ```kotlin
+ * data class Person(name: String, age: Int)
+ * val nameLens = lens(Person::name) { t,f -> t.copy(name = f) }
+ *
+ * val newPerson = nameLens.set(Person("John", 26), "Tom") // result: Person("Tom", 26)
+ * val name = nameLens.get(newPerson)                      // result: "Tom"
+ * val bang = nameLens.mod(newPerson) { "$it!" }           // result: "Tom!"
+ * ```
+ *
+ * ## Composition
+ * Two or more lens can be composed for deep object graph mutation.
+ * ```kotlin
+ * data class Manager(name: String, employee: Person)
+ *
+ * val employeeLens = lens(Manager::employee) { t,f -> t.copy(employee = f) }
+ * val employeeName = employeeLens + nameLens
+ * val manager = Manager("Sally", person)
+ * val newManager = employeeName.set(manager, "Rita") // Manager("Sally", Person("Rita", 26))
+ * ```
+ *
+ * ## Traversals
+ * When you have a collection field, you need a lens with multiple focii, which is where
+ * [Traversal] comes in. It allows you to mutate each member of a collection field (List or Map)
+ * constructing a new collection. In the case of [Map], the map values are traversed, the keys
+ * are left intact.
+ *
+ * ## Example: Modify the age of each child
+ * ```kotlin
+ * data class Parent(name: String, children: List<Person>)
+ * val parent = Parent("Mary", listOf(Person("Jack", 4), Person("Jill", 3)))
+ * val childrenLens = lens(Parent::children) { t, f = t.copy(children = f) }
+ * val ageLens = lens(Person::age) { t,f -> t.copy(age = f) }
+ *
+ * val allChildren = childrenLens.traverse()
+ * val newParent = allChildren.mod(parent) { it.copy(name = "Baby ${it.name}") }
+ * // newParent = Parent("Mary", listOf(Person("Baby Jack", 4), Person("Baby Jill", 3)))
+ * ```
+ *
+ * ## Traversal Composition
+ * A [Traversal] can be combined with a [Lens], or a another [Traversal] to reach deep into
+ * nested data structures.
+ *
+ * ```kotlin
+ * val allChildrenAges = allChildren + ageLens
+ * val newParent = allChildrenAges.mod(parent) { it + 1 }
+ * // newParent = Parent("Mary", listOf(Person("Jack", 5), Person("Jill", 4)))
+ * ```
+ *
+ * ## Reference
+ * Based on the ideas in
+ * [http://davids-code.blogspot.com/2014/02/immutable-domain-and-lenses-in-java-8.html]
+ *
  * @property getter a lambda which given [Target] returns [Focus]
  * @property setter a lambda which given [Target] and [Focus] returns new [Target] set with [Focus]
- *
- * Based on the ideas in
- * http://davids-code.blogspot.com/2014/02/immutable-domain-and-lenses-in-java-8.html
  */
 open class Lens<Target, Focus>(
     private val getter: (Target) -> Focus,
@@ -95,7 +149,6 @@ fun <Target, Focus> Lens<Target, Map<String, Focus>>.traverse() = MapLensTravers
 infix fun <Parent, Target, Focus> Lens<Parent, Target>.compose(other: Lens<Target, Focus>) =
     other.comp(this)
 
-
 /**
  * Compose two [Traversal]s into a new [Traversal] which is the cartesian product of the
  * two sequences they traverse.
@@ -120,12 +173,15 @@ infix fun <Parent, Target, Focus> Traversal<Parent, Target>.compose(
     }
 }
 
+/** Operator overload alias for infix [compose] */
 operator fun <Parent, Target, Focus> Lens<Parent, Target>.plus(other: Lens<Target, Focus>) =
     this compose other
 
+/** Operator overload alias for infix [compose] */
 operator fun <Parent, Target, Focus> Traversal<Parent, Target>.plus(
     other: Traversal<Target, Focus>
 ) = this compose other
 
+/** Operator overload alias for infix [compose] */
 operator fun <Parent, Target, Focus> Traversal<Parent, Target>.plus(lens: Lens<Target, Focus>) =
     this compose lens
