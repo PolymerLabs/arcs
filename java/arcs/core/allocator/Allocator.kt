@@ -26,6 +26,8 @@ import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
+import arcs.core.util.plus
+import arcs.core.util.traverse
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -48,8 +50,8 @@ class Allocator(val hostRegistry: HostRegistry) {
         val idGenerator = Id.Generator.newSession()
         val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(arcName)
         // Any unresolved handles ('create' fate) need storage keys
-        createStorageKeysIfNecessary(arcId, idGenerator, plan)
-        val partitions = computePartitions(arcId, plan)
+        val newPlan = createStorageKeysIfNecessary(arcId, idGenerator, plan)
+        val partitions = computePartitions(arcId, newPlan)
         // Store computed partitions for later
         writePartitionMap(arcId, partitions)
         startPlanPartitionsOnHosts(partitions)
@@ -107,26 +109,34 @@ class Allocator(val hostRegistry: HostRegistry) {
      * Finds [HandleConnection] instances which were unresolved at build time
      * [CreateableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
      */
-    private fun createStorageKeysIfNecessary(arcId: ArcId, idGenerator: Id.Generator, plan: Plan) {
+    private fun createStorageKeysIfNecessary(
+        arcId: ArcId,
+        idGenerator: Id.Generator,
+        plan: Plan
+    ): Plan {
         val createdKeys: MutableMap<StorageKey, StorageKey> = mutableMapOf()
+        val allHandles = Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse()
 
-        plan.particles.forEach {
-            it.handles.values.forEach { spec ->
-                spec.apply {
-                    if (storageKey is CreateableStorageKey) {
-                        if (!createdKeys.containsKey(storageKey)) {
-                            createdKeys[storageKey] = createStorageKey(
-                                arcId,
-                                idGenerator,
-                                storageKey as CreateableStorageKey,
-                                type
-                            )
-                        }
-                        storageKey = createdKeys[storageKey]!!
-                    }
-                }
+        return allHandles.mod(plan) { handle ->
+            Plan.HandleConnection.storageKeyLens.mod(handle) {
+                replaceCreateKey(createdKeys, arcId, idGenerator, it, handle.type)
             }
         }
+    }
+
+    fun replaceCreateKey(
+        createdKeys: MutableMap<StorageKey, StorageKey>,
+        arcId: ArcId,
+        idGenerator: Id.Generator,
+        storageKey: StorageKey,
+        type: Type
+    ): StorageKey {
+        if (storageKey is CreateableStorageKey) {
+            return createdKeys.getOrPut(storageKey) {
+                createStorageKey(arcId, idGenerator, storageKey, type)
+            }
+        }
+        return storageKey
     }
 
     /**

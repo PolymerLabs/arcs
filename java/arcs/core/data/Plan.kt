@@ -12,6 +12,7 @@ package arcs.core.data
 
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
+import arcs.core.util.lens
 
 /**
  * A [Plan] is usually produced by running the build time Particle Accelerator tool, it consists
@@ -33,15 +34,24 @@ open class Plan(
         val particleName: String,
         val location: String,
         val handles: Map<String, HandleConnection>
-    )
+    ) {
+        companion object {
+            val handlesLens = lens(Particle::handles) { t, f -> t.copy(handles = f) }
+        }
+    }
 
     /** Represents a use of a [Handle] by a [Particle]. */
     data class HandleConnection(
-        var storageKey: StorageKey,
+        val storageKey: StorageKey,
         val mode: HandleMode,
         val type: Type,
         val ttl: Ttl? = null
-    )
+    ) {
+        companion object {
+            val storageKeyLens =
+                lens(HandleConnection::storageKey) { t, f -> t.copy(storageKey = f) }
+        }
+    }
 
     /**
      * A [Plan.Partition] is a part of a [Plan] that runs on an [ArcHost]. Since [Plan]s may span
@@ -51,7 +61,11 @@ open class Plan(
         val arcId: String,
         val arcHost: String,
         val particles: List<Particle>
-    )
+    ) {
+        companion object {
+            val particlesLens = lens(Partition::particles) { t, f -> t.copy(particles = f) }
+        }
+    }
 
     // Because Plan is not a data class to allow sub-classing, these are required.
     override fun equals(other: Any?): Boolean {
@@ -61,4 +75,8 @@ open class Plan(
     }
 
     override fun hashCode(): Int = particles.hashCode()
+
+    companion object {
+        val particleLens = lens(Plan::particles) { t, f -> Plan(particles = f, arcId = t.arcId) }
+    }
 }
