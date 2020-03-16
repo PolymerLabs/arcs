@@ -26,11 +26,13 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.lang.IllegalStateException
 import kotlin.coroutines.experimental.suspendCoroutine
 
 private typealias Person = TestParticleInternal1
@@ -124,6 +126,30 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         expectHandleException("readWriteCollectionHandle") {
             handleHolder.readWriteCollectionHandle
         }
+    }
+
+    @Test
+    fun singletonHandle_writeInOnSyncNoDesync() = runBlocking {
+        val writeHandle = createSingletonHandle(
+            handleManager,
+            "writeHandle",
+            HandleMode.Write
+        )
+
+
+        // Wait for sync
+        val deferred = CompletableDeferred<Unit>()
+        writeHandle.onSync {
+            deferred.complete(Unit)
+        }
+        deferred.await()
+
+        // Now don't expect desync
+        writeHandle.onDesync {
+            throw IllegalStateException("desync not excepted")
+        }
+        handleHolder.writeHandle.store(entity1)
+        handleHolder.writeHandle.store(entity2)
     }
 
     @Test
