@@ -1,9 +1,14 @@
 package arcs.core.data.proto
 
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
+import arcs.core.data.Schema
+import arcs.core.data.SchemaName
+import arcs.core.data.SchemaFields
 import arcs.core.data.TypeVariable
 import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
@@ -12,6 +17,7 @@ import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.Message.Builder
 import com.google.protobuf.Message
+import com.google.protobuf.TextFormat
 import java.io.File
 import org.junit.Before
 import org.junit.Test
@@ -31,9 +37,15 @@ class RecipeProtoDecoderTest {
     val thingHandle = Handle(
         "thing", Handle.Fate.CREATE, ramdiskStorageKey, TypeVariable("thing"), emptyList()
     )
-    val readConnectionSpec = HandleConnectionSpec("data", Direction.READS, TypeVariable("data"))
+    val thingSchema = Schema(
+            names = listOf(SchemaName("Thing")),
+            fields = SchemaFields(singletons=mapOf("name" to FieldType.Text), collections=mapOf()),
+            hash = ""
+    )
+    val thingEntity = EntityType(thingSchema)
+    val readConnectionSpec = HandleConnectionSpec("data", Direction.READS, thingEntity)
     val readerSpec = ParticleSpec("Reader", mapOf("data" to readConnectionSpec), "ReaderLocation")
-    val writeConnectionSpec = HandleConnectionSpec("data", Direction.WRITES, TypeVariable("data"))
+    val writeConnectionSpec = HandleConnectionSpec("data", Direction.WRITES, thingEntity)
     val writerSpec = ParticleSpec("Writer", mapOf("data" to writeConnectionSpec), "WriterLocation")
     val context = DecodingContext(
         particleSpecs = mapOf("Reader" to readerSpec, "Writer" to writerSpec),
@@ -109,5 +121,19 @@ class RecipeProtoDecoderTest {
         assertThat(exception).hasMessageThat().contains(
             "Duplicate handle 'thing' when decoding recipe 'Duplicates'."
         )
+    }
+
+    @Test
+    fun decodesRecipeEnvelope() {
+        val path = runfilesDir() + "java/arcs/core/data/testdata/example.textproto"
+        val builder = RecipeEnvelopeProto.newBuilder()
+        TextFormat.getParser().merge(File(path).readText(), builder)
+        val recipeEnvelopeProto = builder.build()
+        with(recipeEnvelopeProto.decodeRecipe()) {
+            assertThat(particles.map { it.spec.name }).containsExactly("Reader", "Writer")
+            assertThat(particles).containsExactly(
+                readerParticle.decode(context), writerParticle.decode(context)
+            )
+        }
     }
 }
