@@ -15,7 +15,7 @@ import arcs.core.common.toArcId
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.storage.LambdaCallbacks
+import arcs.core.storage.Handle as StorageHandle
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.Entity
 import arcs.core.storage.api.EntitySpec
@@ -26,10 +26,6 @@ import arcs.core.storage.api.ReadWriteSingletonHandle
 import arcs.core.storage.handle.CollectionHandle
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.SingletonHandle
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-
-private typealias Sender = (block: suspend () -> Unit) -> Unit
 
 /**
  * Wraps a [HandleManager] and creates [Entity] handles based on [HandleMode], such as
@@ -61,10 +57,9 @@ class EntityHandleManager(
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
         schema: Schema,
-        idGenerator: Id.Generator = Id.Generator.newSession(),
-        sender: Sender = ::defaultSender
+        idGenerator: Id.Generator = Id.Generator.newSession()
     ): SingletonHandleAdapter<T> {
-        val storageHandle = handleManager.singletonHandle(
+        val storageHandle = handleManager.rawEntitySingletonHandle(
             storageKey,
             schema,
             canRead = mode.canRead,
@@ -73,7 +68,7 @@ class EntityHandleManager(
                 name
             ).toString()
         )
-        return SingletonHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator, sender)
+        return SingletonHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator)
     }
 
     /**
@@ -92,10 +87,9 @@ class EntityHandleManager(
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
         schema: Schema,
-        idGenerator: Id.Generator = Id.Generator.newSession(),
-        sender: Sender = ::defaultSender
+        idGenerator: Id.Generator = Id.Generator.newSession()
     ): CollectionHandleAdapter<T> {
-        val storageHandle = handleManager.collectionHandle(
+        val storageHandle = handleManager.rawEntityCollectionHandle(
             storageKey,
             schema,
             canRead = mode.canRead,
@@ -104,43 +98,23 @@ class EntityHandleManager(
                 name
             ).toString()
         )
-        return CollectionHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator, sender)
-    }
-
-    /**
-     * Same-thread non-blocking dispatch. Note that this may lead to concurrency problems on
-     * some platforms. On platforms with real preemptive threads, use an implementation that
-     * provides concurrency aware dispatch.
-     */
-    private fun defaultSender(block: suspend () -> Unit) {
-        GlobalScope.launch {
-            block()
-        }
+        return CollectionHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator)
     }
 }
 
 /** Base functionality common to all read/write singleton and collection handles. */
 sealed class HandleAdapter(
     override val mode: HandleMode,
-    override val name: String
+    override val name: String,
+    private val storageHandle: StorageHandle<*, *, *>
 ) : Handle {
-    private val onSyncActions: MutableList<(Handle) -> Unit> = mutableListOf()
-    private val onDesyncActions: MutableList<(Handle) -> Unit> = mutableListOf()
 
-    override fun onSync(action: (Handle) -> Unit) {
-        onSyncActions.add(action)
+    override suspend fun onSync(action: () -> Unit) {
+        storageHandle.addOnSync(action)
     }
 
-    override fun onDesync(action: (Handle) -> Unit) {
-        onSyncActions.add(action)
-    }
-
-    protected fun fireSync() {
-        onSyncActions.forEach { it(this) }
-    }
-
-    protected fun fireDesync() {
-        onDesyncActions.forEach { it(this) }
+    override suspend fun onDesync(action: () -> Unit) {
+        storageHandle.addOnDesync(action)
     }
 
     protected fun checkCanRead() {
@@ -162,18 +136,8 @@ class SingletonHandleAdapter<T : Entity>(
     name: String,
     private val entitySpec: EntitySpec<T>,
     private val storageHandle: SingletonHandle<RawEntity>,
-    private val idGenerator: Id.Generator,
-    private val sender: Sender
-) : HandleAdapter(mode, name), ReadWriteSingletonHandle<T> {
-    init {
-        storageHandle.callback = LambdaCallbacks(
-            onSync = this::fireSync,
-            onDesync = this::fireDesync,
-            onUpdate = this::fireUpdate
-        )
-    }
-
-    private val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
+    private val idGenerator: Id.Generator
+) : HandleAdapter(mode, name, storageHandle), ReadWriteSingletonHandle<T> {
 
     // VisibleForTesting
     val actorName = storageHandle.name
@@ -197,16 +161,10 @@ class SingletonHandleAdapter<T : Entity>(
         }
     }
 
-    override fun onUpdate(action: (T?) -> Unit) {
+    override suspend fun onUpdate(action: (T?) -> Unit) {
         checkCanRead()
-        onUpdateActions.add(action)
-    }
-
-    private fun fireUpdate() {
-        checkCanRead()
-        sender {
-            val value = fetch()
-            onUpdateActions.forEach { it(value) }
+        storageHandle.addOnUpdate {
+            action(it?.let { entitySpec.deserialize(it) })
         }
     }
 }
@@ -217,18 +175,8 @@ class CollectionHandleAdapter<T : Entity>(
     name: String,
     private val entitySpec: EntitySpec<T>,
     private val storageHandle: CollectionHandle<RawEntity>,
-    private val idGenerator: Id.Generator,
-    private val sender: Sender
-) : HandleAdapter(mode, name), ReadWriteCollectionHandle<T> {
-    init {
-        storageHandle.callback = LambdaCallbacks(
-            onSync = this::fireSync,
-            onDesync = this::fireDesync,
-            onUpdate = this::fireUpdate
-        )
-    }
-
-    private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
+    private val idGenerator: Id.Generator
+) : HandleAdapter(mode, name, storageHandle), ReadWriteCollectionHandle<T> {
 
     // VisibleForTesting
     val actorName = storageHandle.name
@@ -250,16 +198,10 @@ class CollectionHandleAdapter<T : Entity>(
         }.toSet()
     }
 
-    override fun onUpdate(action: (Set<T>) -> Unit) {
+    override suspend fun onUpdate(action: (Set<T>) -> Unit) {
         checkCanRead()
-        onUpdateActions.add(action)
-    }
-
-    private fun fireUpdate() {
-        checkCanRead()
-        sender {
-            val values = fetchAll()
-            onUpdateActions.forEach { it(values) }
+        storageHandle.addOnUpdate { raw ->
+            action(raw.map { entitySpec.deserialize(it) }.toSet())
         }
     }
 

@@ -15,6 +15,9 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
     private var callbacks = mutableListOf<ProxyCallback<Data, Op, T>>()
     private var proxyMessages = mutableListOf<ProxyMessage<Data, Op, T>>()
 
+    // Tests can change this field to alter the value returned by `onProxyMessage`.
+    var onProxyMessageReturn = true
+
     override fun setCallback(callback: ProxyCallback<Data, Op, T>): Int {
         // must be blocking since the storage impl is. Unlikely to be heavily contended.
         return runBlocking {
@@ -31,7 +34,7 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, T>): Boolean {
         mutex.withLock { proxyMessages.add(message) }
-        return true
+        return onProxyMessageReturn
     }
 
     suspend fun getProxyMessages() : List<ProxyMessage<Data, Op, T>> {

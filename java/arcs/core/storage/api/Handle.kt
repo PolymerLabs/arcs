@@ -21,10 +21,10 @@ interface Handle {
     val mode: HandleMode
 
     /** Assign a callback when the handle is synced. */
-    fun onSync(action: (Handle) -> Unit)
+    suspend fun onSync(action: () -> Unit)
 
     /** Assign a callback when the handle is desynced. */
-    fun onDesync(action: (Handle) -> Unit)
+    suspend fun onDesync(action: () -> Unit)
 }
 
 /** A singleton handle with read access. */
@@ -32,7 +32,7 @@ interface ReadSingletonHandle<T : Entity> : Handle {
     /** Returns the value of the singleton. */
     suspend fun fetch(): T?
 
-    fun onUpdate(action: (T?) -> Unit)
+    suspend fun onUpdate(action: (T?) -> Unit)
 }
 
 /** A singleton handle with write access. */
@@ -59,7 +59,7 @@ interface ReadCollectionHandle<T : Entity> : Handle {
     suspend fun fetchAll(): Set<T>
 
     /** Assign a callback when the collection is Updated. */
-    fun onUpdate(action: (Set<T>) -> Unit)
+    suspend fun onUpdate(action: (Set<T>) -> Unit)
 }
 
 /** A collection handle with read access. */
