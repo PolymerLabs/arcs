@@ -201,6 +201,13 @@ class EntityBaseTest {
     }
 
     @Test
+    fun equality_separateSubclassesWithSameDataAreEqual() {
+        val entity1 = object : EntityBase("Foo", SCHEMA) {}
+        val entity2 = object : EntityBase("Foo", SCHEMA) {}
+        assertThat(entity1).isEqualTo(entity2)
+    }
+
+    @Test
     fun reset() {
         with (entity) {
             text = "abc"
