@@ -14,6 +14,7 @@ package arcs.core.data.proto
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
+import arcs.core.data.Recipe.Particle.HandleConnection
 
 /** Class contains information that is required when decoding particle protos.
  *
@@ -26,7 +27,10 @@ class DecodingContext(
 )
 
 /** Converts a [HandleConnectionProto] into a [Handle]. */
-fun HandleConnectionProto.decode(particleSpec: ParticleSpec, context: DecodingContext): Handle {
+fun HandleConnectionProto.decode(
+    particleSpec: ParticleSpec,
+    context: DecodingContext
+): HandleConnection {
     val handleSpec = particleSpec.connections[name]
     requireNotNull(handleSpec) {
         "HandleConnection '$name' not found in ParticleSpec '${particleSpec.name}'."
@@ -35,7 +39,7 @@ fun HandleConnectionProto.decode(particleSpec: ParticleSpec, context: DecodingCo
     requireNotNull(recipeHandle) {
         "Handle '$handle' not found when decoding ParticleProto '${particleSpec.name}'."
     }
-    return recipeHandle
+    return HandleConnection(handleSpec, recipeHandle)
 }
 
 /** Converts a [ParticleProto] into a [Particle]. */
@@ -44,8 +48,6 @@ fun ParticleProto.decode(context: DecodingContext): Particle {
     requireNotNull(particleSpec) {
         "ParticleSpec '$specName' not found in decoding context."
     }
-    val handleConnections = connectionsList.map {
-        it.name to it.decode(particleSpec, context)
-    }.toMap()
+    val handleConnections = connectionsList.map { it.decode(particleSpec, context) }
     return Particle(particleSpec, handleConnections)
 }

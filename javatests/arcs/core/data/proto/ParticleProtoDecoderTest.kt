@@ -1,7 +1,8 @@
 package arcs.core.data.proto
 
 import arcs.core.data.*
-import arcs.core.data.Recipe.Handle;
+import arcs.core.data.Recipe.Handle
+import arcs.core.data.Recipe.Particle
 import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Result
@@ -50,7 +51,8 @@ class ParticleProtoDecoderTest {
             .build()
         // When decoded as part of readerSpec, the mode is [HandleMode.Read].
         val readConnection = handleConnectionProto.decode(readerSpec, context)
-        assertThat(readConnection).isEqualTo(thingHandle)
+        assertThat(readConnection.spec).isEqualTo(readConnectionSpec)
+        assertThat(readConnection.handle).isEqualTo(thingHandle)
     }
 
     @Test
@@ -98,7 +100,9 @@ class ParticleProtoDecoderTest {
         val readConnection = readConnectionProto.decode(readerSpec, context)
         with(particleProto.decode(context)) {
             assertThat(spec).isEqualTo(readerSpec)
-            assertThat(handleConnections).isEqualTo(mapOf("data" to readConnection))
+            assertThat(handleConnections).isEqualTo(
+                listOf(Particle.HandleConnection(readConnectionSpec, thingHandle))
+            )
         }
     }
 
@@ -124,8 +128,10 @@ class ParticleProtoDecoderTest {
         val writeConnection = writeConnectionProto.decode(readerWriterSpec, context)
         with(particleProto.decode(context)) {
             assertThat(spec).isEqualTo(readerWriterSpec)
-            assertThat(handleConnections)
-                .isEqualTo(mapOf("read" to readConnection, "write" to writeConnection))
+            assertThat(handleConnections).containsExactly(
+                Particle.HandleConnection(readConnectionSpec, thingHandle),
+                Particle.HandleConnection(writeConnectionSpec, thingHandle)
+            )
         }
     }
 
