@@ -11,6 +11,7 @@ import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
+import kotlinx.coroutines.CompletableDeferred
 import java.util.concurrent.Executors
 import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -141,6 +142,33 @@ class StorageProxyTest {
         val view = future.await()
 
         assertThat(view).isEqualTo("someData")
+    }
+
+    @Test
+    fun getOnSyncCalledWhenAdded() = runBlockingTest {
+        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+
+        assertThat(
+            storageProxy.onMessage(
+                ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
+            )
+        ).isTrue()
+
+        val syncDeferred = CompletableDeferred<Boolean>()
+        storageProxy.addOnSync("testHandle") {
+            syncDeferred.complete(true)
+        }
+        assertThat(syncDeferred.await()).isEqualTo((true))
+    }
+
+    @Test
+    fun getOnDesyncCalledWhenAdded() = runBlockingTest {
+        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val desyncDeferred = CompletableDeferred<Boolean>()
+        storageProxy.addOnDesync("testHandle") {
+            desyncDeferred.complete(true)
+        }
+        assertThat(desyncDeferred.await()).isEqualTo((true))
     }
 
     @Test

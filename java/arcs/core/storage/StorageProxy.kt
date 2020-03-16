@@ -86,7 +86,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         if (runNow) {
             coroutineScope {
                 launch {
-                    action
+                    action()
                 }
             }
         }
@@ -107,7 +107,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         if (runNow) {
             coroutineScope {
                 launch {
-                    action
+                    action()
                 }
             }
         }
