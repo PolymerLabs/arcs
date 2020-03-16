@@ -23,6 +23,9 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
+import arcs.core.util.lens
+import arcs.core.util.plus
+import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.sdk.ReadSingletonHandle
 import arcs.sdk.WriteSingletonHandle
@@ -145,16 +148,28 @@ open class AllocatorTestBase {
             hostRegistry.availableArcHosts().first { it.hostId.contains("Writing") }
         )
 
+
+        val handleLens = lens(Plan.Particle::handles) { t, f -> t.copy(handles = f) }
+        val storageKeyLens =
+            handleLens.traverse() + lens(Plan.HandleConnection::storageKey) { t, f ->
+                t.copy(storageKey = f)
+            }
+
+        // fetch the allocator replaced key
+        val sharedKey = planPartitions[0].particles[0].handles["person"]?.storageKey!!
+
         assertThat(planPartitions).containsExactly(
             Plan.Partition(
                 arcId.toString(),
                 readingHost.hostId,
-                listOf(readPersonParticle)
+                // replace the CreateableKeys with the allocated keys
+                listOf(storageKeyLens.mod(readPersonParticle) { sharedKey })
             ),
             Plan.Partition(
                 arcId.toString(),
                 writingHost.hostId,
-                listOf(writePersonParticle)
+                // replace the CreateableKeys with the allocated keys
+                listOf(storageKeyLens.mod(writePersonParticle) { sharedKey })
             )
         )
     }
@@ -178,8 +193,11 @@ open class AllocatorTestBase {
                 )
             }
         }
-        assertThat(readPersonHandleConnection.storageKey).isEqualTo(
-            writePersonHandleConnection.storageKey
+        val partition1 = planPartitions[0]
+        val partition2 = planPartitions[1]
+
+        assertThat(partition1.particles[0].handles["person"]?.storageKey).isEqualTo(
+            partition2.particles[0].handles["person"]?.storageKey
         )
 
     }
@@ -193,14 +211,22 @@ open class AllocatorTestBase {
             CapabilitiesResolver.CapabilitiesResolverOptions(testArcId)
         ).createStorageKey(Capabilities.TiedToArc, personSchema, "readWritePerson")
 
-        writeAndReadPersonPlan.particles.forEach { it ->
-            it.handles.getValue("person").storageKey = testKey!!
-        }
+        val particlesLens = lens(Plan::particles) {
+            t, f -> Plan(particles = f, arcId = t.arcId)
+        }.traverse()
+
+        val handlesLens =
+            particlesLens + lens(Plan.Particle::handles) { t, f -> t.copy(handles = f) }.traverse()
+
+        val storageKeyLens =
+            handlesLens + lens(Plan.HandleConnection::storageKey) { t, f -> t.copy(storageKey = f) }
+
+        val testPlan = storageKeyLens.mod(writeAndReadPersonPlan) { testKey!! }
 
         val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
-            writeAndReadPersonPlan
+            testPlan
         )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach {
