@@ -78,7 +78,6 @@ class SingletonHandle<T : Referencable>(
             )
         )
     }
-
     /**
      * Clears the value in the backing [StorageProxy]. If this returns `false`, your operation
      * did not apply fully. Fetch the latest value and retry.
