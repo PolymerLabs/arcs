@@ -16,5 +16,6 @@ arcs_kt_library(
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/type",
+        "//java/arcs/core/util",
     ],
 )
