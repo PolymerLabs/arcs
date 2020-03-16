@@ -1,6 +1,6 @@
 package arcs.core.host
 
-import arcs.sdk.Handle
+import kotlinx.coroutines.runBlocking
 
 class ReadPerson : AbstractReadPerson() {
     var name = ""
@@ -10,17 +10,14 @@ class ReadPerson : AbstractReadPerson() {
     override suspend fun onCreate() {
         createCalled = true
         name = ""
+        handles.person.onUpdate {
+            runBlocking {
+                name = handles.person.fetch()?.name ?: ""
+            }
+        }
     }
 
     override fun onShutdown() {
         shutdownCalled = true
-    }
-
-    override suspend fun onHandleUpdate(handle: Handle) {
-        name = handles.person.fetch()?.name ?: ""
-    }
-
-    override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        name = handles.person.fetch()?.name ?: ""
     }
 }

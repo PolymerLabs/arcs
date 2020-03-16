@@ -3,28 +3,24 @@ package arcs.core.allocator
 import arcs.core.common.Id
 import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
-import arcs.core.data.EntityType
-import arcs.core.data.HandleMode
 import arcs.core.data.Plan
-import arcs.core.data.SingletonType
 import arcs.core.host.ArcState
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
+import arcs.core.host.PersonRecipePlan
 import arcs.core.host.ReadPerson
 import arcs.core.host.ReadPerson_Person
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.storage.handle.HandleManager
+import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.type.Type
 import arcs.core.util.plus
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
@@ -46,17 +42,12 @@ open class AllocatorTestBase {
     /**
      * Recipe hand translated from 'person.arcs'
      */
-    private lateinit var recipePersonStorageKey: StorageKey
     private lateinit var allocator: Allocator
     private lateinit var hostRegistry: HostRegistry
-    private lateinit var readPersonHandleConnection: Plan.HandleConnection
-    private lateinit var writePersonHandleConnection: Plan.HandleConnection
     private lateinit var writePersonParticle: Plan.Particle
     private lateinit var readPersonParticle: Plan.Particle
-    private lateinit var writeAndReadPersonPlan: Plan
 
     protected val personSchema = ReadPerson_Person.SCHEMA
-    private var personEntityType: Type = SingletonType(EntityType(personSchema))
 
     private lateinit var readingExternalHost: TestingHost
     private lateinit var writingExternalHost: TestingHost
@@ -91,37 +82,22 @@ open class AllocatorTestBase {
 
         VolatileStorageKey.registerKeyCreator()
 
+        
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()
 
         hostRegistry = hostRegistry()
         allocator = Allocator.create(hostRegistry, TimeImpl(), HandleManager(TimeImpl()))
 
-        recipePersonStorageKey = CreateableStorageKey(
-            "recipePerson", storageCapability
-        )
-        writePersonHandleConnection =
-            Plan.HandleConnection(recipePersonStorageKey, HandleMode.Write, personEntityType)
+        readPersonParticle =
+            requireNotNull(PersonRecipePlan.particles.find { it.particleName == "ReadPerson" }) {
+                "No ReadPerson particle in PersonRecipePlan"
+            }
 
-        writePersonParticle = Plan.Particle(
-            "WritePerson", WritePerson::class.java.getCanonicalName()!!,
-            mapOf("person" to writePersonHandleConnection)
-        )
-
-        readPersonHandleConnection = Plan.HandleConnection(
-            recipePersonStorageKey,
-            HandleMode.Read,
-            personEntityType
-        )
-
-        readPersonParticle = Plan.Particle(
-            "ReadPerson", ReadPerson::class.java.getCanonicalName()!!,
-            mapOf("person" to readPersonHandleConnection)
-        )
-
-        writeAndReadPersonPlan = Plan(
-            listOf(writePersonParticle, readPersonParticle)
-        )
+        writePersonParticle =
+            requireNotNull(PersonRecipePlan.particles.find { it.particleName == "WritePerson" }) {
+                "No WritePerson particle in PersonRecipePlan"
+            }
 
         readingExternalHost.setup()
         writingExternalHost.setup()
@@ -136,7 +112,7 @@ open class AllocatorTestBase {
     fun allocator_computePartitions() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
-            writeAndReadPersonPlan
+            PersonRecipePlan
         )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
 
@@ -173,13 +149,13 @@ open class AllocatorTestBase {
 
     @Test
     fun allocator_verifyStorageKeysCreated() = runAllocatorTest {
-        writeAndReadPersonPlan.particles.forEach {
+        PersonRecipePlan.particles.forEach {
             it.handles.forEach { (_, connection) ->
                 assertThat(connection.storageKey).isInstanceOf(CreateableStorageKey::class.java)
             }
         }
         val arcId = allocator.startArcForPlan(
-            "readWritePerson", writeAndReadPersonPlan
+            "readWritePerson", PersonRecipePlan
         )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach { particle ->
@@ -211,7 +187,7 @@ open class AllocatorTestBase {
             Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse() +
                 Plan.HandleConnection.storageKeyLens
 
-        val testPlan = allStorageKeyLens.mod(writeAndReadPersonPlan) { testKey!! }
+        val testPlan = allStorageKeyLens.mod(PersonRecipePlan) { testKey!! }
 
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
@@ -229,7 +205,7 @@ open class AllocatorTestBase {
     fun allocator_verifyArcHostStartCalled() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
-            writeAndReadPersonPlan
+            PersonRecipePlan
         )
         val planPartitions = allocator.getPartitionsFor(arcId)!!
 
@@ -268,9 +244,9 @@ open class AllocatorTestBase {
     @Test
     fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
-            "readWriteParticle",
-            writeAndReadPersonPlan
-        )
+                "readWriteParticle", PersonRecipePlan
+            )
+
         assertThat(readingExternalHost.started.size).isEqualTo(1)
         assertThat(writingExternalHost.started.size).isEqualTo(1)
 
@@ -319,7 +295,7 @@ open class AllocatorTestBase {
     fun allocator_canStopArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
-            writeAndReadPersonPlan
+            PersonRecipePlan
         )
 
         val readingContext = requireNotNull(
@@ -359,7 +335,7 @@ open class AllocatorTestBase {
     fun allocator_restartArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
-            writeAndReadPersonPlan
+            PersonRecipePlan
         )
 
         val readingContext = requireNotNull(
@@ -372,24 +348,32 @@ open class AllocatorTestBase {
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
-        readingExternalHost.stopArc(readingExternalHost.started.first())
-        writingExternalHost.stopArc(writingExternalHost.started.first())
+        allocator.stopArc(arcId)
 
         assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
 
-        readingExternalHost.startArc(readingExternalHost.started.first())
-        writingExternalHost.startArc(writingExternalHost.started.first())
+        allocator.startArcForPlan(
+            "readWriteParticle",
+            Plan(PersonRecipePlan.particles, arcId.toString())
+        )
 
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+        val readingContextAfter = requireNotNull(
+            readingExternalHost.arcHostContext(arcId.toString())
+        )
+        val writingContextAfter = requireNotNull(
+            writingExternalHost.arcHostContext(arcId.toString())
+        )
+
+        assertThat(readingContextAfter.arcState).isEqualTo(ArcState.Running)
+        assertThat(writingContextAfter.arcState).isEqualTo(ArcState.Running)
 
         val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle.particleName]
+            readingContextAfter.particles[readPersonParticle.particleName]
         )
 
         val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle.particleName]
+            writingContextAfter.particles[writePersonParticle.particleName]
         )
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
@@ -404,7 +388,7 @@ open class AllocatorTestBase {
     fun allocator_restartCrashedArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
-            writeAndReadPersonPlan
+            PersonRecipePlan
         )
 
         val readingContext = requireNotNull(
@@ -429,7 +413,7 @@ open class AllocatorTestBase {
 
         allocator.startArcForPlan(
             "readWriteParticle",
-            Plan(writeAndReadPersonPlan.particles, arcId.toString())
+            Plan(PersonRecipePlan.particles, arcId.toString())
         )
 
         val readingContextAfter = requireNotNull(
