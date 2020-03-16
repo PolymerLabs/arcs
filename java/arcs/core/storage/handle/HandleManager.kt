@@ -90,8 +90,7 @@ class HandleManager(
         storageKey: StorageKey,
         schema: Schema,
         name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite,
-        canRead: Boolean = true
+        ttl: Ttl = Ttl.Infinite
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -113,7 +112,6 @@ class HandleManager(
             storageProxy,
             ttl,
             time,
-            canRead,
             dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
             schema = schema
         )
@@ -127,8 +125,7 @@ class HandleManager(
         storageKey: StorageKey,
         schema: Schema,
         name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite,
-        canRead: Boolean = true
+        ttl: Ttl = Ttl.Infinite
     ): SingletonHandle<Reference> {
         val storeOptions = SingletonStoreOptions<Reference>(
             storageKey = storageKey,
@@ -150,7 +147,6 @@ class HandleManager(
             storageProxy,
             ttl,
             time,
-            canRead,
             dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
             schema = schema
         )
@@ -165,8 +161,7 @@ class HandleManager(
         storageKey: StorageKey,
         schema: Schema,
         name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite,
-        canRead: Boolean = true
+        ttl: Ttl = Ttl.Infinite
     ): CollectionHandle<RawEntity> {
         val storeOptions = CollectionStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -185,7 +180,6 @@ class HandleManager(
             storageProxy,
             ttl,
             time,
-            canRead,
             dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
             schema = schema
         )
@@ -199,8 +193,7 @@ class HandleManager(
         storageKey: StorageKey,
         schema: Schema,
         name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite,
-        canRead: Boolean = true
+        ttl: Ttl = Ttl.Infinite
     ): CollectionHandle<Reference> {
         val storeOptions = CollectionStoreOptions<Reference>(
             storageKey = storageKey,
@@ -222,7 +215,6 @@ class HandleManager(
             storageProxy = storageProxy,
             ttl = ttl,
             time = time,
-            canRead = canRead,
             dereferencer = RawEntityDereferencer(schema, aff?.dereferenceFactory()),
             schema = schema
         )

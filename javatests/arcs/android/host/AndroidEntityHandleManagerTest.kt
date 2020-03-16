@@ -14,6 +14,12 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.EntityHandleManager
 import arcs.core.data.HandleMode
+import arcs.core.storage.api.ReadCollectionHandle
+import arcs.core.storage.api.ReadSingletonHandle
+import arcs.core.storage.api.ReadWriteCollectionHandle
+import arcs.core.storage.api.ReadWriteSingletonHandle
+import arcs.core.storage.api.WriteCollectionHandle
+import arcs.core.storage.api.WriteSingletonHandle
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -128,7 +134,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             HandleMode.Write
         )
 
-        assertThat(writeHandle.mode).isEqualTo(HandleMode.Write)
+        assertThat(writeHandle).isInstanceOf(WriteSingletonHandle::class.java)
         handleHolder.writeHandle.store(entity1)
 
         val readHandle = createSingletonHandle(
@@ -137,7 +143,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             HandleMode.Read
         )
 
-        assertThat(readHandle.mode).isEqualTo(HandleMode.Read)
+        assertThat(readHandle).isInstanceOf(ReadSingletonHandle::class.java)
 
         val readBack = handleHolder.readHandle.fetch()
         assertThat(readBack).isEqualTo(entity1)
@@ -147,7 +153,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             "readWriteHandle",
             HandleMode.ReadWrite
         )
-        assertThat(readWriteHandle.mode).isEqualTo(HandleMode.ReadWrite)
+        assertThat(readWriteHandle).isInstanceOf(ReadWriteSingletonHandle::class.java)
 
         val readBack2 = handleHolder.readWriteHandle.fetch()
         assertThat(readBack2).isEqualTo(entity1)
@@ -173,7 +179,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             HandleMode.Write
         )
 
-        assertThat(writeCollectionHandle.mode).isEqualTo(HandleMode.Write)
+        assertThat(writeCollectionHandle).isInstanceOf(WriteCollectionHandle::class.java)
 
         handleHolder.writeCollectionHandle.store(entity1)
         handleHolder.writeCollectionHandle.store(entity2)
@@ -184,7 +190,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             HandleMode.Read
         )
 
-        assertThat(readCollectionHandle.mode).isEqualTo(HandleMode.Read)
+        assertThat(readCollectionHandle).isInstanceOf(ReadCollectionHandle::class.java)
 
         val readBack = handleHolder.readCollectionHandle.fetchAll()
         assertThat(readBack).containsExactly(entity1, entity2)
@@ -195,7 +201,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             HandleMode.ReadWrite
         )
 
-        assertThat(readWriteCollectionHandle.mode).isEqualTo(HandleMode.ReadWrite)
+        assertThat(readWriteCollectionHandle).isInstanceOf(ReadWriteCollectionHandle::class.java)
 
         val readBack2 = handleHolder.readWriteCollectionHandle.fetchAll()
         assertThat(readBack2).containsExactly(entity1, entity2)

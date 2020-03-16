@@ -11,14 +11,9 @@
 
 package arcs.core.storage.api
 
-import arcs.core.data.HandleMode
-
 /** Base interface for all handle classes. */
 interface Handle {
     val name: String
-
-    /** Indicates whether this handle is read-only, write-only, or read-write. */
-    val mode: HandleMode
 
     /** Assign a callback when the handle is synced. */
     suspend fun onSync(action: () -> Unit)

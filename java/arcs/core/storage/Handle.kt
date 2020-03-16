@@ -55,18 +55,6 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     val time: Time,
 
     /**
-     * [canRead] is whether this handle reads data so proxy can decide whether to keep its crdt
-     * up to date.
-     */
-    val canRead: Boolean = true,
-
-    /**
-     * [canWrite] is whether this handle is writable. This can be used to enforce additional runtime
-     * checks.
-     */
-    val canWrite: Boolean = true,
-
-    /**
      * [Dereferencer] to assign to any [Reference]s which are given as return values from
      * [value].
      */

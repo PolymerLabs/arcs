@@ -42,7 +42,6 @@ class SingletonHandle<T : Referencable>(
     storageProxy: SingletonProxy<T>,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
-    canRead: Boolean = true,
     dereferencer: Dereferencer<RawEntity>? = null,
     private val schema: Schema? = null
 ) : SingletonBase<T>(
@@ -50,7 +49,6 @@ class SingletonHandle<T : Referencable>(
     storageProxy,
     ttl,
     time,
-    canRead,
     dereferencer = dereferencer
 ) {
     /** Get the current value from the backing [StorageProxy]. */
