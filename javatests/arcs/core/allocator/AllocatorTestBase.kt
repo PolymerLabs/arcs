@@ -305,14 +305,12 @@ open class AllocatorTestBase {
 
         writePersonContext.particle.let { particle ->
             particle as WritePerson
-            assertThat(particle.handles.person.mode).isEqualTo(HandleMode.Write)
             assertThat(particle.createCalled).isTrue()
             assertThat(particle.wrote).isTrue()
         }
 
         readPersonContext.particle.let { particle ->
             particle as ReadPerson
-            assertThat(particle.handles.person.mode).isEqualTo(HandleMode.Read)
             assertThat(particle.createCalled).isTrue()
             assertThat(particle.name).isEqualTo("John Wick")
         }

@@ -20,9 +20,12 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.api.Entity
 import arcs.core.storage.api.EntitySpec
 import arcs.core.storage.api.Handle
+import arcs.core.storage.api.ReadCollectionHandle
 import arcs.core.storage.api.ReadSingletonHandle
 import arcs.core.storage.api.ReadWriteCollectionHandle
 import arcs.core.storage.api.ReadWriteSingletonHandle
+import arcs.core.storage.api.WriteCollectionHandle
+import arcs.core.storage.api.WriteSingletonHandle
 import arcs.core.storage.handle.CollectionHandle
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.SingletonHandle
@@ -58,17 +61,20 @@ class EntityHandleManager(
         storageKey: StorageKey,
         schema: Schema,
         idGenerator: Id.Generator = Id.Generator.newSession()
-    ): SingletonHandleAdapter<T> {
-        val storageHandle = handleManager.rawEntitySingletonHandle(
-            storageKey,
-            schema,
-            canRead = mode.canRead,
-            name = idGenerator.newChildId(
-                idGenerator.newChildId(arcId.toArcId(), hostId),
-                name
-            ).toString()
-        )
-        return SingletonHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator)
+    ) = handleManager.rawEntitySingletonHandle(
+        storageKey,
+        schema,
+        name = idGenerator.newChildId(
+            idGenerator.newChildId(arcId.toArcId(), hostId),
+            name
+        ).toString()
+    ).let {
+        when (mode) {
+            HandleMode.Read -> ReadSingletonHandleAdapter(entitySpec, it)
+            HandleMode.Write -> WriteSingletonHandleAdapter<T>(it, idGenerator)
+            HandleMode.ReadWrite ->
+                ReadWriteSingletonHandleAdapter(entitySpec, it, idGenerator)
+        }
     }
 
     /**
@@ -88,139 +94,180 @@ class EntityHandleManager(
         storageKey: StorageKey,
         schema: Schema,
         idGenerator: Id.Generator = Id.Generator.newSession()
-    ): CollectionHandleAdapter<T> {
-        val storageHandle = handleManager.rawEntityCollectionHandle(
+    ) = handleManager.rawEntityCollectionHandle(
             storageKey,
             schema,
-            canRead = mode.canRead,
             name = idGenerator.newChildId(
                 idGenerator.newChildId(arcId.toArcId(), hostId),
                 name
             ).toString()
-        )
-        return CollectionHandleAdapter(mode, name, entitySpec, storageHandle, idGenerator)
-    }
-}
-
-/** Base functionality common to all read/write singleton and collection handles. */
-sealed class HandleAdapter(
-    override val mode: HandleMode,
-    override val name: String,
-    private val storageHandle: StorageHandle<*, *, *>
-) : Handle {
-
-    override suspend fun onSync(action: () -> Unit) {
-        storageHandle.addOnSync(action)
-    }
-
-    override suspend fun onDesync(action: () -> Unit) {
-        storageHandle.addOnDesync(action)
-    }
-
-    protected fun checkCanRead() {
-        if (!mode.canRead) {
-            throw IllegalArgumentException("Handle $name does not support reads.")
-        }
-    }
-
-    protected fun checkCanWrite() {
-        if (!mode.canWrite) {
-            throw IllegalArgumentException("Handle $name does not support writes.")
+        ).let {
+        when (mode) {
+            HandleMode.Read -> ReadCollectionHandleAdapter(entitySpec, it)
+            HandleMode.Write -> WriteCollectionHandleAdapter<T>(it, idGenerator)
+            HandleMode.ReadWrite ->
+                ReadWriteCollectionHandleAdapter(entitySpec, it, idGenerator)
         }
     }
 }
 
-/** Wraps [SingletonHandle] and makes it suitable for use in the SDK with [Entity]s. */
-class SingletonHandleAdapter<T : Entity>(
-    mode: HandleMode,
-    name: String,
+/** A concrete readable singleton handle implementation. */
+class ReadSingletonHandleAdapter<T : Entity>(
+    private val entitySpec: EntitySpec<T>,
+    private val storageHandle: SingletonHandle<RawEntity>
+) : BaseHandleAdapter(storageHandle),
+    ReadSingletonHandle<T>,
+    ReadSingletonOperations<T> by ReadSingletonOperationsImpl<T>(entitySpec, storageHandle)
+
+/** A concrete writable singleton handle implementation. */
+class WriteSingletonHandleAdapter<T : Entity>(
+    private val storageHandle: SingletonHandle<RawEntity>,
+    private val idGenerator: Id.Generator
+) : BaseHandleAdapter(storageHandle),
+    WriteSingletonHandle<T>,
+    WriteSingletonOperations<T> by WriteSingletonOperationsImpl<T>(storageHandle, idGenerator)
+
+/** A concrete readable + writable singleton handle implementation. */
+class ReadWriteSingletonHandleAdapter<T : Entity>(
     private val entitySpec: EntitySpec<T>,
     private val storageHandle: SingletonHandle<RawEntity>,
     private val idGenerator: Id.Generator
-) : HandleAdapter(mode, name, storageHandle), ReadWriteSingletonHandle<T> {
+) : BaseHandleAdapter(storageHandle),
+    ReadWriteSingletonHandle<T>,
+    ReadSingletonOperations<T> by ReadSingletonOperationsImpl<T>(entitySpec, storageHandle),
+    WriteSingletonOperations<T> by WriteSingletonOperationsImpl<T>(storageHandle, idGenerator)
 
-    // VisibleForTesting
-    val actorName = storageHandle.name
+/** A concrete readable collection handle implementation. */
+class ReadCollectionHandleAdapter<T : Entity>(
+    private val entitySpec: EntitySpec<T>,
+    private val storageHandle: CollectionHandle<RawEntity>
+) : BaseHandleAdapter(storageHandle),
+    ReadCollectionHandle<T>,
+    ReadCollectionOperations<T> by ReadCollectionOperationsImpl<T>(entitySpec, storageHandle)
 
-    override suspend fun store(entity: T) {
-        checkCanWrite()
-        storageHandle.store(
-            entity.ensureIdentified(idGenerator, name).serialize()
-        )
-    }
+/** A concrete writable collection handle implementation. */
+class WriteCollectionHandleAdapter<T : Entity>(
+    private val storageHandle: CollectionHandle<RawEntity>,
+    private val idGenerator: Id.Generator
+) : BaseHandleAdapter(storageHandle),
+    WriteCollectionHandle<T>,
+    WriteCollectionOperations<T> by WriteCollectionOperationsImpl<T>(storageHandle, idGenerator)
 
-    override suspend fun clear() {
-        checkCanWrite()
-        storageHandle.clear()
-    }
-
-    override suspend fun fetch(): T? {
-        checkCanRead()
-        return storageHandle.fetch()?.let { rawEntity ->
-            entitySpec.deserialize(rawEntity)
-        }
-    }
-
-    override suspend fun onUpdate(action: (T?) -> Unit) {
-        checkCanRead()
-        storageHandle.addOnUpdate {
-            action(it?.let { entitySpec.deserialize(it) })
-        }
-    }
-}
-
-/** Wraps [CollectionHandle] and makes it suitable for use in the SDK with [Entity]s. */
-class CollectionHandleAdapter<T : Entity>(
-    mode: HandleMode,
-    name: String,
+/** A concrete readable & writable collection handle implementation. */
+class ReadWriteCollectionHandleAdapter<T : Entity>(
     private val entitySpec: EntitySpec<T>,
     private val storageHandle: CollectionHandle<RawEntity>,
     private val idGenerator: Id.Generator
-) : HandleAdapter(mode, name, storageHandle), ReadWriteCollectionHandle<T> {
+) : BaseHandleAdapter(storageHandle),
+    ReadWriteCollectionHandle<T>,
+    ReadCollectionOperations<T> by ReadCollectionOperationsImpl<T>(entitySpec, storageHandle),
+    WriteCollectionOperations<T> by WriteCollectionOperationsImpl<T>(storageHandle, idGenerator)
 
-    // VisibleForTesting
-    val actorName = storageHandle.name
+/** Implementation of singleton read operations to mix into concrete instances. */
+private class ReadSingletonOperationsImpl<T : Entity>(
+    private val entitySpec: EntitySpec<T>,
+    private val storageHandle: SingletonHandle<RawEntity>
+) : ReadSingletonOperations<T> {
+    override suspend fun fetch() = storageHandle.fetch()?.let { entitySpec.deserialize(it) }
 
-    override suspend fun size(): Int {
-        checkCanRead()
-        return fetchAll().size
+    override suspend fun onUpdate(action: (T?) -> Unit) = storageHandle.addOnUpdate {
+        action(it?.let { entitySpec.deserialize(it) })
     }
+}
 
-    override suspend fun isEmpty(): Boolean {
-        checkCanRead()
-        return fetchAll().isEmpty()
-    }
-
-    override suspend fun fetchAll(): Set<T> {
-        checkCanRead()
-        return storageHandle.fetchAll().map {
-            entitySpec.deserialize(it)
-        }.toSet()
-    }
-
-    override suspend fun onUpdate(action: (Set<T>) -> Unit) {
-        checkCanRead()
-        storageHandle.addOnUpdate { raw ->
-            action(raw.map { entitySpec.deserialize(it) }.toSet())
-        }
-    }
-
+/** Implementation of singleton write operations to mix into concrete instances. */
+private class WriteSingletonOperationsImpl<T : Entity>(
+    private val storageHandle: SingletonHandle<RawEntity>,
+    private val idGenerator: Id.Generator
+) : WriteSingletonOperations<T> {
     override suspend fun store(entity: T) {
-        checkCanWrite()
         storageHandle.store(
-            entity.ensureIdentified(idGenerator, name).serialize()
+            entity.ensureIdentified(idGenerator, storageHandle.name).serialize()
         )
     }
 
     override suspend fun clear() {
-        checkCanWrite()
+        storageHandle.clear()
+    }
+}
+
+/** Implementation of collection read operations to mix into concrete instances. */
+private class ReadCollectionOperationsImpl<T : Entity>(
+    private val entitySpec: EntitySpec<T>,
+    private val storageHandle: CollectionHandle<RawEntity>
+) : ReadCollectionOperations<T> {
+    override suspend fun size() = fetchAll().size
+    override suspend fun isEmpty() = fetchAll().isEmpty()
+
+    private fun Set<RawEntity>.adaptValues() =
+        map { entitySpec.deserialize(it) }.toSet()
+
+    override suspend fun fetchAll() = storageHandle.fetchAll().adaptValues()
+
+    override suspend fun onUpdate(action: (Set<T>) -> Unit) = storageHandle.addOnUpdate {
+        action(it.adaptValues())
+    }
+}
+
+/** Implementation of collection write operations to mix into concrete instances. */
+private class WriteCollectionOperationsImpl<T : Entity>(
+    private val storageHandle: CollectionHandle<RawEntity>,
+    private val idGenerator: Id.Generator
+) : WriteCollectionOperations<T> {
+    override suspend fun store(entity: T) {
+        storageHandle.store(
+            entity.ensureIdentified(idGenerator, storageHandle.name).serialize()
+        )
+    }
+
+    override suspend fun clear() {
         storageHandle.clear()
     }
 
     override suspend fun remove(entity: T) {
-        checkCanWrite()
         storageHandle.remove(entity.serialize())
     }
+}
+
+/** Base functionality common to all read/write singleton and collection handles. */
+abstract class BaseHandleAdapter(
+    private val storageHandle: StorageHandle<*, *, *>
+) : Handle {
+    // VisibleForTesting
+    val actorName = storageHandle.name
+
+    override val name = storageHandle.name
+
+    override suspend fun onSync(action: () -> Unit) = storageHandle.addOnSync(action)
+
+    override suspend fun onDesync(action: () -> Unit) = storageHandle.addOnDesync(action)
+}
+
+/** Delegate this interface in a concrete singleton handle impl to mixin read operations. */
+private interface ReadSingletonOperations<T : Entity> {
+    suspend fun fetch(): T?
+    suspend fun onUpdate(action: (T?) -> Unit)
+}
+
+/** Delegate this interface in a concrete singleton handle impl to mixin write operations. */
+private interface WriteSingletonOperations<T : Entity> {
+    suspend fun store(entity: T)
+    suspend fun clear()
+}
+
+/** Delegate this interface in a concrete collection handle impl to mixin read operations. */
+private interface ReadCollectionOperations<T : Entity> {
+    suspend fun size(): Int
+    suspend fun isEmpty(): Boolean
+    suspend fun fetchAll(): Set<T>
+    suspend fun onUpdate(action: (Set<T>) -> Unit)
+}
+
+/** Delegate this interface in a concrete collection handle impl to mixin write operations. */
+private interface WriteCollectionOperations<T : Entity> {
+    suspend fun store(entity: T)
+    suspend fun clear()
+    suspend fun remove(entity: T)
 }
 
 private fun <T : Entity> T.ensureIdentified(idGenerator: Id.Generator, handleName: String): T {

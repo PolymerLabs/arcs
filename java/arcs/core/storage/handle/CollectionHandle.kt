@@ -43,7 +43,6 @@ class CollectionHandle<T : Referencable>(
     storageProxy: CollectionProxy<T>,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
-    canRead: Boolean = true,
     dereferencer: Dereferencer<RawEntity>? = null,
     private val schema: Schema? = null
 ) : CollectionBase<T>(
@@ -51,7 +50,6 @@ class CollectionHandle<T : Referencable>(
     storageProxy,
     ttl,
     time,
-    canRead,
     dereferencer = dereferencer
 ) {
     /** Return the number of items in the storage proxy view of the collection. */

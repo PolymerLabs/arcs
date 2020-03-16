@@ -58,7 +58,7 @@ class StorageProxyTest {
     @Test
     fun propagatesStorageOpToReaders() = runBlockingTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        val readHandle = newHandle("testReader", storageProxy, true)
+        val readHandle = newHandle("testReader", storageProxy)
         val readCallback = mock<(String)->Unit>().also { readHandle.addOnUpdate(it) }
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
@@ -70,7 +70,7 @@ class StorageProxyTest {
     @Test
     fun propagatesStorageFullModelToReaders() = runBlockingTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        val readHandle = newHandle("testReader", storageProxy, true)
+        val readHandle = newHandle("testReader", storageProxy)
         val syncCallback = mock<()->Unit>().also { readHandle.addOnSync(it) }
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
@@ -94,7 +94,7 @@ class StorageProxyTest {
     @Test
     fun failedApplyOpTriggersSync() = runBlockingTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        val readHandle = newHandle("testReader", storageProxy, true)
+        val readHandle = newHandle("testReader", storageProxy)
 
         // Local op will succeed
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
@@ -114,7 +114,7 @@ class StorageProxyTest {
     fun getParticleViewReturnsSyncedState() = runBlockingTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
         whenever(mockCrdtModel.consumerView).thenReturn("someData")
-        val readHandle = newHandle("testReader", storageProxy, true)
+        val readHandle = newHandle("testReader", storageProxy)
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
         assertThat(storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null)))
@@ -128,7 +128,7 @@ class StorageProxyTest {
     fun getParticleViewWhenUnsyncedQueues() = runBlockingTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
         whenever(mockCrdtModel.consumerView).thenReturn("someData")
-        val readHandle = newHandle("testReader", storageProxy, true)
+        val readHandle = newHandle("testReader", storageProxy)
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
         // get view when not synced
@@ -271,9 +271,8 @@ class StorageProxyTest {
 
     private fun newHandle(
         name: String,
-        storageProxy: StorageProxy<CrdtData, CrdtOperationAtTime, String>,
-        reader: Boolean
-    ) = Handle(name, storageProxy, Ttl.Infinite, TimeImpl(), reader, true)
+        storageProxy: StorageProxy<CrdtData, CrdtOperationAtTime, String>
+    ) = Handle(name, storageProxy, Ttl.Infinite, TimeImpl(), null)
 
     fun CrdtModel<CrdtData, CrdtOperationAtTime, String>.appliesOpAs(op: CrdtOperationAtTime, result: Boolean) {
         whenever(this.applyOperation(op)).thenReturn(result)

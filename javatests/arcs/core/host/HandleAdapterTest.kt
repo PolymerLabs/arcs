@@ -11,12 +11,17 @@
 
 package arcs.core.host
 
+import arcs.core.storage.api.ReadCollectionHandle
+import arcs.core.storage.api.ReadSingletonHandle
+import arcs.core.storage.api.ReadWriteCollectionHandle
+import arcs.core.storage.api.ReadWriteSingletonHandle
+import arcs.core.storage.api.WriteCollectionHandle
+import arcs.core.storage.api.WriteSingletonHandle
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -55,8 +60,9 @@ class HandleAdapterTest {
             Person.SCHEMA
         )
 
-        checkThrowsWriteError { readOnlyHandle.clear() }
-        checkThrowsWriteError { readOnlyHandle.store(Person()) }
+        assertThat(readOnlyHandle).isInstanceOf(ReadSingletonHandle::class.java)
+        assertThat(readOnlyHandle).isNotInstanceOf(WriteSingletonHandle::class.java)
+        assertThat(readOnlyHandle).isNotInstanceOf(ReadWriteSingletonHandle::class.java)
     }
 
     @Test
@@ -68,9 +74,9 @@ class HandleAdapterTest {
             STORAGE_KEY,
             Person.SCHEMA
         )
-
-        checkThrowsReadError { writeOnlyHandle.fetch() }
-        checkThrowsReadError { writeOnlyHandle.onUpdate { } }
+        assertThat(writeOnlyHandle).isInstanceOf(WriteSingletonHandle::class.java)
+        assertThat(writeOnlyHandle).isNotInstanceOf(ReadSingletonHandle::class.java)
+        assertThat(writeOnlyHandle).isNotInstanceOf(ReadWriteSingletonHandle::class.java)
     }
 
     @Test
@@ -83,9 +89,9 @@ class HandleAdapterTest {
             Person.SCHEMA
         )
 
-        checkThrowsWriteError { readOnlyHandle.clear() }
-        checkThrowsWriteError { readOnlyHandle.store(Person()) }
-        checkThrowsWriteError { readOnlyHandle.remove(Person()) }
+        assertThat(readOnlyHandle).isInstanceOf(ReadCollectionHandle::class.java)
+        assertThat(readOnlyHandle).isNotInstanceOf(WriteCollectionHandle::class.java)
+        assertThat(readOnlyHandle).isNotInstanceOf(ReadWriteCollectionHandle::class.java)
     }
 
     @Test
@@ -98,24 +104,9 @@ class HandleAdapterTest {
             Person.SCHEMA
         )
 
-        checkThrowsReadError { writeOnlyHandle.fetchAll() }
-        checkThrowsReadError { writeOnlyHandle.isEmpty() }
-        checkThrowsReadError { writeOnlyHandle.size() }
-        checkThrowsReadError { writeOnlyHandle.onUpdate { } }
-    }
-
-    private suspend fun checkThrowsReadError(action: suspend () -> Unit) {
-        val e = assertSuspendingThrows(IllegalArgumentException::class, action)
-        assertThat(e).hasMessageThat().isEqualTo(
-            "Handle $WRITE_ONLY_HANDLE does not support reads."
-        )
-    }
-
-    private suspend fun checkThrowsWriteError(action: suspend () -> Unit) {
-        val e = assertSuspendingThrows(IllegalArgumentException::class, action)
-        assertThat(e).hasMessageThat().isEqualTo(
-            "Handle $READ_ONLY_HANDLE does not support writes."
-        )
+        assertThat(writeOnlyHandle).isInstanceOf(WriteCollectionHandle::class.java)
+        assertThat(writeOnlyHandle).isNotInstanceOf(ReadCollectionHandle::class.java)
+        assertThat(writeOnlyHandle).isNotInstanceOf(ReadWriteCollectionHandle::class.java)
     }
 
     private companion object {
