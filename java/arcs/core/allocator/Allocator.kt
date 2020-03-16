@@ -132,15 +132,9 @@ class Allocator(val hostRegistry: HostRegistry) {
         type: Type
     ): StorageKey {
         if (storageKey is CreateableStorageKey) {
-            if (!createdKeys.containsKey(storageKey)) {
-                createdKeys[storageKey] = createStorageKey(
-                    arcId,
-                    idGenerator,
-                    storageKey,
-                    type
-                )
+            createdKeys.getOrPut(storageKey) {
+                createStorageKey(arcId, idGenerator, storageKey, type)
             }
-            return createdKeys[storageKey]!!
         }
         return storageKey
     }
