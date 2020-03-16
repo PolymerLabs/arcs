@@ -244,9 +244,13 @@ abstract class BaseHandleAdapter(
 }
 
 /** Delegate this interface in a concrete singleton handle impl to mixin read operations. */
-private interface ReadSingletonOperations<T : Entity> {
+private interface UpdateOperations<T> {
+    suspend fun onUpdate(action: (T) -> Unit)
+}
+
+/** Delegate this interface in a concrete singleton handle impl to mixin read operations. */
+private interface ReadSingletonOperations<T : Entity> : UpdateOperations<T?> {
     suspend fun fetch(): T?
-    suspend fun onUpdate(action: (T?) -> Unit)
 }
 
 /** Delegate this interface in a concrete singleton handle impl to mixin write operations. */
@@ -256,11 +260,10 @@ private interface WriteSingletonOperations<T : Entity> {
 }
 
 /** Delegate this interface in a concrete collection handle impl to mixin read operations. */
-private interface ReadCollectionOperations<T : Entity> {
+private interface ReadCollectionOperations<T : Entity> : UpdateOperations<Set<T>> {
     suspend fun size(): Int
     suspend fun isEmpty(): Boolean
     suspend fun fetchAll(): Set<T>
-    suspend fun onUpdate(action: (Set<T>) -> Unit)
 }
 
 /** Delegate this interface in a concrete collection handle impl to mixin write operations. */
