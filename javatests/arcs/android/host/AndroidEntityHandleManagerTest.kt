@@ -235,7 +235,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             HandleMode.Write
         )
 
-        handleHolder.clear()
+        handleHolder.reset()
 
         val shandle2 = createSingletonHandle(
             handleManager,

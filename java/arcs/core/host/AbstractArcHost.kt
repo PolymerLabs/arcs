@@ -188,7 +188,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
 
         override fun setHandle(handleName: String, handle: Handle) = Unit
 
-        override fun clear() = Unit
+        override fun reset() = Unit
     }
 
     /** A placeholder no-op [Particle] for failures of instantiateParticle. */
@@ -481,7 +481,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      */
     private suspend fun cleanupHandles(handles: HandleHolder) {
         // TODO: disconnect/unregister handles
-        handles.clear()
+        handles.reset()
     }
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =
