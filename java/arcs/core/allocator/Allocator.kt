@@ -26,7 +26,6 @@ import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
-import arcs.core.util.lens
 import arcs.core.util.plus
 import arcs.core.util.traverse
 
@@ -116,13 +115,10 @@ class Allocator(val hostRegistry: HostRegistry) {
         plan: Plan
     ): Plan {
         val createdKeys: MutableMap<StorageKey, StorageKey> = mutableMapOf()
-        val particles = lens(Plan::particles) { t, f -> Plan(particles = f, arcId = t.arcId) }
-        val handles = lens(Plan.Particle::handles) { t, f -> t.copy(handles = f) }
-        val allHandles = particles.traverse() + handles.traverse()
-        val keyLens = lens(Plan.HandleConnection::storageKey) { t, f -> t.copy(storageKey = f) }
+        val allHandles = Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse()
 
         return allHandles.mod(plan) { handle ->
-            keyLens.mod(handle) {
+            Plan.HandleConnection.storageKeyLens.mod(handle) {
                 replaceCreateKey(createdKeys, arcId, idGenerator, it, handle.type)
             }
         }

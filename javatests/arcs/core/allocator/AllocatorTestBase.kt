@@ -17,18 +17,15 @@ import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
-import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
+import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
-import arcs.core.util.lens
 import arcs.core.util.plus
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.sdk.ReadSingletonHandle
-import arcs.sdk.WriteSingletonHandle
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -149,11 +146,8 @@ open class AllocatorTestBase {
         )
 
 
-        val handleLens = lens(Plan.Particle::handles) { t, f -> t.copy(handles = f) }
-        val storageKeyLens =
-            handleLens.traverse() + lens(Plan.HandleConnection::storageKey) { t, f ->
-                t.copy(storageKey = f)
-            }
+        val allStorageKeyLens =
+            Plan.Particle.handlesLens.traverse() + Plan.HandleConnection.storageKeyLens
 
         // fetch the allocator replaced key
         val sharedKey = planPartitions[0].particles[0].handles["person"]?.storageKey!!
@@ -163,13 +157,13 @@ open class AllocatorTestBase {
                 arcId.toString(),
                 readingHost.hostId,
                 // replace the CreateableKeys with the allocated keys
-                listOf(storageKeyLens.mod(readPersonParticle) { sharedKey })
+                listOf(allStorageKeyLens.mod(readPersonParticle) { sharedKey })
             ),
             Plan.Partition(
                 arcId.toString(),
                 writingHost.hostId,
                 // replace the CreateableKeys with the allocated keys
-                listOf(storageKeyLens.mod(writePersonParticle) { sharedKey })
+                listOf(allStorageKeyLens.mod(writePersonParticle) { sharedKey })
             )
         )
     }
@@ -211,17 +205,11 @@ open class AllocatorTestBase {
             CapabilitiesResolver.CapabilitiesResolverOptions(testArcId)
         ).createStorageKey(Capabilities.TiedToArc, personSchema, "readWritePerson")
 
-        val particlesLens = lens(Plan::particles) {
-            t, f -> Plan(particles = f, arcId = t.arcId)
-        }.traverse()
+        val allStorageKeyLens =
+            Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse() +
+                Plan.HandleConnection.storageKeyLens
 
-        val handlesLens =
-            particlesLens + lens(Plan.Particle::handles) { t, f -> t.copy(handles = f) }.traverse()
-
-        val storageKeyLens =
-            handlesLens + lens(Plan.HandleConnection::storageKey) { t, f -> t.copy(storageKey = f) }
-
-        val testPlan = storageKeyLens.mod(writeAndReadPersonPlan) { testKey!! }
+        val testPlan = allStorageKeyLens.mod(writeAndReadPersonPlan) { testKey!! }
 
         val allocator = Allocator(hostRegistry)
         val arcId = allocator.startArcForPlan(
