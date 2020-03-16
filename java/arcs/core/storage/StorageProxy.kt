@@ -74,21 +74,22 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /**
      * Add a [Handle] `onSync` action, associated with a [Handle] name.
      *
-     * If the handle is synchronized when the action is added, it will be called immediately.
-     * */
+     * If the [StorageProxy] is synchronized when the action is added, it will be called
+     * immediately.
+     *
+     * If not, the [StorageProxy] will request synchronization.
+     */
     suspend fun addOnSync(handleName: String, action: () -> Unit) {
-        val runNow = syncMutex.withLock {
+        val isAlreadySynchronized = syncMutex.withLock {
             callbackMutex.withLock {
                 onSyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
             }
             isSynchronized
         }
-        if (runNow) {
-            coroutineScope {
-                launch {
-                    action()
-                }
-            }
+        if (isAlreadySynchronized) {
+            CoroutineScope(coroutineContext).launch { action() }
+        } else {
+            requestSynchronization()
         }
     }
 
@@ -105,11 +106,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             !isSynchronized
         }
         if (runNow) {
-            coroutineScope {
-                launch {
-                    action()
-                }
-            }
+            CoroutineScope(coroutineContext).launch { action() }
         }
     }
 

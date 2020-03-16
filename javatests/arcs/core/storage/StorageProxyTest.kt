@@ -16,6 +16,7 @@ import java.util.concurrent.Executors
 import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -145,7 +146,7 @@ class StorageProxyTest {
     }
 
     @Test
-    fun getOnSyncCalledWhenAdded() = runBlockingTest {
+    fun getOnSyncCalledWhenAddedIfSynced() = runBlocking {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
 
         assertThat(
@@ -155,20 +156,60 @@ class StorageProxyTest {
         ).isTrue()
 
         val syncDeferred = CompletableDeferred<Boolean>()
-        storageProxy.addOnSync("testHandle") {
-            syncDeferred.complete(true)
+        coroutineScope {
+            storageProxy.addOnSync("testHandle") {
+                syncDeferred.complete(true)
+            }
         }
+        syncDeferred.complete(false)
         assertThat(syncDeferred.await()).isEqualTo((true))
     }
 
     @Test
-    fun getOnDesyncCalledWhenAdded() = runBlockingTest {
+    fun getOnSyncNotCalledWhenAddedIfNotSynced() = runBlocking {
+        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+
+        val syncDeferred = CompletableDeferred<Boolean>()
+        coroutineScope {
+            storageProxy.addOnSync("testHandle") {
+                syncDeferred.complete(true)
+            }
+        }
+        syncDeferred.complete(false)
+        assertThat(syncDeferred.await()).isEqualTo((false))
+    }
+
+    @Test
+    fun getOnDesyncCalledWhenAddedIfNotSynced() = runBlocking {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
         val desyncDeferred = CompletableDeferred<Boolean>()
-        storageProxy.addOnDesync("testHandle") {
-            desyncDeferred.complete(true)
+        coroutineScope {
+            storageProxy.addOnDesync("testHandle") {
+                desyncDeferred.complete(true)
+            }
         }
+        desyncDeferred.complete(false)
         assertThat(desyncDeferred.await()).isEqualTo((true))
+    }
+
+    @Test
+    fun getOnDesyncNotCalledWhenAddedIfSynced() = runBlocking {
+        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val desyncDeferred = CompletableDeferred<Boolean>()
+
+        assertThat(
+            storageProxy.onMessage(
+                ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
+            )
+        ).isTrue()
+
+        coroutineScope {
+            storageProxy.addOnDesync("testHandle") {
+                desyncDeferred.complete(true)
+            }
+        }
+        desyncDeferred.complete(false)
+        assertThat(desyncDeferred.await()).isEqualTo((false))
     }
 
     @Test
