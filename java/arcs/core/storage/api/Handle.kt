@@ -27,12 +27,14 @@ interface Handle {
     suspend fun onDesync(action: () -> Unit)
 }
 
+interface ReadableHandle<T> : Handle {
+    suspend fun onUpdate(action: (T) -> Unit)
+}
+
 /** A singleton handle with read access. */
-interface ReadSingletonHandle<T : Entity> : Handle {
+interface ReadSingletonHandle<T : Entity> : ReadableHandle<T?> {
     /** Returns the value of the singleton. */
     suspend fun fetch(): T?
-
-    suspend fun onUpdate(action: (T?) -> Unit)
 }
 
 /** A singleton handle with write access. */
@@ -48,7 +50,7 @@ interface WriteSingletonHandle<T : Entity> : Handle {
 interface ReadWriteSingletonHandle<T : Entity> : ReadSingletonHandle<T>, WriteSingletonHandle<T>
 
 /** A collection handle with read access. */
-interface ReadCollectionHandle<T : Entity> : Handle {
+interface ReadCollectionHandle<T : Entity> : ReadableHandle<Set<T>> {
     /** The number of elements in the collection. */
     suspend fun size(): Int
 
@@ -57,9 +59,6 @@ interface ReadCollectionHandle<T : Entity> : Handle {
 
     /** Returns a set with all the entities in the collection. */
     suspend fun fetchAll(): Set<T>
-
-    /** Assign a callback when the collection is Updated. */
-    suspend fun onUpdate(action: (Set<T>) -> Unit)
 }
 
 /** A collection handle with read access. */
