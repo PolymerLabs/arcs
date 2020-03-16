@@ -16,17 +16,18 @@ import {StorageProxy} from './storage-proxy.js';
 import {Dictionary} from '../hot.js';
 import {Handle} from './handle.js';
 import {Type} from '../type.js';
+import {assert} from '../../platform/assert-web.js';
 
 export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<CRDTTypeRecord> {
   private storageProxies: Dictionary<StorageProxy<CRDTTypeRecord>> = {};
   private callbacks: Dictionary<ProxyCallback<CRDTTypeRecord>> = {};
-  private storageEndpoint;
+  private storageEndpoint: StorageCommunicationEndpoint<T>;
   private storageKey: string;
   private type: Type;
 
   constructor(storeProvider: StorageCommunicationEndpointProvider<T>, type: Type, storageKey: string) {
     this.storageEndpoint = storeProvider.getStorageEndpoint(this);
-    this.storageEndpoint.setCallback(this.onMessage.bind(this));
+    this.storageEndpoint.setCallback(msg => this.onMessage(msg));
     this.storageKey = storageKey;
     this.type = type;
   }
@@ -58,10 +59,11 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCom
     this.storageProxies[muxId].registerHandle(handle);
   }
 
-  async onMessage(message: ProxyMessage<T>, muxId: string): Promise<boolean> {
-    if (!this.callbacks[muxId]) {
+  async onMessage(message: ProxyMessage<T>): Promise<boolean> {
+    assert(message.muxId != null);
+    if (!this.callbacks[message.muxId]) {
       throw new Error('callback has not been set');
     }
-    return this.callbacks[muxId](message);
+    return this.callbacks[message.muxId](message);
   }
 }

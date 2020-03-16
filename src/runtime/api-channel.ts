@@ -601,7 +601,7 @@ export abstract class PECInnerPort extends APIPort {
   Register(
     @Mapped handle: StorageProxy,
     @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
-    @LocalMapped idCallback: Consumer<number>): void  {}
+    @LocalMapped idCallback: Consumer<number>): void {}
   BackingRegister(
     @Mapped handle: BackingStorageProxy<CRDTTypeRecord>,
     @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
@@ -609,7 +609,7 @@ export abstract class PECInnerPort extends APIPort {
   ProxyMessage(
     @Mapped handle: StorageProxy,
     @Direct message: ProxyMessage<CRDTTypeRecord>,
-    @LocalMapped callback: Consumer<Promise<boolean>>): void  {}
+    @LocalMapped callback: Consumer<Promise<boolean>>): void {}
   BackingProxyMessage(
     @Mapped handle: BackingStorageProxy<CRDTTypeRecord>,
     @Direct message: ProxyMessage<CRDTTypeRecord>,

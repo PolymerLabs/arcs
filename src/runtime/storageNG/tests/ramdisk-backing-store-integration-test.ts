@@ -58,7 +58,7 @@ describe('RamDisk + Backing Store Integration', async () => {
     await store.idle();
     let message: ProxyMessage<CRDTCountTypeRecord>;
     let muxId: string;
-    const id2 = store.on(async (m) => {message = m; muxId = message.muxId; return true;});
+    const id2 = store.on(async (m) => {message = m; muxId = m.muxId; return true;});
     await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2, muxId: 'thing0'});
     assertHasModel(message, count1);
     assert.strictEqual(muxId, 'thing0');
