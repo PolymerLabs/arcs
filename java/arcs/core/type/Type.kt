@@ -83,12 +83,6 @@ interface Type {
         val containedType: T
     }
 
-    /** Provides capability to merge internal type data with a given variableMap. */
-    interface TypeVariableMerger : Type {
-        /** Merges internal type data with a given [variableMap]. */
-        fun mergeTypeVariablesByName(variableMap: MutableMap<Any, Any>): Type
-    }
-
     companion object {
         /**
          * Returns the deepest unique types contained by the given pair.
