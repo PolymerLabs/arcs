@@ -19,7 +19,7 @@ import arcs.core.storage.api.*
  * @handle2 The second handle the callback will be assigned to
  * @action callback
  */
-suspend fun <T: Entity, U> combineUpdates(
+suspend fun <T, U> combineUpdates(
     handle1: ReadableHandle<T>,
     handle2: ReadableHandle<U>,
     action: (T, U) -> Unit
