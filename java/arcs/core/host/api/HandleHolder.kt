@@ -31,6 +31,6 @@ interface HandleHolder {
     /** Sets the given [Handle]. */
     fun setHandle(handleName: String, handle: Handle)
 
-    /** Erase all handle references from the [HandleHolder]. */
-    fun clear()
+    /** Erase and release all handle references from the [HandleHolder]. */
+    fun reset()
 }

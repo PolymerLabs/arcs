@@ -12,6 +12,7 @@
 package arcs.sdk
 
 import arcs.core.host.api.Particle
+import kotlinx.coroutines.runBlocking
 
 /**
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
@@ -55,7 +56,12 @@ open class HandleHolderBase(
         handles[handleName] = handle
     }
 
-    override fun clear() = handles.clear()
+    override fun reset() {
+        runBlocking {
+            handles.forEach { (_, handle) -> handle.close() }
+        }
+        handles.clear()
+    }
 
     private fun checkHandleIsValid(handleName: String) {
         // entitySpecs is passed in the constructor with the full set of specs, so it can be

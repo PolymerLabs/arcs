@@ -62,6 +62,9 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 
+    /** Whether this handle can no longer be operated on .*/
+    var closed = false
+
     /** Add an action to be performed whenever the contents of the [Handle]'s data changes. */
     suspend fun addOnUpdate(action: (value: T) -> Unit) {
         storageProxy.addOnUpdate(name, action)
@@ -117,5 +120,16 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             is Set<*> -> this.forEach { it.injectDereferencer() }
         }
         return this
+    }
+
+    protected fun checkNotClosed() {
+        if (closed) {
+            throw IllegalArgumentException("Handle $name is closed.")
+        }
+    }
+
+    suspend fun close() {
+        closed = true
+        removeAllCallbacks()
     }
 }

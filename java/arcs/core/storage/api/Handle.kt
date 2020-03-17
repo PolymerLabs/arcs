@@ -20,6 +20,9 @@ interface Handle {
 
     /** Assign a callback when the handle is desynced. */
     suspend fun onDesync(action: () -> Unit)
+
+    /** Release resources needed by this, unregister all callbacks. */
+    suspend fun close()
 }
 
 interface ReadableHandle<T> : Handle {
