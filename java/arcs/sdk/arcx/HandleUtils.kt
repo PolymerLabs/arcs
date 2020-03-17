@@ -10,7 +10,7 @@
  */
 package arcs.core.host
 
-import arcs.core.storage.api.*
+import arcs.sdk.arcx
 
 /**
  * Receive a callback when either handle is updated.
@@ -20,8 +20,8 @@ import arcs.core.storage.api.*
  * @action callback
  */
 suspend fun <T, U> combineUpdates(
-    handle1: UpdateOperations<T>,
-    handle2: UpdateOperations<U>,
+    handle1: ReadableHandle<T>,
+    handle2: ReadableHandle<U>,
     action: (T, U) -> Unit
 ) {
     val handles = listOf(handle1, handle2)
@@ -44,7 +44,7 @@ suspend fun <T, U> combineUpdates(
 //    }
 //}
 
-private fun <T> UpdateOperations<T>.getContent(): suspend () -> T = when (this) {
+private fun <T> ReadableHandle<T>.getContent(): suspend () -> T = when (this) {
     is ReadWriteSingletonHandle<*> -> suspend { this.fetch() as T }
     is ReadSingletonHandle<*> -> suspend { this.fetch() as T }
     is ReadWriteCollectionHandle<*> -> suspend { this.fetchAll() as T }
