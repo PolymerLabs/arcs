@@ -13,8 +13,20 @@ import arcs.core.storage.StorageKeyParser
 object IngestionPlan : Plan(
     listOf(
         Particle(
+            "Reader",
+            "arcs.core.data.testdata.Reader",
+            mapOf(
+                "data" to HandleConnection(
+                    CreateableStorageKey("my-handle-id"),
+                    HandleMode.Read,
+                    EntityType(Reader_Data.SCHEMA),
+                    Ttl.Days(20)
+                )
+            )
+        ),
+        Particle(
             "Writer",
-            "",
+            "arcs.core.data.testdata.Writer",
             mapOf(
                 "data" to HandleConnection(
                     CreateableStorageKey("my-handle-id"),
@@ -31,7 +43,7 @@ object ConsumptionPlan : Plan(
     listOf(
         Particle(
             "Reader",
-            "",
+            "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
                     StorageKeyParser.parse(

@@ -274,6 +274,26 @@ describe('recipe2plan', () => {
       const resolver = new StorageKeyRecipeResolver(manifest);
       await assertThrowsAsync(async () => await resolver.resolve(), Error, 'More than one handle found for data.');
     });
+    it('does not create storage keys for create handles with no IDs', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      thing2: create persistent
+      Writer
+        data: writes thing
+      Writer
+        data: writes thing2`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      await resolver.resolve();
+      assert.deepStrictEqual(manifest.stores.map(s => s.id), ['my-handle-id']);
+    });
     it.skip('No Handle: If there is no writing handle, it is not valid', () => {
     });
   });

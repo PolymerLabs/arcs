@@ -78,14 +78,14 @@ export class StorageKeyRecipeResolver {
   }
 
   /**
-   * Create stores with keys for all create handles.
+   * Create stores with keys for all create handles with ids.
    *
    * @param recipe should be long running.
    * @param arc Arc is associated with current recipe.
    */
   async createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
     const resolver = new CapabilitiesResolver({arcId: arc.id});
-    for (const createHandle of recipe.handles.filter(h => h.fate === 'create')) {
+    for (const createHandle of recipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
       if (createHandle.type instanceof TypeVariable && !createHandle.type.isResolved()) {
         // TODO(mmandlis): should already be resolved.
         assert(createHandle.type.maybeEnsureResolved());
