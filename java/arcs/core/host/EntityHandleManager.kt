@@ -248,7 +248,7 @@ abstract class BaseHandleAdapter(
 }
 
 /** Delegate this interface in a concrete singleton handle impl to mixin read operations. */
-interface UpdateOperations<T> {
+private interface UpdateOperations<T> {
     suspend fun onUpdate(action: (T) -> Unit)
 }
 
