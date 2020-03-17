@@ -15,8 +15,8 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Log
 import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -75,6 +75,7 @@ class HandleManagerTest {
         storageKey = setRefKey
     )
 
+
     @Before
     fun setup() {
         Log.level = Log.Level.Debug
@@ -83,7 +84,8 @@ class HandleManagerTest {
     }
 
     @Test
-    fun testCreateRawEntitySingletonHandle() = handleManagerTest { hm ->
+    fun singleton_writeAndReadBack() = runBlockingTest {
+        val hm = HandleManager(TimeImpl())
         val singletonHandle = hm.rawEntitySingletonHandle(singletonKey, schema)
         singletonHandle.store(entity1)
 
@@ -94,7 +96,55 @@ class HandleManagerTest {
     }
 
     @Test
-    fun testCreateReferenceSingletonHandle() = handleManagerTest { hm ->
+    fun singleton_writeAndOnUpdate() = runBlockingTest {
+        val hm = HandleManager(TimeImpl())
+        val singletonHandle = hm.rawEntitySingletonHandle(singletonKey, schema)
+
+        // Now read back from a different handle
+        val readbackHandle = hm.rawEntitySingletonHandle(singletonKey, schema)
+        val updateDeferred = CompletableDeferred<RawEntity?>()
+        readbackHandle.addOnUpdate {
+            updateDeferred.complete(it)
+        }
+        singletonHandle.store(entity1)
+        assertThat(updateDeferred.await()).isEqualTo(entity1)
+    }
+
+    @Test
+    fun singleton_writeAndReadback2HM() = runBlockingTest {
+        val hm = HandleManager(TimeImpl())
+        val singletonHandle = hm.rawEntitySingletonHandle(singletonKey, schema)
+        singletonHandle.store(entity1)
+
+        val hm2 = HandleManager(TimeImpl())
+        // Now read back from a different handle
+        val readbackHandle = hm2.rawEntitySingletonHandle(singletonKey, schema)
+        val readBack = readbackHandle.fetch()
+        assertThat(readBack).isEqualTo(entity1)
+    }
+
+    @Test
+    fun singleton_writeAndOnUpdate2HM() = runBlockingTest {
+        // Two handle managers *using the same stores* should be able to receive onUpdate
+        // messages from handles on the other HandleManager.
+        val stores = Stores()
+        val hm = HandleManager(TimeImpl(), stores)
+        val singletonHandle = hm.rawEntitySingletonHandle(singletonKey, schema)
+
+        val hm2 = HandleManager(TimeImpl(), stores)
+        // Now read back from a different handle
+        val readbackHandle = hm2.rawEntitySingletonHandle(singletonKey, schema)
+        val updateDeferred = CompletableDeferred<RawEntity?>()
+        readbackHandle.addOnUpdate {
+            updateDeferred.complete(it)
+        }
+        singletonHandle.store(entity1)
+        assertThat(updateDeferred.await()).isEqualTo(entity1)
+    }
+
+    @Test
+    fun singleton_referenceLiveness() = runBlockingTest {
+        val hm = HandleManager(TimeImpl())
         val singletonHandle = hm.referenceSingletonHandle(singletonRefKey, schema, "refhandle")
         val entity1Ref = singletonHandle.createReference(entity1, backingKey)
         singletonHandle.store(entity1Ref)
@@ -133,7 +183,8 @@ class HandleManagerTest {
     }
 
     @Test
-    fun testDereferencingFromSingletonEntity() = handleManagerTest { hm ->
+    fun singleton_dereferenceEntity() = runBlockingTest {
+        val hm = HandleManager(TimeImpl())
         val singleton1Handle = hm.rawEntitySingletonHandle(singletonKey, schema)
         val singleton1Handle2 = hm.rawEntitySingletonHandle(singletonKey, schema)
         singleton1Handle.store(entity1)
@@ -168,7 +219,8 @@ class HandleManagerTest {
     }
 
     @Test
-    fun testCreateCollectionHandle() = handleManagerTest { hm ->
+    fun collection_writeAndReadBack() = runBlockingTest {
+        val hm = HandleManager(TimeImpl())
         val collectionHandle = hm.rawEntityCollectionHandle(setKey, schema)
         collectionHandle.store(entity1)
         collectionHandle.store(entity2)
@@ -180,7 +232,24 @@ class HandleManagerTest {
     }
 
     @Test
-    fun testCreateReferenceCollectionHandle() = handleManagerTest { hm ->
+    fun collection_writeAndOnUpdate() = runBlockingTest {
+        val hm = HandleManager(TimeImpl())
+        val singletonHandle = hm.rawEntityCollectionHandle(singletonKey, schema)
+
+        // Now read back from a different handle
+        val readbackHandle = hm.rawEntityCollectionHandle(singletonKey, schema)
+        val updateDeferred = CompletableDeferred<Set<RawEntity>>()
+        singletonHandle.store(entity1)
+        readbackHandle.addOnUpdate {
+            updateDeferred.complete(it)
+        }
+        singletonHandle.store(entity2)
+        assertThat(updateDeferred.await()).containsExactly(entity1, entity2)
+    }
+
+    @Test
+    fun collection_referenceLiveness() = runBlockingTest {
+        val hm = HandleManager(TimeImpl())
         val collectionHandle = hm.referenceCollectionHandle(singletonRefKey, schema)
         val entity1Ref = collectionHandle.createReference(entity1, backingKey)
         val entity2Ref = collectionHandle.createReference(entity2, backingKey)
@@ -232,7 +301,8 @@ class HandleManagerTest {
     }
 
     @Test
-    fun testDereferencingFromCollectionHandleEntity() = handleManagerTest { hm ->
+    fun collection_entityDereference() = runBlockingTest {
+        val hm = HandleManager(TimeImpl())
         val collectionHandle = hm.rawEntityCollectionHandle(setKey, schema)
         collectionHandle.store(entity1)
         collectionHandle.store(entity2)
@@ -244,14 +314,5 @@ class HandleManagerTest {
                 .dereference(coroutineContext)
             assertThat(actualBestFriend).isEqualTo(expectedBestFriend)
         }
-    }
-
-    // TODO: Make runBlockingTest work.
-    private fun handleManagerTest(
-        block: suspend CoroutineScope.(HandleManager) -> Unit
-    ) = runBlocking {
-        val hm = HandleManager(TimeImpl())
-        this@runBlocking.block(hm)
-        Unit
     }
 }
