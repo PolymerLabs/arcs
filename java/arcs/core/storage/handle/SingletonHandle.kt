@@ -52,7 +52,10 @@ class SingletonHandle<T : Referencable>(
     dereferencer = dereferencer
 ) {
     /** Get the current value from the backing [StorageProxy]. */
-    suspend fun fetch() = value()
+    suspend fun fetch() = run {
+        checkNotClosed()
+        value()
+    }
 
     /**
      * Sends a new value to the backing [StorageProxy]. If this returns `false`, your operation
@@ -60,6 +63,7 @@ class SingletonHandle<T : Referencable>(
      * */
     suspend fun store(entity: T): Boolean {
         log.debug { "storing $entity" }
+        checkNotClosed()
 
         @Suppress("GoodTime") // use Instant
         entity.creationTimestamp = requireNotNull(time).currentTimeMillis
@@ -84,6 +88,7 @@ class SingletonHandle<T : Referencable>(
      * did not apply fully. Fetch the latest value and retry.
      * */
     suspend fun clear(): Boolean {
+        checkNotClosed()
         // Sync before clearing in order to get an updated versionMap. This ensures we can clear
         // values set by other actors.
         fetch()

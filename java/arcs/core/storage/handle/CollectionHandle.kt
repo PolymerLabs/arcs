@@ -59,10 +59,15 @@ class CollectionHandle<T : Referencable>(
     suspend fun isEmpty(): Boolean = value().isEmpty()
 
     /** Returns the values in the collection as a set. */
-    suspend fun fetchAll(): Set<T> = value()
+    suspend fun fetchAll(): Set<T> = run {
+        checkNotClosed()
+        value()
+    }
 
     /** Returns the values in the collection that fit the requirement (as a set). */
     suspend fun query(args: Any): Set<T> {
+        checkNotClosed()
+
         val results = value().filter {
             require(it is RawEntity) {
                 "Cannot query non entity typed collection $name"
@@ -87,6 +92,8 @@ class CollectionHandle<T : Referencable>(
      */
     suspend fun store(entity: T): Boolean {
         log.debug { "Storing: $entity" }
+        checkNotClosed()
+
         @Suppress("GoodTime") // use Instant
         entity.creationTimestamp = requireNotNull(time).currentTimeMillis
         require(entity !is RawEntity || schema == null || schema.refinement(entity)) {
@@ -113,6 +120,8 @@ class CollectionHandle<T : Referencable>(
      */
     suspend fun clear(): Boolean {
         log.debug { "Clearing" }
+        checkNotClosed()
+
         return storageProxy.getParticleView().all {
             storageProxy.applyOp(
                 CrdtSet.Operation.Remove(name, versionMap(), it)
@@ -131,6 +140,8 @@ class CollectionHandle<T : Referencable>(
      */
     suspend fun remove(entity: T): Boolean {
         log.debug { "Removing $entity" }
+        checkNotClosed()
+
         return storageProxy.applyOp(
             CrdtSet.Operation.Remove(name, versionMap(), entity)
         )
