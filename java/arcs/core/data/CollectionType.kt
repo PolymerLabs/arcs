@@ -32,7 +32,6 @@ data class CollectionType<T : Type>(
     val collectionType: T
 ) : Type,
     Type.TypeContainer<T>,
-    Type.TypeVariableMerger,
     EntitySchemaProviderType,
     CrdtModelType<Data<Referencable>, IOperation<Referencable>, Set<Referencable>> {
 
@@ -54,17 +53,6 @@ data class CollectionType<T : Type>(
     override val crdtModelDataClass: KClass<*> = CrdtSet.DataImpl::class
 
     override fun maybeEnsureResolved(): Boolean = collectionType.maybeEnsureResolved()
-
-    @Suppress("UNCHECKED_CAST")
-    override fun mergeTypeVariablesByName(variableMap: MutableMap<Any, Any>): CollectionType<*> {
-        val collectionType = this.collectionType
-        val result =
-            (collectionType as? Type.TypeVariableMerger)?.mergeTypeVariablesByName(variableMap)
-
-        return if (result !== collectionType && result != null) {
-            requireNotNull(result.collectionOf())
-        } else this
-    }
 
     override fun createCrdtModel():
         CrdtModel<Data<Referencable>, IOperation<Referencable>, Set<Referencable>> {
