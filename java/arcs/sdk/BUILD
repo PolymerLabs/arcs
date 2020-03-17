@@ -84,5 +84,6 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/api",
         "//java/arcs/sdk",
         "//java/arcs/sdk/storage",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
