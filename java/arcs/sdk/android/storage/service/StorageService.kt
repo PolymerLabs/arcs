@@ -29,7 +29,6 @@ import arcs.android.util.AndroidBinderStats
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
-import arcs.core.storage.StoreOptions
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
