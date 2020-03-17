@@ -16,6 +16,19 @@ import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
+    const collectOccurrences = (corpus: string, targetPrefix: string, targetSuffix: string): string[] => {
+      let idx = 0;
+      const collection: string[] = [];
+      while (idx != -1) {
+        const start = corpus.indexOf(targetPrefix, idx);
+        const end = corpus.indexOf(targetSuffix, start);
+        if (start === -1 || end === -1) break;
+        idx = end;
+        const target = corpus.substring(start + targetPrefix.length, end);
+        collection.push(target);
+      }
+      return collection;
+    };
     let emptyGenerator: PlanGenerator;
     beforeEach(() => {
       emptyGenerator = new PlanGenerator([], '');
@@ -152,6 +165,27 @@ describe('recipe2plan', () => {
         }
         actuals.push(newActual);
       }
+    });
+    it('uses the same identifier for all HandleConnections connected to the same handle', async () => {
+      const manifest = await Manifest.parse(`\
+     particle A
+       data: writes Thing {num: Number}
+     particle B
+       data: reads Thing {num: Number}
+       
+     recipe R
+       h: create persistent 
+       A
+         data: writes h
+       B
+         data: reads h`);
+      const recipeResolver = new StorageKeyRecipeResolver(manifest);
+      const recipes = await recipeResolver.resolve();
+      const generator = new PlanGenerator(recipes, '');
+      const plan = await generator.generate();
+      const keys = collectOccurrences(plan, 'CreateableStorageKey("', '")');
+      assert.lengthOf(keys, 2);
+      assert.deepStrictEqual(keys[0], keys[1]);
     });
   });
 });
