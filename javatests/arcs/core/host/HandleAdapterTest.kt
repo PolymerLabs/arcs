@@ -23,6 +23,7 @@ import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.jvm.util.testutil.TimeImpl
+import arcs.sdk.combineUpdates
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -112,12 +113,12 @@ class HandleAdapterTest {
     @Test
     fun singletonHandleAdapter_onUpdateTest() = runBlockingTest {
         val handle = manager.createSingletonHandle(
-            HandleMode.Read,
-            READ_ONLY_HANDLE,
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
             Person,
             STORAGE_KEY,
             Person.SCHEMA
-        )
+        ) as ReadWriteSingletonHandle<Person>
 
         var x = 0
         handle.onUpdate { x = 1 }
@@ -125,57 +126,63 @@ class HandleAdapterTest {
         assertThat(x).isEqualTo(1)
     }
 
-//    @Test
-//    fun collectionHandleAdapter_onUpdateTest() = runBlockingTest {
-//        val handle = manager.createCollectionHandle(
-//            HandleMode.ReadWrite,
-//            READ_ONLY_HANDLE,
-//            Person,
-//            STORAGE_KEY,
-//            Person.SCHEMA
-//        )
-//
-//        var x = 0
-//        handle.onUpdate { x = 1 }
-//        handle.store(Person())
-//        assertThat(x).isEqualTo(1)
-//    }
-//
-//    @Test
-//    fun handleAdapter_combineUpdatesTest() = runBlockingTest {
-//        val collection = manager.createSingletonHandle(
-//            HandleMode.ReadWrite,
-//            READ_ONLY_HANDLE,
-//            Person,
-//            STORAGE_KEY,
-//            Person.SCHEMA
-//        )
-//
-//        val singleton = manager.createCollectionHandle(
-//            HandleMode.ReadWrite,
-//            READ_ONLY_HANDLE,
-//            Person,
-//            KEY_TWO,
-//            Person.SCHEMA
-//        )
-//
-//        var x = 0
-//        combineUpdates(collection, singleton){_, _ ->
-//            x = x + 1
-//        }
-//        singleton.store(Person())
-//        assertThat(x).isEqualTo(1)
-//        collection.store(Person())
-//        assertThat(x).isEqualTo(2)
-//    }
+    @Test
+    fun collectionHandleAdapter_onUpdateTest() = runBlockingTest {
+        val handle = manager.createCollectionHandle(
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
+            Person,
+            STORAGE_KEY,
+            Person.SCHEMA
+        ) as ReadWriteCollectionHandle<Person>
+
+        var x = 0
+        handle.onUpdate { x = 1 }
+        handle.store(Person())
+        assertThat(x).isEqualTo(1)
+    }
+
+    @Test
+    fun handleAdapter_combineUpdatesTest() = runBlockingTest {
+        val collection = manager.createSingletonHandle(
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
+            Person,
+            STORAGE_KEY,
+            Person.SCHEMA
+        ) as ReadWriteSingletonHandle<Person>
+
+        val singleton = manager.createCollectionHandle(
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
+            Person,
+            KEY_TWO,
+            Person.SCHEMA
+        ) as ReadWriteCollectionHandle<Person>
+
+        var x = 0
+        combineUpdates(collection, singleton) { _, _ ->
+            x = x + 1
+        }
+        singleton.store(Person())
+        assertThat(x).isEqualTo(1)
+        collection.store(Person())
+        assertThat(x).isEqualTo(2)
+    }
 
     private companion object {
         private const val READ_ONLY_HANDLE = "readOnlyHandle"
         private const val WRITE_ONLY_HANDLE = "writeOnlyHandle"
+        private const val READ_WRITE_HANDLE = "readWriteHandle"
 
         private val STORAGE_KEY = ReferenceModeStorageKey(
             backingKey = RamDiskStorageKey("backing"),
             storageKey = RamDiskStorageKey("entity")
+        )
+
+        private val KEY_TWO = ReferenceModeStorageKey(
+            backingKey = RamDiskStorageKey("backing2"),
+            storageKey = RamDiskStorageKey("entity2")
         )
     }
 }

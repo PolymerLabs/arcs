@@ -8,9 +8,9 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.host
+package arcs.sdk
 
-import arcs.sdk.arcx
+import arcs.core.storage.api.*
 
 /**
  * Receive a callback when either handle is updated.
@@ -33,16 +33,6 @@ suspend fun <T, U> combineUpdates(
         }
     }
 }
-
-//private fun <T> ReadableHandle<T>.getContent(): suspend () -> T {
-//    if (this is ReadWriteSingletonHandle<*>) {
-//        return suspend { this.fetch() as T }
-//    }
-//
-//    else {
-//        throw IllegalArgumentException("Unknown WasmHandleEvents type found")
-//    }
-//}
 
 private fun <T> ReadableHandle<T>.getContent(): suspend () -> T = when (this) {
     is ReadWriteSingletonHandle<*> -> suspend { this.fetch() as T }
