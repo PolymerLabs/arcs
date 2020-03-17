@@ -10,7 +10,11 @@
  */
 package arcs.sdk
 
-import arcs.core.storage.api.*
+import arcs.core.storage.api.ReadCollectionHandle
+import arcs.core.storage.api.ReadSingletonHandle
+import arcs.core.storage.api.ReadWriteCollectionHandle
+import arcs.core.storage.api.ReadWriteSingletonHandle
+import arcs.core.storage.api.ReadableHandle
 
 /**
  * Receive a callback when either handle is updated.
@@ -41,6 +45,3 @@ private fun <T> ReadableHandle<T>.getContent(): suspend () -> T = when (this) {
     is ReadCollectionHandle<*> -> suspend { this.fetchAll() as T }
     else -> throw IllegalArgumentException("Unknown WasmHandleEvents type found")
 }
-
-
-

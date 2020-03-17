@@ -276,5 +276,3 @@ private interface WriteCollectionOperations<T : Entity> {
     suspend fun clear()
     suspend fun remove(entity: T)
 }
-
-
