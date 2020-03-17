@@ -1,4 +1,42 @@
-/*
+/**
+ * Receive a callback when either handle is updated.
+ *
+ * @handle1 The first handle the callback will be assigned to
+ * @handle2 The second handle the callback will be assigned to
+ * @action callback
+ */
+suspend fun <T, U> combineUpdates(
+    handle1: UpdateOperations<T>,
+    handle2: UpdateOperations<U>,
+    action: (T, U) -> Unit
+) {
+    val handles = listOf(handle1, handle2)
+    handles.forEach { handle ->
+        val e1 = handle1.getContent().invoke()
+        val e2 = handle2.getContent().invoke()
+        handle.onUpdate {
+            action(e1, e2)
+        }
+    }
+}
+
+//private fun <T> ReadableHandle<T>.getContent(): suspend () -> T {
+//    if (this is ReadWriteSingletonHandle<*>) {
+//        return suspend { this.fetch() as T }
+//    }
+//
+//    else {
+//        throw IllegalArgumentException("Unknown WasmHandleEvents type found")
+//    }
+//}
+
+private fun <T> UpdateOperations<T>.getContent(): suspend () -> T = when (this) {
+    is ReadWriteSingletonHandle<*> -> suspend { this.fetch() as T }
+    is ReadSingletonHandle<*> -> suspend { this.fetch() as T }
+    is ReadWriteCollectionHandle<*> -> suspend { this.fetchAll() as T }
+    is ReadCollectionHandle<*> -> suspend { this.fetchAll() as T }
+    else -> throw IllegalArgumentException("Unknown WasmHandleEvents type found")
+}/*
  * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
