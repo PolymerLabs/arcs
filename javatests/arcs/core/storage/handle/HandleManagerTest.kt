@@ -128,7 +128,7 @@ class HandleManagerTest {
         assertThat(readBack.isAlive(coroutineContext)).isTrue()
         assertThat(readBack.isDead(coroutineContext)).isFalse()
 
-        // Now dereference our read-back reference, should now be entity2
+        // Now dereference our read-back reference, should now be modEntity1
         assertThat(readBack.dereference(coroutineContext)).isEqualTo(modEntity1)
     }
 
