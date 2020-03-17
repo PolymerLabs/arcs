@@ -35,6 +35,9 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCom
     const backingStorageProxy = this;
     const storageEndpoint = this.storageEndpoint;
     const muxId = Object.keys(this.storageProxies).find(key => this.storageProxies[key] === storageProxy);
+    if (muxId == undefined) {
+      throw new Error('storage proxy is not registered with backing storage proxy');
+    }
     return {
       async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
         message.muxId = muxId;

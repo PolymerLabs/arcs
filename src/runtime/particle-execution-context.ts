@@ -176,7 +176,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     let id: number = null;
     if (storageProxy instanceof StorageProxy) {
       return {
-      async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>, entityId?: string): Promise<boolean> {
+      async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
         if (idPromise == null) {
           throw new Error('onProxyMessage called without first calling setCallback!');
         }
