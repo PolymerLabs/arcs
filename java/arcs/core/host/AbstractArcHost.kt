@@ -123,7 +123,12 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 hostId
             )
             partition.particles.get(0).handles.forEach { handleSpec ->
-                createHandle(arcHostContext, handleSpec.key, handleSpec.value, handles)
+                createHandle(
+                    arcHostContext.entityHandleManager,
+                    handleSpec.key,
+                    handleSpec.value,
+                    handles
+                )
             }
         }
 
@@ -221,21 +226,25 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
             return particleContext
         }
 
-        spec.handles.forEach { handleSpec ->
-            try {
+        val handles: List<Handle>
+        try {
+            handles = spec.handles.map { handleSpec ->
                 val handle = createHandle(
-                    context,
+                    context.entityHandleManager,
                     handleSpec.key,
                     handleSpec.value,
                     particle.handles
                 )
                 particleContext.handles[handleSpec.key] = handle
-            } catch (e: Exception) {
-                log.error(e) { "Error creating Handle." }
-                markParticleAsFailed(particleContext)
-                return@forEach
+                handle
             }
+        } catch (e: Exception) {
+            log.error(e) { "Error creating Handle." }
+            markParticleAsFailed(particleContext)
+            return particleContext
         }
+
+
 
         return particleContext
     }
@@ -394,13 +403,13 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * [Handle] of the right type.
      */
     private suspend fun createHandle(
-        arcHostContext: ArcHostContext,
+        entityHandleManager: EntityHandleManager,
         handleName: String,
         handleSpec: Plan.HandleConnection,
         holder: HandleHolder
     ) = when (handleSpec.type) {
         is SingletonType<*> ->
-            arcHostContext.entityHandleManager.createSingletonHandle(
+            entityHandleManager.createSingletonHandle(
                 handleSpec.mode,
                 handleName,
                 holder.getEntitySpec(handleName),
@@ -408,7 +417,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 handleSpec.type.toSchema()
             )
         is CollectionType<*> ->
-            arcHostContext.entityHandleManager.createCollectionHandle(
+            entityHandleManager.createCollectionHandle(
                 handleSpec.mode,
                 handleName,
                 holder.getEntitySpec(handleName),
