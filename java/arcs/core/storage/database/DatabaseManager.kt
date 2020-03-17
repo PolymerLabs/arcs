@@ -21,6 +21,9 @@ import arcs.core.type.Type
 //  which hints the factory as to where the database should be found (e.g. a remote server, a local
 //  service like postgres, android sqlite database, non-android sqlite database, WebDatabase, etc..)
 interface DatabaseManager {
+    /** Manifest of [Database]s managed by this [DatabaseManager]. */
+    val registry: DatabaseRegistry
+
     /**
      * Gets a [Database] for the given [name].  If [persistent] is `false`, the [Database] should
      * only exist in-memory (if possible for the current platform).

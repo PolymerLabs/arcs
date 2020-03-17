@@ -30,24 +30,32 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
     private val context = context.applicationContext
     private val mutex = Mutex()
     private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
+    override val registry = AndroidSqliteDatabaseRegistry(context)
 
-    override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
-        dbCache[name to persistent]
-            ?: DatabaseImpl(context, name, persistent).also { dbCache[name to persistent] = it }
+    override suspend fun getDatabase(name: String, persistent: Boolean): Database {
+        val entry = registry.register(name, persistent)
+        return mutex.withLock {
+            dbCache[entry.name to entry.isPersistent]
+                ?: DatabaseImpl(context, name, persistent).also {
+                    dbCache[entry.name to entry.isPersistent] = it
+                }
+        }
     }
 
-    override suspend fun snapshotStatistics(): Map<DatabaseIdentifier, Snapshot> =
-        mutex.withLock { dbCache.mapValues { it.value.snapshotStatistics() } }
+    override suspend fun snapshotStatistics(): Map<DatabaseIdentifier, Snapshot> = mutex.withLock {
+        dbCache.mapValues { it.value.snapshotStatistics() }
+    }
 
-    suspend fun resetAll() = mutex.withLock {
-        // TODO: this should reset all existing databases (including those not in dbCache).
-        dbCache.forEach { (_, db) -> db.reset() }
+    suspend fun resetAll() {
+        registry.fetchAll()
+            .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
+            .forEach { it.reset() }
     }
 
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        // TODO: this should check all existing databases (including those not in dbCache).
         val all = mutableMapOf<StorageKey, Type>()
-        dbCache.forEach { (_, db) -> all.putAll(db.getAllStorageKeys()) }
+        registry.fetchAll().map { getDatabase(it.name, it.isPersistent) }
+            .forEach { all.putAll(it.getAllStorageKeys()) }
         return all
     }
 }

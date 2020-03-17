@@ -32,7 +32,7 @@ import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.storage.database.testutil.MockDatabaseManager
+import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -65,12 +65,12 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         ),
         hash
     )
-    private lateinit var databaseFactory: MockDatabaseManager
+    private lateinit var databaseFactory: FakeDatabaseManager
 
     @Before
     fun setUp() = runBlockingTest {
         DriverFactory.clearRegistrations()
-        databaseFactory = MockDatabaseManager()
+        databaseFactory = FakeDatabaseManager()
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 

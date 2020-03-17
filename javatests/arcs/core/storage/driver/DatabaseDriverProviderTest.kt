@@ -30,7 +30,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.jvm.storage.database.testutil.MockDatabaseManager
+import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
@@ -158,7 +158,7 @@ class DatabaseDriverProviderTest {
     }
 
     private fun databaseFactory(): DatabaseManager =
-        databaseManager ?: MockDatabaseManager().also { databaseManager = it}
+        databaseManager ?: FakeDatabaseManager().also { databaseManager = it}
 
     companion object {
         private val DUMMY_SCHEMA = Schema(
