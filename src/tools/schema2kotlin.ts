@@ -28,7 +28,7 @@ const keywords = [
   'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
   'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
   'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'it', 'internalId'
+  'suspend', 'tailrec', 'vararg', 'it', 'entityId'
 ];
 
 export interface KotlinTypeInfo {
@@ -183,11 +183,10 @@ export class KotlinGenerator implements ClassGenerator {
   encode: string[] = [];
   decode: string[] = [];
   fieldsReset: string[] = [];
+  fieldInitializers: string[] = [];
   fieldsForCopyDecl: string[] = [];
   fieldsForCopy: string[] = [];
   setFieldsToDefaults: string[] = [];
-  fieldSerializes: string[] = [];
-  fieldDeserializes: string[] = [];
   fieldsForToString: string[] = [];
   singletonSchemaFields: string[] = [];
   collectionSchemaFields: string[] = [];
@@ -210,18 +209,32 @@ export class KotlinGenerator implements ClassGenerator {
 
     const {type, decodeFn, defaultVal} = getTypeInfo(typeName);
     const fixed = this.escapeIdentifier(field);
+    const quotedFieldName = quote(field);
 
     this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
-    this.fieldVals.push(
-      `var ${fixed} = ${fixed}\n` +
-      `        get() = field\n` +
-      `        private set(_value) {\n` +
-      `            field = _value\n` +
-      `        }`
-    );
-    this.fieldsReset.push(
-      `${fixed} = ${defaultVal}`,
-    );
+    if (this.opts.wasm) {
+      this.fieldVals.push(
+        `var ${fixed} = ${fixed}\n` +
+        `        get() = field\n` +
+        `        private set(_value) {\n` +
+        `            field = _value\n` +
+        `        }`
+      );
+    } else if (isCollection) {
+      this.fieldVals.push(
+        `var ${fixed}: ${type}\n` +
+        `        get() = super.getCollectionValue(${quotedFieldName}) as Set<${type}>\n` +
+        `        private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
+        );
+    } else {
+      this.fieldVals.push(
+        `var ${fixed}: ${type}\n` +
+        `        get() = super.getSingletonValue(${quotedFieldName}) as ${type}? ?: ${defaultVal}\n` +
+        `        private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
+      );
+    }
+    this.fieldsReset.push(`${fixed} = ${defaultVal}`);
+    this.fieldInitializers.push(`this.${fixed} = ${fixed}`);
     this.fieldsForCopyDecl.push(`${fixed}: ${type} = this.${fixed}`);
     this.fieldsForCopy.push(`${fixed} = ${fixed}`);
     this.setFieldsToDefaults.push(`var ${fixed} = ${defaultVal}`);
@@ -233,8 +246,6 @@ export class KotlinGenerator implements ClassGenerator {
 
     this.encode.push(`${fixed}.let { encoder.encode("${field}:${typeName[0]}", ${fixed}) }`);
 
-    this.fieldSerializes.push(`"${field}" to ${fixed}.toReferencable()`);
-    this.fieldDeserializes.push(`${fixed} = data.singletons["${fixed}"].toPrimitiveValue(${type}::class, ${defaultVal})`);
     this.fieldsForToString.push(`${fixed} = $${fixed}`);
     if (isCollection) {
       this.collectionSchemaFields.push(`"${field}" to ${getTypeInfo(typeName).schemaType}`);
@@ -291,7 +302,10 @@ ${lines}
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
 
     const classDef = `class ${name}(`;
-    const classInterface = `) : ${this.prefixTypeForRuntime('Entity')} {`;
+    const baseClass = this.opts.wasm
+        ? 'WasmEntity'
+        : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA']);
+    const classInterface = `) : ${baseClass} {`;
 
     const constructorArguments =
       withFields(ktUtils.joinWithIndents(this.fields, classDef.length+classInterface.length, 1));
@@ -300,64 +314,42 @@ ${lines}
 
 ${classDef}${constructorArguments}${classInterface}
 
-    override var internalId = ""
-
     ${withFields(`${this.fieldVals.join('\n    ')}`)}
+
+    ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
+        ${this.fieldInitializers.join('\n        ')}
+    }`)}
 
     fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 2)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 2)})
 
-    fun reset() {
-        ${withFields(`${this.fieldsReset.join('\n        ')}`)}
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) {
-            return true
-        }
-
-        if (other is ${name}) {
-            if (internalId.isNotEmpty()) {
-                return internalId == other.internalId
-            }
-            return toString() == other.toString()
-       }
-        return false;
-    }
-
-    override fun hashCode(): Int =
-        if (internalId.isNotEmpty()) internalId.hashCode() else toString().hashCode()
 ${this.opts.wasm ? `
+    fun reset() {
+      ${withFields(`${this.fieldsReset.join('\n        ')}`)}
+    }
+
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
-        encoder.encode("", internalId)
+        encoder.encode("", entityId)
         ${this.encode.join('\n        ')}
         return encoder.toNullTermByteArray()
-    }` : `
-    override fun serialize() = RawEntity(
-        internalId,
-        mapOf(${ktUtils.joinWithIndents(this.fieldSerializes, 15, 3)})
-    )`}
+    }
 
     override fun toString() =
-      "${name}(${this.fieldsForToString.join(', ')})"
-
+        "${name}(${this.fieldsForToString.join(', ')})"
+` : ''}
     companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
         ${this.opts.wasm ? '' : `
         override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 8, true)}.also { SchemaRegistry.register(it) }`}
 
         override fun create() = ${name}()
         ${!this.opts.wasm ? `
-        override fun deserialize(data: RawEntity): ${name} {
-            // TODO: only handles singletons for now
-            val rtn = create().copy(${withFields(`${ktUtils.joinWithIndents(this.fieldDeserializes, 36, 4)}`)})
-            rtn.internalId = data.id
-            return rtn
-        }` : `
+        // TODO: only handles singletons for now
+        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }` : `
         override fun decode(encoded: ByteArray): ${name}? {
             if (encoded.isEmpty()) return null
     
             val decoder = StringDecoder(encoded)
-            val internalId = decoder.decodeText()
+            val entityId = decoder.decodeText()
             decoder.validate("|")
             ${withFields(`
             ${this.setFieldsToDefaults.join('\n            ')}
@@ -382,7 +374,7 @@ ${this.opts.wasm ? `
             val _rtn = create().copy(
                 ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
             )
-            _rtn.internalId = internalId
+            _rtn.entityId = entityId
             return _rtn
         }`}
     }

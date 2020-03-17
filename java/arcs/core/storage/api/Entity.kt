@@ -11,6 +11,7 @@
 
 package arcs.core.storage.api
 
+import arcs.core.common.Id
 import arcs.core.common.Referencable
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -19,8 +20,16 @@ import kotlin.IllegalArgumentException
 import kotlin.reflect.KClass
 
 interface Entity {
-    var internalId: String
+    /** The ID for the entity, or null if it is does not have one yet. */
+    val entityId: String?
+
+    /** Generates a new ID for the Entity, if it doesn't already have one. */
+    fun ensureIdentified(idGenerator: Id.Generator, handleName: String)
+
     fun serialize(): RawEntity
+
+    /** Resets all fields to the default value. */
+    fun reset()
 }
 
 /**

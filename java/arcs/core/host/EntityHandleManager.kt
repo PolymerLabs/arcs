@@ -182,7 +182,7 @@ private class WriteSingletonOperationsImpl<T : Entity>(
 ) : WriteSingletonOperations<T> {
     override suspend fun store(entity: T) {
         storageHandle.store(
-            entity.ensureIdentified(idGenerator, storageHandle.name).serialize()
+            entity.apply { ensureIdentified(idGenerator, storageHandle.name) }.serialize()
         )
     }
 
@@ -216,7 +216,7 @@ private class WriteCollectionOperationsImpl<T : Entity>(
 ) : WriteCollectionOperations<T> {
     override suspend fun store(entity: T) {
         storageHandle.store(
-            entity.ensureIdentified(idGenerator, storageHandle.name).serialize()
+            entity.apply { ensureIdentified(idGenerator, storageHandle.name) }.serialize()
         )
     }
 
@@ -275,15 +275,4 @@ private interface WriteCollectionOperations<T : Entity> {
     suspend fun store(entity: T)
     suspend fun clear()
     suspend fun remove(entity: T)
-}
-
-private fun <T : Entity> T.ensureIdentified(idGenerator: Id.Generator, handleName: String): T {
-    if (this.internalId == "") {
-        this.internalId = idGenerator.newChildId(
-            // TODO: should we allow this to be plumbed through?
-            idGenerator.newArcId("dummy-arc"),
-            handleName
-        ).toString()
-    }
-    return this
 }

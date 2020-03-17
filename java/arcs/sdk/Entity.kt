@@ -11,11 +11,11 @@
 
 package arcs.sdk
 
-import arcs.core.storage.api.Entity
-import arcs.core.storage.api.EntitySpec
+/** Interface of all generated [Entity] types. */
+typealias Entity = arcs.core.storage.api.Entity
 
 /** Base class of all generated [Entity] types. */
-typealias Entity = arcs.core.storage.api.Entity
+typealias EntityBase = arcs.core.storage.api.EntityBase
 
 /**
  * Spec for an [Entity] type. Can create and deserialize new entities.

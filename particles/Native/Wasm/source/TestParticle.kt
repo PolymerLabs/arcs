@@ -125,7 +125,6 @@ class TestParticle : AbstractTestParticle() {
                 for_ = "",
                 val_ = 0.0
             )
-            info.internalId = "wasm" + (++storeCount)
             handles.info.store(info.copy(
                 val_ = (handles.info.size + storeCount).toDouble()
             ))
