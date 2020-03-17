@@ -241,6 +241,10 @@ abstract class BaseHandleAdapter(
     override suspend fun onSync(action: () -> Unit) = storageHandle.addOnSync(action)
 
     override suspend fun onDesync(action: () -> Unit) = storageHandle.addOnDesync(action)
+
+    override suspend fun close() {
+        storageHandle.close()
+    }
 }
 
 /** Delegate this interface in a concrete singleton handle impl to mixin read operations. */
