@@ -26,7 +26,8 @@ fun HandleProto.Fate.decode(): Handle.Fate =
             throw IllegalArgumentException("Invalid HandleProto.Fate value.")
     }
 
-/** Converts [HandleProto] into [Handle].
+/**
+ *Converts [HandleProto] into [Handle].
  *
  * If a type is not set in the [HandleProto], it is initialized to a newly created TypeVariable.
 */
