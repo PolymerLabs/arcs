@@ -10,7 +10,7 @@
  */
 package arcs.core.host
 
-import arcs.core.common.toArcId
+import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -35,12 +35,12 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
      * types, and write them to the appropriate handles. See `ArcHostContext.arcs` for schema
      * definitions.
      */
-    suspend fun writeArcHostContext(arcId: String, hostId: String, context: ArcHostContext) {
+    suspend fun writeArcHostContext(hostId: String, context: ArcHostContext) {
         try {
             val connections = context.particles.flatMap {
                 it.value.planParticle.handles.map { handle ->
                     ArcHostParticle_HandleConnections(
-                        arcId = arcId,
+                        arcId = context.arcId.toString(),
                         particleName = it.key,
                         handleName = handle.key,
                         storageKey = handle.value.storageKey.toString(),
@@ -50,10 +50,14 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
                     )
                 }
             }
-            val arcState = ArcHostParticle_ArcHostContext(arcId, hostId, context.arcState.name)
+            val arcState = ArcHostParticle_ArcHostContext(
+                arcId = context.arcId.toString(),
+                arcHost = hostId,
+                arcState = context.arcState.name
+            )
             val particles = context.particles.map {
                 ArcHostParticle_Particles(
-                    arcId = arcId,
+                    arcId = context.arcId.toString(),
                     particleName = it.key,
                     location = it.value.planParticle.location,
                     particleState = it.value.particleState.name,
@@ -73,7 +77,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
             connections.forEach { handles.handleConnections.store(it) }
         } catch (e: Exception) {
             // TODO: retry?
-            throw IllegalStateException("Unable to serialize $arcId for $hostId", e)
+            throw IllegalStateException("Unable to serialize ${context.arcId} for $hostId", e)
         }
     }
 
@@ -157,7 +161,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
     private fun createHandlesMap(
         handleConnections: Map<String, List<ParticleConnection>>,
         it: ArcHostParticle_Particles,
-        arcId: String
+        arcId: ArcId
     ): Map<String, HandleConnection> {
         return handleConnections[it.particleName]?.associateBy(
             { it.connection.handleName },
@@ -169,7 +173,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
 
     private fun createHandleConnection(
         entity: ArcHostParticle_HandleConnections,
-        arcId: String,
+        arcId: ArcId,
         hostId: String,
         instantiatedParticles: Map<String, Particle>
     ): NamedHandleConnection {
@@ -179,7 +183,6 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
                 StorageKeyParser.parse(entity.storageKey),
                 HandleMode.valueOf(entity.mode),
                 fromTag(
-                    arcId,
                     requireNotNull(instantiatedParticles[entity.particleName]) {
                         "${entity.particleName} not instantiable for $arcId and $hostId"
                     },
@@ -195,7 +198,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
      * Using instantiated particle to obtain [Schema] objects throught their
      * associated [EntitySpec], reconstruct an associated [Type] object.
      */
-    fun fromTag(arcId: String, particle: Particle, tag: String, handleName: String): Type {
+    fun fromTag(particle: Particle, tag: String, handleName: String): Type {
         try {
             val schema = particle.handles.getEntitySpec(handleName).SCHEMA
             return when (Tag.valueOf(tag)) {
@@ -203,7 +206,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
                 Tag.Collection -> CollectionType(EntityType(schema))
                 Tag.Entity -> EntityType(schema)
                 else -> throw IllegalArgumentException(
-                    "Illegal Tag $tag when deserializing ArcHostContext with ArcId $arcId"
+                    "Illegal Tag $tag when deserializing handle $handleName"
                 )
             }
         } catch (e: NoSuchElementException) {
@@ -222,11 +225,11 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
      */
     fun createArcHostContextPersistencePlan(
         capability: Capabilities,
-        arcId: String,
+        arcId: ArcId,
         hostId: String
     ): Plan.Partition {
         val resolver = CapabilitiesResolver(
-            CapabilitiesResolver.CapabilitiesResolverOptions(arcId.toArcId())
+            CapabilitiesResolver.CapabilitiesResolverOptions(arcId)
         )
 
         // Because we don't have references/collections support yet, we use 3 handles/schemas

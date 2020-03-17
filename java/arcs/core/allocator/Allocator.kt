@@ -226,7 +226,7 @@ class Allocator private constructor(
             .groupBy({ it.first }, { it.second })
             .map { (host, particles) ->
                 Plan.Partition(
-                    arcId.toString(),
+                    arcId,
                     host.hostId,
                     particles
                 )

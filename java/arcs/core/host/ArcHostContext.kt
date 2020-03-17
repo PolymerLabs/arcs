@@ -10,6 +10,7 @@
  */
 package arcs.core.host
 
+import arcs.core.common.ArcId
 import arcs.core.data.Plan
 import arcs.core.host.api.Particle
 import arcs.core.storage.api.Handle
@@ -37,7 +38,7 @@ data class ParticleContext(
  * each participating [Particle] in the [Arc].
  */
 data class ArcHostContext(
-    var arcId: String,
+    var arcId: ArcId,
     var particles: MutableMap<String, ParticleContext> = mutableMapOf(),
     var arcState: ArcState = ArcState.NeverStarted,
     var entityHandleManager: EntityHandleManager

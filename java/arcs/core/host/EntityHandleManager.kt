@@ -10,8 +10,8 @@
  */
 package arcs.core.host
 
+import arcs.core.common.ArcId
 import arcs.core.common.Id
-import arcs.core.common.toArcId
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -40,7 +40,7 @@ import arcs.core.storage.handle.SingletonHandle
  */
 class EntityHandleManager(
     private val handleManager: HandleManager,
-    private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
+    private val arcId: ArcId = Id.Generator.newSession().newArcId("arc"),
     private val hostId: String = "nohost"
 ) {
 
@@ -65,7 +65,7 @@ class EntityHandleManager(
         storageKey,
         schema,
         name = idGenerator.newChildId(
-            idGenerator.newChildId(arcId.toArcId(), hostId),
+            idGenerator.newChildId(arcId, hostId),
             name
         ).toString()
     ).let {
@@ -98,7 +98,7 @@ class EntityHandleManager(
             storageKey,
             schema,
             name = idGenerator.newChildId(
-                idGenerator.newChildId(arcId.toArcId(), hostId),
+                idGenerator.newChildId(arcId, hostId),
                 name
             ).toString()
         ).let {

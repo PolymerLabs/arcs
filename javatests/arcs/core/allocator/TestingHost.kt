@@ -1,5 +1,6 @@
 package arcs.core.allocator
 
+import arcs.core.common.ArcId
 import arcs.core.data.Plan
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ParticleRegistration
@@ -9,7 +10,7 @@ import arcs.jvm.util.testutil.TimeImpl
 open class TestingHost(vararg particles: ParticleRegistration) :
     AbstractArcHost(*particles) {
 
-    fun arcHostContext(arcId: String) = getArcHostContext(arcId)
+    fun arcHostContext(arcId: ArcId) = getArcHostContext(arcId)
 
     var started = mutableListOf<Plan.Partition>()
 

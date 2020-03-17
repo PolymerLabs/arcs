@@ -14,6 +14,7 @@ package arcs.android.host.parcelables
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
+import arcs.core.common.toArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.Plan
@@ -61,7 +62,7 @@ class ParcelablePlanPartitionTest {
             mapOf("foo2" to handleConnection2)
         )
 
-        val planPartition = Plan.Partition("arcId", "arcHost", listOf(particle, particle2))
+        val planPartition = Plan.Partition("arcId".toArcId(), "arcHost", listOf(particle, particle2))
 
 
         val marshalled = with(Parcel.obtain()) {

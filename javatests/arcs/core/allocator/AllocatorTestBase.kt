@@ -156,13 +156,13 @@ open class AllocatorTestBase {
 
         assertThat(planPartitions).containsExactly(
             Plan.Partition(
-                arcId.toString(),
+                arcId,
                 readingHost.hostId,
                 // replace the CreateableKeys with the allocated keys
                 listOf(allStorageKeyLens.mod(readPersonParticle) { sharedKey })
             ),
             Plan.Partition(
-                arcId.toString(),
+                arcId,
                 writingHost.hostId,
                 // replace the CreateableKeys with the allocated keys
                 listOf(allStorageKeyLens.mod(writePersonParticle) { sharedKey })
@@ -281,10 +281,10 @@ open class AllocatorTestBase {
         )
 
         val readingContext = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
+            readingExternalHost.arcHostContext(arcId)
         )
         val writingContext = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
+            writingExternalHost.arcHostContext(arcId)
         )
 
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
@@ -322,10 +322,10 @@ open class AllocatorTestBase {
         )
 
         val readingContext = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
+            readingExternalHost.arcHostContext(arcId)
         )
         val writingContext = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
+            writingExternalHost.arcHostContext(arcId)
         )
 
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
@@ -362,10 +362,10 @@ open class AllocatorTestBase {
         )
 
         val readingContext = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
+            readingExternalHost.arcHostContext(arcId)
         )
         val writingContext = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
+            writingExternalHost.arcHostContext(arcId)
         )
 
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
@@ -407,10 +407,10 @@ open class AllocatorTestBase {
         )
 
         val readingContext = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
+            readingExternalHost.arcHostContext(arcId)
         )
         val writingContext = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
+            writingExternalHost.arcHostContext(arcId)
         )
 
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
@@ -432,10 +432,10 @@ open class AllocatorTestBase {
         )
 
         val readingContextAfter = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
+            readingExternalHost.arcHostContext(arcId)
         )
         val writingContextAfter = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
+            writingExternalHost.arcHostContext(arcId)
         )
 
         assertThat(readingContextAfter.arcState).isEqualTo(ArcState.Running)

@@ -10,6 +10,7 @@
  */
 package arcs.core.data
 
+import arcs.core.common.ArcId
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
 import arcs.core.util.lens
@@ -58,7 +59,7 @@ open class Plan(
      * multiple [ArcHost]s, an [Allocator] must partition a plan by [ArcHost].
      */
     data class Partition(
-        val arcId: String,
+        val arcId: ArcId,
         val arcHost: String,
         val particles: List<Particle>
     ) {

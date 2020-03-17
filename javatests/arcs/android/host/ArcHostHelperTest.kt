@@ -24,6 +24,7 @@ import arcs.android.sdk.host.createStartArcHostIntent
 import arcs.android.sdk.host.createStopArcHostIntent
 import arcs.android.sdk.host.toComponentName
 import arcs.core.common.ArcId
+import arcs.core.common.toArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
 import arcs.core.data.Plan
@@ -140,7 +141,7 @@ class ArcHostHelperTest {
             mapOf("foo" to connection)
         )
 
-        val planPartition = Plan.Partition("id", "FooHost", listOf(particleSpec))
+        val planPartition = Plan.Partition("id".toArcId(), "FooHost", listOf(particleSpec))
         val startIntent = planPartition.createStartArcHostIntent(
             TestAndroidArcHostService::class.toComponentName(context)
         )

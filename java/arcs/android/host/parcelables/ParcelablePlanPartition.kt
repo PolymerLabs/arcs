@@ -13,6 +13,7 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import android.os.Parcelable
+import arcs.core.common.toArcId
 import arcs.core.data.Plan
 
 /** [Parcelable] variant of [Plan.Partition]. */
@@ -20,7 +21,7 @@ data class ParcelablePlanPartition(
     override val actual: Plan.Partition
 ) : ActualParcelable<Plan.Partition> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(actual.arcId)
+        parcel.writeString(actual.arcId.toString())
         parcel.writeString(actual.arcHost)
         parcel.writeInt(actual.particles.size)
         actual.particles.forEach {
@@ -51,7 +52,7 @@ data class ParcelablePlanPartition(
                 )
             }
 
-            return ParcelablePlanPartition(Plan.Partition(arcId, arcHost, particles))
+            return ParcelablePlanPartition(Plan.Partition(arcId.toArcId(), arcHost, particles))
         }
 
         override fun newArray(size: Int): Array<ParcelablePlanPartition?> = arrayOfNulls(size)

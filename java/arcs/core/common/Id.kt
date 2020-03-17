@@ -103,7 +103,16 @@ data class ArcId /* internal */ constructor(
     override val root: String,
     override val idTree: List<String>
 ) : Id {
-    override fun toString() = idToString(this)
+
+    private val arcIdString: String by lazy {
+        idToString(this)
+    }
+
+    override fun toString() = arcIdString
+
+    override fun hashCode() = arcIdString.hashCode()
+
+    override fun equals(other: Any?) = (other as? ArcId)?.toString() == arcIdString
 
     companion object {
         /**
