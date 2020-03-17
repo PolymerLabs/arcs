@@ -18,6 +18,7 @@ import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.api.Handle
 import arcs.core.storage.handle.HandleManager
+import arcs.core.storage.handle.Stores
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -50,6 +51,8 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
 
     override val hostId = this::class.className()
+
+    private val storeMap: Stores = Stores()
 
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
@@ -491,7 +494,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
      */
     open fun entityHandleManager(arcId: String) = EntityHandleManager(
-        HandleManager(platformTime),
+        HandleManager(platformTime, storeMap),
         arcId,
         hostId
     )

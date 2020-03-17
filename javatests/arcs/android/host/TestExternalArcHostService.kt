@@ -12,6 +12,7 @@ import arcs.core.allocator.TestingHost
 import arcs.core.data.Capabilities
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
+import arcs.core.storage.handle.Stores
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.Dispatchers
@@ -42,12 +43,15 @@ open class TestExternalArcHostService(val arcHost: TestingAndroidHost) : Service
     open class TestingAndroidHost(vararg particles: ParticleRegistration) : TestingHost(*particles) {
         lateinit var serviceContext: Context
 
+        private val stores = Stores()
+
         override fun entityHandleManager(arcId: String) = EntityHandleManager(
             AndroidHandleManager(
                 serviceContext,
                 FakeLifecycle(),
                 Dispatchers.Default,
-                testConnectionFactory
+                testConnectionFactory,
+                stores
             ),
             arcId,
             hostId
