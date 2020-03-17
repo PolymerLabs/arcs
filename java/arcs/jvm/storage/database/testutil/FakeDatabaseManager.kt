@@ -23,10 +23,10 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
-import arcs.core.storage.database.DatabaseManifest
-import arcs.core.storage.database.DatabaseManifestEntry
 import arcs.core.storage.database.DatabasePerformanceStatistics
-import arcs.core.storage.database.MutableDatabaseManifest
+import arcs.core.storage.database.DatabaseRegistration
+import arcs.core.storage.database.DatabaseRegistry
+import arcs.core.storage.database.MutableDatabaseRegistry
 import arcs.core.type.Type
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
@@ -50,8 +50,8 @@ class FakeDatabaseManager : DatabaseManager {
     private val cache: MutableMap<DatabaseIdentifier, Database>
         by guardedBy(mutex, mutableMapOf())
 
-    private val _manifest = FakeDatabaseManifest()
-    override val manifest: DatabaseManifest = _manifest
+    private val _manifest = FakeDatabaseRegistry()
+    override val registry: DatabaseRegistry = _manifest
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
         _manifest.register(name, persistent)
@@ -160,27 +160,27 @@ open class FakeDatabase : Database {
     }
 }
 
-class FakeDatabaseManifest : MutableDatabaseManifest {
-    private val entries = mutableSetOf<DatabaseManifestEntry>()
+class FakeDatabaseRegistry : MutableDatabaseRegistry {
+    private val entries = mutableSetOf<DatabaseRegistration>()
 
     @Synchronized
-    override fun register(databaseName: String, isPersistent: Boolean): DatabaseManifestEntry {
+    override fun register(databaseName: String, isPersistent: Boolean): DatabaseRegistration {
         val now = Instant.now().toEpochMilli()
         entries.find { it.name == databaseName && it.isPersistent == isPersistent }?.let {
             entries.remove(it)
             return it.copy(lastAccessed = now).also { entry -> entries.add(entry) }
         }
-        return DatabaseManifestEntry(databaseName, isPersistent, now, now)
+        return DatabaseRegistration(databaseName, isPersistent, now, now)
     }
 
     @Synchronized
-    override fun fetchAll(): List<DatabaseManifestEntry> = entries.toList()
+    override fun fetchAll(): List<DatabaseRegistration> = entries.toList()
 
     @Synchronized
-    override fun fetchAllCreatedIn(timeRange: LongRange): List<DatabaseManifestEntry> =
+    override fun fetchAllCreatedIn(timeRange: LongRange): List<DatabaseRegistration> =
         fetchAll().filter { it.created in timeRange }
 
     @Synchronized
-    override fun fetchAllAccessedIn(timeRange: LongRange): List<DatabaseManifestEntry> =
+    override fun fetchAllAccessedIn(timeRange: LongRange): List<DatabaseRegistration> =
         fetchAll().filter { it.lastAccessed in timeRange }
 }

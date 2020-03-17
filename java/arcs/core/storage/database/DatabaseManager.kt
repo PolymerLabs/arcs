@@ -22,7 +22,7 @@ import arcs.core.type.Type
 //  service like postgres, android sqlite database, non-android sqlite database, WebDatabase, etc..)
 interface DatabaseManager {
     /** Manifest of [Database]s managed by this [DatabaseManager]. */
-    val manifest: DatabaseManifest
+    val registry: DatabaseRegistry
 
     /**
      * Gets a [Database] for the given [name].  If [persistent] is `false`, the [Database] should

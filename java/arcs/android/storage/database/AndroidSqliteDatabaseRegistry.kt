@@ -19,25 +19,25 @@ import android.database.sqlite.SQLiteOpenHelper
 import arcs.android.common.forSingleResult
 import arcs.android.common.map
 import arcs.android.common.transaction
-import arcs.core.storage.database.DatabaseManifestEntry
-import arcs.core.storage.database.MutableDatabaseManifest
+import arcs.core.storage.database.DatabaseRegistration
+import arcs.core.storage.database.MutableDatabaseRegistry
 import arcs.core.util.Time
 import arcs.jvm.util.JvmTime
 
 /** Android implementation of the arcs [DatabaseManifest]. */
-class AndroidSqliteDatabaseManifest(
+class AndroidSqliteDatabaseRegistry(
     context: Context,
     private val time: Time = JvmTime
-) : MutableDatabaseManifest, SQLiteOpenHelper(context, MANIFEST_NAME, null, VERSION) {
-    private val nonPersistentEntries = mutableMapOf<String, DatabaseManifestEntry>()
+) : MutableDatabaseRegistry, SQLiteOpenHelper(context, MANIFEST_NAME, null, VERSION) {
+    private val nonPersistentEntries = mutableMapOf<String, DatabaseRegistration>()
 
-    override fun register(databaseName: String, isPersistent: Boolean): DatabaseManifestEntry {
+    override fun register(databaseName: String, isPersistent: Boolean): DatabaseRegistration {
         val nowMillis = time.currentTimeMillis
         if (!isPersistent) {
             return requireNotNull(
                 nonPersistentEntries.compute(databaseName) { _, entry ->
                     entry?.copy(lastAccessed = nowMillis)
-                        ?: DatabaseManifestEntry(
+                        ?: DatabaseRegistration(
                             databaseName,
                             false,
                             nowMillis,
@@ -52,7 +52,7 @@ class AndroidSqliteDatabaseManifest(
                 """SELECT name, created, last_accessed FROM arcs_databases WHERE name = ?""",
                 arrayOf(databaseName)
             ).forSingleResult {
-                DatabaseManifestEntry(
+                DatabaseRegistration(
                     name = it.getString(0),
                     isPersistent = true,
                     created = it.getLong(1),
@@ -68,7 +68,7 @@ class AndroidSqliteDatabaseManifest(
                 return@transaction existingEntry.copy(lastAccessed = nowMillis)
             }
 
-            val newEntry = DatabaseManifestEntry(
+            val newEntry = DatabaseRegistration(
                 name = databaseName,
                 isPersistent = true,
                 created = nowMillis,
@@ -86,12 +86,12 @@ class AndroidSqliteDatabaseManifest(
     }
 
     @SuppressLint("Recycle")
-    override fun fetchAll(): List<DatabaseManifestEntry> {
+    override fun fetchAll(): List<DatabaseRegistration> {
         val persistentEntries = readableDatabase.rawQuery(
             "SELECT name, created, last_accessed FROM arcs_databases",
             emptyArray()
         ).map {
-            DatabaseManifestEntry(
+            DatabaseRegistration(
                 name = it.getString(0),
                 isPersistent = true,
                 created = it.getLong(1),
@@ -101,7 +101,7 @@ class AndroidSqliteDatabaseManifest(
         return persistentEntries + nonPersistentEntries.values
     }
 
-    override fun fetchAllCreatedIn(timeRange: LongRange): List<DatabaseManifestEntry> {
+    override fun fetchAllCreatedIn(timeRange: LongRange): List<DatabaseRegistration> {
         val persistentEntries = readableDatabase.rawQuery(
             """
                 SELECT name, created, last_accessed 
@@ -110,7 +110,7 @@ class AndroidSqliteDatabaseManifest(
             """,
             arrayOf(timeRange.first.toString(), timeRange.last.toString())
         ).map {
-            DatabaseManifestEntry(
+            DatabaseRegistration(
                 name = it.getString(0),
                 isPersistent = true,
                 created = it.getLong(1),
@@ -120,7 +120,7 @@ class AndroidSqliteDatabaseManifest(
         return persistentEntries + nonPersistentEntries.values.filter { it.created in timeRange }
     }
 
-    override fun fetchAllAccessedIn(timeRange: LongRange): List<DatabaseManifestEntry> {
+    override fun fetchAllAccessedIn(timeRange: LongRange): List<DatabaseRegistration> {
         val persistentEntries = readableDatabase.rawQuery(
             """
                 SELECT name, created, last_accessed 
@@ -129,7 +129,7 @@ class AndroidSqliteDatabaseManifest(
             """,
             arrayOf(timeRange.first.toString(), timeRange.last.toString())
         ).map {
-            DatabaseManifestEntry(
+            DatabaseRegistration(
                 name = it.getString(0),
                 isPersistent = true,
                 created = it.getLong(1),

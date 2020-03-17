@@ -14,7 +14,7 @@ package arcs.android.storage.database
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.forSingleResult
-import arcs.core.storage.database.DatabaseManifestEntry
+import arcs.core.storage.database.DatabaseRegistration
 import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -23,14 +23,14 @@ import org.junit.runner.RunWith
 import java.time.Instant
 
 @RunWith(AndroidJUnit4::class)
-class AndroidSqliteDatabaseManifestTest {
+class AndroidSqliteDatabaseRegistryTest {
     private lateinit var time: TestTime
-    private lateinit var manifest: AndroidSqliteDatabaseManifest
+    private lateinit var manifest: AndroidSqliteDatabaseRegistry
 
     @Before
     fun setUp() {
         time = TestTime()
-        manifest = AndroidSqliteDatabaseManifest(ApplicationProvider.getApplicationContext(), time)
+        manifest = AndroidSqliteDatabaseRegistry(ApplicationProvider.getApplicationContext(), time)
     }
 
     @Test
@@ -59,7 +59,7 @@ class AndroidSqliteDatabaseManifestTest {
             "SELECT name, created, last_accessed FROM arcs_databases WHERE name = ?",
             arrayOf("foo")
         ).forSingleResult {
-            DatabaseManifestEntry(
+            DatabaseRegistration(
                 name = it.getString(0),
                 isPersistent = true,
                 created = it.getLong(1),

@@ -30,10 +30,10 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
     private val context = context.applicationContext
     private val mutex = Mutex()
     private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
-    override val manifest = AndroidSqliteDatabaseManifest(context)
+    override val registry = AndroidSqliteDatabaseRegistry(context)
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database {
-        val entry = manifest.register(name, persistent)
+        val entry = registry.register(name, persistent)
         return mutex.withLock {
             dbCache[entry.name to entry.isPersistent]
                 ?: DatabaseImpl(context, name, persistent).also {
@@ -47,14 +47,14 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
     }
 
     suspend fun resetAll() {
-        manifest.fetchAll()
+        registry.fetchAll()
             .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
             .forEach { it.reset() }
     }
 
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
         val all = mutableMapOf<StorageKey, Type>()
-        manifest.fetchAll().map { getDatabase(it.name, it.isPersistent) }
+        registry.fetchAll().map { getDatabase(it.name, it.isPersistent) }
             .forEach { all.putAll(it.getAllStorageKeys()) }
         return all
     }
