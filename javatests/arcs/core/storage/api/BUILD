@@ -7,8 +7,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-TEST_SRCS = glob(["*Test.kt"])
-
 arcs_kt_jvm_test_suite(
     name = "api",
     srcs = glob(["*.kt"]),
