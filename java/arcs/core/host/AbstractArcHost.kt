@@ -480,7 +480,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
      */
     private suspend fun cleanupHandles(handles: HandleHolder) {
-        // TODO: cleans up handles and detaches callbacks, but doesn't use close [ActiveStore]
+        // TODO: cleans up handles and detaches callbacks, but doesn't close [ActiveStore]
         handles.reset()
     }
 
