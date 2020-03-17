@@ -352,8 +352,13 @@ class ReferenceModeStore private constructor(
                                     op.toBridgingOp(updated?.toRawEntity(reference.id)).refModeOp
                                 )
 
-                                // TODO? Typescript doesn't pass an id.
-                                callbacks.send(ProxyMessage.Operations(upstreamOps, id = null))
+                                callbacks.send(
+                                    message = ProxyMessage.Operations(
+                                        operations = upstreamOps,
+                                        id = proxyMessage.id
+                                    ),
+                                    exceptTo = proxyMessage.id
+                                )
                             }
                             continue@opLoop
                         }
@@ -364,8 +369,10 @@ class ReferenceModeStore private constructor(
 
                     sendQueue.enqueue {
                         val upstream = listOf(op.toBridgingOp(getEntity()).refModeOp)
-                        // TODO? Typescript doesn't pass an id.
-                        callbacks.send(ProxyMessage.Operations(upstream, id = proxyMessage.id))
+                        callbacks.send(
+                            message = ProxyMessage.Operations(upstream, id = proxyMessage.id),
+                            exceptTo = proxyMessage.id
+                        )
                     }
                 }
             }
