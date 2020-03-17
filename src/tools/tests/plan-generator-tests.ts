@@ -19,7 +19,7 @@ describe('recipe2plan', () => {
     const collectOccurrences = (corpus: string, targetPrefix: string, targetSuffix: string): string[] => {
       let idx = 0;
       const collection: string[] = [];
-      while (idx != -1) {
+      while (idx !== -1) {
         const start = corpus.indexOf(targetPrefix, idx);
         const end = corpus.indexOf(targetSuffix, start);
         if (start === -1 || end === -1) break;
