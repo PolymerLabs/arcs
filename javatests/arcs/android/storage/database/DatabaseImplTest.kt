@@ -386,19 +386,10 @@ class DatabaseImplTest {
 
     @Test
     fun insertAndGet_entity_newEmptyEntity() = runBlockingTest {
-        val key = DummyStorageKey("key")
-        val schema = newSchema("hash")
-        val entity = DatabaseData.Entity(
-            RawEntity("entity", emptySet(), emptySet()),
-            schema,
-            FIRST_VERSION_NUMBER,
-            VERSION_MAP
-        )
+        database.insertOrUpdateEntity(STORAGE_KEY, EMPTY_ENTITY)
+        val entityOut = database.getEntity(STORAGE_KEY, EMPTY_SCHEMA)
 
-        database.insertOrUpdateEntity(key, entity)
-        val entityOut = database.getEntity(key, schema)
-
-        assertThat(entityOut).isEqualTo(entity)
+        assertThat(entityOut).isEqualTo(EMPTY_ENTITY)
     }
 
     @Test
@@ -698,7 +689,7 @@ class DatabaseImplTest {
             )
         )
         val entity = DatabaseData.Entity(
-            RawEntity("entity", emptyMap(), emptyMap()),
+            EMPTY_RAW_ENTITY,
             schema,
             FIRST_VERSION_NUMBER,
             VERSION_MAP
@@ -1132,41 +1123,27 @@ class DatabaseImplTest {
     @Test
     fun delete_entity_getsRemoved() = runBlockingTest {
         val entityKey = DummyStorageKey("entity")
-        val schema = newSchema("hash")
-        val entity = DatabaseData.Entity(
-            rawEntity = RawEntity("entity", singletons = emptyMap(), collections = emptyMap()),
-            schema = schema,
-            databaseVersion = 1,
-            versionMap = VERSION_MAP
-        )
-        database.insertOrUpdateEntity(entityKey, entity)
+        database.insertOrUpdateEntity(entityKey, EMPTY_ENTITY)
 
         database.delete(entityKey)
 
         assertTableIsEmpty("storage_keys")
         assertTableIsEmpty("entities")
         assertTableIsEmpty("field_values")
-        assertThat(database.getEntity(entityKey, schema)).isNull()
+        assertThat(database.getEntity(entityKey, EMPTY_SCHEMA)).isNull()
     }
 
     @Test
     fun delete_collection_otherEntitiesUnaffected() = runBlockingTest {
         val keyToKeep = DummyStorageKey("key-to-keep")
         val keyToDelete = DummyStorageKey("key-to-delete")
-        val schema = newSchema("hash")
-        val entity = DatabaseData.Entity(
-            rawEntity = RawEntity("entity", emptySet(), emptySet()),
-            schema = schema,
-            databaseVersion = 1,
-            versionMap = VERSION_MAP
-        )
-        database.insertOrUpdateEntity(keyToKeep, entity)
-        database.insertOrUpdateEntity(keyToDelete, entity)
+        database.insertOrUpdateEntity(keyToKeep, EMPTY_ENTITY)
+        database.insertOrUpdateEntity(keyToDelete, EMPTY_ENTITY)
 
         database.delete(keyToDelete)
 
-        assertThat(database.getEntity(keyToKeep, schema)).isEqualTo(entity)
-        assertThat(database.getEntity(keyToDelete, schema)).isNull()
+        assertThat(database.getEntity(keyToKeep, EMPTY_SCHEMA)).isEqualTo(EMPTY_ENTITY)
+        assertThat(database.getEntity(keyToDelete, EMPTY_SCHEMA)).isNull()
     }
 
     @Test
@@ -1315,17 +1292,9 @@ class DatabaseImplTest {
 
     @Test
     fun canAddAndRemoveClientsDuringClientCallback() = runBlockingTest {
-        val storageKey = DummyStorageKey("entity")
-        val schema = newSchema("hash")
-        val entity = DatabaseData.Entity(
-            RawEntity("entity", emptyMap(), emptyMap()),
-            schema,
-            FIRST_VERSION_NUMBER,
-            VERSION_MAP
-        )
-        val otherClient = FakeDatabaseClient(storageKey)
+        val otherClient = FakeDatabaseClient(STORAGE_KEY)
         val testClient = object : DatabaseClient {
-            override val storageKey = storageKey
+            override val storageKey = STORAGE_KEY
             var updateWasCalled = false
             var deleteWasCalled = false
             var extraClientId: Int? = null
@@ -1346,28 +1315,19 @@ class DatabaseImplTest {
         }
 
         // Add a bunch of fake clients before and after the one we're testing.
-        repeat(5) { database.addClient(FakeDatabaseClient(storageKey)) }
+        repeat(5) { database.addClient(FakeDatabaseClient(STORAGE_KEY)) }
         database.addClient(testClient)
-        repeat(5) { database.addClient(FakeDatabaseClient(storageKey)) }
+        repeat(5) { database.addClient(FakeDatabaseClient(STORAGE_KEY)) }
 
         // Issue an update and check it worked.
-        database.insertOrUpdate(storageKey, entity)
+        database.insertOrUpdate(STORAGE_KEY, EMPTY_ENTITY)
         assertThat(testClient.updateWasCalled).isTrue()
         assertThat(testClient.extraClientId).isNotNull()
 
         // Issue a delete and check it worked.
-        database.delete(storageKey, originatingClientId = null)
+        database.delete(STORAGE_KEY, originatingClientId = null)
         assertThat(testClient.deleteWasCalled).isTrue()
     }
-
-    private fun newSchema(
-        hash: String,
-        fields: SchemaFields = SchemaFields(emptyMap(), emptyMap())
-    ) = Schema(
-        names = emptyList(),
-        fields = fields,
-        hash = hash
-    )
 
     /** Returns a list of all the rows in the 'fields' table. */
     private fun readFieldsTable() =
@@ -1395,8 +1355,26 @@ class DatabaseImplTest {
         private val CREATION_TIMESTAMP = 99L
         private val EXPIRATION_TIMESTAMP = 999L
 
+        private val STORAGE_KEY = DummyStorageKey("key")
+        private val EMPTY_SCHEMA = newSchema("empty")
+        private val EMPTY_RAW_ENTITY = RawEntity("empty-entity", emptyMap(), emptyMap())
+        private val EMPTY_ENTITY = DatabaseData.Entity(
+            EMPTY_RAW_ENTITY,
+            EMPTY_SCHEMA,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
     }
 }
+
+private fun newSchema(
+    hash: String,
+    fields: SchemaFields = SchemaFields(emptyMap(), emptyMap())
+) = Schema(
+    names = emptyList(),
+    fields = fields,
+    hash = hash
+)
 
 /** Helper class for reading results from the fields table. */
 private data class FieldRow(
