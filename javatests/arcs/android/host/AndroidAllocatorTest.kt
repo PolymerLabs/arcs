@@ -20,6 +20,7 @@ import arcs.android.sdk.host.toComponentName
 import arcs.core.allocator.AllocatorTestBase
 import arcs.core.data.Capabilities
 import arcs.core.host.HostRegistry
+import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -74,6 +75,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(context)
 
+        TestExternalArcHostService.testConnectionFactory = TestConnectionFactory(context)
         readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
         writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
         super.setUp()

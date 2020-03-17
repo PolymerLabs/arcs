@@ -37,7 +37,7 @@ class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
 
     @Before
     override fun setUp() = runBlocking {
-        TestExternalArcHostService.TestingAndroidHost.testingCapability = Capabilities.Persistent
+        TestExternalArcHostService.testingCapability = Capabilities.Persistent
         super.setUp()
         AndroidDriverAndKeyConfigurator.configure(context)
         Unit
