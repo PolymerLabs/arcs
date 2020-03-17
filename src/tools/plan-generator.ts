@@ -31,6 +31,7 @@ export class PlanGeneratorError extends Error {
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
   private specRegistry: Dictionary<string> = {};
+  private createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
 
   constructor(private resolvedRecipes: Recipe[], private namespace: string) {
   }
@@ -124,14 +125,18 @@ export class PlanGenerator {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
     }
     if (handle.fate === 'create') {
-      return ktUtils.applyFun('CreateableStorageKey', [quote(handle.id || this.createRandomHandleId())]);
+      return ktUtils.applyFun('CreateableStorageKey', [quote(this.createCreateHandleId(handle))]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
   }
 
-  createRandomHandleId(): string {
-    const rand = Math.floor(Random.next() * Math.pow(2, 50));
-    return `handle/${rand}`;
+  createCreateHandleId(handle: Handle): string {
+    if (handle.id) return handle.id;
+    if (!this.createHandleRegistry.has(handle)) {
+      const rand = Math.floor(Random.next() * Math.pow(2, 50));
+      this.createHandleRegistry.set(handle, `handle/${rand}`);
+    }
+    return this.createHandleRegistry.get(handle);
   }
 
   /** Generates a Kotlin `Ttl` from a Ttl. */
