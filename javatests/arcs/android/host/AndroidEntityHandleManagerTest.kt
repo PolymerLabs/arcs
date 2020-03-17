@@ -24,6 +24,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
+import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
@@ -70,6 +71,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         backingKey = RamDiskStorageKey("collection-back"), storageKey = RamDiskStorageKey("collection-ent")
     )
 
+    private lateinit var testConnectionFactory: ConnectionFactory
     @Before
     fun setUp() {
         RamDisk.clear()
@@ -85,11 +87,13 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         handleHolder = TestParticleHandles()
 
+        testConnectionFactory = TestConnectionFactory(app)
+
         handleManager = EntityHandleManager(
             AndroidHandleManager(
                 lifecycle = lifecycle,
                 context = app,
-                connectionFactory = TestConnectionFactory(app)
+                connectionFactory = testConnectionFactory
             )
         )
     }
@@ -150,6 +154,39 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         }
         handleHolder.writeHandle.store(entity1)
         handleHolder.writeHandle.store(entity2)
+    }
+
+    @Test
+    fun singletonHandle_twoHandleManagerOnUpdate() = runBlocking {
+        val writeHandle = createSingletonHandle(
+            handleManager,
+            "writeHandle",
+            HandleMode.Write
+        )
+
+        val secondHandleManager = EntityHandleManager(
+            AndroidHandleManager(
+                lifecycle = lifecycle,
+                context = app,
+                connectionFactory = testConnectionFactory
+            )
+        )
+
+        val readHandle = createSingletonHandle(
+            secondHandleManager,
+            "readHandle",
+            HandleMode.Read
+        )
+
+
+        val deferred = CompletableDeferred<Unit>()
+        handleHolder.readHandle.onUpdate { data ->
+            deferred.complete(Unit)
+        }
+
+        handleHolder.writeHandle.store(entity1)
+
+        deferred.await()
     }
 
     @Test
