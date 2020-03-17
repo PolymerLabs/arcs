@@ -27,6 +27,7 @@ import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.storage.ProxyMessage
+import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.database.name
@@ -53,7 +54,7 @@ import kotlinx.coroutines.runBlocking
 class StorageService : ResurrectorService() {
     private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
-    private val stores = ConcurrentHashMap<StoreOptions<*, *, *>, Store<*, *, *>>()
+    private val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
     private var startTime: Long? = null
     private val stats = BindingContextStatsImpl()
     private val log = TaggedLog { "StorageService" }
@@ -86,8 +87,9 @@ class StorageService : ResurrectorService() {
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
 
+        val options = parcelableOptions.actual
         return BindingContext(
-            stores.computeIfAbsent(parcelableOptions.actual) { Store(it) },
+            stores.computeIfAbsent(options.storageKey) { Store(options) },
             parcelableOptions.crdtType,
             coroutineContext,
             stats
@@ -107,7 +109,7 @@ class StorageService : ResurrectorService() {
 
     override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
         val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
-        val storageKeys = stores.keys.map { it.storageKey }.toSet()
+        val storageKeys = stores.keys.map { it }.toSet()
 
         val statsPercentiles = stats.roundtripPercentiles
 
