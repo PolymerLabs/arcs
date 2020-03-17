@@ -1,7 +1,5 @@
 package arcs.core.storage.handle
 
-import arcs.core.crdt.CrdtEntity
-import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -12,7 +10,6 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.Reference
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileEntry
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Log
@@ -98,7 +95,7 @@ class HandleManagerTest {
 
     @Test
     fun testCreateReferenceSingletonHandle() = handleManagerTest { hm ->
-        val singletonHandle = hm.referenceSingletonHandle(singletonRefKey, schema)
+        val singletonHandle = hm.referenceSingletonHandle(singletonRefKey, schema, "refhandle")
         val entity1Ref = singletonHandle.createReference(entity1, backingKey)
         singletonHandle.store(entity1Ref)
 
@@ -111,14 +108,9 @@ class HandleManagerTest {
         assertThat(readBack.isAlive(coroutineContext)).isFalse()
         assertThat(readBack.isDead(coroutineContext)).isTrue()
 
-        // Stash entity1 in the RamDisk manually, so it becomes alive.
-        RamDisk.memory[readBack.storageKey.childKeyWithComponent(readBack.id)] = VolatileEntry(
-            CrdtEntity.Data(VersionMap("foo" to 1), entity1) {
-                if (it is Reference) it
-                else CrdtEntity.Reference.buildReference(it)
-            },
-            0
-        )
+        // Now write the entity via a different handle
+        val singletonEntityHandle = hm.rawEntitySingletonHandle(singletonKey, schema, "entHandle")
+        singletonEntityHandle.store(entity1)
 
         // Reference should be alive.
         assertThat(readBack.isAlive(coroutineContext)).isTrue()
@@ -126,6 +118,18 @@ class HandleManagerTest {
 
         // Now dereference our read-back reference.
         assertThat(readBack.dereference(coroutineContext)).isEqualTo(entity1)
+
+        val modEntity1 = entity1.copy(
+            singletons = entity1.singletons + ("name" to "Ben".toReferencable())
+        )
+        singletonEntityHandle.store(modEntity1)
+
+        // Reference should still be alive.
+        assertThat(readBack.isAlive(coroutineContext)).isTrue()
+        assertThat(readBack.isDead(coroutineContext)).isFalse()
+
+        // Now dereference our read-back reference, should now be modEntity1
+        assertThat(readBack.dereference(coroutineContext)).isEqualTo(modEntity1)
     }
 
     @Test
@@ -196,25 +200,10 @@ class HandleManagerTest {
         assertThat(readBackEntity2Ref.isAlive(coroutineContext)).isFalse()
         assertThat(readBackEntity2Ref.isDead(coroutineContext)).isTrue()
 
-        // Stash the entities in the RamDisk manually, so it becomes alive.
-        val readBackEntity1Key =
-            readBackEntity1Ref.storageKey.childKeyWithComponent(readBackEntity1Ref.id)
-        RamDisk.memory[readBackEntity1Key] = VolatileEntry(
-            CrdtEntity.Data(VersionMap("foo" to 1), entity1) {
-                if (it is Reference) it
-                else CrdtEntity.Reference.buildReference(it)
-            },
-            0
-        )
-        val readBackEntity2Key =
-            readBackEntity2Ref.storageKey.childKeyWithComponent(readBackEntity2Ref.id)
-        RamDisk.memory[readBackEntity2Key] = VolatileEntry(
-            CrdtEntity.Data(VersionMap("foo" to 1), entity2) {
-                if (it is Reference) it
-                else CrdtEntity.Reference.buildReference(it)
-            },
-            0
-        )
+        // Now write the entity via a different handle
+        val entityHandle = hm.rawEntityCollectionHandle(singletonKey, schema, "entHandle")
+        entityHandle.store(entity1)
+        entityHandle.store(entity2)
 
         // References should be alive.
         assertThat(readBackEntity1Ref.isAlive(coroutineContext)).isTrue()
@@ -225,6 +214,21 @@ class HandleManagerTest {
         // Now dereference our read-back references.
         assertThat(readBackEntity1Ref.dereference(coroutineContext)).isEqualTo(entity1)
         assertThat(readBackEntity2Ref.dereference(coroutineContext)).isEqualTo(entity2)
+
+        // Now mutate the entities
+        val modEntity1 = entity1.copy(
+            singletons = entity1.singletons + ("name" to "Ben".toReferencable())
+        )
+        entityHandle.store(modEntity1)
+
+        val modEntity2 = entity2.copy(
+            singletons = entity2.singletons + ("name" to "Ben".toReferencable())
+        )
+        entityHandle.store(modEntity2)
+
+        // Now dereference our read-back references.
+        assertThat(readBackEntity1Ref.dereference(coroutineContext)).isEqualTo(modEntity1)
+        assertThat(readBackEntity2Ref.dereference(coroutineContext)).isEqualTo(modEntity2)
     }
 
     @Test

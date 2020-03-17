@@ -282,7 +282,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         } while (newState !is State.Idle<Data> && newState !is State.AwaitingDriverModel<Data>)
 
         // Finish applying the models from the driver, if we have any.
-        val models = pendingDriverModels.value
+        val models = pendingDriverModels.getAndSet(emptyList())
         if (models.isNotEmpty()) {
             applyPendingDriverModels(models)
         }
