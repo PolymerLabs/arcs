@@ -184,14 +184,9 @@ class AndroidHandleManagerTest : LifecycleOwner {
         assertThat(readBack.isAlive(coroutineContext)).isFalse()
         assertThat(readBack.isDead(coroutineContext)).isTrue()
 
-        // Stash entity1 in the RamDisk manually, so it becomes alive.
-        RamDisk.memory[readBack.storageKey.childKeyWithComponent(readBack.id)] = VolatileEntry(
-            CrdtEntity.Data(VersionMap("foo" to 1), entity1) {
-                if (it is Reference) it
-                else CrdtEntity.Reference.buildReference(it)
-            },
-            0
-        )
+        // Stash the entities via a different handle to make them live
+        val entityHandle = handleManager.rawEntitySingletonHandle(singletonKey, schema)
+        entityHandle.store(entity1)
 
         // Reference should be alive.
         assertThat(readBack.isAlive(coroutineContext)).isTrue()
@@ -222,25 +217,10 @@ class AndroidHandleManagerTest : LifecycleOwner {
         assertThat(readBackEntity2Ref.isAlive(coroutineContext)).isFalse()
         assertThat(readBackEntity2Ref.isDead(coroutineContext)).isTrue()
 
-        // Stash the entities in the RamDisk manually, so it becomes alive.
-        val readBackEntity1Key =
-            readBackEntity1Ref.storageKey.childKeyWithComponent(readBackEntity1Ref.id)
-        RamDisk.memory[readBackEntity1Key] = VolatileEntry(
-            CrdtEntity.Data(VersionMap("foo" to 1), entity1) {
-                if (it is Reference) it
-                else CrdtEntity.Reference.buildReference(it)
-            },
-            0
-        )
-        val readBackEntity2Key =
-            readBackEntity2Ref.storageKey.childKeyWithComponent(readBackEntity2Ref.id)
-        RamDisk.memory[readBackEntity2Key] = VolatileEntry(
-            CrdtEntity.Data(VersionMap("foo" to 1), entity2) {
-                if (it is Reference) it
-                else CrdtEntity.Reference.buildReference(it)
-            },
-            0
-        )
+        // Stash the entities via a different handle to make them live
+        val entityHandle = handleManager.rawEntityCollectionHandle(singletonKey, schema)
+        entityHandle.store(entity1)
+        entityHandle.store(entity2)
 
         // References should be alive.
         assertThat(readBackEntity1Ref.isAlive(coroutineContext)).isTrue()
