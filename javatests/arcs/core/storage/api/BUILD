@@ -12,6 +12,7 @@ arcs_kt_jvm_test_suite(
     srcs = glob(["*.kt"]),
     package = "arcs.core.storage.api",
     deps = [
+        "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/testutil",
