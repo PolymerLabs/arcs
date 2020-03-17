@@ -40,9 +40,11 @@ import arcs.core.storage.handle.SingletonHandle
  */
 class EntityHandleManager(
     private val handleManager: HandleManager,
-    private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
-    private val hostId: String = "nohost"
+    private val arcName: String = "defaultArcName",
+    private val hostId: String = "nohost",
+    private val idGenerator: Id.Generator = Id.Generator.newSession()
 ) {
+    private val arcId: String = idGenerator.newArcId(arcName).toString()
 
     /**
      * Creates and returns a new [SingletonHandle] for managing an [Entity].
@@ -59,8 +61,7 @@ class EntityHandleManager(
         name: String,
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
-        schema: Schema,
-        idGenerator: Id.Generator = Id.Generator.newSession()
+        schema: Schema
     ) = handleManager.rawEntitySingletonHandle(
         storageKey,
         schema,
@@ -92,8 +93,7 @@ class EntityHandleManager(
         name: String,
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
-        schema: Schema,
-        idGenerator: Id.Generator = Id.Generator.newSession()
+        schema: Schema
     ) = handleManager.rawEntityCollectionHandle(
             storageKey,
             schema,
