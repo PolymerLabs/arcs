@@ -1296,7 +1296,9 @@ class DatabaseImpl(
 
                 -- Maps entity storage key IDs to entity IDs (Arcs string ID, not a row ID).
                 CREATE TABLE entities (
+                    -- Points to id in storage_keys table.
                     storage_key_id INTEGER NOT NULL PRIMARY KEY,
+                    -- The Arcs entity ID.
                     entity_id TEXT NOT NULL,
                     creation_timestamp INTEGER NOT NULL,
                     expiration_timestamp INTEGER NOT NULL,
@@ -1343,18 +1345,22 @@ class DatabaseImpl(
                 CREATE TABLE collection_entries (
                     collection_id INTEGER NOT NULL,
                     -- For collections of primitives: value_id for primitive in collection.
-                    -- For collections of entities: id of reference in entity_refs table.
-                    -- For singletons: storage_key_id of entity.
+                    -- For collections/singletons of entities: id of reference in entity_refs table.
                     value_id INTEGER NOT NULL
                 );
 
                 CREATE INDEX collection_entries_collection_id_index
                 ON collection_entries (collection_id);
 
+                -- Fields in an entity.
                 CREATE TABLE fields (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    -- Points to id in types table.
                     type_id INTEGER NOT NULL,
+                    -- The type id (types table) of the parent (eg if this is a field in an entity,
+                    -- the type id of that entity).
                     parent_type_id INTEGER NOT NULL,
+                    -- Name of the field.
                     name TEXT NOT NULL,
                     -- Boolean indicating if the field is a collection or singleton.
                     is_collection INTEGER NOT NULL
@@ -1364,8 +1370,11 @@ class DatabaseImpl(
 
                 CREATE TABLE field_values (
                     entity_storage_key_id INTEGER NOT NULL,
+                    -- Points to id field in fields table
                     field_id INTEGER NOT NULL,
-                    -- For singleton primitive fields: id in primitive value table.
+                    -- For singleton primitive fields: id in primitive value table (the type_id in 
+                    -- the corresponding fields table determine which primitive value table to use).
+                    -- For booleans this is the boolean value as 0/1.
                     -- For singleton entity references: storage_key_id of entity.
                     -- For collections of anything: collection_id.
                     value_id INTEGER
