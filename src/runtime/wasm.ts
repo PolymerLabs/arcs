@@ -285,7 +285,7 @@ export abstract class StringDecoder {
     while (num--) {
       const klen = Number(decoder.upTo(':'));
       const key = decoder.chomp(klen);
-      // TODO(sjmiles): be backward compatible with encoders that only encode string values
+      // be backward compatible with encoders that only encode string values
       const typeChar = decoder.chomp(1);
       // if typeChar is a digit, it's part of a length specifier
       if (typeChar >= '0' && typeChar <= '9') {
@@ -306,7 +306,7 @@ export abstract class StringDecoder {
     const arr = [];
     let num = Number(decoder.upTo(':'));
     while (num--) {
-      // TODO(sjmiles): be backward compatible with encoders that only encode string values
+      // be backward compatible with encoders that only encode string values
       const typeChar = decoder.chomp(1);
       // if typeChar is a digit, it's part of a length specifier
       if (typeChar >= '0' && typeChar <= '9') {
@@ -772,7 +772,7 @@ export class WasmParticle extends Particle {
     }
     this.innerParticle = this.exports[fn]();
     this.container.register(this, this.innerParticle);
-    // TODO(sjmiles): probably too soon: we need to render at least once, but we may have handle
+    // TODO(sjmiles): probably rendering too soon: we need to render at least once, but we may have handle
     // work pending. @shans says: if the particle has readable handles, onHandleUpdate is guaranteed
     // to be called, otherwise we need `renderOutput` manually. Need to optimize this across all
     // particle bases.
@@ -780,7 +780,7 @@ export class WasmParticle extends Particle {
   }
 
   renderOutput() {
-    // TODO(sjmiles): not yet implemented in CPP
+    // not yet implemented in CPP
     if (this.exports['_renderOutput']) {
       this.exports._renderOutput(this.innerParticle);
     }
@@ -987,8 +987,7 @@ export class WasmParticle extends Particle {
     return p;
   }
 
-  // TODO(sjmiles): UiBroker changes ... we don't have `capabilities` yet,
-  // so just go straight to output
+  // in TS output is provided by `capabilities`, which is not available in WASM, so just go straight to output
   output(content) {
     this.container.apiPort.Output(this, content);
   }

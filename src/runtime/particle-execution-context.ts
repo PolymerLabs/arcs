@@ -294,11 +294,11 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
   capabilities(hasInnerArcs: boolean): Capabilities {
     const cap: Capabilities = {
-      // TODO(sjmiles): experimental `services` impl
+      // remote `services` impl
       serviceRequest: (particle, args, callback) => {
         this.apiPort.ServiceRequest(particle, args, callback);
       },
-      // TODO(sjmiles): alternate render path via slotObserver (UiBroker)
+      // SlotObserver (UiBroker) render path
       output: (particle, content) => {
         this.apiPort.Output(particle, content);
       }
