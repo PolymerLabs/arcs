@@ -92,6 +92,7 @@ describe('API channel', function() {
       onSynchronizeProxy() {}
       onInitializeProxy() {}
       onRegister() {}
+      onBackingRegister() {}
       onProxyMessage() {}
       onSystemTraceBegin() {}
       onSystemTraceEnd() {}

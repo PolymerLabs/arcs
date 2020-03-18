@@ -307,7 +307,7 @@ describe('Reference Mode Store', async () => {
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'age', value: {id: '42', value: 42}, actor, clock: {[actor]: 1}});
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor, clock: {[actor]: 1}});
 
-    await activeStore.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: entityCRDT.getData(), id: 1}, 'an-id');
+    await activeStore.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: entityCRDT.getData(), id: 1, muxId: 'an-id'});
 
     return new Promise(async (resolve, reject) => {
       const id = activeStore.on(async proxyMessage => {
@@ -363,7 +363,7 @@ describe('Reference Mode Store', async () => {
     remoteCollection.applyOperation({type: CollectionOpTypes.Add, clock: {them: 1}, actor: 'them', added: reference});
 
     // ensure remote entity is stored in backing store
-    await activeStore.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: {singletons: {name: {values: {}, version: {}}, age: {values: {}, version: {}}}, collections: {}, version: {}}, id: 2}, 'another-id');
+    await activeStore.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: {singletons: {name: {values: {}, version: {}}, age: {values: {}, version: {}}}, collections: {}, version: {}}, id: 2, muxId: 'another-id'});
 
     const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;
     let sendInvoked = false;
