@@ -1,11 +1,33 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_android_library",
     "arcs_kt_android_test_suite",
 )
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
+
+arcs_kt_android_library(
+    name = "testlib",
+    testonly = 1,
+    srcs = ["AndroidHandleManagerTestBase.kt"],
+    deps = [
+        "//java/arcs/android/storage/handle",
+        "//java/arcs/sdk/android/storage",
+        "//java/arcs/sdk/android/storage/service",
+        "//java/arcs/sdk/android/storage/service/testutil",
+        "//javatests/arcs/core/storage/handle:testbase",
+        "//third_party/android/androidx_test/core",
+        "//third_party/android/androidx_test/ext/junit",
+        "//third_party/java/androidx/work:testing",
+        "//third_party/java/junit:junit-android",
+        "//third_party/java/robolectric",
+        "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
+    ],
+)
 
 arcs_kt_android_test_suite(
     name = "handle",
@@ -14,6 +36,7 @@ arcs_kt_android_test_suite(
     manifest = "AndroidManifest.xml",
     package = "arcs.android.storage.handle",
     deps = [
+        ":testlib",
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
         "//java/arcs/android/storage/handle",
