@@ -14,7 +14,17 @@ package arcs.core.data
 import arcs.core.type.Type
 
 /** Representation of recipe in an Arcs manifest. */
-data class Recipe(val name: String) {
+data class Recipe(
+    val name: String,
+    val handles: Map<String, Handle>,
+    val particles: List<Particle>
+) {
+    /** Representation of a particle in a recipe. */
+    data class Particle(
+        val spec: ParticleSpec,
+        val handleConnections: Map<String, Handle>
+    )
+
     /** Definition of a handle in a recipe. */
     data class Handle(
         val name: String,
