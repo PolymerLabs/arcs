@@ -47,7 +47,7 @@ arcs_kt_plan(
     ],
     deps = [
         ":schemas",
-    ]
+    ],
 )
 
 arcs_kt_jvm_library(
