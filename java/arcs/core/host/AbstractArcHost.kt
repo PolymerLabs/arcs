@@ -52,8 +52,6 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
 
     override val hostId = this::class.className()
 
-    private val storeMap: Stores = Stores()
-
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
     }
@@ -450,7 +448,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
      */
     open fun entityHandleManager(arcId: String) = EntityHandleManager(
-        HandleManager(platformTime, storeMap),
+        HandleManager(platformTime, singletonStores),
         arcId,
         hostId
     )
@@ -464,5 +462,17 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         return particleConstructors[identifier]?.invoke() ?: throw IllegalArgumentException(
             "Particle $identifier not found."
         )
+    }
+
+    companion object {
+        /**
+         * Shared [Stores] instance. This is used to share [Store]s among multiple [ArcHost]s or
+         * even across different arcs. On Android, [StorageService] runs as a single process so all
+         * [ArcHost]s share the same Storage layer and this singleton is not needed, but on other
+         * platforms the [Stores] object provides Android-like functionality. If your platform
+         * supports its own [Service]-level analogue like Android, override this method to return
+         * a new instance each time.
+         */
+        private val singletonStores = Stores()
     }
 }
