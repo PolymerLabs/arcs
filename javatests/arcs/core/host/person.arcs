@@ -8,13 +8,13 @@ particle ReadPerson in 'arcs.core.host.ReadPerson'
   person: reads Person
 
 particle WritePerson in 'arcs.core.host.WritePerson'
-  person: reads writes Person
+  person: writes Person
 
 recipe PersonRecipe
   recipePerson: create 'recipePerson'
 
   WritePerson
-    person: reads writes recipePerson
+    person: writes recipePerson
 
   ReadPerson
     person: reads recipePerson

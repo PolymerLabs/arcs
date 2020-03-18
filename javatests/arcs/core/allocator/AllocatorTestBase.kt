@@ -154,9 +154,7 @@ open class AllocatorTestBase {
                 assertThat(connection.storageKey).isInstanceOf(CreateableStorageKey::class.java)
             }
         }
-        val arcId = allocator.startArcForPlan(
-            "readWritePerson", PersonRecipePlan
-        )
+        val arcId = allocator.startArcForPlan("readWritePerson", PersonRecipePlan)
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach { particle ->
             particle.handles.forEach { (_, connection) ->
