@@ -8,10 +8,11 @@ kt_android_library(
     name = "host",
     srcs = glob(["*.kt"]),
     idl_parcelables = glob(["*.aidl"]),
-    manifest = "//java/arcs/android/common:AndroidManifest.xml",
+    manifest = ":AndroidManifest.xml",
     deps = [
         "//java/arcs/android/host/parcelables",
         "//java/arcs/android/sdk/host",
+        "//java/arcs/android/storage/handle",
         "//java/arcs/android/type",
         "//java/arcs/core/common",
         "//java/arcs/core/host",
@@ -19,6 +20,7 @@ kt_android_library(
         "//java/arcs/core/storage/api",
         "//java/arcs/jvm/host",
         "//third_party/java/androidx/annotation",
+        "//third_party/java/androidx/lifecycle",
         "//third_party/java/jsr305_annotations",
     ],
 )

@@ -1,23 +1,36 @@
 package arcs.core.host
 
 import arcs.sdk.Handle
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 
 class WritePerson : AbstractWritePerson() {
     var wrote = false
     var createCalled = false
     var shutdownCalled = false
 
+    var deferred = CompletableDeferred<Boolean>()
+
     override suspend fun onCreate() {
         createCalled = true
         wrote = false
+        handles.person.onSync {
+            GlobalScope.async {
+                handles.person.store(WritePerson_Person("John Wick"))
+                wrote = true
+                if (!deferred.isCompleted) {
+                    deferred.complete(true)
+                }
+            }
+        }
     }
 
     override fun onShutdown() {
         shutdownCalled = true
     }
 
-    override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        handles.person.store(WritePerson_Person("John Wick"))
-        wrote = true
+    suspend fun await() {
+        deferred.await()
     }
 }
