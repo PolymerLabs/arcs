@@ -5,16 +5,14 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
-
 arcs_kt_jvm_test_suite(
-    name = "api",
+    name = "entity",
     srcs = glob(["*.kt"]),
-    package = "arcs.core.storage.api",
+    package = "arcs.core.entity",
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/data",
-        "//java/arcs/core/storage/api",
+        "//java/arcs/core/entity",
         "//java/arcs/core/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",

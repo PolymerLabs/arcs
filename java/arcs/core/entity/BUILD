@@ -5,9 +5,12 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_library(
-    name = "api",
+    name = "entity",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/core/entity",
+        "//java/arcs/core/common",
+        "//java/arcs/core/data",
+        "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data/util:data-util",
     ],
 )

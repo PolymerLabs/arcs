@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage.api
+package arcs.core.entity
 
 /** Base interface for all handle classes. */
 interface Handle {

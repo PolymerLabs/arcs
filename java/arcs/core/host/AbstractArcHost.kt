@@ -14,9 +14,9 @@ import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
+import arcs.core.entity.Handle
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
-import arcs.core.storage.api.Handle
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.Stores
 import arcs.core.util.LruCacheMap
