@@ -11,17 +11,49 @@
 package arcs.jvm.host
 
 import arcs.core.host.ArcHost
+import arcs.core.host.ParticleIdentifier
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
+import arcs.core.host.api.Particle
+import arcs.core.host.toParticleIdentifier
 import arcs.core.util.Time
 import arcs.jvm.util.JvmTime
+import java.util.ServiceLoader
+import kotlin.reflect.KClass
 
 /**
  * An [ArcHost] that runs isolatable particles that are expected to have no platform
- * dependencies directly on Android APIs.
+ * dependencies. Automatically scans class path using [ServiceLoader] to find additional particles.
+ *
+ * @property targetHost the [TargetHost] class this host will register particles for.
  */
-class JvmProdHost(
-    vararg particles: ParticleRegistration
-) : ProdHost(*particles) {
+open class JvmProdHost(
+    targetHost: KClass<out JvmProdHost> = JvmProdHost::class,
+    vararg additionalParticles: ParticleRegistration
+) : ProdHost(*combine(scanForParticles(targetHost), additionalParticles)) {
+
     override val platformTime: Time = JvmTime
+
+    companion object {
+        /**
+         * Load Particles marked @AutoService(Particle::class) from class path.
+         */
+        fun scanForParticles(host: KClass<out JvmProdHost>): Array<ParticleRegistration> =
+            ServiceLoader.load(Particle::class.java).iterator().asSequence()
+                .filter {
+                        particle -> isParticleForHost(host, particle::class.java)
+                }.map { p ->
+                    p.javaClass.kotlin.toParticleIdentifier() to suspend { p.javaClass.newInstance() }
+                }.toList().toTypedArray()
+
+        fun isParticleForHost(host: KClass<out ProdHost>, particle: Class<out Particle>) =
+            host == (particle.getAnnotation(TargetHost::class.java)?.value ?: JvmProdHost::class)
+    }
+}
+
+private fun combine(
+    scanForParticles: Array<ParticleRegistration>,
+    particles: Array<out ParticleRegistration>
+): Array<Pair<ParticleIdentifier, suspend () -> Particle>> {
+    return scanForParticles.plus(particles as Array<ParticleRegistration>)
 }

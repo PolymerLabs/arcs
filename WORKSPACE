@@ -136,9 +136,9 @@ rules_proto_grpc_repos()
 
 # Java deps from Maven.
 
-RULES_JVM_EXTERNAL_TAG = "2.10"
+RULES_JVM_EXTERNAL_TAG = "3.0"
 
-RULES_JVM_EXTERNAL_SHA = "1bbf2e48d07686707dd85357e9a94da775e1dbd7c464272b3664283c9c716d26"
+RULES_JVM_EXTERNAL_SHA = "62133c125bf4109dfd9d2af64830208356ce4ef8b165a6ef15bbff7460b35c3a"
 
 http_archive(
     name = "rules_jvm_external",
@@ -176,6 +176,7 @@ maven_install(
         "androidx.lifecycle:lifecycle-common:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-common-java8:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-runtime:" + ANDROIDX_LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-service:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.webkit:webkit:1.1.0-rc01",
         "androidx.work:work-runtime:" + ANDROIDX_WORK_VERSION,
         "androidx.work:work-testing:" + ANDROIDX_WORK_VERSION,
