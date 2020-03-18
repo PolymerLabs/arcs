@@ -53,7 +53,7 @@ kt_android_library(
 )
 
 # Use this cmd to intall:
-# bazel mobile-install --noincremental_dexing java/arcs/android/demo
+# bazel mobile-install java/arcs/android/demo
 android_binary(
     name = "demo",
     incremental_dexing = 0,
