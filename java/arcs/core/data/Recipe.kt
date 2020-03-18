@@ -31,7 +31,6 @@ data class Recipe(
         )
     }
 
-
     /** Definition of a handle in a recipe. */
     data class Handle(
         val name: String,

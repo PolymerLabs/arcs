@@ -1,8 +1,10 @@
 package arcs.core.data.proto
 
-import arcs.core.data.*
+import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
+import arcs.core.data.ParticleSpec
+import arcs.core.data.TypeVariable
 import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Result
@@ -159,4 +161,3 @@ class ParticleProtoDecoderTest {
         assertThat(exception).hasMessageThat().contains("ParticleSpec 'NonExistent' not found")
     }
 }
-
