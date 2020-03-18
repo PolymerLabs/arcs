@@ -82,7 +82,6 @@ open class AllocatorTestBase {
 
         VolatileStorageKey.registerKeyCreator()
 
-        
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()
 
