@@ -31,11 +31,8 @@ import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageMode
-import arcs.core.storage.StorageProxy
-import arcs.core.storage.Store
-import arcs.core.storage.StoreOptions
 import arcs.core.storage.handle.CollectionHandle
+import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
@@ -46,9 +43,6 @@ import arcs.core.util.traverse
 private typealias EntityCollectionData = CrdtSet.Data<RawEntity>
 private typealias EntityCollectionOp = CrdtSet.IOperation<RawEntity>
 private typealias EntityCollectionView = Set<RawEntity>
-
-private typealias PartitionProxy =
-    StorageProxy<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -62,8 +56,6 @@ private typealias PartitionProxy =
 class Allocator private constructor(
     private val hostRegistry: HostRegistry,
     private val time: Time,
-    private val store: Store<EntityCollectionData, EntityCollectionOp, EntityCollectionView>,
-    private val storageProxy: PartitionProxy,
     private val collection: CollectionHandle<RawEntity>
 ) {
 
@@ -262,19 +254,13 @@ class Allocator private constructor(
             RamDiskStorageKey("partitions")
         )
 
-        private val STORE_OPTIONS =
-            StoreOptions<EntityCollectionData, EntityCollectionOp, EntityCollectionView>(
-                storageKey = STORAGE_KEY,
-                type = CollectionType(EntityType(SCHEMA)),
-                mode = StorageMode.ReferenceMode
-            )
-
-        suspend fun create(hostRegistry: HostRegistry, time: Time): Allocator {
-            val store = Store(STORE_OPTIONS)
-            val storageProxy = StorageProxy(store.activate(), CrdtSet<RawEntity>())
-            val actor = "allocator" + Math.random().toString()
-            val collection = CollectionHandle(actor, storageProxy, time = time)
-            return Allocator(hostRegistry, time, store, storageProxy, collection)
+        suspend fun create(
+            hostRegistry: HostRegistry,
+            time: Time,
+            handleManager: HandleManager
+        ): Allocator {
+            val collection = handleManager.rawEntityCollectionHandle(STORAGE_KEY, SCHEMA)
+            return Allocator(hostRegistry, time, collection)
         }
     }
 }
