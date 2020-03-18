@@ -16,7 +16,6 @@ import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.Ttl
-import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
@@ -29,7 +28,6 @@ typealias SingletonBase<T> = Handle<SingletonData<T>, SingletonOp<T>, T?>
 typealias SingletonData<T> = CrdtSingleton.Data<T>
 typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
 typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<T>, T?>
-typealias SingletonActivationFactory<T> = ActivationFactory<SingletonData<T>, SingletonOp<T>, T?>
 
 /**
  * Singleton [Handle] implementation for the runtime.

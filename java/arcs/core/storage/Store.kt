@@ -12,11 +12,9 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtOperation
-import arcs.core.data.RawEntity
 import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.type.Type
 
@@ -27,13 +25,11 @@ import arcs.core.type.Type
  * An implementation of this interface should be passed to the `activate` method
  * of an inactive [Store].
  */
-interface ActivationFactory<Data : CrdtData, Op : CrdtOperation, T> {
-    suspend operator fun invoke(options: StoreOptions<Data, Op, T>): ActiveStore<Data, Op, T>
+interface ActivationFactory {
+    suspend operator fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
+        options: StoreOptions<Data, Op, T>
+    ): ActiveStore<Data, Op, T>
 }
-
-/** Type-alias for an [ActivationFactory] to use when de-referencing [Reference]s. */
-typealias EntityActivationFactory =
-    ActivationFactory<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>
 
 /**
  * A representation of a store.
@@ -68,7 +64,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
      * Supply a custom [activationFactory] to override the default behavior.
      */
     suspend fun activate(
-        activationFactory: ActivationFactory<Data, Op, ConsumerData>? = null
+        activationFactory: ActivationFactory? = null
     ): ActiveStore<Data, Op, ConsumerData> {
         activeStore?.let { return it }
 
@@ -81,7 +77,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             model = model
         )
         // If we were given a specific factory to use, use it; otherwise use the default factory.
-        val activeStore = (activationFactory ?: getDefaultFactory()).invoke(options)
+        val activeStore = (activationFactory ?: defaultFactory).invoke(options)
 
         this.activeStore = activeStore
         return activeStore
@@ -98,14 +94,11 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
          * This is a helper method to reduce the space of UNCHECKED_CAST suppression when accessing
          * the [defaultFactory] instance.
          */
-        @Suppress("UNCHECKED_CAST")
-        private fun <Data : CrdtData, Op : CrdtOperation, T> getDefaultFactory() =
-            defaultFactory as ActivationFactory<Data, Op, T>
 
-        private val defaultFactory = object : ActivationFactory<CrdtData, CrdtOperation, Any> {
-            override suspend fun invoke(
-                options: StoreOptions<CrdtData, CrdtOperation, Any>
-            ): ActiveStore<CrdtData, CrdtOperation, Any> {
+        private val defaultFactory = object : ActivationFactory {
+            override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
+                options: StoreOptions<Data, Op, T>
+            ): ActiveStore<Data, Op, T> {
                 val constructor = CrdtException.requireNotNull(DEFAULT_CONSTRUCTORS[options.mode]) {
                     "No constructor registered for mode ${options.mode}"
                 }
@@ -117,7 +110,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
                 @Suppress("UNCHECKED_CAST")
                 return CrdtException.requireNotNull(
-                    constructor(options, dataClass) as? ActiveStore<CrdtData, CrdtOperation, Any>
+                    constructor(options, dataClass) as? ActiveStore<Data, Op, T>
                 ) {
                     "Could not cast constructed store to ActiveStore${constructor.typeParamString}"
                 }

@@ -12,33 +12,13 @@ package arcs.android.storage.handle
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
-import arcs.android.crdt.ParcelableCrdtType
-import arcs.core.common.Referencable
-import arcs.core.crdt.CrdtEntity
-import arcs.core.data.RawEntity
-import arcs.core.storage.EntityActivationFactory
-import arcs.core.storage.handle.ActivationFactoryFactory
-import arcs.core.storage.handle.CollectionData
-import arcs.core.storage.handle.CollectionOp
 import arcs.core.storage.handle.HandleManager
-import arcs.core.storage.handle.SingletonData
-import arcs.core.storage.handle.SingletonOp
 import arcs.core.storage.handle.Stores
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-
-@UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-typealias SingletonServiceStoreFactory<T> =
-    ServiceStoreFactory<SingletonData<T>, SingletonOp<T>, T?>
-@UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-typealias CollectionServiceStoreFactory<T> =
-    ServiceStoreFactory<CollectionData<T>, CollectionOp<T>, Set<T>>
-@UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-typealias EntityServiceStoreFactory =
-    ServiceStoreFactory<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>
 
 /**
  * AndroidHandleManager will create a [HandleManager] instance, replacing the default
@@ -55,41 +35,10 @@ fun AndroidHandleManager(
 ) = HandleManager(
     JvmTime,
     stores,
-    object : ActivationFactoryFactory {
-        /**
-         * Create an [ActivationFactory] which will create [ServiceStore] instances that can manage
-         * [CrdtEntity] objects.
-         */
-        override fun dereferenceFactory(): EntityActivationFactory = EntityServiceStoreFactory(
-            context,
-            lifecycle,
-            ParcelableCrdtType.Entity,
-            coroutineContext,
-            connectionFactory
-        )
-
-        /**
-         * Create an [ActivationFactory] that will create [ServiceStore] instances that can manage
-         * singleton [RawEntities]
-         */
-        override fun <T : Referencable> singletonFactory() = SingletonServiceStoreFactory<T>(
-            context,
-            lifecycle,
-            ParcelableCrdtType.Singleton,
-            coroutineContext,
-            connectionFactory
-        )
-
-        /**
-         * Create a ActivationFactory that will create [ServiceStore] instances that can manage
-         * sets of [RawEntities]
-         */
-        override fun <T : Referencable> setFactory() = CollectionServiceStoreFactory<T>(
-            context,
-            lifecycle,
-            ParcelableCrdtType.Set,
-            coroutineContext,
-            connectionFactory
-        )
-    }
+    ServiceStoreFactory(
+        context,
+        lifecycle,
+        coroutineContext,
+        connectionFactory
+    )
 )
