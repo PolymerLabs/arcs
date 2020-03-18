@@ -14,7 +14,8 @@ def _run_schema2wasm(
         out,
         language_name,
         language_flag,
-        wasm):
+        wasm,
+        test_harness = False):
     """Generates source code for the given .arcs schema file.
 
     Runs sigh schema2wasm to generate the output.
@@ -38,6 +39,7 @@ def _run_schema2wasm(
         sigh_cmd = "schema2wasm " +
                    language_flag + " " +
                    ("--wasm " if wasm else "") +
+                   ("--test_harness " if test_harness else "") +
                    "--outdir $(dirname {OUT}) " +
                    "--outfile $(basename {OUT}) " +
                    "{SRC}",
@@ -55,13 +57,14 @@ def arcs_cc_schema(name, src, deps = [], out = None):
         wasm = False,
     )
 
-def arcs_kt_schema(name, srcs, deps = []):
+def arcs_kt_schema(name, srcs, deps = [], test_harness = True):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
       deps: list of imported manifests
+      test_harness: whether to generate a test harness target
     """
     outs = []
     for src in srcs:
@@ -86,3 +89,31 @@ def arcs_kt_schema(name, srcs, deps = []):
         platforms = ["jvm", "wasm"],
         deps = ARCS_SDK_DEPS,
     )
+
+    if (test_harness):
+        test_harness_outs = []
+        for src in srcs:
+            out = replace_arcs_suffix(src, "_TestHarness.kt")
+            test_harness_outs.append(out)
+
+            _run_schema2wasm(
+                name = replace_arcs_suffix(src, "_genrule_test_harness"),
+                src = src,
+                out = out,
+                deps = deps,
+                wasm = False,
+                test_harness = True,
+                language_flag = "--kotlin",
+                language_name = "Kotlin",
+            )
+
+        arcs_kt_library(
+            name = name + "_test_harness",
+            testonly = 1,
+            srcs = test_harness_outs,
+            deps = ARCS_SDK_DEPS + [
+                ":" + name,
+                "//third_party/java/arcs:testing",
+                "//third_party/kotlin/kotlinx_coroutines",
+            ],
+        )

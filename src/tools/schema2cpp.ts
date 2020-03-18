@@ -108,6 +108,10 @@ protected:
 };
 `;
   }
+
+  generateTestHarness(particle: ParticleSpec): string {
+    throw new Error('Test Harness generation is not available for CPP');
+  }
 }
 
 class CppGenerator implements ClassGenerator {

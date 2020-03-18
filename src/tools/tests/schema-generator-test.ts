@@ -27,10 +27,15 @@ const testData = [
     generated: 'src/tools/tests/golden_GeneratedSchemas.wasm.kt',
     golden: 'src/tools/tests/goldens/generated-schemas.wasm.kt',
   },
+  {
+    label: 'Test Harness - Kotlin',
+    generated: 'src/tools/tests/golden_TestHarness.kt',
+    golden: 'src/tools/tests/goldens/generated-test-harness.kt',
+  },
 ];
 
 testData.forEach(data => {
-  describe(`${data.label} schema generation`, () => {
+  describe(`${data.label} particle code generation`, () => {
     before(function() {
       if (!global['testFlags'].bazel) {
         this.skip();

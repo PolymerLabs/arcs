@@ -1,5 +1,5 @@
 meta
-  namespace: arcs.unit.test.example
+  namespace: arcs.sdk.examples.testing
 
 particle ComputePeopleStats
   people: reads [Person {age: Number}]

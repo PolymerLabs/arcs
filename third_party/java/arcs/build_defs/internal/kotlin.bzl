@@ -171,6 +171,7 @@ def arcs_kt_library(
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
             deps = [_to_jvm_dep(dep) for dep in deps],
             exports = exports,
+            testonly = testonly,
             visibility = visibility,
             add_android_constraints = add_android_constraints,
         )
@@ -182,6 +183,7 @@ def arcs_kt_library(
             # TODO: jvm srcs will be included here. That is not what we want.
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
             deps = [_to_js_dep(dep) for dep in deps],
+            testonly = testonly,
             visibility = visibility,
         )
 
@@ -191,6 +193,7 @@ def arcs_kt_library(
             # Exclude any jvm-specific srcs.
             srcs = [src for src in srcs if not src.endswith(".jvm.kt")],
             deps = [_to_wasm_dep(dep) for dep in deps],
+            testonly = testonly,
             visibility = visibility,
         )
 
