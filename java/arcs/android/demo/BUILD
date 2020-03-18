@@ -56,8 +56,8 @@ kt_android_library(
 # bazel mobile-install --noincremental_dexing java/arcs/android/demo
 android_binary(
     name = "demo",
+    incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
-    incremental_dexing = 0,
     deps = [":demo_lib"],
 )
