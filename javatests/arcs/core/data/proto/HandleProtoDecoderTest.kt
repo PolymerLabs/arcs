@@ -1,9 +1,7 @@
 package arcs.core.data.proto
 
-import arcs.core.data.HandleMode
+import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
-import arcs.core.storage.StorageKeyParser
-import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import arcs.repoutils.runfilesDir
@@ -26,56 +24,75 @@ fun parseHandleProtoText(protoText: String): HandleProto {
 
 @RunWith(JUnit4::class)
 class HandleProtoDecoderTest {
-    @Before
-    fun setupTest() {
-        RamDiskStorageKey.registerParser()
+    @Test
+    fun decodesHandleProtoFate() {
+        assertThat(HandleProto.Fate.CREATE.decode()).isEqualTo(Handle.Fate.CREATE)
+        assertThat(HandleProto.Fate.USE.decode()).isEqualTo(Handle.Fate.USE)
+        assertThat(HandleProto.Fate.MAP.decode()).isEqualTo(Handle.Fate.MAP)
+        assertThat(HandleProto.Fate.COPY.decode()).isEqualTo(Handle.Fate.COPY)
+        assertThat(HandleProto.Fate.JOIN.decode()).isEqualTo(Handle.Fate.JOIN)
+        assertThrows(IllegalArgumentException::class) {
+            HandleProto.Fate.UNRECOGNIZED.decode()
+        }
     }
 
     @Test
     fun decodesHandleProtoWithNoType() {
         val storageKey = "ramdisk://a"
-        val handleText = buildHandleProtoText("notype_thing", "CREATE", "", storageKey)
+        val handleText = buildHandleProtoText("notype_thing", "CREATE", "", storageKey, "handle_c")
         val handleProto = parseHandleProtoText(handleText)
-        val handle = handleProto.decodeAsHandleConnection(HandleMode.Write)
-        assertThat(handle.storageKey).isEqualTo(StorageKeyParser.parse(storageKey))
-        assertThat(handle.mode).isEqualTo(HandleMode.Write)
-        assertThat(handle.type).isEqualTo(TypeVariable("notype_thing"))
-        assertThat(handle.ttl).isEqualTo(null)
-    }
+        with(handleProto.decode()) {
+            assertThat(name).isEqualTo("notype_thing")
+            assertThat(fate).isEqualTo(Handle.Fate.CREATE)
+            assertThat(storageKey).isEqualTo("ramdisk://a")
+            assertThat(associatedHandles).containsExactly("handle1", "handle_c")
+            assertThat(type).isEqualTo(TypeVariable("notype_thing"))
+        }
+   }
 
     @Test
     fun decodesHandleProtoWithType() {
-        val entityTypeProto = """
-          entity {
-            schema {
-              names: "Thing"
-              fields {
-                key: "name"
-                value: { primitive: TEXT }
+        val entityTypeProto =
+            """
+              entity {
+                schema {
+                  names: "Thing"
+                  fields {
+                    key: "name"
+                    value: { primitive: TEXT }
+                  }
+                }
               }
-            }
-          }
-        """.trimIndent()
+            """.trimIndent()
         val storageKey = "ramdisk://b"
         val entityType = parseTypeProtoText(entityTypeProto).decode()
         val handleText = buildHandleProtoText(
-            "thing", "JOIN", "type { ${entityTypeProto} }", storageKey
+            "thing", "JOIN", "type { ${entityTypeProto} }", storageKey, "handle_join"
         )
         val handleProto = parseHandleProtoText(handleText)
-        val handle = handleProto.decodeAsHandleConnection(HandleMode.Read)
-        assertThat(handle.storageKey).isEqualTo(StorageKeyParser.parse(storageKey))
-        assertThat(handle.mode).isEqualTo(HandleMode.Read)
-        assertThat(handle.type).isEqualTo(entityType)
-        assertThat(handle.ttl).isEqualTo(null)
+        with(handleProto.decode()) {
+            assertThat(name).isEqualTo("thing")
+            assertThat(fate).isEqualTo(Handle.Fate.JOIN)
+            assertThat(storageKey).isEqualTo("ramdisk://b")
+            assertThat(associatedHandles).isEqualTo(listOf("handle1", "handle_join"))
+            assertThat(type).isEqualTo(entityType)
+        }
     }
 
     /** A helper function to build a handle proto in text format. */
-    fun buildHandleProtoText(name: String, fate: String, type: String, storageKey: String) = """
-      name: "${name}"
-      fate: ${fate}
-      storage_key: "$storageKey"
-      associated_handles: "handle1"
-      associated_handles: "handle2"
-      ${type}
-    """.trimIndent()
+    fun buildHandleProtoText(
+        name: String,
+        fate: String,
+        type: String,
+        storageKey: String,
+        associatedHandle: String
+    ) =
+        """
+          name: "${name}"
+          fate: ${fate}
+          storage_key: "$storageKey"
+          associated_handles: "handle1"
+          associated_handles: "${associatedHandle}"
+          ${type}
+        """.trimIndent()
 }

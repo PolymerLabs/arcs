@@ -11,20 +11,30 @@
 
 package arcs.core.data.proto
 
-import arcs.core.data.HandleMode
-import arcs.core.data.Plan.HandleConnection
+import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
-import arcs.core.storage.StorageKeyParser
+
+/** Converts [HandleProto.Fate] into [Handle.Fate]. */
+fun HandleProto.Fate.decode(): Handle.Fate =
+    when (this) {
+        HandleProto.Fate.CREATE -> Handle.Fate.CREATE
+        HandleProto.Fate.USE -> Handle.Fate.USE
+        HandleProto.Fate.MAP -> Handle.Fate.MAP
+        HandleProto.Fate.COPY -> Handle.Fate.COPY
+        HandleProto.Fate.JOIN -> Handle.Fate.JOIN
+        HandleProto.Fate.UNRECOGNIZED ->
+            throw IllegalArgumentException("Invalid HandleProto.Fate value.")
+    }
 
 /**
- * Converts a [HandleProto] into [HandleConnection].
+ * Converts [HandleProto] into [Handle].
  *
  * If a type is not set in the [HandleProto], it is initialized to a newly created TypeVariable.
 */
-fun HandleProto.decodeAsHandleConnection(mode: HandleMode) = HandleConnection(
-    // TODO(bgogul): name, fate, associatedHandles, ttl,
-    storageKey = StorageKeyParser.parse(storageKey),
-    mode = mode,
+fun HandleProto.decode() = Handle(
+    name = name,
+    fate = fate.decode(),
+    storageKey = storageKey,
     type = if (hasType()) type.decode() else TypeVariable("$name"),
-    ttl = null
+    associatedHandles = getAssociatedHandlesList()
 )
