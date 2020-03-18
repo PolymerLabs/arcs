@@ -5,8 +5,6 @@ import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
 import arcs.core.data.TypeVariable
-import arcs.core.storage.StorageKeyParser
-import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Result
@@ -57,14 +55,14 @@ class RecipeProtoDecoderTest {
         .addConnections(dataConnection)
         .build()
 
-    /** Defines the following recipe:
+    /**
+     * Defines the following recipe:
      *    recipe PassThrough
      *      thing: create
      *      Writer
      *        data: writes thing
      *      Reader
      *        data: reads thing
-     *
      */
     val recipeProto = RecipeProto
         .newBuilder()
@@ -74,19 +72,15 @@ class RecipeProtoDecoderTest {
         .addParticles(writerParticle)
         .build()
 
-    @Before
-    fun setupTest() {
-        RamDiskStorageKey.registerParser()
-    }
-
     @Test
     fun decodesRecipe() {
-        val recipe = recipeProto.decode(context.particleSpecs)
-        assertThat(recipe.name).isEqualTo("PassThrough")
-        assertThat(recipe.handles).isEqualTo(mapOf("thing" to thingHandle))
-        assertThat(recipe.particles).containsExactly(
-            readerParticle.decode(context), writerParticle.decode(context)
-        )
+        with(recipeProto.decode(context.particleSpecs)) {
+            assertThat(name).isEqualTo("PassThrough")
+            assertThat(handles).isEqualTo(mapOf("thing" to thingHandle))
+            assertThat(particles).containsExactly(
+                readerParticle.decode(context), writerParticle.decode(context)
+            )
+        }
     }
 
     @Test
@@ -94,10 +88,11 @@ class RecipeProtoDecoderTest {
         val emptyRecipeProto = RecipeProto
             .newBuilder()
             .build()
-        val emptyRecipe = emptyRecipeProto.decode(context.particleSpecs)
-        assertThat(emptyRecipe.name).isEqualTo("")
-        assertThat(emptyRecipe.handles).isEmpty()
-        assertThat(emptyRecipe.particles).isEmpty()
+        with(emptyRecipeProto.decode(context.particleSpecs)) {
+            assertThat(name).isEqualTo("")
+            assertThat(handles).isEmpty()
+            assertThat(particles).isEmpty()
+        }
     }
 
     @Test
