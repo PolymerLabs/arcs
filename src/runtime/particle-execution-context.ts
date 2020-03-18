@@ -173,20 +173,17 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord> | BackingStorageProxy<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
     const pec = this;
     let idPromise: Promise<number> = null;
-    let id: number = null;
     if (storageProxy instanceof StorageProxy) {
       return {
         async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
           if (idPromise == null) {
             throw new Error('onProxyMessage called without first calling setCallback!');
           }
-          if (id == null) {
-            id = await idPromise;
-            if (id == null) {
-              throw new Error('undefined id received .. somehow');
-            }
+          message.id = await idPromise;
+          if (message.id == null) {
+            throw new Error('undefined id received .. somehow');
           }
-          message.id = id;
+
           return new Promise(resolve =>
               pec.apiPort.ProxyMessage(storageProxy, message, resolve));
         },
@@ -207,16 +204,12 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           if (idPromise == null) {
             throw new Error('onProxyMessage called without first calling setCallback!');
           }
-          if (id == null) {
-            id = await idPromise;
-            if (id == null) {
-              throw new Error('undefined id received .. somehow');
-            }
+          message.id = await idPromise;
+          if (message.id == null) {
+            throw new Error('undefined id received .. somehow');
           }
-          message.id = id;
 
-          // Ensure muxId exists. Proxy messages sent to Backing stores requires
-          // a muxId in order to redirect the message to the correct store.
+          // Proxy messages sent to Backing stores require a muxId in order to redirect the message to the correct store.
           assert(message.muxId != null);
           return new Promise(resolve =>
             pec.apiPort.BackingProxyMessage(storageProxy, message, resolve));
