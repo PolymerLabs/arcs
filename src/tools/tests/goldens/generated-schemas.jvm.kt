@@ -10,8 +10,7 @@ package arcs.golden
 
 import arcs.sdk.*
 import arcs.core.data.*
-import arcs.core.data.util.toReferencable
-import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.toPrimitiveValue
 import arcs.core.entity.SchemaRegistry
 

@@ -23,6 +23,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
+        "//java/arcs/core/testutil",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk:sdk-kt",

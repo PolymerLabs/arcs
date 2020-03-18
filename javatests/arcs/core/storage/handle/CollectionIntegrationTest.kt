@@ -67,8 +67,22 @@ class CollectionIntegrationTest {
         testStore = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(testStore.activate(), CrdtSet<RawEntity>())
 
-        collectionA = CollectionHandle("collectionA", storageProxy, Ttl.Infinite, TimeImpl(), schema = SCHEMA_A)
-        collectionB = CollectionHandle("collectionB", storageProxy, Ttl.Infinite, TimeImpl(), schema = SCHEMA_B)
+        collectionA = CollectionHandle(
+            "collectionA",
+            STORAGE_KEY,
+            storageProxy,
+            Ttl.Infinite,
+            TimeImpl(),
+            schema = SCHEMA_A
+        )
+        collectionB = CollectionHandle(
+            "collectionB",
+            STORAGE_KEY,
+            storageProxy,
+            Ttl.Infinite,
+            TimeImpl(),
+            schema = SCHEMA_B
+        )
         Unit
     }
 
@@ -184,13 +198,27 @@ class CollectionIntegrationTest {
         assertThat(collectionA.fetchAll().first().expirationTimestamp)
             .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val collectionC = CollectionHandle("collectionC", storageProxy, Ttl.Days(2), TimeImpl(), schema = SCHEMA_A)
+        val collectionC = CollectionHandle(
+            "collectionC",
+            STORAGE_KEY,
+            storageProxy,
+            Ttl.Days(2),
+            TimeImpl(),
+            schema = SCHEMA_A
+        )
         assertThat(collectionC.store(person.toRawEntity())).isTrue()
         val entityC = collectionC.fetchAll().first()
         assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val collectionD = CollectionHandle("collectionD", storageProxy, Ttl.Minutes(1), TimeImpl(), schema = SCHEMA_B)
+        val collectionD = CollectionHandle(
+            "collectionD",
+            STORAGE_KEY,
+            storageProxy,
+            Ttl.Minutes(1),
+            TimeImpl(),
+            schema = SCHEMA_B
+        )
         assertThat(collectionD.store(person.toRawEntity())).isTrue()
         val entityD = collectionD.fetchAll().first()
         assertThat(entityD.creationTimestamp).isGreaterThan(creationTimestampA)

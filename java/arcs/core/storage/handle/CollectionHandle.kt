@@ -18,6 +18,7 @@ import arcs.core.data.Schema
 import arcs.core.data.Ttl
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
+import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
 import arcs.core.util.Time
@@ -37,6 +38,7 @@ typealias CollectionBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set
  */
 class CollectionHandle<T : Referencable>(
     name: String,
+    storageKey: StorageKey,
     storageProxy: CollectionProxy<T>,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
@@ -44,6 +46,7 @@ class CollectionHandle<T : Referencable>(
     private val schema: Schema? = null
 ) : CollectionBase<T>(
     name,
+    storageKey,
     storageProxy,
     ttl,
     time,

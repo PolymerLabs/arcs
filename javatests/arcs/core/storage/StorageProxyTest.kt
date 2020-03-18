@@ -6,6 +6,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Ttl
+import arcs.core.storage.testutil.DummyStorageKey
 import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
@@ -275,9 +276,13 @@ class StorageProxyTest {
     private fun newHandle(
         name: String,
         storageProxy: StorageProxy<CrdtData, CrdtOperationAtTime, String>
-    ) = Handle(name, storageProxy, Ttl.Infinite, TimeImpl(), null)
+    ) = Handle(name, STORAGE_KEY, storageProxy, Ttl.Infinite, TimeImpl(), null)
 
     fun CrdtModel<CrdtData, CrdtOperationAtTime, String>.appliesOpAs(op: CrdtOperationAtTime, result: Boolean) {
         whenever(this.applyOperation(op)).thenReturn(result)
+    }
+
+    companion object {
+        private val STORAGE_KEY = DummyStorageKey("key")
     }
 }

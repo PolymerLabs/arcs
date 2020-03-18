@@ -116,6 +116,7 @@ class HandleManager(
 
         return SingletonHandle(
             name,
+            storageKey,
             storageProxy,
             ttl,
             time,
@@ -151,6 +152,7 @@ class HandleManager(
 
         return SingletonHandle(
             name,
+            storageKey,
             storageProxy,
             ttl,
             time,
@@ -160,9 +162,9 @@ class HandleManager(
     }
 
     /**
-     * Create a new [CollectionHandle] backed by an Android [ServiceStore]
+     * Create a new [CollectionHandle].
      *
-     * The CollectionHandle will represent an Entity specified by the provided [Schema]
+     * The [CollectionHandle] will represent an Entity specified by the provided [Schema]
      */
     suspend fun rawEntityCollectionHandle(
         storageKey: StorageKey,
@@ -187,6 +189,7 @@ class HandleManager(
 
         return CollectionHandle(
             name,
+            storageKey,
             storageProxy,
             ttl,
             time,
@@ -222,6 +225,7 @@ class HandleManager(
 
         return CollectionHandle(
             name = name,
+            storageKey = storageKey,
             storageProxy = storageProxy,
             ttl = ttl,
             time = time,

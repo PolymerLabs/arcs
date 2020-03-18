@@ -18,6 +18,5 @@ arcs_kt_library(
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
