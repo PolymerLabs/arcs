@@ -26,7 +26,11 @@ class ParticleProtoDecoderTest {
     // The test environment.
     var ramdiskStorageKey = "ramdisk://something"
     val thingHandle = Handle(
-        "thing", Handle.Fate.CREATE, ramdiskStorageKey, TypeVariable("thing"), emptyList()
+        "thing",
+        Handle.Fate.CREATE,
+        ramdiskStorageKey,
+        TypeVariable("thing"),
+        emptyList()
     )
     val readConnectionSpec = HandleConnectionSpec("data", Direction.READS, TypeVariable("data"))
     val readerSpec = ParticleSpec("Reader", mapOf("data" to readConnectionSpec), "ReaderLocation")
@@ -34,12 +38,17 @@ class ParticleProtoDecoderTest {
     val writerSpec = ParticleSpec("Writer", mapOf("data" to writeConnectionSpec), "WriterLocation")
     val readerWriterSpec = ParticleSpec(
         "ReaderWriter",
-        mapOf("write" to writeConnectionSpec, "read" to readConnectionSpec),
+        mapOf(
+            "write" to writeConnectionSpec,
+            "read" to readConnectionSpec
+        ),
         "ReaderWriterLocation"
     )
     val context = DecodingContext(
         particleSpecs = mapOf(
-            "Reader" to readerSpec, "Writer" to writerSpec, "ReaderWriter" to readerWriterSpec
+            "Reader" to readerSpec,
+            "Writer" to writerSpec,
+            "ReaderWriter" to readerWriterSpec
         ),
         recipeHandles = mapOf("thing" to thingHandle)
     )

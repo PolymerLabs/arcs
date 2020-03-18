@@ -16,36 +16,34 @@ import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
 import arcs.core.data.Recipe.Particle.HandleConnection
 
-/** Class contains information that is required when decoding particle protos.
+/**
+ * Class contains information that is required when decoding particle protos.
  *
  * @property particleSpecs [ParticleSpec] instances in the context indexed by name.
  * @property recipeHandles [Handle] instances in a [Recipe] indexed by name.
  */
-class DecodingContext(
+data class DecodingContext(
     var particleSpecs: Map<String, ParticleSpec>,
     var recipeHandles: Map<String, Handle>
 )
 
-/** Converts a [HandleConnectionProto] into a [Handle]. */
+/** Converts a [HandleConnectionProto] into a [Recipe.Particle.HandleConnection]. */
 fun HandleConnectionProto.decode(
     particleSpec: ParticleSpec,
     context: DecodingContext
 ): HandleConnection {
-    val handleSpec = particleSpec.connections[name]
-    requireNotNull(handleSpec) {
+    val handleSpec = requireNotNull(particleSpec.connections[name]) {
         "HandleConnection '$name' not found in ParticleSpec '${particleSpec.name}'."
     }
-    val recipeHandle = context.recipeHandles[handle]
-    requireNotNull(recipeHandle) {
+    val recipeHandle = requireNotNull(context.recipeHandles[handle]) {
         "Handle '$handle' not found when decoding ParticleProto '${particleSpec.name}'."
     }
     return HandleConnection(handleSpec, recipeHandle)
 }
 
-/** Converts a [ParticleProto] into a [Particle]. */
+/** Converts a [ParticleProto] into a [Recipe.Particle]. */
 fun ParticleProto.decode(context: DecodingContext): Particle {
-    val particleSpec = context.particleSpecs[specName]
-    requireNotNull(particleSpec) {
+    val particleSpec = requireNotNull(context.particleSpecs[specName]) {
         "ParticleSpec '$specName' not found in decoding context."
     }
     val handleConnections = connectionsList.map { it.decode(particleSpec, context) }
