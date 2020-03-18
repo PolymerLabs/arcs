@@ -241,8 +241,8 @@ open class AllocatorTestBase {
     @Test
     fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
-                "readWriteParticle", PersonPlan
-            )
+            "readWriteParticle", PersonPlan
+        )
 
         assertThat(readingExternalHost.started.size).isEqualTo(1)
         assertThat(writingExternalHost.started.size).isEqualTo(1)
