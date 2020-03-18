@@ -14,6 +14,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
@@ -74,6 +75,10 @@ open class HandleManagerTestBase {
     lateinit var readHandleManager: HandleManager
     lateinit var writeHandleManager: HandleManager
 
+    open var testRunner = { block: suspend CoroutineScope.() -> Unit ->
+        runBlockingTest { this.block() }
+    }
+
     @Before
     fun setup() {
         RamDisk.clear()
@@ -81,7 +86,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_writeAndReadBack() = runBlockingTest {
+    fun singleton_writeAndReadBack() = testRunner {
         val writeHandle = writeHandleManager.rawEntitySingletonHandle(singletonKey, schema)
         writeHandle.store(entity1)
 
@@ -92,7 +97,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_writeAndOnUpdate() = runBlockingTest {
+    open fun singleton_writeAndOnUpdate() = testRunner {
         val writeHandle = writeHandleManager.rawEntitySingletonHandle(singletonKey, schema)
 
         // Now read back from a different handle
@@ -106,7 +111,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_referenceLiveness() = runBlockingTest {
+    open fun singleton_referenceLiveness() = testRunner {
         val writeHandle = writeHandleManager.referenceSingletonHandle(singletonRefKey, schema, "refhandle")
         val entity1Ref = writeHandle.createReference(entity1, backingKey)
         writeHandle.store(entity1Ref)
@@ -145,7 +150,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_dereferenceEntity() = runBlockingTest {
+    fun singleton_dereferenceEntity() = testRunner {
         val writeHandle = writeHandleManager.rawEntitySingletonHandle(singletonKey, schema)
         val readHandle = readHandleManager.rawEntitySingletonHandle(singletonKey, schema)
         writeHandle.store(entity1)
@@ -180,7 +185,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_writeAndReadBack() = runBlockingTest {
+    fun collection_writeAndReadBack() = testRunner {
         val writeHandle = writeHandleManager.rawEntityCollectionHandle(setKey, schema)
         writeHandle.store(entity1)
         writeHandle.store(entity2)
@@ -192,7 +197,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_writeAndOnUpdate() = runBlockingTest {
+    open fun collection_writeAndOnUpdate() = testRunner {
         val writeHandle = writeHandleManager.rawEntityCollectionHandle(singletonKey, schema)
 
         // Now read back from a different handle
@@ -207,7 +212,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_referenceLiveness() = runBlockingTest {
+    open fun collection_referenceLiveness() = testRunner {
         val writeHandle = writeHandleManager.referenceCollectionHandle(singletonRefKey, schema)
         val entity1Ref = writeHandle.createReference(entity1, backingKey)
         val entity2Ref = writeHandle.createReference(entity2, backingKey)
@@ -259,7 +264,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_entityDereference() = runBlockingTest {
+    fun collection_entityDereference() = testRunner {
         val writeHandle = writeHandleManager.rawEntityCollectionHandle(setKey, schema)
         writeHandle.store(entity1)
         writeHandle.store(entity2)

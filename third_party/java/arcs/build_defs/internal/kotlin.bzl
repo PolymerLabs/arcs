@@ -103,6 +103,18 @@ def arcs_kt_jvm_library(**kwargs):
 
     kt_jvm_library(**kwargs)
 
+def arcs_kt_android_library(**kwargs):
+    """Wrapper around kt_android_library for Arcs.
+
+    Args:
+      **kwargs: Set of args to forward to kt_android_library
+    """
+    disable_lint_checks = kwargs.pop("disable_lint_checks", [])
+    if not IS_BAZEL:
+        kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
+
+    kt_android_library(**kwargs)
+
 def arcs_kt_native_library(**kwargs):
     """Wrapper around kt_native_library for Arcs.
 
