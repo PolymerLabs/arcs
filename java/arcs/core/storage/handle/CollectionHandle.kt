@@ -16,7 +16,6 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.Ttl
-import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
 import arcs.core.storage.StorageProxy
@@ -27,8 +26,6 @@ import arcs.core.util.Time
 typealias CollectionData<T> = CrdtSet.Data<T>
 typealias CollectionOp<T> = CrdtSet.IOperation<T>
 typealias CollectionStoreOptions<T> = StoreOptions<CollectionData<T>, CollectionOp<T>, Set<T>>
-typealias CollectionActivationFactory<T> =
-    ActivationFactory<CollectionData<T>, CollectionOp<T>, Set<T>>
 typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 typealias CollectionBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 

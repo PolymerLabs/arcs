@@ -27,6 +27,10 @@ import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
+import arcs.core.data.CollectionType
+import arcs.core.data.CountType
+import arcs.core.data.EntityType
+import arcs.core.data.SingletonType
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
@@ -53,20 +57,27 @@ import kotlinx.coroutines.launch
  */
 @ExperimentalCoroutinesApi
 @UseExperimental(FlowPreview::class)
-class ServiceStoreFactory<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
+class ServiceStoreFactory(
     private val context: Context,
     private val lifecycle: Lifecycle,
-    private val crdtType: ParcelableCrdtType,
     private val coroutineContext: CoroutineContext = Dispatchers.IO,
     private val connectionFactory: ConnectionFactory? = null
-) : ActivationFactory<Data, Op, ConsumerData> {
-    override suspend operator fun invoke(
+) : ActivationFactory {
+    override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
         options: StoreOptions<Data, Op, ConsumerData>
     ): ServiceStore<Data, Op, ConsumerData> {
         val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
+        val parcelableType = when (options.type) {
+            is CountType -> ParcelableCrdtType.Count
+            is CollectionType<*> -> ParcelableCrdtType.Set
+            is SingletonType<*> -> ParcelableCrdtType.Singleton
+            is EntityType -> ParcelableCrdtType.Entity
+            else ->
+                throw IllegalArgumentException("Service store can't handle type ${options.type}")
+        }
         return ServiceStore(
             options = options,
-            crdtType = crdtType,
+            crdtType = parcelableType,
             lifecycle = lifecycle,
             connectionFactory = connectionFactory
                 ?: DefaultConnectionFactory(context, coroutineContext = storeContext),

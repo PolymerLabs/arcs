@@ -10,7 +10,6 @@
  */
 package arcs.core.storage.handle
 
-import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.CrdtSet
@@ -22,8 +21,8 @@ import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
-import arcs.core.storage.EntityActivationFactory
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
@@ -34,19 +33,6 @@ import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
-/**
- * This interface is a convenience for creating the two common types of activation factories
- * that are used: singletons of [RawEntity] and sets of [RawEntity], as well as an activation
- * factory to use when dereferencing [Reference]s.
- *
- * An implementation of this interface can be provided to the constructor for [HandleFactory]
- */
-interface ActivationFactoryFactory {
-    fun dereferenceFactory(): EntityActivationFactory
-    fun <T : Referencable> singletonFactory(): SingletonActivationFactory<T>
-    fun <T : Referencable> setFactory(): CollectionActivationFactory<T>
-}
 
 /** Convenience class for dealing with a map of [Store] instances of any type */
 class Stores {
@@ -80,7 +66,7 @@ class Stores {
 class HandleManager(
     private val time: Time,
     private val stores: Stores = Stores(),
-    private val aff: ActivationFactoryFactory? = null
+    private val activationFactory: ActivationFactory? = null
 ) {
     private val singletonProxiesMutex = Mutex()
     private val singletonProxies by guardedBy(
@@ -122,7 +108,7 @@ class HandleManager(
         val storageProxy = singletonProxiesMutex.withLock {
             singletonProxies.getOrPut(storageKey) {
                 SingletonProxy(
-                    stores.get(storeOptions).activate(aff?.singletonFactory()),
+                    stores.get(storeOptions).activate(activationFactory),
                     CrdtSingleton()
                 )
             }
@@ -133,7 +119,7 @@ class HandleManager(
             storageProxy,
             ttl,
             time,
-            dereferencer = RawEntityDereferencer(schema, stores, aff?.dereferenceFactory()),
+            dereferencer = RawEntityDereferencer(schema, stores, activationFactory),
             schema = schema
         )
     }
@@ -157,7 +143,7 @@ class HandleManager(
         val storageProxy = singletonReferenceProxiesMutex.withLock {
             singletonReferenceProxies.getOrPut(storageKey) {
                 SingletonProxy(
-                    stores.get(storeOptions).activate(aff?.singletonFactory()),
+                    stores.get(storeOptions).activate(activationFactory),
                     CrdtSingleton()
                 )
             }
@@ -168,7 +154,7 @@ class HandleManager(
             storageProxy,
             ttl,
             time,
-            dereferencer = RawEntityDereferencer(schema, stores, aff?.dereferenceFactory()),
+            dereferencer = RawEntityDereferencer(schema, stores, activationFactory),
             schema = schema
         )
     }
@@ -193,7 +179,7 @@ class HandleManager(
         val storageProxy = setProxiesMutex.withLock {
             setProxies.getOrPut(storageKey) {
                 CollectionProxy(
-                    stores.get(storeOptions).activate(aff?.setFactory()),
+                    stores.get(storeOptions).activate(activationFactory),
                     CrdtSet()
                 )
             }
@@ -204,7 +190,7 @@ class HandleManager(
             storageProxy,
             ttl,
             time,
-            dereferencer = RawEntityDereferencer(schema, stores, aff?.dereferenceFactory()),
+            dereferencer = RawEntityDereferencer(schema, stores, activationFactory),
             schema = schema
         )
     }
@@ -228,7 +214,7 @@ class HandleManager(
         val storageProxy = setReferenceProxiesMutex.withLock {
             setReferenceProxies.getOrPut(storageKey) {
                 CollectionProxy(
-                    stores.get(storeOptions).activate(aff?.setFactory()),
+                    stores.get(storeOptions).activate(activationFactory),
                     CrdtSet()
                 )
             }
@@ -239,7 +225,7 @@ class HandleManager(
             storageProxy = storageProxy,
             ttl = ttl,
             time = time,
-            dereferencer = RawEntityDereferencer(schema, stores, aff?.dereferenceFactory()),
+            dereferencer = RawEntityDereferencer(schema, stores, activationFactory),
             schema = schema
         )
     }
