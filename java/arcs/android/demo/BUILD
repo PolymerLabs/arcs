@@ -58,5 +58,6 @@ android_binary(
     name = "demo",
     manifest = ":AndroidManifest.xml",
     multidex = "native",
+    incremental_dexing = 0,
     deps = [":demo_lib"],
 )

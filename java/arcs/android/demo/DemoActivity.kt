@@ -29,6 +29,7 @@ import arcs.core.data.SingletonType
 import arcs.core.host.HostRegistry
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
+import arcs.jvm.util.JvmTime
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +69,7 @@ class DemoActivity : AppCompatActivity() {
 
         scope.launch {
             hostRegistry = AndroidManifestHostRegistry.create(this@DemoActivity)
-            allocator = Allocator(hostRegistry)
+            allocator = Allocator.create(hostRegistry, JvmTime)
 
             recipePersonStorageKey = CreateableStorageKey(
                 "recipePerson", Capabilities.TiedToRuntime
