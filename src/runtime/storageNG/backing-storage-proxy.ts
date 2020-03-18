@@ -20,7 +20,7 @@ import {assert} from '../../platform/assert-web.js';
 import {BiMap} from '../bimap.js';
 
 export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<CRDTTypeRecord> {
-  private storageProxies: BiMap<string, StorageProxy<CRDTTypeRecord>> = new BiMap<string, StorageProxy<CRDTTypeRecord>>();
+  private storageProxies = new BiMap<string, StorageProxy<CRDTTypeRecord>>();
   private callbacks: Dictionary<ProxyCallback<CRDTTypeRecord>> = {};
   private storageEndpoint: StorageCommunicationEndpoint<T>;
   private storageKey: string;
