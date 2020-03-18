@@ -22,6 +22,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
+import arcs.core.storage.handle.HandleManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
 import arcs.core.util.plus
@@ -94,7 +95,7 @@ open class AllocatorTestBase {
         writingExternalHost = writingHost()
 
         hostRegistry = hostRegistry()
-        allocator = Allocator.create(hostRegistry, TimeImpl())
+        allocator = Allocator.create(hostRegistry, TimeImpl(), HandleManager(TimeImpl()))
 
         recipePersonStorageKey = CreateableStorageKey(
             "recipePerson", storageCapability
