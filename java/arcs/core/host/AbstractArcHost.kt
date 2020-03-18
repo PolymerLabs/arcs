@@ -180,23 +180,6 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         updateArcHostContext(partition.arcId, context)
     }
 
-    // Used for FailureParticle
-    private object DummyHandleHolder : HandleHolder {
-        override fun getHandle(handleName: String) = throw NotImplementedError()
-
-        override fun getEntitySpec(handleName: String) = throw NotImplementedError()
-
-        override fun setHandle(handleName: String, handle: Handle) = Unit
-
-        override fun reset() = Unit
-    }
-
-    /** A placeholder no-op [Particle] for failures of instantiateParticle. */
-    private class FailureParticle(
-        val error: String,
-        override val handles: HandleHolder = DummyHandleHolder
-    ) : Particle
-
     /**
      * Instantiates a [Particle] by looking up an associated [ParticleConstructor], allocates
      * all of the [Handle]s connected to it, and returns a [ParticleContext] indicating the
@@ -208,57 +191,36 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     ): ParticleContext {
         val particle = instantiateParticle(ParticleIdentifier.from(spec.location))
 
-        var particleContext = lookupParticleContextOrCreate(
+        val particleContext = lookupParticleContextOrCreate(
             context,
             spec,
             particle
         )
 
-        checkForParticleFailure(particleContext)
-
-        // Don't try anymore
         if (particleContext.particleState == ParticleState.MaxFailed) {
+            // Don't try recreating the particle anymore.
             return particleContext
         }
 
-        spec.handles.forEach { handleSpec ->
-            try {
-                val handle = createHandle(
-                    context,
-                    handleSpec.key,
-                    handleSpec.value,
-                    particle.handles
-                )
-                particleContext.handles[handleSpec.key] = handle
-            } catch (e: Exception) {
-                log.error(e) { "Error creating Handle." }
-                markParticleAsFailed(particleContext)
-                return@forEach
+        // Instantiation succeeded. Move to either Created or Instantiated state based on past
+        // particle state.
+        particleContext.particleState =
+            if (particleContext.particleState.hasBeenCreated) {
+                ParticleState.Created
+            } else {
+                ParticleState.Instantiated
             }
+
+        spec.handles.forEach { handleSpec ->
+            particleContext.handles[handleSpec.key] = createHandle(
+                context,
+                handleSpec.key,
+                handleSpec.value,
+                particle.handles
+            )
         }
 
         return particleContext
-    }
-
-    /**
-     * If [Particle] is not [FailureParticle] then instantiation succeeded and we can
-     * move back to a previous success state such as Instantiated or Created, otherwise
-     * move to a failure state.
-     */
-    private fun checkForParticleFailure(particleContext: ParticleContext) {
-        particleContext.run {
-            if (particle is FailureParticle) {
-                markParticleAsFailed(particleContext)
-            } else {
-                consecutiveFailureCount = 0
-                // Instantiation succeeded, but we move to Created or Instantiated state based on past
-                if (particleState in alreadySucceededOnCreateStates) {
-                    particleState = ParticleState.Created
-                } else {
-                    particleState = ParticleState.Instantiated
-                }
-            }
-        }
     }
 
     /**
@@ -339,14 +301,6 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         }
     }
 
-    /** States which are not safe to call onCreate() from, startup succeeded at least once. */
-    private val alreadySucceededOnCreateStates = setOf(
-        ParticleState.Created,
-        ParticleState.Started,
-        ParticleState.Stopped,
-        ParticleState.Failed
-    )
-
     /**
      * Move to [ParticleState.Failed] if this particle had previously successfully invoked
      * [Particle.onCreate()], else move to [ParticleState.Failed_NeverStarted]. Increments
@@ -359,9 +313,11 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 return
             }
 
-            particleState =
-                if (particleState in alreadySucceededOnCreateStates) ParticleState.Failed
-                else ParticleState.Failed_NeverStarted
+            particleState = if (particleState.hasBeenCreated) {
+                ParticleState.Failed
+            } else {
+                ParticleState.Failed_NeverStarted
+            }
             consecutiveFailureCount++
 
             if (consecutiveFailureCount > MAX_CONSECUTIVE_FAILURES) {
@@ -499,10 +455,10 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     /**
      * Instantiate a [Particle] implementation for a given [ParticleIdentifier].
      *
-     * @property identifier A [ParticleIdentifier] from a [ParticleSpec].
+     * @property identifier a [ParticleIdentifier] from a [Plan.Particle] spec
      */
     open suspend fun instantiateParticle(identifier: ParticleIdentifier): Particle {
-        return particleConstructors[identifier]?.invoke() ?: FailureParticle(
+        return particleConstructors[identifier]?.invoke() ?: throw IllegalArgumentException(
             "Particle $identifier not found."
         )
     }
