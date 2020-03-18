@@ -73,5 +73,12 @@ enum class ParticleState {
      */
     Failed_NeverStarted,
     /** [Particle] has failed to start too many times and won't be started in this [Arc] anymore. */
-    MaxFailed,
+    MaxFailed;
+
+    /**
+     * Indicates whether a particle in this state has ever been created before (i.e. startup
+     * succeeded at least once).
+     */
+    val hasBeenCreated: Boolean
+        get() = this == Created || this == Started || this == Stopped || this == Failed
 }
