@@ -27,7 +27,7 @@ fun HandleProto.Fate.decode(): Handle.Fate =
     }
 
 /**
- *Converts [HandleProto] into [Handle].
+ * Converts [HandleProto] into [Handle].
  *
  * If a type is not set in the [HandleProto], it is initialized to a newly created TypeVariable.
 */

@@ -23,6 +23,7 @@ data class Recipe(val name: String) {
         val type: Type,
         val associatedHandles: List<String>
     ) {
+        // TODO(bgogul): associatedHandles should be changed to List<Handle>.
         enum class Fate {
             CREATE, USE, MAP, COPY, JOIN
         }
