@@ -64,10 +64,11 @@ class Stores {
 }
 
 /**
- * [HandleManager] is a convenience for creating handles using a provided store factory.
+ * [HandleManager] is a convenience for creating handles that should share [StorageProxy]ies,
+ * using a provided store factory.
  *
- * Handles that are used by end-users will deal with [RawEntity], so this helper only bothers to
- * create those types.
+ * This [HandleManager] creates storage-layer handles, which can be wrapped to provide ease-of-use
+ * with non-storage-layer types.
  *
  * It will create a [StorageProxy] for each new [StorageKey], and keep a reference to it for as
  * long as the [HandleManager] exists.
