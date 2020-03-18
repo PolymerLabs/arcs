@@ -10,9 +10,9 @@
  */
 package arcs.core.host.api
 
-import arcs.core.storage.api.Entity
-import arcs.core.storage.api.EntitySpec
-import arcs.core.storage.api.Handle
+import arcs.core.entity.Entity
+import arcs.core.entity.EntitySpec
+import arcs.core.entity.Handle
 
 /**
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields

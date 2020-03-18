@@ -10,7 +10,7 @@
  */
 package arcs.core.host.api
 
-import arcs.core.storage.api.Handle
+import arcs.core.entity.Handle
 
 /** Base interface for all particles. */
 interface Particle {

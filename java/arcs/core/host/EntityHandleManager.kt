@@ -15,17 +15,17 @@ import arcs.core.common.toArcId
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.entity.Entity
+import arcs.core.entity.EntitySpec
+import arcs.core.entity.Handle
+import arcs.core.entity.ReadCollectionHandle
+import arcs.core.entity.ReadSingletonHandle
+import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.WriteCollectionHandle
+import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.Handle as StorageHandle
 import arcs.core.storage.StorageKey
-import arcs.core.storage.api.Entity
-import arcs.core.storage.api.EntitySpec
-import arcs.core.storage.api.Handle
-import arcs.core.storage.api.ReadCollectionHandle
-import arcs.core.storage.api.ReadSingletonHandle
-import arcs.core.storage.api.ReadWriteCollectionHandle
-import arcs.core.storage.api.ReadWriteSingletonHandle
-import arcs.core.storage.api.WriteCollectionHandle
-import arcs.core.storage.api.WriteSingletonHandle
 import arcs.core.storage.handle.CollectionHandle
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.SingletonHandle

@@ -11,12 +11,12 @@
 
 package arcs.core.host
 
-import arcs.core.storage.api.ReadCollectionHandle
-import arcs.core.storage.api.ReadSingletonHandle
-import arcs.core.storage.api.ReadWriteCollectionHandle
-import arcs.core.storage.api.ReadWriteSingletonHandle
-import arcs.core.storage.api.WriteCollectionHandle
-import arcs.core.storage.api.WriteSingletonHandle
+import arcs.core.entity.ReadCollectionHandle
+import arcs.core.entity.ReadSingletonHandle
+import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.WriteCollectionHandle
+import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.handle.HandleManager

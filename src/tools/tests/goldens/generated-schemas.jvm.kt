@@ -9,11 +9,10 @@ package arcs.golden
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-import arcs.sdk.Entity
 import arcs.core.data.*
 import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.storage.api.toPrimitiveValue
+import arcs.core.entity.toPrimitiveValue
 
 class GoldInternal1(val_: String = "") : EntityBase("GoldInternal1", SCHEMA) {
 

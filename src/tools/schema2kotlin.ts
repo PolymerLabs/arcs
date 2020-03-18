@@ -78,11 +78,10 @@ import arcs.sdk.*
 ${this.opts.wasm ?
       `import arcs.sdk.wasm.*` :
       `\
-import arcs.sdk.Entity
 import arcs.core.data.*
 import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.storage.api.toPrimitiveValue`}
+import arcs.core.entity.toPrimitiveValue`}
 `;
   }
 
