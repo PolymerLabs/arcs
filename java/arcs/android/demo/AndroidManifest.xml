@@ -18,12 +18,20 @@
         android:label="@string/app_name"
         android:name=".DemoApplication">
         <activity
-            android:name=".MainActivity"
+            android:name=".DemoActivity"
             android:theme="@style/Theme.AppCompat.Light">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+      <service
+        android:name=".DemoService"
+        android:exported="false">
+        <intent-filter>
+          <action android:name="arcs.android.host.ARC_HOST"/>
+        </intent-filter>
+      </service>
     </application>
 </manifest>
