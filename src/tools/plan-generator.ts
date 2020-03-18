@@ -157,17 +157,22 @@ export class PlanGenerator {
 
   /** Generates a Kotlin `core.arc.type.Type` from a Type. */
   async createType(type: Type): Promise<string> {
+    const initialType = await this.createNestedType(type);
+    return (type.isEntity || type.isReference) ?
+      ktUtils.applyFun('SingletonType', [initialType]) : initialType;
+  }
+  async createNestedType(type: Type) {
     switch (type.tag) {
       case 'Collection':
-        return ktUtils.applyFun('CollectionType', [await this.createType(type.getContainedType())]);
+        return ktUtils.applyFun('CollectionType', [await this.createNestedType(type.getContainedType())]);
       case 'Count':
-        return ktUtils.applyFun('CountType', [await this.createType(type.getContainedType())]);
+        return ktUtils.applyFun('CountType', [await this.createNestedType(type.getContainedType())]);
       case 'Entity':
         return ktUtils.applyFun('EntityType', [`${this.specRegistry[await type.getEntitySchema().hash()]}.SCHEMA`]);
       case 'Reference':
-        return ktUtils.applyFun('ReferenceType', [await this.createType(type.getContainedType())]);
+        return ktUtils.applyFun('ReferenceType', [await this.createNestedType(type.getContainedType())]);
       case 'Singleton':
-        return ktUtils.applyFun('SingletonType', [await this.createType(type.getContainedType())]);
+        return ktUtils.applyFun('SingletonType', [await this.createNestedType(type.getContainedType())]);
       case 'TypeVariable':
       case 'Arc':
       case 'BigCollection':
