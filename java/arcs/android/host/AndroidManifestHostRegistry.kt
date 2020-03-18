@@ -90,7 +90,13 @@ class AndroidManifestHostRegistry private constructor(
     companion object {
         /** Auxiliary constructor with default sender. */
         fun create(ctx: Context) =
-            AndroidManifestHostRegistry(ctx) { intent -> ctx.startService(intent) }.initialize()
+            AndroidManifestHostRegistry(ctx) {
+                intent -> try {
+                    ctx.startService(intent)
+                } catch (e: Exception) {
+                    // TODO: notify Allocator of failure.
+                }
+            }.initialize()
 
         /** Auxiliary constructor for testing. */
         @VisibleForTesting
