@@ -35,6 +35,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/testutil",
         "//java/arcs/core/type",
