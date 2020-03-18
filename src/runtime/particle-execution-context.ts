@@ -185,11 +185,11 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           }
 
           return new Promise(resolve =>
-              pec.apiPort.ProxyMessage(storageProxy, message, resolve));
+            { pec.apiPort.ProxyMessage(storageProxy, message, resolve); });
         },
         setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
           idPromise = new Promise<number>(resolve =>
-            pec.apiPort.Register(storageProxy, callback, resolve));
+            { pec.apiPort.Register(storageProxy, callback, resolve); });
         },
         reportExceptionInHost(exception: PropagatedException): void {
           pec.apiPort.ReportExceptionInHost(exception);
@@ -212,11 +212,11 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           // Proxy messages sent to Backing stores require a muxId in order to redirect the message to the correct store.
           assert(message.muxId != null);
           return new Promise(resolve =>
-            pec.apiPort.BackingProxyMessage(storageProxy, message, resolve));
+            { pec.apiPort.BackingProxyMessage(storageProxy, message, resolve); });
         },
         setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
           idPromise = new Promise<number>(resolve =>
-            pec.apiPort.BackingRegister(storageProxy, callback, resolve));
+            { pec.apiPort.BackingRegister(storageProxy, callback, resolve); });
         },
         reportExceptionInHost(exception: PropagatedException): void {
           pec.apiPort.ReportExceptionInHost(exception);
