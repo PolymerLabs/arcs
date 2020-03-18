@@ -30,15 +30,15 @@ suspend fun <T, U> combineUpdates(
 ) {
     val handles = listOf(handle1, handle2)
     handles.forEach { handle ->
-        val e1 = handle1.getContent().invoke()
-        val e2 = handle2.getContent().invoke()
         handle.onUpdate {
+            val e1 = handle1.getContent().invoke()
+            val e2 = handle2.getContent().invoke()
             action(e1, e2)
         }
     }
 }
 
-private fun <T> ReadableHandle<T>.getContent(): suspend () -> T = when (this) {
+private suspend fun <T> ReadableHandle<T>.getContent(): suspend () -> T = when (this) {
     is ReadWriteSingletonHandle<*> -> suspend { this.fetch() as T }
     is ReadSingletonHandle<*> -> suspend { this.fetch() as T }
     is ReadWriteCollectionHandle<*> -> suspend { this.fetchAll() as T }

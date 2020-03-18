@@ -26,7 +26,7 @@ interface Handle {
 }
 
 interface ReadableHandle<T> : Handle {
-    suspend fun onUpdate(action: (T) -> Unit)
+    suspend fun onUpdate(action: suspend (T) -> Unit)
 }
 
 /** A singleton handle with read access. */

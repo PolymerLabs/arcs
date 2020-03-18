@@ -26,6 +26,7 @@ import arcs.jvm.util.testutil.TimeImpl
 import arcs.sdk.combineUpdates
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
@@ -121,8 +122,12 @@ class HandleAdapterTest {
         ) as ReadWriteSingletonHandle<Person>
 
         var x = 0
-        handle.onUpdate { x = 1 }
-        handle.store(Person())
+        handle.onUpdate { p ->
+            if(p?.name == "Eliza Hamilton") {
+                x = 1
+            }
+        }
+        handle.store(Person("Eliza Hamilton"))
         assertThat(x).isEqualTo(1)
     }
 
@@ -137,37 +142,48 @@ class HandleAdapterTest {
         ) as ReadWriteCollectionHandle<Person>
 
         var x = 0
-        handle.onUpdate { x = 1 }
-        handle.store(Person())
+        handle.onUpdate { people ->
+            if(people.elementAtOrNull(0)?.name == "Elder Price") {
+                x = people.size
+            }
+        }
+        handle.store(Person("Elder Price"))
         assertThat(x).isEqualTo(1)
     }
 
     @Test
-    fun handleAdapter_combineUpdatesTest() = runBlockingTest {
-        val collection = manager.createSingletonHandle(
+    fun handleAdapter_combineUpdatesTest() = runBlocking {
+        val collection = manager.createCollectionHandle(
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
             STORAGE_KEY,
             Person.SCHEMA
-        ) as ReadWriteSingletonHandle<Person>
+        ) as ReadWriteCollectionHandle<Person>
 
-        val singleton = manager.createCollectionHandle(
+        val singleton = manager.createSingletonHandle(
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
             KEY_TWO,
             Person.SCHEMA
-        ) as ReadWriteCollectionHandle<Person>
+        ) as ReadWriteSingletonHandle<Person>
 
-        var x = 0
-        combineUpdates(collection, singleton) { _, _ ->
-            x = x + 1
+        var x = "name"
+        combineUpdates(collection, singleton) { people, e2 ->
+            x = "elder Price"
+//            if(people.size == 0) {
+//                x = "Washington"
+//            }
+//            if(e2?.name == "Martha") {
+//                x = "The Lady"
+//            }
         }
-        singleton.store(Person())
-        assertThat(x).isEqualTo(1)
-        collection.store(Person())
-        assertThat(x).isEqualTo(2)
+        collection.store(Person("George"))
+        //assertThat(collection.fetchAll().elementAtOrNull(0)?.name).isEqualTo("George")
+        //assertThat(x).isEqualTo("Washington")
+        //singleton.store(Person("Martha"))
+        //assertThat(x).isEqualTo(3)
     }
 
     private companion object {
