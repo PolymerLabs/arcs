@@ -261,9 +261,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private suspend fun <FT : Function<Unit>> applySuspendingCallbacks(
         actions: () -> Map<String, List<FT>>,
         block: suspend (FT) -> Unit
-    ) = callbackMutex.withLock {
+    ) {
+        val callbacks = callbackMutex.withLock {
+                actions().values.flatten()
+        }
         coroutineScope {
-            actions().values.flatten().forEach { action ->
+            callbacks.forEach{ action ->
                 launch {
                     block(action)
                 }

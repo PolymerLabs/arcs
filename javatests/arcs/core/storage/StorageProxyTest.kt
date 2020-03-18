@@ -59,7 +59,7 @@ class StorageProxyTest {
     fun propagatesStorageOpToReaders() = runBlockingTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
         val readHandle = newHandle("testReader", storageProxy)
-        val readCallback = mock<(String)->Unit>().also { readHandle.addOnUpdate(it) }
+        val readCallback = mock<suspend (String)->Unit>().also { readHandle.addOnUpdate(it) }
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
         storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))

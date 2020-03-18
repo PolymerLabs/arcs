@@ -152,7 +152,7 @@ class HandleAdapterTest {
     }
 
     @Test
-    fun handleAdapter_combineUpdatesTest() = runBlocking {
+    fun handleAdapter_combineUpdatesTest() = runBlockingTest {
         val collection = manager.createCollectionHandle(
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
@@ -169,21 +169,19 @@ class HandleAdapterTest {
             Person.SCHEMA
         ) as ReadWriteSingletonHandle<Person>
 
-        var x = "name"
+        var x = 0
         combineUpdates(collection, singleton) { people, e2 ->
-            x = "elder Price"
-//            if(people.size == 0) {
-//                x = "Washington"
-//            }
-//            if(e2?.name == "Martha") {
-//                x = "The Lady"
-//            }
+            if(people.elementAtOrNull(0)?.name == "George") {
+                x = x + 1
+            }
+            if(e2?.name == "Martha") {
+                x = x + 3
+            }
         }
         collection.store(Person("George"))
-        //assertThat(collection.fetchAll().elementAtOrNull(0)?.name).isEqualTo("George")
-        //assertThat(x).isEqualTo("Washington")
-        //singleton.store(Person("Martha"))
-        //assertThat(x).isEqualTo(3)
+        assertThat(x).isEqualTo(1)
+        singleton.store(Person("Martha"))
+        assertThat(x).isEqualTo(5)
     }
 
     private companion object {
