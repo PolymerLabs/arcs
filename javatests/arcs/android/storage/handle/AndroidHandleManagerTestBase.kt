@@ -23,6 +23,7 @@ open class AndroidHandleManagerTestBase : HandleManagerTestBase(), LifecycleOwne
     override var testRunner = { block: suspend CoroutineScope.() -> Unit ->
         runBlocking { this.block() }
     }
+
     @Before
     fun setUp() {
         lifecycle = LifecycleRegistry(this).apply {
