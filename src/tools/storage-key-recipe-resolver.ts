@@ -16,11 +16,12 @@ import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {Arc} from '../runtime/arc.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
-import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
+import {CapabilitiesResolver, StorageKeyCreatorInfo} from '../runtime/capabilities-resolver.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
 import {TypeVariable} from '../runtime/type.js';
-import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
+import {DatabaseStorageKey, PersistentDatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
+import {Capabilities} from '../runtime/capabilities.js';
 
 /**
  * Responsible for resolving recipes with storage keys.
@@ -46,7 +47,7 @@ export class StorageKeyRecipeResolver {
       this.validateHandles(recipe);
       const arcId = findLongRunningArcId(recipe);
       const arc = this.runtime.newArc(
-          arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
+        arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
       const resolved = await this.tryResolve(recipe, arc, opts);
       if (!resolved) {
@@ -84,7 +85,12 @@ export class StorageKeyRecipeResolver {
    * @param arc Arc is associated with current recipe.
    */
   async createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
-    const resolver = new CapabilitiesResolver({arcId: arc.id});
+    const dbKeyCreator: StorageKeyCreatorInfo = {
+      protocol: 'db',
+      capabilities: Capabilities.persistentQueryable,
+      create: options => new PersistentDatabaseStorageKey(options.unique(), options.schemaHash),
+    };
+    const resolver = new CapabilitiesResolver({arcId: arc.id}, [dbKeyCreator]);
     for (const createHandle of recipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
       if (createHandle.type instanceof TypeVariable && !createHandle.type.isResolved()) {
         // TODO(mmandlis): should already be resolved.
@@ -92,7 +98,7 @@ export class StorageKeyRecipeResolver {
         assert(createHandle.type.isResolved());
       }
       const storageKey = await resolver.createStorageKey(
-          createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
+        createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
       const store = new Store(createHandle.type, {storageKey, exists: Exists.MayExist, id: createHandle.id});
       arc.context.registerStore(store, createHandle.tags);
     }
