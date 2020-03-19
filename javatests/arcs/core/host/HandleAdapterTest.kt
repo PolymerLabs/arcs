@@ -98,7 +98,7 @@ class HandleAdapterTest {
             HandleMode.Write,
             WRITE_ONLY_HANDLE,
             Person,
-            STORAGE_KEY_ONE,
+            STORAGE_KEY_ONE
         )
 
         assertThat(writeOnlyHandle).isInstanceOf(WriteCollectionHandle::class.java)
@@ -112,8 +112,7 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY_ONE,
-            Person.SCHEMA
+            STORAGE_KEY_ONE
         ) as ReadWriteSingletonHandle<Person>
 
         var x = 0
@@ -132,8 +131,7 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY_ONE,
-            Person.SCHEMA
+            STORAGE_KEY_ONE
         ) as ReadWriteCollectionHandle<Person>
 
         var x = 0
@@ -152,16 +150,14 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY_ONE,
-            Person.SCHEMA
+            STORAGE_KEY_ONE
         ) as ReadWriteCollectionHandle<Person>
 
         val singleton = manager.createSingletonHandle(
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY_TWO,
-            Person.SCHEMA
+            STORAGE_KEY_TWO
         ) as ReadWriteSingletonHandle<Person>
 
         var x = 0
