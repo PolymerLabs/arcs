@@ -27,7 +27,7 @@ export interface TypeLiteral extends Literal {
 }
 
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Tuple' |
-  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton';
+  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton' | 'Backing';
 
 type TypeFromLiteral = (literal: TypeLiteral) => Type;
 
@@ -126,6 +126,10 @@ export abstract class Type {
     return this instanceof ReferenceType;
   }
 
+  isBackingType(): this is BackingType<Type> {
+    return this instanceof BackingType;
+  }
+
   isTupleType(): this is TupleType {
     return this instanceof TupleType;
   }
@@ -167,6 +171,10 @@ export abstract class Type {
     return false;
   }
 
+  get isBacking(): boolean {
+    return false;
+  }
+
   get isSingleton(): boolean {
     return false;
   }
@@ -201,6 +209,10 @@ export abstract class Type {
 
   referenceTo() {
     return new ReferenceType(this);
+  }
+
+  backingTo() {
+    return new BackingType(this);
   }
 
   resolvedType(): Type {
@@ -1006,6 +1018,77 @@ export class ReferenceType<T extends Type> extends Type {
 
   crdtInstanceConstructor<T extends CRDTTypeRecord>(): new () => CRDTModel<T> {
     return this.referredType.crdtInstanceConstructor();
+  }
+}
+
+export class BackingType<T extends Type> extends Type {
+  readonly backedType: T;
+
+  constructor(backing: T) {
+    super('Backing');
+    if (backing == null) {
+      throw new Error('invalid type! Backing tpyes must include a backing type declaration');
+    }
+    this.backedType = backing;
+  }
+
+  get isBacking(): boolean {
+    return true;
+  }
+
+  getContainedType(): T {
+    return this.backedType;
+  }
+
+  resolvedType() {
+    const backedType = this.backedType;
+    const resolvedBackedType = backedType.resolvedType();
+    return (backedType !== resolvedBackedType) ? new BackingType(resolvedBackedType) : this;
+  }
+
+  _canEnsureResolved(): boolean {
+    return this.backedType.canEnsureResolved();
+  }
+
+  maybeEnsureResolved(): boolean {
+    return this.backedType.maybeEnsureResolved();
+  }
+
+  get canWriteSuperset() {
+    return this.backedType.canWriteSuperset;
+  }
+
+  get canReadSubset() {
+    return this.backedType.canReadSubset;
+  }
+
+  _clone(variableMap: Map<string, Type>) {
+    const data = this.backedType.clone(variableMap).toLiteral();
+    return Type.fromLiteral({tag: this.tag, data});
+  }
+
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): BackingType<T> {
+    return new BackingType<T>(this.backedType._cloneWithResolutions(variableMap) as T);
+  }
+
+  toLiteral(): TypeLiteral {
+    return {tag: this.tag, data: this.backedType.toLiteral()};
+  }
+
+  toString(options = undefined): string {
+    return '#' + this.backedType.toString();
+  }
+
+  toPrettyString(): string {
+    return 'Backing Type to ' + this.backedType.toPrettyString();
+  }
+
+  getEntitySchema(): Schema {
+    return this.backedType.getEntitySchema();
+  }
+
+  crdtInstanceConstructor<T extends CRDTTypeRecord>(): new () => CRDTModel<T> {
+    return this.backedType.crdtInstanceConstructor();
   }
 }
 

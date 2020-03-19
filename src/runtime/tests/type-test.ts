@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
-        ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
+        ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo, BackingType} from '../type.js';
 import {Entity} from '../entity.js';
 import {Refinement} from '../refiner.js';
 import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
@@ -25,6 +25,7 @@ import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
 //   InterfaceType     : InterfaceInfo
 //   SlotType          : SlotInfo
 //   ReferenceType     : Type
+//   BackingType       : Type
 //   ArcType           : none
 //   HandleType        : none
 
@@ -163,13 +164,24 @@ describe('types', () => {
       deepEqual(col2, Type.fromLiteral(col2.toLiteral()));
       deepEqual(col2, col2.clone(new Map()));
 
+      // Collection of backing of variables
+      const variable2 = TypeVariable.make('a');
+      const backing = new BackingType(variable2);
+      const col3 = new CollectionType(backing);
+      deepEqual(col3.toLiteral(), {
+        tag: 'Collection',
+        data: {tag: 'Backing', data: variable2.toLiteral()}
+      });
+      deepEqual(col3, Type.fromLiteral(col3.toLiteral()));
+      deepEqual(col3, col3.clone(new Map()));
+
       // Collection of references to slots
       const slot      = SlotType.make('f', 'h');
       const reference = new ReferenceType(slot);
-      const col3      = new CollectionType(reference);
-      deepEqual(col3.toLiteral(), {tag: 'Collection', data: reference.toLiteral()});
-      deepEqual(col3, Type.fromLiteral(col3.toLiteral()));
-      deepEqual(col3, col3.clone(new Map()));
+      const col4      = new CollectionType(reference);
+      deepEqual(col4.toLiteral(), {tag: 'Collection', data: reference.toLiteral()});
+      deepEqual(col4, Type.fromLiteral(col4.toLiteral()));
+      deepEqual(col4, col4.clone(new Map()));
     });
 
     it('BigCollection', async () => {
@@ -265,6 +277,34 @@ describe('types', () => {
       deepEqual(ref3, ref3.clone(new Map()));
     });
 
+    it('Backing', async () => {
+      // BackingType of an entity
+      const entity = EntityType.make(['Foo'], {value: 'Text'});
+      const backing1 = new BackingType(entity);
+      deepEqual(backing1.toLiteral(), {tag: 'Backing', data: entity.toLiteral()});
+      deepEqual(backing1, Type.fromLiteral(backing1.toLiteral()));
+      deepEqual(backing1, backing1.clone(new Map()));
+
+      // BackingType of a reference variable
+      const variable = TypeVariable.make('a');
+      const inner = new ReferenceType(variable);
+      const backing2 = new BackingType(inner);
+      deepEqual(backing2.toLiteral(), {
+        tag: 'Backing',
+        data: {tag: 'Reference', data: variable.toLiteral()}
+      });
+      deepEqual(backing2, Type.fromLiteral(backing2.toLiteral()));
+      deepEqual(backing2, backing2.clone(new Map()));
+
+      // BackingType of a collection of slots
+      const slot = SlotType.make('f', 'h');
+      const col = new CollectionType(slot);
+      const backing3 = new BackingType(col);
+      deepEqual(backing3.toLiteral(), {tag: 'Backing', data: col.toLiteral()});
+      deepEqual(backing3, Type.fromLiteral(backing3.toLiteral()));
+      deepEqual(backing3, backing3.clone(new Map()));
+    });
+
     it('HandleInfo', async () => {
       const handleInfo = new HandleType();
       deepEqual(handleInfo.toLiteral(), {tag: 'Handle'});
@@ -276,6 +316,7 @@ describe('types', () => {
       const slot       = SlotType.make('f', 'h');
       const bigCol     = new BigCollectionType(slot);
       const reference  = new ReferenceType(bigCol);
+      const backedType = new BackingType(reference);
 
       const entity     = EntityType.make(['Foo'], {value: 'Text'});
       const variable   = TypeVariable.make('a');
@@ -283,7 +324,7 @@ describe('types', () => {
 
       const handleInfo = new HandleType();
 
-      const tuple   = new TupleType([reference, iface, handleInfo]);
+      const tuple   = new TupleType([backedType, iface, handleInfo]);
       const collection = new CollectionType(tuple);
 
       deepEqual(collection, Type.fromLiteral(collection.toLiteral()));
