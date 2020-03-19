@@ -168,7 +168,7 @@ private class ReadSingletonOperationsImpl<T : Entity>(
 ) : ReadSingletonOperations<T> {
     override suspend fun fetch() = storageHandle.fetch()?.let { entitySpec.deserialize(it) }
 
-    override suspend fun onUpdate(action: (T?) -> Unit) = storageHandle.addOnUpdate {
+    override suspend fun onUpdate(action: suspend (T?) -> Unit) = storageHandle.addOnUpdate {
         action(it?.let { entitySpec.deserialize(it) })
     }
 }
@@ -202,7 +202,7 @@ private class ReadCollectionOperationsImpl<T : Entity>(
 
     override suspend fun fetchAll() = storageHandle.fetchAll().adaptValues()
 
-    override suspend fun onUpdate(action: (Set<T>) -> Unit) = storageHandle.addOnUpdate {
+    override suspend fun onUpdate(action: suspend (Set<T>) -> Unit) = storageHandle.addOnUpdate {
         action(it.adaptValues())
     }
 }
@@ -247,7 +247,7 @@ abstract class BaseHandleAdapter(
 
 /** Delegate this interface in a concrete singleton handle impl to mixin read operations. */
 private interface UpdateOperations<T> {
-    suspend fun onUpdate(action: (T) -> Unit)
+    suspend fun onUpdate(action: suspend (T) -> Unit)
 }
 
 /** Delegate this interface in a concrete singleton handle impl to mixin read operations. */

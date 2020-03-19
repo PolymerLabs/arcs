@@ -23,6 +23,7 @@ import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.jvm.util.testutil.TimeImpl
+import arcs.sdk.combineUpdates
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -56,7 +57,7 @@ class HandleAdapterTest {
             HandleMode.Read,
             READ_ONLY_HANDLE,
             Person,
-            STORAGE_KEY
+            STORAGE_KEY_ONE
         )
 
         assertThat(readOnlyHandle).isInstanceOf(ReadSingletonHandle::class.java)
@@ -70,7 +71,7 @@ class HandleAdapterTest {
             HandleMode.Write,
             WRITE_ONLY_HANDLE,
             Person,
-            STORAGE_KEY
+            STORAGE_KEY_ONE
         )
         assertThat(writeOnlyHandle).isInstanceOf(WriteSingletonHandle::class.java)
         assertThat(writeOnlyHandle).isNotInstanceOf(ReadSingletonHandle::class.java)
@@ -83,7 +84,7 @@ class HandleAdapterTest {
             HandleMode.Read,
             READ_ONLY_HANDLE,
             Person,
-            STORAGE_KEY
+            STORAGE_KEY_ONE
         )
 
         assertThat(readOnlyHandle).isInstanceOf(ReadCollectionHandle::class.java)
@@ -97,7 +98,7 @@ class HandleAdapterTest {
             HandleMode.Write,
             WRITE_ONLY_HANDLE,
             Person,
-            STORAGE_KEY
+            STORAGE_KEY_ONE
         )
 
         assertThat(writeOnlyHandle).isInstanceOf(WriteCollectionHandle::class.java)
@@ -105,13 +106,88 @@ class HandleAdapterTest {
         assertThat(writeOnlyHandle).isNotInstanceOf(ReadWriteCollectionHandle::class.java)
     }
 
+    @Test
+    fun singletonHandleAdapter_onUpdateTest() = runBlockingTest {
+        val handle = manager.createSingletonHandle(
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
+            Person,
+            STORAGE_KEY_ONE
+        ) as ReadWriteSingletonHandle<Person>
+
+        var x = 0
+        handle.onUpdate { p ->
+            if (p?.name == "Eliza Hamilton") {
+                x++
+            }
+        }
+        handle.store(Person("Eliza Hamilton"))
+        assertThat(x).isEqualTo(1)
+    }
+
+    @Test
+    fun collectionHandleAdapter_onUpdateTest() = runBlockingTest {
+        val handle = manager.createCollectionHandle(
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
+            Person,
+            STORAGE_KEY_ONE
+        ) as ReadWriteCollectionHandle<Person>
+
+        var x = 0
+        handle.onUpdate { people ->
+            if (people.elementAtOrNull(0)?.name == "Elder Price") {
+                x += people.size
+            }
+        }
+        handle.store(Person("Elder Price"))
+        assertThat(x).isEqualTo(1)
+    }
+
+    @Test
+    fun handleAdapter_combineUpdatesTest() = runBlockingTest {
+        val collection = manager.createCollectionHandle(
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
+            Person,
+            STORAGE_KEY_ONE
+        ) as ReadWriteCollectionHandle<Person>
+
+        val singleton = manager.createSingletonHandle(
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
+            Person,
+            STORAGE_KEY_TWO
+        ) as ReadWriteSingletonHandle<Person>
+
+        var x = 0
+        combineUpdates(collection, singleton) { people, e2 ->
+            if (people.elementAtOrNull(0)?.name == "George") {
+                x = x + 1
+            }
+            if (e2?.name == "Martha") {
+                x = x + 3
+            }
+        }
+        collection.store(Person("George"))
+        assertThat(x).isEqualTo(1)
+        singleton.store(Person("Martha"))
+        assertThat(x).isEqualTo(5)
+    }
+
     private companion object {
         private const val READ_ONLY_HANDLE = "readOnlyHandle"
         private const val WRITE_ONLY_HANDLE = "writeOnlyHandle"
+        private const val READ_WRITE_HANDLE = "readWriteHandle"
 
-        private val STORAGE_KEY = ReferenceModeStorageKey(
+        private val STORAGE_KEY_ONE = ReferenceModeStorageKey(
             backingKey = RamDiskStorageKey("backing"),
             storageKey = RamDiskStorageKey("entity")
+        )
+
+        private val STORAGE_KEY_TWO = ReferenceModeStorageKey(
+            backingKey = RamDiskStorageKey("backing2"),
+            storageKey = RamDiskStorageKey("entity2")
         )
     }
 }
