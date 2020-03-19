@@ -344,11 +344,9 @@ ${this.opts.wasm ? `
         init {
             SchemaRegistry.register(this)
         }`}
-
-        override fun create() = ${name}()
         ${!this.opts.wasm ? `
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }` : `
+        override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
         override fun decode(encoded: ByteArray): ${name}? {
             if (encoded.isEmpty()) return null
     
@@ -375,7 +373,7 @@ ${this.opts.wasm ? `
                 decoder.validate("|")
                 i++
             }`)}
-            val _rtn = create().copy(
+            val _rtn = ${name}().copy(
                 ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
             )
             _rtn.entityId = entityId

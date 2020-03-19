@@ -45,10 +45,8 @@ class GoldInternal1(val_: String = "") : EntityBase("GoldInternal1", SCHEMA) {
             SchemaRegistry.register(this)
         }
 
-        override fun create() = GoldInternal1()
-
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = GoldInternal1().apply { deserialize(data) }
     }
 }
 
@@ -146,10 +144,8 @@ class Gold_QCollection(
             SchemaRegistry.register(this)
         }
 
-        override fun create() = Gold_QCollection()
-
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = Gold_QCollection().apply { deserialize(data) }
     }
 }
 
@@ -184,10 +180,8 @@ class Gold_Collection(num: Double = 0.0) : EntityBase("Gold_Collection", SCHEMA)
             SchemaRegistry.register(this)
         }
 
-        override fun create() = Gold_Collection()
-
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = Gold_Collection().apply { deserialize(data) }
     }
 }
 
@@ -249,10 +243,8 @@ class Gold_Data(
             SchemaRegistry.register(this)
         }
 
-        override fun create() = Gold_Data()
-
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = Gold_Data().apply { deserialize(data) }
     }
 }
 
