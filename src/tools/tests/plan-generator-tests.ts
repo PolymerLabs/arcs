@@ -196,5 +196,40 @@ describe('recipe2plan', () => {
       assert.lengthOf(keys, 2);
       assert.deepStrictEqual(keys[0], keys[1]);
     });
+    it('creates particles in the same order as the recipe and not the manifest', async () => {
+      const manifest = await Manifest.parse(`\
+     particle D in 'particle.D'
+       data: reads Thing {num: Number}
+     particle C in 'particle.C'
+       data: writes Thing {num: Number}
+     particle B in 'particle.B'
+       data: reads Thing {num: Number}
+     particle A in 'particle.A'
+       data: writes Thing {num: Number}
+       
+     recipe R
+       h1: create persistent 'id-1'
+       h2: create persistent 'id-2'
+       A
+         data: writes h2
+       B
+         data: reads h2
+       C
+         data: writes h1
+       D
+         data: reads h1`);
+      const recipeResolver = new StorageKeyRecipeResolver(manifest);
+      const recipes = await recipeResolver.resolve();
+      const generator = new PlanGenerator(recipes, 'blah');
+      const plan = await generator.generate();
+
+      assert.include(plan, 'particle.A');
+      assert.include(plan, 'particle.B');
+      assert.include(plan, 'particle.C');
+      assert.include(plan, 'particle.D');
+      assert.isBelow(plan.indexOf('particle.A'), plan.indexOf('particle.B'));
+      assert.isBelow(plan.indexOf('particle.B'), plan.indexOf('particle.C'));
+      assert.isBelow(plan.indexOf('particle.C'), plan.indexOf('particle.D'));
+    });
   });
 });
