@@ -90,7 +90,8 @@ class RecipeProtoDecoderTest {
             assertThat(name).isEqualTo("PassThrough")
             assertThat(handles).isEqualTo(mapOf("thing" to thingHandle))
             assertThat(particles).containsExactly(
-                readerParticle.decode(context), writerParticle.decode(context)
+                readerParticle.decode(context),
+                writerParticle.decode(context)
             )
         }
     }
@@ -132,7 +133,8 @@ class RecipeProtoDecoderTest {
         with(recipeEnvelopeProto.decodeRecipe()) {
             assertThat(particles.map { it.spec.name }).containsExactly("Reader", "Writer")
             assertThat(particles).containsExactly(
-                readerParticle.decode(context), writerParticle.decode(context)
+                readerParticle.decode(context),
+                writerParticle.decode(context)
             )
         }
     }
