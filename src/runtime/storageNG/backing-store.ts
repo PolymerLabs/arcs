@@ -24,10 +24,10 @@ export class BackingStore<T extends CRDTTypeRecord>  {
 
   storageKey: StorageKey;
 
-  private stores: Dictionary<StoreRecord<T>> = {};
-  private callbacks = new Map<number, ProxyCallback<T>>();
+  private readonly stores: Dictionary<StoreRecord<T>> = {};
+  private readonly callbacks = new Map<number, ProxyCallback<T>>();
   private nextCallbackId = 1;
-  private options: StoreConstructorOptions<T>;
+  private readonly options: StoreConstructorOptions<T>;
 
   private constructor(options: StoreConstructorOptions<T>) {
     this.storageKey = options.storageKey;
