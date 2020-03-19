@@ -17,8 +17,8 @@ import arcs.core.host.ArcHost
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
 import arcs.jvm.host.JvmProdHost
-import kotlinx.coroutines.Dispatchers
 import java.util.ServiceLoader
+import kotlinx.coroutines.Dispatchers
 
 /**
  * An [ArcHost] that runs isolatable particles that are expected to have no platform
@@ -40,4 +40,3 @@ class AndroidProdHost(
         hostId
     )
 }
-

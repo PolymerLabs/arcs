@@ -22,6 +22,7 @@ import arcs.core.host.ParticleIdentifier
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 
 /**
  * An [ArcHost] stub that translates API calls to [Intent]s directed at a [Service] using
@@ -98,12 +99,14 @@ class IntentArcHostAdapter(
     private suspend fun <T> sendIntentToArcHostServiceForResult(
         intent: Intent,
         transformer: (Any?) -> T?
-    ): T? = suspendCancellableCoroutine { cancelableContinuation ->
-        ArcHostHelper.setResultReceiver(
-            intent,
-            ResultReceiverContinuation(cancelableContinuation, transformer)
-        )
-        sendIntentToArcHostService(intent)
+    ): T? = withTimeout(1000L) {
+        suspendCancellableCoroutine { cancelableContinuation: CancellableContinuation<T?> ->
+            ArcHostHelper.setResultReceiver(
+                intent,
+                ResultReceiverContinuation(cancelableContinuation, transformer)
+            )
+            sendIntentToArcHostService(intent)
+        }
     }
 
     /**

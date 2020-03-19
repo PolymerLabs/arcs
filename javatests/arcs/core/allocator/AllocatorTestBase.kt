@@ -282,9 +282,14 @@ open class AllocatorTestBase {
 
     @Test
     fun allocator_verifyUnknownParticleThrows() = runAllocatorTest {
-        val particle = Plan.Particle("UnknownParticle", "Unknown", mapOf())
+        val particleLens = Plan.particleLens.traverse()
 
-        val plan = Plan(listOf(particle))
+        val plan = particleLens.mod(PersonPlan) { particle ->
+            particle.copy(
+                particleName = "Unknown ${particle.particleName}",
+                location = "unknown.${particle.location}"
+            )
+        }
         assertSuspendingThrows(ParticleNotFoundException::class) {
             allocator.startArcForPlan("unknown", plan)
         }
