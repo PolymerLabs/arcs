@@ -41,8 +41,6 @@ class GoldInternal1(val_: String = "") : WasmEntity {
     companion object : WasmEntitySpec<GoldInternal1> {
 
 
-        override fun create() = GoldInternal1()
-
         override fun decode(encoded: ByteArray): GoldInternal1? {
             if (encoded.isEmpty()) return null
 
@@ -72,7 +70,7 @@ class GoldInternal1(val_: String = "") : WasmEntity {
                 decoder.validate("|")
                 i++
             }
-            val _rtn = create().copy(
+            val _rtn = GoldInternal1().copy(
                 val_ = val_
             )
             _rtn.entityId = entityId
@@ -180,8 +178,6 @@ class Gold_QCollection(
     companion object : WasmEntitySpec<Gold_QCollection> {
 
 
-        override fun create() = Gold_QCollection()
-
         override fun decode(encoded: ByteArray): Gold_QCollection? {
             if (encoded.isEmpty()) return null
 
@@ -241,7 +237,7 @@ class Gold_QCollection(
                 decoder.validate("|")
                 i++
             }
-            val _rtn = create().copy(
+            val _rtn = Gold_QCollection().copy(
 
             name = name,
             age = age,
@@ -289,8 +285,6 @@ class Gold_Collection(num: Double = 0.0) : WasmEntity {
     companion object : WasmEntitySpec<Gold_Collection> {
 
 
-        override fun create() = Gold_Collection()
-
         override fun decode(encoded: ByteArray): Gold_Collection? {
             if (encoded.isEmpty()) return null
 
@@ -320,7 +314,7 @@ class Gold_Collection(num: Double = 0.0) : WasmEntity {
                 decoder.validate("|")
                 i++
             }
-            val _rtn = create().copy(
+            val _rtn = Gold_Collection().copy(
                 num = num
             )
             _rtn.entityId = entityId
@@ -391,8 +385,6 @@ class Gold_Data(
     companion object : WasmEntitySpec<Gold_Data> {
 
 
-        override fun create() = Gold_Data()
-
         override fun decode(encoded: ByteArray): Gold_Data? {
             if (encoded.isEmpty()) return null
 
@@ -437,7 +429,7 @@ class Gold_Data(
                 decoder.validate("|")
                 i++
             }
-            val _rtn = create().copy(
+            val _rtn = Gold_Data().copy(
                 num = num, txt = txt, lnk = lnk, flg = flg
             )
             _rtn.entityId = entityId
