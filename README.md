@@ -1,5 +1,7 @@
 [![Cloud Build Status](https://storage.googleapis.com/arcs-github-gcb-badges/builds/arcs/branches/master.svg)](https://console.cloud.google.com/cloud-build/builds?query=trigger_id%3D%22bdf768b5-8901-43e5-814c-f3adffff2eab%22&project=arcs-265404)
+<!--
 [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/rswlpkq2vtp9cns0/branch/master?svg=true)](https://ci.appveyor.com/project/arcs/arcs-3i77k/branch/master)
+-->
 
 # Arcs
 
