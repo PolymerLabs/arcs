@@ -257,13 +257,13 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         }
     }
 
-    /** Safely make a copy of the specified action set, and launch each action on a coroutine */
+    /** Safely make a copy of the specified action set, and launch each action on a coroutine. */
     private suspend fun <FT : Function<Unit>> applySuspendingCallbacks(
         actions: () -> Map<String, List<FT>>,
         block: suspend (FT) -> Unit
     ) {
         val callbacks = callbackMutex.withLock {
-                actions().values.flatten()
+            actions().values.flatten()
         }
         coroutineScope {
             callbacks.forEach { action ->

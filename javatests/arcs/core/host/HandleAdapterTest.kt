@@ -122,7 +122,7 @@ class HandleAdapterTest {
 
         var x = 0
         handle.onUpdate { p ->
-            if(p?.name == "Eliza Hamilton") {
+            if (p?.name == "Eliza Hamilton") {
                 x = 1
             }
         }
@@ -142,7 +142,7 @@ class HandleAdapterTest {
 
         var x = 0
         handle.onUpdate { people ->
-            if(people.elementAtOrNull(0)?.name == "Elder Price") {
+            if (people.elementAtOrNull(0)?.name == "Elder Price") {
                 x = people.size
             }
         }
@@ -170,10 +170,10 @@ class HandleAdapterTest {
 
         var x = 0
         combineUpdates(collection, singleton) { people, e2 ->
-            if(people.elementAtOrNull(0)?.name == "George") {
+            if (people.elementAtOrNull(0)?.name == "George") {
                 x = x + 1
             }
-            if(e2?.name == "Martha") {
+            if (e2?.name == "Martha") {
                 x = x + 3
             }
         }
