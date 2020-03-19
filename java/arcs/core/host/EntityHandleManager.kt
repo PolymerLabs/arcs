@@ -59,11 +59,10 @@ class EntityHandleManager(
         name: String,
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
-        schema: Schema,
         idGenerator: Id.Generator = Id.Generator.newSession()
     ) = handleManager.rawEntitySingletonHandle(
         storageKey,
-        schema,
+        entitySpec.SCHEMA,
         name = idGenerator.newChildId(
             idGenerator.newChildId(arcId.toArcId(), hostId),
             name
@@ -92,22 +91,21 @@ class EntityHandleManager(
         name: String,
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
-        schema: Schema,
         idGenerator: Id.Generator = Id.Generator.newSession()
     ) = handleManager.rawEntityCollectionHandle(
             storageKey,
-            schema,
+            entitySpec.SCHEMA,
             name = idGenerator.newChildId(
                 idGenerator.newChildId(arcId.toArcId(), hostId),
                 name
             ).toString()
         ).let {
-        when (mode) {
-            HandleMode.Read -> ReadCollectionHandleAdapter(entitySpec, it)
-            HandleMode.Write -> WriteCollectionHandleAdapter<T>(it, idGenerator)
-            HandleMode.ReadWrite ->
-                ReadWriteCollectionHandleAdapter(entitySpec, it, idGenerator)
-        }
+            when (mode) {
+                HandleMode.Read -> ReadCollectionHandleAdapter(entitySpec, it)
+                HandleMode.Write -> WriteCollectionHandleAdapter<T>(it, idGenerator)
+                HandleMode.ReadWrite ->
+                    ReadWriteCollectionHandleAdapter(entitySpec, it, idGenerator)
+            }
     }
 }
 
