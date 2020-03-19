@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import arcs.android.host.AndroidManifestHostRegistry
+import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.Allocator
 import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
@@ -28,6 +29,7 @@ import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.host.HostRegistry
 import arcs.core.storage.StorageKey
+import arcs.core.storage.handle.Stores
 import arcs.core.type.Type
 import arcs.jvm.util.JvmTime
 import kotlin.coroutines.CoroutineContext
@@ -69,7 +71,17 @@ class DemoActivity : AppCompatActivity() {
 
         scope.launch {
             hostRegistry = AndroidManifestHostRegistry.create(this@DemoActivity)
-            allocator = Allocator.create(hostRegistry, JvmTime)
+            allocator = Allocator.create(
+                hostRegistry,
+                JvmTime,
+                AndroidHandleManager(
+                    this@DemoActivity,
+                    this@DemoActivity.getLifecycle(),
+                    Dispatchers.Default,
+                    null,
+                    Stores()
+                )
+            )
 
             recipePersonStorageKey = CreateableStorageKey(
                 "recipePerson", Capabilities.TiedToRuntime

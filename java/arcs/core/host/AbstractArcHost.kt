@@ -12,6 +12,7 @@ package arcs.core.host
 
 import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
 import arcs.core.entity.Handle
@@ -356,21 +357,19 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         handleSpec: Plan.HandleConnection,
         holder: HandleHolder
     ) = when (handleSpec.type) {
-        is SingletonType<*> ->
+        is SingletonType<*>, is EntityType ->
             arcHostContext.entityHandleManager.createSingletonHandle(
                 handleSpec.mode,
                 handleName,
                 holder.getEntitySpec(handleName),
-                handleSpec.storageKey,
-                handleSpec.type.toSchema()
+                handleSpec.storageKey
             )
         is CollectionType<*> ->
             arcHostContext.entityHandleManager.createCollectionHandle(
                 handleSpec.mode,
                 handleName,
                 holder.getEntitySpec(handleName),
-                handleSpec.storageKey,
-                handleSpec.type.toSchema()
+                handleSpec.storageKey
             )
         else -> throw IllegalArgumentException("Unknown type ${handleSpec.type}")
     }.also { holder.setHandle(handleName, it) }
@@ -422,7 +421,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
 
         // TODO: wait for all stores linked to handles to reach idle() state?
         context.particleState = ParticleState.Stopped
-        cleanupHandles(context.particle.handles)
+        cleanupHandles(context)
     }
 
     /**
@@ -436,9 +435,8 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     /**
      * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
      */
-    private suspend fun cleanupHandles(handles: HandleHolder) {
-        // TODO: disconnect/unregister handles
-        handles.reset()
+    private suspend fun cleanupHandles(context: ParticleContext) {
+        context.particle.handles.reset()
     }
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =

@@ -42,7 +42,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val callbackMutex = Mutex()
     private val onUpdateActions by guardedBy(
         callbackMutex,
-        mutableMapOf<String, MutableList<(T)->Unit>>()
+        mutableMapOf<String, MutableList<suspend (T)->Unit>>()
     )
     private val onSyncActions by guardedBy(
         callbackMutex,
@@ -64,8 +64,10 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val store = storeEndpointProvider.getStorageEndpoint()
     private val storeListenerId = store.setCallback(ProxyCallback(::onMessage))
 
+    val storageKey = storeEndpointProvider.storageKey
+
     /** Add a [Handle] `onUpdate` action, associated with a [Handle] name. */
-    suspend fun addOnUpdate(handleName: String, action: (value: T) -> Unit) {
+    suspend fun addOnUpdate(handleName: String, action: suspend (value: T) -> Unit) {
         callbackMutex.withLock {
             onUpdateActions.getOrPut(handleName) { mutableListOf() }.add(action)
         }
@@ -257,7 +259,26 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         }
     }
 
-    private suspend fun notifyUpdate(data: T) = applyCallbacks(::onUpdateActions) { it(data) }
+    /** Safely make a copy of the specified action set, and launch each action on a coroutine. */
+    private suspend fun <FT : Function<Unit>> applySuspendingCallbacks(
+        actions: () -> Map<String, List<FT>>,
+        block: suspend (FT) -> Unit
+    ) {
+        val callbacks = callbackMutex.withLock {
+            actions().values.flatten()
+        }
+        coroutineScope {
+            callbacks.forEach { action ->
+                launch {
+                    block(action)
+                }
+            }
+        }
+    }
+
+    private suspend fun notifyUpdate(data: T) = applySuspendingCallbacks(::onUpdateActions) {
+        it(data)
+    }
     private suspend fun notifySync() = applyCallbacks(::onSyncActions) { it() }
     private suspend fun notifyDesync() = applyCallbacks(::onDesyncActions) { it() }
 

@@ -13,6 +13,7 @@ import arcs.core.data.*
 import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.entity.toPrimitiveValue
+import arcs.core.entity.SchemaRegistry
 
 class GoldInternal1(val_: String = "") : EntityBase("GoldInternal1", SCHEMA) {
 
@@ -38,12 +39,14 @@ class GoldInternal1(val_: String = "") : EntityBase("GoldInternal1", SCHEMA) {
             "485712110d89359a3e539dac987329cd2649d889",
             refinement = { _ -> true },
             query = null
-        ).also { SchemaRegistry.register(it) }
+        )
 
-        override fun create() = GoldInternal1()
+        init {
+            SchemaRegistry.register(this)
+        }
 
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = GoldInternal1().apply { deserialize(data) }
     }
 }
 
@@ -135,12 +138,14 @@ class Gold_QCollection(
                 val queryArgument = queryArgs as String
                 ((lastCall < 259200) && (name == queryArgument))
             }
-        ).also { SchemaRegistry.register(it) }
+        )
 
-        override fun create() = Gold_QCollection()
+        init {
+            SchemaRegistry.register(this)
+        }
 
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = Gold_QCollection().apply { deserialize(data) }
     }
 }
 
@@ -169,12 +174,14 @@ class Gold_Collection(num: Double = 0.0) : EntityBase("Gold_Collection", SCHEMA)
             "1032e45209f910286cfb898c43a1c3ca7d07aea6",
             refinement = { _ -> true },
             query = null
-        ).also { SchemaRegistry.register(it) }
+        )
 
-        override fun create() = Gold_Collection()
+        init {
+            SchemaRegistry.register(this)
+        }
 
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = Gold_Collection().apply { deserialize(data) }
     }
 }
 
@@ -230,12 +237,14 @@ class Gold_Data(
             "d8058d336e472da47b289eafb39733f77eadb111",
             refinement = { _ -> true },
             query = null
-        ).also { SchemaRegistry.register(it) }
+        )
 
-        override fun create() = Gold_Data()
+        init {
+            SchemaRegistry.register(this)
+        }
 
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = Gold_Data().apply { deserialize(data) }
     }
 }
 

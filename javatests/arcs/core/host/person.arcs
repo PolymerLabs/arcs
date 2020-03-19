@@ -10,8 +10,8 @@ particle ReadPerson in 'arcs.core.host.ReadPerson'
 particle WritePerson in 'arcs.core.host.WritePerson'
   person: writes Person
 
-recipe PersonRecipe
-  recipePerson: create
+recipe Person
+  recipePerson: create 'recipePerson'
 
   WritePerson
     person: writes recipePerson
