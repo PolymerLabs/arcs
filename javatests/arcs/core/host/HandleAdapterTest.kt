@@ -57,8 +57,7 @@ class HandleAdapterTest {
             HandleMode.Read,
             READ_ONLY_HANDLE,
             Person,
-            STORAGE_KEY_ONE,
-            Person.SCHEMA
+            STORAGE_KEY_ONE
         )
 
         assertThat(readOnlyHandle).isInstanceOf(ReadSingletonHandle::class.java)
@@ -72,8 +71,7 @@ class HandleAdapterTest {
             HandleMode.Write,
             WRITE_ONLY_HANDLE,
             Person,
-            STORAGE_KEY_ONE,
-            Person.SCHEMA
+            STORAGE_KEY_ONE
         )
         assertThat(writeOnlyHandle).isInstanceOf(WriteSingletonHandle::class.java)
         assertThat(writeOnlyHandle).isNotInstanceOf(ReadSingletonHandle::class.java)
@@ -86,8 +84,7 @@ class HandleAdapterTest {
             HandleMode.Read,
             READ_ONLY_HANDLE,
             Person,
-            STORAGE_KEY_ONE,
-            Person.SCHEMA
+            STORAGE_KEY_ONE
         )
 
         assertThat(readOnlyHandle).isInstanceOf(ReadCollectionHandle::class.java)
@@ -102,7 +99,6 @@ class HandleAdapterTest {
             WRITE_ONLY_HANDLE,
             Person,
             STORAGE_KEY_ONE,
-            Person.SCHEMA
         )
 
         assertThat(writeOnlyHandle).isInstanceOf(WriteCollectionHandle::class.java)

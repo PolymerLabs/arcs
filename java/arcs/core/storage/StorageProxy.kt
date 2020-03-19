@@ -64,6 +64,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val store = storeEndpointProvider.getStorageEndpoint()
     private val storeListenerId = store.setCallback(ProxyCallback(::onMessage))
 
+    val storageKey = storeEndpointProvider.storageKey
+
     /** Add a [Handle] `onUpdate` action, associated with a [Handle] name. */
     suspend fun addOnUpdate(handleName: String, action: suspend (value: T) -> Unit) {
         callbackMutex.withLock {

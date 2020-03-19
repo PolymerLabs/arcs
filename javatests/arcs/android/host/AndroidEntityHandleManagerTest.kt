@@ -287,8 +287,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleMode,
         handleName,
         handleHolder.getEntitySpec(handleName),
-        singletonKey,
-        schema
+        singletonKey
     ).also { handleHolder.setHandle(handleName, it) }
 
     private suspend fun createCollectionHandle(
@@ -299,7 +298,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleMode,
         handleName,
         handleHolder.getEntitySpec(handleName),
-        collectionKey,
-        schema
+        collectionKey
     ).also { handleHolder.setHandle(handleName, it) }
 }
