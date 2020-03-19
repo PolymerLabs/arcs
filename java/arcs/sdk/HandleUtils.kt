@@ -43,5 +43,5 @@ private suspend fun <T> ReadableHandle<T>.getContent(): suspend () -> T = when (
     is ReadSingletonHandle<*> -> suspend { this.fetch() as T }
     is ReadWriteCollectionHandle<*> -> suspend { this.fetchAll() as T }
     is ReadCollectionHandle<*> -> suspend { this.fetchAll() as T }
-    else -> throw IllegalArgumentException("Unknown WasmHandleEvents type found")
+    else -> throw IllegalArgumentException("Unknown ReadableHandle type found")
 }

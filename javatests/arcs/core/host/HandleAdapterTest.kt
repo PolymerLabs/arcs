@@ -26,7 +26,6 @@ import arcs.jvm.util.testutil.TimeImpl
 import arcs.sdk.combineUpdates
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
@@ -58,7 +57,7 @@ class HandleAdapterTest {
             HandleMode.Read,
             READ_ONLY_HANDLE,
             Person,
-            STORAGE_KEY,
+            STORAGE_KEY_ONE,
             Person.SCHEMA
         )
 
@@ -73,7 +72,7 @@ class HandleAdapterTest {
             HandleMode.Write,
             WRITE_ONLY_HANDLE,
             Person,
-            STORAGE_KEY,
+            STORAGE_KEY_ONE,
             Person.SCHEMA
         )
         assertThat(writeOnlyHandle).isInstanceOf(WriteSingletonHandle::class.java)
@@ -87,7 +86,7 @@ class HandleAdapterTest {
             HandleMode.Read,
             READ_ONLY_HANDLE,
             Person,
-            STORAGE_KEY,
+            STORAGE_KEY_ONE,
             Person.SCHEMA
         )
 
@@ -102,7 +101,7 @@ class HandleAdapterTest {
             HandleMode.Write,
             WRITE_ONLY_HANDLE,
             Person,
-            STORAGE_KEY,
+            STORAGE_KEY_ONE,
             Person.SCHEMA
         )
 
@@ -117,7 +116,7 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY,
+            STORAGE_KEY_ONE,
             Person.SCHEMA
         ) as ReadWriteSingletonHandle<Person>
 
@@ -137,7 +136,7 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY,
+            STORAGE_KEY_ONE,
             Person.SCHEMA
         ) as ReadWriteCollectionHandle<Person>
 
@@ -157,7 +156,7 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY,
+            STORAGE_KEY_ONE,
             Person.SCHEMA
         ) as ReadWriteCollectionHandle<Person>
 
@@ -165,7 +164,7 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            KEY_TWO,
+            STORAGE_KEY_TWO,
             Person.SCHEMA
         ) as ReadWriteSingletonHandle<Person>
 
@@ -189,12 +188,12 @@ class HandleAdapterTest {
         private const val WRITE_ONLY_HANDLE = "writeOnlyHandle"
         private const val READ_WRITE_HANDLE = "readWriteHandle"
 
-        private val STORAGE_KEY = ReferenceModeStorageKey(
+        private val STORAGE_KEY_ONE = ReferenceModeStorageKey(
             backingKey = RamDiskStorageKey("backing"),
             storageKey = RamDiskStorageKey("entity")
         )
 
-        private val KEY_TWO = ReferenceModeStorageKey(
+        private val STORAGE_KEY_TWO = ReferenceModeStorageKey(
             backingKey = RamDiskStorageKey("backing2"),
             storageKey = RamDiskStorageKey("entity2")
         )
