@@ -62,6 +62,8 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 
+    val storageKey = storageProxy.storageKey
+
     /** Whether this handle can no longer be operated on .*/
     var closed = false
 

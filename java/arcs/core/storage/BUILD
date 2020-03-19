@@ -69,6 +69,7 @@ arcs_kt_library(
     name = "proxy",
     srcs = PROXY_SRCS,
     deps = [
+        ":storage_key",
         "//java/arcs/core/crdt",
     ],
 )
