@@ -63,7 +63,7 @@ kt_android_library(
     ],
 )
 
-# Use this cmd to intall:
+# Use this cmd to install:
 # bazel mobile-install java/arcs/android/demo
 android_binary(
     name = "demo",

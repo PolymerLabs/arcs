@@ -65,7 +65,7 @@ class DemoActivity : AppCompatActivity() {
 
     private fun testPersonRecipe() {
         scope.launch {
-            val arcId = allocator.startArcForPlan("Person", PersonPlan())
+            val arcId = allocator.startArcForPlan("Person", PersonRecipePlan)
             allocator.stopArc(arcId)
         }
     }
