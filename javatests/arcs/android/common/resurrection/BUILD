@@ -29,6 +29,7 @@ arcs_kt_android_test_suite(
     srcs = glob(["*Test.kt"]),
     manifest = "AndroidManifest.xml",
     package = "arcs.android.common.resurrection",
+    size = "medium",
     deps = [
         ":support",
         "//java/arcs/android/common/resurrection",
