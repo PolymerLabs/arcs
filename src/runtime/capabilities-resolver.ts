@@ -107,9 +107,9 @@ export class CapabilitiesResolver {
     // added the heuristics is to become more robust.
     const protocols = this.findStorageKeyProtocols(capabilities);
     if (protocols.size === 0) {
-      throw new Error(`Cannot create a suitable storage key for ${capabilities.toString()}`);
+      throw new Error(`Cannot create a suitable storage key for handle '${handleId}' with capabilities ${capabilities.toString()}`);
     } else if (protocols.size > 1) {
-      console.warn(`Multiple storage key creators for ${capabilities.toString()}`);
+      console.warn(`Multiple storage key creators for handle '${handleId}' with capabilities ${capabilities.toString()}`);
     }
     const creator = this.creators.find(({protocol, create}) => protocol === [...protocols][0]);
     const schemaHash = await entitySchema.hash();
