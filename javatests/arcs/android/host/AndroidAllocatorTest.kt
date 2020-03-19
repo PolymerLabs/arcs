@@ -41,7 +41,9 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
 
     protected lateinit var context: Context
     private lateinit var readingService: TestReadingExternalHostService
+    private lateinit var testProdService: ProdArcHostService
     private lateinit var prodService: ProdArcHostService
+
     private lateinit var writingService: TestWritingExternalHostService
 
     override suspend fun hostRegistry(): HostRegistry {
@@ -49,18 +51,26 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
             GlobalScope.launch(Dispatchers.Unconfined) {
                 val readingComponentName =
                     TestReadingExternalHostService::class.toComponentName(context)
-                val prodComponentName =
+                val testProdComponentName =
                     TestProdArcHostService::class.toComponentName(context)
-                if (it.component?.equals(readingComponentName) == true) {
-                    readingService.onStartCommand(it, 0, 0)
-                } else if (it.component?.equals(prodComponentName) == true) {
-                    prodService.onStartCommand(it, 0, 0)
-                } else {
-                    val writingComponentName =
-                        TestWritingExternalHostService::class.toComponentName(context)
-                    if (it.component?.equals(writingComponentName) == true) {
+                val prodComponentName =
+                    ProdArcHostService::class.toComponentName(context)
+                val writingComponentName =
+                    TestWritingExternalHostService::class.toComponentName(context)
+                when {
+                    it.component?.equals(readingComponentName) == true -> {
+                        readingService.onStartCommand(it, 0, 0)
+                    }
+                    it.component?.equals(testProdComponentName) == true -> {
+                        testProdService.onStartCommand(it, 0, 0)
+                    }
+                    it.component?.equals(prodComponentName) == true -> {
+                        prodService.onStartCommand(it, 0, 0)
+                    }
+                    it.component?.equals(writingComponentName) == true -> {
                         writingService.onStartCommand(it, 0, 0)
                     }
+                    else -> throw IllegalArgumentException("Unknown ${it.component}")
                 }
             }
         }
@@ -68,7 +78,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
 
     override fun readingHost() = readingService.arcHost
     override fun writingHost() = writingService.arcHost
-    override fun pureHost() = prodService.arcHost as TestingJvmProdHost
+    override fun pureHost() = testProdService.arcHost as TestingJvmProdHost
 
     // TODO: wire up some kind of mock persistent database?
     override val storageCapability = Capabilities.TiedToRuntime
@@ -84,7 +94,9 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
         TestExternalArcHostService.testConnectionFactory = TestConnectionFactory(context)
         readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
         writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
-        prodService = Robolectric.setupService(TestProdArcHostService::class.java)
+        testProdService = Robolectric.setupService(TestProdArcHostService::class.java)
+        prodService = Robolectric.setupService(ProdArcHostService::class.java)
+
         super.setUp()
     }
 }

@@ -43,7 +43,9 @@ open class JvmProdHost(
                 .filter {
                         particle -> isParticleForHost(host, particle::class.java)
                 }.map { p ->
-                    p.javaClass.kotlin.toParticleIdentifier() to suspend { p.javaClass.newInstance() }
+                    p.javaClass.kotlin.toParticleIdentifier() to suspend {
+                        p.javaClass.newInstance()
+                    }
                 }.toList().toTypedArray()
 
         fun isParticleForHost(host: KClass<out ProdHost>, particle: Class<out Particle>) =
