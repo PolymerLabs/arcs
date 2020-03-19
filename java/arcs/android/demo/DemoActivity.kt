@@ -17,20 +17,8 @@ import androidx.appcompat.app.AppCompatActivity
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.Allocator
-import arcs.core.data.Capabilities
-import arcs.core.data.CreateableStorageKey
-import arcs.core.data.EntityType
-import arcs.core.data.FieldType
-import arcs.core.data.HandleMode
-import arcs.core.data.Plan
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
-import arcs.core.data.SingletonType
 import arcs.core.host.HostRegistry
-import arcs.core.storage.StorageKey
 import arcs.core.storage.handle.Stores
-import arcs.core.type.Type
 import arcs.jvm.util.JvmTime
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -49,20 +37,6 @@ class DemoActivity : AppCompatActivity() {
      */
     private lateinit var allocator: Allocator
     private lateinit var hostRegistry: HostRegistry
-
-    private lateinit var recipePersonStorageKey: StorageKey
-    private lateinit var readPersonHandleConnection: Plan.HandleConnection
-    private lateinit var writePersonHandleConnection: Plan.HandleConnection
-    private lateinit var writePersonParticle: Plan.Particle
-    private lateinit var readPersonParticle: Plan.Particle
-    private lateinit var personPlan: Plan
-
-    private val personSchema = Schema(
-        listOf(SchemaName("Person")),
-        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        "42"
-    )
-    private var personEntityType: Type = SingletonType(EntityType(personSchema))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,32 +57,6 @@ class DemoActivity : AppCompatActivity() {
                 )
             )
 
-            recipePersonStorageKey = CreateableStorageKey(
-                "recipePerson", Capabilities.TiedToRuntime
-            )
-
-            writePersonHandleConnection =
-                Plan.HandleConnection(recipePersonStorageKey, HandleMode.Write, personEntityType)
-
-            writePersonParticle = Plan.Particle(
-                "WritePerson",
-                DemoService.WritePerson::class.java.canonicalName!!,
-                mapOf("person" to writePersonHandleConnection)
-            )
-
-            readPersonHandleConnection =
-                Plan.HandleConnection(recipePersonStorageKey, HandleMode.Read, personEntityType)
-
-            readPersonParticle = Plan.Particle(
-                "ReadPerson",
-                DemoService.ReadPerson::class.java.canonicalName!!,
-                mapOf("person" to readPersonHandleConnection)
-            )
-
-            personPlan = Plan(
-                listOf(writePersonParticle, readPersonParticle)
-            )
-
             findViewById<Button>(R.id.person_test).setOnClickListener {
                 testPersonRecipe()
             }
@@ -117,7 +65,7 @@ class DemoActivity : AppCompatActivity() {
 
     private fun testPersonRecipe() {
         scope.launch {
-            val arcId = allocator.startArcForPlan("Person", personPlan)
+            val arcId = allocator.startArcForPlan("Person", PersonPlan())
             allocator.stopArc(arcId)
         }
     }
