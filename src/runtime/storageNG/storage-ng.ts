@@ -132,17 +132,16 @@ export async function newHandle<T extends Type>(type: T, storageKey: StorageKey,
 export function handleForActiveStore<T extends CRDTTypeRecord>(
   store: ActiveStore<T>,
   arc: ArcLike,
-  options?: HandleOptions
+  options: HandleOptions = {}
 ): ToHandle<ActiveStore<T>> {
-  const type = options && options.type ? options.type : store.baseStore.type;
+  const type = options.type || store.baseStore.type;
   const storageKey = store.baseStore.storageKey.toString();
-  const ttl = options && options.ttl ? options.ttl : undefined;
-  const proxy = new StorageProxy<T>(store.baseStore.id, store, type, storageKey, ttl);
+  const proxy = new StorageProxy<T>(store.baseStore.id, store, type, storageKey, options.ttl);
   const idGenerator = arc.idGenerator;
-  const particle = options && options.particle ? options.particle : null;
-  const canRead = options && options.canRead ? options.canRead : true;
-  const canWrite = options && options.canWrite ? options.canWrite : true;
-  const name = options && options.name ? options.name : null;
+  const particle = options.particle || null;
+  const canRead = (options.canRead != undefined) ? options.canRead : true;
+  const canWrite = (options.canWrite != undefined) ? options.canWrite : true;
+  const name = options.name || null;
   const generateID = arc.generateID ? () => arc.generateID().toString() : () => '';
   if (type instanceof SingletonType) {
     // tslint:disable-next-line: no-any
