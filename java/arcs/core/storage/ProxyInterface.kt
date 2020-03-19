@@ -114,4 +114,5 @@ interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, Cons
 /** Provider of a [StorageCommunicationEndpoint]. */
 interface StorageCommunicationEndpointProvider<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
     fun getStorageEndpoint(): StorageCommunicationEndpoint<Data, Op, ConsumerData>
+    val storageKey: StorageKey
 }
