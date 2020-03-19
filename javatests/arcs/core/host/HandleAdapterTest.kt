@@ -123,7 +123,7 @@ class HandleAdapterTest {
         var x = 0
         handle.onUpdate { p ->
             if (p?.name == "Eliza Hamilton") {
-                x = 1
+                x++
             }
         }
         handle.store(Person("Eliza Hamilton"))
@@ -143,7 +143,7 @@ class HandleAdapterTest {
         var x = 0
         handle.onUpdate { people ->
             if (people.elementAtOrNull(0)?.name == "Elder Price") {
-                x = people.size
+                x += people.size
             }
         }
         handle.store(Person("Elder Price"))
