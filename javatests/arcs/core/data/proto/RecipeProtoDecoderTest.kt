@@ -48,8 +48,8 @@ class RecipeProtoDecoderTest {
     val writeConnectionSpec = HandleConnectionSpec("data", Direction.WRITES, thingEntity)
     val writerSpec = ParticleSpec("Writer", mapOf("data" to writeConnectionSpec), "WriterLocation")
     val context = DecodingContext(
-        particleSpecs = mapOf("Reader" to readerSpec, "Writer" to writerSpec),
-        recipeHandles = mapOf("thing" to thingHandle)
+        particleSpecs = listOf(readerSpec, writerSpec).associateBy { it.name },
+        recipeHandles = listOf(thingHandle).associateBy { it.name }
     )
     var dataConnection = HandleConnectionProto
         .newBuilder()
@@ -109,7 +109,7 @@ class RecipeProtoDecoderTest {
     }
 
     @Test
-    fun decodeRecipeDetecsDuplicateHandles() {
+    fun decodeRecipeDetectsDuplicateHandles() {
         val duplicateHandlesRecipeProto = RecipeProto
             .newBuilder()
             .setName("Duplicates")
