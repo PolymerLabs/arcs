@@ -185,8 +185,11 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
                     },
                     entity.type,
                     entity.handleName
-                ),
-                entity.ttl.let { num -> if (num != Ttl.TTL_INFINITE) Ttl.Minutes(num.toInt()) else Ttl.Infinite }
+                ), entity.ttl.let { num ->
+                    if (num != Ttl.TTL_INFINITE) Ttl.Minutes(
+                        num.toInt()
+                    ) else Ttl.Infinite
+                }
             )
         )
     }
