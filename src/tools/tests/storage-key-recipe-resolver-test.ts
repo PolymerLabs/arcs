@@ -294,6 +294,24 @@ describe('recipe2plan', () => {
       await resolver.resolve();
       assert.deepStrictEqual(manifest.stores.map(s => s.id), ['my-handle-id']);
     });
+    it('resolves queryable create handles', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent queryable 'my-handle-id' 
+      Writer
+        data: writes thing`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      for (const it of (await resolver.resolve())) {
+        assert.isTrue(it.isResolved());
+      }
+    });
     it.skip('No Handle: If there is no writing handle, it is not valid', () => {
     });
   });
