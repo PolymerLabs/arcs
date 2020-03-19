@@ -266,7 +266,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 actions().values.flatten()
         }
         coroutineScope {
-            callbacks.forEach{ action ->
+            callbacks.forEach { action ->
                 launch {
                     block(action)
                 }
@@ -274,7 +274,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         }
     }
 
-    private suspend fun notifyUpdate(data: T) = applySuspendingCallbacks(::onUpdateActions) { it(data) }
+    private suspend fun notifyUpdate(data: T) = applySuspendingCallbacks(::onUpdateActions) {
+        it(data)
+    }
     private suspend fun notifySync() = applyCallbacks(::onSyncActions) { it() }
     private suspend fun notifyDesync() = applyCallbacks(::onDesyncActions) { it() }
 
