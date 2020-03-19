@@ -215,7 +215,7 @@ class EntityInternals {
           }
         } else if (fieldTypes[name] && fieldTypes[name].kind === 'schema-collection') {
           if (this.entity[name]) {
-            clone[name] = [...this.entity[name]].map(a => a.dataClone());
+            clone[name] = [...this.entity[name]].map(a => ['Text', 'URL', 'Boolean', 'Number'].includes(fieldTypes[name].schema.type) ? a : a.dataClone());
           }
         } else {
           clone[name] = this.entity[name];

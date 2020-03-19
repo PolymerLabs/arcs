@@ -147,12 +147,14 @@ export class MockStorageDriverProvider implements StorageDriverProvider {
 
 export class MockParticle {
   lastUpdate = null;
+  model = null;
   onSyncCalled = false;
   onDesyncCalled = false;
   async callOnHandleUpdate(handle: Handle<CRDTTypeRecord>, update, onException: Consumer<Error>) {
     this.lastUpdate = update;
   }
   async callOnHandleSync(handle: Handle<CRDTTypeRecord>, model, onException: Consumer<Error>) {
+    this.model = model;
     this.onSyncCalled = true;
   }
   async callOnHandleDesync(handle: Handle<CRDTTypeRecord>, onException: Consumer<Error>) {

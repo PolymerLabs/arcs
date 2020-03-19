@@ -22,6 +22,7 @@ import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {Producer} from '../hot.js';
+import {CRDTEntityTypeRecord, EntityOperation, RawEntity, Identified} from '../crdt/crdt-entity.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -475,6 +476,76 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
           this /*handle*/,
           model == null ? model : this.serializer.deserialize(model, this.storageProxy.storageKey),
           e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'));
+    }
+  }
+}
+
+/**
+ * A handle on an entity.
+ */
+export class EntityHandle<T> extends Handle<CRDTEntityTypeRecord<Identified, Identified>> {
+  muxId: string;
+
+  constructor(
+    key: string,
+    storageProxy: StorageProxy<CRDTEntityTypeRecord<Identified, Identified>>,
+    idGenerator: IdGenerator,
+    particle: Particle,
+    canRead: boolean,
+    canWrite: boolean,
+    muxId: string,
+    name?: string
+  ) {
+    super(key, storageProxy, idGenerator, particle, canRead, canWrite, name);
+    this.muxId = muxId;
+  }
+
+  async fetch(): Promise<T> {
+    const value = await this.storageProxy.getParticleView();
+    if (value == null) {
+      return null;
+    }
+    const serializedEntity = this.createSerializedEntity(value);
+    return this.serializer.deserialize(serializedEntity, this.storageProxy.storageKey);
+  }
+
+  createSerializedEntity(rawEntity: RawEntity<Identified, Identified>): SerializedEntity {
+    const serializedEntity = {id: this.muxId, rawData: {}} as SerializedEntity;
+
+    // For primitives, only the value propery of the Referenceable should be included in the rawData of the serializedEntity.
+    for (const [key, value] of Object.entries(rawEntity.singletons)) {
+      if (value['value'] !== undefined) {
+        serializedEntity.rawData[key] = value['value'];
+      } else {
+        serializedEntity.rawData[key] = value;
+      }
+    }
+    for (const [key, value] of Object.entries(rawEntity.collections)) {
+      serializedEntity.rawData[key] = new Set();
+      for (const elem of value.values()) {
+        if (elem['value'] !== undefined) {
+          serializedEntity.rawData[key].add(elem['value']);
+        } else {
+          serializedEntity.rawData[key].add(elem);
+        }
+      }
+    }
+    return serializedEntity;
+  }
+
+  onUpdate(update: EntityOperation<Identified, Identified>): void {
+    throw new Error('Method not implemented yet.');
+  }
+
+  async onSync(model: RawEntity<Identified, Identified>): Promise<void> {
+    assert(this.canRead, 'onSync should not be called for non-readable handles');
+    if (this.particle) {
+      const serializedEntity = this.createSerializedEntity(model);
+      await this.particle.callOnHandleSync(
+        this,
+        model == null ? model : this.serializer.deserialize(serializedEntity, this.storageProxy.storageKey),
+        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync')
+      );
     }
   }
 }
