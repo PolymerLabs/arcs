@@ -10,11 +10,11 @@
  */
 package arcs.sdk
 
-import arcs.core.storage.api.ReadCollectionHandle
-import arcs.core.storage.api.ReadSingletonHandle
-import arcs.core.storage.api.ReadWriteCollectionHandle
-import arcs.core.storage.api.ReadWriteSingletonHandle
-import arcs.core.storage.api.ReadableHandle
+import arcs.core.entity.ReadCollectionHandle
+import arcs.core.entity.ReadSingletonHandle
+import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.ReadableHandle
 
 /**
  * Receive a callback when either handle is updated.
