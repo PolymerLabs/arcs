@@ -862,7 +862,7 @@ ${e.message}
         assert(associatedItem, `unrecognized name: ${association}`);
         const associatedHandle = associatedItem && associatedItem.handle;
         assert(associatedHandle, `only handles allowed to be joined: "${association}" is not a handle`);
-        handle.associateHandle(associatedHandle);
+        handle.joinDataFromHandle(associatedHandle);
       }
 
       items.byHandle.set(handle, item);
@@ -1091,7 +1091,9 @@ ${e.message}
             throw new ManifestError(connectionItem.location, `did not expect '${entry}' expected handle or particle`);
           }
 
-          if (entry.item.kind === 'handle' || entry.item.kind === 'requireHandle') {
+          if (entry.item.kind === 'handle'
+              || entry.item.kind === 'synthetic-handle'
+              || entry.item.kind === 'requireHandle') {
             targetHandle = entry.handle;
           } else if (entry.item.kind === 'particle') {
             targetParticle = entry.particle;

@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
-import {Type, TypeVariable, TypeVariableInfo} from '../type.js';
+import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '../type.js';
 import {Slot} from './slot.js';
 import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';
@@ -36,7 +36,12 @@ export class Handle implements Comparable<Handle> {
   private _originalFate: Fate | null = null;
   private _originalId: string | null = null;
   private _connections: HandleConnection[] = [];
-  private _associatedHandles: Handle[] = [];
+  // Handles being joined by this handle.
+  // E.g. for `x: join (a, b, c)`, this field on x has references to a, b, c.
+  private _joinedHandles: Handle[] = [];
+  // Whether this handle is being joined by other handles.
+  // E.g. for `x: join (a, b, c)`, this field is true on a, b and c.
+  private _isJoined = false;
   private _mappedType: Type | undefined = undefined;
   private _storageKey: StorageKey | undefined = undefined;
   capabilities: Capabilities = Capabilities.empty;
@@ -103,7 +108,9 @@ export class Handle implements Comparable<Handle> {
       // attached HandleConnection objects.
       handle._connections = [];
       handle._pattern = this._pattern;
-      handle._associatedHandles = this._associatedHandles.map(h => cloneMap.get(h) as Handle);
+      for (const joined of this.joinedHandles) {
+        handle.joinDataFromHandle(cloneMap.get(joined) as Handle);
+      }
     }
     return handle;
   }
@@ -208,7 +215,6 @@ export class Handle implements Comparable<Handle> {
   get localName() { return this._localName; }
   set localName(name: string) { this._localName = name; }
   get connections() { return this._connections; } // HandleConnection*
-  get associatedHandles() { return this._associatedHandles; }
   get storageKey() { return this._storageKey; }
   set storageKey(key: StorageKey) { this._storageKey = key; }
   get pattern() { return this._pattern; }
@@ -220,6 +226,7 @@ export class Handle implements Comparable<Handle> {
   get ttl() { return this._ttl; }
   set ttl(ttl: Ttl) { this._ttl = ttl; }
   get isSynthetic() { return this.fate === 'join'; } // Join handles are the first type of synthetic handles, other may come.
+  get joinedHandles() { return this._joinedHandles; }
 
   static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction, relaxed?: boolean}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
@@ -229,18 +236,37 @@ export class Handle implements Comparable<Handle> {
     return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
   }
 
-  static resolveEffectiveType(handleType: Type, connections: HandleConnection[], options: IsValidOptions): Type {
-    const typeSet: TypeListInfo[] = connections
+  private resolveEffectiveType(options: IsValidOptions) {
+    const typeSet: TypeListInfo[] = this.connections
       .filter(connection => connection.type != null)
       .map(connection => ({type: connection.type, direction: connection.direction, relaxed: connection.relaxed}));
-    return TypeChecker.processTypeList(handleType, typeSet, options);
+
+    // If a handle is joined, it needs to be a collection (at least for now).
+    if (this._isJoined) {
+      typeSet.push({
+        type: TypeVariable.make('').collectionOf(),
+        direction: 'reads'
+      });
+    }
+
+    // Joining a list of handles is a kin to writing from joined handle into a joining handle.
+    if (this.fate === 'join') {
+      typeSet.push({
+        // We forced the joined handles to be collections and resolve their type first,
+        // so that we can pull out their collection type here.
+        type: new TupleType(this.joinedHandles.map(h => (h.type as CollectionType<Type>).collectionType.referenceTo())).collectionOf(),
+        direction: 'writes'
+      });
+    }
+
+    return TypeChecker.processTypeList(this._mappedType, typeSet, options);
   }
 
   _isValid(options: IsValidOptions): boolean {
     const tags = new Set<string>();
     for (const connection of this._connections) {
       // A remote handle cannot be connected to an output param.
-      if (this.fate === 'map' && ['writes', 'reads writes'].includes(connection.direction)) {
+      if (['map', 'join'].includes(this.fate) && ['writes', 'reads writes'].includes(connection.direction)) {
         if (options && options.errors) {
           options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this}'; it is used for '${connection.direction}' ${connection.getQualifiedName()} connection`);
         }
@@ -254,7 +280,7 @@ export class Handle implements Comparable<Handle> {
     if (options && options.errors) {
       options.typeErrors = [];
     }
-    const type = Handle.resolveEffectiveType(this._mappedType, this._connections, options);
+    const type = this.resolveEffectiveType(options);
     if (!type) {
       if (options && options.errors) {
         const errs = options.typeErrors;
@@ -319,6 +345,7 @@ export class Handle implements Comparable<Handle> {
       }
       case '`slot':
       case 'create':
+      case 'join':
         break;
       default: {
         if (options) {
@@ -344,8 +371,8 @@ export class Handle implements Comparable<Handle> {
       result.push(`${name}:`);
     }
     result.push(this.fate);
-    if (this.associatedHandles.length) {
-      result.push(`(${this.associatedHandles.map(h => getName(h)).join(', ')})`);
+    if (this.fate === 'join') {
+      result.push(`(${this.joinedHandles.map(h => getName(h)).join(', ')})`);
     }
     if (!this.capabilities.isEmpty()) {
       result.push(this.capabilities.toString());
@@ -385,8 +412,9 @@ export class Handle implements Comparable<Handle> {
     return this._connections.find(conn => conn.direction === dir);
   }
 
-  associateHandle(handle: Handle) {
+  joinDataFromHandle(handle: Handle) {
     assert(this.fate === 'join');
-    this._associatedHandles.push(handle);
+    this._joinedHandles.push(handle);
+    handle._isJoined = true;
   }
 }

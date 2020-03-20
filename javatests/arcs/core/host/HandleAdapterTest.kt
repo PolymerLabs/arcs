@@ -11,6 +11,7 @@
 
 package arcs.core.host
 
+import arcs.core.common.Id
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -22,10 +23,11 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.util.testutil.TimeImpl
-import arcs.sdk.combineUpdates
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
@@ -37,12 +39,15 @@ private typealias Person = ReadPerson_Person
 
 @RunWith(JUnit4::class)
 @UseExperimental(ExperimentalCoroutinesApi::class)
+@Suppress("UNCHECKED_CAST")
 class HandleAdapterTest {
     private lateinit var manager: EntityHandleManager
+    private val idGenerator = Id.Generator.newForTest("session")
 
     @Before
     fun setUp() {
         RamDiskDriverProvider()
+        ReferenceModeStorageKey.registerParser()
         manager = EntityHandleManager(HandleManager(TimeImpl()))
     }
 
@@ -57,7 +62,7 @@ class HandleAdapterTest {
             HandleMode.Read,
             READ_ONLY_HANDLE,
             Person,
-            STORAGE_KEY_ONE
+            STORAGE_KEY
         )
 
         assertThat(readOnlyHandle).isInstanceOf(ReadSingletonHandle::class.java)
@@ -71,11 +76,47 @@ class HandleAdapterTest {
             HandleMode.Write,
             WRITE_ONLY_HANDLE,
             Person,
-            STORAGE_KEY_ONE
+            STORAGE_KEY
         )
         assertThat(writeOnlyHandle).isInstanceOf(WriteSingletonHandle::class.java)
         assertThat(writeOnlyHandle).isNotInstanceOf(ReadSingletonHandle::class.java)
         assertThat(writeOnlyHandle).isNotInstanceOf(ReadWriteSingletonHandle::class.java)
+    }
+
+    @Test
+    fun singletonHandleAdapter_createReference() = runBlocking {
+        val handle = manager.createSingletonHandle(
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
+            Person,
+            STORAGE_KEY
+        ) as ReadWriteSingletonHandle<Person>
+        val entity = Person("Watson")
+
+        // Fails when there's no entityId.
+        var e = assertSuspendingThrows(IllegalArgumentException::class) {
+            handle.createReference(entity)
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Entity must have an ID before it can be referenced."
+        )
+
+        entity.ensureIdentified(idGenerator, READ_WRITE_HANDLE)
+
+        // Fails when the entity is not in the collection.
+        e = assertSuspendingThrows(IllegalArgumentException::class) {
+            handle.createReference(entity)
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Entity is not stored in the Singleton."
+        )
+
+        handle.store(entity)
+
+        val reference = handle.createReference(entity)
+        assertThat(reference.schemaHash).isEqualTo(Person.SCHEMA.hash)
+        assertThat(reference.entityId).isEqualTo(entity.entityId)
+        assertThat(reference.dereference()).isEqualTo(entity)
     }
 
     @Test
@@ -84,7 +125,7 @@ class HandleAdapterTest {
             HandleMode.Read,
             READ_ONLY_HANDLE,
             Person,
-            STORAGE_KEY_ONE
+            STORAGE_KEY
         )
 
         assertThat(readOnlyHandle).isInstanceOf(ReadCollectionHandle::class.java)
@@ -98,7 +139,7 @@ class HandleAdapterTest {
             HandleMode.Write,
             WRITE_ONLY_HANDLE,
             Person,
-            STORAGE_KEY_ONE
+            STORAGE_KEY
         )
 
         assertThat(writeOnlyHandle).isInstanceOf(WriteCollectionHandle::class.java)
@@ -112,7 +153,7 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY_ONE
+            STORAGE_KEY
         ) as ReadWriteSingletonHandle<Person>
 
         var x = 0
@@ -131,7 +172,7 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY_ONE
+            STORAGE_KEY
         ) as ReadWriteCollectionHandle<Person>
 
         var x = 0
@@ -145,34 +186,39 @@ class HandleAdapterTest {
     }
 
     @Test
-    fun handleAdapter_combineUpdatesTest() = runBlockingTest {
-        val collection = manager.createCollectionHandle(
+    fun collectionHandleAdapter_createReference() = runBlocking {
+        val handle = manager.createCollectionHandle(
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY_ONE
+            STORAGE_KEY
         ) as ReadWriteCollectionHandle<Person>
+        val entity = Person("Watson")
 
-        val singleton = manager.createSingletonHandle(
-            HandleMode.ReadWrite,
-            READ_WRITE_HANDLE,
-            Person,
-            STORAGE_KEY_TWO
-        ) as ReadWriteSingletonHandle<Person>
-
-        var x = 0
-        combineUpdates(collection, singleton) { people, e2 ->
-            if (people.elementAtOrNull(0)?.name == "George") {
-                x = x + 1
-            }
-            if (e2?.name == "Martha") {
-                x = x + 3
-            }
+        // Fails when there's no entityId.
+        var e = assertSuspendingThrows(IllegalArgumentException::class) {
+            handle.createReference(entity)
         }
-        collection.store(Person("George"))
-        assertThat(x).isEqualTo(1)
-        singleton.store(Person("Martha"))
-        assertThat(x).isEqualTo(5)
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Entity must have an ID before it can be referenced."
+        )
+
+        entity.ensureIdentified(idGenerator, READ_WRITE_HANDLE)
+
+        // Fails when the entity is not in the collection.
+        e = assertSuspendingThrows(IllegalArgumentException::class) {
+            handle.createReference(entity)
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Entity is not stored in the Collection."
+        )
+
+        handle.store(entity)
+
+        val reference = handle.createReference(entity)
+        assertThat(reference.schemaHash).isEqualTo(Person.SCHEMA.hash)
+        assertThat(reference.entityId).isEqualTo(entity.entityId)
+        assertThat(reference.dereference()).isEqualTo(entity)
     }
 
     private companion object {
@@ -180,14 +226,9 @@ class HandleAdapterTest {
         private const val WRITE_ONLY_HANDLE = "writeOnlyHandle"
         private const val READ_WRITE_HANDLE = "readWriteHandle"
 
-        private val STORAGE_KEY_ONE = ReferenceModeStorageKey(
+        private val STORAGE_KEY = ReferenceModeStorageKey(
             backingKey = RamDiskStorageKey("backing"),
             storageKey = RamDiskStorageKey("entity")
-        )
-
-        private val STORAGE_KEY_TWO = ReferenceModeStorageKey(
-            backingKey = RamDiskStorageKey("backing2"),
-            storageKey = RamDiskStorageKey("entity2")
         )
     }
 }

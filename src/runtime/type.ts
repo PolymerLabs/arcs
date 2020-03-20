@@ -769,6 +769,10 @@ export class TupleType extends Type {
     return this.innerTypes.reduce((result: boolean, type: Type, idx: number) => result && predicate(type, idx), true);
   }
 
+  _applyExistenceTypeTest(test: Predicate<Type>): boolean {
+    return this.innerTypes.reduce((result: boolean, type: Type) => result || type._applyExistenceTypeTest(test), false);
+  }
+
   toLiteral(): TypeLiteral {
     return {tag: this.tag, data: this.innerTypes.map(t => t.toLiteral())};
   }
@@ -986,6 +990,10 @@ export class ReferenceType<T extends Type> extends Type {
 
   _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ReferenceType<T> {
     return new ReferenceType<T>(this.referredType._cloneWithResolutions(variableMap) as T);
+  }
+
+  _applyExistenceTypeTest(test: Predicate<Type>): boolean {
+    return this.referredType._applyExistenceTypeTest(test);
   }
 
   toLiteral(): TypeLiteral {

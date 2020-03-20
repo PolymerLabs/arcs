@@ -381,7 +381,10 @@ export class Recipe implements Cloneable<Recipe> {
       this._findDuplicate(this._handles, options);
       this._findDuplicate(this._slots, options);
       const checkForInvalid = (list) => list.forEach(item => !item._isValid(options));
-      checkForInvalid(this._handles);
+      // We resolve the type of the regular handles first,
+      // so that we can use it to resolve the type of synethetic handles later.
+      checkForInvalid(this._handles.filter(h => !h.isSynthetic));
+      checkForInvalid(this._handles.filter(h => h.isSynthetic));
       checkForInvalid(this._particles);
       checkForInvalid(this._slots);
       checkForInvalid(this.handleConnections);
@@ -542,7 +545,7 @@ export class Recipe implements Cloneable<Recipe> {
     recipe.triggers = this.triggers;
     recipe._verbs = recipe._verbs.concat(...this._verbs);
 
-    // Clone regular handles first, then synthetic ones, as synthetic can depend on regular.
+    // Clone regular handles first, then synthetic ones, as synthetic depend on regular.
     this._handles.filter(h => !h.isSynthetic).forEach(cloneTheThing);
     this._handles.filter(h => h.isSynthetic).forEach(cloneTheThing);
     this._particles.forEach(cloneTheThing);

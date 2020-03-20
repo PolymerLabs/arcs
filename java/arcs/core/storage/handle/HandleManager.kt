@@ -160,9 +160,9 @@ class HandleManager(
     }
 
     /**
-     * Create a new [CollectionHandle] backed by an Android [ServiceStore]
+     * Create a new [CollectionHandle].
      *
-     * The CollectionHandle will represent an Entity specified by the provided [Schema]
+     * The [CollectionHandle] will represent an Entity specified by the provided [Schema]
      */
     suspend fun rawEntityCollectionHandle(
         storageKey: StorageKey,
