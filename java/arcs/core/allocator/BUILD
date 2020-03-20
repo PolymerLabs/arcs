@@ -12,6 +12,7 @@ arcs_kt_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",

@@ -25,6 +25,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.toPrimitiveValue
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
 import arcs.core.host.HostRegistry
@@ -43,6 +44,14 @@ import arcs.core.util.traverse
 private typealias EntityCollectionData = CrdtSet.Data<RawEntity>
 private typealias EntityCollectionOp = CrdtSet.IOperation<RawEntity>
 private typealias EntityCollectionView = Set<RawEntity>
+
+fun fieldAsString(entity: RawEntity, field: String): String {
+    return entity.singletons[field].toPrimitiveValue(String::class, "")
+}
+
+fun fieldAsStrings(entity: RawEntity, field: String): List<String> {
+    return entity.collections[field]?.map { it.toPrimitiveValue(String::class, "") } ?: listOf()
+}
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -132,9 +141,15 @@ class Allocator private constructor(
     /**
      * Reads associated [PlanPartition]s with an [ArcId] .
      */
-    private fun readPartitionMap(arcId: ArcId): List<Plan.Partition>? {
-        return partitionMap[arcId]
-        // TODO(cromwellian): implement actual persistence that survives reboot?
+    private suspend fun readPartitionMap(arcId: ArcId): List<Plan.Partition>? {
+        val entities = collection.fetchAll().filter { fieldAsString(it, "arc") == arcId.toString() }
+        return entities.map {
+            Plan.Partition(
+                arcId.toString(),
+                fieldAsString(it, "host"),
+                fieldAsStrings(it, "particles").map { Plan.Particle(it, "", mapOf()) }
+            )
+        }
     }
 
     /**
