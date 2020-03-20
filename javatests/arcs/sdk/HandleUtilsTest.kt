@@ -54,7 +54,7 @@ class HandleUtilsTest {
   }
 
   @Test
-  fun handleUtils_combineUpdatesTest() = runBlockingTest {
+  fun handleUtils_combineTwoUpdatesTest() = runBlockingTest {
     val collection = manager.createCollectionHandle(
       HandleMode.ReadWrite,
       READ_WRITE_HANDLE,
@@ -87,6 +87,58 @@ class HandleUtilsTest {
     assertWithMessage("Expected Singleton to include Martha").that(y).isEqualTo(1)
   }
 
+  @Test
+  fun handleUtils_combineThreeUpdatesTest() = runBlockingTest {
+    val handle1 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_ONE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle2 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_TWO
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle3 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_THREE
+    ) as ReadWriteCollectionHandle<Person>
+
+    var handle1Tracking = 0
+    var handle2Tracking = 0
+    var handle3Tracking = 0
+    combineUpdates(handle1, handle2, handle3) { e1, e2, e3 ->
+      if (e1.elementAtOrNull(0)?.name == "A") {
+        handle1Tracking += 1
+      }
+      if (e2?.name == "B") {
+        handle2Tracking += 1
+      }
+      if (e3.elementAtOrNull(0)?.name == "C") {
+        handle3Tracking += 1
+      }
+    }
+    handle1.store(Person("A"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(1)
+    assertWithMessage("Expected handle2 to not equal B").that(handle2Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
+    handle2.store(Person("B"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(1)
+    assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
+    handle3.store(Person("C"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(1)
+
+  }
+
   private companion object {
     private const val READ_WRITE_HANDLE = "readWriteHandle"
 
@@ -98,6 +150,11 @@ class HandleUtilsTest {
     private val STORAGE_KEY_TWO = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing2"),
       storageKey = RamDiskStorageKey("entity2")
+    )
+
+    private val STORAGE_KEY_THREE = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("backing3"),
+      storageKey = RamDiskStorageKey("entity3")
     )
   }
 }
