@@ -31,19 +31,44 @@ suspend fun <T1, T2> combineUpdates(
     val handles = listOf(handle1, handle2)
     handles.forEach { handle ->
         handle.onUpdate {
-            val e1 = handle1.getContent().invoke()
-            val e2 = handle2.getContent().invoke()
+            val e1 = handle1.getContent()
+            val e2 = handle2.getContent()
             action(e1, e2)
         }
     }
 }
 
+/**
+ * Receive a callback when either handle is updated.
+ *
+ * @handle1 The first handle the callback will be assigned to
+ * @handle2 The second handle the callback will be assigned to
+ * @handle3 The third handle the callback will be assigned to
+ * @action callback
+ */
+suspend fun <T1, T2, T3> combineUpdates(
+    handle1: ReadableHandle<T1, *>,
+    handle2: ReadableHandle<T2, *>,
+    handle3: ReadableHandle<T3, *>,
+    action: (T1, T2, T3) -> Unit
+) {
+    val handles = listOf(handle1, handle2, handle3)
+    handles.forEach { handle ->
+        handle.onUpdate {
+            val e1 = handle1.getContent()
+            val e2 = handle2.getContent()
+            val e3 = handle3.getContent()
+            action(e1, e2, e3)
+        }
+    }
+}
+
 @Suppress("UNCHECKED_CAST")
-private suspend fun <T, E : Entity> ReadableHandle<T, E>.getContent(): suspend () -> T =
+private suspend fun <T, E : Entity> ReadableHandle<T, E>.getContent(): T =
     when (this) {
-        is ReadWriteSingletonHandle<*> -> suspend { fetch() as T }
-        is ReadSingletonHandle<*> -> suspend { fetch() as T }
-        is ReadWriteCollectionHandle<*> -> suspend { fetchAll() as T }
-        is ReadCollectionHandle<*> -> suspend { fetchAll() as T }
+        is ReadWriteSingletonHandle<*> -> fetch() as T
+        is ReadSingletonHandle<*> -> fetch() as T
+        is ReadWriteCollectionHandle<*> -> fetchAll() as T
+        is ReadCollectionHandle<*> -> fetchAll() as T
         else -> throw IllegalArgumentException("Unknown ReadableHandle type found")
     }
