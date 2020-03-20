@@ -71,8 +71,8 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm", "wasm"], test_harn
     for src in srcs:
         for ext in platforms:
             if ext not in supported:
-              fail("Platform %s not allowed; only %s supported.".format(ext, supported.join(',')))
-
+                fail("Platform %s not allowed; only %s supported.".format(ext, supported.join(",")))
+            wasm = ext == "wasm"
             genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
             out = replace_arcs_suffix(src, "_GeneratedSchemas.%s.kt" % ext)
             outs.append(out)
