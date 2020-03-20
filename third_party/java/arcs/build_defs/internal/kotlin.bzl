@@ -45,6 +45,7 @@ KOTLINC_OPTS = [
     "-Xinline-classes",
     "-Xmulti-platform",
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
+    "-jvm-target 1.8",
 ]
 
 DISABLED_LINT_CHECKS = [
