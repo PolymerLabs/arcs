@@ -2,7 +2,7 @@ package arcs.sdk
 
 import kotlinx.coroutines.runBlocking
 
-class ReadSDKPerson : AbstractReadSDKPerson() {
+class ReadSdkPerson : AbstractReadSdkPerson() {
     var name = ""
     var createCalled = false
     var shutdownCalled = false

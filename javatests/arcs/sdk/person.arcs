@@ -4,11 +4,11 @@ meta
 schema Person
   name: Text
 
-particle ReadSDKPerson in 'arcs.sdk.ReadSDKPerson'
+particle ReadSdkPerson in 'arcs.sdk.ReadSdkPerson'
   person: reads Person
 
 recipe Person
   recipePerson: create 'recipePerson'
 
-  ReadSDKPerson
+  ReadSdkPerson
     person: reads recipePerson
