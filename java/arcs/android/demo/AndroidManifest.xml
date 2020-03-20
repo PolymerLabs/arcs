@@ -10,28 +10,39 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="arcs.android.demo">
-    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
+  xmlns:tools="http://schemas.android.com/tools"
+  package="arcs.android.demo">
+  <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
 
-    <application
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:name=".DemoApplication">
-        <activity
-            android:name=".DemoActivity"
-            android:theme="@style/Theme.AppCompat.Light">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+  <application
+    android:icon="@mipmap/ic_launcher"
+    android:label="@string/app_name"
+    android:name=".DemoApplication">
 
-      <service
-        android:name=".DemoService"
-        android:exported="false">
-        <intent-filter>
-          <action android:name="arcs.android.host.ARC_HOST"/>
-        </intent-filter>
-      </service>
-    </application>
+    <provider
+      android:name="androidx.work.impl.WorkManagerInitializer"
+      android:authorities="${applicationId}.workmanager-init"
+      android:directBootAware="false"
+      android:exported="false"
+      android:multiprocess="true"
+      tools:node="remove"
+      tools:targetApi="n" />
+
+    <activity
+      android:name=".DemoActivity"
+      android:theme="@style/Theme.AppCompat.Light">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+
+    <service
+      android:name=".DemoService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="arcs.android.host.ARC_HOST"/>
+      </intent-filter>
+    </service>
+  </application>
 </manifest>
