@@ -1,0 +1,6 @@
+meta
+  namespace: arcs.sdk.examples.testing
+
+particle ComputePeopleStats
+  people: reads [Person {age: Number}]
+  stats: writes Stats {medianAge: Number}

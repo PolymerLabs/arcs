@@ -8,6 +8,12 @@ alias(
     actual = "//java/arcs/sdk",
 )
 
+# Testing components of the Arcs SDK for the JVM.
+alias(
+    name = "testing",
+    actual = "//java/arcs/sdk/testing",
+)
+
 # Arcs SDK for WebAssenbly.
 alias(
     name = "arcs-wasm",

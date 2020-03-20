@@ -53,6 +53,10 @@ class Schema2Mock extends Schema2Base {
   generateParticleClass(particle: ParticleSpec) {
     return '';
   }
+
+  generateTestHarness(particle: ParticleSpec): string {
+    return '';
+  }
 }
 
 describe('schema2wasm', () => {

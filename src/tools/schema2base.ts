@@ -84,6 +84,11 @@ export abstract class Schema2Base {
     // TODO: consider an option to generate one file per particle
     const classes: string[] = [];
     for (const particle of manifest.particles) {
+      if (this.opts.test_harness) {
+        classes.push(this.generateTestHarness(particle));
+        continue;
+      }
+
       const graph = new SchemaGraph(particle);
       // Generate one class definition per node in the graph.
       for (const node of graph.walk()) {
@@ -135,4 +140,6 @@ export abstract class Schema2Base {
   abstract getClassGenerator(node: SchemaNode): ClassGenerator;
 
   abstract generateParticleClass(particle: ParticleSpec): string;
+
+  abstract generateTestHarness(particle: ParticleSpec): string;
 }

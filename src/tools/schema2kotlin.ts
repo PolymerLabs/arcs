@@ -75,19 +75,26 @@ package ${this.namespace}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-${this.opts.wasm ?
-      `import arcs.sdk.wasm.*` :
-      `\
-import arcs.core.data.*
+${this.opts.test_harness ?
+`import arcs.sdk.testing.*
+import kotlinx.coroutines.CoroutineScope`
+: (this.opts.wasm ?
+`import arcs.sdk.wasm.*` :
+`import arcs.core.data.*
 import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.entity.toPrimitiveValue
-import arcs.core.entity.SchemaRegistry`}
+import arcs.core.entity.SchemaRegistry`
+)}
 `;
   }
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
     return new KotlinGenerator(node, this.opts);
+  }
+
+  private entityTypeName(particle: ParticleSpec, connection: HandleConnectionSpec) {
+    return `${particle.name}_${this.upperFirst(connection.name)}`;
   }
 
   generateParticleClass(particle: ParticleSpec): string {
@@ -97,7 +104,7 @@ import arcs.core.entity.SchemaRegistry`}
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType = `${particleName}_${this.upperFirst(connection.name)}`;
+      const entityType = this.entityTypeName(particle, connection);
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       let handleInterfaceType: string;
       if (this.opts.wasm) {
@@ -136,6 +143,30 @@ ${this.getHandlesClassDecl(particleName, specDecls)} {
 
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: ${particleName}Handles = ${particleName}Handles(${this.opts.wasm ? 'this' : ''})
+}
+`;
+  }
+
+  generateTestHarness(particle: ParticleSpec): string {
+    const particleName = particle.name;
+    const handleDecls: string[] = [];
+    const handleDescriptors: string[] = [];
+
+    for (const connection of particle.connections) {
+      const handleName = connection.name;
+      const entityType = this.entityTypeName(particle, connection);
+      const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
+      handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
+      handleDescriptors.push(`HandleDescriptor("${handleName}", ${entityType}, HandleFlavor.${handleConcreteType.toUpperCase()})`);
+    }
+
+    return `
+class ${particleName}TestHarness<P : Abstract${particleName}>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    ${handleDescriptors.join(',\n    ')}
+)) {
+    ${handleDecls.join('\n    ')}
 }
 `;
   }
