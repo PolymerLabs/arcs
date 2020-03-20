@@ -23,10 +23,10 @@ import arcs.core.entity.ReadableHandle
  * @handle2 The second handle the callback will be assigned to
  * @action callback
  */
-suspend fun <T, U> combineUpdates(
-    handle1: ReadableHandle<T>,
-    handle2: ReadableHandle<U>,
-    action: (T, U) -> Unit
+suspend fun <T1, T2> combineUpdates(
+    handle1: ReadableHandle<T1, *>,
+    handle2: ReadableHandle<T2, *>,
+    action: (T1, T2) -> Unit
 ) {
     val handles = listOf(handle1, handle2)
     handles.forEach { handle ->
@@ -38,10 +38,12 @@ suspend fun <T, U> combineUpdates(
     }
 }
 
-private suspend fun <T> ReadableHandle<T>.getContent(): suspend () -> T = when (this) {
-    is ReadWriteSingletonHandle<*> -> suspend { this.fetch() as T }
-    is ReadSingletonHandle<*> -> suspend { this.fetch() as T }
-    is ReadWriteCollectionHandle<*> -> suspend { this.fetchAll() as T }
-    is ReadCollectionHandle<*> -> suspend { this.fetchAll() as T }
-    else -> throw IllegalArgumentException("Unknown ReadableHandle type found")
-}
+@Suppress("UNCHECKED_CAST")
+private suspend fun <T, E : Entity> ReadableHandle<T, E>.getContent(): suspend () -> T =
+    when (this) {
+        is ReadWriteSingletonHandle<*> -> suspend { fetch() as T }
+        is ReadSingletonHandle<*> -> suspend { fetch() as T }
+        is ReadWriteCollectionHandle<*> -> suspend { fetchAll() as T }
+        is ReadCollectionHandle<*> -> suspend { fetchAll() as T }
+        else -> throw IllegalArgumentException("Unknown ReadableHandle type found")
+    }

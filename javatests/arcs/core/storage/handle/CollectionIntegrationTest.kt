@@ -69,7 +69,6 @@ class CollectionIntegrationTest {
 
         collectionA = CollectionHandle(
             "collectionA",
-            STORAGE_KEY,
             storageProxy,
             Ttl.Infinite,
             TimeImpl(),
@@ -77,7 +76,6 @@ class CollectionIntegrationTest {
         )
         collectionB = CollectionHandle(
             "collectionB",
-            STORAGE_KEY,
             storageProxy,
             Ttl.Infinite,
             TimeImpl(),
@@ -200,7 +198,6 @@ class CollectionIntegrationTest {
 
         val collectionC = CollectionHandle(
             "collectionC",
-            STORAGE_KEY,
             storageProxy,
             Ttl.Days(2),
             TimeImpl(),
@@ -213,7 +210,6 @@ class CollectionIntegrationTest {
 
         val collectionD = CollectionHandle(
             "collectionD",
-            STORAGE_KEY,
             storageProxy,
             Ttl.Minutes(1),
             TimeImpl(),

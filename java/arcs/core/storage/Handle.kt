@@ -46,7 +46,6 @@ import arcs.core.util.Time
 open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /** [name] is the unique name for this handle, used to track state in the [VersionMap]. */
     val name: String,
-    val storageKey: StorageKey,
     val storageProxy: StorageProxy<Data, Op, T>,
 
     /** [ttl] applied to the data in the [Handle]. */

@@ -175,8 +175,7 @@ private class ReadSingletonOperationsImpl<T : Entity>(
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."
         }
-        val storageKey = storageHandle.storageKey
-        require(storageKey is ReferenceModeStorageKey) {
+        val storageKey = requireNotNull(storageHandle.storageKey as? ReferenceModeStorageKey) {
             "ReferenceModeStorageKey required in order to create references."
         }
         if (fetch()?.entityId != entityId) {
@@ -227,8 +226,7 @@ private class ReadCollectionOperationsImpl<T : Entity>(
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."
         }
-        val storageKey = storageHandle.storageKey
-        require(storageKey is ReferenceModeStorageKey) {
+        val storageKey = requireNotNull(storageHandle.storageKey as? ReferenceModeStorageKey) {
             "ReferenceModeStorageKey required in order to create references."
         }
         if (!fetchAll().any { it.entityId == entityId }) {

@@ -116,7 +116,6 @@ class HandleManager(
 
         return SingletonHandle(
             name,
-            storageKey,
             storageProxy,
             ttl,
             time,
@@ -152,7 +151,6 @@ class HandleManager(
 
         return SingletonHandle(
             name,
-            storageKey,
             storageProxy,
             ttl,
             time,
@@ -189,7 +187,6 @@ class HandleManager(
 
         return CollectionHandle(
             name,
-            storageKey,
             storageProxy,
             ttl,
             time,
@@ -225,7 +222,6 @@ class HandleManager(
 
         return CollectionHandle(
             name = name,
-            storageKey = storageKey,
             storageProxy = storageProxy,
             ttl = ttl,
             time = time,

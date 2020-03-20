@@ -67,7 +67,6 @@ class SingletonIntegrationTest {
 
         singletonA = SingletonHandle(
             "singletonA",
-            STORAGE_KEY,
             storageProxy,
             Ttl.Infinite,
             TimeImpl(),
@@ -75,7 +74,6 @@ class SingletonIntegrationTest {
         )
         singletonB = SingletonHandle(
             "singletonB",
-            STORAGE_KEY,
             storageProxy,
             Ttl.Infinite,
             TimeImpl(),
@@ -156,7 +154,6 @@ class SingletonIntegrationTest {
 
         val singletonC = SingletonHandle(
             "singletonC",
-            STORAGE_KEY,
             storageProxy,
             Ttl.Days(2),
             TimeImpl(),
@@ -169,7 +166,6 @@ class SingletonIntegrationTest {
 
         val singletonD = SingletonHandle(
             "singletonD",
-            STORAGE_KEY,
             storageProxy,
             Ttl.Minutes(1),
             TimeImpl(),

@@ -20,12 +20,10 @@ class Reference<T : Entity>(
     private val storageReference: StorageReference
 ) {
     /** The schema hash for the [Reference]'s associated schema. */
-    val schemaHash: SchemaHash
-        get() = entitySpec.SCHEMA.hash
+    val schemaHash = entitySpec.SCHEMA.hash
 
     /** The entity ID for the referenced entity. */
-    val entityId: String
-        get() = storageReference.id
+    val entityId = storageReference.id
 
     /** Returns the [Entity] pointed to by this reference. */
     suspend fun dereference() = storageReference.dereference()?.let { entitySpec.deserialize(it) }

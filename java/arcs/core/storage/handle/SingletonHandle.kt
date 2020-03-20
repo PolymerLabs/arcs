@@ -18,7 +18,6 @@ import arcs.core.data.Schema
 import arcs.core.data.Ttl
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.Handle
-import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
 import arcs.core.util.Time
@@ -38,7 +37,6 @@ typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<
  */
 class SingletonHandle<T : Referencable>(
     name: String,
-    storageKey: StorageKey,
     storageProxy: SingletonProxy<T>,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
@@ -46,7 +44,6 @@ class SingletonHandle<T : Referencable>(
     private val schema: Schema? = null
 ) : SingletonBase<T>(
     name,
-    storageKey,
     storageProxy,
     ttl,
     time,

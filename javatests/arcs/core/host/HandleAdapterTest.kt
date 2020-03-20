@@ -90,7 +90,7 @@ class HandleAdapterTest {
             HandleMode.ReadWrite,
             READ_WRITE_HANDLE,
             Person,
-            STORAGE_KEY
+            STORAGE_KEY_ONE
         ) as ReadWriteSingletonHandle<Person>
         val entity = Person("Watson")
 
@@ -205,10 +205,10 @@ class HandleAdapterTest {
         var x = 0
         combineUpdates(collection, singleton) { people, e2 ->
             if (people.elementAtOrNull(0)?.name == "George") {
-                x = x + 1
+                x += 1
             }
             if (e2?.name == "Martha") {
-                x = x + 3
+                x += 3
             }
         }
         collection.store(Person("George"))
