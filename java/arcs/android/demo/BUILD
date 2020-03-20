@@ -1,4 +1,8 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_schema")
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_plan",
+    "arcs_kt_schema",
+)
 load("//tools/build_defs/android:rules.bzl", "android_binary")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
@@ -13,12 +17,19 @@ arcs_kt_schema(
     ],
 )
 
+arcs_kt_plan(
+    name = "plans",
+    srcs = ["person.arcs"],
+    deps = [":schemas"],
+)
+
 kt_android_library(
     name = "demo_lib",
     srcs = glob(["*.kt"]),
     manifest = ":AndroidManifest.xml",
     resource_files = glob(["res/**/*"]),
     deps = [
+        ":plans",
         ":schemas",
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
@@ -52,7 +63,7 @@ kt_android_library(
     ],
 )
 
-# Use this cmd to intall:
+# Use this cmd to install:
 # bazel mobile-install java/arcs/android/demo
 android_binary(
     name = "demo",
