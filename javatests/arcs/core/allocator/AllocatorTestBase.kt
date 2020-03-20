@@ -382,6 +382,31 @@ open class AllocatorTestBase {
     }
 
     @Test
+    fun allocator_startFromOneAllocatorAndStopInAnother() = runAllocatorTest {
+        val arcId = allocator.startArcForPlan(
+            "readWriteParticle",
+            PersonPlan
+        )
+
+        val readingContext = requireNotNull(
+            readingExternalHost.arcHostContext(arcId.toString())
+        )
+        val writingContext = requireNotNull(
+            writingExternalHost.arcHostContext(arcId.toString())
+        )
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+
+        val allocator2 = Allocator.create(hostRegistry, TimeImpl(), HandleManager(TimeImpl()))
+
+        allocator2.stopArc(arcId)
+
+        assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
+        assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
+    }
+
+    @Test
     fun allocator_restartCrashedArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
