@@ -38,8 +38,8 @@ import org.mockito.MockitoAnnotations
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class StorageProxyTest {
-    private lateinit var fakeStoreEndpoint: StoreEndpointFake<CrdtData, CrdtOperationAtTime, String>
-
+    @Mock private lateinit var mockStoreEndpoint:
+        StorageCommunicationEndpoint<CrdtData, CrdtOperationAtTime, String>
     @Mock private lateinit var mockStorageEndpointProvider:
         StorageCommunicationEndpointProvider<CrdtData, CrdtOperationAtTime, String>
     @Mock private lateinit var mockCrdtOperation: CrdtOperationAtTime
@@ -49,8 +49,7 @@ class StorageProxyTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        fakeStoreEndpoint = StoreEndpointFake()
-        whenever(mockStorageEndpointProvider.getStorageEndpoint()).thenReturn(fakeStoreEndpoint)
+        whenever(mockStorageEndpointProvider.getStorageEndpoint()).thenReturn(mockStoreEndpoint)
         whenever(mockCrdtModel.data).thenReturn(mockCrdtData)
         whenever(mockCrdtModel.versionMap).thenReturn(VersionMap())
         whenever(mockCrdtOperation.clock).thenReturn(VersionMap())
@@ -90,8 +89,10 @@ class StorageProxyTest {
 
         storageProxy.onMessage(ProxyMessage.SyncRequest(null))
 
-        val modelUpdate = ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, String>(mockCrdtData, null)
-        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(modelUpdate)
+        val modelUpdate = ProxyMessage.ModelUpdate<CrdtData, CrdtOperationAtTime, String>(
+            mockCrdtData, null
+        )
+        verify(mockStoreEndpoint).onProxyMessage(modelUpdate)
     }
 
     /** Test that when store application of an op fails, synchronization is triggered. */
@@ -100,18 +101,20 @@ class StorageProxyTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
         val readHandle = newHandle("testReader", storageProxy)
 
+        val opReq = ProxyMessage.Operations<CrdtData, CrdtOperationAtTime, String> (
+            listOf(mockCrdtOperation),
+            null
+        )
+        whenever(mockStoreEndpoint.onProxyMessage(opReq)).thenReturn(false)
+
         // Local op will succeed
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
         // Store op will fail
-        fakeStoreEndpoint.onProxyMessageReturn = false
         assertThat(storageProxy.applyOp(mockCrdtOperation)).isTrue()
-        val syncReq = ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
-        val opReq = ProxyMessage.Operations<CrdtData, CrdtOperation, String> (
-            listOf(mockCrdtOperation),
-            null
-        )
-        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(opReq, syncReq)
+        val syncReq = ProxyMessage.SyncRequest<CrdtData, CrdtOperationAtTime, String>(null)
+        verify(mockStoreEndpoint).onProxyMessage(opReq)
+        verify(mockStoreEndpoint).onProxyMessage(syncReq)
     }
 
     @Test
