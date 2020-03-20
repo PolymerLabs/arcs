@@ -64,6 +64,7 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm", "wasm"], test_harn
       name: name of the target to create
       srcs: list of Arcs manifest files to include
       deps: list of imported manifests
+      platforms: list of target platforms (current, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
     """
     supported = ["jvm", "wasm"]
