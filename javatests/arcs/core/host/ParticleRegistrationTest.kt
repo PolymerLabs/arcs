@@ -18,7 +18,10 @@ class ParticleRegistrationTest {
         var foundTestHost = false
 
         val hostRegistry = ExplicitHostRegistry()
-        hostRegistry.registerHost(JvmProdHost(::TestProdParticle.toRegistration()))
+        hostRegistry.registerHost(JvmProdHost(
+            JvmProdHost::class,
+            ::TestProdParticle.toRegistration()
+        ))
         hostRegistry.registerHost(TestHost(::TestHostParticle.toRegistration()))
 
         hostRegistry.availableArcHosts().forEach { host: ArcHost ->

@@ -16,6 +16,111 @@ node_repositories(
     yarn_version = "1.13.0",
 )
 
+# Java deps from Maven. This has to be declare before rules_kotlin
+
+RULES_JVM_EXTERNAL_TAG = "2.10"
+
+RULES_JVM_EXTERNAL_SHA = "1bbf2e48d07686707dd85357e9a94da775e1dbd7c464272b3664283c9c716d26"
+
+http_archive(
+    name = "rules_jvm_external",
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
+
+ANDROIDX_TEST_VERSION = "1.2.0"
+
+ANDROIDX_WORK_VERSION = "2.3.1"
+
+AUTO_VALUE_VERSION = "1.7"
+
+AUTO_SERVICE_VERSION = "1.0-rc6"
+
+KOTLINX_ATOMICFU_VERSION = "0.14.1"
+
+KOTLINX_COROUTINES_VERSION = "1.3.3"
+
+ROBOLECTRIC_VERSION = "4.1"
+
+KOTLINPOET_VERSION = "1.0.1"
+
+CLIKT_VERSION = "2.2.0"
+
+maven_install(
+    artifacts = [
+        "androidx.appcompat:appcompat:1.1.0",
+        "androidx.annotation:annotation:1.1.0",
+        "androidx.lifecycle:lifecycle-common:" + ANDROIDX_LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-common-java8:" + ANDROIDX_LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-runtime:" + ANDROIDX_LIFECYCLE_VERSION,
+        "androidx.webkit:webkit:1.1.0-rc01",
+        "androidx.work:work-runtime:" + ANDROIDX_WORK_VERSION,
+        "androidx.work:work-testing:" + ANDROIDX_WORK_VERSION,
+        "androidx.test:core:" + ANDROIDX_TEST_VERSION,
+        "androidx.test.ext:junit:1.1.1",
+        "androidx.test:monitor:" + ANDROIDX_TEST_VERSION,
+        "androidx.test:runner:" + ANDROIDX_TEST_VERSION,
+        "androidx.test:rules:" + ANDROIDX_TEST_VERSION,
+        "com.google.flogger:flogger:0.4",
+        "com.google.code.findbugs:jsr305:3.0.2",
+        "com.google.flogger:flogger-system-backend:0.4",
+        "com.google.dagger:dagger:2.23.1",
+        "com.google.dagger:dagger-compiler:2.23.1",
+        "com.google.auto.value:auto-value:" + AUTO_VALUE_VERSION,
+        "com.google.auto.value:auto-value-annotations:" + AUTO_VALUE_VERSION,
+        "com.google.auto.service:auto-service:" + AUTO_SERVICE_VERSION,
+        "com.google.auto.service:auto-service-annotations:" + AUTO_SERVICE_VERSION,
+        "com.google.protobuf:protobuf-java:3.11.4",
+        "com.google.truth:truth:1.0",
+        "com.github.ajalt:clikt:" + CLIKT_VERSION,
+        "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
+        "javax.inject:javax.inject:1",
+        "junit:junit:4.11",
+        "org.jetbrains.kotlin:kotlin-reflect:1.3.61",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-android:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-coroutines-test:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:atomicfu:" + KOTLINX_ATOMICFU_VERSION,
+        "org.jetbrains.kotlinx:atomicfu-js:" + KOTLINX_ATOMICFU_VERSION,
+        "org.json:json:20141113",
+        "org.mockito:mockito-core:2.23.0",
+        "org.robolectric:robolectric:" + ROBOLECTRIC_VERSION,
+        "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
+        "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
+        "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
+    ],
+    fetch_sources = True,
+    repositories = [
+        "https://jcenter.bintray.com/",
+        "https://maven.google.com",
+        "https://repo1.maven.org/maven2",
+    ],
+)
+
+# @rules_proto is used by KotlincWorker and must be declared before rules_kotlin
+
+http_archive(
+    name = "rules_proto",
+    sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
+    strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+    ],
+)
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+
+rules_proto_dependencies()
+
+rules_proto_toolchains()
+
 # Install Emscripten via the emsdk.
 
 load("//build_defs/emscripten:repo.bzl", "emsdk_repo")
@@ -48,16 +153,17 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "4f29ff058ebd7b49ece683f61c148e65b80806b3",
+    commit = "3d92e4c2998805c61a87be01b027f1c89da974d0",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
     shallow_since = "1578612474 -0800",
 )
 
+load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
-KOTLIN_VERSION = "1.3.60"
+KOTLIN_VERSION = "1.3.70"
 
-KOTLINC_RELEASE_SHA = "12f97cff23ff8116904cb97a7ef4e3af5c3b8e5df9d9e63baa251d9a73b42fbb"
+KOTLINC_RELEASE_SHA = "709d782ff707a633278bac4c63bab3026b768e717f8aaf62de1036c994bc89c7"
 
 KOTLINC_RELEASE = {
     "urls": [
@@ -65,6 +171,8 @@ KOTLINC_RELEASE = {
     ],
     "sha256": KOTLINC_RELEASE_SHA,
 }
+
+kt_download_local_dev_dependencies()
 
 kotlin_repositories(compiler_release = KOTLINC_RELEASE)
 
