@@ -155,7 +155,7 @@ git_repository(
     name = "io_bazel_rules_kotlin",
     commit = "d4088d3f1d7a02d410d1cac203cb7bc2f65bd1ec",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
-    shallow_since = "1583544131 -0800"
+    shallow_since = "1583544131 -0800",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
