@@ -18,9 +18,10 @@ node_repositories(
 
 # Java deps from Maven. This has to be declare before rules_kotlin
 
-RULES_JVM_EXTERNAL_TAG = "2.10"
+RULES_JVM_EXTERNAL_TAG = "3.0"
 
-RULES_JVM_EXTERNAL_SHA = "1bbf2e48d07686707dd85357e9a94da775e1dbd7c464272b3664283c9c716d26"
+RULES_JVM_EXTERNAL_SHA = "62133c125bf4109dfd9d2af64830208356ce4ef8b165a6ef15bbff7460b35c3a"
+
 
 http_archive(
     name = "rules_jvm_external",
@@ -94,6 +95,7 @@ maven_install(
         "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
+        "com.squareup:javapoet:1.12.1",
     ],
     fetch_sources = True,
     repositories = [
@@ -153,7 +155,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "3d92e4c2998805c61a87be01b027f1c89da974d0",
+    commit = "d4088d3f1d7a02d410d1cac203cb7bc2f65bd1ec",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
     shallow_since = "1578612474 -0800",
 )
