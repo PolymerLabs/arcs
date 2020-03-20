@@ -45,7 +45,7 @@ KOTLINC_OPTS = [
     "-Xinline-classes",
     "-Xmulti-platform",
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
-    "-jvm-target 1.8",
+
 ]
 
 DISABLED_LINT_CHECKS = [
@@ -75,7 +75,7 @@ def arcs_kt_jvm_library(**kwargs):
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
     exports = kwargs.pop("exports", [])
     kotlincopts = kwargs.pop("kotlincopts", [])
-    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS)
+    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS + ["-jvm-target 1.8"])
     if not IS_BAZEL:
         kwargs["constraints"] = constraints
         kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
