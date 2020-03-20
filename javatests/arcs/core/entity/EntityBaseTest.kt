@@ -12,13 +12,14 @@
 package arcs.core.entity
 
 import arcs.core.common.Id
-import arcs.core.data.FieldType
-import arcs.core.data.RawEntity
+import arcs.core.crdt.VersionMap
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
+import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.storage.Reference as StorageReference
 import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,11 +28,17 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")
 class EntityBaseTest {
-    private lateinit var entity: EntityBaseForTest
+    private lateinit var entity: DummyEntity
 
     @Before
     fun setUp() {
-        entity = EntityBaseForTest()
+        SchemaRegistry.register(DummyEntity)
+        entity = DummyEntity()
+    }
+
+    @After
+    fun tearDown() {
+        SchemaRegistry.clearForTest()
     }
 
     @Test
@@ -44,7 +51,7 @@ class EntityBaseTest {
             entity.setSingletonValueForTest("bool", 1.0)
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "Expected Boolean for MyEntity.bool, but received 1.0."
+            "Expected Boolean for DummyEntity.bool, but received 1.0."
         )
     }
 
@@ -58,7 +65,7 @@ class EntityBaseTest {
             entity.setSingletonValueForTest("num", "abc")
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "Expected Double for MyEntity.num, but received abc."
+            "Expected Double for DummyEntity.num, but received abc."
         )
     }
 
@@ -72,7 +79,22 @@ class EntityBaseTest {
             entity.setSingletonValueForTest("text", true)
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "Expected String for MyEntity.text, but received true."
+            "Expected String for DummyEntity.text, but received true."
+        )
+    }
+
+    @Test
+    fun singletonFields_ref() {
+        assertThat(entity.ref).isNull()
+        val ref = createReference("foo")
+        entity.ref = ref
+        assertThat(entity.ref).isEqualTo(ref)
+
+        val e = assertThrows(IllegalArgumentException::class) {
+            entity.setSingletonValueForTest("ref", true)
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Expected Reference for DummyEntity.ref, but received true."
         )
     }
 
@@ -82,7 +104,7 @@ class EntityBaseTest {
             entity.getSingletonValueForTest("not_a_real_field")
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "MyEntity does not have a singleton field called \"not_a_real_field\"."
+            "DummyEntity does not have a singleton field called \"not_a_real_field\"."
         )
     }
 
@@ -92,7 +114,7 @@ class EntityBaseTest {
             entity.setSingletonValueForTest("not_a_real_field", "x")
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "MyEntity does not have a singleton field called \"not_a_real_field\"."
+            "DummyEntity does not have a singleton field called \"not_a_real_field\"."
         )
     }
 
@@ -106,7 +128,7 @@ class EntityBaseTest {
             entity.setCollectionValueForTest("bools", setOf(true, 1.0))
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "Expected Boolean for MyEntity.bools, but received 1.0."
+            "Expected Boolean for DummyEntity.bools, but received 1.0."
         )
     }
 
@@ -120,7 +142,7 @@ class EntityBaseTest {
             entity.setCollectionValueForTest("nums", setOf(1.0, "abc"))
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "Expected Double for MyEntity.nums, but received abc."
+            "Expected Double for DummyEntity.nums, but received abc."
         )
     }
 
@@ -134,7 +156,23 @@ class EntityBaseTest {
             entity.setCollectionValueForTest("texts", setOf("a", true))
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "Expected String for MyEntity.texts, but received true."
+            "Expected String for DummyEntity.texts, but received true."
+        )
+    }
+
+    @Test
+    fun collectionFields_ref() {
+        assertThat(entity.refs).isEmpty()
+        val ref1 = createReference("ref1")
+        val ref2 = createReference("ref2")
+        entity.refs = setOf(ref1, ref2)
+        assertThat(entity.refs).containsExactly(ref1, ref2)
+
+        val e = assertThrows(IllegalArgumentException::class) {
+            entity.setCollectionValueForTest("refs", setOf(ref1, "a"))
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Expected Reference for DummyEntity.refs, but received a."
         )
     }
 
@@ -144,7 +182,7 @@ class EntityBaseTest {
             entity.getCollectionValueForTest("not_a_real_field")
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "MyEntity does not have a collection field called \"not_a_real_field\"."
+            "DummyEntity does not have a collection field called \"not_a_real_field\"."
         )
     }
 
@@ -154,7 +192,7 @@ class EntityBaseTest {
             entity.setCollectionValueForTest("not_a_real_field", setOf("x"))
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "MyEntity does not have a collection field called \"not_a_real_field\"."
+            "DummyEntity does not have a collection field called \"not_a_real_field\"."
         )
     }
 
@@ -164,13 +202,15 @@ class EntityBaseTest {
             text = "abc"
             num = 12.0
             bool = true
+            ref = createReference("foo")
             texts = setOf("aa", "bb")
             nums = setOf(1.0, 2.0)
             bools = setOf(true, false)
+            refs = setOf(createReference("ref1"), createReference("ref2"))
         }
 
         val rawEntity = entity.serialize()
-        val deserialized = EntityBaseForTest()
+        val deserialized = DummyEntity()
         deserialized.deserializeForTest(rawEntity)
 
         assertThat(deserialized).isEqualTo(entity)
@@ -179,18 +219,18 @@ class EntityBaseTest {
 
     @Test
     fun equality() {
-        val entity1 = EntityBase(ENTITY_CLASS_NAME, SCHEMA)
-        val entity2 = EntityBase(ENTITY_CLASS_NAME, SCHEMA)
+        val entity1 = EntityBase("Foo", DummyEntity.SCHEMA)
+        val entity2 = EntityBase("Foo", DummyEntity.SCHEMA)
         assertThat(entity1).isEqualTo(entity1)
         assertThat(entity1).isEqualTo(entity2)
 
         // Different name.
-        assertThat(entity1).isNotEqualTo(EntityBase("x", SCHEMA))
+        assertThat(entity1).isNotEqualTo(EntityBase("Bar", DummyEntity.SCHEMA))
 
         // Different schema.
         assertThat(entity1).isNotEqualTo(
             EntityBase(
-                ENTITY_CLASS_NAME,
+                "Foo",
                 Schema(emptyList(), SchemaFields(emptyMap(), emptyMap()), "hash")
             )
         )
@@ -202,8 +242,8 @@ class EntityBaseTest {
 
     @Test
     fun equality_separateSubclassesWithSameDataAreEqual() {
-        val entity1 = object : EntityBase("Foo", SCHEMA) {}
-        val entity2 = object : EntityBase("Foo", SCHEMA) {}
+        val entity1 = object : EntityBase("Foo", DummyEntity.SCHEMA) {}
+        val entity2 = object : EntityBase("Foo", DummyEntity.SCHEMA) {}
         assertThat(entity1).isEqualTo(entity2)
     }
 
@@ -220,7 +260,7 @@ class EntityBaseTest {
 
         entity.reset()
 
-        assertThat(entity).isEqualTo(EntityBaseForTest())
+        assertThat(entity).isEqualTo(DummyEntity())
     }
 
     @Test
@@ -239,67 +279,24 @@ class EntityBaseTest {
         assertThat(entity.entityId).isEqualTo(id)
     }
 
-    /**
-     * Subclasses [EntityBase] and makes its protected methods public, so that we can call them
-     * in the test. Also adds convenient getters and setters for entity fields, similar to what a
-     * code-generated subclass would do.
-     */
-    private class EntityBaseForTest : EntityBase(ENTITY_CLASS_NAME, SCHEMA) {
-        var bool: Boolean?
-            get() = getSingletonValue("bool") as Boolean?
-            set(value) = setSingletonValue("bool", value)
-
-        var num: Double?
-            get() = getSingletonValue("num") as Double?
-            set(value) = setSingletonValue("num", value)
-
-        var text: String?
-            get() = getSingletonValue("text") as String?
-            set(value) = setSingletonValue("text", value)
-
-        var bools: Set<Boolean>
-            get() = getCollectionValue("bools") as Set<Boolean>
-            set(values) = setCollectionValue("bools", values)
-
-        var nums: Set<Double>
-            get() = getCollectionValue("nums") as Set<Double>
-            set(values) = setCollectionValue("nums", values)
-
-        var texts: Set<String>
-            get() = getCollectionValue("texts") as Set<String>
-            set(values) = setCollectionValue("texts", values)
-
-        fun getSingletonValueForTest(field: String) = super.getSingletonValue(field)
-
-        fun getCollectionValueForTest(field: String) = super.getCollectionValue(field)
-
-        fun setSingletonValueForTest(field: String, value: Any?) =
-            super.setSingletonValue(field, value)
-
-        fun setCollectionValueForTest(field: String, values: Set<Any>) =
-            super.setCollectionValue(field, values)
-
-        fun deserializeForTest(rawEntity: RawEntity) = super.deserialize(rawEntity)
-    }
-
-    companion object {
-        private const val ENTITY_CLASS_NAME = "MyEntity"
-
-        private val SCHEMA = Schema(
-            names = listOf(SchemaName(ENTITY_CLASS_NAME)),
-            fields = SchemaFields(
-                singletons = mapOf(
-                    "text" to FieldType.Text,
-                    "num" to FieldType.Number,
-                    "bool" to FieldType.Boolean
-                ),
-                collections = mapOf(
-                    "texts" to FieldType.Text,
-                    "nums" to FieldType.Number,
-                    "bools" to FieldType.Boolean
-                )
-            ),
-            hash = "hash"
+    @Test
+    fun testToString() {
+        with (entity) {
+            text = "abc"
+            num = 12.0
+            bool = true
+            texts = setOf("aa", "bb")
+            nums = setOf(1.0, 2.0)
+            bools = setOf(true, false)
+        }
+        assertThat(entity.toString()).isEqualTo(
+            "DummyEntity(bool = true, bools = [true, false], num = 12.0, nums = [1.0, 2.0], " +
+                "ref = null, refs = [], text = abc, texts = [aa, bb])"
         )
     }
+
+    private fun createReference(id: String) = Reference(
+        DummyEntity,
+        StorageReference(id, DummyStorageKey(id), VersionMap("id" to 1))
+    )
 }

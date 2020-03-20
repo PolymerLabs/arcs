@@ -17,12 +17,15 @@ arcs_kt_jvm_test_suite(
     deps = [
         ":particle",  # buildcleaner: keep
         ":schemas",
+        "//java/arcs/core/common",
+        "//java/arcs/core/data",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
+        "//java/arcs/core/testutil",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk:sdk-kt",

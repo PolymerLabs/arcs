@@ -15,7 +15,7 @@ import arcs.core.data.Schema
 typealias SchemaHash = String
 
 /**
- * A registry for generated [Schema]s.
+ * A registry for generated [Schema]s and [EntitySpec]s.
  */
 object SchemaRegistry {
     private val entitySpecs = mutableMapOf<SchemaHash, EntitySpec<out Entity>>()

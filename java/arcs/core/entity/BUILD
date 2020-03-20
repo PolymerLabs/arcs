@@ -12,5 +12,6 @@ arcs_kt_library(
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/storage",
     ],
 )

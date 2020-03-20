@@ -65,8 +65,20 @@ class SingletonIntegrationTest {
         store = Store(STORE_OPTIONS)
         storageProxy = StorageProxy(store.activate(), CrdtSingleton<RawEntity>())
 
-        singletonA = SingletonHandle("singletonA", storageProxy, Ttl.Infinite, TimeImpl(), schema = SCHEMA)
-        singletonB = SingletonHandle("singletonB", storageProxy, Ttl.Infinite, TimeImpl(), schema = SCHEMA)
+        singletonA = SingletonHandle(
+            "singletonA",
+            storageProxy,
+            Ttl.Infinite,
+            TimeImpl(),
+            schema = SCHEMA
+        )
+        singletonB = SingletonHandle(
+            "singletonB",
+            storageProxy,
+            Ttl.Infinite,
+            TimeImpl(),
+            schema = SCHEMA
+        )
         Unit
     }
 
@@ -140,13 +152,25 @@ class SingletonIntegrationTest {
         assertThat(requireNotNull(singletonA.fetch()).expirationTimestamp)
             .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val singletonC = SingletonHandle("singletonC", storageProxy, Ttl.Days(2), TimeImpl(), schema = SCHEMA)
+        val singletonC = SingletonHandle(
+            "singletonC",
+            storageProxy,
+            Ttl.Days(2),
+            TimeImpl(),
+            schema = SCHEMA
+        )
         assertThat(singletonC.store(person.toRawEntity())).isTrue()
         val entityC = requireNotNull(singletonC.fetch())
         assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val singletonD = SingletonHandle("singletonD", storageProxy, Ttl.Minutes(1), TimeImpl(), schema = SCHEMA)
+        val singletonD = SingletonHandle(
+            "singletonD",
+            storageProxy,
+            Ttl.Minutes(1),
+            TimeImpl(),
+            schema = SCHEMA
+        )
         assertThat(singletonD.store(person.toRawEntity())).isTrue()
         val entityD = requireNotNull(singletonD.fetch())
         assertThat(entityD.creationTimestamp).isGreaterThan(creationTimestampA)
