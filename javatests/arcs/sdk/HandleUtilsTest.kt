@@ -403,7 +403,518 @@ class HandleUtilsTest {
     assertWithMessage("Expected handle6 to equal F").that(handle6Tracking).isEqualTo(1)
   }
 
+  @Test
+  fun handleUtils_combineSevenUpdatesTest() = runBlockingTest {
+    val handle1 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_ONE
+    ) as ReadWriteCollectionHandle<Person>
 
+    val handle2 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_TWO
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle3 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_THREE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle4 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FOUR
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle5 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FIVE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle6 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_SIX
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle7 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_SEVEN
+    ) as ReadWriteCollectionHandle<Person>
+
+    var handle1Tracking = 0
+    var handle2Tracking = 0
+    var handle3Tracking = 0
+    var handle4Tracking = 0
+    var handle5Tracking = 0
+    var handle6Tracking = 0
+    var handle7Tracking = 0
+
+    combineUpdates(
+      handle1,
+      handle2,
+      handle3,
+      handle4,
+      handle5,
+      handle6,
+      handle7
+    ) { e1, e2, e3, e4, e5, e6, e7 ->
+      if (e1.elementAtOrNull(0)?.name == "A") {
+        handle1Tracking += 1
+      }
+      if (e2?.name == "B") {
+        handle2Tracking += 1
+      }
+      if (e3.elementAtOrNull(0)?.name == "C") {
+        handle3Tracking += 1
+      }
+      if (e4?.name == "D") {
+        handle4Tracking += 1
+      }
+      if (e5.elementAtOrNull(0)?.name == "E") {
+        handle5Tracking += 1
+      }
+      if (e6?.name == "F") {
+        handle6Tracking += 1
+      }
+      if (e7.elementAtOrNull(0)?.name == "G") {
+        handle7Tracking += 1
+      }
+    }
+    
+    handle1.store(Person("A"))
+    handle2.store(Person("B"))
+    handle3.store(Person("C"))
+    handle4.store(Person("D"))
+    handle5.store(Person("E"))
+    handle6.store(Person("F"))
+    handle7.store(Person("G"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(7)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(6)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(5)
+    assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(4)
+    assertWithMessage("Expected handle5 to include E").that(handle5Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle6 to equal F").that(handle6Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle7 to include G").that(handle7Tracking).isEqualTo(1)
+  }
+
+  @Test
+  fun handleUtils_combineEightUpdatesTest() = runBlockingTest {
+    val handle1 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_ONE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle2 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_TWO
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle3 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_THREE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle4 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FOUR
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle5 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FIVE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle6 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_SIX
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle7 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_SEVEN
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle8 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_EIGHT
+    ) as ReadWriteSingletonHandle<Person>
+
+    var handle1Tracking = 0
+    var handle2Tracking = 0
+    var handle3Tracking = 0
+    var handle4Tracking = 0
+    var handle5Tracking = 0
+    var handle6Tracking = 0
+    var handle7Tracking = 0
+    var handle8Tracking = 0
+
+    combineUpdates(
+      handle1,
+      handle2,
+      handle3,
+      handle4,
+      handle5,
+      handle6,
+      handle7,
+      handle8
+    ) { e1, e2, e3, e4, e5, e6, e7, e8 ->
+      if (e1.elementAtOrNull(0)?.name == "A") {
+        handle1Tracking += 1
+      }
+      if (e2?.name == "B") {
+        handle2Tracking += 1
+      }
+      if (e3.elementAtOrNull(0)?.name == "C") {
+        handle3Tracking += 1
+      }
+      if (e4?.name == "D") {
+        handle4Tracking += 1
+      }
+      if (e5.elementAtOrNull(0)?.name == "E") {
+        handle5Tracking += 1
+      }
+      if (e6?.name == "F") {
+        handle6Tracking += 1
+      }
+      if (e7.elementAtOrNull(0)?.name == "G") {
+        handle7Tracking += 1
+      }
+      if (e8?.name == "H") {
+        handle8Tracking += 1
+      }
+    }
+    
+    handle1.store(Person("A"))
+    handle2.store(Person("B"))
+    handle3.store(Person("C"))
+    handle4.store(Person("D"))
+    handle5.store(Person("E"))
+    handle6.store(Person("F"))
+    handle7.store(Person("G"))
+    handle8.store(Person("H"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(8)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(7)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(6)
+    assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(5)
+    assertWithMessage("Expected handle5 to include E").that(handle5Tracking).isEqualTo(4)
+    assertWithMessage("Expected handle6 to equal F").that(handle6Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle7 to include G").that(handle7Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle8 to equal H").that(handle8Tracking).isEqualTo(1)
+  }
+
+  @Test
+  fun handleUtils_combineNineUpdatesTest() = runBlockingTest {
+    val handle1 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_ONE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle2 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_TWO
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle3 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_THREE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle4 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FOUR
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle5 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FIVE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle6 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_SIX
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle7 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_SEVEN
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle8 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_EIGHT
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle9 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_NINE
+    ) as ReadWriteCollectionHandle<Person>
+
+    var handle1Tracking = 0
+    var handle2Tracking = 0
+    var handle3Tracking = 0
+    var handle4Tracking = 0
+    var handle5Tracking = 0
+    var handle6Tracking = 0
+    var handle7Tracking = 0
+    var handle8Tracking = 0
+    var handle9Tracking = 0
+
+    combineUpdates(
+      handle1,
+      handle2,
+      handle3,
+      handle4,
+      handle5,
+      handle6,
+      handle7,
+      handle8,
+      handle9
+    ) { e1, e2, e3, e4, e5, e6, e7, e8, e9 ->
+      if (e1.elementAtOrNull(0)?.name == "A") {
+        handle1Tracking += 1
+      }
+      if (e2?.name == "B") {
+        handle2Tracking += 1
+      }
+      if (e3.elementAtOrNull(0)?.name == "C") {
+        handle3Tracking += 1
+      }
+      if (e4?.name == "D") {
+        handle4Tracking += 1
+      }
+      if (e5.elementAtOrNull(0)?.name == "E") {
+        handle5Tracking += 1
+      }
+      if (e6?.name == "F") {
+        handle6Tracking += 1
+      }
+      if (e7.elementAtOrNull(0)?.name == "G") {
+        handle7Tracking += 1
+      }
+      if (e8?.name == "H") {
+        handle8Tracking += 1
+      }
+      if (e9.elementAtOrNull(0)?.name == "I") {
+        handle9Tracking += 1
+      }
+    }
+    
+    handle1.store(Person("A"))
+    handle2.store(Person("B"))
+    handle3.store(Person("C"))
+    handle4.store(Person("D"))
+    handle5.store(Person("E"))
+    handle6.store(Person("F"))
+    handle7.store(Person("G"))
+    handle8.store(Person("H"))
+    handle9.store(Person("I"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(9)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(8)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(7)
+    assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(6)
+    assertWithMessage("Expected handle5 to include E").that(handle5Tracking).isEqualTo(5)
+    assertWithMessage("Expected handle6 to equal F").that(handle6Tracking).isEqualTo(4)
+    assertWithMessage("Expected handle7 to include G").that(handle7Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle8 to equal H").that(handle8Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle9 to include I").that(handle9Tracking).isEqualTo(1)
+  }
+
+  @Test
+  fun handleUtils_combineTenUpdatesTest() = runBlockingTest {
+    val handle1 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_ONE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle2 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_TWO
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle3 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_THREE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle4 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FOUR
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle5 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FIVE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle6 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_SIX
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle7 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_SEVEN
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle8 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_EIGHT
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle9 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_NINE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle10 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_TEN
+    ) as ReadWriteSingletonHandle<Person>
+
+    var handle1Tracking = 0
+    var handle2Tracking = 0
+    var handle3Tracking = 0
+    var handle4Tracking = 0
+    var handle5Tracking = 0
+    var handle6Tracking = 0
+    var handle7Tracking = 0
+    var handle8Tracking = 0
+    var handle9Tracking = 0
+    var handle10Tracking = 0
+
+    combineUpdates(
+      handle1,
+      handle2,
+      handle3,
+      handle4,
+      handle5,
+      handle6,
+      handle7,
+      handle8,
+      handle9,
+      handle10
+    ) { e1, e2, e3, e4, e5, e6, e7, e8, e9, e10 ->
+      if (e1.elementAtOrNull(0)?.name == "A") {
+        handle1Tracking += 1
+      }
+      if (e2?.name == "B") {
+        handle2Tracking += 1
+      }
+      if (e3.elementAtOrNull(0)?.name == "C") {
+        handle3Tracking += 1
+      }
+      if (e4?.name == "D") {
+        handle4Tracking += 1
+      }
+      if (e5.elementAtOrNull(0)?.name == "E") {
+        handle5Tracking += 1
+      }
+      if (e6?.name == "F") {
+        handle6Tracking += 1
+      }
+      if (e7.elementAtOrNull(0)?.name == "G") {
+        handle7Tracking += 1
+      }
+      if (e8?.name == "H") {
+        handle8Tracking += 1
+      }
+      if (e9.elementAtOrNull(0)?.name == "I") {
+        handle9Tracking += 1
+      }
+      if (e10?.name == "J") {
+        handle10Tracking += 1
+      }
+    }
+    
+    handle1.store(Person("A"))
+    handle2.store(Person("B"))
+    handle3.store(Person("C"))
+    handle4.store(Person("D"))
+    handle5.store(Person("E"))
+    handle6.store(Person("F"))
+    handle7.store(Person("G"))
+    handle8.store(Person("H"))
+    handle9.store(Person("I"))
+    handle10.store(Person("J"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(10)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(9)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(8)
+    assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(7)
+    assertWithMessage("Expected handle5 to include E").that(handle5Tracking).isEqualTo(6)
+    assertWithMessage("Expected handle6 to equal F").that(handle6Tracking).isEqualTo(5)
+    assertWithMessage("Expected handle7 to include G").that(handle7Tracking).isEqualTo(4)
+    assertWithMessage("Expected handle8 to equal H").that(handle8Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle9 to include I").that(handle9Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle10 to equal J").that(handle10Tracking).isEqualTo(1)
+  }
+  
   private companion object {
     private const val READ_WRITE_HANDLE = "readWriteHandle"
 
