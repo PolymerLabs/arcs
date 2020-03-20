@@ -6,7 +6,7 @@ build --nodesugar_for_android
 test --strategy=KotlinCompile=local
 test --spawn_strategy=standalone --nocache_test_results --test_output=errors --jobs=32 --ram_utilization_factor=33 
 test --nostamp
-test --desugar_for_android
+test --nodesugar_for_android
 
 
 
