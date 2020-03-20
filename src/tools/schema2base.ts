@@ -20,6 +20,7 @@ export type AddFieldOptions = Readonly<{
   typeName: string;
   isOptional?: boolean;
   refClassName?: string;
+  refSchemaHash?: string;
   isCollection?: boolean;
 }>;
 
@@ -103,7 +104,8 @@ export abstract class Schema2Base {
               throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
             }
           } else if (descriptor.kind === 'schema-reference') {
-            generator.addField({field, typeName: 'Reference', refClassName: node.refs.get(field).name});
+            const schemaNode = node.refs.get(field);
+            generator.addField({field, typeName: 'Reference', refClassName: schemaNode.name, refSchemaHash: await schemaNode.schema.hash()});
           } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
             // TODO: support collections of references
           } else if (descriptor.kind === 'schema-collection') {

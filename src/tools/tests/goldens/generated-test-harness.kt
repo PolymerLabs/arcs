@@ -6,7 +6,7 @@ package arcs.golden
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support references or optional field detection
+// Current implementation doesn't support optional field detection
 
 import arcs.sdk.*
 import arcs.sdk.testing.*
