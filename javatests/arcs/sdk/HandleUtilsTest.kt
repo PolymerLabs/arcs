@@ -136,8 +136,273 @@ class HandleUtilsTest {
     assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(3)
     assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(2)
     assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(1)
-
   }
+
+  @Test
+  fun handleUtils_combineFourUpdatesTest() = runBlockingTest {
+    val handle1 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_ONE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle2 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_TWO
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle3 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_THREE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle4 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FOUR
+    ) as ReadWriteSingletonHandle<Person>
+
+    var handle1Tracking = 0
+    var handle2Tracking = 0
+    var handle3Tracking = 0
+    var handle4Tracking = 0
+
+    combineUpdates(handle1, handle2, handle3, handle4) { e1, e2, e3, e4 ->
+      if (e1.elementAtOrNull(0)?.name == "A") {
+        handle1Tracking += 1
+      }
+      if (e2?.name == "B") {
+        handle2Tracking += 1
+      }
+      if (e3.elementAtOrNull(0)?.name == "C") {
+        handle3Tracking += 1
+      }
+      if (e4?.name == "D") {
+        handle4Tracking += 1
+      }
+    }
+    handle1.store(Person("A"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(1)
+    assertWithMessage("Expected handle2 to not equal B").that(handle2Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
+
+    handle2.store(Person("B"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(1)
+    assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
+
+    handle3.store(Person("C"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(1)
+    assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
+
+    handle4.store(Person("D"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(4)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(1)
+  }
+
+  @Test
+  fun handleUtils_combineFiveUpdatesTest() = runBlockingTest {
+    val handle1 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_ONE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle2 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_TWO
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle3 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_THREE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle4 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FOUR
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle5 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FIVE
+    ) as ReadWriteCollectionHandle<Person>
+
+    var handle1Tracking = 0
+    var handle2Tracking = 0
+    var handle3Tracking = 0
+    var handle4Tracking = 0
+    var handle5Tracking = 0
+
+    combineUpdates(handle1, handle2, handle3, handle4, handle5) { e1, e2, e3, e4, e5 ->
+      if (e1.elementAtOrNull(0)?.name == "A") {
+        handle1Tracking += 1
+      }
+      if (e2?.name == "B") {
+        handle2Tracking += 1
+      }
+      if (e3.elementAtOrNull(0)?.name == "C") {
+        handle3Tracking += 1
+      }
+      if (e4?.name == "D") {
+        handle4Tracking += 1
+      }
+      if (e5.elementAtOrNull(0)?.name == "E") {
+        handle5Tracking += 1
+      }
+    }
+    handle1.store(Person("A"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(1)
+    assertWithMessage("Expected handle2 to not equal B").that(handle2Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle5 to not include E").that(handle5Tracking).isEqualTo(0)
+
+    handle2.store(Person("B"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(1)
+    assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle5 to not include E").that(handle5Tracking).isEqualTo(0)
+
+    handle3.store(Person("C"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(1)
+    assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
+    assertWithMessage("Expected handle5 to not include E").that(handle5Tracking).isEqualTo(0)
+
+    handle4.store(Person("D"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(4)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(1)
+    assertWithMessage("Expected handle5 to not include E").that(handle5Tracking).isEqualTo(0)
+
+    handle5.store(Person("E"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(5)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(4)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle5 to include E").that(handle5Tracking).isEqualTo(1)
+  }
+
+  
+
+  @Test
+  fun handleUtils_combineSixUpdatesTest() = runBlockingTest {
+    val handle1 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_ONE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle2 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_TWO
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle3 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_THREE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle4 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FOUR
+    ) as ReadWriteSingletonHandle<Person>
+
+    val handle5 = manager.createCollectionHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_FIVE
+    ) as ReadWriteCollectionHandle<Person>
+
+    val handle6 = manager.createSingletonHandle(
+      HandleMode.ReadWrite,
+      READ_WRITE_HANDLE,
+      Person,
+      STORAGE_KEY_SIX
+    ) as ReadWriteSingletonHandle<Person>
+
+    var handle1Tracking = 0
+    var handle2Tracking = 0
+    var handle3Tracking = 0
+    var handle4Tracking = 0
+    var handle5Tracking = 0
+    var handle6Tracking = 0
+
+    combineUpdates(
+      handle1,
+      handle2,
+      handle3,
+      handle4,
+      handle5,
+      handle6
+    ) { e1, e2, e3, e4, e5, e6 ->
+      if (e1.elementAtOrNull(0)?.name == "A") {
+        handle1Tracking += 1
+      }
+      if (e2?.name == "B") {
+        handle2Tracking += 1
+      }
+      if (e3.elementAtOrNull(0)?.name == "C") {
+        handle3Tracking += 1
+      }
+      if (e4?.name == "D") {
+        handle4Tracking += 1
+      }
+      if (e5.elementAtOrNull(0)?.name == "E") {
+        handle5Tracking += 1
+      }
+      if (e6?.name == "F") {
+        handle6Tracking += 1
+      }
+    }
+    
+    handle1.store(Person("A"))
+    handle2.store(Person("B"))
+    handle3.store(Person("C"))
+    handle4.store(Person("D"))
+    handle5.store(Person("E"))
+    handle6.store(Person("F"))
+    assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(6)
+    assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(5)
+    assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(4)
+    assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(3)
+    assertWithMessage("Expected handle5 to include E").that(handle5Tracking).isEqualTo(2)
+    assertWithMessage("Expected handle6 to equal F").that(handle6Tracking).isEqualTo(1)
+  }
+
 
   private companion object {
     private const val READ_WRITE_HANDLE = "readWriteHandle"
@@ -155,6 +420,41 @@ class HandleUtilsTest {
     private val STORAGE_KEY_THREE = ReferenceModeStorageKey(
       backingKey = RamDiskStorageKey("backing3"),
       storageKey = RamDiskStorageKey("entity3")
+    )
+
+    private val STORAGE_KEY_FOUR = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("backing4"),
+      storageKey = RamDiskStorageKey("entity4")
+    )
+
+    private val STORAGE_KEY_FIVE = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("backing5"),
+      storageKey = RamDiskStorageKey("entity5")
+    )
+
+    private val STORAGE_KEY_SIX = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("backing6"),
+      storageKey = RamDiskStorageKey("entity6")
+    )
+
+    private val STORAGE_KEY_SEVEN = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("backing7"),
+      storageKey = RamDiskStorageKey("entity7")
+    )
+
+    private val STORAGE_KEY_EIGHT = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("backing8"),
+      storageKey = RamDiskStorageKey("entity8")
+    )
+
+    private val STORAGE_KEY_NINE = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("backing9"),
+      storageKey = RamDiskStorageKey("entity9")
+    )
+
+    private val STORAGE_KEY_TEN = ReferenceModeStorageKey(
+      backingKey = RamDiskStorageKey("backing10"),
+      storageKey = RamDiskStorageKey("entity10")
     )
   }
 }
