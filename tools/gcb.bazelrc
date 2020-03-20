@@ -2,10 +2,11 @@ build --strategy=KotlinCompile=local
 build --remote_cache=https://storage.googleapis.com/arcs-github-gcb-bazel-cache --google_default_credentials
 build --verbose_failures --spawn_strategy=standalone --jobs=32 --ram_utilization_factor=33
 build --nostamp
-build --strategy=Desugar=sandboxed --noexperimental_check_desugar_deps --nodesugar_for_android 
+build --strategy=Desugar=local
 test --strategy=KotlinCompile=local
 test --spawn_strategy=standalone --nocache_test_results --test_output=errors --jobs=32 --ram_utilization_factor=33 
 test --nostamp
-test --strategy=Desugar=sandboxed --noexperimental_check_desugar_deps --nodesugar_for_android
+test --strategy=Desugar=local
+
 
 
