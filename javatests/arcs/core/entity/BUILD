@@ -17,6 +17,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
