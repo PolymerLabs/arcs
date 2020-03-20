@@ -13,6 +13,7 @@ package arcs.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
+import arcs.android.storage.ParcelableProxyMessage
 import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.VersionMap
@@ -25,6 +26,8 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -35,6 +38,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.yield
 import org.junit.Before
 import org.junit.Test
@@ -73,13 +77,10 @@ class BindingContextTest {
     @Test
     fun getLocalData_fetchesLocalData() = runBlocking {
         val bindingContext = buildContext()
-        val messageChannel = ParcelableProxyMessageChannel(coroutineContext)
-        bindingContext.getLocalData(messageChannel)
+        val callback = DeferredProxyCallback()
+        bindingContext.getLocalData(callback)
 
-        var message = messageChannel.asFlow().first()
-        message.result.complete(true)
-
-        var modelUpdate = checkNotNull(message.message.actual as? ProxyMessage.ModelUpdate)
+        var modelUpdate = checkNotNull(callback.await().actual as? ProxyMessage.ModelUpdate)
         var model = checkNotNull(modelUpdate.model as? CrdtCount.Data)
 
         // Should be empty to start.
@@ -93,11 +94,10 @@ class BindingContextTest {
             )
         )
 
-        bindingContext.getLocalData(messageChannel)
-        message = messageChannel.asFlow().first()
-        message.result.complete(true)
+        val callback2 = DeferredProxyCallback()
+        bindingContext.getLocalData(callback2)
 
-        modelUpdate = checkNotNull(message.message.actual as? ProxyMessage.ModelUpdate)
+        modelUpdate = checkNotNull(callback2.await().actual as? ProxyMessage.ModelUpdate)
         model = checkNotNull(modelUpdate.model as? CrdtCount.Data)
 
         // Should contain a single entry.
@@ -130,8 +130,8 @@ class BindingContextTest {
     @Test
     fun registerCallback_registersCallbackWithStore() = runBlocking {
         val bindingContext = buildContext()
-        val callback = ParcelableProxyMessageChannel(coroutineContext)
-        val token = bindingContext.registerCallback(callback)
+        val callback = DeferredProxyCallback()
+        bindingContext.registerCallback(callback)
 
         // Now send a message directly to the store, and see if we hear it from our callback.
         val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
@@ -146,17 +146,14 @@ class BindingContextTest {
             store.activate().onProxyMessage(message)
         }
 
-        val heardMessage = callback.asFlow().first()
-        heardMessage.result.complete(true)
-
-        val operations = heardMessage.message.actual as ProxyMessage.Operations
+        val operations = callback.await().actual as ProxyMessage.Operations
         assertThat(operations.operations).isEqualTo(message.operations)
     }
 
     @Test
     fun unregisterCallback_unregistersCallbackFromStore() = runBlocking {
         val bindingContext = buildContext()
-        val callback = ParcelableProxyMessageChannel(coroutineContext)
+        val callback = DeferredProxyCallback()
         val token = bindingContext.registerCallback(callback)
 
         bindingContext.unregisterCallback(token)
@@ -175,8 +172,7 @@ class BindingContextTest {
         )
         assertThat(store.activate().onProxyMessage(message)).isTrue()
 
-        callback.close()
-        assertThat(callback.asFlow().toList()).isEmpty()
+        assertThat(callback.isCompleted).isEqualTo(false)
     }
 
     @Test

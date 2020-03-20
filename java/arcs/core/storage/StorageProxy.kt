@@ -187,7 +187,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /**
      * Applies messages from a [Store].
      */
-    suspend fun onMessage(message: ProxyMessage<Data, Op, T>): Boolean {
+    suspend fun onMessage(message: ProxyMessage<Data, Op, T>) {
         log.debug { "onMessage: $message" }
         when (message) {
             is ProxyMessage.ModelUpdate -> {
@@ -223,7 +223,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                     // if requestSynchronization ends up needing a result from this to continue
                     // (which is what happens with the StorageService).
                     CoroutineScope(coroutineContext).launch { requestSynchronization() }
-                    return false
                 }
 
                 // all ops from storage applied cleanly so resolve waiting syncs
@@ -242,7 +241,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 store.onProxyMessage(modelUpdate)
             }
         }
-        return true
     }
 
     /** Safely make a copy of the specified action set, and launch each action on a coroutine */

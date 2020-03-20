@@ -121,8 +121,7 @@ class StorageProxyTest {
         val readHandle = newHandle("testReader", storageProxy)
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
-        assertThat(storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null)))
-            .isTrue()
+        storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
         val view = storageProxy.getParticleView()
 
         assertThat(view).isEqualTo("someData")
@@ -140,8 +139,7 @@ class StorageProxyTest {
         assertThat(future.isCompleted).isFalse()
 
         // cleanly apply model from Store so we are now synced
-        assertThat(storageProxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtModel.data, null)))
-            .isTrue()
+        storageProxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtModel.data, null))
 
         assertThat(future.isCompleted).isTrue()
         val view = future.await()
@@ -153,11 +151,9 @@ class StorageProxyTest {
     fun getOnSyncCalledWhenAddedIfSynced() = runBlocking {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
 
-        assertThat(
-            storageProxy.onMessage(
-                ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
-            )
-        ).isTrue()
+        storageProxy.onMessage(
+            ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
+        )
 
         val syncDeferred = CompletableDeferred<Boolean>()
         coroutineScope {
@@ -201,11 +197,9 @@ class StorageProxyTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
         val desyncDeferred = CompletableDeferred<Boolean>()
 
-        assertThat(
-            storageProxy.onMessage(
-                ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
-            )
-        ).isTrue()
+        storageProxy.onMessage(
+            ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
+        )
 
         coroutineScope {
             storageProxy.addOnDesync("testHandle") {

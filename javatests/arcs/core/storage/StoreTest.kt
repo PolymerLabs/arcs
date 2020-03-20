@@ -128,22 +128,19 @@ class StoreTest {
         val deferred = CompletableDeferred<Unit>(coroutineContext[Job.Key])
         var cbid = 0
         val callback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
-            return@ProxyCallback when (message) {
+            when (message) {
                 is ProxyMessage.Operations -> {
                     assertThat(sentSyncRequest.getAndSet(true)).isFalse()
                     // Make sure to request sync on this callback ID
                     activeStore.onProxyMessage(ProxyMessage.SyncRequest(cbid))
-                    true
                 }
                 is ProxyMessage.ModelUpdate -> {
                     assertThat(sentSyncRequest.value).isTrue()
                     assertThat(message.model).isEqualTo(count.data)
                     deferred.complete(Unit)
-                    true
                 }
                 is ProxyMessage.SyncRequest -> {
                     deferred.completeExceptionally(AssertionError("Shouldn't ever get here."))
-                    false
                 }
             }
         }
@@ -169,11 +166,9 @@ class StoreTest {
         val id1 = activeStore.on(ProxyCallback { message ->
             assertThat(message).isInstanceOf(ProxyMessage.ModelUpdate::class.java)
             listener1Finished.complete(Unit)
-            true
         })
         val id2 = activeStore.on(ProxyCallback {
             fail("This callback should not be called.")
-            true
         })
 
         activeStore.onProxyMessage(ProxyMessage.SyncRequest(id1))
@@ -201,7 +196,7 @@ class StoreTest {
                 assertThat(message.operations[0])
                     .isEqualTo(CrdtCount.Operation.MultiIncrement("me", 0 to 1, delta = 1))
                 listenerFinished.complete(Unit)
-                return@ProxyCallback true
+                return@ProxyCallback
             }
             listenerFinished.completeExceptionally(
                 IllegalStateException("Should be an operations message.")

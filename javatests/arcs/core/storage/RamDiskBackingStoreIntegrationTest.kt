@@ -68,7 +68,7 @@ class RamDiskBackingStoreIntegrationTest {
         val count2 = CrdtCount()
         count2.applyOperation(MultiIncrement("them", version = 0 to 10, delta = 15))
 
-        val id = store.on(MultiplexedProxyCallback { _, _ -> true })
+        val id = store.on(MultiplexedProxyCallback { _, _ -> })
         assertThat(
             store.onProxyMessage(ProxyMessage.ModelUpdate(count1.data, id), "thing0")
         ).isTrue()
@@ -87,7 +87,7 @@ class RamDiskBackingStoreIntegrationTest {
                 message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
                 muxId.value = eventId
                 job.complete()
-                return@MultiplexedProxyCallback true
+                return@MultiplexedProxyCallback
             }
         )
 
