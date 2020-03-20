@@ -28,8 +28,7 @@ import org.junit.runners.JUnit4
 class RecipeProtoDecoderTest {
     // The test environment.
     var ramdiskStorageKey = "ramdisk://thing"
-    val thingHandleProto = HandleProto
-        .newBuilder()
+    val thingHandleProto = HandleProto.newBuilder()
         .setName("thing")
         .setFate(HandleProto.Fate.CREATE)
         .setStorageKey(ramdiskStorageKey)
@@ -51,18 +50,15 @@ class RecipeProtoDecoderTest {
         particleSpecs = listOf(readerSpec, writerSpec).associateBy { it.name },
         recipeHandles = listOf(thingHandle).associateBy { it.name }
     )
-    var dataConnection = HandleConnectionProto
-        .newBuilder()
+    var dataConnection = HandleConnectionProto.newBuilder()
         .setName("data")
         .setHandle("thing")
         .build()
-    val readerParticle = ParticleProto
-        .newBuilder()
+    val readerParticle = ParticleProto.newBuilder()
         .setSpecName("Reader")
         .addConnections(dataConnection)
         .build()
-    val writerParticle = ParticleProto
-        .newBuilder()
+    val writerParticle = ParticleProto.newBuilder()
         .setSpecName("Writer")
         .addConnections(dataConnection)
         .build()
@@ -76,8 +72,7 @@ class RecipeProtoDecoderTest {
      *      Reader
      *        data: reads thing
      */
-    val recipeProto = RecipeProto
-        .newBuilder()
+    val recipeProto = RecipeProto.newBuilder()
         .setName("PassThrough")
         .addHandles(thingHandleProto)
         .addParticles(readerParticle)
@@ -98,8 +93,7 @@ class RecipeProtoDecoderTest {
 
     @Test
     fun decodesEmptyRecipe() {
-        val emptyRecipeProto = RecipeProto
-            .newBuilder()
+        val emptyRecipeProto = RecipeProto.newBuilder()
             .build()
         with(emptyRecipeProto.decode(context.particleSpecs)) {
             assertThat(name).isEqualTo("")
@@ -110,8 +104,7 @@ class RecipeProtoDecoderTest {
 
     @Test
     fun decodeRecipeDetectsDuplicateHandles() {
-        val duplicateHandlesRecipeProto = RecipeProto
-            .newBuilder()
+        val duplicateHandlesRecipeProto = RecipeProto.newBuilder()
             .setName("Duplicates")
             .addHandles(thingHandleProto)
             .addHandles(thingHandleProto)
