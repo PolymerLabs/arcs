@@ -16,6 +16,7 @@ import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.host.ArcHost
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
+import arcs.jvm.host.AnnotationBasedJvmProdHost
 import arcs.jvm.host.JvmProdHost
 import java.util.ServiceLoader
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +30,7 @@ class AndroidProdHost(
     val context: Context,
     val lifecycle: Lifecycle,
     vararg additionalParticles: ParticleRegistration
-) : JvmProdHost(additionalParticles = *additionalParticles) {
+) : AnnotationBasedJvmProdHost(JvmProdHost::class, additionalParticles = *additionalParticles) {
     override fun entityHandleManager(arcId: String) = EntityHandleManager(
         AndroidHandleManager(
             context,

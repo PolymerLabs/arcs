@@ -2,11 +2,11 @@ package arcs.core.host
 
 import arcs.core.data.Plan
 import arcs.core.util.Time
-import arcs.jvm.host.JvmProdHost
+import arcs.jvm.host.AnnotationBasedJvmProdHost
 import arcs.jvm.util.testutil.TimeImpl
 
 open class TestingJvmProdHost(vararg particles: ParticleRegistration) :
-    JvmProdHost(TestingJvmProdHost::class, *particles) {
+    AnnotationBasedJvmProdHost(TestingJvmProdHost::class, *particles) {
 
     fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 
