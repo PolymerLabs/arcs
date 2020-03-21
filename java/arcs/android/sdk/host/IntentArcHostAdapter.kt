@@ -99,7 +99,7 @@ class IntentArcHostAdapter(
     private suspend fun <T> sendIntentToArcHostServiceForResult(
         intent: Intent,
         transformer: (Any?) -> T?
-    ): T? = withTimeout(1000L) {
+    ): T? = withTimeout(2000L) {
         suspendCancellableCoroutine { cancelableContinuation: CancellableContinuation<T?> ->
             ArcHostHelper.setResultReceiver(
                 intent,
