@@ -15,6 +15,7 @@ import {KTExtracter} from '../runtime/refiner.js';
 import {Dictionary} from '../runtime/hot.js';
 import minimist from 'minimist';
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
+import {assert} from '../platform/assert-web.js';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -38,17 +39,27 @@ export interface KotlinTypeInfo {
   schemaType: string;
 }
 
-const typeMap: Dictionary<KotlinTypeInfo> = {
-  'Text': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-  'URL': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-  'Number': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
-  'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
-};
+function getTypeInfo(name: string, refClassName?: string, refSchemaHash?: string): KotlinTypeInfo {
+  const typeMap: Dictionary<KotlinTypeInfo> = {
+    'Text': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
+    'URL': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
+    'Number': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
+    'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
+    'Reference': {
+      type: `Reference<${refClassName}>?`,
+      decodeFn: null,
+      defaultVal: 'null',
+      schemaType: `FieldType.EntityRef(${quote(refSchemaHash)})`,
+    },
+  };
 
-function getTypeInfo(name: string): KotlinTypeInfo {
   const info = typeMap[name];
   if (!info) {
     throw new Error(`Unhandled type '${name}' for kotlin.`);
+  }
+  if (name === 'Reference') {
+    assert(refClassName, 'refClassName must be provided for References');
+    assert(refSchemaHash, 'refSchemaHash must be provided for References');
   }
   return info;
 }
@@ -63,6 +74,32 @@ export class Schema2Kotlin extends Schema2Base {
   }
 
   fileHeader(_outName: string): string {
+    const imports = [
+      'import arcs.sdk.*',
+    ];
+
+    if (this.opts.test_harness) {
+      imports.push(
+        'import arcs.sdk.testing.*',
+        'import kotlinx.coroutines.CoroutineScope',
+      );
+    } else if (this.opts.wasm) {
+      imports.push(
+        'import arcs.sdk.wasm.*',
+      );
+    } else {
+      // Imports for jvm.
+      imports.push(
+        'import arcs.core.data.*',
+        'import arcs.core.data.util.toReferencable',
+        'import arcs.core.data.util.ReferencablePrimitive',
+        'import arcs.core.entity.toPrimitiveValue',
+        'import arcs.core.entity.Reference',
+        'import arcs.core.entity.SchemaRegistry',
+      );
+    }
+    imports.sort();
+
     return `\
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
@@ -72,20 +109,9 @@ package ${this.namespace}
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support references or optional field detection
+// Current implementation doesn't support optional field detection
 
-import arcs.sdk.*
-${this.opts.test_harness ?
-`import arcs.sdk.testing.*
-import kotlinx.coroutines.CoroutineScope`
-: (this.opts.wasm ?
-`import arcs.sdk.wasm.*` :
-`import arcs.core.data.*
-import arcs.core.data.util.toReferencable
-import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.entity.toPrimitiveValue
-import arcs.core.entity.SchemaRegistry`
-)}
+${imports.join('\n')}
 `;
   }
 
@@ -234,13 +260,13 @@ export class KotlinGenerator implements ClassGenerator {
   }
 
   // TODO: allow optional fields in kotlin
-  addField({field, typeName, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
-    // TODO: support reference types in kotlin
-    if (typeName === 'Reference') return;
+  addField({field, typeName, refClassName, refSchemaHash, isOptional = false, isCollection = false}: AddFieldOptions) {
+    if (typeName === 'Reference' && this.opts.wasm) return;
 
-    const {type, decodeFn, defaultVal} = getTypeInfo(typeName);
+    const {type, decodeFn, defaultVal, schemaType} = getTypeInfo(typeName, refClassName, refSchemaHash);
     const fixed = this.escapeIdentifier(field);
     const quotedFieldName = quote(field);
+    const nullableType = type.endsWith('?') ? type : `${type}?`;
 
     this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
     if (this.opts.wasm) {
@@ -258,9 +284,10 @@ export class KotlinGenerator implements ClassGenerator {
         `        private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
         );
     } else {
+      const defaultFallback = defaultVal === 'null' ? '' : ` ?: ${defaultVal}`;
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `        get() = super.getSingletonValue(${quotedFieldName}) as ${type}? ?: ${defaultVal}\n` +
+        `        get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
         `        private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
       );
     }
@@ -279,9 +306,9 @@ export class KotlinGenerator implements ClassGenerator {
 
     this.fieldsForToString.push(`${fixed} = $${fixed}`);
     if (isCollection) {
-      this.collectionSchemaFields.push(`"${field}" to ${getTypeInfo(typeName).schemaType}`);
+      this.collectionSchemaFields.push(`"${field}" to ${schemaType}`);
     } else {
-      this.singletonSchemaFields.push(`"${field}" to ${getTypeInfo(typeName).schemaType}`);
+      this.singletonSchemaFields.push(`"${field}" to ${schemaType}`);
     }
   }
 
@@ -332,7 +359,9 @@ ${lines}
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
 
-    const classDef = `class ${name}(`;
+    const classDef = `\
+@Suppress("UNCHECKED_CAST")
+class ${name}(`;
     const baseClass = this.opts.wasm
         ? 'WasmEntity'
         : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA']);

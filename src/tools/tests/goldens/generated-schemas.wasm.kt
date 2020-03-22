@@ -6,11 +6,12 @@ package arcs.golden
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support references or optional field detection
+// Current implementation doesn't support optional field detection
 
 import arcs.sdk.*
 import arcs.sdk.wasm.*
 
+@Suppress("UNCHECKED_CAST")
 class GoldInternal1(val_: String = "") : WasmEntity {
 
     var val_ = val_
@@ -82,6 +83,7 @@ class GoldInternal1(val_: String = "") : WasmEntity {
 typealias Gold_Data_Ref = GoldInternal1
 typealias Gold_Alias = GoldInternal1
 
+@Suppress("UNCHECKED_CAST")
 class Gold_QCollection(
     name: String = "",
     age: Double = 0.0,
@@ -255,6 +257,7 @@ class Gold_QCollection(
 }
 
 
+@Suppress("UNCHECKED_CAST")
 class Gold_Collection(num: Double = 0.0) : WasmEntity {
 
     var num = num
@@ -324,6 +327,7 @@ class Gold_Collection(num: Double = 0.0) : WasmEntity {
 }
 
 
+@Suppress("UNCHECKED_CAST")
 class Gold_Data(
     num: Double = 0.0,
     txt: String = "",

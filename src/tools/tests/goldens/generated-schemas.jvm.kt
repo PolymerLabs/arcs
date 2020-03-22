@@ -6,16 +6,20 @@ package arcs.golden
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support references or optional field detection
+// Current implementation doesn't support optional field detection
 
-import arcs.sdk.*
 import arcs.core.data.*
-import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.entity.toPrimitiveValue
+import arcs.core.data.util.toReferencable
+import arcs.core.entity.Reference
 import arcs.core.entity.SchemaRegistry
+import arcs.core.entity.toPrimitiveValue
+import arcs.sdk.*
 
-class GoldInternal1(val_: String = "") : EntityBase("GoldInternal1", SCHEMA) {
+@Suppress("UNCHECKED_CAST")
+class GoldInternal1(
+    val_: String = ""
+) : EntityBase("GoldInternal1", SCHEMA) {
 
     var val_: String
         get() = super.getSingletonValue("val") as String? ?: ""
@@ -53,6 +57,7 @@ class GoldInternal1(val_: String = "") : EntityBase("GoldInternal1", SCHEMA) {
 typealias Gold_Data_Ref = GoldInternal1
 typealias Gold_Alias = GoldInternal1
 
+@Suppress("UNCHECKED_CAST")
 class Gold_QCollection(
     name: String = "",
     age: Double = 0.0,
@@ -150,7 +155,10 @@ class Gold_QCollection(
 }
 
 
-class Gold_Collection(num: Double = 0.0) : EntityBase("Gold_Collection", SCHEMA) {
+@Suppress("UNCHECKED_CAST")
+class Gold_Collection(
+    num: Double = 0.0
+) : EntityBase("Gold_Collection", SCHEMA) {
 
     var num: Double
         get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -186,11 +194,13 @@ class Gold_Collection(num: Double = 0.0) : EntityBase("Gold_Collection", SCHEMA)
 }
 
 
+@Suppress("UNCHECKED_CAST")
 class Gold_Data(
     num: Double = 0.0,
     txt: String = "",
     lnk: String = "",
-    flg: Boolean = false
+    flg: Boolean = false,
+    ref: Reference<GoldInternal1>? = null
 ) : EntityBase("Gold_Data", SCHEMA) {
 
     var num: Double
@@ -205,20 +215,25 @@ class Gold_Data(
     var flg: Boolean
         get() = super.getSingletonValue("flg") as Boolean? ?: false
         private set(_value) = super.setSingletonValue("flg", _value)
+    var ref: Reference<GoldInternal1>?
+        get() = super.getSingletonValue("ref") as Reference<GoldInternal1>?
+        private set(_value) = super.setSingletonValue("ref", _value)
 
     init {
         this.num = num
         this.txt = txt
         this.lnk = lnk
         this.flg = flg
+        this.ref = ref
     }
 
     fun copy(
         num: Double = this.num,
         txt: String = this.txt,
         lnk: String = this.lnk,
-        flg: Boolean = this.flg
-    ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg)
+        flg: Boolean = this.flg,
+        ref: Reference<GoldInternal1>? = this.ref
+    ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg, ref = ref)
 
 
     companion object : EntitySpec<Gold_Data> {
@@ -230,7 +245,8 @@ class Gold_Data(
                     "num" to FieldType.Number,
                     "txt" to FieldType.Text,
                     "lnk" to FieldType.Text,
-                    "flg" to FieldType.Boolean
+                    "flg" to FieldType.Boolean,
+                    "ref" to FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889")
                 ),
                 collections = emptyMap()
             ),
