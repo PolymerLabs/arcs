@@ -20,5 +20,5 @@ interface IResultCallback {
      *
      * @param exception will be {@code null} when the result indicates success.
      */
-    void onResult(in ParcelableCrdtException exception);
+    oneway void onResult(in ParcelableCrdtException exception);
 }

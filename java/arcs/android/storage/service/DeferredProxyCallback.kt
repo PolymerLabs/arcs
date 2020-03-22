@@ -6,7 +6,7 @@ import kotlinx.coroutines.Deferred
 
 /**
  * Provides an object that can be provided to service calls as an [IStorageService.Stub],
- * and then waiting on as a deferred. Useful when you want a single message response.
+ * and then waited on as a deferred. Useful when you want a single message response.
  */
 interface DeferredProxyCallback : IStorageServiceCallback, Deferred<ParcelableProxyMessage>
 

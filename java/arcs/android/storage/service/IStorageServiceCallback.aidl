@@ -17,5 +17,5 @@ import arcs.android.storage.service.IResultCallback;
 /** Variant of ProxyCallback intended for StorageService communications. */
 interface IStorageServiceCallback {
     /** Handles an incoming ProxyMessage. */
-    void onProxyMessage(in ParcelableProxyMessage message);
+    oneway void onProxyMessage(in ParcelableProxyMessage message);
 }
