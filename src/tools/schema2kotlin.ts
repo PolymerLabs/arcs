@@ -266,7 +266,7 @@ export class KotlinGenerator implements ClassGenerator {
     const {type, decodeFn, defaultVal, schemaType} = getTypeInfo(typeName, refClassName, refSchemaHash);
     const fixed = this.escapeIdentifier(field);
     const quotedFieldName = quote(field);
-    const optionalType = type.endsWith('?') ? type : `${type}?`;
+    const nullableType = type.endsWith('?') ? type : `${type}?`;
 
     this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
     if (this.opts.wasm) {
@@ -287,7 +287,7 @@ export class KotlinGenerator implements ClassGenerator {
       const defaultFallback = defaultVal === 'null' ? '' : ` ?: ${defaultVal}`;
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `        get() = super.getSingletonValue(${quotedFieldName}) as ${optionalType}${defaultFallback}\n` +
+        `        get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
         `        private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
       );
     }
