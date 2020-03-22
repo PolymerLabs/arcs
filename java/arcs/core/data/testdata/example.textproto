@@ -19,6 +19,7 @@ recipe {
   handles {
     name: "thing"
     fate: CREATE
+    storage_key: "ramdisk://thing"
   }
   particles {
     spec_name: "Reader"
@@ -38,6 +39,7 @@ recipe {
 
 particle_specs {
   name: "Reader"
+  location: "ReaderLocation"
   connections {
     name: "data"
     direction: READS
@@ -59,6 +61,7 @@ particle_specs {
 
 particle_specs {
   name: "Writer"
+  location: "WriterLocation"
   connections {
     name: "data"
     direction: WRITES
