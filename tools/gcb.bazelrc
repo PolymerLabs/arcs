@@ -1,4 +1,4 @@
-build --strategy=KotlinCompile=worker
+build --strategy=KotlinCompile=local
 build --remote_cache=https://storage.googleapis.com/arcs-github-gcb-bazel-cache --google_default_credentials
 build --verbose_failures --spawn_strategy=sandboxed --jobs=32 --ram_utilization_factor=33
 build --nostamp --nodesugar_for_android
