@@ -19,9 +19,9 @@ import arcs.core.entity.ReadableHandle
 /**
  * Receive a callback when either handle is updated.
  *
- * @handle1 The first handle the callback will be assigned to
- * @handle2 The second handle the callback will be assigned to
- * @action callback
+ * @param handle1 The first handle the callback will be assigned to
+ * @param handle2 The second handle the callback will be assigned to
+ * @param action callback
  */
 suspend fun <T1, T2> combineUpdates(
     handle1: ReadableHandle<T1, *>,
@@ -38,14 +38,6 @@ suspend fun <T1, T2> combineUpdates(
     }
 }
 
-/**
- * Receive a callback when either handle is updated.
- *
- * @handle1 The first handle the callback will be assigned to
- * @handle2 The second handle the callback will be assigned to
- * @handle3 The third handle the callback will be assigned to
- * @action callback
- */
 suspend fun <T1, T2, T3> combineUpdates(
     handle1: ReadableHandle<T1, *>,
     handle2: ReadableHandle<T2, *>,
@@ -63,15 +55,6 @@ suspend fun <T1, T2, T3> combineUpdates(
     }
 }
 
-/**
- * Receive a callback when either handle is updated.
- *
- * @handle1 The first handle the callback will be assigned to
- * @handle2 The second handle the callback will be assigned to
- * @handle3 The third handle the callback will be assigned to
- * @handle4 The fourth handle the callback will be assigned to
- * @action callback
- */
 suspend fun <T1, T2, T3, T4> combineUpdates(
     handle1: ReadableHandle<T1, *>,
     handle2: ReadableHandle<T2, *>,
@@ -91,16 +74,6 @@ suspend fun <T1, T2, T3, T4> combineUpdates(
     }
 }
 
-/**
- * Receive a callback when either handle is updated.
- *
- * @handle1 The first handle the callback will be assigned to
- * @handle2 The second handle the callback will be assigned to
- * @handle3 The third handle the callback will be assigned to
- * @handle4 The fourth handle the callback will be assigned to
- * @handle5 The fifth handle the callback will be assigned to
- * @action callback
- */
 suspend fun <T1, T2, T3, T4, T5> combineUpdates(
     handle1: ReadableHandle<T1, *>,
     handle2: ReadableHandle<T2, *>,
@@ -128,17 +101,6 @@ suspend fun <T1, T2, T3, T4, T5> combineUpdates(
     }
 }
 
-/**
- * Receive a callback when either handle is updated.
- *
- * @handle1 The first handle the callback will be assigned to
- * @handle2 The second handle the callback will be assigned to
- * @handle3 The third handle the callback will be assigned to
- * @handle4 The fourth handle the callback will be assigned to
- * @handle5 The fifth handle the callback will be assigned to
- * @handle6 The sixth handle the callback will be assigned to
- * @action callback
- */
 suspend fun <T1, T2, T3, T4, T5, T6> combineUpdates(
     handle1: ReadableHandle<T1, *>,
     handle2: ReadableHandle<T2, *>,
@@ -169,18 +131,6 @@ suspend fun <T1, T2, T3, T4, T5, T6> combineUpdates(
     }
 }
 
-/**
- * Receive a callback when either handle is updated.
- *
- * @handle1 The first handle the callback will be assigned to
- * @handle2 The second handle the callback will be assigned to
- * @handle3 The third handle the callback will be assigned to
- * @handle4 The fourth handle the callback will be assigned to
- * @handle5 The fifth handle the callback will be assigned to
- * @handle6 The sixth handle the callback will be assigned to
- * @handle7 The seventh handle the callback will be assigned to
- * @action callback
- */
 suspend fun <T1, T2, T3, T4, T5, T6, T7> combineUpdates(
     handle1: ReadableHandle<T1, *>,
     handle2: ReadableHandle<T2, *>,
@@ -214,19 +164,6 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7> combineUpdates(
     }
 }
 
-/**
- * Receive a callback when either handle is updated.
- *
- * @handle1 The first handle the callback will be assigned to
- * @handle2 The second handle the callback will be assigned to
- * @handle3 The third handle the callback will be assigned to
- * @handle4 The fourth handle the callback will be assigned to
- * @handle5 The fifth handle the callback will be assigned to
- * @handle6 The sixth handle the callback will be assigned to
- * @handle7 The seventh handle the callback will be assigned to
- * @handle8 The eighth handle the callback will be assigned to
- * @action callback
- */
 suspend fun <T1, T2, T3, T4, T5, T6, T7, T8> combineUpdates(
     handle1: ReadableHandle<T1, *>,
     handle2: ReadableHandle<T2, *>,
@@ -263,20 +200,6 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8> combineUpdates(
     }
 }
 
-/**
- * Receive a callback when either handle is updated.
- *
- * @handle1 The first handle the callback will be assigned to
- * @handle2 The second handle the callback will be assigned to
- * @handle3 The third handle the callback will be assigned to
- * @handle4 The fourth handle the callback will be assigned to
- * @handle5 The fifth handle the callback will be assigned to
- * @handle6 The sixth handle the callback will be assigned to
- * @handle7 The seventh handle the callback will be assigned to
- * @handle8 The eighth handle the callback will be assigned to
- * @handle9 The ninth handle the callback will be assigned to
- * @action callback
- */
 suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> combineUpdates(
     handle1: ReadableHandle<T1, *>,
     handle2: ReadableHandle<T2, *>,
@@ -316,20 +239,6 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> combineUpdates(
     }
 }
 
-/**
- * Receive a callback when either handle is updated.
- *
- * @handle1 The first handle the callback will be assigned to
- * @handle2 The second handle the callback will be assigned to
- * @handle3 The third handle the callback will be assigned to
- * @handle4 The fourth handle the callback will be assigned to
- * @handle5 The fifth handle the callback will be assigned to
- * @handle6 The sixth handle the callback will be assigned to
- * @handle7 The seventh handle the callback will be assigned to
- * @handle8 The eighth handle the callback will be assigned to
- * @handle9 The ninth handle the callback will be assigned to
- * @action callback
- */
 suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> combineUpdates(
     handle1: ReadableHandle<T1, *>,
     handle2: ReadableHandle<T2, *>,
