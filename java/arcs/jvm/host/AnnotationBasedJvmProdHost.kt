@@ -43,9 +43,9 @@ open class AnnotationBasedJvmProdHost(
             ServiceLoader.load(Particle::class.java).iterator().asSequence()
                 .filter {
                         particle -> isParticleForHost(host, particle::class.java)
-                }.map { p ->
-                    p.javaClass.kotlin.toParticleIdentifier() to suspend {
-                        p.javaClass.getDeclaredConstructor().newInstance()
+                }.map { particle ->
+                    particle.javaClass.kotlin.toParticleIdentifier() to suspend {
+                        particle.javaClass.getDeclaredConstructor().newInstance()
                     }
                 }.toList().toTypedArray()
 

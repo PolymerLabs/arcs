@@ -210,11 +210,9 @@ open class AllocatorTestBase {
     private fun findPartitionFor(
         partitions: List<Plan.Partition>,
         particleName: String
-    ) = partitions.find {
-        it.particles.any {
-                p -> p.particleName == particleName
-        }
-    }!!
+    ) = partitions.find { partition ->
+        partition.particles.any { it.particleName == particleName }
+    }
 
     @Test
     fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
