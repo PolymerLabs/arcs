@@ -186,7 +186,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
-  async onMessage(message: ProxyMessage<T>): Promise<boolean> {
+  async onMessage(message: ProxyMessage<T>): Promise<void> {
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
         this.crdt.merge(message.model);
@@ -202,14 +202,15 @@ export class StorageProxy<T extends CRDTTypeRecord> {
                 op, options => !options.keepSynced && options.notifyUpdate));
         // Bail if we're not in synchronized mode.
         if (!this.keepSynced) {
-          return false;
+          return;
         }
         const initialModel = this.crdt.getParticleView();
         for (const op of message.operations) {
           if (!this.crdt.applyOperation(op)) {
             // If we cannot cleanly apply ops, sync the whole model.
             this.clearSynchronized();
-            return this.requestSynchronization();
+            await this.requestSynchronization();
+            return;
           }
           if (!this.synchronized) {
             // If we didn't think we were synchronized but the operation applied cleanly,
@@ -228,7 +229,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         throw new CRDTError(
             `Invalid operation provided to onMessage, message: ${message}`);
     }
-    return true;
+    return;
   }
 
   protected notifyUpdate(operation: CRDTOperation, predicate: Predicate<HandleOptions>) {
@@ -308,8 +309,7 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
   async getData(): Promise<T['data']> {
     return new Promise(resolve => {});
   }
-  async onMessage(message: ProxyMessage<T>): Promise<boolean> {
-    return new Promise(resolve => {});
+  async onMessage(message: ProxyMessage<T>): Promise<void> {
   }
   protected notifyUpdate(operation: CRDTOperation, predicate: Predicate<HandleOptions>) {}
 

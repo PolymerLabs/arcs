@@ -54,7 +54,6 @@ export class ArcStoresFetcher {
               value: await this.dereference(store)
             }
           });
-          return true;
         });
       }
     }

@@ -629,11 +629,10 @@ export class Arc implements ArcInterface {
     tags.forEach(tag => storeTags.add(tag));
   }
 
-  _onDataChange(): boolean {
+  _onDataChange(): void {
     for (const callback of this.dataChangeCallbacks.values()) {
       callback();
     }
-    return true;
   }
 
   onDataChange(callback: Runnable, registration: object): void {

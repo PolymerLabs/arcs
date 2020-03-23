@@ -178,7 +178,6 @@ class PECOuterPortImpl extends PECOuterPort {
     //       for StorageNG if necessary.
     const id = (await store.activate()).on(async data => {
       this.SimpleCallback(messagesCallback, data);
-      return Promise.resolve(true);
     });
     this.SimpleCallback(idCallback, id);
   }
@@ -186,7 +185,6 @@ class PECOuterPortImpl extends PECOuterPort {
   async onBackingRegister(store: BackingStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
     const id = store.on(async data => {
       this.SimpleCallback(messagesCallback, data);
-      return Promise.resolve(true);
     });
     this.SimpleCallback(idCallback, id);
   }

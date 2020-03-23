@@ -35,7 +35,7 @@ export type ProxyMessage<T extends CRDTTypeRecord> =
   {type: ProxyMessageType.ModelUpdate, model: T['data'], id?: number, muxId?: string} |
   {type: ProxyMessageType.Operations, operations: T['operation'][], id?: number, muxId?: string};
 
-export type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => Promise<boolean>;
+export type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>) => Promise<void>;
 
 export type StoreInterface<T extends CRDTTypeRecord> = {
   readonly storageKey: StorageKey;

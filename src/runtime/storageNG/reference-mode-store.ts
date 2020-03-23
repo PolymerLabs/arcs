@@ -192,11 +192,11 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
    * to be updated.
    */
   async onContainerStore(message: ProxyMessage<ReferenceContainer>) {
-    return this.enqueue({from: ReferenceModeUpdateSource.Container, message});
+    noAwait(this.enqueue({from: ReferenceModeUpdateSource.Container, message}));
   }
 
   async onBackingStore(message: ProxyMessage<CRDTEntityTypeRecord<S, C>>) {
-    return this.enqueue({from: ReferenceModeUpdateSource.BackingStore, message});
+    noAwait(this.enqueue({from: ReferenceModeUpdateSource.BackingStore, message}));
   }
 
   async onProxyMessage(message: ProxyMessage<Container>): Promise<boolean> {
@@ -206,6 +206,8 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
   /**
    * enqueue an incoming update onto the object-wide queue and return a promise that will be resolved
    * when the update is processed.
+   *
+   * TODO(shans): Can this be marked non-async once/if onProxyMessage ends up returning Promise<void> too?
    */
   private async enqueue(entry: PreEnqueuedMessage<Container, CRDTEntityTypeRecord<S, C>, ReferenceContainer>): Promise<boolean> {
     return new Promise((resolve, reject) => {
