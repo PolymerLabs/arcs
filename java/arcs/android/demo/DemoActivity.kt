@@ -19,7 +19,6 @@ import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.Allocator
 import arcs.core.host.HostRegistry
 import arcs.core.storage.handle.Stores
-import arcs.jvm.util.JvmTime
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +46,6 @@ class DemoActivity : AppCompatActivity() {
             hostRegistry = AndroidManifestHostRegistry.create(this@DemoActivity)
             allocator = Allocator.create(
                 hostRegistry,
-                JvmTime,
                 AndroidHandleManager(
                     this@DemoActivity,
                     this@DemoActivity.getLifecycle(),
