@@ -161,7 +161,8 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     }
     this.model.version[key] = version[key];
     const previousVersion = this.model.values[value.id] ? this.model.values[value.id].version : {};
-    this.model.values[value.id] = {value, version: mergeVersions(version, previousVersion)};
+    const newValue = this.model.values[value.id] ? this.model.values[value.id].value : value;
+    this.model.values[value.id] = {value: newValue, version: mergeVersions(version, previousVersion)};
     return true;
   }
 

@@ -196,6 +196,7 @@ class CollectionIntegrationTest {
         assertThat(collectionA.fetchAll().first().expirationTimestamp)
             .isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
+        // Create a different handle (but with the same storageProxy/storageKey), with TTL.
         val collectionC = CollectionHandle(
             "collectionC",
             storageProxy,
@@ -203,24 +204,19 @@ class CollectionIntegrationTest {
             TimeImpl(),
             schema = SCHEMA_A
         )
+        // If we re-add the same RawEntity again the timestamps do not change (readding the same
+        // person to the same collection cannot modify it).
         assertThat(collectionC.store(person.toRawEntity())).isTrue()
         val entityC = collectionC.fetchAll().first()
-        assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
-        assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(entityC.creationTimestamp).isEqualTo(creationTimestampA)
+        assertThat(entityC.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        val collectionD = CollectionHandle(
-            "collectionD",
-            storageProxy,
-            Ttl.Minutes(1),
-            TimeImpl(),
-            schema = SCHEMA_B
-        )
-        assertThat(collectionD.store(person.toRawEntity())).isTrue()
-        val entityD = collectionD.fetchAll().first()
-        assertThat(entityD.creationTimestamp).isGreaterThan(creationTimestampA)
-        assertThat(entityD.creationTimestamp).isGreaterThan(entityC.creationTimestamp)
-        assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
-        assertThat(entityC.expirationTimestamp).isGreaterThan(entityD.expirationTimestamp)
+        // If we add another person, it will have different timestamps.
+        val person2 = Person("Jim", 19.0, false)
+        assertThat(collectionC.store(person2.toRawEntity())).isTrue()
+        val entity2 = collectionC.fetchAll().last()
+        assertThat(entity2.creationTimestamp).isGreaterThan(entityC.creationTimestamp)
+        assertThat(entity2.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
     }
 
     private data class Person(

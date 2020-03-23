@@ -198,7 +198,10 @@ class CrdtSet<T : Referencable>(
 
                 data.versionMap[actor] = clock[actor]
                 val previousVersion = data.values[added.id]?.versionMap ?: VersionMap()
-                data.values[added.id] = DataValue(clock mergeWith previousVersion, added)
+                val previousValue = data.values[added.id]?.value
+                // If a value is already stored for this id, we do not overwrite it. 
+                data.values[added.id] =
+                    DataValue(clock mergeWith previousVersion, previousValue ?: added)
                 return true
             }
 

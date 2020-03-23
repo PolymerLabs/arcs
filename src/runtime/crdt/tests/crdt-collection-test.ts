@@ -59,6 +59,22 @@ describe('CRDTCollection', () => {
     });
     assert.sameMembers([...set.getParticleView()].map(a => a.id), ['one']);
   });
+  it('can add the same id twice keeping the first value', () => {
+    const set = new CRDTCollection<{id: string, value: number}>();
+    set.applyOperation({
+      type: CollectionOpTypes.Add,
+      added: {id: 'one', value: 1},
+      clock: {me: 1},
+      actor: 'me'
+    });
+    assert.isTrue(set.applyOperation({
+      type: CollectionOpTypes.Add,
+      added: {id: 'one', value: 2},
+      clock: {me: 2},
+      actor: 'me'
+    }));
+    assert.sameMembers([...set.getParticleView()].map(a => a.value), [1]);
+  });
   it('rejects add operations not in sequence', () => {
     const set = new CRDTCollection<{id: string}>();
     set.applyOperation({
