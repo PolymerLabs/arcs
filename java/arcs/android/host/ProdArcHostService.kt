@@ -35,5 +35,5 @@ open class ProdArcHostService : LifecycleService() {
         return result
     }
 
-    override fun onBind(intent: Intent): IBinder? = null
+    override fun onBind(intent: Intent): IBinder? = super.onBind(intent)
 }
