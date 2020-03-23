@@ -18,6 +18,7 @@ import {Handle} from './handle.js';
 import {Type} from '../type.js';
 import {assert} from '../../platform/assert-web.js';
 import {BiMap} from '../bimap.js';
+import {noAwait} from '../util.js';
 
 export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<CRDTTypeRecord> {
   private readonly storageProxies = new BiMap<string, StorageProxy<CRDTTypeRecord>>();
@@ -69,6 +70,6 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCom
     if (!this.callbacks[message.muxId]) {
       throw new Error('callback has not been set');
     }
-    this.callbacks[message.muxId](message);
+    noAwait(this.callbacks[message.muxId](message));
   }
 }

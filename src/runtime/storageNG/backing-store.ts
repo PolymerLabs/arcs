@@ -15,6 +15,7 @@ import {DirectStore} from './direct-store.js';
 import {Dictionary} from '../hot.js';
 import {StoreConstructorOptions} from './store-interface.js';
 import {assert} from '../../platform/assert-web.js';
+import {noAwait} from '../util.js';
 
 type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore<T>, id: number} | {type: 'pending', promise: Promise<{type: 'record', store: DirectStore<T>, id: number}>};
 /**
@@ -98,6 +99,6 @@ export class BackingStore<T extends CRDTTypeRecord>  {
 
   async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<void> {
     message.muxId = muxId;
-    Promise.all([...this.callbacks.values()].map(callback => callback(message)));
+    noAwait(Promise.all([...this.callbacks.values()].map(callback => callback(message))));
   }
 }
