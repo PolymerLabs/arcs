@@ -275,13 +275,44 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         // Name and age have been cleared (their values are null).
         assertThat(capturedBob.rawEntity).isEqualTo(
             RawEntity(
-                RawEntity.NO_REFERENCE_ID,
+                "an-id",
                 singletons = mapOf(
                     "age" to null,
                     "name" to null
                 )
             )
         )
+    }
+
+    @Test
+    fun keepsEntityTimestamps() = runBlockingTest {
+        val activeStore = createReferenceModeStore()
+        val actor = activeStore.crdtKey
+        val bob = createPersonEntity("an-id", "bob", 42)
+        bob.creationTimestamp = 10
+        bob.expirationTimestamp = 20
+
+        // Add Bob to collection.
+        val addOp = RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
+        ).isTrue()
+        // Check Bob from backing store.
+        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        assertThat(storedBob.toRawEntity()).isEqualTo(bob)
+        assertThat(storedBob.toRawEntity().creationTimestamp).isEqualTo(10)
+        assertThat(storedBob.toRawEntity().expirationTimestamp).isEqualTo(20)
+        
+        // Check Bob in the database.
+        val backingKey = activeStore.backingStore.storageKey as DatabaseStorageKey
+        val database = databaseFactory.getDatabase(backingKey.dbName, true)
+        val bobKey = backingKey.childKeyWithComponent("an-id")
+        val dbBob = requireNotNull(
+            database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
+        )
+        assertThat(dbBob.rawEntity).isEqualTo(bob)
+        assertThat(dbBob.rawEntity.creationTimestamp).isEqualTo(10)
+        assertThat(dbBob.rawEntity.expirationTimestamp).isEqualTo(20)
     }
 
     @Test

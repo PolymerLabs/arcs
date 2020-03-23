@@ -83,6 +83,7 @@ data class RawEntity(
         collectionFields.associateWith { emptySet<Referencable>() }
     ) {
         this.expirationTimestamp = expirationTimestamp
+        this.creationTimestamp = creationTimestamp
     }
 
     companion object {

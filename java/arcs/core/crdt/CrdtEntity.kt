@@ -80,6 +80,35 @@ class CrdtEntity(
                 allOps = false
             }
         }
+
+        if (_data.creationTimestamp != other.creationTimestamp) {
+            allOps = false
+            if (_data.creationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
+                _data.creationTimestamp = other.creationTimestamp
+            } else if (other.creationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
+                // Two different values, we keep the earlier creationTimestamp.
+                _data.creationTimestamp = minOf(_data.creationTimestamp, other.creationTimestamp)
+            }
+        }
+        if (_data.expirationTimestamp != other.expirationTimestamp) {
+            allOps = false
+            if (_data.expirationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
+                _data.expirationTimestamp = other.expirationTimestamp
+            } else if (other.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
+                // Two different values, we don't how to merge this.
+                throw CrdtException("Cannot merge different values for expirationTimestamp.")
+            }
+        }
+        if (_data.id != other.id) {
+            allOps = false
+            if (_data.id == RawEntity.NO_REFERENCE_ID) {
+                _data.id = other.id
+            } else if (other.id != RawEntity.NO_REFERENCE_ID) {
+                // Two different ids, this cannot be as this crdts are keyed by id in the backing store.
+                throw CrdtException("Found two different values for id, this should be impossible.")
+            }
+        }
+
         val oldVersionMap = _data.versionMap.copy()
         _data.versionMap = _data.versionMap mergeWith other.versionMap
 
@@ -211,7 +240,10 @@ class CrdtEntity(
         /** Singleton fields. */
         val singletons: Map<FieldName, CrdtSingleton<Reference>> = emptyMap(),
         /** Collection fields. */
-        val collections: Map<FieldName, CrdtSet<Reference>> = emptyMap()
+        val collections: Map<FieldName, CrdtSet<Reference>> = emptyMap(),
+        var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        var id: ReferenceId = RawEntity.NO_REFERENCE_ID
     ) : CrdtData {
         /** Builds a [CrdtEntity.Data] object from an initial version and a [RawEntity]. */
         constructor(
@@ -221,7 +253,10 @@ class CrdtEntity(
         ) : this(
             versionMap,
             rawEntity.buildCrdtSingletonMap({ versionMap }, referenceBuilder),
-            rawEntity.buildCrdtSetMap({ versionMap }, referenceBuilder)
+            rawEntity.buildCrdtSetMap({ versionMap }, referenceBuilder),
+            rawEntity.creationTimestamp,
+            rawEntity.expirationTimestamp,
+            rawEntity.id
         )
 
         constructor(
@@ -232,22 +267,30 @@ class CrdtEntity(
         ) : this(
             entityVersion,
             rawEntity.buildCrdtSingletonMap(versionProvider, referenceBuilder),
-            rawEntity.buildCrdtSetMap(versionProvider, referenceBuilder)
+            rawEntity.buildCrdtSetMap(versionProvider, referenceBuilder),
+            rawEntity.creationTimestamp,
+            rawEntity.expirationTimestamp,
+            rawEntity.id
         )
 
         fun toRawEntity() = RawEntity(
-            singletons = singletons.mapValues { it.value.consumerView?.unwrap() },
-            collections = collections.mapValues {
+            id,
+            singletons.mapValues { it.value.consumerView?.unwrap() },
+            collections.mapValues {
                 it.value.consumerView.map { item -> item.unwrap() }.toSet()
-            }
+            },
+            creationTimestamp,
+            expirationTimestamp
         )
 
-        fun toRawEntity(id: ReferenceId) = RawEntity(
-            id = id,
-            singletons = singletons.mapValues { it.value.consumerView?.unwrap() },
-            collections = collections.mapValues {
+        fun toRawEntity(refId: ReferenceId) = RawEntity(
+            refId,
+            singletons.mapValues { it.value.consumerView?.unwrap() },
+            collections.mapValues {
                 it.value.consumerView.map { item -> item.unwrap() }.toSet()
-            }
+            },
+            creationTimestamp,
+            expirationTimestamp
         )
 
         /** Makes a deep copy of this [CrdtEntity.Data] object. */
@@ -256,7 +299,10 @@ class CrdtEntity(
         /* internal */ fun copy(): Data = Data(
             versionMap.copy(),
             HashMap(singletons.mapValues { it.value.copy() }),
-            HashMap(collections.mapValues { it.value.copy() })
+            HashMap(collections.mapValues { it.value.copy() }),
+            creationTimestamp,
+            expirationTimestamp,
+            id
         )
 
         companion object {

@@ -258,7 +258,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
             database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
         )
 
-        assertThat(capturedBob.rawEntity).isEqualTo(createEmptyPersonEntity(RawEntity.NO_REFERENCE_ID))
+        assertThat(capturedBob.rawEntity).isEqualTo(createEmptyPersonEntity("an-id"))
     }
 
     @Test

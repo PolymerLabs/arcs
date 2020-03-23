@@ -145,8 +145,8 @@ class SingletonIntegrationTest {
 
     @Test
     fun addEntityWithTtl() = runBlockingTest {
-        val person = Person("Jane", 29, false)
-        assertThat(singletonA.store(person.toRawEntity())).isTrue()
+        val person = Person("Jane", 29, false).toRawEntity()
+        assertThat(singletonA.store(person)).isTrue()
         val creationTimestampA = requireNotNull(singletonA.fetch()).creationTimestamp;
         assertThat(creationTimestampA).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(requireNotNull(singletonA.fetch()).expirationTimestamp)
@@ -159,9 +159,10 @@ class SingletonIntegrationTest {
             TimeImpl(),
             schema = SCHEMA
         )
-        assertThat(singletonC.store(person.toRawEntity())).isTrue()
+        assertThat(singletonC.store(person)).isTrue()
         val entityC = requireNotNull(singletonC.fetch())
-        assertThat(entityC.creationTimestamp).isGreaterThan(creationTimestampA)
+        // Re-adding the same entity to same store does not change creation timestamp.
+        assertThat(entityC.creationTimestamp).isEqualTo(creationTimestampA)
         assertThat(entityC.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
 
         val singletonD = SingletonHandle(
@@ -171,10 +172,11 @@ class SingletonIntegrationTest {
             TimeImpl(),
             schema = SCHEMA
         )
-        assertThat(singletonD.store(person.toRawEntity())).isTrue()
+        // If we add another person, it will have different timestamps.
+        val person2 = Person("Jim", 19, false)
+        assertThat(singletonD.store(person2.toRawEntity())).isTrue()
         val entityD = requireNotNull(singletonD.fetch())
         assertThat(entityD.creationTimestamp).isGreaterThan(creationTimestampA)
-        assertThat(entityD.creationTimestamp).isGreaterThan(entityC.creationTimestamp)
         assertThat(entityD.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(entityC.expirationTimestamp).isGreaterThan(entityD.expirationTimestamp)
     }
