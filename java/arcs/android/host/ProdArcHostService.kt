@@ -29,7 +29,7 @@ open class ProdArcHostService : LifecycleService() {
         ArcHostHelper(this, arcHost)
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val result = super.onStartCommand(intent, flags, startId)
         arcHostHelper.onStartCommand(intent)
         return result
