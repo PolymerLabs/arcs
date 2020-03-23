@@ -47,6 +47,11 @@ KOTLINC_OPTS = [
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
 ]
 
+BAZEL_KOTLINC_OPTS = [
+    # jvm-target 1.8 needed to solve crash in Bazel Desugaring
+    "-jvm-target 1.8",
+]
+
 DISABLED_LINT_CHECKS = [
     "PackageName",
     "TopLevelName",
@@ -73,12 +78,15 @@ def arcs_kt_jvm_library(**kwargs):
     constraints = kwargs.pop("constraints", ["android"] if add_android_constraints else [])
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
     exports = kwargs.pop("exports", [])
-    kotlincopts = kwargs.pop("kotlincopts", [])
-    # jvm-target 1.8 needed to solve crash in Bazel Desugaring
-    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS + ["-jvm-target 1.8"])
+    kotlincopts = kwargs.pop("kotlincopts", KOTLINC_OPTS)
+
     if not IS_BAZEL:
         kwargs["constraints"] = constraints
         kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
+    else:
+        kotlincopts = merge_lists(kotlincopts, BAZEL_KOTLINC_OPTS)
+
+    kwargs["kotlincopts"] = kotlincopts
 
     if exports:
         # kt_jvm_library doesn't support the "exports" property. Instead, we
