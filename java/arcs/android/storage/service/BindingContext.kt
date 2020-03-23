@@ -71,19 +71,14 @@ class BindingContext(
         bindingContextStatisticsSink.traceTransaction("getLocalData") {
             bindingContextStatisticsSink.measure(coroutineContext) {
                 val activeStore = store.activate()
-
-                val deferredResult = DeferredResult(coroutineContext)
                 sendQueue.enqueue {
                     callback.onProxyMessage(
                         ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
                             model = activeStore.getLocalData(),
                             id = null
-                        ).toParcelable(crdtType),
-                        deferredResult
+                        ).toParcelable(crdtType)
                     )
                 }
-
-                deferredResult.await()
             }
         }
     }
@@ -97,9 +92,7 @@ class BindingContext(
                 // so that we catch any exceptions thrown within and re-throw on the same coroutine
                 // as the callback-caller.
                 supervisorScope {
-                    val deferredResult = DeferredResult(coroutineContext)
-                    callback.onProxyMessage(message.toParcelable(crdtType), deferredResult)
-                    deferredResult.await()
+                    callback.onProxyMessage(message.toParcelable(crdtType))
                 }
             }
 

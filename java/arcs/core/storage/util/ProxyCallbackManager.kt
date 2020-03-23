@@ -68,7 +68,7 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     suspend fun send(
         message: ProxyMessage<Data, Op, ConsumerData>,
         exceptTo: Int? = null
-    ): Boolean {
+    ) {
         val targets = mutex.withLock {
             if (exceptTo == null) {
                 callbacks.values.toList()
@@ -78,9 +78,7 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         }
         // Call our targets outside of the mutex so we don't deadlock if a callback leads to another
         // registration.
-        return targets.fold(true) { success, callback ->
-            success && callback(message)
-        }
+        targets.forEach { it(message) }
     }
 
     /**
@@ -93,7 +91,7 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         message: ProxyMessage<Data, Op, ConsumerData>,
         muxId: String,
         exceptTo: Int? = null
-    ): Boolean {
+    ) {
         val targets = mutex.withLock {
             if (exceptTo == null) {
                 ArrayList(callbacks.values)
@@ -103,9 +101,7 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         }
         // Call our targets outside of the mutex so we don't deadlock if a callback leads to another
         // registration.
-        return targets.fold(true) { success, callback ->
-            success && callback(message, muxId)
-        }
+        targets.forEach { it(message, muxId) }
     }
 }
 

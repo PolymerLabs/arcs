@@ -301,16 +301,16 @@ class ReferenceModeStoreTest {
                 assertThat(sentSyncRequest).isFalse()
                 sentSyncRequest = true
                 activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
-                return@ProxyCallback true
+                return@ProxyCallback
             }
 
             assertThat(sentSyncRequest).isTrue()
             if (it is ProxyMessage.ModelUpdate) {
                 it.model.values.assertEquals(entityCollection.data.values)
                 job.complete()
-                return@ProxyCallback true
+                return@ProxyCallback
             }
-            return@ProxyCallback false
+            return@ProxyCallback
         })
 
         activeStore.onProxyMessage(
@@ -335,14 +335,12 @@ class ReferenceModeStoreTest {
         val id1 = activeStore.on(ProxyCallback {
             assertThat(it is ProxyMessage.ModelUpdate).isTrue()
             job.complete()
-            true
         })
 
         // another store
         var calledStore2 = false
         activeStore.on(ProxyCallback {
             calledStore2 = true
-            true
         })
 
         activeStore.onProxyMessage(ProxyMessage.SyncRequest(id = id1))
@@ -393,7 +391,7 @@ class ReferenceModeStoreTest {
             if (it is ProxyMessage.ModelUpdate) {
                 it.model.values.assertEquals(bobCollection.data.values)
                 job.complete()
-                return@ProxyCallback true
+                return@ProxyCallback
             }
             job.completeExceptionally(AssertionError("Should have received model update."))
         })
@@ -570,7 +568,6 @@ class ReferenceModeStoreTest {
             } else {
                 job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
             }
-            true
         })
 
         val containerJob = launch {

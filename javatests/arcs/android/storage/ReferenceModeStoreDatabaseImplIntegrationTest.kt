@@ -300,16 +300,16 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                 assertThat(sentSyncRequest).isFalse()
                 sentSyncRequest = true
                 activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
-                return@ProxyCallback true
+                return@ProxyCallback
             }
 
             assertThat(sentSyncRequest).isTrue()
             if (it is ProxyMessage.ModelUpdate) {
                 it.model.values.assertEquals(entityCollection.data.values)
                 job.complete()
-                return@ProxyCallback true
+                return@ProxyCallback
             }
-            return@ProxyCallback false
+            return@ProxyCallback
         })
 
         activeStore.onProxyMessage(
@@ -391,7 +391,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                 if (it is ProxyMessage.ModelUpdate) {
                     it.model.values.assertEquals(bobCollection.data.values)
                     job.complete()
-                    return@ProxyCallback true
+                    return@ProxyCallback
                 }
                 job.completeExceptionally(AssertionError("Should have received model update."))
             }
@@ -581,7 +581,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     private fun Map<ReferenceId, CrdtSet.DataValue<RawEntity>>.assertEquals(
         other: Map<ReferenceId, CrdtSet.DataValue<RawEntity>>
     ) {
-        assertThat(keys).isEqualTo(other.keys)
+
         forEach { (refId, myEntity) ->
             val otherEntity = requireNotNull(other[refId])
             // Should have same fields.

@@ -277,16 +277,16 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                 assertThat(sentSyncRequest).isFalse()
                 sentSyncRequest = true
                 activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
-                return@ProxyCallback true
+                return@ProxyCallback
             }
 
             assertThat(sentSyncRequest).isTrue()
             if (it is ProxyMessage.ModelUpdate) {
                 it.model.values.assertEquals(entityCollection.data.values)
                 job.complete()
-                return@ProxyCallback true
+                return@ProxyCallback
             }
-            return@ProxyCallback false
+            return@ProxyCallback
         })
 
         activeStore.onProxyMessage(
@@ -309,7 +309,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         val id1 = activeStore.on(ProxyCallback {
             assertThat(it is ProxyMessage.ModelUpdate).isTrue()
             job.complete()
-            true
         })
 
         // another store
@@ -317,7 +316,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         activeStore.on(
             ProxyCallback {
                 calledStore2 = true
-                true
             }
         )
 
@@ -368,7 +366,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                 if (it is ProxyMessage.ModelUpdate) {
                     it.model.values.assertEquals(bobCollection.data.values)
                     job.complete()
-                    return@ProxyCallback true
+                    return@ProxyCallback
                 }
                 job.completeExceptionally(AssertionError("Should have received model update."))
             }
@@ -478,7 +476,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                 } else {
                     job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
                 }
-                true
             }
         )
 

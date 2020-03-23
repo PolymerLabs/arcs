@@ -27,7 +27,7 @@ interface IStorageService {
      * <p>Will respond by calling the {@code callback} with a
      * {@code ParcelableProxyMessage.ModelUpdate} containing the requested data.
      */
-    void getLocalData(IStorageServiceCallback callback);
+    oneway void getLocalData(IStorageServiceCallback callback);
 
     /**
      * Registers an {@link IStorageServiceCallback} with the StorageService and returns its callback
@@ -39,5 +39,5 @@ interface IStorageService {
     void unregisterCallback(int token);
 
     /** Sends a proxy message to the StorageService. */
-    void sendProxyMessage(in ParcelableProxyMessage message, IResultCallback resultCallback);
+    oneway void sendProxyMessage(in ParcelableProxyMessage message, IResultCallback resultCallback);
 }
