@@ -30,3 +30,28 @@ suspend fun <T> resultOfSuspend(block: suspend () -> T): Result<T> = try {
 } catch (e: Throwable) {
     Result.Err(e)
 }
+
+/**
+ * If this is [Result.Err], rethrows the wrapped exception. Otherwise, returns the wrapped value.
+ *
+ * This extension method can be used with [arcs.core.util.resultOf] to short-circuit the execution
+ * of a block of code. e.g.,
+ *
+ * resultOf {
+ *     val resultX = ...
+ *     val resultY = ...
+ *     val x = resultX.getOrThrow() // if resultX is [Result.err], we break control here.
+ *     val y = resultY.getOrThrow()
+ *     val z = foo(x, y) // x and y are unwrapped here.
+ * }
+ */
+fun <T> Result<T>.getOrThrow(): T = when (this) {
+    is Result.Ok -> value
+    is Result.Err -> throw thrown
+}
+
+/** Returns the wrapped value if [Result.Ok]. Otherwise, returns null. */
+fun <T> Result<T>.getOrNull(): T? = when (this) {
+    is Result.Ok -> value
+    is Result.Err -> null
+}
