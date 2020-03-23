@@ -57,21 +57,13 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
                     ProdArcHostService::class.toComponentName(context)
                 val writingComponentName =
                     TestWritingExternalHostService::class.toComponentName(context)
-                when {
-                    it.component?.equals(readingComponentName) == true -> {
-                        readingService.onStartCommand(it, 0, 0)
-                    }
-                    it.component?.equals(testProdComponentName) == true -> {
-                        testProdService.onStartCommand(it, 0, 0)
-                    }
-                    it.component?.equals(prodComponentName) == true -> {
-                        prodService.onStartCommand(it, 0, 0)
-                    }
-                    it.component?.equals(writingComponentName) == true -> {
-                        writingService.onStartCommand(it, 0, 0)
-                    }
+                when (it.component) {
+                    readingComponentName -> readingService
+                    testProdComponentName -> testProdService
+                    prodComponentName -> prodService
+                    writingComponentName -> writingService
                     else -> throw IllegalArgumentException("Unknown ${it.component}")
-                }
+                }.onStartCommand(it, 0, 0)
             }
         }
     }

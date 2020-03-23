@@ -64,8 +64,7 @@ open class AllocatorTestBase {
     open fun writingHost(): TestingHost = WritingHost()
 
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-    open fun pureHost(): TestingJvmProdHost =
-        TestingJvmProdHost()
+    open fun pureHost() = TestingJvmProdHost()
 
     open val storageCapability = Capabilities.TiedToRuntime
     open fun runAllocatorTest(
