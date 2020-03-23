@@ -407,7 +407,7 @@ open class AllocatorTestBase {
     }
 
     @Test
-    fun allocator_restartCrashedArcInTwoExternalHosts() = runAllocatorTest {
+    fun allocator_doesntCreateArcsOnDuplicateStartArc() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
             PersonPlan
@@ -438,29 +438,7 @@ open class AllocatorTestBase {
             Plan(PersonPlan.particles, arcId.toString())
         )
 
-        val readingContextAfter = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
-        )
-        val writingContextAfter = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
-        )
-
-        assertThat(readingContextAfter.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContextAfter.arcState).isEqualTo(ArcState.Running)
-
-        val readPersonContext = requireNotNull(
-            readingContextAfter.particles[readPersonParticle.particleName]
-        )
-
-        val writePersonContext = requireNotNull(
-            writingContextAfter.particles[writePersonParticle.particleName]
-        )
-
-        assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
-        assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Started)
-
-        // onCreate() not called a second time
-        assertThat((writePersonContext.particle as WritePerson).createCalled).isFalse()
-        assertThat((readPersonContext.particle as ReadPerson).createCalled).isFalse()
+        assertThat(readingExternalHost.arcHostContext(arcId.toString())).isNull()
+        assertThat(writingExternalHost.arcHostContext(arcId.toString())).isNull()
     }
 }

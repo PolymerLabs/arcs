@@ -77,6 +77,11 @@ class Allocator private constructor(
      * Start a new Arc given a [Plan] and return the generated [ArcId].
      */
     suspend fun startArcForPlan(arcName: String, plan: Plan): ArcId {
+        if (plan.arcId !== null) {
+            if (!readPartitions(plan.arcId!!.toArcId()).isEmpty()) {
+                return plan.arcId!!.toArcId()
+            }
+        }
         val idGenerator = Id.Generator.newSession()
         val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(arcName)
         // Any unresolved handles ('create' fate) need storage keys
@@ -92,7 +97,7 @@ class Allocator private constructor(
      * Stop an Arc given its [ArcId].
      */
     suspend fun stopArc(arcId: ArcId) {
-        val partitions = readPartitionMap(arcId) ?: return
+        val partitions = readAndClearPartitions(arcId)
         stopPlanPartitionsOnHosts(partitions)
     }
 
@@ -138,18 +143,26 @@ class Allocator private constructor(
         }
     }
 
-    /**
-     * Reads associated [PlanPartition]s with an [ArcId] .
-     */
-    private suspend fun readPartitionMap(arcId: ArcId): List<Plan.Partition>? {
-        val entities = collection.fetchAll().filter { fieldAsString(it, "arc") == arcId.toString() }
-        return entities.map {
-            Plan.Partition(
-                arcId.toString(),
-                fieldAsString(it, "host"),
-                fieldAsStrings(it, "particles").map { Plan.Particle(it, "", mapOf()) }
-            )
-        }
+    /** Looks up [RawEntity]s representing [PlanPartition]s for a given [ArcId] */
+    private suspend fun entitiesForArc(arcId: ArcId): List<RawEntity> =
+        collection.fetchAll().filter { fieldAsString(it, "arc") == arcId.toString() }
+
+    /** Converts a [RawEntity] to a [Plan.Partition] */
+    private fun entityToPartition(entity: RawEntity): Plan.Partition =
+        Plan.Partition(
+            fieldAsString(entity, "arc"),
+            fieldAsString(entity, "host"),
+            fieldAsStrings(entity, "particles").map { Plan.Particle(it, "", mapOf()) }
+        )
+
+    /** Reads associated [PlanPartition]s with an [ArcId]. */
+    private suspend fun readPartitions(arcId: ArcId): List<Plan.Partition> =
+        entitiesForArc(arcId).map { entityToPartition(it) }
+
+    private suspend fun readAndClearPartitions(arcId: ArcId): List<Plan.Partition> {
+        val entities = entitiesForArc(arcId)
+        entities.forEach { collection.remove(it) }
+        return entities.map { entityToPartition(it) }
     }
 
     /**
