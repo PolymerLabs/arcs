@@ -9,7 +9,6 @@ arcs_kt_schema(
     srcs = [
         "ArcHostContext.arcs",
     ],
-    platforms = ["jvm"],
 )
 
 arcs_kt_library(

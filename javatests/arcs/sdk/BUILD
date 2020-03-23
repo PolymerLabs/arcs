@@ -40,7 +40,6 @@ arcs_kt_schema(
     srcs = [
         "person.arcs",
     ],
-    platforms = ["jvm"],
 )
 
 arcs_kt_plan(
