@@ -60,7 +60,7 @@ class Stores {
  * long as the [HandleManager] exists.
  *
  * If no arguments are passed, the default store ActivationFactory will be used. Optionally,
- * you can provide your own ActivationFactoryFactory, which provides methods for creating
+ * you can provide your own ActivationFactory, which provides methods for creating
  * activations factories to create singleton-rawentity and set-rawentity [ActiveStore]s
  */
 class HandleManager(
