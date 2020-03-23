@@ -11,6 +11,7 @@ import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
 import arcs.core.host.ReadPerson
 import arcs.core.host.ReadPerson_Person
+import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
@@ -51,6 +52,7 @@ open class AllocatorTestBase {
 
     private lateinit var readingExternalHost: TestingHost
     private lateinit var writingExternalHost: TestingHost
+    private lateinit var pureHost: TestingJvmProdHost
 
     private class WritingHost : TestingHost(::WritePerson.toRegistration())
     private class ReadingHost : TestingHost(::ReadPerson.toRegistration())
@@ -60,6 +62,9 @@ open class AllocatorTestBase {
 
     /** Return the [ArcHost] that contains [WritePerson]. */
     open fun writingHost(): TestingHost = WritingHost()
+
+    /** Return the [ArcHost] that contains all isolatable [Particle]s. */
+    open fun pureHost() = TestingJvmProdHost()
 
     open val storageCapability = Capabilities.TiedToRuntime
     open fun runAllocatorTest(
@@ -71,6 +76,8 @@ open class AllocatorTestBase {
         val registry = ExplicitHostRegistry()
         registry.registerHost(readingExternalHost)
         registry.registerHost(writingExternalHost)
+        registry.registerHost(pureHost)
+
         return registry
     }
 
@@ -84,6 +91,7 @@ open class AllocatorTestBase {
 
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()
+        pureHost = pureHost()
 
         hostRegistry = hostRegistry()
         allocator = Allocator.create(hostRegistry, TimeImpl(), HandleManager(TimeImpl()))
@@ -123,25 +131,49 @@ open class AllocatorTestBase {
             hostRegistry.availableArcHosts().first { it.hostId.contains("Writing") }
         )
 
+        val prodHost = requireNotNull(
+            hostRegistry.availableArcHosts().first { it.hostId.contains("Prod") }
+        )
 
         val allStorageKeyLens =
             Plan.Particle.handlesLens.traverse() + Plan.HandleConnection.storageKeyLens
 
         // fetch the allocator replaced key
-        val sharedKey = planPartitions[0].particles[0].handles["person"]?.storageKey!!
+        val readPersonKey = findPartitionFor(
+            planPartitions, "ReadPerson"
+        ).particles[0].handles["person"]?.storageKey!!
+
+        val writePersonKey = findPartitionFor(
+            planPartitions, "WritePerson"
+        ).particles[0].handles["person"]?.storageKey!!
+
+        val purePartition = findPartitionFor(planPartitions, "PurePerson")!!
+
+        val storageKeyLens = Plan.HandleConnection.storageKeyLens
 
         assertThat(planPartitions).containsExactly(
             Plan.Partition(
                 arcId.toString(),
                 readingHost.hostId,
                 // replace the CreateableKeys with the allocated keys
-                listOf(allStorageKeyLens.mod(readPersonParticle) { sharedKey })
+                listOf(allStorageKeyLens.mod(readPersonParticle) { readPersonKey })
+            ),
+            Plan.Partition(
+                arcId.toString(),
+                prodHost.hostId,
+                // replace the CreateableKeys with the allocated keys
+                listOf(Plan.Particle.handlesLens.mod(purePartition.particles[0]) {
+                    mapOf(
+                        "inputPerson" to storageKeyLens.mod(it["inputPerson"]!!) { writePersonKey },
+                        "outputPerson" to storageKeyLens.mod(it["outputPerson"]!!) { readPersonKey }
+                    )
+                })
             ),
             Plan.Partition(
                 arcId.toString(),
                 writingHost.hostId,
                 // replace the CreateableKeys with the allocated keys
-                listOf(allStorageKeyLens.mod(writePersonParticle) { sharedKey })
+                listOf(allStorageKeyLens.mod(writePersonParticle) { writePersonKey })
             )
         )
     }
@@ -162,14 +194,25 @@ open class AllocatorTestBase {
                 )
             }
         }
-        val partition1 = planPartitions[0]
-        val partition2 = planPartitions[1]
+        val readPartition = findPartitionFor(planPartitions, "ReadPerson")
+        val purePartition = findPartitionFor(planPartitions, "PurePerson")
+        val writePartition = findPartitionFor(planPartitions, "WritePerson")
 
-        assertThat(partition1.particles[0].handles["person"]?.storageKey).isEqualTo(
-            partition2.particles[0].handles["person"]?.storageKey
+        assertThat(readPartition.particles[0]?.handles["person"]?.storageKey).isEqualTo(
+            purePartition.particles[0]?.handles["outputPerson"]?.storageKey
         )
 
+        assertThat(writePartition.particles[0]?.handles["person"]?.storageKey).isEqualTo(
+            purePartition.particles[0]?.handles["inputPerson"]?.storageKey
+        )
     }
+
+    private fun findPartitionFor(
+        partitions: List<Plan.Partition>,
+        particleName: String
+    ) = partitions.find { partition ->
+        partition.particles.any { it.particleName == particleName }
+    }!!
 
     @Test
     fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
@@ -214,6 +257,10 @@ open class AllocatorTestBase {
             hostRegistry.availableArcHosts().first { it.hostId.contains("Writing") }
         )
 
+        val prodHost = requireNotNull(
+            hostRegistry.availableArcHosts().first { it.hostId.contains("Prod") }
+        )
+
         planPartitions.forEach {
             val host = allocator.lookupArcHost(it.arcHost)
             when (host.hostId) {
@@ -221,6 +268,8 @@ open class AllocatorTestBase {
                     assertThat(readingExternalHost.started).containsExactly(it)
                 writingHost.hostId ->
                     assertThat(writingExternalHost.started).containsExactly(it)
+                prodHost.hostId ->
+                    assertThat(pureHost.started).containsExactly(it)
                 else -> {
                     assert(false)
                 }
@@ -230,9 +279,14 @@ open class AllocatorTestBase {
 
     @Test
     fun allocator_verifyUnknownParticleThrows() = runAllocatorTest {
-        val particle = Plan.Particle("UnknownParticle", "Unknown", mapOf())
+        val particleLens = Plan.particleLens.traverse()
 
-        val plan = Plan(listOf(particle))
+        val plan = particleLens.mod(PersonPlan) { particle ->
+            particle.copy(
+                particleName = "Unknown ${particle.particleName}",
+                location = "unknown.${particle.location}"
+            )
+        }
         assertSuspendingThrows(ParticleNotFoundException::class) {
             allocator.startArcForPlan("unknown", plan)
         }
@@ -277,14 +331,16 @@ open class AllocatorTestBase {
 
         writePersonContext.particle.let { particle ->
             particle as WritePerson
+            particle.await()
             assertThat(particle.createCalled).isTrue()
             assertThat(particle.wrote).isTrue()
         }
 
         readPersonContext.particle.let { particle ->
             particle as ReadPerson
+            particle.await()
             assertThat(particle.createCalled).isTrue()
-            assertThat(particle.name).isEqualTo("John Wick")
+            assertThat(particle.name).isEqualTo("Hello John Wick")
         }
     }
 

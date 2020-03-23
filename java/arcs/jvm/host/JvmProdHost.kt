@@ -20,7 +20,7 @@ import arcs.jvm.util.JvmTime
  * An [ArcHost] that runs isolatable particles that are expected to have no platform
  * dependencies directly on Android APIs.
  */
-class JvmProdHost(
+open class JvmProdHost(
     vararg particles: ParticleRegistration
 ) : ProdHost(*particles) {
     override val platformTime: Time = JvmTime
