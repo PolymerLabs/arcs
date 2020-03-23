@@ -57,7 +57,7 @@ def arcs_cc_schema(name, src, deps = [], out = None):
         wasm = False,
     )
 
-def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm", "wasm"], test_harness = True):
+def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = True):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:
@@ -68,6 +68,9 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm", "wasm"], test_harn
       test_harness: whether to generate a test harness target
     """
     supported = ["jvm", "wasm"]
+    # TODO(#5018)
+    if "jvm" not in platforms:
+        platforms.append("jvm")
     outs = []
     for src in srcs:
         for ext in platforms:

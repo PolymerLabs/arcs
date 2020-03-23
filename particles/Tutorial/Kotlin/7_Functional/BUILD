@@ -16,6 +16,7 @@ arcs_kt_schema(
     name = "functional_schemas",
     srcs = ["Functional.arcs"],
     deps = [":shared_people_schemas"],
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(

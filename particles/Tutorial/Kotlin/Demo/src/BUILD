@@ -9,6 +9,7 @@ licenses(["notice"])
 arcs_kt_schema(
     name = "game_schemas",
     srcs = ["TTTGame.arcs"],
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(
