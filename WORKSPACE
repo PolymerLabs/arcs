@@ -31,7 +31,7 @@ http_archive(
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
-ANDROIDX_LIFECYCLE_VERSION = "2.1.0"
+ANDROIDX_LIFECYCLE_VERSION = "2.2.0"
 
 ANDROIDX_TEST_VERSION = "1.2.0"
 
@@ -58,6 +58,7 @@ maven_install(
         "androidx.lifecycle:lifecycle-common:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-common-java8:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-runtime:" + ANDROIDX_LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-service:" + ANDROIDX_LIFECYCLE_VERSION,
         "androidx.webkit:webkit:1.1.0-rc01",
         "androidx.work:work-runtime:" + ANDROIDX_WORK_VERSION,
         "androidx.work:work-testing:" + ANDROIDX_WORK_VERSION,
