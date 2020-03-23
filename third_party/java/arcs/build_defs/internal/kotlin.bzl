@@ -164,7 +164,6 @@ def arcs_kt_library(
     """
     _check_platforms(platforms)
 
-
     # TODO(#5018)
     if "jvm" in platforms:
         arcs_kt_jvm_library(

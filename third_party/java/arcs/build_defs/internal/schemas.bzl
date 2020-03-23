@@ -68,9 +68,11 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = Tr
       test_harness: whether to generate a test harness target
     """
     supported = ["jvm", "wasm"]
+
     # TODO(#5018)
     if "jvm" not in platforms:
         platforms.append("jvm")
+
     outs = []
     for src in srcs:
         for ext in platforms:
