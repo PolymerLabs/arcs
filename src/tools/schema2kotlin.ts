@@ -405,7 +405,6 @@ ${this.opts.wasm ? `
             SchemaRegistry.register(this)
         }`}
         ${!this.opts.wasm ? `
-        // TODO: only handles singletons for now
         override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
         override fun decode(encoded: ByteArray): ${name}? {
             if (encoded.isEmpty()) return null
