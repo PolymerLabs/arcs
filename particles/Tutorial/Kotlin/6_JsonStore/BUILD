@@ -15,6 +15,7 @@ arcs_manifest(
 arcs_kt_schema(
     name = "store_schemas",
     srcs = ["JsonStore.arcs"],
+    platforms = ["wasm"],
     deps = [":shared_people_schemas"],
 )
 

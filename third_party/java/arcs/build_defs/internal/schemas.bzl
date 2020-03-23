@@ -57,19 +57,28 @@ def arcs_cc_schema(name, src, deps = [], out = None):
         wasm = False,
     )
 
-def arcs_kt_schema(name, srcs, deps = [], test_harness = True):
+def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = True):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
       deps: list of imported manifests
+      platforms: list of target platforms (current, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
     """
+    supported = ["jvm", "wasm"]
+
+    # TODO(#5018)
+    if "jvm" not in platforms:
+        platforms.append("jvm")
+
     outs = []
     for src in srcs:
-        for wasm in [True, False]:
-            ext = "wasm" if wasm else "jvm"
+        for ext in platforms:
+            if ext not in supported:
+                fail("Platform %s not allowed; only %s supported.".format(ext, supported.join(",")))
+            wasm = ext == "wasm"
             genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
             out = replace_arcs_suffix(src, "_GeneratedSchemas.%s.kt" % ext)
             outs.append(out)
@@ -86,7 +95,7 @@ def arcs_kt_schema(name, srcs, deps = [], test_harness = True):
     arcs_kt_library(
         name = name,
         srcs = outs,
-        platforms = ["jvm", "wasm"],
+        platforms = platforms,
         deps = ARCS_SDK_DEPS,
     )
 

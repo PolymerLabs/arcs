@@ -28,6 +28,7 @@ arcs_cc_schema(
 arcs_kt_schema(
     name = "kt_schemas",
     srcs = ["golden.arcs"],
+    platforms = ["wasm"],
 )
 
 arcs_ts_test(
