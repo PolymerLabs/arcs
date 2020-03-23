@@ -21,7 +21,7 @@ import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {ActiveSingletonEntityStore, CRDTEntitySingleton, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storageNG/storage-ng.js';
+import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storageNG/storage-ng.js';
 
 const planificatorId = 'plans';
 
@@ -151,10 +151,7 @@ export class Planificator {
     this.arc.onDataChange(this.dataChangeCallback, this);
     this.storeCallbackIds = new Map();
     this.arc.context.allStores.forEach(async store => {
-      const callbackId = (await store.activate()).on(async () => {
-        this.replanQueue.addChange();
-        return true;
-      });
+      const callbackId = (await store.activate()).on(async () => this.replanQueue.addChange());
       this.storeCallbackIds.set(store, callbackId);
     });
   }

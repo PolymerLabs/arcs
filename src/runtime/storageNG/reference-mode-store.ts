@@ -192,11 +192,11 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
    * to be updated.
    */
   async onContainerStore(message: ProxyMessage<ReferenceContainer>) {
-    return this.enqueue({from: ReferenceModeUpdateSource.Container, message});
+    this.enqueue({from: ReferenceModeUpdateSource.Container, message});
   }
 
   async onBackingStore(message: ProxyMessage<CRDTEntityTypeRecord<S, C>>) {
-    return this.enqueue({from: ReferenceModeUpdateSource.BackingStore, message});
+    this.enqueue({from: ReferenceModeUpdateSource.BackingStore, message});
   }
 
   async onProxyMessage(message: ProxyMessage<Container>): Promise<boolean> {

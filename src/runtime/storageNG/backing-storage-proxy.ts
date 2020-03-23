@@ -64,11 +64,11 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCom
     this.storageProxies.getL(muxId).registerHandle(handle);
   }
 
-  async onMessage(message: ProxyMessage<T>): Promise<boolean> {
+  async onMessage(message: ProxyMessage<T>): Promise<void> {
     assert(message.muxId != null);
     if (!this.callbacks[message.muxId]) {
       throw new Error('callback has not been set');
     }
-    return this.callbacks[message.muxId](message);
+    this.callbacks[message.muxId](message);
   }
 }

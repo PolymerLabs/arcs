@@ -96,8 +96,8 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     await Promise.all(stores.map(store => store.idle()));
   }
 
-  async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<boolean> {
+  async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<void> {
     message.muxId = muxId;
-    return Promise.all([...this.callbacks.values()].map(callback => callback(message))).then(a => a.reduce((a, b) => a && b));
+    Promise.all([...this.callbacks.values()].map(callback => callback(message)));
   }
 }

@@ -248,16 +248,15 @@ describe('Reference Mode Store', async () => {
           assert.isFalse(sentSyncRequest);
           sentSyncRequest = true;
           await activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id});
-          return true;
+          return;
         }
         assert.isTrue(sentSyncRequest);
         if (proxyMessage.type === ProxyMessageType.ModelUpdate) {
           assert.deepEqual(proxyMessage.model, collection.getData());
           resolve(true);
-          return true;
+          return;
         }
         reject(new Error());
-        return false;
       });
 
       await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: id + 1});
@@ -274,7 +273,6 @@ describe('Reference Mode Store', async () => {
       const id1 = activeStore.on(async proxyMessage => {
         assert.equal(proxyMessage.type, ProxyMessageType.ModelUpdate);
         resolve(true);
-        return true;
       });
 
       // another store
@@ -315,7 +313,7 @@ describe('Reference Mode Store', async () => {
           assert.equal(proxyMessage.id, id);
           assert.deepEqual(proxyMessage.model, collection.getData());
           resolve(true);
-          return true;
+          return;
         }
         throw new Error();
       });
@@ -443,13 +441,12 @@ describe('Reference Mode Store', async () => {
       activeStore.on(async message => {
         if (!backingStoreSent) {
           reject(new Error());
-          return false;
+          return;
         }
         const entityRecord = message['model'].values['an-id'].value;
         assert.equal(entityRecord.rawData.name.id, 'bob');
         assert.equal(entityRecord.rawData.age.value, 42);
         resolve();
-        return true;
       });
 
       await activeStore.containerStore.onReceive(referenceCollection.getData(), 1);

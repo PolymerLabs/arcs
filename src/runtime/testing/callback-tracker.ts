@@ -38,9 +38,8 @@ export class CallbackTracker {
 
   // called for each change event
   // tslint:disable-next-line: no-any
-  public changeEvent(c: Dictionary<any>): boolean {
+  public changeEvent(c: Dictionary<any>) {
     this.events.push(c);
-    return true;
   }
 
   /**
