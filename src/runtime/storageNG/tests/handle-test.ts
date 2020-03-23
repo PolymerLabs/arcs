@@ -79,7 +79,7 @@ let Bar: EntityClass;
 
 function newEntity(id: string) {
   const bar = new Bar({});
-  Entity.identify(bar, id, null, null);
+  Entity.identify(bar, id, null);
   return bar;
 }
 

@@ -100,7 +100,7 @@ describe('Entity', () => {
     const entityClass = Entity.createEntityClass(schema, null);
     const data = {id: 'schema-id', mutable: false, schema: 'url', type: 81, toLiteral: 23, makeImmutable: 'make'};
     const e = new entityClass(data);
-    Entity.identify(e, 'arcs-id', null, null);
+    Entity.identify(e, 'arcs-id', null);
 
     // Reading the schema fields should match the input data fields.
     assert.strictEqual(e.id, 'schema-id');
@@ -141,7 +141,7 @@ describe('Entity', () => {
       union: 'def',
       tuple: ['ghi', 12]
     });
-    Entity.identify(e, '!test:uid:u0', null, null);
+    Entity.identify(e, '!test:uid:u0', null);
     const fields = JSON.stringify(e);
     const internals = JSON.stringify(e[SYMBOL_INTERNALS]);
 
