@@ -46,27 +46,32 @@ class EntitySpecTest {
         assertThat(entity.bools).isEmpty()
         assertThat(entity.nums).isEmpty()
         assertThat(entity.texts).isEmpty()
+        assertThat(entity.refs).isEmpty()
     }
 
     @Test
     fun createWithFieldValues() = runBlockingTest {
-        val dummyRef = createBarReference(Bar(value = "dummy"))
+        val ref1 = createBarReference(Bar(value = "bar1"))
+        val ref2 = createBarReference(Bar(value = "bar2"))
+        val ref3 = createBarReference(Bar(value = "bar3"))
         val entity = Foo(
             bool = true,
             num = 123.0,
             text = "abc",
-            ref = dummyRef,
+            ref = ref1,
             bools = setOf(false),
             nums = setOf(456.0, 789.0),
-            texts = setOf("def", "ghi")
+            texts = setOf("def", "ghi"),
+            refs = setOf(ref2, ref3)
         )
         assertThat(entity.bool).isEqualTo(true)
         assertThat(entity.num).isEqualTo(123.0)
         assertThat(entity.text).isEqualTo("abc")
-        assertThat(entity.ref).isEqualTo(dummyRef)
+        assertThat(entity.ref).isEqualTo(ref1)
         assertThat(entity.bools).containsExactly(false)
         assertThat(entity.nums).containsExactly(456.0, 789.0)
         assertThat(entity.texts).containsExactly("def", "ghi")
+        assertThat(entity.refs).containsExactly(ref2, ref3)
     }
 
     @Test
@@ -92,6 +97,7 @@ class EntitySpecTest {
     fun copy() = runBlockingTest {
         val ref1 = createBarReference(Bar(value = "bar1"))
         val ref2 = createBarReference(Bar(value = "bar2"))
+        val ref3 = createBarReference(Bar(value = "bar3"))
         val entity = Foo(
             bool = true,
             num = 123.0,
@@ -99,7 +105,8 @@ class EntitySpecTest {
             ref = ref1,
             bools = setOf(false),
             nums = setOf(456.0, 789.0),
-            texts = setOf("def", "ghi")
+            texts = setOf("def", "ghi"),
+            refs = setOf(ref2, ref3)
         )
 
         // Copying an unidentified entity should give an exact copy of the entity.
@@ -119,7 +126,8 @@ class EntitySpecTest {
             ref = ref2,
             bools = setOf(true),
             nums = setOf(111.0, 222.0),
-            texts = setOf("aaa", "bbb")
+            texts = setOf("aaa", "bbb"),
+            refs = setOf(ref1, ref3)
         )
         assertThat(copy2.entityId).isNull()
         assertThat(copy2.bool).isFalse()
@@ -129,19 +137,23 @@ class EntitySpecTest {
         assertThat(copy2.bools).containsExactly(true)
         assertThat(copy2.nums).containsExactly(111.0, 222.0)
         assertThat(copy2.texts).containsExactly("aaa", "bbb")
+        assertThat(copy2.refs).containsExactly(ref1, ref3)
     }
 
     @Test
     fun serialize_roundTrip() = runBlockingTest {
-        val dummyRef = createBarReference(Bar(value = "dummy"))
+        val ref1 = createBarReference(Bar(value = "bar1"))
+        val ref2 = createBarReference(Bar(value = "bar2"))
+        val ref3 = createBarReference(Bar(value = "bar3"))
         val entity = Foo(
             bool = true,
             num = 123.0,
             text = "abc",
-            ref = dummyRef,
+            ref = ref1,
             bools = setOf(false),
             nums = setOf(456.0, 789.0),
-            texts = setOf("def", "ghi")
+            texts = setOf("def", "ghi"),
+            refs = setOf(ref2, ref3)
         )
         val entityId = entity.identify()
 
@@ -154,12 +166,13 @@ class EntitySpecTest {
                     "bool" to true.toReferencable(),
                     "num" to 123.0.toReferencable(),
                     "text" to "abc".toReferencable(),
-                    "ref" to dummyRef.toReferencable()
+                    "ref" to ref1.toReferencable()
                 ),
                 collections = mapOf(
                     "bools" to setOf(false.toReferencable()),
                     "nums" to setOf(456.0.toReferencable(), 789.0.toReferencable()),
-                    "texts" to setOf("def".toReferencable(), "ghi".toReferencable())
+                    "texts" to setOf("def".toReferencable(), "ghi".toReferencable()),
+                    "refs" to setOf(ref2.toReferencable(), ref3.toReferencable())
                 )
             )
         )

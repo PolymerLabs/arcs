@@ -103,11 +103,16 @@ export abstract class Schema2Base {
             } else {
               throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
             }
-          } else if (descriptor.kind === 'schema-reference') {
+          } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference')) {
+            const isCollection = descriptor.kind === 'schema-collection';
             const schemaNode = node.refs.get(field);
-            generator.addField({field, typeName: 'Reference', refClassName: schemaNode.name, refSchemaHash: await schemaNode.schema.hash()});
-          } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
-            // TODO: support collections of references
+            generator.addField({
+              field,
+              typeName: 'Reference',
+              isCollection,
+              refClassName: schemaNode.name,
+              refSchemaHash: await schemaNode.schema.hash(),
+            });
           } else if (descriptor.kind === 'schema-collection') {
             const schema = descriptor.schema;
             if (!['Text', 'URL', 'Number', 'Boolean'].includes(schema.type)) {
