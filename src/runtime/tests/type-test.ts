@@ -164,17 +164,6 @@ describe('types', () => {
       deepEqual(col2, Type.fromLiteral(col2.toLiteral()));
       deepEqual(col2, col2.clone(new Map()));
 
-      // Collection of backing of variables
-      const variable2 = TypeVariable.make('a');
-      const backing = new BackingType(variable2);
-      const col3 = new CollectionType(backing);
-      deepEqual(col3.toLiteral(), {
-        tag: 'Collection',
-        data: {tag: 'Backing', data: variable2.toLiteral()}
-      });
-      deepEqual(col3, Type.fromLiteral(col3.toLiteral()));
-      deepEqual(col3, col3.clone(new Map()));
-
       // Collection of references to slots
       const slot      = SlotType.make('f', 'h');
       const reference = new ReferenceType(slot);

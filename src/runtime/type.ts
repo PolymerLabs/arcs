@@ -211,7 +211,7 @@ export abstract class Type {
     return new ReferenceType(this);
   }
 
-  backingTo() {
+  backingOf() {
     return new BackingType(this);
   }
 
