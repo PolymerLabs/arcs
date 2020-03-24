@@ -22,6 +22,7 @@ import arcs.core.data.SchemaName
 import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.toPrimitiveValue
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StorageProxy
@@ -245,10 +246,10 @@ class CollectionIntegrationTest {
         )
 
         private val refinementAgeGtZero = { value: RawEntity ->
-            (value.singletons["age"] as ReferencablePrimitive<Double>?)!!.value > 0
+            value.singletons["age"].toPrimitiveValue(Double::class, 0.0) > 0
         }
         private val queryByAge = { value: RawEntity, args: Any ->
-            value.singletons["age"] == (args as Double).toReferencable()
+            value.singletons["age"].toPrimitiveValue(Double::class, 0.0) == (args as Double)
         }
 
         private val SCHEMA_A = Schema(
