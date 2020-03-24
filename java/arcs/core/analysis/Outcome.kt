@@ -11,7 +11,7 @@
 
 package arcs.core.analysis
 
-/** A simple sealed class that captures the outcome af an analysis. */
+/** A simple sealed class that captures the outcome of an analysis. */
 sealed class Outcome<T>() {
     /** Wraps the result of a successful operation. */
     class Success<T>(val value: T) : Outcome<T>()
