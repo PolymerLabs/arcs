@@ -13,6 +13,7 @@ package arcs.core.data
 
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.VersionMap
+import arcs.core.data.Schema.Companion.hashCode
 import arcs.core.type.Type
 
 /** Returns true if the RawEntity data matches the refinement predicate */
@@ -22,7 +23,7 @@ typealias Refinement = (data: RawEntity) -> Boolean
 typealias Query = (data: RawEntity, queryArgs: Any) -> Boolean
 
 data class Schema(
-    val names: List<SchemaName>,
+    val names: Set<SchemaName>,
     val fields: SchemaFields,
     /**
      * The hash code for the schema (note that this is not the same as this object's [hashCode]
@@ -35,6 +36,15 @@ data class Schema(
     val name: SchemaName?
         get() = names.firstOrNull()
 
+    @Deprecated("Use the primary constructor")
+    constructor(
+        names: List<SchemaName>,
+        fields: SchemaFields,
+        hash: String,
+        refinement: Refinement = { _ -> true },
+        query: Query? = null
+    ) : this(names.toSet(), fields, hash, refinement, query)
+
     private val emptyRawEntity: RawEntity
         get() = RawEntity(
             singletonFields = fields.singletons.keys,
@@ -46,7 +56,7 @@ data class Schema(
     fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
 
     data class Literal(
-        val names: List<SchemaName>,
+        val names: Set<SchemaName>,
         val fields: SchemaFields,
         val hash: String
     ) : arcs.core.common.Literal {

@@ -263,7 +263,7 @@ class Allocator private constructor(
     companion object {
         /** Schema for persistent storage of [PlanPartition] information */
         private val SCHEMA = Schema(
-            listOf(SchemaName("partition")),
+            setOf(SchemaName("partition")),
             SchemaFields(
                 mapOf(
                     "arc" to FieldType.Text,

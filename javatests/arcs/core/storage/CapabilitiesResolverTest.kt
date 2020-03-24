@@ -36,7 +36,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class CapabilitiesResolverTest {
     private val thingSchema = Schema(
-        listOf(SchemaName("Thing")),
+        setOf(SchemaName("Thing")),
         SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
         "42"
     )

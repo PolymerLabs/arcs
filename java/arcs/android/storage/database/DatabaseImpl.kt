@@ -745,7 +745,7 @@ class DatabaseImpl(
                 // TODO: keep track of and return the actual schema type.
                 val eType: Type = EntityType(
                     Schema(
-                        listOf<SchemaName>(),
+                        setOf<SchemaName>(),
                         SchemaFields(emptyMap(), emptyMap()),
                         ""
                     )

@@ -1371,7 +1371,7 @@ private fun newSchema(
     hash: String,
     fields: SchemaFields = SchemaFields(emptyMap(), emptyMap())
 ) = Schema(
-    names = emptyList(),
+    names = emptySet(),
     fields = fields,
     hash = hash
 )

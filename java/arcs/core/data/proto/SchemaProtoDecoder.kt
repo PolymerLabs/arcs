@@ -18,7 +18,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 
 /** Returns the names in the [SchemaProto] as List<SchemaName>. */
-fun SchemaProto.decodeNames(): List<SchemaName> = getNamesList().map { SchemaName(it) }
+fun SchemaProto.decodeNames() = getNamesList().map { SchemaName(it) }.toSet()
 
 /** Returns the fields in the [SchemaProto] as a Kotlin [SchemaFields] instance. */
 fun SchemaProto.decodeFields(): SchemaFields {

@@ -35,7 +35,7 @@ class GoldInternal1(
     companion object : EntitySpec<GoldInternal1> {
 
         override val SCHEMA = Schema(
-            listOf(),
+            setOf(),
             SchemaFields(
                 singletons = mapOf("val" to FieldType.Text),
                 collections = emptyMap()
@@ -121,7 +121,7 @@ class Gold_QCollection(
     companion object : EntitySpec<Gold_QCollection> {
 
         override val SCHEMA = Schema(
-            listOf(SchemaName("People")),
+            setOf(SchemaName("People")),
             SchemaFields(
                 singletons = mapOf(
                     "name" to FieldType.Text,
@@ -172,7 +172,7 @@ class Gold_Collection(
     companion object : EntitySpec<Gold_Collection> {
 
         override val SCHEMA = Schema(
-            listOf(),
+            setOf(),
             SchemaFields(
                 singletons = mapOf("num" to FieldType.Number),
                 collections = emptyMap()
@@ -236,7 +236,7 @@ class Gold_Data(
     companion object : EntitySpec<Gold_Data> {
 
         override val SCHEMA = Schema(
-            listOf(),
+            setOf(),
             SchemaFields(
                 singletons = mapOf(
                     "num" to FieldType.Number,

@@ -133,7 +133,7 @@ open class FakeDatabase : Database {
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
         val entityType = EntityType(
             Schema(
-                listOf<SchemaName>(),
+                setOf<SchemaName>(),
                 SchemaFields(emptyMap(), emptyMap()),
                 ""
             )

@@ -31,7 +31,7 @@ import org.junit.runner.RunWith
 class ParcelablePlanTest {
 
     private val personSchema = Schema(
-        listOf(SchemaName("Person")),
+        setOf(SchemaName("Person")),
         SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
         "42"
     )

@@ -40,7 +40,7 @@ import org.junit.runners.JUnit4
 class RawEntityDereferencerTest {
     // Self-referential schema.
     private val schema = Schema(
-        emptyList(),
+        emptySet(),
         SchemaFields(
             singletons = mapOf(
                 "name" to FieldType.Text,
@@ -133,7 +133,7 @@ class RawEntityDereferencerTest {
     fun rawEntity_matches_schema_isTrue_whenEntityIsEmpty_andSchemaIsEmpty() {
         val entity = RawEntity(singletons = emptyMap(), collections = emptyMap())
         val schema = Schema(
-            emptyList(),
+            emptySet(),
             SchemaFields(
                 singletons = emptyMap(),
                 collections = emptyMap()
@@ -148,7 +148,7 @@ class RawEntityDereferencerTest {
     fun rawEntity_matches_schema_isFalse_whenEntityIsEmpty_butSchemaIsNot() {
         val entity = RawEntity(singletons = emptyMap(), collections = emptyMap())
         val schemaOne = Schema(
-            emptyList(),
+            emptySet(),
             SchemaFields(
                 singletons = mapOf("name" to FieldType.Text),
                 collections = emptyMap()
@@ -156,7 +156,7 @@ class RawEntityDereferencerTest {
             "abc"
         )
         val schemaTwo = Schema(
-            emptyList(),
+            emptySet(),
             SchemaFields(
                 singletons = emptyMap(),
                 collections = mapOf("friends" to FieldType.EntityRef("def"))
@@ -175,7 +175,7 @@ class RawEntityDereferencerTest {
             collections = emptyMap()
         )
         val schema = Schema(
-            emptyList(),
+            emptySet(),
             SchemaFields(
                 singletons = mapOf(
                     "name" to FieldType.Text,
@@ -196,7 +196,7 @@ class RawEntityDereferencerTest {
             collections = emptyMap()
         )
         val schema = Schema(
-            emptyList(),
+            emptySet(),
             SchemaFields(
                 singletons = mapOf(
                     "name" to FieldType.Text,
@@ -221,7 +221,7 @@ class RawEntityDereferencerTest {
             )
         )
         val schema = Schema(
-            emptyList(),
+            emptySet(),
             SchemaFields(
                 singletons = emptyMap(),
                 collections = mapOf("friends" to FieldType.EntityRef("def"))
@@ -243,7 +243,7 @@ class RawEntityDereferencerTest {
             )
         )
         val schema = Schema(
-            emptyList(),
+            emptySet(),
             SchemaFields(
                 singletons = emptyMap(),
                 collections = mapOf("friends" to FieldType.EntityRef("def"))

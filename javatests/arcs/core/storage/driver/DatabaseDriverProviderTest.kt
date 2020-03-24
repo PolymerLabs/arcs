@@ -162,7 +162,7 @@ class DatabaseDriverProviderTest {
 
     companion object {
         private val DUMMY_SCHEMA = Schema(
-            listOf(SchemaName("mySchema")),
+            setOf(SchemaName("mySchema")),
             SchemaFields(
                 mapOf("name" to FieldType.Text),
                 mapOf("cities_lived_in" to FieldType.Text)
