@@ -258,12 +258,15 @@ export class Schema {
     let str = this.names.slice().sort().join(' ') + '/';
     for (const field of Object.keys(this.fields).sort()) {
       const {kind, type, schema} = this.fields[field];
+      str += field + ':';
       if (kind === 'schema-primitive') {
-        str += field + ':' + type + '|';
+        str += type + '|';
       } else if (kind === 'schema-reference') {
-        str += field + '&[' + schema.model.entitySchema.normalizeForHash() + ']';
+        str += '&(' + schema.model.entitySchema.normalizeForHash() + ')';
       } else if (kind === 'schema-collection' && schema.kind === 'schema-reference') {
-        str += field + '@[' + schema.schema.model.entitySchema.normalizeForHash() + ']';
+        str += '[&(' + schema.schema.model.entitySchema.normalizeForHash() + ')]';
+      } else if (kind === 'schema-collection' && schema.kind === 'schema-primitive') {
+        str += '[' + schema.type + ']';
       } else {
         throw new Error('Schema hash: unsupported field type');
       }

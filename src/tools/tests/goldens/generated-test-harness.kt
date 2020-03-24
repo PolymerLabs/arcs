@@ -18,10 +18,10 @@ class GoldTestHarness<P : AbstractGold>(
     HandleDescriptor("data", Gold_Data, HandleFlavor.SINGLETON),
     HandleDescriptor("qCollection", Gold_QCollection, HandleFlavor.COLLECTION),
     HandleDescriptor("alias", Gold_Alias, HandleFlavor.SINGLETON),
-    HandleDescriptor("collection", Gold_Collection, HandleFlavor.SINGLETON)
+    HandleDescriptor("collection", Gold_Collection, HandleFlavor.COLLECTION)
 )) {
     val data: ReadWriteSingletonHandle<Gold_Data> by handleMap
     val qCollection: ReadWriteCollectionHandle<Gold_QCollection> by handleMap
     val alias: ReadWriteSingletonHandle<Gold_Alias> by handleMap
-    val collection: ReadWriteSingletonHandle<Gold_Collection> by handleMap
+    val collection: ReadWriteCollectionHandle<Gold_Collection> by handleMap
 }

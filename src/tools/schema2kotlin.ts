@@ -39,27 +39,31 @@ export interface KotlinTypeInfo {
   schemaType: string;
 }
 
-function getTypeInfo(name: string, refClassName?: string, refSchemaHash?: string): KotlinTypeInfo {
+function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?: string, refSchemaHash?: string}): KotlinTypeInfo {
   const typeMap: Dictionary<KotlinTypeInfo> = {
     'Text': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
     'URL': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
     'Number': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
     'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
     'Reference': {
-      type: `Reference<${refClassName}>?`,
+      type: `Reference<${opts.refClassName}>?`,
       decodeFn: null,
       defaultVal: 'null',
-      schemaType: `FieldType.EntityRef(${quote(refSchemaHash)})`,
+      schemaType: `FieldType.EntityRef(${quote(opts.refSchemaHash)})`,
     },
   };
 
-  const info = typeMap[name];
+  const info = typeMap[opts.name];
   if (!info) {
-    throw new Error(`Unhandled type '${name}' for kotlin.`);
+    throw new Error(`Unhandled type '${opts.name}' for kotlin.`);
   }
-  if (name === 'Reference') {
-    assert(refClassName, 'refClassName must be provided for References');
-    assert(refSchemaHash, 'refSchemaHash must be provided for References');
+  if (opts.name === 'Reference') {
+    assert(opts.refClassName, 'refClassName must be provided for References');
+    assert(opts.refSchemaHash, 'refSchemaHash must be provided for References');
+  }
+  if (opts.isCollection) {
+    info.defaultVal = `emptySet<${info.type}>()`;
+    info.type = `Set<${info.type}>`;
   }
   return info;
 }
@@ -213,7 +217,7 @@ class ${particleName}TestHarness<P : Abstract${particleName}>(
     if (!type) {
       return null;
     }
-    return getTypeInfo(type).type;
+    return getTypeInfo({name: type}).type;
   }
 
   private getHandlesClassDecl(particleName: string, entitySpecs: string[]): string {
@@ -263,13 +267,15 @@ export class KotlinGenerator implements ClassGenerator {
   addField({field, typeName, refClassName, refSchemaHash, isOptional = false, isCollection = false}: AddFieldOptions) {
     if (typeName === 'Reference' && this.opts.wasm) return;
 
-    const {type, decodeFn, defaultVal, schemaType} = getTypeInfo(typeName, refClassName, refSchemaHash);
+    const {type, decodeFn, defaultVal, schemaType} = getTypeInfo({name: typeName, isCollection, refClassName, refSchemaHash});
     const fixed = this.escapeIdentifier(field);
     const quotedFieldName = quote(field);
     const nullableType = type.endsWith('?') ? type : `${type}?`;
 
     this.fields.push(`${fixed}: ${type} = ${defaultVal}`);
     if (this.opts.wasm) {
+      // TODO: Add support for collections in wasm.
+      assert(!isCollection, 'Collection fields not supported in Kotlin wasm yet.');
       this.fieldVals.push(
         `var ${fixed} = ${fixed}\n` +
         `        get() = field\n` +
@@ -280,7 +286,7 @@ export class KotlinGenerator implements ClassGenerator {
     } else if (isCollection) {
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `        get() = super.getCollectionValue(${quotedFieldName}) as Set<${type}>\n` +
+        `        get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
         `        private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
         );
     } else {
@@ -328,11 +334,11 @@ Schema(
   }
 
   typeFor(name: string): string {
-    return getTypeInfo(name).type;
+    return getTypeInfo({name}).type;
   }
 
   defaultValFor(name: string): string {
-    return getTypeInfo(name).defaultVal;
+    return getTypeInfo({name}).defaultVal;
   }
 
   generatePredicates() {

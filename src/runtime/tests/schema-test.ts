@@ -506,6 +506,7 @@ describe('schema', () => {
 
         nestedRefs: reads Foo {num: Number, ref: &Bar {str: Text, inner: &* {val: Boolean}}}
         refCollection: reads * {rc: [&Wiz {str: Text}], z: Number}
+        primitiveCollection: reads * {x: [Number], f: [Boolean], s: [Text]}
     `);
     const getHash = handleName => {
       return manifest.particles[0].getConnectionByName(handleName).type.getEntitySchema().normalizeForHash();
@@ -518,8 +519,9 @@ describe('schema', () => {
     assert.strictEqual(getHash('orderedA'), 'Bar Foo Wiz/f:Boolean|s:Text|x:Number|');
     assert.strictEqual(getHash('orderedA'), getHash('orderedB'));
 
-    assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref&[Bar/inner&[/val:Boolean|]str:Text|]');
-    assert.strictEqual(getHash('refCollection'), '/rc@[Wiz/str:Text|]z:Number|');
+    assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref:&(Bar/inner:&(/val:Boolean|)str:Text|)');
+    assert.strictEqual(getHash('refCollection'), '/rc:[&(Wiz/str:Text|)]z:Number|');
+    assert.strictEqual(getHash('primitiveCollection'), '/f:[Boolean]s:[Text]x:[Number]');
   });
   it('tests univariate schema level refinements are propagated to field level', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
