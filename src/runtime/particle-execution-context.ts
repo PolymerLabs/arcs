@@ -175,7 +175,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     let idPromise: Promise<number> = null;
     if (storageProxy instanceof StorageProxy) {
       return {
-        async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
+        async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
           if (idPromise == null) {
             throw new Error('onProxyMessage called without first calling setCallback!');
           }
@@ -184,8 +184,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
             throw new Error('undefined id received .. somehow');
           }
 
-          return new Promise(resolve =>
-            { pec.apiPort.ProxyMessage(storageProxy, message, resolve); });
+          pec.apiPort.ProxyMessage(storageProxy, message);
         },
         setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
           idPromise = new Promise<number>(resolve =>
@@ -200,7 +199,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       };
     } else if (storageProxy instanceof BackingStorageProxy) {
       return {
-        async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
+        async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
           if (idPromise == null) {
             throw new Error('onProxyMessage called without first calling setCallback!');
           }
@@ -211,12 +210,10 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
 
           // Proxy messages sent to Backing stores require a muxId in order to redirect the message to the correct store.
           assert(message.muxId != null);
-          return new Promise(resolve =>
-            { pec.apiPort.BackingProxyMessage(storageProxy, message, resolve); });
+          pec.apiPort.BackingProxyMessage(storageProxy, message);
         },
         setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
-          idPromise = new Promise<number>(resolve =>
-            { pec.apiPort.BackingRegister(storageProxy, callback, resolve); });
+          idPromise = new Promise<number>(resolve => pec.apiPort.BackingRegister(storageProxy, callback, resolve));
         },
         reportExceptionInHost(exception: PropagatedException): void {
           pec.apiPort.ReportExceptionInHost(exception);

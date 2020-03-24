@@ -22,7 +22,7 @@ import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {SlotComposer} from './slot-composer.js';
 import {Type, EntityType, ReferenceType, InterfaceType, SingletonType} from './type.js';
 import {Services} from './services.js';
-import {floatingPromiseToAudit} from './util.js';
+import {floatingPromiseToAudit, noAwait} from './util.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyMessage, Store} from './storageNG/store.js';
@@ -189,24 +189,22 @@ class PECOuterPortImpl extends PECOuterPort {
     this.SimpleCallback(idCallback, id);
   }
 
-  async onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number) {
+  async onProxyMessage(store: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
     // Need an ActiveStore here in order to forward messages. Calling
     // .activate() should generally be a no-op.
     if (!(store instanceof Store)) {
       this.onReportExceptionInHost(new SystemException(new Error('expected new-style store but found old-style store hooked up to new stack'), 'onProxyMessage', ''));
       return;
     }
-    const res = await (await store.activate()).onProxyMessage(message);
-    this.SimpleCallback(callback, res);
+    noAwait((await store.activate()).onProxyMessage(message));
   }
 
-  async onBackingProxyMessage(store: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number) {
+  async onBackingProxyMessage(store: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
     if (!(store instanceof BackingStore)) {
       this.onReportExceptionInHost(new SystemException(new Error('expected BackingStore for onBackingProxyMessage'), 'onBackingProxyMessage', ''));
       return;
     }
-    const res = await store.onProxyMessage(message);
-    this.SimpleCallback(callback, res);
+    noAwait(store.onProxyMessage(message));
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {

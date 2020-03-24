@@ -42,9 +42,9 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCom
     }
     const muxId = this.storageProxies.getR(storageProxy);
     return {
-      async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<boolean> {
+      async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
         message.muxId = muxId;
-        return storageEndpoint.onProxyMessage(message);
+        await storageEndpoint.onProxyMessage(message);
       },
       setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
         backingStorageProxy.callbacks[muxId] = callback;

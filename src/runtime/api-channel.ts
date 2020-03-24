@@ -606,14 +606,8 @@ export abstract class PECInnerPort extends APIPort {
     @Mapped handle: BackingStorageProxy<CRDTTypeRecord>,
     @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
     @LocalMapped idCallback: Consumer<number>): void {}
-  ProxyMessage(
-    @Mapped handle: StorageProxy,
-    @Direct message: ProxyMessage<CRDTTypeRecord>,
-    @LocalMapped callback: Consumer<Promise<boolean>>): void {}
-  BackingProxyMessage(
-    @Mapped handle: BackingStorageProxy<CRDTTypeRecord>,
-    @Direct message: ProxyMessage<CRDTTypeRecord>,
-    @LocalMapped callback: Consumer<Promise<boolean>>): void {}
+  ProxyMessage(@Mapped handle: StorageProxy, @Direct message: ProxyMessage<CRDTTypeRecord>): void {}
+  BackingProxyMessage(@Mapped handle: BackingStorageProxy<CRDTTypeRecord>, @Direct message: ProxyMessage<CRDTTypeRecord>): void {}
 
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
 

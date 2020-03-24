@@ -18,6 +18,7 @@ import {DirectStore} from '../direct-store.js';
 import {MockStorageKey, MockStorageDriverProvider, MockDriver} from '../testing/test-storage.js';
 import {CountType} from '../../type.js';
 import {CRDTTypeRecord} from '../../crdt/crdt.js';
+import {noAwait} from '../../util.js';
 
 let testKey: StorageKey;
 
@@ -68,8 +69,7 @@ describe('Store', async () => {
     const count = new CRDTCount();
     count.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
 
-    const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count.getData(), id: 1});
-    assert.isTrue(result);
+    await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count.getData(), id: 1});
 
     assert.deepEqual(capturedModel, count.getData());
   });
@@ -87,8 +87,7 @@ describe('Store', async () => {
     const count = new CRDTCount();
     const operation: CountOperation = {type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}};
 
-    const result = await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: 1});
-    assert.isTrue(result);
+    await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: 1});
 
     count.applyOperation(operation);
 
@@ -115,7 +114,7 @@ describe('Store', async () => {
         if (proxyMessage.type === ProxyMessageType.Operations) {
           assert.isFalse(sentSyncRequest);
           sentSyncRequest = true;
-          const result = activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id});
+          noAwait(activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id}));
           return;
         }
         assert.isTrue(sentSyncRequest);
@@ -127,7 +126,7 @@ describe('Store', async () => {
         throw new Error();
       });
 
-      const result = activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: id + 1});
+      noAwait(activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: id + 1}));
     });
   });
 
@@ -230,8 +229,7 @@ describe('Store', async () => {
     let sendInvoked = false;
     driver.send = async model => {sendInvoked = true; return false;};
 
-    const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count.getData(), id: 1});
-    assert.isTrue(result);
+    await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count.getData(), id: 1});
     assert.isTrue(sendInvoked);
 
     sendInvoked = false;

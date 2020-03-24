@@ -72,13 +72,12 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   off(callback: number) {
     throw new Error('unimplemented');
   }
-  async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
+  async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
     this.lastCapturedMessage = message;
     if (this.crdtData && message.type === ProxyMessageType.SyncRequest) {
       await this.callback(
           {type: ProxyMessageType.ModelUpdate, model: this.crdtData, id: 1});
     }
-    return true;
   }
   reportExceptionInHost(exception: PropagatedException): void {
     this.lastCapturedException = exception;
