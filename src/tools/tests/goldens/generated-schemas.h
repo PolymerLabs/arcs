@@ -625,7 +625,7 @@ protected:
   Gold_Data(const Gold_Data&) = default;
   Gold_Data& operator=(const Gold_Data&) = default;
 
-  static const char* _schema_hash() { return "d8058d336e472da47b289eafb39733f77eadb111"; }
+  static const char* _schema_hash() { return "c539be82943f3c24e2503cb0410b865fa3688d06"; }
   static const int _field_count = 5;
 
   double num_ = 0;
@@ -781,7 +781,7 @@ protected:
   arcs::Singleton<arcs::Gold_Data> data_{this, "data"};
   arcs::Collection<arcs::Gold_QCollection> qCollection_{this, "qCollection"};
   arcs::Singleton<arcs::Gold_Alias> alias_{this, "alias"};
-  arcs::Singleton<arcs::Gold_Collection> collection_{this, "collection"};
+  arcs::Collection<arcs::Gold_Collection> collection_{this, "collection"};
 };
 
 #endif

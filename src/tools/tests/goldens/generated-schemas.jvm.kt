@@ -247,7 +247,7 @@ class Gold_Data(
                 ),
                 collections = emptyMap()
             ),
-            "d8058d336e472da47b289eafb39733f77eadb111",
+            "c539be82943f3c24e2503cb0410b865fa3688d06",
             refinement = { _ -> true },
             query = null
         )
@@ -273,7 +273,7 @@ class GoldHandles : HandleHolderBase(
     val data: ReadSingletonHandle<Gold_Data> by handles
     val qCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
     val alias: WriteSingletonHandle<Gold_Alias> by handles
-    val collection: ReadSingletonHandle<Gold_Collection> by handles
+    val collection: ReadCollectionHandle<Gold_Collection> by handles
 }
 
 abstract class AbstractGold : BaseParticle() {

@@ -41,7 +41,7 @@
       return;
     }
     if (result === undefined) {
-      error(`Internal Parser Error: result was undefined at ${path}`);
+      internalError(`Result was undefined at ${path}`);
     }
     if (Array.isArray(result)) {
       let i = 0;
@@ -52,13 +52,13 @@
       return;
     }
     if (result.model) {
-      error(`Internal Parser Error: unexpected 'model' in ${JSON.stringify(result)} at ${path}`);
+      internalError(`Unexpected 'model' in ${JSON.stringify(result)} at ${path}`);
     }
     if (!result.location) {
-      error(`Internal Parser Error: no 'location' in ${JSON.stringify(result)} at ${path}`);
+      internalError(`No 'location' in ${JSON.stringify(result)} at ${path}`);
     }
     if (!result.kind) {
-      error(`Internal Parser Error: no 'kind' in ${JSON.stringify(result)} at ${path}`);
+      internalError(`No 'kind' in ${JSON.stringify(result)} at ${path}`);
     }
     for (const key of Object.keys(result)) {
       if (['location', 'kind'].includes(key)) {
@@ -108,6 +108,10 @@
       type,
       name: name || '*',
     });
+  }
+
+  function internalError(message: string) {
+    error(`Internal Parser Error: ${message}`);
   }
 }
 
@@ -1315,7 +1319,7 @@ SchemaType
       return type;
   }
 
-SchemaCollectionType = '[' whiteSpace? schema:SchemaReferenceType whiteSpace? ']'
+SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimitiveType) whiteSpace? ']'
   {
     return toAstNode<AstNode.SchemaCollectionType>({
       kind: 'schema-collection',

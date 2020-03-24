@@ -43,6 +43,9 @@ class EntitySpecTest {
         assertThat(entity.num).isEqualTo(0.0)
         assertThat(entity.text).isEqualTo("")
         assertThat(entity.ref).isNull()
+        assertThat(entity.bools).isEmpty()
+        assertThat(entity.nums).isEmpty()
+        assertThat(entity.texts).isEmpty()
     }
 
     @Test
@@ -52,12 +55,18 @@ class EntitySpecTest {
             bool = true,
             num = 123.0,
             text = "abc",
-            ref = dummyRef
+            ref = dummyRef,
+            bools = setOf(false),
+            nums = setOf(456.0, 789.0),
+            texts = setOf("def", "ghi")
         )
         assertThat(entity.bool).isEqualTo(true)
         assertThat(entity.num).isEqualTo(123.0)
         assertThat(entity.text).isEqualTo("abc")
         assertThat(entity.ref).isEqualTo(dummyRef)
+        assertThat(entity.bools).containsExactly(false)
+        assertThat(entity.nums).containsExactly(456.0, 789.0)
+        assertThat(entity.texts).containsExactly("def", "ghi")
     }
 
     @Test
@@ -87,7 +96,10 @@ class EntitySpecTest {
             bool = true,
             num = 123.0,
             text = "abc",
-            ref = ref1
+            ref = ref1,
+            bools = setOf(false),
+            nums = setOf(456.0, 789.0),
+            texts = setOf("def", "ghi")
         )
 
         // Copying an unidentified entity should give an exact copy of the entity.
@@ -104,13 +116,19 @@ class EntitySpecTest {
             bool = false,
             num = 456.0,
             text = "xyz",
-            ref = ref2
+            ref = ref2,
+            bools = setOf(true),
+            nums = setOf(111.0, 222.0),
+            texts = setOf("aaa", "bbb")
         )
         assertThat(copy2.entityId).isNull()
         assertThat(copy2.bool).isFalse()
         assertThat(copy2.num).isEqualTo(456.0)
         assertThat(copy2.text).isEqualTo("xyz")
         assertThat(copy2.ref).isEqualTo(ref2)
+        assertThat(copy2.bools).containsExactly(true)
+        assertThat(copy2.nums).containsExactly(111.0, 222.0)
+        assertThat(copy2.texts).containsExactly("aaa", "bbb")
     }
 
     @Test
@@ -120,7 +138,10 @@ class EntitySpecTest {
             bool = true,
             num = 123.0,
             text = "abc",
-            ref = dummyRef
+            ref = dummyRef,
+            bools = setOf(false),
+            nums = setOf(456.0, 789.0),
+            texts = setOf("def", "ghi")
         )
         val entityId = entity.identify()
 
@@ -135,7 +156,11 @@ class EntitySpecTest {
                     "text" to "abc".toReferencable(),
                     "ref" to dummyRef.toReferencable()
                 ),
-                collections = emptyMap()
+                collections = mapOf(
+                    "bools" to setOf(false.toReferencable()),
+                    "nums" to setOf(456.0.toReferencable(), 789.0.toReferencable()),
+                    "texts" to setOf("def".toReferencable(), "ghi".toReferencable())
+                )
             )
         )
         assertThat(Foo.deserialize(rawEntity)).isEqualTo(entity)
