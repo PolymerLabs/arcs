@@ -10,6 +10,7 @@
  */
 package arcs.jvm.host
 
+import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
@@ -17,11 +18,10 @@ import arcs.core.util.Time
 import arcs.jvm.util.JvmTime
 
 /**
- * An [ArcHost] that runs isolatable particles that are expected to have no platform
- * dependencies directly on Android APIs.
+ * An [ArcHost] that runs on Java VM platforms.
  */
-open class JvmProdHost(
+open class JvmHost(
     vararg particles: ParticleRegistration
-) : ProdHost(*particles) {
+) : AbstractArcHost(*particles) {
     override val platformTime: Time = JvmTime
 }

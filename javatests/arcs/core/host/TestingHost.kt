@@ -1,4 +1,4 @@
-package arcs.core.allocator
+package arcs.core.host
 
 import arcs.core.data.Plan
 import arcs.core.host.AbstractArcHost

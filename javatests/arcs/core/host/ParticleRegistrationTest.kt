@@ -1,7 +1,7 @@
 package arcs.core.host
 
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmProdHost
+import arcs.jvm.host.JvmHost
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -18,7 +18,7 @@ class ParticleRegistrationTest {
         var foundTestHost = false
 
         val hostRegistry = ExplicitHostRegistry()
-        hostRegistry.registerHost(JvmProdHost(::TestProdParticle.toRegistration()))
+        hostRegistry.registerHost(JvmHost(::TestProdParticle.toRegistration()))
         hostRegistry.registerHost(TestHost(::TestHostParticle.toRegistration()))
 
         hostRegistry.availableArcHosts().forEach { host: ArcHost ->

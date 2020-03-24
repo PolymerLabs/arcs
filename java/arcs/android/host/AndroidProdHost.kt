@@ -14,8 +14,8 @@ import android.content.Context
 import androidx.lifecycle.Lifecycle
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
-import arcs.jvm.host.AnnotationBasedJvmProdHost
-import arcs.jvm.host.JvmProdHost
+import arcs.jvm.host.combine
+import arcs.jvm.host.scanForParticles
 import arcs.sdk.android.storage.ServiceStoreFactory
 import java.util.ServiceLoader
 
@@ -25,9 +25,9 @@ import java.util.ServiceLoader
  * [ServiceLoader] to find additional particles.
  */
 class AndroidProdHost(
-    val context: Context,
-    val lifecycle: Lifecycle,
+    context: Context,
+    lifecycle: Lifecycle,
     vararg additionalParticles: ParticleRegistration
-) : AnnotationBasedJvmProdHost(JvmProdHost::class, additionalParticles = *additionalParticles) {
+) : AndroidHost(context, lifecycle, *combine(scanForParticles(), additionalParticles)) {
     override val activationFactory = ServiceStoreFactory(context, lifecycle)
 }

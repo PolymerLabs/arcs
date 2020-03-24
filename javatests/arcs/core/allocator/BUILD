@@ -24,7 +24,6 @@ arcs_kt_jvm_library(
     testonly = 1,
     srcs = [
         "AllocatorTestBase.kt",
-        "TestingHost.kt",
     ],
     deps = [
         "//java/arcs/core/allocator",  # buildcleaner: keep
