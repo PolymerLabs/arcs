@@ -123,7 +123,7 @@ class ArcHostHelperTest {
     @Test
     fun onStartCommand_callsOnStartArcStopArc_whenStarsAlign() = runBlockingTest {
         val personSchema = Schema(
-            listOf(SchemaName("Person")),
+            setOf(SchemaName("Person")),
             SchemaFields(mapOf("name" to Text), emptyMap()),
             "42"
         )

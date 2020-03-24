@@ -252,7 +252,7 @@ class CollectionIntegrationTest {
         }
 
         private val SCHEMA_A = Schema(
-            listOf(SchemaName("Person")),
+            setOf(SchemaName("Person")),
             SchemaFields(
                 singletons = mapOf(
                     "name" to FieldType.Text,
@@ -268,7 +268,7 @@ class CollectionIntegrationTest {
         )
 
         private val SCHEMA_B = Schema(
-            listOf(SchemaName("Person")),
+            setOf(SchemaName("Person")),
             SchemaFields(
                 singletons = mapOf(
                     "name" to FieldType.Text,

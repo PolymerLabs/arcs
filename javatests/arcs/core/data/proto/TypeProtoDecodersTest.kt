@@ -76,7 +76,7 @@ class TypeProtoDecodersTest {
         """.trimIndent()
         val entityType = parseTypeProtoText(entityTypeProto).decode()
         val expectedSchema = Schema(
-            names = listOf(SchemaName("Person")),
+            names = setOf(SchemaName("Person")),
             fields = SchemaFields(singletons=mapOf("name" to FieldType.Text), collections=mapOf()),
             hash = ""
         )

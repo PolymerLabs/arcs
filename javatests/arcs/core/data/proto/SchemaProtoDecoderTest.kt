@@ -29,7 +29,7 @@ class SchemaProtoDecoderTest {
         names:  "Object"
         """.trimIndent()
         val schema = decodeSchemaProtoText(schemaProtoText)
-        assertThat(schema.names).isEqualTo(listOf(SchemaName("Thing"), SchemaName("Object")))
+        assertThat(schema.names).containsExactly(SchemaName("Thing"), SchemaName("Object"))
     }
 
     @Test

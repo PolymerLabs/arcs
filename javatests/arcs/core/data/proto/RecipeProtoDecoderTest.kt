@@ -37,7 +37,7 @@ class RecipeProtoDecoderTest {
         "thing", Handle.Fate.CREATE, ramdiskStorageKey, TypeVariable("thing"), emptyList()
     )
     val thingSchema = Schema(
-            names = listOf(SchemaName("Thing")),
+            names = setOf(SchemaName("Thing")),
             fields = SchemaFields(singletons=mapOf("name" to FieldType.Text), collections=mapOf()),
             hash = ""
     )

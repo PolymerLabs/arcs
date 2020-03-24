@@ -33,6 +33,7 @@ data class ParcelableSchema(val actual: Schema) : Parcelable {
             val names = mutableListOf<String>()
                 .also { parcel.readStringList(it) }
                 .map { SchemaName(it) }
+                .toSet()
 
             val fields = requireNotNull(parcel.readSchemaFields()) {
                 "No SchemaFields found in Parcel"

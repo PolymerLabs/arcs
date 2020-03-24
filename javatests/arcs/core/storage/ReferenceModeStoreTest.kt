@@ -66,7 +66,7 @@ class ReferenceModeStoreTest {
         )
         baseStore = Store(StoreOptions(testKey, CountType()))
         schema = Schema(
-            listOf(SchemaName("person")),
+            setOf(SchemaName("person")),
             SchemaFields(
                 singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
                 collections = emptyMap()

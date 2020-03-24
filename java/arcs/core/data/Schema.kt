@@ -22,7 +22,7 @@ typealias Refinement = (data: RawEntity) -> Boolean
 typealias Query = (data: RawEntity, queryArgs: Any) -> Boolean
 
 data class Schema(
-    val names: List<SchemaName>,
+    val names: Set<SchemaName>,
     val fields: SchemaFields,
     /**
      * The hash code for the schema (note that this is not the same as this object's [hashCode]
@@ -46,7 +46,7 @@ data class Schema(
     fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
 
     data class Literal(
-        val names: List<SchemaName>,
+        val names: Set<SchemaName>,
         val fields: SchemaFields,
         val hash: String
     ) : arcs.core.common.Literal {

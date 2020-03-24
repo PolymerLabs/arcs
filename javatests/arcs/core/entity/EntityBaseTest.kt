@@ -231,7 +231,7 @@ class EntityBaseTest {
         assertThat(entity1).isNotEqualTo(
             EntityBase(
                 "Foo",
-                Schema(emptyList(), SchemaFields(emptyMap(), emptyMap()), "hash")
+                Schema(emptySet(), SchemaFields(emptyMap(), emptyMap()), "hash")
             )
         )
 

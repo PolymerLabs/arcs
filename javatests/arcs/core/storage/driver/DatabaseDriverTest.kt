@@ -382,7 +382,7 @@ class DatabaseDriverTest {
             dbName = "testdb"
         )
         private val DEFAULT_SCHEMA = Schema(
-            listOf(SchemaName("foo")),
+            setOf(SchemaName("foo")),
             SchemaFields(
                 singletons = mapOf("name" to FieldType.Text),
                 collections = mapOf("phone_numbers" to FieldType.Text)
