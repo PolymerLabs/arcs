@@ -22,7 +22,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * AndroidHandleManager will create a [HandleManager] instance, replacing the default
- * [ActivationFactoryFactory] with one that generates [ServiceStore] instances that can
+ * [ActivationFactory] with one that generates [ServiceStore] instances that can
  * communication with a running [StorageService].
  */
 @UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
