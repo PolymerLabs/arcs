@@ -354,7 +354,7 @@ export class Manifest {
     if (checkSubtype) {
       const [left, right] = Type.unwrapPair(candidate.type, resolvedType);
       if (left instanceof EntityType && right instanceof EntityType) {
-        return left.entitySchema.isAtleastAsSpecificAs(right.entitySchema);
+        return left.entitySchema.isAtLeastAsSpecificAs(right.entitySchema);
       }
       return false;
     }

@@ -49,9 +49,9 @@ export class TypeChecker {
       // This variable cannot be concretized without losing information.
       return candidate;
     }
-    if (candidate.canReadSubset.isAtleastAsSpecificAs(candidate.canWriteSuperset)) {
+    if (candidate.canReadSubset.isAtLeastAsSpecificAs(candidate.canWriteSuperset)) {
       // The resolution is still possible, but we may not have more information then the current candidate.
-      if (candidate.canWriteSuperset.isAtleastAsSpecificAs(candidate.canReadSubset)) {
+      if (candidate.canWriteSuperset.isAtLeastAsSpecificAs(candidate.canReadSubset)) {
         // The type bounds have 'met', they are equivalent and are the resolution.
         candidate.variable.resolution = candidate.canReadSubset;
       }
@@ -248,7 +248,7 @@ export class TypeChecker {
     if (writtenType == null || handleType.canReadSubset == null) {
       return true;
     }
-    if (writtenType.isAtleastAsSpecificAs(handleType.canReadSubset)) {
+    if (writtenType.isAtLeastAsSpecificAs(handleType.canReadSubset)) {
       return true;
     }
     return false;
@@ -262,7 +262,7 @@ export class TypeChecker {
     if (readType == null || handleType.canWriteSuperset == null) {
       return true;
     }
-    if (handleType.canWriteSuperset.isAtleastAsSpecificAs(readType)) {
+    if (handleType.canWriteSuperset.isAtLeastAsSpecificAs(readType)) {
       return true;
     }
     return false;
@@ -321,8 +321,8 @@ export class TypeChecker {
       return false;
     }
 
-    const leftIsSub = leftType.entitySchema.isAtleastAsSpecificAs(rightType.entitySchema);
-    const leftIsSuper = rightType.entitySchema.isAtleastAsSpecificAs(leftType.entitySchema);
+    const leftIsSub = leftType.entitySchema.isAtLeastAsSpecificAs(rightType.entitySchema);
+    const leftIsSuper = rightType.entitySchema.isAtLeastAsSpecificAs(leftType.entitySchema);
 
     if (leftIsSuper && leftIsSub) {
        return true;
