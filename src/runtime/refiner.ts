@@ -21,7 +21,7 @@ export enum Primitive {
   UNKNOWN = '~query_arg_type',
 }
 
-export enum AtleastAsSpecific {
+export enum AtLeastAsSpecific {
   YES,
   NO,
   UNKNOWN
@@ -122,7 +122,7 @@ export class Refinement {
   }
 
   // checks if a is at least as specific as b, returns null if can't be determined
-  static isAtleastAsSpecificAs(a: Refinement, b: Refinement): AtleastAsSpecific {
+  static isAtLeastAsSpecificAs(a: Refinement, b: Refinement): AtLeastAsSpecific {
     // Ensure there is a refinement to check with.
     a = a || new Refinement(new BooleanPrimitive(true));
     b = b || new Refinement(new BooleanPrimitive(true));
@@ -139,10 +139,10 @@ export class Refinement {
       // Find the range of values for the field name over which the refinement is valid.
       const rangeA = Range.fromExpression(a.expression, textToNum);
       const rangeB = Range.fromExpression(b.expression, textToNum);
-      return rangeA.isSubsetOf(rangeB) ? AtleastAsSpecific.YES : AtleastAsSpecific.NO;
+      return rangeA.isSubsetOf(rangeB) ? AtLeastAsSpecific.YES : AtLeastAsSpecific.NO;
     } catch (e) {
       console.warn(`Unable to ascertain if ${a} is at least as specific as ${b}.`);
-      return AtleastAsSpecific.UNKNOWN;
+      return AtLeastAsSpecific.UNKNOWN;
     }
   }
 

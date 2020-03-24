@@ -10,6 +10,7 @@
 import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
+import {AtLeastAsSpecific} from '../runtime/refiner.js';
 
 export class SchemaNode {
   schema: Schema;
@@ -81,7 +82,7 @@ export class SchemaGraph {
       node = new SchemaNode(schema, name);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
-          if (b.schema.isAtleastAsSpecificAs(a.schema)) {
+          if (b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
             a.descendants.add(b);  // b can be sliced to a
             b.parents = [];        // non-null to indicate this has parents; will be filled later
           }

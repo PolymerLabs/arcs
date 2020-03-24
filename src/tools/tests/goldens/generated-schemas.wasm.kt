@@ -84,6 +84,180 @@ typealias Gold_Data_Ref = GoldInternal1
 typealias Gold_Alias = GoldInternal1
 
 @Suppress("UNCHECKED_CAST")
+class Gold_AllPeople(
+    name: String = "",
+    age: Double = 0.0,
+    lastCall: Double = 0.0,
+    address: String = "",
+    favoriteColor: String = "",
+    birthDayMonth: Double = 0.0,
+    birthDayDOM: Double = 0.0
+) : WasmEntity {
+
+    var name = name
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var age = age
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var lastCall = lastCall
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var address = address
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var favoriteColor = favoriteColor
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var birthDayMonth = birthDayMonth
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+    var birthDayDOM = birthDayDOM
+        get() = field
+        private set(_value) {
+            field = _value
+        }
+
+    override var entityId = ""
+
+    fun copy(
+        name: String = this.name,
+        age: Double = this.age,
+        lastCall: Double = this.lastCall,
+        address: String = this.address,
+        favoriteColor: String = this.favoriteColor,
+        birthDayMonth: Double = this.birthDayMonth,
+        birthDayDOM: Double = this.birthDayDOM
+    ) = Gold_AllPeople(
+        name = name,
+        age = age,
+        lastCall = lastCall,
+        address = address,
+        favoriteColor = favoriteColor,
+        birthDayMonth = birthDayMonth,
+        birthDayDOM = birthDayDOM
+    )
+
+
+    fun reset() {
+      name = ""
+        age = 0.0
+        lastCall = 0.0
+        address = ""
+        favoriteColor = ""
+        birthDayMonth = 0.0
+        birthDayDOM = 0.0
+    }
+
+    override fun encodeEntity(): NullTermByteArray {
+        val encoder = StringEncoder()
+        encoder.encode("", entityId)
+        name.let { encoder.encode("name:T", name) }
+        age.let { encoder.encode("age:N", age) }
+        lastCall.let { encoder.encode("lastCall:N", lastCall) }
+        address.let { encoder.encode("address:T", address) }
+        favoriteColor.let { encoder.encode("favoriteColor:T", favoriteColor) }
+        birthDayMonth.let { encoder.encode("birthDayMonth:N", birthDayMonth) }
+        birthDayDOM.let { encoder.encode("birthDayDOM:N", birthDayDOM) }
+        return encoder.toNullTermByteArray()
+    }
+
+    override fun toString() =
+        "Gold_AllPeople(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
+
+    companion object : WasmEntitySpec<Gold_AllPeople> {
+
+
+        override fun decode(encoded: ByteArray): Gold_AllPeople? {
+            if (encoded.isEmpty()) return null
+
+            val decoder = StringDecoder(encoded)
+            val entityId = decoder.decodeText()
+            decoder.validate("|")
+
+            var name = ""
+            var age = 0.0
+            var lastCall = 0.0
+            var address = ""
+            var favoriteColor = ""
+            var birthDayMonth = 0.0
+            var birthDayDOM = 0.0
+            var i = 0
+            while (i < 7 && !decoder.done()) {
+                val _name = decoder.upTo(':').toUtf8String()
+                when (_name) {
+                    "name" -> {
+                        decoder.validate("T")
+                        name = decoder.decodeText()
+                    }
+                    "age" -> {
+                        decoder.validate("N")
+                        age = decoder.decodeNum()
+                    }
+                    "lastCall" -> {
+                        decoder.validate("N")
+                        lastCall = decoder.decodeNum()
+                    }
+                    "address" -> {
+                        decoder.validate("T")
+                        address = decoder.decodeText()
+                    }
+                    "favoriteColor" -> {
+                        decoder.validate("T")
+                        favoriteColor = decoder.decodeText()
+                    }
+                    "birthDayMonth" -> {
+                        decoder.validate("N")
+                        birthDayMonth = decoder.decodeNum()
+                    }
+                    "birthDayDOM" -> {
+                        decoder.validate("N")
+                        birthDayDOM = decoder.decodeNum()
+                    }
+                    else -> {
+                        // Ignore unknown fields until type slicing is fully implemented.
+                        when (decoder.chomp(1).toUtf8String()) {
+                            "T", "U" -> decoder.decodeText()
+                            "N" -> decoder.decodeNum()
+                            "B" -> decoder.decodeBool()
+                        }
+                        i--
+                    }
+                }
+                decoder.validate("|")
+                i++
+            }
+            val _rtn = Gold_AllPeople().copy(
+
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM
+
+            )
+            _rtn.entityId = entityId
+            return _rtn
+        }
+    }
+}
+
+
+@Suppress("UNCHECKED_CAST")
 class Gold_QCollection(
     name: String = "",
     age: Double = 0.0,
@@ -441,7 +615,6 @@ class Gold_Data(
         }
     }
 }
-
 
 
 abstract class AbstractGold : WasmParticleImpl() {
