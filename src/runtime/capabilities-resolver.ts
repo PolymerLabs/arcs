@@ -65,12 +65,13 @@ export class CapabilitiesResolver {
 
   constructor(public readonly options: CapabilitiesResolverOptions,
               creators?: StorageKeyCreatorInfo[]) {
-    this.creators = CapabilitiesResolver.getDefaultCreators();
     if (creators) {
-      this.creators.push(...creators);
-    }
-    for (const {protocol, capabilities, create} of CapabilitiesResolver.registeredCreators) {
-      this.creators.push({protocol, capabilities, create});
+      this.creators = [...creators];
+    } else {
+      this.creators = CapabilitiesResolver.getDefaultCreators();
+      for (const {protocol, capabilities, create} of CapabilitiesResolver.registeredCreators) {
+        this.creators.push({protocol, capabilities, create});
+      }
     }
   }
 

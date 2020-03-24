@@ -90,7 +90,8 @@ export class StorageKeyRecipeResolver {
       capabilities: Capabilities.persistentQueryable,
       create: options => new PersistentDatabaseStorageKey(options.unique(), options.schemaHash),
     };
-    const resolver = new CapabilitiesResolver({arcId: arc.id}, [dbKeyCreator]);
+    const resolver = new CapabilitiesResolver({arcId: arc.id},
+      [dbKeyCreator, ...CapabilitiesResolver.getDefaultCreators()]);
     for (const createHandle of recipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
       if (createHandle.type instanceof TypeVariable && !createHandle.type.isResolved()) {
         // TODO(mmandlis): should already be resolved.
