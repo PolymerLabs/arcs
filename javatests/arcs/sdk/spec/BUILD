@@ -10,8 +10,8 @@ TEST_SRCS = glob(["*Test.kt"])
 
 arcs_kt_jvm_test_suite(
     name = "spec",
-    package = "arcs.sdk.spec",
     srcs = TEST_SRCS,
+    package = "arcs.sdk.spec",
     deps = [
         ":schemas",
         ":schemas_test_harness",
