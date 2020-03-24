@@ -89,20 +89,28 @@ class EntitySpecTest {
             text = "abc",
             ref = ref1
         )
-        entity.identify()
 
-        val entityCopy = entity.copy(
+        // Copying an unidentified entity should give an exact copy of the entity.
+        assertThat(entity.copy()).isEqualTo(entity)
+
+        // Copying an identified entity should reset the ID.
+        entity.identify()
+        val copy1 = entity.copy()
+        assertThat(copy1.entityId).isNull()
+        assertThat(copy1).isNotEqualTo(entity)
+
+        // Copying an entity with replacement fields should overwrite those fields in the copy.
+        val copy2 = entity.copy(
             bool = false,
             num = 456.0,
             text = "xyz",
             ref = ref2
         )
-
-        assertThat(entityCopy.entityId).isNull()
-        assertThat(entityCopy.bool).isFalse()
-        assertThat(entityCopy.num).isEqualTo(456.0)
-        assertThat(entityCopy.text).isEqualTo("xyz")
-        assertThat(entityCopy.ref).isEqualTo(ref2)
+        assertThat(copy2.entityId).isNull()
+        assertThat(copy2.bool).isFalse()
+        assertThat(copy2.num).isEqualTo(456.0)
+        assertThat(copy2.text).isEqualTo("xyz")
+        assertThat(copy2.ref).isEqualTo(ref2)
     }
 
     @Test
