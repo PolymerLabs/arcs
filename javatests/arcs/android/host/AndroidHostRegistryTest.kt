@@ -26,7 +26,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class AndroidHostRegistryTest {
     private lateinit var context: Context
     private lateinit var service: TestReadingExternalHostService

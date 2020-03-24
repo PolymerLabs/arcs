@@ -46,7 +46,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @Suppress("UNCHECKED_CAST")
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class ReferenceModeStoreDatabaseIntegrationTest {
     @get:Rule

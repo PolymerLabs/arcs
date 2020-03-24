@@ -54,7 +54,7 @@ import kotlinx.coroutines.launch
  * [ServiceStore].
  */
 @ExperimentalCoroutinesApi
-@UseExperimental(FlowPreview::class)
+@OptIn(FlowPreview::class)
 class ServiceStoreFactory(
     private val context: Context,
     private val lifecycle: Lifecycle,
@@ -85,7 +85,7 @@ class ServiceStoreFactory(
 }
 
 /** Implementation of [ActiveStore] which pipes [ProxyMessage]s to and from the [StorageService]. */
-@UseExperimental(FlowPreview::class)
+@OptIn(FlowPreview::class)
 @ExperimentalCoroutinesApi
 class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val options: StoreOptions<Data, Op, ConsumerData>,

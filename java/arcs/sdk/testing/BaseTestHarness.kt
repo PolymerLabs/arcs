@@ -69,6 +69,7 @@ open class BaseTestHarness<P : Particle>(
         val flavor: HandleFlavor
     )
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val scope = TestCoroutineScope()
     private val handles = mutableMapOf<String, Handle>()
 

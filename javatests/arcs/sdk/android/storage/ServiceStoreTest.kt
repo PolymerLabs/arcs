@@ -44,7 +44,7 @@ import org.junit.runner.RunWith
 
 /** Unit-Tests for the [ServiceStore]. */
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class ServiceStoreTest {
     private lateinit var lifecycle: Lifecycle
     private val storeOptions = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(

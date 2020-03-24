@@ -112,7 +112,7 @@ class StorageServiceManagerBindingDelegate(
 }
 
 /** Object capable of managing a connection to the [StorageService]. */
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageServiceConnection(
     /**
      * Delegate which is responsible for actually initiating and tearing-down a binding to the

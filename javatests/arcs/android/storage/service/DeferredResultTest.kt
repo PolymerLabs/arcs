@@ -25,7 +25,7 @@ import org.junit.runner.RunWith
 
 /** Tests for [DeferredResult]. */
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class DeferredResultTest {
     @Test
     fun test_nullException_resolvesToTrue() = runBlockingTest {

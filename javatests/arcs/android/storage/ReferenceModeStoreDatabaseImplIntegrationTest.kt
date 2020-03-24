@@ -56,7 +56,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @Suppress("UNCHECKED_CAST", "EXPERIMENTAL_IS_NOT_ENABLED")
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class ReferenceModeStoreDatabaseImplIntegrationTest {
     @get:Rule

@@ -46,7 +46,7 @@ import org.junit.runner.RunWith
 
 /** Tests for [BindingContext]. */
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class, FlowPreview::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class BindingContextTest {
     private lateinit var store: Store<CrdtCount.Data, CrdtCount.Operation, Int>
     private lateinit var storageKey: StorageKey
