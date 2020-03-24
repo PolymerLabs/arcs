@@ -13,12 +13,10 @@ schema Foo
   texts: [Text]
   nums: [Number]
   bools: [Boolean]
-
-  // TODO: Collections of references.
-  // refs: [&Bar]
+  refs: [&Bar]
 
 particle EntitySpecParticle
-  foo: writes Foo {text, num, bool, ref, texts, nums, bools}
+  foo: writes Foo {text, num, bool, ref, texts, nums, bools, refs}
 
   // Used to obtain references to Bar entities.
   bars: reads writes [Bar {value}]

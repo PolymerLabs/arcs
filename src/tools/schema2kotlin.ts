@@ -46,7 +46,7 @@ function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?:
     'Number': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
     'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
     'Reference': {
-      type: `Reference<${opts.refClassName}>?`,
+      type: `Reference<${opts.refClassName}>`,
       decodeFn: null,
       defaultVal: 'null',
       schemaType: `FieldType.EntityRef(${quote(opts.refSchemaHash)})`,
@@ -60,6 +60,10 @@ function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?:
   if (opts.name === 'Reference') {
     assert(opts.refClassName, 'refClassName must be provided for References');
     assert(opts.refSchemaHash, 'refSchemaHash must be provided for References');
+    if (!opts.isCollection) {
+      // Singleton Reference fields are nullable.
+      info.type += '?';
+    }
   }
   if (opts.isCollection) {
     info.defaultVal = `emptySet<${info.type}>()`;
