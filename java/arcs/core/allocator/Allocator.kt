@@ -37,7 +37,6 @@ import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
-import arcs.core.util.Time
 import arcs.core.util.plus
 import arcs.core.util.traverse
 
@@ -64,7 +63,6 @@ fun fieldAsStrings(entity: RawEntity, field: String): List<String> {
  */
 class Allocator private constructor(
     private val hostRegistry: HostRegistry,
-    private val time: Time,
     private val collection: CollectionHandle<RawEntity>
 ) {
 
@@ -284,11 +282,10 @@ class Allocator private constructor(
 
         suspend fun create(
             hostRegistry: HostRegistry,
-            time: Time,
             handleManager: HandleManager
         ): Allocator {
             val collection = handleManager.rawEntityCollectionHandle(STORAGE_KEY, SCHEMA)
-            return Allocator(hostRegistry, time, collection)
+            return Allocator(hostRegistry, collection)
         }
     }
 }

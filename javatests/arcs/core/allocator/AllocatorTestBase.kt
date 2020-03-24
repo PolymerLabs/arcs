@@ -94,7 +94,7 @@ open class AllocatorTestBase {
         pureHost = pureHost()
 
         hostRegistry = hostRegistry()
-        allocator = Allocator.create(hostRegistry, TimeImpl(), HandleManager(TimeImpl()))
+        allocator = Allocator.create(hostRegistry, HandleManager(TimeImpl()))
 
         readPersonParticle =
             requireNotNull(PersonPlan.particles.find { it.particleName == "ReadPerson" }) {
@@ -454,7 +454,7 @@ open class AllocatorTestBase {
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
-        val allocator2 = Allocator.create(hostRegistry, TimeImpl(), HandleManager(TimeImpl()))
+        val allocator2 = Allocator.create(hostRegistry, HandleManager(TimeImpl()))
 
         allocator2.stopArc(arcId)
 
