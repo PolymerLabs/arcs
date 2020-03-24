@@ -49,7 +49,6 @@ class GoldInternal1(
             SchemaRegistry.register(this)
         }
 
-        // TODO: only handles singletons for now
         override fun deserialize(data: RawEntity) = GoldInternal1().apply { deserialize(data) }
     }
 }
@@ -149,7 +148,6 @@ class Gold_QCollection(
             SchemaRegistry.register(this)
         }
 
-        // TODO: only handles singletons for now
         override fun deserialize(data: RawEntity) = Gold_QCollection().apply { deserialize(data) }
     }
 }
@@ -188,7 +186,6 @@ class Gold_Collection(
             SchemaRegistry.register(this)
         }
 
-        // TODO: only handles singletons for now
         override fun deserialize(data: RawEntity) = Gold_Collection().apply { deserialize(data) }
     }
 }
@@ -259,7 +256,6 @@ class Gold_Data(
             SchemaRegistry.register(this)
         }
 
-        // TODO: only handles singletons for now
         override fun deserialize(data: RawEntity) = Gold_Data().apply { deserialize(data) }
     }
 }

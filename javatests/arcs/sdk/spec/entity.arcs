@@ -1,0 +1,25 @@
+meta
+  namespace: arcs.sdk.spec
+
+schema Bar
+  value: Text
+
+schema Foo
+  text: Text
+  num: Number
+  bool: Boolean
+  ref: &Bar
+
+  // TODO: Primitive collections
+  // texts: [Text]
+  // nums: [Number]
+  // bools: [Boolean]
+
+  // TODO: Collections of references.
+  refs: [&Bar]
+
+particle EntitySpecParticle
+  foo: writes Foo {text, num, bool, ref}
+
+  // Used to obtain references to Bar entities.
+  bars: reads writes [Bar {value}]
