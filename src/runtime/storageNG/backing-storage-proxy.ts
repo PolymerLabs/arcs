@@ -18,13 +18,14 @@ import {Handle} from './handle.js';
 import {Type} from '../type.js';
 import {assert} from '../../platform/assert-web.js';
 import {BiMap} from '../bimap.js';
+import {noAwait} from '../util.js';
 
 export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<CRDTTypeRecord> {
-  private storageProxies = new BiMap<string, StorageProxy<CRDTTypeRecord>>();
-  private callbacks: Dictionary<ProxyCallback<CRDTTypeRecord>> = {};
-  private storageEndpoint: StorageCommunicationEndpoint<T>;
-  private storageKey: string;
-  private type: Type;
+  private readonly storageProxies = new BiMap<string, StorageProxy<CRDTTypeRecord>>();
+  private readonly callbacks: Dictionary<ProxyCallback<CRDTTypeRecord>> = {};
+  private readonly storageEndpoint: StorageCommunicationEndpoint<T>;
+  private readonly storageKey: string;
+  private readonly type: Type;
 
   constructor(storeProvider: StorageCommunicationEndpointProvider<T>, type: Type, storageKey: string) {
     this.storageEndpoint = storeProvider.getStorageEndpoint(this);
@@ -64,11 +65,11 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCom
     this.storageProxies.getL(muxId).registerHandle(handle);
   }
 
-  async onMessage(message: ProxyMessage<T>): Promise<boolean> {
+  async onMessage(message: ProxyMessage<T>): Promise<void> {
     assert(message.muxId != null);
     if (!this.callbacks[message.muxId]) {
       throw new Error('callback has not been set');
     }
-    return this.callbacks[message.muxId](message);
+    noAwait(this.callbacks[message.muxId](message));
   }
 }

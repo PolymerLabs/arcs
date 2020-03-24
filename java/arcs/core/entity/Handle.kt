@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage.api
+package arcs.core.entity
 
 /** Base interface for all handle classes. */
 interface Handle {
@@ -25,12 +25,19 @@ interface Handle {
     suspend fun close()
 }
 
-interface ReadableHandle<T> : Handle {
-    suspend fun onUpdate(action: (T) -> Unit)
+interface ReadableHandle<UpdateType, E : Entity> : Handle {
+    suspend fun onUpdate(action: suspend (UpdateType) -> Unit)
+
+    /**
+     * Creates and returns a [Reference] to the given entity.
+     *
+     * The entity must already be stored and present in the handle before calling this method.
+     */
+    suspend fun createReference(entity: E): Reference<E>
 }
 
 /** A singleton handle with read access. */
-interface ReadSingletonHandle<T : Entity> : ReadableHandle<T?> {
+interface ReadSingletonHandle<T : Entity> : ReadableHandle<T?, T> {
     /** Returns the value of the singleton. */
     suspend fun fetch(): T?
 }
@@ -48,7 +55,7 @@ interface WriteSingletonHandle<T : Entity> : Handle {
 interface ReadWriteSingletonHandle<T : Entity> : ReadSingletonHandle<T>, WriteSingletonHandle<T>
 
 /** A collection handle with read access. */
-interface ReadCollectionHandle<T : Entity> : ReadableHandle<Set<T>> {
+interface ReadCollectionHandle<T : Entity> : ReadableHandle<Set<T>, T> {
     /** The number of elements in the collection. */
     suspend fun size(): Int
 

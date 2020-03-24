@@ -73,9 +73,7 @@ describe('StorageProxy', async () => {
       actor: 'A',
       clock: {A: 2}
     };
-    const result = await storageProxy.onMessage(
-        {type: ProxyMessageType.Operations, operations: [op], id: 1});
-    assert.isTrue(result);
+    await storageProxy.onMessage({type: ProxyMessageType.Operations, operations: [op], id: 1});
     await storageProxy.idle();
     // Only handle2 is notified as the proxy is not synchronized.
     assert.isNull(handle1.lastUpdate);

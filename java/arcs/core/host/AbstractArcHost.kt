@@ -12,11 +12,12 @@ package arcs.core.host
 
 import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
+import arcs.core.entity.Handle
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
-import arcs.core.storage.api.Handle
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.Stores
 import arcs.core.util.LruCacheMap
@@ -51,8 +52,6 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
 
     override val hostId = this::class.className()
-
-    private val storeMap: Stores = Stores()
 
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
@@ -358,21 +357,19 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         handleSpec: Plan.HandleConnection,
         holder: HandleHolder
     ) = when (handleSpec.type) {
-        is SingletonType<*> ->
+        is SingletonType<*>, is EntityType ->
             arcHostContext.entityHandleManager.createSingletonHandle(
                 handleSpec.mode,
                 handleName,
                 holder.getEntitySpec(handleName),
-                handleSpec.storageKey,
-                handleSpec.type.toSchema()
+                handleSpec.storageKey
             )
         is CollectionType<*> ->
             arcHostContext.entityHandleManager.createCollectionHandle(
                 handleSpec.mode,
                 handleName,
                 holder.getEntitySpec(handleName),
-                handleSpec.storageKey,
-                handleSpec.type.toSchema()
+                handleSpec.storageKey
             )
         else -> throw IllegalArgumentException("Unknown type ${handleSpec.type}")
     }.also { holder.setHandle(handleName, it) }
@@ -424,7 +421,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
 
         // TODO: wait for all stores linked to handles to reach idle() state?
         context.particleState = ParticleState.Stopped
-        cleanupHandles(context.particle.handles)
+        cleanupHandles(context)
     }
 
     /**
@@ -438,9 +435,8 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     /**
      * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
      */
-    private suspend fun cleanupHandles(handles: HandleHolder) {
-        // TODO: disconnect/unregister handles
-        handles.reset()
+    private suspend fun cleanupHandles(context: ParticleContext) {
+        context.particle.handles.reset()
     }
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =
@@ -450,7 +446,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
      */
     open fun entityHandleManager(arcId: String) = EntityHandleManager(
-        HandleManager(platformTime, storeMap),
+        HandleManager(platformTime, singletonStores),
         arcId,
         hostId
     )
@@ -464,5 +460,17 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         return particleConstructors[identifier]?.invoke() ?: throw IllegalArgumentException(
             "Particle $identifier not found."
         )
+    }
+
+    companion object {
+        /**
+         * Shared [Stores] instance. This is used to share [Store]s among multiple [ArcHost]s or
+         * even across different arcs. On Android, [StorageService] runs as a single process so all
+         * [ArcHost]s share the same Storage layer and this singleton is not needed, but on other
+         * platforms the [Stores] object provides Android-like functionality. If your platform
+         * supports its own [Service]-level analogue like Android, override this method to return
+         * a new instance each time.
+         */
+        private val singletonStores = Stores()
     }
 }

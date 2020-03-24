@@ -459,8 +459,6 @@ export class DescriptionFormatter {
       // Choose connections with patterns (manifest-based or dynamic).
       const connectionSpec = connection.spec;
       const particleDescription = this.particleDescriptions.find(desc => desc._particle === connection.particle);
-      // TODO(sjmiles): added particleDescription null-check for
-      // the moment, but we need to root cause this problem
       return !!connectionSpec.pattern ||
         (!!particleDescription && !!particleDescription._connections[connection.name].pattern);
     });

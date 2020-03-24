@@ -40,5 +40,9 @@ sealed class Ttl(count: Int, val isInfinite: Boolean = false) {
     data class Minutes(val count: Int) : Ttl(count)
     data class Hours(val count: Int) : Ttl(count)
     data class Days(val count: Int) : Ttl(count)
-    object Infinite : Ttl(-1, true)
+    object Infinite : Ttl(TTL_INFINITE.toInt(), true)
+
+    companion object {
+        const val TTL_INFINITE = -1.0
+    }
 }

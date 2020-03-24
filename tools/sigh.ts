@@ -76,6 +76,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   build: [peg, build],
   watch: [watch],
   buildifier: [buildifier],
+  ktlint: [ktlint],
   lint: [check, peg, build, lint, tslint, ktlint, cycles, buildifier],
   cycles: [peg, build, cycles],
   check: [check],

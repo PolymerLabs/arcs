@@ -14,21 +14,22 @@ import arcs.core.common.Id
 import arcs.core.common.toArcId
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
-import arcs.core.data.Schema
+import arcs.core.entity.Entity
+import arcs.core.entity.EntitySpec
+import arcs.core.entity.Handle
+import arcs.core.entity.ReadCollectionHandle
+import arcs.core.entity.ReadSingletonHandle
+import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.Reference
+import arcs.core.entity.WriteCollectionHandle
+import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.Handle as StorageHandle
 import arcs.core.storage.StorageKey
-import arcs.core.storage.api.Entity
-import arcs.core.storage.api.EntitySpec
-import arcs.core.storage.api.Handle
-import arcs.core.storage.api.ReadCollectionHandle
-import arcs.core.storage.api.ReadSingletonHandle
-import arcs.core.storage.api.ReadWriteCollectionHandle
-import arcs.core.storage.api.ReadWriteSingletonHandle
-import arcs.core.storage.api.WriteCollectionHandle
-import arcs.core.storage.api.WriteSingletonHandle
 import arcs.core.storage.handle.CollectionHandle
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.handle.SingletonHandle
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 
 /**
  * Wraps a [HandleManager] and creates [Entity] handles based on [HandleMode], such as
@@ -50,7 +51,6 @@ class EntityHandleManager(
      * @property mode indicates whether the handle is allowed to read or write
      * @property name name for the handle
      * @property storageKey a [StorageKey]
-     * @property schema the [Schema] for this [StorageKey]
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
@@ -59,11 +59,10 @@ class EntityHandleManager(
         name: String,
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
-        schema: Schema,
         idGenerator: Id.Generator = Id.Generator.newSession()
     ) = handleManager.rawEntitySingletonHandle(
         storageKey,
-        schema,
+        entitySpec.SCHEMA,
         name = idGenerator.newChildId(
             idGenerator.newChildId(arcId.toArcId(), hostId),
             name
@@ -83,7 +82,6 @@ class EntityHandleManager(
      * @property mode indicates whether the handle is allowed to read or write
      * @property name name for the handle
      * @property storageKey a [StorageKey]
-     * @property schema the [Schema] for this [StorageKey]
      * @property sender block used to execute callback lambdas
      * @property idGenerator used to generate unique IDs for newly stored entities.
      */
@@ -92,23 +90,22 @@ class EntityHandleManager(
         name: String,
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
-        schema: Schema,
         idGenerator: Id.Generator = Id.Generator.newSession()
     ) = handleManager.rawEntityCollectionHandle(
             storageKey,
-            schema,
+            entitySpec.SCHEMA,
             name = idGenerator.newChildId(
                 idGenerator.newChildId(arcId.toArcId(), hostId),
                 name
             ).toString()
         ).let {
-        when (mode) {
-            HandleMode.Read -> ReadCollectionHandleAdapter(entitySpec, it)
-            HandleMode.Write -> WriteCollectionHandleAdapter<T>(it, idGenerator)
-            HandleMode.ReadWrite ->
-                ReadWriteCollectionHandleAdapter(entitySpec, it, idGenerator)
+            when (mode) {
+                HandleMode.Read -> ReadCollectionHandleAdapter(entitySpec, it)
+                HandleMode.Write -> WriteCollectionHandleAdapter<T>(it, idGenerator)
+                HandleMode.ReadWrite ->
+                    ReadWriteCollectionHandleAdapter(entitySpec, it, idGenerator)
+            }
         }
-    }
 }
 
 /** A concrete readable singleton handle implementation. */
@@ -170,8 +167,25 @@ private class ReadSingletonOperationsImpl<T : Entity>(
 ) : ReadSingletonOperations<T> {
     override suspend fun fetch() = storageHandle.fetch()?.let { entitySpec.deserialize(it) }
 
-    override suspend fun onUpdate(action: (T?) -> Unit) = storageHandle.addOnUpdate {
+    override suspend fun onUpdate(action: suspend (T?) -> Unit) = storageHandle.addOnUpdate {
         action(it?.let { entitySpec.deserialize(it) })
+    }
+
+    override suspend fun createReference(entity: T): Reference<T> {
+        val entityId = requireNotNull(entity.entityId) {
+            "Entity must have an ID before it can be referenced."
+        }
+        val storageKey = requireNotNull(storageHandle.storageKey as? ReferenceModeStorageKey) {
+            "ReferenceModeStorageKey required in order to create references."
+        }
+        if (fetch()?.entityId != entityId) {
+            throw IllegalArgumentException("Entity is not stored in the Singleton.")
+        }
+
+        return Reference(
+            entitySpec,
+            storageHandle.createReference(entity.serialize(), storageKey.backingKey)
+        )
     }
 }
 
@@ -204,8 +218,25 @@ private class ReadCollectionOperationsImpl<T : Entity>(
 
     override suspend fun fetchAll() = storageHandle.fetchAll().adaptValues()
 
-    override suspend fun onUpdate(action: (Set<T>) -> Unit) = storageHandle.addOnUpdate {
+    override suspend fun onUpdate(action: suspend (Set<T>) -> Unit) = storageHandle.addOnUpdate {
         action(it.adaptValues())
+    }
+
+    override suspend fun createReference(entity: T): Reference<T> {
+        val entityId = requireNotNull(entity.entityId) {
+            "Entity must have an ID before it can be referenced."
+        }
+        val storageKey = requireNotNull(storageHandle.storageKey as? ReferenceModeStorageKey) {
+            "ReferenceModeStorageKey required in order to create references."
+        }
+        if (!fetchAll().any { it.entityId == entityId }) {
+            throw IllegalArgumentException("Entity is not stored in the Collection.")
+        }
+
+        return Reference(
+            entitySpec,
+            storageHandle.createReference(entity.serialize(), storageKey.backingKey)
+        )
     }
 }
 
@@ -249,11 +280,16 @@ abstract class BaseHandleAdapter(
 
 /** Delegate this interface in a concrete singleton handle impl to mixin read operations. */
 private interface UpdateOperations<T> {
-    suspend fun onUpdate(action: (T) -> Unit)
+    suspend fun onUpdate(action: suspend (T) -> Unit)
+}
+
+private interface ReferenceOperations<T : Entity> {
+    suspend fun createReference(entity: T): Reference<T>
 }
 
 /** Delegate this interface in a concrete singleton handle impl to mixin read operations. */
-private interface ReadSingletonOperations<T : Entity> : UpdateOperations<T?> {
+private interface ReadSingletonOperations<T : Entity> :
+    UpdateOperations<T?>, ReferenceOperations<T> {
     suspend fun fetch(): T?
 }
 
@@ -264,7 +300,8 @@ private interface WriteSingletonOperations<T : Entity> {
 }
 
 /** Delegate this interface in a concrete collection handle impl to mixin read operations. */
-private interface ReadCollectionOperations<T : Entity> : UpdateOperations<Set<T>> {
+private interface ReadCollectionOperations<T : Entity> :
+    UpdateOperations<Set<T>>, ReferenceOperations<T> {
     suspend fun size(): Int
     suspend fun isEmpty(): Boolean
     suspend fun fetchAll(): Set<T>

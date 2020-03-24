@@ -8,6 +8,6 @@ arcs_kt_library(
     name = "api",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/core/storage/api",
+        "//java/arcs/core/entity",
     ],
 )

@@ -15,8 +15,8 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.data.EntityType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Dereferencer
-import arcs.core.storage.EntityActivationFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
@@ -36,7 +36,7 @@ import kotlinx.coroutines.withContext
 class RawEntityDereferencer(
     private val schema: Schema,
     private val stores: Stores = Stores(),
-    private val entityActivationFactory: EntityActivationFactory? = null
+    private val entityActivationFactory: ActivationFactory? = null
 ) : Dereferencer<RawEntity> {
     private val log = TaggedLog { "Dereferencer(${schema.names})" }
 

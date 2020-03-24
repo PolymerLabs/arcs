@@ -12,4 +12,4 @@
 package arcs.sdk
 
 /** A reference to an [Entity]. */
-typealias Reference<T> = arcs.core.data.Reference<T>
+typealias Reference<T> = arcs.core.entity.Reference<T>

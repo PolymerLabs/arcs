@@ -1098,7 +1098,6 @@ describe('particle-api', () => {
     const [innerArc] = arc.findInnerArcs(transformationParticle);
 
     const sessionId = innerArc.idGenerator.currentSessionIdForTesting;
-    // TODO(sjmiles): host slot id generation has changed
     assert.strictEqual(innerArc.activeRecipe.toString(), `recipe
   slot0: slot 'rootslotid-root___!${sessionId}:demo:inner2:slot1'
   slot1: slot '!${sessionId}:demo:inner2:slot2'

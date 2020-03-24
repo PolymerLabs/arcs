@@ -98,8 +98,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
         this.doneBusy();
       }
     };
-    // TODO(sjmiles): superclass uses Promise.resolve(),
-    // but here use a short timeout for a wider debounce
+    // superclass uses Promise.resolve(), we use a short timeout here for a wider debounce
     return setTimeout(done, 10);
   }
 
@@ -121,7 +120,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
     if (added) {
       //console.log('update.added:', JSON.stringify(added, null, '  '));
       const prop = (this.props[name] || []).concat(added);
-      // TODO(sjmiles): generally improper to set `this._props` directly, this is a special case
+      // generally improper to set `this._props` directly, this is a special case
       this._props[name] = prop;
       this._setProps({[name]: prop});
     }
@@ -131,7 +130,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
       if (Array.isArray(prop)) {
         const removedList = Array.isArray(removed) ? removed : [removed];
         removedList.forEach(removed => {
-          // TODO(sjmiles): linear search is inefficient
+          // linear search is inefficient
           const index = prop.findIndex(entry => this.idFor(entry) === this.idFor(removed));
           if (index >= 0) {
             prop.splice(index, 1);

@@ -2,6 +2,7 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_library",
     "arcs_kt_jvm_test_suite",
+    "arcs_kt_plan",
     "arcs_kt_schema",
 )
 
@@ -16,8 +17,10 @@ arcs_kt_jvm_test_suite(
     deps = [
         ":particle",  # buildcleaner: keep
         ":schemas",
+        "//java/arcs/core/common",
+        "//java/arcs/core/data",
+        "//java/arcs/core/entity",
         "//java/arcs/core/host",
-        "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/keys",
@@ -40,6 +43,16 @@ arcs_kt_schema(
     ],
 )
 
+arcs_kt_plan(
+    name = "plans",
+    srcs = [
+        "person.arcs",
+    ],
+    deps = [
+        ":schemas",
+    ],
+)
+
 arcs_kt_jvm_library(
     name = "particle",
     testonly = 1,
@@ -48,12 +61,15 @@ arcs_kt_jvm_library(
         exclude = ["*Test.kt"],
     ),
     deps = [
+        ":plans",
         ":schemas",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
+        "//java/arcs/core/util",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//third_party/java/auto:auto_service",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

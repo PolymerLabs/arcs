@@ -62,11 +62,13 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 
+    val storageKey = storageProxy.storageKey
+
     /** Whether this handle can no longer be operated on .*/
     var closed = false
 
     /** Add an action to be performed whenever the contents of the [Handle]'s data changes. */
-    suspend fun addOnUpdate(action: (value: T) -> Unit) {
+    suspend fun addOnUpdate(action: suspend (value: T) -> Unit) {
         storageProxy.addOnUpdate(name, action)
     }
 

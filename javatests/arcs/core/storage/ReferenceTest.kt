@@ -91,7 +91,6 @@ class ReferenceTest {
         val job = Job()
         val me = directCollection.on(ProxyCallback {
             if (it is ProxyMessage.ModelUpdate<*, *, *>) job.complete()
-            true
         })
         assertThat(directCollection.onProxyMessage(ProxyMessage.SyncRequest(me)))
             .isTrue()

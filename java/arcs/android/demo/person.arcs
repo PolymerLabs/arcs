@@ -1,0 +1,23 @@
+meta
+  namespace: arcs.android.demo
+
+schema Person
+  name: Text
+
+particle ReadPerson in 'arcs.android.demo.DemoService.ReadPerson'
+  person: reads Person {name}
+
+particle WritePerson in 'arcs.android.demo.DemoService.WritePerson'
+  person: writes Person {name}
+
+@trigger
+  launch startup
+  arcId personArc
+recipe PersonRecipe
+  recipePerson: create
+
+  WritePerson
+    person: writes recipePerson
+
+  ReadPerson
+    person: reads recipePerson

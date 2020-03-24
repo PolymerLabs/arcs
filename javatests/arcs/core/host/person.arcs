@@ -7,14 +7,25 @@ schema Person
 particle ReadPerson in 'arcs.core.host.ReadPerson'
   person: reads Person
 
+particle PurePerson in 'arcs.core.host.PurePerson'
+  inputPerson: reads Person
+  outputPerson: writes Person
+
 particle WritePerson in 'arcs.core.host.WritePerson'
   person: writes Person
 
-recipe PersonRecipe
-  recipePerson: create
+recipe Person
+  inputPerson: create 'inputPerson'
+  outputPerson: create 'outputPerson'
 
   WritePerson
-    person: writes recipePerson
+    person: writes inputPerson
+
+  PurePerson
+    inputPerson: reads inputPerson
+    outputPerson: writes outputPerson
 
   ReadPerson
-    person: reads recipePerson
+    person: reads outputPerson
+
+

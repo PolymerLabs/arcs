@@ -47,7 +47,7 @@ describe('recipe2plan', () => {
 
       assert.notInclude(actual, 'import arcs.core.data.*');
     });
-    it('creates valid types that refer to registered Schemas', async () => {
+    it('creates valid singleton entity types with schemas', async () => {
       const manifest = await Manifest.parse(`\
      particle A
        data: writes Thing {num: Number}
@@ -60,10 +60,14 @@ describe('recipe2plan', () => {
       await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
       const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
 
-      assert.include(actual, 'EntityType(A_Data.SCHEMA)');
-      assert.notInclude(actual, 'SingletonType');
+      assert.include(actual, 'A_Data.SCHEMA');
+      assert.include(actual, 'EntityType');
+      assert.notInclude(actual, 'ReferenceType');
+      assert.include(actual, 'SingletonType');
+      assert.notInclude(actual, 'CollectionType');
+      assert.isBelow(actual.indexOf('SingletonType'), actual.indexOf('EntityType'));
     });
-    it('creates valid types that are derived from other types (via nesting)', async () => {
+    it('creates valid collection entity types with schemas', async () => {
       const manifest = await Manifest.parse(`\
      particle A
        data: writes [Thing {num: Number}]
@@ -76,11 +80,14 @@ describe('recipe2plan', () => {
       await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
       const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
 
-      assert.include(actual, 'EntityType(A_Data.SCHEMA)');
+      assert.include(actual, 'A_Data.SCHEMA');
+      assert.include(actual, 'EntityType');
+      assert.notInclude(actual, 'ReferenceType');
       assert.notInclude(actual, 'SingletonType');
       assert.include(actual, 'CollectionType');
+      assert.isBelow(actual.indexOf('CollectionType'), actual.indexOf('EntityType'));
     });
-    it('creates valid types that are derived from a few other types (via lots of nesting)', async () => {
+    it('creates valid collection reference types with schemas', async () => {
       const manifest = await Manifest.parse(`\
      particle A
        data: writes [&Thing {num: Number}]
@@ -93,10 +100,12 @@ describe('recipe2plan', () => {
       await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
       const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
 
-      assert.include(actual, 'EntityType(A_Data.SCHEMA)');
+      assert.include(actual, 'A_Data.SCHEMA');
+      assert.include(actual, 'EntityType');
+      assert.include(actual, 'ReferenceType');
       assert.notInclude(actual, 'SingletonType');
       assert.include(actual, 'CollectionType');
-      assert.include(actual, 'ReferenceType');
+      assert.isBelow(actual.indexOf('CollectionType'), actual.indexOf('ReferenceType'));
     });
     it('can create Infinite Ttl objects', () => {
       const ttl = Ttl.infinite;
@@ -186,6 +195,41 @@ describe('recipe2plan', () => {
       const keys = collectOccurrences(plan, 'CreateableStorageKey("', '")');
       assert.lengthOf(keys, 2);
       assert.deepStrictEqual(keys[0], keys[1]);
+    });
+    it('creates particles in the same order as the recipe and not the manifest', async () => {
+      const manifest = await Manifest.parse(`\
+     particle D in 'particle.D'
+       data: reads Thing {num: Number}
+     particle C in 'particle.C'
+       data: writes Thing {num: Number}
+     particle B in 'particle.B'
+       data: reads Thing {num: Number}
+     particle A in 'particle.A'
+       data: writes Thing {num: Number}
+       
+     recipe R
+       h1: create persistent 'id-1'
+       h2: create persistent 'id-2'
+       A
+         data: writes h2
+       B
+         data: reads h2
+       C
+         data: writes h1
+       D
+         data: reads h1`);
+      const recipeResolver = new StorageKeyRecipeResolver(manifest);
+      const recipes = await recipeResolver.resolve();
+      const generator = new PlanGenerator(recipes, 'blah');
+      const plan = await generator.generate();
+
+      assert.include(plan, 'particle.A');
+      assert.include(plan, 'particle.B');
+      assert.include(plan, 'particle.C');
+      assert.include(plan, 'particle.D');
+      assert.isBelow(plan.indexOf('particle.A'), plan.indexOf('particle.B'));
+      assert.isBelow(plan.indexOf('particle.B'), plan.indexOf('particle.C'));
+      assert.isBelow(plan.indexOf('particle.C'), plan.indexOf('particle.D'));
     });
   });
 });

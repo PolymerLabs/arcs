@@ -26,6 +26,7 @@ PARTICLE_TEST_SRCS = glob(
 arcs_kt_schema(
     name = "schemas",
     srcs = ["manifest.arcs"],
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(

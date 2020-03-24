@@ -14,7 +14,6 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
 import arcs.core.storage.handle.Stores
 import arcs.sdk.android.storage.service.ConnectionFactory
-import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.Dispatchers
 
 open class TestExternalArcHostService(val arcHost: TestingAndroidHost) : Service() {

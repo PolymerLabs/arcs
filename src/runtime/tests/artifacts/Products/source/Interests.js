@@ -37,7 +37,7 @@ defineParticle(({UiParticle, html}) => {
     }
     shouldRender({list, person}) {
       if (list && person) {
-        // TODO(sjmiles): simulate data fetch that only resolves for someone with Interest data
+        // simulate data fetch that only resolves for someone with Interest data
         return (person.name === 'Claire');
       }
       return false;

@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage.api
+package arcs.core.entity
 
 import arcs.core.common.Id
 import arcs.core.common.Referencable
@@ -74,21 +74,33 @@ open class EntityBase(
         ?: throw InvalidFieldNameException(entityClassName, field, isCollection = true)
 
     /** Checks that the given value is of the expected type. */
-    private fun checkType(field: String, value: Any?, type: FieldType) = when (type) {
-        is FieldType.Primitive -> when (type.primitiveType) {
-            PrimitiveType.Boolean -> require(value is Boolean) {
-                "Expected Boolean for $entityClassName.$field, but received $value."
-            }
-            PrimitiveType.Number -> require(value is Double) {
-                "Expected Double for $entityClassName.$field, but received $value."
-            }
-            PrimitiveType.Text -> require(value is String) {
-                "Expected String for $entityClassName.$field, but received $value."
-            }
+    private fun checkType(field: String, value: Any?, type: FieldType) {
+        if (value == null) {
+            // Null values always pass.
+            return
         }
-        is FieldType.EntityRef -> {
-            // TODO: Handle References.
-            throw NotImplementedError("References aren't supported yet.")
+
+        return when (type) {
+            is FieldType.Primitive -> when (type.primitiveType) {
+                PrimitiveType.Boolean -> require(value is Boolean) {
+                    "Expected Boolean for $entityClassName.$field, but received $value."
+                }
+                PrimitiveType.Number -> require(value is Double) {
+                    "Expected Double for $entityClassName.$field, but received $value."
+                }
+                PrimitiveType.Text -> require(value is String) {
+                    "Expected String for $entityClassName.$field, but received $value."
+                }
+            }
+            is FieldType.EntityRef -> {
+                require(value is Reference<*>) {
+                    "Expected Reference for $entityClassName.$field, but received $value."
+                }
+                require(value.schemaHash == type.schemaHash) {
+                    "Expected Reference type to have schema hash ${type.schemaHash} but had " +
+                        "schema hash ${value.schemaHash}."
+                }
+            }
         }
     }
 
@@ -184,10 +196,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
         PrimitiveType.Number -> (value as Double).toReferencable()
         PrimitiveType.Text -> (value as String).toReferencable()
     }
-    is FieldType.EntityRef -> {
-        // TODO: Handle References.
-        throw NotImplementedError("References aren't supported yet.")
-    }
+    is FieldType.EntityRef -> (value as Reference<*>).toReferencable()
 }
 
 private fun fromReferencable(referencable: Referencable, type: FieldType): Any = when (type) {
@@ -199,8 +208,5 @@ private fun fromReferencable(referencable: Referencable, type: FieldType): Any =
             "ReferencablePrimitive encoded an unexpected null value."
         }
     }
-    is FieldType.EntityRef -> {
-        // TODO: Handle References.
-        throw NotImplementedError("References aren't supported yet.")
-    }
+    is FieldType.EntityRef -> Reference.fromReferencable(referencable, type.schemaHash)
 }

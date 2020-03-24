@@ -9,6 +9,7 @@ licenses(["notice"])
 arcs_kt_schema(
     name = "schemas",
     srcs = ["HelloWorld.arcs"],
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(

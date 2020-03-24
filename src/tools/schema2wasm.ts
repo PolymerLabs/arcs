@@ -13,7 +13,7 @@ import {Schema2Kotlin} from './schema2kotlin.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile'],
-  boolean: ['cpp', 'kotlin', 'update', 'wasm', 'help'],
+  boolean: ['cpp', 'kotlin', 'update', 'wasm', 'test_harness', 'help'],
   alias: {c: 'cpp', k: 'kotlin', d: 'outdir', f: 'outfile', u: 'update'},
   default: {outdir: '.'}
 });
@@ -30,6 +30,7 @@ Options
   --cpp, -c      generate C++ code
   --kotlin, -k   generate Kotlin code
   --wasm         whether to output wasm-specific code (applies to Kotlin only)
+  --test_harness whether to output a particle test harness only (applies to Kotlin only)
   --outdir, -d   output directory; defaults to '.'
   --outfile, -f  output filename; if omitted, generated from the manifest name
   --update, -u   only generate if the source file is newer than the destination

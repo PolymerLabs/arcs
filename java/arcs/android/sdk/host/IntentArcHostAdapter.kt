@@ -22,6 +22,7 @@ import arcs.core.host.ParticleIdentifier
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 
 /**
  * An [ArcHost] stub that translates API calls to [Intent]s directed at a [Service] using
@@ -98,12 +99,14 @@ class IntentArcHostAdapter(
     private suspend fun <T> sendIntentToArcHostServiceForResult(
         intent: Intent,
         transformer: (Any?) -> T?
-    ): T? = suspendCancellableCoroutine { cancelableContinuation ->
-        ArcHostHelper.setResultReceiver(
-            intent,
-            ResultReceiverContinuation(cancelableContinuation, transformer)
-        )
-        sendIntentToArcHostService(intent)
+    ): T? = withTimeout(ARCHOST_INTENT_TIMEOUT) {
+        suspendCancellableCoroutine { cancelableContinuation: CancellableContinuation<T?> ->
+            ArcHostHelper.setResultReceiver(
+                intent,
+                ResultReceiverContinuation(cancelableContinuation, transformer)
+            )
+            sendIntentToArcHostService(intent)
+        }
     }
 
     /**
@@ -121,5 +124,13 @@ class IntentArcHostAdapter(
         if (javaClass != other?.javaClass) return false
         other as ArcHost
         return hostId == other.hostId
+    }
+
+    companion object {
+        /**
+         * The maximum amount of time to wait for an [ArcHost] to process an [Intent]-base RPC call.
+         * This timeout ensures requests don't wait forever.
+         */
+        const val ARCHOST_INTENT_TIMEOUT = 2000L
     }
 }

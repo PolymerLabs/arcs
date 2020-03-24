@@ -6,6 +6,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Ttl
+import arcs.core.storage.testutil.DummyStorageKey
 import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.mock
@@ -59,7 +60,10 @@ class StorageProxyTest {
     fun propagatesStorageOpToReaders() = runBlockingTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
         val readHandle = newHandle("testReader", storageProxy)
-        val readCallback = mock<(String)->Unit>().also { readHandle.addOnUpdate(it) }
+        val readCallback = mock<(String)->Unit>()
+        readHandle.addOnUpdate {
+            readCallback(it)
+        }
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
         storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
@@ -117,8 +121,7 @@ class StorageProxyTest {
         val readHandle = newHandle("testReader", storageProxy)
         mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
 
-        assertThat(storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null)))
-            .isTrue()
+        storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
         val view = storageProxy.getParticleView()
 
         assertThat(view).isEqualTo("someData")
@@ -136,8 +139,7 @@ class StorageProxyTest {
         assertThat(future.isCompleted).isFalse()
 
         // cleanly apply model from Store so we are now synced
-        assertThat(storageProxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtModel.data, null)))
-            .isTrue()
+        storageProxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtModel.data, null))
 
         assertThat(future.isCompleted).isTrue()
         val view = future.await()
@@ -149,11 +151,9 @@ class StorageProxyTest {
     fun getOnSyncCalledWhenAddedIfSynced() = runBlocking {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
 
-        assertThat(
-            storageProxy.onMessage(
-                ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
-            )
-        ).isTrue()
+        storageProxy.onMessage(
+            ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
+        )
 
         val syncDeferred = CompletableDeferred<Boolean>()
         coroutineScope {
@@ -197,11 +197,9 @@ class StorageProxyTest {
         val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
         val desyncDeferred = CompletableDeferred<Boolean>()
 
-        assertThat(
-            storageProxy.onMessage(
-                ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
-            )
-        ).isTrue()
+        storageProxy.onMessage(
+            ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
+        )
 
         coroutineScope {
             storageProxy.addOnDesync("testHandle") {
@@ -274,7 +272,10 @@ class StorageProxyTest {
         storageProxy: StorageProxy<CrdtData, CrdtOperationAtTime, String>
     ) = Handle(name, storageProxy, Ttl.Infinite, TimeImpl(), null)
 
-    fun CrdtModel<CrdtData, CrdtOperationAtTime, String>.appliesOpAs(op: CrdtOperationAtTime, result: Boolean) {
+    private fun CrdtModel<CrdtData, CrdtOperationAtTime, String>.appliesOpAs(
+        op: CrdtOperationAtTime,
+        result: Boolean
+    ) {
         whenever(this.applyOperation(op)).thenReturn(result)
     }
 }

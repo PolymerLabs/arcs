@@ -17,16 +17,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.crdt.toParcelable
 import arcs.android.storage.ParcelableProxyMessage
+import arcs.android.storage.service.DeferredProxyCallback
 import arcs.android.storage.service.DeferredResult
-import arcs.android.storage.service.IResultCallback
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
 import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
+import arcs.core.data.CollectionType
+import arcs.core.data.CountType
+import arcs.core.data.EntityType
+import arcs.core.data.SingletonType
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
@@ -37,7 +40,6 @@ import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,20 +55,27 @@ import kotlinx.coroutines.launch
  */
 @ExperimentalCoroutinesApi
 @UseExperimental(FlowPreview::class)
-class ServiceStoreFactory<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
+class ServiceStoreFactory(
     private val context: Context,
     private val lifecycle: Lifecycle,
-    private val crdtType: ParcelableCrdtType,
     private val coroutineContext: CoroutineContext = Dispatchers.IO,
     private val connectionFactory: ConnectionFactory? = null
-) : ActivationFactory<Data, Op, ConsumerData> {
-    override suspend operator fun invoke(
+) : ActivationFactory {
+    override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
         options: StoreOptions<Data, Op, ConsumerData>
     ): ServiceStore<Data, Op, ConsumerData> {
         val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
+        val parcelableType = when (options.type) {
+            is CountType -> ParcelableCrdtType.Count
+            is CollectionType<*> -> ParcelableCrdtType.Set
+            is SingletonType<*> -> ParcelableCrdtType.Singleton
+            is EntityType -> ParcelableCrdtType.Entity
+            else ->
+                throw IllegalArgumentException("Service store can't handle type ${options.type}")
+        }
         return ServiceStore(
             options = options,
-            crdtType = crdtType,
+            crdtType = parcelableType,
             lifecycle = lifecycle,
             connectionFactory = connectionFactory
                 ?: DefaultConnectionFactory(context, coroutineContext = storeContext),
@@ -97,47 +106,25 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     @Suppress("UNCHECKED_CAST")
     override suspend fun getLocalData(): Data {
         val service = checkNotNull(storageService)
-        return CompletableDeferred<Data>().also { completable ->
-            service.getLocalData(object : IStorageServiceCallback.Stub() {
-                override fun onProxyMessage(
-                    message: ParcelableProxyMessage,
-                    resultCallback: IResultCallback
-                ) {
-                    scope.launch {
-                        val modelUpdate =
-                            message.actual as? ProxyMessage.ModelUpdate<Data, Op, ConsumerData>
-                        if (modelUpdate != null) {
-                            completable.complete(modelUpdate.model)
-                            resultCallback.onResult(null)
-                        } else {
-                            CrdtException("Wrong message type received").let {
-                                completable.completeExceptionally(it)
-                                resultCallback.onResult(it.toParcelable())
-                            }
-                        }
-                    }
-                }
-            })
-        }.await()
+        return DeferredProxyCallback().let {
+            service.getLocalData(it)
+            val message = it.await()
+            val modelUpdate = message.actual as? ProxyMessage.ModelUpdate<Data, Op, ConsumerData>
+            if (modelUpdate == null) throw CrdtException("Wrong message type received $modelUpdate")
+            modelUpdate.model
+        }
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int {
         val service = checkNotNull(storageService)
         return service.registerCallback(object : IStorageServiceCallback.Stub() {
             override fun onProxyMessage(
-                message: ParcelableProxyMessage,
-                resultCallback: IResultCallback
+                message: ParcelableProxyMessage
             ) {
+                @Suppress("UNCHECKED_CAST")
                 scope.launch {
-                    val actualMessage = message.actual as? ProxyMessage<Data, Op, ConsumerData>
-                    val result = if (actualMessage != null) {
-                        if (callback.invoke(actualMessage)) null
-                        else CrdtException("Message could not be handled")
-                    } else {
-                        CrdtException("Wrong message type received")
-                    }
-                    resultCallback.onResult(result?.toParcelable())
+                    val actualMessage = message.actual as ProxyMessage<Data, Op, ConsumerData>
+                    callback.invoke(actualMessage)
                 }
             }
         })

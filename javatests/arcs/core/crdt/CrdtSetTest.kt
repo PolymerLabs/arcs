@@ -59,6 +59,15 @@ class CrdtSetTest {
     }
 
     @Test
+    fun supportsAddingSameValueAgain_keepsFirst() {
+        val alice: CrdtSet<ReferenceWithValue> = CrdtSet()
+        alice.applyOperation(CrdtSet.Operation.Add("alice", VersionMap("alice" to 1), ReferenceWithValue("one", 1)))
+        alice.applyOperation(CrdtSet.Operation.Add("alice", VersionMap("alice" to 2), ReferenceWithValue("one", 2)))
+
+        assertThat(alice.consumerView).containsExactly(ReferenceWithValue("one", 1))
+    }
+
+    @Test
     fun rejectsAdds_notInSequence() {
         alice.add("alice", VersionMap("alice" to 1), "one")
 
@@ -526,6 +535,7 @@ class CrdtSetTest {
     }
 
     private data class Reference(override val id: ReferenceId) : Referencable
+    private data class ReferenceWithValue(override val id: ReferenceId, val value: Int) : Referencable
 
     /** Pseudo-constructor for [CrdtSet.Operation.Add]. */
     private fun Add(actor: Actor, versions: VersionMap, id: ReferenceId) =

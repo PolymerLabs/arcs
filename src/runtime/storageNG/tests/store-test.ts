@@ -116,13 +116,13 @@ describe('Store', async () => {
           assert.isFalse(sentSyncRequest);
           sentSyncRequest = true;
           const result = activeStore.onProxyMessage({type: ProxyMessageType.SyncRequest, id});
-          return true;
+          return;
         }
         assert.isTrue(sentSyncRequest);
         if (proxyMessage.type === ProxyMessageType.ModelUpdate) {
           assert.deepEqual(proxyMessage.model, count.getData());
           resolve(true);
-          return true;
+          return;
         }
         throw new Error();
       });
@@ -142,7 +142,6 @@ describe('Store', async () => {
       const id1 = activeStore.on(async proxyMessage => {
         assert.strictEqual(proxyMessage.type, ProxyMessageType.ModelUpdate);
         resolve(true);
-        return true;
       });
 
       // another store
@@ -171,7 +170,7 @@ describe('Store', async () => {
           assert.deepEqual(proxyMessage.operations[0], {type: CountOpTypes.MultiIncrement, value: 1, actor: 'me',
             version: {from: 0, to: 1}});
           resolve(true);
-          return true;
+          return;
         }
         throw new Error();
       });

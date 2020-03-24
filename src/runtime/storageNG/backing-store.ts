@@ -15,6 +15,7 @@ import {DirectStore} from './direct-store.js';
 import {Dictionary} from '../hot.js';
 import {StoreConstructorOptions} from './store-interface.js';
 import {assert} from '../../platform/assert-web.js';
+import {noAwait} from '../util.js';
 
 type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore<T>, id: number} | {type: 'pending', promise: Promise<{type: 'record', store: DirectStore<T>, id: number}>};
 /**
@@ -24,10 +25,10 @@ export class BackingStore<T extends CRDTTypeRecord>  {
 
   storageKey: StorageKey;
 
-  private stores: Dictionary<StoreRecord<T>> = {};
-  private callbacks = new Map<number, ProxyCallback<T>>();
+  private readonly stores: Dictionary<StoreRecord<T>> = {};
+  private readonly callbacks = new Map<number, ProxyCallback<T>>();
   private nextCallbackId = 1;
-  private options: StoreConstructorOptions<T>;
+  private readonly options: StoreConstructorOptions<T>;
 
   private constructor(options: StoreConstructorOptions<T>) {
     this.storageKey = options.storageKey;
@@ -96,8 +97,8 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     await Promise.all(stores.map(store => store.idle()));
   }
 
-  async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<boolean> {
+  async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<void> {
     message.muxId = muxId;
-    return Promise.all([...this.callbacks.values()].map(callback => callback(message))).then(a => a.reduce((a, b) => a && b));
+    noAwait(Promise.all([...this.callbacks.values()].map(callback => callback(message))));
   }
 }

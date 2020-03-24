@@ -19,8 +19,8 @@ export function FakePecFactory(loader: Loader): PecFactory {
   return (pecId: Id, idGenerator: IdGenerator) => {
     const channel = new MessageChannel();
     // Each PEC should get its own loader.
-    // TODO(sjmiles): weirdly, tslint requires that we capture the unused pec reference
-    const pec = new ParticleExecutionContext(channel.port1, pecId, idGenerator, loader.clone());
+    // tslint requires that we capture the unused pec reference
+    const pec =new ParticleExecutionContext(channel.port1, pecId, idGenerator, loader.clone());
     return channel.port2;
   };
 }

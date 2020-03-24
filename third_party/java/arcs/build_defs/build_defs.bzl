@@ -6,6 +6,7 @@ load(
 )
 load(
     "//third_party/java/arcs/build_defs/internal:kotlin.bzl",
+    _arcs_kt_android_library = "arcs_kt_android_library",
     _arcs_kt_android_test_suite = "arcs_kt_android_test_suite",
     _arcs_kt_jvm_library = "arcs_kt_jvm_library",
     _arcs_kt_jvm_test_suite = "arcs_kt_jvm_test_suite",
@@ -35,6 +36,8 @@ load(":sigh.bzl", "sigh_command")
 # Re-export rules from various other files.
 
 arcs_cc_schema = _arcs_cc_schema
+
+arcs_kt_android_library = _arcs_kt_android_library
 
 arcs_kt_android_test_suite = _arcs_kt_android_test_suite
 

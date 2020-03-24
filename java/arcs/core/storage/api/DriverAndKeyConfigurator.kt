@@ -12,7 +12,7 @@
 package arcs.core.storage.api
 
 import arcs.core.common.ArcId
-import arcs.core.data.SchemaRegistry
+import arcs.core.entity.SchemaRegistry
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseManager
@@ -42,7 +42,7 @@ object DriverAndKeyConfigurator {
         RamDiskDriverProvider()
         // Only register the database driver provider if a database manager was provided.
         databaseManager?.let {
-            DatabaseDriverProvider.configure(it, SchemaRegistry::get)
+            DatabaseDriverProvider.configure(it, SchemaRegistry::getSchema)
         }
 
         // Also register the parsers.

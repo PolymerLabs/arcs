@@ -66,18 +66,15 @@ export class PlanningResult {
     }
   }
 
-  async load(): Promise<boolean> {
+  async load(): Promise<void> {
     const handleValue = await this.handle.fetch();
     if (!handleValue) {
-      return false;
+      return;
     }
     const value = JSON.parse(handleValue.current);
     if (value.suggestions) {
-      if (await this.fromLiteral(value)) {
-        return true;
-      }
+      await this.fromLiteral(value);
     }
-    return false;
   }
 
   async flush() {

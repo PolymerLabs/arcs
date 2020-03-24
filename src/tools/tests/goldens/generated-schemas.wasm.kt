@@ -6,11 +6,12 @@ package arcs.golden
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support references or optional field detection
+// Current implementation doesn't support optional field detection
 
 import arcs.sdk.*
 import arcs.sdk.wasm.*
 
+@Suppress("UNCHECKED_CAST")
 class GoldInternal1(val_: String = "") : WasmEntity {
 
     var val_ = val_
@@ -41,8 +42,6 @@ class GoldInternal1(val_: String = "") : WasmEntity {
     companion object : WasmEntitySpec<GoldInternal1> {
 
 
-        override fun create() = GoldInternal1()
-
         override fun decode(encoded: ByteArray): GoldInternal1? {
             if (encoded.isEmpty()) return null
 
@@ -72,7 +71,7 @@ class GoldInternal1(val_: String = "") : WasmEntity {
                 decoder.validate("|")
                 i++
             }
-            val _rtn = create().copy(
+            val _rtn = GoldInternal1().copy(
                 val_ = val_
             )
             _rtn.entityId = entityId
@@ -84,6 +83,7 @@ class GoldInternal1(val_: String = "") : WasmEntity {
 typealias Gold_Data_Ref = GoldInternal1
 typealias Gold_Alias = GoldInternal1
 
+@Suppress("UNCHECKED_CAST")
 class Gold_QCollection(
     name: String = "",
     age: Double = 0.0,
@@ -180,8 +180,6 @@ class Gold_QCollection(
     companion object : WasmEntitySpec<Gold_QCollection> {
 
 
-        override fun create() = Gold_QCollection()
-
         override fun decode(encoded: ByteArray): Gold_QCollection? {
             if (encoded.isEmpty()) return null
 
@@ -241,7 +239,7 @@ class Gold_QCollection(
                 decoder.validate("|")
                 i++
             }
-            val _rtn = create().copy(
+            val _rtn = Gold_QCollection().copy(
 
             name = name,
             age = age,
@@ -259,6 +257,7 @@ class Gold_QCollection(
 }
 
 
+@Suppress("UNCHECKED_CAST")
 class Gold_Collection(num: Double = 0.0) : WasmEntity {
 
     var num = num
@@ -289,8 +288,6 @@ class Gold_Collection(num: Double = 0.0) : WasmEntity {
     companion object : WasmEntitySpec<Gold_Collection> {
 
 
-        override fun create() = Gold_Collection()
-
         override fun decode(encoded: ByteArray): Gold_Collection? {
             if (encoded.isEmpty()) return null
 
@@ -320,7 +317,7 @@ class Gold_Collection(num: Double = 0.0) : WasmEntity {
                 decoder.validate("|")
                 i++
             }
-            val _rtn = create().copy(
+            val _rtn = Gold_Collection().copy(
                 num = num
             )
             _rtn.entityId = entityId
@@ -330,6 +327,7 @@ class Gold_Collection(num: Double = 0.0) : WasmEntity {
 }
 
 
+@Suppress("UNCHECKED_CAST")
 class Gold_Data(
     num: Double = 0.0,
     txt: String = "",
@@ -391,8 +389,6 @@ class Gold_Data(
     companion object : WasmEntitySpec<Gold_Data> {
 
 
-        override fun create() = Gold_Data()
-
         override fun decode(encoded: ByteArray): Gold_Data? {
             if (encoded.isEmpty()) return null
 
@@ -437,7 +433,7 @@ class Gold_Data(
                 decoder.validate("|")
                 i++
             }
-            val _rtn = create().copy(
+            val _rtn = Gold_Data().copy(
                 num = num, txt = txt, lnk = lnk, flg = flg
             )
             _rtn.entityId = entityId

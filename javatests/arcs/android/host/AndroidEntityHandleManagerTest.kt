@@ -14,12 +14,12 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.EntityHandleManager
 import arcs.core.data.HandleMode
-import arcs.core.storage.api.ReadCollectionHandle
-import arcs.core.storage.api.ReadSingletonHandle
-import arcs.core.storage.api.ReadWriteCollectionHandle
-import arcs.core.storage.api.ReadWriteSingletonHandle
-import arcs.core.storage.api.WriteCollectionHandle
-import arcs.core.storage.api.WriteSingletonHandle
+import arcs.core.entity.ReadCollectionHandle
+import arcs.core.entity.ReadSingletonHandle
+import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.WriteCollectionHandle
+import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -287,8 +287,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleMode,
         handleName,
         handleHolder.getEntitySpec(handleName),
-        singletonKey,
-        schema
+        singletonKey
     ).also { handleHolder.setHandle(handleName, it) }
 
     private suspend fun createCollectionHandle(
@@ -299,7 +298,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleMode,
         handleName,
         handleHolder.getEntitySpec(handleName),
-        collectionKey,
-        schema
+        collectionKey
     ).also { handleHolder.setHandle(handleName, it) }
 }

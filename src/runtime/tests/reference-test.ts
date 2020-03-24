@@ -313,7 +313,7 @@ describe('references', () => {
     // inside schemas. It:
     // * reads a single value from the reads writes connection 'out'
     // * reads the single 'inFoo'
-    // * reads a collction of Results from 'inResult'.
+    // * reads a collection of Results from 'inResult'.
     // * puts a Result into each of the Foos retrieved from 'out' and 'inFoo'
     // * writes the Foos back to 'out'.
     const loader = new Loader(null, {
@@ -383,6 +383,7 @@ describe('references', () => {
                     if (foo.shortForm === model.value[model.value.length - 1]) {
                       let ref = new Reference(model);
                       await ref.stored;
+                      this.output.remove(foo);
                       this.mutate(foo, {result: ref});
                       this.output.add(foo);
                     }

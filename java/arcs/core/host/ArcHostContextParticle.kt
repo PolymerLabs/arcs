@@ -46,7 +46,7 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
                         storageKey = handle.value.storageKey.toString(),
                         mode = handle.value.mode.name,
                         type = handle.value.type.tag.name,
-                        ttl = handle.value.ttl?.minutes?.toDouble() ?: 0.0
+                        ttl = handle.value.ttl?.minutes?.toDouble() ?: Ttl.TTL_INFINITE
                     )
                 }
             }
@@ -185,8 +185,11 @@ class ArcHostContextParticle : AbstractArcHostParticle() {
                     },
                     entity.type,
                     entity.handleName
-                ),
-                entity.ttl.let { num -> if (num != 0.0) Ttl.Minutes(num.toInt()) else null }
+                ), entity.ttl.let { num ->
+                    if (num != Ttl.TTL_INFINITE) Ttl.Minutes(
+                        num.toInt()
+                    ) else Ttl.Infinite
+                }
             )
         )
     }

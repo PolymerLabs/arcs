@@ -9,6 +9,7 @@ licenses(["notice"])
 arcs_kt_schema(
     name = "blackjack_schemas",
     srcs = ["Blackjack.arcs"],
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(

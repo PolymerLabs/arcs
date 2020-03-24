@@ -47,6 +47,11 @@ KOTLINC_OPTS = [
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
 ]
 
+BAZEL_KOTLINC_OPTS = [
+    # jvm-target 1.8 needed to solve crash in Bazel Desugaring
+    "-jvm-target 1.8",
+]
+
 DISABLED_LINT_CHECKS = [
     "PackageName",
     "TopLevelName",
@@ -73,11 +78,15 @@ def arcs_kt_jvm_library(**kwargs):
     constraints = kwargs.pop("constraints", ["android"] if add_android_constraints else [])
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
     exports = kwargs.pop("exports", [])
-    kotlincopts = kwargs.pop("kotlincopts", [])
-    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS)
+    kotlincopts = merge_lists(kwargs.pop("kotlincopts", []), KOTLINC_OPTS)
+
     if not IS_BAZEL:
         kwargs["constraints"] = constraints
         kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
+    else:
+        kotlincopts = merge_lists(kotlincopts, BAZEL_KOTLINC_OPTS)
+
+    kwargs["kotlincopts"] = kotlincopts
 
     if exports:
         # kt_jvm_library doesn't support the "exports" property. Instead, we
@@ -102,6 +111,18 @@ def arcs_kt_jvm_library(**kwargs):
         )
 
     kt_jvm_library(**kwargs)
+
+def arcs_kt_android_library(**kwargs):
+    """Wrapper around kt_android_library for Arcs.
+
+    Args:
+      **kwargs: Set of args to forward to kt_android_library
+    """
+    disable_lint_checks = kwargs.pop("disable_lint_checks", [])
+    if not IS_BAZEL:
+        kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
+
+    kt_android_library(**kwargs)
 
 def arcs_kt_native_library(**kwargs):
     """Wrapper around kt_native_library for Arcs.
@@ -152,6 +173,7 @@ def arcs_kt_library(
     """
     _check_platforms(platforms)
 
+    # TODO(#5018)
     if "jvm" in platforms:
         arcs_kt_jvm_library(
             name = name,
@@ -159,6 +181,7 @@ def arcs_kt_library(
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
             deps = [_to_jvm_dep(dep) for dep in deps],
             exports = exports,
+            testonly = testonly,
             visibility = visibility,
             add_android_constraints = add_android_constraints,
         )
@@ -170,6 +193,7 @@ def arcs_kt_library(
             # TODO: jvm srcs will be included here. That is not what we want.
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
             deps = [_to_js_dep(dep) for dep in deps],
+            testonly = testonly,
             visibility = visibility,
         )
 
@@ -179,6 +203,7 @@ def arcs_kt_library(
             # Exclude any jvm-specific srcs.
             srcs = [src for src in srcs if not src.endswith(".jvm.kt")],
             deps = [_to_wasm_dep(dep) for dep in deps],
+            testonly = testonly,
             visibility = visibility,
         )
 

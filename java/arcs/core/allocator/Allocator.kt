@@ -25,17 +25,15 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.toPrimitiveValue
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageMode
-import arcs.core.storage.StorageProxy
-import arcs.core.storage.Store
-import arcs.core.storage.StoreOptions
 import arcs.core.storage.handle.CollectionHandle
+import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
@@ -47,8 +45,13 @@ private typealias EntityCollectionData = CrdtSet.Data<RawEntity>
 private typealias EntityCollectionOp = CrdtSet.IOperation<RawEntity>
 private typealias EntityCollectionView = Set<RawEntity>
 
-private typealias PartitionProxy =
-    StorageProxy<EntityCollectionData, EntityCollectionOp, EntityCollectionView>
+fun fieldAsString(entity: RawEntity, field: String): String {
+    return entity.singletons[field].toPrimitiveValue(String::class, "")
+}
+
+fun fieldAsStrings(entity: RawEntity, field: String): List<String> {
+    return entity.collections[field]?.map { it.toPrimitiveValue(String::class, "") } ?: listOf()
+}
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -62,8 +65,6 @@ private typealias PartitionProxy =
 class Allocator private constructor(
     private val hostRegistry: HostRegistry,
     private val time: Time,
-    private val store: Store<EntityCollectionData, EntityCollectionOp, EntityCollectionView>,
-    private val storageProxy: PartitionProxy,
     private val collection: CollectionHandle<RawEntity>
 ) {
 
@@ -76,6 +77,11 @@ class Allocator private constructor(
      * Start a new Arc given a [Plan] and return the generated [ArcId].
      */
     suspend fun startArcForPlan(arcName: String, plan: Plan): ArcId {
+        if (plan.arcId !== null) {
+            if (!readPartitions(plan.arcId!!.toArcId()).isEmpty()) {
+                return plan.arcId!!.toArcId()
+            }
+        }
         val idGenerator = Id.Generator.newSession()
         val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(arcName)
         // Any unresolved handles ('create' fate) need storage keys
@@ -91,7 +97,7 @@ class Allocator private constructor(
      * Stop an Arc given its [ArcId].
      */
     suspend fun stopArc(arcId: ArcId) {
-        val partitions = readPartitionMap(arcId) ?: return
+        val partitions = readAndClearPartitions(arcId)
         stopPlanPartitionsOnHosts(partitions)
     }
 
@@ -137,12 +143,26 @@ class Allocator private constructor(
         }
     }
 
-    /**
-     * Reads associated [PlanPartition]s with an [ArcId] .
-     */
-    private fun readPartitionMap(arcId: ArcId): List<Plan.Partition>? {
-        return partitionMap[arcId]
-        // TODO(cromwellian): implement actual persistence that survives reboot?
+    /** Looks up [RawEntity]s representing [PlanPartition]s for a given [ArcId] */
+    private suspend fun entitiesForArc(arcId: ArcId): List<RawEntity> =
+        collection.fetchAll().filter { fieldAsString(it, "arc") == arcId.toString() }
+
+    /** Converts a [RawEntity] to a [Plan.Partition] */
+    private fun entityToPartition(entity: RawEntity): Plan.Partition =
+        Plan.Partition(
+            fieldAsString(entity, "arc"),
+            fieldAsString(entity, "host"),
+            fieldAsStrings(entity, "particles").map { Plan.Particle(it, "", mapOf()) }
+        )
+
+    /** Reads associated [PlanPartition]s with an [ArcId]. */
+    private suspend fun readPartitions(arcId: ArcId): List<Plan.Partition> =
+        entitiesForArc(arcId).map { entityToPartition(it) }
+
+    private suspend fun readAndClearPartitions(arcId: ArcId): List<Plan.Partition> {
+        val entities = entitiesForArc(arcId)
+        entities.forEach { collection.remove(it) }
+        return entities.map { entityToPartition(it) }
     }
 
     /**
@@ -262,19 +282,13 @@ class Allocator private constructor(
             RamDiskStorageKey("partitions")
         )
 
-        private val STORE_OPTIONS =
-            StoreOptions<EntityCollectionData, EntityCollectionOp, EntityCollectionView>(
-                storageKey = STORAGE_KEY,
-                type = CollectionType(EntityType(SCHEMA)),
-                mode = StorageMode.ReferenceMode
-            )
-
-        suspend fun create(hostRegistry: HostRegistry, time: Time): Allocator {
-            val store = Store(STORE_OPTIONS)
-            val storageProxy = StorageProxy(store.activate(), CrdtSet<RawEntity>())
-            val actor = "allocator" + Math.random().toString()
-            val collection = CollectionHandle(actor, storageProxy, time = time)
-            return Allocator(hostRegistry, time, store, storageProxy, collection)
+        suspend fun create(
+            hostRegistry: HostRegistry,
+            time: Time,
+            handleManager: HandleManager
+        ): Allocator {
+            val collection = handleManager.rawEntityCollectionHandle(STORAGE_KEY, SCHEMA)
+            return Allocator(hostRegistry, time, collection)
         }
     }
 }

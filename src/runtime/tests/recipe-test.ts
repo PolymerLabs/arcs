@@ -833,10 +833,9 @@ describe('recipe', () => {
 
       const pairs = recipe.handles.find(h => h.fate === 'join');
       assert.equal(pairs.fate, 'join');
-      assert.lengthOf(pairs.associatedHandles, 2);
-
-      assert.include(pairs.associatedHandles, people);
-      assert.include(pairs.associatedHandles, places);
+      assert.lengthOf(pairs.joinedHandles, 2);
+      assert.include(pairs.joinedHandles, people);
+      assert.include(pairs.joinedHandles, places);
     };
 
     verify(recipe);

@@ -11,11 +11,12 @@ filegroup(
 )
 
 filegroup(
-    name = "generated_schemas",
+    name = "generated",
     srcs = [
         ":golden.h",
         ":golden_GeneratedSchemas.jvm.kt",
         ":golden_GeneratedSchemas.wasm.kt",
+        ":golden_TestHarness.kt",
     ],
 )
 
@@ -27,13 +28,14 @@ arcs_cc_schema(
 arcs_kt_schema(
     name = "kt_schemas",
     srcs = ["golden.arcs"],
+    platforms = ["wasm"],
 )
 
 arcs_ts_test(
     name = "schema-generator-test",
     src = "schema-generator-test.ts",
     deps = [
-        ":generated_schemas",
+        ":generated",
         ":goldens",
     ],
 )

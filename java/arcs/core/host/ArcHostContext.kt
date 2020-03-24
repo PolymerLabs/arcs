@@ -11,8 +11,8 @@
 package arcs.core.host
 
 import arcs.core.data.Plan
+import arcs.core.entity.Handle
 import arcs.core.host.api.Particle
-import arcs.core.storage.api.Handle
 
 /**
  * Holds per-[Particle] context state needed by [ArcHost] to implement [Particle] lifecycle.

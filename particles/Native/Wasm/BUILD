@@ -32,6 +32,7 @@ arcs_kt_schema(
         "Harness.arcs",
         "Services.arcs",
     ],
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(

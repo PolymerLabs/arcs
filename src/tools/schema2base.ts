@@ -20,6 +20,7 @@ export type AddFieldOptions = Readonly<{
   typeName: string;
   isOptional?: boolean;
   refClassName?: string;
+  refSchemaHash?: string;
   isCollection?: boolean;
 }>;
 
@@ -84,6 +85,11 @@ export abstract class Schema2Base {
     // TODO: consider an option to generate one file per particle
     const classes: string[] = [];
     for (const particle of manifest.particles) {
+      if (this.opts.test_harness) {
+        classes.push(this.generateTestHarness(particle));
+        continue;
+      }
+
       const graph = new SchemaGraph(particle);
       // Generate one class definition per node in the graph.
       for (const node of graph.walk()) {
@@ -98,7 +104,8 @@ export abstract class Schema2Base {
               throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
             }
           } else if (descriptor.kind === 'schema-reference') {
-            generator.addField({field, typeName: 'Reference', refClassName: node.refs.get(field).name});
+            const schemaNode = node.refs.get(field);
+            generator.addField({field, typeName: 'Reference', refClassName: schemaNode.name, refSchemaHash: await schemaNode.schema.hash()});
           } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
             // TODO: support collections of references
           } else if (descriptor.kind === 'schema-collection') {
@@ -135,4 +142,6 @@ export abstract class Schema2Base {
   abstract getClassGenerator(node: SchemaNode): ClassGenerator;
 
   abstract generateParticleClass(particle: ParticleSpec): string;
+
+  abstract generateTestHarness(particle: ParticleSpec): string;
 }
