@@ -273,11 +273,17 @@ def arcs_kt_particles(
             tools = [registry_name, "//tools/zip:zipper"],
         )
 
+        registry_import = registry_lib + "_import"
+        native.java_import(
+            name = registry_lib + "_import",
+            jars = [registry_lib]
+        )
+
         arcs_kt_jvm_library(
             name = name + "-jvm",
             srcs = srcs,
             add_android_constraints = add_android_constraints,
-            exports = [":" + registry_lib],
+            exports = [":" + registry_import],
             visibility = visibility,
             deps = deps,
             testonly = testonly,
