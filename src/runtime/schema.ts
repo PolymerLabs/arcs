@@ -154,10 +154,11 @@ export class Schema {
   }
 
   equals(otherSchema: Schema): boolean {
-    // TODO(cypher1): Check equality without calling contains.
-    return this === otherSchema || (this.name === otherSchema.name
-       && (this.isEquivalentOrMoreSpecific(otherSchema) === AtLeastAsSpecific.YES)
-       && (otherSchema.isEquivalentOrMoreSpecific(this) === AtLeastAsSpecific.YES));
+    if (this === otherSchema) {
+      return true;
+    }
+    return (this.isEquivalentOrMoreSpecific(otherSchema) === AtLeastAsSpecific.YES)
+       && (otherSchema.isEquivalentOrMoreSpecific(this) === AtLeastAsSpecific.YES);
   }
 
   isEquivalentOrMoreSpecific(otherSchema: Schema): AtLeastAsSpecific {

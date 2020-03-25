@@ -83,6 +83,9 @@ export class SchemaGraph {
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
           if (b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
+            if (b.descendants.has(a)) {
+              throw new Error(`Cannot add ${b} to ${a}.descendants as it would create a cycle.`);
+            }
             a.descendants.add(b);  // b can be sliced to a
             b.parents = [];        // non-null to indicate this has parents; will be filled later
           }
@@ -94,7 +97,7 @@ export class SchemaGraph {
     // Recurse on any nested schemas in reference-typed fields. We need to do this even if we've
     // seen this schema before, to ensure any nested schemas end up aliased appropriately.
     for (const [field, descriptor] of Object.entries(schema.fields)) {
-      let nestedSchema;
+      let nestedSchema: Schema | undefined;
       if (descriptor.kind === 'schema-reference') {
         nestedSchema = descriptor.schema.model.entitySchema;
       } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
