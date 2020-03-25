@@ -87,6 +87,8 @@ class CrdtEntity(
                 _data.creationTimestamp = other.creationTimestamp
             } else if (other.creationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
                 // Two different values, we keep the earlier creationTimestamp.
+                // TODO: change this to throw an exception instead, creation timestamp should only
+                // be set when the id is created, then never change.
                 _data.creationTimestamp = minOf(_data.creationTimestamp, other.creationTimestamp)
             }
         }
@@ -188,6 +190,8 @@ class CrdtEntity(
                             )
                         }
                 }
+                _data.creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
+                _data.expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
                 return true
             }
         }?.also { success ->
