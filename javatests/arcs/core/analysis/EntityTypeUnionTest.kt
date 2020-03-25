@@ -20,12 +20,12 @@ class EntityTypeUnionTest {
     fun schemaUnionMergesNames() {
         val emptySchemaFields = SchemaFields(emptyMap(), emptyMap())
         val thingSchema = Schema(
-            listOf(SchemaName("Thing"), SchemaName("Another")),
+            setOf(SchemaName("Thing"), SchemaName("Another")),
             emptySchemaFields,
             ""
         )
         val objectSchema = Schema(
-            listOf(SchemaName("Object"), SchemaName("Thing")),
+            setOf(SchemaName("Object"), SchemaName("Thing")),
             emptySchemaFields,
             ""
         )
@@ -50,8 +50,8 @@ class EntityTypeUnionTest {
             mapOf("number" to FieldType.Number),
             emptyMap()
         )
-        val textSchema = Schema(listOf(SchemaName("Example")), textField, "")
-        val numberSchema = Schema(listOf(SchemaName("Example")), numberField, "")
+        val textSchema = Schema(setOf(SchemaName("Example")), textField, "")
+        val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
         val result = textSchema.union(numberSchema).getOrNull()
         result?.let {
             assertThat(it.names).containsExactly(SchemaName("Example"))
@@ -71,8 +71,8 @@ class EntityTypeUnionTest {
             mapOf("num_text" to FieldType.Number),
             emptyMap()
         )
-        val textSchema = Schema(listOf(SchemaName("Example")), textField, "")
-        val numberSchema = Schema(listOf(SchemaName("Example")), numberField, "")
+        val textSchema = Schema(setOf(SchemaName("Example")), textField, "")
+        val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
         with(textSchema.union(numberSchema)) {
             assertThat(getFailureReason()).contains("Incompatible types for field 'num_text'")
         }
@@ -88,8 +88,8 @@ class EntityTypeUnionTest {
             mapOf("number" to FieldType.Number),
             emptyMap()
         )
-        val textSchema = Schema(listOf(SchemaName("Example")), textField, "")
-        val numberSchema = Schema(listOf(SchemaName("Example")), numberField, "")
+        val textSchema = Schema(setOf(SchemaName("Example")), textField, "")
+        val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
         val textEntity = EntityType(textSchema)
         val numberEntity = EntityType(numberSchema)
         val result = textEntity.union(numberEntity).getOrNull()
