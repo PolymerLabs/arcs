@@ -1,6 +1,5 @@
 package arcs.core.host
 
-import arcs.sdk.Handle
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async

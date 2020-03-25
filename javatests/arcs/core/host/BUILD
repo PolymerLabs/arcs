@@ -2,6 +2,7 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_library",
     "arcs_kt_jvm_test_suite",
+    "arcs_kt_particles",
     "arcs_kt_plan",
     "arcs_kt_schema",
 )
@@ -53,23 +54,51 @@ arcs_kt_plan(
     ],
 )
 
-arcs_kt_jvm_library(
-    name = "particle",
+arcs_kt_particles(
+    name = "pure-particles",
     testonly = 1,
-    srcs = glob(
-        ["*.kt"],
-        exclude = ["*Test.kt"],
-    ),
+    srcs = [
+        "PurePerson.kt",
+    ],
+    package = "arcs.core.host",
+    platforms = ["jvm"],
     deps = [
-        ":plans",
         ":schemas",
+        ":testhost",
+        "//java/arcs/jvm/host",
+        "//third_party/kotlin/kotlinx_coroutines",
+    ],
+)
+
+arcs_kt_jvm_library(
+    name = "testhost",
+    testonly = 1,
+    srcs = ["TestingJvmProdHost.kt"],
+    deps = [
         "//java/arcs/core/data",
-        "//java/arcs/core/host",
         "//java/arcs/core/util",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
+    ],
+)
+
+arcs_kt_jvm_library(
+    name = "particle",
+    testonly = 1,
+    srcs = [
+        "ReadPerson.kt",
+        "TestHost.kt",
+        "TestHostParticle.kt",
+        "TestProdParticle.kt",
+        "WritePerson.kt",
+    ],
+    deps = [
+        ":plans",
+        ":pure-particles-jvm",
+        ":schemas",
+        "//java/arcs/core/host",
+        "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
-        "//third_party/java/auto:auto_service",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
