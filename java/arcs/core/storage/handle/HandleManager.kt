@@ -63,6 +63,7 @@ class Stores {
  * you can provide your own ActivationFactory, which provides methods for creating
  * activations factories to create singleton-rawentity and set-rawentity [ActiveStore]s
  */
+@Deprecated("Use arcs.core.host.EntityHandleManager")
 class HandleManager(
     private val time: Time,
     private val stores: Stores = Stores(),

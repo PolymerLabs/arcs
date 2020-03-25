@@ -45,6 +45,9 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     // toMutableMap is documented to copy the data.
     fun copy(): VersionMap = VersionMap(this.backingMap.toMutableMap())
 
+    /** Increment the version for the provided `name` */
+    fun increment(name: String) = this.also { it[name]++ }
+
     /**
      * Gets a the current [Version] for a given [Actor], or [DEFAULT_VERSION] if no value has been
      * set.

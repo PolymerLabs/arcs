@@ -13,7 +13,6 @@ package arcs.core.allocator
 import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.common.toArcId
-import arcs.core.crdt.CrdtSet
 import arcs.core.data.CollectionType
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
@@ -39,10 +38,6 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 import arcs.core.util.plus
 import arcs.core.util.traverse
-
-private typealias EntityCollectionData = CrdtSet.Data<RawEntity>
-private typealias EntityCollectionOp = CrdtSet.IOperation<RawEntity>
-private typealias EntityCollectionView = Set<RawEntity>
 
 fun fieldAsString(entity: RawEntity, field: String): String {
     return entity.singletons[field].toPrimitiveValue(String::class, "")
@@ -280,6 +275,7 @@ class Allocator private constructor(
             RamDiskStorageKey("partitions")
         )
 
+        // TODO(b/152435365) - Transition to using entity handle
         suspend fun create(
             hostRegistry: HostRegistry,
             handleManager: HandleManager

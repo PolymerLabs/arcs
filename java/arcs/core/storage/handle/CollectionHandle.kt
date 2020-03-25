@@ -29,6 +29,7 @@ typealias CollectionStoreOptions<T> = StoreOptions<CollectionData<T>, Collection
 typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 typealias CollectionBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 
+@Deprecated("Use Handles from arcs.core.host")
 /**
  * Collection Handle implementation for the runtime.
  *

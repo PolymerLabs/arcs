@@ -18,9 +18,11 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.handle.HandleManager
+import arcs.core.storage.handle.Stores
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
@@ -46,9 +48,12 @@ class HandleAdapterTest {
 
     @Before
     fun setUp() {
-        RamDiskDriverProvider()
-        ReferenceModeStorageKey.registerParser()
-        manager = EntityHandleManager(HandleManager(TimeImpl()))
+        DriverAndKeyConfigurator.configure(null)
+        manager = EntityHandleManager(
+            "testArc",
+            "",
+            TimeImpl()
+        )
     }
 
     @After

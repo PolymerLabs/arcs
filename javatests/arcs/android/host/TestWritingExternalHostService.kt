@@ -3,7 +3,9 @@ package arcs.android.host
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 
-class TestWritingExternalHostService : TestExternalArcHostService(WritingExternalHost()) {
-
-    class WritingExternalHost : TestingAndroidHost(::WritePerson.toRegistration())
+class TestWritingExternalHostService : TestExternalArcHostService() {
+    override val arcHost = object : TestingAndroidHost(
+        this@TestWritingExternalHostService,
+        ::WritePerson.toRegistration()
+    ) {}
 }

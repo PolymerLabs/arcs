@@ -7,10 +7,12 @@ import arcs.core.data.Schema
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.handle.RawEntityDereferencer
+import arcs.core.storage.handle.Stores
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
@@ -28,7 +30,12 @@ import org.junit.runners.JUnit4
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {
     private val dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA)
-    private val entityHandleManager = EntityHandleManager(HandleManager(TimeImpl()))
+    private val entityHandleManager = EntityHandleManager(
+        "testArc",
+        "",
+        TimeImpl()
+    )
+
     private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>
 
     private val STORAGE_KEY = ReferenceModeStorageKey(
@@ -38,7 +45,7 @@ class ReferenceTest {
 
     @Before
     fun setUp() = runBlocking {
-        RamDiskDriverProvider()
+        DriverAndKeyConfigurator.configure(null)
         SchemaRegistry.register(DummyEntity)
 
         handle = entityHandleManager.createCollectionHandle(

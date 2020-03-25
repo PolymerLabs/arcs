@@ -46,6 +46,7 @@ class DemoActivity : AppCompatActivity() {
             hostRegistry = AndroidManifestHostRegistry.create(this@DemoActivity)
             allocator = Allocator.create(
                 hostRegistry,
+                // TODO(152435750) - Switch to using SDK entity handles
                 AndroidHandleManager(
                     this@DemoActivity,
                     this@DemoActivity.getLifecycle(),
