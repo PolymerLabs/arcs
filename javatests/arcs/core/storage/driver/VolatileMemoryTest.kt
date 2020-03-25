@@ -57,13 +57,4 @@ class VolatileMemoryTest {
         val value: VolatileEntry<Int>? = memory[bar]
         assertThat(value).isEqualTo(expectedValue)
     }
-
-    @Test
-    fun keys_returnsAllKeys() {
-        val memory = VolatileMemory()
-        memory[bar] = VolatileEntry(data = 42)
-        memory[baz] = VolatileEntry(data = 41)
-
-        assertThat(memory.keys()).containsExactly(bar, baz)
-    }
 }

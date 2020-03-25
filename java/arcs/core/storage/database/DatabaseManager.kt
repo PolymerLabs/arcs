@@ -11,9 +11,6 @@
 
 package arcs.core.storage.database
 
-import arcs.core.storage.StorageKey
-import arcs.core.type.Type
-
 /**
  * Defines an abstract factory capable of instantiating (or re-using, when necessary) a [Database].
  */
@@ -40,9 +37,6 @@ interface DatabaseManager {
      */
     suspend fun snapshotStatistics():
         Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot>
-
-    /* Returns the set of storage keys in all known databases. */
-    suspend fun getAllStorageKeys(): Map<StorageKey, Type>
 
     /** Clears all expired entities, in all known databases.  */
     suspend fun removeExpiredEntities()

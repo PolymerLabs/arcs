@@ -56,13 +56,6 @@ object DriverFactory {
 
     /** Reset the driver registration to an empty set. For use in tests only. */
     fun clearRegistrations() = providers.lazySet(setOf())
-
-    /** Return the map of storage keys to a correponding type that each DriverProvider has seen. */
-    suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        val all = mutableMapOf<StorageKey, Type>()
-        providers.value.forEach { all.putAll(it.getAllStorageKeys()) }
-        return all
-    }
 }
 
 /** Provider of information on the [Driver] and characteristics of the storage behind it. */
@@ -76,7 +69,4 @@ interface DriverProvider {
         dataClass: KClass<Data>,
         type: Type
     ): Driver<Data>
-
-    /** Returns a map of [StorageKey] to [Type] for which a driver has been created. */
-    suspend fun getAllStorageKeys(): Map<StorageKey, Type>
 }

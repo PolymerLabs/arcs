@@ -113,17 +113,6 @@ class RamDiskDriverProviderTest {
         assertThat(driver3Version).isEqualTo(1)
     }
 
-    @Test
-    fun getAllStorageKeys_retunsAllStorageKeys() = runBlocking<Unit> {
-        val provider = RamDiskDriverProvider()
-        val storageKey1 = RamDiskStorageKey("foo")
-        val storageKey2 = RamDiskStorageKey("foo2")
-        provider.getDriver(storageKey1, Int::class, DummyType)
-        provider.getDriver(storageKey2, Int::class, DummyType)
-
-        assertThat(provider.getAllStorageKeys().keys).containsExactly(storageKey1, storageKey2)
-    }
-
     companion object {
         object DummyType: Type {
             override val tag = Tag.Count

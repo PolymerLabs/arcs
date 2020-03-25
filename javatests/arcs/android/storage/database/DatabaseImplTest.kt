@@ -1098,30 +1098,6 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun getAllStorageKeys_returnsAllKeys() = runBlockingTest {
-        val entityKey = DummyStorageKey("entity")
-        val entity = DatabaseData.Entity(
-            rawEntity = RawEntity("entity", singletons = emptyMap(), collections = emptyMap()),
-            schema = newSchema("hashentity"),
-            databaseVersion = 1,
-            versionMap = VERSION_MAP
-        )
-        database.insertOrUpdateEntity(entityKey, entity)
-
-        val singletonKey = DummyStorageKey("singleton")
-        val backingKey = DummyStorageKey("backing")
-        val singleton = DatabaseData.Singleton(
-            reference = Reference("ref1", backingKey, VersionMap("ref1" to 1)),
-            schema = newSchema("hashsingleton"),
-            databaseVersion = 1,
-            versionMap = VERSION_MAP
-        )
-        database.insertOrUpdateSingleton(singletonKey, singleton)
-
-        assertThat(database.getAllStorageKeys().keys).containsExactly(singletonKey)
-    }
-
-    @Test
     fun removeExpiredEntities_entityIsCleared() = runBlockingTest {       
         val schema = newSchema(
             "hash",
