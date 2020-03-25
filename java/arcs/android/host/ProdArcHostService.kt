@@ -19,7 +19,7 @@ import arcs.core.host.ArcHost
 /**
  * An isolatable (can run in another process) [Service] that has a [ProdHost] inside. [Particle]
  * implementations wishing to run inside of this [Prod] should use `arcs_kt_particles` macro
- * with `isolatable = True` to make themselves automatically discoverable by ProdHost.
+ * to make themselves automatically discoverable by ProdHost.
  */
 open class ProdArcHostService : LifecycleService() {
 

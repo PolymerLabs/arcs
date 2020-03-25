@@ -3,7 +3,6 @@ package arcs.core.host
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
 
 class ReadPerson : AbstractReadPerson() {
     var name = ""

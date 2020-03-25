@@ -31,7 +31,6 @@ load(
 )
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
-
 load(":util.bzl", "merge_lists", "replace_arcs_suffix")
 
 ARCS_SDK_DEPS = ["//third_party/java/arcs"]
@@ -208,6 +207,11 @@ def arcs_kt_library(
             visibility = visibility,
         )
 
+def _extract_particle_name(src):
+    if not src.endswith(".kt"):
+        fail("%s is not a Kotlin file (must end in .kt)" % src)
+    return src.split("/")[-1][:-3]
+
 def arcs_kt_particles(
         name,
         package,
@@ -238,14 +242,7 @@ def arcs_kt_particles(
         fail("Particles can only depend on one of jvm or wasm")
 
     if "jvm" in platforms:
-        particles = []
-
-        for src in srcs:
-            if not src.endswith(".kt"):
-                fail("%s is not a Kotlin file (must end in .kt)" % src)
-            particle = src.split("/")[-1][:-3]
-            particles = particles + [package + "." + particle]
-
+        particles = [package + _extract_particle_name(src) for src in srcs]
         serviceloader_file = "META-INF/services/arcs.core.host.api.Particle"
 
         registry_name = name + "-serviceloader-registry"
@@ -255,6 +252,7 @@ def arcs_kt_particles(
             out = serviceloader_file,
         )
 
+        # we use an intermediate java_library here for its ability to strip prefixes
         registry_lib = registry_name + "-lib"
         java_library(
             name = registry_lib,
@@ -285,9 +283,7 @@ def arcs_kt_particles(
         # Collect all the sources and annotation files in `wasm_srcs`.
         wasm_srcs = []
         for src in srcs:
-            if not src.endswith(".kt"):
-                fail("%s is not a Kotlin file (must end in .kt)" % src)
-            particle = src.split("/")[-1][:-3]
+            particle = _extract_particle_name(src)
             wasm_lib = particle + "-lib" + _WASM_SUFFIX
             wasm_annotations_file = particle + ".wasm.kt"
 

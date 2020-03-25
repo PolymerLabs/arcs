@@ -54,43 +54,43 @@ arcs_kt_plan(
     ],
 )
 
-alias(
-    name = "particle",
-    actual = ":particles-jvm"
-)
-
 arcs_kt_particles(
-    name = "particles",
+    name = "pure-particles",
     srcs = [
         "PurePerson.kt",
-        "ReadPerson.kt",
-        "WritePerson.kt",
     ],
     package = "arcs.core.host",
     platforms = ["jvm"],
     deps = [
-        ":impl",
         ":schemas",
+        ":testhost",
         "//java/arcs/jvm/host",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
 arcs_kt_jvm_library(
-    name = "impl",
-    testonly = 1,
-    srcs = glob(
-        ["*.kt"],
-        exclude = ["*Test.kt"],
-    ),
+    name = "testhost",
+    srcs = ["TestingJvmProdHost.kt"],
     deps = [
-        ":plans",
-        ":schemas",
         "//java/arcs/core/data",
-        "//java/arcs/core/host",
         "//java/arcs/core/util",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
+    ],
+)
+
+arcs_kt_jvm_library(
+    name = "particle",
+    testonly = 1,
+    srcs = [
+        "ReadPerson.kt",
+        "WritePerson.kt",
+    ],
+    deps = [
+        ":plans",
+        ":pure-particles-jvm",
+        ":schemas",
         "//java/arcs/sdk",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
