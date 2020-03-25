@@ -274,19 +274,24 @@ def arcs_kt_particles(
         )
 
         registry_import = registry_lib + "_import"
+        constraints = []
+        if add_android_constraints:
+            constraints = ["android"]
+
         native.java_import(
             name = registry_lib + "_import",
-            jars = [registry_lib]
+            jars = [registry_lib],
+            constraints = constraints,
         )
 
         arcs_kt_jvm_library(
             name = name + "-jvm",
+            testonly = testonly,
             srcs = srcs,
             add_android_constraints = add_android_constraints,
-            exports = [":" + registry_import],
             visibility = visibility,
+            exports = [":" + registry_import],
             deps = deps,
-            testonly = testonly,
         )
 
     if "js" in platforms:
