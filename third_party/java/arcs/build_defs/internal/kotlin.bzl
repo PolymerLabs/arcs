@@ -34,8 +34,11 @@ load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":util.bzl", "merge_lists", "replace_arcs_suffix")
 
 ARCS_SDK_DEPS = ["//third_party/java/arcs"]
+
 _WASM_SUFFIX = "-wasm"
+
 _JS_SUFFIX = "-js"
+
 _KT_SUFFIX = "-kt"
 
 IS_BAZEL = not (hasattr(native, "genmpm"))
@@ -59,7 +62,11 @@ DISABLED_LINT_CHECKS = [
 ]
 
 # All supported Kotlin platforms.
-ALL_PLATFORMS = ["jvm", "js", "wasm"]
+ALL_PLATFORMS = [
+    "jvm",
+    "js",
+    "wasm",
+]
 
 # Default set of platforms for Kotlin libraries.
 # TODO: re-enable JS after https://github.com/PolymerLabs/arcs/issues/4772 fixed
@@ -177,34 +184,34 @@ def arcs_kt_library(
     if "jvm" in platforms:
         arcs_kt_jvm_library(
             name = name,
+            testonly = testonly,
             # Exclude any wasm-specific srcs.
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
-            deps = [_to_jvm_dep(dep) for dep in deps],
-            exports = exports,
-            testonly = testonly,
-            visibility = visibility,
             add_android_constraints = add_android_constraints,
+            visibility = visibility,
+            exports = exports,
+            deps = [_to_jvm_dep(dep) for dep in deps],
         )
 
     if "js" in platforms:
         arcs_kt_js_library(
             name = name + _JS_SUFFIX,
+            testonly = testonly,
             # Exclude any wasm-specific srcs.
             # TODO: jvm srcs will be included here. That is not what we want.
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
-            deps = [_to_js_dep(dep) for dep in deps],
-            testonly = testonly,
             visibility = visibility,
+            deps = [_to_js_dep(dep) for dep in deps],
         )
 
     if "wasm" in platforms:
         arcs_kt_native_library(
             name = name + _WASM_SUFFIX,
+            testonly = testonly,
             # Exclude any jvm-specific srcs.
             srcs = [src for src in srcs if not src.endswith(".jvm.kt")],
-            deps = [_to_wasm_dep(dep) for dep in deps],
-            testonly = testonly,
             visibility = visibility,
+            deps = [_to_wasm_dep(dep) for dep in deps],
         )
 
 def _extract_particle_name(src):
@@ -248,8 +255,8 @@ def arcs_kt_particles(
         registry_name = name + "-serviceloader-registry"
         kotlin_serviceloader_registry(
             name = registry_name,
-            particles = particles,
             out = serviceloader_file,
+            particles = particles,
         )
 
         # we use an intermediate java_library here for its ability to strip prefixes
@@ -260,12 +267,12 @@ def arcs_kt_particles(
         lib_rule = java_library
         registry_srcs = []
         if not IS_BAZEL:
-            lib_rule = kt_jvm_library
+            lib_rule = kt_jvm_library
             dummyfile = name + "-dummy"
             native.genrule(
                 name = dummyfile,
                 outs = ["Dummy.kt"],
-                cmd = "touch $(OUTS)"
+                cmd = "touch $(OUTS)",
             )
             registry_srcs = [dummyfile]
 
@@ -279,18 +286,18 @@ def arcs_kt_particles(
         arcs_kt_jvm_library(
             name = name + "-jvm",
             srcs = srcs,
-            deps = deps,
+            add_android_constraints = add_android_constraints,
             resource_jars = [":" + registry_lib],
             visibility = visibility,
-            add_android_constraints = add_android_constraints,
+            deps = deps,
         )
 
     if "js" in platforms:
         arcs_kt_js_library(
             name = name + _JS_SUFFIX,
             srcs = srcs,
-            deps = [_to_js_dep(dep) for dep in deps],
             visibility = visibility,
+            deps = [_to_js_dep(dep) for dep in deps],
         )
 
     if "wasm" in platforms:
@@ -305,11 +312,11 @@ def arcs_kt_particles(
 
             kotlin_wasm_annotations(
                 name = particle + "-wasm-annotations",
-                particle = particle,
+                out = wasm_annotations_file,
                 # TODO: Package name should be parsed from the
                 # Arcs manifest, instead of being passed explicitly.
                 package = package,
-                out = wasm_annotations_file,
+                particle = particle,
             )
             wasm_srcs.extend([src, wasm_annotations_file])
 
@@ -326,10 +333,10 @@ def arcs_kt_particles(
         kt_native_binary(
             name = native_binary_name,
             entry_point = "arcs.sdk.main",
-            deps = [wasm_particle_lib],
             # Don't build this manually. Build the wasm_kt_binary rule below
             # instead; otherwise this rule will build a non-wasm binary.
             tags = ["manual", "notap"],
+            deps = [wasm_particle_lib],
         )
 
         # Create a wasm binary from the native binary.
@@ -362,9 +369,9 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
 
     kt_android_library(
         name = name,
+        testonly = True,
         srcs = srcs,
         manifest = manifest,
-        testonly = True,
         deps = deps,
     )
 
@@ -377,11 +384,11 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
         android_local_test(
             name = class_name,
             size = size,
-            manifest = manifest,
-            test_class = "%s.%s" % (package, class_name),
-            tags = tags,
-            deps = android_local_test_deps,
             data = data,
+            manifest = manifest,
+            tags = tags,
+            test_class = "%s.%s" % (package, class_name),
+            deps = android_local_test_deps,
         )
 
 def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
@@ -403,9 +410,9 @@ def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
             name = genrule_name,
             srcs = [src],
             outs = [out],
-            deps = deps,
             progress_message = "Generating Kotlin Plans",
             sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+            deps = deps,
         )
 
     arcs_kt_library(
@@ -436,10 +443,10 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], dat
 
     arcs_kt_jvm_library(
         name = name,
+        testonly = True,
         srcs = srcs,
         # We don't need this to be Android compatible.
         constraints = [],
-        testonly = True,
         deps = deps,
     )
 
@@ -448,10 +455,10 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], dat
         java_test(
             name = class_name,
             size = "small",
+            data = data,
+            tags = tags,
             test_class = "%s.%s" % (package, class_name),
             runtime_deps = [":%s" % name],
-            tags = tags,
-            data = data,
         )
 
 register_extension_info(
