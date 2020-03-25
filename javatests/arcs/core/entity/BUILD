@@ -43,6 +43,7 @@ arcs_kt_jvm_library(
         ["*.kt"],
         exclude = TEST_SRCS,
     ),
+    visibility = ["//javatests/arcs/android/entity:__pkg__"],
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/data",
