@@ -105,8 +105,8 @@ def arcs_kt_jvm_library(**kwargs):
         kwargs["name"] = kt_name
 
         exports.append(kt_name)
-        exports.append(resource_jars)
-        
+        exports = merge_lists(exports, resource_jars)
+
         if not IS_BAZEL:
             java_kwargs = {"constraints": constraints}
         else:
@@ -117,7 +117,6 @@ def arcs_kt_jvm_library(**kwargs):
             exports = exports,
             visibility = kwargs["visibility"],
             testonly = kwargs.get("testonly", False),
-            deps = resource_jars,
             **java_kwargs
         )
 
