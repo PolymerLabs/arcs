@@ -266,15 +266,8 @@ def arcs_kt_particles(
             name = registry_lib,
             srcs = [serviceloader_file],
             outs = [registry_lib + ".jar"],
-            cmd = """
-              rm -rf tmp
-              mkdir -p tmp/META-INF/services
-              cp $(SRCS) tmp/META-INF/services
-              cd tmp
-              zip -qr ../$(OUTS) .
-              cd .. && rm -rf tmp
-            """,
-            tools = [registry_name],
+            cmd = "$(location //tools/zip:zipper) c $(OUTS) %s=$(SRCS)"% serviceloader_file,
+            tools = [registry_name, "//tools/zip:zipper"],
         )
 
         arcs_kt_jvm_library(
