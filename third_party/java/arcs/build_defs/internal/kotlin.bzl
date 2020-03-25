@@ -274,7 +274,7 @@ def arcs_kt_particles(
             name = name + "-jvm",
             srcs = srcs,
             add_android_constraints = add_android_constraints,
-            resource_jars = [":" + registry_lib],
+            exports = [":" + registry_lib],
             visibility = visibility,
             deps = deps,
         )
