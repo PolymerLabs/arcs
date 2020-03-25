@@ -58,4 +58,10 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
             .forEach { all.putAll(it.getAllStorageKeys()) }
         return all
     }
+
+    override suspend fun removeExpiredEntities() {
+        registry.fetchAll()
+            .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
+            .forEach { it.removeExpiredEntities() }
+    }
 }

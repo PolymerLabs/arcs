@@ -68,6 +68,10 @@ class FakeDatabaseManager : DatabaseManager {
         cache.forEach { (_, db) -> all.putAll(db.getAllStorageKeys()) }
         return all
     }
+
+    override suspend fun removeExpiredEntities() {
+        throw UnsupportedOperationException("Fake databases cannot remove expired entities.")
+    }
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -157,6 +161,10 @@ open class FakeDatabase : Database {
     override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
         clients.remove(identifier)
         Unit
+    }
+
+    override suspend fun removeExpiredEntities() {
+        throw UnsupportedOperationException("Fake database cannot remove expired entities.")
     }
 }
 

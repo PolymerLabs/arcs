@@ -34,6 +34,7 @@ import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.assertThrows
 import arcs.core.util.guardedBy
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -1121,6 +1122,73 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun removeExpiredEntities_entityIsCleared() = runBlockingTest {       
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text), 
+                collections = mapOf("nums" to FieldType.Number)
+            )
+        )
+        val entityKey = DummyStorageKey("entity")        
+        val expiredEntityKey = DummyStorageKey("expiredEntity")
+        // An expired entity.
+        val expiredEntity = DatabaseData.Entity(
+            RawEntity(
+                "expiredEntity", 
+                mapOf("text" to "abc".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
+                11L,
+                JvmTime.currentTimeMillis - 10000 // expirationTimestamp, in the past.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        // Also add a non-expired entity.
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity", 
+                mapOf("text" to "def".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
+                11L,
+                JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdateEntity(expiredEntityKey, expiredEntity)
+        database.insertOrUpdateEntity(entityKey, entity)
+
+        database.removeExpiredEntities()
+
+        // Check the expired entity fields have been cleared (only a tombstone is left).
+        assertThat(database.getEntity(expiredEntityKey, schema))
+            .isEqualTo(DatabaseData.Entity(
+                RawEntity("expiredEntity", mapOf("text" to null), mapOf("nums" to emptySet())),
+                schema,
+                FIRST_VERSION_NUMBER,
+                VERSION_MAP
+            ))
+
+        // Check the other entity has not been modified.
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+        
+        // Check unused values have been deleted from the global table as well, it should contain
+        // only values referenced from the second entity (two values as there are two fields).
+        assertTableIsSize("field_values", 2)
+
+        // Check collection entries have been cleared. There should only be two values: 123 and 789.
+        assertTableIsSize("collection_entries", 2)
+
+        // Check unused primitive values have been removed, only those used in entity are present.
+        assertThat(readTextPrimitiveValues()).containsExactly("def")
+        assertThat(readNumberPrimitiveValues()).containsExactly(123L, 789L)
+    }
+
+    @Test
     fun delete_entity_getsRemoved() = runBlockingTest {
         val entityKey = DummyStorageKey("entity")
         database.insertOrUpdateEntity(entityKey, EMPTY_ENTITY)
@@ -1333,12 +1401,26 @@ class DatabaseImplTest {
     private fun readFieldsTable() =
         database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
 
-    private fun assertTableIsEmpty(tableName: String) {
+    private fun readTextPrimitiveValues(): Set<String> = 
+        database.readableDatabase.rawQuery("SELECT value FROM text_primitive_values", emptyArray())
+            .map { it.getString(0) }
+            .toSet()
+
+    private fun readNumberPrimitiveValues(): Set<Long> = 
+        database.readableDatabase.rawQuery("SELECT value FROM number_primitive_values", emptyArray())
+            .map { it.getLong(0) }
+            .toSet()
+
+    private fun assertTableIsSize(tableName: String, size: Int) {
         database.readableDatabase.rawQuery("SELECT * FROM $tableName", arrayOf()).use {
-            assertWithMessage("Expected table $tableName to be empty, but found ${it.count} rows.")
+            assertWithMessage("Expected table $tableName to be of size ${size}, but found ${it.count} rows.")
                 .that(it.count)
-                .isEqualTo(0)
+                .isEqualTo(size)
         }
+    }
+
+    private fun assertTableIsEmpty(tableName: String) {
+        assertTableIsSize(tableName, 0)
     }
 
     companion object {
