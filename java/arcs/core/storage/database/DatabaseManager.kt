@@ -43,6 +43,9 @@ interface DatabaseManager {
 
     /* Returns the set of storage keys in all known databases. */
     suspend fun getAllStorageKeys(): Map<StorageKey, Type>
+
+    /** Clears all expired entities, in all known databases.  */
+    suspend fun removeExpiredEntities()
 }
 
 /** Identifier for an individual [Database] instance. */

@@ -727,6 +727,75 @@ class DatabaseImpl(
         }
     }
 
+    override suspend fun removeExpiredEntities() {
+        // Fix the time before starting the transaction.
+        val nowMillis = JvmTime.currentTimeMillis
+        writableDatabase.transaction {
+            // Find all expired entities.
+            val storageKeyIds = rawQuery(
+                "SELECT storage_key_id FROM entities WHERE expiration_timestamp < ?",
+                arrayOf(nowMillis.toString())
+            ).map { it.getLong(0) }.toSet()
+
+            // Remove field values.
+            delete(
+                TABLE_FIELD_VALUES,
+                "entity_storage_key_id in (?)",
+                arrayOf(storageKeyIds.joinToString())
+            )
+
+            // TODO: remove from collection_entries all references to these entities.
+
+            // Clean up unused values as they can contain sensitive data.
+            // This query will return all field value ids being referenced by collection or 
+            // singleton fields.
+            val usedFieldIdsQuery =
+                """
+                    SELECT
+                        CASE
+                            WHEN fields.is_collection = 0 THEN field_values.value_id
+                            ELSE collection_entries.value_id
+                        END AS field_value_id                        
+                    FROM fields
+                    LEFT JOIN field_values
+                        ON field_values.field_id = fields.id
+                    LEFT JOIN collection_entries
+                        ON fields.is_collection = 1
+                        AND collection_entries.collection_id = field_values.value_id
+                    WHERE fields.type_id = ?
+                """.trimIndent()
+
+            delete(
+                TABLE_NUMBER_PRIMITIVES,
+                "id NOT IN ($usedFieldIdsQuery)",
+                arrayOf(PrimitiveType.Number.ordinal.toString())
+            )
+            delete(
+                TABLE_TEXT_PRIMITIVES,
+                "id NOT IN ($usedFieldIdsQuery)",
+                arrayOf(PrimitiveType.Text.ordinal.toString())
+            )
+
+            // Now delete collection_entries for those fields we just cleared.
+            val usedFieldCollectionIdsQuery =
+                """
+                    SELECT collection_id
+                    FROM fields
+                    LEFT JOIN field_values
+                        ON field_values.field_id = fields.id
+                    LEFT JOIN collection_entries
+                        ON fields.is_collection = 1
+                        AND collection_entries.collection_id = field_values.value_id
+                    WHERE fields.is_collection = 1
+                """.trimIndent()
+            delete(
+                TABLE_COLLECTION_ENTRIES,
+                "collection_id NOT IN ($usedFieldCollectionIdsQuery)",
+                arrayOf()
+            )
+        }
+    }
+
     override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
         val res: MutableMap<StorageKey, Type> = mutableMapOf()
         readableDatabase

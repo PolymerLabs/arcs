@@ -50,6 +50,9 @@ interface Database {
     /** Returns all storage keys stored in this database. */
     suspend fun getAllStorageKeys(): Map<StorageKey, Type>
 
+    /** Clears all expired entities, leaving only a tombstone with the version map. */
+    suspend fun removeExpiredEntities()
+
     /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
     suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot
 
