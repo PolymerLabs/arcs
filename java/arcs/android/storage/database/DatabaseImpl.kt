@@ -751,7 +751,7 @@ class DatabaseImpl(
             // singleton fields.
             val usedFieldIdsQuery =
                 """
-                    (SELECT
+                    SELECT
                         CASE
                             WHEN fields.is_collection = 0 THEN field_values.value_id
                             ELSE collection_entries.value_id
@@ -762,35 +762,35 @@ class DatabaseImpl(
                     LEFT JOIN collection_entries
                         ON fields.is_collection = 1
                         AND collection_entries.collection_id = field_values.value_id
-                    WHERE fields.type_id = ?)
+                    WHERE fields.type_id = ?
                 """.trimIndent()
 
             delete(
                 TABLE_NUMBER_PRIMITIVES,
-                "id NOT IN " + usedFieldIdsQuery,
+                "id NOT IN ($usedFieldIdsQuery)",
                 arrayOf(PrimitiveType.Number.ordinal.toString())
             )
             delete(
                 TABLE_TEXT_PRIMITIVES,
-                "id NOT IN " + usedFieldIdsQuery,
+                "id NOT IN ($usedFieldIdsQuery)",
                 arrayOf(PrimitiveType.Text.ordinal.toString())
             )
 
             // Now delete collection_entries for those fields we just cleared.
             val usedFieldCollectionIdsQuery =
                 """
-                    (SELECT collection_id                     
+                    SELECT collection_id
                     FROM fields
                     LEFT JOIN field_values
                         ON field_values.field_id = fields.id
                     LEFT JOIN collection_entries
                         ON fields.is_collection = 1
                         AND collection_entries.collection_id = field_values.value_id
-                    WHERE fields.is_collection = 1)
+                    WHERE fields.is_collection = 1
                 """.trimIndent()
             delete(
                 TABLE_COLLECTION_ENTRIES,
-                "collection_id NOT IN " + usedFieldCollectionIdsQuery,
+                "collection_id NOT IN ($usedFieldCollectionIdsQuery)",
                 arrayOf()
             )
         }
