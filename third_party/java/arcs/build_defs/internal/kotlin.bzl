@@ -267,7 +267,7 @@ def arcs_kt_particles(
         lib_rule = java_library
         registry_srcs = []
         if not IS_BAZEL:
-            lib_rule = kt_jvm_library
+            lib_rule = kt_jvm_library
             dummyfile = name + "-dummy"
             native.genrule(
                 name = dummyfile,
