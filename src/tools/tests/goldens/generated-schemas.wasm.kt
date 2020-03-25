@@ -445,9 +445,9 @@ class Gold_Data(
 
 
 abstract class AbstractGold : WasmParticleImpl() {
-    val handles: GoldHandles = GoldHandles(this)
+    val handles: Handles = Handles(this)
 
-    class GoldHandles(
+    class Handles(
         particle: WasmParticleImpl
     ) {
         val data: WasmSingletonImpl<Gold_Data> = WasmSingletonImpl(particle, "data", Gold_Data)

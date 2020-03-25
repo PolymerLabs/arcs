@@ -263,9 +263,9 @@ class Gold_Data(
 
 
 abstract class AbstractGold : BaseParticle() {
-    override val handles: GoldHandles = GoldHandles()
+    override val handles: Handles = Handles()
 
-    class GoldHandles : HandleHolderBase(
+    class Handles : HandleHolderBase(
         "Gold",
         mapOf(
             "data" to Gold_Data,
