@@ -52,8 +52,8 @@ describe('RamDisk + Backing Store Integration', async () => {
     count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'them', version: {from: 0, to: 10}, value: 15});
 
     const id = store.on(async (message) => {return;});
-    assert.isTrue(await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count1.getData(), id, muxId: 'thing0'}));
-    assert.isTrue(await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count2.getData(), id, muxId: 'thing1'}));
+    await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count1.getData(), id, muxId: 'thing0'});
+    await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count2.getData(), id, muxId: 'thing1'});
 
     await store.idle();
     let message: ProxyMessage<CRDTCountTypeRecord>;

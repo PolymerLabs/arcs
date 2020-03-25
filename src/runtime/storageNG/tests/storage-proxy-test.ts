@@ -99,7 +99,6 @@ describe('StorageProxy', async () => {
     // Check that on subsequent data request, we don't need to sync.
     mockStore.onProxyMessage = async message => {
       assert.fail('should not need to sync');
-      return false;
     };
     await storageProxy.getParticleView();
   });

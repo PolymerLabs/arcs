@@ -67,7 +67,7 @@ describe('Store Sequence', async () => {
     });
 
     const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 3,
-      {type: ExpectedResponse.Constant, response: true});
+      {type: ExpectedResponse.Constant, response: undefined});
     const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void});
 
     const send = sequenceTest.registerOutput('driver.send',
@@ -133,7 +133,7 @@ describe('Store Sequence', async () => {
       return activeStore;
     });
 
-    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 4, {type: ExpectedResponse.Constant, response: true});
+    const onProxyMessage = sequenceTest.registerInput('onProxyMessage', 4, {type: ExpectedResponse.Constant, response: undefined});
     const onReceive = sequenceTest.registerInput('onReceive', 3, {type: ExpectedResponse.Void});
 
     const meCount = sequenceTest.registerVariable(0);
@@ -189,8 +189,8 @@ describe('Store Sequence', async () => {
       return {store1: activeStore1, store2: activeStore2};
     });
 
-    const store1in = sequenceTest.registerInput('store1.onProxyMessage', 5, {type: ExpectedResponse.Constant, response: true});
-    const store2in = sequenceTest.registerInput('store2.onProxyMessage', 5, {type: ExpectedResponse.Constant, response: true});
+    const store1in = sequenceTest.registerInput('store1.onProxyMessage', 5, {type: ExpectedResponse.Constant, response: undefined});
+    const store2in = sequenceTest.registerInput('store2.onProxyMessage', 5, {type: ExpectedResponse.Constant, response: undefined});
 
     const store1Model = sequenceTest.registerSensor('store1.localModel');
     const store2Model = sequenceTest.registerSensor('store2.localModel');
@@ -244,8 +244,8 @@ describe('Store Sequence', async () => {
       return {store1: activeStore1, store2: activeStore2};
     });
 
-    const store1in = sequenceTest.registerInput('store1.onProxyMessage', 19, {type: ExpectedResponse.Constant, response: true});
-    const store2in = sequenceTest.registerInput('store2.onProxyMessage', 19, {type: ExpectedResponse.Constant, response: true});
+    const store1in = sequenceTest.registerInput('store1.onProxyMessage', 19, {type: ExpectedResponse.Constant, response: undefined});
+    const store2in = sequenceTest.registerInput('store2.onProxyMessage', 19, {type: ExpectedResponse.Constant, response: undefined});
 
     const store1Model = sequenceTest.registerSensor('store1.localModel');
     const store2Model = sequenceTest.registerSensor('store2.localModel');

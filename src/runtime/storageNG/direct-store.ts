@@ -218,7 +218,7 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   // result in an up-to-date model being sent back to that StorageProxy.
   // a return value of true implies that the message was accepted, a
   // return value of false requires that the proxy send a model sync
-  async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
+  async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
     if (typeof message.id !== 'number') {
       throw new Error('Direct Store received message from StorageProxy without an ID');
     }
@@ -228,24 +228,24 @@ export class DirectStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     switch (message.type) {
       case ProxyMessageType.SyncRequest:
         await this.callbacks.get(message.id)({type: ProxyMessageType.ModelUpdate, model: this.localModel.getData(), id: message.id});
-        return true;
+        return;
       case ProxyMessageType.Operations: {
         for (const operation of message.operations) {
           if (!this.localModel.applyOperation(operation)) {
             await this.callbacks.get(message.id)({type: ProxyMessageType.SyncRequest, id: message.id});
-            return false;
+            return;
           }
         }
         const change: CRDTChange<T> = {changeType: ChangeType.Operations, operations: message.operations};
         // to make tsetse checks happy
         noAwait(this.processModelChange(change, null, this.version, message.id));
-        return true;
+        return;
       }
       case ProxyMessageType.ModelUpdate: {
         const {modelChange, otherChange} = this.localModel.merge(message.model);
         // to make tsetse checks happy
         noAwait(this.processModelChange(modelChange, otherChange, this.version, message.id));
-        return true;
+        return;
       }
       default:
         throw new CRDTError('Invalid operation provided to onProxyMessage');

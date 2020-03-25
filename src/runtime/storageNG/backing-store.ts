@@ -69,7 +69,7 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     return record;
   }
 
-  async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
+  async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
     assert(message.muxId != null);
     let storeRecord = this.stores[message.muxId];
     if (storeRecord == null) {
@@ -80,7 +80,7 @@ export class BackingStore<T extends CRDTTypeRecord>  {
     }
     const {store, id} = storeRecord;
     message.id = id;
-    return store.onProxyMessage(message);
+    await store.onProxyMessage(message);
   }
 
   static async construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>) {

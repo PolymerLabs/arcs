@@ -19,6 +19,7 @@ import {Store} from './store.js';
 import {Producer} from '../hot.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {BackingStorageProxy} from './backing-storage-proxy.js';
+import {noAwait} from '../util.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -61,7 +62,7 @@ export type StoreConstructor = {
 export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
   setCallback(callback: ProxyCallback<T>): void;
   reportExceptionInHost(exception: PropagatedException): void;
-  onProxyMessage(message: ProxyMessage<T>): Promise<boolean>;
+  onProxyMessage(message: ProxyMessage<T>): Promise<void>;
   getChannelConstructor: Producer<ChannelConstructor>;
 }
 
@@ -115,16 +116,16 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
 
   abstract on(callback: ProxyCallback<T>): number;
   abstract off(callback: number): void;
-  abstract async onProxyMessage(message: ProxyMessage<T>): Promise<boolean>;
+  abstract async onProxyMessage(message: ProxyMessage<T>): Promise<void>;
   abstract reportExceptionInHost(exception: PropagatedException): void;
 
   getStorageEndpoint() {
     const store = this;
     let id: number;
     return {
-      async onProxyMessage(message: ProxyMessage<T>): Promise<boolean> {
+      async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
         message.id = id!;
-        return store.onProxyMessage(message);
+        noAwait(store.onProxyMessage(message));
       },
 
       setCallback(callback: ProxyCallback<T>) {

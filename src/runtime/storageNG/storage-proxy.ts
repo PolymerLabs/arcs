@@ -267,8 +267,8 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
   }
 
-  protected async requestSynchronization(): Promise<boolean> {
-    return this.store.onProxyMessage({type: ProxyMessageType.SyncRequest});
+  protected async requestSynchronization(): Promise<void> {
+    await this.store.onProxyMessage({type: ProxyMessageType.SyncRequest});
   }
 }
 
@@ -323,7 +323,7 @@ export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> 
 
   unpause() {}
 
-  protected async requestSynchronization(): Promise<boolean> {
+  protected async requestSynchronization(): Promise<void> {
     return new Promise(resolve => {});
   }
 }

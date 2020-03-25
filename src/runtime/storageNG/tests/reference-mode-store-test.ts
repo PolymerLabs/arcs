@@ -112,8 +112,7 @@ describe('Reference Mode Store', async () => {
     entity.rawData.name = {id: 'bob'};
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
 
-    const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
-    assert.isTrue(result);
+     await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
 
     const actor = activeStore['crdtKey'];
     const referenceCollection = new ReferenceCollection();
@@ -166,8 +165,7 @@ describe('Reference Mode Store', async () => {
     entity.rawData.name = {id: 'bob'};
     const operation: CollectionOperation<MyEntity> = {type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity};
 
-    const result = await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: 1});
-    assert.isTrue(result);
+    await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [operation], id: 1});
 
     const actor = activeStore['crdtKey'];
     const referenceCollection = new ReferenceCollection();
@@ -200,8 +198,7 @@ describe('Reference Mode Store', async () => {
       actor: 'me',
       added: entity
     };
-    assert.isTrue(await activeStore.onProxyMessage(
-        {type: ProxyMessageType.Operations, operations: [addOperation], id: 1}));
+    await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [addOperation], id: 1});
 
     // After adding, there is a corresponding entity in the backing store.
     assert.deepEqual(loadEntityFromBackingStore(activeStore, 'an-id'), entity);
@@ -213,8 +210,7 @@ describe('Reference Mode Store', async () => {
       actor: 'me',
       removed: entity
     };
-    assert.isTrue(await activeStore.onProxyMessage(
-        {type: ProxyMessageType.Operations, operations: [deleteOp], id: 1}));
+    await activeStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [deleteOp], id: 1});
 
     // After removing, there corresponding entity in the backing store is now
     // blank.
@@ -367,8 +363,7 @@ describe('Reference Mode Store', async () => {
     let sendInvoked = false;
     driver.send = async model => {sendInvoked = true; return false;};
 
-    const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
-    assert.isTrue(result);
+    await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
     assert.isTrue(sendInvoked);
 
     sendInvoked = false;

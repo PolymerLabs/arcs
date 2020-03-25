@@ -87,8 +87,7 @@ describe('chicken Firebase + Store Integration', async () => {
     await activeStore1.idle();
     await activeStore2.idle();
 
-    const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
-    assert.strictEqual(results.filter(a => !a).length, 0);
+    await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
 
     const firebaseEntry = MockFirebaseStorageDriverProvider.getValueForTesting(
         runtime.getCacheService(), storageKey);

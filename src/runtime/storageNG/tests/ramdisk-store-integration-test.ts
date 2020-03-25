@@ -81,8 +81,7 @@ describe('RamDisk + Store Integration', async () => {
       {type: CountOpTypes.MultiIncrement, actor: 'me', value: 74, version: {from: 28, to: 33}},
     ], id: 1});
 
-    const results = await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
-    assert.strictEqual(results.filter(a => !a).length, 0);
+    await Promise.all([modelReply1, modelReply2, opReply1, opReply2, opReply3]);
 
     await activeStore1.idle();
     await activeStore2.idle();
@@ -127,8 +126,7 @@ describe('RamDisk + Store Integration', async () => {
       {type: CountOpTypes.Increment, actor: 'other', version: {from: 1, to: 2}},
     ], id: 1});
 
-    const results = await Promise.all([opReply1, opReply2, opReply3, opReply4]);
-    assert.strictEqual(results.filter(a => !a).length, 0);
+    await Promise.all([opReply1, opReply2, opReply3, opReply4]);
 
     await activeStore1.idle();
     await activeStore2.idle();

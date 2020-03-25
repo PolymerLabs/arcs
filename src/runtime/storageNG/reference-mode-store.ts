@@ -39,7 +39,7 @@ type PreEnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTyp
   {from: ReferenceModeUpdateSource.BackingStore, message: ProxyMessage<Entity>} |
   {from: ReferenceModeUpdateSource.Container, message: ProxyMessage<RefContainer>};
 type EnqueuedMessage<Container extends CRDTTypeRecord, Entity extends CRDTTypeRecord, RefContainer extends CRDTTypeRecord> =
-  PreEnqueuedMessage<Container, Entity, RefContainer> & {promise: Consumer<boolean>};
+  PreEnqueuedMessage<Container, Entity, RefContainer> & {promise: Consumer<void>};
 
 type BlockableRunnable = {fn: Runnable, block?: string};
 
@@ -190,26 +190,27 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
    * When handling proxy messages, this implies 2 rounds of update - first the backing
    * store needs to be updated, and once that has completed then the container store needs
    * to be updated.
+   *
+   * Note that though there's no explicit return value from processing these messages,
+   * returning implies that they've taken local effect.
    */
-  async onContainerStore(message: ProxyMessage<ReferenceContainer>) {
-    noAwait(this.enqueue({from: ReferenceModeUpdateSource.Container, message}));
+  async onContainerStore(message: ProxyMessage<ReferenceContainer>): Promise<void> {
+    return this.enqueue({from: ReferenceModeUpdateSource.Container, message});
   }
 
-  async onBackingStore(message: ProxyMessage<CRDTEntityTypeRecord<S, C>>) {
-    noAwait(this.enqueue({from: ReferenceModeUpdateSource.BackingStore, message}));
+  async onBackingStore(message: ProxyMessage<CRDTEntityTypeRecord<S, C>>): Promise<void> {
+    return this.enqueue({from: ReferenceModeUpdateSource.BackingStore, message});
   }
 
-  async onProxyMessage(message: ProxyMessage<Container>): Promise<boolean> {
+  async onProxyMessage(message: ProxyMessage<Container>): Promise<void> {
     return this.enqueue({from: ReferenceModeUpdateSource.StorageProxy, message});
   }
 
   /**
    * enqueue an incoming update onto the object-wide queue and return a promise that will be resolved
    * when the update is processed.
-   *
-   * TODO(shans): Can this be marked non-async once/if onProxyMessage ends up returning Promise<void> too?
    */
-  private async enqueue(entry: PreEnqueuedMessage<Container, CRDTEntityTypeRecord<S, C>, ReferenceContainer>): Promise<boolean> {
+  private async enqueue(entry: PreEnqueuedMessage<Container, CRDTEntityTypeRecord<S, C>, ReferenceContainer>): Promise<void> {
     return new Promise((resolve, reject) => {
       const startProcessing = this.receiveQueue.length === 0;
       this.receiveQueue.push({...entry, promise: resolve});
@@ -227,17 +228,18 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
       const nextMessage = this.receiveQueue[0];
       switch (nextMessage.from) {
         case ReferenceModeUpdateSource.StorageProxy:
-          nextMessage.promise(await this.handleProxyMessage(nextMessage.message));
+          await this.handleProxyMessage(nextMessage.message);
           break;
         case ReferenceModeUpdateSource.BackingStore:
-          nextMessage.promise(await this.handleBackingStore(nextMessage.message));
+          await this.handleBackingStore(nextMessage.message);
           break;
         case ReferenceModeUpdateSource.Container:
-          nextMessage.promise(await this.handleContainerStore(nextMessage.message));
+          await this.handleContainerStore(nextMessage.message);
           break;
         default:
           throw new Error('invalid message type');
       }
+      nextMessage.promise();
       this.receiveQueue.shift();
     }
   }
@@ -363,26 +365,19 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
             reference = {id: entity.id, storageKey: this.backingStore.storageKey, version};
           }
           const containerMessage = this.updateOp<Entity, Reference>(operation, () => reference);
-          const response = await this.containerStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [containerMessage], id: 1});
-          if (response) {
-            this.enqueueSend(() => void this.sendExcept(message, message.id));
-          } else {
-            return false;
-          }
+          await this.containerStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [containerMessage], id: 1});
+          this.enqueueSend(() => void this.sendExcept(message, message.id));
         }
         break;
       }
       case ProxyMessageType.ModelUpdate: {
         const {version, values} = message.model;
         const newValues = {} as Dictionary<{value: Reference, version: VersionMap}>;
-        const backingStoreReceipts: Promise<boolean>[] = [];
+        const backingStoreReceipts: Promise<void>[] = [];
         Object.entries(values).forEach(([id, {value, version}]) => {
-          backingStoreReceipts.push(this.updateBackingStore(value).then(success => {
-            if (success) {
-              const entityVersion = this.backingStore.getLocalModel(id).getData().version;
-              newValues[id] = {value: {id, storageKey: this.backingStore.storageKey, version: entityVersion}, version};
-            }
-            return success;
+          backingStoreReceipts.push(this.updateBackingStore(value).then(_ => {
+            const entityVersion = this.backingStore.getLocalModel(id).getData().version;
+            newValues[id] = {value: {id, storageKey: this.backingStore.storageKey, version: entityVersion}, version};
           }));
         });
         await Promise.all(backingStoreReceipts);
