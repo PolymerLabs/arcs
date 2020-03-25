@@ -36,6 +36,8 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
 
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -108,6 +110,18 @@ open class AllocatorTestBase {
 
         readingExternalHost.setup()
         writingExternalHost.setup()
+    }
+
+    @Serializable
+    data class TestEntity(val name: String, val age: Int)
+
+    @Test
+    fun testKotlinSerialization() {
+        val wick = TestEntity("John Wick", 42)
+        val json = Json(JsonConfiguration.Stable)
+        // serializing objects
+        val jsonData = json.stringify(TestEntity.serializer(), wick)
+        assertThat(wick).isEqualTo(json.parse(TestEntity.serializer(), jsonData))
     }
 
     /**

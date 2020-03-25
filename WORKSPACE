@@ -45,6 +45,10 @@ KOTLINX_ATOMICFU_VERSION = "0.14.1"
 
 KOTLINX_COROUTINES_VERSION = "1.3.3"
 
+KOTLINX_SERIALIZATION_VERSION = "0.14.0"
+
+KOTLINX_SERIALIZATION_PLUGIN_VERSION = "0.62"
+
 ROBOLECTRIC_VERSION = "4.1"
 
 KOTLINPOET_VERSION = "1.0.1"
@@ -89,6 +93,8 @@ maven_install(
         "org.jetbrains.kotlinx:kotlinx-coroutines-test:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:atomicfu:" + KOTLINX_ATOMICFU_VERSION,
         "org.jetbrains.kotlinx:atomicfu-js:" + KOTLINX_ATOMICFU_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-serialization-runtime:" + KOTLINX_SERIALIZATION_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:" + KOTLINX_SERIALIZATION_VERSION,
         "org.json:json:20141113",
         "org.mockito:mockito-core:2.23.0",
         "org.robolectric:robolectric:" + ROBOLECTRIC_VERSION,

@@ -49,7 +49,6 @@ KOTLINC_OPTS = [
 
 BAZEL_KOTLINC_OPTS = [
     # jvm-target 1.8 needed to solve crash in Bazel Desugaring
-    "-jvm-target 1.8",
 ]
 
 DISABLED_LINT_CHECKS = [
@@ -85,6 +84,19 @@ def arcs_kt_jvm_library(**kwargs):
         kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
     else:
         kotlincopts = merge_lists(kotlincopts, BAZEL_KOTLINC_OPTS)
+
+#    print("deps is " + ", ".join(kwargs.get("deps", [])))
+    if "//third_party/kotlin/kotlinx_serialization" in kwargs.get("deps", []):
+        print("Running pligin")
+        ABS_HACK_LOCATION = "/tmp/kotlinx_serialization_plugin.jar"
+        native.genrule(
+            name = kwargs["name"] + "_copy_kotlinx_serialization",
+            # Needed because all genrules need an out
+            outs = [kwargs["name"] + "_kotlinx_serialization.jar"],
+            cmd = "touch $(OUTS); cp $(location //third_party/kotlin/kotlinx_serialization:kotlinx_serialization_plugin) " + ABS_HACK_LOCATION,
+            tools = ["//third_party/kotlin/kotlinx_serialization:kotlinx_serialization_plugin"]
+        )
+        kotlincopts = merge_lists(kotlincopts, ["-Xplugin=" + ABS_HACK_LOCATION])
 
     kwargs["kotlincopts"] = kotlincopts
 
