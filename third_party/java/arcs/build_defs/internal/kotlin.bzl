@@ -280,6 +280,7 @@ def arcs_kt_particles(
             constraints = ["android"]
 
         # buildifier: disable=native-java
+        
         native.java_import(
             name = registry_import,
             jars = [registry_lib],
