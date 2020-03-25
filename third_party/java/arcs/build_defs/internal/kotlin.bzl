@@ -114,6 +114,7 @@ def arcs_kt_jvm_library(**kwargs):
             name = name,
             exports = exports,
             visibility = kwargs["visibility"],
+            testonly = kwargs.get("testonly", False),
             **java_kwargs
         )
 
