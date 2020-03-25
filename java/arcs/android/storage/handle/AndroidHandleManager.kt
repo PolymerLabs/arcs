@@ -25,7 +25,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * [ActivationFactory] with one that generates [ServiceStore] instances that can
  * communication with a running [StorageService].
  */
-@UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 fun AndroidHandleManager(
     context: Context,
     lifecycle: Lifecycle,

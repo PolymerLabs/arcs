@@ -8,5 +8,5 @@ import org.junit.runners.JUnit4
  * Tests run on JVM.
  */
 @RunWith(JUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 open class CoreAllocatorTest : AllocatorTestBase()

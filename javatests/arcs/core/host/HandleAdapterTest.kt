@@ -38,7 +38,7 @@ import org.junit.runners.JUnit4
 private typealias Person = ReadPerson_Person
 
 @RunWith(JUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 class HandleAdapterTest {
     private lateinit var manager: EntityHandleManager

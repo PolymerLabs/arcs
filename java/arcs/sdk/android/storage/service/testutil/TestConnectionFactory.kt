@@ -24,7 +24,7 @@ import org.robolectric.Robolectric
  * instances.
  */
 @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 fun TestConnectionFactory(ctx: Context) = DefaultConnectionFactory(ctx, TestBindingDelegate(ctx))
 
 /**

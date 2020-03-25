@@ -39,7 +39,7 @@ import org.junit.runner.RunWith
 
 /** Tests for [StorageServiceConnection]. */
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageServiceConnectionTest {
     private lateinit var delegateMock: StorageServiceBindingDelegate
     private lateinit var serviceMock: IStorageService

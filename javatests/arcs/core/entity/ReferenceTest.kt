@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-@UseExperimental(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {
     private val dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA)

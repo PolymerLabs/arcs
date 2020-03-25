@@ -74,7 +74,7 @@ class IntentArcHostAdapter(
         sender(intent)
     }
 
-    @UseExperimental(ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     class ResultReceiverContinuation<T>(
         val continuation: CancellableContinuation<T?>,
         val block: (Any?) -> T?

@@ -48,7 +48,7 @@ import org.robolectric.Robolectric
 import kotlin.coroutines.experimental.suspendCoroutine
 
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class ArcHostHelperTest {
     private lateinit var context: Context
     private lateinit var helper: ArcHostHelper
