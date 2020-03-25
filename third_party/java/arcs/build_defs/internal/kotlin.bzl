@@ -94,6 +94,7 @@ def arcs_kt_jvm_library(**kwargs):
         kotlincopts = merge_lists(kotlincopts, BAZEL_KOTLINC_OPTS)
 
     kwargs["kotlincopts"] = kotlincopts
+    resource_jars = kwargs.pop("resource_jars", [])
 
     if exports:
         # kt_jvm_library doesn't support the "exports" property. Instead, we
@@ -115,6 +116,7 @@ def arcs_kt_jvm_library(**kwargs):
             exports = exports,
             visibility = kwargs["visibility"],
             testonly = kwargs.get("testonly", False),
+            resource_jars = resource_jars,
             **java_kwargs
         )
 
@@ -279,7 +281,7 @@ def arcs_kt_particles(
             constraints = ["android"]
 
         native.java_import(
-            name = registry_lib + "_import",
+            name = registry_import,
             jars = [registry_lib],
             constraints = constraints,
         )
@@ -289,6 +291,7 @@ def arcs_kt_particles(
             testonly = testonly,
             srcs = srcs,
             add_android_constraints = add_android_constraints,
+            resource_jars = [":" + registry_import],
             visibility = visibility,
             exports = [":" + registry_import],
             deps = deps,
