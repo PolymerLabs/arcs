@@ -36,6 +36,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/sdk/android/storage/service/testutil",
         "//javatests/arcs/core/allocator:allocator-test-util",
         "//javatests/arcs/core/host:particle",
+        "//javatests/arcs/core/host:testhost",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/android/androidx_test/runner/monitor",
