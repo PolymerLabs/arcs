@@ -18,6 +18,7 @@ kt_android_library(
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/storage/handle",
         "//java/arcs/jvm/host",
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/lifecycle",

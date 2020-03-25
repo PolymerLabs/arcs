@@ -7,10 +7,8 @@ import android.os.IBinder
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.TestingHost
 import arcs.core.data.Capabilities
-import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
 import arcs.core.storage.handle.Stores
 import arcs.sdk.android.storage.service.ConnectionFactory
@@ -44,16 +42,14 @@ open class TestExternalArcHostService(val arcHost: TestingAndroidHost) : Service
 
         private val stores = Stores()
 
-        override fun entityHandleManager(arcId: String) = EntityHandleManager(
-            AndroidHandleManager(
-                serviceContext,
-                FakeLifecycle(),
-                Dispatchers.Default,
-                testConnectionFactory,
-                stores
-            ),
+        override fun entityHandleManager(arcId: String) = AndroidEntityHandleManager(
+            serviceContext,
+            FakeLifecycle(),
             arcId,
-            hostId
+            hostId,
+            Dispatchers.Default,
+            testConnectionFactory,
+            stores
         )
 
         override val arcHostContextCapability = testingCapability

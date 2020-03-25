@@ -7,19 +7,18 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
-import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.data.FieldType
+import arcs.core.data.HandleMode
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.host.EntityHandleManager
-import arcs.core.data.HandleMode
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
+import arcs.core.host.EntityHandleManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -32,7 +31,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.IllegalStateException
 import kotlin.coroutines.experimental.suspendCoroutine
 
 private typealias Person = TestParticleInternal1
@@ -85,12 +83,10 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         handleHolder = TestParticleHandles()
 
-        handleManager = EntityHandleManager(
-            AndroidHandleManager(
-                lifecycle = lifecycle,
-                context = app,
-                connectionFactory = TestConnectionFactory(app)
-            )
+        handleManager = AndroidEntityHandleManager(
+            lifecycle = lifecycle,
+            context = app,
+            connectionFactory = TestConnectionFactory(app)
         )
     }
 

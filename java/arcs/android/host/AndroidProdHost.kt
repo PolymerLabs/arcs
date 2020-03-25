@@ -12,9 +12,7 @@ package arcs.android.host
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
-import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.host.ArcHost
-import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
 import arcs.jvm.host.AnnotationBasedJvmProdHost
 import arcs.jvm.host.JvmProdHost
@@ -31,13 +29,10 @@ class AndroidProdHost(
     val lifecycle: Lifecycle,
     vararg additionalParticles: ParticleRegistration
 ) : AnnotationBasedJvmProdHost(JvmProdHost::class, additionalParticles = *additionalParticles) {
-    override fun entityHandleManager(arcId: String) = EntityHandleManager(
-        AndroidHandleManager(
-            context,
-            lifecycle,
-            Dispatchers.Default
-        ),
+    override fun entityHandleManager(arcId: String) = AndroidEntityHandleManager(
+        context,
+        lifecycle,
         arcId,
-        hostId
+        coroutineContext = Dispatchers.Default
     )
 }
