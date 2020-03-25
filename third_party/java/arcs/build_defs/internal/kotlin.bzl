@@ -248,7 +248,7 @@ def arcs_kt_particles(
         registry_name = name + "-serviceloader-registry"
         kotlin_serviceloader_registry(
             name = registry_name,
-            particles = "\n".join(particles),
+            particles = particles,
             out = serviceloader_file,
         )
 
