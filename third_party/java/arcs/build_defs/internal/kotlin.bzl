@@ -94,7 +94,6 @@ def arcs_kt_jvm_library(**kwargs):
         kotlincopts = merge_lists(kotlincopts, BAZEL_KOTLINC_OPTS)
 
     kwargs["kotlincopts"] = kotlincopts
-    resource_jars = kwargs.pop("resource_jars", [])
 
     if exports:
         # kt_jvm_library doesn't support the "exports" property. Instead, we
@@ -105,7 +104,6 @@ def arcs_kt_jvm_library(**kwargs):
         kwargs["name"] = kt_name
 
         exports.append(kt_name)
-        exports = merge_lists(exports, resource_jars)
 
         if not IS_BAZEL:
             java_kwargs = {"constraints": constraints}
@@ -264,13 +262,13 @@ def arcs_kt_particles(
             particles = particles,
         )
 
-        # we use an intermediate java_library here for its ability to strip prefixes
         registry_lib = registry_name + "-lib"
 
         native.genrule(
             name = registry_lib,
             srcs = [serviceloader_file],
             outs = [registry_lib + ".jar"],
+            heuristic_label_expansion = False,
             cmd = "$(location //tools/zip:zipper) c $(OUTS) %s=$(SRCS)" % serviceloader_file,
             tools = [registry_name, "//tools/zip:zipper"],
         )
@@ -291,7 +289,6 @@ def arcs_kt_particles(
             testonly = testonly,
             srcs = srcs,
             add_android_constraints = add_android_constraints,
-            resource_jars = [":" + registry_import],
             visibility = visibility,
             exports = [":" + registry_import],
             deps = deps,
