@@ -29,8 +29,8 @@ load(
     "kt_android_library",
     "kt_jvm_library",
 )
-load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
+load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":util.bzl", "merge_lists", "replace_arcs_suffix")
 
 ARCS_SDK_DEPS = ["//third_party/java/arcs"]
