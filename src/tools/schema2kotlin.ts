@@ -173,7 +173,7 @@ ${imports.join('\n')}
     return `
 
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
-    ${this.opts.wasm ? '' : 'override '}val handles: ${particleName}Handles = ${particleName}Handles(${this.opts.wasm ? 'this' : ''})
+    ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
 
     ${this.getHandlesClassDecl(particleName, specDecls)} {
         ${handleDecls.join('\n        ')}
@@ -227,11 +227,11 @@ class ${particleName}TestHarness<P : Abstract${particleName}>(
 
   private getHandlesClassDecl(particleName: string, entitySpecs: string[]): string {
     if (this.opts.wasm) {
-      return `class ${particleName}Handles(
+      return `class Handles(
         particle: WasmParticleImpl
     )`;
     } else {
-      return `class ${particleName}Handles : HandleHolderBase(
+      return `class Handles : HandleHolderBase(
         "${particleName}",
         mapOf(${ktUtils.joinWithIndents(entitySpecs, 4, 3)})
     )`;

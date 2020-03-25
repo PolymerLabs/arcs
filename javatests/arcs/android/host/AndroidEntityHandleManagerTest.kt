@@ -46,7 +46,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
     val entity1 = Person("Jason", 21.0, false)
     val entity2 = Person("Jason", 22.0, true)
-    lateinit var handleHolder: AbstractTestParticle.TestParticleHandles
+    lateinit var handleHolder: AbstractTestParticle.Handles
     private lateinit var handleManager: EntityHandleManager
 
     private val schema = Schema(
@@ -83,7 +83,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
 
-        handleHolder = AbstractTestParticle.TestParticleHandles()
+        handleHolder = AbstractTestParticle.Handles()
 
         handleManager = EntityHandleManager(
             AndroidHandleManager(
