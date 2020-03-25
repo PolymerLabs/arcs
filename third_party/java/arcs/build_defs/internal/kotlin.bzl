@@ -49,6 +49,7 @@ KOTLINC_OPTS = [
     "-Xinline-classes",
     "-Xmulti-platform",
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
+    "-Xskip-runtime-version-check",
 ]
 
 # Here for future use, bazel (not blaze) specific flags
