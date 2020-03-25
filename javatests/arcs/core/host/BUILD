@@ -13,9 +13,9 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
     name = "host",
+    testonly = 1,
     srcs = glob(["*Test.kt"]),
     package = "arcs.core.host",
-    testonly = 1,
     deps = [
         ":particle",  # buildcleaner: keep
         ":schemas",
@@ -72,8 +72,8 @@ arcs_kt_particles(
 
 arcs_kt_jvm_library(
     name = "testhost",
-    srcs = ["TestingJvmProdHost.kt"],
     testonly = 1,
+    srcs = ["TestingJvmProdHost.kt"],
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/util",
