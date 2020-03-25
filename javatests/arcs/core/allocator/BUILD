@@ -46,6 +46,7 @@ arcs_kt_jvm_library(
         "//javatests/arcs/core/host:particle",
         "//javatests/arcs/core/host:plans",
         "//javatests/arcs/core/host:schemas",
+        "//javatests/arcs/core/host:testhost",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
