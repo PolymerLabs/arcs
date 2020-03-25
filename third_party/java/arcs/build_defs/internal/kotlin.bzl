@@ -30,6 +30,8 @@ load(
     "kt_jvm_library",
 )
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
+load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
+
 load(":util.bzl", "merge_lists", "replace_arcs_suffix")
 
 ARCS_SDK_DEPS = ["//third_party/java/arcs"]
@@ -47,9 +49,8 @@ KOTLINC_OPTS = [
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
 ]
 
+# Here for future use, bazel (not blaze) specific flags
 BAZEL_KOTLINC_OPTS = [
-    # jvm-target 1.8 needed to solve crash in Bazel Desugaring
-    "-jvm-target 1.8",
 ]
 
 DISABLED_LINT_CHECKS = [
@@ -237,10 +238,35 @@ def arcs_kt_particles(
         fail("Particles can only depend on one of jvm or wasm")
 
     if "jvm" in platforms:
+        particles = []
+
+        for src in srcs:
+            if not src.endswith(".kt"):
+                fail("%s is not a Kotlin file (must end in .kt)" % src)
+            particle = src.split("/")[-1][:-3]
+            particles = particles + [package + "." + particle]
+
+        serviceloader_file = "META-INF/services/arcs.core.host.api.Particle"
+
+        registry_name = name + "-serviceloader-registry"
+        kotlin_serviceloader_registry(
+            name = registry_name,
+            particles = "\n".join(particles),
+            out = serviceloader_file,
+        )
+
+        registry_lib = registry_name + "-lib"
+        java_library(
+            name = registry_lib,
+            resource_strip_prefix = native.package_name() + "/",
+            resources = [serviceloader_file],
+        )
+
         arcs_kt_jvm_library(
             name = name + "-jvm",
             srcs = srcs,
             deps = deps,
+            resource_jars = [":" + registry_lib],
             visibility = visibility,
             add_android_constraints = add_android_constraints,
         )

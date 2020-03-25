@@ -37,7 +37,7 @@ open class AnnotationBasedJvmProdHost(
 
     companion object {
         /**
-         * Load Particles marked @AutoService(Particle::class) from class path.
+         * Load Particles marked `arcs_kt_particles(isolatable = True)` from class path.
          */
         fun scanForParticles(host: KClass<out JvmProdHost>): Array<ParticleRegistration> =
             ServiceLoader.load(Particle::class.java).iterator().asSequence()
