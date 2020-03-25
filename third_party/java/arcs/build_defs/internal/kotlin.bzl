@@ -266,7 +266,7 @@ def arcs_kt_particles(
             name = registry_lib,
             srcs = [serviceloader_file],
             outs = [registry_lib + ".jar"],
-            cmd = "$(location //tools/zip:zipper) c $(OUTS) %s=$(SRCS)"% serviceloader_file,
+            cmd = "$(location //tools/zip:zipper) c $(OUTS) %s=$(SRCS)" % serviceloader_file,
             tools = [registry_name, "//tools/zip:zipper"],
         )
 
