@@ -254,8 +254,24 @@ def arcs_kt_particles(
 
         # we use an intermediate java_library here for its ability to strip prefixes
         registry_lib = registry_name + "-lib"
-        java_library(
+
+        # G3 doesn't support resource_strip_prefix on jvm_library
+        # OSS doesn't support it properly on kt_jvm_library
+        lib_rule = java_library
+        registry_srcs = []
+        if not IS_BAZEL:
+            lib_rule = kt_jvm_library
+            dummyfile = name + "-dummy"
+            native.genrule(
+                name = dummyfile,
+                outs = ["Dummy.kt"],
+                cmd = "touch $(OUTS)"
+            )
+            registry_srcs = [dummyfile]
+
+        lib_rule(
             name = registry_lib,
+            srcs = registry_srcs,
             resource_strip_prefix = native.package_name() + "/",
             resources = [serviceloader_file],
         )
