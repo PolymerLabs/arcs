@@ -16,6 +16,7 @@ import androidx.lifecycle.LifecycleService
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.core.host.ArcHost
 
+
 /**
  * An isolatable (can run in another process) [Service] that has a [ProdHost] inside. [Particle]
  * implementations wishing to run inside of this [Prod] should use `arcs_kt_particles` macro
