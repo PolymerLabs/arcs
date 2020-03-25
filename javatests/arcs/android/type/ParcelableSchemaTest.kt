@@ -27,7 +27,7 @@ class ParcelableSchemaTest {
     @Test
     fun parcelableRoundtrip_works() {
         val schema = Schema(
-            names = listOf(SchemaName("MySchema"), SchemaName("AlsoMySchema")),
+            names = setOf(SchemaName("MySchema"), SchemaName("AlsoMySchema")),
             fields = SchemaFields(
                 singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
                 collections = mapOf("friends" to FieldType.EntityRef("hash"))
@@ -52,7 +52,7 @@ class ParcelableSchemaTest {
     @Test
     fun parcelableRoundtrip_works_empty() {
         val schema = Schema(
-            names = emptyList(),
+            names = emptySet(),
             fields = SchemaFields(singletons = emptyMap(), collections = emptyMap()),
             hash = "hash"
         )

@@ -52,7 +52,7 @@ class RemovalManagerTest {
     )
 
     private val schema = Schema(
-        listOf(SchemaName("Person")),
+        setOf(SchemaName("Person")),
         SchemaFields(
             singletons = mapOf("name" to FieldType.Text),
             collections = emptyMap()

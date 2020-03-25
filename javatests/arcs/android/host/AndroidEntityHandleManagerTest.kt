@@ -50,7 +50,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     private lateinit var handleManager: EntityHandleManager
 
     private val schema = Schema(
-        listOf(SchemaName("Person")),
+        setOf(SchemaName("Person")),
         SchemaFields(
             singletons = mapOf(
                 "name" to FieldType.Text,

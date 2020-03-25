@@ -139,7 +139,7 @@ class ParcelableTypeTest {
     }
 
     private val entitySchema = Schema(
-        names = listOf(SchemaName("Person")),
+        names = setOf(SchemaName("Person")),
         fields = SchemaFields(
             singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
             collections = mapOf("friends" to FieldType.EntityRef("hash"))

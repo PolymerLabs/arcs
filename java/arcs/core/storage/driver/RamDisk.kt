@@ -15,7 +15,6 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
@@ -55,7 +54,7 @@ class RamDiskDriverProvider : DriverProvider {
         // TODO: keep track of and return the actual schema type.
         val type = EntityType(
             Schema(
-                listOf<SchemaName>(),
+                setOf(),
                 SchemaFields(emptyMap(), emptyMap()),
                 ""
             )

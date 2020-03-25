@@ -58,7 +58,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         DatabaseStorageKey.Persistent("set", hash)
     )
     private var schema = Schema(
-        listOf(SchemaName("person")),
+        setOf(SchemaName("person")),
         SchemaFields(
             singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
             collections = emptyMap()

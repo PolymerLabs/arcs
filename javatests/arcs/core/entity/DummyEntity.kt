@@ -65,7 +65,7 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA) {
         const val SCHEMA_HASH = "hash"
 
         override val SCHEMA = Schema(
-            names = listOf(SchemaName(ENTITY_CLASS_NAME)),
+            names = setOf(SchemaName(ENTITY_CLASS_NAME)),
             fields = SchemaFields(
                 singletons = mapOf(
                     "text" to FieldType.Text,

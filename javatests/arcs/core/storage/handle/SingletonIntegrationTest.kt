@@ -205,7 +205,7 @@ class SingletonIntegrationTest {
         )
 
         private val SCHEMA = Schema(
-            listOf(SchemaName("Person")),
+            setOf(SchemaName("Person")),
             SchemaFields(
                 singletons = mapOf(
                     "name" to FieldType.Text,

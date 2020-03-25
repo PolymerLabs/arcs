@@ -33,7 +33,7 @@ class ParcelableParticleTest {
     @Test
     fun particle_parcelableRoundTrip_works() {
         val personSchema = Schema(
-            listOf(SchemaName("Person")),
+            setOf(SchemaName("Person")),
             SchemaFields(mapOf("name" to Text), emptyMap()),
             "42"
         )

@@ -31,7 +31,7 @@ import org.junit.runner.RunWith
 class ParcelableHandleConnectionTest {
 
     private val personSchema = Schema(
-        listOf(SchemaName("Person")),
+        setOf(SchemaName("Person")),
         SchemaFields(mapOf("name" to Text), emptyMap()),
         "42"
     )

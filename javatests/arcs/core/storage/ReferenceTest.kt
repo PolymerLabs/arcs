@@ -135,7 +135,7 @@ class ReferenceTest {
 
         companion object {
             val SCHEMA = Schema(
-                emptyList(),
+                emptySet(),
                 SchemaFields(
                     singletons = mapOf(
                         "name" to FieldType.Text,
