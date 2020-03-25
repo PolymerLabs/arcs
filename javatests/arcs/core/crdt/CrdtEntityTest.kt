@@ -36,6 +36,9 @@ class CrdtEntityTest {
 
         assertThat(entity.consumerView.singletons).isEqualTo(mapOf("foo" to null))
         assertThat(entity.consumerView.collections).isEqualTo(mapOf("bar" to emptySet<Reference>()))
+        assertThat(entity.consumerView.creationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(entity.consumerView.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(entity.consumerView.id).isEqualTo(RawEntity.NO_REFERENCE_ID)
     }
 
     @Test
@@ -58,11 +61,14 @@ class CrdtEntityTest {
     @Test
     fun initializesFromRawData() {
         val rawEntity = RawEntity(
+            id = "an-id",
             singletons = mapOf("foo" to Reference("fooRef")),
             collections = mapOf(
                 "bar" to setOf(Reference("barRef1"), Reference("barRef2")),
                 "baz" to setOf(Reference("bazRef"))
-            )
+            ),
+            creationTimestamp = 1L,
+            expirationTimestamp = 2L
         )
         val entity = CrdtEntity(VersionMap(), rawEntity)
 
@@ -74,6 +80,10 @@ class CrdtEntityTest {
             )
         assertThat(entity.data.collections["baz"]?.consumerView)
             .containsExactly(Reference("bazRef"))
+
+        assertThat(entity.data.creationTimestamp).isEqualTo(1)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(2)
+        assertThat(entity.data.id).isEqualTo("an-id")
     }
 
     @Test
@@ -244,4 +254,100 @@ class CrdtEntityTest {
             )
         }
     }
+
+    fun entity(creation: Long = RawEntity.UNINITIALIZED_TIMESTAMP, 
+        expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP) = 
+            CrdtEntity(VersionMap(), RawEntity(
+                id = "an-id",
+                singletons = mapOf(),
+                collections = mapOf(),
+                creationTimestamp = creation,
+                expirationTimestamp = expiration
+            ))
+
+    @Test
+    fun mergeCreationTimestampCorrectly() {
+        var entity = entity()
+        var entity2 = entity()
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        
+        entity = entity(creation=5)
+        entity2 = entity()
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(5)
+
+        entity = entity()
+        entity2 = entity(creation=5)
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(5)
+
+        entity = entity(creation=5)
+        entity2 = entity(creation=5)
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(5)
+        
+        entity = entity(creation=5)
+        entity2 = entity(creation=1)
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(1)
+    }
+
+    @Test
+    fun mergeExpirationTimestampCorrectly() {
+        var entity = entity()
+        var entity2 = entity()
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+
+        entity = entity(expiration=5)
+        entity2 = entity()
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(5)
+
+        entity = entity()
+        entity2 = entity(expiration=5)
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(5)
+
+        entity = entity(expiration=5)
+        entity2 = entity(expiration=5)
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(5)
+        
+        entity = entity(expiration=5)
+        entity2 = entity(expiration=1)
+        assertThrows(CrdtException::class) {
+            entity.merge(entity2.data)
+        }
+    }
+
+    @Test
+    fun mergeIdCorrectly() {
+        var entity = CrdtEntity(VersionMap(), RawEntity())
+        var entity2 = CrdtEntity(VersionMap(), RawEntity())
+        entity.merge(entity2.data)
+        assertThat(entity.data.id).isEqualTo(RawEntity.NO_REFERENCE_ID)
+
+        entity = CrdtEntity(VersionMap(), RawEntity(id="id"))
+        entity2 = CrdtEntity(VersionMap(), RawEntity())
+        entity.merge(entity2.data)
+        assertThat(entity.data.id).isEqualTo("id")
+
+        entity = CrdtEntity(VersionMap(), RawEntity())
+        entity2 = CrdtEntity(VersionMap(), RawEntity(id="id"))
+        entity.merge(entity2.data)
+        assertThat(entity.data.id).isEqualTo("id")
+
+        entity = CrdtEntity(VersionMap(), RawEntity(id="id"))
+        entity2 = CrdtEntity(VersionMap(), RawEntity(id="id"))
+        assertThat(entity.data.id).isEqualTo("id")
+        
+        entity = CrdtEntity(VersionMap(), RawEntity(id="id"))
+        entity2 = CrdtEntity(VersionMap(), RawEntity(id="id2"))
+        assertThrows(CrdtException::class) {
+            entity.merge(entity2.data)
+        }
+    }
+
 }
