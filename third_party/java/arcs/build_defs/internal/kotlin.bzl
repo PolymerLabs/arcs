@@ -225,6 +225,7 @@ def arcs_kt_particles(
         srcs = [],
         deps = [],
         platforms = DEFAULT_PARTICLE_PLATFORMS,
+        testonly = False,
         visibility = None,
         add_android_constraints = True):
     """Performs final compilation of wasm and bundling if necessary.
@@ -238,6 +239,7 @@ def arcs_kt_particles(
       deps: list of dependencies
       platforms: List of platforms for which to compile. Valid options
           are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
+      testonly: generate testonly targets
       visibility: list of visibilities
       add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
     """
@@ -277,6 +279,7 @@ def arcs_kt_particles(
             exports = [":" + registry_lib],
             visibility = visibility,
             deps = deps,
+            testonly = testonly,
         )
 
     if "js" in platforms:

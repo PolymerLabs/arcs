@@ -56,6 +56,7 @@ arcs_kt_plan(
 
 arcs_kt_particles(
     name = "pure-particles",
+    testonly = 1,
     srcs = [
         "PurePerson.kt",
     ],
