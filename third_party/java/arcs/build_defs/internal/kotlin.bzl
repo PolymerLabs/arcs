@@ -242,7 +242,7 @@ def arcs_kt_particles(
         fail("Particles can only depend on one of jvm or wasm")
 
     if "jvm" in platforms:
-        particles = [package + _extract_particle_name(src) for src in srcs]
+        particles = [package + "." + _extract_particle_name(src) for src in srcs]
         serviceloader_file = "META-INF/services/arcs.core.host.api.Particle"
 
         registry_name = name + "-serviceloader-registry"
