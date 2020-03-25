@@ -84,6 +84,7 @@ kt_android_library(
         "//java/arcs/sdk/android/storage/service/testutil",
         "//javatests/arcs/core/allocator:allocator-test-util",
         "//javatests/arcs/core/host:particle",
+        "//javatests/arcs/core/host:testhost",
         "//third_party/java/androidx/appcompat",
         "//third_party/java/androidx/lifecycle",
         "//third_party/java/robolectric",
