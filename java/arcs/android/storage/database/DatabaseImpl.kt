@@ -727,18 +727,50 @@ class DatabaseImpl(
         writableDatabase.transaction {
             // Find all expired entities.
             val storageKeyIds = rawQuery(
-                "SELECT storage_key_id FROM entities WHERE expiration_timestamp < ?",
+                """
+                    SELECT storage_key_id, storage_key 
+                    FROM entities 
+                    LEFT JOIN storage_keys
+                        ON entities.storage_key_id = storage_keys.id
+                    WHERE expiration_timestamp < ?
+                """.trimIndent(),
                 arrayOf(nowMillis.toString())
-            ).map { it.getLong(0) }.toSet()
+            ).map { it.getLong(0) to it.getString(1) }.toSet()
 
-            // Remove field values.
+            // Find collection ids for collection fields of the expired entities.
+            val collectionIdsToDelete = rawQuery(
+                """
+                    SELECT collection_id
+                    FROM fields
+                    LEFT JOIN field_values
+                        ON field_values.field_id = fields.id
+                    LEFT JOIN collection_entries
+                        ON fields.is_collection = 1
+                        AND collection_entries.collection_id = field_values.value_id
+                    WHERE fields.is_collection = 1
+                        AND field_values.entity_storage_key_id in (?)
+                """.trimIndent(),
+                arrayOf(storageKeyIds.map { it.first }.joinToString())
+            ).map { it.getLong(0) }.toSet()
+            // Remove entries for those collections.
+            delete(
+                TABLE_COLLECTION_ENTRIES,
+                "collection_id IN (?)",
+                arrayOf(collectionIdsToDelete.joinToString())
+            )
+            // Remove those collections.
+            delete(
+                TABLE_COLLECTIONS,
+                "id IN (?)",
+                arrayOf(collectionIdsToDelete.joinToString())
+            )
+
+            // Remove field values for all expired entities.
             delete(
                 TABLE_FIELD_VALUES,
                 "entity_storage_key_id in (?)",
-                arrayOf(storageKeyIds.joinToString())
+                arrayOf(storageKeyIds.map { it.first }.joinToString())
             )
-
-            // TODO: remove from collection_entries all references to these entities.
 
             // Clean up unused values as they can contain sensitive data.
             // This query will return all field value ids being referenced by collection or 
@@ -770,22 +802,22 @@ class DatabaseImpl(
                 arrayOf(PrimitiveType.Text.ordinal.toString())
             )
 
-            // Now delete collection_entries for those fields we just cleared.
-            val usedFieldCollectionIdsQuery =
-                """
-                    SELECT collection_id
-                    FROM fields
-                    LEFT JOIN field_values
-                        ON field_values.field_id = fields.id
-                    LEFT JOIN collection_entries
-                        ON fields.is_collection = 1
-                        AND collection_entries.collection_id = field_values.value_id
-                    WHERE fields.is_collection = 1
-                """.trimIndent()
+            // Remove all references to these entities.
+            // TODO: persist the entity storage key in this table instead of instead of concating
+            // backing key and entity id.
+            delete(
+                TABLE_ENTITY_REFS,
+                "backing_storage_key||\"/\"||entity_id in (?)",
+                arrayOf(storageKeyIds.map { it.second }.joinToString())
+            )
+            // Remove from collection_entries all references to the expired entities.            
             delete(
                 TABLE_COLLECTION_ENTRIES,
-                "collection_id NOT IN ($usedFieldCollectionIdsQuery)",
-                arrayOf()
+                """
+                    collection_id IN (SELECT id FROM collections WHERE type_id >= ?)
+                    AND value_id NOT IN (SELECT id FROM entity_refs)
+                """.trimIndent(),
+                arrayOf(PrimitiveType.values().size.toString()) // only entity collections.
             )
         }
     }
