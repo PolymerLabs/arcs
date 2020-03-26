@@ -75,6 +75,7 @@ interface StorageServiceBindingDelegate {
 class DefaultStorageServiceBindingDelegate(
     private val context: Context
 ) : StorageServiceBindingDelegate {
+    @Suppress("NAME_SHADOWING")
     override fun bindStorageService(
         conn: ServiceConnection,
         flags: Int,
