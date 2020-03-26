@@ -35,7 +35,7 @@ private typealias Person = ReadSdkPerson_Person
 
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 class HandleUtilsTest {
   private lateinit var manager: EntityHandleManager
   private val idGenerator = Id.Generator.newForTest("session")
@@ -215,7 +215,6 @@ class HandleUtilsTest {
     assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(1)
   }
 
-  @Suppress("UNUSED_PARAMETER")
   @Test
   fun handleUtils_combineTenUpdatesTest() = runBlockingTest {
     val handle1 = manager.createCollectionHandle(

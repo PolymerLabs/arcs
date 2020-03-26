@@ -106,6 +106,7 @@ class ArcHostHelper(
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private suspend fun <T : ActualParcelable<U>, U, V> runWithResult(
         intent: Intent,
         parcelable: KClass<T>, // dummy argument for type inference
