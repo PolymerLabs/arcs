@@ -7,13 +7,9 @@ import android.os.IBinder
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.TestingHost
 import arcs.core.data.Capabilities
-import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
-import arcs.core.storage.handle.Stores
-import arcs.sdk.android.storage.ServiceStore
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlinx.coroutines.Dispatchers

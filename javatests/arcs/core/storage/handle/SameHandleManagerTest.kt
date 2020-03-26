@@ -1,5 +1,6 @@
 package arcs.core.storage.handle
 
+import arcs.core.storage.StoreManager
 import arcs.jvm.util.testutil.TimeImpl
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -11,7 +12,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
 
     @Before
     fun setUp() {
-        readHandleManager = HandleManager(TimeImpl(), Stores())
+        readHandleManager = HandleManager(TimeImpl(), StoreManager())
         writeHandleManager = readHandleManager
     }
 }

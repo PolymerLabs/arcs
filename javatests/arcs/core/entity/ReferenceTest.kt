@@ -1,6 +1,5 @@
 package arcs.core.entity
 
-import arcs.core.crdt.VersionMap
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -8,11 +7,8 @@ import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.handle.RawEntityDereferencer
-import arcs.core.storage.handle.Stores
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows

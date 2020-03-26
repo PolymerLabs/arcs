@@ -12,8 +12,8 @@ package arcs.android.storage.handle
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
+import arcs.core.storage.StoreManager
 import arcs.core.storage.handle.HandleManager
-import arcs.core.storage.handle.Stores
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
@@ -32,10 +32,10 @@ fun AndroidHandleManager(
     lifecycle: Lifecycle,
     coroutineContext: CoroutineContext = EmptyCoroutineContext,
     connectionFactory: ConnectionFactory? = null,
-    stores: Stores = Stores()
+    storeManager: StoreManager = StoreManager()
 ) = HandleManager(
     JvmTime,
-    stores,
+    storeManager,
     ServiceStoreFactory(
         context,
         lifecycle,
