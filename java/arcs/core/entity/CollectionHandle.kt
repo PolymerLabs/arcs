@@ -114,6 +114,10 @@ class CollectionHandle<T : Entity>(
             action(adaptValues(it))
         }
 
+    override suspend fun onDesync(action: () -> Unit) = storageProxy.addOnDesync(name, action)
+
+    override suspend fun onResync(action: () -> Unit) = storageProxy.addOnResync(name, action)
+
     override suspend fun createReference(entity: T): Reference<T> {
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."

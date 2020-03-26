@@ -149,15 +149,11 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         // Wait for sync
         val deferred = CompletableDeferred<Unit>()
-        writeHandle.onSync {
+        writeHandle.onReady {
             deferred.complete(Unit)
         }
         deferred.await()
 
-        // Now don't expect desync
-        writeHandle.onDesync {
-            throw IllegalStateException("desync not excepted")
-        }
         handleHolder.writeHandle.store(entity1)
         handleHolder.writeHandle.store(entity2)
     }

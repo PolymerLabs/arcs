@@ -17,11 +17,8 @@ import arcs.core.data.HandleMode
 interface Handle {
     val name: String
 
-    /** Assign a callback when the handle is synced. */
-    suspend fun onSync(action: () -> Unit)
-
-    /** Assign a callback when the handle is desynced. */
-    suspend fun onDesync(action: () -> Unit)
+    /** Assign a callback when the handle is synced for the first time. */
+    suspend fun onReady(action: () -> Unit)
 
     /** Release resources needed by this, unregister all callbacks. */
     suspend fun close()
@@ -42,7 +39,14 @@ enum class HandleContainerType {
 }
 
 interface ReadableHandle<UpdateType, E : Entity> : Handle {
+    /** Assign a callback when the handle's data changes. */
     suspend fun onUpdate(action: suspend (UpdateType) -> Unit)
+
+    /** Assign a callback when the handle is desynced. */
+    suspend fun onDesync(action: () -> Unit)
+
+    /** Assign a callback when the handle is re-synced after being desynced. */
+    suspend fun onResync(action: () -> Unit)
 
     /**
      * Creates and returns a [Reference] to the given entity.

@@ -258,7 +258,7 @@ open class HandleManagerTestBase {
 
         // Now read back from a different handle
         val handleB = readHandleManager.createSingletonHandle()
-        handleB.awaitSync()
+        handleB.awaitReady()
         handleB.clear()
 
         assertThat(handleB.fetch()).isNull()
@@ -701,9 +701,9 @@ open class HandleManagerTestBase {
         }
     }
 
-    private suspend fun Handle.awaitSync() {
+    private suspend fun Handle.awaitReady() {
         val deferred = CompletableDeferred<Unit>()
-        onSync {
+        onReady {
             deferred.complete(Unit)
         }
         deferred.await()
