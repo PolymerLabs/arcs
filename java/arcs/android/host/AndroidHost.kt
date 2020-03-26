@@ -14,9 +14,14 @@ import android.content.Context
 import androidx.lifecycle.Lifecycle
 import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.host.ArcHost
+import arcs.core.host.ArcHostContext
+import arcs.core.host.ArcState
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
+import arcs.core.host.Resurrector
+import arcs.core.storage.StorageKey
 import arcs.jvm.host.JvmHost
+import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.Dispatchers
 
@@ -26,7 +31,9 @@ import kotlinx.coroutines.Dispatchers
 open class AndroidHost(
     val context: Context,
     val lifecycle: Lifecycle,
+    androidResurrector: Resurrector,
     vararg particles: ParticleRegistration
 ) : JvmHost(*particles) {
     override val activationFactory = ServiceStoreFactory(context, lifecycle)
+    override val resurrector = androidResurrector
 }

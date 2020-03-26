@@ -12,13 +12,15 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ParticleRegistrationTest {
+    class JvmProdHost(vararg particles: ParticleRegistration) : JvmHost(*particles), ProdHost
+
     @Test
     fun explicit_allParticlesAreRegistered() = runBlockingTest {
         var foundProdHost = false
         var foundTestHost = false
 
         val hostRegistry = ExplicitHostRegistry()
-        hostRegistry.registerHost(JvmHost(::TestProdParticle.toRegistration()))
+        hostRegistry.registerHost(JvmProdHost(::TestProdParticle.toRegistration()))
         hostRegistry.registerHost(TestHost(::TestHostParticle.toRegistration()))
 
         hostRegistry.availableArcHosts().forEach { host: ArcHost ->

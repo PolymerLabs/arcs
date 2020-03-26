@@ -6,8 +6,10 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
 
-open class TestingHost(vararg particles: ParticleRegistration) :
+open class TestingHost(testingResurrector: Resurrector, vararg particles: ParticleRegistration) :
     AbstractArcHost(*particles) {
+
+    override val resurrector = testingResurrector
 
     fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 

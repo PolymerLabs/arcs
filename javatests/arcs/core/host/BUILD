@@ -73,7 +73,11 @@ arcs_kt_particles(
 arcs_kt_jvm_library(
     name = "testhost",
     testonly = 1,
-    srcs = ["TestingHost.kt", "TestingJvmProdHost.kt"],
+    srcs = [
+        "TestingHost.kt",
+        "TestingJvmProdHost.kt",
+        "TestingResurrector.kt",
+    ],
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/util",

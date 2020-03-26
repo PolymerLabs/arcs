@@ -23,10 +23,13 @@ import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.ActivationFactory
+import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 typealias ParticleConstructor = suspend () -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
@@ -56,6 +59,9 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
 
     override val hostId = this::class.className()
+
+    /** No-op [Resurrector] for core platforms that don't have a resurrector service. */
+    open val resurrector = object : Resurrector {}
 
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
@@ -94,9 +100,9 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     protected fun getArcHostContext(arcId: String) = contextCache[arcId]
 
     protected suspend fun lookupOrCreateArcHostContext(
-        partition: Plan.Partition
-    ): ArcHostContext = contextCache[partition.arcId] ?: readContextFromStorage(
-        createArcHostContext(partition.arcId)
+        arcId: String
+    ): ArcHostContext = contextCache[arcId] ?: readContextFromStorage(
+        createArcHostContext(arcId)
     )
 
     private fun createArcHostContext(arcId: String) = ArcHostContext(
@@ -161,7 +167,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         }
 
     override suspend fun startArc(partition: Plan.Partition) {
-        val context = lookupOrCreateArcHostContext(partition)
+        val context = lookupOrCreateArcHostContext(partition.arcId)
 
         // Arc is already currently running, don't restart it
         if (isRunning(partition.arcId)) {
@@ -337,9 +343,16 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * with a [ResurrectorService], so that this [ArcHost] is instructed to automatically
      * restart in the event of a crash.
      */
-    protected open suspend fun maybeRequestResurrection(context: ArcHostContext) {
+    private fun maybeRequestResurrection(context: ArcHostContext) {
+        resurrector.onResurrection(::resurrect)
+
         if (context.arcState == ArcState.NeverStarted) {
-            // TODO: First time, request resurrection for context.
+            resurrector.requestResurrection(
+                context.arcId,
+                context.particles.flatMap { (_, particleContext) ->
+                    particleContext.planParticle.handles.map { it.value.storageKey }
+                }
+            )
         }
     }
 
@@ -347,8 +360,26 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Inform [ResurrectorService] to cancel requests for resurrection for the [StorageKey]s in
      * this [ArcHostContext].
      */
-    protected open suspend fun maybeCancelResurrection(context: ArcHostContext) {
-        // TODO: wire up resurrection cancellation
+    private fun maybeCancelResurrection(context: ArcHostContext) {
+        resurrector.cancelResurrection(context.arcId)
+    }
+
+    private fun resurrect(arcId: String, affectedKeys: List<StorageKey>): Unit {
+        GlobalScope.launch {
+            val context = lookupOrCreateArcHostContext(arcId)
+            if (context.arcState != ArcState.Running && context.arcState == ArcState.Deleted) {
+                startArc(
+                    Plan.Partition(
+                        arcId,
+                        hostId,
+                        context.particles.map { (_, particleContext) ->
+                            particleContext.planParticle
+                        }
+                    )
+                )
+                // TODO: should invoke onHandleUpdate for readable affectedKeys?
+            }
+        }
     }
 
     /**
