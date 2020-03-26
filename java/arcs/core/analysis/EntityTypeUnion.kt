@@ -48,6 +48,7 @@ private fun Map<FieldName, FieldType>.unionFields(
     other.forEach { (name, type) ->
         val existing = this.get(name)
         if (existing != null && type != existing) {
+            // TODO(bgogul): `type != exisiting` check is not sufficient for non-primitive types.
             return Outcome.Failure(
                 "Incompatible types for field '$name': $type vs. $existing."
             )
