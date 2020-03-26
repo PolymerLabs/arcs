@@ -32,13 +32,25 @@ class TypeConstraintsTest {
     //
     var ramdiskStorageKey = "ramdisk://things"
     val textHandle = Handle(
-        "text", Handle.Fate.CREATE, ramdiskStorageKey, TypeVariable("text"), emptyList()
+        "text",
+        Handle.Fate.CREATE,
+        ramdiskStorageKey,
+        TypeVariable("text"),
+        emptyList()
     )
     val numHandle = Handle(
-        "num", Handle.Fate.CREATE, ramdiskStorageKey, TypeVariable("num"), emptyList()
+        "num",
+        Handle.Fate.CREATE,
+        ramdiskStorageKey,
+        TypeVariable("num"),
+        emptyList()
     )
     val intHandle = Handle(
-        "int", Handle.Fate.CREATE, ramdiskStorageKey, TypeVariable("int"), emptyList()
+        "int",
+        Handle.Fate.CREATE,
+        ramdiskStorageKey,
+        TypeVariable("int"),
+        emptyList()
     )
     val textCnxnSpec = HandleConnectionSpec("text_cnxn", Direction.READS, TypeVariable("text_cnxn"))
     val wordCnxnSpec = HandleConnectionSpec("word_cnxn", Direction.READS, TypeVariable("word_cnxn"))
@@ -59,9 +71,7 @@ class TypeConstraintsTest {
 
     @Test
     fun typeConstraintToStringTests() {
-        val connectionNode = TypeConstraintNode.HandleConnection(
-            typeVariablesTestSpec, intCnxnSpec
-        )
+        val connectionNode = TypeConstraintNode.HandleConnection(typeVariablesTestSpec, intCnxnSpec)
         assertThat("$connectionNode").isEqualTo("TypeVariablesTest.int_cnxn")
         val handleNode = TypeConstraintNode.Handle(intHandle)
         assertThat("$handleNode").isEqualTo("int")

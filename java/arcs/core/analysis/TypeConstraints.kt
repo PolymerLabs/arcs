@@ -59,13 +59,13 @@ fun Particle.getTypeConstraints(): List<TypeConstraint> {
         val handleNode = TypeConstraintNode.Handle(handleConnection.handle)
         val specType = handleConnection.spec.type
         if (specType is TypeVariable) {
-            typeVariableNodes
-                .putIfAbsent(specType.name, mutableSetOf(specNode))?.add(specNode)
+            typeVariableNodes.getOrPut(specType.name) { mutableSetOf<TypeConstraintNode>() }
+                .add(specNode)
         }
         val handleType = handleConnection.handle.type
         if (handleType is TypeVariable) {
-            typeVariableNodes
-                .putIfAbsent(handleType.name, mutableSetOf(handleNode))?.add(handleNode)
+            typeVariableNodes.getOrPut(handleType.name) { mutableSetOf<TypeConstraintNode>() }
+                .add(handleNode)
         }
         TypeConstraint(specNode, handleNode)
     }
