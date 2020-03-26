@@ -14,6 +14,7 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 
@@ -33,7 +34,8 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     }
 
     @Before
-    fun setUp() {
+    override fun setUp() {
+        super.setUp()
         app = ApplicationProvider.getApplicationContext()
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
@@ -51,4 +53,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
     }
+
+    @After
+    override fun tearDown() = super.tearDown()
 }

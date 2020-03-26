@@ -3,6 +3,7 @@ package arcs.core.entity
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.jvm.util.testutil.TimeImpl
+import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -12,7 +13,8 @@ import org.junit.runners.JUnit4
 class DifferentHandleManagerTest : HandleManagerTestBase() {
 
     @Before
-    fun setUp() {
+    override fun setUp() {
+        super.setUp()
         val stores = StoreManager()
         readHandleManager = EntityHandleManager(
             arcId = "testArc",
@@ -27,4 +29,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             stores = stores
         )
     }
+
+    @After
+    override fun tearDown() = super.tearDown()
 }

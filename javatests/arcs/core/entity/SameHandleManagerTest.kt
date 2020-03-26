@@ -4,6 +4,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.TimeImpl
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.runner.RunWith
@@ -16,7 +17,8 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     @get:Rule var logRule = LogRule()
 
     @Before
-    fun setUp() {
+    override fun setUp() {
+        super.setUp()
         readHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "testHost",
@@ -25,4 +27,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         )
         writeHandleManager = readHandleManager
     }
+
+    @After
+    override fun tearDown() = super.tearDown()
 }

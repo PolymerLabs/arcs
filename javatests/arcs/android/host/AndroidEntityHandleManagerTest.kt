@@ -283,8 +283,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             HandleMode.Write
         )
 
-        assertThat(shandle1.actorName).isNotEqualTo(shandle2.actorName)
-        assertThat(chandle1.actorName).isNotEqualTo(chandle2.actorName)
+        assertThat(shandle1.name).isNotEqualTo(shandle2.name)
+        assertThat(chandle1.name).isNotEqualTo(chandle2.name)
     }
 
     private suspend fun createSingletonHandle(
