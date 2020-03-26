@@ -49,7 +49,7 @@ private fun Map<FieldName, FieldType>.unionFields(
         val existing = this.get(name)
         if (existing != null && type != existing) {
             return Outcome.Failure(
-                "Incompatible types for field '${name}': ${type} vs. $existing."
+                "Incompatible types for field '$name': $type vs. $existing."
             )
         }
         result.put(name, type)
@@ -61,7 +61,7 @@ private fun Map<FieldName, FieldType>.unionFields(
  * Computes the union of [SchemaField] instances. Returns [Outcome.Failure] if the union
  * results in any incompatibility. e.g., incompatible [FieldType] with the same name.
  */
-infix private fun SchemaFields.union(other: SchemaFields): Outcome<SchemaFields> {
+private infix fun SchemaFields.union(other: SchemaFields): Outcome<SchemaFields> {
     val newSingletons = singletons.unionFields(other.singletons)
         .getOrElse { return Outcome.Failure(it) }
     val newCollections = singletons.unionFields(other.singletons)
