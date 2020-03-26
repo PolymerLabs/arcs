@@ -370,6 +370,7 @@ fun <T, U, V, W, X, Y, Z, A, B, C> combineUpdates(
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 private fun <T> WasmHandleEvents<T>.getContent(): T = when (this) {
     is WasmCollectionImpl<*> -> this.fetchAll() as T
     is WasmSingletonImpl<*> -> this.fetch() as T

@@ -41,9 +41,9 @@ AUTO_VALUE_VERSION = "1.7"
 
 AUTO_SERVICE_VERSION = "1.0-rc6"
 
-KOTLINX_ATOMICFU_VERSION = "0.14.1"
+KOTLINX_ATOMICFU_VERSION = "0.14.2"
 
-KOTLINX_COROUTINES_VERSION = "1.3.3"
+KOTLINX_COROUTINES_VERSION = "1.3.4"
 
 ROBOLECTRIC_VERSION = "4.1"
 
@@ -82,7 +82,6 @@ maven_install(
         "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
         "javax.inject:javax.inject:1",
         "junit:junit:4.11",
-        "org.jetbrains.kotlin:kotlin-reflect:1.3.61",
         "org.jetbrains.kotlinx:kotlinx-coroutines-android:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
@@ -154,9 +153,9 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "d4088d3f1d7a02d410d1cac203cb7bc2f65bd1ec",
+    commit = "eb353b2d3ed3a6634e9028ffb0e8af8321a12c9c",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
-    shallow_since = "1583544131 -0800",
+    shallow_since = "1585186427 -0700",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")

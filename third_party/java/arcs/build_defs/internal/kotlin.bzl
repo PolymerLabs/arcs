@@ -44,11 +44,14 @@ _KT_SUFFIX = "-kt"
 IS_BAZEL = not (hasattr(native, "genmpm"))
 
 # Kotlin Compiler Options
-KOTLINC_OPTS = [
+COMMON_KOTLINC_OPTS = [
     "-Xallow-kotlin-package",
     "-Xinline-classes",
     "-Xmulti-platform",
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
+]
+
+JVM_KOTLINC_OPTS = [
     "-Xskip-runtime-version-check",
 ]
 
@@ -86,7 +89,7 @@ def arcs_kt_jvm_library(**kwargs):
     constraints = kwargs.pop("constraints", ["android"] if add_android_constraints else [])
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
     exports = kwargs.pop("exports", [])
-    kotlincopts = merge_lists(kwargs.pop("kotlincopts", []), KOTLINC_OPTS)
+    kotlincopts = merge_lists(kwargs.pop("kotlincopts", []), COMMON_KOTLINC_OPTS + JVM_KOTLINC_OPTS)
 
     if not IS_BAZEL:
         kwargs["constraints"] = constraints
@@ -131,6 +134,8 @@ def arcs_kt_android_library(**kwargs):
     if not IS_BAZEL:
         kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
 
+    kotlincopts = kwargs.pop("kotlincopts", [])
+    kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS + JVM_KOTLINC_OPTS)
     kt_android_library(**kwargs)
 
 def arcs_kt_native_library(**kwargs):
@@ -140,7 +145,7 @@ def arcs_kt_native_library(**kwargs):
       **kwargs: Set of args to forward to kt_native_library
     """
     kotlincopts = kwargs.pop("kotlincopts", [])
-    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS)
+    kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS)
     kt_native_library(**kwargs)
 
 def arcs_kt_js_library(**kwargs):
@@ -155,7 +160,7 @@ def arcs_kt_js_library(**kwargs):
         return
 
     kotlincopts = kwargs.pop("kotlincopts", [])
-    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS)
+    kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS)
     kt_js_library(**kwargs)
 
 def arcs_kt_library(
@@ -371,7 +376,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
     if not srcs:
         srcs = native.glob(["*.kt"])
 
-    kt_android_library(
+    arcs_kt_android_library(
         name = name,
         testonly = True,
         srcs = srcs,

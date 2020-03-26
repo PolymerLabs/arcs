@@ -383,6 +383,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 ArcState.NeverStarted -> stopArcError(context, "Arc $arcId was never started")
                 ArcState.Stopped -> stopArcError(context, "Arc $arcId already stopped")
                 ArcState.Deleted -> stopArcError(context, "Arc $arcId is deleted.")
+                ArcState.Error -> stopArcError(context, "Arc $arcId encounted an error.")
             }
         }
     }
@@ -391,6 +392,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * If an attempt to [ArcHost.stopArc] fails, this method should report the error message.
      * For example, throw an exception or log.
      */
+    @Suppress("UNUSED_PARAMETER")
     private suspend fun stopArcError(context: ArcHostContext, message: String) {
         // TODO: decide how to propagate this
     }

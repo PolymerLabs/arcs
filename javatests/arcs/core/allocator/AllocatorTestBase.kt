@@ -147,7 +147,7 @@ open class AllocatorTestBase {
             planPartitions, "WritePerson"
         ).particles[0].handles["person"]?.storageKey!!
 
-        val purePartition = findPartitionFor(planPartitions, "PurePerson")!!
+        val purePartition = findPartitionFor(planPartitions, "PurePerson")
 
         val storageKeyLens = Plan.HandleConnection.storageKeyLens
 
@@ -198,12 +198,12 @@ open class AllocatorTestBase {
         val purePartition = findPartitionFor(planPartitions, "PurePerson")
         val writePartition = findPartitionFor(planPartitions, "WritePerson")
 
-        assertThat(readPartition.particles[0]?.handles["person"]?.storageKey).isEqualTo(
-            purePartition.particles[0]?.handles["outputPerson"]?.storageKey
+        assertThat(readPartition.particles[0].handles["person"]?.storageKey).isEqualTo(
+            purePartition.particles[0].handles["outputPerson"]?.storageKey
         )
 
-        assertThat(writePartition.particles[0]?.handles["person"]?.storageKey).isEqualTo(
-            purePartition.particles[0]?.handles["inputPerson"]?.storageKey
+        assertThat(writePartition.particles[0].handles["person"]?.storageKey).isEqualTo(
+            purePartition.particles[0].handles["inputPerson"]?.storageKey
         )
     }
 

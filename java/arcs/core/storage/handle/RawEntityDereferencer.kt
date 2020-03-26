@@ -69,7 +69,6 @@ class RawEntityDereferencer(
                     is ProxyMessage.SyncRequest -> Unit
                     is ProxyMessage.Operations -> Unit
                 }
-                true
             }
         )
 
