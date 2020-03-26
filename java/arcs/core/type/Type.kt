@@ -37,7 +37,7 @@ interface Type {
     fun maybeEnsureResolved(): Boolean = true
 
     /** Checks whether or not this [Type] is at least as specific as the given [other] [Type]. */
-    fun isAtleastAsSpecificAs(other: Type): Boolean {
+    fun isAtLeastAsSpecificAs(other: Type): Boolean {
         if (tag != other.tag) return false
 
         // Throw if they are the same tag but the implementation class hasn't overridden this

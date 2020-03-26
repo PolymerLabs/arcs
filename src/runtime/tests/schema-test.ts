@@ -599,7 +599,7 @@ describe('schema', () => {
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 1', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 1', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Number, c: Number} [a + c > 10]
@@ -607,9 +607,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 2', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 2', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Number, c: Number}
@@ -617,9 +617,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isFalse(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 3', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 3', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Boolean [not b]} [a < 100]
@@ -627,9 +627,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 4', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 4', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Boolean [not b]} [a < 100]
@@ -637,9 +637,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isFalse(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 5', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 5', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Text [a == 'abc']}
@@ -647,9 +647,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 6', async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 6', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Text} [a == 'abc' or a == 'josh']
@@ -657,9 +657,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isFalse(schema1.isAtLeastAsSpecificAs(schema2));
   });
-  it('tests schema.isAtleastAsSpecificAs, case 7', async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 7', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Text} [a != 'abc']
@@ -667,7 +667,7 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   });
   it('tests warning when refinement specificity is unknown', async () => {
     const manifest = await Manifest.parse(`
@@ -677,7 +677,7 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtleastAsSpecificAs(schema2)));
+    const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
     assert.match(refWarning.warn[0], /Unable to ascertain if/);
   });
 });
