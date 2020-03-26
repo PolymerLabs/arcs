@@ -261,21 +261,22 @@ class Gold_Data(
 }
 
 
-class GoldHandles : HandleHolderBase(
-    "Gold",
-    mapOf(
-        "data" to Gold_Data,
-        "qCollection" to Gold_QCollection,
-        "alias" to Gold_Alias,
-        "collection" to Gold_Collection
-    )
-) {
-    val data: ReadSingletonHandle<Gold_Data> by handles
-    val qCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
-    val alias: WriteSingletonHandle<Gold_Alias> by handles
-    val collection: ReadCollectionHandle<Gold_Collection> by handles
-}
 
 abstract class AbstractGold : BaseParticle() {
-    override val handles: GoldHandles = GoldHandles()
+    override val handles: Handles = Handles()
+
+    class Handles : HandleHolderBase(
+        "Gold",
+        mapOf(
+            "data" to Gold_Data,
+            "qCollection" to Gold_QCollection,
+            "alias" to Gold_Alias,
+            "collection" to Gold_Collection
+        )
+    ) {
+        val data: ReadSingletonHandle<Gold_Data> by handles
+        val qCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
+        val alias: WriteSingletonHandle<Gold_Alias> by handles
+        val collection: ReadCollectionHandle<Gold_Collection> by handles
+    }
 }
