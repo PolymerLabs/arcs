@@ -11,11 +11,12 @@
 import {digest} from '../platform/digest-web.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
-import {Referenceable} from './crdt/crdt-collection.js';
+import {Referenceable, CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
 import {SchemaType} from './manifest-ast-nodes.js';
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
+import {Reference} from './reference.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -217,11 +218,41 @@ export class Schema {
     const singletons = {};
     const collections = {};
     // TODO(shans) do this properly
-    for (const [field, {type}] of Object.entries(this.fields)) {
-      if (['Text', 'URL', 'Boolean', 'Number'].includes(type)) {
-        singletons[field] = new CRDTSingleton<{id: string}>();
-      } else {
-        throw new Error(`Big Scary Exception: entity field ${field} of type ${type} doesn't yet have a CRDT mapping implemented`);
+
+    // This implementation only supports:
+    //   - singleton of a primitive,
+    //   - singleton of a reference,
+    //   - collection of primitives,
+    //   - collection of references
+    for (const [field, {kind, type, schema}] of Object.entries(this.fields)) {
+      switch (kind) {
+        case 'schema-primitive': {
+          if (['Text', 'URL', 'Boolean', 'Number'].includes(type)) {
+            singletons[field] = new CRDTSingleton<{id: string}>();
+          } else {
+            throw new Error(`Big Scary Exception: entity field ${field} of type ${type} doesn't yet have a CRDT mapping implemented`);
+          }
+          break;
+        }
+        case 'schema-collection': {
+          if (schema == undefined) {
+            throw new Error(`there is no schema for the entity field ${field}`);
+          }
+          if (['Text', 'URL', 'Boolean', 'Number'].includes(schema.type)) {
+            collections[field] = new CRDTCollection<{id: string}>();
+          } else if (schema.kind === 'schema-reference') {
+            collections[field] = new CRDTCollection<Reference>();
+          } else {
+            throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
+          }
+          break;
+        }
+        case 'schema-reference': {
+          singletons[field] = new CRDTSingleton<Reference>();
+          break;
+        } default: {
+          throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
+        }
       }
     }
     return class EntityCRDT extends CRDTEntity<S, C> {
