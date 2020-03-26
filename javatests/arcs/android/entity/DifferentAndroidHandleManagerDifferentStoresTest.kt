@@ -12,6 +12,9 @@ import arcs.core.storage.StoreManager
 import arcs.jvm.util.testutil.TimeImpl
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.runner.RunWith
 
@@ -25,6 +28,10 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     }
 
     lateinit var app: Application
+
+    override var testRunner = { block: suspend CoroutineScope.() -> Unit ->
+        runBlocking { this.block() }
+    }
 
     @Before
     fun setUp() {
@@ -59,9 +66,4 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     // TODO - fix these?
     override fun collection_referenceLiveness() {}
     override fun singleton_referenceLiveness() {}
-
-    // We don't expect these to pass, since Operations won't make it through the driver level
-    override fun singleton_writeAndOnUpdate() {}
-    override fun collection_writeAndOnUpdate() {}
-
 }
