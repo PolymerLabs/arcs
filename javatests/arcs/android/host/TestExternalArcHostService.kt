@@ -7,7 +7,7 @@ import android.os.IBinder
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.core.allocator.TestingHost
+import arcs.core.host.TestingHost
 import arcs.core.data.Capabilities
 import arcs.core.host.ParticleRegistration
 import arcs.sdk.android.storage.ServiceStoreFactory

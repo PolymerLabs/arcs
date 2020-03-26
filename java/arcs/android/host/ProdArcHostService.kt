@@ -11,11 +11,10 @@
 package arcs.android.host
 
 import android.content.Intent
-import android.os.IBinder
 import androidx.lifecycle.LifecycleService
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.core.host.ArcHost
-
+import arcs.jvm.host.scanForParticles
 
 /**
  * An isolatable (can run in another process) [Service] that has a [ProdHost] inside. [Particle]
@@ -24,7 +23,7 @@ import arcs.core.host.ArcHost
  */
 open class ProdArcHostService : LifecycleService() {
 
-    open val arcHost: ArcHost = AndroidProdHost(this, this.getLifecycle())
+    open val arcHost: ArcHost = AndroidHost(this, this.lifecycle, *scanForParticles())
 
     val arcHostHelper: ArcHostHelper by lazy {
         ArcHostHelper(this, arcHost)
@@ -35,6 +34,4 @@ open class ProdArcHostService : LifecycleService() {
         arcHostHelper.onStartCommand(intent)
         return result
     }
-
-    override fun onBind(intent: Intent): IBinder? = super.onBind(intent)
 }

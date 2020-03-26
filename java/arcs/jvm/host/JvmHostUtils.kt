@@ -20,7 +20,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * Load Particles marked @AutoService(Particle::class) from class path.
+ * Load Particles compiled with `arcs_kt_particles` via the [ServiceLoader] from class path.
  *
  * @property host which [TargetHost] to filter for.
  */
@@ -33,10 +33,13 @@ fun scanForParticles(host: KClass<out ProdHost> = ProdHost::class): Array<Partic
             }
         }.toList().toTypedArray()
 
-fun isParticleForHost(host: KClass<out ProdHost>, particle: Class<out Particle>) =
+private fun isParticleForHost(host: KClass<out ProdHost>, particle: Class<out Particle>) =
     host == (particle.getAnnotation(TargetHost::class.java)?.value ?: ProdHost::class)
 
 
+/**
+ * Combine two [Array]s of [ParticleRegistration] into a single array.
+ */
 fun combine(
     scannedParticles: Array<ParticleRegistration>,
     additionalParticles: Array<out ParticleRegistration>

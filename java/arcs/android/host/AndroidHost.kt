@@ -17,6 +17,7 @@ import arcs.core.host.ArcHost
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
 import arcs.jvm.host.JvmHost
+import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.Dispatchers
 
 /**
@@ -27,13 +28,5 @@ open class AndroidHost(
     val lifecycle: Lifecycle,
     vararg particles: ParticleRegistration
 ) : JvmHost(*particles) {
-    override fun entityHandleManager(arcId: String) = EntityHandleManager(
-        AndroidHandleManager(
-            context,
-            lifecycle,
-            Dispatchers.Default
-        ),
-        arcId,
-        hostId
-    )
+    override val activationFactory = ServiceStoreFactory(context, lifecycle)
 }
