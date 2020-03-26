@@ -22,8 +22,8 @@ import arcs.core.data.SchemaFields
  * is not possible as the inputs are incompatible.
  */
 infix fun Schema.union(other: Schema): Outcome<Schema> {
-    val newNames = names.union(other.names)
-    val newFields = fields.union(other.fields).getOrElse { return Outcome.Failure(it) }
+    val newNames = names union other.names
+    val newFields = (fields union other.fields).getOrElse { return Outcome.Failure(it) }
     // TODO(bgogul): hash, refinement, query
     return Schema(names = newNames, fields = newFields, hash = "").toSuccess()
 }
@@ -61,7 +61,7 @@ private fun Map<FieldName, FieldType>.unionFields(
  * Computes the union of [SchemaField] instances. Returns [Outcome.Failure] if the union
  * results in any incompatibility. e.g., incompatible [FieldType] with the same name.
  */
-private fun SchemaFields.union(other: SchemaFields): Outcome<SchemaFields> {
+infix private fun SchemaFields.union(other: SchemaFields): Outcome<SchemaFields> {
     val newSingletons = singletons.unionFields(other.singletons)
         .getOrElse { return Outcome.Failure(it) }
     val newCollections = singletons.unionFields(other.singletons)
