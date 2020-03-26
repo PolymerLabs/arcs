@@ -11,14 +11,12 @@
 
 package arcs.sdk
 
-import arcs.core.common.Id
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HandleMode
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.handle.Stores
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.jvm.util.testutil.TimeImpl
@@ -38,7 +36,6 @@ private typealias Person = ReadSdkPerson_Person
 @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 class HandleUtilsTest {
   private lateinit var manager: EntityHandleManager
-  private val idGenerator = Id.Generator.newForTest("session")
 
   @Before
   fun setUp() {
@@ -300,7 +297,7 @@ class HandleUtilsTest {
       handle3,
       handle4,
       handle5
-    ) { e1, e2, e3, e4, e5 ->
+    ) { _, _, _, _, _ ->
       tracking5 += 1
     }
 
@@ -311,7 +308,7 @@ class HandleUtilsTest {
       handle4,
       handle5,
       handle6
-    ) { e1, e2, e3, e4, e5, e6 ->
+    ) { _, _, _, _, _, _ ->
       tracking6 += 1
     }
 
@@ -323,7 +320,7 @@ class HandleUtilsTest {
       handle5,
       handle6,
       handle7
-    ) { e1, e2, e3, e4, e5, e6, e7 ->
+    ) { _, _, _, _, _, _, _ ->
       tracking7 += 1
     }
 
@@ -336,7 +333,7 @@ class HandleUtilsTest {
       handle6,
       handle7,
       handle8
-    ) { e1, e2, e3, e4, e5, e6, e7, e8 ->
+    ) { _, _, _, _, _, _, _, _ ->
       tracking8 += 1
     }
 
@@ -350,7 +347,7 @@ class HandleUtilsTest {
       handle7,
       handle8,
       handle9
-    ) { e1, e2, e3, e4, e5, e6, e7, e8, e9 ->
+    ) { _, _, _, _, _, _, _, _, _ ->
       tracking9 += 1
     }
 
@@ -365,7 +362,7 @@ class HandleUtilsTest {
       handle8,
       handle9,
       handle10
-    ) { e1, e2, e3, e4, e5, e6, e7, e8, e9, e10 ->
+    ) { _, _, _, _, _, _, _, _, _, _ ->
       tracking10 += 1
     }
     
