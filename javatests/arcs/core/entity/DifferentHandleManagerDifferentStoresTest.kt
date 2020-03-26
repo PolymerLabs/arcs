@@ -34,5 +34,4 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     // We don't expect these to pass, since Operations won't make it through the driver level
     override fun singleton_writeAndOnUpdate() {}
     override fun collection_writeAndOnUpdate() {}
-
 }

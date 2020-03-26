@@ -12,6 +12,8 @@ import arcs.core.storage.StoreManager
 import arcs.jvm.util.testutil.TimeImpl
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.runner.RunWith
 
@@ -25,6 +27,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     }
 
     lateinit var app: Application
+
+    override var testRunner = { block: suspend CoroutineScope.() -> Unit ->
+        runBlocking { this.block() }
+    }
 
     @Before
     fun setUp() {

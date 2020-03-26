@@ -101,7 +101,7 @@ class EntityHandleManager(
                 type = SingletonType(EntityType(entitySpec.SCHEMA)),
                 mode = ReferenceMode
             )
-        ).activate()
+        ).activate(activationFactory)
 
         val storageProxy = singletonStorageProxies.getOrPut(storageKey) {
             SingletonProxy(store, CrdtSingleton())
@@ -170,7 +170,7 @@ class EntityHandleManager(
                 type = CollectionType(EntityType(entitySpec.SCHEMA)),
                 mode = ReferenceMode
             )
-        ).activate()
+        ).activate(activationFactory)
 
         val storageProxy = collectionStorageProxies.getOrPut(storageKey) {
             CollectionProxy(store, CrdtSet())
