@@ -6,10 +6,9 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.WorkManagerTestInitHelper
-import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.handle.Stores
+import arcs.core.storage.StoreManager
 import arcs.jvm.util.testutil.TimeImpl
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
@@ -30,7 +29,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     @Before
     fun setUp() {
         app = ApplicationProvider.getApplicationContext()
-        val stores = Stores()
+        val stores = StoreManager()
         val testConnectionFactory = TestConnectionFactory(app)
         readHandleManager = EntityHandleManager(
             arcId = "arcId",

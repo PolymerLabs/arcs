@@ -8,7 +8,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.handle.Stores
+import arcs.core.storage.StoreManager
 import arcs.jvm.util.testutil.TimeImpl
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
@@ -33,7 +33,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
             arcId = "arcId",
             hostId = "hostId",
             time = TimeImpl(),
-            stores = Stores(),
+            stores = StoreManager(),
             activationFactory = ServiceStoreFactory(
                 app,
                 fakeLifecycleOwner.lifecycle,
