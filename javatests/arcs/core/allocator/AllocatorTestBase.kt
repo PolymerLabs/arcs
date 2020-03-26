@@ -4,21 +4,11 @@ import arcs.core.common.Id
 import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.Plan
-import arcs.core.host.ArcState
-import arcs.core.host.HostRegistry
-import arcs.core.host.ParticleNotFoundException
-import arcs.core.host.ParticleState
-import arcs.core.host.PersonPlan
-import arcs.core.host.ReadPerson
-import arcs.core.host.ReadPerson_Person
-import arcs.core.host.TestingJvmProdHost
-import arcs.core.host.WritePerson
-import arcs.core.host.toRegistration
+import arcs.core.host.*
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
-import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
@@ -94,7 +84,7 @@ open class AllocatorTestBase {
         pureHost = pureHost()
 
         hostRegistry = hostRegistry()
-        allocator = Allocator.create(hostRegistry, HandleManager(TimeImpl()))
+        allocator = Allocator.create(hostRegistry, EntityHandleManager(time = TimeImpl()))
 
         readPersonParticle =
             requireNotNull(PersonPlan.particles.find { it.particleName == "ReadPerson" }) {
@@ -454,7 +444,7 @@ open class AllocatorTestBase {
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
-        val allocator2 = Allocator.create(hostRegistry, HandleManager(TimeImpl()))
+        val allocator2 = Allocator.create(hostRegistry, EntityHandleManager(time = TimeImpl()))
 
         allocator2.stopArc(arcId)
 

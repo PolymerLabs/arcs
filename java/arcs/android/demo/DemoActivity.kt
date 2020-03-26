@@ -15,10 +15,11 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import arcs.android.host.AndroidManifestHostRegistry
-import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.allocator.Allocator
+import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
-import arcs.core.storage.handle.Stores
+import arcs.jvm.util.JvmTime
+import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,13 +47,13 @@ class DemoActivity : AppCompatActivity() {
             hostRegistry = AndroidManifestHostRegistry.create(this@DemoActivity)
             allocator = Allocator.create(
                 hostRegistry,
-                // TODO(152435750) - Switch to using SDK entity handles
-                AndroidHandleManager(
-                    this@DemoActivity,
-                    this@DemoActivity.getLifecycle(),
-                    Dispatchers.Default,
-                    null,
-                    Stores()
+                EntityHandleManager(
+                    time = JvmTime,
+                    activationFactory = ServiceStoreFactory(
+                        context = this@DemoActivity,
+                        lifecycle = this@DemoActivity.getLifecycle(),
+                        connectionFactory = null
+                    )
                 )
             )
 
