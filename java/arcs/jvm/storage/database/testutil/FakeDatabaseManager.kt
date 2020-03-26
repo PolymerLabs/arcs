@@ -11,12 +11,7 @@
 
 package arcs.jvm.storage.database.testutil
 
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
 import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
-import arcs.core.data.SingletonType
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
@@ -27,7 +22,6 @@ import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.DatabaseRegistration
 import arcs.core.storage.database.DatabaseRegistry
 import arcs.core.storage.database.MutableDatabaseRegistry
-import arcs.core.type.Type
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
@@ -62,12 +56,6 @@ class FakeDatabaseManager : DatabaseManager {
     override suspend fun snapshotStatistics():
         Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
         mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
-
-    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        val all = mutableMapOf<StorageKey, Type>()
-        cache.forEach { (_, db) -> all.putAll(db.getAllStorageKeys()) }
-        return all
-    }
 
     override suspend fun removeExpiredEntities() {
         throw UnsupportedOperationException("Fake databases cannot remove expired entities.")
@@ -133,22 +121,6 @@ open class FakeDatabase : Database {
                 .launchIn(CoroutineScope(coroutineContext))
             Unit
         }
-
-    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        val entityType = EntityType(
-            Schema(
-                setOf<SchemaName>(),
-                SchemaFields(emptyMap(), emptyMap()),
-                ""
-            )
-        )
-        return data.keys.map {
-            val type =
-                if (data[it] is DatabaseData.Singleton) SingletonType(entityType)
-                else CollectionType(entityType)
-            it to type
-        }.toMap()
-    }
 
     override suspend fun snapshotStatistics() = stats.snapshot()
 

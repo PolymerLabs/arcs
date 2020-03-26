@@ -12,12 +12,10 @@
 package arcs.android.storage.database
 
 import android.content.Context
-import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
-import arcs.core.type.Type
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -50,13 +48,6 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
         registry.fetchAll()
             .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
             .forEach { it.reset() }
-    }
-
-    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        val all = mutableMapOf<StorageKey, Type>()
-        registry.fetchAll().map { getDatabase(it.name, it.isPersistent) }
-            .forEach { all.putAll(it.getAllStorageKeys()) }
-        return all
     }
 
     override suspend fun removeExpiredEntities() {

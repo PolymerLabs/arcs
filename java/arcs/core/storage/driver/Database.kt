@@ -92,10 +92,6 @@ object DatabaseDriverProvider : DriverProvider {
         ).register()
     }
 
-    override suspend fun getAllStorageKeys(): Map<StorageKey, Type> {
-        return manager.getAllStorageKeys()
-    }
-
     /**
      * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
      * with the [DriverFactory].

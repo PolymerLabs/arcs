@@ -86,16 +86,6 @@ class VolatileDriverProviderTest {
         assertThat(driver.storageKey).isEqualTo(VolatileStorageKey(arcIdFoo, "myfoo"))
     }
 
-    @Test
-    fun getAllStorageKeys_retunsAllStorageKeys() = runBlocking<Unit> {
-        val storageKey1 = VolatileStorageKey(arcIdFoo, "myfoo")
-        val storageKey2 = VolatileStorageKey(arcIdFoo, "myfoo2")
-        fooProvider.getDriver(storageKey1, Int::class, DummyType)
-        fooProvider.getDriver(storageKey2, Int::class, DummyType)
-
-        assertThat(fooProvider.getAllStorageKeys().keys).containsExactly(storageKey1, storageKey2)
-    }
-
     companion object {
         object DummyType: Type {
             override val tag = Tag.Count
