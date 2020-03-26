@@ -21,15 +21,15 @@ import arcs.core.data.SchemaFields
  * Computes the union of the two [Schema] instances. Returns [Outcome.Failure] if the union
  * is not possible as the inputs are incompatible.
  */
-fun Schema.union(other: Schema): Outcome<Schema> {
+infix fun Schema.union(other: Schema): Outcome<Schema> {
     val newNames = names.union(other.names)
     val newFields = fields.union(other.fields).getOrElse { return Outcome.Failure(it) }
     // TODO(bgogul): hash, refinement, query
     return Schema(names = newNames, fields = newFields, hash = "").toSuccess()
 }
 
-fun EntityType.union(other: EntityType): Outcome<EntityType> {
-    val newSchema = entitySchema.union(other.entitySchema)
+infix fun EntityType.union(other: EntityType): Outcome<EntityType> {
+    val newSchema = (entitySchema union other.entitySchema)
         .getOrElse { return Outcome.Failure(it) }
     return EntityType(newSchema).toSuccess()
 }
@@ -45,14 +45,14 @@ private fun Map<FieldName, FieldType>.unionFields(
 ): Outcome<Map<FieldName, FieldType>> {
     val result = mutableMapOf<FieldName, FieldType>()
     result.putAll(this)
-    other.forEach { entry ->
-        val existing = this.get(entry.key)
-        if (existing != null && entry.value != existing) {
+    other.forEach { (name, type) ->
+        val existing = this.get(name)
+        if (existing != null && type != existing) {
             return Outcome.Failure(
-                "Incompatible types for field '${entry.key}': ${entry.value} vs. $existing."
+                "Incompatible types for field '${name}': ${type} vs. $existing."
             )
         }
-        result.put(entry.key, entry.value)
+        result.put(name, type)
     }
     return result.toSuccess()
 }

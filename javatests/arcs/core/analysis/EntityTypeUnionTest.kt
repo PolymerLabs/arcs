@@ -29,7 +29,7 @@ class EntityTypeUnionTest {
             emptySchemaFields,
             ""
         )
-        val thingObjectSchema = thingSchema.union(objectSchema).getOrNull()
+        val thingObjectSchema = (thingSchema union objectSchema).getOrNull()
         assertThat(thingObjectSchema).isNotNull()
         thingObjectSchema?.let {
             assertThat(it.names).containsExactly(
@@ -52,7 +52,8 @@ class EntityTypeUnionTest {
         )
         val textSchema = Schema(setOf(SchemaName("Example")), textField, "")
         val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
-        val result = textSchema.union(numberSchema).getOrNull()
+        val result = (textSchema union numberSchema).getOrNull()
+        assertThat(result).isNotNull()
         result?.let {
             assertThat(it.names).containsExactly(SchemaName("Example"))
             assertThat(it.fields.singletons).isEqualTo(
@@ -73,7 +74,7 @@ class EntityTypeUnionTest {
         )
         val textSchema = Schema(setOf(SchemaName("Example")), textField, "")
         val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
-        with(textSchema.union(numberSchema)) {
+        with(textSchema union numberSchema) {
             assertThat(getFailureReason()).contains("Incompatible types for field 'num_text'")
         }
     }
@@ -92,7 +93,8 @@ class EntityTypeUnionTest {
         val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
         val textEntity = EntityType(textSchema)
         val numberEntity = EntityType(numberSchema)
-        val result = textEntity.union(numberEntity).getOrNull()
+        val result = (textEntity union numberEntity).getOrNull()
+        assertThat(result).isNotNull()
         result?.let {
             assertThat(it.entitySchema).isEqualTo(numberSchema.union(textSchema).getOrNull())
         }
