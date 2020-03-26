@@ -19,8 +19,7 @@ import arcs.core.entity.Handle
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.ActivationFactory
-import arcs.core.storage.StorageProxy
-import arcs.core.storage.handle.Stores
+import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -481,13 +480,13 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
 
     companion object {
         /**
-         * Shared [Stores] instance. This is used to share [Store]s among multiple [ArcHost]s or
+         * Shared [StoreManager] instance. This is used to share [Store]s among multiple [ArcHost]s or
          * even across different arcs. On Android, [StorageService] runs as a single process so all
          * [ArcHost]s share the same Storage layer and this singleton is not needed, but on other
-         * platforms the [Stores] object provides Android-like functionality. If your platform
+         * platforms the [StoreManager] object provides Android-like functionality. If your platform
          * supports its own [Service]-level analogue like Android, override this method to return
          * a new instance each time.
          */
-        val singletonStores = Stores()
+        val singletonStores = StoreManager()
     }
 }

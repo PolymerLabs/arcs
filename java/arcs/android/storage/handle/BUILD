@@ -12,6 +12,7 @@ arcs_kt_android_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/storage",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util",

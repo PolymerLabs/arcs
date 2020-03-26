@@ -37,6 +37,7 @@ import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode.ReferenceMode
 import arcs.core.storage.StorageProxy
+import arcs.core.storage.StoreManager
 import arcs.core.storage.handle.CollectionHandle
 import arcs.core.storage.handle.CollectionProxy
 import arcs.core.storage.handle.CollectionStoreOptions
@@ -44,7 +45,6 @@ import arcs.core.storage.handle.RawEntityDereferencer
 import arcs.core.storage.handle.SingletonHandle
 import arcs.core.storage.handle.SingletonProxy
 import arcs.core.storage.handle.SingletonStoreOptions
-import arcs.core.storage.handle.Stores
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Time
 
@@ -60,7 +60,7 @@ class EntityHandleManager(
     private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
     private val hostId: String = "nohost",
     private val time: Time,
-    private val stores: Stores = Stores(),
+    private val stores: StoreManager = StoreManager(),
     private val activationFactory: ActivationFactory? = null
 ) {
 
