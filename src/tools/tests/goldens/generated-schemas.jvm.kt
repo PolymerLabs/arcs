@@ -121,7 +121,7 @@ class Gold_AllPeople(
     companion object : EntitySpec<Gold_AllPeople> {
 
         override val SCHEMA = Schema(
-            listOf(SchemaName("People")),
+            setOf(SchemaName("People")),
             SchemaFields(
                 singletons = mapOf(
                     "name" to FieldType.Text,
@@ -143,7 +143,6 @@ class Gold_AllPeople(
             SchemaRegistry.register(this)
         }
 
-        // TODO: only handles singletons for now
         override fun deserialize(data: RawEntity) = Gold_AllPeople().apply { deserialize(data) }
     }
 }
@@ -353,6 +352,8 @@ class Gold_Data(
     }
 }
 
+
+
 abstract class AbstractGold : BaseParticle() {
     override val handles: Handles = Handles()
 
@@ -360,12 +361,14 @@ abstract class AbstractGold : BaseParticle() {
         "Gold",
         mapOf(
             "data" to Gold_Data,
+            "allPeople" to Gold_AllPeople,
             "qCollection" to Gold_QCollection,
             "alias" to Gold_Alias,
             "collection" to Gold_Collection
         )
     ) {
         val data: ReadSingletonHandle<Gold_Data> by handles
+        val allPeople: ReadCollectionHandle<Gold_AllPeople> by handles
         val qCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
         val alias: WriteSingletonHandle<Gold_Alias> by handles
         val collection: ReadCollectionHandle<Gold_Collection> by handles
