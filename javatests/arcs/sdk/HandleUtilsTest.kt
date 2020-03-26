@@ -215,6 +215,7 @@ class HandleUtilsTest {
     assertWithMessage("Expected handle4 to equal D").that(handle4Tracking).isEqualTo(1)
   }
 
+  @Suppress("UNUSED_PARAMETER")
   @Test
   fun handleUtils_combineTenUpdatesTest() = runBlockingTest {
     val handle1 = manager.createCollectionHandle(

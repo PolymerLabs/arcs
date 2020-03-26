@@ -363,7 +363,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         val id1 = activeStore.on(ProxyCallback {
             assertThat(it is ProxyMessage.ModelUpdate).isTrue()
             job.complete()
-            true
         })
 
         // another store
@@ -371,7 +370,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         activeStore.on(
             ProxyCallback {
                 calledStore2 = true
-                true
             }
         )
 
@@ -532,7 +530,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                 } else {
                     job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
                 }
-                true
             }
         )
 

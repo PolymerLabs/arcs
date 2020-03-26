@@ -108,7 +108,7 @@ class ParticleProtoDecoderTest {
             .setSpecName("Reader")
             .addConnections(readConnectionProto)
             .build()
-        val readConnection = readConnectionProto.decode(readerSpec, context)
+        readConnectionProto.decode(readerSpec, context)
         with(particleProto.decode(context)) {
             assertThat(spec).isEqualTo(readerSpec)
             assertThat(handleConnections).isEqualTo(
@@ -135,8 +135,8 @@ class ParticleProtoDecoderTest {
             .addConnections(readConnectionProto)
             .addConnections(writeConnectionProto)
             .build()
-        val readConnection = readConnectionProto.decode(readerWriterSpec, context)
-        val writeConnection = writeConnectionProto.decode(readerWriterSpec, context)
+        readConnectionProto.decode(readerWriterSpec, context)
+        writeConnectionProto.decode(readerWriterSpec, context)
         with(particleProto.decode(context)) {
             assertThat(spec).isEqualTo(readerWriterSpec)
             assertThat(handleConnections).containsExactly(

@@ -131,6 +131,8 @@ def arcs_kt_android_library(**kwargs):
     if not IS_BAZEL:
         kwargs["disable_lint_checks"] = merge_lists(disable_lint_checks, DISABLED_LINT_CHECKS)
 
+    kotlincopts = kwargs.pop("kotlincopts", [])
+    kwargs["kotlincopts"] = merge_lists(kotlincopts, KOTLINC_OPTS)
     kt_android_library(**kwargs)
 
 def arcs_kt_native_library(**kwargs):
@@ -371,7 +373,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
     if not srcs:
         srcs = native.glob(["*.kt"])
 
-    kt_android_library(
+    arcs_kt_android_library(
         name = name,
         testonly = True,
         srcs = srcs,
