@@ -1,9 +1,9 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_android_library",
     "arcs_kt_android_test_suite",
     "arcs_kt_schema",
 )
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
 
 licenses(["notice"])
 
