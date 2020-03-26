@@ -6,8 +6,6 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
-
 arcs_kt_jvm_test_suite(
     name = "allocator",
     srcs = glob(["*Test.kt"]),
@@ -26,6 +24,7 @@ arcs_kt_jvm_library(
         "AllocatorTestBase.kt",
         "TestingHost.kt",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//java/arcs/core/allocator",  # buildcleaner: keep
         "//java/arcs/core/common",

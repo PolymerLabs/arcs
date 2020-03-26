@@ -6,8 +6,6 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
-
 arcs_kt_android_library(
     name = "testlib",
     testonly = 1,

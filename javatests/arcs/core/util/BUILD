@@ -5,8 +5,6 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
-
 PERFORMANCE_SRCS = [
     "Base64PerformanceTest.kt",
 ]

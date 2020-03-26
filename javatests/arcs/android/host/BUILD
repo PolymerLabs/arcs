@@ -1,13 +1,11 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_android_library",
     "arcs_kt_android_test_suite",
     "arcs_kt_schema",
 )
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
-
-package(default_visibility = ["//visibility:public"])
 
 arcs_kt_android_test_suite(
     name = "host",
@@ -58,7 +56,7 @@ arcs_kt_schema(
     ],
 )
 
-kt_android_library(
+arcs_kt_android_library(
     name = "services",
     testonly = True,
     srcs = glob(

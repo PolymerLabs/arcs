@@ -1,19 +1,15 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_android_library",
     "arcs_kt_android_test_suite",
 )
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
-
-kt_android_library(
+arcs_kt_android_library(
     name = "support",
     testonly = 1,
-    srcs = [
-        "ResurrectionHelperDummyService.kt",
-    ],
+    srcs = ["ResurrectionHelperDummyService.kt"],
     manifest = "AndroidManifest.xml",
 )
 

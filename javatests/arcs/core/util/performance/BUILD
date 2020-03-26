@@ -5,11 +5,8 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
-
 arcs_kt_jvm_test_suite(
     name = "performance",
-    srcs = glob(["*.kt"]),
     package = "arcs.core.util.performance",
     deps = [
         "//java/arcs/core/testutil",

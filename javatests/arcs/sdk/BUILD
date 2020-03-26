@@ -8,8 +8,6 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
-
 arcs_kt_jvm_test_suite(
     name = "host",
     srcs = glob(["*Test.kt"]),

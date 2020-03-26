@@ -5,8 +5,6 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
-
 arcs_kt_jvm_test_suite(
     name = "driver",
     package = "arcs.core.storage.driver",
