@@ -216,7 +216,7 @@ class CollectionIntegrationTest {
         val person2 = Person("Jim", 19.0, false)
         assertThat(collectionC.store(person2.toRawEntity())).isTrue()
         val entity2 = collectionC.fetchAll().last()
-        assertThat(entity2.creationTimestamp).isGreaterThan(entityC.creationTimestamp)
+        assertThat(entity2.creationTimestamp).isAtLeast(entityC.creationTimestamp)
         assertThat(entity2.expirationTimestamp).isGreaterThan(RawEntity.UNINITIALIZED_TIMESTAMP)
     }
 
