@@ -18,11 +18,10 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.host.HandleMode
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.handle.HandleManager
+import arcs.core.storage.handle.Stores
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.jvm.util.testutil.TimeImpl
-import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -45,7 +44,11 @@ class HandleUtilsTest {
   fun setUp() {
     RamDiskDriverProvider()
     ReferenceModeStorageKey.registerParser()
-    manager = EntityHandleManager(HandleManager(TimeImpl()))
+      manager = EntityHandleManager(
+          "testArc",
+          "testHost",
+          TimeImpl()
+      )
   }
 
   @After

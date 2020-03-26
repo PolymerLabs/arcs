@@ -21,6 +21,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/keys",
@@ -31,7 +32,6 @@ arcs_kt_jvm_test_suite(
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
 

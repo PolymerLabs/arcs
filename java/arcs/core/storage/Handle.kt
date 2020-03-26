@@ -43,6 +43,7 @@ import arcs.core.util.Time
  *
  * The base handle interface is at this layer to avoid circular dependencies.
  */
+@Deprecated("Use Handles from arcs.core.host")
 open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /** [name] is the unique name for this handle, used to track state in the [VersionMap]. */
     val name: String,

@@ -5,7 +5,6 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.jvm.util.JvmTime
@@ -90,7 +89,11 @@ open class BaseTestHarness<P : Particle>(
                 DriverAndKeyConfigurator.configureKeyParsers()
 
                 scope.launch {
-                    val handleManager = EntityHandleManager(HandleManager(JvmTime))
+                    val handleManager = EntityHandleManager(
+                        arcId = "testHarness",
+                        hostId = "testHarnessHost",
+                        time = JvmTime
+                    )
                     descriptors.forEach { descriptor ->
                         val storageKey = ReferenceModeStorageKey(
                             backingKey = RamDiskStorageKey("backing_${descriptor.name}"),

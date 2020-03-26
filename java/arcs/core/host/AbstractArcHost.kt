@@ -18,7 +18,8 @@ import arcs.core.data.SingletonType
 import arcs.core.entity.Handle
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
-import arcs.core.storage.handle.HandleManager
+import arcs.core.storage.ActivationFactory
+import arcs.core.storage.StorageProxy
 import arcs.core.storage.handle.Stores
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
@@ -446,10 +447,24 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
      */
     open fun entityHandleManager(arcId: String) = EntityHandleManager(
-        HandleManager(platformTime, singletonStores),
         arcId,
-        hostId
+        hostId,
+        platformTime,
+        stores,
+        activationFactory
     )
+
+    /**
+     * The map of [Store] objects that this [ArcHost] will use. By default, it uses a shared
+     * singleton defined statically by this package.
+     */
+    open val stores = singletonStores
+
+    /**
+     * The [ActivationFactory] to use when activating stores. By default this is `null`,
+     * indicating that the default [ActivationFactory] will be used.
+     */
+    open val activationFactory: ActivationFactory? = null
 
     /**
      * Instantiate a [Particle] implementation for a given [ParticleIdentifier].
@@ -471,6 +486,6 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
          * supports its own [Service]-level analogue like Android, override this method to return
          * a new instance each time.
          */
-        private val singletonStores = Stores()
+        val singletonStores = Stores()
     }
 }

@@ -20,10 +20,14 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.handle.Stores
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
+import arcs.jvm.util.testutil.TimeImpl
+import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
@@ -73,6 +77,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     @Before
     fun setUp() {
         RamDisk.clear()
+        DriverAndKeyConfigurator.configure(null)
         app = ApplicationProvider.getApplicationContext()
         lifecycle = LifecycleRegistry(this).apply {
             setCurrentState(Lifecycle.State.CREATED)
@@ -86,9 +91,13 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleHolder = AbstractTestParticle.Handles()
 
         handleManager = EntityHandleManager(
-            AndroidHandleManager(
-                lifecycle = lifecycle,
+            "testArc",
+            "testHost",
+            TimeImpl(),
+            Stores(),
+            ServiceStoreFactory(
                 context = app,
+                lifecycle = lifecycle,
                 connectionFactory = TestConnectionFactory(app)
             )
         )

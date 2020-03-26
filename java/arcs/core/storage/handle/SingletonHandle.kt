@@ -35,6 +35,7 @@ typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<
  * It provides methods that can generate the appropriate operations to send to a
  * backing [StorageProxy].
  */
+@Deprecated("Use Handles from arcs.core.host")
 class SingletonHandle<T : Referencable>(
     name: String,
     storageProxy: SingletonProxy<T>,

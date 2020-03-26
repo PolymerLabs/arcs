@@ -12,14 +12,12 @@ package arcs.android.host
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
-import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.host.ArcHost
-import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
 import arcs.jvm.host.AnnotationBasedJvmProdHost
 import arcs.jvm.host.JvmProdHost
+import arcs.sdk.android.storage.ServiceStoreFactory
 import java.util.ServiceLoader
-import kotlinx.coroutines.Dispatchers
 
 /**
  * An [ArcHost] that runs isolatable particles that are expected to have no platform
@@ -31,13 +29,5 @@ class AndroidProdHost(
     val lifecycle: Lifecycle,
     vararg additionalParticles: ParticleRegistration
 ) : AnnotationBasedJvmProdHost(JvmProdHost::class, additionalParticles = *additionalParticles) {
-    override fun entityHandleManager(arcId: String) = EntityHandleManager(
-        AndroidHandleManager(
-            context,
-            lifecycle,
-            Dispatchers.Default
-        ),
-        arcId,
-        hostId
-    )
+    override val activationFactory = ServiceStoreFactory(context, lifecycle)
 }
