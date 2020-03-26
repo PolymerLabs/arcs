@@ -30,7 +30,7 @@ class EntityTypeUnionTest {
             ""
         )
         val thingObjectSchema = requireNotNull((thingSchema union objectSchema).getOrNull())
-        thingObjectSchema?.let {
+        thingObjectSchema.let {
             assertThat(it.names).containsExactly(
                 SchemaName("Thing"),
                 SchemaName("Object"),
@@ -52,7 +52,7 @@ class EntityTypeUnionTest {
         val textSchema = Schema(setOf(SchemaName("Example")), textField, "")
         val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
         val result = requireNotNull((textSchema union numberSchema).getOrNull())
-        result?.let {
+        result.let {
             assertThat(it.names).containsExactly(SchemaName("Example"))
             assertThat(it.fields.singletons).isEqualTo(
                 mapOf("text" to FieldType.Text, "number" to FieldType.Number)
@@ -92,7 +92,7 @@ class EntityTypeUnionTest {
         val textEntity = EntityType(textSchema)
         val numberEntity = EntityType(numberSchema)
         val result = requireNotNull((textEntity union numberEntity).getOrNull())
-        result?.let {
+        result.let {
             assertThat(it.entitySchema).isEqualTo(
                 (numberSchema union textSchema).getOrNull()
             )
