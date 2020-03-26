@@ -1,5 +1,5 @@
-load("//tools/build_defs/android:rules.bzl", "android_library")
 load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
+load("//tools/build_defs/android:rules.bzl", "android_library")
 
 licenses(["notice"])
 

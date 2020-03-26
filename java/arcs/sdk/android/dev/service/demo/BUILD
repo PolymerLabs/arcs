@@ -1,10 +1,10 @@
-licenses(["notice"])
-
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_manifest_bundle",
 )
 load("//tools/build_defs/android:rules.bzl", "android_binary")
+
+licenses(["notice"])
 
 android_binary(
     name = "demo",

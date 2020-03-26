@@ -1,11 +1,11 @@
+load("//tools/build_defs/android:rules.bzl", "android_library")
+
 licenses(["notice"])
 
 package(default_visibility = [
     "//java/arcs:__subpackages__",
     "//javatests/arcs:__subpackages__",
 ])
-
-load("//tools/build_defs/android:rules.bzl", "android_library")
 
 android_library(
     name = "api-android",
