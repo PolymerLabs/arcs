@@ -21,7 +21,7 @@ data class TypeVariable(val name: String) : Type {
 
     override fun toLiteral() = Literal(tag, LiteralName(name))
 
-    override fun toString(options: Type.ToStringOptions) = "$tag($name)"
+    override fun toString(options: Type.ToStringOptions) = "~$name"
 
     /** [Literal][arcs.core.common.Literal] representation of the name. */
     data class LiteralName(val name: String) : arcs.core.common.Literal
