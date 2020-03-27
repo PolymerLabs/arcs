@@ -32,7 +32,7 @@ export class Reference implements Storable {
   public entity: Entity|null = null;
   public type: ReferenceType<EntityType>;
 
-  protected readonly id: string;
+  public readonly id: string;
   private readonly creationTimestamp: string;
   private entityStorageKey: string;
   private readonly context: ChannelConstructor;
