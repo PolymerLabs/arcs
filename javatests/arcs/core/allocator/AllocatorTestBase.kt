@@ -130,7 +130,7 @@ open class AllocatorTestBase {
      * [ReadPerson] with associated handles and connections, and [WritingHost] contains only
      * [WritePerson] with associated handles and connections.
      */
-    //@Test
+    @Test
     fun allocator_computePartitions() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
@@ -193,7 +193,7 @@ open class AllocatorTestBase {
         )
     }
 
-    //@Test
+    @Test
     fun allocator_verifyStorageKeysCreated() = runAllocatorTest {
         PersonPlan.particles.forEach {
             it.handles.forEach { (_, connection) ->
@@ -229,7 +229,7 @@ open class AllocatorTestBase {
         partition.particles.any { it.particleName == particleName }
     }!!
 
-    //@Test
+    @Test
     fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
         val idGenerator = Id.Generator.newSession()
         val testArcId = idGenerator.newArcId("Test")
@@ -256,7 +256,7 @@ open class AllocatorTestBase {
         }
     }
 
-    //@Test
+    @Test
     fun allocator_verifyArcHostStartCalled() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
@@ -292,7 +292,7 @@ open class AllocatorTestBase {
         }
     }
 
-    //@Test
+    @Test
     fun allocator_verifyUnknownParticleThrows() = runAllocatorTest {
         val particleLens = Plan.particleLens.traverse()
 
@@ -307,7 +307,7 @@ open class AllocatorTestBase {
         }
     }
 
-    //@Test
+    @Test
     fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle", PersonPlan
@@ -359,7 +359,7 @@ open class AllocatorTestBase {
         }
     }
 
-    //@Test
+    @Test
     fun allocator_canStopArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
@@ -399,7 +399,7 @@ open class AllocatorTestBase {
         assertThat(writingExternalHost.isIdle).isTrue()
     }
 
-    //@Test
+    @Test
     fun allocator_restartArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
@@ -452,7 +452,7 @@ open class AllocatorTestBase {
         assertThat((readPersonContext.particle as ReadPerson).createCalled).isFalse()
     }
 
-    //@Test
+    @Test
     fun allocator_startFromOneAllocatorAndStopInAnother() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
@@ -477,7 +477,7 @@ open class AllocatorTestBase {
         assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
     }
 
-//    //@Test
+//    @Test
     fun allocator_doesntCreateArcsOnDuplicateStartArc() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
