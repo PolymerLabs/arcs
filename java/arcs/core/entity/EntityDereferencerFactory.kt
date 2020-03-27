@@ -16,10 +16,9 @@ class EntityDereferencerFactory(
 ) : Dereferencer.Factory<RawEntity> {
     private val dereferencers = mutableMapOf<Schema, RawEntityDereferencer>()
 
-    override fun create(schema: Schema) = dereferencers.getOrPut(
-        schema,
-        { RawEntityDereferencer(schema, stores, entityActivationFactory) }
-    )
+    override fun create(schema: Schema) = dereferencers.getOrPut(schema) {
+        RawEntityDereferencer(schema, stores, entityActivationFactory)
+    }
 
     /**
      * Recursively inject the [Dereferencer] into any [Reference]s in the receiving object.
@@ -48,7 +47,7 @@ class EntityDereferencerFactory(
             injectField(schema.fields.singletons[field], value)
         }
         rawEntity.collections.forEach { (field, value) ->
-            injectField(schema.fields.singletons[field], value)
+            injectField(schema.fields.collections[field], value)
         }
     }
 }

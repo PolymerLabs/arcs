@@ -38,7 +38,6 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode.ReferenceMode
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreManager
-import arcs.core.storage.handle.CollectionHandle
 import arcs.core.storage.handle.CollectionProxy
 import arcs.core.storage.handle.CollectionStoreOptions
 import arcs.core.storage.handle.SingletonProxy
@@ -59,7 +58,7 @@ class EntityHandleManager(
     private val hostId: String = "nohost",
     private val time: Time,
     private val stores: StoreManager = StoreManager(),
-    activationFactory: ActivationFactory? = null
+    private val activationFactory: ActivationFactory? = null
 ) {
 
     private val singletonStorageProxies = mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
@@ -198,8 +197,12 @@ class ReadSingletonHandleAdapter<T : Entity>(
     dereferencerFactory: EntityDereferencerFactory
 ) : BaseHandleAdapter(name, storageProxy),
     ReadSingletonHandle<T>,
-    ReadSingletonOperations<T> by
-    ReadSingletonOperationsImpl<T>(name, entitySpec, storageProxy, dereferencerFactory)
+    ReadSingletonOperations<T> by ReadSingletonOperationsImpl<T>(
+        name,
+        entitySpec,
+        storageProxy,
+        dereferencerFactory
+    )
 
 /** A concrete writable singleton handle implementation. */
 class WriteSingletonHandleAdapter<T : Entity>(
@@ -208,8 +211,11 @@ class WriteSingletonHandleAdapter<T : Entity>(
     entityPreparer: EntityPreparer<T>
 ) : BaseHandleAdapter(name, storageProxy),
     WriteSingletonHandle<T>,
-    WriteSingletonOperations<T> by
-    WriteSingletonOperationsImpl<T>(name, storageProxy, entityPreparer)
+    WriteSingletonOperations<T> by WriteSingletonOperationsImpl<T>(
+        name,
+        storageProxy,
+        entityPreparer
+    )
 
 /** A concrete readable + writable singleton handle implementation. */
 class ReadWriteSingletonHandleAdapter<T : Entity>(
@@ -220,10 +226,17 @@ class ReadWriteSingletonHandleAdapter<T : Entity>(
     dereferencerFactory: EntityDereferencerFactory
 ) : BaseHandleAdapter(name, storageProxy),
     ReadWriteSingletonHandle<T>,
-    ReadSingletonOperations<T> by
-    ReadSingletonOperationsImpl<T>(name, entitySpec, storageProxy, dereferencerFactory),
-    WriteSingletonOperations<T> by
-    WriteSingletonOperationsImpl<T>(name, storageProxy, entityPreparer)
+    ReadSingletonOperations<T> by ReadSingletonOperationsImpl<T>(
+        name,
+        entitySpec,
+        storageProxy,
+        dereferencerFactory
+    ),
+    WriteSingletonOperations<T> by WriteSingletonOperationsImpl<T>(
+        name,
+        storageProxy,
+        entityPreparer
+    )
 
 /** A concrete readable collection handle implementation. */
 class ReadCollectionHandleAdapter<T : Entity>(
@@ -233,8 +246,12 @@ class ReadCollectionHandleAdapter<T : Entity>(
     dereferencerFactory: EntityDereferencerFactory
 ) : BaseHandleAdapter(name, storageProxy),
     ReadCollectionHandle<T>,
-    ReadCollectionOperations<T> by
-    ReadCollectionOperationsImpl<T>(name, entitySpec, storageProxy, dereferencerFactory)
+    ReadCollectionOperations<T> by ReadCollectionOperationsImpl<T>(
+        name,
+        entitySpec,
+        storageProxy,
+        dereferencerFactory
+    )
 
 /** A concrete writable collection handle implementation. */
 class WriteCollectionHandleAdapter<T : Entity>(
@@ -243,8 +260,11 @@ class WriteCollectionHandleAdapter<T : Entity>(
     entityPreparer: EntityPreparer<T>
 ) : BaseHandleAdapter(name, storageProxy),
     WriteCollectionHandle<T>,
-    WriteCollectionOperations<T> by
-    WriteCollectionOperationsImpl<T>(name, storageProxy, entityPreparer)
+    WriteCollectionOperations<T> by WriteCollectionOperationsImpl<T>(
+        name,
+        storageProxy,
+        entityPreparer
+    )
 
 /** A concrete readable & writable collection handle implementation. */
 class ReadWriteCollectionHandleAdapter<T : Entity>(
@@ -255,10 +275,17 @@ class ReadWriteCollectionHandleAdapter<T : Entity>(
     dereferencerFactory: EntityDereferencerFactory
 ) : BaseHandleAdapter(name, storageProxy),
     ReadWriteCollectionHandle<T>,
-    ReadCollectionOperations<T> by
-    ReadCollectionOperationsImpl<T>(name, entitySpec, storageProxy, dereferencerFactory),
-    WriteCollectionOperations<T> by
-    WriteCollectionOperationsImpl<T>(name, storageProxy, entityPreparer)
+    ReadCollectionOperations<T> by ReadCollectionOperationsImpl<T>(
+        name,
+        entitySpec,
+        storageProxy,
+        dereferencerFactory
+    ),
+    WriteCollectionOperations<T> by WriteCollectionOperationsImpl<T>(
+        name,
+        storageProxy,
+        entityPreparer
+    )
 
 /** Implementation of singleton read operations to mix into concrete instances. */
 private class ReadSingletonOperationsImpl<T : Entity>(
@@ -331,10 +358,10 @@ private class ReadCollectionOperationsImpl<T : Entity>(
     override suspend fun size() = fetchAll().size
     override suspend fun isEmpty() = fetchAll().isEmpty()
 
-    private fun adaptValues(values: Set<RawEntity>) = values.map {
+    private fun adaptValues(values: Set<RawEntity>) = values.mapTo(mutableSetOf()) {
         dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, it)
         entitySpec.deserialize(it)
-    }.toSet()
+    }
 
     override suspend fun fetchAll() = adaptValues(storageProxy.getParticleView())
 
