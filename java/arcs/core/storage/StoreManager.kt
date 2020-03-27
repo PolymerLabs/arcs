@@ -11,25 +11,23 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperationAtTime
-import arcs.core.util.guardedBy
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import arcs.core.crdt.CrdtOperation
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Store manager provides a central holding places for the [Store] instances that a runtime will
  * use, so that only one instance of a [Store] can be created per [StorageKey].
  */
 class StoreManager {
-    private val storesMutex = Mutex()
-    private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, Store<*, *, *>>())
+    private val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
 
+    /** Return a list of all [StorageKeys]s for [Store]s managed by this [StoreManager] */
+    val storageKeys
+        get() = stores.keys
+
+    /** Get a [Store] for the provided key. One will be created if it does not exist yet. */
     @Suppress("UNCHECKED_CAST")
-    suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
+    fun <Data : CrdtData, Op : CrdtOperation, T> get(
         storeOptions: StoreOptions<Data, Op, T>
-    ) = storesMutex.withLock {
-        stores.getOrPut(storeOptions.storageKey) {
-            Store(storeOptions)
-        } as Store<Data, Op, T>
-    }
+    ) = stores.getOrPut(storeOptions.storageKey) { Store(storeOptions) } as Store<Data, Op, T>
 }

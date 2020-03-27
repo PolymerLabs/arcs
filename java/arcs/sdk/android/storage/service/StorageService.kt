@@ -27,8 +27,8 @@ import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.storage.ProxyMessage
-import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
+import arcs.core.storage.StoreManager
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -38,7 +38,6 @@ import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
 import java.io.FileDescriptor
 import java.io.PrintWriter
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +52,7 @@ import kotlinx.coroutines.runBlocking
 class StorageService : ResurrectorService() {
     private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
-    private val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
+    private val stores = StoreManager()
     private var startTime: Long? = null
     private val stats = BindingContextStatsImpl()
     private val log = TaggedLog { "StorageService" }
@@ -88,7 +87,7 @@ class StorageService : ResurrectorService() {
 
         val options = parcelableOptions.actual
         return BindingContext(
-            stores.computeIfAbsent(options.storageKey) { Store(options) },
+            stores.get(options),
             parcelableOptions.crdtType,
             coroutineContext,
             stats
@@ -108,7 +107,7 @@ class StorageService : ResurrectorService() {
 
     override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
         val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
-        val storageKeys = stores.keys.map { it }.toSet()
+        val storageKeys = stores.storageKeys
 
         val statsPercentiles = stats.roundtripPercentiles
 
