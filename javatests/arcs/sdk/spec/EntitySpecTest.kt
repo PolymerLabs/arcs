@@ -192,9 +192,8 @@ class EntitySpecTest {
      * it.
      */
     private suspend fun createBarReference(bar: Bar): Reference<Bar> {
-        val handle = harness.particle.handles.bars
-        handle.store(bar)
-        return handle.createReference(bar)
+        harness.bars.store(bar)
+        return harness.bars.createReference(bar)
     }
 
     /** Generates and returns an ID for the entity. */
