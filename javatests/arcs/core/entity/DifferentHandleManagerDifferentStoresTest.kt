@@ -3,6 +3,7 @@ package arcs.core.entity
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.jvm.util.testutil.TimeImpl
+import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -12,7 +13,8 @@ import org.junit.runners.JUnit4
 class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
 
     @Before
-    fun setUp() {
+    override fun setUp() {
+        super.setUp()
         readHandleManager = EntityHandleManager(
             arcId = "testArcId",
             hostId = "testHostId",
@@ -26,6 +28,9 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
             stores = StoreManager()
         )
     }
+
+    @After
+    override fun tearDown() = super.tearDown()
 
     // TODO - fix these?
     override fun collection_referenceLiveness() {}
