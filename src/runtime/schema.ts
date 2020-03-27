@@ -217,7 +217,6 @@ export class Schema {
   crdtConstructor<S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>>() {
     const singletons = {};
     const collections = {};
-    // TODO(shans) do this properly
 
     // This implementation only supports:
     //   - singleton of a primitive,
