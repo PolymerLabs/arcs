@@ -80,7 +80,10 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     protected val isArcHostIdle = runningArcs.isEmpty()
 
     // VisibleForTesting
-    protected fun clearCache() = contextCache.clear()
+    protected fun clearCache() {
+        contextCache.clear()
+        runningArcs.clear()
+    }
 
     /** Used by subclasses to register particles dynamically after [ArcHost] construction */
     protected fun registerParticle(particle: ParticleIdentifier, constructor: ParticleConstructor) {
@@ -344,9 +347,9 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
      * restart in the event of a crash.
      */
     private fun maybeRequestResurrection(context: ArcHostContext) {
-        resurrector.onResurrection(::resurrect)
+        resurrector.onResurrection(hostId, ::resurrect)
 
-        if (context.arcState == ArcState.NeverStarted) {
+        if (context.arcState == ArcState.Running) {
             resurrector.requestResurrection(
                 context.arcId,
                 context.particles.flatMap { (_, particleContext) ->
@@ -364,21 +367,23 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         resurrector.cancelResurrection(context.arcId)
     }
 
-    private fun resurrect(arcId: String, affectedKeys: List<StorageKey>): Unit {
+    private fun resurrect(arcId: String, affectedKeys: List<StorageKey>) {
         GlobalScope.launch {
-            val context = lookupOrCreateArcHostContext(arcId)
-            if (context.arcState != ArcState.Running && context.arcState == ArcState.Deleted) {
-                startArc(
-                    Plan.Partition(
-                        arcId,
-                        hostId,
-                        context.particles.map { (_, particleContext) ->
-                            particleContext.planParticle
-                        }
-                    )
-                )
-                // TODO: should invoke onHandleUpdate for readable affectedKeys?
+            if (isRunning(arcId)) {
+                return@launch
             }
+
+            val context = lookupOrCreateArcHostContext(arcId)
+            startArc(
+                Plan.Partition(
+                    arcId,
+                    hostId,
+                    context.particles.map { (_, particleContext) ->
+                        particleContext.planParticle
+                    }
+                )
+            )
+            // TODO: should invoke onHandleUpdate for readable affectedKeys?
         }
     }
 

@@ -32,9 +32,8 @@ interface Resurrector {
      * Registers a callback to be called by the resurrection service whenever the [affectedKeys]
      * have been updated.
      */
-    fun onResurrection(block: ResurrectorCallback) = Unit
+    fun onResurrection(hostId: String, block: ResurrectorCallback) = Unit
 
-    // VisibleForTesting
     /**
      * Triggers resurrection for the given [keys].
      */

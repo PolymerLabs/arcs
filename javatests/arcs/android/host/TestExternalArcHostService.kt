@@ -12,6 +12,7 @@ import arcs.core.host.TestingHost
 import arcs.core.data.Capabilities
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.Resurrector
+import arcs.core.host.TestingResurrector
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlinx.coroutines.Dispatchers

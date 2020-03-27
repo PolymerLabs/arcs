@@ -19,7 +19,16 @@ import arcs.android.sdk.host.toComponentName
 import arcs.core.allocator.AllocatorTestBase
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.data.Capabilities
+import arcs.core.data.Plan
+import arcs.core.entity.WriteSingletonHandle
+import arcs.core.host.ArcHostContext
 import arcs.core.host.HostRegistry
+import arcs.core.host.PersonPlan
+import arcs.core.host.PurePerson
+import arcs.core.host.ReadPerson
+import arcs.core.host.TestingHost
+import arcs.core.host.WritePerson
+import arcs.core.host.WritePerson_Person
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

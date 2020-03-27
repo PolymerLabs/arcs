@@ -4,13 +4,13 @@ directories:
   build_defs
   tools
   third_party
-#  particles
-#  src
+  particles
+  src
 
 targets:
   //java/...
   //javatests/...
-# //particles/...
+  //particles/...
 
 test_sources:
   javatests/

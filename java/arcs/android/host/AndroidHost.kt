@@ -12,18 +12,11 @@ package arcs.android.host
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
-import arcs.android.storage.handle.AndroidHandleManager
 import arcs.core.host.ArcHost
-import arcs.core.host.ArcHostContext
-import arcs.core.host.ArcState
-import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.Resurrector
-import arcs.core.storage.StorageKey
 import arcs.jvm.host.JvmHost
-import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
-import kotlinx.coroutines.Dispatchers
 
 /**
  * An [ArcHost] runs on Android inside of a [Service].

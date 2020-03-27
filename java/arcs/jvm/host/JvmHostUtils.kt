@@ -18,7 +18,6 @@ import arcs.core.host.toParticleIdentifier
 import java.util.ServiceLoader
 import kotlin.reflect.KClass
 
-
 /**
  * Load Particles compiled with `arcs_kt_particles` via the [ServiceLoader] from class path.
  *
@@ -35,7 +34,6 @@ fun scanForParticles(host: KClass<out ProdHost> = ProdHost::class): Array<Partic
 
 private fun isParticleForHost(host: KClass<out ProdHost>, particle: Class<out Particle>) =
     host == (particle.getAnnotation(TargetHost::class.java)?.value ?: ProdHost::class)
-
 
 /**
  * Combine two [Array]s of [ParticleRegistration] into a single array.

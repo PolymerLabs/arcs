@@ -13,7 +13,6 @@ package arcs.jvm.host
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.ProdHost
 import arcs.core.util.Time
 import arcs.jvm.util.JvmTime
 
