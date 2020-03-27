@@ -34,8 +34,8 @@ class TypeVariableTest {
     fun toStringContainsNameAndTag() {
         val typeVarA = TypeVariable("A")
         val typeVarBaz = TypeVariable("Baz")
-        assertThat(typeVarA.toString(ToStringOptions())).isEqualTo("TypeVariable(A)")
-        assertThat(typeVarBaz.toString(ToStringOptions())).isEqualTo("TypeVariable(Baz)")
+        assertThat(typeVarA.toString(ToStringOptions())).isEqualTo("~A")
+        assertThat(typeVarBaz.toString(ToStringOptions())).isEqualTo("~Baz")
     }
 
     @Test
