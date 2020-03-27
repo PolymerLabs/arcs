@@ -81,26 +81,26 @@ open class EntityBase(
     }
 
     /** Returns the value for the given singleton field. */
-    protected fun getSingletonValue(field: String): Any? = if (field in singletons) {
+    public fun getSingletonValue(field: String): Any? = if (field in singletons) {
         singletons[field]
     } else {
         throw InvalidFieldNameException(entityClassName, field, isCollection = false)
     }
 
     /** Returns the value for the given collection field. */
-    protected fun getCollectionValue(field: String): Set<Any> = collections.getOrElse(field) {
+    public fun getCollectionValue(field: String): Set<Any> = collections.getOrElse(field) {
         throw InvalidFieldNameException(entityClassName, field, isCollection = true)
     }
 
     /** Sets the value for the given singleton field. */
-    protected fun setSingletonValue(field: String, value: Any?) {
+    public fun setSingletonValue(field: String, value: Any?) {
         val expectedType = getSingletonType(field)
         checkType(field, value, expectedType)
         singletons[field] = value
     }
 
     /** Sets the value for the given collection field. */
-    protected fun setCollectionValue(field: String, values: Set<Any>) {
+    public fun setCollectionValue(field: String, values: Set<Any>) {
         val expectedType = getCollectionType(field)
         values.forEach { checkType(field, it, expectedType) }
         collections[field] = values
@@ -171,7 +171,7 @@ open class EntityBase(
      * Populates the entity from the given [RawEntity] serialization. Must only be called on a
      * fresh, empty instance.
      */
-    protected fun deserialize(rawEntity: RawEntity) {
+    public fun deserialize(rawEntity: RawEntity) {
         _entityId = if (rawEntity.id == NO_REFERENCE_ID) null else rawEntity.id
         rawEntity.singletons.forEach { (field, value) ->
             setSingletonValue(field, value?.let { fromReferencable(it, getSingletonType(field)) })
@@ -220,6 +220,14 @@ open class EntityBase(
             }
         return "$entityClassName($fields)"
     }
+}
+
+class EntityBaseSpec(
+    override val SCHEMA: Schema
+) : EntitySpec<EntityBase> {
+    init { SchemaRegistry.register(this) }
+    override fun deserialize(data: RawEntity): EntityBase =
+        EntityBase("EntityBase", SCHEMA).apply { deserialize(data) }
 }
 
 class InvalidFieldNameException(

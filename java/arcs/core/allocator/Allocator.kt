@@ -17,35 +17,28 @@ import arcs.core.data.CollectionType
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
+import arcs.core.data.HandleMode
 import arcs.core.data.Plan
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
-import arcs.core.data.util.toReferencable
-import arcs.core.entity.toPrimitiveValue
+import arcs.core.entity.EntityBase
+import arcs.core.entity.EntityBaseSpec
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
+import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
+import arcs.core.host.ReadWriteCollectionHandleAdapter
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
-import arcs.core.storage.handle.CollectionHandle
-import arcs.core.storage.handle.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 import arcs.core.util.plus
 import arcs.core.util.traverse
-
-fun fieldAsString(entity: RawEntity, field: String): String {
-    return entity.singletons[field].toPrimitiveValue(String::class, "")
-}
-
-fun fieldAsStrings(entity: RawEntity, field: String): List<String> {
-    return entity.collections[field]?.map { it.toPrimitiveValue(String::class, "") } ?: listOf()
-}
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -58,7 +51,7 @@ fun fieldAsStrings(entity: RawEntity, field: String): List<String> {
  */
 class Allocator private constructor(
     private val hostRegistry: HostRegistry,
-    private val collection: CollectionHandle<RawEntity>
+    private val collection: ReadWriteCollectionHandleAdapter<EntityBase>
 ) {
 
     /** Currently active Arcs and their associated [Plan.Partition]s. */
@@ -122,30 +115,29 @@ class Allocator private constructor(
         partitionMap[arcId] = partitions
 
         partitions.forEach { partition ->
-            val singletons = mapOf(
-                "arc" to arcId.toString().toReferencable(),
-                "host" to partition.arcHost.toReferencable()
+            val entity = EntityBase("EntityBase", SCHEMA)
+            entity.setSingletonValue("arc", arcId.toString())
+            entity.setSingletonValue("host", partition.arcHost)
+            entity.setCollectionValue(
+                "particles",
+                partition.particles.map { it.particleName }.toSet()
             )
-            val collections = mapOf(
-                "particles" to partition.particles.map {
-                    it.particleName.toReferencable()
-                }.toSet()
-            )
-            val entity = RawEntity(arcId.toString() + partition.arcHost, singletons, collections)
             collection.store(entity)
         }
     }
 
     /** Looks up [RawEntity]s representing [PlanPartition]s for a given [ArcId] */
-    private suspend fun entitiesForArc(arcId: ArcId): List<RawEntity> =
-        collection.fetchAll().filter { fieldAsString(it, "arc") == arcId.toString() }
+    private suspend fun entitiesForArc(arcId: ArcId): List<EntityBase> =
+        collection.fetchAll().filter { it.getSingletonValue("arc") == arcId.toString() }
 
     /** Converts a [RawEntity] to a [Plan.Partition] */
-    private fun entityToPartition(entity: RawEntity): Plan.Partition =
+    private fun entityToPartition(entity: EntityBase): Plan.Partition =
         Plan.Partition(
-            fieldAsString(entity, "arc"),
-            fieldAsString(entity, "host"),
-            fieldAsStrings(entity, "particles").map { Plan.Particle(it, "", mapOf()) }
+            entity.getSingletonValue("arc") as String,
+            entity.getSingletonValue("host") as String,
+            entity.getCollectionValue("particles").map {
+                Plan.Particle(it as String, "", mapOf())
+            }
         )
 
     /** Reads associated [PlanPartition]s with an [ArcId]. */
@@ -275,13 +267,20 @@ class Allocator private constructor(
             RamDiskStorageKey("partitions")
         )
 
-        // TODO(b/152435365) - Transition to using entity handle
         suspend fun create(
             hostRegistry: HostRegistry,
-            handleManager: HandleManager
+            handleManager: EntityHandleManager
         ): Allocator {
-            val collection = handleManager.rawEntityCollectionHandle(STORAGE_KEY, SCHEMA)
-            return Allocator(hostRegistry, collection)
+            val collection = handleManager.createCollectionHandle(
+                HandleMode.ReadWrite,
+                "partitions",
+                EntityBaseSpec(SCHEMA),
+                STORAGE_KEY
+            )
+            return Allocator(
+                hostRegistry,
+                collection as ReadWriteCollectionHandleAdapter<EntityBase>
+            )
         }
     }
 }
