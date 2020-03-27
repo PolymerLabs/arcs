@@ -28,6 +28,7 @@ import org.junit.Test
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
     private val backingKey = RamDiskStorageKey("entities")
+    private val hatsBackingKey = RamDiskStorageKey("hats")
 
     data class Person(
         override val entityId: ReferenceId,
@@ -144,10 +145,9 @@ open class HandleManagerTestBase {
         storageKey = collectionRefKey
     )
 
-    private val hatCollectionRefKey = RamDiskStorageKey("set-ent")
+    private val hatCollectionRefKey = RamDiskStorageKey("set-hats")
     private val hatCollectionKey = ReferenceModeStorageKey(
-        // TODO: Don't use the same backing key as for the other collection.
-        backingKey = backingKey,
+        backingKey = hatsBackingKey,
         storageKey = hatCollectionRefKey
     )
 
@@ -405,7 +405,6 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    @Ignore("Use a separate backing key for the Hats collection")
     fun collection_dereferenceEntity_nestedReference() = testRunner {
         // Create a stylish new hat, and create a reference to it.
         val hatCollection = writeHandleManager.createCollectionHandle(
