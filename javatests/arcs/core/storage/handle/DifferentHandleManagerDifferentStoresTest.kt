@@ -1,5 +1,6 @@
 package arcs.core.storage.handle
 
+import arcs.core.storage.StoreManager
 import arcs.jvm.util.testutil.TimeImpl
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -11,8 +12,8 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
 
     @Before
     fun setUp() {
-        readHandleManager = HandleManager(TimeImpl(), Stores())
-        writeHandleManager = HandleManager(TimeImpl(), Stores())
+        readHandleManager = HandleManager(TimeImpl(), StoreManager())
+        writeHandleManager = HandleManager(TimeImpl(), StoreManager())
     }
 
     // TODO - fix these?

@@ -21,6 +21,7 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageMode
+import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreOptions
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.CoroutineContext
@@ -35,7 +36,7 @@ import kotlinx.coroutines.withContext
  */
 class RawEntityDereferencer(
     private val schema: Schema,
-    private val stores: Stores = Stores(),
+    private val storeManager: StoreManager = StoreManager(),
     private val entityActivationFactory: ActivationFactory? = null
 ) : Dereferencer<RawEntity> {
     private val log = TaggedLog { "Dereferencer(${schema.names})" }
@@ -54,7 +55,7 @@ class RawEntityDereferencer(
             StorageMode.Direct
         )
 
-        val store = stores.get(options).activate(entityActivationFactory)
+        val store = storeManager.get(options).activate(entityActivationFactory)
         val deferred = CompletableDeferred<RawEntity?>()
         var token = -1
         token = store.on(
@@ -69,7 +70,6 @@ class RawEntityDereferencer(
                     is ProxyMessage.SyncRequest -> Unit
                     is ProxyMessage.Operations -> Unit
                 }
-                true
             }
         )
 

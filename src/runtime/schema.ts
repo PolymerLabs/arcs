@@ -11,11 +11,12 @@
 import {digest} from '../platform/digest-web.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
-import {Referenceable} from './crdt/crdt-collection.js';
+import {Referenceable, CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
 import {SchemaType} from './manifest-ast-nodes.js';
-import {Refinement, AtleastAsSpecific} from './refiner.js';
+import {Refinement, AtLeastAsSpecific} from './refiner.js';
+import {Reference} from './reference.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -154,17 +155,18 @@ export class Schema {
   }
 
   equals(otherSchema: Schema): boolean {
-    // TODO(cypher1): Check equality without calling contains.
-    return this === otherSchema || (this.name === otherSchema.name
-       && this.isAtleastAsSpecificAs(otherSchema)
-       && otherSchema.isAtleastAsSpecificAs(this));
+    if (this === otherSchema) {
+      return true;
+    }
+    return (this.isEquivalentOrMoreSpecific(otherSchema) === AtLeastAsSpecific.YES)
+       && (otherSchema.isEquivalentOrMoreSpecific(this) === AtLeastAsSpecific.YES);
   }
 
-  isAtleastAsSpecificAs(otherSchema: Schema): boolean {
+  isEquivalentOrMoreSpecific(otherSchema: Schema): AtLeastAsSpecific {
     const names = new Set(this.names);
     for (const name of otherSchema.names) {
       if (!names.has(name)) {
-        return false;
+        return AtLeastAsSpecific.NO;
       }
     }
     // tslint:disable-next-line: no-any
@@ -172,18 +174,33 @@ export class Schema {
     for (const [name, type] of Object.entries(this.fields)) {
       fields[name] = type;
     }
+    let best = AtLeastAsSpecific.YES;
     for (const [name, type] of Object.entries(otherSchema.fields)) {
       if (fields[name] == undefined) {
-        return false;
+        return AtLeastAsSpecific.NO;
       }
       if (!Schema.typesEqual(fields[name], type)) {
-        return false;
+        return AtLeastAsSpecific.NO;
       }
-      if (Refinement.isAtleastAsSpecificAs(fields[name].refinement, type.refinement) === AtleastAsSpecific.NO) {
-        return false;
+      const fieldRes = Refinement.isAtLeastAsSpecificAs(fields[name].refinement, type.refinement);
+      if (fieldRes === AtLeastAsSpecific.NO) {
+        return AtLeastAsSpecific.NO;
+      } else if (fieldRes === AtLeastAsSpecific.UNKNOWN) {
+        best = AtLeastAsSpecific.UNKNOWN;
       }
     }
-    return Refinement.isAtleastAsSpecificAs(this.refinement, otherSchema.refinement) !== AtleastAsSpecific.NO;
+    const res = Refinement.isAtLeastAsSpecificAs(this.refinement, otherSchema.refinement);
+    if (res === AtLeastAsSpecific.NO) {
+      return AtLeastAsSpecific.NO;
+    } else if (res === AtLeastAsSpecific.UNKNOWN) {
+      best = AtLeastAsSpecific.UNKNOWN;
+    }
+    return best;
+  }
+
+  isAtLeastAsSpecificAs(otherSchema: Schema): boolean {
+    // Implementation moved to isEquivalentOrMoreSpecific to allow handling 'unknowns' in code gen.
+    return this.isEquivalentOrMoreSpecific(otherSchema) !== AtLeastAsSpecific.NO;
   }
 
   // Returns true if there are fields in this.refinement, that are not in fields
@@ -200,12 +217,41 @@ export class Schema {
   crdtConstructor<S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>>() {
     const singletons = {};
     const collections = {};
-    // TODO(shans) do this properly
-    for (const [field, {type}] of Object.entries(this.fields)) {
-      if (['Text', 'URL', 'Boolean', 'Number'].includes(type)) {
-        singletons[field] = new CRDTSingleton<{id: string}>();
-      } else {
-        throw new Error(`Big Scary Exception: entity field ${field} of type ${type} doesn't yet have a CRDT mapping implemented`);
+
+    // This implementation only supports:
+    //   - singleton of a primitive,
+    //   - singleton of a reference,
+    //   - collection of primitives,
+    //   - collection of references
+    for (const [field, {kind, type, schema}] of Object.entries(this.fields)) {
+      switch (kind) {
+        case 'schema-primitive': {
+          if (['Text', 'URL', 'Boolean', 'Number'].includes(type)) {
+            singletons[field] = new CRDTSingleton<{id: string}>();
+          } else {
+            throw new Error(`Big Scary Exception: entity field ${field} of type ${type} doesn't yet have a CRDT mapping implemented`);
+          }
+          break;
+        }
+        case 'schema-collection': {
+          if (schema == undefined) {
+            throw new Error(`there is no schema for the entity field ${field}`);
+          }
+          if (['Text', 'URL', 'Boolean', 'Number'].includes(schema.type)) {
+            collections[field] = new CRDTCollection<{id: string}>();
+          } else if (schema.kind === 'schema-reference') {
+            collections[field] = new CRDTCollection<Reference>();
+          } else {
+            throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
+          }
+          break;
+        }
+        case 'schema-reference': {
+          singletons[field] = new CRDTSingleton<Reference>();
+          break;
+        } default: {
+          throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
+        }
       }
     }
     return class EntityCRDT extends CRDTEntity<S, C> {

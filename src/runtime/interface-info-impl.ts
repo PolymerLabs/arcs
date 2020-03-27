@@ -112,7 +112,7 @@ class InterfaceInfoImpl extends InterfaceInfo {
     return this._cloneAndUpdate(typeVar => typeVar.canWriteSuperset);
   }
 
-  isAtleastAsSpecificAs(other: InterfaceInfo) : boolean {
+  isAtLeastAsSpecificAs(other: InterfaceInfo) : boolean {
     if (this.handleConnections.length !== other.handleConnections.length ||
         this.slots.length !== other.slots.length) {
       return false;
@@ -121,7 +121,7 @@ class InterfaceInfoImpl extends InterfaceInfo {
     for (let i = 0; i < this.typeVars.length; i++) {
       const thisTypeVar = this.typeVars[i];
       const otherTypeVar = other.typeVars[i];
-      if (!thisTypeVar.object[thisTypeVar.field].isAtleastAsSpecificAs(
+      if (!thisTypeVar.object[thisTypeVar.field].isAtLeastAsSpecificAs(
               otherTypeVar.object[otherTypeVar.field])) {
         return false;
       }

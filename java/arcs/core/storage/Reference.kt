@@ -15,6 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
+import arcs.core.data.Schema
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
 
@@ -34,7 +35,9 @@ data class Reference(
     var dereferencer: Dereferencer<RawEntity>? = null
 
     override suspend fun dereference(coroutineContext: CoroutineContext): RawEntity? =
-        requireNotNull(dereferencer).dereference(this, coroutineContext)
+        checkNotNull(dereferencer) {
+            "A dereferencer is required in order to dereference."
+        }.dereference(this, coroutineContext)
 
     /** Entity creation time (in millis). */
     @Suppress("GoodTime") // use Instant
@@ -65,6 +68,21 @@ interface Dereferencer<T> {
         reference: Reference,
         coroutineContext: CoroutineContext = Dispatchers.Default
     ): T?
+
+    /**
+     * Factory for constructing [Dereferencer] instances, and for injecting them into other
+     * values.
+     */
+    interface Factory<T> {
+        /** Constructs a [Dereferencer] for the given [Schema]. */
+        fun create(schema: Schema): Dereferencer<T>
+
+        /**
+         * Recursively injects the given value with appropriate [Dereferencer] instances for it and
+         * all of its nested fields.
+         */
+        fun injectDereferencers(schema: Schema, value: Any?)
+    }
 }
 
 /** Converts any [Referencable] object into a reference-mode-friendly [Reference] object. */

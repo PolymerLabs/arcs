@@ -20,6 +20,7 @@ import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.Schema
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import kotlin.reflect.KProperty
 
 open class EntityBase(
     private val entityClassName: String,
@@ -37,6 +38,46 @@ open class EntityBase(
     // it will not be considered a valid field for the entity.
     init {
         reset()
+    }
+
+    /**
+     * This is a convenience for exposing singleton entity fields conveniently in subclasses of
+     * [EntityBase].
+     *
+     * It will delegate the getter/setter of the property to the `getSingletonValue` and
+     * `setSingletonValue` methods.
+     *
+     * ```kotlin
+     *   var myProperty: String by SingletonProperty()
+     * ```
+     */
+    @Suppress("UNCHECKED_CAST")
+    protected inner class SingletonProperty<T> {
+        operator fun getValue(thisRef: Any?, property: KProperty<*>) =
+            getSingletonValue(property.name) as T
+
+        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) =
+            setSingletonValue(property.name, value)
+    }
+
+    /**
+     * This is a convenience for exposing collection entity fields conveniently in subclasses of
+     * [EntityBase].
+     *
+     * It will delegate the getter/setter of the property to the `getCollectionValue` and
+     * `setCollectionValue` methods.
+     *
+     * ```kotlin
+     *   var myProperty: Set<String> by CollectionProperty()
+     * ```
+     */
+    @Suppress("UNCHECKED_CAST")
+    protected inner class CollectionProperty<T> {
+        operator fun getValue(thisRef: Any?, property: KProperty<*>) =
+            getCollectionValue(property.name) as Set<T>
+
+        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Set<T>) =
+            setCollectionValue(property.name, value as Set<Any>)
     }
 
     /** Returns the value for the given singleton field. */

@@ -51,8 +51,7 @@ class DemoActivity : AppCompatActivity() {
                     time = JvmTime,
                     activationFactory = ServiceStoreFactory(
                         context = this@DemoActivity,
-                        lifecycle = this@DemoActivity.getLifecycle(),
-                        connectionFactory = null
+                        lifecycle = this@DemoActivity.getLifecycle()
                     )
                 )
             )

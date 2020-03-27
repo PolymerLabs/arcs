@@ -1,5 +1,5 @@
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
 load("//tools/build_defs/android:rules.bzl", "android_library")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
 
@@ -16,7 +16,7 @@ android_library(
     ],
 )
 
-kt_android_library(
+arcs_kt_android_library(
     name = "service",
     srcs = glob(["*.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",

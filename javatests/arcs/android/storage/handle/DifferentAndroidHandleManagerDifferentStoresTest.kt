@@ -1,7 +1,7 @@
 package arcs.android.storage.handle
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.storage.handle.Stores
+import arcs.core.storage.StoreManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -18,13 +18,13 @@ class DifferentAndroidHandleManagerDifferentStoresTest : AndroidHandleManagerTes
             context = app,
             lifecycle = lifecycle,
             connectionFactory = connectionFactory,
-            stores = Stores()
+            storeManager = StoreManager()
         )
         writeHandleManager = AndroidHandleManager(
             context = app,
             lifecycle = lifecycle,
             connectionFactory = connectionFactory,
-            stores = Stores()
+            storeManager = StoreManager()
         )
     }
 }

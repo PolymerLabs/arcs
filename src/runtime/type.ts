@@ -239,12 +239,12 @@ export abstract class Type {
     throw new Error(`canReadSubset not implemented for ${this}`);
   }
 
-  isAtleastAsSpecificAs(type: Type): boolean {
-    return this.tag === type.tag && this._isAtleastAsSpecificAs(type);
+  isAtLeastAsSpecificAs(type: Type): boolean {
+    return this.tag === type.tag && this._isAtLeastAsSpecificAs(type);
   }
 
-  protected _isAtleastAsSpecificAs(type: Type): boolean {
-    throw new Error(`isAtleastAsSpecificAs not implemented for ${this}`);
+  protected _isAtLeastAsSpecificAs(type: Type): boolean {
+    throw new Error(`isAtLeastAsSpecificAs not implemented for ${this}`);
   }
 
   /**
@@ -389,8 +389,8 @@ export class EntityType extends Type {
     return this;
   }
 
-  _isAtleastAsSpecificAs(type: EntityType): boolean {
-    return this.entitySchema.isAtleastAsSpecificAs(type.entitySchema);
+  _isAtLeastAsSpecificAs(type: EntityType): boolean {
+    return this.entitySchema.isAtLeastAsSpecificAs(type.entitySchema);
   }
 
   toLiteral(): TypeLiteral {
@@ -772,9 +772,9 @@ export class TupleType extends Type {
     return this.innerTypesSatisfy((type) => type.maybeEnsureResolved());
   }
 
-  _isAtleastAsSpecificAs(other: TupleType): boolean {
+  _isAtLeastAsSpecificAs(other: TupleType): boolean {
     if (this.innerTypes.length !== other.innerTypes.length) return false;
-    return this.innerTypesSatisfy((type, idx) => type.isAtleastAsSpecificAs(other.innerTypes[idx]));
+    return this.innerTypesSatisfy((type, idx) => type.isAtLeastAsSpecificAs(other.innerTypes[idx]));
   }
 
   private innerTypesSatisfy(predicate: ((type: Type, idx: number) => boolean)): boolean {
@@ -859,8 +859,8 @@ export class InterfaceType extends Type {
     return new InterfaceType(this.interfaceInfo.canReadSubset);
   }
 
-  _isAtleastAsSpecificAs(type: InterfaceType) {
-    return this.interfaceInfo.isAtleastAsSpecificAs(type.interfaceInfo);
+  _isAtLeastAsSpecificAs(type: InterfaceType) {
+    return this.interfaceInfo.isAtLeastAsSpecificAs(type.interfaceInfo);
   }
 
   _clone(variableMap: Map<string, Type>) {
@@ -910,7 +910,7 @@ export class SlotType extends Type {
     return this;
   }
 
-  _isAtleastAsSpecificAs(type: SlotType) {
+  _isAtLeastAsSpecificAs(type: SlotType) {
     // TODO: formFactor checking, etc.
     return true;
   }
@@ -1214,7 +1214,7 @@ export class TypeVariableInfo {
     if (!(constraint instanceof EntityType) || !(type instanceof EntityType)) {
       throw new Error(`constraint checking not implemented for ${this} and ${type}`);
     }
-    return type.getEntitySchema().isAtleastAsSpecificAs(constraint.getEntitySchema());
+    return type.getEntitySchema().isAtLeastAsSpecificAs(constraint.getEntitySchema());
   }
 
   get resolution(): Type|null {
@@ -1402,7 +1402,7 @@ export abstract class InterfaceInfo {
 
   abstract readonly  canWriteSuperset : InterfaceInfo;
 
-  abstract isAtleastAsSpecificAs(other: InterfaceInfo) : boolean;
+  abstract isAtLeastAsSpecificAs(other: InterfaceInfo) : boolean;
 
   abstract _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean;
 

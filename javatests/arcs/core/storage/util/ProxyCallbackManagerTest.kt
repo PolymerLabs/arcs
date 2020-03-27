@@ -52,7 +52,7 @@ class ProxyCallbackManagerTest {
         0.until(200).map {
             launch {
                 Thread.sleep(random.nextLong(0, 1000))
-                manager.register(ProxyCallback { true })
+                manager.register(ProxyCallback { })
             }
         }.joinAll()
 
@@ -64,11 +64,9 @@ class ProxyCallbackManagerTest {
         val registeredMessage = atomic<ProxyMessage<DummyData, DummyOp, String>?>(null)
         val registeredCallback = ProxyCallback<DummyData, DummyOp, String> {
             registeredMessage.value = it
-            true
         }
         val registeringCallback = ProxyCallback<DummyData, DummyOp, String> {
             manager.register(registeredCallback)
-            true
         }
 
         val shouldBeReceivedByRegistered = makeMessage("bar", 2)
@@ -88,12 +86,10 @@ class ProxyCallbackManagerTest {
         val registeredCallback =
             MultiplexedProxyCallback<DummyData, DummyOp, String> { message, _ ->
                 registeredMessage.value = message
-                true
             }
         val registeringCallback =
             MultiplexedProxyCallback<DummyData, DummyOp, String> { _, _ ->
                 manager.register(registeredCallback)
-                true
             }
 
         val shouldBeReceivedByRegistered = makeMessage("bar", 2)

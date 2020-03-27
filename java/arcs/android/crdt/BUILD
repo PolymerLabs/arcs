@@ -1,15 +1,15 @@
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
 load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
     "android_proto_library",
     "proto_library",
 )
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-kt_android_library(
+arcs_kt_android_library(
     name = "crdt",
     srcs = glob(["*.kt"]),
     idl_parcelables = glob(["*.aidl"]),

@@ -419,7 +419,7 @@ ${this.opts.wasm ? `
         override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
         override fun decode(encoded: ByteArray): ${name}? {
             if (encoded.isEmpty()) return null
-    
+
             val decoder = StringDecoder(encoded)
             val entityId = decoder.decodeText()
             decoder.validate("|")

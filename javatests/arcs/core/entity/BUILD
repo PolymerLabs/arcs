@@ -28,6 +28,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil",
+        "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/util/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
@@ -37,12 +38,25 @@ arcs_kt_jvm_test_suite(
 
 arcs_kt_jvm_library(
     name = "lib",
+    testonly = 1,
     srcs = glob(
         ["*.kt"],
         exclude = TEST_SRCS,
     ),
+    visibility = ["//javatests/arcs/android/entity:__pkg__"],
     deps = [
+        "//java/arcs/core/common",
         "//java/arcs/core/data",
+        "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
+        "//java/arcs/core/host",
+        "//java/arcs/core/storage",
+        "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/keys",
+        "//java/arcs/core/storage/referencemode",
+        "//third_party/java/junit:junit-android",
+        "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
