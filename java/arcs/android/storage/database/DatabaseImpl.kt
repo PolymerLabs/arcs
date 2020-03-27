@@ -34,6 +34,7 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
+import arcs.core.data.LARGEST_PRIMITIVE_TYPE_ID
 import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -726,7 +727,7 @@ class DatabaseImpl(
         val nowMillis = JvmTime.currentTimeMillis
         writableDatabase.transaction {
             // Find all expired entities.
-            val storageKeyIds = rawQuery(
+            val storageKeyIdsPairs = rawQuery(
                 """
                     SELECT storage_key_id, storage_key 
                     FROM entities 
@@ -736,6 +737,8 @@ class DatabaseImpl(
                 """.trimIndent(),
                 arrayOf(nowMillis.toString())
             ).map { it.getLong(0) to it.getString(1) }.toSet()
+            val storageKeyIds = storageKeyIdsPairs.map { it.first }
+            val storageKeys = storageKeyIdsPairs.map { it.second }
 
             // Find collection ids for collection fields of the expired entities.
             val collectionIdsToDelete = rawQuery(
@@ -750,7 +753,7 @@ class DatabaseImpl(
                     WHERE fields.is_collection = 1
                         AND field_values.entity_storage_key_id in (?)
                 """.trimIndent(),
-                arrayOf(storageKeyIds.map { it.first }.joinToString())
+                arrayOf(storageKeyIds.joinToString())
             ).map { it.getLong(0) }.toSet()
             // Remove entries for those collections.
             delete(
@@ -769,7 +772,7 @@ class DatabaseImpl(
             delete(
                 TABLE_FIELD_VALUES,
                 "entity_storage_key_id in (?)",
-                arrayOf(storageKeyIds.map { it.first }.joinToString())
+                arrayOf(storageKeyIds.joinToString())
             )
 
             // Clean up unused values as they can contain sensitive data.
@@ -808,16 +811,16 @@ class DatabaseImpl(
             delete(
                 TABLE_ENTITY_REFS,
                 "backing_storage_key||\"/\"||entity_id in (?)",
-                arrayOf(storageKeyIds.map { it.second }.joinToString())
+                arrayOf(storageKeys.joinToString())
             )
             // Remove from collection_entries all references to the expired entities.            
             delete(
                 TABLE_COLLECTION_ENTRIES,
                 """
-                    collection_id IN (SELECT id FROM collections WHERE type_id >= ?)
+                    collection_id IN (SELECT id FROM collections WHERE type_id > ?)
                     AND value_id NOT IN (SELECT id FROM entity_refs)
                 """.trimIndent(),
-                arrayOf(PrimitiveType.values().size.toString()) // only entity collections.
+                arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
             )
         }
     }
@@ -1118,7 +1121,7 @@ class DatabaseImpl(
     }.toSet()
 
     /** Returns true if the given [TypeId] represents a primitive type. */
-    private fun isPrimitiveType(typeId: TypeId) = typeId < PrimitiveType.values().size
+    private fun isPrimitiveType(typeId: TypeId) = typeId <= LARGEST_PRIMITIVE_TYPE_ID
 
     /**
      * Returns a map of field name to field ID and type ID, for each field in the given schema

@@ -41,6 +41,8 @@ enum class PrimitiveType {
     Text,
 }
 
+val LARGEST_PRIMITIVE_TYPE_ID = PrimitiveType.values().size - 1
+
 /** TODO: This is super minimal for now. */
 data class SchemaFields(
     val singletons: Map<FieldName, FieldType>,
