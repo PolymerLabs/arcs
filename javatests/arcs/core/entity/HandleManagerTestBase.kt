@@ -8,6 +8,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
@@ -39,6 +40,8 @@ open class HandleManagerTestBase {
         val hat: Reference?
     ) : Entity {
 
+        var raw: RawEntity? = null
+
         override fun ensureIdentified(idGenerator: Generator, handleName: String) {}
 
         override fun serialize() = RawEntity(
@@ -64,7 +67,9 @@ open class HandleManagerTestBase {
                 isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
                 bestFriend = data.singletons["best_friend"] as? Reference,
                 hat = data.singletons["hat"] as? Reference
-            )
+            ).apply {
+                raw = data
+            }
 
             override val SCHEMA = Schema(
                 setOf(SchemaName("Person")),
@@ -308,6 +313,40 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    fun singleton_noTTL() = testRunner {
+        val handle = createWriteSingletonHandle()
+        handle.store(entity1)
+
+        val handleB = createReadSingletonHandle()
+        val readBack = handleB.fetch()!!
+        assertThat(readBack.raw!!.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack.raw!!.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+    }
+
+    @Test
+    fun singleton_withTTL() = testRunner {
+        val handle = createWriteSingletonHandle(ttl = Ttl.Days(2))
+        handle.store(entity1)
+
+        val handleB = createReadSingletonHandle()
+        val readBack = handleB.fetch()!!
+        assertThat(readBack.raw!!.creationTimestamp)
+            .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack.raw!!.expirationTimestamp)
+            .isGreaterThan(readBack.raw!!.creationTimestamp)
+
+        val handleC = createReadSingletonHandle(ttl = Ttl.Minutes(2))
+        handleC.store(entity2)
+        val readBack2 = handleB.fetch()!!
+        assertThat(readBack2.raw!!.creationTimestamp)
+            .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack2.raw!!.expirationTimestamp)
+            .isGreaterThan(readBack2.raw!!.creationTimestamp)
+        assertThat(readBack2.raw!!.expirationTimestamp)
+            .isLessThan(readBack.raw!!.expirationTimestamp)
+    }
+
+    @Test
     fun collection_writeAndReadBack() = testRunner {
         val writeHandle = createWriteCollectionHandle()
         writeHandle.store(entity1)
@@ -440,83 +479,132 @@ open class HandleManagerTestBase {
         assertThat(hat).isEqualTo(fez)
     }
 
+    @Test
+    fun collection_noTTL() = testRunner {
+        val handle = createWriteCollectionHandle()
+        handle.store(entity1)
+
+        val handleB = createReadCollectionHandle()
+        val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
+        assertThat(readBack.raw!!.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack.raw!!.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+    }
+
+    @Test
+    fun collection_withTTL() = testRunner {
+        val handle = createWriteCollectionHandle(ttl = Ttl.Days(2))
+        handle.store(entity1)
+
+        val handleB = createReadCollectionHandle()
+        val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
+        assertThat(readBack.raw!!.creationTimestamp)
+            .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack.raw!!.expirationTimestamp)
+            .isGreaterThan(readBack.raw!!.creationTimestamp)
+
+        val handleC = createReadCollectionHandle(ttl = Ttl.Minutes(2))
+        handleC.store(entity2)
+        val readBack2 = handleB.fetchAll().first { it.entityId == entity2.entityId }
+        assertThat(readBack2.raw!!.creationTimestamp)
+            .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack2.raw!!.expirationTimestamp)
+            .isGreaterThan(readBack2.raw!!.creationTimestamp)
+        assertThat(readBack2.raw!!.expirationTimestamp)
+            .isLessThan(readBack.raw!!.expirationTimestamp)
+    }
     private suspend fun createWriteSingletonHandle(
         storageKey: StorageKey = singletonKey,
-        name: String = "singletonWriteHandle"
+        name: String = "singletonWriteHandle",
+        ttl: Ttl = Ttl.Infinite
     ) = writeHandleManager.createSingletonHandle(
         HandleMode.ReadWrite,
         name,
         Person,
-        storageKey
+        storageKey,
+        ttl
     ) as ReadWriteSingletonHandle<Person>
 
     private suspend fun createReadSingletonHandle(
         storageKey: StorageKey = singletonKey,
-        name: String = "singletonReadHandle"
+        name: String = "singletonReadHandle",
+        ttl: Ttl = Ttl.Infinite
     ) = readHandleManager.createSingletonHandle(
         HandleMode.ReadWrite,
         name,
         Person,
-        storageKey
+        storageKey,
+        ttl
     ) as ReadWriteSingletonHandle<Person>
 
     private suspend fun createWriteReferenceSingletonHandle(
         storageKey: StorageKey = singletonRefKey,
-        name: String = "singletonRefWriteHandle"
+        name: String = "singletonRefWriteHandle",
+        ttl: Ttl = Ttl.Infinite
     ) = writeHandleManager.createSingletonHandle(
         HandleMode.ReadWrite,
         name,
         Person,
-        storageKey
+        storageKey,
+        ttl
     ) as ReadWriteSingletonHandle<Person>
 
     private suspend fun createReadReferenceSingletonHandle(
         storageKey: StorageKey = singletonRefKey,
-        name: String = "singletonRefReadHandle"
+        name: String = "singletonRefReadHandle",
+        ttl: Ttl = Ttl.Infinite
     ) = readHandleManager.createSingletonHandle(
         HandleMode.ReadWrite,
         name,
         Person,
-        storageKey
+        storageKey,
+        ttl
     ) as ReadWriteSingletonHandle<Person>
 
     private suspend fun createWriteCollectionHandle(
         storageKey: StorageKey = collectionKey,
-        name: String = "collectionWriteHandle"
+        name: String = "collectionWriteHandle",
+        ttl: Ttl = Ttl.Infinite
     ) = writeHandleManager.createCollectionHandle(
         HandleMode.ReadWrite,
         name,
         Person,
-        storageKey
+        storageKey,
+        ttl
     ) as ReadWriteCollectionHandle<Person>
 
     private suspend fun createReadCollectionHandle(
         storageKey: StorageKey = collectionKey,
-        name: String = "collectionReadHandle"
+        name: String = "collectionReadHandle",
+        ttl: Ttl = Ttl.Infinite
     ) = readHandleManager.createCollectionHandle(
         HandleMode.ReadWrite,
         name,
         Person,
-        storageKey
+        storageKey,
+        ttl
     ) as ReadWriteCollectionHandle<Person>
 
     private suspend fun createWriteReferenceCollectionHandle(
         storageKey: StorageKey = collectionRefKey,
-        name: String = "collectionRefWriteHandle"
+        name: String = "collectionRefWriteHandle",
+        ttl: Ttl = Ttl.Infinite
     ) = writeHandleManager.createCollectionHandle(
         HandleMode.ReadWrite,
         name,
         Person,
-        storageKey
+        storageKey,
+        ttl
     ) as ReadWriteCollectionHandle<Person>
 
     private suspend fun createReadReferenceCollectionHandle(
         storageKey: StorageKey = collectionRefKey,
-        name: String = "collectionRefReadHandle"
+        name: String = "collectionRefReadHandle",
+        ttl: Ttl = Ttl.Infinite
     ) = readHandleManager.createCollectionHandle(
         HandleMode.ReadWrite,
         name,
         Person,
-        storageKey
+        storageKey,
+        ttl
     ) as ReadWriteCollectionHandle<Person>
 }
