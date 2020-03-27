@@ -11,39 +11,15 @@ import arcs.core.data.SchemaName
  * in the test. Also adds convenient getters and setters for entity fields, similar to what a
  * code-generated subclass would do.
  */
-@Suppress("UNCHECKED_CAST")
 class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA) {
-    var bool: Boolean?
-        get() = getSingletonValue("bool") as Boolean?
-        set(value) = setSingletonValue("bool", value)
-
-    var num: Double?
-        get() = getSingletonValue("num") as Double?
-        set(value) = setSingletonValue("num", value)
-
-    var text: String?
-        get() = getSingletonValue("text") as String?
-        set(value) = setSingletonValue("text", value)
-
-    var ref: Reference<DummyEntity>?
-        get() = getSingletonValue("ref") as Reference<DummyEntity>?
-        set(value) = setSingletonValue("ref", value)
-
-    var bools: Set<Boolean>
-        get() = getCollectionValue("bools") as Set<Boolean>
-        set(values) = setCollectionValue("bools", values)
-
-    var nums: Set<Double>
-        get() = getCollectionValue("nums") as Set<Double>
-        set(values) = setCollectionValue("nums", values)
-
-    var texts: Set<String>
-        get() = getCollectionValue("texts") as Set<String>
-        set(values) = setCollectionValue("texts", values)
-
-    var refs: Set<Reference<DummyEntity>>
-        get() = getCollectionValue("refs") as Set<Reference<DummyEntity>>
-        set(value) = setCollectionValue("refs", value)
+    var bool: Boolean? by SingletonProperty()
+    var num: Double? by SingletonProperty()
+    var text: String? by SingletonProperty()
+    var ref: Reference<DummyEntity>? by SingletonProperty()
+    var bools: Set<Boolean> by CollectionProperty()
+    var nums: Set<Double> by CollectionProperty()
+    var texts: Set<String> by CollectionProperty()
+    var refs: Set<Reference<DummyEntity>> by CollectionProperty()
 
     fun getSingletonValueForTest(field: String) = super.getSingletonValue(field)
 
