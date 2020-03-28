@@ -27,3 +27,9 @@ data class ParticleIdentifier(val id: String) {
 
 /** Creates a [ParticleIdenfifier] from a [KClass] */
 fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(className())
+
+/**
+ * Creates a [ParticleIdentifier] from a [Class]. Older versions of Kotlin required kotlin-reflect
+ * to use KClass, so this method can be used instead.
+ */
+fun Class<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(name)
