@@ -15,6 +15,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -36,8 +37,8 @@ open class HandleManagerTestBase {
         val name: String,
         val age: Int,
         val isCool: Boolean,
-        val bestFriend: Reference?,
-        val hat: Reference?
+        val bestFriend: Reference? = null,
+        val hat: Reference? = null
     ) : Entity {
 
         var raw: RawEntity? = null
@@ -165,6 +166,7 @@ open class HandleManagerTestBase {
 
     // Must call from subclasses.
     open fun setUp() {
+        DriverAndKeyConfigurator.configure(null)
         SchemaRegistry.register(Person)
         SchemaRegistry.register(Hat)
         DriverFactory.register(RamDiskDriverProvider())
@@ -178,22 +180,74 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_writeAndReadBack() = testRunner {
-        val writeHandle = createWriteSingletonHandle()
+    fun singleton_initialState() = testRunner {
+        val readHandle = readHandleManager.createSingletonHandle()
+        assertThat(readHandle.fetch()).isNull()
+    }
+
+    @Test
+    fun singleton_writeAndReadBackAndClear() = testRunner {
+        val writeHandle = writeHandleManager.createSingletonHandle()
         writeHandle.store(entity1)
 
         // Now read back from a different handle
-        val readHandle = createReadSingletonHandle()
+        val readHandle = readHandleManager.createSingletonHandle()
+        val readBack = readHandle.fetch()
+        assertThat(readBack).isEqualTo(entity1)
+
+        writeHandle.store(entity2)
+        val readBack2 = readHandle.fetch()
+        assertThat(readBack2).isEqualTo(entity2)
+
+        writeHandle.clear()
+        val readBack3 = readHandle.fetch()
+        assertThat(readBack3).isNull()
+    }
+
+    @Test
+    fun singleton_writeAndReadBack() = testRunner {
+        val writeHandle = writeHandleManager.createSingletonHandle()
+        writeHandle.store(entity1)
+
+        // Now read back from a different handle
+        val readHandle = readHandleManager.createSingletonHandle()
         val readBack = readHandle.fetch()
         assertThat(readBack).isEqualTo(entity1)
     }
 
     @Test
-    open fun singleton_writeAndOnUpdate() = testRunner {
-        val writeHandle = createWriteSingletonHandle()
+    fun singleton_clearOnAClearDataWrittenByA() = testRunner {
+        val handleA = writeHandleManager.createSingletonHandle()
+        handleA.store(entity1)
 
         // Now read back from a different handle
-        val readHandle = createReadSingletonHandle()
+        val handleB = readHandleManager.createSingletonHandle()
+        assertThat(handleB.fetch()).isEqualTo(entity1)
+
+        handleA.clear()
+        assertThat(handleB.fetch()).isNull()
+    }
+
+    @Test
+    fun singleton_clearOnAClearDataWrittenByB() = testRunner {
+        val handleA = writeHandleManager.createSingletonHandle()
+        handleA.store(entity1)
+
+        // Now read back from a different handle
+        val handleB = readHandleManager.createSingletonHandle()
+        handleB.awaitSync()
+        handleB.clear()
+
+        assertThat(handleB.fetch()).isNull()
+        assertThat(handleA.fetch()).isNull()
+    }
+
+    @Test
+    open fun singleton_writeAndOnUpdate() = testRunner {
+        val writeHandle = writeHandleManager.createSingletonHandle()
+
+        // Now read back from a different handle
+        val readHandle = readHandleManager.createSingletonHandle()
         val updateDeferred = CompletableDeferred<Person?>()
         readHandle.onUpdate {
             updateDeferred.complete(it)
@@ -246,14 +300,20 @@ open class HandleManagerTestBase {
 
     @Test
     fun singleton_dereferenceEntity() = testRunner {
-        val writeHandle = createWriteSingletonHandle()
-        val readHandle = createReadSingletonHandle()
+        val writeHandle = writeHandleManager.createSingletonHandle()
+        val readHandle = readHandleManager.createSingletonHandle()
         writeHandle.store(entity1)
 
         // Create a second handle for the second entity, so we can store it.
         val storageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("entity2"))
-        val refWriteHandle = createWriteSingletonHandle(storageKey, "ortherWriteHandle")
-        val refReadHandle = createReadSingletonHandle(storageKey, "otherReadHandle")
+        val refWriteHandle = writeHandleManager.createSingletonHandle(
+            storageKey,
+            "otherWriteHandle"
+        )
+        val refReadHandle = readHandleManager.createSingletonHandle(
+            storageKey,
+            "otherReadHandle"
+        )
 
         refWriteHandle.store(entity2)
 
@@ -299,11 +359,11 @@ open class HandleManagerTestBase {
             bestFriend = null,
             hat = fezStorageRef
         )
-        val writeHandle = createWriteSingletonHandle()
+        val writeHandle = writeHandleManager.createSingletonHandle()
         writeHandle.store(personWithHat)
 
         // Read out the entity, and fetch its hat.
-        val readHandle = createReadSingletonHandle()
+        val readHandle = readHandleManager.createSingletonHandle()
         val entityOut = readHandle.fetch()!!
         val hatRef = entityOut.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
@@ -314,10 +374,10 @@ open class HandleManagerTestBase {
 
     @Test
     fun singleton_noTTL() = testRunner {
-        val handle = createWriteSingletonHandle()
+        val handle = writeHandleManager.createSingletonHandle()
         handle.store(entity1)
 
-        val handleB = createReadSingletonHandle()
+        val handleB = readHandleManager.createSingletonHandle()
         val readBack = handleB.fetch()!!
         assertThat(readBack.raw!!.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(readBack.raw!!.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
@@ -325,17 +385,17 @@ open class HandleManagerTestBase {
 
     @Test
     fun singleton_withTTL() = testRunner {
-        val handle = createWriteSingletonHandle(ttl = Ttl.Days(2))
+        val handle = writeHandleManager.createSingletonHandle(ttl = Ttl.Days(2))
         handle.store(entity1)
 
-        val handleB = createReadSingletonHandle()
+        val handleB = readHandleManager.createSingletonHandle()
         val readBack = handleB.fetch()!!
         assertThat(readBack.raw!!.creationTimestamp)
             .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(readBack.raw!!.expirationTimestamp)
             .isGreaterThan(readBack.raw!!.creationTimestamp)
 
-        val handleC = createReadSingletonHandle(ttl = Ttl.Minutes(2))
+        val handleC = readHandleManager.createSingletonHandle(ttl = Ttl.Minutes(2))
         handleC.store(entity2)
         val readBack2 = handleB.fetch()!!
         assertThat(readBack2.raw!!.creationTimestamp)
@@ -347,23 +407,41 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    fun collection_initialState() = testRunner {
+        val handle = writeHandleManager.createCollectionHandle()
+        assertThat(handle.fetchAll()).isEmpty()
+    }
+
+    @Test
+    fun collection_addingToA_showsUpInB() = testRunner {
+        val handleA = writeHandleManager.createCollectionHandle()
+        val handleB = readHandleManager.createCollectionHandle()
+        handleA.store(entity1)
+        assertThat(handleA.fetchAll()).containsExactly(entity1)
+        assertThat(handleB.fetchAll()).containsExactly(entity1)
+        handleB.store(entity2)
+        assertThat(handleA.fetchAll()).containsExactly(entity1, entity2)
+        assertThat(handleB.fetchAll()).containsExactly(entity1, entity2)
+    }
+
+    @Test
     fun collection_writeAndReadBack() = testRunner {
-        val writeHandle = createWriteCollectionHandle()
+        val writeHandle = writeHandleManager.createCollectionHandle()
         writeHandle.store(entity1)
         writeHandle.store(entity2)
 
         // Now read back from a different handle
-        val readHandle = createReadCollectionHandle()
+        val readHandle = readHandleManager.createCollectionHandle()
         val readBack = readHandle.fetchAll()
         assertThat(readBack).containsExactly(entity1, entity2)
     }
 
     @Test
     open fun collection_writeAndOnUpdate() = testRunner {
-        val writeHandle = createWriteCollectionHandle()
+        val writeHandle = writeHandleManager.createCollectionHandle()
 
         // Now read back from a different handle
-        val readHandle = createReadCollectionHandle()
+        val readHandle = readHandleManager.createCollectionHandle()
         val updateDeferred = CompletableDeferred<Set<Person>>()
         writeHandle.store(entity1)
         readHandle.onUpdate {
@@ -371,6 +449,43 @@ open class HandleManagerTestBase {
         }
         writeHandle.store(entity2)
         assertThat(updateDeferred.await()).containsExactly(entity1, entity2)
+    }
+
+    @Test
+    fun collection_removingFromA_isRemovedFromB() = testRunner {
+        val handleA = readHandleManager.createCollectionHandle()
+        val handleB = writeHandleManager.createCollectionHandle()
+
+        handleA.store(entity1)
+        handleB.store(entity2)
+
+        assertThat(handleA.fetchAll()).containsExactly(entity1, entity2)
+        assertThat(handleB.fetchAll()).containsExactly(entity1, entity2)
+
+        handleA.remove(entity1)
+        assertThat(handleA.fetchAll()).containsExactly(entity2)
+        assertThat(handleB.fetchAll()).containsExactly(entity2)
+    }
+
+    @Test
+    fun collection_clearingElementsFromA_clearsThemFromB() = testRunner {
+        val handleA = readHandleManager.createCollectionHandle()
+        val handleB = writeHandleManager.createCollectionHandle()
+
+        handleA.store(Person("a", "a", 1, true))
+        handleA.store(Person("b","b", 2, false))
+        handleA.store(Person("c", "c",3, true))
+        handleA.store(Person("d", "d",4, false))
+        handleA.store(Person("e","e",5, true))
+        handleA.store(Person("f", "f",6, false))
+        handleA.store(Person("g", "g",7, true))
+
+        assertThat(handleA.fetchAll()).hasSize(7)
+        assertThat(handleB.fetchAll()).hasSize(7)
+
+        handleB.clear()
+        assertThat(handleA.fetchAll()).isEmpty()
+        assertThat(handleB.fetchAll()).isEmpty()
     }
 
     @Test
@@ -430,11 +545,11 @@ open class HandleManagerTestBase {
 
     @Test
     fun collection_entityDereference() = testRunner {
-        val writeHandle = createWriteCollectionHandle()
+        val writeHandle = writeHandleManager.createCollectionHandle()
         writeHandle.store(entity1)
         writeHandle.store(entity2)
 
-        val readHandle = createReadCollectionHandle()
+        val readHandle = readHandleManager.createCollectionHandle()
         readHandle.fetchAll().also { assertThat(it).hasSize(2) }.forEach { entity ->
             val expectedBestFriend = if (entity.entityId == "entity1") entity2 else entity1
             val actualRawBestFriend = entity.bestFriend!!.dereference(coroutineContext)!!
@@ -466,11 +581,11 @@ open class HandleManagerTestBase {
             bestFriend = null,
             hat = fezStorageRef
         )
-        val writeHandle = createWriteCollectionHandle()
+        val writeHandle = writeHandleManager.createCollectionHandle()
         writeHandle.store(personWithHat)
 
         // Read out the entity, and fetch its hat.
-        val readHandle = createReadCollectionHandle()
+        val readHandle = readHandleManager.createCollectionHandle()
         val entityOut = readHandle.fetchAll().single { it.entityId == "a-hatted-individual" }
         val hatRef = entityOut.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
@@ -481,10 +596,10 @@ open class HandleManagerTestBase {
 
     @Test
     fun collection_noTTL() = testRunner {
-        val handle = createWriteCollectionHandle()
+        val handle = writeHandleManager.createCollectionHandle()
         handle.store(entity1)
 
-        val handleB = createReadCollectionHandle()
+        val handleB = readHandleManager.createCollectionHandle()
         val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
         assertThat(readBack.raw!!.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(readBack.raw!!.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
@@ -492,17 +607,17 @@ open class HandleManagerTestBase {
 
     @Test
     fun collection_withTTL() = testRunner {
-        val handle = createWriteCollectionHandle(ttl = Ttl.Days(2))
+        val handle = writeHandleManager.createCollectionHandle(ttl = Ttl.Days(2))
         handle.store(entity1)
 
-        val handleB = createReadCollectionHandle()
+        val handleB = readHandleManager.createCollectionHandle()
         val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
         assertThat(readBack.raw!!.creationTimestamp)
             .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
         assertThat(readBack.raw!!.expirationTimestamp)
             .isGreaterThan(readBack.raw!!.creationTimestamp)
 
-        val handleC = createReadCollectionHandle(ttl = Ttl.Minutes(2))
+        val handleC = readHandleManager.createCollectionHandle(ttl = Ttl.Minutes(2))
         handleC.store(entity2)
         val readBack2 = handleB.fetchAll().first { it.entityId == entity2.entityId }
         assertThat(readBack2.raw!!.creationTimestamp)
@@ -512,7 +627,16 @@ open class HandleManagerTestBase {
         assertThat(readBack2.raw!!.expirationTimestamp)
             .isLessThan(readBack.raw!!.expirationTimestamp)
     }
-    private suspend fun createWriteSingletonHandle(
+
+    private suspend fun Handle.awaitSync() {
+        val deferred = CompletableDeferred<Unit>()
+        onSync {
+            deferred.complete(Unit)
+        }
+        deferred.await()
+    }
+
+    private suspend fun EntityHandleManager.createSingletonHandle(
         storageKey: StorageKey = singletonKey,
         name: String = "singletonWriteHandle",
         ttl: Ttl = Ttl.Infinite
@@ -524,80 +648,8 @@ open class HandleManagerTestBase {
         ttl
     ) as ReadWriteSingletonHandle<Person>
 
-    private suspend fun createReadSingletonHandle(
-        storageKey: StorageKey = singletonKey,
-        name: String = "singletonReadHandle",
-        ttl: Ttl = Ttl.Infinite
-    ) = readHandleManager.createSingletonHandle(
-        HandleMode.ReadWrite,
-        name,
-        Person,
-        storageKey,
-        ttl
-    ) as ReadWriteSingletonHandle<Person>
-
-    private suspend fun createWriteReferenceSingletonHandle(
-        storageKey: StorageKey = singletonRefKey,
-        name: String = "singletonRefWriteHandle",
-        ttl: Ttl = Ttl.Infinite
-    ) = writeHandleManager.createSingletonHandle(
-        HandleMode.ReadWrite,
-        name,
-        Person,
-        storageKey,
-        ttl
-    ) as ReadWriteSingletonHandle<Person>
-
-    private suspend fun createReadReferenceSingletonHandle(
-        storageKey: StorageKey = singletonRefKey,
-        name: String = "singletonRefReadHandle",
-        ttl: Ttl = Ttl.Infinite
-    ) = readHandleManager.createSingletonHandle(
-        HandleMode.ReadWrite,
-        name,
-        Person,
-        storageKey,
-        ttl
-    ) as ReadWriteSingletonHandle<Person>
-
-    private suspend fun createWriteCollectionHandle(
+    private suspend fun EntityHandleManager.createCollectionHandle(
         storageKey: StorageKey = collectionKey,
-        name: String = "collectionWriteHandle",
-        ttl: Ttl = Ttl.Infinite
-    ) = writeHandleManager.createCollectionHandle(
-        HandleMode.ReadWrite,
-        name,
-        Person,
-        storageKey,
-        ttl
-    ) as ReadWriteCollectionHandle<Person>
-
-    private suspend fun createReadCollectionHandle(
-        storageKey: StorageKey = collectionKey,
-        name: String = "collectionReadHandle",
-        ttl: Ttl = Ttl.Infinite
-    ) = readHandleManager.createCollectionHandle(
-        HandleMode.ReadWrite,
-        name,
-        Person,
-        storageKey,
-        ttl
-    ) as ReadWriteCollectionHandle<Person>
-
-    private suspend fun createWriteReferenceCollectionHandle(
-        storageKey: StorageKey = collectionRefKey,
-        name: String = "collectionRefWriteHandle",
-        ttl: Ttl = Ttl.Infinite
-    ) = writeHandleManager.createCollectionHandle(
-        HandleMode.ReadWrite,
-        name,
-        Person,
-        storageKey,
-        ttl
-    ) as ReadWriteCollectionHandle<Person>
-
-    private suspend fun createReadReferenceCollectionHandle(
-        storageKey: StorageKey = collectionRefKey,
         name: String = "collectionRefReadHandle",
         ttl: Ttl = Ttl.Infinite
     ) = readHandleManager.createCollectionHandle(
