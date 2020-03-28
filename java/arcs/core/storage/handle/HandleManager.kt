@@ -21,6 +21,7 @@ import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode

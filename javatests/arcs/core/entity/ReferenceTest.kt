@@ -8,7 +8,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.Reference as StorageReference
-import arcs.core.storage.handle.RawEntityDereferencer
+import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows

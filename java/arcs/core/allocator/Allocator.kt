@@ -26,12 +26,12 @@ import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
+import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
-import arcs.core.host.ReadWriteCollectionHandleAdapter
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -51,7 +51,7 @@ import arcs.core.util.traverse
  */
 class Allocator private constructor(
     private val hostRegistry: HostRegistry,
-    private val collection: ReadWriteCollectionHandleAdapter<EntityBase>
+    private val collection: ReadWriteCollectionHandle<EntityBase>
 ) {
 
     /** Currently active Arcs and their associated [Plan.Partition]s. */
@@ -279,7 +279,7 @@ class Allocator private constructor(
             )
             return Allocator(
                 hostRegistry,
-                collection as ReadWriteCollectionHandleAdapter<EntityBase>
+                collection as ReadWriteCollectionHandle<EntityBase>
             )
         }
     }
