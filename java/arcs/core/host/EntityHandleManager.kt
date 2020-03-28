@@ -77,6 +77,7 @@ class EntityHandleManager(
         baseName: String,
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
+        ttl: Ttl = Ttl.Infinite,
         idGenerator: Id.Generator = Id.Generator.newSession()
     ): BaseHandleAdapter {
         val name = idGenerator.newChildId(
@@ -88,7 +89,7 @@ class EntityHandleManager(
             name,
             idGenerator,
             entitySpec.SCHEMA,
-            Ttl.Infinite,
+            ttl,
             time
         )
 
@@ -139,6 +140,7 @@ class EntityHandleManager(
         baseName: String,
         entitySpec: EntitySpec<T>,
         storageKey: StorageKey,
+        ttl: Ttl = Ttl.Infinite,
         idGenerator: Id.Generator = Id.Generator.newSession()
     ): BaseHandleAdapter {
         val name = idGenerator.newChildId(
@@ -150,7 +152,7 @@ class EntityHandleManager(
             name,
             idGenerator,
             entitySpec.SCHEMA,
-            Ttl.Infinite,
+            ttl,
             time
         )
 
