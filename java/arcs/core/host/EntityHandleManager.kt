@@ -29,8 +29,10 @@ import arcs.core.entity.EntityPreparer
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.Handle
 import arcs.core.entity.ReadCollectionHandle
+import arcs.core.entity.ReadQueryCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.Reference
 import arcs.core.entity.SingletonHandle
@@ -122,9 +124,15 @@ class EntityHandleManager(
             )
         }.let {
             when (mode) {
-                HandleMode.Read -> object : ReadCollectionHandle<T> by it {}
+                HandleMode.Read -> when (entitySpec.SCHEMA.query) {
+                    null -> object : ReadCollectionHandle<T> by it {}
+                    else -> object : ReadQueryCollectionHandle<T, Any> by it {}
+                }
                 HandleMode.Write -> object : WriteCollectionHandle<T> by it {}
-                HandleMode.ReadWrite -> object : ReadWriteCollectionHandle<T> by it {}
+                HandleMode.ReadWrite -> when (entitySpec.SCHEMA.query) {
+                    null -> object : ReadWriteCollectionHandle<T> by it {}
+                    else -> object : ReadWriteQueryCollectionHandle<T, Any> by it {}
+                }
             }
         }
 
