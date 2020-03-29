@@ -20,12 +20,14 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Ignore
 import org.junit.Test
+import java.lang.ClassCastException
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
@@ -60,6 +62,15 @@ open class HandleManagerTestBase {
         override fun reset() = throw NotImplementedError()
 
         companion object : EntitySpec<Person> {
+
+            private val queryByAge = { value: RawEntity, args: Any ->
+                value.singletons["age"].toPrimitiveValue(Double::class, 0.0) == (args as Double)
+            }
+
+            private val refinementAgeGtZero = { value: RawEntity ->
+                value.singletons["age"].toPrimitiveValue(Double::class, 0.0) > 0
+            }
+
             @Suppress("UNCHECKED_CAST")
             override fun deserialize(data: RawEntity) = Person(
                 entityId = data.id,
@@ -84,7 +95,9 @@ open class HandleManagerTestBase {
                     ),
                     collections = emptyMap()
                 ),
-                "person-hash"
+                "person-hash",
+                query = queryByAge,
+                refinement = refinementAgeGtZero
             )
         }
     }
@@ -628,6 +641,50 @@ open class HandleManagerTestBase {
             .isLessThan(readBack.raw!!.expirationTimestamp)
     }
 
+    @Test
+    fun collection_addingToA_showsUpInQueryOnB() = testRunner {
+        val writeHandle = writeHandleManager.createCollectionHandle()
+        writeHandle.store(entity1)
+        writeHandle.store(entity2)
+
+        val readHandle = readHandleManager.createCollectionHandle()
+
+        assertThat(writeHandle.fetchAll()).containsExactly(entity1, entity2)
+
+        // Ensure that the query argument is being used.
+        assertThat(readHandle.query(21.0)).containsExactly(entity1)
+        assertThat(readHandle.query(22.0)).containsExactly(entity2)
+
+        // Ensure that an empty set of results can be returned.
+        assertThat(readHandle.query(60.0)).isEmpty()
+    }
+
+    @Test
+    fun collection_dataConsideredInvalidByRefinementThrows() = testRunner {
+        val timeTraveler = Person("doctor1", "the Doctor", -900, false, null, null)
+        val writeHandle = writeHandleManager.createCollectionHandle()
+        writeHandle.store(entity1)
+        writeHandle.store(entity2)
+
+        assertThat(writeHandle.fetchAll()).containsExactly(entity1, entity2)
+
+        assertSuspendingThrows(IllegalArgumentException::class) {
+            writeHandle.store(timeTraveler)
+        }
+    }
+
+    @Test
+    fun collection_queryWithInvalidQueryThrows() = testRunner {
+        val writeHandle = writeHandleManager.createCollectionHandle()
+        writeHandle.store(entity1)
+        writeHandle.store(entity2)
+
+        assertThat(writeHandle.fetchAll()).containsExactly(entity1, entity2)
+        assertSuspendingThrows(ClassCastException::class) {
+            writeHandle.query("44")
+        }
+    }
+
     private suspend fun Handle.awaitSync() {
         val deferred = CompletableDeferred<Unit>()
         onSync {
@@ -658,5 +715,5 @@ open class HandleManagerTestBase {
         Person,
         storageKey,
         ttl
-    ) as ReadWriteCollectionHandle<Person>
+    ) as ReadWriteQueryCollectionHandle<Person, Any>
 }

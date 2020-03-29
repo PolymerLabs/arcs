@@ -49,7 +49,7 @@ class CollectionHandle<T : Entity>(
     val entityPreparer: EntityPreparer<T>,
     /** Provides logic to fetch [RawEntity] object backing a [Reference] field. */
     val dereferencerFactory: EntityDereferencerFactory
-) : BaseHandle(name, storageProxy), ReadWriteCollectionHandle<T> {
+) : BaseHandle(name, storageProxy), ReadWriteQueryCollectionHandle<T, Any> {
 
     // region implement ReadCollectionHandle<T>
     override suspend fun size() = fetchAll().size
@@ -57,6 +57,15 @@ class CollectionHandle<T : Entity>(
     override suspend fun isEmpty() = fetchAll().isEmpty()
 
     override suspend fun fetchAll() = adaptValues(storageProxy.getParticleView())
+    // endregion
+
+    // region implement QueryCollectionHandle<T, Any>
+    override suspend fun query(args: Any): Set<T> =
+        (entitySpec.SCHEMA.query?.let { query ->
+            storageProxy.getParticleView().filter {
+                query(it, args)
+            }.toSet()
+        } ?: emptySet()).let { adaptValues(it) }
     // endregion
 
     // region implement WriteCollectionHandle<T>

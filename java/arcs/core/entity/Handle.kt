@@ -93,4 +93,4 @@ interface ReadQueryCollectionHandle<T : Entity, QueryArgs> :
 
 /** A collection handle with read, write and query access. */
 interface ReadWriteQueryCollectionHandle<T : Entity, QueryArgs> :
-    ReadCollectionHandle<T>, WriteCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
+    ReadWriteCollectionHandle<T>, ReadQueryCollectionHandle<T, QueryArgs>
