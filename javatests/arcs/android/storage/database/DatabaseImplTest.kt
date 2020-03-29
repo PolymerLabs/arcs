@@ -1106,8 +1106,10 @@ class DatabaseImplTest {
                 collections = mapOf("nums" to FieldType.Number)
             )
         )
-        val entityKey = DummyStorageKey("entity")        
-        val expiredEntityKey = DummyStorageKey("expiredEntity")
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val entityKey = DummyStorageKey("backing/entity")        
+        val expiredEntityKey = DummyStorageKey("backing/expiredEntity")
         // An expired entity.
         val expiredEntity = DatabaseData.Entity(
             RawEntity(
@@ -1134,10 +1136,22 @@ class DatabaseImplTest {
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
+        // Add both of them to a collection.
+        val values = setOf(
+            Reference("entity", backingKey, VersionMap("ref" to 1)),
+            Reference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2))
+        )
+        val collection = DatabaseData.Collection(
+            values = values,
+            schema = schema,
+            databaseVersion = FIRST_VERSION_NUMBER,
+            versionMap = VERSION_MAP
+        )
 
-        database.insertOrUpdateEntity(expiredEntityKey, expiredEntity)
-        database.insertOrUpdateEntity(entityKey, entity)
-
+        database.insertOrUpdate(expiredEntityKey, expiredEntity)
+        database.insertOrUpdate(entityKey, entity)
+        database.insertOrUpdate(collectionKey, collection)
+        
         database.removeExpiredEntities()
 
         // Check the expired entity fields have been cleared (only a tombstone is left).
@@ -1151,13 +1165,26 @@ class DatabaseImplTest {
 
         // Check the other entity has not been modified.
         assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+
+        // Check the collection only contain the non-expired entity.
+        val newValues = setOf(Reference("entity", backingKey, VersionMap("ref" to 1)))
+        assertThat(database.getCollection(collectionKey, schema))
+            .isEqualTo(collection.copy(values = newValues))
         
         // Check unused values have been deleted from the global table as well, it should contain
         // only values referenced from the second entity (two values as there are two fields).
         assertTableIsSize("field_values", 2)
 
-        // Check collection entries have been cleared. There should only be two values: 123 and 789.
-        assertTableIsSize("collection_entries", 2)
+        // Check collection entries have been cleared. There should only be two values for 123 and
+        // 789, plus one ref for the membership of entity.
+        assertTableIsSize("collection_entries", 3)
+
+        // Check the collection for nums in expiredEntity is gone (2 collections left are nums for
+        // entity and the entity collection).
+        assertTableIsSize("collections", 2)
+
+        // Check the expired entity ref is gone.
+        assertThat(readEntityRefsEntityId()).containsExactly("entity")
 
         // Check unused primitive values have been removed, only those used in entity are present.
         assertThat(readTextPrimitiveValues()).containsExactly("def")
@@ -1385,6 +1412,11 @@ class DatabaseImplTest {
     private fun readNumberPrimitiveValues(): Set<Long> = 
         database.readableDatabase.rawQuery("SELECT value FROM number_primitive_values", emptyArray())
             .map { it.getLong(0) }
+            .toSet()
+
+    private fun readEntityRefsEntityId(): Set<String> =
+        database.readableDatabase.rawQuery("SELECT entity_id FROM entity_refs", emptyArray())
+            .map { it.getString(0) }
             .toSet()
 
     private fun assertTableIsSize(tableName: String, size: Int) {
