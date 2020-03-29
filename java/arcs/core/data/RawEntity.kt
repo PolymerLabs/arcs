@@ -15,6 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 
 /** Minimal representation of an unresolved [Entity]. */
+@Suppress("GoodTime") // use Instant
 data class RawEntity(
     /** Identifier for the raw entity. */
     override val id: ReferenceId = NO_REFERENCE_ID,
@@ -24,10 +25,14 @@ data class RawEntity(
      * Collection ([Set]) fields and the set of [ReferenceId]s referencing the values in those
      * collections.
      */
-    val collections: Map<FieldName, Set<Referencable>> = emptyMap()
+    val collections: Map<FieldName, Set<Referencable>> = emptyMap(),
+    /** Entity creation time (in milliseconds). */
+    override val creationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
+    /** Entity expiration time (in milliseconds). */
+    override val expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
 ) : Referencable {
-    override fun unwrap(): Referencable {
-        val entity = RawEntity(
+    override fun unwrap(): Referencable =
+        RawEntity(
             id = id,
             creationTimestamp = creationTimestamp,
             expirationTimestamp = expirationTimestamp,
@@ -36,32 +41,6 @@ data class RawEntity(
                 it.value.map { item -> item.unwrap() }.toSet()
             }
         )
-        entity.creationTimestamp = creationTimestamp
-        entity.expirationTimestamp = expirationTimestamp
-        return entity
-    }
-
-    /** Entity creation time (in millis). */
-    @Suppress("GoodTime") // use Instant
-    override var creationTimestamp: Long = UNINITIALIZED_TIMESTAMP
-        set(value) {
-            require(this.creationTimestamp == UNINITIALIZED_TIMESTAMP) {
-                "cannot override creationTimestamp $value"
-            }
-            @Suppress("GoodTime") // use Instant
-            field = value
-        }
-
-    /** Entity expiration time (in millis). */
-    @Suppress("GoodTime") // use Instant
-    override var expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
-        set(value) {
-            require(this.expirationTimestamp == UNINITIALIZED_TIMESTAMP) {
-                "cannot override expirationTimestamp $value"
-            }
-            @Suppress("GoodTime") // use Instant
-            field = value
-        }
 
     /** Iterates over of all field data (both singletons and collections). */
     val allData: Sequence<Map.Entry<FieldName, Any?>>
@@ -73,36 +52,20 @@ data class RawEntity(
     /** Constructor for a [RawEntity] when only the field names are known. */
     constructor(
         id: ReferenceId = NO_REFERENCE_ID,
-        singletonFields: Set<FieldName> = emptySet(),
+        singletonFields: Set<FieldName>,
         collectionFields: Set<FieldName> = emptySet(),
         creationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
     ) : this(
         id,
         singletonFields.associateWith { null },
-        collectionFields.associateWith { emptySet<Referencable>() }
-    ) {
-        this.expirationTimestamp = expirationTimestamp
-        this.creationTimestamp = creationTimestamp
-    }
+        collectionFields.associateWith { emptySet<Referencable>() },
+        creationTimestamp,
+        expirationTimestamp
+    )
 
     companion object {
         const val NO_REFERENCE_ID = "NO REFERENCE ID"
         const val UNINITIALIZED_TIMESTAMP: Long = -1
     }
-}
-
-fun RawEntity(
-    id: String,
-    singletons: Map<FieldName, Referencable?>,
-    collections: Map<FieldName, Set<Referencable>>,
-    creationTimestamp: Long,
-    expirationTimestamp: Long
-) = RawEntity(
-    id,
-    singletons,
-    collections
-).also {
-    it.creationTimestamp = creationTimestamp
-    it.expirationTimestamp = expirationTimestamp
 }

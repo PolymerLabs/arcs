@@ -288,9 +288,15 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     fun keepsEntityTimestamps() = runBlockingTest {
         val activeStore = createReferenceModeStore()
         val actor = activeStore.crdtKey
-        val bob = createPersonEntity("an-id", "bob", 42)
-        bob.creationTimestamp = 10
-        bob.expirationTimestamp = 20
+        val bob = RawEntity(
+            id = "an-id",
+            singletons = mapOf(
+                "name" to "bob".toReferencable(),
+                "age" to 42.toReferencable()
+            ),
+            creationTimestamp = 10,
+            expirationTimestamp = 20
+        )
 
         // Add Bob to collection.
         val addOp = RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)

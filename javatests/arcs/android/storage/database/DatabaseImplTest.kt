@@ -1098,7 +1098,7 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun removeExpiredEntities_entityIsCleared() = runBlockingTest {       
+    fun removeExpiredEntities_entityIsCleared() = runBlockingTest {
         val schema = newSchema(
             "hash",
             SchemaFields(
@@ -1108,16 +1108,17 @@ class DatabaseImplTest {
         )
         val collectionKey = DummyStorageKey("collection")
         val backingKey = DummyStorageKey("backing")
-        val entityKey = DummyStorageKey("backing/entity")        
+        val entityKey = DummyStorageKey("backing/entity")
         val expiredEntityKey = DummyStorageKey("backing/expiredEntity")
         // An expired entity.
+        var timeInPast = JvmTime.currentTimeMillis - 10000
         val expiredEntity = DatabaseData.Entity(
             RawEntity(
-                "expiredEntity", 
+                "expiredEntity",
                 mapOf("text" to "abc".toReferencable()), 
                 mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
                 11L,
-                JvmTime.currentTimeMillis - 10000 // expirationTimestamp, in the past.
+                timeInPast // expirationTimestamp, in the past.
             ),
             schema,
             FIRST_VERSION_NUMBER,
@@ -1151,13 +1152,19 @@ class DatabaseImplTest {
         database.insertOrUpdate(expiredEntityKey, expiredEntity)
         database.insertOrUpdate(entityKey, entity)
         database.insertOrUpdate(collectionKey, collection)
-        
+
         database.removeExpiredEntities()
 
         // Check the expired entity fields have been cleared (only a tombstone is left).
         assertThat(database.getEntity(expiredEntityKey, schema))
             .isEqualTo(DatabaseData.Entity(
-                RawEntity("expiredEntity", mapOf("text" to null), mapOf("nums" to emptySet())),
+                RawEntity(
+                    "expiredEntity", 
+                    mapOf("text" to null), 
+                    mapOf("nums" to emptySet()),
+                    11L,
+                    timeInPast
+                ),
                 schema,
                 FIRST_VERSION_NUMBER,
                 VERSION_MAP

@@ -3,8 +3,10 @@ package arcs.sdk.spec
 import arcs.core.common.Id
 import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
+import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.SchemaRegistry
+import arcs.jvm.util.testutil.TimeImpl
 import arcs.sdk.Reference
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +28,7 @@ class EntitySpecTest {
     class EntitySpecParticle : AbstractEntitySpecParticle()
 
     private lateinit var idGenerator: Id.Generator
+    private var currentTime: Long = 500L
 
     @get:Rule
     val harness = EntitySpecParticleTestHarness { EntitySpecParticle() }
@@ -79,7 +82,7 @@ class EntitySpecTest {
         val entity = Foo()
         assertThat(entity.entityId).isNull()
 
-        entity.ensureIdentified(idGenerator, "handle")
+        entity.ensureIdentified(idGenerator, "handle", TimeImpl(currentTime))
         val entityId = entity.entityId
 
         // Check that the entity ID has been set to *something*.
@@ -88,9 +91,23 @@ class EntitySpecTest {
         assertThat(entityId).isNotEqualTo(NO_REFERENCE_ID)
         assertThat(entityId).contains("handle")
 
-        // Calling it again doesn't overwrite it.
-        entity.ensureIdentified(idGenerator, "something-else")
+        val creationTimestamp = entity.serialize().creationTimestamp
+        assertThat(creationTimestamp).isEqualTo(currentTime)
+
+        // Calling it again doesn't overwrite id and timestamp.
+        entity.ensureIdentified(idGenerator, "something-else", TimeImpl(currentTime+10))
         assertThat(entity.entityId).isEqualTo(entityId)
+        assertThat(entity.serialize().creationTimestamp).isEqualTo(creationTimestamp)
+    }
+
+    @Test
+    fun expiryTimestamp() {
+        val entity = Foo()
+        
+        entity.ensureIdentified(idGenerator, "handle", TimeImpl(currentTime), Ttl.Minutes(1))
+        
+        val expirationTimestamp = entity.serialize().expirationTimestamp
+        assertThat(expirationTimestamp).isEqualTo(currentTime + 60000) // 1 minute = 60'000 milliseconds
     }
 
     @Test
@@ -173,7 +190,8 @@ class EntitySpecTest {
                     "nums" to setOf(456.0.toReferencable(), 789.0.toReferencable()),
                     "texts" to setOf("def".toReferencable(), "ghi".toReferencable()),
                     "refs" to setOf(ref2.toReferencable(), ref3.toReferencable())
-                )
+                ),
+                creationTimestamp = 500L
             )
         )
         assertThat(Foo.deserialize(rawEntity)).isEqualTo(entity)
@@ -199,7 +217,7 @@ class EntitySpecTest {
     /** Generates and returns an ID for the entity. */
     private fun (Foo).identify(): String {
         assertThat(entityId).isNull()
-        ensureIdentified(idGenerator, "handleName")
+        ensureIdentified(idGenerator, "handleName", TimeImpl(currentTime))
         assertThat(entityId).isNotNull()
         return entityId!!
     }

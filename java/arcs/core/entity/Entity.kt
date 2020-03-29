@@ -15,7 +15,9 @@ import arcs.core.common.Id
 import arcs.core.common.Referencable
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.util.Time
 import kotlin.IllegalArgumentException
 import kotlin.reflect.KClass
 
@@ -23,8 +25,16 @@ interface Entity {
     /** The ID for the entity, or null if it is does not have one yet. */
     val entityId: String?
 
-    /** Generates a new ID for the Entity, if it doesn't already have one. */
-    fun ensureIdentified(idGenerator: Id.Generator, handleName: String)
+    /**
+     * Generates a new ID for the Entity, if it doesn't already have one. Also sets creation
+     * timestamp, and expiry timestamp if a ttl is given
+     * */
+    fun ensureIdentified(
+        idGenerator: Id.Generator,
+        handleName: String,
+        time: Time,
+        ttl: Ttl = Ttl.Infinite
+    )
 
     fun serialize(): RawEntity
 
