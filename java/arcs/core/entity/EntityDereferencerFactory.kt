@@ -5,9 +5,9 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Dereferencer
+import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.Reference
 import arcs.core.storage.StoreManager
-import arcs.core.storage.handle.RawEntityDereferencer
 
 /** A [Dereferencer.Factory] for [Reference] and [RawEntity] classes. */
 class EntityDereferencerFactory(
