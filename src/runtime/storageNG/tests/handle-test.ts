@@ -79,19 +79,16 @@ async function getSingletonHandle(primitiveType: Type, particle?: MockParticle, 
 async function getEntityHandle(schema: Schema, muxId: string, particle?: MockParticle, canRead=true, canWrite=false):
     Promise<EntityHandle<Entity>> {
   const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
-  const handle = new EntityHandle(
+  const storageProxy = new StorageProxy('id', new MockStore<CRDTEntityTypeRecord<Identified, Identified>>(), new EntityType(schema), null);
+  const handle = new EntityHandle<Entity>(
     'me',
-    new StorageProxy(
-      'id',
-      new MockStore<CRDTEntityTypeRecord<Identified, Identified>>(),
-      new EntityType(schema),
-      null),
+    storageProxy,
     IdGenerator.newSession(),
     fakeParticle,
     canRead,
     canWrite,
-    muxId) as unknown as EntityHandle<Entity>;
-return handle;
+    muxId);
+  return handle;
 }
 
 let barType: EntityType;
@@ -409,11 +406,11 @@ describe('EntityHandle', async () => {
     const simpleSchema = manifest.schemas.Simple;
     const simpleEntityClass = Entity.createEntityClass(simpleSchema, null);
     const simpleEntity = new simpleEntityClass({txt: 'Text', flag: true, nums: [1, 2]});
-    const simpleMuxId = 'simpleMuxId';
-    Entity.identify(simpleEntity, simpleMuxId, null);
+    const simpleId = 'simpleId';
+    Entity.identify(simpleEntity, simpleId, null);
 
     const particle: MockParticle = new MockParticle();
-    const handle = await getEntityHandle(simpleSchema, simpleMuxId, particle);
+    const handle = await getEntityHandle(simpleSchema, simpleId, particle);
 
     // creating CRDTEntity
     const singletons = {
@@ -447,19 +444,19 @@ describe('EntityHandle', async () => {
     const barSchema = manifest.schemas.Bar;
     const barEntityClass = Entity.createEntityClass(barSchema, null);
     barType = new EntityType(barSchema);
-    const barMuxId = 'barMuxId';
+    const barId = 'barId';
     const barEntity = new barEntityClass({value: 'Text'});
-    Entity.identify(barEntity, barMuxId, null);
-    const barReference = new Reference({id: barMuxId, entityStorageKey: null}, new ReferenceType(barType), null);
+    Entity.identify(barEntity, barId, null);
+    const barReference = new Reference({id: barId, entityStorageKey: null}, new ReferenceType(barType), null);
 
     const fooSchema = manifest.schemas.Foo;
     const fooEntityClass = Entity.createEntityClass(fooSchema, null);
-    const fooMuxId = 'fooMuxId';
+    const fooId = 'fooId';
     const fooEntity = new fooEntityClass({txt: 'Text', ref: barReference}, null);
-    Entity.identify(fooEntity, fooMuxId, null);
+    Entity.identify(fooEntity, fooId, null);
 
     const particle: MockParticle = new MockParticle();
-    const handle = await getEntityHandle(fooSchema, fooMuxId, particle);
+    const handle = await getEntityHandle(fooSchema, fooId, particle);
 
     // creating a CRDTEntity
     const singletons = {
@@ -489,19 +486,19 @@ describe('EntityHandle', async () => {
     const barSchema = manifest.schemas.Bar;
     const barEntityClass = Entity.createEntityClass(barSchema, null);
     barType = new EntityType(barSchema);
-    const barMuxId = 'barMuxId';
+    const barId = 'barId';
     const barEntity = new barEntityClass({value: 'Text'});
-    Entity.identify(barEntity, barMuxId, null);
-    const barReference = new Reference({id: barMuxId, entityStorageKey: null}, new ReferenceType(barType), null);
+    Entity.identify(barEntity, barId, null);
+    const barReference = new Reference({id: barId, entityStorageKey: null}, new ReferenceType(barType), null);
 
     const fooSchema = manifest.schemas.Foo;
     const fooEntityClass = Entity.createEntityClass(fooSchema, null);
-    const fooMuxId = 'fooMuxId';
+    const fooId = 'fooId';
     const fooEntity = new fooEntityClass({txt: 'Text', refs: [barReference]}, null);
-    Entity.identify(fooEntity, fooMuxId, null);
+    Entity.identify(fooEntity, fooId, null);
 
     const particle: MockParticle = new MockParticle();
-    const handle = await getEntityHandle(fooSchema, fooMuxId, particle);
+    const handle = await getEntityHandle(fooSchema, fooId, particle);
 
     // creating a CRDTEntity
     const singletons = {
