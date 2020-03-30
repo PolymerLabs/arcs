@@ -17,9 +17,19 @@ abstract class BaseHandle(
     override val name: String,
     private val storageProxy: StorageProxy<*, *, *>
 ) : Handle {
+    protected var closed = false
+
     override suspend fun onSync(action: () -> Unit) = storageProxy.addOnSync(name, action)
 
     override suspend fun onDesync(action: () -> Unit) = storageProxy.addOnDesync(name, action)
 
-    override suspend fun close() = storageProxy.removeCallbacksForName(name)
+    protected inline fun <T> checkPreconditions(block: () -> T): T {
+        check(!closed) { "Handle $name is closed" }
+        return block()
+    }
+
+    override suspend fun close() {
+        closed = true
+        storageProxy.removeCallbacksForName(name)
+    }
 }

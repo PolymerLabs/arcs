@@ -15,6 +15,7 @@ import arcs.core.common.Id
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
@@ -35,6 +36,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 private typealias Person = ReadPerson_Person
+private typealias QueryPerson = QueryPerson_Person
 
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -119,6 +121,21 @@ class HandleAdapterTest {
         assertThat(reference.schemaHash).isEqualTo(Person.SCHEMA.hash)
         assertThat(reference.entityId).isEqualTo(entity.entityId)
         assertThat(reference.dereference()).isEqualTo(entity)
+    }
+
+    @Test
+    fun singleton_noOpsAfterClose() = runBlockingTest {
+       val handle = manager.createSingletonHandle(
+           HandleMode.ReadWrite,
+           READ_WRITE_HANDLE,
+           Person,
+           STORAGE_KEY
+       ) as ReadWriteSingletonHandle<Person>
+        handle.store(Person("test"))
+        handle.close()
+        assertSuspendingThrows(IllegalStateException::class) { handle.store(Person("other")) }
+        assertSuspendingThrows(IllegalStateException::class) { handle.clear() }
+        assertSuspendingThrows(IllegalStateException::class) { handle.fetch() }
     }
 
     @Test
@@ -221,6 +238,27 @@ class HandleAdapterTest {
         assertThat(reference.schemaHash).isEqualTo(Person.SCHEMA.hash)
         assertThat(reference.entityId).isEqualTo(entity.entityId)
         assertThat(reference.dereference()).isEqualTo(entity)
+    }
+
+    @Test
+    fun collection_noOpsAfterClose() = runBlockingTest {
+        val handle = manager.createCollectionHandle(
+            HandleMode.ReadWrite,
+            READ_WRITE_HANDLE,
+            QueryPerson,
+            STORAGE_KEY
+        ) as ReadWriteQueryCollectionHandle<Person, Any>
+        val testPerson = Person("test")
+        val otherPerson = Person("other")
+        handle.store(testPerson)
+        handle.close()
+        assertSuspendingThrows(IllegalStateException::class) { handle.store(otherPerson) }
+        assertSuspendingThrows(IllegalStateException::class) { handle.remove(testPerson) }
+        assertSuspendingThrows(IllegalStateException::class) { handle.clear() }
+        assertSuspendingThrows(IllegalStateException::class) { handle.fetchAll() }
+        assertSuspendingThrows(IllegalStateException::class) { handle.size() }
+        assertSuspendingThrows(IllegalStateException::class) { handle.isEmpty() }
+        assertSuspendingThrows(IllegalStateException::class) { handle.query("other") }
     }
 
     private companion object {

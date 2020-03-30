@@ -49,11 +49,13 @@ class SingletonHandle<T : Entity>(
 ) : BaseHandle(name, storageProxy), ReadWriteSingletonHandle<T> {
 
     // region implement ReadSingletonHandle<T>
-    override suspend fun fetch() = adaptValue(storageProxy.getParticleView())
+    override suspend fun fetch() = checkPreconditions {
+        adaptValue(storageProxy.getParticleView())
+    }
     // endregion
 
     // region implement WriteSingletonHandle<T>
-    override suspend fun store(entity: T) {
+    override suspend fun store(entity: T) = checkPreconditions<Unit> {
         storageProxy.applyOp(
             CrdtSingleton.Operation.Update(
                 name,
@@ -63,7 +65,7 @@ class SingletonHandle<T : Entity>(
         )
     }
 
-    override suspend fun clear() {
+    override suspend fun clear() = checkPreconditions<Unit> {
         storageProxy.applyOp(
             CrdtSingleton.Operation.Clear(
                 name,
