@@ -11,6 +11,7 @@
 package arcs.core.host
 
 import arcs.core.common.Id
+import arcs.core.common.Referencable
 import arcs.core.common.toArcId
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
@@ -25,10 +26,12 @@ import arcs.core.entity.CollectionProxy
 import arcs.core.entity.CollectionStoreOptions
 import arcs.core.entity.Entity
 import arcs.core.entity.EntityDereferencerFactory
-import arcs.core.entity.EntityPreparer
+import arcs.core.entity.EntityStorageAdapter
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleContent
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadQueryCollectionHandle
@@ -37,9 +40,11 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.Reference
+import arcs.core.entity.ReferenceStorageAdapter
 import arcs.core.entity.SingletonHandle
 import arcs.core.entity.SingletonProxy
 import arcs.core.entity.SingletonStoreOptions
+import arcs.core.entity.StorageAdapter
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.ActivationFactory
@@ -55,8 +60,6 @@ import arcs.core.util.Time
  * invoke its default constructor, or obtain it from the [BaseParticle.handles] field.
  *
  * Instances of this class are not thread-safe.
- *
- * TODO(csilvestrini): Add support for creating Singleton/Set handles of [Reference]s.
  */
 class EntityHandleManager(
     private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
@@ -70,8 +73,9 @@ class EntityHandleManager(
     private val collectionStorageProxies = mutableMapOf<StorageKey, CollectionProxy<RawEntity>>()
     private val dereferencerFactory = EntityDereferencerFactory(stores, activationFactory)
 
-    suspend fun <T : Entity> createHandle(
-        spec: HandleSpec<T>,
+    @Suppress("UNCHECKED_CAST")
+    suspend fun <T : HandleContent> createHandle(
+        spec: HandleSpec<out Entity>,
         storageKey: StorageKey,
         ttl: Ttl = Ttl.Infinite
     ): Handle {
@@ -79,40 +83,46 @@ class EntityHandleManager(
             idGenerator.newChildId(arcId.toArcId(), hostId),
             spec.baseName
         ).toString()
-        val entityPreparer = EntityPreparer<T>(
-            handleName,
-            idGenerator,
-            spec.entitySpec.SCHEMA,
-            ttl,
-            time
-        )
+        val storageAdapter = when (spec.dataType) {
+            HandleDataType.Entity -> EntityStorageAdapter(
+                handleName,
+                idGenerator,
+                spec.entitySpec,
+                ttl,
+                time,
+                dereferencerFactory
+            ) as StorageAdapter<T>
+            HandleDataType.Reference -> ReferenceStorageAdapter(
+                spec.entitySpec
+            ) as StorageAdapter<T>
+        }
         return when (spec.containerType) {
             HandleContainerType.Singleton -> createSingletonHandle(
                 handleName,
                 spec,
                 storageKey,
-                entityPreparer
+                storageAdapter
             )
             HandleContainerType.Collection -> createCollectionHandle(
                 handleName,
                 spec,
                 storageKey,
-                entityPreparer
+                storageAdapter
             )
         }
     }
 
-    private suspend fun <T : Entity> createSingletonHandle(
+    private suspend fun <T : HandleContent> createSingletonHandle(
         handleName: String,
         spec: HandleSpec<T>,
         storageKey: StorageKey,
-        entityPreparer: EntityPreparer<T>
+        storageAdapter: StorageAdapter<T>
     ): Handle {
         val singletonHandle = SingletonHandle(
             name = handleName,
             spec = spec,
             storageProxy = singletonStoreProxy(storageKey, spec.entitySpec),
-            entityPreparer = entityPreparer,
+            storageAdapter = storageAdapter,
             dereferencerFactory = dereferencerFactory
         )
         return when (spec.mode) {
@@ -122,17 +132,17 @@ class EntityHandleManager(
         }
     }
 
-    private suspend fun <T : Entity> createCollectionHandle(
+    private suspend fun <T : HandleContent> createCollectionHandle(
         handleName: String,
         spec: HandleSpec<T>,
         storageKey: StorageKey,
-        entityPreparer: EntityPreparer<T>
+        storageAdapter: StorageAdapter<T>
     ): Handle {
         val collectionHandle = CollectionHandle(
             name = handleName,
             spec = spec,
             storageProxy = collectionStoreProxy(storageKey, spec.entitySpec),
-            entityPreparer = entityPreparer,
+            storageAdapter = storageAdapter,
             dereferencerFactory = dereferencerFactory
         )
         return when (spec.mode) {
@@ -149,9 +159,9 @@ class EntityHandleManager(
         }
     }
 
-    private suspend fun <T : Entity> singletonStoreProxy(
+    private suspend fun <E : Entity> singletonStoreProxy(
         storageKey: StorageKey,
-        entitySpec: EntitySpec<T>
+        entitySpec: EntitySpec<E>
     ) = stores.get(
         SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -164,9 +174,9 @@ class EntityHandleManager(
         }
     }
 
-    private suspend fun <T : Entity> collectionStoreProxy(
+    private suspend fun <E : Entity> collectionStoreProxy(
         storageKey: StorageKey,
-        entitySpec: EntitySpec<T>
+        entitySpec: EntitySpec<E>
     ) = stores.get(
         CollectionStoreOptions<RawEntity>(
             storageKey = storageKey,

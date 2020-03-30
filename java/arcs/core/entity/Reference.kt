@@ -18,7 +18,7 @@ import arcs.core.storage.Reference as StorageReference
 class Reference<T : Entity>(
     val entitySpec: EntitySpec<T>,
     private val storageReference: StorageReference
-) {
+) : HandleContent {
     /** The schema hash for the [Reference]'s associated schema. */
     val schemaHash = entitySpec.SCHEMA.hash
 

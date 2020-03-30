@@ -10,6 +10,7 @@
  */
 package arcs.core.entity
 
+import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
@@ -36,13 +37,13 @@ typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<
  * This class won't be returned directly; instead it will be wrapped in a facade object that
  * exposes only the methods that should be exposed.
  */
-class SingletonHandle<T : Entity>(
+class SingletonHandle<T : HandleContent>(
     name: String,
-    spec: HandleSpec<T>,
+    spec: HandleSpec<out Entity>,
     /** Interface to storage for [RawEntity] objects backing an `entity: T`. */
-    val storageProxy: SingletonProxy<RawEntity>,
+    val storageProxy: SingletonProxy<out Referencable>,
     /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
-    val entityPreparer: EntityPreparer<T>,
+    private val storageAdapter: StorageAdapter<T>,
     /** Provides logic to fetch [RawEntity] object backing a [Reference] field. */
     val dereferencerFactory: EntityDereferencerFactory
 ) : BaseHandle<T>(name, spec, storageProxy), ReadWriteSingletonHandle<T> {
@@ -63,7 +64,7 @@ class SingletonHandle<T : Entity>(
             CrdtSingleton.Operation.Update(
                 name,
                 storageProxy.getVersionMap().increment(name),
-                entityPreparer.prepareEntity(entity)
+                storageAdapter.toStorage(entity)
             )
         )
     }
@@ -78,34 +79,12 @@ class SingletonHandle<T : Entity>(
     }
     // endregion
 
-    // region implement ReadbleHandle<T>
+    // region implement ReadableHandle<T>
     override suspend fun onUpdate(action: suspend (T?) -> Unit) =
         storageProxy.addOnUpdate(name) {
             action(adaptValue(it))
         }
-
-    override suspend fun createReference(entity: T): Reference<T> {
-        val entityId = requireNotNull(entity.entityId) {
-            "Entity must have an ID before it can be referenced."
-        }
-        val storageKey = requireNotNull(storageProxy.storageKey as? ReferenceModeStorageKey) {
-            "ReferenceModeStorageKey required in order to create references."
-        }
-        require(fetch()?.entityId == entityId) {
-            "Entity is not stored in the Singleton."
-        }
-
-        return Reference(
-            spec.entitySpec,
-            arcs.core.storage.Reference(entity.serialize().id, storageKey.backingKey, null).also {
-                it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
-            }
-        )
-    }
     // endregion
 
-    private fun adaptValue(value: RawEntity?): T? = value?.let {
-        dereferencerFactory.injectDereferencers(spec.entitySpec.SCHEMA, value)
-        spec.entitySpec.deserialize(value)
-    }
+    private fun adaptValue(value: Referencable?): T? = value?.let { storageAdapter.fromStorage(it) }
 }

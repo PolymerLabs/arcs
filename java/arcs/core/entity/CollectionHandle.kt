@@ -10,6 +10,7 @@
  */
 package arcs.core.entity
 
+import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
@@ -39,13 +40,13 @@ typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<
  * This class won't be returned directly; instead it will be wrapped in a facade object that
  * exposes only the methods that should be exposed.
  */
-class CollectionHandle<T : Entity>(
+class CollectionHandle<T : HandleContent>(
     name: String,
-    spec: HandleSpec<T>,
+    spec: HandleSpec<out Entity>,
     /** Interface to storage for [RawEntity] objects backing an `entity: T`. */
-    val storageProxy: CollectionProxy<RawEntity>,
+    val storageProxy: CollectionProxy<out Referencable>,
     /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
-    val entityPreparer: EntityPreparer<T>,
+    val storageAdapter: StorageAdapter<T>,
     /** Provides logic to fetch [RawEntity] object backing a [Reference] field. */
     val dereferencerFactory: EntityDereferencerFactory
 ) : BaseHandle<T>(name, spec, storageProxy), ReadWriteQueryCollectionHandle<T, Any> {
@@ -68,6 +69,7 @@ class CollectionHandle<T : Entity>(
     override suspend fun query(args: Any): Set<T> = checkPreconditions {
         (spec.entitySpec.SCHEMA.query?.let { query ->
             storageProxy.getParticleView().filter {
+                check(it is RawEntity) { "Queries only work with Entity-typed Handles." }
                 query(it, args)
             }.toSet()
         } ?: emptySet()).let { adaptValues(it) }
@@ -80,7 +82,7 @@ class CollectionHandle<T : Entity>(
             CrdtSet.Operation.Add(
                 name,
                 storageProxy.getVersionMap().increment(name),
-                entityPreparer.prepareEntity(entity)
+                storageAdapter.toStorage(entity)
             )
         )
     }
@@ -102,7 +104,7 @@ class CollectionHandle<T : Entity>(
             CrdtSet.Operation.Remove(
                 name,
                 storageProxy.getVersionMap(),
-                entity.serialize()
+                storageAdapter.toStorage(entity)
             )
         )
     }
@@ -113,29 +115,9 @@ class CollectionHandle<T : Entity>(
         storageProxy.addOnUpdate(name) {
             action(adaptValues(it))
         }
-
-    override suspend fun createReference(entity: T): Reference<T> {
-        val entityId = requireNotNull(entity.entityId) {
-            "Entity must have an ID before it can be referenced."
-        }
-        val storageKey = requireNotNull(storageProxy.storageKey as? ReferenceModeStorageKey) {
-            "ReferenceModeStorageKey required in order to create references."
-        }
-        require(fetchAll().any { it.entityId == entityId }) {
-            "Entity is not stored in the Collection."
-        }
-
-        return Reference(
-            spec.entitySpec,
-            arcs.core.storage.Reference(entity.serialize().id, storageKey.backingKey, null).also {
-                it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
-            }
-        )
-    }
     // endregion
 
-    private fun adaptValues(values: Set<RawEntity>) = values.map {
-        dereferencerFactory.injectDereferencers(spec.entitySpec.SCHEMA, it)
-        spec.entitySpec.deserialize(it)
-    }.toSet()
+    private fun adaptValues(values: Set<Referencable>) = values.mapTo(mutableSetOf()) {
+        storageAdapter.fromStorage(it)
+    }
 }
