@@ -21,7 +21,6 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/driver",
-        "//java/arcs/core/storage/handle",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/testutil",
