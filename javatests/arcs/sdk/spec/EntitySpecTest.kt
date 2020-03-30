@@ -78,11 +78,11 @@ class EntitySpecTest {
     }
 
     @Test
-    fun ensureIdentified() {
+    fun ensureEntityFields() {
         val entity = Foo()
         assertThat(entity.entityId).isNull()
 
-        entity.ensureIdentified(idGenerator, "handle", TimeImpl(currentTime))
+        entity.ensureEntityFields(idGenerator, "handle", TimeImpl(currentTime))
         val entityId = entity.entityId
 
         // Check that the entity ID has been set to *something*.
@@ -95,7 +95,7 @@ class EntitySpecTest {
         assertThat(creationTimestamp).isEqualTo(currentTime)
 
         // Calling it again doesn't overwrite id and timestamp.
-        entity.ensureIdentified(idGenerator, "something-else", TimeImpl(currentTime+10))
+        entity.ensureEntityFields(idGenerator, "something-else", TimeImpl(currentTime+10))
         assertThat(entity.entityId).isEqualTo(entityId)
         assertThat(entity.serialize().creationTimestamp).isEqualTo(creationTimestamp)
     }
@@ -104,7 +104,7 @@ class EntitySpecTest {
     fun expiryTimestamp() {
         val entity = Foo()
         
-        entity.ensureIdentified(idGenerator, "handle", TimeImpl(currentTime), Ttl.Minutes(1))
+        entity.ensureEntityFields(idGenerator, "handle", TimeImpl(currentTime), Ttl.Minutes(1))
         
         val expirationTimestamp = entity.serialize().expirationTimestamp
         assertThat(expirationTimestamp).isEqualTo(currentTime + 60000) // 1 minute = 60'000 milliseconds
@@ -217,7 +217,7 @@ class EntitySpecTest {
     /** Generates and returns an ID for the entity. */
     private fun (Foo).identify(): String {
         assertThat(entityId).isNull()
-        ensureIdentified(idGenerator, "handleName", TimeImpl(currentTime))
+        ensureEntityFields(idGenerator, "handleName", TimeImpl(currentTime))
         assertThat(entityId).isNotNull()
         return entityId!!
     }

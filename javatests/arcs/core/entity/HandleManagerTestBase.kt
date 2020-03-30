@@ -48,7 +48,7 @@ open class HandleManagerTestBase {
         var creationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
         var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
 
-        override fun ensureIdentified(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {
+        override fun ensureEntityFields(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {
             creationTimestamp = requireNotNull(time).currentTimeMillis
             if (ttl != Ttl.Infinite) {
                 expirationTimestamp = ttl.calculateExpiration(time)
@@ -133,7 +133,7 @@ open class HandleManagerTestBase {
         override val entityId: ReferenceId,
         val style: String
     ) : Entity {
-        override fun ensureIdentified(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {}
+        override fun ensureEntityFields(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {}
 
         override fun serialize() = RawEntity(
             entityId,

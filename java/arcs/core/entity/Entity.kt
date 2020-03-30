@@ -29,7 +29,7 @@ interface Entity {
      * Generates a new ID for the Entity, if it doesn't already have one. Also sets creation
      * timestamp, and expiry timestamp if a ttl is given
      * */
-    fun ensureIdentified(
+    fun ensureEntityFields(
         idGenerator: Id.Generator,
         handleName: String,
         time: Time,

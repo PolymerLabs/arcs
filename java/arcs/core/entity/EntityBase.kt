@@ -191,7 +191,7 @@ open class EntityBase(
         expirationTimestamp = rawEntity.expirationTimestamp
     }
 
-    override fun ensureIdentified(
+    override fun ensureEntityFields(
         idGenerator: Id.Generator,
         handleName: String,
         time: Time,

@@ -238,7 +238,7 @@ class EntityBaseTest {
         )
 
         // Different ID.
-        entity2.ensureIdentified(Id.Generator.newForTest("session"), "handle", TimeImpl())
+        entity2.ensureEntityFields(Id.Generator.newForTest("session"), "handle", TimeImpl())
         assertThat(entity1).isNotEqualTo(entity2)
     }
 
@@ -266,12 +266,12 @@ class EntityBaseTest {
     }
 
     @Test
-    fun ensureIdentified() {
+    fun ensureEntityFields() {
         // ID starts off null.
         assertThat(entity.entityId).isNull()
 
         // Calling once generates a new ID.
-        entity.ensureIdentified(Id.Generator.newForTest("session1"), "handle2", TimeImpl(10), Ttl.Minutes(1))
+        entity.ensureEntityFields(Id.Generator.newForTest("session1"), "handle2", TimeImpl(10), Ttl.Minutes(1))
         val id = entity.entityId
         assertThat(id).isNotNull()
         assertThat(id).isNotEmpty()
@@ -281,7 +281,7 @@ class EntityBaseTest {
         assertThat(serialized.expirationTimestamp).isEqualTo(60010)
 
         // Calling again doesn't change the value.
-        entity.ensureIdentified(Id.Generator.newForTest("session2"), "handle2", TimeImpl(20))
+        entity.ensureEntityFields(Id.Generator.newForTest("session2"), "handle2", TimeImpl(20))
         assertThat(entity.entityId).isEqualTo(id)
         assertThat(entity.serialize().creationTimestamp).isEqualTo(10)
     }

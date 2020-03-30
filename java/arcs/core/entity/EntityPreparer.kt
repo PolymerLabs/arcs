@@ -26,7 +26,7 @@ class EntityPreparer<T : Entity>(
     val time: Time
 ) {
     fun prepareEntity(entity: T): RawEntity {
-        entity.ensureIdentified(idGenerator, handleName, time, ttl)
+        entity.ensureEntityFields(idGenerator, handleName, time, ttl)
 
         val rawEntity = entity.serialize()
 
