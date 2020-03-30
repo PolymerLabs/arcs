@@ -41,15 +41,18 @@ typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<
  */
 class CollectionHandle<T : Entity>(
     name: String,
-    /** Provides the [Schema] and a `deserialize` method. */
-    val entitySpec: EntitySpec<T>,
+    spec: HandleSpec<T>,
     /** Interface to storage for [RawEntity] objects backing an `entity: T`. */
     val storageProxy: CollectionProxy<RawEntity>,
     /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
     val entityPreparer: EntityPreparer<T>,
     /** Provides logic to fetch [RawEntity] object backing a [Reference] field. */
     val dereferencerFactory: EntityDereferencerFactory
-) : BaseHandle(name, storageProxy), ReadWriteQueryCollectionHandle<T, Any> {
+) : BaseHandle<T>(name, spec, storageProxy), ReadWriteQueryCollectionHandle<T, Any> {
+
+    init {
+        check(spec.containerType == HandleContainerType.Collection)
+    }
 
     // region implement ReadCollectionHandle<T>
     override suspend fun size() = fetchAll().size
@@ -63,7 +66,7 @@ class CollectionHandle<T : Entity>(
 
     // region implement QueryCollectionHandle<T, Any>
     override suspend fun query(args: Any): Set<T> = checkPreconditions {
-        (entitySpec.SCHEMA.query?.let { query ->
+        (spec.entitySpec.SCHEMA.query?.let { query ->
             storageProxy.getParticleView().filter {
                 query(it, args)
             }.toSet()
@@ -123,16 +126,16 @@ class CollectionHandle<T : Entity>(
         }
 
         return Reference(
-            entitySpec,
+            spec.entitySpec,
             arcs.core.storage.Reference(entity.serialize().id, storageKey.backingKey, null).also {
-                it.dereferencer = dereferencerFactory.create(entitySpec.SCHEMA)
+                it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
             }
         )
     }
     // endregion
 
     private fun adaptValues(values: Set<RawEntity>) = values.map {
-        dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, it)
-        entitySpec.deserialize(it)
+        dereferencerFactory.injectDereferencers(spec.entitySpec.SCHEMA, it)
+        spec.entitySpec.deserialize(it)
     }.toSet()
 }

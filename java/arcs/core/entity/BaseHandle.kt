@@ -13,23 +13,14 @@ package arcs.core.entity
 import arcs.core.storage.StorageProxy
 
 /** Base functionality common to all read/write singleton and collection handles. */
-abstract class BaseHandle(
+abstract class BaseHandle<T : Entity>(
     override val name: String,
+    protected val spec: HandleSpec<T>,
     private val storageProxy: StorageProxy<*, *, *>
 ) : Handle {
-    protected var closed = false
-
     override suspend fun onSync(action: () -> Unit) = storageProxy.addOnSync(name, action)
 
     override suspend fun onDesync(action: () -> Unit) = storageProxy.addOnDesync(name, action)
 
-    protected inline fun <T> checkPreconditions(block: () -> T): T {
-        check(!closed) { "Handle $name is closed" }
-        return block()
-    }
-
-    override suspend fun close() {
-        closed = true
-        storageProxy.removeCallbacksForName(name)
-    }
+    override suspend fun close() = storageProxy.removeCallbacksForName(name)
 }

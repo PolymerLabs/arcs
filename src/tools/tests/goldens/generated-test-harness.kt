@@ -8,6 +8,9 @@ package arcs.golden
 //
 // Current implementation doesn't support optional field detection
 
+import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleMode
+import arcs.core.entity.HandleSpec
 import arcs.sdk.*
 import arcs.sdk.testing.*
 import kotlinx.coroutines.CoroutineScope
@@ -15,11 +18,11 @@ import kotlinx.coroutines.CoroutineScope
 class GoldTestHarness<P : AbstractGold>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
-    HandleDescriptor("data", Gold_Data, HandleFlavor.SINGLETON),
-    HandleDescriptor("allPeople", Gold_AllPeople, HandleFlavor.COLLECTION),
-    HandleDescriptor("qCollection", Gold_QCollection, HandleFlavor.COLLECTION),
-    HandleDescriptor("alias", Gold_Alias, HandleFlavor.SINGLETON),
-    HandleDescriptor("collection", Gold_Collection, HandleFlavor.COLLECTION)
+    HandleSpec("data", HandleMode.ReadWrite, HandleContainerType.Singleton, Gold_Data),
+    HandleSpec("allPeople", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_AllPeople),
+    HandleSpec("qCollection", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_QCollection),
+    HandleSpec("alias", HandleMode.ReadWrite, HandleContainerType.Singleton, Gold_Alias),
+    HandleSpec("collection", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_Collection)
 )) {
     val data: ReadWriteSingletonHandle<Gold_Data> by handleMap
     val allPeople: ReadWriteCollectionHandle<Gold_AllPeople> by handleMap

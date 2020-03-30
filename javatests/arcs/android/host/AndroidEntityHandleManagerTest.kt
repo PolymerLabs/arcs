@@ -13,6 +13,8 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.EntityHandleManager
 import arcs.core.data.HandleMode
+import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -291,10 +293,13 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleManager: EntityHandleManager,
         handleName: String,
         handleMode: HandleMode
-    ) = handleManager.createSingletonHandle(
-        handleMode,
-        handleName,
-        handleHolder.getEntitySpec(handleName),
+    ) = handleManager.createHandle(
+        HandleSpec(
+            handleName,
+            handleMode,
+            HandleContainerType.Singleton,
+            handleHolder.getEntitySpec(handleName)
+        ),
         singletonKey
     ).also { handleHolder.setHandle(handleName, it) }
 
@@ -302,10 +307,13 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleManager: EntityHandleManager,
         handleName: String,
         handleMode: HandleMode
-    ) = handleManager.createCollectionHandle(
-        handleMode,
-        handleName,
-        handleHolder.getEntitySpec(handleName),
+    ) = handleManager.createHandle(
+        HandleSpec(
+            handleName,
+            handleMode,
+            HandleContainerType.Collection,
+            handleHolder.getEntitySpec(handleName)
+        ),
         collectionKey
     ).also { handleHolder.setHandle(handleName, it) }
 }

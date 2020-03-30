@@ -11,6 +11,8 @@
 
 package arcs.core.entity
 
+import arcs.core.data.HandleMode
+
 /** Base interface for all handle classes. */
 interface Handle {
     val name: String
@@ -23,6 +25,20 @@ interface Handle {
 
     /** Release resources needed by this, unregister all callbacks. */
     suspend fun close()
+}
+
+data class HandleSpec<T : Entity>(
+    val baseName: String,
+    val mode: HandleMode,
+    val containerType: HandleContainerType,
+    val entitySpec: EntitySpec<T>
+)
+
+typealias HandleMode = HandleMode
+
+enum class HandleContainerType {
+    Singleton,
+    Collection
 }
 
 interface ReadableHandle<UpdateType, E : Entity> : Handle {

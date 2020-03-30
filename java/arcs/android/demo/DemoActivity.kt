@@ -23,10 +23,12 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /** Entry UI to launch Arcs demo. */
+@OptIn(ExperimentalCoroutinesApi::class)
 class DemoActivity : AppCompatActivity() {
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main

@@ -362,10 +362,13 @@ open class HandleManagerTestBase {
     @Test
     fun singleton_dereferenceEntity_nestedReference() = testRunner {
         // Create a stylish new hat, and create a reference to it.
-        val hatCollection = writeHandleManager.createCollectionHandle(
-            HandleMode.ReadWrite,
-            "hatCollection",
-            Hat,
+        val hatCollection = writeHandleManager.createHandle(
+            HandleSpec(
+                "hatCollection",
+                HandleMode.ReadWrite,
+                HandleContainerType.Collection,
+                Hat
+            ),
             hatCollectionKey
         ) as ReadWriteCollectionHandle<Hat>
         val fez = Hat(entityId = "fez-id", style = "fez")
@@ -584,10 +587,13 @@ open class HandleManagerTestBase {
     @Test
     fun collection_dereferenceEntity_nestedReference() = testRunner {
         // Create a stylish new hat, and create a reference to it.
-        val hatCollection = writeHandleManager.createCollectionHandle(
-            HandleMode.ReadWrite,
-            "hatCollection",
-            Hat,
+        val hatCollection = writeHandleManager.createHandle(
+            HandleSpec(
+                "hatCollection",
+                HandleMode.ReadWrite,
+                HandleContainerType.Collection,
+                Hat
+            ),
             hatCollectionKey
         ) as ReadWriteCollectionHandle<Hat>
         val fez = Hat(entityId = "fez-id", style = "fez")
@@ -707,10 +713,13 @@ open class HandleManagerTestBase {
         storageKey: StorageKey = singletonKey,
         name: String = "singletonWriteHandle",
         ttl: Ttl = Ttl.Infinite
-    ) = writeHandleManager.createSingletonHandle(
-        HandleMode.ReadWrite,
-        name,
-        Person,
+    ) = readHandleManager.createHandle(
+        HandleSpec(
+            name,
+            HandleMode.ReadWrite,
+            HandleContainerType.Singleton,
+            Person
+        ),
         storageKey,
         ttl
     ) as ReadWriteSingletonHandle<Person>
@@ -719,10 +728,13 @@ open class HandleManagerTestBase {
         storageKey: StorageKey = collectionKey,
         name: String = "collectionRefReadHandle",
         ttl: Ttl = Ttl.Infinite
-    ) = readHandleManager.createCollectionHandle(
-        HandleMode.ReadWrite,
-        name,
-        Person,
+    ) = readHandleManager.createHandle(
+        HandleSpec(
+            name,
+            HandleMode.ReadWrite,
+            HandleContainerType.Collection,
+            Person
+        ),
         storageKey,
         ttl
     ) as ReadWriteQueryCollectionHandle<Person, Any>

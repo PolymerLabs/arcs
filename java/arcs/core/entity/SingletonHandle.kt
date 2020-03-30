@@ -38,15 +38,18 @@ typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<
  */
 class SingletonHandle<T : Entity>(
     name: String,
-    /** Provides the [Schema] and a `deserialize` method. */
-    val entitySpec: EntitySpec<T>,
+    spec: HandleSpec<T>,
     /** Interface to storage for [RawEntity] objects backing an `entity: T`. */
     val storageProxy: SingletonProxy<RawEntity>,
     /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
     val entityPreparer: EntityPreparer<T>,
     /** Provides logic to fetch [RawEntity] object backing a [Reference] field. */
     val dereferencerFactory: EntityDereferencerFactory
-) : BaseHandle(name, storageProxy), ReadWriteSingletonHandle<T> {
+) : BaseHandle<T>(name, spec, storageProxy), ReadWriteSingletonHandle<T> {
+
+    init {
+        check(spec.containerType == HandleContainerType.Singleton)
+    }
 
     // region implement ReadSingletonHandle<T>
     override suspend fun fetch() = checkPreconditions {
@@ -93,16 +96,16 @@ class SingletonHandle<T : Entity>(
         }
 
         return Reference(
-            entitySpec,
+            spec.entitySpec,
             arcs.core.storage.Reference(entity.serialize().id, storageKey.backingKey, null).also {
-                it.dereferencer = dereferencerFactory.create(entitySpec.SCHEMA)
+                it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
             }
         )
     }
     // endregion
 
     private fun adaptValue(value: RawEntity?): T? = value?.let {
-        dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, value)
-        entitySpec.deserialize(value)
+        dereferencerFactory.injectDereferencers(spec.entitySpec.SCHEMA, value)
+        spec.entitySpec.deserialize(value)
     }
 }
