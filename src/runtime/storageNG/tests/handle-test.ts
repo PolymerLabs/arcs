@@ -11,12 +11,12 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Loader} from '../../../platform/loader.js';
 import {VersionMap} from '../../crdt/crdt.js';
-import {CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord} from '../../crdt/crdt-collection.js';
-import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes} from '../../crdt/crdt-singleton.js';
+import {CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord, Referenceable, CRDTCollection} from '../../crdt/crdt-collection.js';
+import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
-import {CollectionType, EntityType, SingletonType, Type} from '../../type.js';
-import {CollectionHandle, SingletonHandle} from '../handle.js';
+import {CollectionType, EntityType, SingletonType, Type, ReferenceType} from '../../type.js';
+import {CollectionHandle, SingletonHandle, EntityHandle} from '../handle.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ProxyMessageType} from '../store.js';
 import {MockParticle, MockStore} from '../testing/test-storage.js';
@@ -24,6 +24,9 @@ import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
 import {CRDTEntityCollection, CollectionEntityStore} from '../storage-ng.js';
+import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
+import {Schema} from '../../schema.js';
+import {Reference} from '../../reference.js';
 
 
 async function getCollectionHandle(primitiveType: Type, particle?: MockParticle, canRead=true, canWrite=true):
@@ -70,6 +73,21 @@ async function getSingletonHandle(primitiveType: Type, particle?: MockParticle, 
     model: {values: {}, version: {}},
     id: 1
   });
+  return handle;
+}
+
+async function getEntityHandle(schema: Schema, muxId: string, particle?: MockParticle, canRead=true, canWrite=false):
+    Promise<EntityHandle<Entity>> {
+  const fakeParticle: Particle = (particle || new MockParticle()) as unknown as Particle;
+  const storageProxy = new StorageProxy('id', new MockStore<CRDTEntityTypeRecord<Identified, Identified>>(), new EntityType(schema), null);
+  const handle = new EntityHandle<Entity>(
+    'me',
+    storageProxy,
+    IdGenerator.newSession(),
+    fakeParticle,
+    canRead,
+    canWrite,
+    muxId);
   return handle;
 }
 
@@ -374,5 +392,169 @@ describe('SingletonHandle', async () => {
     } catch (e) {
       assert.match(e.toString(), /Error: Handle not readable/);
     }
+  });
+});
+
+describe('EntityHandle', async () => {
+  it('can sync when the entity has both singleton and collection fields', async () => {
+    const manifest = await Manifest.parse(`
+      schema Simple
+        txt: Text
+        flag: Boolean
+        nums: [Number]
+    `);
+    const simpleSchema = manifest.schemas.Simple;
+    const simpleEntityClass = Entity.createEntityClass(simpleSchema, null);
+    const simpleEntity = new simpleEntityClass({txt: 'Text', flag: true, nums: [1, 2]});
+    const simpleId = 'simpleId';
+    Entity.identify(simpleEntity, simpleId, null);
+
+    const particle: MockParticle = new MockParticle();
+    const handle = await getEntityHandle(simpleSchema, simpleId, particle);
+
+    // creating CRDTEntity
+    const singletons = {
+      txt: new CRDTSingleton<{id: string, value: string}>(),
+      flag: new CRDTSingleton<{id: string, value: boolean}>()
+    };
+    const collections = {
+      nums: new CRDTCollection<{id: string, value: number}>()
+    };
+    const entityCRDT = new CRDTEntity(singletons, collections);
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+
+    await handle.onSync(entityCRDT.getParticleView());
+
+    assert.isTrue(particle.onSyncCalled);
+    assert.deepEqual(particle.model, simpleEntity);
+  });
+
+  it('can sync when the entity has a reference field', async () => {
+    const manifest = await Manifest.parse(`
+      schema Bar
+        value: Text
+      
+      schema Foo
+        txt: Text
+        ref: &Bar
+    `);
+    const barSchema = manifest.schemas.Bar;
+    const barEntityClass = Entity.createEntityClass(barSchema, null);
+    barType = new EntityType(barSchema);
+    const barId = 'barId';
+    const barEntity = new barEntityClass({value: 'Text'});
+    Entity.identify(barEntity, barId, null);
+    const barReference = new Reference({id: barId, entityStorageKey: null}, new ReferenceType(barType), null);
+
+    const fooSchema = manifest.schemas.Foo;
+    const fooEntityClass = Entity.createEntityClass(fooSchema, null);
+    const fooId = 'fooId';
+    const fooEntity = new fooEntityClass({txt: 'Text', ref: barReference}, null);
+    Entity.identify(fooEntity, fooId, null);
+
+    const particle: MockParticle = new MockParticle();
+    const handle = await getEntityHandle(fooSchema, fooId, particle);
+
+    // creating a CRDTEntity
+    const singletons = {
+      txt: new CRDTSingleton<{id: string, value: string}>(),
+      ref: new CRDTSingleton<Reference>()
+    };
+    const collections = {};
+    const entityCRDT = new CRDTEntity(singletons, collections);
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'ref', value: barReference, actor: 'me', clock: {me: 1}});
+
+    await handle.onSync(entityCRDT.getParticleView());
+
+    assert.isTrue(particle.onSyncCalled);
+    assert.deepEqual(particle.model, fooEntity);
+  });
+
+  it('can sync when the entity has singleton fields and a collection of references field', async () => {
+    const manifest = await Manifest.parse(`
+      schema Bar
+        value: Text
+      
+      schema Foo
+        txt: Text
+        refs: [&Bar]
+    `);
+    const barSchema = manifest.schemas.Bar;
+    const barEntityClass = Entity.createEntityClass(barSchema, null);
+    barType = new EntityType(barSchema);
+    const barId = 'barId';
+    const barEntity = new barEntityClass({value: 'Text'});
+    Entity.identify(barEntity, barId, null);
+    const barReference = new Reference({id: barId, entityStorageKey: null}, new ReferenceType(barType), null);
+
+    const fooSchema = manifest.schemas.Foo;
+    const fooEntityClass = Entity.createEntityClass(fooSchema, null);
+    const fooId = 'fooId';
+    const fooEntity = new fooEntityClass({txt: 'Text', refs: [barReference]}, null);
+    Entity.identify(fooEntity, fooId, null);
+
+    const particle: MockParticle = new MockParticle();
+    const handle = await getEntityHandle(fooSchema, fooId, particle);
+
+    // creating a CRDTEntity
+    const singletons = {
+      txt: new CRDTSingleton<{id: string, value: string}>()
+    };
+    const collections = {
+      refs: new CRDTCollection<Reference>()
+    };
+    const entityCRDT = new CRDTEntity(singletons, collections);
+    entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+    entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'refs', added: barReference, actor: 'me', clock: {me: 1}});
+
+    await handle.onSync(entityCRDT.getParticleView());
+
+    assert.isTrue(particle.onSyncCalled);
+    assert.deepEqual(particle.model, fooEntity);
+  });
+
+  it('can fetch', async () => {
+    const manifest = await Manifest.parse(`
+    schema Simple
+      txt: Text
+      flag: Boolean
+      nums: [Number]
+  `);
+  const simpleSchema = manifest.schemas.Simple;
+  const simpleEntityClass = Entity.createEntityClass(simpleSchema, null);
+  const simpleEntity = new simpleEntityClass({txt: 'Text', flag: true, nums: [1, 2]});
+  const simpleMuxId = 'simpleMuxId';
+  Entity.identify(simpleEntity, simpleMuxId, null);
+
+  const particle: MockParticle = new MockParticle();
+  const handle = await getEntityHandle(simpleSchema, simpleMuxId, particle);
+
+  // creating CRDTEntity
+  const singletons = {
+    txt: new CRDTSingleton<{id: string, value: string}>(),
+    flag: new CRDTSingleton<{id: string, value: boolean}>()
+  };
+  const collections = {
+    nums: new CRDTCollection<{id: string, value: number}>()
+  };
+  const entityCRDT = new CRDTEntity(singletons, collections);
+  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'Text', value: 'Text'}, actor: 'me', clock: {'me': 1}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'flag', value: {id: 'true', value: true}, actor: 'me', clock: {'me': 1}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '1', value: 1}, actor: 'me', clock: {'me': 1}});
+  entityCRDT.applyOperation({type: EntityOpTypes.Add, field: 'nums', added: {id: '2', value: 2}, actor: 'me', clock: {'me': 2}});
+
+  // initialize model in storageProxy
+  await handle.storageProxy.onMessage({
+    type: ProxyMessageType.ModelUpdate,
+    model: entityCRDT.getData(),
+    id: 1
+  });
+
+  const entity = await handle.fetch();
+  assert.deepEqual(entity, simpleEntity);
   });
 });

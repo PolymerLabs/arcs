@@ -14,13 +14,13 @@ import {CRDTSingletonTypeRecord, CRDTSingleton, SingletonOpTypes} from './crdt-s
 import {Dictionary} from '../hot.js';
 
 // Identified extends the concept of Referenceable to a Dictionary
-type Identified = Dictionary<Referenceable>;
+export type Identified = Dictionary<Referenceable>;
 
 // All Entity CRDT types are based around a dictionary of singleton fields and a dictionary of collection fields.
 // The CRDT is composed of CRDTSingleton and CRDTCollection objects, one for each field.
 // The raw view contains the single value from each CRDTSingleton (or null) and a set of the values from each
 // CRDTCollection.
-type RawEntity<S extends Identified, C extends Identified> =
+export type RawEntity<S extends Identified, C extends Identified> =
 {
   singletons: S,
   collections: {[P in keyof C]: Set<C[P]>}
