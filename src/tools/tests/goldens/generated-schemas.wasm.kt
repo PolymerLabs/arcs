@@ -624,10 +624,10 @@ abstract class AbstractGold : WasmParticleImpl() {
     class Handles(
         particle: WasmParticleImpl
     ) {
-        val data: WasmSingletonImpl<Gold_Data> = WasmSingletonImpl(particle, "data", Gold_Data)
-        val allPeople: WasmCollectionImpl<Gold_AllPeople> = WasmCollectionImpl(particle, "allPeople", Gold_AllPeople)
-        val qCollection: WasmCollectionImpl<Gold_QCollection> = WasmCollectionImpl(particle, "qCollection", Gold_QCollection)
-        val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl(particle, "alias", Gold_Alias)
-        val collection: WasmCollectionImpl<Gold_Collection> = WasmCollectionImpl(particle, "collection", Gold_Collection)
+        val data: WasmSingletonImpl<Gold_Data> = WasmSingletonImpl<Gold_Data>(particle, "data", Gold_Data)
+        val allPeople: WasmCollectionImpl<Gold_AllPeople> = WasmCollectionImpl<Gold_AllPeople>(particle, "allPeople", Gold_AllPeople)
+        val qCollection: WasmCollectionImpl<Gold_QCollection> = WasmCollectionImpl<Gold_QCollection>(particle, "qCollection", Gold_QCollection)
+        val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl<Gold_Alias>(particle, "alias", Gold_Alias)
+        val collection: WasmCollectionImpl<Gold_Collection> = WasmCollectionImpl<Gold_Collection>(particle, "collection", Gold_Collection)
     }
 }

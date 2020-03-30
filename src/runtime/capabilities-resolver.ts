@@ -119,6 +119,8 @@ export class CapabilitiesResolver {
     }
     const backingKey = creator.create(new BackingStorageKeyOptions(
         this.options.arcId, schemaHash, entitySchema.name));
+    // TODO(b/152436411): Don't return reference-mode storage keys for
+    // Reference-typed handles.
     return new ReferenceModeStorageKey(
         backingKey, containerKey.childKeyForHandle(handleId));
   }
