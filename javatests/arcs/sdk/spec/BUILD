@@ -16,6 +16,7 @@ arcs_kt_jvm_test_suite(
         ":schemas",
         ":schemas_test_harness",
         "//java/arcs/core/common",
+        "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",

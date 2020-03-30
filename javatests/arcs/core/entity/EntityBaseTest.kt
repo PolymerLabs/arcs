@@ -15,9 +15,11 @@ import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.Ttl
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.testutil.assertThrows
+import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
@@ -236,7 +238,7 @@ class EntityBaseTest {
         )
 
         // Different ID.
-        entity2.ensureIdentified(Id.Generator.newForTest("session"), "handle")
+        entity2.ensureEntityFields(Id.Generator.newForTest("session"), "handle", TimeImpl())
         assertThat(entity1).isNotEqualTo(entity2)
     }
 
@@ -264,19 +266,24 @@ class EntityBaseTest {
     }
 
     @Test
-    fun ensureIdentified() {
+    fun ensureEntityFields() {
         // ID starts off null.
         assertThat(entity.entityId).isNull()
 
         // Calling once generates a new ID.
-        entity.ensureIdentified(Id.Generator.newForTest("session1"), "handle2")
+        entity.ensureEntityFields(Id.Generator.newForTest("session1"), "handle2", TimeImpl(10), Ttl.Minutes(1))
         val id = entity.entityId
         assertThat(id).isNotNull()
         assertThat(id).isNotEmpty()
 
+        val serialized = entity.serialize()
+        assertThat(serialized.creationTimestamp).isEqualTo(10)
+        assertThat(serialized.expirationTimestamp).isEqualTo(60010)
+
         // Calling again doesn't change the value.
-        entity.ensureIdentified(Id.Generator.newForTest("session2"), "handle2")
+        entity.ensureEntityFields(Id.Generator.newForTest("session2"), "handle2", TimeImpl(20))
         assertThat(entity.entityId).isEqualTo(id)
+        assertThat(entity.serialize().creationTimestamp).isEqualTo(10)
     }
 
     @Test

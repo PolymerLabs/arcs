@@ -103,7 +103,7 @@ class HandleAdapterTest {
             "Entity must have an ID before it can be referenced."
         )
 
-        entity.ensureIdentified(idGenerator, READ_WRITE_HANDLE)
+        entity.ensureEntityFields(idGenerator, READ_WRITE_HANDLE, TimeImpl())
 
         // Fails when the entity is not in the collection.
         e = assertSuspendingThrows(IllegalArgumentException::class) {
@@ -205,7 +205,7 @@ class HandleAdapterTest {
             "Entity must have an ID before it can be referenced."
         )
 
-        entity.ensureIdentified(idGenerator, READ_WRITE_HANDLE)
+        entity.ensureEntityFields(idGenerator, READ_WRITE_HANDLE, TimeImpl())
 
         // Fails when the entity is not in the collection.
         e = assertSuspendingThrows(IllegalArgumentException::class) {

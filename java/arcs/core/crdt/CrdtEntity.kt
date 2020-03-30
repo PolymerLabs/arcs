@@ -86,10 +86,8 @@ class CrdtEntity(
             if (_data.creationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
                 _data.creationTimestamp = other.creationTimestamp
             } else if (other.creationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
-                // Two different values, we keep the earlier creationTimestamp.
-                // TODO: change this to throw an exception instead, creation timestamp should only
-                // be set when the id is created, then never change.
-                _data.creationTimestamp = minOf(_data.creationTimestamp, other.creationTimestamp)
+                // Two different values, this should be impossible.
+                throw CrdtException("Cannot merge different values for creationTimestamp.")
             }
         }
         if (_data.expirationTimestamp != other.expirationTimestamp) {
@@ -97,7 +95,7 @@ class CrdtEntity(
             if (_data.expirationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
                 _data.expirationTimestamp = other.expirationTimestamp
             } else if (other.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
-                // Two different values, we don't how to merge this.
+                // Two different values, this should be impossible.
                 throw CrdtException("Cannot merge different values for expirationTimestamp.")
             }
         }

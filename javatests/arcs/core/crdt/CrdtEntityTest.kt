@@ -101,6 +101,7 @@ class CrdtEntityTest {
     @Test
     fun canApply_anAddOperation_toASingleField() {
         val rawEntity = RawEntity(
+            singletonFields = setOf(),
             collectionFields = setOf("foo")
         )
         val entity = CrdtEntity(VersionMap(), rawEntity)
@@ -227,7 +228,10 @@ class CrdtEntityTest {
 
     @Test
     fun failsWhen_singletonOperations_areProvidedTo_collectionFields() {
-        val entity = CrdtEntity(VersionMap(), RawEntity(collectionFields = setOf("things")))
+        val entity = CrdtEntity(VersionMap(), RawEntity(
+            singletonFields = setOf(),
+            collectionFields = setOf("things"))
+        )
 
         assertThrows(CrdtException::class) {
             entity.applyOperation(
@@ -289,8 +293,9 @@ class CrdtEntityTest {
         
         entity = entity(creation=5)
         entity2 = entity(creation=1)
-        entity.merge(entity2.data)
-        assertThat(entity.data.creationTimestamp).isEqualTo(1)
+        assertThrows(CrdtException::class) {
+            entity.merge(entity2.data)
+        }
     }
 
     @Test

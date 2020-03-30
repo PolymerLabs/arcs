@@ -26,16 +26,12 @@ class EntityPreparer<T : Entity>(
     val time: Time
 ) {
     fun prepareEntity(entity: T): RawEntity {
-        entity.ensureIdentified(idGenerator, handleName)
+        entity.ensureEntityFields(idGenerator, handleName, time, ttl)
 
         val rawEntity = entity.serialize()
 
-        rawEntity.creationTimestamp = time.currentTimeMillis
         require(schema.refinement(rawEntity)) {
             "Invalid entity stored to handle $handleName(failed refinement)"
-        }
-        if (ttl != Ttl.Infinite) {
-            rawEntity.expirationTimestamp = ttl.calculateExpiration(time)
         }
         return rawEntity
     }

@@ -17,9 +17,12 @@ import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
+import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
+import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.util.Time
 import kotlin.reflect.KProperty
 
 open class EntityBase(
@@ -33,6 +36,8 @@ open class EntityBase(
 
     private val singletons: MutableMap<String, Any?> = mutableMapOf()
     private val collections: MutableMap<String, Set<Any>> = mutableMapOf()
+    private var creationTimestamp: Long = UNINITIALIZED_TIMESTAMP
+    private var expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
 
     // Initialize all fields. After this point, if a key is not present in singletons/collections,
     // it will not be considered a valid field for the entity.
@@ -164,7 +169,9 @@ open class EntityBase(
         collections = collections.mapValues { (field, values) ->
             val type = getCollectionType(field)
             values.map { toReferencable(it, type) }.toSet()
-        }
+        },
+        creationTimestamp = creationTimestamp,
+        expirationTimestamp = expirationTimestamp
     )
 
     /**
@@ -180,15 +187,26 @@ open class EntityBase(
             val type = getCollectionType(field)
             setCollectionValue(field, values.map { fromReferencable(it, type) }.toSet())
         }
+        creationTimestamp = rawEntity.creationTimestamp
+        expirationTimestamp = rawEntity.expirationTimestamp
     }
 
-    override fun ensureIdentified(idGenerator: Id.Generator, handleName: String) {
+    override fun ensureEntityFields(
+        idGenerator: Id.Generator,
+        handleName: String,
+        time: Time,
+        ttl: Ttl
+    ) {
         if (_entityId == null) {
             _entityId = idGenerator.newChildId(
                 // TODO: should we allow this to be plumbed through?
                 idGenerator.newArcId("dummy-arc"),
                 handleName
             ).toString()
+            creationTimestamp = requireNotNull(time).currentTimeMillis
+            if (ttl != Ttl.Infinite) {
+                expirationTimestamp = ttl.calculateExpiration(time)
+            }
         }
     }
 

@@ -11,6 +11,7 @@ import arcs.core.data.SchemaName
 import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.util.Time
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.Reference
@@ -44,8 +45,15 @@ open class HandleManagerTestBase {
     ) : Entity {
 
         var raw: RawEntity? = null
+        var creationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
 
-        override fun ensureIdentified(idGenerator: Generator, handleName: String) {}
+        override fun ensureEntityFields(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {
+            creationTimestamp = requireNotNull(time).currentTimeMillis
+            if (ttl != Ttl.Infinite) {
+                expirationTimestamp = ttl.calculateExpiration(time)
+            }
+        }
 
         override fun serialize() = RawEntity(
             entityId,
@@ -56,7 +64,9 @@ open class HandleManagerTestBase {
                 "best_friend" to bestFriend,
                 "hat" to hat
             ),
-            collections = emptyMap()
+            collections = emptyMap(),
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
         )
 
         override fun reset() = throw NotImplementedError()
@@ -123,7 +133,7 @@ open class HandleManagerTestBase {
         override val entityId: ReferenceId,
         val style: String
     ) : Entity {
-        override fun ensureIdentified(idGenerator: Generator, handleName: String) {}
+        override fun ensureEntityFields(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {}
 
         override fun serialize() = RawEntity(
             entityId,
