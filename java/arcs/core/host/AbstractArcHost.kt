@@ -15,6 +15,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
+import arcs.core.data.Ttl
 import arcs.core.entity.Handle
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
@@ -362,14 +363,16 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 handleSpec.mode,
                 handleName,
                 holder.getEntitySpec(handleName),
-                handleSpec.storageKey
+                handleSpec.storageKey,
+                handleSpec.ttl ?: Ttl.Infinite
             )
         is CollectionType<*> ->
             arcHostContext.entityHandleManager.createCollectionHandle(
                 handleSpec.mode,
                 handleName,
                 holder.getEntitySpec(handleName),
-                handleSpec.storageKey
+                handleSpec.storageKey,
+                handleSpec.ttl ?: Ttl.Infinite
             )
         else -> throw IllegalArgumentException("Unknown type ${handleSpec.type}")
     }.also { holder.setHandle(handleName, it) }
