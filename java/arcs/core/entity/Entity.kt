@@ -21,7 +21,7 @@ import arcs.core.util.Time
 import kotlin.IllegalArgumentException
 import kotlin.reflect.KClass
 
-interface Entity {
+interface Entity : Storable {
     /** The ID for the entity, or null if it is does not have one yet. */
     val entityId: String?
 

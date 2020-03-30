@@ -24,8 +24,8 @@ import arcs.core.entity.ReadableHandle
  * @param action callback
  */
 suspend fun <T1, T2> combineUpdates(
-    handle1: ReadableHandle<T1, *>,
-    handle2: ReadableHandle<T2, *>,
+    handle1: ReadableHandle<T1>,
+    handle2: ReadableHandle<T2>,
     action: (T1, T2) -> Unit
 ) {
     val handles = listOf(handle1, handle2)
@@ -39,9 +39,9 @@ suspend fun <T1, T2> combineUpdates(
 }
 
 suspend fun <T1, T2, T3> combineUpdates(
-    handle1: ReadableHandle<T1, *>,
-    handle2: ReadableHandle<T2, *>,
-    handle3: ReadableHandle<T3, *>,
+    handle1: ReadableHandle<T1>,
+    handle2: ReadableHandle<T2>,
+    handle3: ReadableHandle<T3>,
     action: (T1, T2, T3) -> Unit
 ) {
     val handles = listOf(handle1, handle2, handle3)
@@ -56,10 +56,10 @@ suspend fun <T1, T2, T3> combineUpdates(
 }
 
 suspend fun <T1, T2, T3, T4> combineUpdates(
-    handle1: ReadableHandle<T1, *>,
-    handle2: ReadableHandle<T2, *>,
-    handle3: ReadableHandle<T3, *>,
-    handle4: ReadableHandle<T4, *>,
+    handle1: ReadableHandle<T1>,
+    handle2: ReadableHandle<T2>,
+    handle3: ReadableHandle<T3>,
+    handle4: ReadableHandle<T4>,
     action: (T1, T2, T3, T4) -> Unit
 ) {
     val handles = listOf(handle1, handle2, handle3, handle4)
@@ -75,11 +75,11 @@ suspend fun <T1, T2, T3, T4> combineUpdates(
 }
 
 suspend fun <T1, T2, T3, T4, T5> combineUpdates(
-    handle1: ReadableHandle<T1, *>,
-    handle2: ReadableHandle<T2, *>,
-    handle3: ReadableHandle<T3, *>,
-    handle4: ReadableHandle<T4, *>,
-    handle5: ReadableHandle<T5, *>,
+    handle1: ReadableHandle<T1>,
+    handle2: ReadableHandle<T2>,
+    handle3: ReadableHandle<T3>,
+    handle4: ReadableHandle<T4>,
+    handle5: ReadableHandle<T5>,
     action: (T1, T2, T3, T4, T5) -> Unit
 ) {
     val handles = listOf(
@@ -102,12 +102,12 @@ suspend fun <T1, T2, T3, T4, T5> combineUpdates(
 }
 
 suspend fun <T1, T2, T3, T4, T5, T6> combineUpdates(
-    handle1: ReadableHandle<T1, *>,
-    handle2: ReadableHandle<T2, *>,
-    handle3: ReadableHandle<T3, *>,
-    handle4: ReadableHandle<T4, *>,
-    handle5: ReadableHandle<T5, *>,
-    handle6: ReadableHandle<T6, *>,
+    handle1: ReadableHandle<T1>,
+    handle2: ReadableHandle<T2>,
+    handle3: ReadableHandle<T3>,
+    handle4: ReadableHandle<T4>,
+    handle5: ReadableHandle<T5>,
+    handle6: ReadableHandle<T6>,
     action: (T1, T2, T3, T4, T5, T6) -> Unit
 ) {
     val handles = listOf(
@@ -132,13 +132,13 @@ suspend fun <T1, T2, T3, T4, T5, T6> combineUpdates(
 }
 
 suspend fun <T1, T2, T3, T4, T5, T6, T7> combineUpdates(
-    handle1: ReadableHandle<T1, *>,
-    handle2: ReadableHandle<T2, *>,
-    handle3: ReadableHandle<T3, *>,
-    handle4: ReadableHandle<T4, *>,
-    handle5: ReadableHandle<T5, *>,
-    handle6: ReadableHandle<T6, *>,
-    handle7: ReadableHandle<T7, *>,
+    handle1: ReadableHandle<T1>,
+    handle2: ReadableHandle<T2>,
+    handle3: ReadableHandle<T3>,
+    handle4: ReadableHandle<T4>,
+    handle5: ReadableHandle<T5>,
+    handle6: ReadableHandle<T6>,
+    handle7: ReadableHandle<T7>,
     action: (T1, T2, T3, T4, T5, T6, T7) -> Unit
 ) {
     val handles = listOf(
@@ -165,14 +165,14 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7> combineUpdates(
 }
 
 suspend fun <T1, T2, T3, T4, T5, T6, T7, T8> combineUpdates(
-    handle1: ReadableHandle<T1, *>,
-    handle2: ReadableHandle<T2, *>,
-    handle3: ReadableHandle<T3, *>,
-    handle4: ReadableHandle<T4, *>,
-    handle5: ReadableHandle<T5, *>,
-    handle6: ReadableHandle<T6, *>,
-    handle7: ReadableHandle<T7, *>,
-    handle8: ReadableHandle<T8, *>,
+    handle1: ReadableHandle<T1>,
+    handle2: ReadableHandle<T2>,
+    handle3: ReadableHandle<T3>,
+    handle4: ReadableHandle<T4>,
+    handle5: ReadableHandle<T5>,
+    handle6: ReadableHandle<T6>,
+    handle7: ReadableHandle<T7>,
+    handle8: ReadableHandle<T8>,
     action: (T1, T2, T3, T4, T5, T6, T7, T8) -> Unit
 ) {
     val handles = listOf(
@@ -201,15 +201,15 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8> combineUpdates(
 }
 
 suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> combineUpdates(
-    handle1: ReadableHandle<T1, *>,
-    handle2: ReadableHandle<T2, *>,
-    handle3: ReadableHandle<T3, *>,
-    handle4: ReadableHandle<T4, *>,
-    handle5: ReadableHandle<T5, *>,
-    handle6: ReadableHandle<T6, *>,
-    handle7: ReadableHandle<T7, *>,
-    handle8: ReadableHandle<T8, *>,
-    handle9: ReadableHandle<T9, *>,
+    handle1: ReadableHandle<T1>,
+    handle2: ReadableHandle<T2>,
+    handle3: ReadableHandle<T3>,
+    handle4: ReadableHandle<T4>,
+    handle5: ReadableHandle<T5>,
+    handle6: ReadableHandle<T6>,
+    handle7: ReadableHandle<T7>,
+    handle8: ReadableHandle<T8>,
+    handle9: ReadableHandle<T9>,
     action: (T1, T2, T3, T4, T5, T6, T7, T8, T9) -> Unit
 ) {
     val handles = listOf(
@@ -240,16 +240,16 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> combineUpdates(
 }
 
 suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> combineUpdates(
-    handle1: ReadableHandle<T1, *>,
-    handle2: ReadableHandle<T2, *>,
-    handle3: ReadableHandle<T3, *>,
-    handle4: ReadableHandle<T4, *>,
-    handle5: ReadableHandle<T5, *>,
-    handle6: ReadableHandle<T6, *>,
-    handle7: ReadableHandle<T7, *>,
-    handle8: ReadableHandle<T8, *>,
-    handle9: ReadableHandle<T9, *>,
-    handle10: ReadableHandle<T10, *>,
+    handle1: ReadableHandle<T1>,
+    handle2: ReadableHandle<T2>,
+    handle3: ReadableHandle<T3>,
+    handle4: ReadableHandle<T4>,
+    handle5: ReadableHandle<T5>,
+    handle6: ReadableHandle<T6>,
+    handle7: ReadableHandle<T7>,
+    handle8: ReadableHandle<T8>,
+    handle9: ReadableHandle<T9>,
+    handle10: ReadableHandle<T10>,
     action: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) -> Unit
 ) {
     val handles = listOf(
@@ -282,7 +282,7 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> combineUpdates(
 }
 
 @Suppress("UNCHECKED_CAST")
-private suspend fun <T, E : Entity> ReadableHandle<T, E>.getContent(): T =
+private suspend fun <T> ReadableHandle<T>.getContent(): T =
     when (this) {
         is ReadWriteSingletonHandle<*> -> fetch() as T
         is ReadSingletonHandle<*> -> fetch() as T
