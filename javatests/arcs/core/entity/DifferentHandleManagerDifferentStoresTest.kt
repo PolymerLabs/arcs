@@ -43,7 +43,7 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     @After
     override fun tearDown() = super.tearDown()
 
-    // TODO - fix these?
+    // TODO(b/152436411): Fix these.
     override fun collection_referenceLiveness() {}
     override fun singleton_referenceLiveness() {}
 

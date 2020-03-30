@@ -25,9 +25,8 @@ import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.withTimeout
-import org.junit.Ignore
 import org.junit.Test
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
@@ -45,11 +44,11 @@ open class HandleManagerTestBase {
     ) : Entity {
 
         var raw: RawEntity? = null
-        var creationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
-        var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
 
         override fun ensureEntityFields(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {
-            creationTimestamp = requireNotNull(time).currentTimeMillis
+            creationTimestamp = time.currentTimeMillis
             if (ttl != Ttl.Infinite) {
                 expirationTimestamp = ttl.calculateExpiration(time)
             }
@@ -280,48 +279,6 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    @Ignore("Fix when references are added in entity handles")
-    open fun singleton_referenceLiveness() = testRunner {
-        /*
-        val writeHandle = createWriteReferenceSingletonHandle()
-        val entity1Ref = writeHandle.createReference(entity1)
-        writeHandle.store(entity1Ref)
-
-        // Now read back from a different handle
-        val readbackHandle = readHandleManager.referenceSingletonHandle(singletonRefKey, schema)
-        val readBack = readbackHandle.fetch()!!
-        assertThat(readBack).isEqualTo(entity1Ref)
-
-        // Reference should be dead.
-        assertThat(readBack.isAlive(coroutineContext)).isFalse()
-        assertThat(readBack.isDead(coroutineContext)).isTrue()
-
-        // Now write the entity via a different handle
-        val entityWriteHandle = writeHandleManager.rawEntitySingletonHandle(singletonKey, schema, "entHandle")
-        entityWriteHandle.store(entity1)
-
-        // Reference should be alive.
-        assertThat(readBack.isAlive(coroutineContext)).isTrue()
-        assertThat(readBack.isDead(coroutineContext)).isFalse()
-
-        // Now dereference our read-back reference.
-        assertThat(readBack.dereference(coroutineContext)).isEqualTo(entity1)
-
-        val modEntity1 = entity1.copy(
-            singletons = entity1.singletons + ("name" to "Ben".toReferencable())
-        )
-        entityWriteHandle.store(modEntity1)
-
-        // Reference should still be alive.
-        assertThat(readBack.isAlive(coroutineContext)).isTrue()
-        assertThat(readBack.isDead(coroutineContext)).isFalse()
-
-        // Now dereference our read-back reference, should now be modEntity1
-        assertThat(readBack.dereference(coroutineContext)).isEqualTo(modEntity1)
-         */
-    }
-
-    @Test
     fun singleton_dereferenceEntity() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
@@ -432,6 +389,62 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    open fun singleton_referenceLiveness() = runBlocking {
+        // Create and store an entity.
+        val writeEntityHandle = writeHandleManager.createCollectionHandle()
+        writeEntityHandle.store(entity1)
+
+        // Create a store a reference to the entity.
+        val entity1Ref = writeEntityHandle.createReference(entity1)
+        val writeRefHandle = writeHandleManager.createReferenceSingletonHandle()
+        writeRefHandle.store(entity1Ref)
+
+        // Now read back the reference from a different handle.
+        val readRefHandle = readHandleManager.createReferenceSingletonHandle()
+        var reference = readRefHandle.fetch()!!
+        assertThat(reference).isEqualTo(entity1Ref)
+
+        // Reference should be alive.
+        assertThat(reference.dereference()).isEqualTo(entity1)
+        var storageReference = reference.toReferencable()
+        assertThat(storageReference.isAlive(coroutineContext)).isTrue()
+        assertThat(storageReference.isDead(coroutineContext)).isFalse()
+
+        // Modify the entity.
+        val modEntity1 = entity1.copy(name = "Ben")
+        writeEntityHandle.store(modEntity1)
+
+        // Reference should still be alive.
+        reference = readRefHandle.fetch()!!
+        assertThat(reference.dereference()).isEqualTo(modEntity1)
+        storageReference = reference.toReferencable()
+        assertThat(storageReference.isAlive(coroutineContext)).isTrue()
+        assertThat(storageReference.isDead(coroutineContext)).isFalse()
+
+        // Remove the entity from the collection.
+        writeEntityHandle.remove(entity1)
+
+        // Reference should be dead.
+        // TODO(b/152436411): The reference should dereference to null, but in fact dereferences to
+        // a RawEntity full of nulls.
+    }
+
+    @Test
+    fun singleton_referenceHandle_referenceModeNotSupported() = testRunner {
+        val e = assertSuspendingThrows(IllegalArgumentException::class) {
+            writeHandleManager.createReferenceSingletonHandle(
+                ReferenceModeStorageKey(
+                    backingKey = backingKey,
+                    storageKey = singletonRefKey
+                )
+            )
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Reference-mode storage keys are not supported for reference-typed handles."
+        )
+    }
+
+    @Test
     fun collection_initialState() = testRunner {
         val handle = writeHandleManager.createCollectionHandle()
         assertThat(handle.fetchAll()).isEmpty()
@@ -526,12 +539,12 @@ open class HandleManagerTestBase {
         val handleB = writeHandleManager.createCollectionHandle()
 
         handleA.store(Person("a", "a", 1, true))
-        handleA.store(Person("b","b", 2, false))
-        handleA.store(Person("c", "c",3, true))
-        handleA.store(Person("d", "d",4, false))
-        handleA.store(Person("e","e",5, true))
-        handleA.store(Person("f", "f",6, false))
-        handleA.store(Person("g", "g",7, true))
+        handleA.store(Person("b", "b", 2, false))
+        handleA.store(Person("c", "c", 3, true))
+        handleA.store(Person("d", "d", 4, false))
+        handleA.store(Person("e", "e", 5, true))
+        handleA.store(Person("f", "f", 6, false))
+        handleA.store(Person("g", "g", 7, true))
 
         assertThat(handleA.fetchAll()).hasSize(7)
         assertThat(handleB.fetchAll()).hasSize(7)
@@ -551,61 +564,6 @@ open class HandleManagerTestBase {
 
         gotUpdate.await()
         assertThat(handleA.fetchAll()).isEmpty()
-    }
-
-    @Test
-    @Ignore("Fix when references are added in entity handles")
-    open fun collection_referenceLiveness() = testRunner {
-        /*
-        val writeHandle = writeHandleManager.referenceCollectionHandle(singletonRefKey, schema)
-        val entity1Ref = writeHandle.createReference(entity1, backingKey)
-        val entity2Ref = writeHandle.createReference(entity2, backingKey)
-        writeHandle.store(entity1Ref)
-        writeHandle.store(entity2Ref)
-
-        // Now read back from a different handle
-        val readHandle = readHandleManager.referenceCollectionHandle(singletonRefKey, schema)
-        val readBack = readHandle.fetchAll()
-        assertThat(readBack).containsExactly(entity1Ref, entity2Ref)
-
-        // References should be dead.
-        val readBackEntity1Ref = readBack.find { it.id == entity1.id }!!
-        val readBackEntity2Ref = readBack.find { it.id == entity2.id }!!
-        assertThat(readBackEntity1Ref.isAlive(coroutineContext)).isFalse()
-        assertThat(readBackEntity1Ref.isDead(coroutineContext)).isTrue()
-        assertThat(readBackEntity2Ref.isAlive(coroutineContext)).isFalse()
-        assertThat(readBackEntity2Ref.isDead(coroutineContext)).isTrue()
-
-        // Now write the entity via a different handle
-        val entityHandle = writeHandleManager.rawEntityCollectionHandle(singletonKey, schema, "entHandle")
-        entityHandle.store(entity1)
-        entityHandle.store(entity2)
-
-        // References should be alive.
-        assertThat(readBackEntity1Ref.isAlive(coroutineContext)).isTrue()
-        assertThat(readBackEntity1Ref.isDead(coroutineContext)).isFalse()
-        assertThat(readBackEntity2Ref.isAlive(coroutineContext)).isTrue()
-        assertThat(readBackEntity2Ref.isDead(coroutineContext)).isFalse()
-
-        // Now dereference our read-back references.
-        assertThat(readBackEntity1Ref.dereference(coroutineContext)).isEqualTo(entity1)
-        assertThat(readBackEntity2Ref.dereference(coroutineContext)).isEqualTo(entity2)
-
-        // Now mutate the entities
-        val modEntity1 = entity1.copy(
-            singletons = entity1.singletons + ("name" to "Ben".toReferencable())
-        )
-        entityHandle.store(modEntity1)
-
-        val modEntity2 = entity2.copy(
-            singletons = entity2.singletons + ("name" to "Ben".toReferencable())
-        )
-        entityHandle.store(modEntity2)
-
-        // Now dereference our read-back references.
-        assertThat(readBackEntity1Ref.dereference(coroutineContext)).isEqualTo(modEntity1)
-        assertThat(readBackEntity2Ref.dereference(coroutineContext)).isEqualTo(modEntity2)
-         */
     }
 
     @Test
@@ -740,6 +698,73 @@ open class HandleManagerTestBase {
         }
     }
 
+
+    @Test
+    open fun collection_referenceLiveness() = runBlocking {
+        // Create and store some entities.
+        val writeEntityHandle = writeHandleManager.createCollectionHandle()
+        writeEntityHandle.store(entity1)
+        writeEntityHandle.store(entity2)
+
+        // Create a store a reference to the entity.
+        val entity1Ref = writeEntityHandle.createReference(entity1)
+        val entity2Ref = writeEntityHandle.createReference(entity2)
+        val writeRefHandle = writeHandleManager.createReferenceCollectionHandle()
+        writeRefHandle.store(entity1Ref)
+        writeRefHandle.store(entity2Ref)
+
+        // Now read back the references from a different handle.
+        val readRefHandle = readHandleManager.createReferenceCollectionHandle()
+        var references = readRefHandle.fetchAll()
+        assertThat(references).containsExactly(entity1Ref, entity2Ref)
+
+        // References should be alive.
+        assertThat(references.map { it.dereference() }).containsExactly(entity1, entity2)
+        references.forEach {
+            val storageReference = it.toReferencable()
+            assertThat(storageReference.isAlive(coroutineContext)).isTrue()
+            assertThat(storageReference.isDead(coroutineContext)).isFalse()
+        }
+
+        // Modify the entities.
+        val modEntity1 = entity1.copy(name = "Ben")
+        val modEntity2 = entity2.copy(name = "Ben")
+        writeEntityHandle.store(modEntity1)
+        writeEntityHandle.store(modEntity2)
+
+        // Reference should still be alive.
+        references = readRefHandle.fetchAll()
+        assertThat(references.map { it.dereference() }).containsExactly(modEntity1, modEntity2)
+        references.forEach {
+            val storageReference = it.toReferencable()
+            assertThat(storageReference.isAlive(coroutineContext)).isTrue()
+            assertThat(storageReference.isDead(coroutineContext)).isFalse()
+        }
+
+        // Remove the entities from the collection.
+        writeEntityHandle.remove(entity1)
+        writeEntityHandle.remove(entity2)
+
+        // Reference should be dead.
+        // TODO(b/152436411): The reference should dereference to null, but in fact dereferences to
+        // a RawEntity full of nulls.
+    }
+
+    @Test
+    fun collection_referenceHandle_referenceModeNotSupported() = testRunner {
+        val e = assertSuspendingThrows(IllegalArgumentException::class) {
+            writeHandleManager.createReferenceCollectionHandle(
+                ReferenceModeStorageKey(
+                    backingKey = backingKey,
+                    storageKey = collectionRefKey
+                )
+            )
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Reference-mode storage keys are not supported for reference-typed handles."
+        )
+    }
+
     private suspend fun Handle.awaitReady() {
         val deferred = CompletableDeferred<Unit>()
         onReady {
@@ -771,7 +796,7 @@ open class HandleManagerTestBase {
 
     private suspend fun <T : Entity> EntityHandleManager.createCollectionHandle(
         storageKey: StorageKey = collectionKey,
-        name: String = "collectionRefReadHandle",
+        name: String = "collectionReadHandle",
         ttl: Ttl = Ttl.Infinite,
         entitySpec: EntitySpec<T>
     ) = createHandle(
@@ -785,4 +810,35 @@ open class HandleManagerTestBase {
         ttl
     ) as ReadWriteQueryCollectionHandle<T, Any>
 
+    private suspend fun EntityHandleManager.createReferenceSingletonHandle(
+        storageKey: StorageKey = singletonRefKey,
+        name: String = "referenceSingletonWriteHandle",
+        ttl: Ttl = Ttl.Infinite
+    ) = createHandle(
+        HandleSpec(
+            name,
+            HandleMode.ReadWrite,
+            HandleContainerType.Singleton,
+            Person,
+            HandleDataType.Reference
+        ),
+        storageKey,
+        ttl
+    ) as ReadWriteSingletonHandle<Reference<Person>>
+
+    private suspend fun EntityHandleManager.createReferenceCollectionHandle(
+        storageKey: StorageKey = collectionRefKey,
+        name: String = "referenceCollectionReadHandle",
+        ttl: Ttl = Ttl.Infinite
+    ) = createHandle(
+        HandleSpec(
+            name,
+            HandleMode.ReadWrite,
+            HandleContainerType.Collection,
+            Person,
+            HandleDataType.Reference
+        ),
+        storageKey,
+        ttl
+    ) as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
 }
