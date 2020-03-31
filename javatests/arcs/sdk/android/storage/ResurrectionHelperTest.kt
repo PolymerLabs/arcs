@@ -20,6 +20,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_CLASS_NAME
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_NOTIFIERS
+import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_NOTIFIER_ID
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_PACKAGE_NAME
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -44,7 +45,7 @@ class ResurrectionHelperTest {
 
         callbackCalls.clear()
 
-        helper = ResurrectionHelper(context) { callbackCalls.add(it) }
+        helper = ResurrectionHelper(context) { _, keys -> callbackCalls.add(keys) }
     }
 
     @Test
@@ -84,6 +85,7 @@ class ResurrectionHelperTest {
                 ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER,
                 ArrayList(storageKeys.map(StorageKey::toString))
             )
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_NOTIFIER_ID, "test")
         }
 
         helper.onStartCommand(intent)
@@ -96,12 +98,13 @@ class ResurrectionHelperTest {
             RamDiskStorageKey("foo"),
             RamDiskStorageKey("bar")
         )
-        helper.requestResurrection(storageKeys, ResurrectionHelperDummyService::class.java)
+        helper.requestResurrection("test", storageKeys, ResurrectionHelperDummyService::class.java)
 
         val actualIntent = shadowOf(ApplicationProvider.getApplicationContext<Application>())
             .nextStartedService
         val expectedIntent = Intent(context, ResurrectionHelperDummyService::class.java).also {
-            ResurrectionRequest.createDefault(context, storageKeys).populateRequestIntent(it)
+            ResurrectionRequest.createDefault(context, storageKeys, "test")
+                .populateRequestIntent(it)
         }
 
         assertThat(actualIntent.action).isEqualTo(expectedIntent.action)
@@ -113,16 +116,18 @@ class ResurrectionHelperTest {
             .containsExactlyElementsIn(
                 expectedIntent.getStringArrayListExtra(EXTRA_REGISTRATION_NOTIFIERS)
             )
+        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_NOTIFIER_ID)).isEqualTo("test")
     }
 
     @Test
     fun cancelResurrectionRequest() {
-        helper.cancelResurrectionRequest(ResurrectionHelperDummyService::class.java)
+        helper.cancelResurrectionRequest("test", ResurrectionHelperDummyService::class.java)
 
         val actualIntent = shadowOf(ApplicationProvider.getApplicationContext<Application>())
             .nextStartedService
         val expectedIntent = Intent(context, ResurrectionHelperDummyService::class.java).also {
-            ResurrectionRequest.createDefault(context, emptyList()).populateUnrequestIntent(it)
+            ResurrectionRequest.createDefault(context, emptyList(), "test")
+                .populateUnrequestIntent(it)
         }
 
         assertThat(actualIntent.action).isEqualTo(expectedIntent.action)
@@ -130,5 +135,6 @@ class ResurrectionHelperTest {
             .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
         assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
             .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
+        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_NOTIFIER_ID)).isEqualTo("test")
     }
 }
