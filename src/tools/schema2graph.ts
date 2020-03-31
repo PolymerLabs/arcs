@@ -19,7 +19,9 @@ export class SchemaNode {
   // is empty. Otherwise, name is of the form 'ParticleInternal#' and aliases lists the
   // 'Particle_Handle' names that need to be type aliased to it.
   name: string;
+  kotlinName: string;
   aliases: string[] = [];
+  kotlinAliases: string[] = [];
 
   // All schemas that can be sliced to this one.
   descendants = new Set<SchemaNode>();
@@ -57,7 +59,7 @@ export class SchemaGraph {
     for (const connection of this.particleSpec.connections) {
       const schema = connection.type.getEntitySchema();
       if (schema) {
-        this.createNodes(schema, [this.particleSpec.name, upperFirst(connection.name)].join('_'));
+        this.createNodes(schema, [this.particleSpec.name, upperFirst(connection.name)].join('_'), upperFirst(connection.name));
       }
     }
 
@@ -71,11 +73,12 @@ export class SchemaGraph {
     }
   }
 
-  private createNodes(schema: Schema, name: string) {
+  private createNodes(schema: Schema, name: string, kotlinName: string) {
     let node = this.nodes.find(n => schema.equals(n.schema));
     if (node) {
-      // We can only have one node in the graph per schema. Collect duplicates as aliases.
+      // We can only have one nosde in the graph per schema. Collect duplicates as aliases.
       node.aliases.push(name);
+      node.kotlinAliases.push(kotlinName);
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
@@ -91,6 +94,7 @@ export class SchemaGraph {
           }
         }
       }
+      node.kotlinName = kotlinName;
       this.nodes.push(node);
     }
 
@@ -106,7 +110,7 @@ export class SchemaGraph {
       if (nestedSchema) {
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, [name, upperFirst(field)].join('_'));
+        const nestedNode = this.createNodes(nestedSchema, [name, upperFirst(field)].join('_'), upperFirst(field));
         node.refs.set(field, nestedNode);
       }
     }
