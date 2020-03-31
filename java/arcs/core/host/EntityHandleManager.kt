@@ -87,41 +87,64 @@ class EntityHandleManager(
             time
         )
         return when (spec.containerType) {
-            HandleContainerType.Singleton -> {
-                val singletonHandle = SingletonHandle(
-                    name = handleName,
-                    spec = spec,
-                    storageProxy = singletonStoreProxy(storageKey, spec.entitySpec),
-                    entityPreparer = entityPreparer,
-                    dereferencerFactory = dereferencerFactory
-                )
-                when (spec.mode) {
-                    HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
-                    HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
-                    HandleMode.ReadWrite ->
-                        object : ReadWriteSingletonHandle<T> by singletonHandle {}
-                }
+            HandleContainerType.Singleton -> createSingletonHandle(
+                handleName,
+                spec,
+                storageKey,
+                entityPreparer
+            )
+            HandleContainerType.Collection -> createCollectionHandle(
+                handleName,
+                spec,
+                storageKey,
+                entityPreparer
+            )
+        }
+    }
+
+    private suspend fun <T : Entity> createSingletonHandle(
+        handleName: String,
+        spec: HandleSpec<T>,
+        storageKey: StorageKey,
+        entityPreparer: EntityPreparer<T>
+    ): Handle {
+        val singletonHandle = SingletonHandle(
+            name = handleName,
+            spec = spec,
+            storageProxy = singletonStoreProxy(storageKey, spec.entitySpec),
+            entityPreparer = entityPreparer,
+            dereferencerFactory = dereferencerFactory
+        )
+        return when (spec.mode) {
+            HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
+            HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
+            HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by singletonHandle {}
+        }
+    }
+
+    private suspend fun <T : Entity> createCollectionHandle(
+        handleName: String,
+        spec: HandleSpec<T>,
+        storageKey: StorageKey,
+        entityPreparer: EntityPreparer<T>
+    ): Handle {
+        val collectionHandle = CollectionHandle(
+            name = handleName,
+            spec = spec,
+            storageProxy = collectionStoreProxy(storageKey, spec.entitySpec),
+            entityPreparer = entityPreparer,
+            dereferencerFactory = dereferencerFactory
+        )
+        return when (spec.mode) {
+            HandleMode.Read -> when (spec.entitySpec.SCHEMA.query) {
+                null -> object : ReadCollectionHandle<T> by collectionHandle {}
+                else -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
             }
-            HandleContainerType.Collection -> {
-                val collectionHandle = CollectionHandle(
-                    name = handleName,
-                    spec = spec,
-                    storageProxy = collectionStoreProxy(storageKey, spec.entitySpec),
-                    entityPreparer = entityPreparer,
-                    dereferencerFactory = dereferencerFactory
-                )
-                when (spec.mode) {
-                    HandleMode.Read -> when (spec.entitySpec.SCHEMA.query) {
-                        null -> object : ReadCollectionHandle<T> by collectionHandle {}
-                        else -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
-                    }
-                    HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}
-                    HandleMode.ReadWrite -> when (spec.entitySpec.SCHEMA.query) {
-                        null -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
-                        else -> object : ReadWriteQueryCollectionHandle<T, Any> by
-                            collectionHandle {}
-                    }
-                }
+            HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}
+            HandleMode.ReadWrite -> when (spec.entitySpec.SCHEMA.query) {
+                null -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
+                else -> object : ReadWriteQueryCollectionHandle<T, Any> by
+                collectionHandle {}
             }
         }
     }

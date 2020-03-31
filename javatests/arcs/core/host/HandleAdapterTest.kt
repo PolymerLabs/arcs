@@ -136,10 +136,13 @@ class HandleAdapterTest {
 
     @Test
     fun singleton_noOpsAfterClose() = runBlockingTest {
-       val handle = manager.createSingletonHandle(
-           HandleMode.ReadWrite,
-           READ_WRITE_HANDLE,
-           Person,
+       val handle = manager.createHandle(
+           HandleSpec(
+               READ_WRITE_HANDLE,
+               HandleMode.ReadWrite,
+               HandleContainerType.Singleton,
+               Person
+           ),
            STORAGE_KEY
        ) as ReadWriteSingletonHandle<Person>
         handle.store(Person("test"))
@@ -268,10 +271,13 @@ class HandleAdapterTest {
 
     @Test
     fun collection_noOpsAfterClose() = runBlockingTest {
-        val handle = manager.createCollectionHandle(
-            HandleMode.ReadWrite,
-            READ_WRITE_HANDLE,
-            QueryPerson,
+        val handle = manager.createHandle(
+            HandleSpec(
+                READ_WRITE_HANDLE,
+                HandleMode.ReadWrite,
+                HandleContainerType.Collection,
+                QueryPerson
+            ),
             STORAGE_KEY
         ) as ReadWriteQueryCollectionHandle<Person, Any>
         val testPerson = Person("test")
