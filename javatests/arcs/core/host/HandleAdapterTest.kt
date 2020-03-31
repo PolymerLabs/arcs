@@ -12,6 +12,8 @@
 package arcs.core.host
 
 import arcs.core.common.Id
+import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -62,10 +64,13 @@ class HandleAdapterTest {
 
     @Test
     fun singletonHandleAdapter_readOnlyCantWrite() = runBlockingTest {
-        val readOnlyHandle = manager.createSingletonHandle(
-            HandleMode.Read,
-            READ_ONLY_HANDLE,
-            Person,
+        val readOnlyHandle = manager.createHandle(
+            HandleSpec(
+                READ_ONLY_HANDLE,
+                HandleMode.Read,
+                HandleContainerType.Singleton,
+                Person
+            ),
             STORAGE_KEY
         )
 
@@ -76,10 +81,13 @@ class HandleAdapterTest {
 
     @Test
     fun singletonHandleAdapter_writeOnlyCantRead() = runBlockingTest {
-        val writeOnlyHandle = manager.createSingletonHandle(
-            HandleMode.Write,
-            WRITE_ONLY_HANDLE,
-            Person,
+        val writeOnlyHandle = manager.createHandle(
+            HandleSpec(
+                WRITE_ONLY_HANDLE,
+                HandleMode.Write,
+                HandleContainerType.Singleton,
+                Person
+            ),
             STORAGE_KEY
         )
         assertThat(writeOnlyHandle).isInstanceOf(WriteSingletonHandle::class.java)
@@ -89,10 +97,13 @@ class HandleAdapterTest {
 
     @Test
     fun singletonHandleAdapter_createReference() = runBlocking {
-        val handle = manager.createSingletonHandle(
-            HandleMode.ReadWrite,
-            READ_WRITE_HANDLE,
-            Person,
+        val handle = manager.createHandle(
+            HandleSpec(
+                READ_WRITE_HANDLE,
+                HandleMode.ReadWrite,
+                HandleContainerType.Singleton,
+                Person
+            ),
             STORAGE_KEY
         ) as ReadWriteSingletonHandle<Person>
         val entity = Person("Watson")
@@ -125,10 +136,13 @@ class HandleAdapterTest {
 
     @Test
     fun singleton_noOpsAfterClose() = runBlockingTest {
-       val handle = manager.createSingletonHandle(
-           HandleMode.ReadWrite,
-           READ_WRITE_HANDLE,
-           Person,
+       val handle = manager.createHandle(
+           HandleSpec(
+               READ_WRITE_HANDLE,
+               HandleMode.ReadWrite,
+               HandleContainerType.Singleton,
+               Person
+           ),
            STORAGE_KEY
        ) as ReadWriteSingletonHandle<Person>
         handle.store(Person("test"))
@@ -140,10 +154,13 @@ class HandleAdapterTest {
 
     @Test
     fun collectionHandleAdapter_readOnlyCantWrite() = runBlockingTest {
-        val readOnlyHandle = manager.createCollectionHandle(
-            HandleMode.Read,
-            READ_ONLY_HANDLE,
-            Person,
+        val readOnlyHandle = manager.createHandle(
+            HandleSpec(
+                READ_ONLY_HANDLE,
+                HandleMode.Read,
+                HandleContainerType.Collection,
+                Person
+            ),
             STORAGE_KEY
         )
 
@@ -154,10 +171,13 @@ class HandleAdapterTest {
 
     @Test
     fun collectionHandleAdapter_writeOnlyCantRead() = runBlockingTest {
-        val writeOnlyHandle = manager.createCollectionHandle(
-            HandleMode.Write,
-            WRITE_ONLY_HANDLE,
-            Person,
+        val writeOnlyHandle = manager.createHandle(
+            HandleSpec(
+                WRITE_ONLY_HANDLE,
+                HandleMode.Write,
+                HandleContainerType.Collection,
+                Person
+            ),
             STORAGE_KEY
         )
 
@@ -168,10 +188,13 @@ class HandleAdapterTest {
 
     @Test
     fun singletonHandleAdapter_onUpdateTest() = runBlockingTest {
-        val handle = manager.createSingletonHandle(
-            HandleMode.ReadWrite,
-            READ_WRITE_HANDLE,
-            Person,
+        val handle = manager.createHandle(
+            HandleSpec(
+                READ_WRITE_HANDLE,
+                HandleMode.ReadWrite,
+                HandleContainerType.Singleton,
+                Person
+            ),
             STORAGE_KEY
         ) as ReadWriteSingletonHandle<Person>
 
@@ -187,10 +210,13 @@ class HandleAdapterTest {
 
     @Test
     fun collectionHandleAdapter_onUpdateTest() = runBlockingTest {
-        val handle = manager.createCollectionHandle(
-            HandleMode.ReadWrite,
-            READ_WRITE_HANDLE,
-            Person,
+        val handle = manager.createHandle(
+            HandleSpec(
+                READ_WRITE_HANDLE,
+                HandleMode.ReadWrite,
+                HandleContainerType.Collection,
+                Person
+            ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<Person>
 
@@ -206,10 +232,13 @@ class HandleAdapterTest {
 
     @Test
     fun collectionHandleAdapter_createReference() = runBlocking {
-        val handle = manager.createCollectionHandle(
-            HandleMode.ReadWrite,
-            READ_WRITE_HANDLE,
-            Person,
+        val handle = manager.createHandle(
+            HandleSpec(
+                READ_WRITE_HANDLE,
+                HandleMode.ReadWrite,
+                HandleContainerType.Collection,
+                Person
+            ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<Person>
         val entity = Person("Watson")
@@ -242,10 +271,13 @@ class HandleAdapterTest {
 
     @Test
     fun collection_noOpsAfterClose() = runBlockingTest {
-        val handle = manager.createCollectionHandle(
-            HandleMode.ReadWrite,
-            READ_WRITE_HANDLE,
-            QueryPerson,
+        val handle = manager.createHandle(
+            HandleSpec(
+                READ_WRITE_HANDLE,
+                HandleMode.ReadWrite,
+                HandleContainerType.Collection,
+                QueryPerson
+            ),
             STORAGE_KEY
         ) as ReadWriteQueryCollectionHandle<Person, Any>
         val testPerson = Person("test")

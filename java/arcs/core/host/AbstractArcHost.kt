@@ -16,7 +16,10 @@ import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
+import arcs.core.entity.Entity
 import arcs.core.entity.Handle
+import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.ActivationFactory
@@ -355,27 +358,26 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     private suspend fun createHandle(
         arcHostContext: ArcHostContext,
         handleName: String,
-        handleSpec: Plan.HandleConnection,
+        connectionSpec: Plan.HandleConnection,
         holder: HandleHolder
-    ) = when (handleSpec.type) {
-        is SingletonType<*>, is EntityType ->
-            arcHostContext.entityHandleManager.createSingletonHandle(
-                handleSpec.mode,
-                handleName,
-                holder.getEntitySpec(handleName),
-                handleSpec.storageKey,
-                handleSpec.ttl ?: Ttl.Infinite
-            )
-        is CollectionType<*> ->
-            arcHostContext.entityHandleManager.createCollectionHandle(
-                handleSpec.mode,
-                handleName,
-                holder.getEntitySpec(handleName),
-                handleSpec.storageKey,
-                handleSpec.ttl ?: Ttl.Infinite
-            )
-        else -> throw IllegalArgumentException("Unknown type ${handleSpec.type}")
-    }.also { holder.setHandle(handleName, it) }
+    ): Handle {
+        val containerType = when (connectionSpec.type) {
+            is SingletonType<*>, is EntityType -> HandleContainerType.Singleton
+            is CollectionType<*> -> HandleContainerType.Collection
+            else -> throw IllegalArgumentException("Unknown type ${connectionSpec.type}")
+        }
+        val handleSpec = HandleSpec(
+            handleName,
+            connectionSpec.mode,
+            containerType,
+            holder.getEntitySpec(handleName)
+        )
+        return arcHostContext.entityHandleManager.createHandle(
+            handleSpec,
+            connectionSpec.storageKey,
+            connectionSpec.ttl ?: Ttl.Infinite
+        ).also { holder.setHandle(handleName, it) }
+    }
 
     override suspend fun stopArc(partition: Plan.Partition) {
         val arcId = partition.arcId

@@ -13,8 +13,9 @@ package arcs.core.entity
 import arcs.core.storage.StorageProxy
 
 /** Base functionality common to all read/write singleton and collection handles. */
-abstract class BaseHandle(
+abstract class BaseHandle<T : Entity>(
     override val name: String,
+    protected val spec: HandleSpec<T>,
     private val storageProxy: StorageProxy<*, *, *>
 ) : Handle {
     protected var closed = false

@@ -44,10 +44,13 @@ class ReferenceTest {
         DriverAndKeyConfigurator.configure(null)
         SchemaRegistry.register(DummyEntity)
 
-        handle = entityHandleManager.createCollectionHandle(
-            HandleMode.ReadWrite,
-            "testHandle",
-            DummyEntity,
+        handle = entityHandleManager.createHandle(
+            HandleSpec(
+                "testHandle",
+                HandleMode.ReadWrite,
+                HandleContainerType.Collection,
+                DummyEntity
+            ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<DummyEntity>
     }

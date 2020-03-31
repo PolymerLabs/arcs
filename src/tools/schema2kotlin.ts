@@ -88,6 +88,9 @@ export class Schema2Kotlin extends Schema2Base {
 
     if (this.opts.test_harness) {
       imports.push(
+        'import arcs.core.entity.HandleContainerType',
+        'import arcs.core.entity.HandleMode',
+        'import arcs.core.entity.HandleSpec',
         'import arcs.sdk.testing.*',
         'import kotlinx.coroutines.CoroutineScope',
       );
@@ -185,21 +188,21 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
   generateTestHarness(particle: ParticleSpec): string {
     const particleName = particle.name;
     const handleDecls: string[] = [];
-    const handleDescriptors: string[] = [];
+    const handleSpecs: string[] = [];
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const entityType = this.entityTypeName(particle, connection);
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
-      handleDescriptors.push(`HandleDescriptor("${handleName}", ${entityType}, HandleFlavor.${handleConcreteType.toUpperCase()})`);
+      handleSpecs.push(`HandleSpec("${handleName}", HandleMode.ReadWrite, HandleContainerType.${handleConcreteType}, ${entityType})`);
     }
 
     return `
 class ${particleName}TestHarness<P : Abstract${particleName}>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
-    ${handleDescriptors.join(',\n    ')}
+    ${handleSpecs.join(',\n    ')}
 )) {
     ${handleDecls.join('\n    ')}
 }

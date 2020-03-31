@@ -26,6 +26,8 @@ import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
+import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostNotFoundException
@@ -53,18 +55,15 @@ class Allocator private constructor(
     private val hostRegistry: HostRegistry,
     private val collection: ReadWriteCollectionHandle<EntityBase>
 ) {
-
     /** Currently active Arcs and their associated [Plan.Partition]s. */
     private val partitionMap: MutableMap<ArcId, List<Plan.Partition>> = mutableMapOf()
-
-    private var counter = 0
 
     /**
      * Start a new Arc given a [Plan] and return the generated [ArcId].
      */
     suspend fun startArcForPlan(arcName: String, plan: Plan): ArcId {
         if (plan.arcId !== null) {
-            if (!readPartitions(plan.arcId!!.toArcId()).isEmpty()) {
+            if (readPartitions(plan.arcId!!.toArcId()).isNotEmpty()) {
                 return plan.arcId!!.toArcId()
             }
         }
@@ -267,14 +266,18 @@ class Allocator private constructor(
             RamDiskStorageKey("partitions")
         )
 
+        @Suppress("UNCHECKED_CAST")
         suspend fun create(
             hostRegistry: HostRegistry,
             handleManager: EntityHandleManager
         ): Allocator {
-            val collection = handleManager.createCollectionHandle(
-                HandleMode.ReadWrite,
-                "partitions",
-                EntityBaseSpec(SCHEMA),
+            val collection = handleManager.createHandle(
+                HandleSpec(
+                    "partitions",
+                    HandleMode.ReadWrite,
+                    HandleContainerType.Collection,
+                    EntityBaseSpec(SCHEMA)
+                ),
                 STORAGE_KEY
             )
             return Allocator(

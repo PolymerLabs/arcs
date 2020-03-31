@@ -1,6 +1,7 @@
 package arcs.sdk.testing
 
-import arcs.core.data.HandleMode
+import arcs.core.entity.Entity
+import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -8,11 +9,8 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.jvm.util.JvmTime
-import arcs.sdk.EntitySpec
 import arcs.sdk.Handle
 import arcs.sdk.Particle
-import arcs.sdk.testing.BaseTestHarness.HandleFlavor.COLLECTION
-import arcs.sdk.testing.BaseTestHarness.HandleFlavor.SINGLETON
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -54,19 +52,8 @@ import org.junit.runners.model.Statement
  */
 open class BaseTestHarness<P : Particle>(
     private val factory: (CoroutineScope) -> P,
-    private val descriptors: List<HandleDescriptor>
+    private val specs: List<HandleSpec<out Entity>>
 ) : TestRule {
-
-    enum class HandleFlavor {
-        SINGLETON,
-        COLLECTION
-    }
-
-    data class HandleDescriptor(
-        val name: String,
-        val entitySpec: EntitySpec<*>,
-        val flavor: HandleFlavor
-    )
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val scope = TestCoroutineScope()
@@ -94,28 +81,12 @@ open class BaseTestHarness<P : Particle>(
                         hostId = "testHarnessHost",
                         time = JvmTime
                     )
-                    descriptors.forEach { descriptor ->
+                    specs.forEach { spec ->
                         val storageKey = ReferenceModeStorageKey(
-                            backingKey = RamDiskStorageKey("backing_${descriptor.name}"),
-                            storageKey = RamDiskStorageKey("entity_${descriptor.name}")
+                            backingKey = RamDiskStorageKey("backing_${spec.baseName}"),
+                            storageKey = RamDiskStorageKey("entity_${spec.baseName}")
                         )
-
-                        val handle = when (descriptor.flavor) {
-                            SINGLETON -> handleManager.createSingletonHandle(
-                                HandleMode.ReadWrite,
-                                descriptor.name,
-                                descriptor.entitySpec,
-                                storageKey
-                            )
-                            COLLECTION -> handleManager.createCollectionHandle(
-                                HandleMode.ReadWrite,
-                                descriptor.name,
-                                descriptor.entitySpec,
-                                storageKey
-                            )
-                        }
-
-                        handles[descriptor.name] = handle
+                        handles[spec.baseName] = handleManager.createHandle(spec, storageKey)
                     }
                 }
                 statement.evaluate()

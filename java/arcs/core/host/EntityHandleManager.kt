@@ -28,6 +28,8 @@ import arcs.core.entity.EntityDereferencerFactory
 import arcs.core.entity.EntityPreparer
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.Handle
+import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadQueryCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
@@ -61,85 +63,91 @@ class EntityHandleManager(
     private val hostId: String = "nohost",
     private val time: Time,
     private val stores: StoreManager = StoreManager(),
-    private val activationFactory: ActivationFactory? = null
+    private val activationFactory: ActivationFactory? = null,
+    private val idGenerator: Id.Generator = Id.Generator.newSession()
 ) {
     private val singletonStorageProxies = mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
     private val collectionStorageProxies = mutableMapOf<StorageKey, CollectionProxy<RawEntity>>()
     private val dereferencerFactory = EntityDereferencerFactory(stores, activationFactory)
 
-    /**
-     * Creates and returns a new singleton handle for managing an [Entity].
-     *
-     * @property mode indicates whether the handle is allowed to read or write
-     * @property baseName part of the name for the handle
-     * @property idGenerator used to generate unique IDs for newly stored entities.
-     */
-    suspend fun <T : Entity> createSingletonHandle(
-        mode: HandleMode,
-        baseName: String,
-        entitySpec: EntitySpec<T>,
+    suspend fun <T : Entity> createHandle(
+        spec: HandleSpec<T>,
         storageKey: StorageKey,
-        ttl: Ttl = Ttl.Infinite,
-        idGenerator: Id.Generator = Id.Generator.newSession()
-    ): Handle =
-        idGenerator.handleName(baseName).let { name ->
-            SingletonHandle(
-                name = idGenerator.handleName(baseName),
-                entitySpec = entitySpec,
-                storageProxy = singletonStoreProxy(storageKey, entitySpec),
-                entityPreparer = EntityPreparer(name, idGenerator, entitySpec.SCHEMA, ttl, time),
-                dereferencerFactory = dereferencerFactory
+        ttl: Ttl = Ttl.Infinite
+    ): Handle {
+        val handleName = idGenerator.newChildId(
+            idGenerator.newChildId(arcId.toArcId(), hostId),
+            spec.baseName
+        ).toString()
+        val entityPreparer = EntityPreparer<T>(
+            handleName,
+            idGenerator,
+            spec.entitySpec.SCHEMA,
+            ttl,
+            time
+        )
+        return when (spec.containerType) {
+            HandleContainerType.Singleton -> createSingletonHandle(
+                handleName,
+                spec,
+                storageKey,
+                entityPreparer
             )
-        }.let { handle ->
-            return when (mode) {
-                HandleMode.Read -> object : ReadSingletonHandle<T> by handle {}
-                HandleMode.Write -> object : WriteSingletonHandle<T> by handle {}
-                HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by handle {}
+            HandleContainerType.Collection -> createCollectionHandle(
+                handleName,
+                spec,
+                storageKey,
+                entityPreparer
+            )
+        }
+    }
+
+    private suspend fun <T : Entity> createSingletonHandle(
+        handleName: String,
+        spec: HandleSpec<T>,
+        storageKey: StorageKey,
+        entityPreparer: EntityPreparer<T>
+    ): Handle {
+        val singletonHandle = SingletonHandle(
+            name = handleName,
+            spec = spec,
+            storageProxy = singletonStoreProxy(storageKey, spec.entitySpec),
+            entityPreparer = entityPreparer,
+            dereferencerFactory = dereferencerFactory
+        )
+        return when (spec.mode) {
+            HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
+            HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
+            HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by singletonHandle {}
+        }
+    }
+
+    private suspend fun <T : Entity> createCollectionHandle(
+        handleName: String,
+        spec: HandleSpec<T>,
+        storageKey: StorageKey,
+        entityPreparer: EntityPreparer<T>
+    ): Handle {
+        val collectionHandle = CollectionHandle(
+            name = handleName,
+            spec = spec,
+            storageProxy = collectionStoreProxy(storageKey, spec.entitySpec),
+            entityPreparer = entityPreparer,
+            dereferencerFactory = dereferencerFactory
+        )
+        return when (spec.mode) {
+            HandleMode.Read -> when (spec.entitySpec.SCHEMA.query) {
+                null -> object : ReadCollectionHandle<T> by collectionHandle {}
+                else -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
+            }
+            HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}
+            HandleMode.ReadWrite -> when (spec.entitySpec.SCHEMA.query) {
+                null -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
+                else -> object : ReadWriteQueryCollectionHandle<T, Any> by
+                collectionHandle {}
             }
         }
-
-    /**
-     * Creates and returns a new collection handle for a set of [Entity]s.
-     *
-     * @property mode indicates whether the handle is allowed to read or write
-     * @property baseName part of the name for the handle
-     * @property storageKey a [StorageKey]
-     * @property idGenerator used to generate unique IDs for newly stored entities.
-     */
-    suspend fun <T : Entity> createCollectionHandle(
-        mode: HandleMode,
-        baseName: String,
-        entitySpec: EntitySpec<T>,
-        storageKey: StorageKey,
-        ttl: Ttl = Ttl.Infinite,
-        idGenerator: Id.Generator = Id.Generator.newSession()
-    ): Handle =
-        idGenerator.handleName(baseName).let { name ->
-            CollectionHandle(
-                name = idGenerator.handleName(baseName),
-                entitySpec = entitySpec,
-                storageProxy = collectionStoreProxy(storageKey, entitySpec),
-                entityPreparer = EntityPreparer(name, idGenerator, entitySpec.SCHEMA, ttl, time),
-                dereferencerFactory = dereferencerFactory
-            )
-        }.let {
-            when (mode) {
-                HandleMode.Read -> when (entitySpec.SCHEMA.query) {
-                    null -> object : ReadCollectionHandle<T> by it {}
-                    else -> object : ReadQueryCollectionHandle<T, Any> by it {}
-                }
-                HandleMode.Write -> object : WriteCollectionHandle<T> by it {}
-                HandleMode.ReadWrite -> when (entitySpec.SCHEMA.query) {
-                    null -> object : ReadWriteCollectionHandle<T> by it {}
-                    else -> object : ReadWriteQueryCollectionHandle<T, Any> by it {}
-                }
-            }
-        }
-
-    private fun Id.Generator.handleName(baseName: String) = newChildId(
-        newChildId(arcId.toArcId(), hostId),
-        baseName
-    ).toString()
+    }
 
     private suspend fun <T : Entity> singletonStoreProxy(
         storageKey: StorageKey,
