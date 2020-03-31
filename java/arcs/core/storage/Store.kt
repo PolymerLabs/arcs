@@ -12,8 +12,6 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtException
-import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.type.Type
@@ -84,36 +82,18 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     }
 
     companion object {
-        private val DEFAULT_CONSTRUCTORS = mapOf(
-            StorageMode.Direct to DirectStore.CONSTRUCTOR,
-            StorageMode.Backing to BackingStore.CONSTRUCTOR,
-            StorageMode.ReferenceMode to ReferenceModeStore.CONSTRUCTOR
-        )
-
         /**
          * This is a helper method to reduce the space of UNCHECKED_CAST suppression when accessing
          * the [defaultFactory] instance.
          */
-
         private val defaultFactory = object : ActivationFactory {
             override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
                 options: StoreOptions<Data, Op, T>
-            ): ActiveStore<Data, Op, T> {
-                val constructor = CrdtException.requireNotNull(DEFAULT_CONSTRUCTORS[options.mode]) {
-                    "No constructor registered for mode ${options.mode}"
-                }
-
-                val dataClass = when (val type = options.type) {
-                    is CrdtModelType<*, *, *> -> type.crdtModelDataClass
-                    else -> throw CrdtException("Unsupported type for storage: $type")
-                }
-
-                @Suppress("UNCHECKED_CAST")
-                return CrdtException.requireNotNull(
-                    constructor(options, dataClass) as? ActiveStore<Data, Op, T>
-                ) {
-                    "Could not cast constructed store to ActiveStore${constructor.typeParamString}"
-                }
+            ): ActiveStore<Data, Op, T> = when (options.mode) {
+                StorageMode.Direct -> DirectStore.create(options)
+                StorageMode.Backing -> BackingStore(options)
+                StorageMode.ReferenceMode ->
+                    ReferenceModeStore.create(options) as ActiveStore<Data, Op, T>
             }
         }
     }

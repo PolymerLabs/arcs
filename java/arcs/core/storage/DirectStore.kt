@@ -24,7 +24,6 @@ import arcs.core.storage.util.RandomProxyCallbackManager
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
-import kotlin.reflect.KClass
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
@@ -413,40 +412,31 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
          */
         private const val MAX_UPDATE_SPINS = 1000
 
-        suspend inline fun <reified Data : CrdtData, Op : CrdtOperation, T> create(
-            options: StoreOptions<Data, Op, T>,
-            type: CrdtModelType<Data, Op, T>
-        ): DirectStore<Data, Op, T> {
-            val driver = CrdtException.requireNotNull(
-                DriverFactory.getDriver<Data>(options.storageKey, options.type)
-            ) { "No driver exists to support storage key ${options.storageKey}" }
-
-            return DirectStore(options.copy(type = type), type.createCrdtModel(), driver)
-        }
-
         @Suppress("UNCHECKED_CAST")
-        // TODO: generics here are sub-optimal, can we make this constructor generic itself?
-        val CONSTRUCTOR = StoreConstructor<CrdtData, CrdtOperation, Any?> { options, dataClass ->
-            val localModel =
-                requireNotNull(options.type as? CrdtModelType<CrdtData, CrdtOperation, Any?>) {
-                    "Specified type ${options.type} does not implement CrdtModelType"
-                }.createCrdtModel()
-
-            options.model?.let { localModel.merge(it) }
+        suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
+            options: StoreOptions<Data, Op, T>
+        ): DirectStore<Data, Op, T> {
+            val crdtType = requireNotNull(options.type as CrdtModelType<Data, Op, T>) {
+                "Type not supported: ${options.type}"
+            }
 
             val driver =
                 CrdtException.requireNotNull(
                     DriverFactory.getDriver(
                         options.storageKey,
-                        dataClass as KClass<out CrdtData>,
+                        crdtType.crdtModelDataClass,
                         options.type
-                    )
+                    ) as? Driver<Data>
                 ) { "No driver exists to support storage key ${options.storageKey}" }
 
-            return@StoreConstructor DirectStore(
-                options as StoreOptions<CrdtData, CrdtOperation, Any?>,
+            val localModel = crdtType.createCrdtModel().apply {
+                options.model?.let { merge(it) }
+            }
+
+            return DirectStore(
+                options,
                 localModel = localModel,
-                driver = driver as Driver<CrdtData>
+                driver = driver
             ).also { store ->
                 driver.registerReceiver(options.versionToken) { data, version ->
                     store.onReceive(data, version)

@@ -612,14 +612,13 @@ class ReferenceModeStoreTest {
         requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>
 
     private suspend fun createReferenceModeStore(): ReferenceModeStore {
-        return ReferenceModeStore.CONSTRUCTOR(
+        return ReferenceModeStore.create(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
                 CollectionType(EntityType(schema)),
                 StorageMode.ReferenceMode
-            ),
-            CrdtSet.Data::class
-        ) as ReferenceModeStore
+            )
+        )
     }
 
     private fun createPersonEntity(id: ReferenceId, name: String, age: Int): RawEntity = RawEntity(

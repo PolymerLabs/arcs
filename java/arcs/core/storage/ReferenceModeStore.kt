@@ -595,55 +595,50 @@ class ReferenceModeStore private constructor(
 
     companion object {
         @Suppress("UNCHECKED_CAST")
-        val CONSTRUCTOR =
-            StoreConstructor<CrdtData, CrdtOperationAtTime, Referencable> { options, _ ->
-                val refableOptions =
-                    requireNotNull(
-                        /* ktlint-disable max-line-length */
-                        options as? StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
-                        /* ktlint-enable max-line-length */
-                    ) { "ReferenceMode stores only manage singletons/collections of Entities." }
-
-                val (type, containedTypeClass) = requireNotNull(
-                    options.type as? Type.TypeContainer<*>
-                ) { "Type ${options.type} does not implement TypeContainer" }.let {
+        suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
+            options: StoreOptions<Data, Op, T>
+        ): ReferenceModeStore {
+            val refableOptions =
+                requireNotNull(
                     /* ktlint-disable max-line-length */
-                    it to requireNotNull(it.containedType as? CrdtModelType<*, *, *>).crdtModelDataClass
+                    options as? StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
                     /* ktlint-enable max-line-length */
-                }
-                val storageKey = requireNotNull(options.storageKey as? ReferenceModeStorageKey) {
-                    "StorageKey ${options.storageKey} is not a ReferenceModeStorageKey"
-                }
-                val (refType, refTypeDataClass) = if (options.type is CollectionType<*>) {
-                    CollectionType(ReferenceType(type.containedType)) to
-                        CrdtSet.DataImpl::class
-                } else {
-                    SingletonType(ReferenceType(type.containedType)) to
-                        CrdtSingleton.DataImpl::class
-                }
+                ) { "ReferenceMode stores only manage singletons/collections of Entities." }
 
-                val backingStore = BackingStore.CONSTRUCTOR(
-                    StoreOptions(
-                        storageKey = storageKey.backingKey,
-                        type = type.containedType,
-                        mode = StorageMode.Backing,
-                        baseStore = options.baseStore
-                    ),
-                    containedTypeClass
-                ) as BackingStore<CrdtData, CrdtOperation, Any?>
-                val containerStore = DirectStore.CONSTRUCTOR(
-                    StoreOptions(
-                        storageKey = storageKey.storageKey,
-                        type = refType,
-                        baseStore = options.baseStore,
-                        versionToken = options.versionToken
-                    ),
-                    refTypeDataClass
-                ) as DirectStore<CrdtData, CrdtOperation, Any?>
-
-                ReferenceModeStore(refableOptions, backingStore, containerStore).apply {
-                    registerStoreCallbacks()
-                }
+            val (type, containedTypeClass) = requireNotNull(
+                options.type as? Type.TypeContainer<*>
+            ) { "Type ${options.type} does not implement TypeContainer" }.let {
+                /* ktlint-disable max-line-length */
+                it to requireNotNull(it.containedType as? CrdtModelType<*, *, *>).crdtModelDataClass
+                /* ktlint-enable max-line-length */
             }
+            val storageKey = requireNotNull(options.storageKey as? ReferenceModeStorageKey) {
+                "StorageKey ${options.storageKey} is not a ReferenceModeStorageKey"
+            }
+            val refType = if (options.type is CollectionType<*>) {
+                CollectionType(ReferenceType(type.containedType))
+            } else {
+                SingletonType(ReferenceType(type.containedType))
+            }
+
+            val backingStore = BackingStore<CrdtData, CrdtOperation, Any?>(
+                StoreOptions(
+                    storageKey = storageKey.backingKey,
+                    type = type.containedType,
+                    mode = StorageMode.Backing
+                )
+            )
+            val containerStore = DirectStore.create<CrdtData, CrdtOperation, Any?>(
+                StoreOptions(
+                    storageKey = storageKey.storageKey,
+                    type = refType,
+                    versionToken = options.versionToken
+                )
+            )
+
+            return ReferenceModeStore(refableOptions, backingStore, containerStore).apply {
+                registerStoreCallbacks()
+            }
+        }
     }
 }
