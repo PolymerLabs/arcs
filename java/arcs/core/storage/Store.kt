@@ -91,7 +91,6 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
                 options: StoreOptions<Data, Op, T>
             ): ActiveStore<Data, Op, T> = when (options.mode) {
                 StorageMode.Direct -> DirectStore.create(options)
-                StorageMode.Backing -> BackingStore(options)
                 StorageMode.ReferenceMode ->
                     ReferenceModeStore.create(options) as ActiveStore<Data, Op, T>
             }

@@ -76,9 +76,11 @@ import kotlinx.coroutines.Job
 class ReferenceModeStore private constructor(
     options: StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
     /* internal */
-    val backingStore: BackingStore<CrdtData, CrdtOperation, Any?>,
+    val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
-    val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>
+    val backingKey: StorageKey,
+    /* internal */
+    backingType: Type
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     private val log = TaggedLog { "Store($storageKey)" }
 
@@ -126,11 +128,27 @@ class ReferenceModeStore private constructor(
      */
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
+    val backingStore = BackingStore<CrdtData, CrdtOperation, Any?>(
+        storageKey = backingKey,
+        backingType = backingType,
+        callbackFactory = { muxId ->
+            ProxyCallback { message ->
+                receiveQueue.enqueue(
+                    PreEnqueuedFromBackingStore(message.toReferenceModeMessage(), muxId)
+                )
+            }
+        }
+    )
+
     init {
         @Suppress("UNCHECKED_CAST")
         crdtType = requireNotNull(
             type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
         ) { "Provided type must contain CrdtModelType" }.containedType
+
+        containerStore.on(ProxyCallback {
+            receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
+        })
     }
 
     override suspend fun idle() {
@@ -159,11 +177,6 @@ class ReferenceModeStore private constructor(
 
     override fun off(callbackToken: Int) = callbacks.unregister(callbackToken)
 
-    private fun registerStoreCallbacks() {
-        backingStore.on(backingStoreCallback)
-        containerStore.on(containerStoreCallback)
-    }
-
     /*
      * Messages are enqueued onto an object-wide queue and processed in order.
      * Internally, each handler (handleContainerStore, handleBackingStore, handleProxyMessage)
@@ -182,20 +195,6 @@ class ReferenceModeStore private constructor(
         val refModeMessage = message.sanitizeForRefModeStore(type)
         return receiveQueue.enqueue(Message.PreEnqueuedFromStorageProxy(refModeMessage))
     }
-
-    @Suppress("UNCHECKED_CAST")
-    private val backingStoreCallback: ProxyCallback<CrdtData, CrdtOperation, Any?> =
-        MultiplexedProxyCallback { message, muxId ->
-            receiveQueue.enqueue(
-                PreEnqueuedFromBackingStore(message.toReferenceModeMessage(), muxId)
-            )
-        }
-
-    @Suppress("UNCHECKED_CAST")
-    private val containerStoreCallback: ProxyCallback<CrdtData, CrdtOperation, Any?> =
-        ProxyCallback {
-            receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
-        }
 
     /**
      * Handle an update from an upstream StorageProxy.
@@ -621,13 +620,6 @@ class ReferenceModeStore private constructor(
                 SingletonType(ReferenceType(type.containedType))
             }
 
-            val backingStore = BackingStore<CrdtData, CrdtOperation, Any?>(
-                StoreOptions(
-                    storageKey = storageKey.backingKey,
-                    type = type.containedType,
-                    mode = StorageMode.Backing
-                )
-            )
             val containerStore = DirectStore.create<CrdtData, CrdtOperation, Any?>(
                 StoreOptions(
                     storageKey = storageKey.storageKey,
@@ -636,9 +628,12 @@ class ReferenceModeStore private constructor(
                 )
             )
 
-            return ReferenceModeStore(refableOptions, backingStore, containerStore).apply {
-                registerStoreCallbacks()
-            }
+            return ReferenceModeStore(
+                refableOptions,
+                containerStore,
+                storageKey.backingKey,
+                type.containedType
+            )
         }
     }
 }

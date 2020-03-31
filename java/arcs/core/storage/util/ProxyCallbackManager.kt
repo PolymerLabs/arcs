@@ -80,29 +80,6 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         // registration.
         targets.forEach { it(message) }
     }
-
-    /**
-     * Notifies all multiplexed [ProxyCallback]s registered of a [message] for a particular [muxId].
-     *
-     * Optionally: you may specify [exceptTo] to omit sending to a particular callback. (with token
-     * value == [exceptTo])
-     */
-    suspend fun sendMultiplexed(
-        message: ProxyMessage<Data, Op, ConsumerData>,
-        muxId: String,
-        exceptTo: Int? = null
-    ) {
-        val targets = mutex.withLock {
-            if (exceptTo == null) {
-                ArrayList(callbacks.values)
-            } else {
-                ArrayList(callbacks.filter { it.key != exceptTo }.values)
-            }
-        }
-        // Call our targets outside of the mutex so we don't deadlock if a callback leads to another
-        // registration.
-        targets.forEach { it(message, muxId) }
-    }
 }
 
 /**
