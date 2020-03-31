@@ -23,16 +23,20 @@ import org.junit.runners.model.Statement
 /** JUnit [TestRule] which prints wrappers around the log output from each test. */
 class LogRule : TestRule {
     private val taggedLog = TaggedLog { "TEST" }
+    lateinit var loggedMessages: List<String>
 
     override fun apply(base: Statement, desc: Description): Statement = object : Statement() {
         override fun evaluate() {
+            val messages = mutableListOf<String>()
+            loggedMessages = messages
+
             println()
             println("+${"-".repeat(98)}+")
             println("| Logs From ${" ".repeat(87)}|")
             println("|   ${desc.testName.padEnd(94, ' ')} |")
             println("+${"-".repeat(98)}+")
             println()
-            initLogForTest()
+            initLogForTest(messages)
             base.evaluate()
             println()
         }
@@ -45,10 +49,11 @@ class LogRule : TestRule {
 
     companion object {
         /** Initializes [Log] for tests on the JVM. */
-        private fun initLogForTest() {
+        private fun initLogForTest(collectedMessages: MutableList<String>) {
             Log.logIndex.value = 0
             Log.level = Log.Level.Debug
             Log.writer = { level, renderedMessage ->
+                collectedMessages.add(renderedMessage)
                 if (
                     level == Log.Level.Warning ||
                     level == Log.Level.Error ||
