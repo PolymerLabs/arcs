@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
+import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
 import {EntityType, CollectionType} from '../runtime/type.js';
@@ -134,10 +134,19 @@ ${imports.join('\n')}
     return `${particle.name}_${this.upperFirst(connection.name)}`;
   }
 
-  generateParticleClass(particle: ParticleSpec): string {
+  generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {
     const particleName = particle.name;
     const handleDecls: string[] = [];
     const specDecls: string[] = [];
+    const classes: string[] = [];
+    const typeAliases: string[] = []
+
+    nodeGenerators.forEach( (ng) => {
+      //await node.schema.hash(), fields.length)
+      const kotlinGenerator = <KotlinGenerator>ng.generator
+      classes.push(kotlinGenerator.generateClasses(ng.hash, ng.fields));
+      typeAliases.push(kotlinGenerator.generateAliases(`Abstract${particleName}`))
+    })
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
@@ -174,9 +183,11 @@ ${imports.join('\n')}
 
     }
     return `
-
+${typeAliases.join(`\n`)}
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
+
+    ${classes.join(`\n    `)}
 
     ${this.getHandlesClassDecl(particleName, specDecls)} {
         ${handleDecls.join('\n        ')}
@@ -192,7 +203,8 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType = this.entityTypeName(particle, connection);
+      const entityType =`${particleName}.${this.entityTypeName(particle, connection)}`;
+      console.log(`entityType: ${entityType}`)
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
       handleSpecs.push(`HandleSpec("${handleName}", HandleMode.ReadWrite, HandleContainerType.${handleConcreteType}, ${entityType})`);
@@ -365,10 +377,16 @@ ${lines}
     }
   }
 
-  generate(schemaHash: string, fieldCount: number): string {
-    const {name, aliases} = this.node;
+  generate(schemaHash: string, fieldCount: number): string { return ''; }
 
-    const typeDecls = aliases.map(alias => `typealias ${alias} = ${name}`);
+  generateAliases(particleName: string): string {
+    const {name, aliases} = this.node;
+    const typeDecls = aliases.map(alias => `typealias ${alias} = ${particleName}.${name}`);
+    return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
+  }
+
+  generateClasses(schemaHash: string, fieldCount: number): string {
+    const name = this.node.name.slice(this.node.name.indexOf("_"));
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
@@ -472,9 +490,7 @@ ${this.opts.wasm ? `
             return _rtn
         }`}
     }
-}
-
-${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
+}`;
   }
 
   private prefixTypeForRuntime(type: string): string {
