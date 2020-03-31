@@ -59,14 +59,16 @@ class StorageServiceTest {
         // Create a resurrection helper we'll use to collect updated storage keys coming from the
         // ShadowApplication-captured nextStartedService intents.
         val receivedUpdates = mutableListOf<List<StorageKey>>()
-        val resurrectionHelper = ResurrectionHelper(app) { keys: List<StorageKey> ->
+        val receivedIds = mutableListOf<String>()
+        val resurrectionHelper = ResurrectionHelper(app) { id: String, keys: List<StorageKey> ->
             receivedUpdates.add(keys)
+            receivedIds.add(id)
         }
 
         // Setup:
         // Add a resurrection request to the storage service.
         val resurrectionRequestIntent = Intent(app, StorageService::class.java).apply {
-            ResurrectionRequest.createDefault(app, listOf(storeOptions.storageKey))
+            ResurrectionRequest.createDefault(app, listOf(storeOptions.storageKey), "test")
                 .populateRequestIntent(this)
         }
         service.onStartCommand(resurrectionRequestIntent, 0, 0)
@@ -101,6 +103,7 @@ class StorageServiceTest {
         resurrectionHelper.onStartCommand(shadowApp.nextStartedService)
         assertThat(receivedUpdates).hasSize(1)
         assertThat(receivedUpdates[0]).containsExactly(storeOptions.storageKey)
+        assertThat(receivedIds[0]).isEqualTo("test")
     }
 
     private fun lifecycle(
