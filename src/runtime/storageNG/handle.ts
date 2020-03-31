@@ -484,8 +484,6 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
  * A handle on an entity.
  */
 export class EntityHandle<T> extends Handle<CRDTEntityTypeRecord<Identified, Identified>> {
-  muxId: string;
-
   constructor(
     key: string,
     storageProxy: StorageProxy<CRDTEntityTypeRecord<Identified, Identified>>,
@@ -493,11 +491,10 @@ export class EntityHandle<T> extends Handle<CRDTEntityTypeRecord<Identified, Ide
     particle: Particle,
     canRead: boolean,
     canWrite: boolean,
-    muxId: string,
+    public muxId: string,
     name?: string
   ) {
     super(key, storageProxy, idGenerator, particle, canRead, canWrite, name);
-    this.muxId = muxId;
   }
 
   async fetch(): Promise<T> {
@@ -544,7 +541,7 @@ export class EntityHandle<T> extends Handle<CRDTEntityTypeRecord<Identified, Ide
       await this.particle.callOnHandleSync(
         this,
         model == null ? model : this.serializer.deserialize(serializedEntity, this.storageProxy.storageKey),
-        e => this.reportUserExceptionInHost(e, this.particle, 'onHandleSync')
+        e => { this.reportUserExceptionInHost(e, this.particle, 'onHandleSync'); }
       );
     }
   }
