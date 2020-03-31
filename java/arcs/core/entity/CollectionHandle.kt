@@ -56,20 +56,23 @@ class CollectionHandle<T : Entity>(
 
     override suspend fun isEmpty() = fetchAll().isEmpty()
 
-    override suspend fun fetchAll() = adaptValues(storageProxy.getParticleView())
+    override suspend fun fetchAll() = checkPreconditions {
+        adaptValues(storageProxy.getParticleView())
+    }
     // endregion
 
     // region implement QueryCollectionHandle<T, Any>
-    override suspend fun query(args: Any): Set<T> =
+    override suspend fun query(args: Any): Set<T> = checkPreconditions {
         (entitySpec.SCHEMA.query?.let { query ->
             storageProxy.getParticleView().filter {
                 query(it, args)
             }.toSet()
         } ?: emptySet()).let { adaptValues(it) }
+    }
     // endregion
 
     // region implement WriteCollectionHandle<T>
-    override suspend fun store(entity: T) {
+    override suspend fun store(entity: T) = checkPreconditions<Unit> {
         storageProxy.applyOp(
             CrdtSet.Operation.Add(
                 name,
@@ -79,7 +82,7 @@ class CollectionHandle<T : Entity>(
         )
     }
 
-    override suspend fun clear() {
+    override suspend fun clear() = checkPreconditions<Unit> {
         storageProxy.getParticleView().forEach {
             storageProxy.applyOp(
                 CrdtSet.Operation.Remove(
@@ -91,7 +94,7 @@ class CollectionHandle<T : Entity>(
         }
     }
 
-    override suspend fun remove(entity: T) {
+    override suspend fun remove(entity: T) = checkPreconditions<Unit> {
         storageProxy.applyOp(
             CrdtSet.Operation.Remove(
                 name,
