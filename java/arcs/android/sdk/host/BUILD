@@ -7,13 +7,13 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_android_library(
     name = "host",
     srcs = glob(["*.kt"]),
-    idl_parcelables = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/host/parcelables",
         "//java/arcs/android/type",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
+        "//java/arcs/jvm/host",
         "//java/arcs/sdk/android/storage",
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/lifecycle",

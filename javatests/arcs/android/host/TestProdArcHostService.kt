@@ -2,25 +2,24 @@ package arcs.android.host
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
-import arcs.android.sdk.host.AndroidResurrector
-import arcs.core.host.Resurrector
+import arcs.android.host.prod.ProdArcHostService
+import arcs.core.host.ParticleRegistration
 import arcs.core.host.TestingJvmProdHost
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 
 class TestProdArcHostService : ProdArcHostService() {
-    override val arcHost = TestingAndroidProdHost(this, this.lifecycle, resurrector)
+    override val arcHost = TestingAndroidProdHost(this, this.lifecycle)
 
     class TestingAndroidProdHost(
         val context: Context,
         val lifecycle: Lifecycle,
-        androidResurrector: Resurrector
-    ) : TestingJvmProdHost(androidResurrector) {
+        vararg particles: ParticleRegistration
+    ) : TestingJvmProdHost(*particles) {
         override val activationFactory = ServiceStoreFactory(
             context,
             lifecycle,
             connectionFactory = TestConnectionFactory(context)
         )
-        override val resurrector = androidResurrector
     }
 }

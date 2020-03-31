@@ -7,10 +7,9 @@ import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
 import kotlinx.coroutines.CompletableDeferred
 
-open class TestingHost(testingResurrector: Resurrector, vararg particles: ParticleRegistration) :
-    AbstractArcHost(*particles) {
-
-    override val resurrector = testingResurrector
+open class TestingHost(
+    vararg particles: ParticleRegistration
+) : AbstractArcHost(*particles) {
 
     fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 

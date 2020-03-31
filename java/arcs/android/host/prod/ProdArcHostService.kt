@@ -8,13 +8,16 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.android.host
+package arcs.android.host.prod
 
+import android.content.Context
 import android.content.Intent
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
-import arcs.android.sdk.host.AndroidResurrector
+import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.core.host.ArcHost
+import arcs.core.host.ParticleRegistration
+import arcs.core.host.ProdHost
 import arcs.jvm.host.scanForParticles
 
 /**
@@ -24,15 +27,21 @@ import arcs.jvm.host.scanForParticles
  */
 open class ProdArcHostService : LifecycleService() {
 
-    val resurrector = AndroidResurrector(this)
+    class ProdAndroidHost(
+        context: Context,
+        lifecycle: Lifecycle,
+        vararg particles: ParticleRegistration
+    ) : AndroidHost(context, lifecycle, *particles), ProdHost
 
-    // Note: if this isn't lazy, then somehow resurrector is null, even though it shouldn't be
+    /**
+     * This is open for tests to override, but normally isn't necessary.
+     */
     open val arcHost: ArcHost by lazy {
-        AndroidHost(this, this.lifecycle, resurrector, *scanForParticles())
+        ProdAndroidHost(this, this.lifecycle, *scanForParticles())
     }
 
     val arcHostHelper: ArcHostHelper by lazy {
-        ArcHostHelper(this, arcHost, resurrector)
+        ArcHostHelper(this, arcHost)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

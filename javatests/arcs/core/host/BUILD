@@ -76,7 +76,6 @@ arcs_kt_jvm_library(
     srcs = [
         "TestingHost.kt",
         "TestingJvmProdHost.kt",
-        "TestingResurrector.kt",
     ],
     deps = [
         "//java/arcs/core/data",

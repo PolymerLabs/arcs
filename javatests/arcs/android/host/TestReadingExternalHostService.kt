@@ -6,7 +6,6 @@ import arcs.core.host.toRegistration
 class TestReadingExternalHostService : TestExternalArcHostService() {
     override val arcHost = object : TestingAndroidHost(
         this@TestReadingExternalHostService,
-        resurrector,
         ::ReadPerson.toRegistration()
     ) {}
 }

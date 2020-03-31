@@ -4,20 +4,7 @@ import arcs.core.common.Id
 import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.Plan
-import arcs.core.host.ArcHostContext
-import arcs.core.host.ArcState
-import arcs.core.host.HostRegistry
-import arcs.core.host.ParticleNotFoundException
-import arcs.core.host.ParticleState
-import arcs.core.host.PersonPlan
-import arcs.core.host.ReadPerson
-import arcs.core.host.ReadPerson_Person
-import arcs.core.host.Resurrector
-import arcs.core.host.TestingHost
-import arcs.core.host.TestingJvmProdHost
-import arcs.core.host.TestingResurrector
-import arcs.core.host.WritePerson
-import arcs.core.host.toRegistration
+import arcs.core.host.*
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -46,20 +33,19 @@ open class AllocatorTestBase {
     /**
      * Recipe hand translated from 'person.arcs'
      */
-    protected lateinit var allocator: Allocator
+    private lateinit var allocator: Allocator
     private lateinit var hostRegistry: HostRegistry
     private lateinit var writePersonParticle: Plan.Particle
     private lateinit var readPersonParticle: Plan.Particle
 
     protected val personSchema = ReadPerson_Person.SCHEMA
 
-    protected lateinit var readingExternalHost: TestingHost
-    protected lateinit var writingExternalHost: TestingHost
+    private lateinit var readingExternalHost: TestingHost
+    private lateinit var writingExternalHost: TestingHost
     private lateinit var pureHost: TestingJvmProdHost
-    open val resurrector: Resurrector = TestingResurrector()
 
-    private inner class WritingHost : TestingHost(resurrector, ::WritePerson.toRegistration())
-    private inner class ReadingHost : TestingHost(resurrector, ::ReadPerson.toRegistration())
+    private class WritingHost : TestingHost(::WritePerson.toRegistration())
+    private class ReadingHost : TestingHost(::ReadPerson.toRegistration())
 
     /** Return the [ArcHost] that contains [ReadPerson]. */
     open fun readingHost(): TestingHost = ReadingHost()
@@ -68,18 +54,7 @@ open class AllocatorTestBase {
     open fun writingHost(): TestingHost = WritingHost()
 
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-    open fun pureHost() = TestingJvmProdHost(resurrector)
-
-    /** Return the [Resurrector] to be used under test */
-    open fun resurrector() = TestingResurrector()
-
-    open suspend fun triggerResurrection(testingHost: TestingHost, context: ArcHostContext) {
-        testingHost.resurrector.onResurrectedInternal(
-            context.particles.values.flatMap { particle ->
-                particle.planParticle.handles.values.map { handle -> handle.storageKey }
-            }
-        )
-    }
+    open fun pureHost() = TestingJvmProdHost()
 
     open val storageCapability = Capabilities.TiedToRuntime
     open fun runAllocatorTest(
@@ -107,6 +82,7 @@ open class AllocatorTestBase {
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()
         pureHost = pureHost()
+
         hostRegistry = hostRegistry()
         allocator = Allocator.create(hostRegistry, EntityHandleManager(time = FakeTime()))
 
@@ -477,7 +453,7 @@ open class AllocatorTestBase {
         assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
     }
 
-//    @Test
+    @Test
     fun allocator_doesntCreateArcsOnDuplicateStartArc() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
@@ -512,54 +488,5 @@ open class AllocatorTestBase {
 
         assertThat(readingExternalHost.arcHostContext(arcId.toString())).isNull()
         assertThat(writingExternalHost.arcHostContext(arcId.toString())).isNull()
-    }
-
-    @Test
-    fun allocator_canRestartAfterCrashViaResurrection() = runAllocatorTest {
-        val arcId = allocator.startArcForPlan(
-            "readWriteParticle",
-            PersonPlan
-        )
-
-        val readingContext = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
-        )
-        val writingContext = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
-        )
-
-        val pureContext = requireNotNull(
-            pureHost.arcHostContext(arcId.toString())
-        )
-
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
-
-        // This erases the internally held-in-memory-cache ArcHost state simulating a crash
-        readingExternalHost.setup()
-        pureHost.setup()
-        writingExternalHost.setup()
-
-        triggerResurrection(readingExternalHost, readingContext)
-        triggerResurrection(pureHost, pureContext)
-        triggerResurrection(writingExternalHost, writingContext)
-
-        readingExternalHost.waitFor(arcId.toString())
-        pureHost.waitFor(arcId.toString())
-        writingExternalHost.waitFor(arcId.toString())
-
-        val readingContextAfter = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
-        )
-        val writingContextAfter = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
-        )
-
-        val pureContextAfter = requireNotNull(
-            pureHost.arcHostContext(arcId.toString())
-        )
-        assertThat(readingContextAfter.arcState).isEqualTo(ArcState.Running)
-        assertThat(pureContextAfter.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContextAfter.arcState).isEqualTo(ArcState.Running)
     }
 }

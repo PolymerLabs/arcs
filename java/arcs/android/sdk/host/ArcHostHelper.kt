@@ -64,8 +64,7 @@ import kotlinx.coroutines.launch
 class ArcHostHelper(
     private val service: Service,
     private val arcHost: ArcHost,
-    private val resurrector: AndroidResurrector? = null,
-    private val coroutineContext: CoroutineContext = Dispatchers.Unconfined
+    coroutineContext: CoroutineContext = Dispatchers.Unconfined
 ) {
     private val job = Job() + coroutineContext + CoroutineName("ArcHostHelper")
 
@@ -79,7 +78,9 @@ class ArcHostHelper(
 
     @VisibleForTesting
     suspend fun onStartCommandSuspendable(intent: Intent?) {
-        resurrector?.resurrectionHelper?.onStartCommand(intent)
+        if (arcHost is ResurrectableHost) {
+            arcHost.resurrectionHelper.onStartCommand(intent)
+        }
 
         // Ignore other actions
         val action = intent?.action ?: return

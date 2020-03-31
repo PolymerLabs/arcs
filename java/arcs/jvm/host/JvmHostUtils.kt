@@ -34,13 +34,3 @@ fun scanForParticles(host: KClass<out ProdHost> = ProdHost::class): Array<Partic
 
 private fun isParticleForHost(host: KClass<out ProdHost>, particle: Class<out Particle>) =
     host == (particle.getAnnotation(TargetHost::class.java)?.value ?: ProdHost::class)
-
-/**
- * Combine two [Array]s of [ParticleRegistration] into a single array.
- */
-fun combine(
-    scannedParticles: Array<ParticleRegistration>,
-    additionalParticles: Array<out ParticleRegistration>
-): Array<Pair<ParticleIdentifier, suspend () -> Particle>> {
-    return scannedParticles.plus(additionalParticles)
-}
