@@ -96,33 +96,26 @@ class Scheduler(
         }.also { it.invokeOnCompletion { isIdle.value = true } }
     }
 
-    private suspend fun process(): Boolean = suspendCancellableCoroutine { cont ->
+    private suspend fun process(): Boolean {
         val timeoutHandler = { throwable: Throwable ->
             if (throwable is TimeoutCancellationException) {
                 log.error(throwable) { "Scheduled tasks timed out." }
             }
         }
 
-        if (isPaused.value) {
-            cont.resume(false, timeoutHandler)
-            return@suspendCancellableCoroutine
-        }
+        if (isPaused.value) return false
 
         val agenda = agenda.getAndSet(Agenda())
-        if (agenda.isEmpty()) {
-            cont.resume(false, timeoutHandler)
-            return@suspendCancellableCoroutine
-        }
+        if (agenda.isEmpty()) return false
 
         log.debug { "Processing agenda: $agenda" }
 
         // Process agenda
-        for (task in agenda) {
-            task()
-            if (cont.isCancelled) break
+        agenda.forEach { task ->
+            suspendCancellableCoroutine<Unit> { it.resume(task(), timeoutHandler) }
         }
 
-        cont.resume(true, timeoutHandler)
+        return true
     }
 
     private fun Int.hzToMillisPerIteration(): Long = ((1.0 / toDouble()) * 1000L).toLong()

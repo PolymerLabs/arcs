@@ -137,17 +137,28 @@ class SchedulerTest {
             agendaProcessingTimeout = 100
         )
 
+        var firstProcRan = true
+        var secondProcRan = false
+
         scheduler.schedule(
-            TestProcessor {
-                log("Starting to sleep")
-                Thread.sleep(200)
-                log("Done sleeping")
-            }
+            listOf(
+                TestProcessor {
+                    firstProcRan = true
+                    Thread.sleep(200)
+                },
+                TestProcessor {
+                    secondProcRan = true
+                }
+            )
         )
         scheduler.waitForIdle()
 
         assertThat(log.loggedMessages.joinToString("\n"))
             .contains("Scheduled tasks timed out")
+        assertWithMessage("First proc should've run")
+            .that(firstProcRan).isTrue()
+        assertWithMessage("Second proc should've been skipped, because of timeout")
+            .that(secondProcRan).isFalse()
     }
 
     @Test
@@ -218,9 +229,7 @@ class SchedulerTest {
     }
 
     private fun createProcess(index: Int, stateHolder: StateHolder): Scheduler.Task =
-        TestProcessor {
-            stateHolder.calls.add(index to "Processor")
-        }
+        TestProcessor { stateHolder.calls.add(index to "Processor") }
 
     private fun createListener(
         index: Int,
