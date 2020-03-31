@@ -61,8 +61,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private var isSynchronized: Boolean
         by guardedBy(syncMutex, false)
 
-    private val store = storeEndpointProvider.getStorageEndpoint()
-    private val storeListenerId = store.setCallback(ProxyCallback(::onMessage))
+    private val store = storeEndpointProvider.getStorageEndpoint(ProxyCallback(::onMessage))
 
     val storageKey = storeEndpointProvider.storageKey
 
@@ -228,10 +227,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 // all ops from storage applied cleanly so resolve waiting syncs
                 futuresToResolve.forEach { it.complete(value) }
 
-                // Notify our handles of an update if these operations came from elsewhere.
-                if (message.id != storeListenerId) {
-                    notifyUpdate(value)
-                }
+                notifyUpdate(value)
             }
             is ProxyMessage.SyncRequest -> {
                 // storage wants our latest state

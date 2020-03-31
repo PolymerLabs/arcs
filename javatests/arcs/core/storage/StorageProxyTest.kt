@@ -6,6 +6,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import com.google.common.truth.Truth.assertThat
+import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
@@ -28,7 +29,6 @@ import org.junit.runners.JUnit4
 import org.mockito.Mock
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.any
 import org.mockito.MockitoAnnotations
 
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
@@ -47,7 +47,11 @@ class StorageProxyTest {
     fun setup() {
         MockitoAnnotations.initMocks(this)
         fakeStoreEndpoint = StoreEndpointFake()
-        whenever(mockStorageEndpointProvider.getStorageEndpoint()).thenReturn(fakeStoreEndpoint)
+        whenever(
+            mockStorageEndpointProvider.getStorageEndpoint(
+                any<ProxyCallback<CrdtData, CrdtOperationAtTime, String>>()
+            )
+        ).thenReturn(fakeStoreEndpoint)
         whenever(mockCrdtModel.data).thenReturn(mockCrdtData)
         whenever(mockCrdtModel.versionMap).thenReturn(VersionMap())
         whenever(mockCrdtOperation.clock).thenReturn(VersionMap())
