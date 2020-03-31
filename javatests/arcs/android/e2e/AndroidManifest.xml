@@ -7,10 +7,9 @@
   <application
     android:allowBackup="false"
     android:label="Arcs test">
-    <uses-library android:name="android.test.runner"/>
   </application>
 
   <instrumentation
-    android:targetPackage="arcs.android.demo"
+    android:targetPackage="arcs.android.e2e.testapp"
     android:name="androidx.test.runner.AndroidJUnitRunner"/>
 </manifest>
