@@ -19,8 +19,14 @@ export class SchemaNode {
   // is empty. Otherwise, name is of the form 'ParticleInternal#' and aliases lists the
   // 'Particle_Handle' names that need to be type aliased to it.
   name: string;
-  kotlinName: string;
   aliases: string[] = [];
+
+  // We are working to move the Kotlin entity classes to be within a particle class. This
+  // provides a unique namesapce, and thus we can have the entity class named just Handle.
+  // to make this easier, we have the kotlinName and kotlinAliases that use just Handle
+  // as the name.
+  // TODO(heimlich): Update to use schema names for kotlin where possible.
+  kotlinName: string;
   kotlinAliases: string[] = [];
 
   // All schemas that can be sliced to this one.
@@ -76,7 +82,7 @@ export class SchemaGraph {
   private createNodes(schema: Schema, name: string, kotlinName: string) {
     let node = this.nodes.find(n => schema.equals(n.schema));
     if (node) {
-      // We can only have one nosde in the graph per schema. Collect duplicates as aliases.
+      // We can only have one node in the graph per schema. Collect duplicates as aliases.
       node.aliases.push(name);
       node.kotlinAliases.push(kotlinName);
     } else {
