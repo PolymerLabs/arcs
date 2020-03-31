@@ -81,15 +81,7 @@ class Scheduler(
             var shallContinue = true
             while (shallContinue) {
                 val startTime = time.currentTimeMillis
-                shallContinue = withTimeout(agendaProcessingTimeout) {
-                    suspendCancellableCoroutine<Boolean> {
-                        it.resume(process()) { throwable ->
-                            if (throwable is TimeoutCancellationException) {
-                                log.error(throwable) { "Scheduled tasks timed out." }
-                            }
-                        }
-                    }
-                }
+                shallContinue = withTimeout(agendaProcessingTimeout) { process() }
                 val elapsed = time.currentTimeMillis - startTime
 
                 if (shallContinue) {
@@ -104,22 +96,33 @@ class Scheduler(
         }.also { it.invokeOnCompletion { isIdle.value = true } }
     }
 
-    private fun process(): Boolean {
-        if (isPaused.value) return false
+    private suspend fun process(): Boolean = suspendCancellableCoroutine { cont ->
+        val timeoutHandler = { throwable: Throwable ->
+            if (throwable is TimeoutCancellationException) {
+                log.error(throwable) { "Scheduled tasks timed out." }
+            }
+        }
+
+        if (isPaused.value) {
+            cont.resume(false, timeoutHandler)
+            return@suspendCancellableCoroutine
+        }
 
         val agenda = agenda.getAndSet(Agenda())
-        if (agenda.isEmpty()) return false
+        if (agenda.isEmpty()) {
+            cont.resume(false, timeoutHandler)
+            return@suspendCancellableCoroutine
+        }
 
         log.debug { "Processing agenda: $agenda" }
 
         // Process agenda
-        agenda.processors.forEach { it() }
-        agenda.listenersByNamespace.listeners.asSequence()
-            .flatMap { (_, listenersByName) -> listenersByName.listeners.values.asSequence() }
-            .flatten()
-            .forEach { it() }
+        for (task in agenda) {
+            task()
+            if (cont.isCancelled) break
+        }
 
-        return true
+        cont.resume(true, timeoutHandler)
     }
 
     private fun Int.hzToMillisPerIteration(): Long = ((1.0 / toDouble()) * 1000L).toLong()
@@ -178,7 +181,7 @@ class Scheduler(
          * Scheduled [Task.Listener]s, collated by [Task.Listener.namespace].
          */
         val listenersByNamespace: ListenersByNamespace = ListenersByNamespace()
-    ) {
+    ) : Iterable<Task> {
         fun addTasks(tasks: Iterable<Task>): Agenda =
             tasks.fold(this) { agenda, task -> agenda.addTask(task) }
 
@@ -195,6 +198,8 @@ class Scheduler(
 
         fun isEmpty(): Boolean =
             processors.isEmpty() && listenersByNamespace.isEmpty()
+
+        override fun iterator(): Iterator<Task> = (processors + listenersByNamespace).iterator()
     }
 
     /**
@@ -202,7 +207,7 @@ class Scheduler(
      */
     private data class ListenersByNamespace(
         val listeners: Map<String, ListenersByName> = emptyMap()
-    ) {
+    ) : Iterable<Task> {
         fun addListener(listener: Task.Listener): ListenersByNamespace {
             val listeners = (listeners[listener.namespace] ?: ListenersByName())
                 .addListener(listener)
@@ -211,6 +216,8 @@ class Scheduler(
         }
 
         fun isEmpty(): Boolean = listeners.isEmpty()
+
+        override fun iterator(): Iterator<Task> = listeners.values.flatten().iterator()
     }
 
     /**
@@ -218,11 +225,13 @@ class Scheduler(
      */
     private data class ListenersByName(
         val listeners: Map<String, List<Task.Listener>> = emptyMap()
-    ) {
+    ) : Iterable<Task> {
         fun addListener(listener: Task.Listener): ListenersByName {
             val resultList = (listeners[listener.name] ?: emptyList()) + listener
             return copy(listeners = listeners + (listener.name to resultList))
         }
+
+        override fun iterator(): Iterator<Task> = listeners.values.flatten().iterator()
     }
 
     companion object {
