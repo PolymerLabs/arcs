@@ -33,7 +33,13 @@ sealed class TypeConstraintNode {
     }
 }
 
-/** A type constraint. The order of the nodes do not matter. i.e., (a, b) is same as (b, a). */
+/**
+ * Represents a type constraint, which captures the fact that the underlying entities,
+ * [HandleConnectionSpec] and [Recipe.Handle] should have the same type.
+ *
+ * The order of the nodes do not matter. i.e., (a, b) is same as (b, a). The type constraints
+ * will be used in the type inference for [Recipe] instances.
+*/
 data class TypeConstraint(val lhs: TypeConstraintNode, val rhs: TypeConstraintNode) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -49,11 +55,16 @@ data class TypeConstraint(val lhs: TypeConstraintNode, val rhs: TypeConstraintNo
     override fun hashCode(): Int = 31 * (lhs.hashCode() + rhs.hashCode())
 }
 
-/** Returns the type constraints induced by the connections and type variables in the particle. */
+/**
+ * Returns the type constraints implied by the connections and type variables in the [Particle].
+ *
+ * For every [Recipe.Particle.HandleConnection] (say `connection`) in [Particle], a type constraint
+ * `(connection.spec, connection.handle)` is added. Further, [HandleConnectionSpec] and [Handle]
+ * entities with [TypeVariable] type are grouped by their type variable name, and for each such
+ * group `e0`, `e1`, `e2, ..., `en`, the constraints `(e0, e1)`, `(e1, e2)`, ... are added.
+*/
 fun Particle.getTypeConstraints(): List<TypeConstraint> {
     var typeVariableNodes = mutableMapOf<String, MutableSet<TypeConstraintNode>>()
-    // Get the constraints induced by the handle connections in the particle. Also, group the
-    // type constraint nodes by the name of the type variable in [typeVariableNodes].
     val connectionConstraints = handleConnections.map { handleConnection ->
         val specNode = TypeConstraintNode.HandleConnection(spec, handleConnection.spec)
         val handleNode = TypeConstraintNode.Handle(handleConnection.handle)
@@ -69,8 +80,6 @@ fun Particle.getTypeConstraints(): List<TypeConstraint> {
         }
         TypeConstraint(specNode, handleNode)
     }
-    // Collect the constraints induced by the type variables. If the list of nodes associated with
-    // a type variable is [a, b, c], we generate the following constraints: a ~ b, b ~ c
     val typeVariableConstraints = typeVariableNodes.flatMap {
         it.value.zipWithNext { a, b -> TypeConstraint(a, b) }
     }
