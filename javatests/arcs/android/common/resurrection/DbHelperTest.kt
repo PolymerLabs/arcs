@@ -29,7 +29,9 @@ class DbHelperTest {
         ComponentName("a", "A"),
         ResurrectionRequest.ComponentType.Service,
         ResurrectionRequest.ACTION_RESURRECT,
-        null
+        null,
+        emptyList(),
+        "requestA"
     )
     private val requestB = ResurrectionRequest(
         ComponentName("b", "B"),
@@ -41,7 +43,8 @@ class DbHelperTest {
         },
         listOf(
             RamDiskStorageKey("bThing")
-        )
+        ),
+        "requestB"
     )
     private val requestC = ResurrectionRequest(
         ComponentName("c", "C"),
@@ -52,7 +55,8 @@ class DbHelperTest {
             RamDiskStorageKey("bThing"),
             RamDiskStorageKey("cThing"),
             RamDiskStorageKey("somethingElse")
-        )
+        ),
+        "requestC"
     )
 
     @Before
@@ -83,7 +87,7 @@ class DbHelperTest {
         dbHelper.registerRequest(requestB)
         dbHelper.registerRequest(requestC)
 
-        dbHelper.unregisterRequest(requestB.componentName)
+        dbHelper.unregisterRequest(requestB.componentName, "requestB")
 
         assertThat(dbHelper.getRegistrations()).containsExactly(requestA, requestC)
     }

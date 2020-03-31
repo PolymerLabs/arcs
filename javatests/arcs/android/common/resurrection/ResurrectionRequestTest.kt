@@ -31,7 +31,7 @@ class ResurrectionRequestTest {
 
     @Test
     fun createDefault() {
-        val request = ResurrectionRequest.createDefault(activity.activity, emptyList())
+        val request = ResurrectionRequest.createDefault(activity.activity, emptyList(), "test")
 
         assertThat(request.componentName).isEqualTo(activity.activity.componentName)
         assertThat(request.componentType).isEqualTo(ResurrectionRequest.ComponentType.Activity)
@@ -83,7 +83,7 @@ class ResurrectionRequestTest {
             RamDiskStorageKey("blah"),
             RamDiskStorageKey("bleh")
         )
-        val request = ResurrectionRequest.createDefault(activity.activity, keys)
+        val request = ResurrectionRequest.createDefault(activity.activity, keys, "test")
         val intent = Intent().also(request::populateRequestIntent)
         val actual = ResurrectionRequest.createFromIntent(intent)
 
@@ -171,7 +171,7 @@ class ResurrectionRequestTest {
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_PACKAGE_NAME, "com.google.test")
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_CLASS_NAME, "MyService")
         }
-        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent)).isNull()
+        assertThat(ResurrectionRequest.unregisterRequestFromUnrequestIntent(intent)).isNull()
     }
 
     @Test
@@ -179,7 +179,7 @@ class ResurrectionRequestTest {
         val intent = Intent().apply {
             action = ResurrectionRequest.ACTION_REQUEST_NO_RESURRECTION
         }
-        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent)).isNull()
+        assertThat(ResurrectionRequest.unregisterRequestFromUnrequestIntent(intent)).isNull()
     }
 
     @Test
@@ -188,7 +188,7 @@ class ResurrectionRequestTest {
             action = ResurrectionRequest.ACTION_REQUEST_NO_RESURRECTION
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_CLASS_NAME, "MyService")
         }
-        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent)).isNull()
+        assertThat(ResurrectionRequest.unregisterRequestFromUnrequestIntent(intent)).isNull()
     }
 
     @Test
@@ -197,7 +197,7 @@ class ResurrectionRequestTest {
             action = ResurrectionRequest.ACTION_REQUEST_NO_RESURRECTION
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_PACKAGE_NAME, "com.google.test")
         }
-        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent)).isNull()
+        assertThat(ResurrectionRequest.unregisterRequestFromUnrequestIntent(intent)).isNull()
     }
 
     @Test
@@ -207,17 +207,17 @@ class ResurrectionRequestTest {
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_PACKAGE_NAME, "com.google.test")
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_CLASS_NAME, "MyService")
         }
-        assertThat(ResurrectionRequest.componentNameFromUnrequestIntent(intent))
+        assertThat(ResurrectionRequest.unregisterRequestFromUnrequestIntent(intent))
             .isEqualTo(ComponentName("com.google.test", "MyService"))
     }
 
     @Test
     fun populateRequestIntent() {
-        val request = ResurrectionRequest.createDefault(activity.activity, emptyList())
+        val request = ResurrectionRequest.createDefault(activity.activity, emptyList(), "test")
         val intent = Intent()
         request.populateUnrequestIntent(intent)
 
-        val componentName = ResurrectionRequest.componentNameFromUnrequestIntent(intent)
+        val componentName = ResurrectionRequest.unregisterRequestFromUnrequestIntent(intent)
 
         assertThat(componentName).isEqualTo(request.componentName)
     }

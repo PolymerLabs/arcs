@@ -37,7 +37,12 @@ data class ResurrectionRequest(
      * If empty, the client requests resurrection for *any* change to *any* [StorageKey]-identified
      * data.
      */
-    val notifyOn: List<StorageKey> = emptyList()
+    val notifyOn: List<StorageKey> = emptyList(),
+    /**
+     * Used to associate [notifierId] with a set of [StorageKeys] and is sent back to listeners
+     * on resurrection along with the keys.
+     */
+    val notifierId: String
 ) {
     /**
      * Populates an [intent] with actions/extras needed to make a request to the
@@ -55,6 +60,7 @@ data class ResurrectionRequest(
                 EXTRA_REGISTRATION_NOTIFIERS,
                 ArrayList(notifyOn.map(StorageKey::toString))
             )
+            putExtra(EXTRA_REGISTRATION_NOTIFIER_ID, notifierId)
         }
     }
 
@@ -66,6 +72,7 @@ data class ResurrectionRequest(
             action = ACTION_REQUEST_NO_RESURRECTION
             putExtra(EXTRA_REGISTRATION_PACKAGE_NAME, componentName.packageName)
             putExtra(EXTRA_REGISTRATION_CLASS_NAME, componentName.className)
+            putExtra(EXTRA_REGISTRATION_NOTIFIER_ID, notifierId)
         }
     }
 
@@ -103,7 +110,7 @@ data class ResurrectionRequest(
         "ResurrectionRequest(" +
             "componentName=$componentName, componentType=$componentType, " +
             "intentAction=$intentAction, intentExtras=${intentExtras?.keySet()?.toSet()}, " +
-            "notifyOn=$notifyOn)"
+            "notifyOn=$notifyOn notifierId=$notifierId)"
 
     /**
      * Type of client requesting resurrection.
@@ -114,6 +121,8 @@ data class ResurrectionRequest(
         Service,
         Activity,
     }
+
+    data class UnregisterRequest(val componentName: ComponentName, val notifierId: String)
 
     companion object {
         const val ACTION_RESURRECT = "arcs.android.common.resurrection.TIME_TO_WAKEUP"
@@ -126,6 +135,7 @@ data class ResurrectionRequest(
         const val EXTRA_REGISTRATION_COMPONENT_TYPE = "registration_intent_component_type"
         const val EXTRA_REGISTRATION_ACTION = "registration_intent_action"
         const val EXTRA_REGISTRATION_EXTRAS = "registration_intent_extras"
+        const val EXTRA_REGISTRATION_NOTIFIER_ID = "registration_notifier_id"
         const val EXTRA_REGISTRATION_NOTIFIERS = "registration_notifiers"
 
         /**
@@ -134,7 +144,8 @@ data class ResurrectionRequest(
          */
         fun createDefault(
             context: Context,
-            resurrectOn: List<StorageKey>
+            resurrectOn: List<StorageKey>,
+            notifierId: String
         ): ResurrectionRequest {
             return ResurrectionRequest(
                 ComponentName(context, context::class.java),
@@ -145,7 +156,8 @@ data class ResurrectionRequest(
                 },
                 ACTION_RESURRECT,
                 null,
-                resurrectOn
+                resurrectOn,
+                notifierId
             )
         }
 
@@ -164,6 +176,7 @@ data class ResurrectionRequest(
                 ?: return null
             val notifiers = extras.getStringArrayList(EXTRA_REGISTRATION_NOTIFIERS)
                 ?.map { StorageKeyParser.parse(it) } ?: emptyList()
+            val notifierId = extras.getString(EXTRA_REGISTRATION_NOTIFIER_ID) ?: return null
 
             val componentType = try {
                 ComponentType.valueOf(componentTypeName)
@@ -174,7 +187,8 @@ data class ResurrectionRequest(
                 componentType,
                 extras.getString(EXTRA_REGISTRATION_ACTION),
                 extras.getParcelable(EXTRA_REGISTRATION_EXTRAS),
-                notifiers
+                notifiers,
+                notifierId
             )
         }
 
@@ -184,13 +198,14 @@ data class ResurrectionRequest(
          * unsubscribe.
          */
         @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-        fun componentNameFromUnrequestIntent(intent: Intent?): ComponentName? {
+        fun unregisterRequestFromUnrequestIntent(intent: Intent?): UnregisterRequest? {
             if (intent?.action?.startsWith(ACTION_REQUEST_NO_RESURRECTION) != true) return null
             val extras = intent.extras ?: return null
             val packageName = extras.getString(EXTRA_REGISTRATION_PACKAGE_NAME) ?: return null
             val className = extras.getString(EXTRA_REGISTRATION_CLASS_NAME) ?: return null
+            val notifierId = extras.getString(EXTRA_REGISTRATION_NOTIFIER_ID) ?: return null
 
-            return ComponentName(packageName, className)
+            return UnregisterRequest(ComponentName(packageName, className), notifierId)
         }
     }
 }

@@ -59,6 +59,7 @@ class DbHelper(
                 put("component_package", request.componentName.packageName)
                 put("component_class", request.componentName.className)
                 put("component_type", request.componentType.name)
+                put("notifier_id", request.notifierId)
                 put("intent_action", request.intentAction)
                 val extrasBlob = if (request.intentExtras != null) {
                     with(Parcel.obtain()) {
@@ -77,10 +78,11 @@ class DbHelper(
 
         delete(
             "requested_notifiers",
-            "component_package = ? AND component_class = ?",
+            "component_package = ? AND component_class = ? AND notifier_id = ?",
             arrayOf(
                 request.componentName.packageName,
-                request.componentName.className
+                request.componentName.className,
+                request.notifierId
             )
         )
 
@@ -94,27 +96,34 @@ class DbHelper(
                 "component_class",
                 request.componentName.className
             )
+            notifierValues.put(
+                "notifier_id",
+                request.notifierId
+            )
             notifierValues.put("notification_key", it.toString())
             insert("requested_notifiers", null, notifierValues)
         }
     }
 
     /** Unregisters a [component] for resurrection. */
-    fun unregisterRequest(component: ComponentName) = writableDatabase.transaction {
-        val componentArgs = arrayOf(component.packageName, component.className)
+    fun unregisterRequest(
+        component: ComponentName,
+        notifierId: String
+    ) = writableDatabase.transaction {
+        val deletionArgs = arrayOf(component.packageName, component.className, notifierId)
         execSQL(
             """
                 DELETE FROM requested_notifiers 
-                WHERE component_package = ? AND component_class = ?
+                WHERE component_package = ? AND component_class = ? AND notifier_id = ?
             """,
-            componentArgs
+            deletionArgs
         )
         execSQL(
             """
                 DELETE FROM resurrection_requests
-                WHERE component_package = ? AND component_class = ?
+                WHERE component_package = ? AND component_class = ? AND notifier_id = ?
             """,
-            componentArgs
+            deletionArgs
         )
     }
 
@@ -122,22 +131,25 @@ class DbHelper(
      * Gets all registered [ResurrectionRequest]s from the database.
      */
     fun getRegistrations(): List<ResurrectionRequest> {
-        val notifiersByComponentName = mutableMapOf<ComponentName, MutableList<StorageKey>>()
+        val notifiersByComponentName =
+            mutableMapOf<Pair<ComponentName, String>, MutableList<StorageKey>>()
         return readableDatabase.transaction {
             rawQuery(
                 """
                     SELECT 
-                        component_package, component_class, notification_key 
+                        component_package, component_class, notification_key, notifier_id 
                     FROM requested_notifiers
                 """.trimIndent(),
                 null
             ).forEach {
                 val componentName = ComponentName(it.getString(0), it.getString(1))
                 val key = it.getString(2)
+                val notifierId = it.getString(3)
 
-                val notifiers = notifiersByComponentName[componentName] ?: mutableListOf()
+                val notifiers =
+                    notifiersByComponentName[componentName to notifierId] ?: mutableListOf()
                 notifiers.add(StorageKeyParser.parse(key))
-                notifiersByComponentName[componentName] = notifiers
+                notifiersByComponentName[componentName to notifierId] = notifiers
             }
 
             rawQuery(
@@ -147,7 +159,8 @@ class DbHelper(
                         component_class, 
                         component_type, 
                         intent_action, 
-                        intent_extras 
+                        intent_extras,
+                        notifier_id
                     FROM resurrection_requests
                 """.trimIndent(),
                 null
@@ -163,13 +176,15 @@ class DbHelper(
                         readTypedObject(PersistableBundle.CREATOR)
                     }
                 }
+                val notifierId = it.getString(5)
 
                 ResurrectionRequest(
                     componentName,
                     type,
                     action,
                     extras?.deepCopy(),
-                    notifiersByComponentName[componentName] ?: emptyList()
+                    notifiersByComponentName[componentName to notifierId] ?: emptyList(),
+                    notifierId
                 )
             }
         }
@@ -193,23 +208,26 @@ class DbHelper(
                     component_package TEXT NOT NULL,
                     component_class TEXT NOT NULL,
                     component_type TEXT NOT NULL,
+                    notifier_id TEXT NOT NULL,
                     intent_action TEXT,
                     intent_extras BLOB,
-                    PRIMARY KEY (component_package, component_class)
+                    PRIMARY KEY (component_package, component_class, notifier_id)
                 )
             """.trimIndent(),
             """
                 CREATE TABLE requested_notifiers (
                     component_package TEXT NOT NULL,
                     component_class TEXT NOT NULL,
+                    notifier_id TEXT NOT NULL,
                     notification_key TEXT NOT NULL
                 )
             """.trimIndent(),
             """
-                CREATE INDEX notifiers_by_component 
+                CREATE INDEX notifiers_by_component_and_id
                 ON requested_notifiers (
                     component_package, 
-                    component_class
+                    component_class,
+                    notifier_id
                 )
             """.trimIndent()
         )
