@@ -51,6 +51,8 @@ KOTLINPOET_VERSION = "1.0.1"
 
 CLIKT_VERSION = "2.2.0"
 
+UI_AUTOMATOR_VERSION = "2.2.0"
+
 maven_install(
     artifacts = [
         "androidx.appcompat:appcompat:1.1.0",
@@ -67,6 +69,7 @@ maven_install(
         "androidx.test:monitor:" + ANDROIDX_TEST_VERSION,
         "androidx.test:runner:" + ANDROIDX_TEST_VERSION,
         "androidx.test:rules:" + ANDROIDX_TEST_VERSION,
+        "androidx.test.uiautomator:uiautomator:" + UI_AUTOMATOR_VERSION,
         "com.google.flogger:flogger:0.4",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.flogger:flogger-system-backend:0.4",

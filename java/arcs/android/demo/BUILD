@@ -49,8 +49,6 @@ arcs_kt_android_library(
         "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/jvm/util",
-        "//java/arcs/sdk/android/dev/api:api-android",
-        "//java/arcs/sdk/android/dev/service",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/storage",
