@@ -50,7 +50,6 @@ class SchedulerTest {
         scheduler.schedule(processors + listeners)
         scheduler.waitForIdle()
 
-
         assertThat(scheduler.launches.value).isEqualTo(1)
         assertThat(scheduler.loops.value).isEqualTo(1)
 
@@ -134,7 +133,7 @@ class SchedulerTest {
         val scheduler = Scheduler(
             JvmTime,
             coroutineContext + singleThreadDispatcher,
-            agendaProcessingTimeout = 100
+            agendaProcessingTimeoutMs = 100
         )
 
         var firstProcRan = true

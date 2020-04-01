@@ -25,12 +25,13 @@ import kotlinx.coroutines.withTimeout
 /**
  * The [Scheduler] is responsible for scheduling the execution of a batch of [Task]s (known as an
  * [Agenda]), at a defined maximum [scheduleRateHz], where each agenda is limited to running within
- * the specified [agendaProcessingTimeout] window.
+ * the specified [agendaProcessingTimeoutMs] window.
  */
+@Suppress("EXPERIMENTAL_API_USAGE")
 class Scheduler(
     private val time: Time,
     context: CoroutineContext,
-    private val agendaProcessingTimeout: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT,
+    private val agendaProcessingTimeoutMs: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS,
     private val scheduleRateHz: Int = DEFAULT_SCHEDULE_RATE_HZ
 ) {
     private val log = TaggedLog { "Scheduler(${hashCode()})" }
@@ -81,7 +82,7 @@ class Scheduler(
             var shallContinue = true
             while (shallContinue) {
                 val startTime = time.currentTimeMillis
-                shallContinue = withTimeout(agendaProcessingTimeout) { process() }
+                shallContinue = withTimeout(agendaProcessingTimeoutMs) { executeAgenda() }
                 val elapsed = time.currentTimeMillis - startTime
 
                 if (shallContinue) {
@@ -96,16 +97,24 @@ class Scheduler(
         }.also { it.invokeOnCompletion { isIdle.value = true } }
     }
 
-    private suspend fun process(): Boolean {
+    /**
+     * If the [Scheduler] isn't paused, executes the current [Agenda] and returns whether or not
+     * another execution iteration is worth trying when complete.
+     */
+    private suspend fun executeAgenda(): Boolean {
         val timeoutHandler = { throwable: Throwable ->
             if (throwable is TimeoutCancellationException) {
                 log.error(throwable) { "Scheduled tasks timed out." }
             }
         }
 
+        // We're paused, so no need to do anything - and we should return false so the processing
+        // job finishes without looping.
         if (isPaused.value) return false
 
         val agenda = agenda.getAndSet(Agenda())
+
+        // There's nothing to do - return false so the processing job finishes without looping.
         if (agenda.isEmpty()) return false
 
         log.debug { "Processing agenda: $agenda" }
@@ -229,13 +238,14 @@ class Scheduler(
 
     companion object {
         /**
-         * The default maximum duration each iteration of scheduled tasks' execution is allowed to
-         * take.
+         * The default maximum duration, in milliseconds, each iteration of scheduled tasks'
+         * execution is allowed to take.
          */
-        const val DEFAULT_AGENDA_PROCESSING_TIMEOUT = 5000L
+        const val DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS = 5000L
 
         /**
-         * The default maximum rate at which iterations of agenda processing are allowed to operate.
+         * The default maximum rate at which iterations of agenda processing are allowed to operate
+         * per second.
          */
         const val DEFAULT_SCHEDULE_RATE_HZ = 60
     }
