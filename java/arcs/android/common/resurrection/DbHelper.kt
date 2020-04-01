@@ -192,7 +192,11 @@ class DbHelper(
                 val notifierId = it.getString(5)
 
                 ResurrectionRequest(
-                    componentName, type, action, extras?.deepCopy(), notifierId,
+                    componentName,
+                    type,
+                    action,
+                    extras?.deepCopy(),
+                    notifierId,
                     notifiersByComponentName[RequestedNotifier(notifierId, componentName)]
                         ?: emptyList()
                 )

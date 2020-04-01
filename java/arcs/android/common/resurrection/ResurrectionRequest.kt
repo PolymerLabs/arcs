@@ -153,11 +153,16 @@ data class ResurrectionRequest(
             notifierId: String
         ): ResurrectionRequest {
             return ResurrectionRequest(
-                ComponentName(context, context::class.java), when (context) {
+                ComponentName(context, context::class.java),
+                when (context) {
                     is Service -> ComponentType.Service
                     is Activity -> ComponentType.Activity
                     else -> ComponentType.Service
-                }, ACTION_RESURRECT, null, notifierId, resurrectOn
+                },
+                ACTION_RESURRECT,
+                null,
+                notifierId,
+                resurrectOn
             )
         }
 
@@ -183,9 +188,12 @@ data class ResurrectionRequest(
             } catch (e: IllegalArgumentException) { return null }
 
             return ResurrectionRequest(
-                ComponentName(packageName, className), componentType,
+                ComponentName(packageName, className),
+                componentType,
                 extras.getString(EXTRA_REGISTRATION_ACTION),
-                extras.getParcelable(EXTRA_REGISTRATION_EXTRAS), notifierId, notifiers
+                extras.getParcelable(EXTRA_REGISTRATION_EXTRAS),
+                notifierId,
+                notifiers
             )
         }
 
