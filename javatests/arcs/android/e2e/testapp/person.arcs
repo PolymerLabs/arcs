@@ -1,0 +1,23 @@
+meta
+  namespace: arcs.android.e2e.testapp
+
+schema Person
+  name: Text
+
+particle ReadPerson in 'arcs.android.e2e.testapp.TestService.ReadPerson'
+  person: reads Person {name}
+
+particle WritePerson in 'arcs.android.e2e.testapp.TestService.WritePerson'
+  person: writes Person {name}
+
+@trigger
+  launch startup
+  arcId personArc
+recipe PersonRecipe
+  recipePerson: create
+
+  WritePerson
+    person: writes recipePerson
+
+  ReadPerson
+    person: reads recipePerson

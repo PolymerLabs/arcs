@@ -19,6 +19,12 @@ set -x
 
 ./tools/sigh webpack
 ./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/... //src/... //particles/...
+
+# Build apks used by Firebase Test Labs and copy them to /workspace which
+# can be used be next Cloud Build step.
+./tools/bazelisk ${BAZELRC_OPTS} build //javatests/arcs/android/e2e/testapp //javatests/arcs/android/e2e
+cp ./bazel-bin/javatests/arcs/android/e2e/testapp/testapp.apk /workspace
+cp ./bazel-bin/javatests/arcs/android/e2e/e2e.apk /workspace
 ./tools/sigh testShells
 ./tools/sigh lint
 ./tools/sigh test --all

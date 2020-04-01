@@ -24,7 +24,8 @@ arcs_kt_plan(
 )
 
 arcs_kt_android_library(
-    name = "demo_lib",
+    name = "test_app_lib",
+    testonly = 1,
     srcs = glob(["*.kt"]),
     manifest = ":AndroidManifest.xml",
     resource_files = glob(["res/**/*"]),
@@ -60,12 +61,10 @@ arcs_kt_android_library(
     ],
 )
 
-# Use this cmd to install:
-# bazel mobile-install java/arcs/android/demo
 android_binary(
-    name = "demo",
+    name = "testapp",
     incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
-    deps = [":demo_lib"],
+    deps = [":test_app_lib"],
 )
