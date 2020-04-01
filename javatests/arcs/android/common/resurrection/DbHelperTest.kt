@@ -26,29 +26,21 @@ import org.junit.runner.RunWith
 class DbHelperTest {
     private lateinit var dbHelper: DbHelper
     private val requestA = ResurrectionRequest(
-        ComponentName("a", "A"),
-        ResurrectionRequest.ComponentType.Service,
-        ResurrectionRequest.ACTION_RESURRECT,
-        null
+        ComponentName("a", "A"), ResurrectionRequest.ComponentType.Service,
+        ResurrectionRequest.ACTION_RESURRECT, null, "requestA", emptyList()
     )
     private val requestB = ResurrectionRequest(
-        ComponentName("b", "B"),
-        ResurrectionRequest.ComponentType.Activity,
-        "StartMeUp",
+        ComponentName("b", "B"), ResurrectionRequest.ComponentType.Activity, "StartMeUp",
         PersistableBundle().apply {
             putBoolean("foo", true)
             putInt("bar", 1)
-        },
-        listOf(
+        }, "requestB", listOf(
             RamDiskStorageKey("bThing")
         )
     )
     private val requestC = ResurrectionRequest(
-        ComponentName("c", "C"),
-        ResurrectionRequest.ComponentType.Activity,
-        ResurrectionRequest.ACTION_RESURRECT,
-        PersistableBundle.EMPTY,
-        listOf(
+        ComponentName("c", "C"), ResurrectionRequest.ComponentType.Activity,
+        ResurrectionRequest.ACTION_RESURRECT, PersistableBundle.EMPTY, "requestC", listOf(
             RamDiskStorageKey("bThing"),
             RamDiskStorageKey("cThing"),
             RamDiskStorageKey("somethingElse")
@@ -83,7 +75,7 @@ class DbHelperTest {
         dbHelper.registerRequest(requestB)
         dbHelper.registerRequest(requestC)
 
-        dbHelper.unregisterRequest(requestB.componentName)
+        dbHelper.unregisterRequest(requestB.componentName, "requestB")
 
         assertThat(dbHelper.getRegistrations()).containsExactly(requestA, requestC)
     }

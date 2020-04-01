@@ -48,7 +48,12 @@ class DbHelper(
         db.transaction { CREATE.forEach(db::execSQL) }
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = db.transaction {
+        val upgradeRange = (oldVersion + 1)..newVersion
+        if (2 in upgradeRange) {
+            VERSION_2_MIGRATION.forEach(db::execSQL)
+        }
+    }
 
     /**
      * Stores a [ResurrectionRequest] in the database.
@@ -59,6 +64,7 @@ class DbHelper(
                 put("component_package", request.componentName.packageName)
                 put("component_class", request.componentName.className)
                 put("component_type", request.componentType.name)
+                put("target_id", request.targetId)
                 put("intent_action", request.intentAction)
                 val extrasBlob = if (request.intentExtras != null) {
                     with(Parcel.obtain()) {
@@ -77,10 +83,11 @@ class DbHelper(
 
         delete(
             "requested_notifiers",
-            "component_package = ? AND component_class = ?",
+            "component_package = ? AND component_class = ? AND target_id = ?",
             arrayOf(
                 request.componentName.packageName,
-                request.componentName.className
+                request.componentName.className,
+                request.targetId
             )
         )
 
@@ -94,50 +101,64 @@ class DbHelper(
                 "component_class",
                 request.componentName.className
             )
+            notifierValues.put(
+                "target_id",
+                request.targetId
+            )
             notifierValues.put("notification_key", it.toString())
             insert("requested_notifiers", null, notifierValues)
         }
     }
 
     /** Unregisters a [component] for resurrection. */
-    fun unregisterRequest(component: ComponentName) = writableDatabase.transaction {
-        val componentArgs = arrayOf(component.packageName, component.className)
+    fun unregisterRequest(
+        component: ComponentName,
+        targetId: String
+    ) = writableDatabase.transaction {
+        val deletionArgs = arrayOf(component.packageName, component.className, targetId)
         execSQL(
             """
                 DELETE FROM requested_notifiers 
-                WHERE component_package = ? AND component_class = ?
+                WHERE component_package = ? AND component_class = ? AND target_id = ?
             """,
-            componentArgs
+            deletionArgs
         )
         execSQL(
             """
                 DELETE FROM resurrection_requests
-                WHERE component_package = ? AND component_class = ?
+                WHERE component_package = ? AND component_class = ? AND target_id = ?
             """,
-            componentArgs
+            deletionArgs
         )
     }
+
+    private data class RequestedNotifier(val targetId: String, val component: ComponentName)
 
     /**
      * Gets all registered [ResurrectionRequest]s from the database.
      */
     fun getRegistrations(): List<ResurrectionRequest> {
-        val notifiersByComponentName = mutableMapOf<ComponentName, MutableList<StorageKey>>()
+        val notifiersByComponentName =
+            mutableMapOf<RequestedNotifier, MutableList<StorageKey>>()
         return readableDatabase.transaction {
             rawQuery(
                 """
                     SELECT 
-                        component_package, component_class, notification_key 
+                        component_package, component_class, notification_key, target_id 
                     FROM requested_notifiers
                 """.trimIndent(),
                 null
             ).forEach {
                 val componentName = ComponentName(it.getString(0), it.getString(1))
                 val key = it.getString(2)
+                val targetId = it.getString(3)
 
-                val notifiers = notifiersByComponentName[componentName] ?: mutableListOf()
+                val requestedNotifier = RequestedNotifier(targetId, componentName)
+                val notifiers =
+                    notifiersByComponentName[requestedNotifier]
+                        ?: mutableListOf()
                 notifiers.add(StorageKeyParser.parse(key))
-                notifiersByComponentName[componentName] = notifiers
+                notifiersByComponentName[requestedNotifier] = notifiers
             }
 
             rawQuery(
@@ -147,7 +168,8 @@ class DbHelper(
                         component_class, 
                         component_type, 
                         intent_action, 
-                        intent_extras 
+                        intent_extras,
+                        target_id
                     FROM resurrection_requests
                 """.trimIndent(),
                 null
@@ -163,13 +185,16 @@ class DbHelper(
                         readTypedObject(PersistableBundle.CREATOR)
                     }
                 }
+                val targetId = it.getString(5)
 
                 ResurrectionRequest(
                     componentName,
                     type,
                     action,
                     extras?.deepCopy(),
-                    notifiersByComponentName[componentName] ?: emptyList()
+                    targetId,
+                    notifiersByComponentName[RequestedNotifier(targetId, componentName)]
+                        ?: emptyList()
                 )
             }
         }
@@ -185,7 +210,7 @@ class DbHelper(
 
     companion object {
         internal const val RESURRECTION_DB_NAME = "resurrection.sqlite3"
-        private const val RESURRECTION_DB_VERSION = 1
+        private const val RESURRECTION_DB_VERSION = 2
 
         private val CREATE = arrayOf(
             """
@@ -193,25 +218,34 @@ class DbHelper(
                     component_package TEXT NOT NULL,
                     component_class TEXT NOT NULL,
                     component_type TEXT NOT NULL,
+                    target_id TEXT NOT NULL,
                     intent_action TEXT,
                     intent_extras BLOB,
-                    PRIMARY KEY (component_package, component_class)
+                    PRIMARY KEY (component_package, component_class, target_id)
                 )
             """.trimIndent(),
             """
                 CREATE TABLE requested_notifiers (
                     component_package TEXT NOT NULL,
                     component_class TEXT NOT NULL,
+                    target_id TEXT NOT NULL,
                     notification_key TEXT NOT NULL
                 )
             """.trimIndent(),
             """
-                CREATE INDEX notifiers_by_component 
+                CREATE INDEX notifiers_by_component_and_id
                 ON requested_notifiers (
                     component_package, 
-                    component_class
+                    component_class,
+                    target_id
                 )
             """.trimIndent()
         )
+
+        private val VERSION_2_MIGRATION = arrayOf(
+            "DROP TABLE resurrection_requests",
+            "DROP TABLE requested_notifiers",
+            "DROP TABLE notifiers_by_component"
+        ) + CREATE
     }
 }
