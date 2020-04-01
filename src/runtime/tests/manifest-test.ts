@@ -277,8 +277,9 @@ ${particleStr1}
     const manifest = await parseManifest(`
       particle Fooer
         foo: reads Foo {
+          // Comments can go here
           value: Text,
-          other: Number
+          other: Number // Or here.
         }
     `);
     const verify = (manifest: Manifest) => {
