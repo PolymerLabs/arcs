@@ -25,8 +25,8 @@ arcs_kt_plan(
 
 arcs_kt_android_library(
     name = "test_app_lib",
-    srcs = glob(["*.kt"]),
     testonly = 1,
+    srcs = glob(["*.kt"]),
     manifest = ":AndroidManifest.xml",
     resource_files = glob(["res/**/*"]),
     deps = [
@@ -66,5 +66,6 @@ android_binary(
     incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
+    tags = ["no-cache"],
     deps = [":test_app_lib"],
 )
