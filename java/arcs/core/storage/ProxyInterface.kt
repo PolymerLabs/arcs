@@ -93,12 +93,22 @@ fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallback(
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */
 interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    fun setCallback(callback: ProxyCallback<Data, Op, ConsumerData>): Int
     suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
+
+    /** Signal to the endpoint provider that the client is finished using this endpoint. */
+    fun close()
 }
 
 /** Provider of a [StorageCommunicationEndpoint]. */
 interface StorageCommunicationEndpointProvider<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    fun getStorageEndpoint(): StorageCommunicationEndpoint<Data, Op, ConsumerData>
+    /**
+     * Implementers should return a [StorageCommunicationEndpoint] that signals information back to
+     * the agent using the provided [callback].
+     */
+    fun getStorageEndpoint(
+        callback: ProxyCallback<Data, Op, ConsumerData>
+    ): StorageCommunicationEndpoint<Data, Op, ConsumerData>
+
+    /** Return the [StorageKey] that the store behind this implementation is representing. */
     val storageKey: StorageKey
 }

@@ -49,17 +49,20 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /** Handles a message from the storage proxy. */
     abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 
-    override fun getStorageEndpoint(): StorageCommunicationEndpoint<Data, Op, ConsumerData> {
-        return object : StorageCommunicationEndpoint<Data, Op, ConsumerData> {
-            var id: Int? = null
+    /**
+     * Return a storage endpoint that will receive messages from the store via the
+     * provided callback
+     */
+    override fun getStorageEndpoint(
+        callback: ProxyCallback<Data, Op, ConsumerData>
+    ) = object : StorageCommunicationEndpoint<Data, Op, ConsumerData> {
+        val id = on(callback)
 
-            override fun setCallback(callback: ProxyCallback<Data, Op, ConsumerData>): Int =
-                on(callback).also { id = it }
+        override suspend fun onProxyMessage(
+            message: ProxyMessage<Data, Op, ConsumerData>
+        ) = this@ActiveStore.onProxyMessage(message.withId(id))
 
-            override suspend fun onProxyMessage(
-                message: ProxyMessage<Data, Op, ConsumerData>
-            ) = this@ActiveStore.onProxyMessage(message.withId(id!!))
-        }
+        override fun close() = off(id)
     }
 
     /** Clones data from the given store into this one. */
