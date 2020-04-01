@@ -380,14 +380,14 @@ ${lines}
   generate(schemaHash: string, fieldCount: number): string { return ''; }
 
   generateAliases(particleName: string): string {
-    const name = this.node.kotlinName;
-    const aliases = this.node.kotlinAliases
+    const name = this.node.name;
+    const aliases = this.node.aliases;
     const typeDecls = aliases.map(alias => `typealias ${alias} = ${particleName}.${name}`);
     return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
   }
 
   generateClasses(schemaHash: string, fieldCount: number): string {
-    const name = this.node.kotlinName;
+    const name = this.node.name;
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
