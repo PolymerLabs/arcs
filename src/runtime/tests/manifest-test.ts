@@ -32,7 +32,7 @@ import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
 import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
-import {TupleType, CollectionType} from '../type.js';
+import {TupleType, CollectionType, EntityType} from '../type.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storageNG/storage-ng.js';
 
 function verifyPrimitiveType(field, type) {
@@ -270,6 +270,23 @@ ${particleStr1}
       particle Fooer
         foo: reads Foo {value}`);
     const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Foo.fields.value, 'Text');
+    verify(manifest);
+    verify(await parseManifest(manifest.toString()));
+  });
+  it('can parse a manifest containing an inline schema with line breaks', async () => {
+    const manifest = await parseManifest(`
+      particle Fooer
+        foo: reads Foo {
+          value: Text,
+          other: Number
+        }
+    `);
+    const verify = (manifest: Manifest) => {
+      const [particle] = manifest.particles;
+      const connectionEntity = (particle.connections[0].type as EntityType).getEntitySchema();
+      verifyPrimitiveType(connectionEntity.fields.value, 'Text');
+      verifyPrimitiveType(connectionEntity.fields.other, 'Number');
+    };
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
   });
