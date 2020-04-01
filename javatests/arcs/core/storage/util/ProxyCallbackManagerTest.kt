@@ -14,7 +14,6 @@ package arcs.core.storage.util
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
-import arcs.core.storage.MultiplexedProxyCallback
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
@@ -77,29 +76,6 @@ class ProxyCallbackManagerTest {
         assertThat(registeredMessage.value).isNull()
 
         manager.send(shouldBeReceivedByRegistered)
-        assertThat(registeredMessage.value).isEqualTo(shouldBeReceivedByRegistered)
-    }
-
-    @Test
-    fun sendMultiplexedWhichCausesARegistration_doesntDeadlock() = runBlockingTest {
-        val registeredMessage = atomic<ProxyMessage<DummyData, DummyOp, String>?>(null)
-        val registeredCallback =
-            MultiplexedProxyCallback<DummyData, DummyOp, String> { message, _ ->
-                registeredMessage.value = message
-            }
-        val registeringCallback =
-            MultiplexedProxyCallback<DummyData, DummyOp, String> { _, _ ->
-                manager.register(registeredCallback)
-            }
-
-        val shouldBeReceivedByRegistered = makeMessage("bar", 2)
-
-        manager.register(registeringCallback)
-
-        manager.sendMultiplexed(makeMessage("foo", 1), "mux1")
-        assertThat(registeredMessage.value).isNull()
-
-        manager.sendMultiplexed(shouldBeReceivedByRegistered, "mux1")
         assertThat(registeredMessage.value).isEqualTo(shouldBeReceivedByRegistered)
     }
 

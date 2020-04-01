@@ -78,29 +78,17 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
  * ```
  */
 interface ProxyCallback<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    val singleCallback: suspend (ProxyMessage<Data, Op, ConsumerData>) -> Unit
-        get() = throw UnsupportedOperationException("Single callback not supported.")
-    val multiCallback: suspend (ProxyMessage<Data, Op, ConsumerData>, String) -> Unit
-        get() = throw UnsupportedOperationException("Multiplexed callback not supported")
-
     suspend operator fun invoke(
-        message: ProxyMessage<Data, Op, ConsumerData>,
-        muxId: String? = null
-    ) = muxId?.let { multiCallback(message, muxId) } ?: singleCallback(message)
+        message: ProxyMessage<Data, Op, ConsumerData>
+    )
 }
 
-/** Pseudo-constructor for a [ProxyCallback] capable of receiving direct messages. */
 fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallback(
-    callback: suspend (message: ProxyMessage<Data, Op, ConsumerData>) -> Unit
-): ProxyCallback<Data, Op, ConsumerData> = object : ProxyCallback<Data, Op, ConsumerData> {
-    override val singleCallback = callback
-}
-
-/** Pseudo-constructor for a [ProxyCallback] capable of receiving multiplexed messages. */
-fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> MultiplexedProxyCallback(
-    callback: suspend (message: ProxyMessage<Data, Op, ConsumerData>, muxId: String) -> Unit
-): ProxyCallback<Data, Op, ConsumerData> = object : ProxyCallback<Data, Op, ConsumerData> {
-    override val multiCallback = callback
+    callback: suspend (ProxyMessage<Data, Op, ConsumerData>) -> Unit
+) = object : ProxyCallback<Data, Op, ConsumerData> {
+    override suspend operator fun invoke(
+        message: ProxyMessage<Data, Op, ConsumerData>
+    ) = callback(message)
 }
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */

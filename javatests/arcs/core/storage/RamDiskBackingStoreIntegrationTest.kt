@@ -54,13 +54,23 @@ class RamDiskBackingStoreIntegrationTest {
     @Suppress("UNCHECKED_CAST")
     @Test
     fun allowsStorageOf_aNumberOfObjects() = runBlockingTest {
+        val message = atomic<ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>?>(null)
+        val muxId = atomic<String?>(null)
+        var job = Job()
+
         val storageKey = RamDiskStorageKey("unique")
-        val baseStore = Store<CrdtCount.Data, CrdtCount.Operation, Int>(
-            StoreOptions(
-                storageKey, CountType(), StorageMode.Backing
-            )
+        val store = BackingStore<CrdtData, CrdtOperation, Any?>(
+            storageKey = storageKey,
+            backingType = CountType(),
+            callbackFactory = { eventId ->
+                ProxyCallback { m ->
+                    message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
+                    muxId.value = eventId
+                    job.complete()
+                }
+            }
         )
-        val store = baseStore.activate() as BackingStore<CrdtData, CrdtOperation, Any?>
+
 
         val count1 = CrdtCount()
         count1.applyOperation(Increment("me", version = 0 to 1))
@@ -77,20 +87,7 @@ class RamDiskBackingStoreIntegrationTest {
 
         store.idle()
 
-        val message = atomic<ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>?>(null)
-        val muxId = atomic<String?>(null)
-        var job = Job()
-
-        val id2 = store.on(
-            MultiplexedProxyCallback { m, eventId ->
-                message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
-                muxId.value = eventId
-                job.complete()
-                return@MultiplexedProxyCallback
-            }
-        )
-
-        store.onProxyMessage(ProxyMessage.SyncRequest(id2), "thing0")
+        store.onProxyMessage(ProxyMessage.SyncRequest(null), "thing0")
         job.join()
         message.value.assertHasData(count1)
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing0")
@@ -98,7 +95,7 @@ class RamDiskBackingStoreIntegrationTest {
         message.value = null
         muxId.value = null
         job = Job()
-        store.onProxyMessage(ProxyMessage.SyncRequest(id2), "thing1")
+        store.onProxyMessage(ProxyMessage.SyncRequest(null), "thing1")
         job.join()
         message.value.assertHasData(count2)
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing1")
@@ -106,7 +103,7 @@ class RamDiskBackingStoreIntegrationTest {
         message.value = null
         muxId.value = null
         job = Job()
-        store.onProxyMessage(ProxyMessage.SyncRequest(id2), "not-a-thing")
+        store.onProxyMessage(ProxyMessage.SyncRequest(null), "not-a-thing")
         job.join()
         message.value.assertHasData(CrdtCount())
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("not-a-thing")
