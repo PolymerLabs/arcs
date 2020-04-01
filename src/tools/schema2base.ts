@@ -35,7 +35,7 @@ export class NodeAndGenerator {
   //await node.schema.hash(), fields.length)
   generator: ClassGenerator;
   hash: string;
-  fields: number;
+  fieldLength: number;
 }
 
 export abstract class Schema2Base {
@@ -135,9 +135,9 @@ export abstract class Schema2Base {
           generator.generatePredicates();
         }
         const hash = await node.schema.hash();
-        const length = fields.length;
-        classes.push(generator.generate(hash, length));
-        nodes.push({generator, hash, length});
+        const fieldLength = fields.length;
+        classes.push(generator.generate(hash, fieldLength));
+        nodes.push({generator, hash, fieldLength});
       }
 
       classes.push(this.generateParticleClass(particle, nodes));

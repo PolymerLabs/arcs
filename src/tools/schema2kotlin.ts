@@ -144,7 +144,7 @@ ${imports.join('\n')}
     nodeGenerators.forEach( (ng) => {
       //await node.schema.hash(), fields.length)
       const kotlinGenerator = <KotlinGenerator>ng.generator
-      classes.push(kotlinGenerator.generateClasses(ng.hash, ng.fields));
+      classes.push(kotlinGenerator.generateClasses(ng.hash, ng.fieldLength));
       typeAliases.push(kotlinGenerator.generateAliases(`Abstract${particleName}`))
     })
 
@@ -380,13 +380,14 @@ ${lines}
   generate(schemaHash: string, fieldCount: number): string { return ''; }
 
   generateAliases(particleName: string): string {
-    const {name, aliases} = this.node;
+    const name = this.node.kotlinName;
+    const aliases = this.node.kotlinAliases
     const typeDecls = aliases.map(alias => `typealias ${alias} = ${particleName}.${name}`);
     return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
   }
 
   generateClasses(schemaHash: string, fieldCount: number): string {
-    const name = this.node.name.slice(this.node.name.indexOf("_"));
+    const name = this.node.kotlinName;
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';

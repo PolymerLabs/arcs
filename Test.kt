@@ -18,8 +18,7 @@ import arcs.sdk.*
 
 
 
-typealias Gold_Bar = AbstractGold.GoldInternal1
-typealias Gold_Bar2 = AbstractGold.GoldInternal1
+typealias Bar2 = AbstractGold.Bar
 
 
 abstract class AbstractGold : BaseParticle() {
@@ -27,7 +26,7 @@ abstract class AbstractGold : BaseParticle() {
 
 
 @Suppress("UNCHECKED_CAST")
-class _NoName(txt: String = "") : EntityBase("_NoName", SCHEMA) {
+class NoName(txt: String = "") : EntityBase("NoName", SCHEMA) {
 
     var txt: String
         get() = super.getSingletonValue("txt") as String? ?: ""
@@ -37,10 +36,10 @@ class _NoName(txt: String = "") : EntityBase("_NoName", SCHEMA) {
         this.txt = txt
     }
 
-    fun copy(txt: String = this.txt) = _NoName(txt = txt)
+    fun copy(txt: String = this.txt) = NoName(txt = txt)
 
 
-    companion object : EntitySpec<_NoName> {
+    companion object : EntitySpec<NoName> {
 
         override val SCHEMA = Schema(
             setOf(),
@@ -57,12 +56,12 @@ class _NoName(txt: String = "") : EntityBase("_NoName", SCHEMA) {
             SchemaRegistry.register(this)
         }
 
-        override fun deserialize(data: RawEntity) = _NoName().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = NoName().apply { deserialize(data) }
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-class _Foo(txt: String = "") : EntityBase("_Foo", SCHEMA) {
+class Foo(txt: String = "") : EntityBase("Foo", SCHEMA) {
 
     var txt: String
         get() = super.getSingletonValue("txt") as String? ?: ""
@@ -72,10 +71,10 @@ class _Foo(txt: String = "") : EntityBase("_Foo", SCHEMA) {
         this.txt = txt
     }
 
-    fun copy(txt: String = this.txt) = _Foo(txt = txt)
+    fun copy(txt: String = this.txt) = Foo(txt = txt)
 
 
-    companion object : EntitySpec<_Foo> {
+    companion object : EntitySpec<Foo> {
 
         override val SCHEMA = Schema(
             setOf(SchemaName("Foo")),
@@ -92,12 +91,12 @@ class _Foo(txt: String = "") : EntityBase("_Foo", SCHEMA) {
             SchemaRegistry.register(this)
         }
 
-        override fun deserialize(data: RawEntity) = _Foo().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = Foo().apply { deserialize(data) }
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-class 1(txt: String = "") : EntityBase("1", SCHEMA) {
+class Bar(txt: String = "") : EntityBase("Bar", SCHEMA) {
 
     var txt: String
         get() = super.getSingletonValue("txt") as String? ?: ""
@@ -107,10 +106,10 @@ class 1(txt: String = "") : EntityBase("1", SCHEMA) {
         this.txt = txt
     }
 
-    fun copy(txt: String = this.txt) = 1(txt = txt)
+    fun copy(txt: String = this.txt) = Bar(txt = txt)
 
 
-    companion object : EntitySpec<1> {
+    companion object : EntitySpec<Bar> {
 
         override val SCHEMA = Schema(
             setOf(SchemaName("Bar")),
@@ -127,15 +126,15 @@ class 1(txt: String = "") : EntityBase("1", SCHEMA) {
             SchemaRegistry.register(this)
         }
 
-        override fun deserialize(data: RawEntity) = 1().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = Bar().apply { deserialize(data) }
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-class _CFoo(
+class CFoo(
     txt: String = "",
     num: Double = 0.0
-) : EntityBase("_CFoo", SCHEMA) {
+) : EntityBase("CFoo", SCHEMA) {
 
     var txt: String
         get() = super.getSingletonValue("txt") as String? ?: ""
@@ -149,10 +148,10 @@ class _CFoo(
         this.num = num
     }
 
-    fun copy(txt: String = this.txt, num: Double = this.num) = _CFoo(txt = txt, num = num)
+    fun copy(txt: String = this.txt, num: Double = this.num) = CFoo(txt = txt, num = num)
 
 
-    companion object : EntitySpec<_CFoo> {
+    companion object : EntitySpec<CFoo> {
 
         override val SCHEMA = Schema(
             setOf(SchemaName("Foo")),
@@ -169,12 +168,12 @@ class _CFoo(
             SchemaRegistry.register(this)
         }
 
-        override fun deserialize(data: RawEntity) = _CFoo().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = CFoo().apply { deserialize(data) }
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-class _FooBar(txt: String = "") : EntityBase("_FooBar", SCHEMA) {
+class FooBar(txt: String = "") : EntityBase("FooBar", SCHEMA) {
 
     var txt: String
         get() = super.getSingletonValue("txt") as String? ?: ""
@@ -184,10 +183,10 @@ class _FooBar(txt: String = "") : EntityBase("_FooBar", SCHEMA) {
         this.txt = txt
     }
 
-    fun copy(txt: String = this.txt) = _FooBar(txt = txt)
+    fun copy(txt: String = this.txt) = FooBar(txt = txt)
 
 
-    companion object : EntitySpec<_FooBar> {
+    companion object : EntitySpec<FooBar> {
 
         override val SCHEMA = Schema(
             setOf(SchemaName("Foo"), SchemaName("Bar")),
@@ -204,7 +203,7 @@ class _FooBar(txt: String = "") : EntityBase("_FooBar", SCHEMA) {
             SchemaRegistry.register(this)
         }
 
-        override fun deserialize(data: RawEntity) = _FooBar().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = FooBar().apply { deserialize(data) }
     }
 }
 
