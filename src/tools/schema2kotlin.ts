@@ -131,7 +131,7 @@ ${imports.join('\n')}
   }
 
   private entityTypeName(particle: ParticleSpec, connection: HandleConnectionSpec) {
-    return `${particle.name}_${this.upperFirst(connection.name)}`;
+    return `${this.upperFirst(connection.name)}`;
   }
 
   generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {

@@ -18,7 +18,8 @@ import arcs.sdk.*
 
 
 
-typealias Bar2 = AbstractGold.Bar
+typealias Bar = AbstractGold.GoldInternal1
+typealias Bar2 = AbstractGold.GoldInternal1
 
 
 abstract class AbstractGold : BaseParticle() {
@@ -96,7 +97,9 @@ class Foo(txt: String = "") : EntityBase("Foo", SCHEMA) {
 }
 
 @Suppress("UNCHECKED_CAST")
-class Bar(txt: String = "") : EntityBase("Bar", SCHEMA) {
+class GoldInternal1(
+    txt: String = ""
+) : EntityBase("GoldInternal1", SCHEMA) {
 
     var txt: String
         get() = super.getSingletonValue("txt") as String? ?: ""
@@ -106,10 +109,10 @@ class Bar(txt: String = "") : EntityBase("Bar", SCHEMA) {
         this.txt = txt
     }
 
-    fun copy(txt: String = this.txt) = Bar(txt = txt)
+    fun copy(txt: String = this.txt) = GoldInternal1(txt = txt)
 
 
-    companion object : EntitySpec<Bar> {
+    companion object : EntitySpec<GoldInternal1> {
 
         override val SCHEMA = Schema(
             setOf(SchemaName("Bar")),
@@ -126,7 +129,7 @@ class Bar(txt: String = "") : EntityBase("Bar", SCHEMA) {
             SchemaRegistry.register(this)
         }
 
-        override fun deserialize(data: RawEntity) = Bar().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = GoldInternal1().apply { deserialize(data) }
     }
 }
 
@@ -210,19 +213,19 @@ class FooBar(txt: String = "") : EntityBase("FooBar", SCHEMA) {
     class Handles : HandleHolderBase(
         "Gold",
         mapOf(
-            "foo" to Gold_Foo,
-            "cFoo" to Gold_CFoo,
-            "bar" to Gold_Bar,
-            "bar2" to Gold_Bar2,
-            "noName" to Gold_NoName,
-            "fooBar" to Gold_FooBar
+            "foo" to Foo,
+            "cFoo" to CFoo,
+            "bar" to Bar,
+            "bar2" to Bar2,
+            "noName" to NoName,
+            "fooBar" to FooBar
         )
     ) {
-        val foo: WriteSingletonHandle<Gold_Foo> by handles
-        val cFoo: WriteSingletonHandle<Gold_CFoo> by handles
-        val bar: WriteSingletonHandle<Gold_Bar> by handles
-        val bar2: WriteSingletonHandle<Gold_Bar2> by handles
-        val noName: WriteSingletonHandle<Gold_NoName> by handles
-        val fooBar: WriteSingletonHandle<Gold_FooBar> by handles
+        val foo: WriteSingletonHandle<Foo> by handles
+        val cFoo: WriteSingletonHandle<CFoo> by handles
+        val bar: WriteSingletonHandle<Bar> by handles
+        val bar2: WriteSingletonHandle<Bar2> by handles
+        val noName: WriteSingletonHandle<NoName> by handles
+        val fooBar: WriteSingletonHandle<FooBar> by handles
     }
 }

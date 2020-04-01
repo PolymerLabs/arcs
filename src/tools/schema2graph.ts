@@ -41,9 +41,10 @@ export class SchemaNode {
   // ensure that nested schemas are generated before the references that rely on them.
   refs = new Map<string, SchemaNode>();
 
-  constructor(schema: Schema, name: string) {
+  constructor(schema: Schema, name: string, kotlinName: string) {
     this.schema = schema;
     this.aliases.push(name);
+    this.kotlinAliases.push(kotlinName)
   }
 }
 
@@ -88,7 +89,7 @@ export class SchemaGraph {
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
-      node = new SchemaNode(schema, name);
+      node = new SchemaNode(schema, name, kotlinName);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
           if (b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
@@ -100,7 +101,6 @@ export class SchemaGraph {
           }
         }
       }
-      node.kotlinName = kotlinName;
       this.nodes.push(node);
     }
 
@@ -130,8 +130,10 @@ export class SchemaGraph {
     // Otherwise generate an internal name and create aliases for it.
     if (node.aliases.length === 1) {
       node.name = node.aliases.pop();
+      node.kotlinName = node.kotlinAliases.pop();
     } else {
       node.name = `${this.particleSpec.name}Internal${++this.internalClassIndex}`;
+      node.kotlinName = node.name;
     }
 
     // Set up children links: collect descendants of descendants.
