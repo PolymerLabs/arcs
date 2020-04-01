@@ -25,6 +25,5 @@ android_binary(
     instruments = "//javatests/arcs/android/e2e/testapp",
     manifest = "AndroidManifest.xml",
     multidex = "native",
-    tags = ["no-cache"],
     deps = [":arcs_e2e_test_lib"],
 )

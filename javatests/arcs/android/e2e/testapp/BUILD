@@ -66,6 +66,5 @@ android_binary(
     incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
-    tags = ["no-cache"],
     deps = [":test_app_lib"],
 )
