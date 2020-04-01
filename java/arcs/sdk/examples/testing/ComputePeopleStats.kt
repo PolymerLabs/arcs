@@ -7,6 +7,10 @@ import kotlinx.coroutines.launch
 typealias Person = ComputePeopleStats_People
 typealias Stats = ComputePeopleStats_Stats
 
+class Compute2() : AbstractCompute2() {
+
+}
+
 /**
  * Particle computing a median age of input people - an example for unit testing.
  */

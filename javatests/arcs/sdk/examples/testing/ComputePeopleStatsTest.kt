@@ -16,6 +16,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class ComputePeopleStatsTest {
 
+    @get:Rule val harness2 = Compute2TestHarness { Compute2() }
     @get:Rule val harness = ComputePeopleStatsTestHarness { scope -> ComputePeopleStats(scope) }
 
     @Test

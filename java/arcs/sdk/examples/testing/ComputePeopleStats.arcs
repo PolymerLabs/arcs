@@ -4,3 +4,6 @@ meta
 particle ComputePeopleStats
   people: reads [Person {age: Number}]
   stats: writes Stats {medianAge: Number}
+
+particle Compute2
+  stats: writes Stats {medianAge: Number}
