@@ -60,7 +60,7 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
         override suspend fun onProxyMessage(
             message: ProxyMessage<Data, Op, ConsumerData>
-        ) = this@ActiveStore.onProxyMessage(message.withId(id!!))
+        ) = this@ActiveStore.onProxyMessage(message.withId(id))
 
         override fun close() = off(id)
     }
