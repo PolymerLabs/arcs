@@ -107,7 +107,7 @@ fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> MultiplexedProxyCallback
 interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
     suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 
-    /** Signal to the endpoint provider that the clinet is finished using this endpoint */
+    /** Signal to the endpoint provider that the client is finished using this endpoint. */
     fun close()
 }
 
