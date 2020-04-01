@@ -18,7 +18,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.ACTION_RESURRECT
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_RESURRECT_NOTIFIER
-import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_NOTIFIER_ID
+import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_TARGET_ID
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import java.io.PrintWriter
@@ -60,7 +60,7 @@ class ResurrectorServiceTest {
         assertThat(resurrectIntent.action).isEqualTo(ACTION_RESURRECT)
         assertThat(resurrectIntent.getStringArrayListExtra(EXTRA_RESURRECT_NOTIFIER))
             .containsExactly(storageKeys[0].toString())
-        assertThat(resurrectIntent.getStringExtra(EXTRA_REGISTRATION_NOTIFIER_ID))
+        assertThat(resurrectIntent.getStringExtra(EXTRA_REGISTRATION_TARGET_ID))
             .isEqualTo("test")
     }
 

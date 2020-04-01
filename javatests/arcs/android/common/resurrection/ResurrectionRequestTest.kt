@@ -39,7 +39,7 @@ class ResurrectionRequestTest {
         assertThat(request.intentAction).isEqualTo(ResurrectionRequest.ACTION_RESURRECT)
         assertThat(request.intentExtras).isNull()
         assertThat(request.notifyOn).isEmpty()
-        assertThat(request.notifierId).isEqualTo("test")
+        assertThat(request.targetId).isEqualTo("test")
     }
 
     @Test
@@ -56,7 +56,7 @@ class ResurrectionRequestTest {
             action = ResurrectionRequest.ACTION_REQUEST_RESURRECTION
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_PACKAGE_NAME, "com.google.test")
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_CLASS_NAME, "MyService")
-            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_NOTIFIER_ID, "test")
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, "test")
             putExtra(
                 ResurrectionRequest.EXTRA_REGISTRATION_COMPONENT_TYPE,
                 ResurrectionRequest.ComponentType.Service.name
@@ -78,7 +78,7 @@ class ResurrectionRequestTest {
         assertThat(actual.intentExtras?.getBoolean("foo")).isTrue()
         assertThat(actual.intentExtras?.getString("bar")).isEqualTo("hello")
         assertThat(actual.notifyOn).containsExactlyElementsIn(keys)
-        assertThat(actual.notifierId).isEqualTo("test")
+        assertThat(actual.targetId).isEqualTo("test")
     }
 
     @Test
@@ -210,7 +210,7 @@ class ResurrectionRequestTest {
             action = ResurrectionRequest.ACTION_REQUEST_NO_RESURRECTION
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_PACKAGE_NAME, "com.google.test")
             putExtra(ResurrectionRequest.EXTRA_REGISTRATION_CLASS_NAME, "MyService")
-            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_NOTIFIER_ID, "test")
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, "test")
         }
         assertThat(ResurrectionRequest.unregisterRequestFromUnrequestIntent(intent))
             .isEqualTo(UnregisterRequest(ComponentName("com.google.test", "MyService"), "test"))
@@ -225,7 +225,7 @@ class ResurrectionRequestTest {
         val unregisterRequest = ResurrectionRequest.unregisterRequestFromUnrequestIntent(intent)
 
         assertThat(unregisterRequest?.componentName).isEqualTo(request.componentName)
-        assertThat(unregisterRequest?.notifierId).isEqualTo("test")
+        assertThat(unregisterRequest?.targetId).isEqualTo("test")
 
     }
 }

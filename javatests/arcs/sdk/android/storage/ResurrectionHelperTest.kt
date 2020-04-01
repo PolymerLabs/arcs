@@ -20,7 +20,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_CLASS_NAME
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_NOTIFIERS
-import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_NOTIFIER_ID
+import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_TARGET_ID
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_PACKAGE_NAME
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -85,7 +85,7 @@ class ResurrectionHelperTest {
                 ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER,
                 ArrayList(storageKeys.map(StorageKey::toString))
             )
-            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_NOTIFIER_ID, "test")
+            putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, "test")
         }
 
         helper.onStartCommand(intent)
@@ -116,7 +116,7 @@ class ResurrectionHelperTest {
             .containsExactlyElementsIn(
                 expectedIntent.getStringArrayListExtra(EXTRA_REGISTRATION_NOTIFIERS)
             )
-        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_NOTIFIER_ID)).isEqualTo("test")
+        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_TARGET_ID)).isEqualTo("test")
     }
 
     @Test
@@ -135,6 +135,6 @@ class ResurrectionHelperTest {
             .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_PACKAGE_NAME))
         assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
             .isEqualTo(expectedIntent.getStringExtra(EXTRA_REGISTRATION_CLASS_NAME))
-        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_NOTIFIER_ID)).isEqualTo("test")
+        assertThat(actualIntent.getStringExtra(EXTRA_REGISTRATION_TARGET_ID)).isEqualTo("test")
     }
 }

@@ -168,7 +168,7 @@ abstract class ResurrectorService : Service() {
     }
 
     private fun CoroutineScope.unregisterRequest(unregisterRequest: UnregisterRequest) = launch {
-        dbHelper.unregisterRequest(unregisterRequest.componentName, unregisterRequest.notifierId)
+        dbHelper.unregisterRequest(unregisterRequest.componentName, unregisterRequest.targetId)
         loadRequests().join()
     }
 
@@ -192,7 +192,7 @@ abstract class ResurrectorService : Service() {
             ArrayList(events.toSet().map(StorageKey::toString))
         )
 
-        intent.putExtra(ResurrectionRequest.EXTRA_REGISTRATION_NOTIFIER_ID, this.notifierId)
+        intent.putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, this.targetId)
 
         when (this.componentType) {
             ResurrectionRequest.ComponentType.Activity -> startActivity(intent)
