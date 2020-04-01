@@ -115,7 +115,7 @@ interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, Cons
 interface StorageCommunicationEndpointProvider<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
     /**
      * Implementers should return a [StorageCommunicationEndpoint] that signals information back to
-     * the agent using the provided `callback`.
+     * the agent using the provided [callback].
      */
     fun getStorageEndpoint(
         callback: ProxyCallback<Data, Op, ConsumerData>
