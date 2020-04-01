@@ -56,7 +56,7 @@ import arcs.sdk.android.storage.service.StorageService
  */
 class ResurrectionHelper(
     private val context: Context,
-    private val onResurrected: (id: String, List<StorageKey>) -> Unit
+    private val onResurrected: (notifierId: String, List<StorageKey>) -> Unit
 ) {
     /**
      * Determines whether or not the given [intent] represents a resurrection, and if it does:

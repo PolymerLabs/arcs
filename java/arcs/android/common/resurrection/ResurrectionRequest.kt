@@ -31,18 +31,19 @@ data class ResurrectionRequest(
     val intentAction: String?,
     val intentExtras: PersistableBundle?,
     /**
+     * A string, which along with [componentName], uniquely identifies this request. When
+     * clients are resurrected, the client receives a set of [StorageKeys] supplied in
+     * [notifyOn] along with the [notifierId] used to create the request.
+     */
+    val notifierId: String,
+    /**
      * [StorageKey]s the requesting component is interested in being resurrected in response to
      * changes.
      *
      * If empty, the client requests resurrection for *any* change to *any* [StorageKey]-identified
      * data.
      */
-    val notifyOn: List<StorageKey> = emptyList(),
-    /**
-     * Used to associate [notifierId] with a set of [StorageKeys] and is sent back to listeners
-     * on resurrection along with the keys.
-     */
-    val notifierId: String
+    val notifyOn: List<StorageKey> = emptyList()
 ) {
     /**
      * Populates an [intent] with actions/extras needed to make a request to the
@@ -122,6 +123,10 @@ data class ResurrectionRequest(
         Activity,
     }
 
+    /**
+     * A request to unregister [componentName] with associated [notifierId] from the resurrection
+     * service.
+     */
     data class UnregisterRequest(val componentName: ComponentName, val notifierId: String)
 
     companion object {
@@ -148,16 +153,11 @@ data class ResurrectionRequest(
             notifierId: String
         ): ResurrectionRequest {
             return ResurrectionRequest(
-                ComponentName(context, context::class.java),
-                when (context) {
+                ComponentName(context, context::class.java), when (context) {
                     is Service -> ComponentType.Service
                     is Activity -> ComponentType.Activity
                     else -> ComponentType.Service
-                },
-                ACTION_RESURRECT,
-                null,
-                resurrectOn,
-                notifierId
+                }, ACTION_RESURRECT, null, notifierId, resurrectOn
             )
         }
 
@@ -183,12 +183,9 @@ data class ResurrectionRequest(
             } catch (e: IllegalArgumentException) { return null }
 
             return ResurrectionRequest(
-                ComponentName(packageName, className),
-                componentType,
+                ComponentName(packageName, className), componentType,
                 extras.getString(EXTRA_REGISTRATION_ACTION),
-                extras.getParcelable(EXTRA_REGISTRATION_EXTRAS),
-                notifiers,
-                notifierId
+                extras.getParcelable(EXTRA_REGISTRATION_EXTRAS), notifierId, notifiers
             )
         }
 

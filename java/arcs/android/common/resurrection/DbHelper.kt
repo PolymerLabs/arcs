@@ -48,7 +48,16 @@ class DbHelper(
         db.transaction { CREATE.forEach(db::execSQL) }
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion == RESURRECTION_DB_OLD_VERSION && newVersion == RESURRECTION_DB_VERSION) {
+            db.transaction {
+                db.execSQL("DROP TABLE resurrection_requests")
+                db.execSQL("DROP TABLE requested_notifiers")
+                db.execSQL("DROP INDEX notifiers_by_component")
+                onCreate(db)
+            }
+        }
+    }
 
     /**
      * Stores a [ResurrectionRequest] in the database.
@@ -127,12 +136,14 @@ class DbHelper(
         )
     }
 
+    private data class RequestedNotifier(val notifierId: String, val component: ComponentName)
+
     /**
      * Gets all registered [ResurrectionRequest]s from the database.
      */
     fun getRegistrations(): List<ResurrectionRequest> {
         val notifiersByComponentName =
-            mutableMapOf<Pair<ComponentName, String>, MutableList<StorageKey>>()
+            mutableMapOf<RequestedNotifier, MutableList<StorageKey>>()
         return readableDatabase.transaction {
             rawQuery(
                 """
@@ -146,10 +157,12 @@ class DbHelper(
                 val key = it.getString(2)
                 val notifierId = it.getString(3)
 
+                val requestedNotifier = RequestedNotifier(notifierId, componentName)
                 val notifiers =
-                    notifiersByComponentName[componentName to notifierId] ?: mutableListOf()
+                    notifiersByComponentName[requestedNotifier]
+                        ?: mutableListOf()
                 notifiers.add(StorageKeyParser.parse(key))
-                notifiersByComponentName[componentName to notifierId] = notifiers
+                notifiersByComponentName[requestedNotifier] = notifiers
             }
 
             rawQuery(
@@ -179,12 +192,9 @@ class DbHelper(
                 val notifierId = it.getString(5)
 
                 ResurrectionRequest(
-                    componentName,
-                    type,
-                    action,
-                    extras?.deepCopy(),
-                    notifiersByComponentName[componentName to notifierId] ?: emptyList(),
-                    notifierId
+                    componentName, type, action, extras?.deepCopy(), notifierId,
+                    notifiersByComponentName[RequestedNotifier(notifierId, componentName)]
+                        ?: emptyList()
                 )
             }
         }
@@ -200,7 +210,8 @@ class DbHelper(
 
     companion object {
         internal const val RESURRECTION_DB_NAME = "resurrection.sqlite3"
-        private const val RESURRECTION_DB_VERSION = 1
+        private const val RESURRECTION_DB_OLD_VERSION = 1
+        private const val RESURRECTION_DB_VERSION = 2
 
         private val CREATE = arrayOf(
             """
