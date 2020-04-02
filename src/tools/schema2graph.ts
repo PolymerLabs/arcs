@@ -44,7 +44,7 @@ export class SchemaNode {
   constructor(schema: Schema, name: string, kotlinName: string) {
     this.schema = schema;
     this.aliases.push(name);
-    this.kotlinAliases.push(kotlinName)
+    this.kotlinAliases.push(name)
   }
 }
 
@@ -85,7 +85,10 @@ export class SchemaGraph {
     if (node) {
       // We can only have one node in the graph per schema. Collect duplicates as aliases.
       node.aliases.push(name);
-      node.kotlinAliases.push(kotlinName);
+      node.kotlinName = name;
+      if(!node.kotlinAliases.includes(name)) {
+        node.kotlinAliases.push(name);
+      }
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
@@ -101,6 +104,7 @@ export class SchemaGraph {
           }
         }
       }
+      
       this.nodes.push(node);
     }
 
@@ -130,11 +134,16 @@ export class SchemaGraph {
     // Otherwise generate an internal name and create aliases for it.
     if (node.aliases.length === 1) {
       node.name = node.aliases.pop();
-      node.kotlinName = node.kotlinAliases.pop();
+      node.kotlinName = node.name;
     } else {
       node.name = `${this.particleSpec.name}Internal${++this.internalClassIndex}`;
       node.kotlinName = node.name;
     }
+
+    console.log(`node ${node.kotlinName}:`)
+      node.kotlinAliases.forEach( (child) => {
+        console.log(`    ${child}`)
+      })
 
     // Set up children links: collect descendants of descendants.
     const transitiveDescendants = new Set<SchemaNode>();

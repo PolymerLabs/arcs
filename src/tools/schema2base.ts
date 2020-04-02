@@ -121,6 +121,7 @@ export abstract class Schema2Base {
               refClassName: schemaNode.name,
               refSchemaHash: await schemaNode.schema.hash(),
             });
+            node.kotlinAliases.push(schemaNode.name)
           } else if (descriptor.kind === 'schema-collection') {
             const schema = descriptor.schema;
             if (!['Text', 'URL', 'Number', 'Boolean'].includes(schema.type)) {

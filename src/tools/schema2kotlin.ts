@@ -131,7 +131,7 @@ ${imports.join('\n')}
   }
 
   private entityTypeName(particle: ParticleSpec, connection: HandleConnectionSpec) {
-    return `${this.upperFirst(connection.name)}`;
+    return `${particle.name}_${this.upperFirst(connection.name)}`;
   }
 
   generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {
@@ -145,7 +145,7 @@ ${imports.join('\n')}
       //await node.schema.hash(), fields.length)
       const kotlinGenerator = <KotlinGenerator>ng.generator
       classes.push(kotlinGenerator.generateClasses(ng.hash, ng.fieldLength));
-      typeAliases.push(kotlinGenerator.generateAliases(`Abstract${particleName}`))
+      typeAliases.push(kotlinGenerator.generateAliases(`${particleName}`))
     })
 
     for (const connection of particle.connections) {
@@ -203,7 +203,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType =`${particleName}.${this.entityTypeName(particle, connection)}`;
+      const entityType =`${this.entityTypeName(particle, connection)}`;
       console.log(`entityType: ${entityType}`)
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
@@ -380,14 +380,14 @@ ${lines}
   generate(schemaHash: string, fieldCount: number): string { return ''; }
 
   generateAliases(particleName: string): string {
-    const name = this.node.name;
-    const aliases = this.node.aliases;
-    const typeDecls = aliases.map(alias => `typealias ${alias} = ${particleName}.${name}`);
+    const name = this.node.kotlinName;
+    const aliases = this.node.kotlinAliases;
+    const typeDecls = aliases.map(alias => `typealias ${alias} = Abstract${particleName}.${name}`);
     return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
   }
 
   generateClasses(schemaHash: string, fieldCount: number): string {
-    const name = this.node.name;
+    const name = this.node.kotlinName;
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
