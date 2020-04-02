@@ -22,6 +22,6 @@ interface ResurrectableHost : ArcHost {
     /** Implementing hosts must provide an instance of ResurrectionHelper */
     val resurrectionHelper: ResurrectionHelper
 
-    /** Invoked by [ArcHostHelper.onStartCommand] when [ResurrectorService] wakes our arc. */
+    /** Invoked by [ArcHostHelper.onStartCommand] when [ResurrectorService] needs to wake an arc. */
     fun onResurrected(arcId: String, affectedKeys: List<StorageKey>)
 }

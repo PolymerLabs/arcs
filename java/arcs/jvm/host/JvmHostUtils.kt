@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -10,7 +10,6 @@
  */
 package arcs.jvm.host
 
-import arcs.core.host.ParticleIdentifier
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
 import arcs.core.host.api.Particle

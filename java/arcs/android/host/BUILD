@@ -7,6 +7,7 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_android_library(
     name = "host",
     srcs = glob(["*.kt"]),
+    manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/sdk/host",
         "//java/arcs/core/host",

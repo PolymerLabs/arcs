@@ -21,7 +21,7 @@ import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 
 /**
- * An [ArcHost] runs on Android inside of a [Service], uses [StorageService] for storage, and
+ * An [ArcHost] that runs on Android inside of a [Service], uses [StorageService] for storage, and
  * can be resurrected via [ResurrectorService] if the [ArcHost] is embedded in its own service.
  */
 abstract class AndroidHost(

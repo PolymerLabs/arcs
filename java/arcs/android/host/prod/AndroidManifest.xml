@@ -1,10 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="arcs.android.host">
+          package="arcs.android.host.prod">
 
   <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
 
   <application>
-    <service android:name=".prod.ProdArcHostService" android:exported="false">
+    <service android:name=".ProdArcHostService" android:exported="false">
       <intent-filter>
         <action android:name="arcs.android.host.ARC_HOST"/>
       </intent-filter>
