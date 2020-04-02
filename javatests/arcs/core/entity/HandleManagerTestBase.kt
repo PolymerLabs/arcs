@@ -11,7 +11,6 @@ import arcs.core.data.SchemaName
 import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.util.Time
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.Reference
@@ -22,13 +21,14 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.withTimeout
 import org.junit.Ignore
 import org.junit.Test
-import java.lang.ClassCastException
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
@@ -445,9 +445,18 @@ open class HandleManagerTestBase {
         handleA.store(entity1)
         assertThat(handleA.fetchAll()).containsExactly(entity1)
         assertThat(handleB.fetchAll()).containsExactly(entity1)
+
+        // Ensure we get update from A before checking.
+        // Since some test configurations may result in the handles
+        // operating on different threads.
+        val gotUpdate = CompletableDeferred<Unit>()
+        handleA.onUpdate {
+            gotUpdate.complete(Unit)
+        }
         handleB.store(entity2)
-        assertThat(handleA.fetchAll()).containsExactly(entity1, entity2)
         assertThat(handleB.fetchAll()).containsExactly(entity1, entity2)
+        gotUpdate.await()
+        assertThat(handleA.fetchAll()).containsExactly(entity1, entity2)
     }
 
     @Test
@@ -468,11 +477,15 @@ open class HandleManagerTestBase {
 
         // Now read back from a different handle
         val readHandle = readHandleManager.createCollectionHandle()
-        val updateDeferred = CompletableDeferred<Set<Person>>()
         writeHandle.store(entity1)
+
+        val updateDeferred = CompletableDeferred<Set<Person>>()
         readHandle.onUpdate {
-            updateDeferred.complete(it)
+            if (it.size == 2) {
+                updateDeferred.complete(it)
+            }
         }
+
         writeHandle.store(entity2)
         assertThat(updateDeferred.await()).containsExactly(entity1, entity2)
     }
@@ -728,7 +741,7 @@ open class HandleManagerTestBase {
         storageKey: StorageKey = singletonKey,
         name: String = "singletonWriteHandle",
         ttl: Ttl = Ttl.Infinite
-    ) = readHandleManager.createHandle(
+    ) = createHandle(
         HandleSpec(
             name,
             HandleMode.ReadWrite,
@@ -750,7 +763,7 @@ open class HandleManagerTestBase {
         name: String = "collectionRefReadHandle",
         ttl: Ttl = Ttl.Infinite,
         entitySpec: EntitySpec<T>
-    ) = readHandleManager.createHandle(
+    ) = createHandle(
         HandleSpec(
             name,
             HandleMode.ReadWrite,
