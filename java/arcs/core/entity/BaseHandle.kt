@@ -22,6 +22,12 @@ abstract class BaseHandle<T : Entity>(
 
     override suspend fun onReady(action: () -> Unit) = storageProxy.addOnReady(name, action)
 
+    // TODO: temporary alias
+    override suspend fun onSync(action: () -> Unit) = onReady(action)
+
+    // TODO: remove this when the interface method is moved to ReadableHandle
+    override suspend fun onDesync(action: () -> Unit) = storageProxy.addOnDesync(name, action)
+
     protected inline fun <T> checkPreconditions(block: () -> T): T {
         check(!closed) { "Handle $name is closed" }
         return block()
