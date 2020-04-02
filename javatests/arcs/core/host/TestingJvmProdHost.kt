@@ -5,6 +5,7 @@ import arcs.core.util.Time
 import arcs.jvm.host.AnnotationBasedJvmProdHost
 import arcs.jvm.util.testutil.FakeTime
 
+
 open class TestingJvmProdHost(vararg particles: ParticleRegistration) :
     AnnotationBasedJvmProdHost(TestingJvmProdHost::class, *particles) {
 
