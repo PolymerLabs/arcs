@@ -58,8 +58,7 @@ def arcs_cc_schema(name, src, deps = [], out = None):
     )
 
 def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = True):
-    """Generates a Kotlin schemas, entities, entityspecs, handle holders, and base particles for the given .arcs
-    manifest file.
+    """Generates a Kotlin schemas, entities, specs, handle holders, and base particles for input .arcs manifest files.
 
     Example:
 
