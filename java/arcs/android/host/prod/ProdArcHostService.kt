@@ -16,6 +16,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostHelper
+import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
 import arcs.jvm.host.scanForParticles
