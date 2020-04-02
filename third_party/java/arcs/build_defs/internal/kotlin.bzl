@@ -401,7 +401,24 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
         )
 
 def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
-    """Converts recipes in manifests into Kotlin Plans.
+    """Converts recipes from manifests into Kotlin plans.
+
+    Example:
+
+      Direct dependency on this target is required for use.
+
+      ```
+          arcs_kt_plans(
+            name = "foo_plans",
+            srcs = ["foo.arcs"],
+          )
+
+          arcs_kt_library(
+            name = "arcs_lib",
+            srcs = [glob("*.kt")],
+            deps = [":foo_plans"],
+          )
+      ```
 
     Args:
       name: the name of the target to create

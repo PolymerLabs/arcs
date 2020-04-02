@@ -58,13 +58,31 @@ def arcs_cc_schema(name, src, deps = [], out = None):
     )
 
 def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = True):
-    """Generates a Kotlin file for the given .arcs schema file.
+    """Generates a Kotlin schemas, entities, entityspecs, handle holders, and base particles for the given .arcs
+    manifest file.
+
+    Example:
+
+      Direct dependency on this target is required for use.
+
+      ```
+          arcs_kt_schema(
+            name = "foo_schemas",
+            srcs = ["foo.arcs"],
+          )
+
+          arcs_kt_library(
+            name = "arcs_lib",
+            srcs = [glob("*.kt")],
+            deps = [":foo_schemas"],
+          )
+      ```
 
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
       deps: list of imported manifests
-      platforms: list of target platforms (current, `jvm` and `wasm` supported).
+      platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
     """
     supported = ["jvm", "wasm"]
