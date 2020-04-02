@@ -14,4 +14,16 @@
   <string name="app_name">Arcs Test</string>
   <string name="result_prompt" translatable="false">Result will be shown here.</string>
   <string name="person_test_btn" translatable="false">PersonTest</string>
+  <string name="handles_test_btn" translatable="false">HandlesTest</string>
+  <string name="create" translatable="false">Create</string>
+  <string name="set" translatable="false">Set</string>
+  <string name="clear" translatable="false">Clear</string>
+  <string name="prod_ex_test" translatable="false">ProdEx Test</string>
+  <string name="storage_test" translatable="false">Storage Test</string>
+  <string name="singleton" translatable="false">Singleton</string>
+  <string name="collection" translatable="false">Collection</string>
+  <string name="in_memory" translatable="false">In Memory</string>
+  <string name="persistent" translatable="false">Persistent</string>
+  <string name="local_activity" translatable="false">Local Activity</string>
+  <string name="remote_service" translatable="false">Remote Service</string>
 </resources>

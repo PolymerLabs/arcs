@@ -13,10 +13,14 @@ package arcs.android.e2e.testapp
 
 import android.app.Application
 import androidx.work.Configuration
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.android.util.initLogForAndroid
 import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Log
 
 /** Application class for Arcs Test. */
@@ -34,6 +38,13 @@ class TestApplication : Application(), Configuration.Provider {
         RamDiskDriverProvider()
 
         DriverAndKeyConfigurator.configureKeyParsers()
+
+        DatabaseStorageKey.registerParser()
+        DatabaseDriverProvider.configure(AndroidSqliteDatabaseManager(this)) {
+            TestEntity.SCHEMA
+        }
+
+        ReferenceModeStorageKey.registerParser()
 
         initLogForAndroid(Log.Level.Debug)
     }

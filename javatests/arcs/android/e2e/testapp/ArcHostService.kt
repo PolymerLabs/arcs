@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 /**
  * Service which wraps an ArcHost.
  */
-class TestService : Service() {
+class ArcHostService : Service() {
 
     private val coroutineContext = Job() + Dispatchers.Main
     private val scope = CoroutineScope(coroutineContext)
@@ -60,7 +60,7 @@ class TestService : Service() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
             scope.launch {
                 val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                val intent = Intent(this@TestService, TestActivity::class.java)
+                val intent = Intent(this@ArcHostService, TestActivity::class.java)
                     .apply {
                         putExtra(TestActivity.RESULT_NAME, name)
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK

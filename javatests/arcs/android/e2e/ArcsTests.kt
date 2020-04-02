@@ -30,6 +30,32 @@ class ArcsTest {
     }
 
     @Test
+    fun testStorageService_localActivityInMemory() {
+        context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
+
+        // Configure handle options.
+        clickOnTextIfPresent(LOCAL_BTN_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(IN_MEMORY_BTN_TEXT, UI_TIMEOUT_MS)
+
+        // Create a handle first.
+        clickOnTextIfPresent(CREATE_BTN_TEXT, UI_TIMEOUT_MS)
+        waitForTextToAppear(ON_UPDATE_NULL, UI_TIMEOUT_MS)
+
+        // Set value to the handle.
+        clickOnTextIfPresent(SET_BTN_TEXT, UI_TIMEOUT_MS)
+        waitForTextToAppear(ON_UPDATE_TEST_RESULT, UI_TIMEOUT_MS)
+//        var result = uiDevice.findObjects(By.text(ON_UPDATE_TEST_RESULT)) +
+//                     uiDevice.findObjects(By.text(ON_SYNC_TEST_RESULT))
+//        assertThat(result).isNotEmpty()
+//
+//        // Test clicking on Clear button which should clear the handle.
+//        uiAutomationTestHelper.clickOnTextIfPresent(CLEAR_BTN_TEXT, UI_TIMEOUT_MS.toLong())
+//        uiAutomationTestHelper.waitForTextToAppear(ON_UPDATE_NULL, UI_TIMEOUT_MS.toLong())
+//        result = uiDevice.findObjects(By.text(ON_UPDATE_NULL))
+//        assertThat(result).isNotEmpty()
+    }
+
+    @Test
     fun testAllocator_readWrite() {
         context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
         clickOnTextIfPresent(PERSON_TEST_BTN_TEXT, UI_TIMEOUT_MS)
@@ -62,5 +88,18 @@ class ArcsTest {
 
         const val PERSON_TEST_BTN_TEXT = "PersonTest"
         const val PERSON_TEST_RESULT_TEXT = "John Wick"
+
+        const val STORAGE_TEST_RESULT = "Test Text,1234.0,true"
+        const val ON_UPDATE_TEST_RESULT = "onUpdate:$STORAGE_TEST_RESULT"
+        const val ON_UPDATE_NULL = "onUpdate:null"
+        const val ON_SYNC_TEST_RESULT = "onSync:$STORAGE_TEST_RESULT"
+        const val ON_SYNC_NULL = "onSync:null"
+        const val IN_MEMORY_BTN_TEXT = "In Memory"
+        const val PERSISTENT_BTN_TEXT = "Persistent"
+        const val LOCAL_BTN_TEXT = "Local Activity"
+        const val REMOTE_BTN_TEXT = "Remote Service"
+        const val CREATE_BTN_TEXT = "Create"
+        const val SET_BTN_TEXT = "Set"
+        const val CLEAR_BTN_TEXT = "Clear"
     }
 }
