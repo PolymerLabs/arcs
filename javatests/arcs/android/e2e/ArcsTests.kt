@@ -1,3 +1,14 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.android.e2e
 
 import android.content.Context
@@ -35,7 +46,7 @@ class ArcsTest {
 
         // Configure handle options.
         clickOnTextIfPresent(IN_MEMORY_BTN_TEXT, UI_TIMEOUT_MS)
-        clickOnTextIfPresent(LOCAL_BTN_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT, UI_TIMEOUT_MS)
 
         // Create a handle first.
         clickOnTextIfPresent(CREATE_BTN_TEXT, UI_TIMEOUT_MS)
@@ -44,6 +55,60 @@ class ArcsTest {
         // Set value to the handle.
         clickOnTextIfPresent(SET_BTN_TEXT, UI_TIMEOUT_MS)
         waitForTextToAppear(ON_UPDATE_TEST_RESULT, UI_TIMEOUT_MS)
+
+        // Clear the handle.
+        clickOnTextIfPresent(CLEAR_BTN_TEXT, UI_TIMEOUT_MS)
+        waitForTextToAppear(ON_UPDATE_NULL, UI_TIMEOUT_MS)
+    }
+
+    @Test
+    fun testStorageService_inMemoryRemoteService() {
+        context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
+
+        // Configure handle options.
+        clickOnTextIfPresent(IN_MEMORY_BTN_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(REMOTE_SERVICE_BTN_TEXT, UI_TIMEOUT_MS)
+
+        // Create a handle first.
+        clickOnTextIfPresent(CREATE_BTN_TEXT, UI_TIMEOUT_MS)
+        waitForTextToAppear(ON_SYNC_NULL, UI_TIMEOUT_MS)
+
+        // Set value to the handle.
+        clickOnTextIfPresent(SET_BTN_TEXT, UI_TIMEOUT_MS)
+        waitForTextToAppear(ON_UPDATE_TEST_RESULT, UI_TIMEOUT_MS)
+
+        // Clear the handle.
+        clickOnTextIfPresent(CLEAR_BTN_TEXT, UI_TIMEOUT_MS)
+        waitForTextToAppear(ON_UPDATE_NULL, UI_TIMEOUT_MS)
+    }
+
+    @Test
+    fun testStorageService_persistentLocalActivity() {
+        context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
+
+        // Configure handle options.
+        clickOnTextIfPresent(PERSISTENT_BTN_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT, UI_TIMEOUT_MS)
+
+        // Create a handle first.
+        clickOnTextIfPresent(CREATE_BTN_TEXT, UI_TIMEOUT_MS)
+        waitForTextToAppear(ON_SYNC_NULL, UI_TIMEOUT_MS)
+
+        // Set value to the handle.
+        clickOnTextIfPresent(SET_BTN_TEXT, UI_TIMEOUT_MS)
+        waitForTextToAppear(ON_UPDATE_TEST_RESULT, UI_TIMEOUT_MS)
+
+        uiDevice.pressBack()
+
+        context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
+
+        // Configure handle options.
+        clickOnTextIfPresent(PERSON_TEST_BTN_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT, UI_TIMEOUT_MS)
+
+        // Create a handle first.
+        clickOnTextIfPresent(CREATE_BTN_TEXT, UI_TIMEOUT_MS)
+        waitForTextToAppear(ON_SYNC_TEST_RESULT, UI_TIMEOUT_MS)
 
         // Clear the handle.
         clickOnTextIfPresent(CLEAR_BTN_TEXT, UI_TIMEOUT_MS)
@@ -91,8 +156,8 @@ class ArcsTest {
         const val ON_SYNC_NULL = "onSync:null"
         const val IN_MEMORY_BTN_TEXT = "In Memory"
         const val PERSISTENT_BTN_TEXT = "Persistent"
-        const val LOCAL_BTN_TEXT = "Local Activity"
-        const val REMOTE_BTN_TEXT = "Remote Service"
+        const val LOCAL_ACTIVITY_BTN_TEXT = "Local Activity"
+        const val REMOTE_SERVICE_BTN_TEXT = "Remote Service"
         const val CREATE_BTN_TEXT = "Create"
         const val SET_BTN_TEXT = "Set"
         const val CLEAR_BTN_TEXT = "Clear"

@@ -37,10 +37,9 @@ import kotlinx.coroutines.launch
 /** Entry UI to launch Arcs Test. */
 class TestActivity : AppCompatActivity() {
 
-    /**
-     * Recipe hand translated from 'person.arcs'
-     */
     private lateinit var resultView: TextView
+    private var resultLine1: String? = ""
+    private var resultLine2: String? = ""
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
@@ -99,17 +98,9 @@ class TestActivity : AppCompatActivity() {
 
         intent?.run {
             scope.launch {
-                resultView.text = intent.getStringExtra(RESULT_NAME)
+                updateResultText(intent.getStringExtra(RESULT_NAME))
             }
         }
-    }
-
-    override fun onStop() {
-        scope.launch {
-            singletonHandle?.close()
-        }
-
-        super.onStop()
     }
 
     override fun onDestroy() {
@@ -172,25 +163,25 @@ class TestActivity : AppCompatActivity() {
 
         singletonHandle?.onUpdate {
             scope.launch {
-                updateTestResult("onUpdate")
+                fetchAndUpdateResult("onUpdate")
             }
         }
 
         singletonHandle?.onSync {
             scope.launch {
-                updateTestResult("onSync")
+                fetchAndUpdateResult("onSync")
             }
         }
 
         singletonHandle?.onDesync {
             scope.launch {
-                updateTestResult("onDesync")
+                fetchAndUpdateResult("onDesync")
             }
         }
     }
 
     private suspend fun fetchHandle() {
-        updateTestResult("Fetch")
+        fetchAndUpdateResult("Fetch")
     }
 
     private suspend fun setHandle() {
@@ -233,11 +224,18 @@ class TestActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun updateTestResult(prefix: String) {
+    private suspend fun fetchAndUpdateResult(prefix: String) {
         val person = singletonHandle?.fetch()
-        resultView.text = person?.let {
+        val result = person?.let {
             "$prefix:${it.text},${it.number},${it.boolean}"
         } ?: "$prefix:null"
+        updateResultText(result)
+    }
+
+    private fun updateResultText(result: String) {
+        resultLine1 = resultLine2
+        resultLine2 = result
+        resultView.text = "$resultLine1\n$resultLine2"
     }
 
     companion object {
