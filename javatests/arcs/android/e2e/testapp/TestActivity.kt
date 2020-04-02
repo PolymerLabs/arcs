@@ -59,6 +59,11 @@ class TestActivity : AppCompatActivity() {
                 createHandle()
             }
         }
+        findViewById<Button>(R.id.fetch).setOnClickListener {
+            scope.launch {
+                fetchHandle()
+            }
+        }
         findViewById<Button>(R.id.set).setOnClickListener {
             scope.launch {
                 setHandle()
@@ -182,6 +187,10 @@ class TestActivity : AppCompatActivity() {
                 updateTestResult("onDesync")
             }
         }
+    }
+
+    private suspend fun fetchHandle() {
+        updateTestResult("Fetch")
     }
 
     private suspend fun setHandle() {

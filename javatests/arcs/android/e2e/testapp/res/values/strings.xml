@@ -16,6 +16,7 @@
   <string name="person_test_btn" translatable="false">PersonTest</string>
   <string name="handles_test_btn" translatable="false">HandlesTest</string>
   <string name="create" translatable="false">Create</string>
+  <string name="fetch" translatable="false">Fetch</string>
   <string name="set" translatable="false">Set</string>
   <string name="clear" translatable="false">Clear</string>
   <string name="prod_ex_test" translatable="false">ProdEx Test</string>
