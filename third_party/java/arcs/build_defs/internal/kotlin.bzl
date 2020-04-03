@@ -413,7 +413,6 @@ def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
             srcs = ["foo.arcs"],
           )
 
-
           arcs_kt_plan(
             name = "foo_plans",
             srcs = ["foo.arcs"],
@@ -422,7 +421,7 @@ def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
 
           arcs_kt_library(
             name = "arcs_lib",
-            srcs = [glob("*.kt")],
+            srcs = glob("*.kt"),
             deps = [":foo_plans"],
           )
       ```

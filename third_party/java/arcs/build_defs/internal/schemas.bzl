@@ -72,7 +72,7 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = Tr
 
           arcs_kt_library(
             name = "arcs_lib",
-            srcs = [glob("*.kt")],
+            srcs = glob("*.kt"),
             deps = [":foo_schemas"],
           )
       ```
