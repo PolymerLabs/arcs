@@ -314,11 +314,8 @@ describe('recipe2plan', () => {
     });
     it('forces resolution of type variables', async () => {
       const manifest = await Manifest.parse(`\
-    schema Thing 
-      name: Text
-     
     particle Writer
-       data: writes [Thing {name}] // Could also be a singleton
+       data: writes [Thing {name: Text}] // Could also be a singleton
     
     @trigger
       launch startup
