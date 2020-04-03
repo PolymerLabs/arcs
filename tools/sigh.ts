@@ -1089,6 +1089,7 @@ function runNodeScript(args: string[]) {
 /** Returns the series of steps to run the given script. */
 function runNodeScriptSteps(scriptName: string) {
   const runFn = (args: string[]) => runNodeScript([scriptName, ...args]);
+  Object.defineProperty(runFn, 'name', {value: scriptName});
   return [peg, build, runFn];
 }
 
