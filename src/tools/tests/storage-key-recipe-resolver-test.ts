@@ -312,6 +312,24 @@ describe('recipe2plan', () => {
         assert.isTrue(it.isResolved());
       }
     });
+    it('forces resolution of type variables', async () => {
+      const manifest = await Manifest.parse(`\
+    particle Writer
+       data: writes [Thing {name: Text}] // Could also be a singleton
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: thing`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      for (const it of (await resolver.resolve())) {
+        assert.isTrue(it.isResolved());
+      }
+    });
     it.skip('No Handle: If there is no writing handle, it is not valid', () => {
     });
   });
