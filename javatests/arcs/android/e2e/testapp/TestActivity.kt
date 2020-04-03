@@ -13,7 +13,6 @@ package arcs.android.e2e.testapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
@@ -51,7 +50,6 @@ class TestActivity : AppCompatActivity() {
     private var singletonHandle: ReadWriteSingletonHandle<TestEntity>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d("XXX", "onCreate")
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.test_activity)
@@ -99,14 +97,10 @@ class TestActivity : AppCompatActivity() {
     }
 
     override fun onNewIntent(intent: Intent?) {
-        Log.d("XXX", "onNewIntent")
         super.onNewIntent(intent)
 
         intent?.run {
-            if (intent.hasExtra(SHUTDOWN)) {
-                Log.d("XXX", "finish")
-                finish()
-            } else if (intent.hasExtra(RESULT_NAME)) {
+            if (intent.hasExtra(RESULT_NAME)) {
                 scope.launch {
                     appendResultText(intent.getStringExtra(RESULT_NAME))
                 }
@@ -115,7 +109,6 @@ class TestActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        Log.d("XXX", "onDestroy")
         val intent = Intent(
             this, StorageAccessService::class.java
         )
@@ -256,6 +249,5 @@ class TestActivity : AppCompatActivity() {
 
     companion object {
         const val RESULT_NAME = "result"
-        const val SHUTDOWN = "shutdown"
     }
 }

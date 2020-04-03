@@ -13,7 +13,6 @@ arcs_kt_android_library(
     testonly = 1,
     srcs = glob(["*.kt"]),
     deps = [
-        "//javatests/arcs/android/e2e:arcs_e2e_test_lib",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/android/androidx_test/runner",
         "//third_party/android/androidx_test/uiautomator",

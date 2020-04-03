@@ -11,6 +11,8 @@
 
 package arcs.android.e2e
 
+import android.app.Activity
+import android.app.Instrumentation
 import android.content.Context
 import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -18,11 +20,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
-import arcs.android.e2e.testapp.TestActivity
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -32,26 +32,31 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ArcsTest {
 
+    private lateinit var instrumentation: Instrumentation
     private lateinit var context: Context
     private lateinit var uiDevice: UiDevice
 
+    private var activity: Activity? = null
+
     @Before
     fun setup() {
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation = InstrumentationRegistry.getInstrumentation()
         context = instrumentation.context
         uiDevice = UiDevice.getInstance(instrumentation)
+
+        activity = instrumentation.startActivitySync(
+            createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
     }
 
     @After
     fun after() {
-        uiDevice.pressHome()
+        instrumentation.runOnMainSync {
+            activity?.finish()
+        }
     }
 
     @Test
-    @Ignore
     fun testStorageService_inMemoryLocalActivity() {
-        context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
-
         // Configure handle options.
         clickOnTextIfPresent(IN_MEMORY_BTN_TEXT)
         clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
@@ -70,10 +75,7 @@ class ArcsTest {
     }
 
     @Test
-    @Ignore
     fun testStorageService_inMemoryRemoteService() {
-        context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
-
         // Configure handle options.
         clickOnTextIfPresent(IN_MEMORY_BTN_TEXT)
         clickOnTextIfPresent(REMOTE_SERVICE_BTN_TEXT)
@@ -93,8 +95,6 @@ class ArcsTest {
 
     @Test
     fun testStorageService_persistentLocalActivity() {
-        context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
-
         // Configure handle options.
         clickOnTextIfPresent(PERSISTENT_BTN_TEXT)
         clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
@@ -107,17 +107,12 @@ class ArcsTest {
         clickOnTextIfPresent(SET_BTN_TEXT)
         waitForTextToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
 
-        // Send signal to the current activity to finish itself.
-        val intent = createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME).apply {
-            putExtra(TestActivity.SHUTDOWN, true)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        // Restart the activity.
+        instrumentation.runOnMainSync {
+            activity?.finish()
         }
-        context.startActivity(intent)
-
-        // Wait for the current activity to finish.
-        waitForTextGone(SET_BTN_TEXT)
-
-        context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
+        activity = instrumentation.startActivitySync(
+            createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
 
         // Configure handle options.
         clickOnTextIfPresent(PERSISTENT_BTN_TEXT)
@@ -133,9 +128,7 @@ class ArcsTest {
     }
 
     @Test
-    @Ignore
     fun testAllocator_readWrite() {
-        context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
         clickOnTextIfPresent(PERSON_TEST_BTN_TEXT)
         waitForTextToAppear(WAITING_FOR_RESULT, PERSON_TEST_RESULT_TEXT)
     }
@@ -153,13 +146,16 @@ class ArcsTest {
     }
 
     private fun waitForTextToAppear(text1: String, text2: String) {
+        val sequencedText1 = "1: $text1"
+        val sequencedText2 = "2: $text2"
+
         val text1Appeared = uiDevice.wait(Until.hasObject(By.text(
-            "1: $text1")), UI_TIMEOUT_MS)
-        assertWithMessage("View with exactly \"$text1\" should appear")
+            sequencedText1)), UI_TIMEOUT_MS)
+        assertWithMessage("View with exactly \"$sequencedText1\" should appear")
             .that(text1Appeared).isTrue()
         val text2Appeared = uiDevice.wait(Until.hasObject(By.text(
-            "2: $text2")), UI_TIMEOUT_MS)
-        assertWithMessage("View with exactly \"$text2\" should appear")
+            sequencedText2)), UI_TIMEOUT_MS)
+        assertWithMessage("View with exactly \"$sequencedText2\" should appear")
             .that(text2Appeared).isTrue()
     }
 
