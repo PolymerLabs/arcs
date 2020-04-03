@@ -23,6 +23,13 @@ import {TypeVariable} from '../runtime/type.js';
 import {DatabaseStorageKey, PersistentDatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
 import {Capabilities} from '../runtime/capabilities.js';
 
+export class StorageKeyRecipeResolverError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'StorageKeyRecipeResolverError';
+  }
+}
+
 /**
  * Responsible for resolving recipes with storage keys.
  */
@@ -51,11 +58,15 @@ export class StorageKeyRecipeResolver {
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
       const resolved = await this.tryResolve(recipe, arc, opts);
       if (!resolved) {
-        throw Error(`Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
+        throw new StorageKeyRecipeResolverError(
+          `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`
+        );
       }
       await this.createStoresForCreateHandles(resolved, arc);
       if (!resolved.isResolved()) {
-        throw Error(`Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`);
+        throw new StorageKeyRecipeResolverError(
+          `Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`
+        );
       }
       recipes.push(resolved);
     }
@@ -98,6 +109,11 @@ export class StorageKeyRecipeResolver {
         assert(createHandle.type.maybeEnsureResolved());
         assert(createHandle.type.isResolved());
       }
+
+      if (createHandle.type.getEntitySchema() === null) {
+        throw new StorageKeyRecipeResolverError(`Handle '${createHandle.id}' was not properly resolved.`);
+      }
+
       const storageKey = await resolver.createStorageKey(
         createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
       const store = new Store(createHandle.type, {storageKey, exists: Exists.MayExist, id: createHandle.id});
@@ -121,14 +137,16 @@ export class StorageKeyRecipeResolver {
           .filter(h => h.fate === 'create');
 
         if (matches.length === 0) {
-          throw Error(`No matching handles found for ${handle.localName}.`);
+          throw new StorageKeyRecipeResolverError(`No matching handles found for ${handle.localName}.`);
         } else if (matches.length > 1) {
-          throw Error(`More than one handle found for ${handle.localName}.`);
+          throw new StorageKeyRecipeResolverError(`More than one handle found for ${handle.localName}.`);
         }
 
         const match = matches[0];
         if (!isLongRunning(match.recipe)) {
-          throw Error(`Handle ${handle.localName} mapped to ephemeral handle ${match.localName}.`);
+          throw new StorageKeyRecipeResolverError(
+            `Handle ${handle.localName} mapped to ephemeral handle ${match.localName}.`
+          );
         }
       });
   }
