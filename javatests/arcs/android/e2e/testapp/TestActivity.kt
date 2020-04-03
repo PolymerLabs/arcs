@@ -13,6 +13,7 @@ package arcs.android.e2e.testapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
@@ -37,9 +38,11 @@ import kotlinx.coroutines.launch
 /** Entry UI to launch Arcs Test. */
 class TestActivity : AppCompatActivity() {
 
-    private lateinit var resultView: TextView
-    private var resultLine1: String? = ""
-    private var resultLine2: String? = ""
+    private lateinit var resultView1: TextView
+    private lateinit var resultView2: TextView
+
+    private var result1 = ""
+    private var result2 = ""
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
@@ -48,10 +51,12 @@ class TestActivity : AppCompatActivity() {
     private var singletonHandle: ReadWriteSingletonHandle<TestEntity>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d("XXX", "onCreate")
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.test_activity)
-        resultView = findViewById<Button>(R.id.result)
+        resultView1 = findViewById<Button>(R.id.result1)
+        resultView2 = findViewById<Button>(R.id.result2)
 
         findViewById<Button>(R.id.create).setOnClickListener {
             scope.launch {
@@ -94,16 +99,23 @@ class TestActivity : AppCompatActivity() {
     }
 
     override fun onNewIntent(intent: Intent?) {
+        Log.d("XXX", "onNewIntent")
         super.onNewIntent(intent)
 
         intent?.run {
-            scope.launch {
-                updateResultText(intent.getStringExtra(RESULT_NAME))
+            if (intent.hasExtra(SHUTDOWN)) {
+                Log.d("XXX", "finish")
+                finish()
+            } else if (intent.hasExtra(RESULT_NAME)) {
+                scope.launch {
+                    appendResultText(intent.getStringExtra(RESULT_NAME))
+                }
             }
         }
     }
 
     override fun onDestroy() {
+        Log.d("XXX", "onDestroy")
         val intent = Intent(
             this, StorageAccessService::class.java
         )
@@ -113,6 +125,7 @@ class TestActivity : AppCompatActivity() {
     }
 
     private suspend fun runPersonRecipe() {
+        appendResultText(getString(R.string.waiting_for_result))
         val allocator = Allocator.create(
             AndroidManifestHostRegistry.create(this@TestActivity),
             EntityHandleManager(
@@ -178,6 +191,8 @@ class TestActivity : AppCompatActivity() {
                 fetchAndUpdateResult("onDesync")
             }
         }
+
+        appendResultText(getString(R.string.waiting_for_result))
     }
 
     private suspend fun fetchHandle() {
@@ -229,16 +244,18 @@ class TestActivity : AppCompatActivity() {
         val result = person?.let {
             "$prefix:${it.text},${it.number},${it.boolean}"
         } ?: "$prefix:null"
-        updateResultText(result)
+        appendResultText(result)
     }
 
-    private fun updateResultText(result: String) {
-        resultLine1 = resultLine2
-        resultLine2 = result
-        resultView.text = "$resultLine1\n$resultLine2"
+    private fun appendResultText(result: String) {
+        result1 = result2
+        result2 = result
+        resultView1.text = "1: $result1"
+        resultView2.text = "2: $result2"
     }
 
     companion object {
         const val RESULT_NAME = "result"
+        const val SHUTDOWN = "shutdown"
     }
 }

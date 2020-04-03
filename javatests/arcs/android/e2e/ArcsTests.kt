@@ -13,13 +13,16 @@ package arcs.android.e2e
 
 import android.content.Context
 import android.content.Intent
-import androidx.test.uiautomator.By
-import androidx.test.uiautomator.UiDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
+import arcs.android.e2e.testapp.TestActivity
 import com.google.common.truth.Truth.assertWithMessage
+import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -35,51 +38,57 @@ class ArcsTest {
     @Before
     fun setup() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
-        this.context = instrumentation.context
-        this.uiDevice = UiDevice.getInstance(instrumentation)
+        context = instrumentation.context
+        uiDevice = UiDevice.getInstance(instrumentation)
+    }
+
+    @After
+    fun after() {
         uiDevice.pressHome()
     }
 
     @Test
+    @Ignore
     fun testStorageService_inMemoryLocalActivity() {
         context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
 
         // Configure handle options.
-        clickOnTextIfPresent(IN_MEMORY_BTN_TEXT, UI_TIMEOUT_MS)
-        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(IN_MEMORY_BTN_TEXT)
+        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
 
         // Create a handle first.
-        clickOnTextIfPresent(CREATE_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_SYNC_NULL, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(CREATE_BTN_TEXT)
+        waitForTextToAppear(WAITING_FOR_RESULT, ON_SYNC_NULL)
 
         // Set value to the handle.
-        clickOnTextIfPresent(SET_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_UPDATE_TEST_RESULT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(SET_BTN_TEXT)
+        waitForTextToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
 
         // Clear the handle.
-        clickOnTextIfPresent(CLEAR_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_UPDATE_NULL, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(CLEAR_BTN_TEXT)
+        waitForTextToAppear(ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
     }
 
     @Test
+    @Ignore
     fun testStorageService_inMemoryRemoteService() {
         context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
 
         // Configure handle options.
-        clickOnTextIfPresent(IN_MEMORY_BTN_TEXT, UI_TIMEOUT_MS)
-        clickOnTextIfPresent(REMOTE_SERVICE_BTN_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(IN_MEMORY_BTN_TEXT)
+        clickOnTextIfPresent(REMOTE_SERVICE_BTN_TEXT)
 
         // Create a handle first.
-        clickOnTextIfPresent(CREATE_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_SYNC_NULL, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(CREATE_BTN_TEXT)
+        waitForTextToAppear(WAITING_FOR_RESULT, ON_SYNC_NULL)
 
         // Set value to the handle.
-        clickOnTextIfPresent(SET_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_UPDATE_TEST_RESULT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(SET_BTN_TEXT)
+        waitForTextToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
 
         // Clear the handle.
-        clickOnTextIfPresent(CLEAR_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_UPDATE_NULL, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(CLEAR_BTN_TEXT)
+        waitForTextToAppear(ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
     }
 
     @Test
@@ -87,50 +96,71 @@ class ArcsTest {
         context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
 
         // Configure handle options.
-        clickOnTextIfPresent(PERSISTENT_BTN_TEXT, UI_TIMEOUT_MS)
-        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(PERSISTENT_BTN_TEXT)
+        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
 
         // Create a handle first.
-        clickOnTextIfPresent(CREATE_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_SYNC_NULL, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(CREATE_BTN_TEXT)
+        waitForTextToAppear(WAITING_FOR_RESULT, ON_SYNC_NULL)
 
         // Set value to the handle.
-        clickOnTextIfPresent(SET_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_UPDATE_TEST_RESULT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(SET_BTN_TEXT)
+        waitForTextToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
 
-        uiDevice.pressBack()
+        // Send signal to the current activity to finish itself.
+        val intent = createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME).apply {
+            putExtra(TestActivity.SHUTDOWN, true)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(intent)
+
+        // Wait for the current activity to finish.
+        waitForTextGone(SET_BTN_TEXT)
 
         context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
 
         // Configure handle options.
-        clickOnTextIfPresent(PERSON_TEST_BTN_TEXT, UI_TIMEOUT_MS)
-        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(PERSISTENT_BTN_TEXT)
+        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
 
         // Create a handle first.
-        clickOnTextIfPresent(CREATE_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_SYNC_TEST_RESULT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(CREATE_BTN_TEXT)
+        waitForTextToAppear(WAITING_FOR_RESULT, ON_SYNC_TEST_RESULT)
 
         // Clear the handle.
-        clickOnTextIfPresent(CLEAR_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(ON_UPDATE_NULL, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(CLEAR_BTN_TEXT)
+        waitForTextToAppear(ON_SYNC_TEST_RESULT, ON_UPDATE_NULL)
     }
 
     @Test
+    @Ignore
     fun testAllocator_readWrite() {
         context.startActivity(createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
-        clickOnTextIfPresent(PERSON_TEST_BTN_TEXT, UI_TIMEOUT_MS)
-        waitForTextToAppear(PERSON_TEST_RESULT_TEXT, UI_TIMEOUT_MS)
+        clickOnTextIfPresent(PERSON_TEST_BTN_TEXT)
+        waitForTextToAppear(WAITING_FOR_RESULT, PERSON_TEST_RESULT_TEXT)
     }
 
-    private fun clickOnTextIfPresent(text: String , timeoutMs: Long) {
-        uiDevice.wait(Until.hasObject(By.text(text)), timeoutMs)
+    private fun clickOnTextIfPresent(text: String) {
+        uiDevice.wait(Until.hasObject(By.text(text)), UI_TIMEOUT_MS)
         val textObject = uiDevice.findObject(By.text(text))
-        textObject?.click()
+        textObject.click()
     }
 
-    private fun waitForTextToAppear(text: String , timeoutMs: Long) {
-        val textAppeared = uiDevice.wait(Until.hasObject(By.text(text)), timeoutMs)
-        assertWithMessage("View with exactly \"$text\" should appear").that(textAppeared).isTrue()
+    private fun waitForTextGone(text: String) {
+        val textGone = uiDevice.wait(Until.gone(By.text(text)), UI_TIMEOUT_MS)
+        assertWithMessage("View with exactly \"$text\" should be gone")
+            .that(textGone).isTrue()
+    }
+
+    private fun waitForTextToAppear(text1: String, text2: String) {
+        val text1Appeared = uiDevice.wait(Until.hasObject(By.text(
+            "1: $text1")), UI_TIMEOUT_MS)
+        assertWithMessage("View with exactly \"$text1\" should appear")
+            .that(text1Appeared).isTrue()
+        val text2Appeared = uiDevice.wait(Until.hasObject(By.text(
+            "2: $text2")), UI_TIMEOUT_MS)
+        assertWithMessage("View with exactly \"$text2\" should appear")
+            .that(text2Appeared).isTrue()
     }
 
     private fun createTestAppIntent(packageName: String, className: String) : Intent {
@@ -145,6 +175,8 @@ class ArcsTest {
         const val TEST_ACTIVITY_NAME = "$TEST_APP_PKG_NAME.TestActivity"
 
         const val UI_TIMEOUT_MS = 20000L
+
+        const val WAITING_FOR_RESULT = "Waiting for result."
 
         const val PERSON_TEST_BTN_TEXT = "PersonTest"
         const val PERSON_TEST_RESULT_TEXT = "John Wick"

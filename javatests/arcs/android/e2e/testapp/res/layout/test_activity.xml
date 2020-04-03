@@ -17,15 +17,24 @@
   android:layout_height="match_parent">
 
   <TextView
-    android:id="@+id/result"
+    android:id="@+id/result1"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:textAllCaps="false"
     android:text="@string/result_prompt"
     android:fontFamily="sans-serif-black"
     android:padding="8dp"
-    android:lines="2"
     android:layout_marginTop="8dp"/>
+
+  <TextView
+    android:id="@+id/result2"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:textAllCaps="false"
+    android:text="@string/result_prompt"
+    android:fontFamily="sans-serif-black"
+    android:padding="8dp"
+    android:layout_marginBottom="8dp"/>
 
   <LinearLayout
     android:orientation="vertical"
