@@ -290,6 +290,41 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     }
 
     @Test
+    fun collectionHandle_writeFollowedByQuery() = runBlocking<Unit> {
+        val readWriteQueryCollectionHandle = createCollectionHandle(
+            handleManager,
+            "readWriteQueryCollectionHandle",
+            HandleMode.ReadWriteQuery
+        ) as ReadWriteQueryCollectionHandle<PersonWithQuery, Double>
+
+        assertThat(readWriteQueryCollectionHandle)
+            .isInstanceOf(ReadWriteQueryCollectionHandle::class.java)
+
+        readWriteQueryCollectionHandle.store(entity1.withQuery())
+        readWriteQueryCollectionHandle.store(entity2.withQuery())
+
+        val queryBack = readWriteQueryCollectionHandle.query(21.5)
+        assertThat(queryBack.map {it.toString()}).containsExactly(entity2.withQuery().toString())
+
+        val queryBack2 = readWriteQueryCollectionHandle.query(0.0)
+        assertThat(queryBack2.map {it.toString()})
+            .containsExactly(
+                entity1.withQuery().toString(),
+                entity2.withQuery().toString()
+            )
+
+        val queryBack3 = readWriteQueryCollectionHandle.query(30.0)
+        assertThat(queryBack3).isEmpty()
+
+        val allData = readWriteQueryCollectionHandle.fetchAll()
+        assertThat(allData.map {it.toString()})
+            .containsExactly(
+                entity1.withQuery().toString(),
+                entity2.withQuery().toString()
+            )
+    }
+
+    @Test
     fun handle_nameIsGloballyUnique() = runBlocking<Unit> {
 
         val shandle1 = createSingletonHandle(
