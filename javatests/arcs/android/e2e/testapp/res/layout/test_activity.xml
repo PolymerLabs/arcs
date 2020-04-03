@@ -11,26 +11,132 @@
   -->
 
 <LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
 
   <TextView
-    android:id="@+id/result"
+    android:id="@+id/result1"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:textAllCaps="false"
     android:text="@string/result_prompt"
+    android:fontFamily="sans-serif-black"
     android:padding="8dp"
     android:layout_marginTop="8dp"/>
 
-  <Button
-    android:id="@+id/person_test"
+  <TextView
+    android:id="@+id/result2"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:textAllCaps="false"
-    android:text="@string/person_test_btn"
-    android:visibility="invisible"
-    style="?android:attr/buttonBarButtonStyle"/>
+    android:text="@string/result_prompt"
+    android:fontFamily="sans-serif-black"
+    android:padding="8dp"
+    android:layout_marginBottom="8dp"/>
+
+  <LinearLayout
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp">
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:fontFamily="sans-serif-medium"
+      android:text="@string/prod_ex_test"/>
+
+    <Button
+      android:id="@+id/person_test"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAllCaps="false"
+      android:text="@string/person_test_btn"
+      style="?android:attr/buttonBarButtonStyle"/>
+  </LinearLayout>
+
+  <LinearLayout
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp">
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:fontFamily="sans-serif-medium"
+      android:text="@string/storage_test"/>
+
+    <RadioGroup
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <RadioButton
+        android:id="@+id/in_memory"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/in_memory"
+        android:checked="true"/>
+      <RadioButton
+        android:id="@+id/persistent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/persistent"/>
+    </RadioGroup>
+
+
+    <RadioGroup
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <RadioButton
+        android:id="@+id/local"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/local_activity"
+        android:checked="true"/>
+      <RadioButton
+        android:id="@+id/remote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/remote_service"/>
+    </RadioGroup>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      style="?android:attr/buttonBarStyle">
+      <Button
+        android:id="@+id/create"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/create"
+        style="?android:attr/buttonBarButtonStyle"/>
+      <Button
+        android:id="@+id/fetch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/fetch"
+        style="?android:attr/buttonBarButtonStyle"/>
+      <Button
+        android:id="@+id/set"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/set"
+        style="?android:attr/buttonBarButtonStyle"/>
+      <Button
+        android:id="@+id/clear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/clear"
+        style="?android:attr/buttonBarButtonStyle"/>
+    </LinearLayout>
+  </LinearLayout>
 </LinearLayout>

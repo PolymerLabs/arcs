@@ -38,11 +38,16 @@
     </activity>
 
     <service
-      android:name=".TestService"
+      android:name=".ArcHostService"
       android:exported="false">
       <intent-filter>
         <action android:name="arcs.android.host.ARC_HOST"/>
       </intent-filter>
     </service>
+
+    <service
+      android:name=".StorageAccessService"
+      android:exported="false"
+      android:process=":test"/>
   </application>
 </manifest>

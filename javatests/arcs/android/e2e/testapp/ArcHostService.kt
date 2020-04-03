@@ -1,3 +1,14 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.android.e2e.testapp
 
 import android.app.Service
@@ -19,7 +30,7 @@ import kotlinx.coroutines.withContext
 /**
  * Service which wraps an ArcHost.
  */
-class TestService : Service() {
+class ArcHostService : Service() {
 
     private val coroutineContext = Job() + Dispatchers.Main
     private val scope = CoroutineScope(coroutineContext)
@@ -60,7 +71,7 @@ class TestService : Service() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
             scope.launch {
                 val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                val intent = Intent(this@TestService, TestActivity::class.java)
+                val intent = Intent(this@ArcHostService, TestActivity::class.java)
                     .apply {
                         putExtra(TestActivity.RESULT_NAME, name)
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK

@@ -1,11 +1,14 @@
+load(
+    "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_android_library",
+)
 load("//tools/build_defs/android:rules.bzl", "android_binary")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-kt_android_library(
+arcs_kt_android_library(
     name = "arcs_e2e_test_lib",
     testonly = 1,
     srcs = glob(["*.kt"]),
