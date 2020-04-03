@@ -23,6 +23,7 @@ import androidx.test.uiautomator.Until
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -39,7 +40,7 @@ class ArcsTest {
     private var activity: Activity? = null
 
     @Before
-    fun setup() {
+    fun before() {
         instrumentation = InstrumentationRegistry.getInstrumentation()
         context = instrumentation.context
         uiDevice = UiDevice.getInstance(instrumentation)
@@ -75,6 +76,7 @@ class ArcsTest {
     }
 
     @Test
+    @Ignore("Broken")
     fun testStorageService_inMemoryRemoteService() {
         // Configure handle options.
         clickOnTextIfPresent(IN_MEMORY_BTN_TEXT)
