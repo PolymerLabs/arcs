@@ -136,6 +136,9 @@ def arcs_kt_android_library(**kwargs):
 
     kotlincopts = kwargs.pop("kotlincopts", [])
     kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS + JVM_KOTLINC_OPTS)
+    if not IS_BAZEL:
+        constraints = kwargs.pop("constraints", [])
+        kwargs["constraints"] = merge_lists(constraints, ["android"])
     kt_android_library(**kwargs)
 
 def arcs_kt_native_library(**kwargs):

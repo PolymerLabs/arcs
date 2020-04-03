@@ -79,9 +79,11 @@ arcs_kt_jvm_library(
     ],
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/host",
         "//java/arcs/core/util",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
