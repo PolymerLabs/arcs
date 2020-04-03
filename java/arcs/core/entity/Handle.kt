@@ -119,6 +119,12 @@ interface WriteCollectionHandle<T : Storable> : Handle {
     suspend fun remove(element: T)
 }
 
+/** A collection handle with query access. */
+interface QueryCollectionHandle<T : Storable, QueryArgs> : Handle {
+    /** Returns a set with all the entities in the collection that match the associated query. */
+    suspend fun query(args: QueryArgs): Set<T>
+}
+
 /** A collection handle with read and write access. */
 interface ReadWriteCollectionHandle<T : Storable> :
     ReadCollectionHandle<T>, WriteCollectionHandle<T>
@@ -127,6 +133,12 @@ interface ReadWriteCollectionHandle<T : Storable> :
 interface ReadQueryCollectionHandle<T : Storable, QueryArgs> :
     ReadCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
 
+/** A collection handle with write and query access. */
+interface WriteQueryCollectionHandle<T : Entity, QueryArgs> :
+    WriteCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
+
 /** A collection handle with read, write and query access. */
 interface ReadWriteQueryCollectionHandle<T : Storable, QueryArgs> :
-    ReadWriteCollectionHandle<T>, ReadQueryCollectionHandle<T, QueryArgs>
+    ReadWriteCollectionHandle<T>,
+    WriteQueryCollectionHandle<T, QueryArgs>,
+    ReadQueryCollectionHandle<T, QueryArgs>

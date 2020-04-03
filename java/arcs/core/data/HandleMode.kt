@@ -13,19 +13,23 @@ package arcs.core.data
 /**
  * Specifies the access mode for a [Handle].
  */
-enum class HandleMode {
+enum class HandleMode (
+    val canRead: Boolean = false,
+    val canWrite: Boolean = false,
+    val canQuery: Boolean = false
+) {
     /** [Handle] is read only. */
-    Read,
+    Read (canRead = true),
     /** [Handle] is write only. */
-    Write,
+    Write (canWrite = true),
+    /** [Handle] is query only. */
+    Query (canQuery = true),
     /** [Handle] is read-write. */
-    ReadWrite;
-
-    /** True if reading is supported by this mode. */
-    val canRead: Boolean
-        get() = this != Write
-
-    /** True if writing is supported by this mode. */
-    val canWrite: Boolean
-        get() = this != Read
+    ReadWrite (canRead = true, canWrite = true),
+    /** [Handle] is read-query. */
+    ReadQuery (canRead = true, canQuery = true),
+    /** [Handle] is query-write. */
+    WriteQuery (canWrite = true, canQuery = true),
+    /** [Handle] is read-query-write. */
+    ReadWriteQuery (canRead = true, canWrite = true, canQuery = true);
 }

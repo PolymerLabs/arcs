@@ -31,6 +31,7 @@ import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.QueryCollectionHandle
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadQueryCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
@@ -38,6 +39,8 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.ReferenceStorageAdapter
+import arcs.core.entity.WriteQueryCollectionHandle
+import arcs.core.entity.Reference
 import arcs.core.entity.SingletonHandle
 import arcs.core.entity.SingletonProxy
 import arcs.core.entity.SingletonStoreOptions
@@ -177,6 +180,7 @@ class EntityHandleManager(
             HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
             HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
             HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by singletonHandle {}
+            else -> throw Error("Singleton Handles do not support mode ${spec.mode}")
         }
     }
 
@@ -198,15 +202,13 @@ class EntityHandleManager(
             dereferencerFactory = dereferencerFactory
         )
         return when (spec.mode) {
-            HandleMode.Read -> when (spec.entitySpec.SCHEMA.query) {
-                null -> object : ReadCollectionHandle<T> by collectionHandle {}
-                else -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
-            }
+            HandleMode.Read -> object : ReadCollectionHandle<T> by collectionHandle {}
             HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}
-            HandleMode.ReadWrite -> when (spec.entitySpec.SCHEMA.query) {
-                null -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
-                else -> object : ReadWriteQueryCollectionHandle<T, Any> by collectionHandle {}
-            }
+            HandleMode.Query -> object : ReadQueryCollectionHandle<T, *> by collectionHandle {}
+            HandleMode.ReadWrite -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
+            HandleMode.ReadQuery -> object : ReadQueryCollectionHandle<T, *> by collectionHandle {}
+            HandleMode.WriteQuery -> object : WriteQueryCollectionHandle<T, *> by collectionHandle {}
+            HandleMode.ReadWriteQuery -> object : ReadWriteQueryCollectionHandle<T, *> by collectionHandle {}
         }
     }
 

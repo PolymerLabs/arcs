@@ -11,18 +11,22 @@ import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.host.EntityHandleManager
 import arcs.core.data.HandleMode
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
+import arcs.core.data.RawEntity
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.toPrimitiveValue
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.entity.QueryCollectionHandle
+import arcs.core.host.EntityHandleManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -41,7 +45,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.coroutines.experimental.suspendCoroutine
 
+// Generated from ./javatests/arcs/android/host/test.arcs
 private typealias Person = AbstractTestParticle.TestParticleInternal1
+private typealias PersonWithQuery = AbstractTestParticle.TestParticleInternal2
+
+fun Person.withQuery(): PersonWithQuery {
+    // TODO(cypher1): Remove this when implicit casting to super types is supported by code gen.
+    return PersonWithQuery(name = this.name, age = this.age, is_cool = this.is_cool)
+}
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
@@ -55,6 +66,10 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     lateinit var handleHolder: AbstractTestParticle.Handles
     private lateinit var handleManager: EntityHandleManager
 
+    private val queryByMinAge = { value: RawEntity, args: Any ->
+        value.singletons["age"].toPrimitiveValue<Double>(Double::class, 0.0) > (args as Double)
+    }
+
     private val schema = Schema(
         setOf(SchemaName("Person")),
         SchemaFields(
@@ -65,7 +80,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             ),
             collections = emptyMap()
         ),
-        "1234acf"
+        "1234acf",
+        query = queryByMinAge
     )
 
     private val singletonKey = ReferenceModeStorageKey(
@@ -130,16 +146,32 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             handleHolder.readWriteHandle
         }
 
-        expectHandleException("writeCollectionHandle") {
-            handleHolder.writeCollectionHandle
-        }
-
         expectHandleException("readCollectionHandle") {
             handleHolder.readCollectionHandle
         }
 
+        expectHandleException("writeCollectionHandle") {
+            handleHolder.writeCollectionHandle
+        }
+
+        expectHandleException("queryCollectionHandle") {
+            handleHolder.queryCollectionHandle
+        }
+
         expectHandleException("readWriteCollectionHandle") {
             handleHolder.readWriteCollectionHandle
+        }
+
+        expectHandleException("readQueryCollectionHandle") {
+            handleHolder.readQueryCollectionHandle
+        }
+
+        expectHandleException("writeQueryCollectionHandle") {
+            handleHolder.writeQueryCollectionHandle
+        }
+
+        expectHandleException("readWriteQueryCollectionHandle") {
+            handleHolder.readWriteQueryCollectionHandle
         }
     }
 
