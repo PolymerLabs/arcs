@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
+import org.junit.Ignore
 import org.junit.Test
 import arcs.core.storage.Reference as StorageReference
 
@@ -90,8 +91,8 @@ open class HandleManagerTestBase {
                 name = data.singletons["name"].toPrimitiveValue(String::class, ""),
                 age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0),
                 isCool = data.singletons["is_cool"].toPrimitiveValue(Boolean::class, false),
-                bestFriend = data.singletons["best_friend"] as? Reference,
-                hat = data.singletons["hat"] as? Reference
+                bestFriend = data.singletons["best_friend"] as? StorageReference,
+                hat = data.singletons["hat"] as? StorageReference
             ).apply {
                 raw = data
                 expirationTimestamp = data.expirationTimestamp
@@ -593,7 +594,6 @@ open class HandleManagerTestBase {
         val readHandle = readHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
 
-        val updateDeferred = CompletableDeferred<Set<Person>>()
         writeHandle.store(entity1)
 
         val updateDeferred = readHandle.onUpdateDeferred() { it.size == 2 }

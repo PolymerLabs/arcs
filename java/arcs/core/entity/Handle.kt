@@ -101,12 +101,6 @@ interface ReadCollectionHandle<T : Storable> : ReadableHandle<Set<T>> {
     suspend fun fetchAll(): Set<T>
 }
 
-/** A collection handle with read access. */
-interface QueryCollectionHandle<T : Storable, QueryArgs> : Handle {
-    /** Returns a set with all the entities in the collection that match the associated query. */
-    suspend fun query(args: QueryArgs): Set<T>
-}
-
 /** A collection handle with write access. */
 interface WriteCollectionHandle<T : Storable> : Handle {
     /** Adds the given [element] to the collection. */
@@ -134,7 +128,7 @@ interface ReadQueryCollectionHandle<T : Storable, QueryArgs> :
     ReadCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with write and query access. */
-interface WriteQueryCollectionHandle<T : Entity, QueryArgs> :
+interface WriteQueryCollectionHandle<T : Storable, QueryArgs> :
     WriteCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with read, write and query access. */
