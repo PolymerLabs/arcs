@@ -1,3 +1,14 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
@@ -5,30 +16,20 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.storage.StorageProxy.ProxyState
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
-import kotlinx.coroutines.CompletableDeferred
-import java.util.concurrent.Executors
-import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.withTimeout
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.Mock
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
@@ -47,226 +48,384 @@ class StorageProxyTest {
     fun setup() {
         MockitoAnnotations.initMocks(this)
         fakeStoreEndpoint = StoreEndpointFake()
-        whenever(
-            mockStorageEndpointProvider.getStorageEndpoint(
-                any<ProxyCallback<CrdtData, CrdtOperationAtTime, String>>()
-            )
-        ).thenReturn(fakeStoreEndpoint)
+        whenever(mockStorageEndpointProvider.getStorageEndpoint(any()))
+            .thenReturn(fakeStoreEndpoint)
         whenever(mockCrdtModel.data).thenReturn(mockCrdtData)
         whenever(mockCrdtModel.versionMap).thenReturn(VersionMap())
+        whenever(mockCrdtModel.consumerView).thenReturn("data")
         whenever(mockCrdtOperation.clock).thenReturn(VersionMap())
     }
 
     @Test
-    fun propagatesStorageOpToReaders() = runBlockingTest {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        val readCallback = mock<(String)->Unit>()
-        storageProxy.addOnUpdate("test") {
-            readCallback(it)
-        }
-        mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
-
-        storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
-
-        verify(readCallback).invoke(mockCrdtModel.consumerView)
-    }
-
-    @Test
-    fun propagatesStorageFullModelToReaders() = runBlockingTest {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        val syncCallback = mock<()->Unit>().also { storageProxy.addOnSync("test", it) }
-        mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
-
-        storageProxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
-
-        verify(syncCallback).invoke()
-    }
-
-    @Test
-    fun propagatesStorageSyncReqToStorage() = runBlockingTest {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
-
-        storageProxy.onMessage(ProxyMessage.SyncRequest(null))
-
-        val modelUpdate = ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, String>(mockCrdtData, null)
-        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(modelUpdate)
-    }
-
-    /** Test that when store application of an op fails, synchronization is triggered. */
-    @Test
-    fun failedApplyOpTriggersSync() = runBlockingTest {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-
-        // Local op will succeed
-        mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
-
-        // Store op will fail
-        fakeStoreEndpoint.onProxyMessageReturn = false
-        assertThat(storageProxy.applyOp(mockCrdtOperation)).isTrue()
-        val syncReq = ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
-        val opReq = ProxyMessage.Operations<CrdtData, CrdtOperation, String> (
-            listOf(mockCrdtOperation),
-            null
+    fun addOnReadyTriggersSyncRequest() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        proxy.addOnReady("test") {}
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
         )
-        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(opReq, syncReq)
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+    }
+
+    @Test
+    fun addOnUpdateTriggersSyncRequest() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        proxy.addOnUpdate("test") {}
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
+        )
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+    }
+
+    @Test
+    fun addOnDesyncTriggersSyncRequest() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        proxy.addOnDesync("test") {}
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
+        )
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+    }
+
+    @Test
+    fun addOnResyncTriggersSyncRequest() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        proxy.addOnResync("test") {}
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
+        )
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+    }
+
+    @Test
+    fun onlyOneSyncRequestIsSentWhenAddingMultipleActions() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        proxy.addOnReady("test") {}
+        proxy.addOnUpdate("test") {}
+        proxy.addOnDesync("test") {}
+        proxy.addOnResync("test") {}
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
+        )
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+    }
+
+    @Test
+    fun addingActionsInvokesCallbacksBasedOnState() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        assertThat(proxy.getStateForTesting() == ProxyState.INIT)
+
+        // In INIT and AWAITING_SYNC, none of the notifiers are invoked immediately.
+        val (onReady1, onUpdate1, onDesync1, onResync1) = addAllActions(proxy)
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+        verifyNoMoreInteractions(onReady1, onUpdate1, onDesync1, onResync1)
+
+        // In SYNC, addOnReady should invoke its callback immediately.
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+
+        val (onReady2, onUpdate2, onDesync2, onResync2) = addAllActions(proxy)
+        verify(onReady2).invoke()
+        verifyNoMoreInteractions(onUpdate2, onDesync2, onResync2)
+
+        // In DESYNC, addOnDesync should invoke its callback immediately.
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        assertThat(proxy.getStateForTesting() == ProxyState.DESYNC)
+
+        val (onReady3, onUpdate3, onDesync3, onResync3) = addAllActions(proxy)
+        verify(onDesync3).invoke()
+        verifyNoMoreInteractions(onReady3, onUpdate3, onResync3)
+    }
+
+    @Test
+    fun modelUpdatesTriggerOnReadyThenOnUpdate() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+
+        // Send a model update to sync the proxy.
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verify(onReady).invoke()
+
+        // Sending another model should trigger the onUpdate callback.
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verify(onUpdate).invoke("data")
+        verifyNoMoreInteractions(onReady, onDesync, onResync)
+    }
+
+    @Test
+    fun modelOperationsTriggerOnUpdate() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
+
+        // Ops should be ignored prior to syncing.
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+        verifyNoMoreInteractions(onReady, onUpdate, onDesync, onResync)
+
+        // Sync the proxy.
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verify(onReady).invoke()
+
+        // Sending ops after syncing should trigger the onUpdate callback; also check that multiple
+        // successful ops are processed.
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation, mockCrdtOperation), null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verify(onUpdate).invoke("data")
+        verifyNoMoreInteractions(onReady, onDesync, onResync)
+    }
+
+    @Test
+    fun failingModelOperationsTriggerDesync() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
+
+        // Sync the proxy.
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verify(onReady).invoke()
+
+        // First ops received fails to apply, second would succeed but should be ignored.
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation))
+            .thenReturn(false)
+            .thenReturn(true)
+
+        // Failure to apply ops should trigger onDesync and send a sync request.
+        fakeStoreEndpoint.clearProxyMessages()
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
+        )
+        assertThat(proxy.getStateForTesting() == ProxyState.DESYNC)
+        verify(onDesync).invoke()
+
+        // Ops should be ignored when desynced.
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
+        assertThat(proxy.getStateForTesting() == ProxyState.DESYNC)
+        verifyNoMoreInteractions(onReady, onUpdate, onDesync, onResync)
+
+        // Syncing the proxy again should trigger onResync.
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verify(onResync).invoke()
+        verifyNoMoreInteractions(onReady, onUpdate, onDesync)
+    }
+
+    @Test
+    fun listOfModelOperationsWithOneFailing() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verify(onReady).invoke()
+
+        // When the second op fails, no further ops will be processed and the proxy should desync.
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation))
+            .thenReturn(true)
+            .thenReturn(false)
+            .thenThrow(IllegalStateException("should not be reached"))
+
+        fakeStoreEndpoint.clearProxyMessages()
+        val threeOps = listOf(mockCrdtOperation, mockCrdtOperation, mockCrdtOperation)
+        proxy.onMessage(ProxyMessage.Operations(threeOps,null))
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
+        )
+        assertThat(proxy.getStateForTesting() == ProxyState.DESYNC)
+        verify(onDesync).invoke()
+        verifyNoMoreInteractions(onReady, onUpdate, onResync)
+    }
+
+    @Test
+    fun syncRequestReturnsTheLocalModel() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
+
+        fakeStoreEndpoint.clearProxyMessages()
+        proxy.onMessage(ProxyMessage.SyncRequest(null))
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, String>(mockCrdtData, null)
+        )
+        verifyNoMoreInteractions(onReady, onUpdate, onDesync, onResync)
+    }
+
+    @Test
+    fun removeCallbacksForName() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+
+        // First sync usually triggers onReady.
+        val (onReady1, onUpdate1, onDesync1, onResync1) = addAllActions(proxy)
+        proxy.removeCallbacksForName("test")
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verifyNoMoreInteractions(onReady1, onUpdate1, onDesync1, onResync1)
+
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation))
+            .thenReturn(true)
+            .thenReturn(false)
+
+        // Successful model ops usually trigger onUpdate.
+        val (onReady2, onUpdate2, onDesync2, onResync2) = addAllActions(proxy)
+        verify(onReady2).invoke()  // immediate callback when synced
+        proxy.removeCallbacksForName("test")
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verifyNoMoreInteractions(onReady2, onUpdate2, onDesync2, onResync2)
+
+        // Failed model ops usually trigger onDesync.
+        val (onReady3, onUpdate3, onDesync3, onResync3) = addAllActions(proxy)
+        verify(onReady3).invoke()  // immediate callback when synced
+        proxy.removeCallbacksForName("test")
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        assertThat(proxy.getStateForTesting() == ProxyState.DESYNC)
+        verifyNoMoreInteractions(onReady3, onUpdate3, onDesync3, onResync3)
+
+        // Subsequent sync usually trigger onResync.
+        val (onReady4, onUpdate4, onDesync4, onResync4) = addAllActions(proxy)
+        verify(onDesync4).invoke()  // immediate callback when desynced
+        proxy.removeCallbacksForName("test")
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        verifyNoMoreInteractions(onReady4, onUpdate4, onDesync4, onResync4)
+    }
+
+    @Test
+    fun applyOpSucceeds() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
+
+        fakeStoreEndpoint.clearProxyMessages()
+        assertThat(proxy.applyOp(mockCrdtOperation)).isTrue()
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.Operations<CrdtData, CrdtOperation, String>(
+                listOf(mockCrdtOperation), null
+            )
+        )
+        verify(onUpdate).invoke("data")
+        verifyNoMoreInteractions(onReady, onDesync, onResync)
+    }
+
+    @Test
+    fun applyOpFails() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
+
+        fakeStoreEndpoint.clearProxyMessages()
+        assertThat(proxy.applyOp(mockCrdtOperation)).isFalse()
+        assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
+        verifyNoMoreInteractions(onReady, onUpdate, onDesync, onResync)
     }
 
     @Test
     fun getParticleViewReturnsSyncedState() = runBlockingTest {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        whenever(mockCrdtModel.consumerView).thenReturn("someData")
-        mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
 
-        storageProxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
-        val view = storageProxy.getParticleView()
-
-        assertThat(view).isEqualTo("someData")
+        fakeStoreEndpoint.clearProxyMessages()
+        assertThat(proxy.getParticleView()).isEqualTo("data")
+        assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
     }
 
     @Test
-    fun getParticleViewWhenUnsyncedQueues() = runBlockingTest {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        whenever(mockCrdtModel.consumerView).thenReturn("someData")
-        mockCrdtModel.appliesOpAs(mockCrdtOperation, true)
+    fun getParticleViewWhenInInitialStateQueuesAndRequestsSync() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        assertThat(proxy.getStateForTesting() == ProxyState.INIT)
 
-        // get view when not synced
-        val future = storageProxy.getParticleViewAsync()
+        val future1 = proxy.getParticleViewAsync()
+        assertThat(future1.isCompleted).isFalse()
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
+            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
+        )
+
+        // Test that multiple futures can be returned and resolved.
+        val future2 = proxy.getParticleViewAsync()
+        assertThat(future2.isCompleted).isFalse()
+
+        // Syncing the proxy should resolve the futures.
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        assertThat(future1.isCompleted).isTrue()
+        assertThat(future1.await()).isEqualTo("data")
+        assertThat(future2.isCompleted).isTrue()
+        assertThat(future2.await()).isEqualTo("data")
+    }
+
+    @Test
+    fun getParticleViewWhenAwaitingSyncQueues() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        proxy.addOnReady("test") {}
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+
+        fakeStoreEndpoint.clearProxyMessages()
+        val future = proxy.getParticleViewAsync()
         assertThat(future.isCompleted).isFalse()
+        assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
+        assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
 
-        // cleanly apply model from Store so we are now synced
-        storageProxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtModel.data, null))
-
+        // Syncing the proxy should resolve the future.
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
         assertThat(future.isCompleted).isTrue()
-        val view = future.await()
-
-        assertThat(view).isEqualTo("someData")
+        assertThat(future.await()).isEqualTo("data")
     }
 
     @Test
-    fun getOnSyncCalledWhenAddedIfSynced() = runBlocking {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+    fun getParticleViewWhenDesyncedQueues() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        assertThat(proxy.getStateForTesting() == ProxyState.DESYNC)
 
-        storageProxy.onMessage(
-            ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
-        )
+        fakeStoreEndpoint.clearProxyMessages()
+        val future = proxy.getParticleViewAsync()
+        assertThat(future.isCompleted).isFalse()
+        assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
 
-        val syncDeferred = CompletableDeferred<Boolean>()
-        coroutineScope {
-            storageProxy.addOnSync("testHandle") {
-                syncDeferred.complete(true)
-            }
-        }
-        syncDeferred.complete(false)
-        assertThat(syncDeferred.await()).isEqualTo((true))
+        // Syncing the proxy should resolve the future.
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
+        assertThat(future.isCompleted).isTrue()
+        assertThat(future.await()).isEqualTo("data")
     }
 
     @Test
-    fun getOnSyncNotCalledWhenAddedIfNotSynced() = runBlocking {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+    fun getVersionMap() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val versionMap = VersionMap(mapOf("x" to 7))
+        whenever(mockCrdtModel.versionMap).thenReturn(versionMap)
+        val proxyMap = proxy.getVersionMap()
+        assertThat(proxyMap).isEqualTo(versionMap)
 
-        val syncDeferred = CompletableDeferred<Boolean>()
-        coroutineScope {
-            storageProxy.addOnSync("testHandle") {
-                syncDeferred.complete(true)
-            }
-        }
-        syncDeferred.complete(false)
-        assertThat(syncDeferred.await()).isEqualTo((false))
+        // The returned map should be a copy; modifying shouldn't change the proxy instance.
+        proxyMap["y"] = 3
+        assertThat(proxyMap).isNotEqualTo(proxy.getVersionMap())
     }
 
-    @Test
-    fun getOnDesyncCalledWhenAddedIfNotSynced() = runBlocking {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        val desyncDeferred = CompletableDeferred<Boolean>()
-        coroutineScope {
-            storageProxy.addOnDesync("testHandle") {
-                desyncDeferred.complete(true)
-            }
+    // Convenience wrapper for destructuring.
+    private data class ActionMocks (
+        val onReady: () -> Unit = mock(),
+        val onUpdate: (String) -> Unit = mock(),
+        val onDesync: () -> Unit = mock(),
+        val onResync: () -> Unit = mock()
+    )
+
+    private suspend fun addAllActions(
+        proxy: StorageProxy<CrdtData, CrdtOperationAtTime, String>
+    ): ActionMocks {
+        return ActionMocks().also { mocks ->
+            proxy.addOnReady("test") { mocks.onReady() }
+            proxy.addOnUpdate("test") { mocks.onUpdate(it) }
+            proxy.addOnDesync("test") { mocks.onDesync() }
+            proxy.addOnResync("test") { mocks.onResync() }
         }
-        desyncDeferred.complete(false)
-        assertThat(desyncDeferred.await()).isEqualTo((true))
-    }
-
-    @Test
-    fun getOnDesyncNotCalledWhenAddedIfSynced() = runBlocking {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        val desyncDeferred = CompletableDeferred<Boolean>()
-
-        storageProxy.onMessage(
-            ProxyMessage.ModelUpdate(mockCrdtModel.data, null)
-        )
-
-        coroutineScope {
-            storageProxy.addOnDesync("testHandle") {
-                desyncDeferred.complete(true)
-            }
-        }
-        desyncDeferred.complete(false)
-        assertThat(desyncDeferred.await()).isEqualTo((false))
-    }
-
-    @Test
-    @Ignore("We've detected flakes with this approach, reworking in follow up PR")
-    fun deadlockDetectionTest() = runBlocking {
-        val storageProxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
-        whenever(mockCrdtModel.consumerView).thenReturn("someData")
-
-        val ops = listOf(
-            suspend {
-                // store sends sync req
-                val syncReq = ProxyMessage.SyncRequest<CrdtData, CrdtOperationAtTime, String>(null)
-                storageProxy.onMessage(syncReq)
-            },
-            suspend {
-                // store sends op
-                val op = mock(CrdtOperationAtTime::class.java)
-                storageProxy.onMessage(ProxyMessage.Operations(listOf(op), null))
-            },
-            suspend {
-                // handle sends op
-                val op = mock(CrdtOperationAtTime::class.java)
-                mockCrdtModel.appliesOpAs(op, Random.nextBoolean())
-                storageProxy.applyOp(op)
-            },
-            suspend {
-                // handle reads data
-                storageProxy.getParticleView()
-                // make sure we follow up by ensuring view is synced so the particle view doesn't
-                // stay blocked
-                launch {
-                    delay(10)
-                    val op = mock(CrdtOperationAtTime::class.java)
-                    mockCrdtModel.appliesOpAs(op, true)
-                    storageProxy.onMessage(ProxyMessage.Operations(listOf(op), null))
-                }
-            }
-        )
-
-        val workers = 20
-        val jobs = 10
-        Executors.newFixedThreadPool(workers).asCoroutineDispatcher().use {inPool ->
-            repeat(10) {
-                runBlocking {
-                    withTimeout(5000) {
-                        repeat(workers) {
-                            launch(inPool) {
-                                repeat(jobs) {
-                                    val randomOp = ops[Random.nextInt(0, ops.size - 1)]
-                                    randomOp()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun CrdtModel<CrdtData, CrdtOperationAtTime, String>.appliesOpAs(
-        op: CrdtOperationAtTime,
-        result: Boolean
-    ) {
-        whenever(this.applyOperation(op)).thenReturn(result)
     }
 }

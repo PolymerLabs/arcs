@@ -14,7 +14,7 @@ class WritePerson : AbstractWritePerson() {
     override suspend fun onCreate() {
         createCalled = true
         wrote = false
-        handles.person.onSync {
+        handles.person.onReady {
             GlobalScope.async {
                 handles.person.store(WritePerson_Person("John Wick"))
                 wrote = true

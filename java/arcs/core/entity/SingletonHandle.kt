@@ -78,11 +78,15 @@ class SingletonHandle<T : Entity>(
     }
     // endregion
 
-    // region implement ReadbleHandle<T>
+    // region implement ReadableHandle<T>
     override suspend fun onUpdate(action: suspend (T?) -> Unit) =
         storageProxy.addOnUpdate(name) {
             action(adaptValue(it))
         }
+
+    override suspend fun onDesync(action: () -> Unit) = storageProxy.addOnDesync(name, action)
+
+    override suspend fun onResync(action: () -> Unit) = storageProxy.addOnResync(name, action)
 
     override suspend fun createReference(entity: T): Reference<T> {
         val entityId = requireNotNull(entity.entityId) {

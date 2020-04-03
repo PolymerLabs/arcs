@@ -26,5 +26,9 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
         mutex.withLock { return proxyMessages.toList() }
     }
 
+    suspend fun clearProxyMessages() {
+        mutex.withLock { proxyMessages.clear() }
+    }
+
     override fun close() {}
 }

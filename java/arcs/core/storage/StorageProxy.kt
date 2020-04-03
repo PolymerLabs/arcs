@@ -31,24 +31,54 @@ import kotlinx.coroutines.sync.withLock
  * state to readers, and ensures write operations apply cleanly before forwarding to the store.
  *
  * @param T the consumer data type for the model behind this proxy
- * @property initialCrdt the CrdtModel instance [StorageProxy] will apply ops to.
+ * @param initialCrdt the CrdtModel instance [StorageProxy] will apply ops to.
  */
 class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
     initialCrdt: CrdtModel<Data, Op, T>
 ) {
+    // Visible for testing
+    enum class ProxyState {
+        /**
+         * The [StorageProxy] has not received any actions to invoke on storage events. A call to
+         * `onReady`, `onUpdate`, `onDesync` or `onResync` will change the state to [AWAITING_SYNC].
+         */
+        INIT,
+
+        /**
+         * The [StorageProxy] has received at least one action for storage events. A sync request
+         * has been sent to storage, but the response has not been received yet.
+         */
+        AWAITING_SYNC,
+
+        /**
+         * The [StorageProxy] is synchronized with its associated storage.
+         */
+        SYNC,
+
+        /**
+         * A set of model operations from storage failed to apply cleanly to the local CRDT model,
+         * so the [StorageProxy] is desynchronized. A request has been sent to resynchronize.
+         */
+        DESYNC
+    }
+
     private val log = TaggedLog { "StorageProxy" }
 
     private val callbackMutex = Mutex()
-    private val onUpdateActions by guardedBy(
-        callbackMutex,
-        mutableMapOf<String, MutableList<suspend (T)->Unit>>()
-    )
-    private val onSyncActions by guardedBy(
+    private val onReadyActions by guardedBy(
         callbackMutex,
         mutableMapOf<String, MutableList<() -> Unit>>()
     )
+    private val onUpdateActions by guardedBy(
+        callbackMutex,
+        mutableMapOf<String, MutableList<suspend (T) -> Unit>>()
+    )
     private val onDesyncActions by guardedBy(
+        callbackMutex,
+        mutableMapOf<String, MutableList<() -> Unit>>()
+    )
+    private val onResyncActions by guardedBy(
         callbackMutex,
         mutableMapOf<String, MutableList<() -> Unit>>()
     )
@@ -58,71 +88,109 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         by guardedBy(syncMutex, initialCrdt)
     private val waitingSyncs: MutableList<CompletableDeferred<T>>
         by guardedBy(syncMutex, mutableListOf())
-    private var isSynchronized: Boolean
-        by guardedBy(syncMutex, false)
+    private var state: ProxyState
+        by guardedBy(syncMutex, ProxyState.INIT)
 
     private val store = storeEndpointProvider.getStorageEndpoint(ProxyCallback(::onMessage))
 
     val storageKey = storeEndpointProvider.storageKey
 
-    /** Add a [Handle] `onUpdate` action, associated with a [Handle] name. */
-    suspend fun addOnUpdate(handleName: String, action: suspend (value: T) -> Unit) {
-        callbackMutex.withLock {
-            onUpdateActions.getOrPut(handleName) { mutableListOf() }.add(action)
-        }
-    }
+    suspend fun getStateForTesting(): ProxyState = syncMutex.withLock { state }
 
     /**
-     * Add a [Handle] `onSync` action, associated with a [Handle] name.
+     * Add a [Handle] `onReady` action, associated with a [Handle] name.
      *
      * If the [StorageProxy] is synchronized when the action is added, it will be called
      * immediately.
      *
-     * If not, the [StorageProxy] will request synchronization.
+     * If the [StorageProxy] is in its initial state, the first call to any of the action methods
+     * will trigger a request for synchronization.
      */
-    suspend fun addOnSync(handleName: String, action: () -> Unit) {
-        val isAlreadySynchronized = syncMutex.withLock {
-            callbackMutex.withLock {
-                onSyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
-            }
-            isSynchronized
+    suspend fun addOnReady(handleName: String, action: () -> Unit) {
+        val currentState = addAction {
+            onReadyActions.getOrPut(handleName) { mutableListOf() }.add(action)
         }
-        if (isAlreadySynchronized) {
+        if (currentState == ProxyState.SYNC) {
             CoroutineScope(coroutineContext).launch { action() }
-        } else {
-            requestSynchronization()
+        }
+    }
+
+    /**
+     * Add a [Handle] `onUpdate` action, associated with a [Handle] name.
+     *
+     * If the [StorageProxy] is in its initial state, the first call to any of the action methods
+     * will trigger a request for synchronization.
+     */
+    suspend fun addOnUpdate(handleName: String, action: suspend (value: T) -> Unit) {
+        addAction {
+            onUpdateActions.getOrPut(handleName) { mutableListOf() }.add(action)
         }
     }
 
     /**
      * Add a [Handle] `onDesync` action, associated with a [Handle] name.
      *
-     * If the handle is not synchronized when the action is added, it will be called immediately.
+     * If the [StorageProxy] is desynchronized when the action is added, it will be called
+     * immediately.
+     *
+     * If the [StorageProxy] is in its initial state, the first call to any of the action methods
+     * will trigger a request for synchronization.
      */
     suspend fun addOnDesync(handleName: String, action: () -> Unit) {
-        val runNow = syncMutex.withLock {
-            callbackMutex.withLock {
-                onDesyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
-            }
-            !isSynchronized
+        val currentState = addAction {
+            onDesyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
         }
-        if (runNow) {
+        if (currentState == ProxyState.DESYNC) {
             CoroutineScope(coroutineContext).launch { action() }
         }
     }
 
     /**
-     *  Remove all `onUpdate`, `onSync`, and `onDesync` callbacks associated with the provided
-     * `handleName`.
+     * Add a [Handle] `onResync` action, associated with a [Handle] name.
+     *
+     * If the [StorageProxy] is in its initial state, the first call to any of the action methods
+     * will trigger a request for synchronization.
+     */
+    suspend fun addOnResync(handleName: String, action: () -> Unit) {
+        addAction {
+            onResyncActions.getOrPut(handleName) { mutableListOf() }.add(action)
+        }
+    }
+
+    /**
+     * Run the `add` function to add a storage event action method.
+     *
+     * If the [StorageProxy] is in the INIT state, send a sync request and move to AWAITING_SYNC.
+     */
+    private suspend fun addAction(add: () -> Unit): ProxyState {
+        var needsSync = false
+        val currentState = syncMutex.withLock {
+            callbackMutex.withLock {
+                add()
+            }
+            if (state == ProxyState.INIT) {
+                needsSync = true
+                state = ProxyState.AWAITING_SYNC
+            }
+            state
+        }
+        if (needsSync) requestSynchronization()
+        return currentState
+    }
+
+    /**
+     *  Remove all `onUpdate`, `onReady`, `onDesync` and `onResync` callbacks associated with the
+     *  provided `handleName`.
      *
      * A [Handle] that is being removed from active usage should make sure to trigger this method
      * on its associated [StorageProxy].
      */
     suspend fun removeCallbacksForName(handleName: String) {
         callbackMutex.withLock {
+            onReadyActions.remove(handleName)
             onUpdateActions.remove(handleName)
-            onSyncActions.remove(handleName)
             onDesyncActions.remove(handleName)
+            onResyncActions.remove(handleName)
         }
     }
 
@@ -132,22 +200,13 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      */
     suspend fun applyOp(op: Op): Boolean {
         log.debug { "Applying operation: $op" }
-        val (localSuccess, value) = syncMutex.withLock {
-            crdt.applyOperation(op) to crdt.consumerView
-        }
-        if (!localSuccess) return false
-
-        val msg = ProxyMessage.Operations<Data, Op, T>(listOf(op), null)
-        val storeSuccess = store.onProxyMessage(msg)
-
-        if (!storeSuccess) {
-            // we're not up to date so request latest model from store. This will get merged with
-            // already applied local changes.
-            requestSynchronization()
+        val value = syncMutex.withLock {
+            if (!crdt.applyOperation(op)) return false
+            crdt.consumerView
         }
 
+        store.onProxyMessage(ProxyMessage.Operations(listOf(op), null))
         notifyUpdate(value)
-
         return true
     }
 
@@ -167,7 +226,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         val future = CompletableDeferred<T>()
 
         val needsSync = syncMutex.withLock {
-            if (isSynchronized) {
+            if (state == ProxyState.SYNC) {
                 val result = crdt.consumerView
                 log.debug { "Already synchronized, returning $result" }
                 future.complete(result)
@@ -175,7 +234,13 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             } else {
                 log.debug { "Awaiting sync." }
                 waitingSyncs.add(future)
-                true
+                if (state == ProxyState.INIT) {
+                    state = ProxyState.AWAITING_SYNC
+                    true
+                } else {
+                    // We've already sent a sync request.
+                    false
+                }
             }
         }
 
@@ -189,53 +254,64 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     suspend fun onMessage(message: ProxyMessage<Data, Op, T>) {
         log.debug { "onMessage: $message" }
         when (message) {
-            is ProxyMessage.ModelUpdate -> {
-                val (futuresToResolve, value) = syncMutex.withLock {
-                    crdt.merge(message.model)
-                    isSynchronized = true
-                    val toResolve = waitingSyncs.toList() // list guaranteed to be copy
-                    waitingSyncs.clear()
-                    toResolve to crdt.consumerView
-                }
-
-                futuresToResolve.forEach { it.complete(value) }
-
-                notifySync()
-            }
-            is ProxyMessage.Operations -> {
-                var futuresToResolve: List<CompletableDeferred<T>> = emptyList()
-                val (value, applyFailures) = syncMutex.withLock {
-                    val failures = message.operations.any { !crdt.applyOperation(it) }
-                    isSynchronized = !failures
-                    if (!failures) {
-                        futuresToResolve = waitingSyncs.toList()
-                        waitingSyncs.clear()
-                    }
-                    crdt.consumerView to failures
-                }
-
-                if (applyFailures) {
-                    notifyDesync()
-                    // Before we return, let's issue a request for synchronization on a new
-                    // coroutine. It can't be done on this current coroutine because the response
-                    // we give here is being waited-on downstream, and we could end up dead-locking
-                    // if requestSynchronization ends up needing a result from this to continue
-                    // (which is what happens with the StorageService).
-                    CoroutineScope(coroutineContext).launch { requestSynchronization() }
-                }
-
-                // all ops from storage applied cleanly so resolve waiting syncs
-                futuresToResolve.forEach { it.complete(value) }
-
-                notifyUpdate(value)
-            }
+            is ProxyMessage.ModelUpdate -> processModelUpdate(message.model)
+            is ProxyMessage.Operations -> processModelOps(message.operations)
             is ProxyMessage.SyncRequest -> {
-                // storage wants our latest state
+                // Storage wants our latest state.
                 val modelUpdate = syncMutex.withLock {
                     ProxyMessage.ModelUpdate<Data, Op, T>(crdt.data, null)
                 }
                 store.onProxyMessage(modelUpdate)
             }
+        }
+    }
+
+    private suspend fun processModelUpdate(model: Data) {
+        val (futuresToResolve, particleView, notifyFn) = syncMutex.withLock {
+            // TODO: send the returned merge changes to notifyUpdate()
+            crdt.merge(model)
+
+            // We need to read consumerView inside the mutex; capture it to use in notifyUpdate.
+            val value = crdt.consumerView
+            val innerNotifyFn = when (state) {
+                ProxyState.INIT, ProxyState.AWAITING_SYNC -> suspend { notifyReady() }
+                ProxyState.SYNC -> suspend { notifyUpdate(value) }
+                ProxyState.DESYNC -> suspend { notifyResync() }
+            }
+            state = ProxyState.SYNC
+
+            val toResolve = waitingSyncs.toList() // list guaranteed to be copy
+            waitingSyncs.clear()
+            Triple(toResolve, crdt.consumerView, innerNotifyFn)
+        }
+
+        notifyFn()
+        futuresToResolve.forEach { it.complete(particleView) }
+    }
+
+    private suspend fun processModelOps(operations: List<Op>) {
+        var futuresToResolve: List<CompletableDeferred<T>> = emptyList()
+        val (value, applyFailures) = syncMutex.withLock {
+            // Ignore update ops when not synchronized.
+            if (state != ProxyState.SYNC) return
+
+            val failures = operations.any { !crdt.applyOperation(it) }
+            if (failures) {
+                state = ProxyState.DESYNC
+            } else {
+                futuresToResolve = waitingSyncs.toList() // list guaranteed to be copy
+                waitingSyncs.clear()
+            }
+            Pair(crdt.consumerView, failures)
+        }
+
+        if (applyFailures) {
+            notifyDesync()
+            requestSynchronization()
+        } else {
+            // All ops from storage applied cleanly so resolve waiting syncs.
+            futuresToResolve.forEach { it.complete(value) }
+            notifyUpdate(value)
         }
     }
 
@@ -270,14 +346,14 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         }
     }
 
+    private suspend fun notifyReady() = applyCallbacks(::onReadyActions) { it() }
     private suspend fun notifyUpdate(data: T) = applySuspendingCallbacks(::onUpdateActions) {
         it(data)
     }
-    private suspend fun notifySync() = applyCallbacks(::onSyncActions) { it() }
     private suspend fun notifyDesync() = applyCallbacks(::onDesyncActions) { it() }
+    private suspend fun notifyResync() = applyCallbacks(::onResyncActions) { it() }
 
-    private suspend fun requestSynchronization(): Boolean {
-        val msg = ProxyMessage.SyncRequest<Data, Op, T>(null)
-        return store.onProxyMessage(msg)
+    private suspend fun requestSynchronization() {
+        store.onProxyMessage(ProxyMessage.SyncRequest(null))
     }
 }
