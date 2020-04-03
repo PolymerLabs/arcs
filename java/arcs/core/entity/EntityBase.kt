@@ -27,17 +27,25 @@ import kotlin.reflect.KProperty
 
 open class EntityBase(
     private val entityClassName: String,
-    private val schema: Schema
+    private val schema: Schema,
+    entityId: String? = null,
+    creationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
+    expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
 ) : Entity {
-    // Private var _entityId with public getter. Only this class can set this field.
-    private var _entityId: String? = null
-    override val entityId: String?
-        get() = _entityId
+    /**
+     * Only this class should be able to change these fields (in the [deserialize] and
+     * [ensureEntityFields] methods). But we keep them visible so that it's possible to construct
+     * mutated copies of the same entity.
+     */
+    final override var entityId: String? = entityId
+        private set
+    var creationTimestamp: Long = creationTimestamp
+        private set
+    var expirationTimestamp: Long = expirationTimestamp
+        private set
 
     private val singletons: MutableMap<String, Any?> = mutableMapOf()
     private val collections: MutableMap<String, Set<Any>> = mutableMapOf()
-    private var creationTimestamp: Long = UNINITIALIZED_TIMESTAMP
-    private var expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
 
     // Initialize all fields. After this point, if a key is not present in singletons/collections,
     // it will not be considered a valid field for the entity.
@@ -179,7 +187,7 @@ open class EntityBase(
      * fresh, empty instance.
      */
     fun deserialize(rawEntity: RawEntity) {
-        _entityId = if (rawEntity.id == NO_REFERENCE_ID) null else rawEntity.id
+        entityId = if (rawEntity.id == NO_REFERENCE_ID) null else rawEntity.id
         rawEntity.singletons.forEach { (field, value) ->
             setSingletonValue(field, value?.let { fromReferencable(it, getSingletonType(field)) })
         }
@@ -197,8 +205,8 @@ open class EntityBase(
         time: Time,
         ttl: Ttl
     ) {
-        if (_entityId == null) {
-            _entityId = idGenerator.newChildId(
+        if (entityId == null) {
+            entityId = idGenerator.newChildId(
                 // TODO: should we allow this to be plumbed through?
                 idGenerator.newArcId("dummy-arc"),
                 handleName
@@ -215,7 +223,7 @@ open class EntityBase(
         if (other !is EntityBase) return false
         if (entityClassName != other.entityClassName) return false
         if (schema != other.schema) return false
-        if (_entityId != other._entityId) return false
+        if (entityId != other.entityId) return false
         if (singletons != other.singletons) return false
         if (collections != other.collections) return false
         return true
@@ -224,7 +232,7 @@ open class EntityBase(
     override fun hashCode(): Int {
         var result = entityClassName.hashCode()
         result = 31 * result + schema.hashCode()
-        result = 31 * result + _entityId.hashCode()
+        result = 31 * result + entityId.hashCode()
         result = 31 * result + singletons.hashCode()
         result = 31 * result + collections.hashCode()
         return result

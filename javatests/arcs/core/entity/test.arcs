@@ -1,0 +1,15 @@
+meta
+  namespace: arcs.core.entity
+
+schema TestEntity
+  text: Text
+  number: Number
+
+particle TestParticle
+  entities: reads writes [TestEntity {text, number} [text == ?]]
+
+recipe TestRecipe
+  entities: create
+
+  TestParticle
+    entities: entities

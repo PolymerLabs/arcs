@@ -18,8 +18,11 @@ import arcs.sdk.*
 
 @Suppress("UNCHECKED_CAST")
 class GoldInternal1(
-    val_: String = ""
-) : EntityBase("GoldInternal1", SCHEMA) {
+    val_: String = "",
+    entityId: String? = null,
+    expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+) : EntityBase("GoldInternal1", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
     var val_: String
         get() = super.getSingletonValue("val") as String? ?: ""
@@ -28,9 +31,21 @@ class GoldInternal1(
     init {
         this.val_ = val_
     }
-
+    /**
+     * Use this method to create a new, distinctly identified copy of the entity.
+     * Storing the copy will result in a new copy of the data being stored.
+     */
     fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
-
+    /**
+     * Use this method to create a new version of an existing entity.
+     * Storing the mutation will overwrite the existing entity in the set, if it exists.
+     */
+    fun mutate(val_: String = this.val_) = GoldInternal1(
+        val_ = val_,
+        entityId = entityId,
+        expirationTimestamp = expirationTimestamp,
+        creationTimestamp = creationTimestamp
+    )
 
     companion object : EntitySpec<GoldInternal1> {
 
@@ -64,8 +79,11 @@ class Gold_AllPeople(
     address: String = "",
     favoriteColor: String = "",
     birthDayMonth: Double = 0.0,
-    birthDayDOM: Double = 0.0
-) : EntityBase("Gold_AllPeople", SCHEMA) {
+    birthDayDOM: Double = 0.0,
+    entityId: String? = null,
+    expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+) : EntityBase("Gold_AllPeople", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
     var name: String
         get() = super.getSingletonValue("name") as String? ?: ""
@@ -98,7 +116,10 @@ class Gold_AllPeople(
         this.birthDayMonth = birthDayMonth
         this.birthDayDOM = birthDayDOM
     }
-
+    /**
+     * Use this method to create a new, distinctly identified copy of the entity.
+     * Storing the copy will result in a new copy of the data being stored.
+     */
     fun copy(
         name: String = this.name,
         age: Double = this.age,
@@ -116,7 +137,30 @@ class Gold_AllPeople(
         birthDayMonth = birthDayMonth,
         birthDayDOM = birthDayDOM
     )
-
+    /**
+     * Use this method to create a new version of an existing entity.
+     * Storing the mutation will overwrite the existing entity in the set, if it exists.
+     */
+    fun mutate(
+        name: String = this.name,
+        age: Double = this.age,
+        lastCall: Double = this.lastCall,
+        address: String = this.address,
+        favoriteColor: String = this.favoriteColor,
+        birthDayMonth: Double = this.birthDayMonth,
+        birthDayDOM: Double = this.birthDayDOM
+    ) = Gold_AllPeople(
+        name = name,
+        age = age,
+        lastCall = lastCall,
+        address = address,
+        favoriteColor = favoriteColor,
+        birthDayMonth = birthDayMonth,
+        birthDayDOM = birthDayDOM,
+        entityId = entityId,
+        expirationTimestamp = expirationTimestamp,
+        creationTimestamp = creationTimestamp
+    )
 
     companion object : EntitySpec<Gold_AllPeople> {
 
@@ -156,8 +200,11 @@ class Gold_QCollection(
     address: String = "",
     favoriteColor: String = "",
     birthDayMonth: Double = 0.0,
-    birthDayDOM: Double = 0.0
-) : EntityBase("Gold_QCollection", SCHEMA) {
+    birthDayDOM: Double = 0.0,
+    entityId: String? = null,
+    expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+) : EntityBase("Gold_QCollection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
     var name: String
         get() = super.getSingletonValue("name") as String? ?: ""
@@ -190,7 +237,10 @@ class Gold_QCollection(
         this.birthDayMonth = birthDayMonth
         this.birthDayDOM = birthDayDOM
     }
-
+    /**
+     * Use this method to create a new, distinctly identified copy of the entity.
+     * Storing the copy will result in a new copy of the data being stored.
+     */
     fun copy(
         name: String = this.name,
         age: Double = this.age,
@@ -208,7 +258,30 @@ class Gold_QCollection(
         birthDayMonth = birthDayMonth,
         birthDayDOM = birthDayDOM
     )
-
+    /**
+     * Use this method to create a new version of an existing entity.
+     * Storing the mutation will overwrite the existing entity in the set, if it exists.
+     */
+    fun mutate(
+        name: String = this.name,
+        age: Double = this.age,
+        lastCall: Double = this.lastCall,
+        address: String = this.address,
+        favoriteColor: String = this.favoriteColor,
+        birthDayMonth: Double = this.birthDayMonth,
+        birthDayDOM: Double = this.birthDayDOM
+    ) = Gold_QCollection(
+        name = name,
+        age = age,
+        lastCall = lastCall,
+        address = address,
+        favoriteColor = favoriteColor,
+        birthDayMonth = birthDayMonth,
+        birthDayDOM = birthDayDOM,
+        entityId = entityId,
+        expirationTimestamp = expirationTimestamp,
+        creationTimestamp = creationTimestamp
+    )
 
     companion object : EntitySpec<Gold_QCollection> {
 
@@ -247,8 +320,11 @@ class Gold_QCollection(
 
 @Suppress("UNCHECKED_CAST")
 class Gold_Collection(
-    num: Double = 0.0
-) : EntityBase("Gold_Collection", SCHEMA) {
+    num: Double = 0.0,
+    entityId: String? = null,
+    expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+) : EntityBase("Gold_Collection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
     var num: Double
         get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -257,9 +333,21 @@ class Gold_Collection(
     init {
         this.num = num
     }
-
+    /**
+     * Use this method to create a new, distinctly identified copy of the entity.
+     * Storing the copy will result in a new copy of the data being stored.
+     */
     fun copy(num: Double = this.num) = Gold_Collection(num = num)
-
+    /**
+     * Use this method to create a new version of an existing entity.
+     * Storing the mutation will overwrite the existing entity in the set, if it exists.
+     */
+    fun mutate(num: Double = this.num) = Gold_Collection(
+        num = num,
+        entityId = entityId,
+        expirationTimestamp = expirationTimestamp,
+        creationTimestamp = creationTimestamp
+    )
 
     companion object : EntitySpec<Gold_Collection> {
 
@@ -289,8 +377,11 @@ class Gold_Data(
     txt: String = "",
     lnk: String = "",
     flg: Boolean = false,
-    ref: Reference<GoldInternal1>? = null
-) : EntityBase("Gold_Data", SCHEMA) {
+    ref: Reference<GoldInternal1>? = null,
+    entityId: String? = null,
+    expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+) : EntityBase("Gold_Data", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
     var num: Double
         get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -315,7 +406,10 @@ class Gold_Data(
         this.flg = flg
         this.ref = ref
     }
-
+    /**
+     * Use this method to create a new, distinctly identified copy of the entity.
+     * Storing the copy will result in a new copy of the data being stored.
+     */
     fun copy(
         num: Double = this.num,
         txt: String = this.txt,
@@ -323,7 +417,26 @@ class Gold_Data(
         flg: Boolean = this.flg,
         ref: Reference<GoldInternal1>? = this.ref
     ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg, ref = ref)
-
+    /**
+     * Use this method to create a new version of an existing entity.
+     * Storing the mutation will overwrite the existing entity in the set, if it exists.
+     */
+    fun mutate(
+        num: Double = this.num,
+        txt: String = this.txt,
+        lnk: String = this.lnk,
+        flg: Boolean = this.flg,
+        ref: Reference<GoldInternal1>? = this.ref
+    ) = Gold_Data(
+        num = num,
+        txt = txt,
+        lnk = lnk,
+        flg = flg,
+        ref = ref,
+        entityId = entityId,
+        expirationTimestamp = expirationTimestamp,
+        creationTimestamp = creationTimestamp
+    )
 
     companion object : EntitySpec<Gold_Data> {
 

@@ -2,11 +2,17 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_library",
     "arcs_kt_jvm_test_suite",
+    "arcs_kt_schema",
 )
 
 licenses(["notice"])
 
 TEST_SRCS = glob(["*Test.kt"])
+
+arcs_kt_schema(
+    name = "test_arcs_gen",
+    srcs = ["test.arcs"],
+)
 
 arcs_kt_jvm_test_suite(
     name = "entity",
@@ -44,6 +50,7 @@ arcs_kt_jvm_library(
     ),
     visibility = ["//javatests/arcs/android/entity:__pkg__"],
     deps = [
+        ":test_arcs_gen",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",

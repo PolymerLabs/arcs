@@ -478,6 +478,21 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    open fun collection_writeMutatedEntityReplaces() = testRunner {
+        val entity = TestParticle_Entities(text = "Hello")
+        val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        handle.store(entity)
+
+        assertThat(handle.fetchAll()).containsExactly(entity)
+
+        val modified = entity.mutate(text = "Changed")
+        assertThat(modified).isNotEqualTo(entity)
+        handle.remove(modified)
+        handle.store(modified)
+        assertThat(handle.fetchAll()).containsExactly(modified)
+    }
+
+    @Test
     fun collection_removingFromA_isRemovedFromB() = testRunner {
         val handleA = readHandleManager.createCollectionHandle()
         val handleB = writeHandleManager.createCollectionHandle()
@@ -728,14 +743,22 @@ open class HandleManagerTestBase {
         storageKey: StorageKey = collectionKey,
         name: String = "collectionRefReadHandle",
         ttl: Ttl = Ttl.Infinite
+    ) = createCollectionHandle(storageKey, name, ttl, Person)
+
+    private suspend fun <T : Entity> EntityHandleManager.createCollectionHandle(
+        storageKey: StorageKey = collectionKey,
+        name: String = "collectionRefReadHandle",
+        ttl: Ttl = Ttl.Infinite,
+        entitySpec: EntitySpec<T>
     ) = readHandleManager.createHandle(
         HandleSpec(
             name,
             HandleMode.ReadWrite,
             HandleContainerType.Collection,
-            Person
+            entitySpec
         ),
         storageKey,
         ttl
-    ) as ReadWriteQueryCollectionHandle<Person, Any>
+    ) as ReadWriteQueryCollectionHandle<T, Any>
+
 }
