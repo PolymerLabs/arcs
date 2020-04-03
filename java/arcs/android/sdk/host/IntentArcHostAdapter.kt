@@ -131,6 +131,6 @@ class IntentArcHostAdapter(
          * The maximum amount of time to wait for an [ArcHost] to process an [Intent]-base RPC call.
          * This timeout ensures requests don't wait forever.
          */
-        const val ARCHOST_INTENT_TIMEOUT = 2000L
+        const val ARCHOST_INTENT_TIMEOUT = 5000L
     }
 }

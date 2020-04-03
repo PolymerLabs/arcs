@@ -41,7 +41,6 @@ class SameHandleManagerTest : HandleManagerTestBase() {
             arcId = "arcId",
             hostId = "hostId",
             time = TimeImpl(),
-            stores = StoreManager(),
             activationFactory = ServiceStoreFactory(
                 app,
                 fakeLifecycleOwner.lifecycle,

@@ -95,7 +95,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             "testArc",
             "testHost",
             TimeImpl(),
-            StoreManager(),
             ServiceStoreFactory(
                 context = app,
                 lifecycle = lifecycle,

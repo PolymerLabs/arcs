@@ -47,6 +47,9 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode.ReferenceMode
 import arcs.core.storage.StoreManager
 import arcs.core.util.Time
+import arcs.core.util.guardedBy
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Creates [Entity] handles based on [HandleMode], such as
@@ -54,20 +57,23 @@ import arcs.core.util.Time
  * `arcs_kt_schema` on a manifest file to generate a `{ParticleName}Handles' class, and
  * invoke its default constructor, or obtain it from the [BaseParticle.handles] field.
  *
- * Instances of this class are not thread-safe.
- *
  * TODO(csilvestrini): Add support for creating Singleton/Set handles of [Reference]s.
  */
 class EntityHandleManager(
     private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
     private val hostId: String = "nohost",
     private val time: Time,
-    private val stores: StoreManager = StoreManager(),
     private val activationFactory: ActivationFactory? = null,
     private val idGenerator: Id.Generator = Id.Generator.newSession()
 ) {
-    private val singletonStorageProxies = mutableMapOf<StorageKey, SingletonProxy<RawEntity>>()
-    private val collectionStorageProxies = mutableMapOf<StorageKey, CollectionProxy<RawEntity>>()
+    private val stores = StoreManager()
+
+    private val storageProxyMutex = Mutex()
+    private val singletonStorageProxies by
+        guardedBy(storageProxyMutex, mutableMapOf<StorageKey, SingletonProxy<RawEntity>>())
+    private val collectionStorageProxies by
+        guardedBy(storageProxyMutex, mutableMapOf<StorageKey, CollectionProxy<RawEntity>>())
+
     private val dereferencerFactory = EntityDereferencerFactory(stores, activationFactory)
 
     suspend fun <T : Entity> createHandle(
@@ -159,8 +165,10 @@ class EntityHandleManager(
             mode = ReferenceMode
         )
     ).activate(activationFactory).let { activeStore ->
-        singletonStorageProxies.getOrPut(storageKey) {
-            SingletonProxy(activeStore, CrdtSingleton())
+        storageProxyMutex.withLock {
+            singletonStorageProxies.getOrPut(storageKey) {
+                SingletonProxy(activeStore, CrdtSingleton())
+            }
         }
     }
 
@@ -174,8 +182,10 @@ class EntityHandleManager(
             mode = ReferenceMode
         )
     ).activate(activationFactory).let { activeStore ->
-        collectionStorageProxies.getOrPut(storageKey) {
-            CollectionProxy(activeStore, CrdtSet())
+        storageProxyMutex.withLock {
+            collectionStorageProxies.getOrPut(storageKey) {
+                CollectionProxy(activeStore, CrdtSet())
+            }
         }
     }
 }

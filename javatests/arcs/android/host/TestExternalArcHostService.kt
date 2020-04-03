@@ -41,8 +41,6 @@ abstract class TestExternalArcHostService() : Service() {
         vararg particles: ParticleRegistration
     ) : TestingHost(*particles) {
 
-        override val stores = singletonStores
-
         override val activationFactory =  ServiceStoreFactory(
                 serviceContext,
                 FakeLifecycle(),

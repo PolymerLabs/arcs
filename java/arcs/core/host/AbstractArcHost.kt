@@ -23,7 +23,6 @@ import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.ActivationFactory
-import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -456,15 +455,8 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         arcId,
         hostId,
         platformTime,
-        stores,
         activationFactory
     )
-
-    /**
-     * The map of [Store] objects that this [ArcHost] will use. By default, it uses a shared
-     * singleton defined statically by this package.
-     */
-    open val stores = singletonStores
 
     /**
      * The [ActivationFactory] to use when activating stores. By default this is `null`,
@@ -481,17 +473,5 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         return particleConstructors[identifier]?.invoke() ?: throw IllegalArgumentException(
             "Particle $identifier not found."
         )
-    }
-
-    companion object {
-        /**
-         * Shared [StoreManager] instance. This is used to share [Store]s among multiple [ArcHost]s or
-         * even across different arcs. On Android, [StorageService] runs as a single process so all
-         * [ArcHost]s share the same Storage layer and this singleton is not needed, but on other
-         * platforms the [StoreManager] object provides Android-like functionality. If your platform
-         * supports its own [Service]-level analogue like Android, override this method to return
-         * a new instance each time.
-         */
-        val singletonStores = StoreManager()
     }
 }

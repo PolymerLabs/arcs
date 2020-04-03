@@ -43,7 +43,6 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             arcId = "arcId",
             hostId = "hostId",
             time = TimeImpl(),
-            stores = stores,
             activationFactory = ServiceStoreFactory(
                 app,
                 fakeLifecycleOwner.lifecycle,
@@ -54,7 +53,6 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             arcId = "arcId",
             hostId = "hostId",
             time = TimeImpl(),
-            stores = stores,
             activationFactory = ServiceStoreFactory(
                 app,
                 fakeLifecycleOwner.lifecycle,

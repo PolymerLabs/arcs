@@ -1,7 +1,6 @@
 package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.StoreManager
 import arcs.jvm.util.testutil.TimeImpl
 import org.junit.After
 import org.junit.Before
@@ -15,18 +14,15 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     @Before
     override fun setUp() {
         super.setUp()
-        val stores = StoreManager()
         readHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "testHost",
-            time = TimeImpl(),
-            stores = stores
+            time = TimeImpl()
         )
         writeHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "testHost",
-            time = TimeImpl(),
-            stores = stores
+            time = TimeImpl()
         )
     }
 

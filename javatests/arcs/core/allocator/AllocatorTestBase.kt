@@ -323,7 +323,6 @@ open class AllocatorTestBase {
             particle as WritePerson
             particle.await()
             assertThat(particle.createCalled).isTrue()
-            assertThat(particle.wrote).isTrue()
         }
 
         readPersonContext.particle.let { particle ->
