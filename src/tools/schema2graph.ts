@@ -44,6 +44,7 @@ export class SchemaNode {
   constructor(schema: Schema, name: string, kotlinName: string) {
     this.schema = schema;
     this.aliases.push(name);
+    console.log(`adding ${name} as alias of ${name}`)
     this.kotlinAliases.push(name)
   }
 }
@@ -87,6 +88,7 @@ export class SchemaGraph {
       node.aliases.push(name);
       node.kotlinName = name;
       if(!node.kotlinAliases.includes(name)) {
+        console.log(`boo: adding ${name} as alias of ${node.name}`)
         node.kotlinAliases.push(name);
       }
     } else {

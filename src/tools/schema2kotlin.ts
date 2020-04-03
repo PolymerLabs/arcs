@@ -382,6 +382,10 @@ ${lines}
   generateAliases(particleName: string): string {
     const name = this.node.kotlinName;
     const aliases = this.node.kotlinAliases;
+    console.log(`generateAliases for ${name}`)
+    aliases.forEach( (alias) => {
+      console.log(`\t${alias}`)
+    })
     const typeDecls = aliases.map(alias => `typealias ${alias} = Abstract${particleName}.${name}`);
     return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
   }

@@ -4,3 +4,6 @@ meta
 particle ComputePeopleStats
   people: reads [Person {age: Number}]
   stats: writes Stats {medianAge: Number}
+  other: reads Thing {x: &Product {name: Text}}
+  other2: reads &Thing {name: Text}
+  errors: writes [{msg: Text}]
