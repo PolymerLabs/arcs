@@ -12,7 +12,7 @@ import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -29,7 +29,7 @@ class ReferenceTest {
     private val entityHandleManager = EntityHandleManager(
         "testArc",
         "",
-        TimeImpl()
+        FakeTime()
     )
 
     private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>

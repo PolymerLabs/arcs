@@ -11,8 +11,7 @@
 
 package arcs.core.util.performance
 
-import arcs.core.util.Time
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -26,7 +25,7 @@ class TimerTest {
     private lateinit var timer: Timer
     @Before
     fun setUp() {
-        timer = Timer(TimeImpl())
+        timer = Timer(JvmTime)
     }
 
     @Test

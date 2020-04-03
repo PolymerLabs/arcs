@@ -9,12 +9,11 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -42,7 +41,7 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
-            time = TimeImpl(),
+            time = FakeTime(),
             stores = StoreManager(),
             activationFactory = ServiceStoreFactory(
                 app,
@@ -53,7 +52,7 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
         writeHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
-            time = TimeImpl(),
+            time = FakeTime(),
             stores = StoreManager(),
             activationFactory = ServiceStoreFactory(
                 app,

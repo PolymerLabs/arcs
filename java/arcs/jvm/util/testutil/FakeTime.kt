@@ -13,9 +13,10 @@ package arcs.jvm.util.testutil
 
 import arcs.core.util.Time
 
-class TimeImpl(val millis: Long? = null) : Time() {
+class FakeTime(var millis: Long = 999_999) : Time() {
     override val currentTimeNanos: Long
-        get() = System.nanoTime()
+        get() = millis * 1_000_000
+
     override val currentTimeMillis: Long
-        get() = millis ?: System.currentTimeMillis()
+        get() = millis
 }

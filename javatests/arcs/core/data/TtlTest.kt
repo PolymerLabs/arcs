@@ -11,8 +11,6 @@
 
 package arcs.core.data
 
-import arcs.core.util.Time
-import arcs.jvm.util.testutil.TimeImpl
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
