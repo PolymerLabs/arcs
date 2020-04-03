@@ -13,6 +13,7 @@ arcs_kt_library(
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/data",
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage/referencemode",

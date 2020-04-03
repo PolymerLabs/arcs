@@ -12,7 +12,6 @@
 package arcs.sdk
 
 import arcs.core.host.api.Particle
-import kotlinx.coroutines.runBlocking
 
 /**
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
@@ -57,9 +56,9 @@ open class HandleHolderBase(
     }
 
     override fun reset() {
-        runBlocking {
-            handles.forEach { (_, handle) -> handle.close() }
-        }
+//        runBlocking {
+//            handles.forEach { (_, handle) -> handle.close() }
+//        }
         handles.clear()
     }
 

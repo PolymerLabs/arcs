@@ -11,7 +11,6 @@
 
 package arcs.core.storage
 
-import androidx.annotation.VisibleForTesting
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtData
@@ -129,7 +128,7 @@ class ReferenceModeStore private constructor(
      */
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+//    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val backingStore = BackingStore<CrdtData, CrdtOperation, Any?>(
         storageKey = backingKey,
         backingType = backingType,

@@ -14,5 +14,5 @@ kt_js_import(
     jars = [
         "@maven//:org_jetbrains_kotlinx_atomicfu_js",
     ],
-    srcjar = "atomicfu-js-0.13.1-sources.jar",
+    srcjar = "atomicfu-js-0.14.2-sources.jar",
 )

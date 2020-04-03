@@ -23,9 +23,11 @@ arcs_kt_library(
         "//java/arcs/core/entity",
         "//java/arcs/core/host/api",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//java/arcs/sdk",
     ],
 )

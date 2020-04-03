@@ -1,6 +1,7 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_library",
+    "arcs_kt_library",
     "arcs_kt_native_library",
     # TODO: KotlinJS crashes (https://github.com/PolymerLabs/arcs/issues/4772)
     #   "kt_js_library",
@@ -10,11 +11,11 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-arcs_kt_jvm_library(
+arcs_kt_library(
     name = "sdk",
     srcs = glob([
         "*.kt",
-        "jvm/*.kt",
+        "jvm/BaseParticle.kt",
     ]),
     visibility = ["//visibility:public"],
     exports = [
@@ -37,7 +38,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/util",
         "//java/arcs/sdk/storage",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
+#        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )
 

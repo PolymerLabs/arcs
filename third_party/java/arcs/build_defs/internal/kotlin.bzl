@@ -33,7 +33,13 @@ load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":util.bzl", "merge_lists", "replace_arcs_suffix")
 
-ARCS_SDK_DEPS = ["//third_party/java/arcs"]
+ARCS_SDK_DEPS = [
+    "//third_party/java/arcs",
+    "//java/arcs/core/data",
+    "//java/arcs/core/entity",
+    "//java/arcs/core/host/api",
+    "//java/arcs/core/data/util:data-util",
+]
 
 _WASM_SUFFIX = "-wasm"
 
@@ -74,7 +80,10 @@ ALL_PLATFORMS = [
 
 # Default set of platforms for Kotlin libraries.
 # TODO: re-enable JS after https://github.com/PolymerLabs/arcs/issues/4772 fixed
-DEFAULT_LIBRARY_PLATFORMS = ["jvm"]
+DEFAULT_LIBRARY_PLATFORMS = [
+    "js",
+    "jvm",
+]
 
 # Default set of platforms for Kotlin particles.
 DEFAULT_PARTICLE_PLATFORMS = ["jvm"]
@@ -107,7 +116,7 @@ def arcs_kt_jvm_library(**kwargs):
         kt_name = name + _KT_SUFFIX
         kwargs["name"] = kt_name
 
-        exports.append(kt_name)
+        exports = exports + [kt_name]
 
         if not IS_BAZEL:
             java_kwargs = {"constraints": constraints}
@@ -201,6 +210,7 @@ def arcs_kt_library(
         )
 
     if "js" in platforms:
+        print("js target " + name + _JS_SUFFIX)
         arcs_kt_js_library(
             name = name + _JS_SUFFIX,
             testonly = testonly,
@@ -427,7 +437,7 @@ def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
     arcs_kt_library(
         name = name,
         srcs = outs,
-        platforms = ["jvm"],
+        platforms = ["js", "jvm"],
         deps = ARCS_SDK_DEPS + deps,
     )
 
