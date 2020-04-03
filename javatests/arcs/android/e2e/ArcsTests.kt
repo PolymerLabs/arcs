@@ -63,15 +63,15 @@ class ArcsTest {
 
         // Create a handle first.
         clickOnTextIfPresent(CREATE_BTN_TEXT)
-        waitForTextToAppear(WAITING_FOR_RESULT, ON_SYNC_NULL)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, ON_SYNC_NULL)
 
         // Set value to the handle.
         clickOnTextIfPresent(SET_BTN_TEXT)
-        waitForTextToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
+        waitForSequencedTextsToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
 
         // Clear the handle.
         clickOnTextIfPresent(CLEAR_BTN_TEXT)
-        waitForTextToAppear(ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
+        waitForSequencedTextsToAppear(ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
     }
 
     @Test
@@ -82,15 +82,15 @@ class ArcsTest {
 
         // Create a handle first.
         clickOnTextIfPresent(CREATE_BTN_TEXT)
-        waitForTextToAppear(WAITING_FOR_RESULT, ON_SYNC_NULL)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, ON_SYNC_NULL)
 
         // Set value to the handle.
         clickOnTextIfPresent(SET_BTN_TEXT)
-        waitForTextToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
+        waitForSequencedTextsToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
 
         // Clear the handle.
         clickOnTextIfPresent(CLEAR_BTN_TEXT)
-        waitForTextToAppear(ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
+        waitForSequencedTextsToAppear(ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
     }
 
     @Test
@@ -101,11 +101,11 @@ class ArcsTest {
 
         // Create a handle first.
         clickOnTextIfPresent(CREATE_BTN_TEXT)
-        waitForTextToAppear(WAITING_FOR_RESULT, ON_SYNC_NULL)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, ON_SYNC_NULL)
 
         // Set value to the handle.
         clickOnTextIfPresent(SET_BTN_TEXT)
-        waitForTextToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
+        waitForSequencedTextsToAppear(ON_SYNC_NULL, ON_UPDATE_TEST_RESULT)
 
         // Restart the activity.
         instrumentation.runOnMainSync {
@@ -120,17 +120,17 @@ class ArcsTest {
 
         // Create a handle first.
         clickOnTextIfPresent(CREATE_BTN_TEXT)
-        waitForTextToAppear(WAITING_FOR_RESULT, ON_SYNC_TEST_RESULT)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, ON_SYNC_TEST_RESULT)
 
         // Clear the handle.
         clickOnTextIfPresent(CLEAR_BTN_TEXT)
-        waitForTextToAppear(ON_SYNC_TEST_RESULT, ON_UPDATE_NULL)
+        waitForSequencedTextsToAppear(ON_SYNC_TEST_RESULT, ON_UPDATE_NULL)
     }
 
     @Test
     fun testAllocator_readWrite() {
         clickOnTextIfPresent(PERSON_TEST_BTN_TEXT)
-        waitForTextToAppear(WAITING_FOR_RESULT, PERSON_TEST_RESULT_TEXT)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, PERSON_TEST_RESULT_TEXT)
     }
 
     private fun clickOnTextIfPresent(text: String) {
@@ -145,7 +145,7 @@ class ArcsTest {
             .that(textGone).isTrue()
     }
 
-    private fun waitForTextToAppear(text1: String, text2: String) {
+    private fun waitForSequencedTextsToAppear(text1: String, text2: String) {
         val sequencedText1 = "1: $text1"
         val sequencedText2 = "2: $text2"
 
