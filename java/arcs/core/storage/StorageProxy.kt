@@ -26,9 +26,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-// Visible for testing
-enum class ProxyState { INIT, AWAITING_SYNC, SYNC, DESYNC }
-
 /**
  * [StorageProxy] is an intermediary between a [Handle] and [Store]. It provides up-to-date CRDT
  * state to readers, and ensures write operations apply cleanly before forwarding to the store.
@@ -40,6 +37,32 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
     initialCrdt: CrdtModel<Data, Op, T>
 ) {
+    // Visible for testing
+    enum class ProxyState {
+        /**
+         * The [StorageProxy] has not received any actions to invoke on storage events. A call to
+         * `onReady`, `onUpdate`, `onDesync` or `onResync` will change the state to [AWAITING_SYNC].
+         */
+        INIT,
+
+        /**
+         * The [StorageProxy] has received at least one action for storage events. A sync request
+         * has been sent to storage, but the response has not been received yet.
+         */
+        AWAITING_SYNC,
+
+        /**
+         * The [StorageProxy] is synchronized with its associated storage.
+         */
+        SYNC,
+
+        /**
+         * A set of model operations from storage failed to apply cleanly to the local CRDT model,
+         * so the [StorageProxy] is desynchronized. A request has been sent to resynchronize.
+         */
+        DESYNC
+    }
+
     private val log = TaggedLog { "StorageProxy" }
 
     private val callbackMutex = Mutex()
@@ -142,12 +165,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private suspend fun addAction(add: () -> Unit): ProxyState {
         var needsSync = false
         val currentState = syncMutex.withLock {
+            callbackMutex.withLock {
+                add()
+            }
             if (state == ProxyState.INIT) {
                 needsSync = true
                 state = ProxyState.AWAITING_SYNC
-            }
-            callbackMutex.withLock {
-                add()
             }
             state
         }
@@ -184,7 +207,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
         store.onProxyMessage(ProxyMessage.Operations(listOf(op), null))
         notifyUpdate(value)
-
         return true
     }
 
@@ -285,12 +307,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
         if (applyFailures) {
             notifyDesync()
-            // Before we return, let's issue a request for synchronization on a new
-            // coroutine. It can't be done on this current coroutine because the response
-            // we give here is being waited-on downstream, and we could end up dead-locking
-            // if requestSynchronization ends up needing a result from this to continue
-            // (which is what happens with the StorageService).
-            CoroutineScope(coroutineContext).launch { requestSynchronization() }
+            requestSynchronization()
         } else {
             // All ops from storage applied cleanly so resolve waiting syncs.
             futuresToResolve.forEach { it.complete(value) }

@@ -1,3 +1,14 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
@@ -5,6 +16,7 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.storage.StorageProxy.ProxyState
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
@@ -184,7 +196,7 @@ class StorageProxyTest {
 
         // Failure to apply ops should trigger onDesync and send a sync request.
         fakeStoreEndpoint.clearProxyMessages()
-        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
         assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
             ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
         )
