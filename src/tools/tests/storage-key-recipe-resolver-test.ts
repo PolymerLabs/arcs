@@ -10,7 +10,12 @@
 
 import {Manifest} from '../../runtime/manifest.js';
 import {assert} from '../../platform/chai-node.js';
-import {findLongRunningArcId, isLongRunning, StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
+import {
+  findLongRunningArcId,
+  isLongRunning,
+  StorageKeyRecipeResolver,
+  StorageKeyRecipeResolverError
+} from '../storage-key-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {DatabaseStorageKey} from '../../runtime/storageNG/database-storage-key.js';
 import {CapabilitiesResolver} from '../../runtime/capabilities-resolver.js';
@@ -107,7 +112,11 @@ describe('recipe2plan', () => {
         data: reads data`);
 
       const resolver = new StorageKeyRecipeResolver(manifest);
-      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
+      await assertThrowsAsync(
+        async () => await resolver.resolve(),
+        StorageKeyRecipeResolverError,
+        'Handle data mapped to ephemeral handle thing.'
+      );
     }));
     it('fails to resolve mapping a handle from a short running arc into a long running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
@@ -131,7 +140,11 @@ describe('recipe2plan', () => {
         data: reads data`);
 
       const resolver = new StorageKeyRecipeResolver(manifest);
-      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
+      await assertThrowsAsync(
+        async () => await resolver.resolve(),
+        StorageKeyRecipeResolverError,
+        'Handle data mapped to ephemeral handle thing.'
+      );
     }));
     it('resolves mapping a handle from a long running arc into a short running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
@@ -211,7 +224,11 @@ describe('recipe2plan', () => {
         data: reads data`);
 
       const resolver = new StorageKeyRecipeResolver(manifest);
-      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'Handle data mapped to ephemeral handle thing.');
+      await assertThrowsAsync(
+        async () => await resolver.resolve(),
+        StorageKeyRecipeResolverError,
+        'Handle data mapped to ephemeral handle thing.'
+      );
     });
     it('fails to resolve when an ingestion recipe uses a create handle with no Id', async () => {
       const manifest = await Manifest.parse(`\
@@ -237,7 +254,11 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
       const resolver = new StorageKeyRecipeResolver(manifest);
-      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'No matching handles found for data.');
+      await assertThrowsAsync(
+        async () => await resolver.resolve(),
+        StorageKeyRecipeResolverError,
+        'No matching handles found for data.'
+      );
     });
     it('fails to resolve recipes that have an ambiguous mapping to handles', async () => {
       const manifest = await Manifest.parse(`\
@@ -272,7 +293,11 @@ describe('recipe2plan', () => {
         data: reads data`);
 
       const resolver = new StorageKeyRecipeResolver(manifest);
-      await assertThrowsAsync(async () => await resolver.resolve(), Error, 'More than one handle found for data.');
+      await assertThrowsAsync(
+        async () => await resolver.resolve(),
+        StorageKeyRecipeResolverError,
+        'More than one handle found for data.'
+      );
     });
     it('does not create storage keys for create handles with no IDs', async () => {
       const manifest = await Manifest.parse(`\
