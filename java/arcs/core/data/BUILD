@@ -16,7 +16,7 @@ arcs_kt_library(
     name = "data",
     srcs = glob(
         ["*.kt"],
-        exclude = ENTITY_SRCS,
+#        exclude = ENTITY_SRCS,
     ),
     exports = [
         ":rawentity",

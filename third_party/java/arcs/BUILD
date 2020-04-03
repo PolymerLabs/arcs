@@ -8,6 +8,11 @@ alias(
     actual = "//java/arcs/sdk",
 )
 
+alias(
+    name = "arcs-js",
+    actual = "//java/arcs/sdk:sdk-js",
+)
+
 # Testing components of the Arcs SDK for the JVM.
 alias(
     name = "testing",

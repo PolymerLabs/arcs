@@ -32,4 +32,4 @@ fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(classN
  * Creates a [ParticleIdentifier] from a [Class]. Older versions of Kotlin required kotlin-reflect
  * to use KClass, so this method can be used instead.
  */
-fun Class<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(name)
+//fun Class<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(name)

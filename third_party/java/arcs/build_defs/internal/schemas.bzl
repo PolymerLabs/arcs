@@ -67,7 +67,7 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = Tr
       platforms: list of target platforms (current, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
     """
-    supported = ["jvm", "wasm"]
+    supported = ["js", "jvm", "wasm"]
 
     # TODO(#5018)
     if "jvm" not in platforms:
@@ -95,7 +95,7 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = Tr
     arcs_kt_library(
         name = name,
         srcs = outs,
-        platforms = platforms,
+#        platforms = platforms,
         deps = ARCS_SDK_DEPS,
     )
 
@@ -125,4 +125,5 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = Tr
                 "//third_party/java/arcs:testing",
                 "//third_party/kotlin/kotlinx_coroutines",
             ],
+            exports = ARCS_SDK_DEPS,
         )
