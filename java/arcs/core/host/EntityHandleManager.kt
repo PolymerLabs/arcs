@@ -31,22 +31,21 @@ import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.QueryCollectionHandle
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadQueryCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
-import arcs.core.entity.ReferenceStorageAdapter
-import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.Reference
+import arcs.core.entity.ReferenceStorageAdapter
 import arcs.core.entity.SingletonHandle
 import arcs.core.entity.SingletonProxy
 import arcs.core.entity.SingletonStoreOptions
 import arcs.core.entity.Storable
 import arcs.core.entity.StorageAdapter
 import arcs.core.entity.WriteCollectionHandle
+import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
@@ -207,8 +206,10 @@ class EntityHandleManager(
             HandleMode.Query -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
             HandleMode.ReadWrite -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
             HandleMode.ReadQuery -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
-            HandleMode.WriteQuery -> object : WriteQueryCollectionHandle<T, Any> by collectionHandle {}
-            HandleMode.ReadWriteQuery -> object : ReadWriteQueryCollectionHandle<T, Any> by collectionHandle {}
+            HandleMode.WriteQuery ->
+                object : WriteQueryCollectionHandle<T, Any> by collectionHandle {}
+            HandleMode.ReadWriteQuery ->
+                object : ReadWriteQueryCollectionHandle<T, Any*> by collectionHandle {}
         }
     }
 
