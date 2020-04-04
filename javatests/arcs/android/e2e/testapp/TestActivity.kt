@@ -25,6 +25,7 @@ import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
 import arcs.jvm.util.JvmTime
+import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlin.coroutines.CoroutineContext
@@ -46,8 +47,10 @@ class TestActivity : AppCompatActivity() {
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
     private var storageMode = TestEntity.StorageMode.IN_MEMORY
+    private var collection = false
     private var setFromRemoteService = false
     private var singletonHandle: ReadWriteSingletonHandle<TestEntity>? = null
+    private var collectionHandle: ReadWriteCollectionHandle<TestEntity>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
