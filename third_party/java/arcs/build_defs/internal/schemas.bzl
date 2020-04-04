@@ -3,9 +3,10 @@
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
+load("//devtools/build_cleaner/skylark:build_defs.bzl", "register_extension_info")
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix")
-load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library")
+load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library", "arcs_kt_plan")
 
 def _run_schema2wasm(
         name,
@@ -57,15 +58,27 @@ def arcs_cc_schema(name, src, deps = [], out = None):
         wasm = False,
     )
 
-def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = True):
+def arcs_kt_schema(
+        name,
+        srcs,
+        deps = [],
+        platforms = ["jvm"],
+        test_harness = True,
+        visibility = None):
     """Generates a Kotlin file for the given .arcs schema file.
 
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
       deps: list of imported manifests
-      platforms: list of target platforms (current, `jvm` and `wasm` supported).
+      platforms: list of target platforms (current, `jvm` and `wasm` supported)
       test_harness: whether to generate a test harness target
+      visibility: visibility of the generated arcs_kt_library
+
+    Returns:
+      Dictionary of:
+        "outs": output files. other rules can use this to bundle outputs.
+        "deps": deps of those outputs.
     """
     supported = ["jvm", "wasm"]
 
@@ -74,6 +87,7 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = Tr
         platforms.append("jvm")
 
     outs = []
+    outdeps = []
     for src in srcs:
         for ext in platforms:
             if ext not in supported:
@@ -97,7 +111,9 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = Tr
         srcs = outs,
         platforms = platforms,
         deps = ARCS_SDK_DEPS,
+        visibility = visibility,
     )
+    outdeps = outdeps + ARCS_SDK_DEPS
 
     if (test_harness):
         test_harness_outs = []
@@ -126,3 +142,55 @@ def arcs_kt_schema(name, srcs, deps = [], platforms = ["jvm"], test_harness = Tr
                 "//third_party/kotlin/kotlinx_coroutines",
             ],
         )
+    return {"outs": outs, "deps": outdeps}
+
+def arcs_kt_gen(
+        name,
+        srcs,
+        deps = [],
+        platforms = ["jvm"],
+        test_harness = True,
+        visibility = None):
+    """Generates Kotlin files for the given .arcs files.
+
+    This is a convenience wrapper that combines all code generation targets based on arcs files.
+
+    Args:
+      name: name of the target to create
+      srcs: list of Arcs manifest files to include
+      deps: list of dependent arcs targets, such as an arcs_kt_gen target in a different package
+      platforms: list of target platforms (currently, `jvm` and `wasm` supported).
+      test_harness: whether to generate a test harness target
+      visibility: visibility of the generated arcs_kt_library
+    """
+    schema_name = name + "_schema"
+    plan_name = name + "_plan"
+    schema = arcs_kt_schema(
+        name = schema_name,
+        srcs = srcs,
+        deps = deps,
+        platforms = platforms,
+        test_harness = test_harness,
+        visibility = visibility,
+    )
+    plan = arcs_kt_plan(
+        name = plan_name,
+        srcs = srcs,
+        deps = deps + [schema_name],
+        platforms = platforms,
+        visibility = visibility,
+    )
+
+    # generates combined library. This allows developers to more easily see what is generated.
+    arcs_kt_library(
+        name = name,
+        srcs = depset(schema["outs"] + plan["outs"]).to_list(),
+        platforms = platforms,
+        deps = depset(schema["deps"] + plan["deps"]).to_list(),
+        visibility = visibility,
+    )
+
+register_extension_info(
+    extension = arcs_kt_gen,
+    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+)

@@ -1,8 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_kt_plan",
-    "arcs_kt_schema",
-    "arcs_manifest_proto",
+    "arcs_kt_gen",
 )
 
 licenses(["notice"])
@@ -16,20 +14,8 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-arcs_manifest_proto(
-    name = "example",
-    src = "Example.arcs",
-    visibility = ["//visibility:public"],
-)
-
-arcs_kt_schema(
-    name = "example_schema",
-    srcs = ["WriterReaderExample.arcs"],
-)
-
-arcs_kt_plan(
-    name = "example_plan",
+arcs_kt_gen(
+    name = "example_gen",
     srcs = ["WriterReaderExample.arcs"],
     visibility = ["//visibility:public"],
-    deps = [":example_schema"],
 )
