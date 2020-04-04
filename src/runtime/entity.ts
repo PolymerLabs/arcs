@@ -67,9 +67,8 @@ class EntityInternals {
   private id?: string;
   private storageKey?: string;
   private userIDComponent?: string;
-  // TODO(mmandlis): use Date for timestamp fields.
-  private creationTimestamp: string;
-  private expirationTimestamp: string;
+  private creationTimestamp: Date;
+  private expirationTimestamp: Date;
 
   // TODO: Only the Arc that "owns" this Entity should be allowed to mutate it.
   private mutable = true;
@@ -104,7 +103,7 @@ class EntityInternals {
     return this.entityClass;
   }
 
-  getCreationTimestamp(): string {
+  getCreationTimestamp(): Date {
     if (this.id === undefined) {
       throw new Error('entity has not yet been stored!');
     }
@@ -125,7 +124,7 @@ class EntityInternals {
     return this.expirationTimestamp !== undefined;
   }
 
-  identify(identifier: string, storageKey: string, creationTimestamp?: string) {
+  identify(identifier: string, storageKey: string, creationTimestamp?: Date) {
     assert(!this.isIdentified(), 'identify() called on already identified entity');
     this.id = identifier;
     this.storageKey = storageKey;
@@ -153,9 +152,9 @@ class EntityInternals {
   private setExpiration(ttl: Ttl) {
     assert(ttl, `ttl cannot be null`);
     const now = new Date();
-    this.creationTimestamp = now.getTime().toString();
+    this.creationTimestamp = now;
     if (!ttl.isInfinite) {
-      this.expirationTimestamp = ttl.calculateExpiration(now).getTime().toString();
+      this.expirationTimestamp = ttl.calculateExpiration(now);
     }
   }
 
@@ -231,10 +230,10 @@ class EntityInternals {
       rawData: this.dataClone()
     };
     if (this.hasCreationTimestamp()) {
-      serializedEntity.creationTimestamp = this.creationTimestamp;
+      serializedEntity.creationTimestamp = this.creationTimestamp.getTime().toString();
     }
     if (this.hasExpirationTimestamp()) {
-      serializedEntity.expirationTimestamp = this.expirationTimestamp;
+      serializedEntity.expirationTimestamp = this.expirationTimestamp.getTime().toString();
     }
     return serializedEntity;
   }
@@ -351,7 +350,7 @@ export abstract class Entity implements Storable {
     return getInternals(entity).getId();
   }
 
-  static creationTimestamp(entity: Entity): string | null {
+  static creationTimestamp(entity: Entity): Date | null {
     return getInternals(entity).hasCreationTimestamp()
         ? getInternals(entity).getCreationTimestamp() : null;
   }
@@ -369,7 +368,7 @@ export abstract class Entity implements Storable {
   }
 
   static identify(entity: Entity, identifier: string, storageKey: string, creationTimestamp?: string) {
-    getInternals(entity).identify(identifier, storageKey, creationTimestamp);
+    getInternals(entity).identify(identifier, storageKey, new Date(Number(creationTimestamp)));
     return entity;
   }
 

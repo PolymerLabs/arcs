@@ -62,10 +62,11 @@ describe('Entity', () => {
     // Mutation APIs are tested below.
     const e = new entityClass({txt: 'abc', num: 56});
     assert.isFalse(Entity.isIdentified(e));
-    Entity.identify(e, 'id1', null, 'now');
+    const now = new Date().getTime().toString();
+    Entity.identify(e, 'id1', null, now);
     assert.isTrue(Entity.isIdentified(e));
     assert.strictEqual(Entity.id(e), 'id1');
-    assert.strictEqual(Entity.creationTimestamp(e), 'now');
+    assert.strictEqual(Entity.creationTimestamp(e).getTime().toString(), now);
 
     const e2 = new entityClass({txt: 'abc'});
     assert.isFalse(Entity.isIdentified(e2));
@@ -74,7 +75,7 @@ describe('Entity', () => {
     assert.strictEqual(Entity.id(e2), '!s:id2:0');
 
     assert.deepEqual(Entity.dataClone(e), {txt: 'abc', num: 56});
-    assert.deepEqual(Entity.serialize(e), {id: 'id1', creationTimestamp: 'now', rawData: {txt: 'abc', num: 56}});
+    assert.deepEqual(Entity.serialize(e), {id: 'id1', creationTimestamp: now, rawData: {txt: 'abc', num: 56}});
     assert.strictEqual(Entity.entityClass(e), entityClass);
 
     // Static methods

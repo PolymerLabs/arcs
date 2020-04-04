@@ -40,7 +40,7 @@ interface Serializer<T, Serialized> {
 // The following must return a Reference, but we are trying to break the cyclic
 // dependency between this file and reference.ts, so we lose a little bit of type safety
 // to do that.
-type ReferenceMaker = (data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) => ReferenceInt;
+type ReferenceMaker = (data: {id: string, creationTimestamp?: string | null, expirationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) => ReferenceInt;
 
 /**
  * Base class for Handles.
@@ -206,7 +206,7 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
   }
 }
 
-type ReferenceSer = {id: string, creationTimestamp?: string, entityStorageKey: string};
+type ReferenceSer = {id: string, creationTimestamp?: string, expirationTimestamp?: string, entityStorageKey: string};
 interface ReferenceInt {
   dataClone: Producer<ReferenceSer>;
 }
