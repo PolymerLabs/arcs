@@ -167,15 +167,21 @@ class TestActivity : AppCompatActivity() {
             }
         ) as ReadWriteSingletonHandle<TestEntity>
 
+        singletonHandle?.onReady {
+            scope.launch {
+                fetchAndUpdateResult("onReady")
+            }
+        }
+
         singletonHandle?.onUpdate {
             scope.launch {
                 fetchAndUpdateResult("onUpdate")
             }
         }
 
-        singletonHandle?.onSync {
+        singletonHandle?.onResync{
             scope.launch {
-                fetchAndUpdateResult("onSync")
+                fetchAndUpdateResult("onResync")
             }
         }
 
