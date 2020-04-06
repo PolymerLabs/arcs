@@ -128,7 +128,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
                 arcHostContext.arcId,
                 hostId
             )
-            partition.particles.get(0).handles.forEach { handleSpec ->
+            partition.particles[0].handles.forEach { handleSpec ->
                 createHandle(arcHostContext, handleSpec.key, handleSpec.value, handles)
             }
         }

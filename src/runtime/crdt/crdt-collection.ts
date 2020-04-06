@@ -276,7 +276,7 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
   }
   // Sort the add ops in increasing order by the actor's version.
   const addOps = [...fastForwardOp.added].sort(([elem1, v1], [elem2, v2]) => (v1[actor] || 0) - (v2[actor] || 0));
-  let expectedVersion = fastForwardOp.oldClock[actor];
+  let expectedVersion = fastForwardOp.oldClock[actor] || 0;
   for (const [elem, version] of addOps) {
     if (++expectedVersion !== version[actor]) {
       // The add op didn't match the expected increment-by-one pattern. Can't
@@ -304,9 +304,6 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
  * there's more than one such actor, returns null.
  */
 function getSingleActorIncrement(oldVersion: VersionMap, newVersion: VersionMap): string | null {
-  if (Object.keys(oldVersion).length !== Object.keys(newVersion).length) {
-    return null;
-  }
-  const incrementedActors = Object.entries(oldVersion).filter(([k, v]) => newVersion[k] > v);
+  const incrementedActors = Object.entries(newVersion).filter(([k, v]) => v > (oldVersion[k] || 0));
   return incrementedActors.length === 1 ? incrementedActors[0][0] : null;
 }

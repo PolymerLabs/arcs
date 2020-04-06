@@ -78,7 +78,7 @@ class CrdtSet<T : Referencable>(
         }
 
         _data.values.forEach { (id, myEntry) ->
-            if (id !in other.values && other.versionMap isDominatedBy myEntry.versionMap) {
+            if (id !in other.values && other.versionMap doesNotDominate myEntry.versionMap) {
                 // Value was added by this model.
                 mergedData.values[id] = myEntry
                 fastForwardOp.added += myEntry
@@ -90,7 +90,7 @@ class CrdtSet<T : Referencable>(
         val (myOperations, otherOperations) = if (
             fastForwardOp.added.isNotEmpty() ||
             fastForwardOp.removed.isNotEmpty() ||
-            oldClock isDominatedBy newClock
+            oldClock doesNotDominate newClock
         ) {
             CrdtChange.Data<Data<T>, IOperation<T>>(mergedData) to
                 Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())
@@ -231,7 +231,7 @@ class CrdtSet<T : Referencable>(
 
                 // Can't remove the item unless the clock value dominates that of the item already
                 // in the set.
-                if (clock isDominatedBy existingDatum.versionMap) return false
+                if (clock doesNotDominate existingDatum.versionMap) return false
 
                 // No need to edit actual data during a dry run.
                 if (isDryRun) return true
@@ -263,7 +263,7 @@ class CrdtSet<T : Referencable>(
 
             override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
                 // Can't fast-forward when current data's clock is behind oldClock.
-                if (data.versionMap isDominatedBy oldClock) return false
+                if (data.versionMap doesNotDominate oldClock) return false
 
                 // If the current data already knows about everything in the fast-forward op, we
                 // don't have to do anything.
@@ -279,7 +279,7 @@ class CrdtSet<T : Referencable>(
                             DataValue(
                                 addedClock mergeWith existingValue.versionMap, existingValue.value
                             )
-                    } else if (data.versionMap isDominatedBy addedClock) {
+                    } else if (data.versionMap doesNotDominate addedClock) {
                         data.values[addedValue.id] = DataValue(addedClock, addedValue)
                     }
                 }

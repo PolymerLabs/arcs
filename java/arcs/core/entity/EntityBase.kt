@@ -86,26 +86,26 @@ open class EntityBase(
     }
 
     /** Returns the value for the given singleton field. */
-    public fun getSingletonValue(field: String): Any? = if (field in singletons) {
+    fun getSingletonValue(field: String): Any? = if (field in singletons) {
         singletons[field]
     } else {
         throw InvalidFieldNameException(entityClassName, field, isCollection = false)
     }
 
     /** Returns the value for the given collection field. */
-    public fun getCollectionValue(field: String): Set<Any> = collections.getOrElse(field) {
+    fun getCollectionValue(field: String): Set<Any> = collections.getOrElse(field) {
         throw InvalidFieldNameException(entityClassName, field, isCollection = true)
     }
 
     /** Sets the value for the given singleton field. */
-    public fun setSingletonValue(field: String, value: Any?) {
+    fun setSingletonValue(field: String, value: Any?) {
         val expectedType = getSingletonType(field)
         checkType(field, value, expectedType)
         singletons[field] = value
     }
 
     /** Sets the value for the given collection field. */
-    public fun setCollectionValue(field: String, values: Set<Any>) {
+    fun setCollectionValue(field: String, values: Set<Any>) {
         val expectedType = getCollectionType(field)
         values.forEach { checkType(field, it, expectedType) }
         collections[field] = values
@@ -178,7 +178,7 @@ open class EntityBase(
      * Populates the entity from the given [RawEntity] serialization. Must only be called on a
      * fresh, empty instance.
      */
-    public fun deserialize(rawEntity: RawEntity) {
+    fun deserialize(rawEntity: RawEntity) {
         _entityId = if (rawEntity.id == NO_REFERENCE_ID) null else rawEntity.id
         rawEntity.singletons.forEach { (field, value) ->
             setSingletonValue(field, value?.let { fromReferencable(it, getSingletonType(field)) })
@@ -203,7 +203,7 @@ open class EntityBase(
                 idGenerator.newArcId("dummy-arc"),
                 handleName
             ).toString()
-            creationTimestamp = requireNotNull(time).currentTimeMillis
+            creationTimestamp = time.currentTimeMillis
             if (ttl != Ttl.Infinite) {
                 expirationTimestamp = ttl.calculateExpiration(time)
             }
