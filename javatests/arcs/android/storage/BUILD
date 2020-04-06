@@ -26,7 +26,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
-        "//java/arcs/java/arcs/jvm/util",
+        "//java/arcs/jvm/util",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
         "//third_party/java/robolectric",
