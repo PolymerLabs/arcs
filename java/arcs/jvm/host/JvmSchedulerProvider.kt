@@ -14,12 +14,12 @@ package arcs.jvm.host
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
+import java.util.concurrent.Executors
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
-import java.util.concurrent.Executors
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Implementation of a [SchedulerProvider] for the Java Virtual Machine (including Android).
@@ -34,7 +34,8 @@ import kotlin.coroutines.CoroutineContext
 class JvmSchedulerProvider(
     private val baseCoroutineContext: CoroutineContext,
     private val maxThreadCount: Int =
-        maxOf(1, Runtime.getRuntime().availableProcessors() / 2)
+        maxOf(1, Runtime.getRuntime().availableProcessors() / 2),
+    private val threadPriority: Int = Thread.NORM_PRIORITY
 ) : SchedulerProvider {
     private val dispatchers = mutableListOf<CoroutineDispatcher>()
     private val schedulersByArcId = mutableMapOf<String, Scheduler>()
@@ -49,8 +50,7 @@ class JvmSchedulerProvider(
             Executors
                 .newSingleThreadExecutor {
                     Thread(it).apply {
-                        // TODO: Tune
-                        priority = Thread.NORM_PRIORITY
+                        priority = threadPriority
                     }
                 }
                 .asCoroutineDispatcher()
@@ -58,7 +58,11 @@ class JvmSchedulerProvider(
         }
 
         val schedulerParentJob = Job(baseCoroutineContext[Job])
-        schedulerParentJob.invokeOnCompletion { schedulersByArcId.remove(arcId) }
+        schedulerParentJob.invokeOnCompletion {
+            synchronized(this@JvmSchedulerProvider) {
+                schedulersByArcId.remove(arcId)
+            }
+        }
 
         val schedulerContext = baseCoroutineContext +
             schedulerParentJob +
@@ -68,8 +72,8 @@ class JvmSchedulerProvider(
         return Scheduler(JvmTime, schedulerContext).also { schedulersByArcId[arcId] = it }
     }
 
-
-    suspend fun cancelAll() {
-        schedulersByArcId.values.forEach { it.cancel() }
+    @Synchronized
+    fun cancelAll() {
+        schedulersByArcId.values.toList().forEach { it.cancel() }
     }
 }

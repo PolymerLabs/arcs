@@ -21,6 +21,7 @@ import arcs.core.host.HostRegistry
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.ServiceStoreFactory
+import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import java.util.concurrent.Executors
 
 /** Entry UI to launch Arcs demo. */
 @OptIn(ExperimentalCoroutinesApi::class)

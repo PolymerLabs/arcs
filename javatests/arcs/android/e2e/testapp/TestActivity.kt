@@ -124,11 +124,11 @@ class TestActivity : AppCompatActivity() {
             AndroidManifestHostRegistry.create(this@TestActivity),
             EntityHandleManager(
                 time = JvmTime,
-	        scheduler = Scheduler(
-		    JvmTime,
-		    coroutineContext
-		        + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-	        ),
+                scheduler = Scheduler(
+                    JvmTime,
+                    coroutineContext
+                        + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+                ),
                 activationFactory = ServiceStoreFactory(
                     context = this@TestActivity,
                     lifecycle = this@TestActivity.lifecycle
