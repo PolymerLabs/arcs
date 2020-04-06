@@ -90,7 +90,7 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
 
     /**
      * Subtracts the other [VersionMap] from the receiver and returns the actor-by-actor difference
-     * in a new [VersionMap].
+     * in a new [VersionMap]. Only non-zero differences will be returned.
      */
     operator fun minus(other: VersionMap): VersionMap {
         // Return an empty result if the other map is newer than this one.
