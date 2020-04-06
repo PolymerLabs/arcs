@@ -1110,6 +1110,15 @@ class DatabaseImplTest {
         val backingKey = DummyStorageKey("backing")
         val entityKey = DummyStorageKey("backing/entity")
         val expiredEntityKey = DummyStorageKey("backing/expiredEntity")
+
+        // Add clients to verify updates.
+        val collectionClient = FakeDatabaseClient(collectionKey)
+        database.addClient(collectionClient)
+        val entityClient = FakeDatabaseClient(entityKey)
+        database.addClient(entityClient)
+        val expiredEntityClient = FakeDatabaseClient(expiredEntityKey)
+        database.addClient(expiredEntityClient)
+
         // An expired entity.
         var timeInPast = JvmTime.currentTimeMillis - 10000
         val expiredEntity = DatabaseData.Entity(
@@ -1196,6 +1205,20 @@ class DatabaseImplTest {
         // Check unused primitive values have been removed, only those used in entity are present.
         assertThat(readTextPrimitiveValues()).containsExactly("def")
         assertThat(readNumberPrimitiveValues()).containsExactly(123L, 789L)
+
+        // Check the corrent clients were notified.
+        collectionClient.eventMutex.withLock {
+            assertThat(collectionClient.deletes)
+                .containsExactly(null)
+        }
+        expiredEntityClient.eventMutex.withLock {
+            assertThat(expiredEntityClient.deletes)
+                .containsExactly(null)
+        }
+        entityClient.eventMutex.withLock {
+            assertThat(entityClient.deletes)
+                .isEmpty()
+        }
     }
 
     @Test

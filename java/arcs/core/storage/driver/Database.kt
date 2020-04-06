@@ -148,29 +148,7 @@ class DatabaseDriver<Data : Any>(
             // If we didn't have any data, try and fetch it from the database.
             if (dataAndVersion.first == null || dataAndVersion.second == null) {
                 log.debug { "registerReceiver($token) - no local data, fetching from database" }
-                database.get(
-                    storageKey,
-                    when (dataClass) {
-                        CrdtEntity.Data::class -> DatabaseData.Entity::class
-                        CrdtSingleton.DataImpl::class -> DatabaseData.Singleton::class
-                        CrdtSet.DataImpl::class -> DatabaseData.Collection::class
-                        else -> throw IllegalStateException("Illegal dataClass: $dataClass")
-                    },
-                    schema
-                )?.also {
-                    dataAndVersion = when (it) {
-                        is DatabaseData.Entity ->
-                            it.rawEntity.toCrdtEntityData(it.versionMap) { refable ->
-                                // Use the storage reference if it is one.
-                                if (refable is Reference) refable
-                                else CrdtEntity.Reference.buildReference(refable)
-                            }
-                        is DatabaseData.Singleton ->
-                            it.reference.toCrdtSingletonData(it.versionMap)
-                        is DatabaseData.Collection ->
-                            it.values.toCrdtSetData(it.versionMap)
-                    } as Data to it.databaseVersion
-                }
+                dataAndVersion = getDatabaseData()
             }
             dataAndVersion
         }
@@ -284,15 +262,17 @@ class DatabaseDriver<Data : Any>(
     }
 
     override suspend fun onDatabaseDelete(originatingClientId: Int?) {
+        val (dbData, dbVersion) = getDatabaseData()
         localDataMutex.withLock {
-            localData = null
-            localVersion = null
+            localData = dbData
+            localVersion = dbVersion
         }
 
         if (originatingClientId == clientId) return
 
         log.debug { "onDatabaseDelete(originatingClientId: $originatingClientId)" }
         bumpToken()
+        if (dbData != null && dbVersion != null) { receiver?.invoke(dbData, dbVersion) }
     }
 
     override fun toString(): String = "DatabaseDriver($storageKey, $clientId)"
@@ -301,5 +281,33 @@ class DatabaseDriver<Data : Any>(
 
     private fun bumpToken() {
         token = Random.nextInt().toString()
+    }
+
+    private suspend fun getDatabaseData(): Pair<Data?, Int?> {
+        var dataAndVersion: Pair<Data?, Int?> = null to null
+        database.get(
+            storageKey,
+            when (dataClass) {
+                CrdtEntity.Data::class -> DatabaseData.Entity::class
+                CrdtSingleton.DataImpl::class -> DatabaseData.Singleton::class
+                CrdtSet.DataImpl::class -> DatabaseData.Collection::class
+                else -> throw IllegalStateException("Illegal dataClass: $dataClass")
+            },
+            schema
+        )?.also {
+            dataAndVersion = when (it) {
+                is DatabaseData.Entity ->
+                    it.rawEntity.toCrdtEntityData(it.versionMap) { refable ->
+                        // Use the storage reference if it is one.
+                        if (refable is Reference) refable
+                        else CrdtEntity.Reference.buildReference(refable)
+                    }
+                is DatabaseData.Singleton ->
+                    it.reference.toCrdtSingletonData(it.versionMap)
+                is DatabaseData.Collection ->
+                    it.values.toCrdtSetData(it.versionMap)
+            } as Data to it.databaseVersion
+        }
+        return dataAndVersion
     }
 }
