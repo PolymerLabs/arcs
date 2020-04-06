@@ -14,6 +14,7 @@ package arcs.jvm.host
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
+import kotlinx.atomicfu.atomic
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,6 +38,8 @@ class JvmSchedulerProvider(
         maxOf(1, Runtime.getRuntime().availableProcessors() / 2),
     private val threadPriority: Int = DEFAULT_THREAD_PRIORITY
 ) : SchedulerProvider {
+    private val providedSoFar = atomic(0)
+    private val threads = arrayOfNulls<Thread>(maxThreadCount)
     private val dispatchers = mutableListOf<CoroutineDispatcher>()
     private val schedulersByArcId = mutableMapOf<String, Scheduler>()
 
@@ -45,15 +48,17 @@ class JvmSchedulerProvider(
         schedulersByArcId[arcId]?.let { return it }
 
         val dispatcher = if (dispatchers.size == maxThreadCount) {
-            dispatchers[schedulersByArcId.size % maxThreadCount]
+            dispatchers[providedSoFar.getAndIncrement() % maxThreadCount]
         } else {
+            val threadIndex = providedSoFar.getAndIncrement()
             Executors
                 .newSingleThreadExecutor {
-                    // TODO(jasonwyatt): Create and cache this thread outside of the thread factory,
-                    //  so we can ensure we always return it - rather than creating new threads
-                    //  when/if the on the executor was created with failed or was killed.
+                    val thread = threads[threadIndex % maxThreadCount]
+                    if (thread != null) return@newSingleThreadExecutor thread
+
                     Thread(it).apply {
                         priority = threadPriority
+                        threads[threadIndex % maxThreadCount] = this
                     }
                 }
                 .asCoroutineDispatcher()

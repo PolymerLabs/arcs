@@ -134,7 +134,6 @@ class JvmSchedulerProviderTest {
         // Delay just a bit to ensure the `invokeOnCompletion` has been called for our scheduler
         delay(100)
 
-
         assertWithMessage(
             "After canceling the original scheduler, we should get a new one, even with the " +
                 "same arcId."
