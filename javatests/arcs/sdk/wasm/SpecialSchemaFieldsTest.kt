@@ -12,7 +12,7 @@
 package arcs.sdk.wasm
 
 class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
-    ::SpecialSchemaFieldsTest_Errors,
+    AbstractSpecialSchemaFieldsTest::SpecialSchemaFieldsTest_Errors,
     SpecialSchemaFieldsTest_Errors
 ) {
     private val unused = WasmSingletonImpl(
