@@ -85,42 +85,11 @@ class VersionMapTest {
     }
 
     @Test
-    fun isDominatedByReturnsFalse_whenVersionMapsAreEqual() {
-        var a = VersionMap()
-        a["alice"]++
-        a["bob"] = 42
-        var b = VersionMap(a)
-        assertThat(a isDominatedBy b).isFalse()
-
-        a = VersionMap()
-        b = VersionMap(a)
-        assertThat(a isDominatedBy b).isFalse()
-    }
-
-    @Test
-    fun isDominatedByReturnsTrue_whenVersionMapIsDominatedByAnother() {
-        val a = VersionMap()
-        val b = VersionMap()
-
-        a["alice"]++
-        assertThat(b isDominatedBy a).isTrue()
-
-        a["bob"] = 2
-        b["bob"] = 2
-        assertThat(b isDominatedBy a).isTrue()
-    }
-
-    @Test
-    fun isDominatedByReturnsFalse_whenVersionMapDominatesAnother() {
-        val a = VersionMap()
-        val b = VersionMap()
-
-        b["alice"]++
-        assertThat(b isDominatedBy a).isFalse()
-
-        a["bob"] = 2
-        b["bob"] = 2
-        assertThat(b isDominatedBy a).isFalse()
+    fun dominatesReturnsFalse_whenNeitherDominates() {
+        val a = VersionMap("a" to 1)
+        val b = VersionMap("b" to 1)
+        assertThat(a dominates b).isFalse()
+        assertThat(b dominates a).isFalse()
     }
 
     @Test

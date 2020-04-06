@@ -253,6 +253,30 @@ class CrdtSetTest {
     }
 
     @Test
+    fun merge_canMergeAdditionsByTwoActors() {
+        assertThat(alice.applyOperation(Add("alice", VersionMap("alice" to 1), "a"))).isTrue()
+        assertThat(bob.applyOperation(Add("bob", VersionMap("bob" to 1), "b"))).isTrue()
+
+        val changes = alice.merge(bob.data)
+
+        val modelChanges = requireNotNull(
+            changes.modelChange as? CrdtChange.Data<Data<Reference>, IOperation<Reference>>
+        )
+        val otherChanges = requireNotNull(
+            changes.otherChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
+        )
+        val expectedVersionMap = VersionMap("alice" to 1, "bob" to 1)
+        assertThat(modelChanges.data.versionMap).isEqualTo(expectedVersionMap)
+        assertThat(modelChanges.data.values).containsExactly(
+            "a", CrdtSet.DataValue(VersionMap("alice" to 1), Reference("a")),
+            "b", CrdtSet.DataValue(VersionMap("bob" to 1), Reference("b"))
+        )
+        assertThat(otherChanges.ops).containsExactly(
+            Add("alice", VersionMap("alice" to 1), "a")
+        )
+    }
+
+    @Test
     fun fastForward_canSimplifySingleActorAddOps() {
         listOf(
             Add("alice", VersionMap("alice" to 1), "zero"),

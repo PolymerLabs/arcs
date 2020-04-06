@@ -348,6 +348,39 @@ describe('CRDTCollection', () => {
     }
   });
 
+  it('can merge additions by two actors', () => {
+    const set1 = new CRDTCollection<{id: string}>();
+    const set2 = new CRDTCollection<{id: string}>();
+    assert.isTrue(set1.applyOperation(addOp('added by a', 'a', {a: 1})));
+    assert.isTrue(set2.applyOperation(addOp('added by b', 'b', {b: 1})));
+
+    const {modelChange, otherChange} = set1.merge(set2.getData());
+
+    const expectedVersion = {a: 1, b: 1};
+    assert.deepEqual(modelChange, {
+      changeType: ChangeType.Model,
+      modelPostChange: {
+        values: {
+          'added by a': {value: {id: 'added by a'}, version: {a: 1}},
+          'added by b': {value: {id: 'added by b'}, version: {b: 1}}
+        },
+        version: expectedVersion
+      },
+    });
+    assert.deepEqual(otherChange, {
+      changeType: ChangeType.Operations,
+      operations: [{
+        type: CollectionOpTypes.FastForward,
+        added: [
+          [{id: 'added by a'}, {a: 1}],
+        ],
+        removed: [],
+        oldClock: {b: 1},
+        newClock: expectedVersion,
+      }],
+    });
+  });
+
   it('can simplify single-actor add ops in merges', () => {
     const set1 = new CRDTCollection<{id: string}>();
     const set2 = new CRDTCollection<{id: string}>();
