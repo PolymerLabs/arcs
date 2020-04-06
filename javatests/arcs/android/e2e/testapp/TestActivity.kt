@@ -47,7 +47,7 @@ class TestActivity : AppCompatActivity() {
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
     private var storageMode = TestEntity.StorageMode.IN_MEMORY
-    private var collection = false
+    private var isCollection = false
     private var setFromRemoteService = false
     private var singletonHandle: ReadWriteSingletonHandle<TestEntity>? = null
     private var collectionHandle: ReadWriteCollectionHandle<TestEntity>? = null
@@ -80,6 +80,12 @@ class TestActivity : AppCompatActivity() {
             }
         }
 
+        findViewById<RadioButton>(R.id.singleton).setOnClickListener {
+            v -> onTestOptionClicked(v)
+        }
+        findViewById<RadioButton>(R.id.collection).setOnClickListener {
+            v -> onTestOptionClicked(v)
+        }
         findViewById<RadioButton>(R.id.in_memory).setOnClickListener {
             v -> onTestOptionClicked(v)
         }
@@ -139,6 +145,8 @@ class TestActivity : AppCompatActivity() {
     private fun onTestOptionClicked(view: View) {
         if (view is RadioButton && view.isChecked) {
             when (view.getId()) {
+                R.id.singleton -> isCollection = false
+                R.id.collection -> isCollection = true
                 R.id.in_memory -> storageMode = TestEntity.StorageMode.IN_MEMORY
                 R.id.persistent -> storageMode = TestEntity.StorageMode.PERSISTENT
                 R.id.local -> setFromRemoteService = false
@@ -149,6 +157,9 @@ class TestActivity : AppCompatActivity() {
 
     private suspend fun createHandle() {
         singletonHandle?.close()
+        collectionHandle?.close()
+
+        appendResultText(getString(R.string.waiting_for_result))
 
         val handleManager = EntityHandleManager(
             time = JvmTime,
@@ -157,44 +168,82 @@ class TestActivity : AppCompatActivity() {
                 lifecycle
             )
         )
-        singletonHandle = handleManager.createHandle(
-            HandleSpec(
-                "singletonHandle",
-                HandleMode.ReadWrite,
-                HandleContainerType.Singleton,
-                TestEntity
-            ),
-            when (storageMode) {
-                TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
-                else -> TestEntity.singletonInMemoryStorageKey
-            }
-        ) as ReadWriteSingletonHandle<TestEntity>
+        if (isCollection) {
+            collectionHandle = handleManager.createHandle(
+                HandleSpec(
+                    "collectionHandle",
+                    HandleMode.ReadWrite,
+                    HandleContainerType.Collection,
+                    TestEntity.Companion
+                ),
+                when (storageMode) {
+                    TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
+                    else -> TestEntity.collectionInMemoryStorageKey
+                }
+            ) as ReadWriteCollectionHandle<TestEntity>
 
-        singletonHandle?.onReady {
-            scope.launch {
-                fetchAndUpdateResult("onReady")
+
+            collectionHandle?.onReady {
+                scope.launch {
+                    fetchAndUpdateResult("onReady")
+                }
+            }
+
+            collectionHandle?.onUpdate {
+                scope.launch {
+                    fetchAndUpdateResult("onUpdate")
+                }
+            }
+
+            collectionHandle?.onDesync {
+                scope.launch {
+                    fetchAndUpdateResult("onDesync")
+                }
+            }
+
+            collectionHandle?.onResync {
+                scope.launch {
+                    fetchAndUpdateResult("onResync")
+                }
+            }
+        } else {
+            singletonHandle = handleManager.createHandle(
+                HandleSpec(
+                    "singletonHandle",
+                    HandleMode.ReadWrite,
+                    HandleContainerType.Singleton,
+                    TestEntity
+                ),
+                when (storageMode) {
+                    TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                    else -> TestEntity.singletonInMemoryStorageKey
+                }
+            ) as ReadWriteSingletonHandle<TestEntity>
+
+            singletonHandle?.onReady {
+                scope.launch {
+                    fetchAndUpdateResult("onReady")
+                }
+            }
+
+            singletonHandle?.onUpdate {
+                scope.launch {
+                    fetchAndUpdateResult("onUpdate")
+                }
+            }
+
+            singletonHandle?.onResync{
+                scope.launch {
+                    fetchAndUpdateResult("onResync")
+                }
+            }
+
+            singletonHandle?.onDesync {
+                scope.launch {
+                    fetchAndUpdateResult("onDesync")
+                }
             }
         }
-
-        singletonHandle?.onUpdate {
-            scope.launch {
-                fetchAndUpdateResult("onUpdate")
-            }
-        }
-
-        singletonHandle?.onResync{
-            scope.launch {
-                fetchAndUpdateResult("onResync")
-            }
-        }
-
-        singletonHandle?.onDesync {
-            scope.launch {
-                fetchAndUpdateResult("onDesync")
-            }
-        }
-
-        appendResultText(getString(R.string.waiting_for_result))
     }
 
     private suspend fun fetchHandle() {
@@ -207,20 +256,35 @@ class TestActivity : AppCompatActivity() {
                 this, StorageAccessService::class.java
             )
             intent.putExtra(
-                StorageAccessService.storageModeExtra, storageMode.ordinal
+                StorageAccessService.IS_COLLECTION_EXTRA, isCollection
             )
             intent.putExtra(
-                StorageAccessService.handleActionExtra, StorageAccessService.Action.SET.ordinal
+                StorageAccessService.STORAGE_MODE_EXTRA, storageMode.ordinal
+            )
+            intent.putExtra(
+                StorageAccessService.HANDLE_ACTION_EXTRA, StorageAccessService.Action.SET.ordinal
             )
             startService(intent)
         } else {
-            val newTestEntity = TestEntity(
-                text = TestEntity.text,
-                number = TestEntity.number,
-                boolean = TestEntity.boolean
-            )
-
-            singletonHandle?.store(newTestEntity)
+            if (isCollection) {
+                for (i in 0 until 2) {
+                    collectionHandle?.store(
+                        TestEntity(
+                            text = TestEntity.text,
+                            number = i.toDouble(),
+                            boolean = TestEntity.boolean
+                        )
+                    )
+                }
+            } else {
+                singletonHandle?.store(
+                    TestEntity(
+                        text = TestEntity.text,
+                        number = TestEntity.number,
+                        boolean = TestEntity.boolean
+                    )
+                )
+            }
         }
     }
 
@@ -230,23 +294,40 @@ class TestActivity : AppCompatActivity() {
                 this, StorageAccessService::class.java
             )
             intent.putExtra(
-                StorageAccessService.handleActionExtra, StorageAccessService.Action.CLEAR.ordinal
+                StorageAccessService.IS_COLLECTION_EXTRA, isCollection
             )
             intent.putExtra(
-                StorageAccessService.storageModeExtra, storageMode.ordinal
+                StorageAccessService.HANDLE_ACTION_EXTRA, StorageAccessService.Action.CLEAR.ordinal
+            )
+            intent.putExtra(
+                StorageAccessService.STORAGE_MODE_EXTRA, storageMode.ordinal
             )
             startService(intent)
         } else {
             singletonHandle?.clear()
+            collectionHandle?.clear()
         }
     }
 
     private suspend fun fetchAndUpdateResult(prefix: String) {
-        val person = singletonHandle?.fetch()
-        val result = person?.let {
-            "$prefix:${it.text},${it.number},${it.boolean}"
-        } ?: "$prefix:null"
-        appendResultText(result)
+        var result: String? = "null"
+        if (isCollection) {
+            val testEntities = collectionHandle?.fetchAll()
+            if (!testEntities.isNullOrEmpty()) {
+                result =
+                    testEntities
+                        .sortedBy { it.number }
+                        .joinToString(separator = ";") {
+                        "${it.text},${it.number},${it.boolean}"
+                    }
+            }
+        } else {
+            val testEntity = singletonHandle?.fetch()
+            result = testEntity?.let {
+                "${it.text},${it.number},${it.boolean}"
+            }
+        }
+        appendResultText("$prefix:$result")
     }
 
     private fun appendResultText(result: String) {

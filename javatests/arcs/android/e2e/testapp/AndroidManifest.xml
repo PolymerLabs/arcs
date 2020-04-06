@@ -29,7 +29,7 @@
 
     <activity
       android:name=".TestActivity"
-      android:launchMode="singleInstance"
+      android:launchMode="singleTask"
       android:theme="@style/Theme.AppCompat.Light">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
