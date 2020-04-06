@@ -17,7 +17,7 @@ import java.io.StringWriter
 import java.util.Locale
 
 /** Initializes [Log] for tests on the JVM. */
-fun initLogForAndroid(level: Log.Level) {
+fun initLogForAndroid(level: Log.Level = mapAndroidLogLevel("Arcs")) {
     Log.level = level
     Log.writer = { lvl, renderedMessage ->
         when (lvl) {
@@ -38,3 +38,11 @@ fun initLogForAndroid(level: Log.Level) {
         String.format(Locale.ENGLISH, "%s%s", rawMessage, stackTrace)
     }
 }
+
+private fun mapAndroidLogLevel(tag: String): Log.Level = arrayOf(
+  android.util.Log.DEBUG to Log.Level.Debug,
+  android.util.Log.INFO to Log.Level.Info,
+  android.util.Log.WARN to Log.Level.Warning,
+  android.util.Log.ERROR to Log.Level.Error,
+  android.util.Log.ASSERT to Log.Level.Wtf
+).find { android.util.Log.isLoggable(tag, it.first) }?.second ?: Log.Level.Error
