@@ -25,10 +25,10 @@ class StorageAccessService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        val actionOrdinal = intent?.getIntExtra(handleActionExtra, 0)
+        val actionOrdinal = intent?.getIntExtra(HANDLE_ACTION_EXTRA, 0)
         val action = actionOrdinal?.run { Action.values()[actionOrdinal] }
 
-        val storageModeOrdinal = intent?.getIntExtra(storageModeExtra, 0)
+        val storageModeOrdinal = intent?.getIntExtra(STORAGE_MODE_EXTRA, 0)
         val storageMode: TestEntity.StorageMode? =
             storageModeOrdinal?.run { TestEntity.StorageMode.values()[storageModeOrdinal] }
 
@@ -89,7 +89,8 @@ class StorageAccessService : LifecycleService() {
     }
 
     companion object {
-        const val handleActionExtra = "handle_action_extra"
-        const val storageModeExtra = "storage_mode_extra"
+        const val IS_COLLECTION_EXTRA = "is_collection_extra"
+        const val HANDLE_ACTION_EXTRA = "handle_action_extra"
+        const val STORAGE_MODE_EXTRA = "storage_mode_extra"
     }
 }

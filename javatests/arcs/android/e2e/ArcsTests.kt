@@ -51,14 +51,13 @@ class ArcsTest {
 
     @After
     fun after() {
-        instrumentation.runOnMainSync {
-            activity?.finish()
-        }
+        activity?.finish()
     }
 
     @Test
-    fun testStorageService_inMemoryLocalActivity() {
+    fun testSingleton_inMemoryLocalActivity() {
         // Configure handle options.
+        clickOnTextIfPresent(SINGLETON_BTN_TEXT)
         clickOnTextIfPresent(IN_MEMORY_BTN_TEXT)
         clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
 
@@ -68,17 +67,18 @@ class ArcsTest {
 
         // Set value to the handle.
         clickOnTextIfPresent(SET_BTN_TEXT)
-        waitForSequencedTextsToAppear(ON_READY_NULL, ON_UPDATE_TEST_RESULT)
+        waitForSequencedTextsToAppear(ON_READY_NULL, SINGLETON_ON_UPDATE_TEST_RESULT)
 
         // Clear the handle.
         clickOnTextIfPresent(CLEAR_BTN_TEXT)
-        waitForSequencedTextsToAppear(ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
+        waitForSequencedTextsToAppear(SINGLETON_ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
     }
 
     @Test
     @Ignore("Broken")
-    fun testStorageService_inMemoryRemoteService() {
+    fun testSingleton_inMemoryRemoteService() {
         // Configure handle options.
+        clickOnTextIfPresent(SINGLETON_BTN_TEXT)
         clickOnTextIfPresent(IN_MEMORY_BTN_TEXT)
         clickOnTextIfPresent(REMOTE_SERVICE_BTN_TEXT)
 
@@ -88,16 +88,17 @@ class ArcsTest {
 
         // Set value to the handle.
         clickOnTextIfPresent(SET_BTN_TEXT)
-        waitForSequencedTextsToAppear(ON_READY_NULL, ON_UPDATE_TEST_RESULT)
+        waitForSequencedTextsToAppear(ON_READY_NULL, SINGLETON_ON_UPDATE_TEST_RESULT)
 
         // Clear the handle.
         clickOnTextIfPresent(CLEAR_BTN_TEXT)
-        waitForSequencedTextsToAppear(ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
+        waitForSequencedTextsToAppear(SINGLETON_ON_UPDATE_TEST_RESULT, ON_UPDATE_NULL)
     }
 
     @Test
-    fun testStorageService_persistentLocalActivity() {
+    fun testSingleton_persistentLocalActivity() {
         // Configure handle options.
+        clickOnTextIfPresent(SINGLETON_BTN_TEXT)
         clickOnTextIfPresent(PERSISTENT_BTN_TEXT)
         clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
 
@@ -107,7 +108,7 @@ class ArcsTest {
 
         // Set value to the handle.
         clickOnTextIfPresent(SET_BTN_TEXT)
-        waitForSequencedTextsToAppear(ON_READY_NULL, ON_UPDATE_TEST_RESULT)
+        waitForSequencedTextsToAppear(ON_READY_NULL, SINGLETON_ON_UPDATE_TEST_RESULT)
 
         // Restart the activity.
         instrumentation.runOnMainSync {
@@ -117,16 +118,73 @@ class ArcsTest {
             createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
 
         // Configure handle options.
+        clickOnTextIfPresent(SINGLETON_BTN_TEXT)
         clickOnTextIfPresent(PERSISTENT_BTN_TEXT)
         clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
 
         // Create a handle first.
         clickOnTextIfPresent(CREATE_BTN_TEXT)
-        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, ON_READY_TEST_RESULT)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, SINGLETON_ON_READY_TEST_RESULT)
 
         // Clear the handle.
         clickOnTextIfPresent(CLEAR_BTN_TEXT)
-        waitForSequencedTextsToAppear(ON_READY_TEST_RESULT, ON_UPDATE_NULL)
+        waitForSequencedTextsToAppear(SINGLETON_ON_READY_TEST_RESULT, ON_UPDATE_NULL)
+    }
+
+    @Test
+    fun testCollection_inMemoryLocalActivity() {
+        // Configure handle options.
+        clickOnTextIfPresent(COLLECTION_BTN_TEXT)
+        clickOnTextIfPresent(IN_MEMORY_BTN_TEXT)
+        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
+
+        // Create a handle first.
+        clickOnTextIfPresent(CREATE_BTN_TEXT)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, ON_READY_NULL)
+
+        // Set value to the handle.
+        clickOnTextIfPresent(SET_BTN_TEXT)
+        waitForTextToAppear(2, COLLECTION_ON_UPDATE_TEST_RESULT)
+
+        // Clear the handle.
+        clickOnTextIfPresent(CLEAR_BTN_TEXT)
+        waitForTextToAppear(2, ON_UPDATE_NULL)
+    }
+
+    @Test
+    fun testCollection_persistentLocalActivity() {
+        // Configure handle options.
+        clickOnTextIfPresent(COLLECTION_BTN_TEXT)
+        clickOnTextIfPresent(PERSISTENT_BTN_TEXT)
+        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
+
+        // Create a handle first.
+        clickOnTextIfPresent(CREATE_BTN_TEXT)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, ON_READY_NULL)
+
+        // Set value to the handle.
+        clickOnTextIfPresent(SET_BTN_TEXT)
+        waitForTextToAppear(2, COLLECTION_ON_UPDATE_TEST_RESULT)
+
+        // Restart the activity.
+        instrumentation.runOnMainSync {
+            activity?.finish()
+        }
+        activity = instrumentation.startActivitySync(
+            createTestAppIntent(TEST_APP_PKG_NAME, TEST_ACTIVITY_NAME))
+
+        // Configure handle options.
+        clickOnTextIfPresent(COLLECTION_BTN_TEXT)
+        clickOnTextIfPresent(PERSISTENT_BTN_TEXT)
+        clickOnTextIfPresent(LOCAL_ACTIVITY_BTN_TEXT)
+
+        // Create a handle first.
+        clickOnTextIfPresent(CREATE_BTN_TEXT)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, COLLECTION_ON_READY_TEST_RESULT)
+
+        // Clear the handle.
+        clickOnTextIfPresent(CLEAR_BTN_TEXT)
+        waitForTextToAppear(2, ON_UPDATE_NULL)
     }
 
     @Test
@@ -141,10 +199,13 @@ class ArcsTest {
         textObject.click()
     }
 
-    private fun waitForTextGone(text: String) {
-        val textGone = uiDevice.wait(Until.gone(By.text(text)), UI_TIMEOUT_MS)
-        assertWithMessage("View with exactly \"$text\" should be gone")
-            .that(textGone).isTrue()
+    private fun waitForTextToAppear(seq: Int, text: String) {
+        val textAppeared = uiDevice.wait(
+            Until.hasObject(By.text("$seq: $text")),
+            UI_TIMEOUT_MS
+        )
+        assertWithMessage("View with exactly \"$text\" should appear")
+            .that(textAppeared).isTrue()
     }
 
     private fun waitForSequencedTextsToAppear(text1: String, text2: String) {
@@ -179,11 +240,19 @@ class ArcsTest {
         const val PERSON_TEST_BTN_TEXT = "PersonTest"
         const val PERSON_TEST_RESULT_TEXT = "John Wick"
 
-        const val STORAGE_TEST_RESULT = "Test Text,1234.0,true"
-        const val ON_UPDATE_TEST_RESULT = "onUpdate:$STORAGE_TEST_RESULT"
         const val ON_UPDATE_NULL = "onUpdate:null"
-        const val ON_READY_TEST_RESULT = "onReady:$STORAGE_TEST_RESULT"
         const val ON_READY_NULL = "onReady:null"
+
+        private const val SINGLETON_TEST_RESULT = "Test Text,1234.0,true"
+        const val SINGLETON_ON_UPDATE_TEST_RESULT = "onUpdate:$SINGLETON_TEST_RESULT"
+        const val SINGLETON_ON_READY_TEST_RESULT = "onReady:$SINGLETON_TEST_RESULT"
+
+        private const val COLLECTION_TEST_RESULT = "Test Text,0.0,true;Test Text,1.0,true"
+        const val COLLECTION_ON_UPDATE_TEST_RESULT = "onUpdate:$COLLECTION_TEST_RESULT"
+        const val COLLECTION_ON_READY_TEST_RESULT = "onReady:$COLLECTION_TEST_RESULT"
+
+        const val SINGLETON_BTN_TEXT = "Singleton"
+        const val COLLECTION_BTN_TEXT = "Collection"
         const val IN_MEMORY_BTN_TEXT = "In Memory"
         const val PERSISTENT_BTN_TEXT = "Persistent"
         const val LOCAL_ACTIVITY_BTN_TEXT = "Local Activity"

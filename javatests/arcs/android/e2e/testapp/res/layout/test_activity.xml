@@ -74,6 +74,23 @@
       android:layout_height="wrap_content"
       android:orientation="horizontal">
       <RadioButton
+        android:id="@+id/singleton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/singleton"
+        android:checked="true"/>
+      <RadioButton
+        android:id="@+id/collection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/collection"/>
+    </RadioGroup>
+
+    <RadioGroup
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <RadioButton
         android:id="@+id/in_memory"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -85,7 +102,6 @@
         android:layout_height="wrap_content"
         android:text="@string/persistent"/>
     </RadioGroup>
-
 
     <RadioGroup
       android:layout_width="match_parent"
