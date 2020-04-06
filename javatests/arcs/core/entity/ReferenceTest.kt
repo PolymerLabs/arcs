@@ -29,7 +29,7 @@ import java.util.concurrent.Executors
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {
     private val scheduler = Scheduler(
-        TimeImpl(),
+        FakeTime(),
         Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     )
     private val dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, scheduler = scheduler)

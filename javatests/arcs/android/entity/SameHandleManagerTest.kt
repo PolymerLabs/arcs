@@ -10,6 +10,7 @@ import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.util.Scheduler
+import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CoroutineScope

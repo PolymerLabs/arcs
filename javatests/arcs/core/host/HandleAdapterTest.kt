@@ -27,6 +27,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.Scheduler
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -55,7 +56,7 @@ class HandleAdapterTest {
             "",
             FakeTime(),
             scheduler = Scheduler(
-                TimeImpl(),
+                FakeTime(),
                 coroutineContext
             )
         )
