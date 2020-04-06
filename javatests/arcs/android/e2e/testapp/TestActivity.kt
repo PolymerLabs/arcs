@@ -80,24 +80,12 @@ class TestActivity : AppCompatActivity() {
             }
         }
 
-        findViewById<RadioButton>(R.id.singleton).setOnClickListener {
-            v -> onTestOptionClicked(v)
-        }
-        findViewById<RadioButton>(R.id.collection).setOnClickListener {
-            v -> onTestOptionClicked(v)
-        }
-        findViewById<RadioButton>(R.id.in_memory).setOnClickListener {
-            v -> onTestOptionClicked(v)
-        }
-        findViewById<RadioButton>(R.id.persistent).setOnClickListener {
-            v -> onTestOptionClicked(v)
-        }
-        findViewById<RadioButton>(R.id.local).setOnClickListener {
-            v -> onTestOptionClicked(v)
-        }
-        findViewById<RadioButton>(R.id.remote).setOnClickListener {
-            v -> onTestOptionClicked(v)
-        }
+        findViewById<RadioButton>(R.id.singleton).setOnClickListener(::onTestOptionClicked)
+        findViewById<RadioButton>(R.id.collection).setOnClickListener(::onTestOptionClicked)
+        findViewById<RadioButton>(R.id.in_memory).setOnClickListener(::onTestOptionClicked)
+        findViewById<RadioButton>(R.id.persistent).setOnClickListener(::onTestOptionClicked)
+        findViewById<RadioButton>(R.id.local).setOnClickListener(::onTestOptionClicked)
+        findViewById<RadioButton>(R.id.remote).setOnClickListener(::onTestOptionClicked)
         findViewById<Button>(R.id.person_test).setOnClickListener {
             scope.launch {
                 runPersonRecipe()
@@ -314,12 +302,9 @@ class TestActivity : AppCompatActivity() {
         if (isCollection) {
             val testEntities = collectionHandle?.fetchAll()
             if (!testEntities.isNullOrEmpty()) {
-                result =
-                    testEntities
-                        .sortedBy { it.number }
-                        .joinToString(separator = ";") {
-                        "${it.text},${it.number},${it.boolean}"
-                    }
+                result = testEntities
+                    .sortedBy { it.number }
+                    .joinToString(separator = ";") { "${it.text},${it.number},${it.boolean}" }
             }
         } else {
             val testEntity = singletonHandle?.fetch()

@@ -201,7 +201,9 @@ class ArcsTest {
 
     private fun waitForTextToAppear(seq: Int, text: String) {
         val textAppeared = uiDevice.wait(
-            Until.hasObject(By.text("$seq: $text")), UI_TIMEOUT_MS)
+            Until.hasObject(By.text("$seq: $text")),
+            UI_TIMEOUT_MS
+        )
         assertWithMessage("View with exactly \"$text\" should appear")
             .that(textAppeared).isTrue()
     }
