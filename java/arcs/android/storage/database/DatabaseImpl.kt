@@ -806,14 +806,31 @@ class DatabaseImpl(
             )
 
             // Remove all references to these entities.
-            // TODO: persist the entity storage key in this table instead of instead of concating
+            // TODO: persist the entity storage key in this table instead of concatenating
             // backing key and entity id.
             delete(
                 TABLE_ENTITY_REFS,
                 "backing_storage_key||\"/\"||entity_id in (?)",
                 arrayOf(storageKeys.joinToString())
             )
-            // Remove from collection_entries all references to the expired entities.            
+
+            // Find all collections with missing entries (collections that were updated).
+            val updatedContainersStorageKeys = rawQuery(
+                """
+                    SELECT storage_keys.storage_key
+                    FROM storage_keys
+                    LEFT JOIN collection_entries
+                        ON storage_keys.value_id = collection_entries.collection_id
+                    WHERE storage_keys.data_type in (?, ?)
+                    AND collection_entries.value_id NOT IN (SELECT id FROM entity_refs)
+                """.trimIndent(),
+                arrayOf(
+                    DataType.Singleton.ordinal.toString(),
+                    DataType.Collection.ordinal.toString()
+                )
+            ).map { it.getString(0) }.toSet()
+
+            // Remove from collection_entries all references to the expired entities.
             delete(
                 TABLE_COLLECTION_ENTRIES,
                 """
@@ -822,6 +839,11 @@ class DatabaseImpl(
                 """.trimIndent(),
                 arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
             )
+            (storageKeys union updatedContainersStorageKeys).forEach { storageKey ->
+                notifyClients(StorageKeyParser.parse(storageKey)) {
+                    it.onDatabaseDelete(null)
+                }
+            }
         }
     }
 
