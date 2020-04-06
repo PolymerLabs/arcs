@@ -49,6 +49,9 @@ class JvmSchedulerProvider(
         } else {
             Executors
                 .newSingleThreadExecutor {
+                    // TODO(jasonwyatt): Create and cache this thread outside of the thread factory,
+                    //  so we can ensure we always return it - rather than creating new threads
+                    //  when/if the on the executor was created with failed or was killed.
                     Thread(it).apply {
                         priority = threadPriority
                     }
