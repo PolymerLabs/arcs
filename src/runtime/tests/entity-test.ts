@@ -62,11 +62,11 @@ describe('Entity', () => {
     // Mutation APIs are tested below.
     const e = new entityClass({txt: 'abc', num: 56});
     assert.isFalse(Entity.isIdentified(e));
-    const now = new Date().getTime().toString();
+    const now = new Date().getTime();
     Entity.identify(e, 'id1', null, now);
     assert.isTrue(Entity.isIdentified(e));
     assert.strictEqual(Entity.id(e), 'id1');
-    assert.strictEqual(Entity.creationTimestamp(e).getTime().toString(), now);
+    assert.strictEqual(Entity.creationTimestamp(e).getTime(), now);
 
     const e2 = new entityClass({txt: 'abc'});
     assert.isFalse(Entity.isIdentified(e2));

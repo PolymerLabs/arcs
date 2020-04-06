@@ -24,8 +24,8 @@ export type SerializedReference = {
   id: string;
   entityStorageKey: string;
   // TODO(#4861): creationTimestamp shouldn't be optional.
-  creationTimestamp?: string;
-  expirationTimestamp?: string;
+  creationTimestamp?: number;
+  expirationTimestamp?: number;
 };
 
 export class Reference implements Storable {
@@ -52,8 +52,8 @@ export class Reference implements Storable {
     this[SYMBOL_INTERNALS] = {
       serialize: () => ({
         id: this.id,
-        creationTimestamp: this.creationTimestamp ? this.creationTimestamp.getTime().toString() : null,
-        expirationTimestamp: this.expirationTimestamp ? this.expirationTimestamp.getTime().toString() : null,
+        creationTimestamp: this.creationTimestamp ? this.creationTimestamp.getTime() : null,
+        expirationTimestamp: this.expirationTimestamp ? this.expirationTimestamp.getTime() : null,
         rawData: this.dataClone()
       })
     };
@@ -88,8 +88,8 @@ export class Reference implements Storable {
     return {
       entityStorageKey: this.entityStorageKey,
       id: this.id,
-      creationTimestamp: this.creationTimestamp ? this.creationTimestamp.getTime().toString() : null,
-      expirationTimestamp: this.expirationTimestamp ? this.expirationTimestamp.getTime().toString() : null
+      creationTimestamp: this.creationTimestamp ? this.creationTimestamp.getTime() : null,
+      expirationTimestamp: this.expirationTimestamp ? this.expirationTimestamp.getTime() : null
     };
   }
 
@@ -113,7 +113,7 @@ export abstract class ClientReference extends Reference {
       {
         id: Entity.id(entity),
         creationTimestamp: Entity.creationTimestamp(entity),
-        expirationTimestamp: Entity.creationTimestamp(entity),
+        expirationTimestamp: Entity.expirationTimestamp(entity),
         entityStorageKey: Entity.storageKey(entity)
       },
       new ReferenceType(Entity.entityClass(entity).type),
@@ -151,11 +151,11 @@ export abstract class ClientReference extends Reference {
  * Instead of statically depending on reference.ts, handle.ts defines a static makeReference method which is
  * dynamically populated here.
  */
-function makeReference(data: {id: string, creationTimestamp?: string | null, expirationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor): Reference {
+function makeReference(data: {id: string, creationTimestamp?: number | null, expirationTimestamp?: number | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor): Reference {
   return new Reference({
     id: data.id,
-    creationTimestamp: data.creationTimestamp ? new Date(Number(data.creationTimestamp)) : null,
-    expirationTimestamp: data.expirationTimestamp ? new Date(Number(data.expirationTimestamp)) : null,
+    creationTimestamp: data.creationTimestamp ? new Date(data.creationTimestamp) : null,
+    expirationTimestamp: data.expirationTimestamp ? new Date(data.expirationTimestamp) : null,
     entityStorageKey: data.entityStorageKey}, type, context);
 }
 

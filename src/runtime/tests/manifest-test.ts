@@ -1869,8 +1869,8 @@ recipe SomeRecipe
     assert.isFalse(broken, 'a particle doesn\'t parse correctly');
   });
   it('loads entities from json files', async () => {
-    const now = new Date().getTime().toString();
-    const earlier = (new Date().getTime() - 100).toString();
+    const now = new Date().getTime();
+    const earlier = new Date(now - 100).getTime();
     const manifestSource = `
         schema Thing
           someProp: Text
@@ -1924,8 +1924,8 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     }
   });
   it('loads entities from a resource section', async () => {
-    const now = new Date().getTime().toString();
-    const later = (new Date().getTime() + 1000).toString();
+    const now = new Date().getTime();
+    const later = new Date(now + 1000).getTime();
     const manifest = await parseManifest(`
       schema Thing
         someProp: Text

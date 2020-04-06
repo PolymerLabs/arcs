@@ -104,6 +104,7 @@ function newEntity(id: string) {
 async function containedIds(handle: CollectionHandle<Entity>): Promise<string[]> {
   return (await handle.toList()).map(a => Entity.id(a));
 }
+const creationTimestamp = new Date().getTime();
 
 describe('CollectionHandle', async () => {
   before(async () => {
@@ -216,7 +217,7 @@ describe('CollectionHandle', async () => {
     const handle = await getCollectionHandle(barType, particle);
     const op: CollectionOperation<SerializedEntity> = {
       type: CollectionOpTypes.Remove,
-      removed: {id: 'id', creationTimestamp: 'now', rawData: {}},
+      removed: {id: 'id', creationTimestamp, rawData: {}},
       actor: 'actor',
       clock: {'actor': 1}
     };
@@ -231,7 +232,7 @@ describe('CollectionHandle', async () => {
     const op: CollectionOperation<SerializedEntity> = {
       type: CollectionOpTypes.FastForward,
       added: [],
-      removed: [{id: 'id', creationTimestamp: 'now', rawData: {}}],
+      removed: [{id: 'id', creationTimestamp, rawData: {}}],
       oldClock: {'actor': 1},
       newClock: {'actor': 1}
     };
@@ -335,7 +336,7 @@ describe('SingletonHandle', async () => {
     const handle = await getSingletonHandle(barType, particle);
     const op: SingletonOperation<SerializedEntity> = {
       type: SingletonOpTypes.Set,
-      value: {id: 'id', creationTimestamp: 'now', rawData: {}},
+      value: {id: 'id', creationTimestamp, rawData: {}},
       actor: 'actor',
       clock: {'actor': 1}
     };
