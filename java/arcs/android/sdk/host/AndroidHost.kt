@@ -30,21 +30,14 @@ abstract class AndroidHost(
     vararg particles: ParticleRegistration
 ) : JvmHost(*particles), ResurrectableHost {
 
-    override val resurrectionHelper: ResurrectionHelper =
-        ResurrectionHelper(context, ::onResurrected)
+    override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(context,
+        ::onResurrected)
 
     override val activationFactory = ServiceStoreFactory(context, lifecycle)
 
     override fun maybeRequestResurrection(context: ArcHostContext) {
         if (context.arcState == ArcState.Running) {
-            resurrectionHelper.requestResurrection(context.arcId,
-                // collect all readable storageKeys referenced by all particles in the arc
-                context.particles.flatMap { (_, particleContext) ->
-                    particleContext.planParticle.handles.filter {
-                        it.value.mode.canRead
-                    }.map { it.value.storageKey }
-                }.distinct()
-            )
+            resurrectionHelper.requestResurrection(context.arcId, context.allReadableStorageKeys())
         }
     }
 

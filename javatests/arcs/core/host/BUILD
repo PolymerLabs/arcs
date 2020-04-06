@@ -15,6 +15,7 @@ arcs_kt_jvm_test_suite(
     name = "host",
     srcs = glob(["*Test.kt"]),
     package = "arcs.core.host",
+    constraints = ["android"],
     deps = [
         ":particle",  # buildcleaner: keep
         ":schemas",
@@ -77,6 +78,7 @@ arcs_kt_jvm_library(
         "TestingHost.kt",
         "TestingJvmProdHost.kt",
     ],
+    constraints = ["android"],
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/host",

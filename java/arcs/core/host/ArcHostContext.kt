@@ -41,4 +41,14 @@ data class ArcHostContext(
     var particles: MutableMap<String, ParticleContext> = mutableMapOf(),
     var arcState: ArcState = ArcState.NeverStarted,
     var entityHandleManager: EntityHandleManager
-)
+) {
+    /**
+     * Traverse every handle and return a distinct collection of all [StorageKey]s
+     * that are readable by this arc.
+     */
+    fun allReadableStorageKeys() = particles.flatMap { (_, particleContext) ->
+        particleContext.planParticle.handles.filter {
+            it.value.mode.canRead
+        }.map { it.value.storageKey }
+    }.distinct()
+}

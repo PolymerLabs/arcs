@@ -26,6 +26,7 @@ import arcs.jvm.host.scanForParticles
  * implementations wishing to run inside of this [Prod] should use `arcs_kt_particles` macro
  * to make themselves automatically discoverable by ProdHost.
  */
+@VisibleForTesting
 open class ProdArcHostService : LifecycleService() {
 
     class ProdAndroidHost(
