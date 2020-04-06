@@ -10,6 +10,7 @@
  */
 package arcs.jvm.host
 
+import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
@@ -22,6 +23,6 @@ import arcs.jvm.util.JvmTime
  */
 open class JvmProdHost(
     vararg particles: ParticleRegistration
-) : ProdHost(*particles) {
+) : AbstractArcHost(*particles), ProdHost {
     override val platformTime: Time = JvmTime
 }
