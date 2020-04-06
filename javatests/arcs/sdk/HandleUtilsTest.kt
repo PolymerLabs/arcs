@@ -22,7 +22,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -47,7 +47,7 @@ class HandleUtilsTest {
         manager = EntityHandleManager(
             "testArc",
             "testHost",
-            TimeImpl()
+            FakeTime()
         )
     }
 

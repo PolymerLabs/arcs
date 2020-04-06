@@ -4,7 +4,7 @@ import arcs.core.data.Plan
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.util.Time
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 
 open class TestingHost(vararg particles: ParticleRegistration) :
     AbstractArcHost(*particles) {
@@ -20,7 +20,7 @@ open class TestingHost(vararg particles: ParticleRegistration) :
 
     val isIdle = isArcHostIdle
     
-    override val platformTime: Time = TimeImpl()
+    override val platformTime: Time = FakeTime()
 
     fun setup() {
         started.clear()

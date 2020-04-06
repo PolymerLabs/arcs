@@ -26,7 +26,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -53,7 +53,7 @@ class HandleAdapterTest {
         manager = EntityHandleManager(
             "testArc",
             "",
-            TimeImpl()
+            FakeTime()
         )
     }
 
@@ -116,7 +116,7 @@ class HandleAdapterTest {
             "Entity must have an ID before it can be referenced."
         )
 
-        entity.ensureEntityFields(idGenerator, READ_WRITE_HANDLE, TimeImpl())
+        entity.ensureEntityFields(idGenerator, READ_WRITE_HANDLE, FakeTime())
 
         // Fails when the entity is not in the collection.
         e = assertSuspendingThrows(IllegalArgumentException::class) {
@@ -251,7 +251,7 @@ class HandleAdapterTest {
             "Entity must have an ID before it can be referenced."
         )
 
-        entity.ensureEntityFields(idGenerator, READ_WRITE_HANDLE, TimeImpl())
+        entity.ensureEntityFields(idGenerator, READ_WRITE_HANDLE, FakeTime())
 
         // Fails when the entity is not in the collection.
         e = assertSuspendingThrows(IllegalArgumentException::class) {

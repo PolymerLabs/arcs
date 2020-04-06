@@ -15,7 +15,7 @@ import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.plus
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -84,7 +84,7 @@ open class AllocatorTestBase {
         pureHost = pureHost()
 
         hostRegistry = hostRegistry()
-        allocator = Allocator.create(hostRegistry, EntityHandleManager(time = TimeImpl()))
+        allocator = Allocator.create(hostRegistry, EntityHandleManager(time = FakeTime()))
 
         readPersonParticle =
             requireNotNull(PersonPlan.particles.find { it.particleName == "ReadPerson" }) {
@@ -444,7 +444,7 @@ open class AllocatorTestBase {
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
-        val allocator2 = Allocator.create(hostRegistry, EntityHandleManager(time = TimeImpl()))
+        val allocator2 = Allocator.create(hostRegistry, EntityHandleManager(time = FakeTime()))
 
         allocator2.stopArc(arcId)
 

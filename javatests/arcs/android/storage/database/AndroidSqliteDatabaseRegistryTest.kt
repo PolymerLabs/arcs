@@ -173,7 +173,7 @@ class AndroidSqliteDatabaseRegistryTest {
     class TestTime : Time() {
         var overrideMillis: Long? = null
 
-        override val currentTimeNanos: Long
+        override val nanoTime: Long
             get() = overrideMillis?.let { it * 1000000 } ?: System.nanoTime()
         override val currentTimeMillis: Long
             get() = overrideMillis ?: Instant.now().toEpochMilli()

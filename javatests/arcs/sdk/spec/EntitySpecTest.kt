@@ -6,7 +6,7 @@ import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.SchemaRegistry
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.Reference
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -82,7 +82,7 @@ class EntitySpecTest {
         val entity = Foo()
         assertThat(entity.entityId).isNull()
 
-        entity.ensureEntityFields(idGenerator, "handle", TimeImpl(currentTime))
+        entity.ensureEntityFields(idGenerator, "handle", FakeTime(currentTime))
         val entityId = entity.entityId
 
         // Check that the entity ID has been set to *something*.
@@ -95,7 +95,7 @@ class EntitySpecTest {
         assertThat(creationTimestamp).isEqualTo(currentTime)
 
         // Calling it again doesn't overwrite id and timestamp.
-        entity.ensureEntityFields(idGenerator, "something-else", TimeImpl(currentTime+10))
+        entity.ensureEntityFields(idGenerator, "something-else", FakeTime(currentTime+10))
         assertThat(entity.entityId).isEqualTo(entityId)
         assertThat(entity.serialize().creationTimestamp).isEqualTo(creationTimestamp)
     }
@@ -104,7 +104,7 @@ class EntitySpecTest {
     fun expiryTimestamp() {
         val entity = Foo()
         
-        entity.ensureEntityFields(idGenerator, "handle", TimeImpl(currentTime), Ttl.Minutes(1))
+        entity.ensureEntityFields(idGenerator, "handle", FakeTime(currentTime), Ttl.Minutes(1))
         
         val expirationTimestamp = entity.serialize().expirationTimestamp
         assertThat(expirationTimestamp).isEqualTo(currentTime + 60000) // 1 minute = 60'000 milliseconds
@@ -217,7 +217,7 @@ class EntitySpecTest {
     /** Generates and returns an ID for the entity. */
     private fun (Foo).identify(): String {
         assertThat(entityId).isNull()
-        ensureEntityFields(idGenerator, "handleName", TimeImpl(currentTime))
+        ensureEntityFields(idGenerator, "handleName", FakeTime(currentTime))
         assertThat(entityId).isNotNull()
         return entityId!!
     }

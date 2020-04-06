@@ -3,7 +3,7 @@ package arcs.core.entity
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -22,7 +22,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         readHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "testHost",
-            time = TimeImpl(),
+            time = FakeTime(),
             stores = StoreManager()
         )
         writeHandleManager = readHandleManager

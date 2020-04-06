@@ -19,7 +19,7 @@ import arcs.core.data.Ttl
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.testutil.assertThrows
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
@@ -238,7 +238,7 @@ class EntityBaseTest {
         )
 
         // Different ID.
-        entity2.ensureEntityFields(Id.Generator.newForTest("session"), "handle", TimeImpl())
+        entity2.ensureEntityFields(Id.Generator.newForTest("session"), "handle", FakeTime())
         assertThat(entity1).isNotEqualTo(entity2)
     }
 
@@ -271,7 +271,7 @@ class EntityBaseTest {
         assertThat(entity.entityId).isNull()
 
         // Calling once generates a new ID.
-        entity.ensureEntityFields(Id.Generator.newForTest("session1"), "handle2", TimeImpl(10), Ttl.Minutes(1))
+        entity.ensureEntityFields(Id.Generator.newForTest("session1"), "handle2", FakeTime(10), Ttl.Minutes(1))
         val id = entity.entityId
         assertThat(id).isNotNull()
         assertThat(id).isNotEmpty()
@@ -281,7 +281,7 @@ class EntityBaseTest {
         assertThat(serialized.expirationTimestamp).isEqualTo(60010)
 
         // Calling again doesn't change the value.
-        entity.ensureEntityFields(Id.Generator.newForTest("session2"), "handle2", TimeImpl(20))
+        entity.ensureEntityFields(Id.Generator.newForTest("session2"), "handle2", FakeTime(20))
         assertThat(entity.entityId).isEqualTo(id)
         assertThat(entity.serialize().creationTimestamp).isEqualTo(10)
     }

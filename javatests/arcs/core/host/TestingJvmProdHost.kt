@@ -3,7 +3,7 @@ package arcs.core.host
 import arcs.core.data.Plan
 import arcs.core.util.Time
 import arcs.jvm.host.AnnotationBasedJvmProdHost
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 
 open class TestingJvmProdHost(vararg particles: ParticleRegistration) :
     AnnotationBasedJvmProdHost(TestingJvmProdHost::class, *particles) {
@@ -19,7 +19,7 @@ open class TestingJvmProdHost(vararg particles: ParticleRegistration) :
 
     val isIdle = isArcHostIdle
     
-    override val platformTime: Time = TimeImpl()
+    override val platformTime: Time = FakeTime()
 
     fun setup() {
         started.clear()

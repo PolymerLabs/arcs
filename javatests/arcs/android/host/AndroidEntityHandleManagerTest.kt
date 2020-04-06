@@ -27,7 +27,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
-import arcs.jvm.util.testutil.TimeImpl
+import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
@@ -37,7 +37,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.IllegalStateException
 import kotlin.coroutines.experimental.suspendCoroutine
 
 private typealias Person = TestParticleInternal1
@@ -94,7 +93,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleManager = EntityHandleManager(
             "testArc",
             "testHost",
-            TimeImpl(),
+            FakeTime(),
             StoreManager(),
             ServiceStoreFactory(
                 context = app,
