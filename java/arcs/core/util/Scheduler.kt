@@ -17,6 +17,7 @@ import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -72,6 +73,11 @@ class Scheduler(
     /** Wait for the [Scheduler] to become idle. */
     suspend fun waitForIdle() {
         processingJob?.join()
+    }
+
+    /** Cancel the [CoroutineScope] belonging to this Scheduler. */
+    fun cancel() {
+        scope.cancel()
     }
 
     private fun CoroutineScope.startProcessingJob() {

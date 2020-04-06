@@ -24,6 +24,8 @@ import arcs.core.data.HandleMode
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.HostRegistry
+import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
@@ -32,8 +34,10 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.util.concurrent.Executors
 
 /** Entry UI to launch Arcs Test. */
 class TestActivity : AppCompatActivity() {
@@ -120,6 +124,11 @@ class TestActivity : AppCompatActivity() {
             AndroidManifestHostRegistry.create(this@TestActivity),
             EntityHandleManager(
                 time = JvmTime,
+	        scheduler = Scheduler(
+		    JvmTime,
+		    coroutineContext
+		        + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+	        ),
                 activationFactory = ServiceStoreFactory(
                     context = this@TestActivity,
                     lifecycle = this@TestActivity.lifecycle
@@ -151,6 +160,11 @@ class TestActivity : AppCompatActivity() {
 
         val handleManager = EntityHandleManager(
             time = JvmTime,
+            scheduler = Scheduler(
+                JvmTime,
+                coroutineContext
+                    + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+            ),
             activationFactory = ServiceStoreFactory(
                 this,
                 lifecycle

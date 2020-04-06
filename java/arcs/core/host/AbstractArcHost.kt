@@ -26,6 +26,7 @@ import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
+import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import kotlinx.coroutines.CoroutineName
@@ -50,7 +51,10 @@ const val MAX_CONSECUTIVE_FAILURES = 5
  *
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
-abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : ArcHost {
+abstract class AbstractArcHost(
+    private val schedulerProvider: SchedulerProvider,
+    vararg initialParticles: ParticleRegistration
+) : ArcHost {
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
@@ -485,6 +489,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         arcId,
         hostId,
         platformTime,
+        schedulerProvider(arcId),
         stores,
         activationFactory
     )

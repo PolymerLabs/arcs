@@ -12,24 +12,32 @@ import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
+import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.Executors
 
 @RunWith(JUnit4::class)
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {
-    private val dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA)
+    private val scheduler = Scheduler(
+        TimeImpl(),
+        Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    )
+    private val dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, scheduler = scheduler)
     private val entityHandleManager = EntityHandleManager(
         "testArc",
         "",
-        FakeTime()
+        FakeTime(),
+        scheduler = scheduler
     )
 
     private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>

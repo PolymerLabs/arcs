@@ -18,7 +18,9 @@ import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
+import arcs.core.host.SchedulerProvider
 import arcs.jvm.host.scanForParticles
+import arcs.jvm.host.JvmSchedulerProvider
 
 /**
  * An isolatable (can run in another process) [Service] that has a [ProdHost] inside. [Particle]
@@ -27,17 +29,22 @@ import arcs.jvm.host.scanForParticles
  */
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 open class ProdArcHostService : ArcHostService() {
-
     class ProdAndroidHost(
         context: Context,
         lifecycle: Lifecycle,
+        schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, *particles), ProdHost
+    ) : AndroidHost(context, lifecycle, schedulerProvider, *particles), ProdHost
 
     /**
      * This is open for tests to override, but normally isn't necessary.
      */
     override val arcHost: ArcHost by lazy {
-        ProdAndroidHost(this, this.lifecycle, *scanForParticles())
+        ProdAndroidHost(
+            this,
+            this.lifecycle,
+            JvmSchedulerProvider(scope.coroutineContext),
+            *scanForParticles()
+        )
     }
 }

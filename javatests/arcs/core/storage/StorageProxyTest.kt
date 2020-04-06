@@ -17,12 +17,15 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy.ProxyState
+import arcs.core.util.Scheduler
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -44,6 +47,8 @@ class StorageProxyTest {
     @Mock private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperationAtTime, String>
     @Mock private lateinit var mockCrdtData: CrdtData
 
+    private val scheduler: Scheduler = Scheduler(JvmTime, EmptyCoroutineContext)
+
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
@@ -58,7 +63,7 @@ class StorageProxyTest {
 
     @Test
     fun addOnReadyTriggersSyncRequest() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         proxy.addOnReady("test") {}
         assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
             ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
@@ -68,7 +73,7 @@ class StorageProxyTest {
 
     @Test
     fun addOnUpdateTriggersSyncRequest() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         proxy.addOnUpdate("test") {}
         assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
             ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
@@ -78,7 +83,7 @@ class StorageProxyTest {
 
     @Test
     fun addOnDesyncTriggersSyncRequest() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         proxy.addOnDesync("test") {}
         assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
             ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
@@ -88,7 +93,7 @@ class StorageProxyTest {
 
     @Test
     fun addOnResyncTriggersSyncRequest() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         proxy.addOnResync("test") {}
         assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
             ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
@@ -98,7 +103,7 @@ class StorageProxyTest {
 
     @Test
     fun onlyOneSyncRequestIsSentWhenAddingMultipleActions() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         proxy.addOnReady("test") {}
         proxy.addOnUpdate("test") {}
         proxy.addOnDesync("test") {}
@@ -111,7 +116,7 @@ class StorageProxyTest {
 
     @Test
     fun addingActionsInvokesCallbacksBasedOnState() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         assertThat(proxy.getStateForTesting() == ProxyState.INIT)
 
         // In INIT and AWAITING_SYNC, none of the notifiers are invoked immediately.
@@ -139,7 +144,7 @@ class StorageProxyTest {
 
     @Test
     fun modelUpdatesTriggerOnReadyThenOnUpdate() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
         assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
 
@@ -157,7 +162,7 @@ class StorageProxyTest {
 
     @Test
     fun modelOperationsTriggerOnUpdate() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
 
@@ -181,7 +186,7 @@ class StorageProxyTest {
 
     @Test
     fun failingModelOperationsTriggerDesync() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
 
         // Sync the proxy.
@@ -217,7 +222,7 @@ class StorageProxyTest {
 
     @Test
     fun listOfModelOperationsWithOneFailing() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
         proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
         assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
@@ -242,7 +247,7 @@ class StorageProxyTest {
 
     @Test
     fun syncRequestReturnsTheLocalModel() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
 
         fakeStoreEndpoint.clearProxyMessages()
@@ -255,7 +260,7 @@ class StorageProxyTest {
 
     @Test
     fun removeCallbacksForName() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
 
         // First sync usually triggers onReady.
         val (onReady1, onUpdate1, onDesync1, onResync1) = addAllActions(proxy)
@@ -295,7 +300,7 @@ class StorageProxyTest {
 
     @Test
     fun applyOpSucceeds() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
 
@@ -312,7 +317,7 @@ class StorageProxyTest {
 
     @Test
     fun applyOpFails() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
 
@@ -324,7 +329,7 @@ class StorageProxyTest {
 
     @Test
     fun getParticleViewReturnsSyncedState() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
         assertThat(proxy.getStateForTesting() == ProxyState.SYNC)
 
@@ -335,7 +340,7 @@ class StorageProxyTest {
 
     @Test
     fun getParticleViewWhenInInitialStateQueuesAndRequestsSync() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         assertThat(proxy.getStateForTesting() == ProxyState.INIT)
 
         val future1 = proxy.getParticleViewAsync()
@@ -360,7 +365,7 @@ class StorageProxyTest {
 
     @Test
     fun getParticleViewWhenAwaitingSyncQueues() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         proxy.addOnReady("test") {}
         assertThat(proxy.getStateForTesting() == ProxyState.AWAITING_SYNC)
 
@@ -379,7 +384,7 @@ class StorageProxyTest {
 
     @Test
     fun getParticleViewWhenDesyncedQueues() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
         proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
         proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
@@ -399,7 +404,7 @@ class StorageProxyTest {
 
     @Test
     fun getVersionMap() = runBlockingTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val versionMap = VersionMap(mapOf("x" to 7))
         whenever(mockCrdtModel.versionMap).thenReturn(versionMap)
         val proxyMap = proxy.getVersionMap()

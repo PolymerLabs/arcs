@@ -10,13 +10,14 @@ import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.ResurrectableHost
 import arcs.core.data.Capabilities
 import arcs.core.host.ParticleRegistration
+import arcs.core.host.SchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlinx.coroutines.Dispatchers
 
-abstract class TestExternalArcHostService() : Service() {
+abstract class TestExternalArcHostService : Service() {
 
     abstract val arcHost: TestingAndroidHost
 
@@ -40,9 +41,9 @@ abstract class TestExternalArcHostService() : Service() {
 
     abstract class TestingAndroidHost(
         context: Context,
+        schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : TestingHost(*particles), ResurrectableHost {
-
+    ) : TestingHost(schedulerProvider, *particles), ResurrectableHost {
         override val stores = singletonStores
 
         override val resurrectionHelper: ResurrectionHelper =

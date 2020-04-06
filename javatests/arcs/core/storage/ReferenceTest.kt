@@ -25,8 +25,11 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -43,7 +46,10 @@ class ReferenceTest {
     val log = LogRule()
     private val collectionKey = RamDiskStorageKey("friends")
     private val backingKey = RamDiskStorageKey("people")
-    private val dereferencer = RawEntityDereferencer(Person.SCHEMA)
+    private val dereferencer = RawEntityDereferencer(
+        Person.SCHEMA,
+        scheduler = Scheduler(JvmTime, EmptyCoroutineContext)
+    )
     /* ktlint-disable: max-line-length */
     private lateinit var directCollection: ActiveStore<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>, Set<Reference>>
     /* ktlint-enable: max-line-length */

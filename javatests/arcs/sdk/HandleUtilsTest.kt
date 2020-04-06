@@ -22,15 +22,19 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Scheduler
+import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.Executors
 
 private typealias Person = ReadSdkPerson_Person
 
@@ -41,13 +45,14 @@ class HandleUtilsTest {
     private lateinit var manager: EntityHandleManager
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlockingTest {
         RamDiskDriverProvider()
         ReferenceModeStorageKey.registerParser()
         manager = EntityHandleManager(
             "testArc",
             "testHost",
-            FakeTime()
+            FakeTime(),
+            Scheduler(JvmTime, coroutineContext)
         )
     }
 

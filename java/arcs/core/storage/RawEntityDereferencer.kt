@@ -15,6 +15,7 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.data.EntityType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
@@ -25,10 +26,13 @@ import kotlinx.coroutines.withContext
  * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
  *
  * [Handle] implementations should inject this into any [Reference] objects they encounter.
+ *
+ * TODO(jasonwyatt): Use the [Scheduler] here when dereferencing.
  */
 class RawEntityDereferencer(
     private val schema: Schema,
     private val storeManager: StoreManager = StoreManager(),
+    private val scheduler: Scheduler,
     private val entityActivationFactory: ActivationFactory? = null
 ) : Dereferencer<RawEntity> {
     private val log = TaggedLog { "Dereferencer(${schema.names})" }

@@ -26,7 +26,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.jvm.util.testutil.FakeTime
+import arcs.core.util.Scheduler
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -48,12 +48,16 @@ class HandleAdapterTest {
     private val idGenerator = Id.Generator.newForTest("session")
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlockingTest {
         DriverAndKeyConfigurator.configure(null)
         manager = EntityHandleManager(
             "testArc",
             "",
-            FakeTime()
+            FakeTime(),
+            scheduler = Scheduler(
+                TimeImpl(),
+                coroutineContext
+            )
         )
     }
 

@@ -8,16 +8,18 @@ import arcs.core.storage.Dereferencer
 import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.Reference
 import arcs.core.storage.StoreManager
+import arcs.core.util.Scheduler
 
 /** A [Dereferencer.Factory] for [Reference] and [RawEntity] classes. */
 class EntityDereferencerFactory(
     private val stores: StoreManager,
+    private val scheduler: Scheduler,
     private val entityActivationFactory: ActivationFactory? = null
 ) : Dereferencer.Factory<RawEntity> {
     private val dereferencers = mutableMapOf<Schema, RawEntityDereferencer>()
 
     override fun create(schema: Schema) = dereferencers.getOrPut(schema) {
-        RawEntityDereferencer(schema, stores, entityActivationFactory)
+        RawEntityDereferencer(schema, stores, scheduler, entityActivationFactory)
     }
 
     /**

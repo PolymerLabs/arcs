@@ -15,6 +15,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import kotlin.coroutines.coroutineContext
@@ -35,7 +36,8 @@ import kotlinx.coroutines.sync.withLock
  */
 class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
-    initialCrdt: CrdtModel<Data, Op, T>
+    initialCrdt: CrdtModel<Data, Op, T>,
+    private val scheduler: Scheduler
 ) {
     // Visible for testing
     enum class ProxyState {
