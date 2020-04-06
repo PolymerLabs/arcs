@@ -370,14 +370,11 @@ describe('CRDTCollection', () => {
     assert.deepEqual(otherChange, {
       changeType: ChangeType.Operations,
       operations: [{
-        type: CollectionOpTypes.FastForward,
-        added: [
-          [{id: 'added by a'}, {a: 1}],
-        ],
-        removed: [],
-        oldClock: {b: 1},
-        newClock: expectedVersion,
-      }],
+        type: CollectionOpTypes.Add,
+        added: {id: 'added by a'},
+        actor: 'a',
+        clock: {a: 1}
+      }]
     });
   });
 
@@ -398,6 +395,33 @@ describe('CRDTCollection', () => {
       addOp('three', 'b', {a: 1, b: 3}),
       addOp('four', 'b', {a: 1, b: 4}),
       addOp('five', 'b', {a: 1, b: 5}),
+    ];
+    set2AddOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
+
+    const {modelChange, otherChange} = set2.merge(set1.getData());
+
+    // Check that add ops are produced (not a fast-forward op).
+    assert.deepEqual(otherChange, {
+      changeType: ChangeType.Operations,
+      operations: set2AddOps,
+    });
+  });
+
+  it('can simplify single-actor add ops in merges for previously unseen actors', () => {
+    const set1 = new CRDTCollection<{id: string}>();
+    const set2 = new CRDTCollection<{id: string}>();
+
+    const originalOps = [
+      addOp('zero', 'a', {a: 1})
+    ];
+    originalOps.forEach(op => assert.isTrue(set1.applyOperation(op)));
+    originalOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
+
+    // Add a bunch of things to set2.
+    const set2AddOps = [
+      addOp('one', 'b', {b: 1}),
+      addOp('two', 'b', {b: 2}),
+      addOp('three', 'b', {b: 3}),
     ];
     set2AddOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
 
