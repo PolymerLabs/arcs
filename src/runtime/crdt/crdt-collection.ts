@@ -304,11 +304,6 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
  * there's more than one such actor, returns null.
  */
 function getSingleActorIncrement(oldVersion: VersionMap, newVersion: VersionMap): string | null {
-  const oldNumActors = Object.keys(oldVersion).length;
-  const newNumActors = Object.keys(newVersion).length;
-  if (newNumActors < oldNumActors || newNumActors > oldNumActors + 1) {
-    return null;
-  }
   const incrementedActors = Object.entries(newVersion).filter(([k, v]) => v > (oldVersion[k] || 0));
   return incrementedActors.length === 1 ? incrementedActors[0][0] : null;
 }
