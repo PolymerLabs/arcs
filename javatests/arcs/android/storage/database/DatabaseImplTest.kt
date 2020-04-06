@@ -1112,7 +1112,7 @@ class DatabaseImplTest {
         val expiredEntityKey = DummyStorageKey("backing/expiredEntity")
 
         // An expired entity.
-        var timeInPast = JvmTime.currentTimeMillis - 10000
+        val timeInPast = JvmTime.currentTimeMillis - 10000
         val expiredEntity = DatabaseData.Entity(
             RawEntity(
                 "expiredEntity",
@@ -1208,16 +1208,13 @@ class DatabaseImplTest {
 
         // Check the corrent clients were notified.
         collectionClient.eventMutex.withLock {
-            assertThat(collectionClient.deletes)
-                .containsExactly(null)
+            assertThat(collectionClient.deletes).containsExactly(null)
         }
         expiredEntityClient.eventMutex.withLock {
-            assertThat(expiredEntityClient.deletes)
-                .containsExactly(null)
+            assertThat(expiredEntityClient.deletes).containsExactly(null)
         }
         entityClient.eventMutex.withLock {
-            assertThat(entityClient.deletes)
-                .isEmpty()
+            assertThat(entityClient.deletes).isEmpty()
         }
     }
 

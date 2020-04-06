@@ -820,9 +820,9 @@ class DatabaseImpl(
                     SELECT storage_keys.storage_key
                     FROM storage_keys
                     LEFT JOIN collection_entries
-                        ON storage_keys.data_type in (?, ?)
-                        AND storage_keys.value_id = collection_entries.collection_id
-                    WHERE collection_entries.value_id NOT IN (SELECT id FROM entity_refs)
+                        ON storage_keys.value_id = collection_entries.collection_id
+                    WHERE storage_keys.data_type in (?, ?)
+                    AND collection_entries.value_id NOT IN (SELECT id FROM entity_refs)
                 """.trimIndent(),
                 arrayOf(
                     DataType.Singleton.ordinal.toString(),
@@ -839,8 +839,8 @@ class DatabaseImpl(
                 """.trimIndent(),
                 arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
             )
-            (storageKeys + updatedContainersStorageKeys).forEach {
-                storageKey -> notifyClients(StorageKeyParser.parse(storageKey)) {
+            (storageKeys union updatedContainersStorageKeys).forEach { storageKey ->
+                notifyClients(StorageKeyParser.parse(storageKey)) {
                     it.onDatabaseDelete(null)
                 }
             }
