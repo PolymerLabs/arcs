@@ -204,7 +204,6 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const entityType =`${this.entityTypeName(particle, connection)}`;
-      console.log(`entityType: ${entityType}`)
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
       handleSpecs.push(`HandleSpec("${handleName}", HandleMode.ReadWrite, HandleContainerType.${handleConcreteType}, ${entityType})`);
@@ -382,10 +381,6 @@ ${lines}
   generateAliases(particleName: string): string {
     const name = this.node.kotlinName;
     const aliases = this.node.kotlinAliases;
-    console.log(`generateAliases for ${name}`)
-    aliases.forEach( (alias) => {
-      console.log(`\t${alias}`)
-    })
     const typeDecls = aliases.map(alias => `typealias ${alias} = Abstract${particleName}.${name}`);
     return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
   }
