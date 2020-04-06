@@ -35,7 +35,7 @@ class JvmSchedulerProvider(
     private val baseCoroutineContext: CoroutineContext,
     private val maxThreadCount: Int =
         maxOf(1, Runtime.getRuntime().availableProcessors() / 2),
-    private val threadPriority: Int = Thread.NORM_PRIORITY
+    private val threadPriority: Int = DEFAULT_THREAD_PRIORITY
 ) : SchedulerProvider {
     private val dispatchers = mutableListOf<CoroutineDispatcher>()
     private val schedulersByArcId = mutableMapOf<String, Scheduler>()
@@ -75,5 +75,9 @@ class JvmSchedulerProvider(
     @Synchronized
     fun cancelAll() {
         schedulersByArcId.values.toList().forEach { it.cancel() }
+    }
+
+    companion object {
+        private const val DEFAULT_THREAD_PRIORITY = Thread.NORM_PRIORITY + 1
     }
 }

@@ -12,6 +12,7 @@ arcs_kt_jvm_test_suite(
     data = ["//java/arcs/core/data/testdata:examples"],
     package = "arcs.jvm.host",
     deps = [
+        "//java/arcs/core/testutil",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/host",
