@@ -1111,14 +1111,6 @@ class DatabaseImplTest {
         val entityKey = DummyStorageKey("backing/entity")
         val expiredEntityKey = DummyStorageKey("backing/expiredEntity")
 
-        // Add clients to verify updates.
-        val collectionClient = FakeDatabaseClient(collectionKey)
-        database.addClient(collectionClient)
-        val entityClient = FakeDatabaseClient(entityKey)
-        database.addClient(entityClient)
-        val expiredEntityClient = FakeDatabaseClient(expiredEntityKey)
-        database.addClient(expiredEntityClient)
-
         // An expired entity.
         var timeInPast = JvmTime.currentTimeMillis - 10000
         val expiredEntity = DatabaseData.Entity(
@@ -1161,6 +1153,14 @@ class DatabaseImplTest {
         database.insertOrUpdate(expiredEntityKey, expiredEntity)
         database.insertOrUpdate(entityKey, entity)
         database.insertOrUpdate(collectionKey, collection)
+
+        // Add clients to verify updates.
+        val collectionClient = FakeDatabaseClient(collectionKey)
+        database.addClient(collectionClient)
+        val entityClient = FakeDatabaseClient(entityKey)
+        database.addClient(entityClient)
+        val expiredEntityClient = FakeDatabaseClient(expiredEntityKey)
+        database.addClient(expiredEntityClient)
 
         database.removeExpiredEntities()
 
