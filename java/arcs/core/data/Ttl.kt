@@ -35,7 +35,7 @@ sealed class Ttl(count: Int, val isInfinite: Boolean = false) {
 
     fun calculateExpiration(time: Time): Long =
         if (isInfinite) RawEntity.UNINITIALIZED_TIMESTAMP
-        else requireNotNull(time).currentTimeMillis + (minutes * 60 * 1000)
+        else time.currentTimeMillis + (minutes * 60 * 1000)
 
     data class Minutes(val count: Int) : Ttl(count)
     data class Hours(val count: Int) : Ttl(count)
