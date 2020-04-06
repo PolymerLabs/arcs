@@ -17,12 +17,12 @@ import arcs.core.util.Time
 class Timer(val time: Time) {
     /** Times the execution of the given [block]. */
     inline fun <T> time(crossinline block: () -> T): TimedResult<T> {
-        val startTime = time.currentTimeNanos
+        val startTime = time.nanoTime
         val endTime: Long
         val result = try {
             block()
         } finally {
-            endTime = time.currentTimeNanos
+            endTime = time.nanoTime
         }
         return TimedResult(
             result,
@@ -33,12 +33,12 @@ class Timer(val time: Time) {
     /** Times the exeuction of the given suspending [block]. */
     @Suppress("REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE") // It's not redundant.
     suspend inline fun <T> timeSuspending(block: suspend () -> T): TimedResult<T> {
-        val startTime = time.currentTimeNanos
+        val startTime = time.nanoTime
         val endTime: Long
         val result = try {
             block()
         } finally {
-            endTime = time.currentTimeNanos
+            endTime = time.nanoTime
         }
         return TimedResult(
             result,

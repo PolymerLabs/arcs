@@ -13,8 +13,13 @@ package arcs.core.util
 
 /** [Time] contains time related helper methods. */
 abstract class Time {
-    /** The current time, in nanoseconds past the Epoch. Implementations will vary by platform. */
-    abstract val currentTimeNanos: Long
+    /**
+     * The current time, in nanoseconds. Implementations will vary by platform.
+     *
+     * Note that this is not time since the Epoch, so this value can only be used for measuring
+     * durations, not the actual time. See [System.nanoTime] for details.
+     */
+    abstract val nanoTime: Long
 
     /** The current time, in milliseconds past the Epoch. Implementations will vary by platform. */
     abstract val currentTimeMillis: Long

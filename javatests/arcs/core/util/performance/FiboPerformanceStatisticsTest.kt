@@ -114,7 +114,7 @@ class FiboPerformanceStatisticsTest {
     }
 
     private object PlatformTime : Time() {
-        override val currentTimeNanos: Long
+        override val nanoTime: Long
             get() = System.nanoTime()
         override val currentTimeMillis: Long
             get() = System.currentTimeMillis()
