@@ -400,7 +400,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             deps = android_local_test_deps,
         )
 
-def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
+def arcs_kt_plan(name, srcs = [], deps = [], platforms = ["jvm"], visibility = None):
     """Converts recipes from manifests into Kotlin plans.
 
     Example:
@@ -430,7 +430,13 @@ def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
       name: the name of the target to create
       srcs: list of Arcs manifest files
       deps: list of dependencies (other manifests)
-      visibility: list of visibilities
+      platforms: list of target platforms (currently, `jvm` and `wasm` supported).
+      visibility: visibility of the generated arcs_kt_library
+
+    Returns:
+      Dictionary of:
+        "outs": output files. other rules can use this to bundle outputs.
+        "deps": deps of those outputs.
     """
     outs = []
 
@@ -450,9 +456,11 @@ def arcs_kt_plan(name, srcs = [], deps = [], visibility = None):
     arcs_kt_library(
         name = name,
         srcs = outs,
-        platforms = ["jvm"],
+        platforms = platforms,
         deps = ARCS_SDK_DEPS + deps,
+        visibility = visibility,
     )
+    return {"outs": outs, "deps": ARCS_SDK_DEPS + deps}
 
 def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], data = []):
     """Defines Kotlin JVM test targets for a directory.

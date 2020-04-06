@@ -25,6 +25,7 @@ load(
 load(
     "//third_party/java/arcs/build_defs/internal:schemas.bzl",
     _arcs_cc_schema = "arcs_cc_schema",
+    _arcs_kt_gen = "arcs_kt_gen",
     _arcs_kt_schema = "arcs_kt_schema",
 )
 load(
@@ -40,6 +41,8 @@ arcs_cc_schema = _arcs_cc_schema
 arcs_kt_android_library = _arcs_kt_android_library
 
 arcs_kt_android_test_suite = _arcs_kt_android_test_suite
+
+arcs_kt_gen = _arcs_kt_gen
 
 arcs_kt_jvm_library = _arcs_kt_jvm_library
 

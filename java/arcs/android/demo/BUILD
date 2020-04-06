@@ -1,8 +1,7 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_android_library",
-    "arcs_kt_plan",
-    "arcs_kt_schema",
+    "arcs_kt_gen",
 )
 load("//tools/build_defs/android:rules.bzl", "android_binary")
 
@@ -10,17 +9,9 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-arcs_kt_schema(
-    name = "schemas",
-    srcs = [
-        "person.arcs",
-    ],
-)
-
-arcs_kt_plan(
-    name = "plans",
+arcs_kt_gen(
+    name = "manifest",
     srcs = ["person.arcs"],
-    deps = [":schemas"],
 )
 
 arcs_kt_android_library(
@@ -29,8 +20,7 @@ arcs_kt_android_library(
     manifest = ":AndroidManifest.xml",
     resource_files = glob(["res/**/*"]),
     deps = [
-        ":plans",
-        ":schemas",
+        ":manifest",
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
