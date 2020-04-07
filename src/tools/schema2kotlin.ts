@@ -412,7 +412,7 @@ ${lines}
     ]);
 
     const constructorArguments =
-      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 1);
+      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
 
     return `\
 

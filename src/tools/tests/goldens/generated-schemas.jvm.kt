@@ -27,50 +27,35 @@ abstract class AbstractGold : BaseParticle() {
 
 
     @Suppress("UNCHECKED_CAST")
-<<<<<<< HEAD
-class GoldInternal1(
-    val_: String = "",
-    entityId: String? = null,
-    expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-) : EntityBase("GoldInternal1", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
-=======
     class GoldInternal1(
-        val_: String = ""
-    ) : EntityBase("GoldInternal1", SCHEMA) {
->>>>>>> 83c303f27... Updating generated Kotlin Spacing
+        val_: String = "",
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("GoldInternal1", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var val_: String
         get() = super.getSingletonValue("val") as String? ?: ""
         private set(_value) = super.setSingletonValue("val", _value)
 
-<<<<<<< HEAD
-    init {
-        this.val_ = val_
-    }
-    /**
-     * Use this method to create a new, distinctly identified copy of the entity.
-     * Storing the copy will result in a new copy of the data being stored.
-     */
-    fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
-    /**
-     * Use this method to create a new version of an existing entity.
-     * Storing the mutation will overwrite the existing entity in the set, if it exists.
-     */
-    fun mutate(val_: String = this.val_) = GoldInternal1(
-        val_ = val_,
-        entityId = entityId,
-        expirationTimestamp = expirationTimestamp,
-        creationTimestamp = creationTimestamp
-    )
-=======
         init {
             this.val_ = val_
         }
-
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
         fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
-
->>>>>>> cb12abf77... update golden files.
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(val_: String = this.val_) = GoldInternal1(
+            val_ = val_,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
 
         companion object : EntitySpec<GoldInternal1> {
 
@@ -94,20 +79,6 @@ class GoldInternal1(
     }
 
     @Suppress("UNCHECKED_CAST")
-<<<<<<< HEAD
-class Gold_AllPeople(
-    name: String = "",
-    age: Double = 0.0,
-    lastCall: Double = 0.0,
-    address: String = "",
-    favoriteColor: String = "",
-    birthDayMonth: Double = 0.0,
-    birthDayDOM: Double = 0.0,
-    entityId: String? = null,
-    expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-) : EntityBase("Gold_AllPeople", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
-=======
     class Gold_AllPeople(
         name: String = "",
         age: Double = 0.0,
@@ -115,9 +86,11 @@ class Gold_AllPeople(
         address: String = "",
         favoriteColor: String = "",
         birthDayMonth: Double = 0.0,
-        birthDayDOM: Double = 0.0
-    ) : EntityBase("Gold_AllPeople", SCHEMA) {
->>>>>>> 83c303f27... Updating generated Kotlin Spacing
+        birthDayDOM: Double = 0.0,
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var name: String
         get() = super.getSingletonValue("name") as String? ?: ""
@@ -143,30 +116,17 @@ class Gold_AllPeople(
 
         init {
             this.name = name
-        this.age = age
-        this.lastCall = lastCall
-        this.address = address
-        this.favoriteColor = favoriteColor
-        this.birthDayMonth = birthDayMonth
-        this.birthDayDOM = birthDayDOM
-<<<<<<< HEAD
-    }
-    /**
-     * Use this method to create a new, distinctly identified copy of the entity.
-     * Storing the copy will result in a new copy of the data being stored.
-     */
-    fun copy(
-        name: String = this.name,
-        age: Double = this.age,
-        lastCall: Double = this.lastCall,
-        address: String = this.address,
-        favoriteColor: String = this.favoriteColor,
-        birthDayMonth: Double = this.birthDayMonth,
-        birthDayDOM: Double = this.birthDayDOM
-    ) = Gold_AllPeople(
-=======
+            this.age = age
+            this.lastCall = lastCall
+            this.address = address
+            this.favoriteColor = favoriteColor
+            this.birthDayMonth = birthDayMonth
+            this.birthDayDOM = birthDayDOM
         }
-
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
         fun copy(
             name: String = this.name,
             age: Double = this.age,
@@ -176,39 +136,38 @@ class Gold_AllPeople(
             birthDayMonth: Double = this.birthDayMonth,
             birthDayDOM: Double = this.birthDayDOM
         ) = Gold_AllPeople(
->>>>>>> cb12abf77... update golden files.
-        name = name,
-        age = age,
-        lastCall = lastCall,
-        address = address,
-        favoriteColor = favoriteColor,
-        birthDayMonth = birthDayMonth,
-        birthDayDOM = birthDayDOM
-    )
-    /**
-     * Use this method to create a new version of an existing entity.
-     * Storing the mutation will overwrite the existing entity in the set, if it exists.
-     */
-    fun mutate(
-        name: String = this.name,
-        age: Double = this.age,
-        lastCall: Double = this.lastCall,
-        address: String = this.address,
-        favoriteColor: String = this.favoriteColor,
-        birthDayMonth: Double = this.birthDayMonth,
-        birthDayDOM: Double = this.birthDayDOM
-    ) = Gold_AllPeople(
-        name = name,
-        age = age,
-        lastCall = lastCall,
-        address = address,
-        favoriteColor = favoriteColor,
-        birthDayMonth = birthDayMonth,
-        birthDayDOM = birthDayDOM,
-        entityId = entityId,
-        expirationTimestamp = expirationTimestamp,
-        creationTimestamp = creationTimestamp
-    )
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM
+        )
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(
+            name: String = this.name,
+            age: Double = this.age,
+            lastCall: Double = this.lastCall,
+            address: String = this.address,
+            favoriteColor: String = this.favoriteColor,
+            birthDayMonth: Double = this.birthDayMonth,
+            birthDayDOM: Double = this.birthDayDOM
+        ) = Gold_AllPeople(
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
 
         companion object : EntitySpec<Gold_AllPeople> {
 
@@ -240,20 +199,6 @@ class Gold_AllPeople(
     }
 
     @Suppress("UNCHECKED_CAST")
-<<<<<<< HEAD
-class Gold_QCollection(
-    name: String = "",
-    age: Double = 0.0,
-    lastCall: Double = 0.0,
-    address: String = "",
-    favoriteColor: String = "",
-    birthDayMonth: Double = 0.0,
-    birthDayDOM: Double = 0.0,
-    entityId: String? = null,
-    expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-) : EntityBase("Gold_QCollection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
-=======
     class Gold_QCollection(
         name: String = "",
         age: Double = 0.0,
@@ -261,9 +206,11 @@ class Gold_QCollection(
         address: String = "",
         favoriteColor: String = "",
         birthDayMonth: Double = 0.0,
-        birthDayDOM: Double = 0.0
-    ) : EntityBase("Gold_QCollection", SCHEMA) {
->>>>>>> 83c303f27... Updating generated Kotlin Spacing
+        birthDayDOM: Double = 0.0,
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_QCollection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var name: String
         get() = super.getSingletonValue("name") as String? ?: ""
@@ -289,30 +236,17 @@ class Gold_QCollection(
 
         init {
             this.name = name
-        this.age = age
-        this.lastCall = lastCall
-        this.address = address
-        this.favoriteColor = favoriteColor
-        this.birthDayMonth = birthDayMonth
-        this.birthDayDOM = birthDayDOM
-<<<<<<< HEAD
-    }
-    /**
-     * Use this method to create a new, distinctly identified copy of the entity.
-     * Storing the copy will result in a new copy of the data being stored.
-     */
-    fun copy(
-        name: String = this.name,
-        age: Double = this.age,
-        lastCall: Double = this.lastCall,
-        address: String = this.address,
-        favoriteColor: String = this.favoriteColor,
-        birthDayMonth: Double = this.birthDayMonth,
-        birthDayDOM: Double = this.birthDayDOM
-    ) = Gold_QCollection(
-=======
+            this.age = age
+            this.lastCall = lastCall
+            this.address = address
+            this.favoriteColor = favoriteColor
+            this.birthDayMonth = birthDayMonth
+            this.birthDayDOM = birthDayDOM
         }
-
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
         fun copy(
             name: String = this.name,
             age: Double = this.age,
@@ -322,39 +256,38 @@ class Gold_QCollection(
             birthDayMonth: Double = this.birthDayMonth,
             birthDayDOM: Double = this.birthDayDOM
         ) = Gold_QCollection(
->>>>>>> cb12abf77... update golden files.
-        name = name,
-        age = age,
-        lastCall = lastCall,
-        address = address,
-        favoriteColor = favoriteColor,
-        birthDayMonth = birthDayMonth,
-        birthDayDOM = birthDayDOM
-    )
-    /**
-     * Use this method to create a new version of an existing entity.
-     * Storing the mutation will overwrite the existing entity in the set, if it exists.
-     */
-    fun mutate(
-        name: String = this.name,
-        age: Double = this.age,
-        lastCall: Double = this.lastCall,
-        address: String = this.address,
-        favoriteColor: String = this.favoriteColor,
-        birthDayMonth: Double = this.birthDayMonth,
-        birthDayDOM: Double = this.birthDayDOM
-    ) = Gold_QCollection(
-        name = name,
-        age = age,
-        lastCall = lastCall,
-        address = address,
-        favoriteColor = favoriteColor,
-        birthDayMonth = birthDayMonth,
-        birthDayDOM = birthDayDOM,
-        entityId = entityId,
-        expirationTimestamp = expirationTimestamp,
-        creationTimestamp = creationTimestamp
-    )
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM
+        )
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(
+            name: String = this.name,
+            age: Double = this.age,
+            lastCall: Double = this.lastCall,
+            address: String = this.address,
+            favoriteColor: String = this.favoriteColor,
+            birthDayMonth: Double = this.birthDayMonth,
+            birthDayDOM: Double = this.birthDayDOM
+        ) = Gold_QCollection(
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
 
         companion object : EntitySpec<Gold_QCollection> {
 
@@ -392,8 +325,11 @@ class Gold_QCollection(
 
     @Suppress("UNCHECKED_CAST")
     class Gold_Collection(
-        num: Double = 0.0
-    ) : EntityBase("Gold_Collection", SCHEMA) {
+        num: Double = 0.0,
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_Collection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var num: Double
         get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -402,9 +338,21 @@ class Gold_QCollection(
         init {
             this.num = num
         }
-
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
         fun copy(num: Double = this.num) = Gold_Collection(num = num)
-
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(num: Double = this.num) = Gold_Collection(
+            num = num,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
 
         companion object : EntitySpec<Gold_Collection> {
 
@@ -428,26 +376,16 @@ class Gold_QCollection(
     }
 
     @Suppress("UNCHECKED_CAST")
-<<<<<<< HEAD
-class Gold_Data(
-    num: Double = 0.0,
-    txt: String = "",
-    lnk: String = "",
-    flg: Boolean = false,
-    ref: Reference<GoldInternal1>? = null,
-    entityId: String? = null,
-    expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-) : EntityBase("Gold_Data", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
-=======
     class Gold_Data(
         num: Double = 0.0,
         txt: String = "",
         lnk: String = "",
         flg: Boolean = false,
-        ref: Reference<GoldInternal1>? = null
-    ) : EntityBase("Gold_Data", SCHEMA) {
->>>>>>> 83c303f27... Updating generated Kotlin Spacing
+        ref: Reference<GoldInternal1>? = null,
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_Data", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var num: Double
         get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -467,58 +405,15 @@ class Gold_Data(
 
         init {
             this.num = num
-        this.txt = txt
-        this.lnk = lnk
-        this.flg = flg
-        this.ref = ref
-<<<<<<< HEAD
-    }
-    /**
-     * Use this method to create a new, distinctly identified copy of the entity.
-     * Storing the copy will result in a new copy of the data being stored.
-     */
-    fun copy(
-        num: Double = this.num,
-        txt: String = this.txt,
-        lnk: String = this.lnk,
-        flg: Boolean = this.flg,
-        ref: Reference<GoldInternal1>? = this.ref
-    ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg, ref = ref)
-    /**
-     * Use this method to create a new version of an existing entity.
-     * Storing the mutation will overwrite the existing entity in the set, if it exists.
-     */
-    fun mutate(
-        num: Double = this.num,
-        txt: String = this.txt,
-        lnk: String = this.lnk,
-        flg: Boolean = this.flg,
-        ref: Reference<GoldInternal1>? = this.ref
-    ) = Gold_Data(
-        num = num,
-        txt = txt,
-        lnk = lnk,
-        flg = flg,
-        ref = ref,
-        entityId = entityId,
-        expirationTimestamp = expirationTimestamp,
-        creationTimestamp = creationTimestamp
-    )
-
-    companion object : EntitySpec<Gold_Data> {
-
-        override val SCHEMA = Schema(
-            setOf(),
-            SchemaFields(
-                singletons = mapOf(
-                    "num" to FieldType.Number,
-                    "txt" to FieldType.Text,
-                    "lnk" to FieldType.Text,
-                    "flg" to FieldType.Boolean,
-                    "ref" to FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889")
-=======
+            this.txt = txt
+            this.lnk = lnk
+            this.flg = flg
+            this.ref = ref
         }
-
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
         fun copy(
             num: Double = this.num,
             txt: String = this.txt,
@@ -526,7 +421,26 @@ class Gold_Data(
             flg: Boolean = this.flg,
             ref: Reference<GoldInternal1>? = this.ref
         ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg, ref = ref)
-
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(
+            num: Double = this.num,
+            txt: String = this.txt,
+            lnk: String = this.lnk,
+            flg: Boolean = this.flg,
+            ref: Reference<GoldInternal1>? = this.ref
+        ) = Gold_Data(
+            num = num,
+            txt = txt,
+            lnk = lnk,
+            flg = flg,
+            ref = ref,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
 
         companion object : EntitySpec<Gold_Data> {
 
@@ -541,7 +455,6 @@ class Gold_Data(
                         "ref" to FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889")
                     ),
                     collections = emptyMap()
->>>>>>> cb12abf77... update golden files.
                 ),
                 "c539be82943f3c24e2503cb0410b865fa3688d06",
                 refinement = { _ -> true },

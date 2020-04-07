@@ -36,7 +36,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
 
         fun reset() {
-            val_ = ""
+          val_ = ""
         }
 
         override fun encodeEntity(): NullTermByteArray {
@@ -148,18 +148,18 @@ abstract class AbstractGold : WasmParticleImpl() {
             birthDayMonth: Double = this.birthDayMonth,
             birthDayDOM: Double = this.birthDayDOM
         ) = Gold_AllPeople(
-        name = name,
-        age = age,
-        lastCall = lastCall,
-        address = address,
-        favoriteColor = favoriteColor,
-        birthDayMonth = birthDayMonth,
-        birthDayDOM = birthDayDOM
-    )
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM
+        )
 
 
         fun reset() {
-            name = ""
+          name = ""
             age = 0.0
             lastCall = 0.0
             address = ""
@@ -321,18 +321,18 @@ abstract class AbstractGold : WasmParticleImpl() {
             birthDayMonth: Double = this.birthDayMonth,
             birthDayDOM: Double = this.birthDayDOM
         ) = Gold_QCollection(
-        name = name,
-        age = age,
-        lastCall = lastCall,
-        address = address,
-        favoriteColor = favoriteColor,
-        birthDayMonth = birthDayMonth,
-        birthDayDOM = birthDayDOM
-    )
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM
+        )
 
 
         fun reset() {
-            name = ""
+          name = ""
             age = 0.0
             lastCall = 0.0
             address = ""
@@ -451,7 +451,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
 
         fun reset() {
-            num = 0.0
+          num = 0.0
         }
 
         override fun encodeEntity(): NullTermByteArray {
@@ -545,7 +545,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
 
         fun reset() {
-            num = 0.0
+          num = 0.0
             txt = ""
             lnk = ""
             flg = false
