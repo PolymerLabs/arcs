@@ -139,14 +139,14 @@ ${imports.join('\n')}
     const handleDecls: string[] = [];
     const specDecls: string[] = [];
     const classes: string[] = [];
-    const typeAliases: string[] = []
+    const typeAliases: string[] = [];
 
     nodeGenerators.forEach( (ng) => {
       //await node.schema.hash(), fields.length)
-      const kotlinGenerator = <KotlinGenerator>ng.generator
+      const kotlinGenerator = <KotlinGenerator>ng.generator;
       classes.push(kotlinGenerator.generateClasses(ng.hash, ng.fieldLength));
-      typeAliases.push(kotlinGenerator.generateAliases(`${particleName}`))
-    })
+      typeAliases.push(kotlinGenerator.generateAliases(`${particleName}`));
+    });
 
     for (const connection of particle.connections) {
       const handleName = connection.name;

@@ -44,7 +44,7 @@ export class SchemaNode {
   constructor(schema: Schema, name: string, kotlinName: string) {
     this.schema = schema;
     this.aliases.push(name);
-    this.kotlinAliases.push(name)
+    this.kotlinAliases.push(name);
   }
 }
 
@@ -86,7 +86,7 @@ export class SchemaGraph {
       // We can only have one node in the graph per schema. Collect duplicates as aliases.
       node.aliases.push(name);
       node.kotlinName = name;
-      if(!node.kotlinAliases.includes(name)) {
+      if (!node.kotlinAliases.includes(name)) {
         node.kotlinAliases.push(name);
       }
     } else {
@@ -104,7 +104,7 @@ export class SchemaGraph {
           }
         }
       }
-      
+
       this.nodes.push(node);
     }
 
