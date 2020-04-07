@@ -13,73 +13,70 @@ package arcs.android.e2e.testapp
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
+import androidx.lifecycle.Lifecycle
+import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
-import arcs.core.data.Plan
-import arcs.core.host.AbstractArcHost
+import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.jvm.host.JvmSchedulerProvider
-import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
+import arcs.sdk.android.storage.ServiceStoreFactory
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Service which wraps an ArcHost.
+ * Service wrapping an ArcHost which hosts a particle writing data to a handle.
  */
 class ArcHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
-    override val arcHost = MyArcHost(
+    override val arcHost: ArcHost = MyArcHost(
         this,
-        JvmSchedulerProvider(coroutineContext),
-        ::ReadPerson.toRegistration(),
-        ::WritePerson.toRegistration()
+        this.lifecycle,
+        initialParticles = *arrayOf(
+            ::WritePerson.toRegistration(),
+            ::ReadPerson.toRegistration()
+        )
     )
 
-    inner class MyArcHost(
-        val context: Context,
-        schedulerProvider: SchedulerProvider,
+    class MyArcHost(
+        context: Context,
+        lifecycle: Lifecycle,
         vararg initialParticles: ParticleRegistration
-    ) : AbstractArcHost(schedulerProvider, *initialParticles) {
-
-        override suspend fun stopArc(partition: Plan.Partition) {
-            super.stopArc(partition)
-            if (isArcHostIdle) {
-                sendResult("ArcHost is idle")
-            }
-        }
-
-        override val platformTime = JvmTime
-    }
-
-    inner class ReadPerson : AbstractReadPerson() {
-
-        override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-            scope.launch {
-                val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                sendResult(name)
-            }
-        }
+    ) : AndroidHost(context, lifecycle, *initialParticles) {
+        override val activationFactory = ServiceStoreFactory(context, lifecycle)
     }
 
     inner class WritePerson : AbstractWritePerson() {
 
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
+            Log.d("XXX", "onHandleSync called here ${handle.name} ")
             handles.person.store(WritePerson_Person("John Wick"))
         }
     }
 
-    private fun sendResult(result: String) {
-        val intent = Intent(this@ArcHostService, TestActivity::class.java)
-            .apply {
-                putExtra(TestActivity.RESULT_NAME, result)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    inner class ReadPerson : AbstractReadPerson() {
+
+        override suspend fun onHandleUpdate(handle: Handle) {
+            android.util.Log.d("XXX", "onHandleUpdate")
+            arcs.core.util.Log.debug { "XXX onHandleUpdate" }
+            scope.launch {
+                val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
+                android.util.Log.d("XXX", "onHandleUpdate $name")
+                arcs.core.util.Log.debug { "XXX onHandleUpdate with name $name" }
+                val intent = Intent(this@ArcHostService, TestActivity::class.java)
+                    .apply {
+                        putExtra(TestActivity.RESULT_NAME, name)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                startActivity(intent)
             }
-        startActivity(intent)
+        }
     }
 }
