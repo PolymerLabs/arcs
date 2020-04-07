@@ -20,7 +20,8 @@ import arcs.core.host.ProdHost
 import arcs.jvm.host.scanForParticles
 
 /**
- * Temporary to avoid G3 breakage. Delete in followup.
+ * Temporary to avoid G3 breakage.
+ * TODO: Delete in followup.
  */
 open class ProdArcHostService : ArcHostService() {
 
