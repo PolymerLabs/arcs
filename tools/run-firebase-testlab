@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# A basic script to run Android e2e tests on Firebase Test Lab.
+set -e
+
+source $(dirname $0)/logging.sh
+# Temporary hack to pass bazelrc file for running the bazel tests in google cloud build.
+# We could get rid of this if we split up these commands as steps in cloudbuild.
+# See https://github.com/PolymerLabs/arcs/issues/4550
+BAZELRC_OPTS=$1
+
+cd $ROOT
+status "Testing all of the things."
+
+set -x
+
+./tools/bazelisk build javatests/arcs/android/e2e/testapp && \
+    ./tools/bazelisk build javatests/arcs/android/e2e && \
+    gcloud firebase test android run \
+    --type instrumentation \
+    --app bazel-bin/javatests/arcs/android/e2e/testapp/testapp.apk \
+    --test bazel-bin/javatests/arcs/android/e2e/e2e.apk \
+    --device model=Pixel2,version=29,locale=en,orientation=portrait \
+    --use-orchestrator
