@@ -32,7 +32,6 @@ export interface ClassGenerator {
 }
 
 export class NodeAndGenerator {
-  //await node.schema.hash(), fields.length)
   generator: ClassGenerator;
   hash: string;
   fieldLength: number;
@@ -98,7 +97,7 @@ export abstract class Schema2Base {
       }
 
       const graph = new SchemaGraph(particle);
-      const nodes = [];
+      const nodes: NodeAndGenerator[] = [];
       // Generate one class definition per node in the graph.
       for (const node of graph.walk()) {
         const generator = this.getClassGenerator(node);
@@ -121,7 +120,6 @@ export abstract class Schema2Base {
               refClassName: schemaNode.name,
               refSchemaHash: await schemaNode.schema.hash(),
             });
-            //node.kotlinAliases.push(schemaNode.name)
           } else if (descriptor.kind === 'schema-collection') {
             const schema = descriptor.schema;
             if (!['Text', 'URL', 'Number', 'Boolean'].includes(schema.type)) {

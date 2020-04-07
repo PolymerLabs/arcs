@@ -142,10 +142,9 @@ ${imports.join('\n')}
     const typeAliases: string[] = [];
 
     nodeGenerators.forEach( (ng) => {
-      //await node.schema.hash(), fields.length)
       const kotlinGenerator = <KotlinGenerator>ng.generator;
       classes.push(kotlinGenerator.generateClasses(ng.hash, ng.fieldLength));
-      typeAliases.push(kotlinGenerator.generateAliases(`${particleName}`));
+      typeAliases.push(kotlinGenerator.generateAliases(particleName));
     });
 
     for (const connection of particle.connections) {
@@ -184,6 +183,7 @@ ${imports.join('\n')}
     }
     return `
 ${typeAliases.join(`\n`)}
+
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
 
@@ -203,7 +203,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType =`${this.entityTypeName(particle, connection)}`;
+      const entityType = this.entityTypeName(particle, connection);
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
       handleSpecs.push(`HandleSpec("${handleName}", HandleMode.ReadWrite, HandleContainerType.${handleConcreteType}, ${entityType})`);
@@ -297,23 +297,23 @@ export class KotlinGenerator implements ClassGenerator {
       assert(!isCollection, 'Collection fields not supported in Kotlin wasm yet.');
       this.fieldVals.push(
         `var ${fixed} = ${fixed}\n` +
-        `        get() = field\n` +
-        `        private set(_value) {\n` +
-        `            field = _value\n` +
-        `        }`
+        `            get() = field\n` +
+        `            private set(_value) {\n` +
+        `                field = _value\n` +
+        `            }`
       );
     } else if (isCollection) {
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `        get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
-        `        private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
+        `            get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
+        `            private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
         );
     } else {
       const defaultFallback = defaultVal === 'null' ? '' : ` ?: ${defaultVal}`;
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `        get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
-        `        private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
+        `            get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
+        `            private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
       );
     }
     this.fieldsReset.push(`${fixed} = ${defaultVal}`);

@@ -22,6 +22,7 @@ typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
 typealias Gold_Collection = AbstractGold.Gold_Collection
 typealias Gold_Data = AbstractGold.Gold_Data
+
 abstract class AbstractGold : BaseParticle() {
     override val handles: Handles = Handles()
 
@@ -35,8 +36,8 @@ abstract class AbstractGold : BaseParticle() {
     ) : EntityBase("GoldInternal1", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var val_: String
-        get() = super.getSingletonValue("val") as String? ?: ""
-        private set(_value) = super.setSingletonValue("val", _value)
+            get() = super.getSingletonValue("val") as String? ?: ""
+            private set(_value) = super.setSingletonValue("val", _value)
 
         init {
             this.val_ = val_
@@ -93,26 +94,26 @@ abstract class AbstractGold : BaseParticle() {
     ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var name: String
-        get() = super.getSingletonValue("name") as String? ?: ""
-        private set(_value) = super.setSingletonValue("name", _value)
+            get() = super.getSingletonValue("name") as String? ?: ""
+            private set(_value) = super.setSingletonValue("name", _value)
         var age: Double
-        get() = super.getSingletonValue("age") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("age", _value)
+            get() = super.getSingletonValue("age") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("age", _value)
         var lastCall: Double
-        get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("lastCall", _value)
+            get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("lastCall", _value)
         var address: String
-        get() = super.getSingletonValue("address") as String? ?: ""
-        private set(_value) = super.setSingletonValue("address", _value)
+            get() = super.getSingletonValue("address") as String? ?: ""
+            private set(_value) = super.setSingletonValue("address", _value)
         var favoriteColor: String
-        get() = super.getSingletonValue("favoriteColor") as String? ?: ""
-        private set(_value) = super.setSingletonValue("favoriteColor", _value)
+            get() = super.getSingletonValue("favoriteColor") as String? ?: ""
+            private set(_value) = super.setSingletonValue("favoriteColor", _value)
         var birthDayMonth: Double
-        get() = super.getSingletonValue("birthDayMonth") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("birthDayMonth", _value)
+            get() = super.getSingletonValue("birthDayMonth") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("birthDayMonth", _value)
         var birthDayDOM: Double
-        get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("birthDayDOM", _value)
+            get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("birthDayDOM", _value)
 
         init {
             this.name = name
@@ -213,26 +214,26 @@ abstract class AbstractGold : BaseParticle() {
     ) : EntityBase("Gold_QCollection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var name: String
-        get() = super.getSingletonValue("name") as String? ?: ""
-        private set(_value) = super.setSingletonValue("name", _value)
+            get() = super.getSingletonValue("name") as String? ?: ""
+            private set(_value) = super.setSingletonValue("name", _value)
         var age: Double
-        get() = super.getSingletonValue("age") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("age", _value)
+            get() = super.getSingletonValue("age") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("age", _value)
         var lastCall: Double
-        get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("lastCall", _value)
+            get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("lastCall", _value)
         var address: String
-        get() = super.getSingletonValue("address") as String? ?: ""
-        private set(_value) = super.setSingletonValue("address", _value)
+            get() = super.getSingletonValue("address") as String? ?: ""
+            private set(_value) = super.setSingletonValue("address", _value)
         var favoriteColor: String
-        get() = super.getSingletonValue("favoriteColor") as String? ?: ""
-        private set(_value) = super.setSingletonValue("favoriteColor", _value)
+            get() = super.getSingletonValue("favoriteColor") as String? ?: ""
+            private set(_value) = super.setSingletonValue("favoriteColor", _value)
         var birthDayMonth: Double
-        get() = super.getSingletonValue("birthDayMonth") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("birthDayMonth", _value)
+            get() = super.getSingletonValue("birthDayMonth") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("birthDayMonth", _value)
         var birthDayDOM: Double
-        get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("birthDayDOM", _value)
+            get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("birthDayDOM", _value)
 
         init {
             this.name = name
@@ -332,8 +333,8 @@ abstract class AbstractGold : BaseParticle() {
     ) : EntityBase("Gold_Collection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var num: Double
-        get() = super.getSingletonValue("num") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("num", _value)
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
 
         init {
             this.num = num
@@ -388,20 +389,20 @@ abstract class AbstractGold : BaseParticle() {
     ) : EntityBase("Gold_Data", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
 
         var num: Double
-        get() = super.getSingletonValue("num") as Double? ?: 0.0
-        private set(_value) = super.setSingletonValue("num", _value)
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
         var txt: String
-        get() = super.getSingletonValue("txt") as String? ?: ""
-        private set(_value) = super.setSingletonValue("txt", _value)
+            get() = super.getSingletonValue("txt") as String? ?: ""
+            private set(_value) = super.setSingletonValue("txt", _value)
         var lnk: String
-        get() = super.getSingletonValue("lnk") as String? ?: ""
-        private set(_value) = super.setSingletonValue("lnk", _value)
+            get() = super.getSingletonValue("lnk") as String? ?: ""
+            private set(_value) = super.setSingletonValue("lnk", _value)
         var flg: Boolean
-        get() = super.getSingletonValue("flg") as Boolean? ?: false
-        private set(_value) = super.setSingletonValue("flg", _value)
+            get() = super.getSingletonValue("flg") as Boolean? ?: false
+            private set(_value) = super.setSingletonValue("flg", _value)
         var ref: Reference<GoldInternal1>?
-        get() = super.getSingletonValue("ref") as Reference<GoldInternal1>?
-        private set(_value) = super.setSingletonValue("ref", _value)
+            get() = super.getSingletonValue("ref") as Reference<GoldInternal1>?
+            private set(_value) = super.setSingletonValue("ref", _value)
 
         init {
             this.num = num

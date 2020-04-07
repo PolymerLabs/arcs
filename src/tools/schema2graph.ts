@@ -41,7 +41,7 @@ export class SchemaNode {
   // ensure that nested schemas are generated before the references that rely on them.
   refs = new Map<string, SchemaNode>();
 
-  constructor(schema: Schema, name: string, kotlinName: string) {
+  constructor(schema: Schema, name: string) {
     this.schema = schema;
     this.aliases.push(name);
     this.kotlinAliases.push(name);
@@ -92,7 +92,7 @@ export class SchemaGraph {
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
-      node = new SchemaNode(schema, name, kotlinName);
+      node = new SchemaNode(schema, name);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
           if (b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {

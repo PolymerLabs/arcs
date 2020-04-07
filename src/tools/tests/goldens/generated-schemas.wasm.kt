@@ -17,6 +17,7 @@ typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
 typealias Gold_Collection = AbstractGold.Gold_Collection
 typealias Gold_Data = AbstractGold.Gold_Data
+
 abstract class AbstractGold : WasmParticleImpl() {
     val handles: Handles = Handles(this)
 
@@ -25,10 +26,10 @@ abstract class AbstractGold : WasmParticleImpl() {
     class GoldInternal1(val_: String = "") : WasmEntity {
 
         var val_ = val_
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
 
         override var entityId = ""
 
@@ -102,40 +103,40 @@ abstract class AbstractGold : WasmParticleImpl() {
     ) : WasmEntity {
 
         var name = name
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var age = age
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var lastCall = lastCall
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var address = address
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var favoriteColor = favoriteColor
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var birthDayMonth = birthDayMonth
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var birthDayDOM = birthDayDOM
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
 
         override var entityId = ""
 
@@ -275,40 +276,40 @@ abstract class AbstractGold : WasmParticleImpl() {
     ) : WasmEntity {
 
         var name = name
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var age = age
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var lastCall = lastCall
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var address = address
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var favoriteColor = favoriteColor
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var birthDayMonth = birthDayMonth
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var birthDayDOM = birthDayDOM
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
 
         override var entityId = ""
 
@@ -440,10 +441,10 @@ abstract class AbstractGold : WasmParticleImpl() {
     class Gold_Collection(num: Double = 0.0) : WasmEntity {
 
         var num = num
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
 
         override var entityId = ""
 
@@ -514,25 +515,25 @@ abstract class AbstractGold : WasmParticleImpl() {
     ) : WasmEntity {
 
         var num = num
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var txt = txt
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var lnk = lnk
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
         var flg = flg
-        get() = field
-        private set(_value) {
-            field = _value
-        }
+            get() = field
+            private set(_value) {
+                field = _value
+            }
 
         override var entityId = ""
 
