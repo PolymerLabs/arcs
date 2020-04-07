@@ -34,3 +34,20 @@
    ```
    docker push arcsproject/travis-build:latest
    ```
+
+
+## Run Android Integration Tests
+
+Android Integration Tests need to run on a device or emulator. There
+are two ways to run them:
+
+### Run locally with an Android dev phone or emulator
+
+   ```
+   ./run-android-e2e-tests-locally
+   ```
+
+### Run in Firebase Test Lab
+
+   ```
+   ./run-android-e2e-tests-on-firebase
