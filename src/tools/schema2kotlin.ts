@@ -378,11 +378,23 @@ ${lines}
 class ${name}(`;
     const baseClass = this.opts.wasm
         ? 'WasmEntity'
-        : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA']);
+        : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'expirationTimestamp', 'creationTimestamp']);
     const classInterface = `) : ${baseClass} {`;
 
+    const constructorFields = this.fields.concat(this.opts.wasm ? [] : [
+      'entityId: String? = null',
+      'expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+      'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+    ]);
+
+    const fieldsForMutate = this.fieldsForCopy.concat(this.opts.wasm ? [] : [
+      'entityId = entityId',
+      'expirationTimestamp = expirationTimestamp',
+      'creationTimestamp = creationTimestamp'
+    ]);
+
     const constructorArguments =
-      withFields(ktUtils.joinWithIndents(this.fields, classDef.length+classInterface.length, 1));
+      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 1);
 
     return `\
 
@@ -393,9 +405,16 @@ ${classDef}${constructorArguments}${classInterface}
     ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
         ${this.fieldInitializers.join('\n        ')}
     }`)}
-
+    ${this.opts.wasm ? `` : `/**
+     * Use this method to create a new, distinctly identified copy of the entity. 
+     * Storing the copy will result in a new copy of the data being stored.
+     */`}
     fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 2)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 2)})
-
+    ${this.opts.wasm ? `` : `/** 
+     * Use this method to create a new version of an existing entity.
+     * Storing the mutation will overwrite the existing entity in the set, if it exists.
+     */
+    fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 2)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 2)})`}
 ${this.opts.wasm ? `
     fun reset() {
       ${withFields(`${this.fieldsReset.join('\n        ')}`)}
