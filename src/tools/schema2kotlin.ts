@@ -393,7 +393,7 @@ ${lines}
 
     const classDef = `\
 @Suppress("UNCHECKED_CAST")
-class ${name}(`;
+    class ${name}(`;
     const baseClass = this.opts.wasm
         ? 'WasmEntity'
         : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'expirationTimestamp', 'creationTimestamp']);
@@ -418,7 +418,7 @@ class ${name}(`;
 
     ${classDef}${constructorArguments}${classInterface}
 
-        ${withFields(`${this.fieldVals.join('\n    ')}`)}
+        ${withFields(`${this.fieldVals.join('\n        ')}`)}
 
         ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
             ${this.fieldInitializers.join('\n            ')}

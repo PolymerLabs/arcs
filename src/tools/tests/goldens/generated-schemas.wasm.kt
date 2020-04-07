@@ -22,7 +22,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
 
     @Suppress("UNCHECKED_CAST")
-class GoldInternal1(val_: String = "") : WasmEntity {
+    class GoldInternal1(val_: String = "") : WasmEntity {
 
         var val_ = val_
         get() = field
@@ -91,47 +91,47 @@ class GoldInternal1(val_: String = "") : WasmEntity {
     }
 
     @Suppress("UNCHECKED_CAST")
-class Gold_AllPeople(
-    name: String = "",
-    age: Double = 0.0,
-    lastCall: Double = 0.0,
-    address: String = "",
-    favoriteColor: String = "",
-    birthDayMonth: Double = 0.0,
-    birthDayDOM: Double = 0.0
-) : WasmEntity {
+    class Gold_AllPeople(
+        name: String = "",
+        age: Double = 0.0,
+        lastCall: Double = 0.0,
+        address: String = "",
+        favoriteColor: String = "",
+        birthDayMonth: Double = 0.0,
+        birthDayDOM: Double = 0.0
+    ) : WasmEntity {
 
         var name = name
         get() = field
         private set(_value) {
             field = _value
         }
-    var age = age
+        var age = age
         get() = field
         private set(_value) {
             field = _value
         }
-    var lastCall = lastCall
+        var lastCall = lastCall
         get() = field
         private set(_value) {
             field = _value
         }
-    var address = address
+        var address = address
         get() = field
         private set(_value) {
             field = _value
         }
-    var favoriteColor = favoriteColor
+        var favoriteColor = favoriteColor
         get() = field
         private set(_value) {
             field = _value
         }
-    var birthDayMonth = birthDayMonth
+        var birthDayMonth = birthDayMonth
         get() = field
         private set(_value) {
             field = _value
         }
-    var birthDayDOM = birthDayDOM
+        var birthDayDOM = birthDayDOM
         get() = field
         private set(_value) {
             field = _value
@@ -264,47 +264,47 @@ class Gold_AllPeople(
     }
 
     @Suppress("UNCHECKED_CAST")
-class Gold_QCollection(
-    name: String = "",
-    age: Double = 0.0,
-    lastCall: Double = 0.0,
-    address: String = "",
-    favoriteColor: String = "",
-    birthDayMonth: Double = 0.0,
-    birthDayDOM: Double = 0.0
-) : WasmEntity {
+    class Gold_QCollection(
+        name: String = "",
+        age: Double = 0.0,
+        lastCall: Double = 0.0,
+        address: String = "",
+        favoriteColor: String = "",
+        birthDayMonth: Double = 0.0,
+        birthDayDOM: Double = 0.0
+    ) : WasmEntity {
 
         var name = name
         get() = field
         private set(_value) {
             field = _value
         }
-    var age = age
+        var age = age
         get() = field
         private set(_value) {
             field = _value
         }
-    var lastCall = lastCall
+        var lastCall = lastCall
         get() = field
         private set(_value) {
             field = _value
         }
-    var address = address
+        var address = address
         get() = field
         private set(_value) {
             field = _value
         }
-    var favoriteColor = favoriteColor
+        var favoriteColor = favoriteColor
         get() = field
         private set(_value) {
             field = _value
         }
-    var birthDayMonth = birthDayMonth
+        var birthDayMonth = birthDayMonth
         get() = field
         private set(_value) {
             field = _value
         }
-    var birthDayDOM = birthDayDOM
+        var birthDayDOM = birthDayDOM
         get() = field
         private set(_value) {
             field = _value
@@ -437,7 +437,7 @@ class Gold_QCollection(
     }
 
     @Suppress("UNCHECKED_CAST")
-class Gold_Collection(num: Double = 0.0) : WasmEntity {
+    class Gold_Collection(num: Double = 0.0) : WasmEntity {
 
         var num = num
         get() = field
@@ -506,29 +506,29 @@ class Gold_Collection(num: Double = 0.0) : WasmEntity {
     }
 
     @Suppress("UNCHECKED_CAST")
-class Gold_Data(
-    num: Double = 0.0,
-    txt: String = "",
-    lnk: String = "",
-    flg: Boolean = false
-) : WasmEntity {
+    class Gold_Data(
+        num: Double = 0.0,
+        txt: String = "",
+        lnk: String = "",
+        flg: Boolean = false
+    ) : WasmEntity {
 
         var num = num
         get() = field
         private set(_value) {
             field = _value
         }
-    var txt = txt
+        var txt = txt
         get() = field
         private set(_value) {
             field = _value
         }
-    var lnk = lnk
+        var lnk = lnk
         get() = field
         private set(_value) {
             field = _value
         }
-    var flg = flg
+        var flg = flg
         get() = field
         private set(_value) {
             field = _value
