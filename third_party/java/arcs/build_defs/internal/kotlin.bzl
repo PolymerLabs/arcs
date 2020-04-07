@@ -484,6 +484,7 @@ def arcs_kt_jvm_test_suite(
       tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_jvm_library
       data: list of files available to the test at runtime
+      constraints: list of constraints, e.g android
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
