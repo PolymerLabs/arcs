@@ -24,8 +24,8 @@ export type SerializedReference = {
   id: string;
   entityStorageKey: string;
   // TODO(#4861): creationTimestamp shouldn't be optional.
-  creationTimestamp?: string;
-  // TODO(mmandlis): add expiration time here as well.
+  creationTimestamp?: number;
+  expirationTimestamp?: number;
 };
 
 export class Reference implements Storable {
@@ -33,7 +33,8 @@ export class Reference implements Storable {
   public type: ReferenceType<EntityType>;
 
   public readonly id: string;
-  private readonly creationTimestamp: string;
+  private readonly creationTimestamp: Date;
+  private readonly expirationTimestamp: Date;
   private entityStorageKey: string;
   private readonly context: ChannelConstructor;
   private storageProxy: StorageProxy<CRDTEntityCollection> = null;
@@ -41,14 +42,20 @@ export class Reference implements Storable {
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
-  constructor(data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) {
+  constructor(data: {id: string, creationTimestamp?: Date | null, expirationTimestamp?: Date | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) {
     this.id = data.id;
     this.creationTimestamp = data.creationTimestamp;
+    this.expirationTimestamp = data.expirationTimestamp;
     this.entityStorageKey = data.entityStorageKey;
     this.context = context;
     this.type = type;
     this[SYMBOL_INTERNALS] = {
-      serialize: () => ({id: this.id, creationTimestamp: this.creationTimestamp, rawData: this.dataClone()})
+      serialize: () => ({
+        id: this.id,
+        creationTimestamp: this.creationTimestamp ? this.creationTimestamp.getTime() : null,
+        expirationTimestamp: this.expirationTimestamp ? this.expirationTimestamp.getTime() : null,
+        rawData: this.dataClone()
+      })
     };
   }
 
@@ -78,7 +85,12 @@ export class Reference implements Storable {
   }
 
   dataClone(): SerializedReference {
-    return {entityStorageKey: this.entityStorageKey, id: this.id, creationTimestamp: this.creationTimestamp};
+    return {
+      entityStorageKey: this.entityStorageKey,
+      id: this.id,
+      creationTimestamp: this.creationTimestamp ? this.creationTimestamp.getTime() : null,
+      expirationTimestamp: this.expirationTimestamp ? this.expirationTimestamp.getTime() : null
+    };
   }
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
@@ -101,6 +113,7 @@ export abstract class ClientReference extends Reference {
       {
         id: Entity.id(entity),
         creationTimestamp: Entity.creationTimestamp(entity),
+        expirationTimestamp: Entity.expirationTimestamp(entity),
         entityStorageKey: Entity.storageKey(entity)
       },
       new ReferenceType(Entity.entityClass(entity).type),
@@ -138,8 +151,12 @@ export abstract class ClientReference extends Reference {
  * Instead of statically depending on reference.ts, handle.ts defines a static makeReference method which is
  * dynamically populated here.
  */
-function makeReference(data: {id: string, creationTimestamp?: string | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor): Reference {
-  return new Reference(data, type, context);
+function makeReference(data: {id: string, creationTimestamp?: number | null, expirationTimestamp?: number | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor): Reference {
+  return new Reference({
+    id: data.id,
+    creationTimestamp: data.creationTimestamp ? new Date(data.creationTimestamp) : null,
+    expirationTimestamp: data.expirationTimestamp ? new Date(data.expirationTimestamp) : null,
+    entityStorageKey: data.entityStorageKey}, type, context);
 }
 
 Handle.makeReference = makeReference;

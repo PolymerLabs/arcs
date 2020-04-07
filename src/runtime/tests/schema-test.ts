@@ -244,9 +244,10 @@ describe('schema', () => {
     const References = Entity.createEntityClass(manifest.findSchemaByName('References'), null);
 
     const ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
+    const now = new Date();
     assert.doesNotThrow(() => {
       new References({
-        one: new Reference({id: 'test', creationTimestamp: 'now', entityStorageKey: 'test'}, new ReferenceType(new EntityType(ReferencedOneSchema)), null),
+        one: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: 'test'}, new ReferenceType(new EntityType(ReferencedOneSchema)), null),
         two: null
       });
     });
@@ -254,7 +255,7 @@ describe('schema', () => {
     assert.throws(() => {
       new References({
         one: null,
-        two: new Reference({id: 'test', creationTimestamp: 'now', entityStorageKey: 'test'}, new ReferenceType(new EntityType(ReferencedOneSchema)), null)
+        two: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: 'test'}, new ReferenceType(new EntityType(ReferencedOneSchema)), null)
       });
     }, TypeError, `Cannot set reference two with value '[object Object]' of mismatched type`);
     assert.throws(() => {
@@ -272,12 +273,13 @@ describe('schema', () => {
     const FooType = EntityType.make(['Foo'], {value: 'Text'});
     const BarType = EntityType.make(['Bar'], {value: 'Text'});
     new Collections({collection: new Set()});
+    const now = new Date();
     new Collections({
-      collection: new Set([new Reference({id: 'test', creationTimestamp: 'now', entityStorageKey: 'test'}, new ReferenceType(FooType), null)])
+      collection: new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: 'test'}, new ReferenceType(FooType), null)])
     });
     assert.throws(() => {
       new Collections({collection:
-        new Set([new Reference({id: 'test', creationTimestamp: 'now', entityStorageKey: 'test'}, new ReferenceType(BarType), null)])
+        new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: 'test'}, new ReferenceType(BarType), null)])
       });
     }, TypeError, `Cannot set reference collection with value '[object Object]' of mismatched type`);
   });

@@ -25,8 +25,8 @@ export type EntityRawData = {};
 export type SerializedEntity = {
   id: string,
   // TODO(#4861): creationTimestamp shouldn't be optional
-  creationTimestamp?: string,
-  expirationTimestamp?: string,
+  creationTimestamp?: number,
+  expirationTimestamp?: number,
   rawData: EntityRawData
 };
 
@@ -67,9 +67,8 @@ class EntityInternals {
   private id?: string;
   private storageKey?: string;
   private userIDComponent?: string;
-  // TODO(mmandlis): use Date for timestamp fields.
-  private creationTimestamp: string;
-  private expirationTimestamp: string;
+  private creationTimestamp: Date;
+  private expirationTimestamp: Date;
 
   // TODO: Only the Arc that "owns" this Entity should be allowed to mutate it.
   private mutable = true;
@@ -104,7 +103,7 @@ class EntityInternals {
     return this.entityClass;
   }
 
-  getCreationTimestamp(): string {
+  getCreationTimestamp(): Date {
     if (this.id === undefined) {
       throw new Error('entity has not yet been stored!');
     }
@@ -112,6 +111,13 @@ class EntityInternals {
       throw new Error('entity has been stored but creation timestamp was not recorded against entity');
     }
     return this.creationTimestamp;
+  }
+
+  getExpirationTimestamp(): Date {
+    if (this.id === undefined) {
+      throw new Error('entity has not yet been stored!');
+    }
+    return this.expirationTimestamp;
   }
 
   isIdentified(): boolean {
@@ -125,11 +131,12 @@ class EntityInternals {
     return this.expirationTimestamp !== undefined;
   }
 
-  identify(identifier: string, storageKey: string, creationTimestamp?: string) {
+  identify(identifier: string, storageKey: string, creationTimestamp?: Date, expirationTimestamp?: Date) {
     assert(!this.isIdentified(), 'identify() called on already identified entity');
     this.id = identifier;
     this.storageKey = storageKey;
     this.creationTimestamp = creationTimestamp;
+    this.expirationTimestamp = expirationTimestamp;
     const components = identifier.split(':');
     const uid = components.lastIndexOf('uid');
     this.userIDComponent = uid > 0 ? components.slice(uid+1).join(':') : '';
@@ -153,9 +160,9 @@ class EntityInternals {
   private setExpiration(ttl: Ttl) {
     assert(ttl, `ttl cannot be null`);
     const now = new Date();
-    this.creationTimestamp = now.getTime().toString();
+    this.creationTimestamp = now;
     if (!ttl.isInfinite) {
-      this.expirationTimestamp = ttl.calculateExpiration(now).getTime().toString();
+      this.expirationTimestamp = ttl.calculateExpiration(now);
     }
   }
 
@@ -231,10 +238,10 @@ class EntityInternals {
       rawData: this.dataClone()
     };
     if (this.hasCreationTimestamp()) {
-      serializedEntity.creationTimestamp = this.creationTimestamp;
+      serializedEntity.creationTimestamp = this.creationTimestamp.getTime();
     }
     if (this.hasExpirationTimestamp()) {
-      serializedEntity.expirationTimestamp = this.expirationTimestamp;
+      serializedEntity.expirationTimestamp = this.expirationTimestamp.getTime();
     }
     return serializedEntity;
   }
@@ -351,9 +358,14 @@ export abstract class Entity implements Storable {
     return getInternals(entity).getId();
   }
 
-  static creationTimestamp(entity: Entity): string | null {
+  static creationTimestamp(entity: Entity): Date | null {
     return getInternals(entity).hasCreationTimestamp()
         ? getInternals(entity).getCreationTimestamp() : null;
+  }
+
+  static expirationTimestamp(entity: Entity): Date | null {
+    return getInternals(entity).hasExpirationTimestamp()
+        ? getInternals(entity).getExpirationTimestamp() : null;
   }
 
   static storageKey(entity: Entity): string {
@@ -368,8 +380,10 @@ export abstract class Entity implements Storable {
     return getInternals(entity).isIdentified();
   }
 
-  static identify(entity: Entity, identifier: string, storageKey: string, creationTimestamp?: string) {
-    getInternals(entity).identify(identifier, storageKey, creationTimestamp);
+  static identify(entity: Entity, identifier: string, storageKey: string, creationTimestamp?: number, expirationTimestamp?: number) {
+    getInternals(entity).identify(identifier, storageKey,
+        creationTimestamp ? new Date(creationTimestamp) : undefined,
+        expirationTimestamp ? new Date(expirationTimestamp) : undefined);
     return entity;
   }
 

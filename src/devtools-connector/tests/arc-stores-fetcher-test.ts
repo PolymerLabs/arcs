@@ -83,7 +83,7 @@ describe('ArcStoresFetcher', () => {
           tag: 'Singleton',
         },
         description: undefined,
-        value: {id: entityId, creationTimestamp, rawData: {value: 'persistence is useful'}}
+        value: {id: entityId, creationTimestamp: creationTimestamp.getTime(), rawData: {value: 'persistence is useful'}}
       }],
       // Context stores from manifests have been moved to a temporary StorageStub implementation,
       // StorageStub does not allow for fetching value. Let's add a test for context store after

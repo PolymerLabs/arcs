@@ -36,12 +36,14 @@ class MyEntityModel extends CRDTEntity<{name: {id: string}, age: {id: string, va
 
 class MyEntity {
   id: string;
-  creationTimestamp: string;
+  creationTimestamp: number;
   rawData: {
     name?: {id: string};
     age?: {id: string, value: number};
   } = {};
 }
+
+const now = new Date().getTime();
 
 class MyEntityCollection extends CRDTCollection<SerializedEntity> {}
 
@@ -108,7 +110,7 @@ describe('Reference Mode Store', async () => {
     const entity = new MyEntity();
     entity.rawData.age = {id: '42', value: 42};
     entity.id = 'an-id';
-    entity.creationTimestamp = 'now';
+    entity.creationTimestamp = now;
     entity.rawData.name = {id: 'bob'};
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
 
@@ -138,7 +140,7 @@ describe('Reference Mode Store', async () => {
     const entity = new MyEntity();
     entity.rawData.age = {id: '42', value: 42};
     entity.id = 'an-id';
-    entity.creationTimestamp = 'now';
+    entity.creationTimestamp = now;
     entity.rawData.name = {id: 'bob'};
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
     const result = await activeStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: collection.getData(), id: 1});
@@ -161,7 +163,7 @@ describe('Reference Mode Store', async () => {
     const entity = new MyEntity();
     entity.rawData.age = {id: '42', value: 42};
     entity.id = 'an-id';
-    entity.creationTimestamp = 'now';
+    entity.creationTimestamp = now;
     entity.rawData.name = {id: 'bob'};
     const operation: CollectionOperation<MyEntity> = {type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity};
 
@@ -347,7 +349,7 @@ describe('Reference Mode Store', async () => {
     const entity = new MyEntity();
     entity.rawData.age = {id: '42', value: 42};
     entity.id = 'an-id';
-    entity.creationTimestamp = 'now';
+    entity.creationTimestamp = now;
     entity.rawData.name = {id: 'bob'};
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
 
@@ -390,13 +392,13 @@ describe('Reference Mode Store', async () => {
 
     const e1 = new MyEntity();
     e1.id = 'e1';
-    e1.creationTimestamp = 'now';
+    e1.creationTimestamp = now;
     const e2 = new MyEntity();
     e2.id = 'e2';
-    e2.creationTimestamp = 'now';
+    e2.creationTimestamp = now;
     const e3 = new MyEntity();
     e3.id = 'e3';
-    e3.creationTimestamp = 'now';
+    e3.creationTimestamp = now;
 
     void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CollectionOpTypes.Add, actor: 'me', clock: {me: 1}, added: e1}

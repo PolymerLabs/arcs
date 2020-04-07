@@ -734,8 +734,9 @@ describe('reference mode store tests', () => {
 
     const handle = await handleForStore(inputStore, arc);
     assert.strictEqual((handle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
-    await handle.add(Entity.identify(new handle.entityClass({value: 'what a result!'}), 'id:1', null, 'now'));
-    await handle.add(Entity.identify(new handle.entityClass({value: 'what another result!'}), 'id:2', null, 'now'));
+    const now = new Date().getTime();
+    await handle.add(Entity.identify(new handle.entityClass({value: 'what a result!'}), 'id:1', null, now));
+    await handle.add(Entity.identify(new handle.entityClass({value: 'what another result!'}), 'id:2', null, now));
 
     await arc.idle;
     const outputHandle = await handleForStore(refStore, arc);
