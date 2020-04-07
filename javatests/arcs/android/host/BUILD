@@ -18,6 +18,7 @@ arcs_kt_android_test_suite(
         ":schemas",
         ":services",
         "//java/arcs/android/host",
+        "//java/arcs/android/host/prod",
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/common",
