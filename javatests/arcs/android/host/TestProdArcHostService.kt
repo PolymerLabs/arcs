@@ -20,7 +20,7 @@ class TestProdArcHostService : ProdArcHostService() {
     class TestingAndroidProdHost(
         val context: Context,
         val lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider
+        schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
     ) : TestingJvmProdHost(schedulerProvider, *particles) {
         override val activationFactory = ServiceStoreFactory(

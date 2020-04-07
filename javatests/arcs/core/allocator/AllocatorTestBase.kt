@@ -50,12 +50,12 @@ open class AllocatorTestBase {
     private lateinit var pureHost: TestingJvmProdHost
 
     private class WritingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext)("writingHost"),
+        JvmSchedulerProvider(EmptyCoroutineContext),
         ::WritePerson.toRegistration()
     )
 
     private class ReadingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext)("readingHost"),
+        JvmSchedulerProvider(EmptyCoroutineContext),
         ::ReadPerson.toRegistration()
     )
 

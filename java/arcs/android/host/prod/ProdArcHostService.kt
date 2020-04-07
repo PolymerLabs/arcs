@@ -19,8 +19,8 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
 import arcs.core.host.SchedulerProvider
-import arcs.jvm.host.scanForParticles
 import arcs.jvm.host.JvmSchedulerProvider
+import arcs.jvm.host.scanForParticles
 
 /**
  * An isolatable (can run in another process) [Service] that has a [ProdHost] inside. [Particle]

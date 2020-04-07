@@ -15,9 +15,13 @@ import arcs.core.host.TestingHost
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 
 abstract class TestExternalArcHostService : Service() {
+    protected val scope: CoroutineScope = MainScope()
 
     abstract val arcHost: TestingAndroidHost
 
@@ -32,6 +36,11 @@ abstract class TestExternalArcHostService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel()
+    }
 
     class FakeLifecycle : Lifecycle() {
         override fun addObserver(p0: LifecycleObserver) = Unit
