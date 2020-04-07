@@ -14,8 +14,8 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_jvm_test_suite(
     name = "host",
     srcs = glob(["*Test.kt"]),
-    package = "arcs.core.host",
     constraints = ["android"],
+    package = "arcs.core.host",
     deps = [
         ":particle",  # buildcleaner: keep
         ":schemas",

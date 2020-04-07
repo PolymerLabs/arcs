@@ -457,13 +457,19 @@ def arcs_kt_plan(name, srcs = [], deps = [], platforms = ["jvm"], visibility = N
         name = name,
         srcs = outs,
         platforms = platforms,
-        deps = ARCS_SDK_DEPS + deps,
         visibility = visibility,
+        deps = ARCS_SDK_DEPS + deps,
     )
     return {"outs": outs, "deps": ARCS_SDK_DEPS + deps}
 
-def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], data = [],
-                           constraints = []):
+def arcs_kt_jvm_test_suite(
+        name,
+        package,
+        srcs = None,
+        tags = [],
+        deps = [],
+        data = [],
+        constraints = []):
     """Defines Kotlin JVM test targets for a directory.
 
     Defines a Kotlin JVM library (kt_jvm_library) for all of the sources
