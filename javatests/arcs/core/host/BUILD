@@ -104,6 +104,7 @@ arcs_kt_jvm_library(
         ":pure-particles-jvm",
         ":schemas",
         "//java/arcs/core/host",
+        "//java/arcs/core/util",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//third_party/kotlin/kotlinx_coroutines",
