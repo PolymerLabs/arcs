@@ -7,9 +7,11 @@ import android.os.IBinder
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.core.allocator.TestingHost
+import arcs.android.sdk.host.ResurrectableHost
 import arcs.core.data.Capabilities
 import arcs.core.host.ParticleRegistration
+import arcs.core.host.TestingHost
+import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlinx.coroutines.Dispatchers
@@ -37,14 +39,17 @@ abstract class TestExternalArcHostService() : Service() {
     }
 
     abstract class TestingAndroidHost(
-        serviceContext: Context,
+        context: Context,
         vararg particles: ParticleRegistration
-    ) : TestingHost(*particles) {
+    ) : TestingHost(*particles), ResurrectableHost {
 
         override val stores = singletonStores
 
+        override val resurrectionHelper: ResurrectionHelper =
+            ResurrectionHelper(context, ::onResurrected)
+
         override val activationFactory =  ServiceStoreFactory(
-                serviceContext,
+                context,
                 FakeLifecycle(),
                 Dispatchers.Default,
                 testConnectionFactory

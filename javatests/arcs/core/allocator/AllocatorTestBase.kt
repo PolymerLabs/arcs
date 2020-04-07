@@ -97,6 +97,7 @@ open class AllocatorTestBase {
             }
 
         readingExternalHost.setup()
+        pureHost.setup()
         writingExternalHost.setup()
     }
 
@@ -477,6 +478,7 @@ open class AllocatorTestBase {
 
         // This erases the internally held-in-memory-cache ArcHost state simulating a crash
         readingExternalHost.setup()
+        pureHost.setup()
         writingExternalHost.setup()
 
         allocator.startArcForPlan(

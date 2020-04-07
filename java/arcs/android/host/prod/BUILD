@@ -5,9 +5,9 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_android_library(
-    name = "host",
+    name = "prod",
     srcs = glob(["*.kt"]),
-    manifest = "//java/arcs/android/common:AndroidManifest.xml",
+    manifest = ":AndroidManifest.xml",
     deps = [
         "//java/arcs/android/sdk/host",
         "//java/arcs/core/host",
@@ -17,6 +17,5 @@ arcs_kt_android_library(
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/lifecycle",
         "//third_party/java/androidx/lifecycle/service",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

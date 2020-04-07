@@ -457,12 +457,19 @@ def arcs_kt_plan(name, srcs = [], deps = [], platforms = ["jvm"], visibility = N
         name = name,
         srcs = outs,
         platforms = platforms,
-        deps = ARCS_SDK_DEPS + deps,
         visibility = visibility,
+        deps = ARCS_SDK_DEPS + deps,
     )
     return {"outs": outs, "deps": ARCS_SDK_DEPS + deps}
 
-def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], data = []):
+def arcs_kt_jvm_test_suite(
+        name,
+        package,
+        srcs = None,
+        tags = [],
+        deps = [],
+        data = [],
+        constraints = []):
     """Defines Kotlin JVM test targets for a directory.
 
     Defines a Kotlin JVM library (kt_jvm_library) for all of the sources
@@ -477,6 +484,7 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], dat
       tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_jvm_library
       data: list of files available to the test at runtime
+      constraints: list of constraints, e.g android
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
@@ -486,7 +494,7 @@ def arcs_kt_jvm_test_suite(name, package, srcs = None, tags = [], deps = [], dat
         testonly = True,
         srcs = srcs,
         # We don't need this to be Android compatible.
-        constraints = [],
+        constraints = constraints,
         deps = deps,
     )
 

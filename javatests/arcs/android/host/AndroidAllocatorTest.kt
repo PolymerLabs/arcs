@@ -15,6 +15,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
+import arcs.android.host.prod.ProdArcHostService
 import arcs.android.sdk.host.toComponentName
 import arcs.core.allocator.AllocatorTestBase
 import arcs.core.host.TestingJvmProdHost
@@ -91,4 +92,5 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
 
         super.setUp()
     }
+
 }

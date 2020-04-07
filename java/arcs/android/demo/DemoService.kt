@@ -3,12 +3,12 @@ package arcs.android.demo
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.IBinder
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleService
+import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.core.host.AbstractArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.toRegistration
 import arcs.jvm.util.JvmTime
@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 /**
  * Service which wraps an ArcHost.
  */
-class DemoService : Service() {
+class DemoService : LifecycleService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
     private val scope = CoroutineScope(coroutineContext)
@@ -32,6 +32,8 @@ class DemoService : Service() {
 
     private val myHelper: ArcHostHelper by lazy {
         val host = MyArcHost(
+            this,
+            this.lifecycle,
             ::ReadPerson.toRegistration(),
             ::WritePerson.toRegistration()
         )
@@ -60,18 +62,16 @@ class DemoService : Service() {
         )
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
-
     override fun onDestroy() {
         coroutineContext.cancelChildren()
         super.onDestroy()
     }
 
     class MyArcHost(
+        context: Context,
+        lifecycle: Lifecycle,
         vararg initialParticles: ParticleRegistration
-    ) : AbstractArcHost(*initialParticles) {
+    ) : AndroidHost(context, lifecycle, *initialParticles) {
         override val platformTime = JvmTime
     }
 

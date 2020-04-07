@@ -11,9 +11,7 @@
 package arcs.core.host
 
 /**
- * An ArcsHost that runs isolatable particles that are expected to have no platform
- * dependencies directly on Android APIs.
+ * Tagging interface to identity [ArcHost] which runs isolatable particles that are expected to have
+ * no platform dependencies directly on Android APIs.
  */
-abstract class ProdHost(
-    vararg particles: ParticleRegistration
-) : AbstractArcHost(*particles)
+interface ProdHost

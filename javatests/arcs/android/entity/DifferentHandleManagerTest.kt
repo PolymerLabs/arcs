@@ -3,8 +3,8 @@ package arcs.android.entity
 import android.app.Application
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager

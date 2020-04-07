@@ -14,6 +14,7 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_jvm_test_suite(
     name = "host",
     srcs = glob(["*Test.kt"]),
+    constraints = ["android"],
     package = "arcs.core.host",
     deps = [
         ":particle",  # buildcleaner: keep
@@ -73,12 +74,18 @@ arcs_kt_particles(
 arcs_kt_jvm_library(
     name = "testhost",
     testonly = 1,
-    srcs = ["TestingJvmProdHost.kt"],
+    srcs = [
+        "TestingHost.kt",
+        "TestingJvmProdHost.kt",
+    ],
+    constraints = ["android"],
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/host",
         "//java/arcs/core/util",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
