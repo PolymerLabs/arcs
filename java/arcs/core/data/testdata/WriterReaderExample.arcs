@@ -24,3 +24,5 @@ recipe Consumption
   data: map 'my-handle-id'
   Reader
     data: reads data
+
+// TODO: add more tests for ephemeral Arcs and stores with CreateableStorageKey.
