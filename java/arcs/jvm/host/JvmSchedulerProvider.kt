@@ -13,6 +13,7 @@ package arcs.jvm.host
 
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Scheduler
+import arcs.core.util.TaggedLog
 import arcs.jvm.util.JvmTime
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
@@ -38,6 +39,7 @@ class JvmSchedulerProvider(
         maxOf(1, Runtime.getRuntime().availableProcessors() / 2),
     private val threadPriority: Int = DEFAULT_THREAD_PRIORITY
 ) : SchedulerProvider {
+    private val log = TaggedLog { toString() }
     private val providedSoFar = atomic(0)
     private val threads = arrayOfNulls<Thread>(maxThreadCount)
     private val dispatchers = mutableListOf<CoroutineDispatcher>()
@@ -54,10 +56,16 @@ class JvmSchedulerProvider(
             Executors
                 .newSingleThreadExecutor {
                     val thread = threads[threadIndex % maxThreadCount]
-                    if (thread != null) return@newSingleThreadExecutor thread
+                    if (thread != null && thread.isAlive) return@newSingleThreadExecutor thread
+
+                    if (thread?.isAlive == false) log.warning {
+                        "Creating a new thread (index: ${threadIndex % maxThreadCount}) because " +
+                            "a previously-created one had died."
+                    }
 
                     Thread(it).apply {
                         priority = threadPriority
+                        name = "Scheduler-Thread#${threadIndex % maxThreadCount}"
                         threads[threadIndex % maxThreadCount] = this
                     }
                 }
@@ -74,7 +82,7 @@ class JvmSchedulerProvider(
 
         val schedulerContext = baseCoroutineContext +
             schedulerParentJob +
-            CoroutineName("Scheduler::$arcId") +
+            CoroutineName("ArcId::$arcId") +
             dispatcher
 
         return Scheduler(JvmTime, schedulerContext).also { schedulersByArcId[arcId] = it }
