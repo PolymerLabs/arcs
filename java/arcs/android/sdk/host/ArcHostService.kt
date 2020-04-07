@@ -11,7 +11,6 @@
 package arcs.android.sdk.host
 
 import android.content.Intent
-import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LifecycleService
 import arcs.core.host.ArcHost
 
