@@ -38,7 +38,15 @@
     </activity>
 
     <service
-      android:name=".ArcHostService"
+      android:name=".WriteHostService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="arcs.android.host.ARC_HOST"/>
+      </intent-filter>
+    </service>
+
+    <service
+      android:name=".ReadHostService"
       android:exported="false">
       <intent-filter>
         <action android:name="arcs.android.host.ARC_HOST"/>

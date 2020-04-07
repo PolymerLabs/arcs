@@ -18,7 +18,6 @@ import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.sdk.Handle
 import arcs.sdk.android.storage.ServiceStoreFactory
@@ -31,16 +30,16 @@ import kotlinx.coroutines.withContext
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
  */
-class ArcHostService : ArcHostService() {
+class WriteHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
+    private val scope = CoroutineScope(coroutineContext)
 
     override val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
         initialParticles = *arrayOf(
-            ::WritePerson.toRegistration(),
-            ::ReadPerson.toRegistration()
+            ::WritePerson.toRegistration()
         )
     )
 
@@ -56,21 +55,6 @@ class ArcHostService : ArcHostService() {
 
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
             handles.person.store(WritePerson_Person("John Wick"))
-        }
-    }
-
-    inner class ReadPerson : AbstractReadPerson() {
-
-        override suspend fun onHandleUpdate(handle: Handle) {
-            scope.launch {
-                val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                val intent = Intent(this@ArcHostService, TestActivity::class.java)
-                    .apply {
-                        putExtra(TestActivity.RESULT_NAME, name)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
-                startActivity(intent)
-            }
         }
     }
 }
