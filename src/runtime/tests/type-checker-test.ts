@@ -13,8 +13,115 @@ import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker, TypeListInfo} from '../recipe/type-checker.js';
 import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType, TupleType, Type} from '../type.js';
+import {IsValidOptions} from '../recipe/recipe.js';
 
 describe('TypeChecker', () => {
+   it.only('gogul-type-checker-test', async () => {
+    const manifest = await Manifest.parse(`
+schema Person
+  name: Text
+  age: Number
+
+particle PassThrough
+  valueIn: reads ~a
+  valueOut: writes Person {age: Number}
+  tapOut: writes ~a
+
+particle GetPerson
+  person: writes Person
+
+particle GenericGetPerson
+  person: writes ~a
+
+particle GetAge
+  age: writes Person {age: Number}
+
+particle DisplayGreeting
+  person: reads Person
+
+particle DisplayAge
+  age: reads Person {age: Number}
+
+recipe Test
+   personHandle: create
+   ageHandle: create
+   tapOutHandle: create
+   GenericGetPerson
+      person: writes personHandle
+   GetPerson
+      person: writes personHandle
+   DisplayGreeting
+      person: reads personHandle
+   PassThrough
+      valueIn: personHandle
+      valueOut: ageHandle
+      tapOut: tapOutHandle
+   GetAge
+      age: writes ageHandle
+   DisplayAge
+      age: reads ageHandle
+    `);
+
+//        onsider a particle A that writes `[Foo { bar, baz }]`, another B that reads `[Foo { bar }]` and writes a singleton reference `&Foo`. And a third particle C that reads `Foo { baz }`.
+
+// Now consider a fourth particle D that writes `[Foo { bar, other }]`.
+
+// `A -> h1 -> B -> h2 -> C` works, but `D -> h3 -> B -> h4 -> C`, doesn't.
+
+// I think the type system figures this out now, but if not, it should :) And it should work if `B` and `C` act on an entity that itself has a reference to a `Foo`.
+//     const manifest = await Manifest.parse(`
+// schema Foo
+//   bar: Text
+//   baz: Text
+//   other: Text
+
+// particle A
+//   aw: writes [Foo {bar, baz}]
+
+// particle B
+//   br: reads [~a with {bar: Text}]
+//   bw: writes ~a
+
+// particle C
+//   cr: reads Foo {baz}
+
+// particle D
+//   dw: writes [Foo {bar, other}]
+
+// recipe Test
+//   h1: create
+//   h2: create
+//   A
+//     aw: writes h1
+//   // D
+//   //   dw: writes h1
+//   B
+//     br: reads h1
+//     bw: writes h2
+//   C
+//     cr: reads h2
+// `)
+    const [recipe] = manifest.recipes;
+    var options: IsValidOptions = {errors: new Map(), typeErrors: []};
+    if (!recipe.normalize(options)) {
+      console.log(`errors:`)
+      for (let [key, value] of options.errors) {
+          console.log(`${key}: ${value}`);
+      }
+      console.log(`typeErrors: ${options.typeErrors}`);
+      assert.fail('cannot normalize recipe');
+    } else {
+      console.log(`Recipe: ${recipe.name}`)
+      for (const handle of recipe.handles) {
+        console.log(`${handle.localName}: ${handle.type.canWriteSuperset}, ${handle.type.canReadSubset}`);
+        console.log("Connections:");
+        for (const cnxn of handle.connections) {
+          console.log(` ${cnxn.name} of ${cnxn.particle.spec.name}: ${cnxn.type.canWriteSuperset}, ${cnxn.type.canReadSubset}`);
+        }
+      }
+    }
+  });
+
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
     const a = TypeVariable.make('a').collectionOf();
     const b = TypeVariable.make('b').collectionOf();
