@@ -23,8 +23,6 @@ import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 import {SlotComposer} from '../../build/runtime/slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
-import {RuntimeCacheService} from '../../build/runtime/runtime-cache.js';
-import {VolatileStorage} from '../../build/runtime/storage/volatile-storage.js';
 
 import '../../build/services/ml5-service.js';
 import '../../build/services/random-service.js';
@@ -47,8 +45,7 @@ let memoryProvider;
 init();
 
 function init() {
-  VolatileStorage.setStorageCache(new RuntimeCacheService());
-  const memoryProvider = new SimpleVolatileMemoryProvider();
+  memoryProvider = new SimpleVolatileMemoryProvider();
   RamDiskStorageDriverProvider.register(memoryProvider);
   filePane.init(execute, toggleFilesButton, exportFilesButton);
   executeButton.addEventListener('click', execute);
@@ -66,26 +63,34 @@ function init() {
     const exampleManifest = `\
 import 'https://$particles/Tutorial/Javascript/1_HelloWorld/HelloWorld.arcs'
 
-schema Data
-  num: Number
-  txt: Text
-
+// TODO: provide a better way to bootstrap entities in stores
 resource DataResource
   start
-  [{"num": 73, "txt": "xyz"}]
+  {
+    "root": {
+      "values": {
+        "eid": {
+          "value": {"id": "eid", "creationTimestamp": "1", "rawData": {"num": 73, "txt": "abc"}},
+          "version": {"u": 1}
+        }
+      },
+      "version": {"u": 1}
+    },
+    "locations": {}
+  }
 
-store DataStore of Data in DataResource
+store DataStore of Data {num: Number, txt: Text} in DataResource
 
 particle P in 'a.js'
   root: consumes Slot
-  data: reads Data
+  data: reads Data {num: Number, txt: Text}
 
 recipe
-  h0: map DataStore
+  h0: copy DataStore
   P
     data: reads h0`;
 
-    const exampleParticle = `
+    const exampleParticle = `\
 defineParticle(({SimpleParticle, html, log}) => {
   return class extends SimpleParticle {
     get template() {
@@ -143,14 +148,12 @@ async function wrappedExecute() {
     const slotComposer = new SlotComposer();
     slotComposer.observeSlots(new SlotObserver(arcPanel.shadowRoot));
 
-    const storage = new StorageProviderFactory(id);
     const arc = new Arc({
       id,
       context: manifest,
       pecFactories: [pecFactory],
       slotComposer,
       loader,
-      storageProviderFactory: storage,
       inspectorFactory: devtoolsArcInspectorFactory
     });
     arcPanel.attachArc(arc);

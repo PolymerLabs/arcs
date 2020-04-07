@@ -94,8 +94,10 @@ ${this.arc.activeRecipe.toString()}`;
     const tags: Set<string> = this.arc.storeTags.get(store) || new Set();
     const handleTags = [...tags];
 
+    // TODO: handle ramdisk stores correctly?
     switch (key.protocol) {
       case 'reference-mode':
+      case 'ramdisk':
       case 'firebase':
       case 'pouchdb':
         this.handles += store.toManifestString({handleTags, overrides: {name}}) + '\n';
