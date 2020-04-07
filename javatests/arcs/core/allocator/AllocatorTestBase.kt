@@ -463,7 +463,16 @@ open class AllocatorTestBase {
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
-        val allocator2 = Allocator.create(hostRegistry, EntityHandleManager(time = FakeTime(), scheduler = Scheduler(FakeTime(), Executors.newSingleThreadExecutor().asCoroutineDispatcher())))
+        val allocator2 = Allocator.create(
+            hostRegistry,
+            EntityHandleManager(
+                time = FakeTime(),
+                scheduler = Scheduler(
+                    FakeTime(),
+                    Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+                )
+            )
+        )
 
         allocator2.stopArc(arcId)
 

@@ -58,7 +58,7 @@ import arcs.core.util.Time
  * `arcs_kt_schema` on a manifest file to generate a `{ParticleName}Handles' class, and
  * invoke its default constructor, or obtain it from the [BaseParticle.handles] field.
  *
- * The [scheduler] provided to the [EntityHandlemManager] at construction-time will be shared across
+ * The [scheduler] provided to the [EntityHandleManager] at construction-time will be shared across
  * all handles and storage-proxies created by the [EntityHandleManager].
  *
  * Instances of this class are not thread-safe.
