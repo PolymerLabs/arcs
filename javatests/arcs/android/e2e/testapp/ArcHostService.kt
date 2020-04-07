@@ -13,7 +13,6 @@ package arcs.android.e2e.testapp
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
@@ -56,7 +55,6 @@ class ArcHostService : ArcHostService() {
     inner class WritePerson : AbstractWritePerson() {
 
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-            Log.d("XXX", "onHandleSync called here ${handle.name} ")
             handles.person.store(WritePerson_Person("John Wick"))
         }
     }
@@ -64,12 +62,8 @@ class ArcHostService : ArcHostService() {
     inner class ReadPerson : AbstractReadPerson() {
 
         override suspend fun onHandleUpdate(handle: Handle) {
-            android.util.Log.d("XXX", "onHandleUpdate")
-            arcs.core.util.Log.debug { "XXX onHandleUpdate" }
             scope.launch {
                 val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                android.util.Log.d("XXX", "onHandleUpdate $name")
-                arcs.core.util.Log.debug { "XXX onHandleUpdate with name $name" }
                 val intent = Intent(this@ArcHostService, TestActivity::class.java)
                     .apply {
                         putExtra(TestActivity.RESULT_NAME, name)
