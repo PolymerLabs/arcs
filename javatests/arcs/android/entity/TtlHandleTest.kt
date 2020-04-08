@@ -16,13 +16,16 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.Executors
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
@@ -173,7 +176,13 @@ class TtlHandleTest() {
             ttl: Ttl = Ttl.Hours(1),
             key: StorageKey = collectionKey
         ) =
-        EntityHandleManager(time = time).createHandle(
+        EntityHandleManager(
+            time = time,
+            scheduler = Scheduler(
+                FakeTime(),
+                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+            )
+        ).createHandle(
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
@@ -185,7 +194,13 @@ class TtlHandleTest() {
         ) as ReadWriteCollectionHandle<DummyEntity>
 
     private suspend fun createSingletonHandle() =
-        EntityHandleManager(time = time).createHandle(
+        EntityHandleManager(
+            time = time,
+            scheduler = Scheduler(
+                FakeTime(),
+                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+            )
+        ).createHandle(
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
