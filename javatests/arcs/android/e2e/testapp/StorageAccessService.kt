@@ -76,6 +76,7 @@ class StorageAccessService : LifecycleService() {
                     }
 
                     singletonHandle.close()
+                    handleManager.close()
                 }
             }
 

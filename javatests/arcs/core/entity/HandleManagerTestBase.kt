@@ -13,7 +13,6 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -30,6 +29,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
+import arcs.core.storage.Reference as StorageReference
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
@@ -838,6 +838,7 @@ open class HandleManagerTestBase {
         storageKey,
         ttl
     ) as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
+
     private suspend fun <T> ReadableHandle<T>.onUpdateDeferred(
         predicate: (T) -> Boolean = { true }
     ): Deferred<T> = CompletableDeferred<T>().also { deferred ->

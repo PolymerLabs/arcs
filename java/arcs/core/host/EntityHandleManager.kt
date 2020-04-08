@@ -52,6 +52,9 @@ import arcs.core.storage.StoreManager
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
+import arcs.core.util.guardedBy
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Creates [Entity] handles based on [HandleMode], such as
@@ -62,7 +65,8 @@ import arcs.core.util.Time
  * The [scheduler] provided to the [EntityHandleManager] at construction-time will be shared across
  * all handles and storage-proxies created by the [EntityHandleManager].
  *
- * Instances of this class are not thread-safe.
+ * Call [close] on an instance that will no longer be used to ensure that all [StorageProxy]
+ * instances created by this [EntityHandleManager] will also be closed.
  */
 class EntityHandleManager(
     private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
@@ -73,8 +77,15 @@ class EntityHandleManager(
     private val activationFactory: ActivationFactory? = null,
     private val idGenerator: Id.Generator = Id.Generator.newSession()
 ) {
-    private val singletonStorageProxies = mutableMapOf<StorageKey, SingletonProxy<Referencable>>()
-    private val collectionStorageProxies = mutableMapOf<StorageKey, CollectionProxy<Referencable>>()
+    private val proxyMutex = Mutex()
+    private val singletonStorageProxies by guardedBy(
+        proxyMutex,
+        mutableMapOf<StorageKey, SingletonProxy<Referencable>>()
+    )
+    private val collectionStorageProxies by guardedBy(
+        proxyMutex,
+        mutableMapOf<StorageKey, CollectionProxy<Referencable>>()
+    )
     private val dereferencerFactory =
         EntityDereferencerFactory(stores, scheduler, activationFactory)
 
@@ -132,6 +143,16 @@ class EntityHandleManager(
                 storageKey,
                 storageAdapter
             )
+        }
+    }
+
+    /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
+    suspend fun close() {
+        proxyMutex.withLock {
+            singletonStorageProxies.values.forEach { it.close() }
+            collectionStorageProxies.values.forEach { it.close() }
+            singletonStorageProxies.clear()
+            collectionStorageProxies.clear()
         }
     }
 
@@ -194,32 +215,36 @@ class EntityHandleManager(
         storageKey: StorageKey,
         schema: Schema,
         storageMode: StorageMode
-    ): SingletonProxy<R> = singletonStorageProxies.getOrPut(storageKey) {
-        val activeStore = stores.get(
-            SingletonStoreOptions<Referencable>(
-                storageKey = storageKey,
-                type = SingletonType(EntityType(schema)),
-                mode = storageMode
-            )
-        ).activate(activationFactory)
-        SingletonProxy(activeStore, CrdtSingleton(), scheduler)
-    } as SingletonProxy<R>
+    ): SingletonProxy<R> = proxyMutex.withLock {
+        singletonStorageProxies.getOrPut(storageKey) {
+            val activeStore = stores.get(
+                SingletonStoreOptions<Referencable>(
+                    storageKey = storageKey,
+                    type = SingletonType(EntityType(schema)),
+                    mode = storageMode
+                )
+            ).activate(activationFactory)
+            SingletonProxy(activeStore, CrdtSingleton(), scheduler)
+        } as SingletonProxy<R>
+    }
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun <R : Referencable> collectionStoreProxy(
         storageKey: StorageKey,
         schema: Schema,
         storageMode: StorageMode
-    ): CollectionProxy<R> = collectionStorageProxies.getOrPut(storageKey) {
-        val activeStore = stores.get(
-            CollectionStoreOptions<Referencable>(
-                storageKey = storageKey,
-                type = CollectionType(EntityType(schema)),
-                mode = storageMode
-            )
-        ).activate(activationFactory)
-        CollectionProxy(activeStore, CrdtSet(), scheduler)
-    } as CollectionProxy<R>
+    ): CollectionProxy<R> = proxyMutex.withLock {
+        collectionStorageProxies.getOrPut(storageKey) {
+            val activeStore = stores.get(
+                CollectionStoreOptions<Referencable>(
+                    storageKey = storageKey,
+                    type = CollectionType(EntityType(schema)),
+                    mode = storageMode
+                )
+            ).activate(activationFactory)
+            CollectionProxy(activeStore, CrdtSet(), scheduler)
+        } as CollectionProxy<R>
+    }
 }
 
 private fun HandleDataType.toStorageMode() = when (this) {
