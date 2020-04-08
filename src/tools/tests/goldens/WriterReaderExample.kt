@@ -17,7 +17,7 @@ object IngestionPlan : Plan(
             "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
-                    CreateableStorageKey("my-handle-id", Capabilities.isPersistent),
+                    CreateableStorageKey("my-handle-id", Capabilities.Persistent),
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
                     Ttl.Days(20)
@@ -29,7 +29,7 @@ object IngestionPlan : Plan(
             "arcs.core.data.testdata.Writer",
             mapOf(
                 "data" to HandleConnection(
-                    CreateableStorageKey("my-handle-id", Capabilities.isPersistent),
+                    CreateableStorageKey("my-handle-id", Capabilities.Persistent),
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
                     Ttl.Days(20)
