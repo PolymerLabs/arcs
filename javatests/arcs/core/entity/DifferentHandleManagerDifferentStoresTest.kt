@@ -2,11 +2,14 @@ package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
+import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
+import kotlinx.coroutines.asCoroutineDispatcher
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.Executors
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
@@ -19,12 +22,20 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
             arcId = "testArcId",
             hostId = "testHostId",
             time = FakeTime(),
+            scheduler = Scheduler(
+                FakeTime(),
+                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+            ),
             stores = StoreManager()
         )
         writeHandleManager = EntityHandleManager(
             arcId = "testArcId",
             hostId = "testHostId",
             time = FakeTime(),
+            scheduler = Scheduler(
+                FakeTime(),
+                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+            ),
             stores = StoreManager()
         )
     }

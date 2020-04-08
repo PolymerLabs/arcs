@@ -10,13 +10,18 @@ import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.ResurrectableHost
 import arcs.core.data.Capabilities
 import arcs.core.host.ParticleRegistration
+import arcs.core.host.SchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 
-abstract class TestExternalArcHostService() : Service() {
+abstract class TestExternalArcHostService : Service() {
+    protected val scope: CoroutineScope = MainScope()
 
     abstract val arcHost: TestingAndroidHost
 
@@ -32,6 +37,11 @@ abstract class TestExternalArcHostService() : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel()
+    }
+
     class FakeLifecycle : Lifecycle() {
         override fun addObserver(p0: LifecycleObserver) = Unit
         override fun removeObserver(p0: LifecycleObserver) = Unit
@@ -40,9 +50,9 @@ abstract class TestExternalArcHostService() : Service() {
 
     abstract class TestingAndroidHost(
         context: Context,
+        schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : TestingHost(*particles), ResurrectableHost {
-
+    ) : TestingHost(schedulerProvider, *particles), ResurrectableHost {
         override val stores = singletonStores
 
         override val resurrectionHelper: ResurrectionHelper =

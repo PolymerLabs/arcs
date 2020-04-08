@@ -17,7 +17,9 @@ import android.os.IBinder
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ParticleRegistration
+import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +39,7 @@ class ArcHostService : Service() {
 
     private val myHelper: ArcHostHelper by lazy {
         val host = MyArcHost(
+            JvmSchedulerProvider(coroutineContext),
             ::ReadPerson.toRegistration(),
             ::WritePerson.toRegistration()
         )
@@ -61,8 +64,9 @@ class ArcHostService : Service() {
     }
 
     class MyArcHost(
+        schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AbstractArcHost(*initialParticles) {
+    ) : AbstractArcHost(schedulerProvider, *initialParticles) {
         override val platformTime = JvmTime
     }
 

@@ -49,6 +49,7 @@ import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode.ReferenceMode
 import arcs.core.storage.StoreManager
+import arcs.core.util.Scheduler
 import arcs.core.util.Time
 
 /**
@@ -57,19 +58,24 @@ import arcs.core.util.Time
  * `arcs_kt_schema` on a manifest file to generate a `{ParticleName}Handles' class, and
  * invoke its default constructor, or obtain it from the [BaseParticle.handles] field.
  *
+ * The [scheduler] provided to the [EntityHandleManager] at construction-time will be shared across
+ * all handles and storage-proxies created by the [EntityHandleManager].
+ *
  * Instances of this class are not thread-safe.
  */
 class EntityHandleManager(
     private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
     private val hostId: String = "nohost",
     private val time: Time,
+    private val scheduler: Scheduler,
     private val stores: StoreManager = StoreManager(),
     private val activationFactory: ActivationFactory? = null,
     private val idGenerator: Id.Generator = Id.Generator.newSession()
 ) {
     private val singletonStorageProxies = mutableMapOf<StorageKey, SingletonProxy<Referencable>>()
     private val collectionStorageProxies = mutableMapOf<StorageKey, CollectionProxy<Referencable>>()
-    private val dereferencerFactory = EntityDereferencerFactory(stores, activationFactory)
+    private val dereferencerFactory =
+        EntityDereferencerFactory(stores, scheduler, activationFactory)
 
     @Suppress("UNCHECKED_CAST")
     suspend fun createHandle(
@@ -183,7 +189,7 @@ class EntityHandleManager(
         )
     ).activate(activationFactory).let { activeStore ->
         singletonStorageProxies.getOrPut(storageKey) {
-            SingletonProxy(activeStore, CrdtSingleton())
+            SingletonProxy(activeStore, CrdtSingleton(), scheduler)
         } as SingletonProxy<R>
     }
 
@@ -199,7 +205,7 @@ class EntityHandleManager(
         )
     ).activate(activationFactory).let { activeStore ->
         collectionStorageProxies.getOrPut(storageKey) {
-            CollectionProxy(activeStore, CrdtSet())
+            CollectionProxy(activeStore, CrdtSet(), scheduler)
         } as CollectionProxy<R>
     }
 }

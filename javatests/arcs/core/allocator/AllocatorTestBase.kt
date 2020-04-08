@@ -12,18 +12,23 @@ import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.Scheduler
 import arcs.core.util.plus
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -44,8 +49,15 @@ open class AllocatorTestBase {
     private lateinit var writingExternalHost: TestingHost
     private lateinit var pureHost: TestingJvmProdHost
 
-    private class WritingHost : TestingHost(::WritePerson.toRegistration())
-    private class ReadingHost : TestingHost(::ReadPerson.toRegistration())
+    private class WritingHost : TestingHost(
+        JvmSchedulerProvider(EmptyCoroutineContext),
+        ::WritePerson.toRegistration()
+    )
+
+    private class ReadingHost : TestingHost(
+        JvmSchedulerProvider(EmptyCoroutineContext),
+        ::ReadPerson.toRegistration()
+    )
 
     /** Return the [ArcHost] that contains [ReadPerson]. */
     open fun readingHost(): TestingHost = ReadingHost()
@@ -54,7 +66,7 @@ open class AllocatorTestBase {
     open fun writingHost(): TestingHost = WritingHost()
 
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-    open fun pureHost() = TestingJvmProdHost()
+    open fun pureHost() = TestingJvmProdHost(JvmSchedulerProvider(EmptyCoroutineContext))
 
     open val storageCapability = Capabilities.TiedToRuntime
     open fun runAllocatorTest(
@@ -84,7 +96,13 @@ open class AllocatorTestBase {
         pureHost = pureHost()
 
         hostRegistry = hostRegistry()
-        allocator = Allocator.create(hostRegistry, EntityHandleManager(time = FakeTime()))
+        allocator = Allocator.create(
+            hostRegistry,
+            EntityHandleManager(
+                time = FakeTime(),
+                scheduler = Scheduler(FakeTime(), coroutineContext)
+            )
+        )
 
         readPersonParticle =
             requireNotNull(PersonPlan.particles.find { it.particleName == "ReadPerson" }) {
@@ -445,7 +463,16 @@ open class AllocatorTestBase {
         assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
 
-        val allocator2 = Allocator.create(hostRegistry, EntityHandleManager(time = FakeTime()))
+        val allocator2 = Allocator.create(
+            hostRegistry,
+            EntityHandleManager(
+                time = FakeTime(),
+                scheduler = Scheduler(
+                    FakeTime(),
+                    Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+                )
+            )
+        )
 
         allocator2.stopArc(arcId)
 

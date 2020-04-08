@@ -8,6 +8,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import arcs.sdk.Particle
@@ -79,7 +80,8 @@ open class BaseTestHarness<P : Particle>(
                     val handleManager = EntityHandleManager(
                         arcId = "testHarness",
                         hostId = "testHarnessHost",
-                        time = JvmTime
+                        time = JvmTime,
+                        scheduler = Scheduler(JvmTime, scope.coroutineContext)
                     )
                     specs.forEach { spec ->
                         val storageKey = ReferenceModeStorageKey(

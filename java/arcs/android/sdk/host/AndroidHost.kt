@@ -16,6 +16,7 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.ParticleRegistration
+import arcs.core.host.SchedulerProvider
 import arcs.jvm.host.JvmHost
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
@@ -27,8 +28,9 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 abstract class AndroidHost(
     val context: Context,
     val lifecycle: Lifecycle,
+    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
-) : JvmHost(*particles), ResurrectableHost {
+) : JvmHost(schedulerProvider, *particles), ResurrectableHost {
 
     override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(context,
         ::onResurrected)

@@ -8,8 +8,9 @@ import arcs.jvm.util.testutil.FakeTime
 import kotlinx.coroutines.CompletableDeferred
 
 open class TestingHost(
+    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
-) : AbstractArcHost(*particles) {
+) : AbstractArcHost(schedulerProvider, *particles) {
 
     fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 
