@@ -737,8 +737,10 @@ class DatabaseImpl(
                 """.trimIndent(),
                 arrayOf(nowMillis.toString())
             ).map { it.getLong(0) to it.getString(1) }.toSet()
-            val storageKeyIds = storageKeyIdsPairs.map { it.first }
-            val storageKeys = storageKeyIdsPairs.map { it.second }
+            val storageKeyIds = storageKeyIdsPairs.map { it.first.toString() }.toTypedArray()
+            val storageKeys = storageKeyIdsPairs.map { it.second }.toTypedArray()
+            // List of question marks of the same length, to be used in queries.
+            val questionMarks = storageKeyIdsPairs.map { "?" }.joinToString()
 
             // Find collection ids for collection fields of the expired entities.
             val collectionIdsToDelete = rawQuery(
@@ -751,28 +753,29 @@ class DatabaseImpl(
                         ON fields.is_collection = 1
                         AND collection_entries.collection_id = field_values.value_id
                     WHERE fields.is_collection = 1
-                        AND field_values.entity_storage_key_id in (?)
+                        AND field_values.entity_storage_key_id IN ($questionMarks)
                 """.trimIndent(),
-                arrayOf(storageKeyIds.joinToString())
-            ).map { it.getLong(0) }.toSet()
+                storageKeyIds
+            ).map { it.getLong(0).toString() }.toSet().toTypedArray()
+            val collectionQuestionMarks = collectionIdsToDelete.map { "?" }.joinToString()
             // Remove entries for those collections.
             delete(
                 TABLE_COLLECTION_ENTRIES,
-                "collection_id IN (?)",
-                arrayOf(collectionIdsToDelete.joinToString())
+                "collection_id IN ($collectionQuestionMarks)",
+                collectionIdsToDelete
             )
             // Remove those collections.
             delete(
                 TABLE_COLLECTIONS,
-                "id IN (?)",
-                arrayOf(collectionIdsToDelete.joinToString())
+                "id IN ($collectionQuestionMarks)",
+                collectionIdsToDelete
             )
 
             // Remove field values for all expired entities.
             delete(
                 TABLE_FIELD_VALUES,
-                "entity_storage_key_id in (?)",
-                arrayOf(storageKeyIds.joinToString())
+                "entity_storage_key_id IN ($questionMarks)",
+                storageKeyIds
             )
 
             // Clean up unused values as they can contain sensitive data.
@@ -785,8 +788,8 @@ class DatabaseImpl(
                             WHEN fields.is_collection = 0 THEN field_values.value_id
                             ELSE collection_entries.value_id
                         END AS field_value_id                        
-                    FROM fields
-                    LEFT JOIN field_values
+                    FROM field_values
+                    LEFT JOIN fields
                         ON field_values.field_id = fields.id
                     LEFT JOIN collection_entries
                         ON fields.is_collection = 1
@@ -810,8 +813,8 @@ class DatabaseImpl(
             // backing key and entity id.
             delete(
                 TABLE_ENTITY_REFS,
-                "backing_storage_key||\"/\"||entity_id in (?)",
-                arrayOf(storageKeys.joinToString())
+                "backing_storage_key||\"/\"||entity_id IN ($questionMarks)",
+                storageKeys
             )
 
             // Find all collections with missing entries (collections that were updated).
@@ -821,7 +824,7 @@ class DatabaseImpl(
                     FROM storage_keys
                     LEFT JOIN collection_entries
                         ON storage_keys.value_id = collection_entries.collection_id
-                    WHERE storage_keys.data_type in (?, ?)
+                    WHERE storage_keys.data_type IN (?, ?)
                     AND collection_entries.value_id NOT IN (SELECT id FROM entity_refs)
                 """.trimIndent(),
                 arrayOf(
