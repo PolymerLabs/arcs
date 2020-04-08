@@ -25,4 +25,7 @@ recipe Consumption
   Reader
     data: reads data
 
-// TODO: add more tests for ephemeral Arcs and stores with CreateableStorageKey.
+recipe EphemeralWriting
+  thing: create 'my-ephemeral-handle-id'
+  Writer
+    data: writes thing

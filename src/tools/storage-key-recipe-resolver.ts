@@ -64,8 +64,10 @@ export class StorageKeyRecipeResolver {
       }
       assert(resolved.isResolved());
 
-      resolved = await this.createStoresForCreateHandles(resolved, arc);
-      assert(resolved.isResolved());
+      if (isLongRunning(recipe)) {
+        resolved = await this.createStoresForCreateHandles(resolved, arc);
+        assert(resolved.isResolved());
+      }
 
       recipes.push(resolved);
     }

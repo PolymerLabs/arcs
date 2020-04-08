@@ -62,3 +62,19 @@ object ConsumptionPlan : Plan(
     ),
     "readingArcId"
 )
+object EphemeralWritingPlan : Plan(
+    listOf(
+        Particle(
+            "Writer",
+            "arcs.core.data.testdata.Writer",
+            mapOf(
+                "data" to HandleConnection(
+                    CreateableStorageKey("my-ephemeral-handle-id"),
+                    HandleMode.Write,
+                    SingletonType(EntityType(Writer_Data.SCHEMA)),
+                    Ttl.Infinite
+                )
+            )
+        )
+    )
+)
