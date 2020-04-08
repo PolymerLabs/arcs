@@ -238,19 +238,19 @@ describe('recipe2plan', () => {
 
       assert.deepStrictEqual(
         generator.createCapabilities(Capabilities.persistent),
-        `Capabilities.isPersistent`
+        `Capabilities.Persistent`
       );
       assert.deepStrictEqual(
         generator.createCapabilities(Capabilities.queryable),
-        `Capabilities.isQueryable`
+        `Capabilities.Queryable`
       );
       assert.deepStrictEqual(
         generator.createCapabilities(Capabilities.tiedToArc),
-        `Capabilities.isTiedToArc`
+        `Capabilities.TiedToArc`
       );
       assert.deepStrictEqual(
         generator.createCapabilities(Capabilities.tiedToRuntime),
-        `Capabilities.isTiedToRuntime`
+        `Capabilities.TiedToRuntime`
       );
     });
     it('constructs a capabilities object when translating multiple capabilities', () => {

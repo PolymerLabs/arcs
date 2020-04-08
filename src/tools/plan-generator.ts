@@ -171,7 +171,7 @@ export class PlanGenerator {
     }
 
     if (ktCapabilities.length === 1) {
-      return ktCapabilities[0].replace('Capability.', 'is');
+      return ktCapabilities[0].replace('Capability.', '');
     }
 
     return ktUtils.applyFun('Capabilities', [ktUtils.setOf(ktCapabilities)]);
