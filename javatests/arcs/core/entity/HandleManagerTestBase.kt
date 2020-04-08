@@ -537,9 +537,21 @@ open class HandleManagerTestBase {
         assertThat(handleA.fetchAll()).hasSize(7)
         assertThat(handleB.fetchAll()).hasSize(7)
 
+        // Ensure we get update from A before checking.
+        // Since some test configurations may result in the handles
+        // operating on different threads.
+        val gotUpdate = CompletableDeferred<Unit>()
+        handleA.onUpdate {
+            if (it.isEmpty()) {
+                gotUpdate.complete(Unit)
+            }
+        }
+
         handleB.clear()
-        assertThat(handleA.fetchAll()).isEmpty()
         assertThat(handleB.fetchAll()).isEmpty()
+
+        gotUpdate.await()
+        assertThat(handleA.fetchAll()).isEmpty()
     }
 
     @Test
