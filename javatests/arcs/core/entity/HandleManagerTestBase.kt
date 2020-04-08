@@ -394,7 +394,7 @@ open class HandleManagerTestBase {
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         writeEntityHandle.store(entity1)
 
-        // Create a store a reference to the entity.
+        // Create and store a reference to the entity.
         val entity1Ref = writeEntityHandle.createReference(entity1)
         val writeRefHandle = writeHandleManager.createReferenceSingletonHandle()
         writeRefHandle.store(entity1Ref)
@@ -697,7 +697,6 @@ open class HandleManagerTestBase {
             writeHandle.query("44")
         }
     }
-
 
     @Test
     open fun collection_referenceLiveness() = runBlocking {
