@@ -14,15 +14,14 @@ import {PropagatedException} from '../arc-exceptions.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxy} from './storage-proxy.js';
 import {Dictionary} from '../hot.js';
-import {Handle} from './handle.js';
 import {Type} from '../type.js';
 import {assert} from '../../platform/assert-web.js';
 import {BiMap} from '../bimap.js';
 import {noAwait} from '../util.js';
 
-export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<CRDTTypeRecord> {
-  private readonly storageProxies = new BiMap<string, StorageProxy<CRDTTypeRecord>>();
-  private readonly callbacks: Dictionary<ProxyCallback<CRDTTypeRecord>> = {};
+export class BackingStorageProxy<T extends CRDTTypeRecord> {
+  private readonly storageProxies = new BiMap<string, StorageProxy<T>>();
+  private readonly callbacks: Dictionary<ProxyCallback<T>> = {};
   private readonly storageEndpoint: StorageCommunicationEndpoint<T>;
   private readonly storageKey: string;
   private readonly type: Type;
@@ -34,35 +33,34 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> implements StorageCom
     this.type = type;
   }
 
-  getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
-    const backingStorageProxy = this;
-    const storageEndpoint = this.storageEndpoint;
-    if (!this.storageProxies.hasR(storageProxy)) {
-      throw new Error('storage proxy is not registered with backing storage proxy');
+  getStorageProxy(muxId: string): StorageProxy<T> {
+    if (!this.storageProxies.hasL(muxId)) {
+      const storageCommunicationEndpointProvider = this.createStorageCommunicationEndpointProvider(muxId, this.storageEndpoint, this);
+      this.storageProxies.set(muxId, new StorageProxy(muxId, storageCommunicationEndpointProvider, this.type.getContainedType(), this.storageKey));
     }
-    const muxId = this.storageProxies.getR(storageProxy);
-    return {
-      async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
-        message.muxId = muxId;
-        await storageEndpoint.onProxyMessage(message);
-      },
-      setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
-        backingStorageProxy.callbacks[muxId] = callback;
-      },
-      reportExceptionInHost(exception: PropagatedException): void {
-        storageEndpoint.reportExceptionInHost(exception);
-      },
-      getChannelConstructor(): ChannelConstructor {
-        return storageEndpoint.getChannelConstructor();
-      }
-    };
+    return this.storageProxies.getL(muxId);
   }
 
-  registerHandle(handle: Handle<T>, muxId: string): void {
-    if (!this.storageProxies.hasL(muxId)) {
-      this.storageProxies.set(muxId, new StorageProxy(muxId, this, this.type, this.storageKey));
-    }
-    this.storageProxies.getL(muxId).registerHandle(handle);
+  createStorageCommunicationEndpointProvider(muxId: string, storageEndpoint: StorageCommunicationEndpoint<T>, backingStorageProxy: BackingStorageProxy<T>): StorageCommunicationEndpointProvider<T> {
+    return {
+      getStorageEndpoint(): StorageCommunicationEndpoint<T> {
+        return {
+          async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
+            message.muxId = muxId;
+            await storageEndpoint.onProxyMessage(message);
+          },
+          setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
+            backingStorageProxy.callbacks[muxId] = callback;
+          },
+          reportExceptionInHost(exception: PropagatedException): void {
+            storageEndpoint.reportExceptionInHost(exception);
+          },
+          getChannelConstructor(): ChannelConstructor {
+            return storageEndpoint.getChannelConstructor();
+          }
+        };
+      }
+    };
   }
 
   async onMessage(message: ProxyMessage<T>): Promise<void> {

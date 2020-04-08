@@ -96,6 +96,12 @@ type ExceptionHandler = (arc: Arc, input: Error) => void;
 const systemHandlers = <ExceptionHandler[]>[];
 
 export function reportSystemException(arc: Arc, exception: PropagatedException) {
+  // TODO: handle reporting of system exceptions that have come from stores.
+  // At the moment, a store reporting an exception does not supply the arc that the
+  // exception belongs to.
+  if (arc == null) {
+    return;
+  }
   for (const handler of systemHandlers) {
     handler(arc, exception);
   }
