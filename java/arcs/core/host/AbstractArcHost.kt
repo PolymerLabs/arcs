@@ -81,6 +81,10 @@ abstract class AbstractArcHost(
      */
     protected fun isRunning(arcId: String) = runningArcs[arcId]?.arcState == ArcState.Running
 
+    /** Lookup an [ArcHostContext] and return its [ArcState]. */
+    override suspend fun lookupArcHostStatus(partition: Plan.Partition) =
+        lookupOrCreateArcHostContext(partition.arcId).arcState
+
     /**
      * This property is true if this [ArcHost] has no running, memory resident arcs, e.g.
      * running [Particle]s with active connected [Handle]s.

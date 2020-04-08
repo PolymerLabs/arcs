@@ -15,6 +15,8 @@ import android.content.Intent
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
+import arcs.core.host.ArcHostException
+import arcs.core.host.ArcState
 import arcs.core.host.ParticleIdentifier
 
 /**
@@ -51,6 +53,16 @@ class IntentArcHostAdapter(
         sendIntentToHostServiceForResult(
             partition.createStopArcHostIntent(hostComponentName, hostId)
         )
+    }
+
+    override suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState {
+        return sendIntentToArcHostServiceForResult(
+            partition.createLookupArcStatusIntent(
+                arcHostComponentName
+            )
+        ) {
+            ArcState.valueOf(it.toString())
+        } ?: ArcState.Error
     }
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =

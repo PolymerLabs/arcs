@@ -26,6 +26,7 @@ import arcs.android.host.parcelables.ParcelablePlanPartition
 import arcs.android.host.parcelables.toParcelable
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
+import arcs.core.host.ArcState
 import arcs.core.host.ParticleIdentifier
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
@@ -129,6 +130,12 @@ class ArcHostHelper(
                     intent,
                     arcHost::registeredParticles
                 )
+            Operation.LookupArcStatus ->
+                runWithResult(
+                    intent,
+                    ParcelablePlanPartition::class,
+                    arcHost::lookupArcHostStatus
+                )
             else -> Unit
         }
     }
@@ -152,7 +159,7 @@ class ArcHostHelper(
         block: suspend () -> Any?
     ) {
         val bundle = Bundle()
-        val result = block()
+        val result = try { block() } catch(e: Exception) { e }
 
         when (result) {
             is Set<*> -> {
@@ -170,10 +177,17 @@ class ArcHostHelper(
                     arrayList
                 )
             }
+            is ArcState ->
+                bundle.putString(EXTRA_OPERATION_RESULT, result.toString())
             is Parcelable ->
                 bundle.putParcelable(EXTRA_OPERATION_RESULT, result)
             is Operation ->
                 bundle.putInt(EXTRA_OPERATION_RESULT, result.ordinal)
+            is Exception -> {
+                bundle.putString(EXTRA_OPERATION_EXCEPTION, result.message)
+                bundle.putString(EXTRA_OPERATION_EXCEPTION_STACKTRACE,
+                    result.stackTrace.joinToString("\n"))
+            }
             else -> Unit
         }
         // This triggers a suspended coroutine to resume with the value.
@@ -185,7 +199,8 @@ class ArcHostHelper(
         StartArc,
         StopArc,
         GetRegisteredParticles,
-        AvailableHosts
+        AvailableHosts,
+        LookupArcStatus
     }
 
     companion object {
@@ -195,6 +210,9 @@ class ArcHostHelper(
         private const val EXTRA_OPERATION_ARG = "EXTRA_OPERATION_ARG"
         private const val EXTRA_OPERATION_RECEIVER = "EXTRA_OPERATION_RECEIVER"
         internal const val EXTRA_OPERATION_RESULT = "EXTRA_OPERATION_RESULT"
+        internal const val EXTRA_OPERATION_EXCEPTION = "EXTRA_OPERATION_EXCEPTION"
+        internal const val EXTRA_OPERATION_EXCEPTION_STACKTRACE =
+            "EXTRA_OPERATION_EXCEPTION_STACKTRACE"
 
         internal fun createArcHostIntent(
             operation: Operation,
@@ -214,6 +232,9 @@ class ArcHostHelper(
         @VisibleForTesting
         fun setResultReceiver(intent: Intent, receiver: ResultReceiver?) =
             intent.putExtra(EXTRA_OPERATION_RECEIVER, receiver)
+
+        @VisibleForTesting
+        fun getResultString(resultData: Bundle?) = resultData?.getString(EXTRA_OPERATION_RESULT)
 
         @VisibleForTesting
         fun getParticleIdentifierListResult(resultData: Bundle?): List<ParticleIdentifier> =
@@ -272,6 +293,16 @@ fun Plan.Partition.createStartArcHostIntent(service: ComponentName, hostId: Stri
         ArcHostHelper.Operation.StartArc,
         service,
         hostId,
+        this.toParcelable()
+    )
+
+/**
+ * Creates an [Intent] to invoke [ArcHost.lookupArcStatus] on a [Service]'s internal [ArcHost].
+ */
+fun Plan.Partition.createLookupArcStatusIntent(service: ComponentName): Intent =
+    ArcHostHelper.createArcHostIntent(
+        ArcHostHelper.Operation.LookupArcStatus,
+        service,
         this.toParcelable()
     )
 
