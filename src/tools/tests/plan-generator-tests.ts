@@ -13,6 +13,8 @@ import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Ttl, TtlUnits} from '../../runtime/recipe/ttl.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
+import {Handle} from '../../runtime/recipe/handle.js';
+import {Capabilities} from '../../runtime/capabilities.js';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
@@ -138,7 +140,7 @@ describe('recipe2plan', () => {
       const actuals: string[] = [];
       for (const handle of manifest.recipes[0].handles) {
         const newActual = await emptyGenerator.createStorageKey(handle);
-        assert.match(newActual, /CreateableStorageKey\("handle\/[\w\d]+"\)/); for (const existing of actuals) {
+        assert.match(newActual, /CreateableStorageKey\("handle\/[\w\d]+"/); for (const existing of actuals) {
           assert.notDeepEqual(existing, newActual);
         }
         actuals.push(newActual);
@@ -168,7 +170,7 @@ describe('recipe2plan', () => {
       const actuals: string[] = [];
       for (const handle of recipes[0].handles) {
         const newActual = await generator.createStorageKey(handle);
-        assert.match(newActual, /CreateableStorageKey\("handle\/[\w\d]+"\)/);
+        assert.match(newActual, /CreateableStorageKey\("handle\/[\w\d]+"/);
         for (const existing of actuals) {
           assert.notDeepEqual(existing, newActual);
         }
@@ -183,7 +185,7 @@ describe('recipe2plan', () => {
        data: reads Thing {num: Number}
        
      recipe R
-       h: create persistent 
+       h: create 
        A
          data: writes h
        B
@@ -230,6 +232,38 @@ describe('recipe2plan', () => {
       assert.isBelow(plan.indexOf('particle.A'), plan.indexOf('particle.B'));
       assert.isBelow(plan.indexOf('particle.B'), plan.indexOf('particle.C'));
       assert.isBelow(plan.indexOf('particle.C'), plan.indexOf('particle.D'));
+    });
+    it('refers to static constants when translating a single capability', () => {
+      const generator = new PlanGenerator([], 'blah');
+
+      assert.deepStrictEqual(
+        generator.createCapabilities(Capabilities.persistent),
+        `Capabilities.isPersistent`
+      );
+      assert.deepStrictEqual(
+        generator.createCapabilities(Capabilities.queryable),
+        `Capabilities.isQueryable`
+      );
+      assert.deepStrictEqual(
+        generator.createCapabilities(Capabilities.tiedToArc),
+        `Capabilities.isTiedToArc`
+      );
+      assert.deepStrictEqual(
+        generator.createCapabilities(Capabilities.tiedToRuntime),
+        `Capabilities.isTiedToRuntime`
+      );
+    });
+    it('constructs a capabilities object when translating multiple capabilities', () => {
+      const generator = new PlanGenerator([], 'blah');
+
+      assert.deepStrictEqual(
+        generator.createCapabilities(Capabilities.persistentQueryable),
+        `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.Queryable))`
+      );
+      assert.deepStrictEqual(
+        generator.createCapabilities(new Capabilities(['tied-to-arc', 'persistent'])),
+        `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc))`
+      );
     });
   });
 });

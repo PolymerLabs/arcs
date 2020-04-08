@@ -23,6 +23,9 @@ data class Capabilities(val capabilities: Set<Capability>) {
     /** Whether the store needs to be persistent */
     val isPersistent: Boolean
         get() = capabilities.contains(Capability.Persistent)
+    /** Whether the store needs to be queryable */
+    val isQueryable: Boolean
+        get() = capabilities.contains(Capability.Queryable)
     /** Whether the store needs to be in-memory and shared across all Arcs (e.g. ramdisk) */
     val isTiedToRuntime: Boolean
         get() = capabilities.contains(Capability.TiedToRuntime)
@@ -32,6 +35,7 @@ data class Capabilities(val capabilities: Set<Capability>) {
 
     enum class Capability {
         Persistent,
+        Queryable,
         TiedToRuntime,
         TiedToArc
     }
@@ -40,6 +44,7 @@ data class Capabilities(val capabilities: Set<Capability>) {
         /** Helper constants with useful capability variants. */
         val Empty: Capabilities = Capabilities(emptySet())
         val Persistent: Capabilities = Capabilities(setOf<Capability>(Capability.Persistent))
+        val Queryable: Capabilities = Capabilities(setOf<Capability>(Capability.Queryable))
         val TiedToRuntime: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToRuntime))
         val TiedToArc: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToArc))
     }
