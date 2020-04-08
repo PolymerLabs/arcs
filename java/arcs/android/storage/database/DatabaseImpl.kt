@@ -740,7 +740,7 @@ class DatabaseImpl(
             val storageKeyIds = storageKeyIdsPairs.map { it.first.toString() }.toTypedArray()
             val storageKeys = storageKeyIdsPairs.map { it.second }.toTypedArray()
             // List of question marks of the same length, to be used in queries.
-            val questionMarks = storageKeyIdsPairs.map { "?" }.joinToString()
+            val questionMarks = questionMarks(storageKeyIds)
 
             // Find collection ids for collection fields of the expired entities.
             val collectionIdsToDelete = rawQuery(
@@ -757,7 +757,7 @@ class DatabaseImpl(
                 """.trimIndent(),
                 storageKeyIds
             ).map { it.getLong(0).toString() }.toSet().toTypedArray()
-            val collectionQuestionMarks = collectionIdsToDelete.map { "?" }.joinToString()
+            val collectionQuestionMarks = questionMarks(collectionIdsToDelete)
             // Remove entries for those collections.
             delete(
                 TABLE_COLLECTION_ENTRIES,
@@ -849,6 +849,11 @@ class DatabaseImpl(
             }
         }
     }
+
+    /* Constructs a string with [array.size] question marks separated by a comma. This can be used
+     * to pass [array] as parameters to sql statements.
+     */
+    private fun questionMarks(array: Array<String>) = array.map { "?" }.joinToString()
 
     @VisibleForTesting
     suspend fun getSchemaTypeId(
