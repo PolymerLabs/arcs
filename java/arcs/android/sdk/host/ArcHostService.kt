@@ -11,14 +11,12 @@
 package arcs.android.sdk.host
 
 import android.content.Intent
-import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LifecycleService
 import arcs.core.host.ArcHost
 
 /**
  * Base [Service] for embedders of [ArcHost].
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 abstract class ArcHostService : LifecycleService() {
     /**
      * Subclasses must override this with their own [ArcHost].
