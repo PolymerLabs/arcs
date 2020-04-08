@@ -45,6 +45,9 @@ data class Capabilities(val capabilities: Set<Capability>) {
         val Empty: Capabilities = Capabilities(emptySet())
         val Persistent: Capabilities = Capabilities(setOf<Capability>(Capability.Persistent))
         val Queryable: Capabilities = Capabilities(setOf<Capability>(Capability.Queryable))
+        val PersistentQueryable: Capabilities = Capabilities(
+            setOf<Capability>(Capability.Persistent, Capability.Queryable)
+        )
         val TiedToRuntime: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToRuntime))
         val TiedToArc: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToArc))
     }
