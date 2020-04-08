@@ -19,7 +19,17 @@ import arcs.core.crdt.CrdtChange.Operations
 import arcs.core.crdt.CrdtSet.Data
 import arcs.core.data.util.ReferencablePrimitive
 
-/** A [CrdtModel] capable of managing a set of items [T]. */
+/**
+ * A [CrdtModel] capable of managing a set of items [T].
+ *
+ * The implementation is based on the optimized OR-Set as described in:
+ *
+ * Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro,
+ * Carlos Baquero, Valter Balegas, Sérgio Duarte,
+ * "An Optimized Conflict-free Replicated Set" (2012)
+ *
+ * https://arxiv.org/abs/1210.3368
+ */
 class CrdtSet<T : Referencable>(
     /** Initial data. */
     /* internal */ var _data: Data<T> = DataImpl(),
@@ -85,22 +95,26 @@ class CrdtSet<T : Referencable>(
             }
         }
 
-        this._data = mergedData
-
-        val (myOperations, otherOperations) = if (
+        val otherOperations = if (
             fastForwardOp.added.isNotEmpty() ||
             fastForwardOp.removed.isNotEmpty() ||
             oldClock doesNotDominate newClock
         ) {
-            CrdtChange.Data<Data<T>, IOperation<T>>(mergedData) to
-                Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())
+            Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())
         } else {
-            Operations<Data<T>, IOperation<T>>(mutableListOf()) to
-                Operations<Data<T>, IOperation<T>>(mutableListOf())
+            Operations<Data<T>, IOperation<T>>(mutableListOf())
         }
 
+        val myChange = if (mergedData == this._data) {
+            Operations<Data<T>, IOperation<T>>(mutableListOf())
+        } else {
+            CrdtChange.Data<Data<T>, IOperation<T>>(mergedData)
+        }
+
+        this._data = mergedData
+
         return MergeChanges(
-            modelChange = myOperations, otherChange = otherOperations
+            modelChange = myChange, otherChange = otherOperations
         )
     }
 
