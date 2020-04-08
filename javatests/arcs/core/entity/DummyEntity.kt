@@ -38,7 +38,7 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA) {
 
         const val ENTITY_CLASS_NAME = "DummyEntity"
 
-        const val SCHEMA_HASH = "hash"
+        const val SCHEMA_HASH = "abcdef"
 
         override val SCHEMA = Schema(
             names = setOf(SchemaName(ENTITY_CLASS_NAME)),
