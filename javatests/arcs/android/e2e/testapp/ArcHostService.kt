@@ -11,10 +11,8 @@
 
 package arcs.android.e2e.testapp
 
-import android.app.Service
 import android.content.Intent
-import android.os.IBinder
-import arcs.android.sdk.host.ArcHostHelper
+import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
@@ -22,46 +20,23 @@ import arcs.core.host.toRegistration
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
  * Service which wraps an ArcHost.
  */
-class ArcHostService : Service() {
+class ArcHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
-    private val scope = CoroutineScope(coroutineContext)
 
-    private val myHelper: ArcHostHelper by lazy {
-        val host = MyArcHost(
-            JvmSchedulerProvider(coroutineContext),
-            ::ReadPerson.toRegistration(),
-            ::WritePerson.toRegistration()
-        )
-        ArcHostHelper(this, host)
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
-
-        myHelper.onStartCommand(intent)
-
-        return START_NOT_STICKY
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
-
-    override fun onDestroy() {
-        coroutineContext.cancelChildren()
-        super.onDestroy()
-    }
+    override val arcHost = MyArcHost(
+        JvmSchedulerProvider(coroutineContext),
+        ::ReadPerson.toRegistration(),
+        ::WritePerson.toRegistration()
+    )
 
     class MyArcHost(
         schedulerProvider: SchedulerProvider,
