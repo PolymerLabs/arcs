@@ -10,11 +10,11 @@
  */
 package arcs.core.entity
 
+import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.referencemode.ReferenceModeStorageKey
 
 typealias CollectionData<T> = CrdtSet.Data<T>
 typealias CollectionOp<T> = CrdtSet.IOperation<T>
@@ -39,16 +39,16 @@ typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<
  * This class won't be returned directly; instead it will be wrapped in a facade object that
  * exposes only the methods that should be exposed.
  */
-class CollectionHandle<T : Entity>(
+class CollectionHandle<T : Storable, R : Referencable>(
     name: String,
-    spec: HandleSpec<T>,
+    spec: HandleSpec<out Entity>,
     /** Interface to storage for [RawEntity] objects backing an `entity: T`. */
-    val storageProxy: CollectionProxy<RawEntity>,
+    val storageProxy: CollectionProxy<R>,
     /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
-    val entityPreparer: EntityPreparer<T>,
-    /** Provides logic to fetch [RawEntity] object backing a [Reference] field. */
-    val dereferencerFactory: EntityDereferencerFactory
-) : BaseHandle<T>(name, spec, storageProxy), ReadWriteQueryCollectionHandle<T, Any> {
+    val storageAdapter: StorageAdapter<T, R>,
+    dereferencerFactory: EntityDereferencerFactory
+) : BaseHandle<T>(name, spec, storageProxy, dereferencerFactory),
+    ReadWriteQueryCollectionHandle<T, Any> {
 
     init {
         check(spec.containerType == HandleContainerType.Collection)
@@ -68,6 +68,7 @@ class CollectionHandle<T : Entity>(
     override suspend fun query(args: Any): Set<T> = checkPreconditions {
         (spec.entitySpec.SCHEMA.query?.let { query ->
             storageProxy.getParticleView().filter {
+                check(it is RawEntity) { "Queries only work with Entity-typed Handles." }
                 query(it, args)
             }.toSet()
         } ?: emptySet()).let { adaptValues(it) }
@@ -75,12 +76,12 @@ class CollectionHandle<T : Entity>(
     // endregion
 
     // region implement WriteCollectionHandle<T>
-    override suspend fun store(entity: T) = checkPreconditions<Unit> {
+    override suspend fun store(element: T) = checkPreconditions<Unit> {
         storageProxy.applyOp(
             CrdtSet.Operation.Add(
                 name,
                 storageProxy.getVersionMap().increment(name),
-                entityPreparer.prepareEntity(entity)
+                storageAdapter.storableToReferencable(element)
             )
         )
     }
@@ -97,12 +98,12 @@ class CollectionHandle<T : Entity>(
         }
     }
 
-    override suspend fun remove(entity: T) = checkPreconditions<Unit> {
+    override suspend fun remove(element: T) = checkPreconditions<Unit> {
         storageProxy.applyOp(
             CrdtSet.Operation.Remove(
                 name,
                 storageProxy.getVersionMap(),
-                entity.serialize()
+                storageAdapter.storableToReferencable(element)
             )
         )
     }
@@ -118,28 +119,25 @@ class CollectionHandle<T : Entity>(
 
     override suspend fun onResync(action: () -> Unit) = storageProxy.addOnResync(name, action)
 
-    override suspend fun createReference(entity: T): Reference<T> {
+    override suspend fun <E : Entity> createReference(entity: E): Reference<E> {
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."
         }
-        val storageKey = requireNotNull(storageProxy.storageKey as? ReferenceModeStorageKey) {
-            "ReferenceModeStorageKey required in order to create references."
-        }
-        require(fetchAll().any { it.entityId == entityId }) {
-            "Entity is not stored in the Collection."
-        }
-
-        return Reference(
-            spec.entitySpec,
-            arcs.core.storage.Reference(entity.serialize().id, storageKey.backingKey, null).also {
-                it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
+        fetchAll().let { data ->
+            data.firstOrNull()?.let {
+                require(it is Entity) {
+                    "Handle must contain Entity-typed elements in order to create references."
+                }
             }
-        )
+            require(data.any { it is Entity && it.entityId == entityId }) {
+                "Entity is not stored in the Collection."
+            }
+        }
+        return createReferenceInternal(entity)
     }
     // endregion
 
-    private fun adaptValues(values: Set<RawEntity>) = values.map {
-        dereferencerFactory.injectDereferencers(spec.entitySpec.SCHEMA, it)
-        spec.entitySpec.deserialize(it)
-    }.toSet()
+    private fun adaptValues(values: Set<R>): Set<T> = values.mapTo(mutableSetOf()) {
+        storageAdapter.referencableToStorable(it)
+    }
 }

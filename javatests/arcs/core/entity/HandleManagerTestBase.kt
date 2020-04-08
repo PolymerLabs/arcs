@@ -13,7 +13,7 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.Reference
+import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -40,8 +40,8 @@ open class HandleManagerTestBase {
         val name: String,
         val age: Int,
         val isCool: Boolean,
-        val bestFriend: Reference? = null,
-        val hat: Reference? = null
+        val bestFriend: StorageReference? = null,
+        val hat: StorageReference? = null
     ) : Entity {
 
         var raw: RawEntity? = null
@@ -87,8 +87,8 @@ open class HandleManagerTestBase {
                 name = (data.singletons["name"] as ReferencablePrimitive<String>).value,
                 age = (data.singletons["age"] as ReferencablePrimitive<Int>).value,
                 isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
-                bestFriend = data.singletons["best_friend"] as? Reference,
-                hat = data.singletons["hat"] as? Reference
+                bestFriend = data.singletons["best_friend"] as? StorageReference,
+                hat = data.singletons["hat"] as? StorageReference
             ).apply {
                 raw = data
             }
@@ -117,7 +117,7 @@ open class HandleManagerTestBase {
         name = "Jason",
         age = 21,
         isCool = false,
-        bestFriend = Reference("entity2", backingKey, null),
+        bestFriend = StorageReference("entity2", backingKey, null),
         hat = null
     )
     private val entity2 = Person(
@@ -125,7 +125,7 @@ open class HandleManagerTestBase {
         name = "Jason",
         age = 22,
         isCool = true,
-        bestFriend = Reference("entity1", backingKey, null),
+        bestFriend = StorageReference("entity1", backingKey, null),
         hat = null
     )
 
@@ -353,8 +353,7 @@ open class HandleManagerTestBase {
 
         // Do the same for entity2's best_friend
         val dereferencedRawEntity1 =
-            (refReadHandle.fetch()!!.bestFriend as Reference)
-                .dereference(coroutineContext)!!
+            refReadHandle.fetch()!!.bestFriend!!.dereference(coroutineContext)!!
         val dereferencedEntity1 = Person.deserialize(dereferencedRawEntity1)
         assertThat(dereferencedEntity1).isEqualTo(entity1)
     }
@@ -374,7 +373,7 @@ open class HandleManagerTestBase {
         val fez = Hat(entityId = "fez-id", style = "fez")
         hatCollection.store(fez)
         val fezRef = hatCollection.createReference(fez)
-        val fezStorageRef = fezRef.toReferencable() as Reference
+        val fezStorageRef = fezRef.toReferencable()
 
         // Give the hat to an entity and store it.
         val personWithHat = Person(
@@ -639,7 +638,7 @@ open class HandleManagerTestBase {
         val fez = Hat(entityId = "fez-id", style = "fez")
         hatCollection.store(fez)
         val fezRef = hatCollection.createReference(fez)
-        val fezStorageRef = fezRef.toReferencable() as Reference
+        val fezStorageRef = fezRef.toReferencable()
 
         // Give the hat to an entity and store it.
         val personWithHat = Person(
@@ -766,7 +765,7 @@ open class HandleManagerTestBase {
 
     private suspend fun EntityHandleManager.createCollectionHandle(
         storageKey: StorageKey = collectionKey,
-        name: String = "collectionRefReadHandle",
+        name: String = "collectionReadHandle",
         ttl: Ttl = Ttl.Infinite
     ) = createCollectionHandle(storageKey, name, ttl, Person)
 

@@ -24,21 +24,33 @@ interface Handle {
     suspend fun close()
 }
 
+/** Base interface for types that can be stored in a [Handle] (see [Entity] and [Reference]). */
+interface Storable
+
+/** Configuration for a [Handle]. */
 data class HandleSpec<T : Entity>(
     val baseName: String,
     val mode: HandleMode,
     val containerType: HandleContainerType,
-    val entitySpec: EntitySpec<T>
+    val entitySpec: EntitySpec<T>,
+    val dataType: HandleDataType = HandleDataType.Entity
 )
 
 typealias HandleMode = HandleMode
 
+/** The type of container that a [Handle] represents. */
 enum class HandleContainerType {
     Singleton,
     Collection
 }
 
-interface ReadableHandle<UpdateType, E : Entity> : Handle {
+/** The type of data stored in a [Handle]. */
+enum class HandleDataType {
+    Entity,
+    Reference
+}
+
+interface ReadableHandle<UpdateType> : Handle {
     /** Assign a callback when the handle's data changes. */
     suspend fun onUpdate(action: suspend (UpdateType) -> Unit)
 
@@ -52,30 +64,33 @@ interface ReadableHandle<UpdateType, E : Entity> : Handle {
      * Creates and returns a [Reference] to the given entity.
      *
      * The entity must already be stored and present in the handle before calling this method.
+     *
+     * Note that this method only works for handles which store [Entity] types (i.e. not handles
+     * containing [Reference]s). [E] must be the same type the handle stores.
      */
-    suspend fun createReference(entity: E): Reference<E>
+    suspend fun <E : Entity> createReference(entity: E): Reference<E>
 }
 
 /** A singleton handle with read access. */
-interface ReadSingletonHandle<T : Entity> : ReadableHandle<T?, T> {
+interface ReadSingletonHandle<T : Storable> : ReadableHandle<T?> {
     /** Returns the value of the singleton. */
     suspend fun fetch(): T?
 }
 
 /** A singleton handle with write access. */
-interface WriteSingletonHandle<T : Entity> : Handle {
+interface WriteSingletonHandle<T : Storable> : Handle {
     /** Sets the value of the singleton. */
-    suspend fun store(entity: T)
+    suspend fun store(element: T)
 
     /** Clears the value of the singleton. */
     suspend fun clear()
 }
 
 /** A singleton handle with read and write access. */
-interface ReadWriteSingletonHandle<T : Entity> : ReadSingletonHandle<T>, WriteSingletonHandle<T>
+interface ReadWriteSingletonHandle<T : Storable> : ReadSingletonHandle<T>, WriteSingletonHandle<T>
 
 /** A collection handle with read access. */
-interface ReadCollectionHandle<T : Entity> : ReadableHandle<Set<T>, T> {
+interface ReadCollectionHandle<T : Storable> : ReadableHandle<Set<T>> {
     /** The number of elements in the collection. */
     suspend fun size(): Int
 
@@ -87,30 +102,31 @@ interface ReadCollectionHandle<T : Entity> : ReadableHandle<Set<T>, T> {
 }
 
 /** A collection handle with read access. */
-interface QueryCollectionHandle<T : Entity, QueryArgs> : Handle {
+interface QueryCollectionHandle<T : Storable, QueryArgs> : Handle {
     /** Returns a set with all the entities in the collection that match the associated query. */
     suspend fun query(args: QueryArgs): Set<T>
 }
 
 /** A collection handle with write access. */
-interface WriteCollectionHandle<T : Entity> : Handle {
-    /** Adds the given [entity] to the collection. */
-    suspend fun store(entity: T)
+interface WriteCollectionHandle<T : Storable> : Handle {
+    /** Adds the given [element] to the collection. */
+    suspend fun store(element: T)
 
     /** Removes everything from the collection. */
     suspend fun clear()
 
-    /** Removes the given [entity] from the collection. */
-    suspend fun remove(entity: T)
+    /** Removes the given [element] from the collection. */
+    suspend fun remove(element: T)
 }
 
 /** A collection handle with read and write access. */
-interface ReadWriteCollectionHandle<T : Entity> : ReadCollectionHandle<T>, WriteCollectionHandle<T>
+interface ReadWriteCollectionHandle<T : Storable> :
+    ReadCollectionHandle<T>, WriteCollectionHandle<T>
 
 /** A collection handle with read and query access. */
-interface ReadQueryCollectionHandle<T : Entity, QueryArgs> :
+interface ReadQueryCollectionHandle<T : Storable, QueryArgs> :
     ReadCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with read, write and query access. */
-interface ReadWriteQueryCollectionHandle<T : Entity, QueryArgs> :
+interface ReadWriteQueryCollectionHandle<T : Storable, QueryArgs> :
     ReadWriteCollectionHandle<T>, ReadQueryCollectionHandle<T, QueryArgs>

@@ -18,7 +18,7 @@ import arcs.core.storage.Reference as StorageReference
 class Reference<T : Entity>(
     val entitySpec: EntitySpec<T>,
     private val storageReference: StorageReference
-) {
+) : Storable {
     /** The schema hash for the [Reference]'s associated schema. */
     val schemaHash = entitySpec.SCHEMA.hash
 
@@ -29,7 +29,7 @@ class Reference<T : Entity>(
     suspend fun dereference() = storageReference.dereference()?.let { entitySpec.deserialize(it) }
 
     /** Returns a [Referencable] for this reference. */
-    /* internal */ fun toReferencable(): Referencable = storageReference
+    /* internal */ fun toReferencable(): StorageReference = storageReference
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

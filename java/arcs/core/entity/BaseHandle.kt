@@ -11,12 +11,14 @@
 package arcs.core.entity
 
 import arcs.core.storage.StorageProxy
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 
 /** Base functionality common to all read/write singleton and collection handles. */
-abstract class BaseHandle<T : Entity>(
+abstract class BaseHandle<T : Storable>(
     override val name: String,
-    protected val spec: HandleSpec<T>,
-    private val storageProxy: StorageProxy<*, *, *>
+    val spec: HandleSpec<out Entity>,
+    private val storageProxy: StorageProxy<*, *, *>,
+    private val dereferencerFactory: EntityDereferencerFactory
 ) : Handle {
     protected var closed = false
 
@@ -30,5 +32,24 @@ abstract class BaseHandle<T : Entity>(
     override suspend fun close() {
         closed = true
         storageProxy.removeCallbacksForName(name)
+    }
+
+    /**
+     * Constructs a [Reference] to the given [entity].
+     *
+     * Subclasses should implement their own `createReference` method, which first ensures that the
+     * entity is actually stored in the handle before calling this internal method.
+     */
+    @Suppress("UNCHECKED_CAST")
+    protected fun <E : Entity> createReferenceInternal(entity: E): Reference<E> {
+        val storageKey = requireNotNull(storageProxy.storageKey as? ReferenceModeStorageKey) {
+            "ReferenceModeStorageKey required in order to create references."
+        }
+        return Reference(
+            spec.entitySpec,
+            arcs.core.storage.Reference(entity.serialize().id, storageKey.backingKey, null).also {
+                it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
+            }
+        ) as Reference<E>
     }
 }
