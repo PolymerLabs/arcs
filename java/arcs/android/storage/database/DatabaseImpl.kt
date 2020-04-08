@@ -853,7 +853,7 @@ class DatabaseImpl(
     /* Constructs a string with [array.size] question marks separated by a comma. This can be used
      * to pass [array] as parameters to sql statements.
      */
-    private fun questionMarks(array: Array<String>) = array.map { "?" }.joinToString()
+    private fun questionMarks(array: Array<String>): String = array.map { "?" }.joinToString()
 
     @VisibleForTesting
     suspend fun getSchemaTypeId(
