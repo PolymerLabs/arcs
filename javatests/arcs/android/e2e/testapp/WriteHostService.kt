@@ -34,9 +34,7 @@ class WriteHostService : ArcHostService() {
     override val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
-        initialParticles = *arrayOf(
-            ::WritePerson.toRegistration()
-        )
+        ::WritePerson.toRegistration()
     )
 
     class MyArcHost(

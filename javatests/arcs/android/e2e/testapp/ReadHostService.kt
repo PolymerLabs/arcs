@@ -37,9 +37,7 @@ class ReadHostService : ArcHostService() {
     override val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
-        initialParticles = *arrayOf(
-            ::ReadPerson.toRegistration()
-        )
+        ::ReadPerson.toRegistration()
     )
 
     class MyArcHost(
