@@ -27,6 +27,7 @@ import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.host.ArcHost
+import arcs.core.host.ArcHostException
 import arcs.core.host.ArcHostNotFoundException
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
@@ -71,8 +72,13 @@ class Allocator private constructor(
         val partitions = computePartitions(arcId, newPlan)
         // Store computed partitions for later
         writePartitionMap(arcId, partitions)
-        startPlanPartitionsOnHosts(partitions)
-        return arcId
+        try {
+            startPlanPartitionsOnHosts(partitions)
+            return arcId
+        } catch (e: ArcHostException) {
+            stopArc(arcId)
+            throw e
+        }
     }
 
     /**

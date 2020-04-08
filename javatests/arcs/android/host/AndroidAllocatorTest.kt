@@ -20,14 +20,20 @@ import arcs.android.sdk.host.toComponentName
 import arcs.core.allocator.AllocatorTestBase
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.data.Capabilities
+import arcs.core.host.ArcHostException
+import arcs.core.host.ArcState
 import arcs.core.host.HostRegistry
+import arcs.core.host.PersonPlan
+import arcs.core.testutil.assertSuspendingThrows
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import com.google.common.truth.Truth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 
@@ -93,4 +99,15 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
         super.setUp()
     }
 
+    @Test
+    fun allocator_startArc_throwsException() = runAllocatorTest {
+        writingHost().throws = true
+
+        assertSuspendingThrows(ArcHostException::class) {
+            allocator.startArcForPlan(
+                "readWriteParticle",
+                PersonPlan
+            )
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package arcs.core.allocator
 
+import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
@@ -30,6 +31,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.concurrent.Executors
+import java.lang.IllegalArgumentException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -39,7 +41,7 @@ open class AllocatorTestBase {
     /**
      * Recipe hand translated from 'person.arcs'
      */
-    private lateinit var allocator: Allocator
+    protected lateinit var allocator: Allocator
     private lateinit var hostRegistry: HostRegistry
     private lateinit var writePersonParticle: Plan.Particle
     private lateinit var readPersonParticle: Plan.Particle
@@ -118,6 +120,26 @@ open class AllocatorTestBase {
         readingExternalHost.setup()
         pureHost.setup()
         writingExternalHost.setup()
+        WritePerson.throws = false
+    }
+
+    private suspend fun assertAllStatus(
+        arcId: ArcId,
+        arcState: ArcState,
+        testAllocator: Allocator = allocator
+    ) {
+        requireNotNull(testAllocator.getPartitionsFor(arcId)) {
+            "No Partitions for $arcId"
+        }.forEach { partition ->
+            val hostId = partition.arcHost
+            val status = when {
+                hostId.contains("Reading") -> readingExternalHost.lookupArcHostStatus(partition)
+                hostId.contains("Prod") -> pureHost.lookupArcHostStatus(partition)
+                hostId.contains("Writing") -> writingExternalHost.lookupArcHostStatus(partition)
+                else -> throw IllegalArgumentException("Unknown ${partition.arcHost}")
+            }
+            assertThat(status).isEqualTo(arcState)
+        }
     }
 
     /**
@@ -325,8 +347,7 @@ open class AllocatorTestBase {
             writingExternalHost.arcHostContext(arcId.toString())
         )
 
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+        assertAllStatus(arcId, ArcState.Running)
 
         val readPersonContext = requireNotNull(
             readingContext.particles[readPersonParticle.particleName]
@@ -368,13 +389,10 @@ open class AllocatorTestBase {
             writingExternalHost.arcHostContext(arcId.toString())
         )
 
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+        assertAllStatus(arcId, ArcState.Running)
 
         allocator.stopArc(arcId)
-
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
+        assertAllStatus(arcId, ArcState.Stopped)
 
         val readPersonContext = requireNotNull(
             readingContext.particles[readPersonParticle.particleName]
@@ -401,20 +419,10 @@ open class AllocatorTestBase {
             PersonPlan
         )
 
-        val readingContext = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
-        )
-        val writingContext = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
-        )
-
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+        assertAllStatus(arcId, ArcState.Running)
 
         allocator.stopArc(arcId)
-
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
+        assertAllStatus(arcId, ArcState.Stopped)
 
         allocator.startArcForPlan(
             "readWriteParticle",
@@ -428,8 +436,7 @@ open class AllocatorTestBase {
             writingExternalHost.arcHostContext(arcId.toString())
         )
 
-        assertThat(readingContextAfter.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContextAfter.arcState).isEqualTo(ArcState.Running)
+        assertAllStatus(arcId, ArcState.Running)
 
         val readPersonContext = requireNotNull(
             readingContextAfter.particles[readPersonParticle.particleName]
@@ -461,8 +468,7 @@ open class AllocatorTestBase {
             writingExternalHost.arcHostContext(arcId.toString())
         )
 
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+        assertAllStatus(arcId, ArcState.Running)
 
         val allocator2 = Allocator.create(
             hostRegistry,
@@ -488,21 +494,13 @@ open class AllocatorTestBase {
             PersonPlan
         )
 
-        val readingContext = requireNotNull(
-            readingExternalHost.arcHostContext(arcId.toString())
-        )
-        val writingContext = requireNotNull(
-            writingExternalHost.arcHostContext(arcId.toString())
-        )
-
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Running)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Running)
+        assertAllStatus(arcId, ArcState.Running)
 
         readingExternalHost.stopArc(readingExternalHost.started.first())
+        pureHost.stopArc(pureHost.started.first())
         writingExternalHost.stopArc(writingExternalHost.started.first())
 
-        assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
-        assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
+        assertAllStatus(arcId, ArcState.Stopped)
 
         // This erases the internally held-in-memory-cache ArcHost state simulating a crash
         readingExternalHost.setup()
@@ -516,5 +514,18 @@ open class AllocatorTestBase {
 
         assertThat(readingExternalHost.arcHostContext(arcId.toString())).isNull()
         assertThat(writingExternalHost.arcHostContext(arcId.toString())).isNull()
+    }
+
+//    @Test
+    fun allocator_startArc_particleException_isErrorState() = runAllocatorTest {
+        WritePerson.throws = true
+        val arcId = allocator.startArcForPlan(
+            "readWriteParticle",
+            PersonPlan
+        )
+
+        assertThat(writingExternalHost.arcHostContext(arcId.toString())?.arcState).isEqualTo(
+            ArcState.Error
+        )
     }
 }

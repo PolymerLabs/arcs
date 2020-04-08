@@ -26,6 +26,7 @@ import arcs.android.host.parcelables.ParcelablePlanPartition
 import arcs.android.host.parcelables.toParcelable
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
+import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
 import arcs.core.host.ParticleIdentifier
 import kotlin.reflect.KClass
@@ -159,7 +160,7 @@ class ArcHostHelper(
         block: suspend () -> Any?
     ) {
         val bundle = Bundle()
-        val result = try { block() } catch(e: Exception) { e }
+        val result = try { block() } catch (e: Exception) { e }
 
         when (result) {
             is Set<*> -> {
@@ -234,7 +235,13 @@ class ArcHostHelper(
             intent.putExtra(EXTRA_OPERATION_RECEIVER, receiver)
 
         @VisibleForTesting
-        fun getResultString(resultData: Bundle?) = resultData?.getString(EXTRA_OPERATION_RESULT)
+        fun getStringResult(resultData: Bundle?) = resultData?.getString(EXTRA_OPERATION_RESULT)
+
+        @VisibleForTesting
+        fun getExceptionResult(resultData: Bundle?) = ArcHostException(
+            resultData?.getString(EXTRA_OPERATION_EXCEPTION)!!,
+            resultData.getString(EXTRA_OPERATION_EXCEPTION_STACKTRACE)!!
+        )
 
         @VisibleForTesting
         fun getParticleIdentifierListResult(resultData: Bundle?): List<ParticleIdentifier> =

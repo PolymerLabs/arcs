@@ -33,12 +33,12 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
 import arcs.core.data.HandleMode
+import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
 import arcs.core.host.ParticleIdentifier
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.guardedBy
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -159,27 +159,28 @@ class ArcHostHelperTest {
             TestAndroidArcHostService::class.toComponentName(context)
         )
 
-        runWithResult(ArcHostHelper::getResultString) {
-            val actual = suspendCoroutine<String> { coroutine ->
-                ArcHostHelper.setResultReceiver(lookupIntent, object : ResultReceiver(Handler()) {
-                    override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
-                        val state = ArcHostHelper.getResultString(resultData)
-                        coroutine.resume(state ?: "")
-                    }
-                })
-                helper.onStartCommand(lookupIntent)
-            }
-            assertThat(actual).isEqualTo(ArcState.Stopped.toString())
+        val actual = runWithResult<String?>(lookupIntent) {
+                bundle -> ArcHostHelper.getStringResult(bundle)
         }
+        assertThat(actual).isEqualTo(ArcState.Stopped.toString())
     }
 
     private fun <T> runWithResult(
-        transformer: (Bundle?) -> T,
-        block: suspend CoroutineScope.() -> Bundle
-    ): T {
-      return runBlocking {
-          transformer(block())
-      }
+        intent: Intent,
+        transformer: (Bundle?) -> T
+    ): T = runBlocking {
+        suspendCoroutine<T> { coroutine ->
+            ArcHostHelper.setResultReceiver(
+                intent,
+                object : ResultReceiver(Handler()) {
+                    override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+                        val state = transformer(resultData)
+                        coroutine.resume(state!!)
+                    }
+                }
+            )
+            helper.onStartCommand(intent)
+        }
     }
 
     @Test
@@ -188,6 +189,12 @@ class ArcHostHelperTest {
         val startIntent = planPartition.createStartArcHostIntent(
             TestAndroidArcHostService::class.toComponentName(context)
         )
+        val exception = runWithResult(startIntent) {
+            bundle -> ArcHostHelper.getExceptionResult(bundle)
+        }
+        assertThat(exception).isInstanceOf(ArcHostException::class.java)
+        assertThat(exception).hasMessageThat().isEqualTo("Boom!")
+        assertThat(exception.stackTrace).contains("TestArcHost")
     }
 
     @Test
@@ -218,25 +225,12 @@ class ArcHostHelperTest {
         val getParticlesIntent = TestAndroidArcHostService::class.toComponentName(context)
             .createGetRegisteredParticlesIntent(arcHost.hostId)
 
-        // Wait for async result
-        runBlocking {
-            suspendCoroutine<List<ParticleIdentifier>?> { coroutine ->
-                ArcHostHelper.setResultReceiver(
-                    getParticlesIntent,
-                    object : ResultReceiver(Handler()) {
-                        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
-                            val particles =
-                                ArcHostHelper.getParticleIdentifierListResult(resultData)
-
-                            assertThat(particles).containsExactly(
-                                particleIdentifier, particleIdentifier2
-                            )
-                            coroutine.resume(particles)
-                        }
-                    }
-                )
-                helper.onStartCommand(getParticlesIntent)
-            }
+        val particles = runWithResult(getParticlesIntent) {
+            bundle -> ArcHostHelper.getParticleIdentifierListResult(bundle)
         }
+
+        assertThat(particles).containsExactly(
+            particleIdentifier, particleIdentifier2
+        )
     }
 }
