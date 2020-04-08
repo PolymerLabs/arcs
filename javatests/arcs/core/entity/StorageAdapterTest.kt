@@ -40,7 +40,7 @@ class StorageAdapterTest {
         val entity = DummyEntity().apply { text = "Watson" }
 
         // Convert to storage format (RawEntity).
-        val rawEntity = adapter.toStorage(entity)
+        val rawEntity = adapter.storableToReferencable(entity)
 
         assertThat(entity.entityId).isNotNull()
         assertThat(rawEntity.id).isNotEqualTo(NO_REFERENCE_ID)
@@ -50,7 +50,7 @@ class StorageAdapterTest {
         assertThat(entity.serialize()).isEqualTo(rawEntity)
 
         // Convert back from storage format again.
-        assertThat(adapter.fromStorage(rawEntity)).isEqualTo(entity)
+        assertThat(adapter.referencableToStorable(rawEntity)).isEqualTo(entity)
     }
 
     @Test
@@ -64,9 +64,9 @@ class StorageAdapterTest {
         val reference = Reference(DummyEntity, storageReference)
 
         // Convert to storage format (StorageReference).
-        assertThat(adapter.toStorage(reference)).isEqualTo(storageReference)
+        assertThat(adapter.storableToReferencable(reference)).isEqualTo(storageReference)
 
         // Convert back from storage format again.
-        assertThat(adapter.fromStorage(storageReference)).isEqualTo(reference)
+        assertThat(adapter.referencableToStorable(storageReference)).isEqualTo(reference)
     }
 }

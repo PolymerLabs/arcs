@@ -62,7 +62,7 @@ class SingletonHandle<T : Storable, R : Referencable>(
             CrdtSingleton.Operation.Update(
                 name,
                 storageProxy.getVersionMap().increment(name),
-                storageAdapter.toStorage(entity)
+                storageAdapter.storableToReferencable(entity)
             )
         )
     }
@@ -100,5 +100,5 @@ class SingletonHandle<T : Storable, R : Referencable>(
     }
     // endregion
 
-    private fun adaptValue(value: R?): T? = value?.let { storageAdapter.fromStorage(it) }
+    private fun adaptValue(value: R?): T? = value?.let { storageAdapter.referencableToStorable(it) }
 }

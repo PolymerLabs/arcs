@@ -81,7 +81,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
             CrdtSet.Operation.Add(
                 name,
                 storageProxy.getVersionMap().increment(name),
-                storageAdapter.toStorage(element)
+                storageAdapter.storableToReferencable(element)
             )
         )
     }
@@ -103,7 +103,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
             CrdtSet.Operation.Remove(
                 name,
                 storageProxy.getVersionMap(),
-                storageAdapter.toStorage(element)
+                storageAdapter.storableToReferencable(element)
             )
         )
     }
@@ -138,6 +138,6 @@ class CollectionHandle<T : Storable, R : Referencable>(
     // endregion
 
     private fun adaptValues(values: Set<R>): Set<T> = values.mapTo(mutableSetOf()) {
-        storageAdapter.fromStorage(it)
+        storageAdapter.referencableToStorable(it)
     }
 }

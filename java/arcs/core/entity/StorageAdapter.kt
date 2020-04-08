@@ -19,8 +19,11 @@ import arcs.core.util.Time
 
 /** Converts instances of developer-facing type [T] into a raw storage instances of type [R]. */
 sealed class StorageAdapter<T : Storable, R : Referencable> {
-    abstract fun toStorage(value: T): R
-    abstract fun fromStorage(referencable: R): T
+    /** Converts a [Storable] of type [T] into a [Referencable] of type [R]. */
+    abstract fun storableToReferencable(value: T): R
+
+    /** Converts a [Referencable] of type [R] into a [Storable] of type [T]. */
+    abstract fun referencableToStorable(referencable: R): T
 }
 
 /** [StorageAdapter] for converting [Entity] to/from [RawEntity]. */
@@ -33,7 +36,7 @@ class EntityStorageAdapter<T : Entity>(
     val time: Time,
     private val dereferencerFactory: EntityDereferencerFactory
 ) : StorageAdapter<T, RawEntity>() {
-    override fun toStorage(value: T): RawEntity {
+    override fun storableToReferencable(value: T): RawEntity {
         value.ensureEntityFields(idGenerator, handleName, time, ttl)
 
         val rawEntity = value.serialize()
@@ -44,7 +47,7 @@ class EntityStorageAdapter<T : Entity>(
         return rawEntity
     }
 
-    override fun fromStorage(referencable: RawEntity): T {
+    override fun referencableToStorable(referencable: RawEntity): T {
         dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, referencable)
         return entitySpec.deserialize(referencable)
     }
@@ -54,9 +57,9 @@ class EntityStorageAdapter<T : Entity>(
 class ReferenceStorageAdapter<E : Entity>(
     private val entitySpec: EntitySpec<E>
 ) : StorageAdapter<Reference<E>, StorageReference>() {
-    override fun toStorage(value: Reference<E>) = value.toReferencable()
+    override fun storableToReferencable(value: Reference<E>) = value.toReferencable()
 
-    override fun fromStorage(referencable: StorageReference): Reference<E> {
+    override fun referencableToStorable(referencable: StorageReference): Reference<E> {
         return Reference(entitySpec, referencable)
     }
 }
