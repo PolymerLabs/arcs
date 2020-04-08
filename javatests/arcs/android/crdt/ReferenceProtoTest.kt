@@ -9,13 +9,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.storage
+package arcs.android.crdt
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.android.crdt.ParcelableRawEntity
-import arcs.android.crdt.readReferencable
-import arcs.android.crdt.writeReference
+import arcs.android.util.writeProto
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.storage.Reference
@@ -26,7 +24,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ParcelableReferenceTest {
+class ReferenceProtoTest {
     @Before
     fun setUp() {
         RamDiskStorageKey.registerParser()
@@ -38,7 +36,7 @@ class ParcelableReferenceTest {
 
         // Create a parcel and populate it with a ParcelableOperations object.
         val marshalled = with(Parcel.obtain()) {
-            writeReference(expected, 0)
+            writeProto(expected.toProto())
             marshall()
         }
 
@@ -46,7 +44,7 @@ class ParcelableReferenceTest {
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readReferencable()
+            readReference()
         }
         assertThat(unmarshalled).isEqualTo(expected)
     }
@@ -61,7 +59,7 @@ class ParcelableReferenceTest {
 
         // Create a parcel and populate it with a ParcelableOperations object.
         val marshalled = with(Parcel.obtain()) {
-            writeReference(expected, 0)
+            writeProto(expected.toProto())
             marshall()
         }
 
@@ -69,7 +67,7 @@ class ParcelableReferenceTest {
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readReferencable()
+            readReference()
         }
         assertThat(unmarshalled).isEqualTo(expected)
     }
@@ -89,7 +87,7 @@ class ParcelableReferenceTest {
 
         // Create a parcel and populate it with a ParcelableOperations object.
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(ParcelableRawEntity(expected), 0)
+            writeProto(expected.toProto())
             marshall()
         }
 
@@ -97,7 +95,7 @@ class ParcelableReferenceTest {
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readReferencable()
+            readRawEntity()
         }
         assertThat(unmarshalled).isEqualTo(expected)
     }

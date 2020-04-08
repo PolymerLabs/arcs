@@ -28,7 +28,7 @@ object ParcelableCrdtSet {
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             parcel.writeProto(actual.versionMap.toProto())
-            parcel.writeTypedObject(actual.value.toParcelable(), flags)
+            parcel.writeProto(actual.value.toProto())
         }
 
         companion object CREATOR : Parcelable.Creator<DataValue> {
@@ -109,7 +109,7 @@ object ParcelableCrdtSet {
                 super.writeToParcel(parcel, flags)
                 parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
-                parcel.writeTypedObject(actual.added.toParcelable(), flags)
+                parcel.writeProto(actual.added.toProto())
             }
 
             companion object CREATOR : Parcelable.Creator<Add> {
@@ -138,7 +138,7 @@ object ParcelableCrdtSet {
                 super.writeToParcel(parcel, flags)
                 parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
-                parcel.writeTypedObject(actual.removed.toParcelable(), flags)
+                parcel.writeProto(actual.removed.toProto())
             }
 
             companion object CREATOR : Parcelable.Creator<Remove> {
@@ -175,7 +175,7 @@ object ParcelableCrdtSet {
 
                 parcel.writeInt(actual.removed.size)
                 actual.removed.forEach {
-                    parcel.writeTypedObject(it.toParcelable(), flags)
+                    parcel.writeProto(it.toProto())
                 }
             }
 

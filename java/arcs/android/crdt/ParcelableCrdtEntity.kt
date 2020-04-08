@@ -22,29 +22,6 @@ import arcs.core.data.FieldName
 
 /** Container of [Parcelable] implementations for the data and ops classes of [CrdtEntity]. */
 object ParcelableCrdtEntity {
-    /** Parcelable variant of [CrdtEntity.ReferenceImpl]. */
-    data class ReferenceImpl(
-        override val actual: CrdtEntity.ReferenceImpl
-    ) : ParcelableReferencable {
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
-            super.writeToParcel(parcel, flags)
-            parcel.writeString(actual.id)
-        }
-
-        override fun describeContents(): Int = 0
-
-        /** Don't use this directly; use the [ParcelableReferencable] base class instead. */
-        internal companion object CREATOR : Parcelable.Creator<ReferenceImpl> {
-            override fun createFromParcel(parcel: Parcel): ReferenceImpl {
-                val id = requireNotNull(parcel.readString()) {
-                    "ID not found in parcel when reading ParcelableCrdtEntity.ReferenceImpl"
-                }
-                return ReferenceImpl(CrdtEntity.ReferenceImpl(id))
-            }
-
-            override fun newArray(size: Int): Array<ReferenceImpl?> = arrayOfNulls(size)
-        }
-    }
 
     /** Parcelable variant of [CrdtEntity.Data]. */
     data class Data(
@@ -141,7 +118,7 @@ object ParcelableCrdtEntity {
                 parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
                 parcel.writeString(actual.field)
-                parcel.writeTypedObject(actual.value.toParcelable(), flags)
+                parcel.writeProto(actual.value.toProto())
             }
 
             companion object CREATOR : Parcelable.Creator<SetSingleton> {
@@ -203,7 +180,7 @@ object ParcelableCrdtEntity {
                 parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
                 parcel.writeString(actual.field)
-                parcel.writeTypedObject(actual.added.toParcelable(), flags)
+                parcel.writeProto(actual.added.toProto())
             }
 
             companion object CREATOR : Parcelable.Creator<AddToSet> {
@@ -234,7 +211,7 @@ object ParcelableCrdtEntity {
                 parcel.writeProto(actual.clock.toProto())
                 parcel.writeString(actual.actor)
                 parcel.writeString(actual.field)
-                parcel.writeTypedObject(actual.removed.toParcelable(), flags)
+                parcel.writeProto(actual.removed.toProto())
             }
 
             companion object CREATOR : Parcelable.Creator<RemoveFromSet> {
