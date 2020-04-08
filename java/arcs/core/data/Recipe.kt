@@ -11,6 +11,7 @@
 
 package arcs.core.data
 
+import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Type
 
 /** Representation of recipe in an Arcs manifest. */
@@ -46,4 +47,32 @@ data class Recipe(
             CREATE, USE, MAP, COPY, JOIN
         }
     }
+}
+
+/** Translates a [Recipe] into a [Plan] */
+fun Recipe.toPlan() = Plan(
+    arcId = arcId,
+    particles = particles.map { it.toPlanParticle() }
+)
+
+/** Translates a [Recipe.Particle] into a [Plan.Particle] */
+fun Recipe.Particle.toPlanParticle() = Plan.Particle(
+    particleName = spec.name,
+    location = spec.location,
+    handles = handleConnections.associate { it.spec.name to it.toPlanHandleConnection() }
+)
+
+/** Translates a [Recipe.Particle.HandleConnection] into a [Plan.HandleConnection] */
+fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConnection(
+    mode = spec.direction,
+    type = spec.type,
+    storageKey = handle.toStorageKey()
+    // TODO: Add TTL.
+)
+
+/** Translates a [Recipe.Handle] into a [StorageKey] */
+fun Recipe.Handle.toStorageKey() = when {
+    storageKey != null -> StorageKeyParser.parse(storageKey)
+    capabilities != null -> CreateableStorageKey(name, capabilities)
+    else -> CreateableStorageKey(name)
 }
