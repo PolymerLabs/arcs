@@ -12,7 +12,6 @@
 package arcs.android.e2e.testapp
 
 import android.content.Context
-import android.content.Intent
 import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
@@ -24,8 +23,6 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
@@ -33,7 +30,6 @@ import kotlinx.coroutines.withContext
 class WriteHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
-    private val scope = CoroutineScope(coroutineContext)
 
     override val arcHost: ArcHost = MyArcHost(
         this,

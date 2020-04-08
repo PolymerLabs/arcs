@@ -20,7 +20,6 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.sdk.Handle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,16 +52,21 @@ class ReadHostService : ArcHostService() {
 
 
     inner class ReadPerson : AbstractReadPerson() {
-
-        override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-            scope.launch {
-                val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                val intent = Intent(this@ReadHostService, TestActivity::class.java)
-                    .apply {
-                        putExtra(TestActivity.RESULT_NAME, name)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        override suspend fun onCreate() {
+            super.onCreate()
+            handles.person.onUpdate {
+                scope.launch {
+                    val name = withContext(Dispatchers.IO) {
+                        handles.person.fetch()?.name ?: ""
                     }
-                startActivity(intent)
+
+                    val intent = Intent(this@ReadHostService, TestActivity::class.java)
+                        .apply {
+                            putExtra(TestActivity.RESULT_NAME, name)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                    startActivity(intent)
+                }
             }
         }
     }
