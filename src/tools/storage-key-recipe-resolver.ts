@@ -54,15 +54,9 @@ export class StorageKeyRecipeResolver {
       this.validateHandles(recipe);
       const arcId = findLongRunningArcId(recipe);
       const arc = this.runtime.newArc(
-        arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
+          arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
       let resolved = await this.tryResolve(recipe, arc, opts);
-      if (!resolved) {
-        throw new StorageKeyRecipeResolverError(
-          `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`
-        );
-      }
-      assert(resolved.isResolved());
 
       if (isLongRunning(recipe)) {
         resolved = await this.createStoresForCreateHandles(resolved, arc);
@@ -84,11 +78,17 @@ export class StorageKeyRecipeResolver {
   async tryResolve(recipe: Recipe, arc: Arc, opts?: IsValidOptions): Promise<Recipe | null> {
     if (!recipe.normalize(opts)) {
       throw new StorageKeyRecipeResolverError(
-          `Failed to normalize recipe ${recipe.toString()} with errors:\n${[...opts.errors.values()].join('\n')}`);
+          `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
     }
     if (recipe.isResolved()) return recipe;
 
-    return await (new RecipeResolver(arc).resolve(recipe, opts));
+    const resolvedRecipe = await (new RecipeResolver(arc).resolve(recipe, opts));
+    if (!resolvedRecipe) {
+      throw new StorageKeyRecipeResolverError(
+        `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
+    }
+    assert(resolvedRecipe.isResolved());
+    return resolvedRecipe;
   }
 
   /**
@@ -100,9 +100,6 @@ export class StorageKeyRecipeResolver {
   async createStoresForCreateHandles(recipe: Recipe, arc: Arc): Promise<Recipe> {
     DatabaseStorageKey.register();
     const resolver = new CapabilitiesResolver({arcId: arc.id});
-    if (recipe.handles.filter(h => h.fate === 'create' && !!h.id).length === 0) {
-      return recipe;
-    }
     const cloneRecipe = recipe.clone();
     for (const createHandle of cloneRecipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
       if (createHandle.type.hasVariable && !createHandle.type.isResolved()) {
@@ -115,7 +112,7 @@ export class StorageKeyRecipeResolver {
       }
 
       const storageKey = await resolver.createStorageKey(
-        createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
+          createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
       const store = new Store(createHandle.type, {storageKey, exists: Exists.MayExist, id: createHandle.id});
       arc.context.registerStore(store, createHandle.tags);
       createHandle.storageKey = storageKey;
