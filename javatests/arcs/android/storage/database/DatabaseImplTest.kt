@@ -1219,6 +1219,112 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun removeExpiredEntities_twoEntitiesExpired() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text), 
+                collections = mapOf("nums" to FieldType.Number)
+            )
+        )
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val entity1Key = DummyStorageKey("backing/entity1")
+        val entity2Key = DummyStorageKey("backing/entity2")
+
+        val timeInPast = JvmTime.currentTimeMillis - 10000
+        val entity1 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "abc".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
+                11L,
+                timeInPast // expirationTimestamp, in the past.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity2", 
+                mapOf("text" to "def".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
+                11L,
+                timeInPast // expirationTimestamp, in the past.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        // Add both of them to a collection.
+        val values = setOf(
+            Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+            Reference("entity2", backingKey, VersionMap("ref2" to 2))
+        )
+        val collection = DatabaseData.Collection(
+            values = values,
+            schema = schema,
+            databaseVersion = FIRST_VERSION_NUMBER,
+            versionMap = VERSION_MAP
+        )
+
+        database.insertOrUpdate(entity1Key, entity1)
+        database.insertOrUpdate(entity2Key, entity2)
+        database.insertOrUpdate(collectionKey, collection)
+
+        database.removeExpiredEntities()
+
+        // Check the expired entities fields have been cleared (only a tombstone is left).
+        assertThat(database.getEntity(entity1Key, schema))
+            .isEqualTo(DatabaseData.Entity(
+                RawEntity(
+                    "entity1", 
+                    mapOf("text" to null), 
+                    mapOf("nums" to emptySet()),
+                    11L,
+                    timeInPast
+                ),
+                schema,
+                FIRST_VERSION_NUMBER,
+                VERSION_MAP
+            ))
+        assertThat(database.getEntity(entity2Key, schema))
+            .isEqualTo(DatabaseData.Entity(
+                RawEntity(
+                    "entity2", 
+                    mapOf("text" to null), 
+                    mapOf("nums" to emptySet()),
+                    11L,
+                    timeInPast
+                ),
+                schema,
+                FIRST_VERSION_NUMBER,
+                VERSION_MAP
+            ))
+
+        // Check the collection is empty.
+        assertThat(database.getCollection(collectionKey, schema))
+            .isEqualTo(collection.copy(values = setOf()))
+        
+        // Check unused values have been deleted from the global table as well.
+        assertTableIsEmpty("field_values")
+
+        // Check collection entries have been cleared.
+        assertTableIsEmpty("collection_entries")
+
+        // Check the collections for nums are gone (the collection left is the entity collection).
+        assertTableIsSize("collections", 1)
+
+        // Check the entity refs are gone.
+        assertTableIsEmpty("entity_refs")
+
+        // Check unused primitive values have been removed.
+        assertTableIsEmpty("text_primitive_values")
+        assertTableIsEmpty("number_primitive_values")
+    }
+
+    @Test
     fun delete_entity_getsRemoved() = runBlockingTest {
         val entityKey = DummyStorageKey("entity")
         database.insertOrUpdateEntity(entityKey, EMPTY_ENTITY)
