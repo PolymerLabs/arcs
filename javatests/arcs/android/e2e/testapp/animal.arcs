@@ -1,0 +1,23 @@
+meta
+  namespace: arcs.android.e2e.testapp
+
+schema Animal
+  name: Text
+
+particle ReadAnimal in 'arcs.android.e2e.testapp.ReadAnimalHostService.ReadAnimal'
+  animal: reads Animal {name}
+
+particle WriteAnimal in 'arcs.android.e2e.testapp.WriteAnimalHostService.WriteAnimal'
+  animal: writes Animal {name}
+
+@trigger
+  launch startup
+  arcId animalArc
+recipe AnimalRecipe
+  recipeAnimal: create
+
+  WriteAnimal
+    animal: writes recipeAnimal
+
+  ReadAnimal
+    animal: reads recipeAnimal

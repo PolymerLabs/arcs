@@ -17,7 +17,9 @@ import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
+import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.Handle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.CoroutineScope
@@ -27,28 +29,30 @@ import kotlinx.coroutines.Job
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
  */
-class WriteHostService : ArcHostService() {
+class WriteAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
     override val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
-        ::WritePerson.toRegistration()
+        JvmSchedulerProvider(coroutineContext),
+        ::WriteAnimal.toRegistration()
     )
 
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
+        schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, *initialParticles) {
+    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
         override val activationFactory = ServiceStoreFactory(context, lifecycle)
     }
 
-    inner class WritePerson : AbstractWritePerson() {
+    inner class WriteAnimal: AbstractWriteAnimal() {
 
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-            handles.person.store(WritePerson_Person("John Wick"))
+            handles.animal.store(WriteAnimal_Animal("platypus"))
         }
     }
 }

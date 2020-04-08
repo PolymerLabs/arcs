@@ -4,10 +4,10 @@ meta
 schema Person
   name: Text
 
-particle ReadPerson in 'arcs.android.e2e.testapp.ReadHostService.ReadPerson'
+particle ReadPerson in 'arcs.android.e2e.testapp.PersonHostService.ReadPerson'
   person: reads Person {name}
 
-particle WritePerson in 'arcs.android.e2e.testapp.WriteHostService.WritePerson'
+particle WritePerson in 'arcs.android.e2e.testapp.PersonHostService.WritePerson'
   person: writes Person {name}
 
 @trigger

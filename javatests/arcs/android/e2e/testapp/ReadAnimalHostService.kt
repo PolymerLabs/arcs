@@ -20,8 +20,8 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -30,35 +30,37 @@ import kotlinx.coroutines.withContext
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
  */
-class ReadHostService : ArcHostService() {
+class ReadAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
     override val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
-        ::ReadPerson.toRegistration()
+        JvmSchedulerProvider(coroutineContext),
+        ::ReadAnimal.toRegistration()
     )
 
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
+        schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, *initialParticles) {
+    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
         override val activationFactory = ServiceStoreFactory(context, lifecycle)
     }
 
+    inner class ReadAnimal: AbstractReadAnimal() {
 
-    inner class ReadPerson : AbstractReadPerson() {
         override suspend fun onCreate() {
             super.onCreate()
-            handles.person.onUpdate {
+            handles.animal.onUpdate {
                 scope.launch {
                     val name = withContext(Dispatchers.IO) {
-                        handles.person.fetch()?.name ?: ""
+                        handles.animal.fetch()?.name ?: ""
                     }
 
-                    val intent = Intent(this@ReadHostService, TestActivity::class.java)
+                    val intent = Intent(this@ReadAnimalHostService, TestActivity::class.java)
                         .apply {
                             putExtra(TestActivity.RESULT_NAME, name)
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK

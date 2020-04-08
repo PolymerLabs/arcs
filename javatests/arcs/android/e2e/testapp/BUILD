@@ -10,6 +10,11 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_gen(
+    name = "animal_arcs",
+    srcs = ["animal.arcs"],
+)
+
+arcs_kt_gen(
     name = "person_arcs",
     srcs = ["person.arcs"],
 )
@@ -21,6 +26,7 @@ arcs_kt_android_library(
     manifest = ":AndroidManifest.xml",
     resource_files = glob(["res/**/*"]),
     deps = [
+        ":animal_arcs",
         ":person_arcs",
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
