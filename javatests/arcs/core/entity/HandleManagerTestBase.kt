@@ -23,8 +23,10 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
@@ -246,7 +248,11 @@ open class HandleManagerTestBase {
         val handleB = readHandleManager.createSingletonHandle()
         assertThat(handleB.fetch()).isEqualTo(entity1)
 
+        val updateBDeferred = handleB.onUpdateDeferred()
+
         handleA.clear()
+
+        updateBDeferred.await()
         assertThat(handleB.fetch()).isNull()
     }
 
@@ -258,9 +264,14 @@ open class HandleManagerTestBase {
         // Now read back from a different handle
         val handleB = readHandleManager.createSingletonHandle()
         handleB.awaitReady()
+
+        val updateADeferred = handleA.onUpdateDeferred()
+
         handleB.clear()
 
         assertThat(handleB.fetch()).isNull()
+
+        updateADeferred.await()
         assertThat(handleA.fetch()).isNull()
     }
 
@@ -270,10 +281,8 @@ open class HandleManagerTestBase {
 
         // Now read back from a different handle
         val readHandle = readHandleManager.createSingletonHandle()
-        val updateDeferred = CompletableDeferred<Person?>()
-        readHandle.onUpdate {
-            updateDeferred.complete(it)
-        }
+
+        val updateDeferred = readHandle.onUpdateDeferred()
         writeHandle.store(entity1)
         assertThat(updateDeferred.await()).isEqualTo(entity1)
     }
@@ -461,10 +470,7 @@ open class HandleManagerTestBase {
         // Ensure we get update from A before checking.
         // Since some test configurations may result in the handles
         // operating on different threads.
-        val gotUpdate = CompletableDeferred<Unit>()
-        handleA.onUpdate {
-            gotUpdate.complete(Unit)
-        }
+        val gotUpdate = handleA.onUpdateDeferred()
         handleB.store(entity2)
         assertThat(handleB.fetchAll()).containsExactly(entity1, entity2)
         gotUpdate.await()
@@ -491,13 +497,7 @@ open class HandleManagerTestBase {
         val readHandle = readHandleManager.createCollectionHandle()
         writeHandle.store(entity1)
 
-        val updateDeferred = CompletableDeferred<Set<Person>>()
-        readHandle.onUpdate {
-            if (it.size == 2) {
-                updateDeferred.complete(it)
-            }
-        }
-
+        val updateDeferred = readHandle.onUpdateDeferred() { it.size == 2 }
         writeHandle.store(entity2)
         assertThat(updateDeferred.await()).containsExactly(entity1, entity2)
     }
@@ -552,12 +552,7 @@ open class HandleManagerTestBase {
         // Ensure we get update from A before checking.
         // Since some test configurations may result in the handles
         // operating on different threads.
-        val gotUpdate = CompletableDeferred<Unit>()
-        handleA.onUpdate {
-            if (it.isEmpty()) {
-                gotUpdate.complete(Unit)
-            }
-        }
+        val gotUpdate = handleA.onUpdateDeferred() { it.isEmpty() }
 
         handleB.clear()
         assertThat(handleB.fetchAll()).isEmpty()
@@ -840,4 +835,13 @@ open class HandleManagerTestBase {
         storageKey,
         ttl
     ) as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
+    private suspend fun <T> ReadableHandle<T>.onUpdateDeferred(
+        predicate: (T) -> Boolean = { true }
+    ): Deferred<T> = CompletableDeferred<T>().also { deferred ->
+        onUpdate {
+            if (deferred.isActive && predicate(it)) {
+                deferred.complete(it)
+            }
+        }
+    }
 }
