@@ -209,7 +209,7 @@ class EntityHandleManager(
             HandleMode.WriteQuery ->
                 object : WriteQueryCollectionHandle<T, Any> by collectionHandle {}
             HandleMode.ReadWriteQuery ->
-                object : ReadWriteQueryCollectionHandle<T, Any*> by collectionHandle {}
+                object : ReadWriteQueryCollectionHandle<T, Any> by collectionHandle {}
         }
     }
 
