@@ -218,7 +218,7 @@ export class Schema {
     if (!this.refinement) {
       return false;
     }
-    const qParams: Map<String, String> = this.refinement.getQueryParams();
+    const qParams: Map<string, string> = this.refinement.getQueryParams();
     return qParams.size > 0;
   }
 

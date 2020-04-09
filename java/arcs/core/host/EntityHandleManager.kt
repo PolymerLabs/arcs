@@ -205,7 +205,8 @@ class EntityHandleManager(
             HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}
             HandleMode.Query -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
             HandleMode.ReadWrite -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
-            HandleMode.ReadQuery -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
+            HandleMode.ReadQuery ->
+                object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
             HandleMode.WriteQuery ->
                 object : WriteQueryCollectionHandle<T, Any> by collectionHandle {}
             HandleMode.ReadWriteQuery ->
