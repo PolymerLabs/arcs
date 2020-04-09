@@ -102,19 +102,21 @@ export class PlanGenerator {
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   async createHandleConnection(connection: HandleConnection): Promise<string> {
     const storageKey = this.createStorageKey(connection.handle);
-    const mode = this.createDirection(connection.direction);
+    const mode = this.createHandleMode(connection.direction, connection.type);
     const type = await this.createType(connection.type);
     const ttl = this.createTtl(connection.handle.ttl);
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], 24);
   }
 
-  /** Generates a Kotlin `HandleMode` from a Direction. */
-  createDirection(direction: Direction): string {
+  /** Generates a Kotlin `HandleMode` from a Direction and Type. */
+  createHandleMode(direction: Direction, type: Type): string {
+    const schema = type.getEntitySchema();
+    const isQuery = (schema && schema.hasQuery()) ? 'Query' : '';
     switch (direction) {
-      case 'reads': return 'HandleMode.Read';
-      case 'writes': return 'HandleMode.Write';
-      case 'reads writes': return 'HandleMode.ReadWrite';
+      case 'reads': return `HandleMode.Read${isQuery}`;
+      case 'writes': return `HandleMode.Write${isQuery}`;
+      case 'reads writes': return `HandleMode.ReadWrite${isQuery}`;
       default: throw new PlanGeneratorError(
         `HandleConnection direction '${direction}' is not supported.`);
     }
