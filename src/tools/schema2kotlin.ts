@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
+import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
 import {EntityType, CollectionType} from '../runtime/type.js';
@@ -134,10 +134,18 @@ ${imports.join('\n')}
     return `${particle.name}_${this.upperFirst(connection.name)}`;
   }
 
-  generateParticleClass(particle: ParticleSpec): string {
+  generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {
     const particleName = particle.name;
     const handleDecls: string[] = [];
     const specDecls: string[] = [];
+    const classes: string[] = [];
+    const typeAliases: string[] = [];
+
+    nodeGenerators.forEach( (ng) => {
+      const kotlinGenerator = <KotlinGenerator>ng.generator;
+      classes.push(kotlinGenerator.generateClasses(ng.hash, ng.fieldLength));
+      typeAliases.push(kotlinGenerator.generateAliases(particleName));
+    });
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
@@ -174,9 +182,12 @@ ${imports.join('\n')}
 
     }
     return `
+${typeAliases.join(`\n`)}
 
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
+
+    ${classes.join(`\n    `)}
 
     ${this.getHandlesClassDecl(particleName, specDecls)} {
         ${handleDecls.join('\n        ')}
@@ -286,23 +297,23 @@ export class KotlinGenerator implements ClassGenerator {
       assert(!isCollection, 'Collection fields not supported in Kotlin wasm yet.');
       this.fieldVals.push(
         `var ${fixed} = ${fixed}\n` +
-        `        get() = field\n` +
-        `        private set(_value) {\n` +
-        `            field = _value\n` +
-        `        }`
+        `            get() = field\n` +
+        `            private set(_value) {\n` +
+        `                field = _value\n` +
+        `            }`
       );
     } else if (isCollection) {
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `        get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
-        `        private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
+        `            get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
+        `            private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
         );
     } else {
       const defaultFallback = defaultVal === 'null' ? '' : ` ?: ${defaultVal}`;
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `        get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
-        `        private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
+        `            get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
+        `            private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
       );
     }
     this.fieldsReset.push(`${fixed} = ${defaultVal}`);
@@ -365,17 +376,24 @@ ${lines}
     }
   }
 
-  generate(schemaHash: string, fieldCount: number): string {
-    const {name, aliases} = this.node;
+  generate(schemaHash: string, fieldCount: number): string { return ''; }
 
-    const typeDecls = aliases.map(alias => `typealias ${alias} = ${name}`);
+  generateAliases(particleName: string): string {
+    const name = this.node.kotlinName;
+    const aliases = this.node.kotlinAliases;
+    const typeDecls = aliases.map(alias => `typealias ${alias} = Abstract${particleName}.${name}`);
+    return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
+  }
+
+  generateClasses(schemaHash: string, fieldCount: number): string {
+    const name = this.node.kotlinName;
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
 
     const classDef = `\
 @Suppress("UNCHECKED_CAST")
-class ${name}(`;
+    class ${name}(`;
     const baseClass = this.opts.wasm
         ? 'WasmEntity'
         : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'expirationTimestamp', 'creationTimestamp']);
@@ -394,87 +412,85 @@ class ${name}(`;
     ]);
 
     const constructorArguments =
-      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 1);
+      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
 
     return `\
 
-${classDef}${constructorArguments}${classInterface}
+    ${classDef}${constructorArguments}${classInterface}
 
-    ${withFields(`${this.fieldVals.join('\n    ')}`)}
+        ${withFields(`${this.fieldVals.join('\n        ')}`)}
 
-    ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
-        ${this.fieldInitializers.join('\n        ')}
-    }`)}
-    ${this.opts.wasm ? `` : `/**
-     * Use this method to create a new, distinctly identified copy of the entity. 
-     * Storing the copy will result in a new copy of the data being stored.
-     */`}
-    fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 2)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 2)})
-    ${this.opts.wasm ? `` : `/** 
-     * Use this method to create a new version of an existing entity.
-     * Storing the mutation will overwrite the existing entity in the set, if it exists.
-     */
-    fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 2)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 2)})`}
-${this.opts.wasm ? `
-    fun reset() {
-      ${withFields(`${this.fieldsReset.join('\n        ')}`)}
-    }
+        ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
+            ${this.fieldInitializers.join('\n            ')}
+        }`)}
+        ${this.opts.wasm ? `` : `/**
+         * Use this method to create a new, distinctly identified copy of the entity. 
+         * Storing the copy will result in a new copy of the data being stored.
+         */`}
+        fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 3)})
+        ${this.opts.wasm ? `` : `/** 
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 3)})`}
+    ${this.opts.wasm ? `
+        fun reset() {
+          ${withFields(`${this.fieldsReset.join('\n            ')}`)}
+        }
 
-    override fun encodeEntity(): NullTermByteArray {
-        val encoder = StringEncoder()
-        encoder.encode("", entityId)
-        ${this.encode.join('\n        ')}
-        return encoder.toNullTermByteArray()
-    }
+        override fun encodeEntity(): NullTermByteArray {
+            val encoder = StringEncoder()
+            encoder.encode("", entityId)
+            ${this.encode.join('\n        ')}
+            return encoder.toNullTermByteArray()
+        }
 
-    override fun toString() =
-        "${name}(${this.fieldsForToString.join(', ')})"
-` : ''}
-    companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
-        ${this.opts.wasm ? '' : `
-        override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 8, true)}
+        override fun toString() =
+            "${name}(${this.fieldsForToString.join(', ')})"
+    ` : ''}
+        companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
+            ${this.opts.wasm ? '' : `
+            override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
 
-        init {
-            SchemaRegistry.register(this)
-        }`}
-        ${!this.opts.wasm ? `
-        override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
-        override fun decode(encoded: ByteArray): ${name}? {
-            if (encoded.isEmpty()) return null
+            init {
+                SchemaRegistry.register(this)
+            }`}
+            ${!this.opts.wasm ? `
+            override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
+            override fun decode(encoded: ByteArray): ${name}? {
+                if (encoded.isEmpty()) return null
 
-            val decoder = StringDecoder(encoded)
-            val entityId = decoder.decodeText()
-            decoder.validate("|")
-            ${withFields(`
-            ${this.setFieldsToDefaults.join('\n            ')}
-            var i = 0
-            while (i < ${fieldCount} && !decoder.done()) {
-                val _name = decoder.upTo(':').toUtf8String()
-                when (_name) {
-                    ${this.decode.join('\n                    ')}
-                    else -> {
-                        // Ignore unknown fields until type slicing is fully implemented.
-                        when (decoder.chomp(1).toUtf8String()) {
-                            "T", "U" -> decoder.decodeText()
-                            "N" -> decoder.decodeNum()
-                            "B" -> decoder.decodeBool()
-                        }
-                        i--
-                    }
-                }
+                val decoder = StringDecoder(encoded)
+                val entityId = decoder.decodeText()
                 decoder.validate("|")
-                i++
-            }`)}
-            val _rtn = ${name}().copy(
-                ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
-            )
-            _rtn.entityId = entityId
-            return _rtn
-        }`}
-    }
-}
-
-${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
+                ${withFields(`
+                ${this.setFieldsToDefaults.join('\n            ')}
+                var i = 0
+                while (i < ${fieldCount} && !decoder.done()) {
+                    val _name = decoder.upTo(':').toUtf8String()
+                    when (_name) {
+                        ${this.decode.join('\n                    ')}
+                        else -> {
+                            // Ignore unknown fields until type slicing is fully implemented.
+                            when (decoder.chomp(1).toUtf8String()) {
+                                "T", "U" -> decoder.decodeText()
+                                "N" -> decoder.decodeNum()
+                                "B" -> decoder.decodeBool()
+                            }
+                            i--
+                        }
+                    }
+                    decoder.validate("|")
+                    i++
+                }`)}
+                val _rtn = ${name}().copy(
+                    ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
+                )
+               _rtn.entityId = entityId
+                return _rtn
+            }`}
+        }
+    }`;
   }
 
   private prefixTypeForRuntime(type: string): string {

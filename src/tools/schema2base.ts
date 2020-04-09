@@ -31,6 +31,12 @@ export interface ClassGenerator {
   generate(schemaHash: string, fieldCount: number): string;
 }
 
+export class NodeAndGenerator {
+  generator: ClassGenerator;
+  hash: string;
+  fieldLength: number;
+}
+
 export abstract class Schema2Base {
   namespace: string;
 
@@ -91,6 +97,7 @@ export abstract class Schema2Base {
       }
 
       const graph = new SchemaGraph(particle);
+      const nodes: NodeAndGenerator[] = [];
       // Generate one class definition per node in the graph.
       for (const node of graph.walk()) {
         const generator = this.getClassGenerator(node);
@@ -126,10 +133,13 @@ export abstract class Schema2Base {
         if (node.schema.refinement) {
           generator.generatePredicates();
         }
-        classes.push(generator.generate(await node.schema.hash(), fields.length));
+        const hash = await node.schema.hash();
+        const fieldLength = fields.length;
+        classes.push(generator.generate(hash, fieldLength));
+        nodes.push({generator, hash, fieldLength});
       }
 
-      classes.push(this.generateParticleClass(particle));
+      classes.push(this.generateParticleClass(particle, nodes));
     }
     return classes;
   }
@@ -146,7 +156,7 @@ export abstract class Schema2Base {
 
   abstract getClassGenerator(node: SchemaNode): ClassGenerator;
 
-  abstract generateParticleClass(particle: ParticleSpec): string;
+  abstract generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): string;
 
   abstract generateTestHarness(particle: ParticleSpec): string;
 }

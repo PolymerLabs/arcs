@@ -41,7 +41,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.coroutines.experimental.suspendCoroutine
 
-private typealias Person = TestParticleInternal1
+private typealias Person = AbstractTestParticle.TestParticleInternal1
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
