@@ -34,6 +34,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
@@ -68,7 +69,7 @@ class ArcHostHelper(
     private val service: Service,
     vararg arcHosts: ArcHost
 ) {
-    private val job = Job() + Dispatchers.Unconfined + CoroutineName("ArcHostHelper")
+    private val job = SupervisorJob() + Dispatchers.Unconfined + CoroutineName("ArcHostHelper")
     private val arcHostByHostId = mutableMapOf<String, ArcHost>()
 
     init {
@@ -196,6 +197,7 @@ class ArcHostHelper(
         // This triggers a suspended coroutine to resume with the value.
         intent.getParcelableExtra<ResultReceiver>(EXTRA_OPERATION_RECEIVER)
             ?.send(0, bundle)
+
         if (result is Exception) {
             throw result
         }
