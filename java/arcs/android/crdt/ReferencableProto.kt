@@ -5,17 +5,19 @@ import arcs.android.util.readProto
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.storage.Reference
 
 /** Constructs a [Referencable] from the given [ReferencableProto]. */
-fun fromProto(proto: ReferencableProto): Referencable? = when (proto.referencableCase) {
+fun ReferencableProto.toReferencable(): Referencable? = when (referencableCase) {
     ReferencableProto.ReferencableCase.REFERENCABLE_NOT_SET -> null
-    ReferencableProto.ReferencableCase.RAW_ENTITY -> fromProto(proto.rawEntity)
-    ReferencableProto.ReferencableCase.CRDT_ENTITY_REFERENCE -> fromProto(proto.crdtEntityReference)
-    ReferencableProto.ReferencableCase.REFERENCE -> fromProto(proto.reference)
-    ReferencableProto.ReferencableCase.PRIMITIVE -> fromProto(proto.primitive)
+    ReferencableProto.ReferencableCase.RAW_ENTITY -> rawEntity.toRawEntity()
+    ReferencableProto.ReferencableCase.CRDT_ENTITY_REFERENCE ->
+        crdtEntityReference.toCrdtEntityReference()
+    ReferencableProto.ReferencableCase.REFERENCE -> reference.toReference()
+    ReferencableProto.ReferencableCase.PRIMITIVE -> primitive.toReferencablePrimitive()
     else -> throw UnsupportedOperationException(
-        "Unknown ReferencableProto type: ${proto.referencableCase}."
+        "Unknown ReferencableProto type: $referencableCase."
     )
 }
 
@@ -26,6 +28,7 @@ fun Referencable.toProto(): ReferencableProto {
         is RawEntity -> proto.rawEntity = toProto()
         is CrdtEntity.ReferenceImpl -> proto.crdtEntityReference = toProto()
         is Reference -> proto.reference = toProto()
+        is ReferencablePrimitive<*> -> proto.primitive = toProto()
         else -> throw UnsupportedOperationException("Unsupported Referencable: $this.")
     }
     return proto.build()
@@ -33,4 +36,4 @@ fun Referencable.toProto(): ReferencableProto {
 
 /** Reads a [Referencable] out of a [Parcel]. */
 fun Parcel.readReferencable(): Referencable? =
-    readProto(ReferencableProto.getDefaultInstance())?.let { fromProto(it) }
+    readProto(ReferencableProto.getDefaultInstance())?.toReferencable()

@@ -28,8 +28,8 @@ import arcs.android.common.getNullableString
 import arcs.android.common.map
 import arcs.android.common.transaction
 import arcs.android.crdt.VersionMapProto
-import arcs.android.crdt.fromProto
 import arcs.android.crdt.toProto
+import arcs.android.crdt.toVersionMap
 import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldName
@@ -1326,7 +1326,7 @@ class DatabaseImpl(
             log.error(e) { "Parsing serialized VersionMap \"$str\"." }
             throw e
         }
-        return fromProto(proto)
+        return proto.toVersionMap()
     }
 
     /** The type of the data stored at a storage key. */

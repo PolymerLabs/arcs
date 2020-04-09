@@ -5,19 +5,19 @@ import arcs.android.util.readProto
 import arcs.core.data.RawEntity
 
 /** Constructs a [RawEntity] from the given [RawEntityProto]. */
-fun fromProto(proto: RawEntityProto): RawEntity {
-    val singletons = proto.singletonMap.mapValues { (_, referencable) ->
-        fromProto(referencable)
+fun RawEntityProto.toRawEntity(): RawEntity {
+    val singletons = singletonMap.mapValues { (_, referencable) ->
+        referencable.toReferencable()
     }
-    val collections = proto.collectionMap.mapValues { (_, referencable) ->
-        referencable.referencableList.mapTo(mutableSetOf()) { fromProto(it)!! }
+    val collections = collectionMap.mapValues { (_, referencable) ->
+        referencable.referencableList.mapTo(mutableSetOf()) { it.toReferencable()!! }
     }
     return RawEntity(
-        id = proto.id,
+        id = id,
         singletons = singletons,
         collections = collections,
-        creationTimestamp = proto.creationTimestampMs,
-        expirationTimestamp = proto.expirationTimestampMs
+        creationTimestamp = creationTimestampMs,
+        expirationTimestamp = expirationTimestampMs
     )
 }
 
@@ -42,4 +42,4 @@ fun RawEntity.toProto(): RawEntityProto = RawEntityProto.newBuilder()
 
 /** Reads a [RawEntity] out of a [Parcel]. */
 fun Parcel.readRawEntity(): RawEntity? =
-    readProto(RawEntityProto.getDefaultInstance())?.let { fromProto(it) }
+    readProto(RawEntityProto.getDefaultInstance())?.toRawEntity()

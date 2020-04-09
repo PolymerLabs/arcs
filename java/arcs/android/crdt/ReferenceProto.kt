@@ -6,10 +6,10 @@ import arcs.core.storage.Reference
 import arcs.core.storage.StorageKeyParser
 
 /** Constructs a [Reference] from the given [ReferenceProto]. */
-fun fromProto(proto: ReferenceProto) = Reference(
-    id = proto.id,
-    storageKey = StorageKeyParser.parse(proto.storageKey),
-    version = if (proto.hasVersionMap()) fromProto(proto.versionMap) else null
+fun ReferenceProto.toReference() = Reference(
+    id = id,
+    storageKey = StorageKeyParser.parse(storageKey),
+    version = if (hasVersionMap()) versionMap.toVersionMap() else null
 )
 
 /** Serializes a [Reference] to its proto form. */
@@ -23,4 +23,4 @@ fun Reference.toProto(): ReferenceProto {
 
 /** Reads a [Reference] out of a [Parcel]. */
 fun Parcel.readReference(): Reference? =
-    readProto(ReferenceProto.getDefaultInstance())?.let { fromProto(it) }
+    readProto(ReferenceProto.getDefaultInstance())?.toReference()
