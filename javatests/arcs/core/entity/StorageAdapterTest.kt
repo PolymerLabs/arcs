@@ -7,20 +7,23 @@ import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.StoreManager
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.coroutines.EmptyCoroutineContext
 import arcs.core.storage.Reference as StorageReference
 
 @RunWith(JUnit4::class)
 class StorageAdapterTest {
 
-    private val dereferencerFactory = EntityDereferencerFactory(StoreManager())
-    private val idGenerator = Id.Generator.newForTest("session")
     private val time = FakeTime()
+    private val scheduler = Scheduler(time, EmptyCoroutineContext)
+    private val dereferencerFactory = EntityDereferencerFactory(StoreManager(), scheduler)
+    private val idGenerator = Id.Generator.newForTest("session")
 
     @Before
     fun setUp() {

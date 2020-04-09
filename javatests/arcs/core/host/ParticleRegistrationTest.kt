@@ -2,6 +2,7 @@ package arcs.core.host
 
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmHost
+import arcs.jvm.host.JvmSchedulerProvider
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -12,7 +13,10 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ParticleRegistrationTest {
-    class JvmProdHost(vararg particles: ParticleRegistration) : JvmHost(*particles), ProdHost
+    class JvmProdHost(
+        schedulerProvider: SchedulerProvider,
+        vararg particles: ParticleRegistration
+    ) : JvmHost(schedulerProvider, *particles), ProdHost
 
     @Test
     fun explicit_allParticlesAreRegistered() = runBlockingTest {
@@ -20,8 +24,9 @@ class ParticleRegistrationTest {
         var foundTestHost = false
 
         val hostRegistry = ExplicitHostRegistry()
-        hostRegistry.registerHost(JvmProdHost(::TestProdParticle.toRegistration()))
-        hostRegistry.registerHost(TestHost(::TestHostParticle.toRegistration()))
+        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
+        hostRegistry.registerHost(JvmProdHost(schedulerProvider, ::TestProdParticle.toRegistration()))
+        hostRegistry.registerHost(TestHost(schedulerProvider("foo"), ::TestHostParticle.toRegistration()))
 
         hostRegistry.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
@@ -41,5 +46,7 @@ class ParticleRegistrationTest {
         }
         assertThat(foundProdHost).isTrue()
         assertThat(foundTestHost).isTrue()
+
+        schedulerProvider.cancelAll()
     }
 }

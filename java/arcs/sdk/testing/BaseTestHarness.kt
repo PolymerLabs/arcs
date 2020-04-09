@@ -1,6 +1,7 @@
 package arcs.sdk.testing
 
 import arcs.core.entity.Entity
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -8,6 +9,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import arcs.sdk.Particle
@@ -79,14 +81,23 @@ open class BaseTestHarness<P : Particle>(
                     val handleManager = EntityHandleManager(
                         arcId = "testHarness",
                         hostId = "testHarnessHost",
-                        time = JvmTime
+                        time = JvmTime,
+                        scheduler = Scheduler(JvmTime, scope.coroutineContext)
                     )
                     specs.forEach { spec ->
-                        val storageKey = ReferenceModeStorageKey(
-                            backingKey = RamDiskStorageKey("backing_${spec.baseName}"),
-                            storageKey = RamDiskStorageKey("entity_${spec.baseName}")
-                        )
-                        handles[spec.baseName] = handleManager.createHandle(spec, storageKey)
+                        val storageKey = when (spec.dataType) {
+                            HandleDataType.Entity -> ReferenceModeStorageKey(
+                                backingKey = RamDiskStorageKey("backing_${spec.baseName}"),
+                                storageKey = RamDiskStorageKey("entity_${spec.baseName}")
+                            )
+                            HandleDataType.Reference -> RamDiskStorageKey("ref_${spec.baseName}")
+                        }
+                        try {
+                            val handle = handleManager.createHandle(spec, storageKey)
+                            handles[spec.baseName] = handle
+                        } catch (e: Exception) {
+                            throw e
+                        }
                     }
                 }
                 statement.evaluate()

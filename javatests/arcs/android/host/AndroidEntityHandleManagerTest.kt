@@ -27,6 +27,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
+import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
@@ -34,12 +35,13 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.coroutines.experimental.suspendCoroutine
 
-private typealias Person = TestParticleInternal1
+private typealias Person = AbstractTestParticle.TestParticleInternal1
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
@@ -75,11 +77,11 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     )
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlockingTest {
         RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
         app = ApplicationProvider.getApplicationContext()
-        lifecycle = LifecycleRegistry(this).apply {
+        lifecycle = LifecycleRegistry(this@AndroidEntityHandleManagerTest).apply {
             setCurrentState(Lifecycle.State.CREATED)
             setCurrentState(Lifecycle.State.STARTED)
             setCurrentState(Lifecycle.State.RESUMED)
@@ -94,6 +96,10 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             "testArc",
             "testHost",
             FakeTime(),
+            Scheduler(
+                FakeTime(),
+                coroutineContext
+            ),
             StoreManager(),
             ServiceStoreFactory(
                 context = app,

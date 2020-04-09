@@ -50,7 +50,10 @@ const val MAX_CONSECUTIVE_FAILURES = 5
  *
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
-abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : ArcHost {
+abstract class AbstractArcHost(
+    private val schedulerProvider: SchedulerProvider,
+    vararg initialParticles: ParticleRegistration
+) : ArcHost {
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
@@ -485,6 +488,7 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         arcId,
         hostId,
         platformTime,
+        schedulerProvider(arcId),
         stores,
         activationFactory
     )

@@ -13,6 +13,7 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.util.writeProto
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import com.google.common.truth.Truth.assertThat
@@ -20,23 +21,22 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ParcelableReferencablePrimitiveTest {
+class ReferencablePrimitiveProtoTest {
     @Test
     fun parcelableRoundTrip_works_forInts() {
         val primitive = 1.toReferencable()
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(primitive.toParcelable(), 0)
+            writeProto(primitive.toProto())
             marshall()
         }
-        val unmarshalled = with(Parcel.obtain()) {
+        val unmarshalled = with (Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+            readReferencablePrimitive()
         }
 
-        assertThat((unmarshalled?.actual as ReferencablePrimitive<*>).value)
-            .isEqualTo(primitive.value)
+        assertThat(unmarshalled).isEqualTo(primitive)
     }
 
     @Test
@@ -44,17 +44,16 @@ class ParcelableReferencablePrimitiveTest {
         val primitive = 1.0f.toReferencable()
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(primitive.toParcelable(), 0)
+            writeProto(primitive.toProto())
             marshall()
         }
-        val unmarshalled = with(Parcel.obtain()) {
+        val unmarshalled = with (Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+            readReferencablePrimitive()
         }
 
-        assertThat((unmarshalled?.actual as ReferencablePrimitive<*>).value)
-            .isEqualTo(primitive.value)
+        assertThat(unmarshalled).isEqualTo(primitive)
     }
 
     @Test
@@ -62,17 +61,16 @@ class ParcelableReferencablePrimitiveTest {
         val primitive = 1.0.toReferencable()
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(primitive.toParcelable(), 0)
+            writeProto(primitive.toProto())
             marshall()
         }
-        val unmarshalled = with(Parcel.obtain()) {
+        val unmarshalled = with (Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+            readReferencablePrimitive()
         }
 
-        assertThat((unmarshalled?.actual as ReferencablePrimitive<*>).value)
-            .isEqualTo(primitive.value)
+        assertThat(unmarshalled).isEqualTo(primitive)
     }
 
     @Test
@@ -80,17 +78,16 @@ class ParcelableReferencablePrimitiveTest {
         val primitive = "This is a test".toReferencable()
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(primitive.toParcelable(), 0)
+            writeProto(primitive.toProto())
             marshall()
         }
-        val unmarshalled = with(Parcel.obtain()) {
+        val unmarshalled = with (Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+            readReferencablePrimitive()
         }
 
-        assertThat((unmarshalled?.actual as ReferencablePrimitive<*>).value)
-            .isEqualTo(primitive.value)
+        assertThat(unmarshalled).isEqualTo(primitive)
     }
 
     @Test
@@ -98,17 +95,16 @@ class ParcelableReferencablePrimitiveTest {
         val primitive = true.toReferencable()
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(primitive.toParcelable(), 0)
+            writeProto(primitive.toProto())
             marshall()
         }
-        val unmarshalled = with(Parcel.obtain()) {
+        val unmarshalled = with (Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+            readReferencablePrimitive()
         }
 
-        assertThat((unmarshalled?.actual as ReferencablePrimitive<*>).value)
-            .isEqualTo(primitive.value)
+        assertThat(unmarshalled).isEqualTo(primitive)
     }
 
     @Test
@@ -116,16 +112,14 @@ class ParcelableReferencablePrimitiveTest {
         val primitive = ByteArray(10) { it.toByte() }.toReferencable()
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(primitive.toParcelable(), 0)
+            writeProto(primitive.toProto())
             marshall()
         }
-        val unmarshalled = with(Parcel.obtain()) {
+        val unmarshalled = with (Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+            readReferencablePrimitive()
         }
-
-        assertThat((unmarshalled?.actual as ReferencablePrimitive<*>).value)
-            .isEqualTo(primitive.value)
+        assertThat(unmarshalled).isEqualTo(primitive)
     }
 }

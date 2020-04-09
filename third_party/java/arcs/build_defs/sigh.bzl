@@ -9,6 +9,7 @@ def sigh_command(
         deps = [],
         execute = True,
         quiet = True,
+        flaky = False,
         visibility = []):
     """Runs the tool/sigh command from bazel with the given sign_cmd arguments.
 
@@ -25,10 +26,10 @@ def sigh_command(
       execute: boolean indicating whether this sigh command is executable,
         e.g. tests
       quiet: boolean indicating whether to suppress sigh output
+      flaky: boolean indicating whether the test is flaky and should be re-run
+        on failure.
       visibility: list of visibilities
     """
-
-    run_macro = run_in_repo if execute else run_in_repo_test
 
     # The default bazel working directory for all actions is
     # WORKDIR: ~/.cache/bazel/_bazel_$USER/<project_path_hash>/execroot/__main__
@@ -46,13 +47,15 @@ def sigh_command(
         cmd += "--quiet "
     cmd += sigh_cmd
 
-    run_macro(
+    _run_macro(
         name = name,
         srcs = srcs,
         outs = outs,
         cmd = cmd,
+        execute = execute,
         progress_message = progress_message,
         tags = EXECUTION_REQUIREMENTS_TAGS,
+        flaky = flaky,
         deps = [
             "//:all_srcs",
             "//:concrete_storage_node_modules",
@@ -63,3 +66,10 @@ def sigh_command(
         ] + deps,
         visibility = visibility,
     )
+
+def _run_macro(execute, **kwargs):
+    if execute:
+        kwargs.pop("flaky")
+        run_in_repo(**kwargs)
+    else:
+        run_in_repo_test(**kwargs)

@@ -13,11 +13,16 @@ package arcs.android.sdk.host
 import android.content.Intent
 import androidx.lifecycle.LifecycleService
 import arcs.core.host.ArcHost
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 
 /**
  * Base [Service] for embedders of [ArcHost].
  */
 abstract class ArcHostService : LifecycleService() {
+    protected val scope: CoroutineScope = MainScope()
+
     /**
      * Subclasses must override this with their own [ArcHost].
      */
@@ -31,5 +36,10 @@ abstract class ArcHostService : LifecycleService() {
         val result = super.onStartCommand(intent, flags, startId)
         arcHostHelper.onStartCommand(intent)
         return result
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        scope.cancel()
     }
 }

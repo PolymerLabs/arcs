@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package arcs.android.crdt;
+
+option java_package = "arcs.android.crdt";
+option java_multiple_files = true;
+
+import "java/arcs/android/crdt/version_map.proto";
+
+message ReferencableProto {
+  oneof referencable {
+    RawEntityProto raw_entity = 1;
+    CrdtEntityReferenceProto crdt_entity_reference = 2;
+    ReferenceProto reference = 3;
+    ReferencablePrimitiveProto primitive = 4;
+  }
+}
+
+message ReferencableSetProto {
+  repeated ReferencableProto referencable = 1;
+}
+
+message RawEntityProto {
+  string id = 1;
+  map<string, ReferencableProto> singleton = 2;
+  map<string, ReferencableSetProto> collection = 3;
+  int64 creation_timestamp_ms = 4;
+  int64 expiration_timestamp_ms = 5;
+}
+
+message CrdtEntityReferenceProto {
+  string id = 1;
+}
+
+message ReferenceProto {
+  string id = 1;
+  string storage_key = 2;
+  VersionMapProto version_map = 3;
+}
+
+message ReferencablePrimitiveProto {
+  string id = 1;
+}

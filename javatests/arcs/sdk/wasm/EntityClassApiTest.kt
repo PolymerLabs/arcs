@@ -12,7 +12,7 @@
 package arcs.sdk.wasm
 
 class EntityClassApiTest : TestBase<EntityClassApiTest_Errors>(
-    ::EntityClassApiTest_Errors,
+    AbstractEntityClassApiTest::EntityClassApiTest_Errors,
     EntityClassApiTest_Errors
 ) {
     private val unused1 = WasmSingletonImpl(this, "data", EntityClassApiTest_Data)

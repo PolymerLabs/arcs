@@ -13,13 +13,14 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.util.writeProto
 import arcs.core.data.RawEntity
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ParcelableRawEntityTest {
+class RawEntityProtoTest {
     @Test
     fun parcelableRoundTrip_works() {
         val entity = RawEntity(
@@ -29,16 +30,16 @@ class ParcelableRawEntityTest {
         )
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(ParcelableRawEntity(entity), 0)
+            writeProto(entity.toProto())
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+            readRawEntity()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(entity)
+        assertThat(unmarshalled).isEqualTo(entity)
     }
 
     @Test
@@ -53,15 +54,15 @@ class ParcelableRawEntityTest {
         )
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(ParcelableRawEntity(uberEntity), 0)
+            writeProto(uberEntity.toProto())
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(ParcelableReferencable.Companion.CREATOR)
+            readRawEntity()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(uberEntity)
+        assertThat(unmarshalled).isEqualTo(uberEntity)
     }
 }

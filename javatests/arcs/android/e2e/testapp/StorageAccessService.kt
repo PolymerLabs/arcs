@@ -7,6 +7,7 @@ import arcs.core.data.HandleMode
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
+import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.WriteSingletonHandle
 import arcs.sdk.android.storage.ServiceStoreFactory
@@ -35,6 +36,10 @@ class StorageAccessService : LifecycleService() {
         scope.launch {
             val handleManager = EntityHandleManager(
                 time = JvmTime,
+                scheduler = Scheduler(
+                    JvmTime,
+                    coroutineContext
+                ),
                 activationFactory = ServiceStoreFactory(
                     this@StorageAccessService,
                     lifecycle

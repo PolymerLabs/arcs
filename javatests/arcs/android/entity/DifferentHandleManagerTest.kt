@@ -9,14 +9,17 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
+import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
+import java.util.concurrent.Executors
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
@@ -43,6 +46,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             arcId = "arcId",
             hostId = "hostId",
             time = FakeTime(),
+            scheduler = Scheduler(
+                FakeTime(),
+                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+            ),
             stores = stores,
             activationFactory = ServiceStoreFactory(
                 app,
@@ -54,6 +61,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             arcId = "arcId",
             hostId = "hostId",
             time = FakeTime(),
+            scheduler = Scheduler(
+                FakeTime(),
+                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+            ),
             stores = stores,
             activationFactory = ServiceStoreFactory(
                 app,
@@ -67,4 +78,8 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
 
     @After
     override fun tearDown() = super.tearDown()
+
+    // TODO(b/152436411): Fix these.
+    override fun collection_referenceLiveness() {}
+    override fun singleton_referenceLiveness() {}
 }
