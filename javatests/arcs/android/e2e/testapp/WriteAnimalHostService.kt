@@ -12,19 +12,19 @@
 package arcs.android.e2e.testapp
 
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
-import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.Handle
 import arcs.sdk.android.storage.ServiceStoreFactory
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
@@ -33,12 +33,26 @@ class WriteAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
-    override val arcHost: ArcHost = MyArcHost(
+    override val arcHost: MyArcHost = MyArcHost(
         this,
         this.lifecycle,
         JvmSchedulerProvider(coroutineContext),
         ::WriteAnimal.toRegistration()
     )
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val arcId = intent?.getStringExtra(ARC_ID_EXTRA)
+        val context = arcId?.let { arcHost.arcHostContext(it) }
+        val writeAnimalParticle=
+            context?.particles?.get("WriteAnimal")?.particle as? WriteAnimal
+        writeAnimalParticle?.apply {
+            scope.launch {
+                handles.animal.store(WriteAnimal_Animal("capybara"))
+            }
+        }
+
+        return super.onStartCommand(intent, flags, startId)
+    }
 
     class MyArcHost(
         context: Context,
@@ -47,6 +61,8 @@ class WriteAnimalHostService : ArcHostService() {
         vararg initialParticles: ParticleRegistration
     ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
         override val activationFactory = ServiceStoreFactory(context, lifecycle)
+
+        fun arcHostContext(arcId: String) = getArcHostContext(arcId)
     }
 
     inner class WriteAnimal: AbstractWriteAnimal() {
@@ -54,5 +70,9 @@ class WriteAnimalHostService : ArcHostService() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
             handles.animal.store(WriteAnimal_Animal("platypus"))
         }
+    }
+
+    companion object {
+        const val ARC_ID_EXTRA = "arc_id_extra"
     }
 }

@@ -56,6 +56,7 @@ class ReadAnimalHostService : ArcHostService() {
             super.onCreate()
             handles.animal.onUpdate {
                 scope.launch {
+
                     val name = withContext(Dispatchers.IO) {
                         handles.animal.fetch()?.name ?: ""
                     }

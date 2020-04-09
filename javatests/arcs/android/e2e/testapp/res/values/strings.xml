@@ -14,7 +14,11 @@
   <string name="app_name">Arcs Test</string>
   <string name="result_prompt" translatable="false">Result will be shown here.</string>
   <string name="waiting_for_result" translatable="false">Waiting for result.</string>
-  <string name="person_test_btn" translatable="false">PersonTest</string>
+  <string name="start_resurrection_arc_btn" translatable="false">StartResurrectionArc</string>
+  <string name="stop_resurrection_arc_btn" translatable="false">StopResurrectionArc</string>
+  <string name="stop_read_service_btn" translatable="false">StopReadService</string>
+  <string name="trigger_write_btn" translatable="false">TriggerWrite</string>
+  <string name="readwrite_test_btn" translatable="false">PersonTest</string>
   <string name="handles_test_btn" translatable="false">HandlesTest</string>
   <string name="create" translatable="false">Create</string>
   <string name="fetch" translatable="false">Fetch</string>
