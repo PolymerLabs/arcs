@@ -70,12 +70,13 @@ arcs_manifest_proto = _arcs_manifest_proto
 
 kt_js_library = _kt_js_library
 
-def arcs_ts_test(name, src, deps):
+def arcs_ts_test(name, src, deps, flaky = False):
     """Runs a TypeScript test file using `sigh test`."""
     sigh_command(
         name = name,
         srcs = [src],
         execute = False,
         sigh_cmd = "test --bazel --file {SRC}",
+        flaky = flaky,
         deps = deps,
     )
