@@ -126,7 +126,6 @@ class ArcHostHelperTest {
         service = Robolectric.setupService(TestAndroidArcHostService::class.java)
         arcHost = TestArcHost()
         helper = ArcHostHelper(service, arcHost)
-        TestArcHost.throws = false
     }
 
     @Test
