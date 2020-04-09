@@ -1,10 +1,16 @@
 directories:
   java
   javatests
+  build_defs
+  tools
+  third_party
+  particles
+  src
 
 targets:
   //java/...
   //javatests/...
+  //particles/...
 
 test_sources:
   javatests/
