@@ -35,6 +35,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
+import kotlin.reflect.KClass
 
 /**
  * Tool which can be used by [ArcHost]s to handle [Intent] based API calls, as well as
@@ -126,13 +128,11 @@ class ArcHostHelper(
                 ParcelablePlanPartition::class,
                 arcHost::stopArc
             )
-            Operation.GetRegisteredParticles ->
-                runWithResult(
+            Operation.GetRegisteredParticles -> runWithResult(
                     intent,
                     arcHost::registeredParticles
                 )
-            Operation.LookupArcStatus ->
-                runWithResult(
+            Operation.LookupArcStatus -> runWithResult(
                     intent,
                     ParcelablePlanPartition::class,
                     arcHost::lookupArcHostStatus
@@ -186,14 +186,19 @@ class ArcHostHelper(
                 bundle.putInt(EXTRA_OPERATION_RESULT, result.ordinal)
             is Exception -> {
                 bundle.putString(EXTRA_OPERATION_EXCEPTION, result.message)
-                bundle.putString(EXTRA_OPERATION_EXCEPTION_STACKTRACE,
-                    result.stackTrace.joinToString("\n"))
+                bundle.putString(
+                    EXTRA_OPERATION_EXCEPTION_STACKTRACE,
+                    result.stackTrace.joinToString("\n")
+                )
             }
             else -> Unit
         }
         // This triggers a suspended coroutine to resume with the value.
         intent.getParcelableExtra<ResultReceiver>(EXTRA_OPERATION_RECEIVER)
             ?.send(0, bundle)
+        if (result is Exception) {
+            throw result
+        }
     }
 
     internal enum class Operation {

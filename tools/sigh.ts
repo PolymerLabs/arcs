@@ -40,6 +40,7 @@ const sources = {
     astNodes: 'src/runtime/manifest-ast-nodes.ts',
     output: 'src/gen/runtime/manifest-parser.ts',
     railroad: 'manifest-railroad.html',
+    optimize: 'size',
     tspegjs: {
       noTsLint: false,
       tslintIgnores:

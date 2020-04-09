@@ -57,13 +57,11 @@ class IntentArcHostAdapter(
 
     override suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState {
         return sendIntentToArcHostServiceForResult(
-            partition.createLookupArcStatusIntent(
-                arcHostComponentName
-            )
+            partition.createLookupArcStatusIntent(arcHostComponentName)
         ) {
             try {
                 ArcState.valueOf(it.toString())
-            } catch (e: Exception) {
+            } catch (e: IllegalArgumentException) {
                 ArcState.Error
             }
         } ?: ArcState.Error

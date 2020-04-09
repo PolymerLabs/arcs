@@ -60,16 +60,21 @@ class ArcHostHelperTest {
     private lateinit var arcHost: TestArcHost
 
     val personSchema = Schema(
-        setOf(SchemaName("Person")), SchemaFields(mapOf("name" to Text), emptyMap()), "42"
+        setOf(SchemaName("Person")),
+        SchemaFields(mapOf("name" to Text), emptyMap()),
+        "42"
     )
 
     val connection = Plan.HandleConnection(
-        VolatileStorageKey(ArcId.newForTest("foo"), "bar"), HandleMode.ReadWrite,
+        VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+        HandleMode.ReadWrite,
         EntityType(personSchema)
     )
 
     val particleSpec = Plan.Particle(
-        "FooParticle", "foo.bar.FooParticle", mapOf("foo" to connection)
+        "FooParticle",
+        "foo.bar.FooParticle",
+        mapOf("foo" to connection)
     )
 
     val planPartition = Plan.Partition("id", "FooHost", listOf(particleSpec))
@@ -116,7 +121,6 @@ class ArcHostHelperTest {
         companion object {
             var throws = false
         }
-
     }
 
     @Before
@@ -158,8 +162,8 @@ class ArcHostHelperTest {
             TestAndroidArcHostService::class.toComponentName(context)
         )
 
-        val actual = runWithResult<String?>(lookupIntent) {
-                bundle -> ArcHostHelper.getStringResult(bundle)
+        val actual = runWithResult(lookupIntent) { bundle ->
+            ArcHostHelper.getStringResult(bundle)
         }
         assertThat(actual).isEqualTo(ArcState.Stopped.toString())
     }
@@ -188,8 +192,8 @@ class ArcHostHelperTest {
         val startIntent = planPartition.createStartArcHostIntent(
             TestAndroidArcHostService::class.toComponentName(context)
         )
-        val exception = runWithResult(startIntent) {
-            bundle -> ArcHostHelper.getExceptionResult(bundle)
+        val exception = runWithResult(startIntent) { bundle ->
+            ArcHostHelper.getExceptionResult(bundle)
         }
         assertThat(exception).isInstanceOf(ArcHostException::class.java)
         assertThat(exception).hasMessageThat().isEqualTo("Boom!")
@@ -224,12 +228,10 @@ class ArcHostHelperTest {
         val getParticlesIntent = TestAndroidArcHostService::class.toComponentName(context)
             .createGetRegisteredParticlesIntent(arcHost.hostId)
 
-        val particles = runWithResult(getParticlesIntent) {
-            bundle -> ArcHostHelper.getParticleIdentifierListResult(bundle)
+        val particles = runWithResult(getParticlesIntent) { bundle ->
+            ArcHostHelper.getParticleIdentifierListResult(bundle)
         }
 
-        assertThat(particles).containsExactly(
-            particleIdentifier, particleIdentifier2
-        )
+        assertThat(particles).containsExactly(particleIdentifier, particleIdentifier2)
     }
 }

@@ -516,7 +516,7 @@ open class AllocatorTestBase {
         assertThat(writingExternalHost.arcHostContext(arcId.toString())).isNull()
     }
 
-//    @Test
+    @Test
     fun allocator_startArc_particleException_isErrorState() = runAllocatorTest {
         WritePerson.throws = true
         val arcId = allocator.startArcForPlan(
