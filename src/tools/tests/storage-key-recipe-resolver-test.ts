@@ -65,13 +65,9 @@ describe('recipe2plan', () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
-    // TODO(alxr): Resolve these types later
-    // particle Writer
-    //   data: writes Product Thing {name: Text, price: Number}
-
     particle Writer
-       data: writes Thing {name: Text}
-    
+      data: writes Thing {name: Text}
+
     @trigger
       launch startup
       arcId writeArcId
@@ -172,7 +168,7 @@ describe('recipe2plan', () => {
         assert.isTrue(it.isResolved());
       }
     }));
-    it('Invalid Type: If Reader reads {name: Text, age: Number} it is not valid', Flags.withDefaultReferenceMode(async () => {
+    it('fails if the type read is broader than the type written', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text, age: Number}
@@ -199,6 +195,31 @@ describe('recipe2plan', () => {
       const resolver = new StorageKeyRecipeResolver(manifest);
       // TODO: specify the correct error to be thrown
       await assertThrowsAsync(resolver.resolve);
+    }));
+    it('resolves if the type written is be broader than type read', Flags.withDefaultReferenceMode(async () => {
+      const manifest = await Manifest.parse(`\
+    particle Writer
+      data: writes Product Thing {name: Text, price: Number}
+    particle Reader
+      data: reads Thing {name: Text}
+
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create persistent 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      for (const it of (await resolver.resolve())) {
+        assert.isTrue(it.isResolved());
+      }
     }));
     it('fails to resolve when a ingestion recipe has no arcId', async () => {
       const manifest = await Manifest.parse(`\
@@ -337,10 +358,10 @@ describe('recipe2plan', () => {
         assert.isTrue(it.isResolved());
       }
     });
-    it('forces resolution of type variables', async () => {
+    it('resolves writes of collections of entities', async () => {
       const manifest = await Manifest.parse(`\
     particle Writer
-       data: writes [Thing {name: Text}] // Could also be a singleton
+       data: writes [Thing {name: Text}]
     
     @trigger
       launch startup
@@ -355,7 +376,21 @@ describe('recipe2plan', () => {
         assert.isTrue(it.isResolved());
       }
     });
-    it.skip('No Handle: If there is no writing handle, it is not valid', () => {
+    it('fails if there is no matching writing handle found', async () => {
+      const manifest = await Manifest.parse(`\
+      particle Reader
+        data: reads Thing {name: Text}
+  
+      recipe ReadingRecipe
+        data: map 'my-handle-id'
+        Reader
+          data: reads data`);
+        const resolver = new StorageKeyRecipeResolver(manifest);
+        await assertThrowsAsync(
+          async () => await resolver.resolve(),
+          StorageKeyRecipeResolverError,
+          'No matching handles found for data.'
+        );
     });
   });
 });
