@@ -54,20 +54,15 @@ export class StorageKeyRecipeResolver {
       this.validateHandles(recipe);
       const arcId = findLongRunningArcId(recipe);
       const arc = this.runtime.newArc(
-        arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
+          arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
-      const resolved = await this.tryResolve(recipe, arc, opts);
-      if (!resolved) {
-        throw new StorageKeyRecipeResolverError(
-          `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`
-        );
+      let resolved = await this.tryResolve(recipe, arc, opts);
+
+      if (isLongRunning(recipe)) {
+        resolved = await this.createStoresForCreateHandles(resolved, arc);
+        assert(resolved.isResolved());
       }
-      await this.createStoresForCreateHandles(resolved, arc);
-      if (!resolved.isResolved()) {
-        throw new StorageKeyRecipeResolverError(
-          `Recipe ${resolved.name} did not properly resolve!\n${resolved.toString({showUnresolved: true})}`
-        );
-      }
+
       recipes.push(resolved);
     }
     return recipes;
@@ -81,12 +76,19 @@ export class StorageKeyRecipeResolver {
    * @param opts contains `errors` map for reporting.
    */
   async tryResolve(recipe: Recipe, arc: Arc, opts?: IsValidOptions): Promise<Recipe | null> {
-    const normalized = recipe.clone();
-    const successful = normalized.normalize(opts);
-    if (!successful) return null;
-    if (normalized.isResolved()) return normalized;
+    if (!recipe.normalize(opts)) {
+      throw new StorageKeyRecipeResolverError(
+          `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
+    }
+    if (recipe.isResolved()) return recipe;
 
-    return await (new RecipeResolver(arc).resolve(recipe, opts));
+    const resolvedRecipe = await (new RecipeResolver(arc).resolve(recipe, opts));
+    if (!resolvedRecipe) {
+      throw new StorageKeyRecipeResolverError(
+        `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
+    }
+    assert(resolvedRecipe.isResolved());
+    return resolvedRecipe;
   }
 
   /**
@@ -95,17 +97,12 @@ export class StorageKeyRecipeResolver {
    * @param recipe should be long running.
    * @param arc Arc is associated with current recipe.
    */
-  async createStoresForCreateHandles(recipe: Recipe, arc: Arc) {
-    const dbKeyCreator: StorageKeyCreatorInfo = {
-      protocol: 'db',
-      capabilities: Capabilities.persistentQueryable,
-      create: options => new PersistentDatabaseStorageKey(options.unique(), options.schemaHash),
-    };
-    const resolver = new CapabilitiesResolver({arcId: arc.id},
-      [dbKeyCreator, ...CapabilitiesResolver.getDefaultCreators()]);
-    for (const createHandle of recipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
+  async createStoresForCreateHandles(recipe: Recipe, arc: Arc): Promise<Recipe> {
+    DatabaseStorageKey.register();
+    const resolver = new CapabilitiesResolver({arcId: arc.id});
+    const cloneRecipe = recipe.clone();
+    for (const createHandle of cloneRecipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
       if (createHandle.type.hasVariable && !createHandle.type.isResolved()) {
-        // TODO(mmandlis): should already be resolved.
         assert(createHandle.type.maybeEnsureResolved());
         assert(createHandle.type.isResolved());
       }
@@ -115,10 +112,13 @@ export class StorageKeyRecipeResolver {
       }
 
       const storageKey = await resolver.createStorageKey(
-        createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
+          createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
       const store = new Store(createHandle.type, {storageKey, exists: Exists.MayExist, id: createHandle.id});
       arc.context.registerStore(store, createHandle.tags);
+      createHandle.storageKey = storageKey;
     }
+    assert(cloneRecipe.normalize() && cloneRecipe.isResolved());
+    return cloneRecipe;
   }
 
   /**
@@ -145,7 +145,7 @@ export class StorageKeyRecipeResolver {
         const match = matches[0];
         if (!isLongRunning(match.recipe)) {
           throw new StorageKeyRecipeResolverError(
-            `Handle ${handle.localName} mapped to ephemeral handle ${match.localName}.`
+            `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
           );
         }
       });
