@@ -111,7 +111,7 @@ describe('recipe2plan', () => {
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
-        'Handle data mapped to ephemeral handle thing.'
+        `Handle data mapped to ephemeral handle 'my-handle-id'.`
       );
     }));
     it('fails to resolve mapping a handle from a short running arc into a long running arc', Flags.withDefaultReferenceMode(async () => {
@@ -139,7 +139,7 @@ describe('recipe2plan', () => {
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
-        'Handle data mapped to ephemeral handle thing.'
+        `Handle data mapped to ephemeral handle 'my-handle-id'.`
       );
     }));
     it('resolves mapping a handle from a long running arc into a short running arc', Flags.withDefaultReferenceMode(async () => {
@@ -164,7 +164,8 @@ describe('recipe2plan', () => {
         data: reads data`);
 
       const resolver = new StorageKeyRecipeResolver(manifest);
-      for (const it of await resolver.resolve()) {
+      const recipes = await resolver.resolve();
+      for (const it of recipes) {
         assert.isTrue(it.isResolved());
       }
     }));
@@ -248,7 +249,7 @@ describe('recipe2plan', () => {
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
-        'Handle data mapped to ephemeral handle thing.'
+        `Handle data mapped to ephemeral handle 'my-handle-id'.`
       );
     });
     it('fails to resolve when an ingestion recipe uses a create handle with no Id', async () => {

@@ -44,8 +44,7 @@ export abstract class DatabaseStorageKey extends StorageKey {
   static register() {
     CapabilitiesResolver.registerKeyCreator(
         PersistentDatabaseStorageKey.protocol,
-        // TODO(mmandlis): add queryable, when #4794 lands
-        Capabilities.persistent,
+        Capabilities.persistentQueryable,
         (options: StorageKeyOptions) =>
             new PersistentDatabaseStorageKey(options.location(), options.schemaHash));
 

@@ -24,3 +24,8 @@ recipe Consumption
   data: map 'my-handle-id'
   Reader
     data: reads data
+
+recipe EphemeralWriting
+  thing: create 'my-ephemeral-handle-id'
+  Writer
+    data: writes thing
