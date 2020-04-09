@@ -1,28 +1,24 @@
 package arcs.core.data.proto
 
+import arcs.core.data.Capabilities
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe.Handle
-import arcs.core.data.Recipe.Particle
 import arcs.core.data.Schema
-import arcs.core.data.SchemaName
 import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import arcs.core.data.TypeVariable
 import arcs.core.testutil.assertThrows
-import arcs.core.testutil.fail
-import arcs.core.util.Result
 import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
-import com.google.protobuf.Message.Builder
-import com.google.protobuf.Message
 import com.google.protobuf.TextFormat
-import java.io.File
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @RunWith(JUnit4::class)
 class RecipeProtoDecoderTest {
@@ -34,7 +30,7 @@ class RecipeProtoDecoderTest {
         .setStorageKey(ramdiskStorageKey)
         .build()
     val thingHandle = Handle(
-        "thing", Handle.Fate.CREATE, ramdiskStorageKey, TypeVariable("thing"), emptyList()
+        "thing", Handle.Fate.CREATE, TypeVariable("thing"), ramdiskStorageKey, Capabilities.Empty
     )
     val thingSchema = Schema(
             names = setOf(SchemaName("Thing")),
@@ -42,9 +38,9 @@ class RecipeProtoDecoderTest {
             hash = ""
     )
     val thingEntity = EntityType(thingSchema)
-    val readConnectionSpec = HandleConnectionSpec("data", Direction.READS, thingEntity)
+    val readConnectionSpec = HandleConnectionSpec("data", HandleMode.Read, thingEntity)
     val readerSpec = ParticleSpec("Reader", mapOf("data" to readConnectionSpec), "ReaderLocation")
-    val writeConnectionSpec = HandleConnectionSpec("data", Direction.WRITES, thingEntity)
+    val writeConnectionSpec = HandleConnectionSpec("data", HandleMode.Write, thingEntity)
     val writerSpec = ParticleSpec("Writer", mapOf("data" to writeConnectionSpec), "WriterLocation")
     val context = DecodingContext(
         particleSpecs = listOf(readerSpec, writerSpec).associateBy { it.name },
@@ -65,6 +61,8 @@ class RecipeProtoDecoderTest {
 
     /**
      * Defines the following recipe:
+     *    @trigger
+     *      arcId pass-through-arc
      *    recipe PassThrough
      *      thing: create
      *      Writer
@@ -74,6 +72,7 @@ class RecipeProtoDecoderTest {
      */
     val recipeProto = RecipeProto.newBuilder()
         .setName("PassThrough")
+        .setArcId("pass-through-arc")
         .addHandles(thingHandleProto)
         .addParticles(readerParticle)
         .addParticles(writerParticle)
@@ -83,6 +82,7 @@ class RecipeProtoDecoderTest {
     fun decodesRecipe() {
         with(recipeProto.decode(context.particleSpecs)) {
             assertThat(name).isEqualTo("PassThrough")
+            assertThat(arcId).isEqualTo("pass-through-arc")
             assertThat(handles).isEqualTo(mapOf("thing" to thingHandle))
             assertThat(particles).containsExactly(
                 readerParticle.decode(context),
@@ -96,7 +96,8 @@ class RecipeProtoDecoderTest {
         val emptyRecipeProto = RecipeProto.newBuilder()
             .build()
         with(emptyRecipeProto.decode(context.particleSpecs)) {
-            assertThat(name).isEqualTo("")
+            assertThat(name).isNull()
+            assertThat(arcId).isNull()
             assertThat(handles).isEmpty()
             assertThat(particles).isEmpty()
         }

@@ -1,6 +1,7 @@
 package arcs.core.data.proto
 
 import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.HandleMode
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
 import arcs.core.data.ParticleSpec
@@ -19,8 +20,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-typealias Direction = HandleConnectionSpec.Direction
-
 @RunWith(JUnit4::class)
 class ParticleProtoDecoderTest {
     // The test environment.
@@ -28,13 +27,12 @@ class ParticleProtoDecoderTest {
     val thingHandle = Handle(
         "thing",
         Handle.Fate.CREATE,
-        ramdiskStorageKey,
         TypeVariable("thing"),
-        emptyList()
+        ramdiskStorageKey
     )
-    val readConnectionSpec = HandleConnectionSpec("data", Direction.READS, TypeVariable("data"))
+    val readConnectionSpec = HandleConnectionSpec("data", HandleMode.Read, TypeVariable("data"))
     val readerSpec = ParticleSpec("Reader", mapOf("data" to readConnectionSpec), "ReaderLocation")
-    val writeConnectionSpec = HandleConnectionSpec("data", Direction.WRITES, TypeVariable("data"))
+    val writeConnectionSpec = HandleConnectionSpec("data", HandleMode.Write, TypeVariable("data"))
     val writerSpec = ParticleSpec("Writer", mapOf("data" to writeConnectionSpec), "WriterLocation")
     val readerWriterSpec = ParticleSpec(
         "ReaderWriter",

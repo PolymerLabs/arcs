@@ -1,6 +1,7 @@
 package arcs.core.analysis
 
 import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.HandleMode
 import arcs.core.data.Recipe
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
@@ -13,8 +14,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-
-typealias Direction = HandleConnectionSpec.Direction
 
 /** Tests for TypeConstraints. */
 @RunWith(JUnit4::class)
@@ -30,33 +29,26 @@ class TypeConstraintsTest {
     //    num_cnxn: reads TypeVariable("num_type")
     //    int_cnxn: reads TypeVariable("num_type")
     //
-    var ramdiskStorageKey = "ramdisk://things"
     val textHandle = Handle(
         "text",
         Handle.Fate.CREATE,
-        ramdiskStorageKey,
-        TypeVariable("text"),
-        emptyList()
+        TypeVariable("text")
     )
     val numHandle = Handle(
         "num",
         Handle.Fate.CREATE,
-        ramdiskStorageKey,
-        TypeVariable("num"),
-        emptyList()
+        TypeVariable("num")
     )
     val intHandle = Handle(
         "int",
         Handle.Fate.CREATE,
-        ramdiskStorageKey,
-        TypeVariable("int"),
-        emptyList()
+        TypeVariable("int")
     )
-    val textCnxnSpec = HandleConnectionSpec("text_cnxn", Direction.READS, TypeVariable("text_cnxn"))
-    val wordCnxnSpec = HandleConnectionSpec("word_cnxn", Direction.READS, TypeVariable("word_cnxn"))
-    val numCnxnSpec = HandleConnectionSpec("num_cnxn",  Direction.READS, TypeVariable("num_type"))
+    val textCnxnSpec = HandleConnectionSpec("text_cnxn", HandleMode.Read, TypeVariable("text_cnxn"))
+    val wordCnxnSpec = HandleConnectionSpec("word_cnxn", HandleMode.Read, TypeVariable("word_cnxn"))
+    val numCnxnSpec = HandleConnectionSpec("num_cnxn",  HandleMode.Read, TypeVariable("num_type"))
     // numCnxnSpec has the same type variable name as [numCnxnSpec]
-    val intCnxnSpec = HandleConnectionSpec("int_cnxn", Direction.WRITES, TypeVariable("num_type"))
+    val intCnxnSpec = HandleConnectionSpec("int_cnxn", HandleMode.Write, TypeVariable("num_type"))
 
     val connectionsTestSpec = ParticleSpec(
         "ConnectionsTest",

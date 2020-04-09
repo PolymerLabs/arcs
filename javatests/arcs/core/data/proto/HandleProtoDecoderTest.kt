@@ -1,5 +1,6 @@
 package arcs.core.data.proto
 
+import arcs.core.data.Capabilities
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
 import arcs.core.testutil.assertThrows
@@ -37,9 +38,37 @@ class HandleProtoDecoderTest {
     }
 
     @Test
+    fun decodesCapabilitiesList() {
+        assertThat(
+            listOf(HandleProto.Capability.TIED_TO_ARC).decode()
+        ).isEqualTo(Capabilities.TiedToArc)
+        assertThat(
+            listOf(HandleProto.Capability.TIED_TO_RUNTIME).decode()
+        ).isEqualTo(Capabilities.TiedToRuntime)
+        assertThat(
+            listOf(HandleProto.Capability.PERSISTENT).decode()
+        ).isEqualTo(Capabilities.Persistent)
+        assertThat(
+            listOf(HandleProto.Capability.QUERYABLE).decode()
+        ).isEqualTo(Capabilities.Queryable)
+        assertThat(
+            listOf(
+                HandleProto.Capability.QUERYABLE,
+                HandleProto.Capability.PERSISTENT
+            ).decode()
+        ).isEqualTo(Capabilities.PersistentQueryable)
+
+        assertThrows(IllegalArgumentException::class) {
+            listOf(HandleProto.Capability.UNRECOGNIZED).decode()
+        }
+    }
+
+    @Test
     fun decodesHandleProtoWithNoType() {
         val storageKey = "ramdisk://a"
-        val handleText = buildHandleProtoText("notype_thing", "CREATE", "", storageKey, "handle_c")
+        val handleText = buildHandleProtoText(
+            "notype_thing", "CREATE", "", storageKey, "handle_c", listOf("TIED_TO_ARC")
+        )
         val handleProto = parseHandleProtoText(handleText)
         with(handleProto.decode()) {
             assertThat(name).isEqualTo("notype_thing")
@@ -47,8 +76,9 @@ class HandleProtoDecoderTest {
             assertThat(storageKey).isEqualTo("ramdisk://a")
             assertThat(associatedHandles).containsExactly("handle1", "handle_c")
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
+            assertThat(capabilities).isEqualTo(Capabilities.TiedToArc)
         }
-   }
+    }
 
     @Test
     fun decodesHandleProtoWithType() {
@@ -67,7 +97,12 @@ class HandleProtoDecoderTest {
         val storageKey = "ramdisk://b"
         val entityType = parseTypeProtoText(entityTypeProto).decode()
         val handleText = buildHandleProtoText(
-            "thing", "JOIN", "type { ${entityTypeProto} }", storageKey, "handle_join"
+            "thing",
+            "JOIN",
+            "type { ${entityTypeProto} }",
+            storageKey,
+            "handle_join",
+            listOf("PERSISTENT", "QUERYABLE")
         )
         val handleProto = parseHandleProtoText(handleText)
         with(handleProto.decode()) {
@@ -76,6 +111,7 @@ class HandleProtoDecoderTest {
             assertThat(storageKey).isEqualTo("ramdisk://b")
             assertThat(associatedHandles).isEqualTo(listOf("handle1", "handle_join"))
             assertThat(type).isEqualTo(entityType)
+            assertThat(capabilities).isEqualTo(Capabilities.PersistentQueryable)
         }
     }
 
@@ -85,7 +121,8 @@ class HandleProtoDecoderTest {
         fate: String,
         type: String,
         storageKey: String,
-        associatedHandle: String
+        associatedHandle: String,
+        capabilities: List<String>
     ) =
         """
           name: "${name}"
@@ -94,5 +131,6 @@ class HandleProtoDecoderTest {
           associated_handles: "handle1"
           associated_handles: "${associatedHandle}"
           ${type}
+          ${capabilities.joinToString { "capabilities: $it" }}
         """.trimIndent()
 }

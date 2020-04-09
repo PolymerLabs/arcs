@@ -15,9 +15,10 @@ import arcs.core.type.Type
 
 /** Representation of recipe in an Arcs manifest. */
 data class Recipe(
-    val name: String,
+    val name: String?,
     val handles: Map<String, Handle>,
-    val particles: List<Particle>
+    val particles: List<Particle>,
+    val arcId: String?
 ) {
     /** Representation of a particle in a recipe. */
     data class Particle(
@@ -35,9 +36,10 @@ data class Recipe(
     data class Handle(
         val name: String,
         val fate: Fate,
-        val storageKey: String,
         val type: Type,
-        val associatedHandles: List<String>
+        val storageKey: String? = null,
+        val capabilities: Capabilities? = null,
+        val associatedHandles: List<String> = emptyList()
     ) {
         // TODO(bgogul): associatedHandles should be changed to List<Handle>.
         enum class Fate {
