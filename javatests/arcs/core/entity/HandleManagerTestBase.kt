@@ -220,7 +220,6 @@ open class HandleManagerTestBase {
     @Test
     fun singleton_writeAndReadBackAndClear() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
-            as ReadWriteSingletonHandle<Person>
         writeHandle.store(entity1)
 
         // Now read back from a different handle
@@ -277,12 +276,10 @@ open class HandleManagerTestBase {
     @Test
     fun singleton_clearOnAClearDataWrittenByB() = testRunner {
         val handleA = writeHandleManager.createSingletonHandle()
-            as ReadWriteSingletonHandle<Person>
         handleA.store(entity1)
 
         // Now read back from a different handle
         val handleB = readHandleManager.createSingletonHandle()
-            as ReadWriteSingletonHandle<Person>
 
         handleB.awaitReady()
 
@@ -474,7 +471,6 @@ open class HandleManagerTestBase {
         assertThat(readBack.expirationTimestamp).isEqualTo(2*24*3600*1000)
 
         val handleC = readHandleManager.createSingletonHandle(ttl = Ttl.Minutes(2))
-            as ReadWriteSingletonHandle<Person>
 
         handleC.store(entity2)
         val readBack2 = handleB.fetch()!!
