@@ -193,6 +193,12 @@ class ArcsTest {
         waitForSequencedTextsToAppear(PERSON_TEST_RESULT_TEXT, ARC_HOST_IDLE_TEXT)
     }
 
+    @Test
+    fun testAllocator_resurrection() {
+        clickOnTextIfPresent(PERSON_TEST_BTN_TEXT)
+        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, PERSON_TEST_RESULT_TEXT)
+    }
+
     private fun clickOnTextIfPresent(text: String) {
         uiDevice.wait(Until.hasObject(By.text(text)), UI_TIMEOUT_MS)
         val textObject = uiDevice.findObject(By.text(text))
@@ -240,6 +246,11 @@ class ArcsTest {
         const val PERSON_TEST_BTN_TEXT = "PersonTest"
         const val PERSON_TEST_RESULT_TEXT = "John Wick"
         const val ARC_HOST_IDLE_TEXT = "ArcHost is idle"
+
+        const val START_RESURRECTION_ARC_BTN_TEXT = "StartResurrectionArc"
+        const val STOP_READ_SERVICE_BTN_TEXT = "StopReadService"
+        const val TRIGGER_WRITE_BTN_TEXT = "TriggerWrite"
+        const val STOP_RESURRECTION_ARC_BTN_TEXT = "StopResurrectionArc"
 
         const val ON_UPDATE_NULL = "onUpdate:null"
         const val ON_READY_NULL = "onReady:null"
