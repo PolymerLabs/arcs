@@ -49,3 +49,4 @@ bazel-*
 **/.project
 **/.classpath
 **/.settings
+.bazelproject

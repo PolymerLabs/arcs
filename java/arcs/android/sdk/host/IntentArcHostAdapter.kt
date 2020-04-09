@@ -61,7 +61,11 @@ class IntentArcHostAdapter(
                 arcHostComponentName
             )
         ) {
-            ArcState.valueOf(it.toString())
+            try {
+                ArcState.valueOf(it.toString())
+            } catch (e: Exception) {
+                ArcState.Error
+            }
         } ?: ArcState.Error
     }
 
