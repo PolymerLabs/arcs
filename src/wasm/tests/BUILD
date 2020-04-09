@@ -14,6 +14,7 @@ filegroup(
 arcs_ts_test(
     name = "wasm-api-test",
     src = "wasm-api-test.ts",
+    flaky = True,
     deps = [
         ":manifest_srcs",
         "//javatests/arcs/sdk/wasm:test-module",
