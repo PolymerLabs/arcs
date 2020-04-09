@@ -49,8 +49,8 @@ import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreManager
-import arcs.core.util.Scheduler
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Scheduler
 import arcs.core.util.Time
 
 /**
