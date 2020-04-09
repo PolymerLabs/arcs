@@ -294,7 +294,7 @@ export class Handle implements Comparable<Handle> {
       }
       return false;
     }
-    console.log(`Resolving handle '${this.localName}' succeeded (W, R): ${type.canWriteSuperset}, ${type.canReadSubset}.`)
+    console.log(`Resolving handle '${this.localName}' succeeded (W, R): ${type}, ${type.canWriteSuperset}, ${type.canReadSubset}.`)
     this._type = type;
     this._tags.forEach(tag => tags.add(tag));
     this._tags = [...tags];

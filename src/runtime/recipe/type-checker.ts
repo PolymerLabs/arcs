@@ -25,6 +25,7 @@ export class TypeChecker {
   // NOTE: you almost definitely don't want to call this function, if you think
   // you do, talk to shans@.
   private static getResolution(candidate: Type, options: TypeCheckOptions): Type | null {
+    console.log(`In getResolution of ${candidate}.`)
     if (candidate.isCollectionType()) {
       const resolution = TypeChecker.getResolution(candidate.collectionType, options);
       return (resolution !== null) ? resolution.collectionOf() : null;
@@ -43,9 +44,12 @@ export class TypeChecker {
     }
 
     if (!(candidate instanceof TypeVariable)) {
+      console.log(`${candidate} is not a type variable.`)
       return candidate;
     }
+    console.log(`${candidate} is a type variable.`)
     if (candidate.canReadSubset == null || candidate.canWriteSuperset == null) {
+      console.log(`${candidate} cannot be concretized.`)
       // This variable cannot be concretized without losing information.
       return candidate;
     }
@@ -53,6 +57,7 @@ export class TypeChecker {
       // The resolution is still possible, but we may not have more information then the current candidate.
       if (candidate.canWriteSuperset.isAtLeastAsSpecificAs(candidate.canReadSubset)) {
         // The type bounds have 'met', they are equivalent and are the resolution.
+        console.log(`Resolving the candidate to ${candidate.canReadSubset}.`)
         candidate.variable.resolution = candidate.canReadSubset;
       }
       return candidate;
@@ -77,7 +82,9 @@ export class TypeChecker {
   // do, talk to shans@.
   static processTypeList(baseType: Type, list: TypeListInfo[], options: TypeCheckOptions = {}) {
     const newBaseType = TypeVariable.make('');
+
     if (baseType) {
+      console.log(`Non null baseType: ${baseType}`);
       newBaseType.variable.resolution = baseType;
     }
     baseType = newBaseType;
@@ -95,11 +102,18 @@ export class TypeChecker {
     // If the baseType is a variable then this results in a single place to manipulate the constraints
     // of all the other connected variables at the same time.
     for (const item of list) {
+      console.log(`Item.type: ${item.type}, resolved: ${item.type.resolvedType()}`);
       if (item.type.resolvedType().hasVariable) {
+        console.log(`Merging constraints for ${baseType} and ${item.type}:`);
+        console.log(`Base: W: ${baseType.canWriteSuperset}, R: ${baseType.canReadSubset}.`);
+        console.log(`Item: W: ${item.type.resolvedType().canWriteSuperset}, R: ${item.type.resolvedType().canReadSubset}.`);
         baseType = TypeChecker._tryMergeTypeVariable(baseType, item.type, options);
         if (baseType == null) {
           return null;
         }
+        console.log(`After`);
+        console.log(`Base: W: ${baseType.canWriteSuperset}, R: ${baseType.canReadSubset}.`);
+        console.log(`Item: W: ${item.type.resolvedType().canWriteSuperset}, R: ${item.type.resolvedType().canReadSubset}.`);
       } else {
         concreteTypes.push(item);
       }
@@ -110,15 +124,22 @@ export class TypeChecker {
         // Skip relaxed handles, as they do not constrain the type.
         continue;
       }
+      console.log(`Merging concrete type ${item.type}, ${item.direction} with ${baseType}:`)
+      console.log(`Base: W: ${baseType.canWriteSuperset}, R: ${baseType.canReadSubset}.`);
+      console.log(`Concrete: W: ${item.type.resolvedType().canWriteSuperset}, R: ${item.type.resolvedType().canReadSubset}.`);
       if (!TypeChecker._tryMergeConstraints(baseType, item, options)) {
         return null;
       }
+      console.log(`After`)
+      console.log(`Base: W: ${baseType.canWriteSuperset}, R: ${baseType.canReadSubset}.`)
+      console.log(`Concrete: W: ${item.type.resolvedType().canWriteSuperset}, R: ${item.type.resolvedType().canReadSubset}.`);
     }
 
     const x = TypeChecker.getResolution(baseType.resolvedType(), options);
     if (x != null) {
-      console.log(`Write superset: ${(x.canWriteSuperset)}`);
-      console.log(`Read subset: ${(x.canReadSubset)}`);
+      console.log(`${x.tag}`)
+      console.log(`Write superset: ${(x.resolvedType().canWriteSuperset)}`);
+      console.log(`Read subset: ${(x.resolvedType().canReadSubset)}`);
     } else {
       console.log(`Write/Read sets: null`);
     }
@@ -182,7 +203,9 @@ export class TypeChecker {
     const [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
 
     if (primitiveHandleType instanceof TypeVariable) {
+      console.log(`primitiveHandleType is Variable.`);
       if (primitiveConnectionType.isTypeContainer()) {
+        console.log(`primitiveHandleType is container.`);
         if (primitiveHandleType.variable.resolution != null
             || primitiveHandleType.variable.canReadSubset != null
             || primitiveHandleType.variable.canWriteSuperset != null) {
@@ -208,6 +231,7 @@ export class TypeChecker {
         // Call recursively to unwrap and merge constraints of potentially multiple type variables (e.g. for tuples).
         return this._tryMergeConstraints(primitiveHandleType.resolvedType(), {type: primitiveConnectionType, relaxed, direction}, options);
       }
+      console.log(`primitiveHandleType is blah.`);
 
       if (direction === 'writes' || direction === 'reads writes' || direction === '`provides') {
         // the canReadSubset of the handle represents the maximal type that can be read from the
@@ -222,6 +246,7 @@ export class TypeChecker {
         if (direction === 'reads' || direction === 'reads writes' || direction === '`consumes') {
           // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
           // so we need to union it with the type that wants to be read here.
+          console.log(`Direction reads. W: ${primitiveHandleType.variable.canWriteSuperset}, R: ${primitiveConnectionType.canReadSubset}`);
           if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset)) {
             return false;
           }
