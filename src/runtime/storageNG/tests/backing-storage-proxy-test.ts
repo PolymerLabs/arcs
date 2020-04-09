@@ -36,11 +36,11 @@ describe('BackingStorageProxy', async () => {
 
     const mockHandle = new MockHandle(backingStorageProxy.getStorageProxy('foo-id'));
     const mockHandle2 = new MockHandle(backingStorageProxy.getStorageProxy('foo-id'));
-    assert.deepEqual(mockHandle.storageProxy, mockHandle2.storageProxy);
+    assert.strictEqual(mockHandle.storageProxy, mockHandle2.storageProxy);
 
     // a different muxId will create a different storage proxy
     const mockHandle3 = new MockHandle(backingStorageProxy.getStorageProxy('foo-id-2'));
-    assert.notDeepEqual(mockHandle.storageProxy, mockHandle3.storageProxy);
+    assert.notStrictEqual(mockHandle.storageProxy, mockHandle3.storageProxy);
   });
   it('can direct ProxyMessages from storage proxy to backing stores', async () => {
     const mockBackingStore = new MockBackingStore<CRDTEntityTypeRecord<Identified, Identified>>();

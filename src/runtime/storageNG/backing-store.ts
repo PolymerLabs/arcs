@@ -125,11 +125,11 @@ export class BackingStore<T extends CRDTTypeRecord> implements StorageCommunicat
       getChannelConstructor(): ChannelConstructor {
         return {
           generateID() {
-            throw new Error('error');
+            throw new Error('unimplemented, should not be called');
           },
           idGenerator: null,
           getStorageProxy() {
-            throw new Error('error');
+            throw new Error('unimplemented, should not be called');
           },
           reportExceptionInHost(exception: PropagatedException): void {
           }
