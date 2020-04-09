@@ -17,50 +17,93 @@ import {IsValidOptions} from '../recipe/recipe.js';
 
 describe('TypeChecker', () => {
    it.only('gogul-type-checker-test', async () => {
-    const manifest = await Manifest.parse(`
+   // ReadSome
+   //    tapIn: reads tapOutHandle
+   // tapOut: writes ~a
+   // tapOutHandle: create
+   // tapOut: writes tapOutHandle
+  // particle ReadSome
+  //   tapIn: reads Person {age: Number}
+  // particle GenericGetPerson
+  //   person: writes ~b
+  // GenericGetPerson
+  //    person: writes personHandle
+     const manifest = await Manifest.parse(`
 schema Person
   name: Text
   age: Number
 
 particle PassThrough
   valueIn: reads ~a
-  valueOut: writes Person {age: Number}
-  tapOut: writes ~a
+  valueOut: writes ~a
 
-particle GetPerson
+particle WritePerson
   person: writes Person
 
-particle GenericGetPerson
-  person: writes ~a
-
-particle GetAge
+particle WriteAge
   age: writes Person {age: Number}
 
 particle DisplayGreeting
-  person: reads Person
+  person: reads Person {name: Text}
 
 particle DisplayAge
   age: reads Person {age: Number}
 
 recipe Test
+   // Flipping order of handles makes the recipe valid.
    personHandle: create
    ageHandle: create
-   tapOutHandle: create
-   GenericGetPerson
-      person: writes personHandle
-   GetPerson
+   WritePerson
       person: writes personHandle
    DisplayGreeting
       person: reads personHandle
-   PassThrough
-      valueIn: personHandle
-      valueOut: ageHandle
-      tapOut: tapOutHandle
-   GetAge
+   WriteAge
       age: writes ageHandle
    DisplayAge
       age: reads ageHandle
+   PassThrough
+      valueIn: reads personHandle
+      valueOut: writes ageHandle
     `);
+//        const manifest = await Manifest.parse(`
+// schema TextAge
+//    value: Text
+
+// schema Age
+//    value: Number
+
+// particle P
+//   textAge: reads ~a
+//   age: reads ~a
+//   textAgeCollection: writes ~a
+//   ageCollection: writes ~a
+
+// particle Q
+//   ageCollection: reads Age
+
+// particle GetTextAge
+//   textAge: writes TextAge
+
+// particle GetAge
+//   age: writes Age
+
+// recipe Test
+//   ageCollectionHandle: create
+//   textAgeCollectionHandle: create
+//   ageHandle: create
+//   textAgeHandle: create
+//   GetTextAge
+//     textAge: writes textAgeHandle
+//   GetAge
+//     age: writes ageHandle
+//   P
+//     textAge: reads textAgeHandle
+//     age: reads ageHandle
+//     textAgeCollection: writes textAgeCollectionHandle
+//     ageCollection: writes ageCollectionHandle
+//   Q
+//     ageCollection: reads ageCollectionHandle
+// `)
 
 //        onsider a particle A that writes `[Foo { bar, baz }]`, another B that reads `[Foo { bar }]` and writes a singleton reference `&Foo`. And a third particle C that reads `Foo { baz }`.
 
@@ -112,11 +155,27 @@ recipe Test
       assert.fail('cannot normalize recipe');
     } else {
       console.log(`Recipe: ${recipe.name}`)
+      // this.type.resolvedType().toString({hideFields: options.hideFields == undefined ? true: options.hideFields}
       for (const handle of recipe.handles) {
-        console.log(`${handle.localName}: ${handle.type.canWriteSuperset}, ${handle.type.canReadSubset}`);
+          console.log(`${handle.localName}: ${handle.type.canWriteSuperset}, ${handle.type.canReadSubset}`);
+          var htype = handle.type.resolvedType();
+          if (htype.canWriteSuperset != null) {
+              console.log(`NOT NULL`)
+              if (htype.canWriteSuperset.isResolved()) {
+                  const x = htype.toString()
+                  console.log(`RESOLVED: ${x}.`)
+                  if (htype.isCollectionType()) {
+                      const x = htype.collectionType.resolvedType().toString()
+                      console.log(`COLLECTION: ${x}.`)
+                  }
+              }
+        }
         console.log("Connections:");
         for (const cnxn of handle.connections) {
-          console.log(` ${cnxn.name} of ${cnxn.particle.spec.name}: ${cnxn.type.canWriteSuperset}, ${cnxn.type.canReadSubset}`);
+            console.log(` ${cnxn.name} of ${cnxn.particle.spec.name}: ${cnxn.type.canWriteSuperset}, ${cnxn.type.canReadSubset}`);
+            // if (cnxn.resolvedType().canWriteSuperset != null && cnxn.resolvedType().canWriteSuperset.isCollectionType()) {
+            //     console.log(`__COLLECTION__`);
+            // }
         }
       }
     }
