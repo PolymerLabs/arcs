@@ -1,6 +1,7 @@
 package arcs.sdk.testing
 
 import arcs.core.entity.Entity
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -84,11 +85,19 @@ open class BaseTestHarness<P : Particle>(
                         scheduler = Scheduler(JvmTime, scope.coroutineContext)
                     )
                     specs.forEach { spec ->
-                        val storageKey = ReferenceModeStorageKey(
-                            backingKey = RamDiskStorageKey("backing_${spec.baseName}"),
-                            storageKey = RamDiskStorageKey("entity_${spec.baseName}")
-                        )
-                        handles[spec.baseName] = handleManager.createHandle(spec, storageKey)
+                        val storageKey = when (spec.dataType) {
+                            HandleDataType.Entity -> ReferenceModeStorageKey(
+                                backingKey = RamDiskStorageKey("backing_${spec.baseName}"),
+                                storageKey = RamDiskStorageKey("entity_${spec.baseName}")
+                            )
+                            HandleDataType.Reference -> RamDiskStorageKey("ref_${spec.baseName}")
+                        }
+                        try {
+                            val handle = handleManager.createHandle(spec, storageKey)
+                            handles[spec.baseName] = handle
+                        } catch (e: Exception) {
+                            throw e
+                        }
                     }
                 }
                 statement.evaluate()
