@@ -25,6 +25,9 @@ interface Entity : Storable {
     /** The ID for the entity, or null if it is does not have one yet. */
     val entityId: String?
 
+    /** The expiration timestamp of the entity. Set at the same time the ID is set. */
+    val expirationTimestamp: Long
+
     /**
      * Generates a new ID for the Entity, if it doesn't already have one. Also sets creation
      * timestamp, and expiry timestamp if a ttl is given

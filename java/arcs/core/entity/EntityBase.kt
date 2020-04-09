@@ -41,7 +41,7 @@ open class EntityBase(
         private set
     var creationTimestamp: Long = creationTimestamp
         private set
-    var expirationTimestamp: Long = expirationTimestamp
+    final override var expirationTimestamp: Long = expirationTimestamp
         private set
 
     private val singletons: MutableMap<String, Any?> = mutableMapOf()

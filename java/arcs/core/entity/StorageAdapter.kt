@@ -24,6 +24,9 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
 
     /** Converts a [Referencable] of type [R] into a [Storable] of type [T]. */
     abstract fun referencableToStorable(referencable: R): T
+
+    /** Checks if the [Storable] is expired (its expiration time is in the past). */
+    abstract fun isExpired(value: T): Boolean
 }
 
 /** [StorageAdapter] for converting [Entity] to/from [RawEntity]. */
@@ -51,6 +54,11 @@ class EntityStorageAdapter<T : Entity>(
         dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, referencable)
         return entitySpec.deserialize(referencable)
     }
+
+    override fun isExpired(value: T): Boolean {
+        return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
+            value.expirationTimestamp < time.currentTimeMillis
+    }
 }
 
 /** [StorageAdapter] for converting [Reference] to/from [StorageReference]. */
@@ -62,4 +70,7 @@ class ReferenceStorageAdapter<E : Entity>(
     override fun referencableToStorable(referencable: StorageReference): Reference<E> {
         return Reference(entitySpec, referencable)
     }
+
+    // Reference handle expiration is not supported.
+    override fun isExpired(value: Reference<E>): Boolean = false
 }

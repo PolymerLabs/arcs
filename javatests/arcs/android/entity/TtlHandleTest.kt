@@ -40,7 +40,6 @@ class TtlHandleTest() {
         backingKey = backingKey,
         storageKey = DatabaseStorageKey.Persistent("singleton", DummyEntity.SCHEMA_HASH)
     )
-    private val time = FakeTime()
     private lateinit var databaseManager: AndroidSqliteDatabaseManager
     
     @Before
@@ -58,13 +57,13 @@ class TtlHandleTest() {
             texts = setOf("1", "one")
         }
         // Set a time in the past. So that this entity is already expired.
-        time.millis = 1L
+        FakeTime.millis = 1L
         handle.store(entity1)
         // Then set time to now.
-        time.millis = System.currentTimeMillis()
+        FakeTime.millis = System.currentTimeMillis()
 
-        // TODO(b/152361041): once expired entities are filtered out on read, this should be null.
-        assertThat(handle.fetch()).isEqualTo(entity1)
+        // Entity1 is already expired.
+        assertThat(handle.fetch()).isEqualTo(null)
         
         // Simulate periodic job triggering.
         databaseManager.removeExpiredEntities()
@@ -95,10 +94,10 @@ class TtlHandleTest() {
             texts = setOf("1", "one")
         }
         // Set a time in the past. So that this entity is already expired.
-        time.millis = 1L
+        FakeTime.millis = 1L
         handle.store(entity1)
         // Then set time to now.
-        time.millis = System.currentTimeMillis()
+        FakeTime.millis = System.currentTimeMillis()
 
         val entity2 = DummyEntity().apply {
             num = 2.0
@@ -106,9 +105,8 @@ class TtlHandleTest() {
         }
         handle.store(entity2)
 
-        // TODO(b/152361041): after expired entities are filtered out on read, this should only
-        // contain entity2.
-        assertThat(handle.fetchAll()).containsExactly(entity1, entity2)
+        // Entity1 is already expired.
+        assertThat(handle.fetchAll()).containsExactly(entity2)
         
         // Simulate periodic job triggering.
         databaseManager.removeExpiredEntities()
@@ -153,7 +151,7 @@ class TtlHandleTest() {
 
         // Insert at time now-90seconds. So all entities in handle1 will be expired, those in
         // handle2 are still alive.
-        time.millis = System.currentTimeMillis() - 90_000
+        FakeTime.millis = System.currentTimeMillis() - 90_000
 
         handle1.store(entity1)
         handle1.store(entity2)
@@ -177,7 +175,7 @@ class TtlHandleTest() {
             key: StorageKey = collectionKey
         ) =
         EntityHandleManager(
-            time = time,
+            time = FakeTime(),
             scheduler = Scheduler(
                 FakeTime(),
                 Executors.newSingleThreadExecutor().asCoroutineDispatcher()
@@ -195,7 +193,7 @@ class TtlHandleTest() {
 
     private suspend fun createSingletonHandle() =
         EntityHandleManager(
-            time = time,
+            time = FakeTime(),
             scheduler = Scheduler(
                 FakeTime(),
                 Executors.newSingleThreadExecutor().asCoroutineDispatcher()
