@@ -15,6 +15,7 @@ arcs_kt_android_library(
     idl_parcelables = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
+        ":referencable_android_proto",
         ":version_map_android_proto",
         "//java/arcs/android/util",
         "//java/arcs/core/common",
@@ -25,6 +26,17 @@ arcs_kt_android_library(
         "//java/arcs/core/storage:storage_key",
         "//third_party/java/jsr305_annotations",
     ],
+)
+
+proto_library(
+    name = "referencable_proto",
+    srcs = ["referencable.proto"],
+    deps = [":version_map_proto"],
+)
+
+android_proto_library(
+    name = "referencable_android_proto",
+    deps = [":referencable_proto"],
 )
 
 proto_library(

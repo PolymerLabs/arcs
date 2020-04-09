@@ -13,6 +13,7 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.util.writeProto
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
@@ -28,20 +29,19 @@ class ParcelableCrdtEntityTest {
     private val referenceA: CrdtEntity.Reference = CrdtEntity.ReferenceImpl("AAA")
     private val referenceB: CrdtEntity.Reference = CrdtEntity.ReferenceImpl("BBB")
     private val referenceC: CrdtEntity.Reference = CrdtEntity.ReferenceImpl("CCC")
-    private val referenceD: CrdtEntity.Reference = CrdtEntity.ReferenceImpl("DDD")
 
     @Test
     fun referenceImpl_parcelableRoundTrip_works() {
         val reference = CrdtEntity.ReferenceImpl("ref")
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(reference.toParcelable(), 0)
+            writeProto(reference.toProto())
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readReferencable()
+            readCrdtEntityReference()
         }
 
         assertThat(unmarshalled).isEqualTo(reference)

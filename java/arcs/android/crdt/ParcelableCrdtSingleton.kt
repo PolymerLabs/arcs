@@ -88,7 +88,7 @@ object ParcelableCrdtSingleton {
                 super.writeToParcel(parcel, flags)
                 parcel.writeString(actual.actor)
                 parcel.writeProto(actual.clock.toProto())
-                parcel.writeTypedObject(actual.value.toParcelable(), flags)
+                parcel.writeProto(actual.value.toProto())
             }
 
             companion object CREATOR : Parcelable.Creator<Update> {
