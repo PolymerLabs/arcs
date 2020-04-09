@@ -95,7 +95,7 @@ sealed class DatabaseStorageKey(
         fun registerKeyCreator() {
             CapabilitiesResolver.registerKeyCreator(
                 DATABASE_DRIVER_PROTOCOL,
-                Capabilities.Persistent
+                Capabilities.PersistentQueryable
             ) { storageKeyOptions ->
                 DatabaseStorageKey.Persistent(
                     storageKeyOptions.location,

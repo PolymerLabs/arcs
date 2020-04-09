@@ -18,6 +18,7 @@ import {Ttl, TtlUnits} from '../runtime/recipe/ttl.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Random} from '../runtime/random.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
+import {Capabilities} from '../runtime/capabilities.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -125,11 +126,17 @@ export class PlanGenerator {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
     }
     if (handle.fate === 'create') {
-      return ktUtils.applyFun('CreateableStorageKey', [quote(this.createCreateHandleId(handle))]);
+      const createKeyArgs = [quote(this.createCreateHandleId(handle))];
+      const capabilities = this.createCapabilities(handle.capabilities);
+      if (capabilities !== 'Capabilities.Empty') {
+        createKeyArgs.push(capabilities);
+      }
+      return ktUtils.applyFun('CreateableStorageKey', createKeyArgs);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
   }
 
+  /** Generates a consistent handle id. */
   createCreateHandleId(handle: Handle): string {
     if (handle.id) return handle.id;
     if (!this.createHandleRegistry.has(handle)) {
@@ -137,6 +144,37 @@ export class PlanGenerator {
       this.createHandleRegistry.set(handle, `handle/${rand}`);
     }
     return this.createHandleRegistry.get(handle);
+  }
+
+  /** Generates Kotlin `Capabilities` from Capabilities. */
+  createCapabilities(capabilities: Capabilities): string {
+    const ktCapabilities  = [];
+
+    if (capabilities.isEmpty()) {
+      return 'Capabilities.Empty';
+    }
+
+    if (capabilities.isPersistent) {
+      ktCapabilities.push('Capabilities.Capability.Persistent');
+    }
+
+    if (capabilities.isQueryable) {
+      ktCapabilities.push('Capabilities.Capability.Queryable');
+    }
+
+    if (capabilities.isTiedToArc) {
+      ktCapabilities.push('Capabilities.Capability.TiedToArc');
+    }
+
+    if (capabilities.isTiedToRuntime) {
+      ktCapabilities.push('Capabilities.Capability.TiedToRuntime');
+    }
+
+    if (ktCapabilities.length === 1) {
+      return ktCapabilities[0].replace('Capability.', '');
+    }
+
+    return ktUtils.applyFun('Capabilities', [ktUtils.setOf(ktCapabilities)]);
   }
 
   /** Generates a Kotlin `Ttl` from a Ttl. */
