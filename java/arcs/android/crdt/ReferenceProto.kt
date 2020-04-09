@@ -9,7 +9,7 @@ import arcs.core.storage.StorageKeyParser
 fun ReferenceProto.toReference() = Reference(
     id = id,
     storageKey = StorageKeyParser.parse(storageKey),
-    version = if (hasVersionMap()) versionMap.toVersionMap() else null
+    version = if (hasVersionMap()) fromProto(versionMap) else null
 )
 
 /** Serializes a [Reference] to its proto form. */

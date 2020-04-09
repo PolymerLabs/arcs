@@ -16,7 +16,7 @@ import arcs.android.util.readProto
 import arcs.core.crdt.VersionMap
 
 /** Constructs a [VersionMap] from the given [VersionMapProto]. */
-fun VersionMapProto.toVersionMap() = VersionMap(versionMap)
+fun fromProto(proto: VersionMapProto) = VersionMap(proto.versionMap)
 
 /** Serializes a [VersionMap] to its proto form. */
 fun VersionMap.toProto(): VersionMapProto = VersionMapProto.newBuilder()
@@ -25,4 +25,4 @@ fun VersionMap.toProto(): VersionMapProto = VersionMapProto.newBuilder()
 
 /** Reads a [VersionMap] out of a [Parcel]. */
 fun Parcel.readVersionMap(): VersionMap? =
-    readProto(VersionMapProto.getDefaultInstance())?.toVersionMap()
+    readProto(VersionMapProto.getDefaultInstance())?.let { fromProto(it) }
