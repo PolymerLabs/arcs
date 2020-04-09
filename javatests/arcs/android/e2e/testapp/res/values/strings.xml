@@ -24,7 +24,8 @@
   <string name="fetch" translatable="false">Fetch</string>
   <string name="set" translatable="false">Set</string>
   <string name="clear" translatable="false">Clear</string>
-  <string name="prod_ex_test" translatable="false">ProdEx Test</string>
+  <string name="readwrite_test" translatable="false">ReadWrite Test</string>
+  <string name="resurrection_test" translatable="false">Resurrection Test</string>
   <string name="storage_test" translatable="false">Storage Test</string>
   <string name="singleton" translatable="false">Singleton</string>
   <string name="collection" translatable="false">Collection</string>

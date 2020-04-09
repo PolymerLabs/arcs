@@ -46,8 +46,7 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:fontFamily="sans-serif-medium"
-      android:text="@string/prod_ex_test"/>
-
+      android:text="@string/readwrite_test"/>
 
     <Button
       android:id="@+id/readwrite_test"
@@ -56,6 +55,12 @@
       android:textAllCaps="false"
       android:text="@string/readwrite_test_btn"
       style="?android:attr/buttonBarButtonStyle"/>
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:fontFamily="sans-serif-medium"
+      android:text="@string/resurrection_test"/>
 
     <Button
       android:id="@+id/start_resurrection_arc"
