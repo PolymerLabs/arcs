@@ -17,6 +17,7 @@ import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmHost
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
@@ -46,4 +47,6 @@ abstract class AndroidHost(
     override fun maybeCancelResurrection(context: ArcHostContext) {
         resurrectionHelper.cancelResurrectionRequest(context.arcId)
     }
+
+    override val stores: StoreManager = StoreManager()
 }
