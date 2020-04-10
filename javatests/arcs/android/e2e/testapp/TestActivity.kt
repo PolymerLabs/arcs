@@ -20,11 +20,11 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
+import arcs.core.common.ArcId
 import arcs.core.data.HandleMode
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.HostRegistry
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
@@ -55,6 +55,9 @@ class TestActivity : AppCompatActivity() {
     private var setFromRemoteService = false
     private var singletonHandle: ReadWriteSingletonHandle<TestEntity>? = null
     private var collectionHandle: ReadWriteCollectionHandle<TestEntity>? = null
+
+    private var allocator: Allocator? = null
+    private var resurrectionArcId: ArcId? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,10 +93,20 @@ class TestActivity : AppCompatActivity() {
         findViewById<RadioButton>(R.id.persistent).setOnClickListener(::onTestOptionClicked)
         findViewById<RadioButton>(R.id.local).setOnClickListener(::onTestOptionClicked)
         findViewById<RadioButton>(R.id.remote).setOnClickListener(::onTestOptionClicked)
-        findViewById<Button>(R.id.person_test).setOnClickListener {
-            scope.launch {
-                runPersonRecipe()
-            }
+        findViewById<Button>(R.id.read_write_test).setOnClickListener {
+            scope.launch { testReadWriteArc() }
+        }
+        findViewById<Button>(R.id.start_resurrection_arc).setOnClickListener {
+            scope.launch { startResurrectionArc() }
+        }
+        findViewById<Button>(R.id.stop_read_service).setOnClickListener {
+            scope.launch { stopReadService() }
+        }
+        findViewById<Button>(R.id.trigger_write).setOnClickListener {
+            scope.launch { triggerWrite() }
+        }
+        findViewById<Button>(R.id.stop_resurrection_arc).setOnClickListener {
+            scope.launch { stopResurrectionArc() }
         }
     }
 
@@ -118,9 +131,9 @@ class TestActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private suspend fun runPersonRecipe() {
+    private suspend fun testReadWriteArc() {
         appendResultText(getString(R.string.waiting_for_result))
-        val allocator = Allocator.create(
+        allocator = Allocator.create(
             AndroidManifestHostRegistry.create(this@TestActivity),
             EntityHandleManager(
                 time = JvmTime,
@@ -135,8 +148,48 @@ class TestActivity : AppCompatActivity() {
                 )
             )
         )
-        val arcId = allocator.startArcForPlan("Person", PersonRecipePlan)
-        allocator.stopArc(arcId)
+        val arcId = allocator?.startArcForPlan("Person", PersonRecipePlan)
+        arcId?.let { allocator?.stopArc(it) }
+    }
+
+    private suspend fun startResurrectionArc() {
+        appendResultText(getString(R.string.waiting_for_result))
+        allocator = Allocator.create(
+            AndroidManifestHostRegistry.create(this@TestActivity),
+            EntityHandleManager(
+                time = JvmTime,
+                scheduler = Scheduler(
+                    JvmTime,
+                    coroutineContext
+                    + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+                ),
+                activationFactory = ServiceStoreFactory(
+                    context = this@TestActivity,
+                    lifecycle = this@TestActivity.lifecycle
+                )
+            )
+        )
+        resurrectionArcId = allocator?.startArcForPlan("Animal", AnimalRecipePlan)
+    }
+
+    private fun stopReadService() {
+        val intent = Intent(
+            this, ReadAnimalHostService::class.java
+        )
+        stopService(intent)
+    }
+
+    private fun triggerWrite() {
+        val intent = Intent(
+            this, WriteAnimalHostService::class.java
+        ).apply {
+            putExtra(WriteAnimalHostService.ARC_ID_EXTRA, resurrectionArcId?.toString())
+        }
+        startService(intent)
+    }
+
+    private suspend fun stopResurrectionArc() {
+        resurrectionArcId?.let { allocator?.stopArc(it) }
     }
 
     private fun onTestOptionClicked(view: View) {

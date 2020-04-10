@@ -38,7 +38,23 @@
     </activity>
 
     <service
-      android:name=".ArcHostService"
+      android:name=".PersonHostService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="arcs.android.host.ARC_HOST"/>
+      </intent-filter>
+    </service>
+
+    <service
+      android:name=".WriteAnimalHostService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="arcs.android.host.ARC_HOST"/>
+      </intent-filter>
+    </service>
+
+    <service
+      android:name=".ReadAnimalHostService"
       android:exported="false">
       <intent-filter>
         <action android:name="arcs.android.host.ARC_HOST"/>

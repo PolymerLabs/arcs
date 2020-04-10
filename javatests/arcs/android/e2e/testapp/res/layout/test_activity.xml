@@ -46,14 +46,52 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:fontFamily="sans-serif-medium"
-      android:text="@string/prod_ex_test"/>
+      android:text="@string/readwrite_test"/>
 
     <Button
-      android:id="@+id/person_test"
+      android:id="@+id/read_write_test"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:textAllCaps="false"
-      android:text="@string/person_test_btn"
+      android:text="@string/read_write_test_btn"
+      style="?android:attr/buttonBarButtonStyle"/>
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:fontFamily="sans-serif-medium"
+      android:text="@string/resurrection_test"/>
+
+    <Button
+      android:id="@+id/start_resurrection_arc"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAllCaps="false"
+      android:text="@string/start_resurrection_arc_btn"
+      style="?android:attr/buttonBarButtonStyle"/>
+
+    <Button
+      android:id="@+id/stop_read_service"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAllCaps="false"
+      android:text="@string/stop_read_service_btn"
+      style="?android:attr/buttonBarButtonStyle"/>
+
+    <Button
+      android:id="@+id/trigger_write"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAllCaps="false"
+      android:text="@string/trigger_write_btn"
+      style="?android:attr/buttonBarButtonStyle"/>
+
+    <Button
+      android:id="@+id/stop_resurrection_arc"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAllCaps="false"
+      android:text="@string/stop_resurrection_arc_btn"
       style="?android:attr/buttonBarButtonStyle"/>
   </LinearLayout>
 
