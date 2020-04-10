@@ -16,6 +16,7 @@ import android.content.Intent
 import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
+import arcs.core.data.Plan
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
@@ -42,13 +43,20 @@ class PersonHostService : ArcHostService() {
         ::WritePerson.toRegistration()
     )
 
-    class MyArcHost(
+    inner class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
     ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
         override val platformTime = JvmTime
+
+        override suspend fun stopArc(partition: Plan.Partition) {
+            super.stopArc(partition)
+            if (isArcHostIdle) {
+                sendResult("ArcHost is idle")
+            }
+        }
     }
 
     inner class ReadPerson : AbstractReadPerson() {
@@ -56,12 +64,7 @@ class PersonHostService : ArcHostService() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
             scope.launch {
                 val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                val intent = Intent(this@PersonHostService, TestActivity::class.java)
-                    .apply {
-                        putExtra(TestActivity.RESULT_NAME, name)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
-                startActivity(intent)
+                sendResult(name)
             }
         }
     }
@@ -71,5 +74,14 @@ class PersonHostService : ArcHostService() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
             handles.person.store(WritePerson_Person("John Wick"))
         }
+    }
+
+    private fun sendResult(result: String) {
+        val intent = Intent(this, TestActivity::class.java)
+            .apply {
+                putExtra(TestActivity.RESULT_NAME, result)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        startActivity(intent)
     }
 }

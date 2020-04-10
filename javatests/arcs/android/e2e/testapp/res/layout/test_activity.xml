@@ -49,11 +49,11 @@
       android:text="@string/readwrite_test"/>
 
     <Button
-      android:id="@+id/readwrite_test"
+      android:id="@+id/read_write_test"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:textAllCaps="false"
-      android:text="@string/readwrite_test_btn"
+      android:text="@string/read_write_test_btn"
       style="?android:attr/buttonBarButtonStyle"/>
 
     <TextView

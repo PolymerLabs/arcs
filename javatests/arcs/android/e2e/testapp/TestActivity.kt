@@ -93,7 +93,7 @@ class TestActivity : AppCompatActivity() {
         findViewById<RadioButton>(R.id.persistent).setOnClickListener(::onTestOptionClicked)
         findViewById<RadioButton>(R.id.local).setOnClickListener(::onTestOptionClicked)
         findViewById<RadioButton>(R.id.remote).setOnClickListener(::onTestOptionClicked)
-        findViewById<Button>(R.id.readwrite_test).setOnClickListener {
+        findViewById<Button>(R.id.read_write_test).setOnClickListener {
             scope.launch { testReadWriteArc() }
         }
         findViewById<Button>(R.id.start_resurrection_arc).setOnClickListener {
