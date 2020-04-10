@@ -11,8 +11,10 @@
 
 package arcs.android.e2e.testapp
 
+import android.content.Context
 import android.content.Intent
 import arcs.android.sdk.host.ArcHostService
+import arcs.core.data.Plan
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
@@ -33,15 +35,25 @@ class ArcHostService : ArcHostService() {
     private val coroutineContext = Job() + Dispatchers.Main
 
     override val arcHost = MyArcHost(
+        this,
         JvmSchedulerProvider(coroutineContext),
         ::ReadPerson.toRegistration(),
         ::WritePerson.toRegistration()
     )
 
-    class MyArcHost(
+    inner class MyArcHost(
+        val context: Context,
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
     ) : AbstractArcHost(schedulerProvider, *initialParticles) {
+
+        override suspend fun stopArc(partition: Plan.Partition) {
+            super.stopArc(partition)
+            if (isArcHostIdle) {
+                sendResult("ArcHost is idle")
+            }
+        }
+
         override val platformTime = JvmTime
     }
 
@@ -50,12 +62,7 @@ class ArcHostService : ArcHostService() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
             scope.launch {
                 val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                val intent = Intent(this@ArcHostService, TestActivity::class.java)
-                    .apply {
-                        putExtra(TestActivity.RESULT_NAME, name)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
-                startActivity(intent)
+                sendResult(name)
             }
         }
     }
@@ -65,5 +72,14 @@ class ArcHostService : ArcHostService() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
             handles.person.store(WritePerson_Person("John Wick"))
         }
+    }
+
+    private fun sendResult(result: String) {
+        val intent = Intent(this@ArcHostService, TestActivity::class.java)
+            .apply {
+                putExtra(TestActivity.RESULT_NAME, result)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        startActivity(intent)
     }
 }

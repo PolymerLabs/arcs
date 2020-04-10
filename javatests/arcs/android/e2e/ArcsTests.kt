@@ -190,7 +190,7 @@ class ArcsTest {
     @Test
     fun testAllocator_readWrite() {
         clickOnTextIfPresent(PERSON_TEST_BTN_TEXT)
-        waitForSequencedTextsToAppear(WAITING_FOR_RESULT, PERSON_TEST_RESULT_TEXT)
+        waitForSequencedTextsToAppear(PERSON_TEST_RESULT_TEXT, ARC_HOST_IDLE_TEXT)
     }
 
     private fun clickOnTextIfPresent(text: String) {
@@ -239,6 +239,7 @@ class ArcsTest {
 
         const val PERSON_TEST_BTN_TEXT = "PersonTest"
         const val PERSON_TEST_RESULT_TEXT = "John Wick"
+        const val ARC_HOST_IDLE_TEXT = "ArcHost is idle"
 
         const val ON_UPDATE_NULL = "onUpdate:null"
         const val ON_READY_NULL = "onReady:null"
