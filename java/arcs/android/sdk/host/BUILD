@@ -13,6 +13,7 @@ arcs_kt_android_library(
         "//java/arcs/android/type",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
+        "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/jvm/host",
         "//java/arcs/sdk/android/storage",
