@@ -3,6 +3,8 @@ load(
     "arcs_kt_gen",
 )
 
+package(default_visibility = ["//visibility:public"])
+
 licenses(["notice"])
 
 filegroup(
@@ -11,11 +13,15 @@ filegroup(
         ["*"],
         exclude = ["BUILD"],
     ),
-    visibility = ["//visibility:public"],
 )
 
 arcs_kt_gen(
     name = "example_gen",
     srcs = ["WriterReaderExample.arcs"],
-    visibility = ["//visibility:public"],
 )
+
+# TODO(b/153689275): It doesn't resovle currently, can we investigate why?
+# arcs_kt_gen(
+#     name = "ingest_process_retrieve_gen",
+#     srcs = ["IngestProcessRetrieve.arcs"]
+# )
