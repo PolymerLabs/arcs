@@ -56,6 +56,14 @@
       android:text="@string/read_write_test_btn"
       style="?android:attr/buttonBarButtonStyle"/>
 
+    <Button
+      android:id="@+id/persistent_read_write_test"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAllCaps="false"
+      android:text="@string/persistent_read_write_test_btn"
+      style="?android:attr/buttonBarButtonStyle"/>
+
     <TextView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
@@ -93,6 +101,7 @@
       android:textAllCaps="false"
       android:text="@string/stop_resurrection_arc_btn"
       style="?android:attr/buttonBarButtonStyle"/>
+
   </LinearLayout>
 
   <LinearLayout
