@@ -16,21 +16,9 @@ import {Dictionary} from '../runtime/hot.js';
 import minimist from 'minimist';
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
 import {assert} from '../platform/assert-web.js';
+import {kotlinKeywords} from './schema2wasm-utils.ts'
 
 // TODO: use the type lattice to generate interfaces
-
-// https://kotlinlang.org/docs/reference/keyword-reference.html
-// [...document.getElementsByTagName('code')].map(x => x.innerHTML);
-// Includes reserve words for Entity Interface
-const keywords = [
-  'as', 'as?', 'break', 'class', 'continue', 'do', 'else', 'false', 'for', 'fun', 'if', 'in', '!in', 'interface', 'is',
-  '!is', 'null', 'object', 'package', 'return', 'super', 'this', 'throw', 'true', 'try', 'typealias', 'val', 'var',
-  'when', 'while', 'by', 'catch', 'constructor', 'delegate', 'dynamic', 'field', 'file', 'finally', 'get', 'import',
-  'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
-  'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
-  'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'it', 'entityId'
-];
 
 export interface KotlinTypeInfo {
   type: string;
@@ -279,7 +267,7 @@ export class KotlinGenerator implements ClassGenerator {
   escapeIdentifier(name: string): string {
     // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and 'final_' are keywords).
     // TODO(cypher1): Check for name overlaps (e.g. 'final' and 'final_' should not be escaped to the same identifier.
-    return name + (keywords.includes(name) ? '_' : '');
+    return name + (kotlinKeywords.includes(name) ? '_' : '');
   }
 
   // TODO: allow optional fields in kotlin
