@@ -40,10 +40,9 @@ fun decodeParticleSpecProto(protoText: String): ParticleSpec {
 class ParticleSpecProtoDecoderTest {
     @Test
     fun decodesDirectionProto() {
-        assertThat(DirectionProto.READS.decode()).isEqualTo(HandleConnectionSpec.Direction.READS)
-        assertThat(DirectionProto.WRITES.decode()).isEqualTo(HandleConnectionSpec.Direction.WRITES)
-        assertThat(DirectionProto.READS_WRITES.decode()).isEqualTo(
-            HandleConnectionSpec.Direction.READS_WRITES)
+        assertThat(DirectionProto.READS.decode()).isEqualTo(HandleMode.Read)
+        assertThat(DirectionProto.WRITES.decode()).isEqualTo(HandleMode.Write)
+        assertThat(DirectionProto.READS_WRITES.decode()).isEqualTo(HandleMode.ReadWrite)
         assertThrows(IllegalArgumentException::class) {
             DirectionProto.UNRECOGNIZED.decode()
         }
@@ -80,7 +79,7 @@ class ParticleSpecProtoDecoderTest {
         val schema = Schema(setOf(SchemaName("Thing")), fields, hash="")
         val connectionSpec = decodeHandleConnectionSpecProto(handleConnectionSpecProto)
         assertThat(connectionSpec.name).isEqualTo("data")
-        assertThat(connectionSpec.direction).isEqualTo(HandleConnectionSpec.Direction.READS)
+        assertThat(connectionSpec.direction).isEqualTo(HandleMode.Read)
         assertThat(connectionSpec.type).isEqualTo(EntityType(schema))
     }
 

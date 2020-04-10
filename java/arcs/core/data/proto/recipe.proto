@@ -17,10 +17,13 @@ message RecipeProto {
   string name = 1;
   repeated HandleProto handles = 2;
   repeated ParticleProto particles = 3;
+  // Optional arc id provided by the recipe annotation.
+  string arc_id = 4;
 }
 
 // Recipe-level representation of a store.
 message HandleProto {
+  // Next Id: 5
   enum Fate {
     CREATE = 0;
     USE = 1;
@@ -29,13 +32,22 @@ message HandleProto {
     JOIN = 4;
   }
 
+  // Next Id: 4
+  enum Capability {
+    PERSISTENT = 0;
+    TIED_TO_RUNTIME = 1;
+    TIED_TO_ARC = 2;
+    QUERYABLE = 3;
+  }
+
   // Identifies a handle in a recipe.
   string name = 1;
   Fate fate = 2;
-  string storage_key = 3;
-  TypeProto type = 4;
+  TypeProto type = 3;
+  repeated Capability capabilities = 4;
+  string storage_key = 5;
   // Only present for fate = JOIN handles.
-  repeated string associated_handles = 5;
+  repeated string associated_handles = 6;
 }
 
 // A single particle instance in a recipe.

@@ -15,10 +15,6 @@ import arcs.core.type.Type
 
 data class HandleConnectionSpec(
     val name: String,
-    val direction: Direction,
+    val direction: HandleMode,
     val type: Type
-) {
-    enum class Direction {
-        READS, WRITES, READS_WRITES
-    }
-}
+)

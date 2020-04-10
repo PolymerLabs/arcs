@@ -12,7 +12,7 @@
 package arcs.core.data.proto
 
 import arcs.core.data.HandleConnectionSpec
-import arcs.core.data.HandleConnectionSpec.Direction
+import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
 import arcs.core.util.Result
 import arcs.core.util.resultOf
@@ -22,9 +22,9 @@ typealias DirectionProto = HandleConnectionSpecProto.Direction
 /** Converts [HandleConnectionSpecProto.Direction] to [HandleConnectionSpec.Direction]. */
 fun DirectionProto.decode() =
     when (this) {
-        DirectionProto.READS -> Direction.READS
-        DirectionProto.WRITES -> Direction.WRITES
-        DirectionProto.READS_WRITES -> Direction.READS_WRITES
+        DirectionProto.READS -> HandleMode.Read
+        DirectionProto.WRITES -> HandleMode.Write
+        DirectionProto.READS_WRITES -> HandleMode.ReadWrite
         DirectionProto.UNRECOGNIZED ->
             throw IllegalArgumentException("Invalid direction when decoding [HandleConnectionSpec]")
     }

@@ -11,20 +11,34 @@
 
 package arcs.core.data.proto
 
+import arcs.core.data.Capabilities
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
 
 /** Converts [HandleProto.Fate] into [Handle.Fate]. */
-fun HandleProto.Fate.decode(): Handle.Fate =
-    when (this) {
-        HandleProto.Fate.CREATE -> Handle.Fate.CREATE
-        HandleProto.Fate.USE -> Handle.Fate.USE
-        HandleProto.Fate.MAP -> Handle.Fate.MAP
-        HandleProto.Fate.COPY -> Handle.Fate.COPY
-        HandleProto.Fate.JOIN -> Handle.Fate.JOIN
-        HandleProto.Fate.UNRECOGNIZED ->
-            throw IllegalArgumentException("Invalid HandleProto.Fate value.")
-    }
+fun HandleProto.Fate.decode() = when (this) {
+    HandleProto.Fate.CREATE -> Handle.Fate.CREATE
+    HandleProto.Fate.USE -> Handle.Fate.USE
+    HandleProto.Fate.MAP -> Handle.Fate.MAP
+    HandleProto.Fate.COPY -> Handle.Fate.COPY
+    HandleProto.Fate.JOIN -> Handle.Fate.JOIN
+    HandleProto.Fate.UNRECOGNIZED ->
+        throw IllegalArgumentException("Invalid HandleProto.Fate value.")
+}
+
+/** Converts List<[HandleProto.Fate]> into [Capabilities]. */
+fun List<HandleProto.Capability>.decode() = Capabilities(
+    this.map {
+        when (it) {
+            HandleProto.Capability.PERSISTENT -> Capabilities.Capability.Persistent
+            HandleProto.Capability.QUERYABLE -> Capabilities.Capability.Queryable
+            HandleProto.Capability.TIED_TO_ARC -> Capabilities.Capability.TiedToArc
+            HandleProto.Capability.TIED_TO_RUNTIME -> Capabilities.Capability.TiedToRuntime
+            HandleProto.Capability.UNRECOGNIZED ->
+                throw IllegalArgumentException("Invalid HandleProto.Capability value.")
+        }
+    }.toSet()
+)
 
 /**
  * Converts [HandleProto] into [Handle].
@@ -36,5 +50,6 @@ fun HandleProto.decode() = Handle(
     fate = fate.decode(),
     storageKey = storageKey,
     type = if (hasType()) type.decode() else TypeVariable("$name"),
+    capabilities = capabilitiesList.decode(),
     associatedHandles = getAssociatedHandlesList()
 )
