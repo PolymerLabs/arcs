@@ -15,7 +15,14 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.Recipe
 
-/** Constructs a graph capturing the connections between particles and handles in [recipe]. */
+/**
+ * A graph capturing the connections between particles and handles in [recipe].
+ *
+ * Nodes in the graph are either a [Recipe.Handle] or [Recipe.Particle]. For every write connection
+ * from a particle `p` to a handle `h` using a connection spec `s`, there is a labeled edge
+ * `p -s-> h` in the graph. Similarly, for every read connection from a particle `p` to a handle `h`
+ * using a connection spec `s`, there is a labeled edge `h -s-> p` in the graph.
+*/
 class RecipeGraph(recipe: Recipe) {
     var nodes = mutableListOf<Node>()
 
