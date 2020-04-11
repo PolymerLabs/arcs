@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import androidx.annotation.VisibleForTesting
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage.ModelUpdate
@@ -41,11 +42,7 @@ class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
     /**
      * Gets data from the store corresponding to the given [referenceId].
      */
-    suspend fun getLocalData(referenceId: String): Data {
-        val record = storeMutex.withLock { stores[referenceId] }
-            ?: return setupStore(referenceId).store.getLocalData()
-        return record.store.getLocalData()
-    }
+    suspend fun getLocalData(referenceId: String) = store(referenceId).store.getLocalData()
 
     /** Calls [idle] on all existing contained stores and waits for their completion. */
     suspend fun idle() = storeMutex.withLock {
@@ -65,7 +62,7 @@ class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
         message: ProxyMessage<Data, Op, T>,
         referenceId: String
     ): Boolean {
-        val (id, store) = storeMutex.withLock { stores[referenceId] } ?: setupStore(referenceId)
+        val (id, store) = store(referenceId)
         val deMuxedMessage: ProxyMessage<Data, Op, T> = when (message) {
             is SyncRequest -> SyncRequest(id)
             is ModelUpdate -> ModelUpdate(message.model, id)
@@ -88,7 +85,13 @@ class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
 
         // Return a new Record and add it to our local stores, keyed by muxId.
         return StoreRecord(id, store)
-            .also { record -> storeMutex.withLock { stores[referenceId] = record } }
+    }
+
+    @VisibleForTesting
+    suspend fun store(id: String) = storeMutex.withLock {
+        stores.getOrPut(id) {
+            setupStore(id)
+        }
     }
 
     data class StoreRecord<Data : CrdtData, Op : CrdtOperation, T>(

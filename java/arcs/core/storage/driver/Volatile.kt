@@ -71,13 +71,15 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
             storageKey is VolatileStorageKey || storageKey is RamDiskStorageKey
         ) { "Invalid storage key type: $storageKey" }
 
-        val dataForCriteria: VolatileEntry<Data> = memory.get<Data>(storageKey)?.also {
-            pendingModel = it.data
-            pendingVersion = it.version
-        } ?: VolatileEntry()
+        synchronized(memory) {
+            val dataForCriteria: VolatileEntry<Data> = memory.get<Data>(storageKey)?.also {
+                pendingModel = it.data
+                pendingVersion = it.version
+            } ?: VolatileEntry()
 
-        // Add the data to the memory.
-        memory[storageKey] = dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
+            // Add the data to the memory.
+            memory[storageKey] = dataForCriteria.copy(drivers = dataForCriteria.drivers + this)
+        }
         log.debug { "Created" }
     }
 
