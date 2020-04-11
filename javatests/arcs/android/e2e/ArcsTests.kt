@@ -193,6 +193,12 @@ class ArcsTest {
         waitForSequencedTextsToAppear(READ_WRITE_TEST_RESULT_TEXT, ARC_HOST_IDLE_TEXT)
     }
 
+    @Test
+    fun testAllocator_persistentReadWrite() {
+        clickOnTextIfPresent(PERSISTENT_READ_WRITE_TEST_BTN_TEXT)
+        waitForSequencedTextsToAppear(READ_WRITE_TEST_RESULT_TEXT, ARC_HOST_IDLE_TEXT)
+    }
+
     private fun clickOnTextIfPresent(text: String) {
         uiDevice.wait(Until.hasObject(By.text(text)), UI_TIMEOUT_MS)
         val textObject = uiDevice.findObject(By.text(text))
@@ -238,6 +244,7 @@ class ArcsTest {
         const val WAITING_FOR_RESULT = "Waiting for result."
 
         const val READ_WRITE_TEST_BTN_TEXT = "RunReadWriteArc"
+        const val PERSISTENT_READ_WRITE_TEST_BTN_TEXT = "RunPersistentReadWriteArc"
         const val READ_WRITE_TEST_RESULT_TEXT = "John Wick"
 
         const val ARC_HOST_IDLE_TEXT = "ArcHost is idle"
