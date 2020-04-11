@@ -108,6 +108,11 @@ class TestActivity : AppCompatActivity() {
         findViewById<Button>(R.id.stop_resurrection_arc).setOnClickListener {
             scope.launch { stopResurrectionArc() }
         }
+        findViewById<Button>(R.id.persistent_read_write_test).setOnClickListener {
+            scope.launch {
+                runPersistentPersonRecipe()
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -190,6 +195,27 @@ class TestActivity : AppCompatActivity() {
 
     private suspend fun stopResurrectionArc() {
         resurrectionArcId?.let { allocator?.stopArc(it) }
+    }
+
+    private suspend fun runPersistentPersonRecipe() {
+        appendResultText(getString(R.string.waiting_for_result))
+        val allocator = Allocator.create(
+            AndroidManifestHostRegistry.create(this@TestActivity),
+            EntityHandleManager(
+                time = JvmTime,
+                scheduler = Scheduler(
+                    JvmTime,
+                    coroutineContext
+                    + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+                ),
+                activationFactory = ServiceStoreFactory(
+                    context = this@TestActivity,
+                    lifecycle = this@TestActivity.lifecycle
+                )
+            )
+        )
+        val arcId = allocator.startArcForPlan("Person", PersonRecipePlan)
+        allocator.stopArc(arcId)
     }
 
     private fun onTestOptionClicked(view: View) {

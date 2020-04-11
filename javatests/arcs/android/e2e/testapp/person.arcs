@@ -21,3 +21,15 @@ recipe PersonRecipe
 
   ReadPerson
     person: reads recipePerson
+
+@trigger
+  launch startup
+  arcId persistentPersonArc
+recipe PersistentPersonRecipe
+  persistentRecipePerson: create persistent 'person'
+
+  WritePerson
+    person: writes persistentRecipePerson
+
+  ReadPerson
+    person: reads persistentRecipePerson
