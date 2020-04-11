@@ -528,8 +528,11 @@ open class HandleManagerTestBase {
         assertThat(handleA.fetchAll()).containsExactly(entity1, entity2)
         assertThat(handleB.fetchAll()).containsExactly(entity1, entity2)
 
+        val gotUpdateAtB = handleB.onUpdateDeferred() { it.size == 1 }
         handleA.remove(entity1)
         assertThat(handleA.fetchAll()).containsExactly(entity2)
+
+        gotUpdateAtB.await()
         assertThat(handleB.fetchAll()).containsExactly(entity2)
     }
 
