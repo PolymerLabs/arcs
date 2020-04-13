@@ -37,31 +37,31 @@ class BoundedAbstractElementTest {
     }
 
     @Test
-    fun isLessThanEqualRespectsBottomTopOrder() {
-        val compareInts: (Int, Int) -> Boolean = { a, b -> a <= b }
+    fun joinRespectsBottomTopOrder() {
+        val joinInts: (Int, Int) -> Int = { a, b -> maxOf(a, b) }
         with(bottom) {
-            assertTrue(isLessThanEqual(bottom, compareInts))
-            assertTrue(isLessThanEqual(top, compareInts))
-            assertTrue(isLessThanEqual(nine, compareInts))
-            assertTrue(isLessThanEqual(ten, compareInts))
+            assertThat(join(bottom, joinInts)).isEqualTo(bottom)
+            assertThat(join(top, joinInts)).isEqualTo(top)
+            assertThat(join(nine, joinInts)).isEqualTo(nine)
+            assertThat(join(ten, joinInts)).isEqualTo(ten)
         }
         with(top) {
-            assertFalse(isLessThanEqual(bottom, compareInts))
-            assertTrue(isLessThanEqual(top, compareInts))
-            assertFalse(isLessThanEqual(nine, compareInts))
-            assertFalse(isLessThanEqual(ten, compareInts))
+            assertThat(join(bottom, joinInts)).isEqualTo(top)
+            assertThat(join(top, joinInts)).isEqualTo(top)
+            assertThat(join(nine, joinInts)).isEqualTo(top)
+            assertThat(join(ten, joinInts)).isEqualTo(top)
         }
         with(nine) {
-            assertFalse(isLessThanEqual(bottom, compareInts))
-            assertTrue(isLessThanEqual(top, compareInts))
-            assertTrue(isLessThanEqual(nine, compareInts))
-            assertTrue(isLessThanEqual(ten, compareInts))
+            assertThat(join(bottom, joinInts)).isEqualTo(nine)
+            assertThat(join(top, joinInts)).isEqualTo(top)
+            assertThat(join(nine, joinInts)).isEqualTo(nine)
+            assertThat(join(ten, joinInts)).isEqualTo(ten)
         }
         with(ten) {
-            assertFalse(isLessThanEqual(bottom, compareInts))
-            assertTrue(isLessThanEqual(top, compareInts))
-            assertFalse(isLessThanEqual(nine, compareInts))
-            assertTrue(isLessThanEqual(ten, compareInts))
+            assertThat(join(bottom, joinInts)).isEqualTo(ten)
+            assertThat(join(top, joinInts)).isEqualTo(top)
+            assertThat(join(nine, joinInts)).isEqualTo(ten)
+            assertThat(join(ten, joinInts)).isEqualTo(ten)
         }
     }
 }
