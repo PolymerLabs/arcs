@@ -24,20 +24,19 @@ import arcs.core.data.Recipe
  * using a connection spec `s`, there is a labeled edge `h -s-> p` in the graph.
 */
 class RecipeGraph(recipe: Recipe) {
-    var nodes = mutableListOf<Node>()
+    val nodes: List<Node> = getNodesWithEdges(recipe)
 
-    init {
+    /** Returns the nodes for the [Recipe.Handle] and [Recipe.Particle] instances in [recipe]. */
+    private fun getNodesWithEdges(recipe: Recipe): List<Node> {
         val handleNodesMap: Map<String, Node> = recipe.handles
             .map { (_, handle) -> Node.Handle(handle) }
             .associateBy { it.handle.name }
-        nodes = handleNodesMap.values.toMutableList()
-        recipe.particles.forEach { it.addNodeAndEdges(handleNodesMap) }
+        return handleNodesMap.values.toList() + recipe.particles.map { it.getNode(handleNodesMap) }
     }
 
-    /** Adds a [Node.Particle] node and the edges induced by the handle connections. */
-    private fun Recipe.Particle.addNodeAndEdges(handleNodesMap: Map<String, Node>) {
+    /** Returns a [Node.Particle] node with the edges associated with the handle connections. */
+    private fun Recipe.Particle.getNode(handleNodesMap: Map<String, Node>): Node {
         val particleNode = Node.Particle(this)
-        nodes.add(particleNode)
         handleConnections.forEach { connection ->
             val handleNode = requireNotNull(handleNodesMap[connection.handle.name])
             when (connection.spec.direction) {
@@ -49,6 +48,7 @@ class RecipeGraph(recipe: Recipe) {
                 }
             }
         }
+        return particleNode
     }
 
     /** Represents a node in a [RecipeGraph]. */
