@@ -5,9 +5,15 @@ particle TestProdParticle in 'arcs.core.host.TestProdParticle'
 
 particle TestHostParticle in 'arcs.core.host.TestHostParticle'
 
+particle TestConstructedParticle in 'arcs.core.host.TestConstructedParticle'
+  data: reads [Thing {name: Text}]
+
 recipe TestRecipe
   testHandle: create
 
   TestProdParticle
 
   TestHostParticle
+
+  TestConstructedParticle
+    data: reads testHandle

@@ -10,7 +10,6 @@
  */
 package arcs.jvm.host
 
-import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
 import arcs.core.host.api.Particle
@@ -27,8 +26,9 @@ fun scanForParticles(host: KClass<out ArcHost> = ProdHost::class): Array<Particl
     ServiceLoader.load(Particle::class.java).iterator().asSequence().filter { particle ->
             isParticleForHost(host, particle::class.java)
         }.map { particle ->
-            particle.javaClass.kotlin.toParticleIdentifier() to suspend {
-                particle.javaClass.getDeclaredConstructor().newInstance()
+            particle.javaClass.kotlin.toParticleIdentifier() to object : ParticleConstructor.Empty() {
+                override fun invoke(): Particle =
+                    particle.javaClass.getDeclaredConstructor().newInstance()
             }
         }.toList().toTypedArray()
 

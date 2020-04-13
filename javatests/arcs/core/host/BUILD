@@ -98,6 +98,7 @@ arcs_kt_jvm_library(
         "TestHost.kt",
         "TestHostParticle.kt",
         "TestProdParticle.kt",
+        "TestConstructedParticle.kt",
         "WritePerson.kt",
     ],
     deps = [

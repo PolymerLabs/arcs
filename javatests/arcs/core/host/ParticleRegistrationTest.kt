@@ -1,5 +1,6 @@
 package arcs.core.host
 
+import arcs.core.data.Plan
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmHost
 import arcs.jvm.host.JvmSchedulerProvider
@@ -25,14 +26,28 @@ class ParticleRegistrationTest {
 
         val hostRegistry = ExplicitHostRegistry()
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
-        hostRegistry.registerHost(JvmProdHost(schedulerProvider, ::TestProdParticle.toRegistration()))
-        hostRegistry.registerHost(TestHost(schedulerProvider("foo"), ::TestHostParticle.toRegistration()))
+
+        val dynamicRegistration = TestConstructedParticle::class.toParticleIdentifier() to
+            object : ParticleConstructor.Spec() {
+                override fun invoke(spec: Plan.Particle) = build(spec)
+            }
+
+        hostRegistry.registerHost(JvmProdHost(schedulerProvider,
+                                              ::TestProdParticle.toRegistration(),
+                                              dynamicRegistration)
+        )
+
+        hostRegistry.registerHost(TestHost(schedulerProvider("foo"),
+                                           ::TestHostParticle.toRegistration()))
 
         hostRegistry.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
                 is ProdHost -> {
                     assertThat(host.registeredParticles()).contains(
                         TestProdParticle::class.toParticleIdentifier()
+                    )
+                    assertThat(host.registeredParticles()).contains(
+                        TestConstructedParticle::class.toParticleIdentifier()
                     )
                     foundProdHost = true
                 }
