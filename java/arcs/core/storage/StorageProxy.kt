@@ -15,9 +15,11 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.storage.StorageProxy.ProxyState.CLOSED
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
+import java.lang.IllegalStateException
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -62,7 +64,13 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
          * A set of model operations from storage failed to apply cleanly to the local CRDT model,
          * so the [StorageProxy] is desynchronized. A request has been sent to resynchronize.
          */
-        DESYNC
+        DESYNC,
+
+        /**
+         * The [StorageProxy] has been closed; no further operations are possible, and no
+         * messages from the store will be received.
+         */
+        CLOSED,
     }
 
     private val log = TaggedLog { "StorageProxy" }
@@ -165,6 +173,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * If the [StorageProxy] is in the INIT state, send a sync request and move to AWAITING_SYNC.
      */
     private suspend fun addAction(add: () -> Unit): ProxyState {
+        checkNotClosed()
         var needsSync = false
         val currentState = syncMutex.withLock {
             callbackMutex.withLock {
@@ -188,6 +197,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * on its associated [StorageProxy].
      */
     suspend fun removeCallbacksForName(handleName: String) {
+        checkNotClosed()
         callbackMutex.withLock {
             onReadyActions.remove(handleName)
             onUpdateActions.remove(handleName)
@@ -197,10 +207,21 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     /**
+     * Closes this [StorageProxy]. It will no longer receive messages from its associated [Store].
+     * Attempting to perform an operation on a closed [StorageProxy] will result in an exception
+     * being thrown.
+     */
+    suspend fun close() {
+        store.close()
+        syncMutex.withLock { this.state = ProxyState.CLOSED }
+    }
+
+    /**
      * Apply a CRDT operation to the [CrdtModel] that this [StorageProxy] manages, notifies read
      * handles, and forwards the write to the [Store].
      */
     suspend fun applyOp(op: Op): Boolean {
+        checkNotClosed()
         log.debug { "Applying operation: $op" }
         val value = syncMutex.withLock {
             if (!crdt.applyOperation(op)) return false
@@ -224,6 +245,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     suspend fun getVersionMap(): VersionMap = syncMutex.withLock { crdt.versionMap.copy() }
 
     suspend fun getParticleViewAsync(): Deferred<T> {
+        checkNotClosed()
         log.debug { "Getting particle view" }
         val future = CompletableDeferred<T>()
 
@@ -254,6 +276,14 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * Applies messages from a [Store].
      */
     suspend fun onMessage(message: ProxyMessage<Data, Op, T>) {
+        // Since close operation may be asynchronous, depending on Store implementation,
+        // there's no guarantee we won't receive more messages after calling it.
+        syncMutex.withLock {
+            if (state == CLOSED) {
+                log.info { "in closed state, received message: $message" }
+                return
+            }
+        }
         log.debug { "onMessage: $message" }
         when (message) {
             is ProxyMessage.ModelUpdate -> processModelUpdate(message.model)
@@ -279,6 +309,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 ProxyState.INIT, ProxyState.AWAITING_SYNC -> suspend { notifyReady() }
                 ProxyState.SYNC -> suspend { notifyUpdate(value) }
                 ProxyState.DESYNC -> suspend { notifyResync() }
+                ProxyState.CLOSED ->
+                    throw IllegalStateException("processModelUpdate on closed StorageProxy")
             }
             state = ProxyState.SYNC
 
@@ -357,5 +389,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private suspend fun requestSynchronization() {
         store.onProxyMessage(ProxyMessage.SyncRequest(null))
+    }
+
+    private suspend fun checkNotClosed() = syncMutex.withLock {
+        check(state != ProxyState.CLOSED) { "Unexpected operation on closed StorageProxy" }
     }
 }

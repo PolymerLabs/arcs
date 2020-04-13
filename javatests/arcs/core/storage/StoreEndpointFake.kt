@@ -13,6 +13,7 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
     StorageCommunicationEndpoint<Data, Op, T> {
     private val mutex = Mutex()
     private var proxyMessages = mutableListOf<ProxyMessage<Data, Op, T>>()
+    var closed = false
 
     // Tests can change this field to alter the value returned by `onProxyMessage`.
     var onProxyMessageReturn = true
@@ -30,5 +31,7 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
         mutex.withLock { proxyMessages.clear() }
     }
 
-    override fun close() {}
+    override fun close() {
+        closed = true
+    }
 }

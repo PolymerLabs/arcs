@@ -415,6 +415,13 @@ class StorageProxyTest {
         assertThat(proxyMap).isNotEqualTo(proxy.getVersionMap())
     }
 
+    @Test
+    fun closeStorageProxy_closesStoreEndpoint() = runBlockingTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        proxy.close()
+        assertThat(fakeStoreEndpoint.closed)
+    }
+
     // Convenience wrapper for destructuring.
     private data class ActionMocks (
         val onReady: () -> Unit = mock(),
