@@ -39,7 +39,9 @@ class RecipeGraphTest {
     )
     private val writeConnectionSpec = HandleConnectionSpec("w", HandleMode.Write, TypeVariable("w"))
     private val rwConnectionSpec = HandleConnectionSpec(
-        "rw", HandleMode.ReadWrite, TypeVariable("rw")
+        "rw",
+        HandleMode.ReadWrite,
+        TypeVariable("rw")
     )
     private val writerSpec = ParticleSpec(
         "Writer",

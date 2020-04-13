@@ -54,15 +54,23 @@ class RecipeGraph(recipe: Recipe) {
     /** Represents a node in a [RecipeGraph]. */
     sealed class Node {
         /** List of successors of this node. */
-        val successors = mutableListOf<Neighbor>()
+        val successors: List<Neighbor>
+            get() = _successors
 
         /** List of predecessors of this node. */
-        val predecessors = mutableListOf<Neighbor>()
+        val predecessors: List<Neighbor>
+            get() = _predecessors
+
+        /** (Internal) list of successors of this node. */
+        private val _successors = mutableListOf<Neighbor>()
+
+        /** (Internal) list of predecessors of this node. */
+        private val _predecessors = mutableListOf<Neighbor>()
 
         /** Adds ([succ], [spec]) as a successor of [this] and also updates [succ.predecessors]. */
         fun addSuccessor(succ: Node, spec: HandleConnectionSpec) {
-            successors.add(Neighbor(succ, spec))
-            succ.predecessors.add(Neighbor(this, spec))
+            _successors.add(Neighbor(succ, spec))
+            succ._predecessors.add(Neighbor(this, spec))
         }
 
         /** Represents a successor or predecessor of a [Node] in a [RecipeGraph]. */
