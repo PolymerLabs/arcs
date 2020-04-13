@@ -1,9 +1,6 @@
 #!/bin/bash
 #
-# A basic script to locally semi-simulate the build and test
-# operations performed by our continuous integration service. Note
-# that this does not do a clean and reinstall of npm modules and
-# sigh/bazel artifacts.
+# A basic script to build android apks for testing.
 set -e
 
 source $(dirname $0)/logging.sh
@@ -13,18 +10,12 @@ source $(dirname $0)/logging.sh
 BAZELRC_OPTS=$1
 
 cd $ROOT
-status "Testing all of the things."
+status "Building Android apks."
 
 set -x
-
-./tools/sigh webpack
-./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/... //src/... //particles/...
 
 # Build apks used by Firebase Test Labs and copy them to /workspace which
 # can be used be next Cloud Build step.
 ./tools/bazelisk ${BAZELRC_OPTS} build //javatests/arcs/android/e2e/testapp //javatests/arcs/android/e2e
 cp ./bazel-bin/javatests/arcs/android/e2e/testapp/testapp.apk /workspace
 cp ./bazel-bin/javatests/arcs/android/e2e/e2e.apk /workspace
-./tools/sigh testShells
-./tools/sigh lint
-./tools/sigh test --all

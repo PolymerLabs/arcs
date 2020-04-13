@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# Locally run //java/... and //javatests... tests. Note
+# that this does not do a clean and reinstall of npm modules and
+# sigh/bazel artifacts.
+set -e
+
+source $(dirname $0)/logging.sh
+# Temporary hack to pass bazelrc file for running the bazel tests in google cloud build.
+# We could get rid of this if we split up these commands as steps in cloudbuild.
+# See https://github.com/PolymerLabs/arcs/issues/4550
+BAZELRC_OPTS=$1
+
+cd $ROOT
+status "Testing all Java things."
+
+set -x
+
+./tools/sigh webpack
+./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/...
