@@ -37,12 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
-sealed class ParticleConstructor {
-    // TODO(alxr): Do these need to be suspend functions? If so, I have a solution to achieve that.
-    abstract class Empty : () -> Particle, ParticleConstructor()
-    abstract class Spec : (Plan.Particle) -> Particle, ParticleConstructor()
-}
-
+typealias ParticleConstructor = (Plan.Particle) -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
 /** Maximum number of times a particle may fail to be started before giving up. */
@@ -549,11 +544,8 @@ abstract class AbstractArcHost(
         identifier: ParticleIdentifier,
         spec: Plan.Particle
     ): Particle {
-        return when (val constructor = particleConstructors[identifier]) {
-            is ParticleConstructor.Empty -> constructor.invoke()
-            is ParticleConstructor.Spec -> constructor.invoke(spec)
-            else -> throw IllegalArgumentException("Particle $identifier not found.")
-        }
+        return particleConstructors[identifier]?.invoke(spec)
+               ?: throw IllegalArgumentException("Particle $identifier not found.")
     }
 
     companion object {

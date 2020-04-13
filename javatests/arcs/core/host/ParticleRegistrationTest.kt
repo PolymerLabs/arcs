@@ -1,6 +1,5 @@
 package arcs.core.host
 
-import arcs.core.data.Plan
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmHost
 import arcs.jvm.host.JvmSchedulerProvider
@@ -28,9 +27,7 @@ class ParticleRegistrationTest {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
 
         val dynamicRegistration = TestConstructedParticle::class.toParticleIdentifier() to
-            object : ParticleConstructor.Spec() {
-                override fun invoke(spec: Plan.Particle) = build(spec)
-            }
+            ::build
 
         hostRegistry.registerHost(JvmProdHost(schedulerProvider,
                                               ::TestProdParticle.toRegistration(),
