@@ -16,7 +16,7 @@ import {Dictionary} from '../runtime/hot.js';
 import minimist from 'minimist';
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
 import {assert} from '../platform/assert-web.js';
-import {kotlinKeywords} from './schema2wasm-utils.js'
+import {kotlinKeywords} from './schema2wasm-utils.js';
 
 // TODO: use the type lattice to generate interfaces
 
