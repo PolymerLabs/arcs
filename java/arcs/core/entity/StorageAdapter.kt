@@ -71,6 +71,7 @@ class ReferenceStorageAdapter<E : Entity>(
         return Reference(entitySpec, referencable)
     }
 
-    // Reference handle expiration is not supported.
+    // Reference handle expiration is not supported yet.
+    // TODO: add TTL to reference handles, in the same way as entities.
     override fun isExpired(value: Reference<E>): Boolean = false
 }
