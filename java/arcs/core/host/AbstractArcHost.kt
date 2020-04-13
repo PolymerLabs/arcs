@@ -37,7 +37,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
-typealias ParticleConstructor = suspend () -> Particle
+sealed class ParticleConstructor {
+    // TODO(alxr): Do these need to be suspend functions? If so, I have a solution to achieve that.
+    abstract class Empty : () -> Particle, ParticleConstructor()
+    abstract class Spec : (Plan.Particle) -> Particle, ParticleConstructor()
+}
+
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
 /** Maximum number of times a particle may fail to be started before giving up. */
@@ -61,6 +66,7 @@ abstract class AbstractArcHost(
     private val log = TaggedLog { "AbstractArcHost" }
     protected val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
+
     /** In memory cache of [ArcHostContext] state. */
     private val contextCache: MutableMap<String, ArcHostContext> = LruCacheMap()
 
@@ -72,6 +78,7 @@ abstract class AbstractArcHost(
 
     // TODO: refactor to allow clients to supply this
     private val coroutineContext = Dispatchers.Unconfined + CoroutineName("AbstractArcHost")
+
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
     private val scope = CoroutineScope(coroutineContext)
 
@@ -542,9 +549,11 @@ abstract class AbstractArcHost(
         identifier: ParticleIdentifier,
         spec: Plan.Particle
     ): Particle {
-        return particleConstructors[identifier]?.invoke() ?: throw IllegalArgumentException(
-            "Particle $identifier not found."
-        )
+        return when (val constructor = particleConstructors[identifier]) {
+            is ParticleConstructor.Empty -> constructor.invoke()
+            is ParticleConstructor.Spec -> constructor.invoke(spec)
+            else -> throw IllegalArgumentException("Particle $identifier not found.")
+        }
     }
 
     companion object {

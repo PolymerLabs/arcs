@@ -36,8 +36,9 @@ fun KClass<*>.className(): String {
 
 /** Returns a pair mapping [ParticleIdentifier] to [ParticleConstructor] */
 inline fun <reified T : Particle> (() -> T).toRegistration(): ParticleRegistration =
-    T::class.toParticleIdentifier() to suspend { this.invoke() }
-
+    T::class.toParticleIdentifier() to object : ParticleConstructor.Empty() {
+        override fun invoke(): Particle = this@toRegistration.invoke()
+    }
 /**
  * If this Type represents a [SingletonType], [CollectionType], or [EntityType], return the
  * [Schema] used by the underlying [Entity] that this type represents.
