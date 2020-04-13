@@ -594,8 +594,7 @@ class ReferenceModeStoreTest {
             )
         )
 
-        val backingStore = activeStore.backingStore.stores["an-id"]
-            ?: activeStore.backingStore.setupStore("an-id")
+        val backingStore = activeStore.backingStore.store("an-id")
         backingStore.store.onReceive(entityCrdt.data, id + 2)
 
         activeStore.idle()
