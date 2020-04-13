@@ -222,7 +222,7 @@ abstract class AbstractArcHost(
         spec: Plan.Particle,
         context: ArcHostContext
     ): ParticleContext {
-        val particle = instantiateParticle(ParticleIdentifier.from(spec.location))
+        val particle = instantiateParticle(ParticleIdentifier.from(spec.location), spec)
 
         val particleContext = lookupParticleContextOrCreate(
             context,
@@ -538,7 +538,10 @@ abstract class AbstractArcHost(
      *
      * @property identifier a [ParticleIdentifier] from a [Plan.Particle] spec
      */
-    open suspend fun instantiateParticle(identifier: ParticleIdentifier): Particle {
+    open suspend fun instantiateParticle(
+        identifier: ParticleIdentifier,
+        spec: Plan.Particle
+    ): Particle {
         return particleConstructors[identifier]?.invoke() ?: throw IllegalArgumentException(
             "Particle $identifier not found."
         )
