@@ -59,7 +59,7 @@ abstract class AbstractArcHost(
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
     private val log = TaggedLog { "AbstractArcHost" }
-    private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
+    protected val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
     /** In memory cache of [ArcHostContext] state. */
     private val contextCache: MutableMap<String, ArcHostContext> = LruCacheMap()
