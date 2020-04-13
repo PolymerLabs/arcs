@@ -57,6 +57,10 @@ export class Schema2Cpp extends Schema2Base {
     return baseName.toLowerCase().replace(/\.arcs$/, '').replace(/[._]/g, '-') + '.h';
   }
 
+  generateEntityClassName(particleName: string, name: string) {
+    return `${particleName}_${this.upperFirst(name)}`;
+  }
+
   fileHeader(outName: string): string {
     const headerGuard = `_ARCS_${outName.toUpperCase().replace(/[-.]/g, '_')}`;
     return `\

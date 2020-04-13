@@ -60,8 +60,10 @@ export class SchemaGraph {
   nodes: SchemaNode[] = [];
   startNodes: SchemaNode[];
   internalClassIndex = 0;
+  nameGenerator: (particleName: string, name: string)  => string;
 
-  constructor(readonly particleSpec: ParticleSpec) {
+  constructor(readonly particleSpec: ParticleSpec, nameGenerator: (particleName: string, name: string)  => string) {
+    this.nameGenerator = nameGenerator;
     // First pass to establish a node for each unique schema, with the descendants field populated.
     for (const connection of this.particleSpec.connections) {
       const schema = connection.type.getEntitySchema();

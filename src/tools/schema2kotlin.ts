@@ -132,8 +132,8 @@ ${imports.join('\n')}
     return new KotlinGenerator(node, this.opts);
   }
 
-  private entityTypeName(particle: ParticleSpec, connection: HandleConnectionSpec) {
-    return `${particle.name}_${this.upperFirst(connection.name)}`;
+  generateEntityClassName(particleName: string, name: string) {
+    return `${particleName}_${this.upperFirst(name)}`;
   }
 
   /** Returns the container type of the handle, e.g. Singleton or Collection. */

@@ -21,6 +21,10 @@ import {ParticleSpec} from '../../runtime/particle-spec.js';
 class Schema2Mock extends Schema2Base {
   res: Dictionary<{count: number, adds: string[]}> = {};
 
+  generateEntityClassName(particleName: string, name: string) {
+    return `${particleName}_${this.upperFirst(name)}`;
+  }
+
   static async create(manifest: Manifest): Promise<Schema2Mock> {
     const mock = new Schema2Mock({'_': []});
     await mock.processManifest(manifest);
