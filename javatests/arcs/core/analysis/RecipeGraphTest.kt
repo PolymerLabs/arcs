@@ -16,35 +16,44 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class RecipeGraphTest {
     // The test environment.
-    var ramdiskStorageKey = "ramdisk://thing"
-    val thingHandle = Recipe.Handle(
-        "thing", Recipe.Handle.Fate.CREATE, TypeVariable("thing"), ramdiskStorageKey
+    private val thingHandle = Recipe.Handle(
+        "thing",
+        Recipe.Handle.Fate.CREATE,
+        TypeVariable("thing")
     )
-    val someHandle = Recipe.Handle(
-        "some", Recipe.Handle.Fate.CREATE, TypeVariable("some"), ramdiskStorageKey
+    private val someHandle = Recipe.Handle("some", Recipe.Handle.Fate.CREATE, TypeVariable("some"))
+    private val readConnectionSpec = HandleConnectionSpec(
+        "r",
+        HandleMode.Read,
+        TypeVariable("r")
     )
-    val readConnectionSpec = HandleConnectionSpec("r", HandleMode.Read, TypeVariable("r"))
-    val readSomeConnectionSpec = HandleConnectionSpec("rs", HandleMode.Read, TypeVariable("rs"))
-    val readerSpec = ParticleSpec(
+    private val readSomeConnectionSpec = HandleConnectionSpec(
+        "rs",
+        HandleMode.Read,
+        TypeVariable("rs")
+    )
+    private val readerSpec = ParticleSpec(
         "Reader",
         listOf(readConnectionSpec, readSomeConnectionSpec).associateBy { it.name },
         "ReaderLocation"
     )
-    val writeConnectionSpec = HandleConnectionSpec("w", HandleMode.Write, TypeVariable("w"))
-    val rwConnectionSpec = HandleConnectionSpec("rw", HandleMode.ReadWrite, TypeVariable("rw"))
-    val writerSpec = ParticleSpec(
+    private val writeConnectionSpec = HandleConnectionSpec("w", HandleMode.Write, TypeVariable("w"))
+    private val rwConnectionSpec = HandleConnectionSpec(
+        "rw", HandleMode.ReadWrite, TypeVariable("rw")
+    )
+    private val writerSpec = ParticleSpec(
         "Writer",
         listOf(writeConnectionSpec, readConnectionSpec, rwConnectionSpec).associateBy { it.name },
         "WriterLocation"
     )
-    val readerParticle = Recipe.Particle(
+    private val readerParticle = Recipe.Particle(
         readerSpec,
         listOf(
             Recipe.Particle.HandleConnection(readConnectionSpec, thingHandle),
             Recipe.Particle.HandleConnection(readSomeConnectionSpec, someHandle)
         )
     )
-    val writerParticle = Recipe.Particle(
+    private val writerParticle = Recipe.Particle(
         writerSpec,
         listOf(
             Recipe.Particle.HandleConnection(writeConnectionSpec, thingHandle),
@@ -65,7 +74,7 @@ class RecipeGraphTest {
      *        r: reads thing
      *        rs: reads some
      */
-    val recipe = Recipe(
+    private val recipe = Recipe(
         "PassThrough",
         listOf(thingHandle, someHandle).associateBy { it.name },
         listOf(readerParticle, writerParticle),
@@ -73,7 +82,7 @@ class RecipeGraphTest {
     )
 
     @Test
-    fun testAddSuccessorUpdatesPredecessorOfSuccessor() {
+    fun addSuccessorUpdatesPredecessorOfSuccessor() {
         val particleNode = RecipeGraph.Node.Particle(readerParticle)
         val handleNode = RecipeGraph.Node.Handle(thingHandle)
         particleNode.addSuccessor(handleNode, readConnectionSpec)
@@ -83,7 +92,7 @@ class RecipeGraphTest {
     }
 
     @Test
-    fun testGraphContainsAllConnections() {
+    fun graphContainsAllConnections() {
         val graph = RecipeGraph(recipe)
         val readerNode = RecipeGraph.Node.Particle(readerParticle)
         val writerNode = RecipeGraph.Node.Particle(writerParticle)
