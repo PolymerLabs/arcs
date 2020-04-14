@@ -63,6 +63,21 @@ data class BoundedAbstractElement<V: Any> private constructor(
         }
     }
 
+    /** A helper for implementing [AbstractValue.meet]. */
+    fun meet(other: BoundedAbstractElement<V>, meeter: (V, V) -> V): BoundedAbstractElement<V> {
+        return when (this.kind) {
+            Kind.BOTTOM -> this /* returns bottom */
+            Kind.TOP -> other
+            Kind.VALUE -> when (other.kind) {
+                Kind.VALUE -> makeValue(
+                    meeter(requireNotNull(this.value), requireNotNull(other.value))
+                )
+                Kind.TOP -> this
+                Kind.BOTTOM -> other /* returns bottom */
+            }
+        }
+    }
+
     companion object {
         /** Returns a canonical [Top] value. */
         fun <V: Any> getTop() = BoundedAbstractElement<V>(Kind.TOP, null)

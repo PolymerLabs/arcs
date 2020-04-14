@@ -64,4 +64,33 @@ class BoundedAbstractElementTest {
             assertThat(join(ten, joinInts)).isEqualTo(ten)
         }
     }
+
+    @Test
+    fun meetRespectsBottomTopOrder() {
+        val meetInts: (Int, Int) -> Int = { a, b -> minOf(a, b) }
+        with(bottom) {
+            assertThat(meet(bottom, meetInts)).isEqualTo(bottom)
+            assertThat(meet(top, meetInts)).isEqualTo(bottom)
+            assertThat(meet(nine, meetInts)).isEqualTo(bottom)
+            assertThat(meet(ten, meetInts)).isEqualTo(bottom)
+        }
+        with(top) {
+            assertThat(meet(bottom, meetInts)).isEqualTo(bottom)
+            assertThat(meet(top, meetInts)).isEqualTo(top)
+            assertThat(meet(nine, meetInts)).isEqualTo(nine)
+            assertThat(meet(ten, meetInts)).isEqualTo(ten)
+        }
+        with(nine) {
+            assertThat(meet(bottom, meetInts)).isEqualTo(bottom)
+            assertThat(meet(top, meetInts)).isEqualTo(nine)
+            assertThat(meet(nine, meetInts)).isEqualTo(nine)
+            assertThat(meet(ten, meetInts)).isEqualTo(nine)
+        }
+        with(ten) {
+            assertThat(meet(bottom, meetInts)).isEqualTo(bottom)
+            assertThat(meet(top, meetInts)).isEqualTo(ten)
+            assertThat(meet(nine, meetInts)).isEqualTo(nine)
+            assertThat(meet(ten, meetInts)).isEqualTo(ten)
+        }
+    }
 }
