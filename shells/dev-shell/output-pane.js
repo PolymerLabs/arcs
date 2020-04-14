@@ -156,7 +156,11 @@ const arcTemplate = `
     <br>
     <span id="stores-collapse-all" class="control">⮝⮝</span>
   </span>
-  <div id="stores" class="control-panel"></div>
+  <div id="stores" class="control-panel">
+    <div style="font-size: 15px; font-style: italic; color: grey; margin-bottom: 10px">
+      Modifying entities is temporarily disabled while the dev shell is migrated to the new storage stack
+    </div>
+  </div>
   <div id="serial" class="control-panel">
     <pre></pre>
   </div>`;
@@ -209,13 +213,9 @@ class ArcPanel extends HTMLElement {
     if (this.linkedArc._stores.length > 0) {
       this.storesControl.style.display = 'inline-block';
       for (const store of this.linkedArc._stores) {
-        if (store.stream) {
-          console.warn(`BigCollection stores not supported: '${store.id}'`);
-          continue;
-        }
         const storePanel = document.createElement('store-panel');
         this.stores.appendChild(storePanel);
-        await storePanel.attach(store);
+        await storePanel.attach(await store.activate(), this.linkedArc);
       }
       this.storesCollapseAll.enabled = (this.linkedArc._stores.length > 1);
     }
@@ -244,7 +244,8 @@ class ArcPanel extends HTMLElement {
       action = 'show';
     }
     for (const store of this.stores.children) {
-      store.collapse(action);
+      // TODO: remove 'if' when saving entities works
+      if (store.collapse) store.collapse(action);
     }
   }
 
