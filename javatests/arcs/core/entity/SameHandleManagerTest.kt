@@ -25,9 +25,9 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         readHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "testHost",
-            time = FakeTime(),
+            time = fakeTime,
             scheduler = Scheduler(
-                FakeTime(),
+                fakeTime,
                 Executors.newSingleThreadExecutor().asCoroutineDispatcher()
             ),
             stores = StoreManager()

@@ -36,6 +36,7 @@ import arcs.core.storage.Reference as StorageReference
 open class HandleManagerTestBase {
     private val backingKey = RamDiskStorageKey("entities")
     private val hatsBackingKey = RamDiskStorageKey("hats")
+    protected lateinit var fakeTime: FakeTime
 
     data class Person(
         override val entityId: ReferenceId,
@@ -194,6 +195,7 @@ open class HandleManagerTestBase {
 
     // Must call from subclasses.
     open fun setUp() {
+        fakeTime = FakeTime()
         DriverAndKeyConfigurator.configure(null)
         SchemaRegistry.register(Person)
         SchemaRegistry.register(Hat)
@@ -380,7 +382,7 @@ open class HandleManagerTestBase {
 
     @Test
     fun singleton_withTTL() = testRunner {
-        FakeTime.millis = 0
+        fakeTime.millis = 0
         val handle = writeHandleManager.createSingletonHandle(ttl = Ttl.Days(2))
         handle.store(entity1)
 
@@ -396,7 +398,7 @@ open class HandleManagerTestBase {
         assertThat(readBack2.expirationTimestamp).isEqualTo(2*60*1000)
 
         // Fast forward time to 5 minutes later, so entity2 expires.
-        FakeTime.millis += 5*60*1000
+        fakeTime.millis += 5*60*1000
         assertThat(handleB.fetch()).isNull()
     }
 
@@ -436,9 +438,9 @@ open class HandleManagerTestBase {
         // Remove the entity from the collection.
         writeEntityHandle.remove(entity1)
 
-        // Reference should be dead.
-        // TODO(b/152436411): The reference should dereference to null, but in fact dereferences to
-        // a RawEntity full of nulls.
+        // Reference should be dead. (Removed entities currently aren't actually deleted, but
+        // instead are "nulled out".
+        assertThat(storageReference.dereference()).isEqualTo(createNulledOutPerson("entity1"))
     }
 
     @Test
@@ -634,7 +636,7 @@ open class HandleManagerTestBase {
 
     @Test
     fun collection_withTTL() = testRunner {
-        FakeTime.millis = 0
+        fakeTime.millis = 0
         val handle = writeHandleManager.createCollectionHandle(ttl = Ttl.Days(2))
         handle.store(entity1)
 
@@ -650,7 +652,7 @@ open class HandleManagerTestBase {
         assertThat(readBack2.expirationTimestamp).isEqualTo(2*60*1000)
 
         // Fast forward time to 5 minutes later, so entity2 expires, entity1 doesn't.
-        FakeTime.millis += 5*60*1000
+        fakeTime.millis += 5*60*1000
         assertThat(handleB.fetchAll()).containsExactly(entity1)
     }
 
@@ -699,7 +701,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_referenceLiveness() = runBlocking {
+    open fun collection_referenceLiveness() = runBlocking<Unit> {
         // Create and store some entities.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         writeEntityHandle.store(entity1)
@@ -744,9 +746,12 @@ open class HandleManagerTestBase {
         writeEntityHandle.remove(entity1)
         writeEntityHandle.remove(entity2)
 
-        // Reference should be dead.
-        // TODO(b/152436411): The reference should dereference to null, but in fact dereferences to
-        // a RawEntity full of nulls.
+        // Reference should be dead. (Removed entities currently aren't actually deleted, but
+        // instead are "nulled out".
+        assertThat(references.map { it.toReferencable().dereference() }).containsExactly(
+            createNulledOutPerson("entity1"),
+            createNulledOutPerson("entity2")
+        )
     }
 
     @Test
@@ -850,4 +855,18 @@ open class HandleManagerTestBase {
             }
         }
     }
+
+    private fun createNulledOutPerson(entityId: ReferenceId) = RawEntity(
+        id = entityId,
+        singletons = mapOf(
+            "name" to null,
+            "age" to null,
+            "is_cool" to null,
+            "best_friend" to null,
+            "hat" to null
+        ),
+        collections = emptyMap(),
+        creationTimestamp = fakeTime.millis,
+        expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
+    )
 }
