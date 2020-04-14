@@ -20,19 +20,19 @@ class BoundedAbstractElementTest {
     @Test
     fun factoryMethodsAndPredicatesAreCorrect() {
         with(top) {
-            assertFalse(isBottom())
-            assertTrue(isTop())
-            assertNull(value())
+            assertFalse(isBottom)
+            assertTrue(isTop)
+            assertNull(value)
         }
         with(bottom) {
-            assertTrue(isBottom())
-            assertFalse(isTop())
-            assertNull(value())
+            assertTrue(isBottom)
+            assertFalse(isTop)
+            assertNull(value)
         }
         with(ten) {
-            assertFalse(isBottom())
-            assertFalse(isTop())
-            assertThat(value()).isEqualTo(10)
+            assertFalse(isBottom)
+            assertFalse(isTop)
+            assertThat(value).isEqualTo(10)
         }
     }
 

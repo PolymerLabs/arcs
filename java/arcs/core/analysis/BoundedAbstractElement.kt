@@ -34,19 +34,18 @@ package arcs.core.analysis
  * ```
  */
 data class BoundedAbstractElement<V: Any> private constructor(
-    val kind: Kind,
+    private val kind: Kind,
     val value: V?
 ) {
     private enum class Kind { TOP, BOTTOM, VALUE }
 
-    /** Returns true if this is a [Top] value. */
-    fun isTop() = kind == Kind.TOP
+    /** True if this is top. */
+    val isTop: Boolean
+        get() = kind == Kind.TOP
 
-    /** Returns true if this is a [Bottom] value. */
-    fun isBottom() = kind == Kind.BOTTOM
-
-    /** Returns the underlying value if this is a [Value] type. Otherwise, returns null. */
-    fun value(): V? = value
+    /** True if this is bottom. */
+    val isBottom: Boolean
+        get() = kind == Kind.BOTTOM
 
     /** A helper for implementing [AbstractValue.join]. */
     fun join(other: BoundedAbstractElement<V>, joiner: (V, V) -> V): BoundedAbstractElement<V> {
@@ -79,13 +78,13 @@ data class BoundedAbstractElement<V: Any> private constructor(
     }
 
     companion object {
-        /** Returns a canonical [Top] value. */
+        /** Returns a canonical top value. */
         fun <V: Any> getTop() = BoundedAbstractElement<V>(Kind.TOP, null)
 
-        /** Returns a canonical [Bottom] value. */
+        /** Returns a canonical bottom value. */
         fun <V: Any> getBottom() = BoundedAbstractElement<V>(Kind.BOTTOM, null)
 
-        /** Returns a [Value] instance that wraps [value]. */
+        /** Returns an instance that wraps [value]. */
         fun <V: Any> makeValue(value: V) = BoundedAbstractElement<V>(Kind.VALUE, value)
     }
 }
