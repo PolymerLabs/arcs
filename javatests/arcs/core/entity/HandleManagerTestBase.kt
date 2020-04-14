@@ -439,7 +439,7 @@ open class HandleManagerTestBase {
         writeEntityHandle.remove(entity1)
 
         // Reference should be dead. (Removed entities currently aren't actually deleted, but
-        // instead are "nulled out".
+        // instead are "nulled out".)
         assertThat(storageReference.dereference()).isEqualTo(createNulledOutPerson("entity1"))
     }
 
@@ -747,7 +747,7 @@ open class HandleManagerTestBase {
         writeEntityHandle.remove(entity2)
 
         // Reference should be dead. (Removed entities currently aren't actually deleted, but
-        // instead are "nulled out".
+        // instead are "nulled out".)
         assertThat(references.map { it.toReferencable().dereference() }).containsExactly(
             createNulledOutPerson("entity1"),
             createNulledOutPerson("entity2")
