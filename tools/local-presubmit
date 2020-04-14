@@ -18,7 +18,8 @@ status "Testing all non-Java things."
 set -x
 
 ./tools/sigh webpack
-./tools/bazelisk ${BAZELRC_OPTS} test javatests/arcs/sdk/wasm:test-module //src/... //particles/...
+#./tools/bazelisk ${BAZELRC_OPTS} test //javatests/arcs/sdk/wasm:test-module //src/... //particles/...
+./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/... //src/... //particles/...
 ./tools/sigh testShells
 ./tools/sigh lint
 ./tools/sigh test --all

@@ -23,31 +23,19 @@ steps:
   args: ['push', 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:head']
   waitFor: ['build-image']
 
-# Java tests.
-- id: 'java-tests'
+# Run non-integration tests.
+- id: 'local-presubmit'
   name: 'gcr.io/cloud-builders/docker'
   args: [
     'run',
     '--network=cloudbuild',
     '--rm', 'arcs-base',
-    'tools/java-tests',
+    'tools/local-presubmit',
     '--bazelrc=tools/gcb.bazelrc',
   ]
   waitFor: ['build-image']
 
-# non-Java tests.
-- id: 'non-java-tests'
-  name: 'gcr.io/cloud-builders/docker'
-  args: [
-    'run',
-    '--network=cloudbuild',
-    '--rm', 'arcs-base',
-    'tools/non-java-tests',
-    '--bazelrc=tools/gcb.bazelrc',
-  ]
-  waitFor: ['build-image']
-
-# Build Android test apks.
+# Build Android integration test apks.
 - id: 'build-test-apks'
   name: 'gcr.io/cloud-builders/docker'
   args: [
@@ -60,7 +48,7 @@ steps:
   ]
   waitFor: ['build-image']
 
-# Run Android test in Firebase Test Lab.
+# Run Android integration test in Firebase Test Lab.
 - id: 'android-firebase-test-lab'
   name: 'gcr.io/cloud-builders/gcloud'
   args: [
