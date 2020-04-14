@@ -13,7 +13,7 @@ source $(dirname $0)/logging.sh
 BAZELRC_OPTS=$1
 
 cd $ROOT
-status "Testing all non-Java things."
+status "Testing all of the things."
 
 set -x
 
