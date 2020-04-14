@@ -16,12 +16,11 @@ import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {Arc} from '../runtime/arc.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
-import {CapabilitiesResolver, StorageKeyCreatorInfo} from '../runtime/capabilities-resolver.js';
+import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
-import {TypeVariable} from '../runtime/type.js';
-import {DatabaseStorageKey, PersistentDatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
-import {Capabilities} from '../runtime/capabilities.js';
+import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
+import {Handle} from '../runtime/recipe/handle';
 
 export class StorageKeyRecipeResolverError extends Error {
   constructor(message: string) {
@@ -54,7 +53,7 @@ export class StorageKeyRecipeResolver {
       this.validateHandles(recipe);
       const arcId = findLongRunningArcId(recipe);
       const arc = this.runtime.newArc(
-          arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
+        arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
       let resolved = await this.tryResolve(recipe, arc, opts);
 
@@ -78,7 +77,7 @@ export class StorageKeyRecipeResolver {
   async tryResolve(recipe: Recipe, arc: Arc, opts?: IsValidOptions): Promise<Recipe | null> {
     if (!recipe.normalize(opts)) {
       throw new StorageKeyRecipeResolverError(
-          `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
+        `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
     }
     if (recipe.isResolved()) return recipe;
 
@@ -112,8 +111,12 @@ export class StorageKeyRecipeResolver {
       }
 
       const storageKey = await resolver.createStorageKey(
-          createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
-      const store = new Store(createHandle.type, {storageKey, exists: Exists.MayExist, id: createHandle.id});
+        createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
+      const store = new Store(createHandle.type, {
+        storageKey,
+        exists: Exists.MayExist,
+        id: createHandle.id
+      });
       arc.context.registerStore(store, createHandle.tags);
       createHandle.storageKey = storageKey;
     }
@@ -148,8 +151,15 @@ export class StorageKeyRecipeResolver {
             `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
           );
         }
+
+        if (isVolatileCreateHandle(match)) {
+          throw new StorageKeyRecipeResolverError(
+            `Handle ${handle.localName} mapped to a volatile handle '${match.id}'.`
+          );
+        }
       });
   }
+
 }
 
 /** Returns true if input recipe is for a long-running arc. */
@@ -171,4 +181,14 @@ export function findLongRunningArcId(recipe: Recipe): string | null {
     }
   }
   return null;
+}
+
+
+/** Determines if create handle is volatile. */
+function isVolatileCreateHandle(handle: Handle): boolean {
+  if (handle.capabilities.isEmpty()) return true;
+  if (!handle.capabilities.isPersistent &&
+    !handle.capabilities.isTiedToRuntime &&
+    !handle.capabilities.isTiedToArc) return true;
+  return !!handle.tags.includes('volatile');
 }
