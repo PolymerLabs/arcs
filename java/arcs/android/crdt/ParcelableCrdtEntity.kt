@@ -78,7 +78,7 @@ object ParcelableCrdtEntity {
                 repeat(numCollections) {
                     val field = requireNotNull(parcel.readString())
                     val data = requireNotNull(
-                        parcel.readTypedObject(ParcelableCrdtSingleton.Data)?.actual
+                        parcel.readTypedObject(ParcelableCrdtSet.Data)?.actual
                     )
                     collections[field] =
                         CrdtSet.createWithData(data as CrdtSet.Data<CrdtEntity.Reference>)

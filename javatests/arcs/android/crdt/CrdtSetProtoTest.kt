@@ -13,6 +13,7 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.util.writeProto
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
@@ -22,7 +23,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ParcelableCrdtSetTest {
+class CrdtSetProtoTest {
     private val versionMap: VersionMap = VersionMap("alice" to 1, "bob" to 2)
     private val entity1: Referencable = RawEntity("ref-id-1", setOf("a"), setOf())
     private val entity2: Referencable = RawEntity("ref-id-2", setOf(), setOf("b"))
@@ -32,16 +33,16 @@ class ParcelableCrdtSetTest {
         val dataValue = CrdtSet.DataValue(versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(ParcelableCrdtSet.DataValue(dataValue), 0)
+            writeProto(dataValue.toProto())
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtSet.DataValue.CREATOR))
+            readCrdtSetDataValue()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(dataValue)
+        assertThat(unmarshalled).isEqualTo(dataValue)
     }
 
     @Test
@@ -52,16 +53,16 @@ class ParcelableCrdtSetTest {
         ))
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(data.toParcelable(), 0)
+            writeProto(data.toProto())
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Set.crdtDataCreator))
+            readCrdtSetData()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(data)
+        assertThat(unmarshalled).isEqualTo(data)
     }
 
     @Test
@@ -69,16 +70,16 @@ class ParcelableCrdtSetTest {
         val op = CrdtSet.Operation.Add("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeProto(op.toProto())
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Set.crdtOperationCreator))
+            readCrdtSetOperation()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 
     @Test
@@ -86,16 +87,16 @@ class ParcelableCrdtSetTest {
         val op = CrdtSet.Operation.Remove("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeProto(op.toProto())
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Set.crdtOperationCreator))
+            readCrdtSetOperation()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 
     @Test
@@ -110,15 +111,15 @@ class ParcelableCrdtSetTest {
         )
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeProto(op.toProto())
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Set.crdtOperationCreator))
+            readCrdtSetOperation()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 }
