@@ -29,3 +29,8 @@ recipe EphemeralWriting
   thing: create 'my-ephemeral-handle-id'
   Writer
     data: writes thing
+
+recipe EphemeralReading
+  data: map 'my-handle-id'
+  Reader
+    data: reads data
