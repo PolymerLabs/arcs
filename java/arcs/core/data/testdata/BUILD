@@ -22,5 +22,5 @@ arcs_kt_gen(
 
 arcs_kt_gen(
     name = "ingest_process_retrieve_gen",
-    srcs = ["IngestProcessRetrieve.arcs"]
+    srcs = ["IngestProcessRetrieve.arcs"],
 )
