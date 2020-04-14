@@ -60,6 +60,7 @@ steps:
     '--app', '/workspace/testapp.apk',
     '--test', '/workspace/e2e.apk',
     '--device', 'model=Pixel2,version=29,locale=en,orientation=portrait',
+    '--use-orchestrator',
   ]
   waitFor: ['build-test-apks']
 
