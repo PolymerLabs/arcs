@@ -374,7 +374,8 @@ describe('recipe2plan', () => {
 
       const resolver = new StorageKeyRecipeResolver(manifest);
       for (const it of (await resolver.resolve())) {
-        assert.isTrue(it.isResolved()); }
+        assert.isTrue(it.isResolved());
+      }
     });
     it('fails if there is no matching writing handle found', async () => {
       const manifest = await Manifest.parse(`\

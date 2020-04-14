@@ -188,7 +188,7 @@ export function findLongRunningArcId(recipe: Recipe): string | null {
 function isVolatileCreateHandle(handle: Handle): boolean {
   if (handle.capabilities.isEmpty()) return true;
   if (!handle.capabilities.isPersistent &&
-    !handle.capabilities.isTiedToRuntime &&
-    !handle.capabilities.isTiedToArc) return true;
+    !handle.capabilities.isQueryable &&
+    !handle.capabilities.isTiedToRuntime) return true;
   return !!handle.tags.includes('volatile');
 }
