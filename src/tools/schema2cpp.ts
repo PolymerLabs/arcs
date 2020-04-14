@@ -57,8 +57,19 @@ export class Schema2Cpp extends Schema2Base {
     return baseName.toLowerCase().replace(/\.arcs$/, '').replace(/[._]/g, '-') + '.h';
   }
 
-  generateEntityClassName(particleName: string, name: string) {
-    return `${particleName}_${this.upperFirst(name)}`;
+  generateEntityClassName(node: SchemaNode, i: number) {
+    if (i === -1) {
+      return `${node.particleName}_${node.connections[0]}`;
+    }
+    return `${node.particleName}Internal${i}`;
+  }
+
+  generateAliasNames(node: SchemaNode): string[] {
+    const arr: string[] = [];
+    for (const connection of node.connections) {
+      arr.push(`${node.particleName}_${connection}`);
+    }
+    return arr;
   }
 
   fileHeader(outName: string): string {

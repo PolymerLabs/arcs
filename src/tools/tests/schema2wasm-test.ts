@@ -21,8 +21,19 @@ import {ParticleSpec} from '../../runtime/particle-spec.js';
 class Schema2Mock extends Schema2Base {
   res: Dictionary<{count: number, adds: string[]}> = {};
 
-  generateEntityClassName(particleName: string, name: string) {
-    return `${particleName}_${this.upperFirst(name)}`;
+  generateEntityClassName(node: SchemaNode, i: number) {
+    if (i === -1) {
+      return `${node.particleName}_${this.upperFirst(node.connections[0])}`;
+    }
+    return `${node.particleName}Internal${i}`;
+  }
+
+  generateAliasNames(node: SchemaNode): string[] {
+    const arr: string[] = [];
+    for (const connection of node.connections) {
+      arr.push(`${node.particleName}_${this.upperFirst(connection)}`);
+    }
+    return arr;
   }
 
   static async create(manifest: Manifest): Promise<Schema2Mock> {

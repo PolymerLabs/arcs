@@ -10,7 +10,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Dictionary} from '../../runtime/hot.js';
-import {SchemaGraph} from '../schema2graph.js';
+import {SchemaGraph, SchemaNode} from '../schema2graph.js';
 
 interface NodeInfo {
   name: string;      // generated class name
@@ -34,8 +34,12 @@ function convert(graph: SchemaGraph) {
   return {nodes, aliases};
 }
 
-function dummyNameGenerator(a: string, b: string) {
+function dummyNameGenerator(node: SchemaNode, i: number) {
   return '';
+}
+
+function dummyAliasGenerator(node: SchemaNode): string[] {
+  return [''];
 }
 
 describe('schema2graph', () => {
@@ -45,7 +49,7 @@ describe('schema2graph', () => {
         root: consumes Slot
           tile: provides Slot
     `);
-    const graph = new SchemaGraph(manifest.particles[0], dummyNameGenerator);
+    const graph = new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator);
     assert.isEmpty([...graph.walk()]);
   });
 
@@ -56,7 +60,7 @@ describe('schema2graph', () => {
         h2: reads * {a: Text, b: Text}
         h3: reads * {a: Text, b: Text, c: Text}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'L_H1', parents: '',     children: 'L_H2'},
       {name: 'L_H2', parents: 'L_H1', children: 'L_H3'},
@@ -73,7 +77,7 @@ describe('schema2graph', () => {
         h3: reads * {a: Text, c: Text}              //   4
         h4: reads * {a: Text, b: Text, c: Text}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'D_H1', parents: '',           children: 'D_H2, D_H3'},
       {name: 'D_H2', parents: 'D_H1',       children: 'D_H4'},
@@ -93,7 +97,7 @@ describe('schema2graph', () => {
         d2: reads * {a: Text, b: Text}
         d4: reads * {a: Text, b: Text, c: Text}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'A_H1',       parents: '',                 children: 'AInternal1, A_H3'},
       {name: 'AInternal1', parents: 'A_H1',             children: 'AInternal2'},
@@ -120,7 +124,7 @@ describe('schema2graph', () => {
         v8: reads * {c: URL, d: URL}
         v9: reads * {a: URL, b: URL, c: URL, d: URL}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
 
     // Traversal is breadth-first; nodes within a row are in the same order as in the manifest.
     assert.deepStrictEqual(res.nodes, [
@@ -153,7 +157,7 @@ describe('schema2graph', () => {
         h4: reads * {a: Text, b: Text, d: Text}
         h5: reads * {a: Text, b: Text, c: Text, d: Text, e: Text}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'M_H1', parents: '',           children: 'M_H3, M_H4'},
       {name: 'M_H2', parents: '',           children: 'M_H3, M_H4'},
@@ -183,7 +187,7 @@ describe('schema2graph', () => {
         h4: reads * {a: Text, b: Text, c: Text}
         h5: reads * {a: Text, b: Text, c: Text, x: Text}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'J_H1', parents: '',           children: 'J_H3'},
       {name: 'J_H2', parents: '',           children: 'J_H5'},
@@ -205,7 +209,7 @@ describe('schema2graph', () => {
         oldness: reads writes [Data {n: Number}]
         mainAddress: writes &* {u: URL}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'Test_Name',        parents: '', children: ''},
       {name: 'TestInternal1',    parents: '', children: ''},
@@ -225,7 +229,7 @@ describe('schema2graph', () => {
         h3: reads [&* {a: Text, b: Text, c: Text}]
         h4: reads * {a: Text, b: Text, r: [&* {d: Text}]}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'W_H1',   parents: '',     children: 'W_H2'},
       {name: 'W_H4_R', parents: '',     children: ''},
@@ -261,7 +265,7 @@ describe('schema2graph', () => {
         h5: reads * {a: Text, b: Text, d: Text}
         h3: reads * {a: Text, b: Text}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'X_H1', parents: '',           children: 'X_H3'},
       {name: 'X_H2', parents: '',           children: 'X_H4, X_H5'},
@@ -282,7 +286,7 @@ describe('schema2graph', () => {
         data: reads * {outer: &* {t: Text, inner: &* {u: URL}}}
         dupe: reads * {t: Text, inner: &* {u: URL}}
     `);
-    const graph = new SchemaGraph(manifest.particles[0], dummyNameGenerator);
+    const graph = new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator);
     const res = convert(graph);
     assert.deepStrictEqual(res.nodes.map(x => x.name), [
       'NamesInternal2', 'NamesInternal1', 'Names_Data'
@@ -302,7 +306,7 @@ describe('schema2graph', () => {
         h2: reads * {a: Text, r: &* {b: Text}}
         h3: reads * {a: Text, r: &* {b: Text}, c: Text}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'N_H1',       parents: '',     children: 'N_H2'},
       {name: 'NInternal1', parents: '',     children: ''},
@@ -326,7 +330,7 @@ describe('schema2graph', () => {
         h2: reads * {a: Text}
         h3: reads * {v: &* {a: Text}}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'QInternal3', parents: '', children: ''},
       {name: 'Q_H3',       parents: '', children: ''},
@@ -353,7 +357,7 @@ describe('schema2graph', () => {
         h2: reads * {a: Text, b: Text, c: Text}
         h3: reads * {r: &* {a: Text, b: Text}, s: &* {a: Text, c: Text}}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'I_H1',   parents: '',               children: 'I_H3_R, I_H3_S'},
       {name: 'I_H3_R', parents: 'I_H1',           children: 'I_H2'},
@@ -373,7 +377,7 @@ describe('schema2graph', () => {
         h4: reads * {a: Text, d: Text, e: Text}
         h5: reads * {b: Text, c: Text, v: &* {d: Text}}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'YInternal1', parents: '',                       children: 'Y_H2, Y_H4'},
       {name: 'YInternal3', parents: '',                       children: 'Y_H4'},
@@ -404,7 +408,7 @@ describe('schema2graph', () => {
         h3: reads * {a: Text, b: Text}
         h4: reads * {a: Text, b: Text, c: Text}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'V_H1',       parents: '',     children: 'V_H2, V_H3'},
       {name: 'V_H3',       parents: 'V_H1', children: 'VInternal1'},
@@ -437,7 +441,7 @@ describe('schema2graph', () => {
         // Separate starting node with co-descendant reference
         k2: reads * {j: &* {n: Number, o: Number}}
     `);
-    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator));
+    const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'RInternal1', parents: '',           children: 'R_H2_S, R_H4_V'},
       {name: 'R_K1_I',     parents: '',           children: 'R_K2_J'},

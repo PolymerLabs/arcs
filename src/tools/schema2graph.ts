@@ -11,6 +11,7 @@ import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
 import {AtLeastAsSpecific} from '../runtime/refiner.js';
+import {connect} from 'http2';
 
 export class SchemaNode {
   schema: Schema;
@@ -20,14 +21,8 @@ export class SchemaNode {
   // 'Particle_Handle' names that need to be type aliased to it.
   name: string;
   aliases: string[] = [];
-
-  // We are working to move the Kotlin entity classes to be within a particle class. This
-  // provides a unique namesapce, and thus we can have the entity class named just Handle.
-  // to make this easier, we have the kotlinName and kotlinAliases that use just Handle
-  // as the name.
-  // TODO(heimlich): Update to use schema names for kotlin where possible.
-  kotlinName: string;
-  kotlinAliases: string[] = [];
+  particleName: string;
+  connections: string[] =[];
 
   // All schemas that can be sliced to this one.
   descendants = new Set<SchemaNode>();
@@ -41,10 +36,10 @@ export class SchemaNode {
   // ensure that nested schemas are generated before the references that rely on them.
   refs = new Map<string, SchemaNode>();
 
-  constructor(schema: Schema, name: string) {
+  constructor(schema: Schema, particleName: string, connectionName: string) {
     this.schema = schema;
-    this.aliases.push(name);
-    this.kotlinAliases.push(name);
+    this.connections.push(connectionName);
+    this.particleName = particleName;
   }
 }
 
@@ -60,15 +55,23 @@ export class SchemaGraph {
   nodes: SchemaNode[] = [];
   startNodes: SchemaNode[];
   internalClassIndex = 0;
-  nameGenerator: (particleName: string, name: string)  => string;
+  nameGenerator: (node: SchemaNode, i: number)  => string;
+  aliasGenerator: (node: SchemaNode) => string[];
 
-  constructor(readonly particleSpec: ParticleSpec, nameGenerator: (particleName: string, name: string)  => string) {
+  constructor(
+    readonly particleSpec: ParticleSpec,
+    nameGenerator: (node: SchemaNode, i: number)  => string,
+    aliasGenerator: (node: SchemaNode)  => string[]
+    ) {
     this.nameGenerator = nameGenerator;
+    this.aliasGenerator = aliasGenerator;
     // First pass to establish a node for each unique schema, with the descendants field populated.
     for (const connection of this.particleSpec.connections) {
       const schema = connection.type.getEntitySchema();
       if (schema) {
-        this.createNodes(schema, [this.particleSpec.name, upperFirst(connection.name)].join('_'), upperFirst(connection.name));
+        console.log(`Particle Name ${particleSpec.name}`);
+        console.log(`conneciton name ${connection.name}`);
+        this.createNodes(schema, this.particleSpec.name, upperFirst(connection.name));
       }
     }
 
@@ -82,19 +85,17 @@ export class SchemaGraph {
     }
   }
 
-  private createNodes(schema: Schema, name: string, kotlinName: string) {
+  private createNodes(schema: Schema, particleName: string, connectionName: string) {
     let node = this.nodes.find(n => schema.equals(n.schema));
     if (node) {
       // We can only have one node in the graph per schema. Collect duplicates as aliases.
-      node.aliases.push(name);
-      node.kotlinName = name;
-      if (!node.kotlinAliases.includes(name)) {
-        node.kotlinAliases.push(name);
+      if (!node.connections.includes(connectionName)) {
+        node.connections.push(connectionName);
       }
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
-      node = new SchemaNode(schema, name);
+      node = new SchemaNode(schema, particleName, connectionName);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
           if (b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
@@ -122,7 +123,9 @@ export class SchemaGraph {
       if (nestedSchema) {
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, [name, upperFirst(field)].join('_'), upperFirst(field));
+        console.log(`nest name: ${particleName}`);
+        console.log(`nest field ${field}`);
+        const nestedNode = this.createNodes(nestedSchema, particleName, upperFirst(field));
         node.refs.set(field, nestedNode);
       }
     }
@@ -134,12 +137,12 @@ export class SchemaGraph {
 
     // If this node only has one alias, use that for the class name.
     // Otherwise generate an internal name and create aliases for it.
-    if (node.aliases.length === 1) {
-      node.name = node.aliases.pop();
-      node.kotlinName = node.name;
+    if (node.connections.length === 1) {
+      node.name = this.nameGenerator(node, -1);
+      node.aliases = this.aliasGenerator(node);
     } else {
-      node.name = `${this.particleSpec.name}Internal${++this.internalClassIndex}`;
-      node.kotlinName = node.name;
+      node.name = this.nameGenerator(node, ++this.internalClassIndex);//`${this.particleSpec.name}Internal${++this.internalClassIndex}`;
+      node.aliases = this.aliasGenerator(node);
     }
 
     // Set up children links: collect descendants of descendants.

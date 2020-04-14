@@ -96,7 +96,7 @@ export abstract class Schema2Base {
         continue;
       }
 
-      const graph = new SchemaGraph(particle, this.generateEntityClassName);
+      const graph = new SchemaGraph(particle, this.generateEntityClassName, this.generateAliasNames);
       const nodes: NodeAndGenerator[] = [];
       // Generate one class definition per node in the graph.
       for (const node of graph.walk()) {
@@ -160,5 +160,7 @@ export abstract class Schema2Base {
 
   abstract generateTestHarness(particle: ParticleSpec): string;
 
-  abstract generateEntityClassName(particleName: string, name: string): string;
+  abstract generateEntityClassName(node: SchemaNode, i: number): string;
+
+  abstract generateAliasNames(node: SchemaNode): string[];
 }

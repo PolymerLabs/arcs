@@ -132,8 +132,23 @@ ${imports.join('\n')}
     return new KotlinGenerator(node, this.opts);
   }
 
-  generateEntityClassName(particleName: string, name: string) {
-    return `${particleName}_${this.upperFirst(name)}`;
+  generateEntityClassName(node: SchemaNode, i: number) {
+    if (i === -1) {
+      return `${node.particleName}_${node.connections[0]}`;
+    }
+    return `${node.particleName}Internal${i}`;
+  }
+
+  generateAliasNames(node: SchemaNode): string[] {
+    const arr: string[] = [];
+    for (const connection of node.connections) {
+      arr.push(`${node.particleName}_${connection}`);
+    }
+    return arr;
+  }
+
+  generateEntityName(particle: string, connection: string) {
+    return `${particle}_${this.upperFirst(connection)}`;
   }
 
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
@@ -221,8 +236,30 @@ ${imports.join('\n')}
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType = this.entityTypeName(particle, connection);
-      const handleInterfaceType = this.handleInterfaceType(connection, entityType);
+      const entityType = this.generateEntityName(particle.name, connection.name);
+      const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
+      let handleInterfaceType: string;
+      if (this.opts.wasm) {
+        handleInterfaceType = this.prefixTypeForRuntime(`${handleConcreteType}Impl<${entityType}>`);
+      } else {
+        if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
+            throw new Error(`Unsupported handle direction: ${connection.direction}`);
+        }
+        const handleInterfaces: string[] = [];
+        const typeArguments: string[] = [entityType];
+        if (connection.direction === 'reads' || connection.direction === 'reads writes') {
+          handleInterfaces.push('Read');
+        }
+        if (connection.direction === 'writes' || connection.direction === 'reads writes') {
+          handleInterfaces.push('Write');
+        }
+        const queryType = this.getQueryType(connection);
+        if (queryType) {
+          handleInterfaces.push('Query');
+          typeArguments.push(queryType);
+        }
+        handleInterfaceType = this.prefixTypeForRuntime(`${handleInterfaces.join('')}${handleConcreteType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`);
+      }
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
       } else {
@@ -253,10 +290,10 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
-      const entityType = this.entityTypeName(particle, connection);
-      const interfaceType = this.handleInterfaceType(connection, entityType);
-      handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
-      handleSpecs.push(this.handleSpec(handleName, entityType, connection));
+      const entityType = this.generateEntityName(particle.name, connection.name);
+      const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
+      handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
+      handleSpecs.push(`HandleSpec("${handleName}", HandleMode.ReadWrite, HandleContainerType.${handleConcreteType}, ${entityType})`);
     }
 
     return `
@@ -429,14 +466,14 @@ ${lines}
   generate(schemaHash: string, fieldCount: number): string { return ''; }
 
   generateAliases(particleName: string): string {
-    const name = this.node.kotlinName;
-    const aliases = this.node.kotlinAliases;
+    const name = this.node.name;
+    const aliases = this.node.aliases;
     const typeDecls = aliases.map(alias => `typealias ${alias} = Abstract${particleName}.${name}`);
     return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
   }
 
   generateClasses(schemaHash: string, fieldCount: number): string {
-    const name = this.node.kotlinName;
+    const name = this.node.name;
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
