@@ -33,7 +33,7 @@ package arcs.core.analysis
  * }
  * ```
  */
-data class BoundedAbstractElement<V: Any> private constructor(
+data class BoundedAbstractElement<V : Any> private constructor(
     private val kind: Kind,
     val value: V?
 ) {
@@ -88,12 +88,12 @@ data class BoundedAbstractElement<V: Any> private constructor(
 
     companion object {
         /** Returns a canonical top value. */
-        fun <V: Any> getTop() = BoundedAbstractElement<V>(Kind.TOP, null)
+        fun <V : Any> getTop() = BoundedAbstractElement<V>(Kind.TOP, null)
 
         /** Returns a canonical bottom value. */
-        fun <V: Any> getBottom() = BoundedAbstractElement<V>(Kind.BOTTOM, null)
+        fun <V : Any> getBottom() = BoundedAbstractElement<V>(Kind.BOTTOM, null)
 
         /** Returns an instance that wraps [value]. */
-        fun <V: Any> makeValue(value: V) = BoundedAbstractElement<V>(Kind.VALUE, value)
+        fun <V : Any> makeValue(value: V) = BoundedAbstractElement<V>(Kind.VALUE, value)
     }
 }
