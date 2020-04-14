@@ -66,6 +66,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/testutil",
         "//java/arcs/core/util",
+        "//java/arcs/jvm/util/testutil",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",

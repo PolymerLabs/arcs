@@ -21,6 +21,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.Time
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
@@ -46,8 +47,8 @@ open class HandleManagerTestBase {
     ) : Entity {
 
         var raw: RawEntity? = null
-        var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-        var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        var creationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        override var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
 
         override fun ensureEntityFields(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {
             creationTimestamp = time.currentTimeMillis
@@ -92,6 +93,8 @@ open class HandleManagerTestBase {
                 hat = data.singletons["hat"] as? StorageReference
             ).apply {
                 raw = data
+                expirationTimestamp = data.expirationTimestamp
+                creationTimestamp = data.creationTimestamp
             }
 
             override val SCHEMA = Schema(
@@ -134,6 +137,7 @@ open class HandleManagerTestBase {
         override val entityId: ReferenceId,
         val style: String
     ) : Entity {
+        override var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
         override fun ensureEntityFields(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {}
 
         override fun serialize() = RawEntity(
@@ -370,31 +374,30 @@ open class HandleManagerTestBase {
 
         val handleB = readHandleManager.createSingletonHandle()
         val readBack = handleB.fetch()!!
-        assertThat(readBack.raw!!.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
-        assertThat(readBack.raw!!.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
     }
 
     @Test
     fun singleton_withTTL() = testRunner {
+        FakeTime.millis = 0
         val handle = writeHandleManager.createSingletonHandle(ttl = Ttl.Days(2))
         handle.store(entity1)
 
         val handleB = readHandleManager.createSingletonHandle()
         val readBack = handleB.fetch()!!
-        assertThat(readBack.raw!!.creationTimestamp)
-            .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
-        assertThat(readBack.raw!!.expirationTimestamp)
-            .isGreaterThan(readBack.raw!!.creationTimestamp)
+        assertThat(readBack.creationTimestamp).isEqualTo(0)
+        assertThat(readBack.expirationTimestamp).isEqualTo(2*24*3600*1000)
 
         val handleC = readHandleManager.createSingletonHandle(ttl = Ttl.Minutes(2))
         handleC.store(entity2)
         val readBack2 = handleB.fetch()!!
-        assertThat(readBack2.raw!!.creationTimestamp)
-            .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
-        assertThat(readBack2.raw!!.expirationTimestamp)
-            .isGreaterThan(readBack2.raw!!.creationTimestamp)
-        assertThat(readBack2.raw!!.expirationTimestamp)
-            .isLessThan(readBack.raw!!.expirationTimestamp)
+        assertThat(readBack2.creationTimestamp).isEqualTo(0)
+        assertThat(readBack2.expirationTimestamp).isEqualTo(2*60*1000)
+
+        // Fast forward time to 5 minutes later, so entity2 expires.
+        FakeTime.millis += 5*60*1000
+        assertThat(handleB.fetch()).isNull()
     }
 
     @Test
@@ -625,31 +628,30 @@ open class HandleManagerTestBase {
 
         val handleB = readHandleManager.createCollectionHandle()
         val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
-        assertThat(readBack.raw!!.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
-        assertThat(readBack.raw!!.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(readBack.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
     }
 
     @Test
     fun collection_withTTL() = testRunner {
+        FakeTime.millis = 0
         val handle = writeHandleManager.createCollectionHandle(ttl = Ttl.Days(2))
         handle.store(entity1)
 
         val handleB = readHandleManager.createCollectionHandle()
         val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
-        assertThat(readBack.raw!!.creationTimestamp)
-            .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
-        assertThat(readBack.raw!!.expirationTimestamp)
-            .isGreaterThan(readBack.raw!!.creationTimestamp)
+        assertThat(readBack.creationTimestamp).isEqualTo(0)
+        assertThat(readBack.expirationTimestamp).isEqualTo(2*24*3600*1000)
 
         val handleC = readHandleManager.createCollectionHandle(ttl = Ttl.Minutes(2))
         handleC.store(entity2)
         val readBack2 = handleB.fetchAll().first { it.entityId == entity2.entityId }
-        assertThat(readBack2.raw!!.creationTimestamp)
-            .isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
-        assertThat(readBack2.raw!!.expirationTimestamp)
-            .isGreaterThan(readBack2.raw!!.creationTimestamp)
-        assertThat(readBack2.raw!!.expirationTimestamp)
-            .isLessThan(readBack.raw!!.expirationTimestamp)
+        assertThat(readBack2.creationTimestamp).isEqualTo(0)
+        assertThat(readBack2.expirationTimestamp).isEqualTo(2*60*1000)
+
+        // Fast forward time to 5 minutes later, so entity2 expires, entity1 doesn't.
+        FakeTime.millis += 5*60*1000
+        assertThat(handleB.fetchAll()).containsExactly(entity1)
     }
 
     @Test
