@@ -17,8 +17,8 @@ package arcs.core.analysis
  * This class may be used to represent the elements of a lattice when implementing the
  * [AbstractValue] interface. Specifically, it provides helpers for various methods in the
  * [AbstractValue] interface that have well-known semantics with respect to bottom (the smallest
- * value) and top (the largest value) in the lattice. For example, `bottom.isLessThan(other)`
- * is always true for any value of `other` because `bottom` is the lowest value in the lattice.
+ * value) and top (the largest value) in the lattice. For example, `bottom.join(other)` is always
+ * equal to `other` for any value of `other`, because `bottom` is the lowest value in the lattice.
  *
  * Here is a sample use of this class for implementing an abstract domain of integer elements,
  * where the elements are ordered by [Int]'s `<=` operator.
@@ -26,51 +26,51 @@ package arcs.core.analysis
  * class IntegerDomain(
  *     val abstractInt: BoundedAbstractElement<Int>
  * ) : AbstractValue<IntegerDomain> {
- *     override infix fun isLessThanEqual(other: IntegerDomain): Boolean {
- *         return abstractInt.isLessThanEqual(other.abstractInt) { a, b -> a <= b }
+ *     override infix fun join(other: IntegerDomain): IntegerDomain {
+ *         return abstractInt.join(other.abstractInt) { a, b -> maxOf(a, b) }
  *     }
  *     // . . .
  * }
  * ```
  */
-sealed class BoundedAbstractElement<V> {
-    /** Represents the smallest value in a lattice. */
-    private class Bottom<V> : BoundedAbstractElement<V>()
-    /** Represents the largest value in a lattice. */
-    private class Top<V> : BoundedAbstractElement<V>()
-    /** Wraps a non-top/non-bottom value of type [V]. */
-    private data class Value<V>(val value: V) : BoundedAbstractElement<V>()
+data class BoundedAbstractElement<V: Any> private constructor(
+    val kind: Kind,
+    val value: V?
+) {
+    private enum class Kind { TOP, BOTTOM, VALUE }
 
     /** Returns true if this is a [Top] value. */
-    fun isTop() = this is Top
+    fun isTop() = kind == Kind.TOP
 
     /** Returns true if this is a [Bottom] value. */
-    fun isBottom() = this is Bottom
+    fun isBottom() = kind == Kind.BOTTOM
 
     /** Returns the underlying value if this is a [Value] type. Otherwise, returns null. */
-    fun value(): V? = if (this is Value) value else null
+    fun value(): V? = value
 
-    /** A helper for implementing [AbstractValue.isLessThanEqual]. */
-    fun isLessThanEqual(other: BoundedAbstractElement<V>, compare: (V, V) -> Boolean): Boolean {
-        return when (this) {
-            is Bottom -> true
-            is Top -> other is Top
-            is Value -> when (other) {
-                is Value -> compare(this.value, other.value)
-                is Top -> true
-                is Bottom -> false
+    /** A helper for implementing [AbstractValue.join]. */
+    fun join(other: BoundedAbstractElement<V>, joiner: (V, V) -> V): BoundedAbstractElement<V> {
+        return when (this.kind) {
+            Kind.BOTTOM -> other
+            Kind.TOP -> this /* returns top */
+            Kind.VALUE -> when (other.kind) {
+                Kind.VALUE -> makeValue(
+                    joiner(requireNotNull(this.value), requireNotNull(other.value))
+                )
+                Kind.TOP -> other /* returns top */
+                Kind.BOTTOM -> this
             }
         }
     }
 
     companion object {
         /** Returns a canonical [Top] value. */
-        fun <V> getTop(): BoundedAbstractElement<V> = lazy { Top<V>() }.value
+        fun <V: Any> getTop() = BoundedAbstractElement<V>(Kind.TOP, null)
 
         /** Returns a canonical [Bottom] value. */
-        fun <V> getBottom(): BoundedAbstractElement<V> = lazy { Bottom<V>() }.value
+        fun <V: Any> getBottom() = BoundedAbstractElement<V>(Kind.BOTTOM, null)
 
         /** Returns a [Value] instance that wraps [value]. */
-        fun <V> makeValue(value: V): BoundedAbstractElement<V> = Value<V>(value)
+        fun <V: Any> makeValue(value: V) = BoundedAbstractElement<V>(Kind.VALUE, value)
     }
 }
