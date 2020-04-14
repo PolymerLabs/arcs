@@ -20,6 +20,7 @@ import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
 import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
+import {Handle} from '../runtime/recipe/handle.js';
 
 export class StorageKeyRecipeResolverError extends Error {
   constructor(message: string) {
