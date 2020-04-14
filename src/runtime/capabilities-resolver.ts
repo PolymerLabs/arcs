@@ -110,7 +110,7 @@ export class CapabilitiesResolver {
     } else if (protocols.size > 1) {
       console.warn(`Multiple storage key creators for handle '${handleId}' with capabilities ${capabilities.toString()}`);
     }
-    const creator = this.creators.find(({protocol, create}) => protocol === [...protocols][0]);
+    const creator = this.creators.find(({protocol}) => protocol === [...protocols][0]);
     const schemaHash = await entitySchema.hash();
     const containerKey = creator.create(new ContainerStorageKeyOptions(
         this.options.arcId, schemaHash, entitySchema.name));
