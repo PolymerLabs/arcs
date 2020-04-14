@@ -22,6 +22,8 @@ typealias DirectionProto = HandleConnectionSpecProto.Direction
 /** Converts [HandleConnectionSpecProto.Direction] to [HandleConnectionSpec.Direction]. */
 fun DirectionProto.decode() =
     when (this) {
+        DirectionProto.UNSPECIFIED ->
+            throw IllegalArgumentException("Direction not set in [HandleConnectionSpec]")
         DirectionProto.READS -> HandleMode.Read
         DirectionProto.WRITES -> HandleMode.Write
         DirectionProto.READS_WRITES -> HandleMode.ReadWrite

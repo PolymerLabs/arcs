@@ -5,6 +5,12 @@ package arcs;
 option java_package = "arcs.core.data.proto";
 option java_multiple_files = true;
 
+// A manifest containing multiple recipes and particle specs.
+message ManifestProto {
+  repeated RecipeProto recipes = 1;
+  repeated ParticleSpecProto particle_specs = 2;
+}
+
 // Holds a single plan and particle specs used by it.
 message RecipeEnvelopeProto {
   RecipeProto recipe = 1;
@@ -25,11 +31,12 @@ message RecipeProto {
 message HandleProto {
   // Next Id: 5
   enum Fate {
-    CREATE = 0;
-    USE = 1;
-    MAP = 2;
-    COPY = 3;
-    JOIN = 4;
+    UNSPECIFIED = 0;
+    CREATE = 1;
+    USE = 2;
+    MAP = 3;
+    COPY = 4;
+    JOIN = 5;
   }
 
   // Next Id: 4
@@ -42,12 +49,14 @@ message HandleProto {
 
   // Identifies a handle in a recipe.
   string name = 1;
-  Fate fate = 2;
-  TypeProto type = 3;
-  repeated Capability capabilities = 4;
-  string storage_key = 5;
+  string id = 2;
+  Fate fate = 3;
+  repeated string tags = 4;
+  TypeProto type = 5;
+  repeated Capability capabilities = 6;
+  string storage_key = 7;
   // Only present for fate = JOIN handles.
-  repeated string associated_handles = 6;
+  repeated string associated_handles = 8;
 }
 
 // A single particle instance in a recipe.
@@ -78,9 +87,10 @@ message ParticleSpecProto {
 // Defines a single connection of a particle spec.
 message HandleConnectionSpecProto {
   enum Direction {
-    READS = 0;
-    WRITES = 1;
-    READS_WRITES = 2;
+    UNSPECIFIED = 0;
+    READS = 1;
+    WRITES = 2;
+    READS_WRITES = 3;
   }
   // Identifies a connection in a particle spec.
   string name = 1;
