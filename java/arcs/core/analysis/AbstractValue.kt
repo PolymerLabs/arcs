@@ -15,11 +15,11 @@ package arcs.core.analysis
  * An interface for defining the values of an abstract domain commonly used in abstract
  * interpretation frameworks (https://en.wikipedia.org/wiki/Abstract_interpretation).
  *
- * An abstract domain is typically defined as a mathematical lattice, but they don't have to be in
- * general. The interface here is designed to be general enough to allow abstract domains that are
- * not lattices (https://en.wikipedia.org/wiki/Lattice_(order)). To that extent, we only expect
- * the implementing class to provide an [isEquivalentTo] method that returns true if two abstract
- * values are semantically equivalent. The [isEquivalentTo] method is also used to determine if we
+ * An abstract domain is typically defined as a mathematical lattice, but they don't have to be a
+ * lattice in general. The interface here is designed to be general enough to allow abstract domains
+ * that are not lattices (https://en.wikipedia.org/wiki/Lattice_(order)). To that extent, we only
+ * expect the implementing class to provide an [isEquivalentTo] method that returns true if two
+ * values are semantically equivalent. The [isEquivalentTo] method is used to determine if we
  * have reached a fixpoint when using iterative algorithms to solve the data flow equations for the
  * problem at hand (https://en.wikipedia.org/wiki/Data-flow_analysis). For abstract domains that are
  * lattices, the [isEquivalentTo] method can be used to compute the partial order as follows:
@@ -32,6 +32,9 @@ package arcs.core.analysis
  *     of Programming Languages (POPL), 1977.
  *   - Cousot, Patrick; Cousot, Radhia. Abstract interpretation frameworks. Journal of Logic and
  *     Computation, 2(4):511—547, August 1992.
+ *
+ * Note that this interface does not yet support domains with infinite ascending chains, which
+ * would require the definition of `widen` and `narrow` operators.
  */
 interface AbstractValue<V : AbstractValue<V>> {
     /**
@@ -60,27 +63,4 @@ interface AbstractValue<V : AbstractValue<V>> {
 
     /** Returns the greatest lower bound of the values for lattices or narrowed value. */
     infix fun meet(other: V): V
-
-    /**
-     * Returns the widened value.
-     *
-     * A widening operator is used to ensure that the increasing fixpoint computation terminates for
-     * domains with infinite ascending chains in its lattice or even to accelerate fixpoint
-     * computations (at the cost of precision) for domains with no infinite ascending chains. For
-     * lattices of finite height, this can be the same as join.
-     *
-     * Also, note that the widen operator is not commutative.
-     */
-    infix fun widen(other: V) = (this join other)
-
-    /**
-     * Returns the narrowed value.
-     *
-     * A narrowing operator is the dual of widen and used to ensure that decreasing fixpoint
-     * computation terminates for domains with lattices of infinite height. For lattices of finite
-     * height, this can be the same as meet.
-     *
-     * Also, note that the narrow operator is not commutative.
-     */
-    infix fun narrow(other: V) = (this meet other)
 }
