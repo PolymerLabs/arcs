@@ -38,7 +38,6 @@ class PersonHostService : ArcHostService() {
     override val arcHost = MyArcHost(
         this,
         this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
         ::ReadPerson.toRegistration(),
         ::WritePerson.toRegistration()
     )
@@ -48,10 +47,8 @@ class PersonHostService : ArcHostService() {
     inner class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
-        override val platformTime = JvmTime
+    ) : AndroidHost(context, lifecycle, *initialParticles) {
 
         override suspend fun stopArc(partition: Plan.Partition) {
             super.stopArc(partition)

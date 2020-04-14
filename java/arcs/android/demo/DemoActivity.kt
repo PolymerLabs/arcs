@@ -15,12 +15,9 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import arcs.android.host.AndroidManifestHostRegistry
+import arcs.android.sdk.host.AndroidHandleManagerProvider
 import arcs.core.allocator.Allocator
-import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
-import arcs.core.util.Scheduler
-import arcs.jvm.util.JvmTime
-import arcs.sdk.android.storage.ServiceStoreFactory
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -43,6 +40,13 @@ class DemoActivity : AppCompatActivity() {
     private lateinit var allocator: Allocator
     private lateinit var hostRegistry: HostRegistry
 
+    private val handleManagerProvider = AndroidHandleManagerProvider(
+        this,
+        this.lifecycle,
+        coroutineContext +
+            Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -52,18 +56,7 @@ class DemoActivity : AppCompatActivity() {
             hostRegistry = AndroidManifestHostRegistry.create(this@DemoActivity)
             allocator = Allocator.create(
                 hostRegistry,
-                EntityHandleManager(
-                    time = JvmTime,
-                    scheduler = Scheduler(
-                        JvmTime,
-                        coroutineContext +
-                            Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                    ),
-                    activationFactory = ServiceStoreFactory(
-                        context = this@DemoActivity,
-                        lifecycle = this@DemoActivity.getLifecycle()
-                    )
-                )
+                handleManagerProvider
             )
 
             findViewById<Button>(R.id.person_test).setOnClickListener {

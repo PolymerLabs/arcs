@@ -7,7 +7,6 @@ import arcs.jvm.host.JvmSchedulerProvider
 class TestWritingExternalHostService : TestExternalArcHostService() {
     override val arcHost = object : TestingAndroidHost(
         this@TestWritingExternalHostService,
-        JvmSchedulerProvider(scope.coroutineContext),
         ::WritePerson.toRegistration()
     ) {}
 }

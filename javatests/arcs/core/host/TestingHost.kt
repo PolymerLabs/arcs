@@ -1,17 +1,15 @@
 package arcs.core.host
 
 import arcs.core.data.Plan
-import arcs.core.host.AbstractArcHost
-import arcs.core.host.ParticleRegistration
-import arcs.core.util.Time
-import arcs.jvm.util.testutil.FakeTime
 import kotlinx.coroutines.CompletableDeferred
 import java.lang.IllegalArgumentException
 
+interface TestingProdHost : ArcHost, ProdHost
+
 open class TestingHost(
-    schedulerProvider: SchedulerProvider,
+    handleManagerProvider: HandleManagerProvider,
     vararg particles: ParticleRegistration
-) : AbstractArcHost(schedulerProvider, *particles) {
+) : AbstractArcHost(handleManagerProvider, *particles) {
 
     fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 
@@ -34,8 +32,6 @@ open class TestingHost(
 
     val isIdle = isArcHostIdle
     
-    override val platformTime: Time = FakeTime()
-
     fun setup() {
         started.clear()
         clearCache()

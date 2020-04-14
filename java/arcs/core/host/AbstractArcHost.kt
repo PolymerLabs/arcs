@@ -22,12 +22,10 @@ import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
-import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
-import arcs.core.util.Time
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,10 +48,19 @@ const val MAX_CONSECUTIVE_FAILURES = 5
  *
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
-abstract class AbstractArcHost(
-    private val schedulerProvider: SchedulerProvider,
+open class AbstractArcHost(
+    /**
+     * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
+     */
+    val handleManagerProvider: HandleManagerProvider,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
+
+    /** Instances of this known how to provide an [EntityHandleManager]. */
+    interface HandleManagerProvider {
+        operator fun invoke(arcId: String, hostId: String): EntityHandleManager
+    }
+
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
@@ -125,7 +132,7 @@ abstract class AbstractArcHost(
 
     private fun createArcHostContext(arcId: String) = ArcHostContext(
         arcId = arcId,
-        entityHandleManager = entityHandleManager(arcId)
+        entityHandleManager = handleManagerProvider(arcId, hostId)
     )
 
     /**
@@ -470,12 +477,6 @@ abstract class AbstractArcHost(
         cleanupHandles(context)
     }
 
-    /**
-     * Until Kotlin Multiplatform adds a common API for retrieving time, each platform that
-     * implements an [ArcHost] needs to supply an implementation of the [Time] interface.
-     */
-    abstract val platformTime: Time
-
     open val arcHostContextCapability = Capabilities.TiedToRuntime
 
     /**
@@ -489,28 +490,10 @@ abstract class AbstractArcHost(
         registeredParticles().contains(ParticleIdentifier.from(particle.location))
 
     /**
-     * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
-     */
-    open fun entityHandleManager(arcId: String) = EntityHandleManager(
-        arcId,
-        hostId,
-        platformTime,
-        schedulerProvider(arcId),
-        stores,
-        activationFactory
-    )
-
-    /**
      * The map of [Store] objects that this [ArcHost] will use. By default, it uses a shared
      * singleton defined statically by this package.
      */
     open val stores = singletonStores
-
-    /**
-     * The [ActivationFactory] to use when activating stores. By default this is `null`,
-     * indicating that the default [ActivationFactory] will be used.
-     */
-    open val activationFactory: ActivationFactory? = null
 
     /**
      * Instantiate a [Particle] implementation for a given [ParticleIdentifier].

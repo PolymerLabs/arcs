@@ -18,13 +18,13 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.host.prod.ProdArcHostService
 import arcs.android.sdk.host.toComponentName
 import arcs.core.allocator.AllocatorTestBase
-import arcs.core.host.TestingJvmProdHost
 import arcs.core.data.Capabilities
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
 import arcs.core.host.HostRegistry
 import arcs.core.host.PersonPlan
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.host.TestingHost
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth
 import kotlinx.coroutines.Dispatchers
@@ -77,7 +77,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
 
     override fun readingHost() = readingService.arcHost
     override fun writingHost() = writingService.arcHost
-    override fun pureHost() = testProdService.arcHost as TestingJvmProdHost
+    override fun pureHost() = testProdService.arcHost as TestingHost
 
     // TODO: wire up some kind of mock persistent database?
     override val storageCapability = Capabilities.TiedToRuntime

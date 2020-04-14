@@ -37,7 +37,6 @@ class ReadAnimalHostService : ArcHostService() {
     override val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
         ::ReadAnimal.toRegistration()
     )
 
@@ -46,11 +45,8 @@ class ReadAnimalHostService : ArcHostService() {
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
-        override val activationFactory = ServiceStoreFactory(context, lifecycle)
-    }
+    ) : AndroidHost(context, lifecycle, *initialParticles) {}
 
     inner class ReadAnimal: AbstractReadAnimal() {
 

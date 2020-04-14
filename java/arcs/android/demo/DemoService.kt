@@ -10,10 +10,7 @@ import androidx.lifecycle.LifecycleService
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.jvm.host.JvmSchedulerProvider
-import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +33,6 @@ class DemoService : LifecycleService() {
         val host = MyArcHost(
             this,
             this.lifecycle,
-            JvmSchedulerProvider(coroutineContext),
             ::ReadPerson.toRegistration(),
             ::WritePerson.toRegistration()
         )
@@ -73,11 +69,8 @@ class DemoService : LifecycleService() {
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
-        override val platformTime = JvmTime
-    }
+    ) : AndroidHost(context, lifecycle, *initialParticles)
 
     inner class ReadPerson : AbstractReadPerson() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {

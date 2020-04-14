@@ -61,9 +61,7 @@ class WriteAnimalHostService : ArcHostService() {
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
-        override val activationFactory = ServiceStoreFactory(context, lifecycle)
-
+    ) : AndroidHost(context, lifecycle, *initialParticles) {
         fun arcHostContext(arcId: String) = getArcHostContext(arcId)
     }
 

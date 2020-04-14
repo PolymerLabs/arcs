@@ -26,10 +26,10 @@ import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.host.AbstractArcHost.HandleManagerProvider
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcHostNotFoundException
-import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
@@ -255,8 +255,12 @@ class Allocator private constructor(
         @Suppress("UNCHECKED_CAST")
         suspend fun create(
             hostRegistry: HostRegistry,
-            handleManager: EntityHandleManager
+            handleManagerProvider: HandleManagerProvider
         ): Allocator {
+            val handleManager = handleManagerProvider.invoke(
+                arcId = "allocatorArc",
+                hostId = "allocator"
+            )
             val collection = handleManager.createHandle(
                 HandleSpec(
                     "partitions",

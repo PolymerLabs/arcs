@@ -19,18 +19,14 @@ import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import arcs.android.host.AndroidManifestHostRegistry
+import arcs.android.sdk.host.AndroidHandleManagerProvider
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
 import arcs.core.data.HandleMode
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
-import arcs.core.host.EntityHandleManager
-import arcs.core.util.Scheduler
-import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
-import arcs.sdk.android.storage.ServiceStoreFactory
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,6 +34,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
+import kotlin.coroutines.CoroutineContext
 
 /** Entry UI to launch Arcs Test. */
 class TestActivity : AppCompatActivity() {
@@ -58,6 +55,13 @@ class TestActivity : AppCompatActivity() {
 
     private var allocator: Allocator? = null
     private var resurrectionArcId: ArcId? = null
+
+    private val handleManagerProvider = AndroidHandleManagerProvider(
+        context = this@TestActivity,
+        lifecycle = this@TestActivity.lifecycle,
+        coroutineContext = coroutineContext
+            + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,18 +144,7 @@ class TestActivity : AppCompatActivity() {
         appendResultText(getString(R.string.waiting_for_result))
         allocator = Allocator.create(
             AndroidManifestHostRegistry.create(this@TestActivity),
-            EntityHandleManager(
-                time = JvmTime,
-                scheduler = Scheduler(
-                    JvmTime,
-                    coroutineContext
-                        + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                ),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
-                )
-            )
+            handleManagerProvider
         )
         val arcId = allocator?.startArcForPlan("Person", PersonRecipePlan)
         arcId?.let { allocator?.stopArc(it) }
@@ -161,18 +154,7 @@ class TestActivity : AppCompatActivity() {
         appendResultText(getString(R.string.waiting_for_result))
         allocator = Allocator.create(
             AndroidManifestHostRegistry.create(this@TestActivity),
-            EntityHandleManager(
-                time = JvmTime,
-                scheduler = Scheduler(
-                    JvmTime,
-                    coroutineContext
-                    + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                ),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
-                )
-            )
+            handleManagerProvider
         )
         resurrectionArcId = allocator?.startArcForPlan("Animal", AnimalRecipePlan)
     }
@@ -201,18 +183,7 @@ class TestActivity : AppCompatActivity() {
         appendResultText(getString(R.string.waiting_for_result))
         val allocator = Allocator.create(
             AndroidManifestHostRegistry.create(this@TestActivity),
-            EntityHandleManager(
-                time = JvmTime,
-                scheduler = Scheduler(
-                    JvmTime,
-                    coroutineContext
-                    + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                ),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
-                )
-            )
+            handleManagerProvider
         )
         val arcId = allocator.startArcForPlan("Person", PersonRecipePlan)
         allocator.stopArc(arcId)
@@ -237,18 +208,8 @@ class TestActivity : AppCompatActivity() {
 
         appendResultText(getString(R.string.waiting_for_result))
 
-        val handleManager = EntityHandleManager(
-            time = JvmTime,
-            scheduler = Scheduler(
-                JvmTime,
-                coroutineContext
-                    + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-            ),
-            activationFactory = ServiceStoreFactory(
-                this,
-                lifecycle
-            )
-        )
+        val handleManager = handleManagerProvider.invoke("manual", "")
+
         if (isCollection) {
             collectionHandle = handleManager.createHandle(
                 HandleSpec(

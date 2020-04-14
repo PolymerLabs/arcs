@@ -10,5 +10,6 @@ arcs_kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/util",
+        "//java/arcs/jvm/host",
     ],
 )

@@ -77,7 +77,6 @@ arcs_kt_jvm_library(
     testonly = 1,
     srcs = [
         "TestingHost.kt",
-        "TestingJvmProdHost.kt",
     ],
     constraints = ["android"],
     deps = [
@@ -95,7 +94,6 @@ arcs_kt_jvm_library(
     testonly = 1,
     srcs = [
         "ReadPerson.kt",
-        "TestHost.kt",
         "TestHostParticle.kt",
         "TestProdParticle.kt",
         "WritePerson.kt",

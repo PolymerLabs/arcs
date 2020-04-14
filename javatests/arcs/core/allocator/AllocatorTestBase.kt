@@ -7,6 +7,7 @@ import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.host.*
+import arcs.core.host.AbstractArcHost.HandleManagerProvider
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -18,11 +19,10 @@ import arcs.core.util.Scheduler
 import arcs.core.util.plus
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
+import arcs.jvm.util.testutil.TestHandleManagerProvider
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
@@ -35,9 +35,10 @@ import java.lang.IllegalArgumentException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-open class AllocatorTestBase {
+abstract class AllocatorTestBase {
     /**
      * Recipe hand translated from 'person.arcs'
      */
@@ -50,26 +51,32 @@ open class AllocatorTestBase {
 
     private lateinit var readingExternalHost: TestingHost
     private lateinit var writingExternalHost: TestingHost
-    private lateinit var pureHost: TestingJvmProdHost
+    private lateinit var pureHost: TestingHost
 
-    private class WritingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext),
+    open val handleManagerProvider: HandleManagerProvider = TestHandleManagerProvider()
+
+    private class WritingHost(
+        handleManagerProvider: HandleManagerProvider
+    ) : TestingHost(
+        handleManagerProvider,
         ::WritePerson.toRegistration()
     )
 
-    private class ReadingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext),
+    private class ReadingHost(
+        handleManagerProvider: HandleManagerProvider
+    ) : TestingHost(
+        handleManagerProvider,
         ::ReadPerson.toRegistration()
     )
 
     /** Return the [ArcHost] that contains [ReadPerson]. */
-    open fun readingHost(): TestingHost = ReadingHost()
+    open fun readingHost(): TestingHost = ReadingHost(handleManagerProvider)
 
     /** Return the [ArcHost] that contains [WritePerson]. */
-    open fun writingHost(): TestingHost = WritingHost()
+    open fun writingHost(): TestingHost = WritingHost(handleManagerProvider)
 
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-    open fun pureHost() = TestingJvmProdHost(JvmSchedulerProvider(EmptyCoroutineContext))
+    abstract fun pureHost(): TestingHost
 
     open val storageCapability = Capabilities.TiedToRuntime
     open fun runAllocatorTest(
@@ -101,10 +108,7 @@ open class AllocatorTestBase {
         hostRegistry = hostRegistry()
         allocator = Allocator.create(
             hostRegistry,
-            EntityHandleManager(
-                time = FakeTime(),
-                scheduler = Scheduler(FakeTime(), coroutineContext)
-            )
+            handleManagerProvider
         )
 
         readPersonParticle =
@@ -472,13 +476,7 @@ open class AllocatorTestBase {
 
         val allocator2 = Allocator.create(
             hostRegistry,
-            EntityHandleManager(
-                time = FakeTime(),
-                scheduler = Scheduler(
-                    FakeTime(),
-                    Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                )
-            )
+            handleManagerProvider
         )
 
         allocator2.stopArc(arcId)

@@ -6,17 +6,16 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
+import arcs.android.sdk.host.AndroidHandleManagerProvider
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.ResurrectableHost
 import arcs.core.data.Capabilities
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.sdk.android.storage.ResurrectionHelper
-import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
+import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 
@@ -50,20 +49,19 @@ abstract class TestExternalArcHostService : Service() {
 
     abstract class TestingAndroidHost(
         context: Context,
-        schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : TestingHost(schedulerProvider, *particles), ResurrectableHost {
+    ) : TestingHost(
+        AndroidHandleManagerProvider(
+            context = context,
+            lifecycle = FakeLifecycle(),
+            connnectionFactory = TestConnectionFactory(context)
+        ),
+        *particles
+    ), ResurrectableHost {
         override val stores = singletonStores
 
         override val resurrectionHelper: ResurrectionHelper =
             ResurrectionHelper(context, ::onResurrected)
-
-        override val activationFactory =  ServiceStoreFactory(
-                context,
-                FakeLifecycle(),
-                Dispatchers.Default,
-                testConnectionFactory
-            )
 
         override val arcHostContextCapability = testingCapability
     }

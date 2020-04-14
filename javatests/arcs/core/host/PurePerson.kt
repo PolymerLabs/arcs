@@ -4,7 +4,7 @@ import arcs.jvm.host.TargetHost
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 
-@TargetHost(TestingJvmProdHost::class)
+@TargetHost(TestingProdHost::class)
 class PurePerson : AbstractPurePerson() {
     override suspend fun onCreate() {
         handles.inputPerson.onUpdate {
