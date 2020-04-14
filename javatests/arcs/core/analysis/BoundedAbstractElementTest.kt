@@ -93,4 +93,34 @@ class BoundedAbstractElementTest {
             assertThat(meet(ten, meetInts)).isEqualTo(ten)
         }
     }
+
+    @Test
+    fun isEquivalentToRespectsBottomTopOrder() {
+        val compareInts: (Int, Int) -> Boolean = { a, b -> a == b }
+        with(bottom) {
+            assertTrue(isEquivalentTo(bottom, compareInts))
+            assertFalse(isEquivalentTo(top, compareInts))
+            assertFalse(isEquivalentTo(nine, compareInts))
+            assertFalse(isEquivalentTo(ten, compareInts))
+        }
+        with(top) {
+            assertFalse(isEquivalentTo(bottom, compareInts))
+            assertTrue(isEquivalentTo(top, compareInts))
+            assertFalse(isEquivalentTo(nine, compareInts))
+            assertFalse(isEquivalentTo(ten, compareInts))
+        }
+        with(nine) {
+            assertFalse(isEquivalentTo(bottom, compareInts))
+            assertFalse(isEquivalentTo(top, compareInts))
+            assertTrue(isEquivalentTo(nine, compareInts))
+            assertFalse(isEquivalentTo(ten, compareInts))
+        }
+        with(ten) {
+            assertFalse(isEquivalentTo(bottom, compareInts))
+            assertFalse(isEquivalentTo(top, compareInts))
+            assertFalse(isEquivalentTo(nine, compareInts))
+            assertTrue(isEquivalentTo(ten, compareInts))
+        }
+    }
+
 }
