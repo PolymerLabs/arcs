@@ -809,11 +809,9 @@ class DatabaseImpl(
             )
 
             // Remove all references to these entities.
-            // TODO: persist the entity storage key in this table instead of concatenating
-            // backing key and entity id.
             delete(
                 TABLE_ENTITY_REFS,
-                "backing_storage_key||\"/\"||entity_id IN ($questionMarks)",
+                "entity_storage_key IN ($questionMarks)",
                 storageKeys
             )
 
@@ -1032,6 +1030,7 @@ class DatabaseImpl(
                     put("creation_timestamp", reference.creationTimestamp)
                     put("expiration_timestamp", reference.expirationTimestamp)
                     put("backing_storage_key", reference.storageKey.toString())
+                    put("entity_storage_key", reference.referencedStorageKey().toString())
                     reference.version?.let {
                         put("version_map", it.toProtoLiteral())
                     } ?: run {
@@ -1412,7 +1411,9 @@ class DatabaseImpl(
                     -- The storage key for the backing store for this entity.
                     backing_storage_key TEXT NOT NULL,
                     -- Serialized VersionMapProto for the reference, if available.
-                    version_map TEXT
+                    version_map TEXT,
+                    -- Storage key of the referenced entity.
+                    entity_storage_key TEXT
                 );
 
                 CREATE INDEX entity_refs_index ON entity_refs (

@@ -40,6 +40,8 @@ data class Reference(
 
     override suspend fun dereference(coroutineContext: CoroutineContext): RawEntity? =
         requireNotNull(dereferencer).dereference(this, coroutineContext)
+
+    fun referencedStorageKey() = storageKey.childKeyWithComponent(id)
 }
 
 /** Defines an object capable of de-referencing a [Reference]. */

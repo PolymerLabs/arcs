@@ -18,7 +18,8 @@ import arcs.core.storage.StorageKeyParser
 class DummyStorageKey(val key: String) : StorageKey(protocol) {
     override fun toKeyString(): String = key
 
-    override fun childKeyWithComponent(component: String): StorageKey = this
+    override fun childKeyWithComponent(component: String): StorageKey =
+        DummyStorageKey("$key/$component")
 
     companion object {
         const val protocol = "dummy"

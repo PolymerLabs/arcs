@@ -43,7 +43,7 @@ class RawEntityDereferencer(
     ): RawEntity? {
         log.debug { "De-referencing $reference" }
 
-        val storageKey = reference.storageKey.childKeyWithComponent(reference.id)
+        val storageKey = reference.referencedStorageKey()
 
         val options = StoreOptions<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>(
             storageKey,
