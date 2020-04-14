@@ -23,7 +23,6 @@ import androidx.test.uiautomator.Until
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -75,7 +74,6 @@ class ArcsTest {
     }
 
     @Test
-    @Ignore("Broken")
     fun testSingleton_inMemoryRemoteService() {
         // Configure handle options.
         clickOnTextIfPresent(SINGLETON_BTN_TEXT)
