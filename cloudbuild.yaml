@@ -24,13 +24,13 @@ steps:
   waitFor: ['build-image']
 
 # Run non-integration tests.
-- id: 'local-presubmit'
+- id: 'presubmit'
   name: 'gcr.io/cloud-builders/docker'
   args: [
     'run',
     '--network=cloudbuild',
     '--rm', 'arcs-base',
-    'tools/local-presubmit',
+    'tools/cloud-presubmit',
     '--bazelrc=tools/gcb.bazelrc',
   ]
   waitFor: ['build-image']
