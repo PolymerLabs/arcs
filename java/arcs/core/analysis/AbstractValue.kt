@@ -23,8 +23,8 @@ package arcs.core.analysis
  * have reached a fixpoint when using iterative algorithms to solve the data flow equations for the
  * problem at hand (https://en.wikipedia.org/wiki/Data-flow_analysis). For abstract domains that are
  * lattices, the [isEquivalentTo] method can be used to compute the partial order as follows:
- *    `a.isLessThanEqual(b)` <=> `b.isEquivalentTo(a.join(b))` [for join semi-lattice]
- *    `a.isLessThanEqual(b)` <=> `a.isEquivalentTo(a.meet(b))` [for meet semi-lattice]
+ *   - `a.isLessThanEqual(b)` <=> `b.isEquivalentTo(a.join(b))` [for join semi-lattice]
+ *   - `a.isLessThanEqual(b)` <=> `a.isEquivalentTo(a.meet(b))` [for meet semi-lattice]
  *
  * For more details on the theory behind abstract interpretation, consult the following papers:
  *   - Cousot, Patrick; Cousot, Radhia. "Abstract Interpretation: A Unified Lattice Model for
@@ -38,6 +38,18 @@ package arcs.core.analysis
  */
 interface AbstractValue<V : AbstractValue<V>> {
     /**
+     * Should be true if the instance represents `Bottom`. `Bottom` is the lowest value in the
+     * domain lattice or represents an empty set of concrete values.
+     */
+    val isBottom: Boolean
+
+    /**
+     * Should be true if the instance represents `Top`. `Top` is the greatest value in the domain
+     * lattice or represents the universe of concrete values.
+     */
+    val isTop: Boolean
+
+    /**
      * Returns true if the two values are semantically equivalent.
      *
      * Note that this is semantic equivalence and not structural equality. This method is
@@ -45,18 +57,6 @@ interface AbstractValue<V : AbstractValue<V>> {
      * be structural equality.
      */
     infix fun isEquivalentTo(other: V): Boolean
-
-    /**
-     * Returns true if the instance represents `Bottom`. `Bottom` is the lowest value in the domain
-     * lattice or represents an empty set of concrete values.
-     */
-    fun isBottom(): Boolean
-
-    /**
-     * Returns true if the instance represents `Top`. `Top` is the greatest value in the domain
-     * lattice or represents the universe of concrete values.
-     */
-    fun isTop(): Boolean
 
     /** Returns the least upper bound of the values for lattices or a widened value. */
     infix fun join(other: V): V
