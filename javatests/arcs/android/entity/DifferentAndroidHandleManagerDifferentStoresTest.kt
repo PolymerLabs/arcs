@@ -44,9 +44,9 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
-            time = FakeTime(),
+            time = fakeTime,
             scheduler = Scheduler(
-                FakeTime(),
+                fakeTime,
                 Executors.newSingleThreadExecutor().asCoroutineDispatcher()
             ),
             stores = StoreManager(),
@@ -59,9 +59,9 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
         writeHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
-            time = FakeTime(),
+            time = fakeTime,
             scheduler = Scheduler(
-                FakeTime(),
+                fakeTime,
                 Executors.newSingleThreadExecutor().asCoroutineDispatcher()
             ),
             stores = StoreManager(),
