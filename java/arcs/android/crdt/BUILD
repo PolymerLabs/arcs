@@ -16,6 +16,7 @@ arcs_kt_android_library(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         ":crdt_set_android_proto",
+        ":crdt_singleton_android_proto",
         ":referencable_android_proto",
         ":version_map_android_proto",
         "//java/arcs/android/util",
@@ -41,6 +42,21 @@ proto_library(
 android_proto_library(
     name = "crdt_set_android_proto",
     deps = [":crdt_set_proto"],
+)
+
+proto_library(
+    name = "crdt_singleton_proto",
+    srcs = ["crdt_singleton.proto"],
+    deps = [
+        ":crdt_set_proto",
+        ":referencable_proto",
+        ":version_map_proto",
+    ],
+)
+
+android_proto_library(
+    name = "crdt_singleton_android_proto",
+    deps = [":crdt_singleton_proto"],
 )
 
 proto_library(
