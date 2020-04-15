@@ -1,9 +1,6 @@
 package arcs.core.analysis
 
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -18,20 +15,28 @@ class BoundedAbstractElementTest {
     private val ten = BoundedAbstractElement.makeValue<Int>(10)
 
     @Test
-    fun factoryMethodsAndPredicatesAreCorrect() {
+    fun factoryMethodsAndPredicatesAreCorrect_top() {
         with(top) {
-            assertFalse(isBottom)
-            assertTrue(isTop)
-            assertNull(value)
+            assertThat(isBottom).isFalse()
+            assertThat(isTop).isTrue()
+            assertThat(value).isNull()
         }
+    }
+
+    @Test
+    fun factoryMethodsAndPredicatesAreCorrect_bottom() {
         with(bottom) {
-            assertTrue(isBottom)
-            assertFalse(isTop)
-            assertNull(value)
+            assertThat(isBottom).isTrue()
+            assertThat(isTop).isFalse()
+            assertThat(value).isNull()
         }
+    }
+
+    @Test
+    fun factoryMethodsAndPredicatesAreCorrect_value() {
         with(ten) {
-            assertFalse(isBottom)
-            assertFalse(isTop)
+            assertThat(isBottom).isFalse()
+            assertThat(isTop).isFalse()
             assertThat(value).isEqualTo(10)
         }
     }
@@ -98,29 +103,28 @@ class BoundedAbstractElementTest {
     fun isEquivalentToRespectsBottomTopOrder() {
         val compareInts: (Int, Int) -> Boolean = { a, b -> a == b }
         with(bottom) {
-            assertTrue(isEquivalentTo(bottom, compareInts))
-            assertFalse(isEquivalentTo(top, compareInts))
-            assertFalse(isEquivalentTo(nine, compareInts))
-            assertFalse(isEquivalentTo(ten, compareInts))
+            assertThat(isEquivalentTo(bottom, compareInts)).isTrue()
+            assertThat(isEquivalentTo(top, compareInts)).isFalse()
+            assertThat(isEquivalentTo(nine, compareInts)).isFalse()
+            assertThat(isEquivalentTo(ten, compareInts)).isFalse()
         }
         with(top) {
-            assertFalse(isEquivalentTo(bottom, compareInts))
-            assertTrue(isEquivalentTo(top, compareInts))
-            assertFalse(isEquivalentTo(nine, compareInts))
-            assertFalse(isEquivalentTo(ten, compareInts))
+            assertThat(isEquivalentTo(bottom, compareInts)).isFalse()
+            assertThat(isEquivalentTo(top, compareInts)).isTrue()
+            assertThat(isEquivalentTo(nine, compareInts)).isFalse()
+            assertThat(isEquivalentTo(ten, compareInts)).isFalse()
         }
         with(nine) {
-            assertFalse(isEquivalentTo(bottom, compareInts))
-            assertFalse(isEquivalentTo(top, compareInts))
-            assertTrue(isEquivalentTo(nine, compareInts))
-            assertFalse(isEquivalentTo(ten, compareInts))
+            assertThat(isEquivalentTo(bottom, compareInts)).isFalse()
+            assertThat(isEquivalentTo(top, compareInts)).isFalse()
+            assertThat(isEquivalentTo(nine, compareInts)).isTrue()
+            assertThat(isEquivalentTo(ten, compareInts)).isFalse()
         }
         with(ten) {
-            assertFalse(isEquivalentTo(bottom, compareInts))
-            assertFalse(isEquivalentTo(top, compareInts))
-            assertFalse(isEquivalentTo(nine, compareInts))
-            assertTrue(isEquivalentTo(ten, compareInts))
+            assertThat(isEquivalentTo(bottom, compareInts)).isFalse()
+            assertThat(isEquivalentTo(top, compareInts)).isFalse()
+            assertThat(isEquivalentTo(nine, compareInts)).isFalse()
+            assertThat(isEquivalentTo(ten, compareInts)).isTrue()
         }
     }
-
 }

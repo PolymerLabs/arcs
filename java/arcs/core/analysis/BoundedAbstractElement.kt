@@ -78,12 +78,14 @@ data class BoundedAbstractElement<V : Any> private constructor(
     }
 
     /** A helper for implementing [AbstractValue.isEquivalentTo]. */
-    fun isEquivalentTo(other: BoundedAbstractElement<V>, comparator: (V, V) -> Boolean) = when {
-        this.kind != other.kind -> false
-        this.kind == Kind.VALUE -> comparator(
+    fun isEquivalentTo(
+        other: BoundedAbstractElement<V>,
+        comparator: (V, V) -> Boolean
+    ) = when (kind) {
+        other.kind -> if (kind != Kind.VALUE) true else comparator(
             requireNotNull(this.value), requireNotNull(other.value)
         )
-        else -> true
+        else -> false
     }
 
     companion object {
