@@ -1,13 +1,10 @@
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
-
 package arcs.golden
-
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 // Current implementation doesn't support optional field detection
-
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleMode

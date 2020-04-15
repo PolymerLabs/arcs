@@ -1,13 +1,10 @@
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
-
 package arcs.golden
-
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 // Current implementation doesn't support optional field detection
-
 import arcs.sdk.*
 import arcs.sdk.wasm.*
 
@@ -17,20 +14,15 @@ typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
 typealias Gold_Collection = AbstractGold.Gold_Collection
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
 typealias Gold_Data = AbstractGold.Gold_Data
-
 abstract class AbstractGold : WasmParticleImpl() {
     val handles: Handles = Handles(this)
-
-
     @Suppress("UNCHECKED_CAST")
     class GoldInternal1(val_: String = "") : WasmEntity {
-
         var val_ = val_
             get() = field
             private set(_value) {
                 field = _value
             }
-
         override var entityId = ""
 
         fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
@@ -39,14 +31,12 @@ abstract class AbstractGold : WasmParticleImpl() {
         fun reset() {
           val_ = ""
         }
-
         override fun encodeEntity(): NullTermByteArray {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             val_.let { encoder.encode("val:T", val_) }
             return encoder.toNullTermByteArray()
         }
-
         override fun toString() =
             "GoldInternal1(val_ = $val_)"
 
@@ -55,7 +45,6 @@ abstract class AbstractGold : WasmParticleImpl() {
 
             override fun decode(encoded: ByteArray): GoldInternal1? {
                 if (encoded.isEmpty()) return null
-
                 val decoder = StringDecoder(encoded)
                 val entityId = decoder.decodeText()
                 decoder.validate("|")
@@ -90,7 +79,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             }
         }
     }
-
     @Suppress("UNCHECKED_CAST")
     class Gold_AllPeople(
         name: String = "",
@@ -101,7 +89,6 @@ abstract class AbstractGold : WasmParticleImpl() {
         birthDayMonth: Double = 0.0,
         birthDayDOM: Double = 0.0
     ) : WasmEntity {
-
         var name = name
             get() = field
             private set(_value) {
@@ -137,7 +124,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             private set(_value) {
                 field = _value
             }
-
         override var entityId = ""
 
         fun copy(
@@ -168,7 +154,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             birthDayMonth = 0.0
             birthDayDOM = 0.0
         }
-
         override fun encodeEntity(): NullTermByteArray {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
@@ -181,7 +166,6 @@ abstract class AbstractGold : WasmParticleImpl() {
         birthDayDOM.let { encoder.encode("birthDayDOM:N", birthDayDOM) }
             return encoder.toNullTermByteArray()
         }
-
         override fun toString() =
             "Gold_AllPeople(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
 
@@ -190,7 +174,6 @@ abstract class AbstractGold : WasmParticleImpl() {
 
             override fun decode(encoded: ByteArray): Gold_AllPeople? {
                 if (encoded.isEmpty()) return null
-
                 val decoder = StringDecoder(encoded)
                 val entityId = decoder.decodeText()
                 decoder.validate("|")
@@ -263,7 +246,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             }
         }
     }
-
     @Suppress("UNCHECKED_CAST")
     class Gold_Collection(num: Double = 0.0) : WasmEntity {
 
@@ -343,7 +325,6 @@ abstract class AbstractGold : WasmParticleImpl() {
         birthDayMonth: Double = 0.0,
         birthDayDOM: Double = 0.0
     ) : WasmEntity {
-
         var name = name
             get() = field
             private set(_value) {
@@ -379,7 +360,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             private set(_value) {
                 field = _value
             }
-
         override var entityId = ""
 
         fun copy(
@@ -410,7 +390,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             birthDayMonth = 0.0
             birthDayDOM = 0.0
         }
-
         override fun encodeEntity(): NullTermByteArray {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
@@ -423,7 +402,6 @@ abstract class AbstractGold : WasmParticleImpl() {
         birthDayDOM.let { encoder.encode("birthDayDOM:N", birthDayDOM) }
             return encoder.toNullTermByteArray()
         }
-
         override fun toString() =
             "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
 
@@ -432,7 +410,6 @@ abstract class AbstractGold : WasmParticleImpl() {
 
             override fun decode(encoded: ByteArray): Gold_QCollection? {
                 if (encoded.isEmpty()) return null
-
                 val decoder = StringDecoder(encoded)
                 val entityId = decoder.decodeText()
                 decoder.validate("|")
@@ -505,15 +482,79 @@ abstract class AbstractGold : WasmParticleImpl() {
             }
         }
     }
-
     @Suppress("UNCHECKED_CAST")
+<<<<<<< HEAD
+=======
+    class Gold_Collection(num: Double = 0.0) : WasmEntity {
+        var num = num
+            get() = field
+            private set(_value) {
+                field = _value
+            }
+        override var entityId = ""
+
+        fun copy(num: Double = this.num) = Gold_Collection(num = num)
+
+
+        fun reset() {
+          num = 0.0
+        }
+        override fun encodeEntity(): NullTermByteArray {
+            val encoder = StringEncoder()
+            encoder.encode("", entityId)
+            num.let { encoder.encode("num:N", num) }
+            return encoder.toNullTermByteArray()
+        }
+        override fun toString() =
+            "Gold_Collection(num = $num)"
+
+        companion object : WasmEntitySpec<Gold_Collection> {
+
+
+            override fun decode(encoded: ByteArray): Gold_Collection? {
+                if (encoded.isEmpty()) return null
+                val decoder = StringDecoder(encoded)
+                val entityId = decoder.decodeText()
+                decoder.validate("|")
+
+                var num = 0.0
+                var i = 0
+                while (i < 1 && !decoder.done()) {
+                    val _name = decoder.upTo(':').toUtf8String()
+                    when (_name) {
+                        "num" -> {
+                        decoder.validate("N")
+                        num = decoder.decodeNum()
+                    }
+                        else -> {
+                            // Ignore unknown fields until type slicing is fully implemented.
+                            when (decoder.chomp(1).toUtf8String()) {
+                                "T", "U" -> decoder.decodeText()
+                                "N" -> decoder.decodeNum()
+                                "B" -> decoder.decodeBool()
+                            }
+                            i--
+                        }
+                    }
+                    decoder.validate("|")
+                    i++
+                }
+                val _rtn = Gold_Collection().copy(
+                    num = num
+                )
+               _rtn.entityId = entityId
+                return _rtn
+            }
+        }
+    }
+    @Suppress("UNCHECKED_CAST")
+>>>>>>> 107b965fc... Fixing up merge issues
     class Gold_Data(
         num: Double = 0.0,
         txt: String = "",
         lnk: String = "",
         flg: Boolean = false
     ) : WasmEntity {
-
         var num = num
             get() = field
             private set(_value) {
@@ -534,7 +575,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             private set(_value) {
                 field = _value
             }
-
         override var entityId = ""
 
         fun copy(
@@ -551,7 +591,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             lnk = ""
             flg = false
         }
-
         override fun encodeEntity(): NullTermByteArray {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
@@ -561,7 +600,6 @@ abstract class AbstractGold : WasmParticleImpl() {
         flg.let { encoder.encode("flg:B", flg) }
             return encoder.toNullTermByteArray()
         }
-
         override fun toString() =
             "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
 
@@ -570,7 +608,6 @@ abstract class AbstractGold : WasmParticleImpl() {
 
             override fun decode(encoded: ByteArray): Gold_Data? {
                 if (encoded.isEmpty()) return null
-
                 val decoder = StringDecoder(encoded)
                 val entityId = decoder.decodeText()
                 decoder.validate("|")
@@ -620,7 +657,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             }
         }
     }
-
     class Handles(
         particle: WasmParticleImpl
     ) {

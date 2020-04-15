@@ -120,14 +120,11 @@ export class Schema2Kotlin extends Schema2Base {
     return `\
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
-
 package ${this.namespace}
-
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 // Current implementation doesn't support optional field detection
-
 ${imports.join('\n')}
 `;
   }
@@ -237,29 +234,7 @@ ${imports.join('\n')}
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const entityType = entityTypeName(particle.name, connection.name);
-      const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
-      let handleInterfaceType: string;
-      if (this.opts.wasm) {
-        handleInterfaceType = this.prefixTypeForRuntime(`${handleConcreteType}Impl<${entityType}>`);
-      } else {
-        if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
-            throw new Error(`Unsupported handle direction: ${connection.direction}`);
-        }
-        const handleInterfaces: string[] = [];
-        const typeArguments: string[] = [entityType];
-        if (connection.direction === 'reads' || connection.direction === 'reads writes') {
-          handleInterfaces.push('Read');
-        }
-        if (connection.direction === 'writes' || connection.direction === 'reads writes') {
-          handleInterfaces.push('Write');
-        }
-        const queryType = this.getQueryType(connection);
-        if (queryType) {
-          handleInterfaces.push('Query');
-          typeArguments.push(queryType);
-        }
-        handleInterfaceType = this.prefixTypeForRuntime(`${handleInterfaces.join('')}${handleConcreteType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`);
-      }
+      const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
       } else {
@@ -272,9 +247,7 @@ ${typeAliases.join(`\n`)}
 
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
-
     ${classes.join(`\n    `)}
-
     ${this.getHandlesClassDecl(particleName, specDecls)} {
         ${handleDecls.join('\n        ')}
     }
@@ -285,21 +258,22 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
   generateTestHarness(particle: ParticleSpec): string {
     const particleName = particle.name;
     const handleDecls: string[] = [];
-    const handleDescriptors: string[] = [];
+    const handleSpecs: string[] = [];
 
     for (const connection of particle.connections) {
+      connection.direction = 'reads writes';
       const handleName = connection.name;
-      const entityType = entityTypeName(particle.name, handleName);
-      const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
-      handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
-      handleDescriptors.push(`HandleDescriptor("${handleName}", ${entityType}, HandleFlavor.${handleConcreteType.toUpperCase()})`);
+      const entityType = entityTypeName(particle.name, connection.name);
+      const interfaceType = this.handleInterfaceType(connection, entityType);
+      handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
+      handleSpecs.push(this.handleSpec(handleName, entityType, connection));
     }
 
     return `
 class ${particleName}TestHarness<P : Abstract${particleName}>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
-    ${handleDescriptors.join(',\n    ')}
+    ${handleSpecs.join(',\n    ')}
 )) {
     ${handleDecls.join('\n    ')}
 }
@@ -501,11 +475,8 @@ ${lines}
       ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
 
     return `\
-
-    ${classDef}${constructorArguments}${classInterface}
-
+${classDef}${constructorArguments}${classInterface}
         ${withFields(`${this.fieldVals.join('\n        ')}`)}
-
         ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
             ${this.fieldInitializers.join('\n            ')}
         }`)}
@@ -523,21 +494,18 @@ ${lines}
         fun reset() {
           ${withFields(`${this.fieldsReset.join('\n            ')}`)}
         }
-
         override fun encodeEntity(): NullTermByteArray {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             ${this.encode.join('\n        ')}
             return encoder.toNullTermByteArray()
         }
-
         override fun toString() =
             "${name}(${this.fieldsForToString.join(', ')})"
     ` : ''}
         companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
-
             init {
                 SchemaRegistry.register(this)
             }`}
@@ -545,7 +513,6 @@ ${lines}
             override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
             override fun decode(encoded: ByteArray): ${name}? {
                 if (encoded.isEmpty()) return null
-
                 val decoder = StringDecoder(encoded)
                 val entityId = decoder.decodeText()
                 decoder.validate("|")

@@ -1,13 +1,10 @@
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
-
 package arcs.golden
-
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 // Current implementation doesn't support optional field detection
-
 import arcs.core.data.*
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -22,11 +19,8 @@ typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
 typealias Gold_Collection = AbstractGold.Gold_Collection
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
 typealias Gold_Data = AbstractGold.Gold_Data
-
 abstract class AbstractGold : BaseParticle() {
     override val handles: Handles = Handles()
-
-
     @Suppress("UNCHECKED_CAST")
     class GoldInternal1(
         val_: String = "",
@@ -34,11 +28,9 @@ abstract class AbstractGold : BaseParticle() {
         expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("GoldInternal1", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
-
         var val_: String
             get() = super.getSingletonValue("val") as String? ?: ""
             private set(_value) = super.setSingletonValue("val", _value)
-
         init {
             this.val_ = val_
         }
@@ -70,7 +62,6 @@ abstract class AbstractGold : BaseParticle() {
                 refinement = { _ -> true },
                 query = null
             )
-
             init {
                 SchemaRegistry.register(this)
             }
@@ -78,7 +69,6 @@ abstract class AbstractGold : BaseParticle() {
             override fun deserialize(data: RawEntity) = GoldInternal1().apply { deserialize(data) }
         }
     }
-
     @Suppress("UNCHECKED_CAST")
     class Gold_AllPeople(
         name: String = "",
@@ -92,7 +82,6 @@ abstract class AbstractGold : BaseParticle() {
         expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
-
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
             private set(_value) = super.setSingletonValue("name", _value)
@@ -114,7 +103,6 @@ abstract class AbstractGold : BaseParticle() {
         var birthDayDOM: Double
             get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("birthDayDOM", _value)
-
         init {
             this.name = name
             this.age = age
@@ -190,7 +178,6 @@ abstract class AbstractGold : BaseParticle() {
                 refinement = { _ -> true },
                 query = null
             )
-
             init {
                 SchemaRegistry.register(this)
             }
@@ -198,7 +185,6 @@ abstract class AbstractGold : BaseParticle() {
             override fun deserialize(data: RawEntity) = Gold_AllPeople().apply { deserialize(data) }
         }
     }
-
     @Suppress("UNCHECKED_CAST")
     class Gold_Collection(
         num: Double = 0.0,
@@ -264,7 +250,6 @@ abstract class AbstractGold : BaseParticle() {
         expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("Gold_QCollection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
-
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
             private set(_value) = super.setSingletonValue("name", _value)
@@ -286,7 +271,6 @@ abstract class AbstractGold : BaseParticle() {
         var birthDayDOM: Double
             get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("birthDayDOM", _value)
-
         init {
             this.name = name
             this.age = age
@@ -367,7 +351,6 @@ abstract class AbstractGold : BaseParticle() {
                     ((lastCall < 259200) && (name == queryArgument))
                 }
             )
-
             init {
                 SchemaRegistry.register(this)
             }
@@ -375,8 +358,58 @@ abstract class AbstractGold : BaseParticle() {
             override fun deserialize(data: RawEntity) = Gold_QCollection().apply { deserialize(data) }
         }
     }
-
     @Suppress("UNCHECKED_CAST")
+<<<<<<< HEAD
+=======
+    class Gold_Collection(
+        num: Double = 0.0,
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_Collection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+        var num: Double
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
+        init {
+            this.num = num
+        }
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(num: Double = this.num) = Gold_Collection(num = num)
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(num: Double = this.num) = Gold_Collection(
+            num = num,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
+
+        companion object : EntitySpec<Gold_Collection> {
+
+            override val SCHEMA = Schema(
+                setOf(),
+                SchemaFields(
+                    singletons = mapOf("num" to FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "1032e45209f910286cfb898c43a1c3ca7d07aea6",
+                refinement = { _ -> true },
+                query = null
+            )
+            init {
+                SchemaRegistry.register(this)
+            }
+
+            override fun deserialize(data: RawEntity) = Gold_Collection().apply { deserialize(data) }
+        }
+    }
+    @Suppress("UNCHECKED_CAST")
+>>>>>>> 107b965fc... Fixing up merge issues
     class Gold_Data(
         num: Double = 0.0,
         txt: String = "",
@@ -387,7 +420,6 @@ abstract class AbstractGold : BaseParticle() {
         expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("Gold_Data", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
-
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
@@ -403,7 +435,6 @@ abstract class AbstractGold : BaseParticle() {
         var ref: Reference<GoldInternal1>?
             get() = super.getSingletonValue("ref") as Reference<GoldInternal1>?
             private set(_value) = super.setSingletonValue("ref", _value)
-
         init {
             this.num = num
             this.txt = txt
@@ -461,7 +492,6 @@ abstract class AbstractGold : BaseParticle() {
                 refinement = { _ -> true },
                 query = null
             )
-
             init {
                 SchemaRegistry.register(this)
             }
@@ -469,7 +499,6 @@ abstract class AbstractGold : BaseParticle() {
             override fun deserialize(data: RawEntity) = Gold_Data().apply { deserialize(data) }
         }
     }
-
     class Handles : HandleHolderBase(
         "Gold",
         mapOf(
