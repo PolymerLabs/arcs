@@ -23,7 +23,7 @@ class Schema2Mock extends Schema2Base {
 
   generateEntityClassName(node: SchemaNode, i: number) {
     if (i === -1) {
-      return `${node.particleName}_${this.upperFirst(node.connections[0])}`;
+      return `${node.particleName}_${node.connections[0]}`;
     }
     return `${node.particleName}Internal${i}`;
   }
@@ -31,7 +31,7 @@ class Schema2Mock extends Schema2Base {
   generateAliasNames(node: SchemaNode): string[] {
     const arr: string[] = [];
     for (const connection of node.connections) {
-      arr.push(`${node.particleName}_${this.upperFirst(connection)}`);
+      arr.push(`${node.particleName}_${connection}`);
     }
     return arr;
   }

@@ -35,11 +35,21 @@ function convert(graph: SchemaGraph) {
 }
 
 function dummyNameGenerator(node: SchemaNode, i: number) {
-  return '';
+  if (i === -1) {
+    return `${node.particleName}_${node.connections[0]}`;
+  }
+  return `${node.particleName}Internal${i}`;
 }
 
 function dummyAliasGenerator(node: SchemaNode): string[] {
-  return [''];
+  const arr: string[] = [];
+  if (node.connections.length === 1) {
+    return arr;
+  }
+  for (const connection of node.connections) {
+    arr.push(`${node.particleName}_${connection}`);
+  }
+  return arr;
 }
 
 describe('schema2graph', () => {
