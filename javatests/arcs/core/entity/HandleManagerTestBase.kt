@@ -173,12 +173,14 @@ open class HandleManagerTestBase {
         backingKey = backingKey,
         storageKey = singletonRefKey
     )
+    private val singletonRefHandleKey = RamDiskStorageKey("singleton-reference-handle")
 
     private val collectionRefKey = RamDiskStorageKey("set-ent")
     private val collectionKey = ReferenceModeStorageKey(
         backingKey = backingKey,
         storageKey = collectionRefKey
     )
+    private val collectionRefHandleKey = RamDiskStorageKey("collection-reference-handle")
 
     private val hatCollectionRefKey = RamDiskStorageKey("set-hats")
     private val hatCollectionKey = ReferenceModeStorageKey(
@@ -403,7 +405,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_referenceLiveness() = runBlocking {
+    fun singleton_referenceLiveness() = runBlocking {
         // Create and store an entity.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         writeEntityHandle.store(entity1)
@@ -701,7 +703,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_referenceLiveness() = runBlocking<Unit> {
+    fun collection_referenceLiveness() = runBlocking<Unit> {
         // Create and store some entities.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         writeEntityHandle.store(entity1)
@@ -760,7 +762,7 @@ open class HandleManagerTestBase {
             writeHandleManager.createReferenceCollectionHandle(
                 ReferenceModeStorageKey(
                     backingKey = backingKey,
-                    storageKey = collectionRefKey
+                    storageKey = collectionRefHandleKey
                 )
             )
         }
@@ -815,7 +817,7 @@ open class HandleManagerTestBase {
     ) as ReadWriteQueryCollectionHandle<T, Any>
 
     private suspend fun EntityHandleManager.createReferenceSingletonHandle(
-        storageKey: StorageKey = singletonRefKey,
+        storageKey: StorageKey = singletonRefHandleKey,
         name: String = "referenceSingletonWriteHandle",
         ttl: Ttl = Ttl.Infinite
     ) = createHandle(
@@ -831,7 +833,7 @@ open class HandleManagerTestBase {
     ) as ReadWriteSingletonHandle<Reference<Person>>
 
     private suspend fun EntityHandleManager.createReferenceCollectionHandle(
-        storageKey: StorageKey = collectionRefKey,
+        storageKey: StorageKey = collectionRefHandleKey,
         name: String = "referenceCollectionReadHandle",
         ttl: Ttl = Ttl.Infinite
     ) = createHandle(

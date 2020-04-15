@@ -43,10 +43,6 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     @After
     override fun tearDown() = super.tearDown()
 
-    // TODO(b/152436411): Fix these.
-    override fun collection_referenceLiveness() {}
-    override fun singleton_referenceLiveness() {}
-
     // We don't expect these to pass, since Operations won't make it through the driver level
     override fun singleton_writeAndOnUpdate() {}
     override fun collection_writeAndOnUpdate() {}
