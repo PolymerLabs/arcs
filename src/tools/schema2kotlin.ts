@@ -40,6 +40,10 @@ export interface KotlinTypeInfo {
   schemaType: string;
 }
 
+function entityTypeName(particle: string, connection: string) {
+  return `${particle}_${connection[0].toUpperCase() + connection.slice(1)}`;
+}
+
 function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?: string, refSchemaHash?: string}): KotlinTypeInfo {
   const typeMap: Dictionary<KotlinTypeInfo> = {
     'Text': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
@@ -134,7 +138,7 @@ ${imports.join('\n')}
 
   generateEntityClassName(node: SchemaNode, i: number) {
     if (i === -1) {
-      return `${node.particleName}_${node.connections[0]}`;
+      return entityTypeName(node.particleName, node.connections[0]);
     }
     return `${node.particleName}Internal${i}`;
   }
@@ -145,10 +149,6 @@ ${imports.join('\n')}
       arr.push(`${node.particleName}_${connection}`);
     }
     return arr;
-  }
-
-  generateEntityName(particle: string, connection: string) {
-    return `${particle}_${this.upperFirst(connection)}`;
   }
 
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
@@ -236,7 +236,7 @@ ${imports.join('\n')}
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType = this.generateEntityName(particle.name, connection.name);
+      const entityType = entityTypeName(particle.name, connection.name);
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       let handleInterfaceType: string;
       if (this.opts.wasm) {
@@ -285,22 +285,21 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
   generateTestHarness(particle: ParticleSpec): string {
     const particleName = particle.name;
     const handleDecls: string[] = [];
-    const handleSpecs: string[] = [];
+    const handleDescriptors: string[] = [];
 
     for (const connection of particle.connections) {
-      connection.direction = 'reads writes';
       const handleName = connection.name;
-      const entityType = this.generateEntityName(particle.name, connection.name);
+      const entityType = entityTypeName(particle.name, handleName);
       const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
       handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
-      handleSpecs.push(`HandleSpec("${handleName}", HandleMode.ReadWrite, HandleContainerType.${handleConcreteType}, ${entityType})`);
+      handleDescriptors.push(`HandleDescriptor("${handleName}", ${entityType}, HandleFlavor.${handleConcreteType.toUpperCase()})`);
     }
 
     return `
 class ${particleName}TestHarness<P : Abstract${particleName}>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
-    ${handleSpecs.join(',\n    ')}
+    ${handleDescriptors.join(',\n    ')}
 )) {
     ${handleDecls.join('\n    ')}
 }
