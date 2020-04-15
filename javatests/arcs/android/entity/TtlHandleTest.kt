@@ -173,11 +173,11 @@ class TtlHandleTest {
     }
 
     @Test
-    fun handleWithTTLNoExpiredEntities() = runBlockingTest {
+    fun handleWithTtlNoExpiredEntities() = runBlockingTest {
         val entity1 = DummyEntity().apply { num = 1.0 }
         val entity2 = DummyEntity().apply { num = 2.0 }
 
-        // Note: this tests and handle configured with TTL (thus entities have an expiry time).
+        // Note: this tests a handle configured with TTL (thus entities have an expiry time).
         val handle1 = createCollectionHandle()
         val handle2 = createSingletonHandle()
 
