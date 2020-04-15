@@ -442,9 +442,9 @@ abstract class AbstractArcHost(
             stopParticle(particleContext)
         }
         maybeCancelResurrection(context)
-        context.entityHandleManager.close()
         context.arcState = ArcState.Stopped
         updateArcHostContext(arcId, context)
+        context.entityHandleManager.close()
     }
 
     /**
