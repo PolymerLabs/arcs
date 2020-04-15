@@ -125,7 +125,7 @@ export class SchemaGraph {
         // refs map to indicate that this node requires nestedNode's class to be generated first.
         console.log(`nest name: ${particleName}`);
         console.log(`nest field ${field}`);
-        const nestedNode = this.createNodes(nestedSchema, particleName, upperFirst(field));
+        const nestedNode = this.createNodes(nestedSchema, particleName, `${upperFirst(connectionName)}_${upperFirst(field)}`);
         node.refs.set(field, nestedNode);
       }
     }

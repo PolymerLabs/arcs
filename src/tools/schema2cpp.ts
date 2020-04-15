@@ -66,6 +66,9 @@ export class Schema2Cpp extends Schema2Base {
 
   generateAliasNames(node: SchemaNode): string[] {
     const arr: string[] = [];
+    if (node.connections.length === 1) {
+      return arr;
+    }
     for (const connection of node.connections) {
       arr.push(`${node.particleName}_${connection}`);
     }
