@@ -120,11 +120,14 @@ export class Schema2Kotlin extends Schema2Base {
     return `\
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
+
 package ${this.namespace}
+
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 // Current implementation doesn't support optional field detection
+
 ${imports.join('\n')}
 `;
   }
@@ -481,6 +484,7 @@ ${lines}
     ${classDef}${constructorArguments}${classInterface}
     
         ${withFields(`${this.fieldVals.join('\n        ')}`)}
+
         ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
             ${this.fieldInitializers.join('\n            ')}
         }`)}
@@ -509,7 +513,6 @@ ${lines}
         override fun toString() =
             "${name}(${this.fieldsForToString.join(', ')})"
     ` : ''}
-    
         companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}

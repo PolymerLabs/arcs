@@ -1,10 +1,13 @@
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
+
 package arcs.golden
+
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 // Current implementation doesn't support optional field detection
+
 import arcs.core.data.*
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -35,6 +38,7 @@ abstract class AbstractGold : BaseParticle() {
         var val_: String
             get() = super.getSingletonValue("val") as String? ?: ""
             private set(_value) = super.setSingletonValue("val", _value)
+
         init {
             this.val_ = val_
         }
@@ -53,7 +57,6 @@ abstract class AbstractGold : BaseParticle() {
             expirationTimestamp = expirationTimestamp,
             creationTimestamp = creationTimestamp
         )
-
 
         companion object : EntitySpec<GoldInternal1> {
 
@@ -110,6 +113,7 @@ abstract class AbstractGold : BaseParticle() {
         var birthDayDOM: Double
             get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("birthDayDOM", _value)
+
         init {
             this.name = name
             this.age = age
@@ -164,7 +168,6 @@ abstract class AbstractGold : BaseParticle() {
             expirationTimestamp = expirationTimestamp,
             creationTimestamp = creationTimestamp
         )
-
 
         companion object : EntitySpec<Gold_AllPeople> {
 
@@ -281,6 +284,7 @@ abstract class AbstractGold : BaseParticle() {
         var birthDayDOM: Double
             get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("birthDayDOM", _value)
+
         init {
             this.name = name
             this.age = age
@@ -336,7 +340,6 @@ abstract class AbstractGold : BaseParticle() {
             creationTimestamp = creationTimestamp
         )
 
-
         companion object : EntitySpec<Gold_QCollection> {
 
             override val SCHEMA = Schema(
@@ -383,6 +386,7 @@ abstract class AbstractGold : BaseParticle() {
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
+
         init {
             this.num = num
         }
@@ -401,7 +405,6 @@ abstract class AbstractGold : BaseParticle() {
             expirationTimestamp = expirationTimestamp,
             creationTimestamp = creationTimestamp
         )
-
 
         companion object : EntitySpec<Gold_Collection> {
 
@@ -451,6 +454,7 @@ abstract class AbstractGold : BaseParticle() {
         var ref: Reference<GoldInternal1>?
             get() = super.getSingletonValue("ref") as Reference<GoldInternal1>?
             private set(_value) = super.setSingletonValue("ref", _value)
+
         init {
             this.num = num
             this.txt = txt
@@ -489,7 +493,6 @@ abstract class AbstractGold : BaseParticle() {
             expirationTimestamp = expirationTimestamp,
             creationTimestamp = creationTimestamp
         )
-
 
         companion object : EntitySpec<Gold_Data> {
 

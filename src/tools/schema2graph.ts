@@ -11,7 +11,6 @@ import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
 import {AtLeastAsSpecific} from '../runtime/refiner.js';
-import {connect} from 'http2';
 
 export class SchemaNode {
   schema: Schema;

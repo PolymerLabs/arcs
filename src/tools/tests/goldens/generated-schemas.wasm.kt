@@ -1,10 +1,13 @@
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
+
 package arcs.golden
+
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 // Current implementation doesn't support optional field detection
+
 import arcs.sdk.*
 import arcs.sdk.wasm.*
 
@@ -27,6 +30,7 @@ abstract class AbstractGold : WasmParticleImpl() {
             private set(_value) {
                 field = _value
             }
+
         override var entityId = ""
 
         fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
@@ -45,7 +49,6 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         override fun toString() =
             "GoldInternal1(val_ = $val_)"
-
 
         companion object : WasmEntitySpec<GoldInternal1> {
 
@@ -134,6 +137,7 @@ abstract class AbstractGold : WasmParticleImpl() {
             private set(_value) {
                 field = _value
             }
+
         override var entityId = ""
 
         fun copy(
@@ -180,7 +184,6 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         override fun toString() =
             "Gold_AllPeople(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
-
 
         companion object : WasmEntitySpec<Gold_AllPeople> {
 
@@ -376,6 +379,7 @@ abstract class AbstractGold : WasmParticleImpl() {
             private set(_value) {
                 field = _value
             }
+
         override var entityId = ""
 
         fun copy(
@@ -422,7 +426,6 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         override fun toString() =
             "Gold_QCollection(name = $name, age = $age, lastCall = $lastCall, address = $address, favoriteColor = $favoriteColor, birthDayMonth = $birthDayMonth, birthDayDOM = $birthDayDOM)"
-
 
         companion object : WasmEntitySpec<Gold_QCollection> {
 
@@ -513,6 +516,7 @@ abstract class AbstractGold : WasmParticleImpl() {
             private set(_value) {
                 field = _value
             }
+
         override var entityId = ""
 
         fun copy(num: Double = this.num) = Gold_Collection(num = num)
@@ -531,7 +535,6 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         override fun toString() =
             "Gold_Collection(num = $num)"
-
 
         companion object : WasmEntitySpec<Gold_Collection> {
 
@@ -603,6 +606,7 @@ abstract class AbstractGold : WasmParticleImpl() {
             private set(_value) {
                 field = _value
             }
+
         override var entityId = ""
 
         fun copy(
@@ -632,7 +636,6 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         override fun toString() =
             "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
-
 
         companion object : WasmEntitySpec<Gold_Data> {
 
