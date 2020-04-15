@@ -48,5 +48,11 @@ abstract class AndroidHost(
         resurrectionHelper.cancelResurrectionRequest(context.arcId)
     }
 
-    override val stores: StoreManager = StoreManager()
+    /*
+     * Android uses [StorageService] which is a persistent process, so we don't share
+     * [ActiveStore] between [EntityHandleManager]s, but use a new [StoreManager] for each
+     * new arc. Otherwise, when closing an [ActiveStore] when one Arc is shutdown leads to the
+     * handles being unusable in other arcs that are still arctive.
+     */
+    override val stores: StoreManager get() = StoreManager()
 }
