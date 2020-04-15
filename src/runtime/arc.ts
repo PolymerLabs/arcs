@@ -574,7 +574,7 @@ export class Arc implements ArcInterface {
     if (storageKey == undefined) {
       if (this.capabilitiesResolver) {
         storageKey = await this.capabilitiesResolver.createStorageKey(
-            capabilities, type.getEntitySchema(), id);
+            capabilities, type, id);
       } else if (this.storageKey) {
         storageKey = this.storageKey.childKeyForHandle(id);
       }
