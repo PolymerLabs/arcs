@@ -40,8 +40,10 @@ inline fun <reified T : Particle> (() -> T).toRegistration(): ParticleRegistrati
     T::class.toParticleIdentifier() to { _ -> this.invoke() }
 
 /** Returns a pair mapping [ParticleIdentifier] to [ParticleConstructor] */
-inline fun <reified T : Particle> ((Plan.Particle) -> T).toRegistration(): ParticleRegistration =
-    T::class.toParticleIdentifier() to { it: Plan.Particle -> this.invoke(it) }
+inline fun <reified T : Particle> ((Plan.Particle) -> T).toRegistration(): ParticleRegistration {
+    val construct: suspend (Plan.Particle) -> T = { this.invoke(it) }
+    return T::class.toParticleIdentifier() to construct
+}
 /**
  * If this Type represents a [SingletonType], [CollectionType], or [EntityType], return the
  * [Schema] used by the underlying [Entity] that this type represents.

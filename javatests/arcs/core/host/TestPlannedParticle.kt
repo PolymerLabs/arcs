@@ -6,12 +6,8 @@ import arcs.core.entity.EntityBaseSpec
 import arcs.sdk.BaseParticle
 import arcs.sdk.HandleHolderBase
 
-fun build(spec: Plan.Particle): TestConstructedParticle {
-    val schema = spec.handles["data"]!!.type.toSchema()
-    return TestConstructedParticle(schema)
-}
-
-class TestConstructedParticle(val schema: Schema) : BaseParticle() {
+class TestPlannedParticle(val spec: Plan.Particle) : BaseParticle() {
+    val schema = spec.handles.getValue("data").type.toSchema()
     override val handles = Handles(schema)
 
     class Handles(val schema: Schema) : HandleHolderBase(

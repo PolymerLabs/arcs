@@ -37,7 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
-typealias ParticleConstructor = (Plan.Particle) -> Particle
+typealias ParticleConstructor = suspend (Plan.Particle) -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
 /** Maximum number of times a particle may fail to be started before giving up. */

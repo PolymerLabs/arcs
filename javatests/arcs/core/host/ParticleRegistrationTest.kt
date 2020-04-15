@@ -26,12 +26,9 @@ class ParticleRegistrationTest {
         val hostRegistry = ExplicitHostRegistry()
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
 
-        val dynamicRegistration = TestConstructedParticle::class.toParticleIdentifier() to
-            ::build
-
         hostRegistry.registerHost(JvmProdHost(schedulerProvider,
                                               ::TestProdParticle.toRegistration(),
-                                              dynamicRegistration)
+                                              ::TestPlannedParticle.toRegistration())
         )
 
         hostRegistry.registerHost(TestHost(schedulerProvider("foo"),
@@ -44,7 +41,7 @@ class ParticleRegistrationTest {
                         TestProdParticle::class.toParticleIdentifier()
                     )
                     assertThat(host.registeredParticles()).contains(
-                        TestConstructedParticle::class.toParticleIdentifier()
+                        TestPlannedParticle::class.toParticleIdentifier()
                     )
                     foundProdHost = true
                 }
