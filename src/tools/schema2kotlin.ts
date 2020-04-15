@@ -10,12 +10,13 @@
 import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
-import {EntityType, CollectionType} from '../runtime/type.js';
+import {EntityType, CollectionType, Type} from '../runtime/type.js';
 import {KTExtracter} from '../runtime/refiner.js';
 import {Dictionary} from '../runtime/hot.js';
 import minimist from 'minimist';
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
 import {assert} from '../platform/assert-web.js';
+import {Direction} from '../runtime/manifest-ast-nodes.js';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -89,6 +90,7 @@ export class Schema2Kotlin extends Schema2Base {
     if (this.opts.test_harness) {
       imports.push(
         'import arcs.core.entity.HandleContainerType',
+        'import arcs.core.entity.HandleDataType',
         'import arcs.core.entity.HandleMode',
         'import arcs.core.entity.HandleSpec',
         'import arcs.sdk.testing.*',
@@ -134,6 +136,76 @@ ${imports.join('\n')}
     return `${particle.name}_${this.upperFirst(connection.name)}`;
   }
 
+  /** Returns the container type of the handle, e.g. Singleton or Collection. */
+  private handleContainerType(type: Type): string {
+    return type.isCollectionType() ? 'Collection' : 'Singleton';
+  }
+
+  /** Returns whether this handle contains either Entity or Reference. */
+  private handleDataType(type: Type): string {
+    if (type.isReference) {
+      return 'Reference';
+    } else if (type.isCollection) {
+      return this.handleDataType(type.getContainedType());
+    } else {
+      return 'Entity';
+    }
+  }
+
+  /**
+   * Returns the type of the thing stored in the handle, e.g. MyEntity or
+   * Reference<MyEntity>.
+   */
+  private handleInnerType(type: Type, entityType: string): string {
+    const dataType = this.handleDataType(type);
+    return dataType === 'Reference' ? `Reference<${entityType}>` : entityType;
+  }
+
+  /** Returns one of Read, Write, ReadWrite. */
+  private handleMode(direction: Direction): string {
+    switch (direction) {
+      case 'reads writes':
+        return 'ReadWrite';
+      case 'reads':
+        return 'Read';
+      case 'writes':
+        return 'Write';
+      default:
+        throw new Error(`Unsupported handle direction: ${direction}`);
+    }
+  }
+
+  /**
+   * Returns the handle interface type, e.g. WriteSingletonHandle,
+   * ReadWriteCollectionHandle. Includes generic arguments.
+   */
+  private handleInterfaceType(connection: HandleConnectionSpec, entityType: string): string {
+    const containerType = this.handleContainerType(connection.type);
+    if (this.opts.wasm) {
+      return `Wasm${containerType}Impl<${entityType}>`;
+    }
+
+    if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
+      throw new Error(`Unsupported handle direction: ${connection.direction}`);
+    }
+    const innerType = this.handleInnerType(connection.type, entityType);
+    const typeArguments: string[] = [innerType];
+    const interfacePrefixes: string[] = [this.handleMode(connection.direction)];
+    const queryType = this.getQueryType(connection);
+    if (queryType) {
+      interfacePrefixes.push('Query');
+      typeArguments.push(queryType);
+    }
+    return `${interfacePrefixes.join('')}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`;
+  }
+
+  private handleSpec(handleName: string, entityType: string, connection: HandleConnectionSpec): string {
+    const mode = this.handleMode(connection.direction);
+    const containerType = this.handleContainerType(connection.type);
+    const dataType = this.handleDataType(connection.type);
+    return `HandleSpec("${handleName}", HandleMode.${mode}, HandleContainerType.${containerType}, ${entityType}, HandleDataType.${dataType})`;
+  }
+
   generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {
     const particleName = particle.name;
     const handleDecls: string[] = [];
@@ -141,45 +213,22 @@ ${imports.join('\n')}
     const classes: string[] = [];
     const typeAliases: string[] = [];
 
-    nodeGenerators.forEach( (ng) => {
-      const kotlinGenerator = <KotlinGenerator>ng.generator;
-      classes.push(kotlinGenerator.generateClasses(ng.hash, ng.fieldLength));
+    nodeGenerators.forEach(nodeGenerator => {
+      const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
+      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash, nodeGenerator.fieldLength));
       typeAliases.push(kotlinGenerator.generateAliases(particleName));
     });
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const entityType = this.entityTypeName(particle, connection);
-      const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
-      let handleInterfaceType: string;
+      const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
-        handleInterfaceType = this.prefixTypeForRuntime(`${handleConcreteType}Impl<${entityType}>`);
-      } else {
-        if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
-            throw new Error(`Unsupported handle direction: ${connection.direction}`);
-        }
-        const handleInterfaces: string[] = [];
-        const typeArguments: string[] = [entityType];
-        if (connection.direction === 'reads' || connection.direction === 'reads writes') {
-          handleInterfaces.push('Read');
-        }
-        if (connection.direction === 'writes' || connection.direction === 'reads writes') {
-          handleInterfaces.push('Write');
-        }
-        const queryType = this.getQueryType(connection);
-        if (queryType) {
-          handleInterfaces.push('Query');
-          typeArguments.push(queryType);
-        }
-        handleInterfaceType = this.prefixTypeForRuntime(`${handleInterfaces.join('')}${handleConcreteType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`);
-      }
-      if (this.opts.wasm) {
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.prefixTypeForRuntime(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType})`);
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
       } else {
         specDecls.push(`"${handleName}" to ${entityType}`);
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
       }
-
     }
     return `
 ${typeAliases.join(`\n`)}
@@ -202,11 +251,12 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     const handleSpecs: string[] = [];
 
     for (const connection of particle.connections) {
+      connection.direction = 'reads writes';
       const handleName = connection.name;
       const entityType = this.entityTypeName(particle, connection);
-      const handleConcreteType = connection.type.isCollectionType() ? 'Collection' : 'Singleton';
-      handleDecls.push(`val ${handleName}: ReadWrite${handleConcreteType}Handle<${entityType}> by handleMap`);
-      handleSpecs.push(`HandleSpec("${handleName}", HandleMode.ReadWrite, HandleContainerType.${handleConcreteType}, ${entityType})`);
+      const interfaceType = this.handleInterfaceType(connection, entityType);
+      handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
+      handleSpecs.push(this.handleSpec(handleName, entityType, connection));
     }
 
     return `
