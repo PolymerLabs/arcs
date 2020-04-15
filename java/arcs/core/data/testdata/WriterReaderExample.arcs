@@ -29,3 +29,22 @@ recipe EphemeralWriting
   thing: create 'my-ephemeral-handle-id'
   Writer
     data: writes thing
+
+recipe EphemeralReading
+  data: map 'my-handle-id'
+  Reader
+    data: reads data
+
+particle ReadWriteReferences
+  inThingRefs: reads [&Thing {name: Text}]
+  outThingRef: writes &Thing {name: Text}
+
+@trigger
+  launch startup
+  arcId referencesArcId
+recipe ReferencesRecipe
+  things: create persistent 'my-refs-id'
+  thing: create persistent 'my-ref-id'
+  ReadWriteReferences
+    inThingRefs: things
+    outThingRef: thing

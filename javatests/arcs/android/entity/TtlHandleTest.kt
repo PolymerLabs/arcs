@@ -29,7 +29,7 @@ import java.util.concurrent.Executors
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
-class TtlHandleTest() {
+class TtlHandleTest {
 
     private val backingKey = DatabaseStorageKey.Persistent("entities-backing", DummyEntity.SCHEMA_HASH)
     private val collectionKey = ReferenceModeStorageKey(
@@ -41,9 +41,11 @@ class TtlHandleTest() {
         storageKey = DatabaseStorageKey.Persistent("singleton", DummyEntity.SCHEMA_HASH)
     )
     private lateinit var databaseManager: AndroidSqliteDatabaseManager
+    private lateinit var fakeTime: FakeTime
     
     @Before
     fun setUp() {
+        fakeTime = FakeTime()
         databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         DriverAndKeyConfigurator.configure(databaseManager)
         SchemaRegistry.register(DummyEntity)
@@ -57,10 +59,10 @@ class TtlHandleTest() {
             texts = setOf("1", "one")
         }
         // Set a time in the past. So that this entity is already expired.
-        FakeTime.millis = 1L
+        fakeTime.millis = 1L
         handle.store(entity1)
         // Then set time to now.
-        FakeTime.millis = System.currentTimeMillis()
+        fakeTime.millis = System.currentTimeMillis()
 
         // Entity1 is already expired.
         assertThat(handle.fetch()).isEqualTo(null)
@@ -94,10 +96,10 @@ class TtlHandleTest() {
             texts = setOf("1", "one")
         }
         // Set a time in the past. So that this entity is already expired.
-        FakeTime.millis = 1L
+        fakeTime.millis = 1L
         handle.store(entity1)
         // Then set time to now.
-        FakeTime.millis = System.currentTimeMillis()
+        fakeTime.millis = System.currentTimeMillis()
 
         val entity2 = DummyEntity().apply {
             num = 2.0
@@ -151,7 +153,7 @@ class TtlHandleTest() {
 
         // Insert at time now-90seconds. So all entities in handle1 will be expired, those in
         // handle2 are still alive.
-        FakeTime.millis = System.currentTimeMillis() - 90_000
+        fakeTime.millis = System.currentTimeMillis() - 90_000
 
         handle1.store(entity1)
         handle1.store(entity2)
@@ -175,9 +177,9 @@ class TtlHandleTest() {
             key: StorageKey = collectionKey
         ) =
         EntityHandleManager(
-            time = FakeTime(),
+            time = fakeTime,
             scheduler = Scheduler(
-                FakeTime(),
+                fakeTime,
                 Executors.newSingleThreadExecutor().asCoroutineDispatcher()
             )
         ).createHandle(
@@ -193,9 +195,9 @@ class TtlHandleTest() {
 
     private suspend fun createSingletonHandle() =
         EntityHandleManager(
-            time = FakeTime(),
+            time = fakeTime,
             scheduler = Scheduler(
-                FakeTime(),
+                fakeTime,
                 Executors.newSingleThreadExecutor().asCoroutineDispatcher()
             )
         ).createHandle(
