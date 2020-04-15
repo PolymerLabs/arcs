@@ -12,5 +12,6 @@ arcs_kt_android_library(
         "//java/arcs/core/storage/database",
         "//java/arcs/core/util",
         "//third_party/java/androidx/work",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
