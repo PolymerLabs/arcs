@@ -172,6 +172,28 @@ class TtlHandleTest {
         assertThat(handle2.fetchAll()).containsExactly(entity3, entity4)
     }
 
+    @Test
+    fun handleWithTtlNoExpiredEntities() = runBlockingTest {
+        val entity1 = DummyEntity().apply { num = 1.0 }
+        val entity2 = DummyEntity().apply { num = 2.0 }
+
+        // Note: this tests a handle configured with TTL (thus entities have an expiry time).
+        val handle1 = createCollectionHandle()
+        val handle2 = createSingletonHandle()
+
+        // Store at time now, so entities are not expired.
+        fakeTime.millis = System.currentTimeMillis()
+
+        handle1.store(entity1)
+        handle2.store(entity2)
+
+        // Simulate periodic job triggering.
+        databaseManager.removeExpiredEntities()
+
+        assertThat(handle1.fetchAll()).containsExactly(entity1)
+        assertThat(handle2.fetch()).isEqualTo(entity2)
+    }
+
     private suspend fun createCollectionHandle(
             ttl: Ttl = Ttl.Hours(1),
             key: StorageKey = collectionKey
