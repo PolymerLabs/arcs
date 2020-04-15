@@ -247,7 +247,9 @@ ${typeAliases.join(`\n`)}
 
 abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
+
     ${classes.join(`\n    `)}
+
     ${this.getHandlesClassDecl(particleName, specDecls)} {
         ${handleDecls.join('\n        ')}
     }
@@ -475,7 +477,9 @@ ${lines}
       ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
 
     return `\
-${classDef}${constructorArguments}${classInterface}
+
+    ${classDef}${constructorArguments}${classInterface}
+    
         ${withFields(`${this.fieldVals.join('\n        ')}`)}
         ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
             ${this.fieldInitializers.join('\n            ')}
@@ -494,15 +498,18 @@ ${classDef}${constructorArguments}${classInterface}
         fun reset() {
           ${withFields(`${this.fieldsReset.join('\n            ')}`)}
         }
+
         override fun encodeEntity(): NullTermByteArray {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             ${this.encode.join('\n        ')}
             return encoder.toNullTermByteArray()
         }
+
         override fun toString() =
             "${name}(${this.fieldsForToString.join(', ')})"
     ` : ''}
+    
         companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
@@ -513,6 +520,7 @@ ${classDef}${constructorArguments}${classInterface}
             override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
             override fun decode(encoded: ByteArray): ${name}? {
                 if (encoded.isEmpty()) return null
+
                 val decoder = StringDecoder(encoded)
                 val entityId = decoder.decodeText()
                 decoder.validate("|")
