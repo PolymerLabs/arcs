@@ -96,3 +96,30 @@ object EphemeralReadingPlan : Plan(
         )
     )
 )
+object ReferencesRecipePlan : Plan(
+    listOf(
+        Particle(
+            "ReadWriteReferences",
+            "",
+            mapOf(
+                "inThingRefs" to HandleConnection(
+                    StorageKeyParser.parse(
+                        "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-refs-id"
+                    ),
+                    HandleMode.Read,
+                    CollectionType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
+                    Ttl.Infinite
+                ),
+                "outThingRef" to HandleConnection(
+                    StorageKeyParser.parse(
+                        "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-ref-id"
+                    ),
+                    HandleMode.Write,
+                    SingletonType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
+                    Ttl.Infinite
+                )
+            )
+        )
+    ),
+    "referencesArcId"
+)

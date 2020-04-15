@@ -15,6 +15,7 @@ import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {Schema} from './schema.js';
+import {Type} from './type.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 
 export type CapabilitiesResolverOptions = Readonly<{
@@ -99,7 +100,7 @@ export class CapabilitiesResolver {
 
   async createStorageKey(
       capabilities: Capabilities,
-      entitySchema: Schema,
+      type: Type,
       handleId: string): Promise<StorageKey> {
     // TODO: This is a naive and basic solution for picking the appropriate
     // storage key creator for the given capabilities. As more capabilities are
@@ -111,18 +112,20 @@ export class CapabilitiesResolver {
       console.warn(`Multiple storage key creators for handle '${handleId}' with capabilities ${capabilities.toString()}`);
     }
     const creator = this.creators.find(({protocol}) => protocol === [...protocols][0]);
-    const schemaHash = await entitySchema.hash();
+    const schemaHash = await type.getEntitySchema().hash();
     const containerKey = creator.create(new ContainerStorageKeyOptions(
-        this.options.arcId, schemaHash, entitySchema.name));
+        this.options.arcId, schemaHash, type.getEntitySchema().name));
+    const containerChildKey = containerKey.childKeyForHandle(handleId);
     if (!Flags.defaultReferenceMode) {
-      return containerKey.childKeyForHandle(handleId);
+      return containerChildKey;
+    }
+    if (type.isReference ||
+        (type.getContainedType() && type.getContainedType().isReference)) {
+      return containerChildKey;
     }
     const backingKey = creator.create(new BackingStorageKeyOptions(
-        this.options.arcId, schemaHash, entitySchema.name));
-    // TODO(b/152436411): Don't return reference-mode storage keys for
-    // Reference-typed handles.
-    return new ReferenceModeStorageKey(
-        backingKey, containerKey.childKeyForHandle(handleId));
+        this.options.arcId, schemaHash, type.getEntitySchema().name));
+    return new ReferenceModeStorageKey(backingKey, containerChildKey);
   }
 
   findStorageKeyProtocols(inCapabilities: Capabilities): Set<string> {
