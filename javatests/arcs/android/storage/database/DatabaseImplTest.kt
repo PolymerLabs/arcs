@@ -1219,6 +1219,118 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun removeExpiredEntities_entityInSingleton() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text), 
+                collections = mapOf("nums" to FieldType.Number)
+            )
+        )
+        val singletonKey = DummyStorageKey("singleton")
+        val backingKey = DummyStorageKey("backing")
+        val entityKey = DummyStorageKey("backing/entity")
+        val expiredEntityKey = DummyStorageKey("backing/expiredEntity")
+
+        // An expired entity.
+        val timeInPast = JvmTime.currentTimeMillis - 10000
+        val expiredEntity = DatabaseData.Entity(
+            RawEntity(
+                "expiredEntity",
+                mapOf("text" to "abc".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
+                11L,
+                timeInPast // expirationTimestamp, in the past.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        // A non-expired entity.
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity", 
+                mapOf("text" to "def".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
+                11L,
+                JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        // Singleton with expired entity.
+        var singleton = DatabaseData.Singleton(
+            reference = Reference("expiredEntity", backingKey, VersionMap("ref-to-remove" to 2)),
+            schema = schema,
+            databaseVersion = FIRST_VERSION_NUMBER,
+            versionMap = VERSION_MAP
+        )
+
+        database.insertOrUpdate(expiredEntityKey, expiredEntity)
+        database.insertOrUpdate(entityKey, entity)
+        database.insertOrUpdate(singletonKey, singleton)
+
+        // Add clients to verify updates.
+        val singletonClient = FakeDatabaseClient(singletonKey)
+        database.addClient(singletonClient)
+        val entityClient = FakeDatabaseClient(entityKey)
+        database.addClient(entityClient)
+        val expiredEntityClient = FakeDatabaseClient(expiredEntityKey)
+        database.addClient(expiredEntityClient)
+
+        database.removeExpiredEntities()
+        
+        val nullEntity = DatabaseData.Entity(
+            RawEntity(
+                "expiredEntity", 
+                mapOf("text" to null), 
+                mapOf("nums" to emptySet()),
+                11L,
+                timeInPast
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        // Check the expired entity fields have been cleared (only a tombstone is left).
+        assertThat(database.getEntity(expiredEntityKey, schema)).isEqualTo(nullEntity)
+
+        // Check the other entity has not been modified.
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+
+        // Check the singleton now contains null.
+        assertThat(database.getSingleton(singletonKey, schema))
+            .isEqualTo(singleton.copy(reference = null))
+
+        // Check the corrent clients were notified.
+        singletonClient.eventMutex.withLock {
+            assertThat(singletonClient.deletes).containsExactly(null)
+        }
+        expiredEntityClient.eventMutex.withLock {
+            assertThat(expiredEntityClient.deletes).containsExactly(null)
+        }
+        entityClient.eventMutex.withLock {
+            assertThat(entityClient.deletes).isEmpty()
+        }
+
+        // Change the singleton to point to the non expired entity.
+        singleton = singleton.copy(
+            reference = Reference("entity", backingKey, VersionMap("ref" to 1)),
+            databaseVersion = FIRST_VERSION_NUMBER+1
+        )
+        database.insertOrUpdate(singletonKey, singleton)
+
+        database.removeExpiredEntities()
+
+        // Nothing should change.
+        assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(singleton)
+        assertThat(database.getEntity(expiredEntityKey, schema)).isEqualTo(nullEntity)
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+    }
+
+    @Test
     fun removeExpiredEntities_twoEntitiesExpired() = runBlockingTest {
         val schema = newSchema(
             "hash",
