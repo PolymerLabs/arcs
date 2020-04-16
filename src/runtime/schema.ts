@@ -214,6 +214,14 @@ export class Schema {
     return false;
   }
 
+  hasQuery(): boolean {
+    if (!this.refinement) {
+      return false;
+    }
+    const qParams: Map<string, string> = this.refinement.getQueryParams();
+    return qParams.size > 0;
+  }
+
   crdtConstructor<S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>>() {
     const singletons = {};
     const collections = {};

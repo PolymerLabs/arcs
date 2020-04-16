@@ -20,6 +20,7 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
+import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 
 /** Base interface for all handle classes. */
@@ -50,6 +51,10 @@ typealias ReadWriteCollectionHandle<T> = ReadWriteCollectionHandle<T>
 /** A collection handle with read and query access. */
 typealias ReadQueryCollectionHandle<T, QueryArgs> =
     ReadQueryCollectionHandle<T, QueryArgs>
+
+/** A collection handle with write and query access. */
+typealias WriteQueryCollectionHandle<T, QueryArgs> =
+    WriteQueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with read, write and query access. */
 typealias ReadWriteQueryCollectionHandle<T, QueryArgs> =

@@ -12,7 +12,12 @@ particle TestParticle in 'arcs.android.host.AndroidSdkHandlesTest.TestParticle'
   readWriteHandle: reads writes Person
   readCollectionHandle: reads [Person]
   writeCollectionHandle: writes [Person]
+  // TODO: Add tests for deletion handle using query.
+  queryCollectionHandle: reads [Person {name, age, is_cool} [age > ?]]
   readWriteCollectionHandle: reads writes [Person]
+  readQueryCollectionHandle: reads [Person {name, age, is_cool} [age > ?]]
+  writeQueryCollectionHandle: writes [Person {name, age, is_cool} [age > ?]]
+  readWriteQueryCollectionHandle: reads writes [Person {name, age, is_cool} [age > ?]]
 
 recipe TestRecipe
   data: create
@@ -21,8 +26,10 @@ recipe TestRecipe
   TestParticle
     readHandle: reads data
     writeHandle: writes data
+    queryCollectionHandle: reads dataSet
     readWriteHandle: reads writes data
     writeCollectionHandle: writes dataSet
     readWriteCollectionHandle: reads dataSet
-
-
+    readQueryCollectionHandle: reads dataSet
+    writeQueryCollectionHandle: writes dataSet
+    readWriteQueryCollectionHandle: reads dataSet

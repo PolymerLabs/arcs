@@ -14,8 +14,8 @@ import arcs.sdk.wasm.*
 typealias Gold_Data_Ref = AbstractGold.GoldInternal1
 typealias Gold_Alias = AbstractGold.GoldInternal1
 typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
-typealias Gold_QCollection = AbstractGold.Gold_QCollection
 typealias Gold_Collection = AbstractGold.Gold_Collection
+typealias Gold_QCollection = AbstractGold.Gold_QCollection
 typealias Gold_Data = AbstractGold.Gold_Data
 
 abstract class AbstractGold : WasmParticleImpl() {
@@ -265,6 +265,75 @@ abstract class AbstractGold : WasmParticleImpl() {
     }
 
     @Suppress("UNCHECKED_CAST")
+    class Gold_Collection(num: Double = 0.0) : WasmEntity {
+
+        var num = num
+            get() = field
+            private set(_value) {
+                field = _value
+            }
+
+        override var entityId = ""
+
+        fun copy(num: Double = this.num) = Gold_Collection(num = num)
+
+
+        fun reset() {
+          num = 0.0
+        }
+
+        override fun encodeEntity(): NullTermByteArray {
+            val encoder = StringEncoder()
+            encoder.encode("", entityId)
+            num.let { encoder.encode("num:N", num) }
+            return encoder.toNullTermByteArray()
+        }
+
+        override fun toString() =
+            "Gold_Collection(num = $num)"
+
+        companion object : WasmEntitySpec<Gold_Collection> {
+
+
+            override fun decode(encoded: ByteArray): Gold_Collection? {
+                if (encoded.isEmpty()) return null
+
+                val decoder = StringDecoder(encoded)
+                val entityId = decoder.decodeText()
+                decoder.validate("|")
+
+                var num = 0.0
+                var i = 0
+                while (i < 1 && !decoder.done()) {
+                    val _name = decoder.upTo(':').toUtf8String()
+                    when (_name) {
+                        "num" -> {
+                        decoder.validate("N")
+                        num = decoder.decodeNum()
+                    }
+                        else -> {
+                            // Ignore unknown fields until type slicing is fully implemented.
+                            when (decoder.chomp(1).toUtf8String()) {
+                                "T", "U" -> decoder.decodeText()
+                                "N" -> decoder.decodeNum()
+                                "B" -> decoder.decodeBool()
+                            }
+                            i--
+                        }
+                    }
+                    decoder.validate("|")
+                    i++
+                }
+                val _rtn = Gold_Collection().copy(
+                    num = num
+                )
+               _rtn.entityId = entityId
+                return _rtn
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
     class Gold_QCollection(
         name: String = "",
         age: Double = 0.0,
@@ -430,75 +499,6 @@ abstract class AbstractGold : WasmParticleImpl() {
             birthDayMonth = birthDayMonth,
             birthDayDOM = birthDayDOM
 
-                )
-               _rtn.entityId = entityId
-                return _rtn
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    class Gold_Collection(num: Double = 0.0) : WasmEntity {
-
-        var num = num
-            get() = field
-            private set(_value) {
-                field = _value
-            }
-
-        override var entityId = ""
-
-        fun copy(num: Double = this.num) = Gold_Collection(num = num)
-
-
-        fun reset() {
-          num = 0.0
-        }
-
-        override fun encodeEntity(): NullTermByteArray {
-            val encoder = StringEncoder()
-            encoder.encode("", entityId)
-            num.let { encoder.encode("num:N", num) }
-            return encoder.toNullTermByteArray()
-        }
-
-        override fun toString() =
-            "Gold_Collection(num = $num)"
-
-        companion object : WasmEntitySpec<Gold_Collection> {
-
-
-            override fun decode(encoded: ByteArray): Gold_Collection? {
-                if (encoded.isEmpty()) return null
-
-                val decoder = StringDecoder(encoded)
-                val entityId = decoder.decodeText()
-                decoder.validate("|")
-
-                var num = 0.0
-                var i = 0
-                while (i < 1 && !decoder.done()) {
-                    val _name = decoder.upTo(':').toUtf8String()
-                    when (_name) {
-                        "num" -> {
-                        decoder.validate("N")
-                        num = decoder.decodeNum()
-                    }
-                        else -> {
-                            // Ignore unknown fields until type slicing is fully implemented.
-                            when (decoder.chomp(1).toUtf8String()) {
-                                "T", "U" -> decoder.decodeText()
-                                "N" -> decoder.decodeNum()
-                                "B" -> decoder.decodeBool()
-                            }
-                            i--
-                        }
-                    }
-                    decoder.validate("|")
-                    i++
-                }
-                val _rtn = Gold_Collection().copy(
-                    num = num
                 )
                _rtn.entityId = entityId
                 return _rtn

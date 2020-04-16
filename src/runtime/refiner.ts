@@ -22,9 +22,9 @@ export enum Primitive {
 }
 
 export enum AtLeastAsSpecific {
-  YES,
-  NO,
-  UNKNOWN
+  YES = 'YES',
+  NO = 'NO',
+  UNKNOWN = 'UNKNOWN'
 }
 
 // The variable name used for the query argument in generated Kotlin code.
@@ -121,14 +121,20 @@ export class Refinement {
     return this.expression.getTextPrimitives();
   }
 
-  // checks if a is at least as specific as b, returns null if can't be determined
+  // checks if a is at least as specific as b
   static isAtLeastAsSpecificAs(a: Refinement, b: Refinement): AtLeastAsSpecific {
     // Ensure there is a refinement to check with.
+    if (b == null) {
+      // All refinements are more specific than this.
+      return AtLeastAsSpecific.YES;
+    }
     a = a || new Refinement(new BooleanPrimitive(true));
-    b = b || new Refinement(new BooleanPrimitive(true));
     try {
       a.normalize();
       b.normalize();
+      if (a.toString() === b.toString()) { // Short cut until simple Multinomial equality works.
+        return AtLeastAsSpecific.YES;
+      }
       const texts = new Set<string>([...a.expression.getTextPrimitives(), ...b.expression.getTextPrimitives()]);
       const textToNum: Dictionary<number> = {};
       let idx = 0;

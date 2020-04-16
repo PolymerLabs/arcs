@@ -61,12 +61,12 @@ class HandleManagerCloseTest {
             updates++
         }
 
-        handleA.store(Person("e1", "p1", 1, true))
+        handleA.store(Person("e1", "p1", 1.0, true))
         assertThat(updates).isEqualTo(1)
 
         handleManagerB.close()
 
-        handleA.store(Person("e2", "p2", 2, true))
+        handleA.store(Person("e2", "p2", 2.0, true))
         assertThat(updates).isEqualTo(1)
     }
 
@@ -78,7 +78,7 @@ class HandleManagerCloseTest {
 
         handleManager.close()
 
-        val person = Person("1","p",1,true)
+        val person = Person("1","p",1.0,true)
 
         listOf(
             suspend { handle.store(person) },
@@ -100,7 +100,7 @@ class HandleManagerCloseTest {
 
         handleManager.close()
 
-        val person = Person("1","p",1,true)
+        val person = Person("1","p",1.0,true)
 
         listOf(
             suspend { handle.store(person) },
