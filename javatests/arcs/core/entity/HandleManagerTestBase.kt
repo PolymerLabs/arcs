@@ -310,50 +310,6 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    @Ignore("Fix when references are added in entity handles")
-    open fun singleton_referenceLiveness() = testRunner {
-        /*
-        val writeHandle = createWriteReferenceSingletonHandle()
-            as WriteSingletonHandle<Person>
-        val entity1Ref = writeHandle.createReference(entity1)
-        writeHandle.store(entity1Ref)
-
-        // Now read back from a different handle
-        val readbackHandle = readHandleManager.referenceSingletonHandle(singletonRefKey, schema)
-            as ReadSingletonHandle<Person>
-        val readBack = readbackHandle.fetch()!!
-        assertThat(readBack).isEqualTo(entity1Ref)
-
-        // Reference should be dead.
-        assertThat(readBack.isAlive(coroutineContext)).isFalse()
-        assertThat(readBack.isDead(coroutineContext)).isTrue()
-
-        // Now write the entity via a different handle
-        val entityWriteHandle = writeHandleManager.rawEntitySingletonHandle(singletonKey, schema, "entHandle")
-        entityWriteHandle.store(entity1)
-
-        // Reference should be alive.
-        assertThat(readBack.isAlive(coroutineContext)).isTrue()
-        assertThat(readBack.isDead(coroutineContext)).isFalse()
-
-        // Now dereference our read-back reference.
-        assertThat(readBack.dereference(coroutineContext)).isEqualTo(entity1)
-
-        val modEntity1 = entity1.copy(
-            singletons = entity1.singletons + ("name" to "Ben".toReferencable())
-        )
-        entityWriteHandle.store(modEntity1)
-
-        // Reference should still be alive.
-        assertThat(readBack.isAlive(coroutineContext)).isTrue()
-        assertThat(readBack.isDead(coroutineContext)).isFalse()
-
-        // Now dereference our read-back reference, should now be modEntity1
-        assertThat(readBack.dereference(coroutineContext)).isEqualTo(modEntity1)
-         */
-    }
-
-    @Test
     fun singleton_dereferenceEntity() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
             as WriteSingletonHandle<Person>
@@ -960,7 +916,7 @@ open class HandleManagerTestBase {
     ) = createHandle(
         HandleSpec(
             name,
-            HandleMode.ReadWrite,
+            HandleMode.ReadWriteQuery,
             HandleContainerType.Collection,
             Person,
             HandleDataType.Reference
