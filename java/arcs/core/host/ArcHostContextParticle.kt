@@ -166,7 +166,7 @@ class ArcHostContextParticle(
     }.toSet().associateBy({ it.first }, { it.second })
 
     /**
-     * Using instantiated particle to obtain [Schema] objects throught their
+     * Using instantiated particle to obtain [Schema] objects through their
      * associated [EntitySpec], reconstruct an associated [Type] object.
      */
     fun fromTag(arcId: String, particle: Particle, tag: String, handleName: String): Type {
