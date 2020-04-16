@@ -13,7 +13,9 @@ package arcs.core.storage
 
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
+import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
@@ -35,11 +37,14 @@ import org.junit.runners.JUnit4
 /** Tests for [CapabilitiesResolver]. */
 @RunWith(JUnit4::class)
 class CapabilitiesResolverTest {
-    private val thingSchema = Schema(
-        setOf(SchemaName("Thing")),
-        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        "42"
+    private val thingEntityType = EntityType(
+        Schema(
+            setOf(SchemaName("Thing")),
+            SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+            "42"
+        )
     )
+    private val thingReferenceType = ReferenceType(thingEntityType)
     private val handleId = "h0"
 
     @Before
@@ -70,18 +75,28 @@ class CapabilitiesResolverTest {
         assertThat(resolver.findStorageKeyProtocols(Capabilities.TiedToRuntime)).isEmpty()
         assertThat(resolver.findStorageKeyProtocols(Capabilities.Persistent)).isEmpty()
         verifyStorageKey(
-            resolver.createStorageKey(Capabilities.TiedToArc, thingSchema, handleId),
+            resolver.createStorageKey(Capabilities.TiedToArc, thingEntityType, handleId),
             VolatileStorageKey::class.java
         )
+        assertThat(resolver.createStorageKey(Capabilities.TiedToArc, thingReferenceType, handleId))
+            .isInstanceOf(VolatileStorageKey::class.java)
         verifyStorageKey(
-            resolver.createStorageKey(Capabilities.Empty, thingSchema, handleId),
+            resolver.createStorageKey(Capabilities.Empty, thingEntityType, handleId),
             VolatileStorageKey::class.java
         )
+        assertThat(resolver.createStorageKey(Capabilities.Empty, thingReferenceType, handleId))
+            .isInstanceOf(VolatileStorageKey::class.java)
         assertThrows(IllegalArgumentException::class) {
-            resolver.createStorageKey(Capabilities.TiedToRuntime, thingSchema, handleId)
+            resolver.createStorageKey(Capabilities.TiedToRuntime, thingEntityType, handleId)
         }
         assertThrows(IllegalArgumentException::class) {
-            resolver.createStorageKey(Capabilities.Persistent, thingSchema, handleId)
+            resolver.createStorageKey(Capabilities.TiedToRuntime, thingReferenceType, handleId)
+        }
+        assertThrows(IllegalArgumentException::class) {
+            resolver.createStorageKey(Capabilities.Persistent, thingEntityType, handleId)
+        }
+        assertThrows(IllegalArgumentException::class) {
+            resolver.createStorageKey(Capabilities.Persistent, thingReferenceType, handleId)
         }
         assertThrows(IllegalArgumentException::class) {
             resolver.createStorageKey(
@@ -89,7 +104,17 @@ class CapabilitiesResolverTest {
                     Capabilities.Capability.TiedToArc,
                     Capabilities.Capability.Persistent
                 )),
-                thingSchema,
+                thingEntityType,
+                handleId
+            )
+        }
+        assertThrows(IllegalArgumentException::class) {
+            resolver.createStorageKey(
+                Capabilities(setOf(
+                    Capabilities.Capability.TiedToArc,
+                    Capabilities.Capability.Persistent
+                )),
+                thingReferenceType,
                 handleId
             )
         }
@@ -107,15 +132,23 @@ class CapabilitiesResolverTest {
             ))
         )
         assertThrows(IllegalArgumentException::class) {
-            resolver.createStorageKey(Capabilities.TiedToArc, thingSchema, handleId)
+            resolver.createStorageKey(Capabilities.TiedToArc, thingEntityType, handleId)
         }
         assertThrows(IllegalArgumentException::class) {
-            resolver.createStorageKey(Capabilities.Empty, thingSchema, handleId)
+            resolver.createStorageKey(Capabilities.TiedToArc, thingReferenceType, handleId)
+        }
+        assertThrows(IllegalArgumentException::class) {
+            resolver.createStorageKey(Capabilities.Empty, thingEntityType, handleId)
+        }
+        assertThrows(IllegalArgumentException::class) {
+            resolver.createStorageKey(Capabilities.Empty, thingReferenceType, handleId)
         }
         verifyStorageKey(
-            resolver.createStorageKey(Capabilities.TiedToRuntime, thingSchema, handleId),
+            resolver.createStorageKey(Capabilities.TiedToRuntime, thingEntityType, handleId),
             RamDiskStorageKey::class.java
         )
+        assertThat(resolver.createStorageKey(Capabilities.TiedToRuntime, thingReferenceType, handleId))
+            .isInstanceOf(RamDiskStorageKey::class.java)
     }
 
     @Test
@@ -135,49 +168,78 @@ class CapabilitiesResolverTest {
         assertThat(resolver1.findStorageKeyProtocols(Capabilities.Persistent))
             .containsExactly(DATABASE_DRIVER_PROTOCOL)
         verifyStorageKey(
-            resolver1.createStorageKey(Capabilities.TiedToArc, thingSchema, handleId),
+            resolver1.createStorageKey(Capabilities.TiedToArc, thingEntityType, handleId),
             VolatileStorageKey::class.java
         )
+        assertThat(resolver1.createStorageKey(Capabilities.TiedToArc, thingReferenceType, handleId))
+            .isInstanceOf(VolatileStorageKey::class.java)
         verifyStorageKey(
-            resolver1.createStorageKey(Capabilities.Empty, thingSchema, handleId),
+            resolver1.createStorageKey(Capabilities.Empty, thingEntityType, handleId),
             VolatileStorageKey::class.java
         )
+        assertThat(resolver1.createStorageKey(Capabilities.Empty, thingReferenceType, handleId))
+            .isInstanceOf(VolatileStorageKey::class.java)
         val ramdiskKey =
-            resolver1.createStorageKey(Capabilities.TiedToRuntime, thingSchema, handleId)
+            resolver1.createStorageKey(Capabilities.TiedToRuntime, thingEntityType, handleId)
         verifyStorageKey(ramdiskKey, RamDiskStorageKey::class.java)
         assertThat(ramdiskKey).isEqualTo(
             resolver1.createStorageKey(
                 Capabilities.TiedToRuntime,
-                thingSchema,
+                thingEntityType,
+                handleId
+            )
+        )
+        val ramdiskRefKey =
+            resolver1.createStorageKey(Capabilities.TiedToRuntime, thingReferenceType, handleId)
+        assertThat(ramdiskRefKey).isInstanceOf(RamDiskStorageKey::class.java)
+        assertThat(ramdiskRefKey).isEqualTo(
+            resolver1.createStorageKey(
+                Capabilities.TiedToRuntime,
+                thingReferenceType,
                 handleId
             )
         )
 
         val persistentKey =
-            resolver1.createStorageKey(Capabilities.Persistent, thingSchema, handleId)
+            resolver1.createStorageKey(Capabilities.Persistent, thingEntityType, handleId)
         verifyStorageKey(persistentKey, DatabaseStorageKey::class.java)
         assertThat(persistentKey).isEqualTo(
             resolver1.createStorageKey(
                 Capabilities.Persistent,
-                thingSchema,
+                thingEntityType,
                 handleId
             )
+        )
+        val persistentRefKey =
+            resolver1.createStorageKey(Capabilities.Persistent, thingReferenceType, handleId)
+        assertThat(persistentRefKey).isInstanceOf(DatabaseStorageKey::class.java)
+        assertThat(persistentRefKey).isEqualTo(
+            resolver1.createStorageKey(Capabilities.Persistent, thingReferenceType, handleId)
         )
 
         CapabilitiesResolver.reset()
         val resolver2 = CapabilitiesResolver(options)
         val volatileKey =
-            resolver2.createStorageKey(Capabilities.TiedToArc, thingSchema, handleId)
+            resolver2.createStorageKey(Capabilities.TiedToArc, thingEntityType, handleId)
         verifyStorageKey(volatileKey, VolatileStorageKey::class.java)
         assertThat(volatileKey).isEqualTo(
             resolver2.createStorageKey(
                 Capabilities.TiedToArc,
-                thingSchema,
+                thingEntityType,
                 handleId
             )
         )
+        val volatileRefKey =
+            resolver2.createStorageKey(Capabilities.TiedToArc, thingReferenceType, handleId)
+        assertThat(volatileRefKey).isInstanceOf(VolatileStorageKey::class.java)
+        assertThat(volatileRefKey).isEqualTo(
+            resolver2.createStorageKey(Capabilities.TiedToArc, thingReferenceType, handleId)
+        )
         assertThrows(IllegalArgumentException::class) {
-            resolver2.createStorageKey(Capabilities.TiedToRuntime, thingSchema, handleId)
+            resolver2.createStorageKey(Capabilities.TiedToRuntime, thingEntityType, handleId)
+        }
+        assertThrows(IllegalArgumentException::class) {
+            resolver2.createStorageKey(Capabilities.TiedToRuntime, thingReferenceType, handleId)
         }
     }
 

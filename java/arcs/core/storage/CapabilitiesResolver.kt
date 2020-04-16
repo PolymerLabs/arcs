@@ -13,8 +13,13 @@ package arcs.core.storage
 
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
+import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
+import arcs.core.data.SingletonType
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 
 /**
@@ -74,7 +79,7 @@ class CapabilitiesResolver(
     /** Creates and returns a [StorageKey] corresponding to the given [Capabilities]. */
     fun createStorageKey(
         capabilities: Capabilities,
-        entitySchema: Schema,
+        type: Type,
         handleId: String
     ): StorageKey? {
         // TODO: This is a naive and basic solution for picking the appropriate
@@ -88,9 +93,31 @@ class CapabilitiesResolver(
             log.warning { "Multiple storage key creators for $capabilities" }
         }
         val create = creators.first().create
-        val backingKey = create(BackingStorageKeyOptions(options.arcId, entitySchema))
-        val storageKey = create(ContainerStorageKeyOptions(options.arcId, entitySchema))
-        return ReferenceModeStorageKey(backingKey, storageKey.childKeyForHandle(handleId))
+        val storageKey = create(ContainerStorageKeyOptions(options.arcId, toEntitySchema(type)))
+        val childKey = storageKey.childKeyForHandle(handleId)
+        if (type is ReferenceType<*>) {
+            return childKey
+        }
+        val backingKey = create(BackingStorageKeyOptions(options.arcId, toEntitySchema(type)))
+        return ReferenceModeStorageKey(backingKey, childKey)
+    }
+
+    /**
+     * Retrieves [Schema] from the given [Type], if possible.
+     * TODO: declare a common interface.
+     */
+    private fun toEntitySchema(type: Type): Schema {
+        when (type) {
+            is SingletonType<*> -> if (type.containedType is EntityType) {
+                return (type.containedType as EntityType).entitySchema
+            }
+            is CollectionType<*> -> if (type.collectionType is EntityType) {
+                return (type.collectionType as EntityType).entitySchema
+            }
+            is ReferenceType<*> -> return type.entitySchema!!
+            is EntityType -> return type.entitySchema
+        }
+        throw IllegalArgumentException("Can't retrieve entitySchema of unknown type $type")
     }
 
     /** Returns list of protocols corresponding to the given [Capabilities]. */
