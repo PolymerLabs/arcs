@@ -1,0 +1,5 @@
+meta
+  namespace: arcs.core.data.testdata.gen
+
+schema Thing
+  name: Text

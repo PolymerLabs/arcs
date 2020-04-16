@@ -16,6 +16,12 @@ filegroup(
 )
 
 arcs_kt_gen(
+    name = "import_example_gen",
+    srcs = ["ImportExample.arcs"],
+    deps = ["Schemas.arcs"],
+)
+
+arcs_kt_gen(
     name = "example_gen",
     srcs = ["WriterReaderExample.arcs"],
 )
