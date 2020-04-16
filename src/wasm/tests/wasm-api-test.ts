@@ -73,7 +73,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     const isKotlin = testLabel === 'Kotlin';
     const isCpp = testLabel === 'C++';
 
-    this.timeout(4000);
+    this.timeout(15000);
 
     let loader;
     let manifestPromise;

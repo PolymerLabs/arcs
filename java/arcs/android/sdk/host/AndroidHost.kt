@@ -17,6 +17,7 @@ import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmHost
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
@@ -46,4 +47,12 @@ abstract class AndroidHost(
     override fun maybeCancelResurrection(context: ArcHostContext) {
         resurrectionHelper.cancelResurrectionRequest(context.arcId)
     }
+
+    /*
+     * Android uses [StorageService] which is a persistent process, so we don't share
+     * [ActiveStore] between [EntityHandleManager]s, but use a new [StoreManager] for each
+     * new arc. Otherwise, when closing an [ActiveStore] when one Arc is shutdown leads to the
+     * handles being unusable in other arcs that are still arctive.
+     */
+    override val stores: StoreManager get() = StoreManager()
 }

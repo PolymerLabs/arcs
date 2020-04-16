@@ -111,7 +111,7 @@ export class StorageKeyRecipeResolver {
       }
 
       const storageKey = await resolver.createStorageKey(
-        createHandle.capabilities, createHandle.type.getEntitySchema(), createHandle.id);
+        createHandle.capabilities, createHandle.type, createHandle.id);
       const store = new Store(createHandle.type, {
         storageKey,
         exists: Exists.MayExist,

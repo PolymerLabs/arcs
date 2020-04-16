@@ -85,4 +85,35 @@ class TypeProtoDecodersTest {
             else -> fail("TypeProto should have been decoded to [EntityType].")
         }
     }
+
+    @Test
+    fun decodesCollectionTypeProtoAsCollectionType() {
+        val collectionTypeProto = """
+        collection {
+          collection_type {
+            entity {
+              schema {
+                names: "Person"
+                fields: {
+                  key: "name"
+                  value: { primitive: TEXT }
+                }
+              }
+            }
+          }
+        }
+        """.trimIndent()
+        val collectionType = parseTypeProtoText(collectionTypeProto).decode()
+        val expectedSchema = Schema(
+            names = setOf(SchemaName("Person")),
+            fields = SchemaFields(singletons=mapOf("name" to FieldType.Text), collections=mapOf()),
+            hash = ""
+        )
+        when (collectionType) {
+            is CollectionType<*> -> assertThat(collectionType.collectionType).isEqualTo(
+                EntityType(expectedSchema)
+            )
+            else -> fail("TypeProto should have been decoded to [EntityType].")
+        }
+    }
 }
