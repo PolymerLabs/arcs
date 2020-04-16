@@ -96,6 +96,7 @@ class ArcsTest {
     }
 
     @Test
+    @Ignore("b/154181519")
     fun testSingleton_persistentLocalActivity() {
         // Configure handle options.
         clickOnTextIfPresent(SINGLETON_BTN_TEXT)
