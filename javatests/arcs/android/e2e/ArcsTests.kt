@@ -96,7 +96,7 @@ class ArcsTest {
     }
 
     @Test
-    @Ignore("b/154181519")
+    @Ignore("Broken: b/154181519")
     fun testSingleton_persistentLocalActivity() {
         // Configure handle options.
         clickOnTextIfPresent(SINGLETON_BTN_TEXT)
@@ -189,12 +189,14 @@ class ArcsTest {
     }
 
     @Test
+    @Ignore("Flaky: b/154268012")
     fun testAllocator_readWrite() {
         clickOnTextIfPresent(READ_WRITE_TEST_BTN_TEXT)
         waitForSequencedTextsToAppear(READ_WRITE_TEST_RESULT_TEXT, ARC_HOST_IDLE_TEXT)
     }
 
     @Test
+    @Ignore("Flaky: b/154268012")
     fun testAllocator_persistentReadWrite() {
         clickOnTextIfPresent(PERSISTENT_READ_WRITE_TEST_BTN_TEXT)
         waitForSequencedTextsToAppear(READ_WRITE_TEST_RESULT_TEXT, ARC_HOST_IDLE_TEXT)
