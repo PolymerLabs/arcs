@@ -160,7 +160,17 @@ export abstract class Schema2Base {
 
   abstract generateTestHarness(particle: ParticleSpec): string;
 
-  abstract generateEntityClassName(node: SchemaNode, i: number): string;
+  generateEntityClassName(node: SchemaNode, i: number = null) {
+    if (i === null) {
+      return `${node.particleName}_${node.connections[0]}`;
+    }
+    return `${node.particleName}Internal${i}`;
+  }
 
-  abstract generateAliasNames(node: SchemaNode): string[];
+  generateAliasNames(node: SchemaNode): string[] {
+    if (node.connections.length === 1) {
+      return [];
+    }
+    return node.connections.map((s: string) =>`${node.particleName}_${s}`);
+  }
 }

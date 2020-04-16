@@ -35,21 +35,11 @@ function convert(graph: SchemaGraph) {
 }
 
 function dummyNameGenerator(node: SchemaNode, i: number) {
-  if (i === -1) {
-    return `${node.particleName}_${node.connections[0]}`;
-  }
-  return `${node.particleName}Internal${i}`;
+  return `${node.particleName}_${node.connections[0]}`;
 }
 
 function dummyAliasGenerator(node: SchemaNode): string[] {
-  const arr: string[] = [];
-  if (node.connections.length === 1) {
-    return arr;
-  }
-  for (const connection of node.connections) {
-    arr.push(`${node.particleName}_${connection}`);
-  }
-  return arr;
+  return node.connections.map((s: string) =>`${node.particleName}_${s}`);
 }
 
 describe('schema2graph', () => {
@@ -76,7 +66,11 @@ describe('schema2graph', () => {
       {name: 'L_H2', parents: 'L_H1', children: 'L_H3'},
       {name: 'L_H3', parents: 'L_H2', children: ''},
     ]);
-    assert.isEmpty(res.aliases);
+    assert.deepStrictEqual(res.aliases, {
+      'L_H1': ['L_H1'],
+      'L_H2': ['L_H2'],
+      'L_H3': ['L_H3']
+    });
   });
 
   it('diamond graph', async () => {
@@ -94,7 +88,12 @@ describe('schema2graph', () => {
       {name: 'D_H3', parents: 'D_H1',       children: 'D_H4'},
       {name: 'D_H4', parents: 'D_H2, D_H3', children: ''},
     ]);
-    assert.isEmpty(res.aliases);
+    assert.deepStrictEqual(res.aliases, {
+      'D_H1': ['D_H1'],
+      'D_H2': ['D_H2'],
+      'D_H3': ['D_H3'],
+      'D_H4': ['D_H4']
+    });
   });
 
   it('aliased schemas', async () => {
@@ -109,14 +108,16 @@ describe('schema2graph', () => {
     `);
     const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'A_H1',       parents: '',                 children: 'AInternal1, A_H3'},
-      {name: 'AInternal1', parents: 'A_H1',             children: 'AInternal2'},
-      {name: 'A_H3',       parents: 'A_H1',             children: 'AInternal2'},
-      {name: 'AInternal2', parents: 'AInternal1, A_H3', children: ''},
+      {name: 'A_H1',       parents: '',                 children: 'A_H2, A_H3'},
+      {name: 'A_H2', parents: 'A_H1',             children: 'A_H4'},
+      {name: 'A_H3',       parents: 'A_H1',             children: 'A_H4'},
+      {name: 'A_H4', parents: 'A_H2, A_H3', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'AInternal1': ['A_D2', 'A_H2'],
-      'AInternal2': ['A_D4', 'A_H4'],
+      'A_H1': ['A_H1'],
+      'A_H2': ['A_D2', 'A_H2'],
+      'A_H3': ['A_H3'],
+      'A_H4': ['A_D4', 'A_H4'],
     });
   });
 
@@ -149,7 +150,18 @@ describe('schema2graph', () => {
       {name: 'S_P4', parents: 'S_P2',       children: ''},
       {name: 'S_V9', parents: 'S_V7, S_V8', children: ''},
     ]);
-    assert.isEmpty(res.aliases);
+    assert.deepStrictEqual(res.aliases, {
+      'S_P0': ['S_P0'],
+      'S_V5': ['S_V5'],
+      'S_V6': ['S_V6'],
+      'S_P1': ['S_P1'],
+      'S_P2': ['S_P2'],
+      'S_V7': ['S_V7'],
+      'S_V8': ['S_V8'],
+      'S_P3': ['S_P3'],
+      'S_P4': ['S_P4'],
+      'S_V9': ['S_V9']
+    });
   });
 
   it('mesh graph', async () => {
@@ -175,7 +187,13 @@ describe('schema2graph', () => {
       {name: 'M_H4', parents: 'M_H1, M_H2', children: 'M_H5'},
       {name: 'M_H5', parents: 'M_H3, M_H4', children: ''},
     ]);
-    assert.isEmpty(res.aliases);
+    assert.deepStrictEqual(res.aliases, {
+      'M_H1': ['M_H1'],
+      'M_H2': ['M_H2'],
+      'M_H3': ['M_H3'],
+      'M_H4': ['M_H4'],
+      'M_H5': ['M_H5']
+    });
   });
 
   it('jump graph', async () => {
@@ -205,7 +223,13 @@ describe('schema2graph', () => {
       {name: 'J_H4', parents: 'J_H3',       children: 'J_H5'},
       {name: 'J_H5', parents: 'J_H2, J_H4', children: ''},
     ]);
-    assert.isEmpty(res.aliases);
+    assert.deepStrictEqual(res.aliases, {
+      'J_H1': ['J_H1'],
+      'J_H2': ['J_H2'],
+      'J_H3': ['J_H3'],
+      'J_H4': ['J_H4'],
+      'J_H5': ['J_H5']
+    });
   });
 
   it('unconnected graph with aliased schema', async () => {
@@ -222,12 +246,15 @@ describe('schema2graph', () => {
     const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'Test_Name',        parents: '', children: ''},
-      {name: 'TestInternal1',    parents: '', children: ''},
+      {name: 'Test_Age',         parents: '', children: ''},
       {name: 'Test_Moniker',     parents: '', children: ''},
       {name: 'Test_MainAddress', parents: '', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'TestInternal1': ['Test_Age', 'Test_Oldness']
+      'Test_Name': ['Test_Name'],
+      'Test_Age': ['Test_Age', 'Test_Oldness'],
+      'Test_Moniker': ['Test_Moniker'],
+      'Test_MainAddress': ['Test_MainAddress']
     });
   });
 
@@ -247,7 +274,13 @@ describe('schema2graph', () => {
       {name: 'W_H3',   parents: 'W_H2', children: ''},
       {name: 'W_H4',   parents: 'W_H2', children: ''},
     ]);
-    assert.isEmpty(res.aliases);
+    assert.deepStrictEqual(res.aliases, {
+      'W_H1': ['W_H1'],
+      'W_H4_R': ['W_H4_R'],
+      'W_H2': ['W_H2'],
+      'W_H3': ['W_H3'],
+      'W_H4': ['W_H4']
+    });
   });
 
   it('complex graph', async () => {
@@ -287,7 +320,17 @@ describe('schema2graph', () => {
       {name: 'X_H8', parents: 'X_H6',       children: ''},
       {name: 'X_H9', parents: 'X_H7',       children: ''},
     ]);
-    assert.isEmpty(res.aliases);
+    assert.deepStrictEqual(res.aliases, {
+      'X_H1': ['X_H1'],
+      'X_H2': ['X_H2'],
+      'X_H3': ['X_H3'],
+      'X_H4': ['X_H4'],
+      'X_H5': ['X_H5'],
+      'X_H6': ['X_H6'],
+      'X_H7': ['X_H7'],
+      'X_H8': ['X_H8'],
+      'X_H9': ['X_H9']
+    });
   });
 
   it('nested schemas use camel-cased path names', async () => {
@@ -299,11 +342,12 @@ describe('schema2graph', () => {
     const graph = new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator);
     const res = convert(graph);
     assert.deepStrictEqual(res.nodes.map(x => x.name), [
-      'NamesInternal2', 'NamesInternal1', 'Names_Data'
+      'Names_Data_Outer_Inner', 'Names_Data_Outer', 'Names_Data'
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'NamesInternal1': ['Names_Data_Outer', 'Names_Dupe'],
-      'NamesInternal2': ['Names_Data_Outer_Inner', 'Names_Dupe_Inner'],
+      'Names_Data': ['Names_Data'],
+      'Names_Data_Outer': ['Names_Data_Outer', 'Names_Dupe'],
+      'Names_Data_Outer_Inner': ['Names_Data_Outer_Inner', 'Names_Dupe_Inner'],
     });
   });
 
@@ -318,13 +362,16 @@ describe('schema2graph', () => {
     `);
     const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'N_H1',       parents: '',     children: 'N_H2'},
-      {name: 'NInternal1', parents: '',     children: ''},
-      {name: 'N_H2',       parents: 'N_H1', children: 'N_H3'},
-      {name: 'N_H3',       parents: 'N_H2', children: ''},
+      {name: 'N_H1',   parents: '',     children: 'N_H2'},
+      {name: 'N_H2_R', parents: '',     children: ''},
+      {name: 'N_H2',   parents: 'N_H1', children: 'N_H3'},
+      {name: 'N_H3',   parents: 'N_H2', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'NInternal1': ['N_H2_R', 'N_H3_R']
+      'N_H1': ['N_H1'],
+      'N_H2_R': ['N_H2_R', 'N_H3_R'],
+      'N_H2': ['N_H2'],
+      'N_H3': ['N_H3']
     });
   });
 
@@ -342,16 +389,18 @@ describe('schema2graph', () => {
     `);
     const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'QInternal3', parents: '', children: ''},
+      {name: 'Q_H1_R_T_U', parents: '', children: ''},
       {name: 'Q_H3',       parents: '', children: ''},
-      {name: 'QInternal2', parents: '', children: ''},
-      {name: 'QInternal1', parents: '', children: ''},
+      {name: 'Q_H1_R_T',   parents: '', children: ''},
+      {name: 'Q_H1_R',     parents: '', children: ''},
       {name: 'Q_H1',       parents: '', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'QInternal1': ['Q_H1_R', 'Q_H1_S'],
-      'QInternal2': ['Q_H1_R_T', 'Q_H1_S_T'],
-      'QInternal3': ['Q_H1_R_T_U', 'Q_H1_S_T_U', 'Q_H2', 'Q_H3_V'],
+      'Q_H1_R_T_U': ['Q_H1_R_T_U', 'Q_H1_S_T_U', 'Q_H2', 'Q_H3_V'],
+      'Q_H3': ['Q_H3'],
+      'Q_H1_R_T': ['Q_H1_R_T', 'Q_H1_S_T'],
+      'Q_H1_R': ['Q_H1_R', 'Q_H1_S'],
+      'Q_H1': ['Q_H1']
     });
   });
 
@@ -375,7 +424,13 @@ describe('schema2graph', () => {
       {name: 'I_H3',   parents: '',               children: ''},
       {name: 'I_H2',   parents: 'I_H3_R, I_H3_S', children: ''},
     ]);
-    assert.isEmpty(res.aliases);
+    assert.deepStrictEqual(res.aliases, {
+      'I_H1': ['I_H1'],
+      'I_H3_R': ['I_H3_R'],
+      'I_H3_S': ['I_H3_S'],
+      'I_H3': ['I_H3'],
+      'I_H2': ['I_H2']
+    });
   });
 
   it('deeply nested schemas', async () => {
@@ -389,19 +444,24 @@ describe('schema2graph', () => {
     `);
     const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'YInternal1', parents: '',                       children: 'Y_H2, Y_H4'},
-      {name: 'YInternal3', parents: '',                       children: 'Y_H4'},
-      {name: 'Y_H1',       parents: '',                       children: ''},
-      {name: 'Y_H2',       parents: 'YInternal1',             children: ''},
-      {name: 'Y_H4',       parents: 'YInternal1, YInternal3', children: ''},
-      {name: 'YInternal2', parents: '',                       children: ''},
-      {name: 'Y_H3_T',     parents: '',                       children: ''},
-      {name: 'Y_H3',       parents: '',                       children: ''},
+      {name: 'Y_H1_R',     parents: '',                   children: 'Y_H2, Y_H4'},
+      {name: 'Y_H3_T_U_V', parents: '',                   children: 'Y_H4'},
+      {name: 'Y_H1',       parents: '',                   children: ''},
+      {name: 'Y_H2',       parents: 'Y_H1_R',             children: ''},
+      {name: 'Y_H4',       parents: 'Y_H1_R, Y_H3_T_U_V', children: ''},
+      {name: 'Y_H3_T_U',   parents: '',                   children: ''},
+      {name: 'Y_H3_T',     parents: '',                   children: ''},
+      {name: 'Y_H3',       parents: '',                   children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'YInternal1': ['Y_H1_R', 'Y_H2_S'],
-      'YInternal2': ['Y_H3_T_U', 'Y_H5'],
-      'YInternal3': ['Y_H3_T_U_V', 'Y_H5_V'],
+      'Y_H1_R': ['Y_H1_R', 'Y_H2_S'],
+      'Y_H3_T_U_V': ['Y_H3_T_U_V', 'Y_H5_V'],
+      'Y_H1': ['Y_H1'],
+      'Y_H2': ['Y_H2'],
+      'Y_H4': ['Y_H4'],
+      'Y_H3_T_U': ['Y_H3_T_U', 'Y_H5'],
+      'Y_H3_T': ['Y_H3_T'],
+      'Y_H3': ['Y_H3']
     });
   });
 
@@ -421,12 +481,15 @@ describe('schema2graph', () => {
     const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
       {name: 'V_H1',       parents: '',     children: 'V_H2, V_H3'},
-      {name: 'V_H3',       parents: 'V_H1', children: 'VInternal1'},
-      {name: 'VInternal1', parents: 'V_H3', children: ''},
+      {name: 'V_H3',       parents: 'V_H1', children: 'V_H2_R'},
+      {name: 'V_H2_R',     parents: 'V_H3', children: ''},
       {name: 'V_H2',       parents: 'V_H1', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'VInternal1': ['V_H2_R', 'V_H4']
+      'V_H1': ['V_H1'],
+      'V_H3': ['V_H3'],
+      'V_H2_R': ['V_H2_R', 'V_H4'],
+      'V_H2': ['V_H2']
     });
   });
 
@@ -453,13 +516,13 @@ describe('schema2graph', () => {
     `);
     const res = convert(new SchemaGraph(manifest.particles[0], dummyNameGenerator, dummyAliasGenerator));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'RInternal1', parents: '',           children: 'R_H2_S, R_H4_V'},
+      {name: 'R_H1_R',     parents: '',           children: 'R_H2_S, R_H4_V'},
       {name: 'R_K1_I',     parents: '',           children: 'R_K2_J'},
       {name: 'R_H3_T',     parents: '',           children: ''},
       {name: 'R_H3_U',     parents: '',           children: ''},
       {name: 'R_H1',       parents: '',           children: 'R_H3, R_H4'},
-      {name: 'R_H2_S',     parents: 'RInternal1', children: ''},
-      {name: 'R_H4_V',     parents: 'RInternal1', children: ''},
+      {name: 'R_H2_S',     parents: 'R_H1_R',     children: ''},
+      {name: 'R_H4_V',     parents: 'R_H1_R',     children: ''},
       {name: 'R_H2',       parents: '',           children: ''},
       {name: 'R_K1',       parents: '',           children: ''},
       {name: 'R_K2_J',     parents: 'R_K1_I',     children: ''},
@@ -468,7 +531,19 @@ describe('schema2graph', () => {
       {name: 'R_H4',       parents: 'R_H1',       children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'RInternal1': ['R_H1_R', 'R_H3_R', 'R_H4_R']
+      'R_H1_R': ['R_H1_R', 'R_H3_R', 'R_H4_R'],
+      'R_K1_I': ['R_K1_I'],
+      'R_H3_T': ['R_H3_T'],
+      'R_H3_U': ['R_H3_U'],
+      'R_H1': ['R_H1'],
+      'R_H2_S': ['R_H2_S'],
+      'R_H4_V': ['R_H4_V'],
+      'R_H2': ['R_H2'],
+      'R_K1': ['R_K1'],
+      'R_K2_J': ['R_K2_J'],
+      'R_K2': ['R_K2'],
+      'R_H3': ['R_H3'],
+      'R_H4': ['R_H4']
     });
   });
 });

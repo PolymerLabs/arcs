@@ -136,19 +136,15 @@ ${imports.join('\n')}
     return new KotlinGenerator(node, this.opts);
   }
 
-  generateEntityClassName(node: SchemaNode, i: number) {
-    if (i === -1) {
+  generateEntityClassName(node: SchemaNode, i: number = null) {
+    if (i === null) {
       return entityTypeName(node.particleName, node.connections[0]);
     }
     return `${node.particleName}Internal${i}`;
   }
 
   generateAliasNames(node: SchemaNode): string[] {
-    const arr: string[] = [];
-    for (const connection of node.connections) {
-      arr.push(`${node.particleName}_${connection}`);
-    }
-    return arr;
+    return node.connections.map((s: string) =>`${node.particleName}_${s}`);
   }
 
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
@@ -482,7 +478,7 @@ ${lines}
     return `\
 
     ${classDef}${constructorArguments}${classInterface}
-    
+
         ${withFields(`${this.fieldVals.join('\n        ')}`)}
 
         ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {

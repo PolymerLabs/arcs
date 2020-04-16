@@ -21,7 +21,7 @@ export class SchemaNode {
   name: string;
   aliases: string[] = [];
   particleName: string;
-  connections: string[] =[];
+  connections: string[] = [];
 
   // All schemas that can be sliced to this one.
   descendants = new Set<SchemaNode>();
@@ -54,16 +54,11 @@ export class SchemaGraph {
   nodes: SchemaNode[] = [];
   startNodes: SchemaNode[];
   internalClassIndex = 0;
-  nameGenerator: (node: SchemaNode, i: number)  => string;
-  aliasGenerator: (node: SchemaNode) => string[];
 
   constructor(
     readonly particleSpec: ParticleSpec,
-    nameGenerator: (node: SchemaNode, i: number)  => string,
-    aliasGenerator: (node: SchemaNode)  => string[]
-    ) {
-    this.nameGenerator = nameGenerator;
-    this.aliasGenerator = aliasGenerator;
+    private nameGenerator: (node: SchemaNode, i?: number) => string,
+    private aliasGenerator: (node: SchemaNode) => string[]) {
     // First pass to establish a node for each unique schema, with the descendants field populated.
     for (const connection of this.particleSpec.connections) {
       const schema = connection.type.getEntitySchema();
@@ -133,7 +128,7 @@ export class SchemaGraph {
     // If this node only has one alias, use that for the class name.
     // Otherwise generate an internal name and create aliases for it.
     if (node.connections.length === 1) {
-      node.name = this.nameGenerator(node, -1);
+      node.name = this.nameGenerator(node);
       node.aliases = this.aliasGenerator(node);
     } else {
       node.name = this.nameGenerator(node, ++this.internalClassIndex);//`${this.particleSpec.name}Internal${++this.internalClassIndex}`;
