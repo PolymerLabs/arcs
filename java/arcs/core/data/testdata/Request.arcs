@@ -1,0 +1,29 @@
+// Big example for recipe2plan generation.
+
+meta
+  namespace: arcs.core.data.testdata.gen
+
+import './Schemas.arcs'
+
+particle RequestProvider
+  request: writes SentimentRequest {cohortId: Number}
+
+particle ResponseCalculator
+  request: reads SentimentRequest {cohortId: Number}
+  sentimentPerCohort: reads OverallSentiment {sentimentCohortBreakdown: [Number]}
+  response: writes SentimentResponse {sentimentValue: Number}
+
+// Example: Ephemeral arc mapping data from long running arc.
+recipe RequestHandler
+  // Example: Mapping through type alone; mapping a singleton.
+  sentimentSummary: map 'events-summary'
+  // Example: Handle created without capabilities in an ephemeral arc.
+  request: create
+  // Example: Handle created with capabilities in an ephemeral arc.
+  response: create tied-to-arc
+  RequestProvider
+    request: writes request
+  ResponseCalculator
+    request: reads request
+    sentimentPerCohort: reads sentimentSummary
+    response: writes response

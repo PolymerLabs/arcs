@@ -1,6 +1,7 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_gen",
+    "arcs_manifest",
 )
 
 package(default_visibility = ["//visibility:public"])
@@ -29,4 +30,19 @@ arcs_kt_gen(
 arcs_kt_gen(
     name = "ingest_process_retrieve_gen",
     srcs = ["IngestProcessRetrieve.arcs"],
+)
+
+arcs_manifest(
+    name = "shared_schemas",
+    srcs = ["Schemas.arcs"],
+)
+
+arcs_kt_gen(
+    name = "split_recipe_pathway_gen",
+    srcs = [
+        "Analyze.arcs",
+        "Ingest.arcs",
+        "Request.arcs",
+    ],
+    deps = ["Schemas.arcs"]
 )
