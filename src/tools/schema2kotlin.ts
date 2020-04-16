@@ -512,6 +512,7 @@ ${lines}
         companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
+            
             init {
                 SchemaRegistry.register(this)
             }`}
