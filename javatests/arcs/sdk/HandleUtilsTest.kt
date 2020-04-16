@@ -288,12 +288,12 @@ class HandleUtilsTest {
     ) = manager.createHandle(
         HandleSpec(
             READ_WRITE_HANDLE,
-            HandleMode.ReadWrite,
+            HandleMode.ReadWriteQuery,
             HandleContainerType.Collection,
             Person
         ),
         storageKey
-    ) as ReadWriteCollectionHandle<Person>
+    ) as ReadWriteQueryCollectionHandle<Person, *>
 
     private suspend fun createSingletonHandle(
         storageKey: StorageKey

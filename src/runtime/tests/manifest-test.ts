@@ -928,10 +928,9 @@ ${particleStr1}
               input: reads data
         `);
         const cc = await ConCap.capture(() => verify(manifest, true, []));
-        assert.lengthOf(cc.warn, 2);
+        assert.lengthOf(cc.warn, 1);
         assert.lengthOf(cc.log, 0);
         assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
-        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
       }));
       it('catches unsafe schema level refinements', Flags.withFieldRefinementsAllowed(async () => {
         const manifest = await parseManifest(`

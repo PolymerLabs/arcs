@@ -279,7 +279,7 @@ class HandleAdapterTest {
         val handle = manager.createHandle(
             HandleSpec(
                 READ_WRITE_HANDLE,
-                HandleMode.ReadWrite,
+                HandleMode.ReadWriteQuery,
                 HandleContainerType.Collection,
                 QueryPerson
             ),
