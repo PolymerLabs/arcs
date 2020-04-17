@@ -12,3 +12,6 @@ schema Event
 schema AnalyzedEvent
   sentiment: Number
   cohortIndex: Number
+
+schema Thing
+  name: Text
