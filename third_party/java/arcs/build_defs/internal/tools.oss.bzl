@@ -11,7 +11,7 @@ def arcs_manifest_parse_test(name, srcs, deps = []):
       deps: list of dependencies (e.g. other imported manifest files)
     """
 
-    test_args = " ".join(["--src $(location %s)" % src for src in srcs])
+    test_args = " ".join(["$(location %s)" % src for src in srcs])
 
     sigh_command(
         name = name,
