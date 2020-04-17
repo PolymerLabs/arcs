@@ -151,12 +151,6 @@ export class StorageKeyRecipeResolver {
             `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
           );
         }
-
-        if (isVolatileCreateHandle(match)) {
-          throw new StorageKeyRecipeResolverError(
-            `Handle ${handle.localName} mapped to a volatile handle '${match.id}'.`
-          );
-        }
       });
   }
 
@@ -181,14 +175,4 @@ export function findLongRunningArcId(recipe: Recipe): string | null {
     }
   }
   return null;
-}
-
-
-/** Determines if create handle is volatile. */
-function isVolatileCreateHandle(handle: Handle): boolean {
-  if (handle.capabilities.isEmpty()) return true;
-  if (!handle.capabilities.isPersistent &&
-    !handle.capabilities.isQueryable &&
-    !handle.capabilities.isTiedToRuntime) return true;
-  return !!handle.tags.includes('volatile');
 }

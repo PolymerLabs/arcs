@@ -418,7 +418,9 @@ describe('recipe2plan', () => {
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
-        `Handle data mapped to a volatile handle 'my-handle-id'.`
+       `Recipe ReadingRecipe failed to resolve:
+cannot find associated store with handle id 'my-handle-id'
+Resolver generated 0 recipes`
       );
     }));
   });
