@@ -269,6 +269,19 @@ describe('manifest parser', () => {
         optionalType: reads * {value}
     `);
   });
+  it('parses inline schemas with a trailing comma', () => {
+    parse(`
+      particle Foo
+        input: reads [{value: Text, num: Number,}]
+    `);
+    parse(`
+      particle Foo
+        input: reads [{
+          value: Text,
+          num: Number,
+        }]
+    `);
+  });
   it('parses inline schemas with no name', () => {
     parse(`
       particle Foo

@@ -273,13 +273,13 @@ ${particleStr1}
     verify(manifest);
     verify(await parseManifest(manifest.toString()));
   });
-  it('can parse a manifest containing an inline schema with line breaks', async () => {
+  it('can parse a manifest containing an inline schema with line breaks and a trailing comma', async () => {
     const manifest = await parseManifest(`
       particle Fooer
         foo: reads Foo {
           // Comments can go here
           value: Text,
-          other: Number // Or here.
+          other: Number, // Or here.
         }
     `);
     const verify = (manifest: Manifest) => {
@@ -2542,7 +2542,10 @@ resource SomeName
       particle P
         foo: reads Thing1 Thing2 {value1, value2}
       particle P2
-        foo: reads * {value1: Text, value2: Number}
+        foo: reads * {
+          value1: Text,
+          value2: Number,
+        }
 
       recipe
         h0: create
