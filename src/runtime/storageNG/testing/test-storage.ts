@@ -10,7 +10,7 @@
 
 import {PropagatedException} from '../../arc-exceptions.js';
 import {CRDTData, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
-import {Consumer} from '../../hot.js';
+import {Consumer, Dictionary} from '../../hot.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
 import {StorageDriverProvider} from '../drivers/driver-factory.js';
@@ -20,6 +20,7 @@ import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store.js';
 import {CountType} from '../../type.js';
+import {BackingStore} from '../backing-store.js';
 
 
 /**
@@ -88,6 +89,46 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
 
   async serializeContents(): Promise<T['data']> {
     throw new Error('unimplemented');
+  }
+}
+
+export class MockBackingStore<T extends CRDTTypeRecord> extends BackingStore<T> {
+  lastCapturedMessage: ProxyMessage<T> = null;
+  lastCapturedException: PropagatedException = null;
+  callback: ProxyCallback<T> = null;
+  mockCRDTData: Dictionary<T['data']> = {};
+  callbackNum = 0;
+  constructor() {
+    super({
+      storageKey: new MockStorageKey(),
+      exists: Exists.ShouldCreate,
+      type: null,
+      mode: StorageMode.Backing,
+      baseStore: null,
+      versionToken: null
+    });
+  }
+
+  on(callback: ProxyCallback<T>): number {
+    this.callback = callback;
+    return 1;
+  }
+
+  off(callback: number) {
+    throw new Error('unimplemented');
+  }
+
+  async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
+    this.lastCapturedMessage = message;
+    if (message.type === ProxyMessageType.SyncRequest && this.mockCRDTData[message.muxId] != null) {
+      await this.callback({type: ProxyMessageType.ModelUpdate, model: this.mockCRDTData[message.muxId], muxId: message.muxId, id: 1});
+    } else if (message.type === ProxyMessageType.ModelUpdate) {
+      this.mockCRDTData[message.muxId] = message.model;
+    }
+  }
+
+  reportExceptionInHost(exception: PropagatedException): void {
+    this.lastCapturedException = exception;
   }
 }
 

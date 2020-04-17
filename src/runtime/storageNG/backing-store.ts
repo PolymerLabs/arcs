@@ -13,15 +13,17 @@ import {ProxyMessage, ProxyCallback} from './store.js';
 import {StorageKey} from './storage-key.js';
 import {DirectStore} from './direct-store.js';
 import {Dictionary} from '../hot.js';
-import {StoreConstructorOptions} from './store-interface.js';
+import {StoreConstructorOptions, StorageCommunicationEndpointProvider} from './store-interface.js';
 import {assert} from '../../platform/assert-web.js';
 import {noAwait} from '../util.js';
+import {PropagatedException, reportSystemException} from '../arc-exceptions.js';
+import {ChannelConstructor} from '../channel-constructor.js';
 
 type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore<T>, id: number} | {type: 'pending', promise: Promise<{type: 'record', store: DirectStore<T>, id: number}>};
 /**
  * A store that allows multiple CRDT models to be stored as sub-keys of a single storageKey location.
  */
-export class BackingStore<T extends CRDTTypeRecord>  {
+export class BackingStore<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<T> {
 
   storageKey: StorageKey;
 
@@ -30,7 +32,7 @@ export class BackingStore<T extends CRDTTypeRecord>  {
   private nextCallbackId = 1;
   private readonly options: StoreConstructorOptions<T>;
 
-  private constructor(options: StoreConstructorOptions<T>) {
+  constructor(options: StoreConstructorOptions<T>) {
     this.storageKey = options.storageKey;
     this.options = options;
   }
@@ -100,5 +102,39 @@ export class BackingStore<T extends CRDTTypeRecord>  {
   async processStoreCallback(muxId: string, message: ProxyMessage<T>): Promise<void> {
     message.muxId = muxId;
     noAwait(Promise.all([...this.callbacks.values()].map(callback => callback(message))));
+  }
+
+  reportExceptionInHost(exception: PropagatedException): void {
+    reportSystemException(null, exception);
+  }
+
+  getStorageEndpoint() {
+    const backingStore = this;
+    let id: number;
+    return {
+      async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
+        message.id = id!;
+        noAwait(backingStore.onProxyMessage(message));
+      },
+      setCallback(callback: ProxyCallback<T>) {
+        id = backingStore.on(callback);
+      },
+      reportExceptionInHost(exception: PropagatedException): void {
+        backingStore.reportExceptionInHost(exception);
+      },
+      getChannelConstructor(): ChannelConstructor {
+        return {
+          generateID() {
+            throw new Error('unimplemented, should not be called');
+          },
+          idGenerator: null,
+          getStorageProxy() {
+            throw new Error('unimplemented, should not be called');
+          },
+          reportExceptionInHost(exception: PropagatedException): void {
+          }
+        };
+      }
+    };
   }
 }
