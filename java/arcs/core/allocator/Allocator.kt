@@ -13,9 +13,7 @@ package arcs.core.allocator
 import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.common.toArcId
-import arcs.core.data.CollectionType
 import arcs.core.data.CreateableStorageKey
-import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
 import arcs.core.data.Plan
@@ -23,7 +21,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.data.SingletonType
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.HandleContainerType
@@ -196,29 +193,12 @@ class Allocator private constructor(
         CapabilitiesResolver(CapabilitiesResolver.CapabilitiesResolverOptions(arcId))
             .createStorageKey(
                 storageKey.capabilities,
-                toEntitySchema(type),
+                type,
                 idGenerator.newChildId(arcId, "").toString()
             )
             ?: throw Exception(
                 "Unable to create storage key $storageKey"
             )
-
-    /**
-     * Retrieves [Schema] from the given [Type], if possible.
-     * TODO: declare a common interface.
-     */
-    private fun toEntitySchema(type: Type): Schema {
-        when (type) {
-            is SingletonType<*> -> if (type.containedType is EntityType) {
-                return (type.containedType as EntityType).entitySchema
-            }
-            is CollectionType<*> -> if (type.collectionType is EntityType) {
-                return (type.collectionType as EntityType).entitySchema
-            }
-            is EntityType -> return type.entitySchema
-        }
-        throw IllegalArgumentException("Can't retrieve entitySchema of unknown type $type")
-    }
 
     /**
      * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]

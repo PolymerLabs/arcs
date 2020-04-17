@@ -3,6 +3,7 @@ package arcs.core.allocator
 import arcs.core.common.Id
 import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
+import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.host.*
 import arcs.core.storage.CapabilitiesResolver
@@ -230,7 +231,7 @@ open class AllocatorTestBase {
         VolatileDriverProvider(testArcId)
         val testKey = CapabilitiesResolver(
             CapabilitiesResolver.CapabilitiesResolverOptions(testArcId)
-        ).createStorageKey(Capabilities.TiedToArc, personSchema, "readWritePerson")
+        ).createStorageKey(Capabilities.TiedToArc, EntityType(personSchema), "readWritePerson")
 
         val allStorageKeyLens =
             Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse() +
