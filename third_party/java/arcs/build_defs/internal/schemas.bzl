@@ -186,11 +186,10 @@ def arcs_kt_gen(
     schema_name = name + "_schema"
     plan_name = name + "_plan"
 
-
     arcs_manifest(
         name = manifest_name,
         srcs = srcs,
-        deps = [d for d in deps if d.endswith(".arcs")]
+        deps = [d for d in deps if d.endswith(".arcs")],
     )
 
     deps = [d for d in deps if not d.endswith(".arcs")]
