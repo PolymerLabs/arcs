@@ -393,5 +393,35 @@ describe('recipe2plan', () => {
           'No matching handles found for data.'
         );
     });
+    it('fails to resolve when user maps to a volatile create handle', Flags.withDefaultReferenceMode(async () => {
+      const manifest = await Manifest.parse(`\
+    particle Reader
+      data: reads Thing {name: Text}
+
+    particle Writer
+       data: writes Thing {name: Text}
+    
+    @trigger
+      launch startup
+      arcId writeArcId
+    recipe WritingRecipe
+      thing: create 'my-handle-id' 
+      Writer
+        data: writes thing
+
+    recipe ReadingRecipe
+      data: map 'my-handle-id'
+      Reader
+        data: reads data`);
+
+      const resolver = new StorageKeyRecipeResolver(manifest);
+      await assertThrowsAsync(
+        async () => await resolver.resolve(),
+        StorageKeyRecipeResolverError,
+        `Recipe ReadingRecipe failed to resolve:
+cannot find associated store with handle id 'my-handle-id'
+Resolver generated 0 recipes`
+      );
+    }));
   });
 });
