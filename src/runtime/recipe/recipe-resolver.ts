@@ -90,7 +90,7 @@ export class ResolveWalker extends RecipeWalker {
       if (storeById) {
         mappable = [storeById];
       } else {
-        return error('cannot find associated store');
+        return error(`cannot find associated store with handle id '${handle.id}'`);
       }
     }
 

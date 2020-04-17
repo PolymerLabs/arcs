@@ -20,8 +20,7 @@ arcs_kt_gen(
     srcs = ["WriterReaderExample.arcs"],
 )
 
-# TODO(b/153689275): It doesn't resovle currently, can we investigate why?
-# arcs_kt_gen(
-#     name = "ingest_process_retrieve_gen",
-#     srcs = ["IngestProcessRetrieve.arcs"]
-# )
+arcs_kt_gen(
+    name = "ingest_process_retrieve_gen",
+    srcs = ["IngestProcessRetrieve.arcs"],
+)
