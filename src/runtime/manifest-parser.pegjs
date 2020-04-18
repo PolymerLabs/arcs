@@ -1230,7 +1230,7 @@ RecipeSlot
   }
 
 SchemaInline
-  = names:((upperIdent / '*') whiteSpace?)* '{' eolPlusWhiteSpace? fields:(SchemaInlineField (',' eolPlusWhiteSpace? SchemaInlineField)*)? eolPlusWhiteSpace? '}'
+  = names:((upperIdent / '*') whiteSpace?)* '{' eolPlusWhiteSpace? fields:(SchemaInlineField (',' eolPlusWhiteSpace? SchemaInlineField)*)? ','? eolPlusWhiteSpace? '}'
   {
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
