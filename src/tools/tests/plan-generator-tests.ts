@@ -164,7 +164,7 @@ describe('recipe2plan', () => {
          data: writes h2
        A
          data: writes h3`);
-      const recipeResolver = new StorageKeyRecipeResolver(manifest);
+      const recipeResolver = new StorageKeyRecipeResolver(manifest, []);
       const recipes = await recipeResolver.resolve();
       const generator = new PlanGenerator(recipes, '');
       const actuals: string[] = [];
@@ -190,7 +190,7 @@ describe('recipe2plan', () => {
          data: writes h
        B
          data: reads h`);
-      const recipeResolver = new StorageKeyRecipeResolver(manifest);
+      const recipeResolver = new StorageKeyRecipeResolver(manifest, []);
       const recipes = await recipeResolver.resolve();
       const generator = new PlanGenerator(recipes, '');
       const plan = await generator.generate();
@@ -220,7 +220,7 @@ describe('recipe2plan', () => {
          data: writes h1
        D
          data: reads h1`);
-      const recipeResolver = new StorageKeyRecipeResolver(manifest);
+      const recipeResolver = new StorageKeyRecipeResolver(manifest, []);
       const recipes = await recipeResolver.resolve();
       const generator = new PlanGenerator(recipes, 'blah');
       const plan = await generator.generate();

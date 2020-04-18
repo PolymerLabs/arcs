@@ -2,6 +2,8 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_gen",
     "arcs_manifest",
+    "arcs_kt_plan",
+    "arcs_kt_schema",
 )
 
 package(default_visibility = ["//visibility:public"])
@@ -37,12 +39,61 @@ arcs_manifest(
     srcs = ["Schemas.arcs"],
 )
 
-arcs_kt_gen(
-    name = "split_recipe_pathway_gen",
+arcs_kt_schema(
+    name = "multimanifest_schemas",
     srcs = [
-        "Analyze.arcs",
         "Ingest.arcs",
+        "Analyze.arcs",
         "Request.arcs",
     ],
     deps = ["Schemas.arcs"]
 )
+
+#arcs_kt_plan(
+#    name = "ingest_plan",
+#    srcs = ["Ingest.arcs"],
+#    deps = [
+#        ":multimanifest_schemas",
+#    ],
+#)
+#
+#arcs_kt_plan(
+#    name = "analyze_plan",
+#    srcs = ["Analyze.arcs"],
+#    deps = [
+#        ":multimanifest_schemas",
+#        ":ingest_plan",
+#    ],
+#)
+#
+#arcs_kt_plan(
+#    name = "request_plan",
+#    srcs = ["Request.arcs"],
+#    deps = [
+#        ":multimanifest_schemas",
+#        ":analyze_plan",
+#    ],
+#)
+
+arcs_kt_plan(
+    name = "etl_plan",
+    srcs = [
+        "Ingest.arcs",
+        "Analyze.arcs",
+        "Request.arcs",
+    ],
+    deps = [
+        ":multimanifest_schemas",
+        "Schemas.arcs",
+    ],
+)
+
+#arcs_kt_gen(
+#    name = "split_recipe_pathway_gen",
+#    srcs = [
+#        "Ingest.arcs",
+#        "Analyze.arcs",
+#        "Request.arcs",
+#    ],
+#    deps = ["Schemas.arcs"]
+#)

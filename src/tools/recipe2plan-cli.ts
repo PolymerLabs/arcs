@@ -23,10 +23,14 @@ const opts = minimist(process.argv.slice(2), {
 if (opts.help || opts._.length === 0) {
   console.log(`
 Usage
-  $ tools/sigh recipe2plan [options] path/to/manifest.arcs
+  $ tools/sigh recipe2plan [options] path/to/manifest.arcs [dependencies...]
 
 Description
-  Generates Kotlin plans from recipes in a manifest. 
+  Generates Kotlin plans from recipes in manifest files. 
+  
+  The first file is the target manifest that will be converted into a plan.
+  The rest of the files are dependency manifests. 
+  
 
 Options
   --outfile, -f output filename; required
@@ -41,11 +45,6 @@ if (!opts.outfile) {
   process.exit(1);
 }
 
-if (opts._.length > 1) {
-  console.error(`Only a single manifest is allowed`);
-  process.exit(1);
-}
-
 if (opts._.some((file) => !file.endsWith('.arcs'))) {
   console.error(`Only Arcs manifests ('*.arcs') are allowed.`);
   process.exit(1);
@@ -56,7 +55,7 @@ async function main() {
     Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const plans: string = await recipe2plan(opts._[0]);
+    const plans: string = await recipe2plan(opts._);
 
     const outPath = path.join(opts.outdir, opts.outfile);
     console.log(outPath);
