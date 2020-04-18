@@ -16,12 +16,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.ResultReceiver
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.sdk.host.ResurrectableHost
 import arcs.android.sdk.host.createGetRegisteredParticlesIntent
 import arcs.android.sdk.host.createStartArcHostIntent
 import arcs.android.sdk.host.createStopArcHostIntent
@@ -36,10 +33,8 @@ import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
 import arcs.core.data.HandleMode
 import arcs.core.host.ParticleIdentifier
-import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.guardedBy
-import arcs.sdk.android.storage.ResurrectionHelper
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
