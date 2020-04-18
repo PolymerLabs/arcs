@@ -1,7 +1,7 @@
 meta
   namespace: arcs.core.host
 
-// Represents a de-normalized Map<String, Plan.HandleConnection>
+// Represents a Plan.HandleConnection
 schema HandleConnection
   handleName: Text
   storageKey: Text
@@ -12,7 +12,7 @@ schema HandleConnection
   // Ttl object's count field in minutes
   ttl: Number
 
-// Represents a de-normalized ParticleContext
+// Represents a ParticleContext and Plan.Particle
 schema Particle
   particleName: Text
   location: Text
