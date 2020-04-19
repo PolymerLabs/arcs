@@ -42,6 +42,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -142,10 +143,12 @@ class ArcHostHelperTest {
 
         val planPartition = Plan.Partition("id", "FooHost", listOf(particleSpec))
         val startIntent = planPartition.createStartArcHostIntent(
-            TestAndroidArcHostService::class.toComponentName(context)
+            TestAndroidArcHostService::class.toComponentName(context),
+            arcHost.hostId
         )
         val stopIntent = planPartition.createStopArcHostIntent(
-            TestAndroidArcHostService::class.toComponentName(context)
+            TestAndroidArcHostService::class.toComponentName(context),
+            arcHost.hostId
         )
         helper.onStartCommandSuspendable(startIntent)
         assertThat(arcHost.startCalls()).containsExactly(planPartition)
@@ -163,7 +166,7 @@ class ArcHostHelperTest {
         arcHost.registerParticle(particleIdentifier2)
 
         val getParticlesIntent = TestAndroidArcHostService::class.toComponentName(context)
-            .createGetRegisteredParticlesIntent()
+            .createGetRegisteredParticlesIntent(arcHost.hostId)
 
         // Wait for async result
         runBlocking {

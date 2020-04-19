@@ -39,7 +39,7 @@ open class ProdArcHostService : ArcHostService() {
     /**
      * This is open for tests to override, but normally isn't necessary.
      */
-    override val arcHost: ArcHost by lazy {
+    val arcHost: ArcHost by lazy {
         ProdAndroidHost(
             this,
             this.lifecycle,
@@ -47,4 +47,6 @@ open class ProdArcHostService : ArcHostService() {
             *scanForParticles()
         )
     }
+
+    override val arcHosts = listOf(arcHost)
 }

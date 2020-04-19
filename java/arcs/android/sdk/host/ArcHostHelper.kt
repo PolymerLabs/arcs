@@ -27,7 +27,6 @@ import arcs.android.host.parcelables.toParcelable
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleIdentifier
-import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +43,7 @@ import kotlinx.coroutines.launch
  * ```kotlin
  * class MyService : Service() {
  *     private val myHelper: ArcHostHelper by lazy {
- *         ArcHostHelper(this, MyArcHost())
+ *         ArcHostHelper(this, MyArcHost(), MyArcHost2())
  *     }
  *
  *     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) {
@@ -63,10 +62,19 @@ import kotlinx.coroutines.launch
  */
 class ArcHostHelper(
     private val service: Service,
-    private val arcHost: ArcHost,
-    coroutineContext: CoroutineContext = Dispatchers.Unconfined
+    vararg arcHosts: ArcHost
 ) {
-    private val job = Job() + coroutineContext + CoroutineName("ArcHostHelper")
+    private val job = Job() + Dispatchers.Unconfined + CoroutineName("ArcHostHelper")
+    private val arcHostByHostId = mutableMapOf<String, ArcHost>()
+
+    init {
+        arcHosts.forEach { arcHostByHostId[it.hostId] = it }
+    }
+
+    /**
+     * Invoked by [IntentRegistryAdapter] to discover which hosts are handled by this helper.
+     */
+    private suspend fun availableHosts() = arcHostByHostId.keys
 
     /**
      * Determines whether or not the given [Intent] represents a call to an [ArcHost] and invokes
@@ -78,8 +86,10 @@ class ArcHostHelper(
 
     @VisibleForTesting
     suspend fun onStartCommandSuspendable(intent: Intent?) {
-        if (arcHost is ResurrectableHost) {
-            arcHost.resurrectionHelper.onStartCommand(intent)
+        arcHostByHostId.values.forEach {
+            if (it is ResurrectableHost) {
+                it.resurrectionHelper.onStartCommand(intent)
+            }
         }
 
         // Ignore other actions
@@ -89,7 +99,19 @@ class ArcHostHelper(
         // Ignore Intent when it doesn't target our Service
         if (intent.component?.equals(ComponentName(service, service::class.java)) != true) return
 
+        val hostId = intent.getStringExtra(ArcHostHelper.EXTRA_ARCHOST_HOSTID)
         val operation = intent.getIntExtra(EXTRA_OPERATION, Operation.values().size).toOperation()
+        val arcHost = hostId?.let { arcHostByHostId[it] }
+
+        if (arcHost == null) {
+            if (operation == Operation.AvailableHosts) {
+                runWithResult(
+                    intent,
+                    this::availableHosts
+                )
+            }
+            return
+        }
 
         when (operation) {
             Operation.StartArc -> runWithResult(
@@ -107,6 +129,7 @@ class ArcHostHelper(
                     intent,
                     arcHost::registeredParticles
                 )
+            else -> Unit
         }
     }
 
@@ -132,6 +155,11 @@ class ArcHostHelper(
         val result = block()
 
         when (result) {
+            is Set<*> -> {
+                val arrayList = ArrayList<String>()
+                result.forEach { arrayList += it.toString() }
+                bundle.putStringArrayList(EXTRA_OPERATION_RESULT, arrayList)
+            }
             is List<*> -> {
                 val arrayList = ArrayList<ParcelableParticleIdentifier>()
                 result.forEach {
@@ -156,11 +184,13 @@ class ArcHostHelper(
     internal enum class Operation {
         StartArc,
         StopArc,
-        GetRegisteredParticles
+        GetRegisteredParticles,
+        AvailableHosts
     }
 
     companion object {
         const val ACTION_HOST_INTENT = "arcs.android.host.ARC_HOST"
+        private const val EXTRA_ARCHOST_HOSTID = "HOST_ID"
         private const val EXTRA_OPERATION = "OPERATION"
         private const val EXTRA_OPERATION_ARG = "EXTRA_OPERATION_ARG"
         private const val EXTRA_OPERATION_RECEIVER = "EXTRA_OPERATION_RECEIVER"
@@ -169,11 +199,13 @@ class ArcHostHelper(
         internal fun createArcHostIntent(
             operation: Operation,
             component: ComponentName,
+            hostId: String,
             argument: Parcelable?
         ): Intent = Intent(ACTION_HOST_INTENT)
             .setComponent(component)
             .putExtra(EXTRA_OPERATION, operation.ordinal)
             .putExtra(EXTRA_OPERATION_ARG, argument)
+            .putExtra(EXTRA_ARCHOST_HOSTID, hostId)
 
         /**
          * Used by callers to specify a callback [ResultReceiver] for an [Intent] to be invoked
@@ -198,43 +230,58 @@ private fun Int.toOperation(): ArcHostHelper.Operation? =
 @VisibleForTesting
 fun KClass<out Service>.toComponentName(context: Context) = ComponentName(context, this.java)
 
-/** Create a wrapper around a [Service] to invoke it's internal [ArcHost] via [Intent]s. */
-fun Service.toArcHost(context: Context, sender: (Intent) -> Unit) =
-    IntentArcHostAdapter(this::class.toComponentName(context), sender)
+/** Create a wrapper around a [Service] to invoke it's internal [ArcHostHelper] via [Intent]s. */
+fun Service.toArcHost(context: Context, hostId: String, sender: (Intent) -> Unit) =
+    IntentArcHostAdapter(this::class.toComponentName(context), hostId, sender)
 
 /**
- * Create a wrapper around a [ServiceInfo] to invoke the associate [Service]'s internal [ArcHost]
- * via [Intent]s.
+ * Create a wrapper around a [ServiceInfo] to invoke the associate [Service]'s internal
+ * [ArcHostHelper] via [Intent]s.
  **/
-fun ServiceInfo.toArcHost(sender: (Intent) -> Unit) =
-    IntentArcHostAdapter(ComponentName(this.packageName, this.name), sender)
+fun ServiceInfo.toRegistryHost(sender: (Intent) -> Unit) =
+    IntentRegistryAdapter(ComponentName(this.packageName, this.name), sender)
 
 /**
  * Creates an [Intent] to invoke [ArcHost.registeredParticles] on a [Service]'s internal [ArcHost].
  */
-fun ComponentName.createGetRegisteredParticlesIntent(): Intent =
+fun ComponentName.createGetRegisteredParticlesIntent(hostId: String): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.GetRegisteredParticles,
         this,
+        hostId,
+        null
+    )
+
+/**
+ * Creates an [Intent] to invoke [ArcHostHelper.availableHosts] on a [Service] containing an
+ * [ArcHostHelper].
+ */
+fun ComponentName.createAvailableHostsIntent(): Intent =
+    ArcHostHelper.createArcHostIntent(
+        ArcHostHelper.Operation.AvailableHosts,
+        this,
+        "",
         null
     )
 
 /**
  * Creates an [Intent] to invoke [ArcHost.startArc] on a [Service]'s internal [ArcHost].
  */
-fun Plan.Partition.createStartArcHostIntent(service: ComponentName): Intent =
+fun Plan.Partition.createStartArcHostIntent(service: ComponentName, hostId: String): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.StartArc,
         service,
+        hostId,
         this.toParcelable()
     )
 
 /**
  * Creates an [Intent] to invoke [ArcHost.stopArc] on a [Service]'s internal [ArcHost].
  */
-fun Plan.Partition.createStopArcHostIntent(service: ComponentName): Intent =
+fun Plan.Partition.createStopArcHostIntent(service: ComponentName, hostId: String): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.StopArc,
         service,
+        hostId,
         this.toParcelable()
     )

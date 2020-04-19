@@ -24,12 +24,12 @@ abstract class ArcHostService : LifecycleService() {
     protected val scope: CoroutineScope = MainScope()
 
     /**
-     * Subclasses must override this with their own [ArcHost].
+     * Subclasses must override this with their own [ArcHost]s.
      */
-    abstract val arcHost: ArcHost
+    abstract val arcHosts: List<ArcHost>
 
     val arcHostHelper: ArcHostHelper by lazy {
-        ArcHostHelper(this, arcHost)
+        ArcHostHelper(this, *arcHosts.toTypedArray())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

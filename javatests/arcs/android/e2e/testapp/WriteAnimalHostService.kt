@@ -33,12 +33,14 @@ class WriteAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
-    override val arcHost: MyArcHost = MyArcHost(
+    val arcHost: MyArcHost = MyArcHost(
         this,
         this.lifecycle,
         JvmSchedulerProvider(coroutineContext),
         ::WriteAnimal.toRegistration()
     )
+
+    override val arcHosts = listOf(arcHost)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val arcId = intent?.getStringExtra(ARC_ID_EXTRA)

@@ -43,8 +43,9 @@ class AndroidHostRegistryTest {
 
     @Test
     fun hostRegistry_availableArcHosts_containsTestArcHost() = runBlockingTest {
+        val service = TestReadingExternalHostService()
         assertThat(hostRegistry.availableArcHosts()).contains(
-            TestReadingExternalHostService().toArcHost(context, sender)
+            service.toArcHost(context, service.arcHost.hostId, sender)
         )
     }
 }

@@ -35,13 +35,15 @@ class PersonHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
-    override val arcHost = MyArcHost(
+    val arcHost = MyArcHost(
         this,
         this.lifecycle,
         JvmSchedulerProvider(coroutineContext),
         ::ReadPerson.toRegistration(),
         ::WritePerson.toRegistration()
     )
+
+    override val arcHosts = listOf(arcHost)
 
     inner class MyArcHost(
         context: Context,

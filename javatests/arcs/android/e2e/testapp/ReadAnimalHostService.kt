@@ -34,12 +34,14 @@ class ReadAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
-    override val arcHost: ArcHost = MyArcHost(
+    val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
         JvmSchedulerProvider(coroutineContext),
         ::ReadAnimal.toRegistration()
     )
+
+    override val arcHosts = listOf(arcHost)
 
     class MyArcHost(
         context: Context,
