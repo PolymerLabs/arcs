@@ -46,10 +46,8 @@ class ArcHostContextParticle(
             val connections = context.particles.flatMap {
                 it.value.planParticle.handles.map { handle ->
                     ArcHostContextParticle_HandleConnections(
-                        handleName = handle.key,
-                        storageKey = handle.value.storageKey.toString(),
-                        mode = handle.value.mode.name,
-                        type = handle.value.type.tag.name,
+                        handleName = handle.key, storageKey = handle.value.storageKey.toString(),
+                        mode = handle.value.mode.name, type = handle.value.type.tag.name,
                         ttl = handle.value.ttl?.minutes?.toDouble() ?: Ttl.TTL_INFINITE
                     )
                 }
@@ -60,8 +58,7 @@ class ArcHostContextParticle(
 
             val particles = context.particles.map {
                 ArcHostContextParticle_Particles(
-                    particleName = it.key,
-                    location = it.value.planParticle.location,
+                    particleName = it.key, location = it.value.planParticle.location,
                     particleState = it.value.particleState.name,
                     consecutiveFailures = it.value.consecutiveFailureCount.toDouble(),
                     handles = connections.map {
@@ -75,9 +72,7 @@ class ArcHostContextParticle(
             particles.forEach { handles.particles.store(it) }
 
             val arcState = ArcHostContextParticle_ArcHostContext(
-                arcId = arcId,
-                hostId = hostId,
-                arcState = context.arcState.name,
+                arcId = arcId, hostId = hostId, arcState = context.arcState.name,
                 particles = particles.map { handles.particles.createReference(it) }.toSet()
             )
 
@@ -103,35 +98,26 @@ class ArcHostContextParticle(
         try {
             // TODO(cromwellian): replace with .query(arcId, hostId) when queryHandles are efficient
             val arcStateEntity = handles.arcHostContext.fetch() ?: return null
-            val particleEntities = arcStateEntity.particles.map { it.dereference() }.toSet()
-
-            val particles = particleEntities.map {
-                requireNotNull(it) {
-                    "Particle dereference was null for $arcId"
-                }.let {
-                    val particle = tryInstantiateParticle(
-                        it.particleName,
-                        it.location
-                    )
-
-                    val handlesMap = createHandlesMap(
-                        arcId,
-                        it.particleName,
-                        particle,
-                        it.handles
-                    )
-
-                    it.particleName to ParticleContext(
-                        particle,
-                        Plan.Particle(it.particleName, it.location, handlesMap)
-                    )
+            val particles = arcStateEntity.particles.map {
+                requireNotNull(it.dereference()) {
+                    "Invalid particle reference when deserialising arc $arcId for host $hostId"
                 }
-            }.associateBy({ it.first }, { it.second })
+            }.map { particleEntity ->
+                val particle =
+                    tryInstantiateParticle(particleEntity.particleName, particleEntity.location)
+
+                val handlesMap = createHandlesMap(
+                    arcId, particleEntity.particleName, particle, particleEntity.handles
+                )
+
+                particleEntity.particleName to ParticleContext(
+                    particle,
+                    Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap)
+                )
+            }.toSet().associateBy({ it.first }, { it.second })
 
             return ArcHostContext(
-                arcId,
-                particles.toMutableMap(),
-                ArcState.valueOf(arcStateEntity.arcState),
+                arcId, particles.toMutableMap(), ArcState.valueOf(arcStateEntity.arcState),
                 entityHandleManager = arcHostContext.entityHandleManager
             )
         } catch (e: Exception) {
@@ -142,30 +128,25 @@ class ArcHostContextParticle(
     private suspend fun tryInstantiateParticle(
         particleName: String,
         location: String
-    ): Particle = instantiatedParticles.getOrPut(
-        particleName,
-        { instantiateParticle(ParticleIdentifier.from(location)) }
-    )
+    ): Particle = instantiatedParticles.getOrPut(particleName) {
+        instantiateParticle(ParticleIdentifier.from(location))
+    }
 
     private suspend fun createHandlesMap(
         arcId: String,
         particleName: String,
         particle: Particle,
         handles: Set<Reference<ArcHostContextParticle_HandleConnections>>
-    ) = handles.map { ref ->
-            ref.dereference()
-        }.map {
-        requireNotNull(it) {
+    ) = handles.map { handle ->
+        requireNotNull(handle.dereference()) {
             "HandleConnection couldn't be dereferenced for arcId $arcId, particle $particleName"
-        }.let { handle ->
-            handle.handleName to Plan.HandleConnection(
-                StorageKeyParser.parse(handle.storageKey),
-                HandleMode.valueOf(handle.mode),
-                fromTag(arcId, particle, handle.type, handle.handleName),
-                handle.ttl.toTtl()
-            )
         }
-    }.associateBy({ it.first }, { it.second })
+    }.map { handle ->
+        handle.handleName to Plan.HandleConnection(
+            StorageKeyParser.parse(handle.storageKey), HandleMode.valueOf(handle.mode),
+            fromTag(arcId, particle, handle.type, handle.handleName), handle.ttl.toTtl()
+        )
+    }.toSet().associateBy({ it.first }, { it.second })
 
     /**
      * Using instantiated particle to obtain [Schema] objects throught their
@@ -183,11 +164,13 @@ class ArcHostContextParticle(
                 )
             }
         } catch (e: NoSuchElementException) {
-            throw IllegalStateException("""
+            throw IllegalStateException(
+                """
                 Can't create Type $tag for Handle $handleName and ${particle::class}. This usually
                 occurs because the Particle or ArcHost implementation has changed since
                 the last time this arc was serialized.
-            """.trimIndent(), e)
+            """.trimIndent(), e
+            )
         }
     }
 
@@ -211,8 +194,7 @@ class ArcHostContextParticle(
          */
         val arcHostContextKey = requireNotNull(
             resolver.createStorageKey(
-                capability,
-                EntityType(ArcHostContextParticle_ArcHostContext.SCHEMA),
+                capability, EntityType(ArcHostContextParticle_ArcHostContext.SCHEMA),
                 "${hostId}_arcState"
             )
         ) {
@@ -221,8 +203,7 @@ class ArcHostContextParticle(
 
         val particlesKey = requireNotNull(
             resolver.createStorageKey(
-                capability,
-                EntityType(ArcHostContextParticle_Particles.SCHEMA),
+                capability, EntityType(ArcHostContextParticle_Particles.SCHEMA),
                 "${hostId}_arcState_particles"
             )
         ) {
@@ -231,8 +212,7 @@ class ArcHostContextParticle(
 
         val handleConnectionsKey = requireNotNull(
             resolver.createStorageKey(
-                capability,
-                EntityType(ArcHostContextParticle_HandleConnections.SCHEMA),
+                capability, EntityType(ArcHostContextParticle_HandleConnections.SCHEMA),
                 "${hostId}_arcState_handleConnections"
             )
         ) {
