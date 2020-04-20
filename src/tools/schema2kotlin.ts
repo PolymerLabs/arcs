@@ -40,6 +40,10 @@ export interface KotlinTypeInfo {
   schemaType: string;
 }
 
+function entityTypeName(particle: string, connection: string) {
+  return `${particle}_${connection[0].toUpperCase() + connection.slice(1)}`;
+}
+
 function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?: string, refSchemaHash?: string}): KotlinTypeInfo {
   const typeMap: Dictionary<KotlinTypeInfo> = {
     'Text': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
@@ -132,8 +136,15 @@ ${imports.join('\n')}
     return new KotlinGenerator(node, this.opts);
   }
 
-  private entityTypeName(particle: ParticleSpec, connection: HandleConnectionSpec) {
-    return `${particle.name}_${this.upperFirst(connection.name)}`;
+  generateEntityClassName(node: SchemaNode, i: number = null) {
+    if (i === null) {
+      return entityTypeName(node.particleName, node.connections[0]);
+    }
+    return `${node.particleName}Internal${i}`;
+  }
+
+  generateAliasNames(node: SchemaNode): string[] {
+    return node.connections.map((s: string) => `${node.particleName}_${s}`);
   }
 
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
@@ -221,7 +232,7 @@ ${imports.join('\n')}
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType = this.entityTypeName(particle, connection);
+      const entityType = entityTypeName(particle.name, connection.name);
       const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
@@ -253,7 +264,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
-      const entityType = this.entityTypeName(particle, connection);
+      const entityType = entityTypeName(particle.name, connection.name);
       const interfaceType = this.handleInterfaceType(connection, entityType);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
       handleSpecs.push(this.handleSpec(handleName, entityType, connection));
@@ -429,14 +440,14 @@ ${lines}
   generate(schemaHash: string, fieldCount: number): string { return ''; }
 
   generateAliases(particleName: string): string {
-    const name = this.node.kotlinName;
-    const aliases = this.node.kotlinAliases;
+    const name = this.node.name;
+    const aliases = this.node.aliases;
     const typeDecls = aliases.map(alias => `typealias ${alias} = Abstract${particleName}.${name}`);
     return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
   }
 
   generateClasses(schemaHash: string, fieldCount: number): string {
-    const name = this.node.kotlinName;
+    const name = this.node.name;
 
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
     const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
