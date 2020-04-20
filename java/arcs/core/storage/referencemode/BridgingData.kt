@@ -29,7 +29,7 @@ import arcs.core.util.resultOfSuspend
  */
 data class BridgingData(
     val backingModels: Collection<RawEntity>,
-    val collectionModel: CrdtModel<out CrdtSet.Data<Reference>, out CrdtOperationAtTime, out Any?>
+    val collectionModel: CrdtModel<out CrdtData, out CrdtOperationAtTime, out Any?>
 )
 
 /**

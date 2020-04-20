@@ -43,11 +43,10 @@ fun Parcel.writeModelData(model: CrdtData?, flags: Int) {
         null -> writeTypedObject(null, flags)
         is CrdtCount.Data ->
             writeTypedObject((model as? CrdtCount.Data)?.toParcelable(), flags)
-        // Caution: CrdtSingleton.Data extends CrdtSet.Data, so we must check it first.
-        is CrdtSingleton.Data<*> ->
-            writeTypedObject((model as? CrdtSingleton.Data<Referencable>)?.toParcelable(), flags)
         is CrdtSet.Data<*> ->
             writeTypedObject((model as? CrdtSet.Data<Referencable>)?.toParcelable(), flags)
+        is CrdtSingleton.Data<*> ->
+            writeTypedObject((model as? CrdtSingleton.Data<Referencable>)?.toParcelable(), flags)
         is CrdtEntity.Data ->
             TODO("Implement me when ParcelableEntity is ready")
         else -> throw IllegalArgumentException("Unsupported CrdtData type: ${model.javaClass}")
