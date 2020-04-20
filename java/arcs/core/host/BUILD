@@ -1,4 +1,4 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_library", "arcs_kt_schema")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_library", "arcs_kt_plan", "arcs_kt_schema")
 
 licenses(["notice"])
 
@@ -11,10 +11,21 @@ arcs_kt_schema(
     ],
 )
 
+arcs_kt_plan(
+    name = "plan",
+    srcs = [
+        "ArcHostContext.arcs",
+    ],
+    deps = [
+        ":schemas",
+    ],
+)
+
 arcs_kt_library(
     name = "host",
     srcs = glob(["*.kt"]),
     deps = [
+        ":plan",
         ":schemas",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",

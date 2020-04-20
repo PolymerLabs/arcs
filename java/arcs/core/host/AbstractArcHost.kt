@@ -138,11 +138,10 @@ abstract class AbstractArcHost(
      * to storage.
      */
     private suspend fun createArcHostContextParticle(arcHostContext: ArcHostContext) =
-        ArcHostContextParticle().apply {
+        ArcHostContextParticle(hostId, this::instantiateParticle).apply {
             val partition = createArcHostContextPersistencePlan(
                 arcHostContextCapability,
-                arcHostContext.arcId,
-                hostId
+                arcHostContext.arcId
             )
             partition.particles[0].handles.forEach { handleSpec ->
                 createHandle(arcHostContext, handleSpec.key, handleSpec.value, handles)
@@ -160,7 +159,7 @@ abstract class AbstractArcHost(
     protected open suspend fun readContextFromStorage(
         arcHostContext: ArcHostContext
     ): ArcHostContext = createArcHostContextParticle(arcHostContext).let {
-        it.readArcHostContext(arcHostContext, hostId, this::instantiateParticle)
+        it.readArcHostContext(arcHostContext)
     }?.also {
         contextCache[arcHostContext.arcId] = it
     } ?: arcHostContext
@@ -173,7 +172,7 @@ abstract class AbstractArcHost(
      */
     protected open suspend fun writeContextToStorage(arcId: String, context: ArcHostContext) =
         createArcHostContextParticle(context).run {
-            writeArcHostContext(context.arcId, hostId, context)
+            writeArcHostContext(context.arcId, context)
         }
 
     override suspend fun startArc(partition: Plan.Partition) {
