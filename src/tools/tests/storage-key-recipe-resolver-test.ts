@@ -414,7 +414,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest);
+      const resolver = new StorageKeyRecipeResolver(manifest, []);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
