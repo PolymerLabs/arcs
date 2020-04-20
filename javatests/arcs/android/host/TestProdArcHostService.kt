@@ -11,11 +11,13 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 
 class TestProdArcHostService : ProdArcHostService() {
-    override val arcHost = TestingAndroidProdHost(
+    val testArcHost = TestingAndroidProdHost(
         this,
         this.lifecycle,
         JvmSchedulerProvider(scope.coroutineContext)
     )
+
+    override val arcHosts = listOf(testArcHost)
 
     class TestingAndroidProdHost(
         val context: Context,
