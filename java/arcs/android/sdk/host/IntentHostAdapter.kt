@@ -17,10 +17,12 @@ import android.os.Handler
 import android.os.ResultReceiver
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
+import kotlinx.coroutines.CancellableContinuation
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
@@ -44,13 +46,13 @@ abstract class IntentHostAdapter(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     class ResultReceiverContinuation<T>(
-        val continuation: Continuation<T?>,
+        val continuation: CancellableContinuation<T?>,
         val block: (Any?) -> T?
     ) : ResultReceiver(Handler()) {
         override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
             val exception = resultData?.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION)
             exception?.let {
-                continuation.resumeWithException(
+                continuation.cancel(
                     ArcHostException(
                         exception,
                         resultData.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION_STACKTRACE, "")
@@ -62,7 +64,8 @@ abstract class IntentHostAdapter(
                         resultData?.get(
                             ArcHostHelper.EXTRA_OPERATION_RESULT
                         )
-                    )
+                    ),
+                    onCancellation = {}
                 )
             }
         }
@@ -78,16 +81,13 @@ abstract class IntentHostAdapter(
     protected suspend fun <T> sendIntentToHostServiceForResult(
         intent: Intent,
         transformer: (Any?) -> T?
-    ): T? = withContext(Dispatchers.Main) {
-        // Not using Main complains ResultReceiver can't create a Handler()
-        withTimeout(ARCHOST_INTENT_TIMEOUT) {
-            suspendCoroutine { continuation: Continuation<T?> ->
-                ArcHostHelper.setResultReceiver(
-                    intent,
-                    ResultReceiverContinuation(continuation, transformer)
-                )
-                sendIntentToHostService(intent)
-            }
+    ): T? = withTimeout(ARCHOST_INTENT_TIMEOUT) {
+        suspendCancellableCoroutine { continuation: CancellableContinuation<T?> ->
+            ArcHostHelper.setResultReceiver(
+                intent,
+                ResultReceiverContinuation(continuation, transformer)
+            )
+            sendIntentToHostService(intent)
         }
     }
 
