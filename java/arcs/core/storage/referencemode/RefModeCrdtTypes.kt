@@ -62,6 +62,8 @@ sealed class RefModeStoreData : CrdtData {
                 values.mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.value) }
                     .toMutableMap()
             )
+
+        override fun asCrdtSetData() = Set(VersionMap(versionMap), HashMap(values))
     }
 
     data class Set(

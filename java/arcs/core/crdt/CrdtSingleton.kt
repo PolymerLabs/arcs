@@ -16,11 +16,10 @@ import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtSet.Operation.Add
 import arcs.core.crdt.CrdtSet.Operation.Remove
 import arcs.core.crdt.CrdtSingleton.Data
+import arcs.core.data.util.ReferencablePrimitive
 
 /** A [CrdtModel] capable of managing a mutable reference. */
 class CrdtSingleton<T : Referencable>(
-    /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
-    dataBuilder: (VersionMap) -> Data<T> = { versionMap -> DataImpl(versionMap) },
     initialVersion: VersionMap = VersionMap(),
     initialData: T? = null,
     singletonToCopy: CrdtSingleton<T>? = null
@@ -44,13 +43,13 @@ class CrdtSingleton<T : Referencable>(
         }
         set = when {
             initialData != null -> CrdtSet(
-                DataImpl(
+                CrdtSet.DataImpl(
                     initialVersion,
                     mutableMapOf(initialData.id to CrdtSet.DataValue(initialVersion, initialData))
                 )
             )
             singletonToCopy != null -> singletonToCopy.set.copy()
-            else -> CrdtSet(DataImpl(initialVersion), dataBuilder)
+            else -> CrdtSet(CrdtSet.DataImpl(initialVersion))
         }
     }
 
@@ -64,7 +63,7 @@ class CrdtSingleton<T : Referencable>(
     )
 
     override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
-        val result = set.merge(other)
+        val result = set.merge(other.asCrdtSetData())
         // Always return CrdtChange.Data change record for the local update, since we cannot perform
         // an op-based change.
         val modelChange: CrdtChange<Data<T>, IOperation<T>> = CrdtChange.Data(data)
@@ -82,7 +81,7 @@ class CrdtSingleton<T : Referencable>(
 
     override fun applyOperation(op: IOperation<T>): Boolean = op.applyTo(set)
 
-    override fun updateData(newData: Data<T>) = set.updateData(newData)
+    override fun updateData(newData: Data<T>) = set.updateData(newData.asCrdtSetData())
 
     /** Makes a deep copy of this [CrdtSingleton]. */
     /* internal */ fun copy(): CrdtSingleton<T> = CrdtSingleton(singletonToCopy = this)
@@ -104,8 +103,19 @@ class CrdtSingleton<T : Referencable>(
     override fun hashCode(): Int = set.hashCode()
 
     /** Abstract representation of the data stored by a [CrdtSingleton]. */
-    interface Data<T : Referencable> : CrdtSet.Data<T> {
-        override fun copy(): Data<T>
+    interface Data<T : Referencable> : CrdtData {
+        val values: MutableMap<ReferenceId, CrdtSet.DataValue<T>>
+
+        /** Constructs a deep copy of this [Data]. */
+        fun copy(): Data<T>
+
+        /**
+         * Converts this instance into an equivalent instance of [CrdtSet.Data].
+         *
+         * CrdtSingleton is implemented via a backing CrdtSet, and their [Data] types are trivially
+         * convertible from one to the other.
+         */
+        fun asCrdtSetData(): CrdtSet.Data<T>
     }
 
     /** Concrete representation of the data stored by a [CrdtSingleton]. */
@@ -113,8 +123,20 @@ class CrdtSingleton<T : Referencable>(
         override var versionMap: VersionMap = VersionMap(),
         override val values: MutableMap<ReferenceId, CrdtSet.DataValue<T>> = mutableMapOf()
     ) : Data<T> {
-        override fun copy(): Data<T> =
-            DataImpl(versionMap = VersionMap(versionMap), values = HashMap(values))
+        override fun asCrdtSetData() = CrdtSet.DataImpl(VersionMap(versionMap), HashMap(values))
+
+        override fun copy() = DataImpl(
+            versionMap = VersionMap(versionMap),
+            values = HashMap(values)
+        )
+
+        override fun toString(): String =
+            "CrdtSingleton.Data(versionMap=$versionMap, values=${values.toStringRepr()})"
+
+        private fun <T : Referencable> Map<ReferenceId, CrdtSet.DataValue<T>>.toStringRepr() =
+            entries.joinToString(prefix = "{", postfix = "}") { (id, value) ->
+                "${ReferencablePrimitive.unwrap(id) ?: id}=$value"
+            }
     }
 
     /** General representation of an operation which can be applied to a [CrdtSingleton]. */
@@ -189,8 +211,7 @@ class CrdtSingleton<T : Referencable>(
     companion object {
         /** Creates a [CrdtSingleton] from pre-existing data. */
         fun <T : Referencable> createWithData(
-            data: Data<T>,
-            dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
-        ) = CrdtSingleton(dataBuilder).apply { set = CrdtSet(data, dataBuilder) }
+            data: Data<T>
+        ) = CrdtSingleton<T>().apply { set = CrdtSet(data.asCrdtSetData()) }
     }
 }

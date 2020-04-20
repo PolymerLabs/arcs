@@ -32,16 +32,8 @@ import arcs.core.data.util.ReferencablePrimitive
  */
 class CrdtSet<T : Referencable>(
     /** Initial data. */
-    /* internal */ var _data: Data<T> = DataImpl(),
-    /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
-    private val dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
+    /* internal */ var _data: Data<T> = DataImpl()
 ) : CrdtModel<Data<T>, CrdtSet.IOperation<T>, Set<T>> {
-
-    // TODO(mmandlis): get rid of the secondary constructors, once Java code has migrated to Kotlin
-    // and there is no more need for @JvmOverloads annotation, that fails to compile to JS.
-    constructor() : this(DataImpl())
-
-    constructor(data: Data<T>) : this(data, { DataImpl(it) })
 
     override val versionMap: VersionMap
         get() = _data.versionMap.copy()
@@ -54,7 +46,7 @@ class CrdtSet<T : Referencable>(
     override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
         val oldClock = _data.versionMap.copy()
         val newClock = _data.versionMap mergeWith other.versionMap
-        val mergedData = dataBuilder(newClock)
+        val mergedData = DataImpl<T>(newClock)
         val fastForwardOp = Operation.FastForward<T>(other.versionMap, newClock)
 
         other.values.values.forEach { (otherVersion: VersionMap, otherValue: T) ->
@@ -130,8 +122,7 @@ class CrdtSet<T : Referencable>(
 
     /** Makes a deep copy of this [CrdtSet]. */
     /* internal */ fun copy(): CrdtSet<T> = CrdtSet(
-        DataImpl(_data.versionMap.copy(), HashMap(_data.values)),
-        dataBuilder
+        DataImpl(_data.versionMap.copy(), HashMap(_data.values))
     )
 
     override fun toString(): String = "CrdtSet($_data)"
@@ -154,7 +145,7 @@ class CrdtSet<T : Referencable>(
     interface Data<T : Referencable> : CrdtData {
         val values: MutableMap<ReferenceId, DataValue<T>>
 
-        /** Constructs a deep copy of this [DataImpl]. */
+        /** Constructs a deep copy of this [Data]. */
         fun copy(): Data<T>
     }
 
@@ -164,11 +155,13 @@ class CrdtSet<T : Referencable>(
         /** Map of values by their [ReferenceId]s. */
         override val values: MutableMap<ReferenceId, DataValue<T>> = mutableMapOf()
     ) : Data<T> {
-        override fun copy(): Data<T> =
-            DataImpl(versionMap = VersionMap(versionMap), values = HashMap(values))
+        override fun copy() = DataImpl(
+            versionMap = VersionMap(versionMap),
+            values = HashMap(values)
+        )
 
         override fun toString(): String =
-            "Data(versionMap=$versionMap, values=${values.toStringRepr()})"
+            "CrdtSet.Data(versionMap=$versionMap, values=${values.toStringRepr()})"
 
         private fun <T : Referencable> Map<ReferenceId, DataValue<T>>.toStringRepr(): String =
             entries.joinToString(prefix = "{", postfix = "}") { (id, value) ->
@@ -351,9 +344,6 @@ class CrdtSet<T : Referencable>(
 
     companion object {
         /** Creates a [CrdtSet] from pre-existing data. */
-        fun <T : Referencable> createWithData(
-            data: Data<T>,
-            dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
-        ) = CrdtSet(data, dataBuilder)
+        fun <T : Referencable> createWithData(data: Data<T>) = CrdtSet(data)
     }
 }
