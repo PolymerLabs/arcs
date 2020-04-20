@@ -63,7 +63,8 @@ abstract class AbstractArcHost(
     /** Arcs currently running in memory. */
     private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
 
-    override val hostId = this::class.className()
+    // There can be more then one instance of a host, hashCode is used to disambiguate them
+    override val hostId = "${this::class.className()}@${this.hashCode()}"
 
     // TODO: refactor to allow clients to supply this
     private val coroutineContext = Dispatchers.Unconfined + CoroutineName("AbstractArcHost")

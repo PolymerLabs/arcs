@@ -43,6 +43,8 @@ class PersonHostService : ArcHostService() {
         ::WritePerson.toRegistration()
     )
 
+    override val arcHosts = listOf(arcHost)
+
     inner class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,

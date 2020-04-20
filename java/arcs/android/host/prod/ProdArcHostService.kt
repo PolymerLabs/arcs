@@ -47,4 +47,6 @@ open class ProdArcHostService : ArcHostService() {
             *scanForParticles()
         )
     }
+
+    override val arcHosts = listOf(arcHost)
 }

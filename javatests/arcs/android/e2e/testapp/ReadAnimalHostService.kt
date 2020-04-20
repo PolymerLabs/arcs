@@ -41,6 +41,8 @@ class ReadAnimalHostService : ArcHostService() {
         ::ReadAnimal.toRegistration()
     )
 
+    override val arcHosts = listOf(arcHost)
+
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,

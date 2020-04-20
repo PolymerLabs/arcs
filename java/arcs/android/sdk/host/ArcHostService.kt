@@ -23,13 +23,16 @@ import kotlinx.coroutines.cancel
 abstract class ArcHostService : LifecycleService() {
     protected val scope: CoroutineScope = MainScope()
 
-    /**
-     * Subclasses must override this with their own [ArcHost].
-     */
+    // TODO: remove after G3 fixed
     abstract val arcHost: ArcHost
 
+    /**
+     * Subclasses must override this with their own [ArcHost]s.
+     */
+    open val arcHosts: List<ArcHost> by lazy { listOf(arcHost) }
+
     val arcHostHelper: ArcHostHelper by lazy {
-        ArcHostHelper(this, arcHost)
+        ArcHostHelper(this, *arcHosts.toTypedArray())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

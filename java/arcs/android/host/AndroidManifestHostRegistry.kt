@@ -16,10 +16,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.annotation.VisibleForTesting
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.sdk.host.toArcHost
+import arcs.android.sdk.host.IntentRegistryAdapter
+import arcs.android.sdk.host.toRegistryHost
 import arcs.core.host.ArcHost
 import arcs.core.host.HostRegistry
 import arcs.core.host.api.Particle
+import kotlinx.coroutines.TimeoutCancellationException
 
 /**
  * A [HostRegistry] that discovers available [ArcHost] services by using [PackageManager] to
@@ -47,11 +49,12 @@ class AndroidManifestHostRegistry private constructor(
     private val sender: (Intent) -> Unit
 ) : HostRegistry {
 
+    private val serviceHosts = mutableListOf<IntentRegistryAdapter>()
     private val arcHosts = mutableListOf<ArcHost>()
 
     /** Discover all Android services which handle [ArcHost] operations. */
     fun initialize(): AndroidManifestHostRegistry = apply {
-        arcHosts.addAll(findHostsByManifest())
+        serviceHosts.addAll(findHostsByManifest())
     }
 
     /**
@@ -65,15 +68,26 @@ class AndroidManifestHostRegistry private constructor(
      * Constructs an [ArcHost] delegate that communicates via [Intent]s for each
      * [Service] discovered.
      */
-    private fun findHostsByManifest(): List<ArcHost> =
+    private fun findHostsByManifest(): List<IntentRegistryAdapter> =
         context.packageManager.queryIntentServices(
             Intent(ArcHostHelper.Companion.ACTION_HOST_INTENT),
             PackageManager.MATCH_ALL
         )
         .filter { it.serviceInfo != null }
-        .map { it.serviceInfo.toArcHost(sender) }
+        .map { it.serviceInfo.toRegistryHost(sender) }
 
-    override suspend fun availableArcHosts(): List<ArcHost> = arcHosts
+    override suspend fun availableArcHosts(): List<ArcHost> {
+        if (arcHosts.isEmpty()) {
+            arcHosts.addAll(serviceHosts.flatMap { registryHost ->
+                try {
+                    registryHost.registeredHosts()
+                } catch (e: TimeoutCancellationException) {
+                    emptyList<ArcHost>()
+                }
+            })
+        }
+        return arcHosts
+    }
 
     override suspend fun registerHost(host: ArcHost) {
         throw UnsupportedOperationException(

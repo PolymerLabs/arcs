@@ -40,6 +40,8 @@ class WriteAnimalHostService : ArcHostService() {
         ::WriteAnimal.toRegistration()
     )
 
+    override val arcHosts = listOf(arcHost)
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val arcId = intent?.getStringExtra(ARC_ID_EXTRA)
         val context = arcId?.let { arcHost.arcHostContext(it) }

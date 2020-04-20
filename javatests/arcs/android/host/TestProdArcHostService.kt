@@ -17,6 +17,8 @@ class TestProdArcHostService : ProdArcHostService() {
         JvmSchedulerProvider(scope.coroutineContext)
     )
 
+    override val arcHosts = listOf(arcHost)
+
     class TestingAndroidProdHost(
         val context: Context,
         val lifecycle: Lifecycle,
