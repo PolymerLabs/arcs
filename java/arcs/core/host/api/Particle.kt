@@ -29,6 +29,9 @@ interface Particle {
      */
     suspend fun onCreate() = Unit
 
+    /** Called when all [Handle]s used by this [Particle] have signalled [onReady]. */
+    suspend fun onReady() = Unit
+
     /**
      * React to handle updates.
      *

@@ -29,7 +29,7 @@ data class ParticleContext(
     var particleState: ParticleState = ParticleState.Instantiated,
     /** Used to detect infinite-crash loop particles */
     var consecutiveFailureCount: Int = 0
-)
+) : ParticleStateMachine(particleState)
 
 /**
  * Runtime context state needed by the [ArcHost] on a per [ArcId] basis. For each [Arc],

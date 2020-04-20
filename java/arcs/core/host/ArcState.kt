@@ -57,6 +57,7 @@ enum class ParticleState {
     Instantiated,
     /** onCreate() has been successfully called. */
     Created,
+    Ready,
     /** onStart() has been successfully called. */
     Started,
     /** onStop() has been successfully called. */
