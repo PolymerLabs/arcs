@@ -39,6 +39,9 @@ interface ArcHost {
     suspend fun stopArc(partition: Plan.Partition)
     // TODO: HandleMessage
 
+    /** Returns [ArcState] for a given [Plan.Partition]. */
+    suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState
+
     /**
      * Returns true if the provided [Plan.Particle] can be loaded by this [ArcHost].
      */

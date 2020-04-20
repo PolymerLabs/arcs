@@ -6,6 +6,7 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
 import kotlinx.coroutines.CompletableDeferred
+import java.lang.IllegalArgumentException
 
 open class TestingHost(
     schedulerProvider: SchedulerProvider,
@@ -18,7 +19,12 @@ open class TestingHost(
     var deferred = CompletableDeferred<Boolean>()
     var waitingFor: String? = null
 
+    var throws = false
+
     override suspend fun startArc(partition: Plan.Partition) {
+        if (throws) {
+            throw IllegalArgumentException("Boom!")
+        }
         super.startArc(partition)
         started.add(partition)
         if (partition.arcId == waitingFor) {
@@ -33,6 +39,7 @@ open class TestingHost(
     fun setup() {
         started.clear()
         clearCache()
+        throws = false
     }
 
     /** Wait for an arc with [arcId] to start. */

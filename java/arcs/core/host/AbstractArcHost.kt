@@ -82,6 +82,13 @@ abstract class AbstractArcHost(
     protected fun isRunning(arcId: String) = runningArcs[arcId]?.arcState == ArcState.Running
 
     /**
+     * Lookup the [ArcHostContext] associated with the [ArcId] in [partition] and return its
+     * [ArcState].
+     **/
+    override suspend fun lookupArcHostStatus(partition: Plan.Partition) =
+        lookupOrCreateArcHostContext(partition.arcId).arcState
+
+    /**
      * This property is true if this [ArcHost] has no running, memory resident arcs, e.g.
      * running [Particle]s with active connected [Handle]s.
      */
@@ -266,8 +273,7 @@ abstract class AbstractArcHost(
     private suspend fun performLifecycleForContext(context: ArcHostContext) {
         context.particles.values.forEach { particleContext ->
             performParticleLifecycle(particleContext)
-            if (particleContext.particleState == ParticleState.Failed ||
-                particleContext.particleState == ParticleState.MaxFailed) {
+            if (particleContext.particleState.failed) {
                 context.arcState = ArcState.Error
                 return@forEach
             }

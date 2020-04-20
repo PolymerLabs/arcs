@@ -81,4 +81,10 @@ enum class ParticleState {
      */
     val hasBeenCreated: Boolean
         get() = this == Created || this == Started || this == Stopped || this == Failed
+
+    /**
+     * Indicates whether the particle has failed during its lifecycle.
+     */
+    val failed: Boolean
+        get() = this == Failed || this == Failed_NeverStarted || this == MaxFailed
 }

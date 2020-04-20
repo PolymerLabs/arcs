@@ -16,6 +16,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.ResultReceiver
 import arcs.core.host.ArcHost
+import arcs.core.host.ArcHostException
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -44,38 +45,50 @@ abstract class IntentHostAdapter(
         val continuation: CancellableContinuation<T?>,
         val block: (Any?) -> T?
     ) : ResultReceiver(Handler()) {
-        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) =
-            continuation.resume(
-                block(
-                    resultData?.get(
-                        ArcHostHelper.EXTRA_OPERATION_RESULT
+        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+            val exception = resultData?.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION)
+            exception?.let {
+                continuation.cancel(
+                    ArcHostException(
+                        exception,
+                        resultData.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION_STACKTRACE, "")
                     )
                 )
-            ) {}
+            } ?: run {
+                continuation.resume(
+                    block(
+                        resultData?.get(
+                            ArcHostHelper.EXTRA_OPERATION_RESULT
+                        )
+                    ),
+                    onCancellation = {}
+                )
+            }
+        }
     }
 
     /**
-     * Sends an asynchronous command via [Intent] to a [Service] and waits for a
+     * Sends an asynchronous [ArcHost] command via [Intent] to a [Service] and waits for a
      * result using a suspendable coroutine.
      *
-     * @property intent the command, usually from [ArcHostHelper]
+     * @property intent the [ArcHost] command, usually from [ArcHostHelper]
      * @property transformer a lambda to map return values from a [Bundle] into other types.
      */
     protected suspend fun <T> sendIntentToHostServiceForResult(
         intent: Intent,
         transformer: (Any?) -> T?
     ): T? = withTimeout(ARCHOST_INTENT_TIMEOUT) {
-        suspendCancellableCoroutine { cancelableContinuation: CancellableContinuation<T?> ->
+        suspendCancellableCoroutine { continuation: CancellableContinuation<T?> ->
             ArcHostHelper.setResultReceiver(
                 intent,
-                ResultReceiverContinuation(cancelableContinuation, transformer)
+                ResultReceiverContinuation(continuation, transformer)
             )
             sendIntentToHostService(intent)
         }
     }
 
     /**
-     * Sends an asynchronous command via [Intent] and waits for it to complete
+     * Sends an asynchronous [ArcHost] command via [Intent] and waits for it to complete
      * with no return value.
      */
     protected suspend fun sendIntentToHostServiceForResult(
