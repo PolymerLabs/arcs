@@ -310,10 +310,11 @@ fun Plan.Partition.createStartArcHostIntent(service: ComponentName, hostId: Stri
 /**
  * Creates an [Intent] to invoke [ArcHost.lookupArcStatus] on a [Service]'s internal [ArcHost].
  */
-fun Plan.Partition.createLookupArcStatusIntent(service: ComponentName): Intent =
+fun Plan.Partition.createLookupArcStatusIntent(service: ComponentName, hostId: String): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.LookupArcStatus,
         service,
+        hostId,
         this.toParcelable()
     )
 

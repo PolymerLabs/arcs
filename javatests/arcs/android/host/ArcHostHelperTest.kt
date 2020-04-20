@@ -159,7 +159,8 @@ class ArcHostHelperTest {
     @Test
     fun onStartCommand_lookupArcHostStatus_returnsValue() = runBlockingTest {
         val lookupIntent = planPartition.createLookupArcStatusIntent(
-            TestAndroidArcHostService::class.toComponentName(context)
+            TestAndroidArcHostService::class.toComponentName(context),
+            arcHost.hostId
         )
 
         val actual = runWithResult(lookupIntent) { bundle ->
@@ -190,7 +191,8 @@ class ArcHostHelperTest {
     fun onStartCommand_callsOnStart_throwsException_returnsException() = runBlockingTest {
         TestArcHost.throws = true
         val startIntent = planPartition.createStartArcHostIntent(
-            TestAndroidArcHostService::class.toComponentName(context)
+            TestAndroidArcHostService::class.toComponentName(context),
+            arcHost.hostId
         )
         val exception = runWithResult(startIntent) { bundle ->
             ArcHostHelper.getExceptionResult(bundle)
