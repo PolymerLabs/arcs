@@ -29,7 +29,7 @@ abstract class ArcHostService : LifecycleService() {
     /**
      * Subclasses must override this with their own [ArcHost]s.
      */
-    open val arcHosts: List<ArcHost> = listOf(arcHost)
+    open val arcHosts: List<ArcHost> by lazy { listOf(arcHost) }
 
     val arcHostHelper: ArcHostHelper by lazy {
         ArcHostHelper(this, *arcHosts.toTypedArray())
