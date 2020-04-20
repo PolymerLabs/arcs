@@ -23,7 +23,7 @@ enum class ParcelableCrdtType(
     /** [Parcelable.Creator] for the type's [ParcelableCrdtOperation] classes. */
     val crdtOperationCreator: Parcelable.Creator<out ParcelableCrdtOperation<out CrdtOperation>>
 ) {
-    Count(ParcelableCrdtCount.Data.CREATOR, ParcelableCrdtCount.Operation.CREATOR),
+    Count(ParcelableCrdtCount.Data, ParcelableCrdtCount.Operation),
     Set(ParcelableCrdtSet.Data, ParcelableCrdtSet.Operation),
     Singleton(ParcelableCrdtSingleton.Data, ParcelableCrdtSingleton.Operation),
     Entity(ParcelableCrdtEntity.Data, ParcelableCrdtEntity.Operation),

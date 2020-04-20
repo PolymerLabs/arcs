@@ -14,11 +14,11 @@ package arcs.android.crdt
 import android.os.Parcel
 import android.os.Parcelable
 import arcs.android.util.writeProto
-import arcs.core.crdt.Actor
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.VersionMap
 
 /** Container of [Parcelable] implementations for [CrdtCount]'s data and ops classes. */
+// TODO(b/151449060): Delete this class once all ParcelableCrdtTypes have been converted to protos.
 object ParcelableCrdtCount {
     /**
      * Parcelable variant of [CrdtCount.Data].
@@ -32,37 +32,17 @@ object ParcelableCrdtCount {
         override var versionMap: VersionMap = actual.versionMap
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
-            // Write the version map.
-            parcel.writeProto(actual.versionMap.toProto())
-
-            // Write the number of values as a hint of what to expect.
-            parcel.writeInt(actual.values.size)
-            // Write the actual values.
-            actual.values.forEach { (actor, value) ->
-                parcel.writeString(actor)
-                parcel.writeInt(value)
-            }
+            parcel.writeProto(actual.toProto())
         }
 
         override fun describeContents(): Int = 0
 
         companion object CREATOR : Parcelable.Creator<Data> {
-            override fun createFromParcel(parcel: Parcel): Data {
-                // Read the version map.
-                val versionMap = requireNotNull(parcel.readVersionMap()) {
-                    "No VersionMap found in parcel when reading ParcelableCrdtCountData"
+            override fun createFromParcel(parcel: Parcel) = Data(
+                requireNotNull(parcel.readCrdtCountData()) {
+                    "CrdtCountProto.Data not found in parcel."
                 }
-                val values = mutableMapOf<Actor, Int>()
-
-                // Read the item count hint.
-                val items = parcel.readInt()
-                // Use the item count hint to read the values into the map.
-                repeat(items) {
-                    values[requireNotNull(parcel.readString())] = parcel.readInt()
-                }
-
-                return Data(CrdtCount.Data(values, versionMap))
-            }
+            )
 
             override fun newArray(size: Int): Array<Data?> = arrayOfNulls(size)
         }
@@ -83,88 +63,25 @@ object ParcelableCrdtCount {
      * **Note:** There are no AIDL parcelable definition provided for these, because they are always
      * passed as members of another class to an AIDL interface, not directly.
      */
-    sealed class Operation(
-        private val opType: OpType
+    class Operation(
+        override val actual: CrdtCount.Operation
     ) : ParcelableCrdtOperation<CrdtCount.Operation> {
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
-            // Write the opType so we can multiplex during createFromParcel.
-            parcel.writeInt(opType.ordinal)
+            parcel.writeProto(actual.toProto())
         }
 
-        /** Parcelable variant of [CrdtCount.Operation.Increment]. */
-        data class Increment(
-            override val actual: CrdtCount.Operation.Increment
-        ) : Operation(OpType.Increment) {
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                super.writeToParcel(parcel, flags)
-                parcel.writeString(actual.actor)
-                parcel.writeInt(actual.version.first)
-                parcel.writeInt(actual.version.second)
-            }
-
-            override fun describeContents(): Int = 0
-
-            companion object CREATOR : Parcelable.Creator<Increment> {
-                override fun createFromParcel(parcel: Parcel): Increment {
-                    val actor = requireNotNull(parcel.readString())
-                    val from = parcel.readInt()
-                    val to = parcel.readInt()
-                    return Increment(CrdtCount.Operation.Increment(actor, from to to))
-                }
-
-                override fun newArray(size: Int): Array<Increment?> = arrayOfNulls(size)
-            }
-        }
-
-        /** Parcelable variant of [CrdtCount.Operation.MultiIncrement]. */
-        data class MultiIncrement(
-            override val actual: CrdtCount.Operation.MultiIncrement
-        ) : Operation(OpType.MultiIncrement) {
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                super.writeToParcel(parcel, flags)
-                parcel.writeString(actual.actor)
-                parcel.writeInt(actual.version.first)
-                parcel.writeInt(actual.version.second)
-                parcel.writeInt(actual.delta)
-            }
-
-            override fun describeContents(): Int = 0
-
-            companion object CREATOR : Parcelable.Creator<MultiIncrement> {
-                override fun createFromParcel(parcel: Parcel): MultiIncrement {
-                    val actor = requireNotNull(parcel.readString())
-                    val from = parcel.readInt()
-                    val to = parcel.readInt()
-                    val delta = parcel.readInt()
-                    return MultiIncrement(
-                        CrdtCount.Operation.MultiIncrement(actor, from to to, delta)
-                    )
-                }
-
-                override fun newArray(size: Int): Array<MultiIncrement?> = arrayOfNulls(size)
-            }
-        }
+        override fun describeContents() = 0
 
         companion object CREATOR : Parcelable.Creator<Operation> {
-            override fun createFromParcel(parcel: Parcel): Operation =
-                when (OpType.values()[parcel.readInt()]) {
-                    OpType.Increment -> Increment.createFromParcel(parcel)
-                    OpType.MultiIncrement -> MultiIncrement.createFromParcel(parcel)
+            override fun createFromParcel(parcel: Parcel) = Operation(
+                requireNotNull(parcel.readCrdtCountOperation()) {
+                    "CrdtCountProto.Operation not found in parcel."
                 }
+            )
 
             override fun newArray(size: Int): Array<Operation?> = arrayOfNulls(size)
         }
-    }
-
-    /**
-     * Identifiers for when [Operation] is reading from a parcelable, so it can multiplex out to the
-     * correct subclass.
-     */
-    internal enum class OpType {
-        Increment,
-        MultiIncrement,
     }
 }
 
@@ -173,11 +90,5 @@ fun CrdtCount.Data.toParcelable(): ParcelableCrdtData<CrdtCount.Data> =
     ParcelableCrdtCount.Data(this)
 
 /** Converts a [CrdtCount.Operation] to a [Parcelable] variant. */
-fun CrdtCount.Operation.toParcelable(): ParcelableCrdtOperation<CrdtCount.Operation> = when (this) {
-    is CrdtCount.Operation.Increment -> ParcelableCrdtCount.Operation.Increment(this)
-    is CrdtCount.Operation.MultiIncrement -> ParcelableCrdtCount.Operation.MultiIncrement(this)
-}
-
-/** Returns a list of [ParcelableCrdtOperation]s based on the list of [CrdtCount.Operation]s. */
-fun List<CrdtCount.Operation>.toParcelables(): List<ParcelableCrdtOperation<CrdtCount.Operation>> =
-    map { it.toParcelable() }
+fun CrdtCount.Operation.toParcelable(): ParcelableCrdtOperation<CrdtCount.Operation> =
+    ParcelableCrdtCount.Operation(this)
