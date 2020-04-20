@@ -123,7 +123,7 @@ class CrdtSingleton<T : Referencable>(
         override var versionMap: VersionMap = VersionMap(),
         override val values: MutableMap<ReferenceId, CrdtSet.DataValue<T>> = mutableMapOf()
     ) : Data<T> {
-        override fun asCrdtSetData() = CrdtSet.DataImpl(VersionMap(versionMap), HashMap(values))
+        override fun asCrdtSetData() = CrdtSet.DataImpl(versionMap, values)
 
         override fun copy() = DataImpl(
             versionMap = VersionMap(versionMap),
