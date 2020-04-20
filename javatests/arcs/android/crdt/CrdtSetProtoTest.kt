@@ -53,13 +53,13 @@ class CrdtSetProtoTest {
         ))
 
         val marshalled = with(Parcel.obtain()) {
-            writeProto(data.toProto())
+            writeModelData(data, 0)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readCrdtSetData()
+            readModelData(ParcelableCrdtType.Set)
         }
 
         assertThat(unmarshalled).isEqualTo(data)
@@ -70,13 +70,13 @@ class CrdtSetProtoTest {
         val op = CrdtSet.Operation.Add("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeProto(op.toProto())
+            writeOperation(op, 0)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readCrdtSetOperation()
+            readOperation(ParcelableCrdtType.Set)
         }
 
         assertThat(unmarshalled).isEqualTo(op)
@@ -87,13 +87,13 @@ class CrdtSetProtoTest {
         val op = CrdtSet.Operation.Remove("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeProto(op.toProto())
+            writeOperation(op, 0)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readCrdtSetOperation()
+            readOperation(ParcelableCrdtType.Set)
         }
 
         assertThat(unmarshalled).isEqualTo(op)
@@ -111,13 +111,13 @@ class CrdtSetProtoTest {
         )
 
         val marshalled = with(Parcel.obtain()) {
-            writeProto(op.toProto())
+            writeOperation(op, 0)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readCrdtSetOperation()
+            readOperation(ParcelableCrdtType.Set)
         }
 
         assertThat(unmarshalled).isEqualTo(op)

@@ -96,7 +96,6 @@ class ArcsTest {
     }
 
     @Test
-    @Ignore("Broken: b/154181519")
     fun testSingleton_persistentLocalActivity() {
         // Configure handle options.
         clickOnTextIfPresent(SINGLETON_BTN_TEXT)

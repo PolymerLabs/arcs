@@ -36,16 +36,16 @@ class ParcelableCrdtSingletonTest {
         ))
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(data.toParcelable(), 0)
+            writeModelData(data, 0)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Singleton.crdtDataCreator))
+            readModelData(ParcelableCrdtType.Singleton)
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(data)
+        assertThat(unmarshalled).isEqualTo(data)
     }
 
     @Test
@@ -53,16 +53,16 @@ class ParcelableCrdtSingletonTest {
         val op = CrdtSingleton.Operation.Update("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeOperation(op, 0)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Singleton.crdtOperationCreator))
+            readOperation(ParcelableCrdtType.Singleton)
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 
     @Test
@@ -70,15 +70,15 @@ class ParcelableCrdtSingletonTest {
         val op = CrdtSingleton.Operation.Clear<Referencable>("alice", versionMap)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeOperation(op, 0)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Singleton.crdtOperationCreator))
+            readOperation(ParcelableCrdtType.Singleton)
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 }

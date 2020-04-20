@@ -156,7 +156,8 @@ class CrdtSingleton<T : Referencable>(
 
             override fun hashCode(): Int = toString().hashCode()
 
-            override fun toString(): String = "CrdtSet.Operation.Update($clock, $actor, $value)"
+            override fun toString(): String =
+                "CrdtSingleton.Operation.Update($clock, $actor, $value)"
         }
 
         /** An [Operation] to clear the value stored by the [CrdtSingleton]. */
@@ -181,7 +182,7 @@ class CrdtSingleton<T : Referencable>(
 
             override fun hashCode(): Int = toString().hashCode()
 
-            override fun toString(): String = "CrdtSet.Operation.Clear($clock, $actor)"
+            override fun toString(): String = "CrdtSingleton.Operation.Clear($clock, $actor)"
         }
     }
 
