@@ -34,7 +34,7 @@ class ReadAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
-    val arcHost: ArcHost = MyArcHost(
+    override val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
         JvmSchedulerProvider(coroutineContext),

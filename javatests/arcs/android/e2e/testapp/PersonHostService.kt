@@ -35,7 +35,7 @@ class PersonHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
-    val arcHost = MyArcHost(
+    override val arcHost = MyArcHost(
         this,
         this.lifecycle,
         JvmSchedulerProvider(coroutineContext),
