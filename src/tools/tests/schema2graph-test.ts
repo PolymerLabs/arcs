@@ -39,7 +39,7 @@ function dummyNameGenerator(node: SchemaNode, i: number) {
 }
 
 function dummyAliasGenerator(node: SchemaNode): string[] {
-  return node.connections.map((s: string) =>`${node.particleName}_${s}`);
+  return node.connections.map((s: string) => `${node.particleName}_${s}`);
 }
 
 describe('schema2graph', () => {

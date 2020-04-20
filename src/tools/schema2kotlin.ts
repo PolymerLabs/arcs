@@ -144,7 +144,7 @@ ${imports.join('\n')}
   }
 
   generateAliasNames(node: SchemaNode): string[] {
-    return node.connections.map((s: string) =>`${node.particleName}_${s}`);
+    return node.connections.map((s: string) => `${node.particleName}_${s}`);
   }
 
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
@@ -512,7 +512,7 @@ ${lines}
         companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
-            
+
             init {
                 SchemaRegistry.register(this)
             }`}

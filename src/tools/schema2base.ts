@@ -171,6 +171,6 @@ export abstract class Schema2Base {
     if (node.connections.length === 1) {
       return [];
     }
-    return node.connections.map((s: string) =>`${node.particleName}_${s}`);
+    return node.connections.map((s: string) => `${node.particleName}_${s}`);
   }
 }
