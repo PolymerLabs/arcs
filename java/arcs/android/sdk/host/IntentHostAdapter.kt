@@ -18,12 +18,8 @@ import android.os.ResultReceiver
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
 import kotlinx.coroutines.CancellableContinuation
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.suspendCoroutine
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
 /**
