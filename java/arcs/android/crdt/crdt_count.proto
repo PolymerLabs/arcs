@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package arcs.android.crdt;
+
+option java_package = "arcs.android.crdt";
+option java_multiple_files = true;
+
+import "java/arcs/android/crdt/version_map.proto";
+
+message CrdtCountProto {
+  message Data {
+    VersionMapProto version_map = 1;
+    // Maps from actor to value.
+    map<string, int32> values = 2;
+  }
+
+  message Operation {
+    message Increment {
+      string actor = 1;
+      int32 from_version = 2;
+      int32 to_version = 3;
+    }
+
+    message MultiIncrement {
+      string actor = 1;
+      int32 from_version = 2;
+      int32 to_version = 3;
+      int32 delta = 4;
+    }
+
+    oneof operation {
+      Increment increment = 1;
+      MultiIncrement multi_increment = 2;
+    }
+  }
+}
