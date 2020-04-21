@@ -9,14 +9,21 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.util.Scheduler
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertWithMessage
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
+import kotlinx.coroutines.withTimeout
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -60,6 +67,7 @@ open class BaseTestHarness<P : Particle>(
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val scope = TestCoroutineScope()
     private val handles = mutableMapOf<String, Handle>()
+    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
     // Exposes handles to subclasses in a read only fashion.
     protected val handleMap: Map<String, Handle>
@@ -77,13 +85,14 @@ open class BaseTestHarness<P : Particle>(
                 RamDiskDriverProvider()
                 DriverAndKeyConfigurator.configureKeyParsers()
 
-                scope.launch {
-                    val handleManager = EntityHandleManager(
-                        arcId = "testHarness",
-                        hostId = "testHarnessHost",
-                        time = JvmTime,
-                        scheduler = Scheduler(JvmTime, scope.coroutineContext)
-                    )
+                val scheduler = schedulerProvider(description.methodName)
+                val handleManager = EntityHandleManager(
+                    arcId = "testHarness",
+                    hostId = "testHarnessHost",
+                    time = JvmTime,
+                    scheduler = scheduler
+                )
+                runBlocking {
                     specs.forEach { spec ->
                         val storageKey = when (spec.dataType) {
                             HandleDataType.Entity -> ReferenceModeStorageKey(
@@ -101,6 +110,7 @@ open class BaseTestHarness<P : Particle>(
                     }
                 }
                 statement.evaluate()
+                scheduler.cancel()
             }
         }
     }
@@ -110,14 +120,36 @@ open class BaseTestHarness<P : Particle>(
      *
      * TODO: Describe the boot up sequence in detail once it is finalized.
      */
-    suspend fun start() {
+    suspend fun start() = coroutineScope {
         assertWithMessage("Harness can be started only once")
             .that(::particle.isInitialized).isFalse()
         particle = factory(scope)
         handles.forEach { (name, handle) -> particle.handles.setHandle(name, handle) }
+
         particle.onCreate()
-        handles.values.toList().withIndex().forEach { (index, handle) ->
-            particle.onHandleSync(handle, index == handles.size - 1)
+
+        val readySoFar = atomic(0)
+        val readyJobs = handles.map { (name, handle) ->
+            launch {
+                // TODO: switch to this version when onReady is non-suspending:
+                //suspendCoroutine<Unit> { cont ->
+                //    handle.onReady {
+                //        val ready = readySoFar.incrementAndGet()
+                //        cont.resume(Unit)
+                //        launch { particle.onHandleSync(handle, ready == handles.size) }
+                //    }
+                //}
+                // TODO: get rid of this version when onReady is non-suspending
+                val job = Job()
+                handle.onReady {
+                    val ready = readySoFar.incrementAndGet()
+                    job.complete()
+                    launch { particle.onHandleSync(handle, ready == handles.size) }
+                }
+                withTimeout(1000) { job.join() }
+            }
         }
+
+        readyJobs.joinAll()
     }
 }
