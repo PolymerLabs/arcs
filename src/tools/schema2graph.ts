@@ -107,7 +107,7 @@ export class SchemaGraph {
         }
       }
 
-      let sameSchema = this.nodes.find(n => schema.name == n.schema.name);
+      const sameSchema = this.nodes.find(n => schema.name === n.schema.name);
       if (sameSchema) {
         node.uniqueSchemaName = false;
         sameSchema.uniqueSchemaName = false;

@@ -144,7 +144,7 @@ ${imports.join('\n')}
   }
 
   generateEntityClassName(node: SchemaNode, i: number = null) {
-    if(node.uniqueSchemaName && node.schema.name) {
+    if (node.uniqueSchemaName && node.schema.name) {
       return node.schema.name;
     }
     if (i === null) {
@@ -243,8 +243,6 @@ ${imports.join('\n')}
       const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
       classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash, nodeGenerator.fieldLength));
       typeAliases.push(kotlinGenerator.generateAliases(particleName));
-
-      kotlinGenerator.node
     });
 
     for (const connection of particle.connections) {
@@ -255,7 +253,7 @@ ${imports.join('\n')}
         return kg.node.connections.includes(capitalHandleName);
       });
       let entityType = entityTypeName(particle.name, connection.name);
-      if(ng) {
+      if (ng) {
         const kg = <KotlinGenerator>ng.generator;
         entityType = kg.node.name;
       }
