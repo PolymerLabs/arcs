@@ -57,6 +57,7 @@ import com.google.protobuf.InvalidProtocolBufferException
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -840,7 +841,7 @@ class DatabaseImpl(
                 """.trimIndent(),
                 arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
             )
-            (storageKeys union updatedContainersStorageKeys).forEach { storageKey ->
+            (storageKeys union updatedContainersStorageKeys).map { storageKey ->
                 notifyClients(StorageKeyParser.parse(storageKey)) {
                     it.onDatabaseDelete(null)
                 }
@@ -1273,8 +1274,8 @@ class DatabaseImpl(
     private suspend fun notifyClients(
         storageKey: StorageKey,
         action: suspend (DatabaseClient) -> Unit
-    ) {
-        clientFlow.filter { it.storageKey == storageKey }
+    ): Job {
+        return clientFlow.filter { it.storageKey == storageKey }
             .onEach(action)
             .launchIn(CoroutineScope(coroutineContext))
     }

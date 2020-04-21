@@ -30,6 +30,7 @@ import java.time.Instant
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -57,7 +58,7 @@ class FakeDatabaseManager : DatabaseManager {
         Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
         mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
 
-    override suspend fun removeExpiredEntities() {
+    override suspend fun removeExpiredEntities(): Job {
         throw UnsupportedOperationException("Fake databases cannot remove expired entities.")
     }
 }
