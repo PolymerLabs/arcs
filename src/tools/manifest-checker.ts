@@ -64,7 +64,7 @@ async function main() {
   if (opts.help || !opts.src) {
     console.log(`
 Usage
-  $ tools/sigh run manifestChecker --src [files...]
+  $ tools/sigh run manifestChecker --src path/to/target.arcs [--src other/other.arcs] ...
 
 Description
   Loads the given .arcs manifest file and checks it for errors.
