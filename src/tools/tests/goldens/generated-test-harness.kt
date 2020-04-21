@@ -21,7 +21,7 @@ class GoldTestHarness<P : AbstractGold>(
 ) : BaseTestHarness<P>(factory, listOf(
     HandleSpec("data", HandleMode.ReadWrite, HandleContainerType.Singleton, Gold_Data, HandleDataType.Entity),
     HandleSpec("allPeople", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_AllPeople, HandleDataType.Entity),
-    HandleSpec("qCollection", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_QCollection, HandleDataType.Entity),
+    HandleSpec("qCollection", HandleMode.ReadWriteQuery, HandleContainerType.Collection, Gold_QCollection, HandleDataType.Entity),
     HandleSpec("alias", HandleMode.ReadWrite, HandleContainerType.Singleton, Gold_Alias, HandleDataType.Entity),
     HandleSpec("collection", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_Collection, HandleDataType.Entity)
 )) {
