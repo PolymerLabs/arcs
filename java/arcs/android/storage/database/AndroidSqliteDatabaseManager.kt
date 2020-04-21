@@ -17,6 +17,9 @@ import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
 import arcs.core.util.guardedBy
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -50,9 +53,11 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
             .forEach { it.reset() }
     }
 
-    override suspend fun removeExpiredEntities() {
-        registry.fetchAll()
-            .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
-            .forEach { it.removeExpiredEntities() }
+    override suspend fun removeExpiredEntities(): Job = coroutineScope {
+        launch {
+            registry.fetchAll()
+                .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
+                .forEach { it.removeExpiredEntities() }
+        }
     }
 }

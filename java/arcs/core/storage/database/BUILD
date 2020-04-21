@@ -18,5 +18,6 @@ arcs_kt_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util/performance",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
