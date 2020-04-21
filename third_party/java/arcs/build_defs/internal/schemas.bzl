@@ -198,6 +198,10 @@ def arcs_kt_gen(
         visibility = visibility,
     )
 
+    # The following `arcs_kt_library` call will be generating the schema symbols,
+    # so remove this from the plan deps.
+    plan["deps"].remove(schema_name)
+
     # generates combined library. This allows developers to more easily see what is generated.
     arcs_kt_library(
         name = name,
