@@ -132,13 +132,13 @@ open class BaseTestHarness<P : Particle>(
         val readyJobs = handles.map { (name, handle) ->
             launch {
                 // TODO: switch to this version when onReady is non-suspending:
-                //suspendCoroutine<Unit> { cont ->
+                // suspendCoroutine<Unit> { cont ->
                 //    handle.onReady {
                 //        val ready = readySoFar.incrementAndGet()
                 //        cont.resume(Unit)
                 //        launch { particle.onHandleSync(handle, ready == handles.size) }
                 //    }
-                //}
+                // }
                 // TODO: get rid of this version when onReady is non-suspending
                 val job = Job()
                 handle.onReady {
