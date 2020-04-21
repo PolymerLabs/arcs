@@ -12,30 +12,22 @@
 package arcs.android.util
 
 import arcs.core.util.Log
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.util.Locale
 
 /** Initializes [Log] for tests on the JVM. */
 fun initLogForAndroid(level: Log.Level = mapAndroidLogLevel("Arcs")) {
     Log.level = level
-    Log.writer = { lvl, renderedMessage ->
+    Log.writer = { lvl, renderedMessage, throwable ->
         when (lvl) {
-            Log.Level.Debug -> android.util.Log.d("Arcs", renderedMessage)
-            Log.Level.Info -> android.util.Log.i("Arcs", renderedMessage)
-            Log.Level.Warning -> android.util.Log.w("Arcs", renderedMessage)
-            Log.Level.Error -> android.util.Log.e("Arcs", renderedMessage)
-            Log.Level.Wtf -> android.util.Log.wtf("Arcs", renderedMessage)
+            Log.Level.Debug -> android.util.Log.d("Arcs", renderedMessage, throwable)
+            Log.Level.Info -> android.util.Log.i("Arcs", renderedMessage, throwable)
+            Log.Level.Warning -> android.util.Log.w("Arcs", renderedMessage, throwable)
+            Log.Level.Error -> android.util.Log.e("Arcs", renderedMessage, throwable)
+            Log.Level.Wtf -> android.util.Log.wtf("Arcs", renderedMessage, throwable)
         }
     }
     Log.formatter = { _, _, throwable, rawMessage ->
-        val stackTrace = throwable?.let {
-            val writer = StringWriter()
-            throwable.printStackTrace(PrintWriter(writer))
-            "\n$writer"
-        } ?: ""
-
-        String.format(Locale.ENGLISH, "%s%s", rawMessage, stackTrace)
+        String.format(Locale.ENGLISH, "%s", rawMessage)
     }
 }
 
