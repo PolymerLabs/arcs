@@ -12,7 +12,6 @@
 package arcs.android.util
 
 import arcs.core.util.Log
-import java.util.Locale
 
 /** Initializes [Log] for tests on the JVM. */
 fun initLogForAndroid(level: Log.Level = mapAndroidLogLevel("Arcs")) {
@@ -26,9 +25,7 @@ fun initLogForAndroid(level: Log.Level = mapAndroidLogLevel("Arcs")) {
             Log.Level.Wtf -> android.util.Log.wtf("Arcs", renderedMessage, throwable)
         }
     }
-    Log.formatter = { _, _, throwable, rawMessage ->
-        String.format(Locale.ENGLISH, "%s", rawMessage)
-    }
+    Log.formatter = { _, _, _, rawMessage -> rawMessage }
 }
 
 private fun mapAndroidLogLevel(tag: String): Log.Level = arrayOf(
