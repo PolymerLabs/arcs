@@ -14,8 +14,10 @@ package arcs.core.util
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -40,8 +42,8 @@ class Scheduler(
     val launches = atomic(0)
     /* internal */
     val loops = atomic(0)
+    val scope = CoroutineScope(context)
     private var processingJob: Job? = null
-    private val scope = CoroutineScope(context)
     private val isIdle = atomic(true)
     private val isPaused = atomic(false)
     private val agenda = atomic(Agenda())
@@ -127,7 +129,11 @@ class Scheduler(
 
         // Process agenda
         agenda.forEach { task ->
-            suspendCancellableCoroutine<Unit> { it.resume(task(), timeoutHandler) }
+            suspendCancellableCoroutine<Unit> {
+                log.debug { "Starting $task" }
+                it.resume(task(), timeoutHandler)
+                log.debug { "Finished $task" }
+            }
         }
 
         return true
@@ -255,4 +261,21 @@ class Scheduler(
          */
         const val DEFAULT_SCHEDULE_RATE_HZ = 60
     }
+}
+
+/**
+ * Implementation of a [CoroutineDispatcher] which can be used by code unaware of the [Scheduler]
+ * itself to run operations as listeners on the scheduler.
+ *
+ * For example: [Handle.dispatcher] returns an instance of [SchedulerDispatcher] so that code
+ * outside of particle-context can run operations on the scheduler to access the handle data
+ * safely and correctly.
+ */
+class SchedulerDispatcher(private val scheduler: Scheduler) : CoroutineDispatcher() {
+    override fun dispatch(context: CoroutineContext, block: Runnable) =
+        scheduler.schedule(DispatchedTask(block::run))
+
+    private class DispatchedTask(
+        block: () -> Unit
+    ) : Scheduler.Task.Listener("dispatcher", "non-particle", block)
 }
