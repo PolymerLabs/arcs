@@ -16,6 +16,7 @@ import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.Scheduler
 import arcs.core.util.plus
+import arcs.core.util.testutil.LogRule
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
@@ -27,6 +28,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -38,6 +40,11 @@ import kotlin.coroutines.EmptyCoroutineContext
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 open class AllocatorTestBase {
+    @get:Rule
+    val log = LogRule()
+
+    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+
     /**
      * Recipe hand translated from 'person.arcs'
      */
@@ -69,7 +76,7 @@ open class AllocatorTestBase {
     open fun writingHost(): TestingHost = WritingHost()
 
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-    open fun pureHost() = TestingJvmProdHost(JvmSchedulerProvider(EmptyCoroutineContext))
+    open fun pureHost() = TestingJvmProdHost(schedulerProvider)
 
     open val storageCapability = Capabilities.TiedToRuntime
     open fun runAllocatorTest(
@@ -103,7 +110,7 @@ open class AllocatorTestBase {
             hostRegistry,
             EntityHandleManager(
                 time = FakeTime(),
-                scheduler = Scheduler(FakeTime(), coroutineContext)
+                scheduler = schedulerProvider("allocator")
             )
         )
 
@@ -217,7 +224,9 @@ open class AllocatorTestBase {
                 assertThat(connection.storageKey).isInstanceOf(CreateableStorageKey::class.java)
             }
         }
+        log("Plan handles are using correct storage keys")
         val arcId = allocator.startArcForPlan("readWritePerson", PersonPlan)
+        log("Arc started.")
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach { particle ->
             particle.handles.forEach { (_, connection) ->
@@ -226,6 +235,7 @@ open class AllocatorTestBase {
                 )
             }
         }
+        log("Particle handles are using correct storage key types")
         val readPartition = findPartitionFor(planPartitions, "ReadPerson")
         val purePartition = findPartitionFor(planPartitions, "PurePerson")
         val writePartition = findPartitionFor(planPartitions, "WritePerson")
