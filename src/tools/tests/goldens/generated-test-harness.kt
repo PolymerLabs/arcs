@@ -23,11 +23,13 @@ class GoldTestHarness<P : AbstractGold>(
     HandleSpec("allPeople", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_AllPeople, HandleDataType.Entity),
     HandleSpec("qCollection", HandleMode.ReadWriteQuery, HandleContainerType.Collection, Gold_QCollection, HandleDataType.Entity),
     HandleSpec("alias", HandleMode.ReadWrite, HandleContainerType.Singleton, Gold_Alias, HandleDataType.Entity),
-    HandleSpec("collection", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_Collection, HandleDataType.Entity)
+    HandleSpec("collection", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_Collection, HandleDataType.Entity),
+    HandleSpec("foo", HandleMode.ReadWrite, HandleContainerType.Singleton, Gold_Foo, HandleDataType.Entity)
 )) {
     val data: ReadWriteSingletonHandle<Gold_Data> by handleMap
     val allPeople: ReadWriteCollectionHandle<Gold_AllPeople> by handleMap
     val qCollection: ReadWriteQueryCollectionHandle<Gold_QCollection, String> by handleMap
     val alias: ReadWriteSingletonHandle<Gold_Alias> by handleMap
     val collection: ReadWriteCollectionHandle<Gold_Collection> by handleMap
+    val foo: ReadWriteSingletonHandle<Gold_Foo> by handleMap
 }
