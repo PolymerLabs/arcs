@@ -108,14 +108,10 @@ export class SchemaGraph {
       }
 
       let sameSchema = this.nodes.find(n => schema.name == n.schema.name);
-      console.log(`${node.connections} has schema ${schema.name}`)
       if (sameSchema) {
-        //console.log(`same schema for ${sameSchema.connections} and ${node.connections}`)
-        console.log(`Schema: ${schema.name}`)
         node.uniqueSchemaName = false;
         sameSchema.uniqueSchemaName = false;
       }
-
       this.nodes.push(node);
     }
 
