@@ -63,11 +63,13 @@ class EntityStorageAdapter<T : Entity>(
 
 /** [StorageAdapter] for converting [Reference] to/from [StorageReference]. */
 class ReferenceStorageAdapter<E : Entity>(
-    private val entitySpec: EntitySpec<E>
+    private val entitySpec: EntitySpec<E>,
+    private val dereferencerFactory: EntityDereferencerFactory
 ) : StorageAdapter<Reference<E>, StorageReference>() {
     override fun storableToReferencable(value: Reference<E>) = value.toReferencable()
 
     override fun referencableToStorable(referencable: StorageReference): Reference<E> {
+        dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, referencable)
         return Reference(entitySpec, referencable)
     }
 

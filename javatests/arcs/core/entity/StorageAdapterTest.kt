@@ -58,7 +58,7 @@ class StorageAdapterTest {
 
     @Test
     fun referenceStorageAdapter() {
-        val adapter = ReferenceStorageAdapter(DummyEntity)
+        val adapter = ReferenceStorageAdapter(DummyEntity, dereferencerFactory)
         val storageReference = StorageReference(
             "id",
             DummyStorageKey("storage-key"),

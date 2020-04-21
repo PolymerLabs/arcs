@@ -37,14 +37,10 @@ typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<
  * exposes only the methods that should be exposed.
  */
 class SingletonHandle<T : Storable, R : Referencable>(
-    name: String,
-    spec: HandleSpec<out Entity>,
-    /** Interface to storage for [RawEntity] objects backing an `entity: T`. */
-    val storageProxy: SingletonProxy<R>,
-    /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
-    private val storageAdapter: StorageAdapter<T, R>,
-    dereferencerFactory: EntityDereferencerFactory
-) : BaseHandle<T>(name, spec, storageProxy, dereferencerFactory), ReadWriteSingletonHandle<T> {
+    config: Config<T, R>
+) : BaseHandle<T>(config), ReadWriteSingletonHandle<T> {
+    private val storageProxy = config.proxy
+    private val storageAdapter = config.storageAdapter
 
     init {
         check(spec.containerType == HandleContainerType.Singleton)
@@ -105,4 +101,24 @@ class SingletonHandle<T : Storable, R : Referencable>(
     }?.takeUnless {
         storageAdapter.isExpired(it)
     }
+
+    /** Configuration required to instantiate a [SingletonHandle]. */
+    class Config<T : Storable, R : Referencable>(
+        /** See [BaseHandleConfig.name]. */
+        name: String,
+        /** See [BaseHandleConfig.spec]. */
+        spec: HandleSpec<out Entity>,
+        /**
+         * Interface to storage for [RawEntity] objects backing an `entity: T`.
+         *
+         * See [BaseHandleConfig.storageProxy].
+         */
+        val proxy: SingletonProxy<R>,
+        /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
+        val storageAdapter: StorageAdapter<T, R>,
+        /** See [BaseHandleConfig.dereferencerFactory]. */
+        dereferencerFactory: EntityDereferencerFactory,
+        /** See [BaseHandleConfig.particleId]. */
+        particleId: String
+    ) : BaseHandleConfig(name, spec, proxy, dereferencerFactory, particleId)
 }

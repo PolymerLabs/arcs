@@ -14,13 +14,15 @@ import arcs.core.storage.StorageProxy
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 
 /** Base functionality common to all read/write singleton and collection handles. */
-abstract class BaseHandle<T : Storable>(
-    override val name: String,
-    val spec: HandleSpec<out Entity>,
-    private val storageProxy: StorageProxy<*, *, *>,
-    private val dereferencerFactory: EntityDereferencerFactory
-) : Handle {
+abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
+    override val name: String = config.name
+
+    val spec: HandleSpec<out Entity> = config.spec
+
     protected var closed = false
+
+    private val storageProxy = config.storageProxy
+    private val dereferencerFactory = config.dereferencerFactory
 
     override suspend fun onReady(action: () -> Unit) = storageProxy.addOnReady(name, action)
 
@@ -52,4 +54,26 @@ abstract class BaseHandle<T : Storable>(
             }
         ) as Reference<E>
     }
+
+    /** Configuration object required when calling [BaseHandle]'s constructor. */
+    abstract class BaseHandleConfig(
+        /** Name of the [Handle], typically comes from a particle manifest. */
+        val name: String,
+        /** Description of the capabilities and other details about the [Handle]. */
+        val spec: HandleSpec<out Entity>,
+        /**
+         * [StorageProxy] instance to use when listening for updates, fetching data, or issuing
+         * changes.
+         */
+        val storageProxy: StorageProxy<*, *, *>,
+        /**
+         * Creates de-referencers to support hydrating references within entities.
+         */
+        val dereferencerFactory: EntityDereferencerFactory,
+        /**
+         * ID of the Owning-particle. Used as a namespace for listeners created by this handle on
+         * the [StorageProxy].
+         */
+        val particleId: String
+    )
 }
