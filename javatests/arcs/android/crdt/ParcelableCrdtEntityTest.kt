@@ -67,16 +67,16 @@ class ParcelableCrdtEntityTest {
         )
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(data.toParcelable(), 0)
+            writeModelData(data)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(ParcelableCrdtEntity.Data.CREATOR)
+            readModelData()
         }
 
-        assertThat(unmarshalled?.actual?.toRawEntity()).isEqualTo(data.toRawEntity())
+        assertThat((unmarshalled as? CrdtEntity.Data)?.toRawEntity()).isEqualTo(data.toRawEntity())
     }
 
     @Test
@@ -84,16 +84,16 @@ class ParcelableCrdtEntityTest {
         val op = CrdtEntity.Operation.SetSingleton("alice", versionMap, "field", referenceA)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeOperation(op)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Entity.crdtOperationCreator))
+            readOperation()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 
     @Test
@@ -101,16 +101,16 @@ class ParcelableCrdtEntityTest {
         val op = CrdtEntity.Operation.ClearSingleton("alice", versionMap, "field")
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeOperation(op)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Entity.crdtOperationCreator))
+            readOperation()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 
     @Test
@@ -118,16 +118,16 @@ class ParcelableCrdtEntityTest {
         val op = CrdtEntity.Operation.AddToSet("alice", versionMap, "field", referenceA)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeOperation(op)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Entity.crdtOperationCreator))
+            readOperation()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 
     @Test
@@ -135,15 +135,15 @@ class ParcelableCrdtEntityTest {
         val op = CrdtEntity.Operation.RemoveFromSet("alice", versionMap, "field", referenceA)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeOperation(op)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Entity.crdtOperationCreator))
+            readOperation()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 }

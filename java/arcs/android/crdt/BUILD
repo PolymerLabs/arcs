@@ -15,6 +15,7 @@ arcs_kt_android_library(
     idl_parcelables = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
+        ":crdt_android_proto",
         ":crdt_count_android_proto",
         ":crdt_entity_android_proto",
         ":crdt_set_android_proto",
@@ -30,6 +31,22 @@ arcs_kt_android_library(
         "//java/arcs/core/storage:storage_key",
         "//third_party/java/jsr305_annotations",
     ],
+)
+
+proto_library(
+    name = "crdt_proto",
+    srcs = ["crdt.proto"],
+    deps = [
+        ":crdt_count_proto",
+        ":crdt_entity_proto",
+        ":crdt_set_proto",
+        ":crdt_singleton_proto",
+    ],
+)
+
+android_proto_library(
+    name = "crdt_android_proto",
+    deps = [":crdt_proto"],
 )
 
 proto_library(

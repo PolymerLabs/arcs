@@ -57,7 +57,7 @@ sealed class ParcelableProxyMessage(
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             super.writeToParcel(parcel, flags)
-            parcel.writeModelData(model, 0)
+            parcel.writeModelData(model)
         }
 
         companion object {
@@ -67,7 +67,7 @@ sealed class ParcelableProxyMessage(
                 crdtType: ParcelableCrdtType,
                 id: Int?
             ): ModelUpdate<Data, Op, ConsumerData> {
-                val model = requireNotNull(parcel.readModelData(crdtType) as? Data) {
+                val model = requireNotNull(parcel.readModelData() as? Data) {
                     "ParcelableCrdtData of expected type not found in parcel"
                 }
                 return ModelUpdate(model, id, crdtType)
@@ -87,7 +87,7 @@ sealed class ParcelableProxyMessage(
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             super.writeToParcel(parcel, flags)
-            parcel.writeOperations(operations, flags)
+            parcel.writeOperations(operations)
         }
 
         companion object {
@@ -97,7 +97,7 @@ sealed class ParcelableProxyMessage(
                 crdtType: ParcelableCrdtType,
                 id: Int?
             ): Operations<Data, Op, ConsumerData> {
-                val operations = requireNotNull(parcel.readOperations(crdtType) as? List<Op>) {
+                val operations = requireNotNull(parcel.readOperations() as? List<Op>) {
                     "CrdtOperations not found in parcel"
                 }
                 return Operations(operations, id, crdtType)
