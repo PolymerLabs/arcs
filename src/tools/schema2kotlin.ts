@@ -173,7 +173,7 @@ ${imports.join('\n')}
   }
 
   /** Returns one of Read, Write, ReadWrite. */
-  private handleMode(direction: Direction): string {
+  private handleDirection(direction: Direction): string {
     switch (direction) {
       case 'reads writes':
         return 'ReadWrite';
@@ -184,6 +184,12 @@ ${imports.join('\n')}
       default:
         throw new Error(`Unsupported handle direction: ${direction}`);
     }
+  }
+
+  private handleMode(connection: HandleConnectionSpec): string {
+    const direction = this.handleDirection(connection.direction);
+    const querySuffix = this.getQueryType(connection) ? 'Query' : '';
+    return `${direction}${querySuffix}`;
   }
 
   /**
@@ -201,17 +207,16 @@ ${imports.join('\n')}
     }
     const innerType = this.handleInnerType(connection.type, entityType);
     const typeArguments: string[] = [innerType];
-    const interfacePrefixes: string[] = [this.handleMode(connection.direction)];
+    const handleMode = this.handleMode(connection);
     const queryType = this.getQueryType(connection);
     if (queryType) {
-      interfacePrefixes.push('Query');
       typeArguments.push(queryType);
     }
-    return `${interfacePrefixes.join('')}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`;
+    return `${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`;
   }
 
   private handleSpec(handleName: string, entityType: string, connection: HandleConnectionSpec): string {
-    const mode = this.handleMode(connection.direction);
+    const mode = this.handleMode(connection);
     const containerType = this.handleContainerType(connection.type);
     const dataType = this.handleDataType(connection.type);
     return `HandleSpec("${handleName}", HandleMode.${mode}, HandleContainerType.${containerType}, ${entityType}, HandleDataType.${dataType})`;
