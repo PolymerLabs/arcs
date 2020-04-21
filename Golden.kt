@@ -1,0 +1,544 @@
+/* ktlint-disable */
+@file:Suppress("PackageName", "TopLevelName")
+
+package arcs.golden
+
+//
+// GENERATED CODE -- DO NOT EDIT
+//
+// Current implementation doesn't support optional field detection
+
+import arcs.core.data.*
+import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.data.util.toReferencable
+import arcs.core.entity.Reference
+import arcs.core.entity.SchemaRegistry
+import arcs.core.entity.toPrimitiveValue
+import arcs.sdk.*
+
+typealias Gold_Data_Ref = AbstractGold.GoldInternal1
+typealias Gold_Alias = AbstractGold.GoldInternal1
+typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
+typealias Gold_Collection = AbstractGold.Gold_Collection
+typealias Gold_Foo = AbstractGold.Foo
+typealias Gold_QCollection = AbstractGold.Gold_QCollection
+typealias Gold_Data = AbstractGold.Gold_Data
+
+abstract class AbstractGold : BaseParticle() {
+    override val handles: Handles = Handles()
+
+
+    @Suppress("UNCHECKED_CAST")
+    class GoldInternal1(
+        val_: String = "",
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("GoldInternal1", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+
+        var val_: String
+            get() = super.getSingletonValue("val") as String? ?: ""
+            private set(_value) = super.setSingletonValue("val", _value)
+
+        init {
+            this.val_ = val_
+        }
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(val_: String = this.val_) = GoldInternal1(
+            val_ = val_,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
+
+        companion object : EntitySpec<GoldInternal1> {
+
+            override val SCHEMA = Schema(
+                setOf(),
+                SchemaFields(
+                    singletons = mapOf("val" to FieldType.Text),
+                    collections = emptyMap()
+                ),
+                "485712110d89359a3e539dac987329cd2649d889",
+                refinement = { _ -> true },
+                query = null
+            )
+
+            init {
+                SchemaRegistry.register(this)
+            }
+
+            override fun deserialize(data: RawEntity) = GoldInternal1().apply { deserialize(data) }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    class Gold_AllPeople(
+        name: String = "",
+        age: Double = 0.0,
+        lastCall: Double = 0.0,
+        address: String = "",
+        favoriteColor: String = "",
+        birthDayMonth: Double = 0.0,
+        birthDayDOM: Double = 0.0,
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+
+        var name: String
+            get() = super.getSingletonValue("name") as String? ?: ""
+            private set(_value) = super.setSingletonValue("name", _value)
+        var age: Double
+            get() = super.getSingletonValue("age") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("age", _value)
+        var lastCall: Double
+            get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("lastCall", _value)
+        var address: String
+            get() = super.getSingletonValue("address") as String? ?: ""
+            private set(_value) = super.setSingletonValue("address", _value)
+        var favoriteColor: String
+            get() = super.getSingletonValue("favoriteColor") as String? ?: ""
+            private set(_value) = super.setSingletonValue("favoriteColor", _value)
+        var birthDayMonth: Double
+            get() = super.getSingletonValue("birthDayMonth") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("birthDayMonth", _value)
+        var birthDayDOM: Double
+            get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("birthDayDOM", _value)
+
+        init {
+            this.name = name
+            this.age = age
+            this.lastCall = lastCall
+            this.address = address
+            this.favoriteColor = favoriteColor
+            this.birthDayMonth = birthDayMonth
+            this.birthDayDOM = birthDayDOM
+        }
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(
+            name: String = this.name,
+            age: Double = this.age,
+            lastCall: Double = this.lastCall,
+            address: String = this.address,
+            favoriteColor: String = this.favoriteColor,
+            birthDayMonth: Double = this.birthDayMonth,
+            birthDayDOM: Double = this.birthDayDOM
+        ) = Gold_AllPeople(
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM
+        )
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(
+            name: String = this.name,
+            age: Double = this.age,
+            lastCall: Double = this.lastCall,
+            address: String = this.address,
+            favoriteColor: String = this.favoriteColor,
+            birthDayMonth: Double = this.birthDayMonth,
+            birthDayDOM: Double = this.birthDayDOM
+        ) = Gold_AllPeople(
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
+
+        companion object : EntitySpec<Gold_AllPeople> {
+
+            override val SCHEMA = Schema(
+                setOf(SchemaName("People")),
+                SchemaFields(
+                    singletons = mapOf(
+                        "name" to FieldType.Text,
+                        "age" to FieldType.Number,
+                        "lastCall" to FieldType.Number,
+                        "address" to FieldType.Text,
+                        "favoriteColor" to FieldType.Text,
+                        "birthDayMonth" to FieldType.Number,
+                        "birthDayDOM" to FieldType.Number
+                    ),
+                    collections = emptyMap()
+                ),
+                "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
+                refinement = { _ -> true },
+                query = null
+            )
+
+            init {
+                SchemaRegistry.register(this)
+            }
+
+            override fun deserialize(data: RawEntity) = Gold_AllPeople().apply { deserialize(data) }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    class Gold_Collection(
+        num: Double = 0.0,
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_Collection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+
+        var num: Double
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
+
+        init {
+            this.num = num
+        }
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(num: Double = this.num) = Gold_Collection(num = num)
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(num: Double = this.num) = Gold_Collection(
+            num = num,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
+
+        companion object : EntitySpec<Gold_Collection> {
+
+            override val SCHEMA = Schema(
+                setOf(),
+                SchemaFields(
+                    singletons = mapOf("num" to FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "1032e45209f910286cfb898c43a1c3ca7d07aea6",
+                refinement = { _ -> true },
+                query = null
+            )
+
+            init {
+                SchemaRegistry.register(this)
+            }
+
+            override fun deserialize(data: RawEntity) = Gold_Collection().apply { deserialize(data) }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    class Foo(
+        txt: String = "",
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Foo", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+
+        var txt: String
+            get() = super.getSingletonValue("txt") as String? ?: ""
+            private set(_value) = super.setSingletonValue("txt", _value)
+
+        init {
+            this.txt = txt
+        }
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(txt: String = this.txt) = Foo(txt = txt)
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(txt: String = this.txt) = Foo(
+            txt = txt,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
+
+        companion object : EntitySpec<Foo> {
+
+            override val SCHEMA = Schema(
+                setOf(SchemaName("Foo")),
+                SchemaFields(
+                    singletons = mapOf("txt" to FieldType.Text),
+                    collections = emptyMap()
+                ),
+                "9583859f8d908f629fb8cbc1d345d76eee14e64f",
+                refinement = { _ -> true },
+                query = null
+            )
+
+            init {
+                SchemaRegistry.register(this)
+            }
+
+            override fun deserialize(data: RawEntity) = Foo().apply { deserialize(data) }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    class Gold_QCollection(
+        name: String = "",
+        age: Double = 0.0,
+        lastCall: Double = 0.0,
+        address: String = "",
+        favoriteColor: String = "",
+        birthDayMonth: Double = 0.0,
+        birthDayDOM: Double = 0.0,
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_QCollection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+
+        var name: String
+            get() = super.getSingletonValue("name") as String? ?: ""
+            private set(_value) = super.setSingletonValue("name", _value)
+        var age: Double
+            get() = super.getSingletonValue("age") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("age", _value)
+        var lastCall: Double
+            get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("lastCall", _value)
+        var address: String
+            get() = super.getSingletonValue("address") as String? ?: ""
+            private set(_value) = super.setSingletonValue("address", _value)
+        var favoriteColor: String
+            get() = super.getSingletonValue("favoriteColor") as String? ?: ""
+            private set(_value) = super.setSingletonValue("favoriteColor", _value)
+        var birthDayMonth: Double
+            get() = super.getSingletonValue("birthDayMonth") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("birthDayMonth", _value)
+        var birthDayDOM: Double
+            get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("birthDayDOM", _value)
+
+        init {
+            this.name = name
+            this.age = age
+            this.lastCall = lastCall
+            this.address = address
+            this.favoriteColor = favoriteColor
+            this.birthDayMonth = birthDayMonth
+            this.birthDayDOM = birthDayDOM
+        }
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(
+            name: String = this.name,
+            age: Double = this.age,
+            lastCall: Double = this.lastCall,
+            address: String = this.address,
+            favoriteColor: String = this.favoriteColor,
+            birthDayMonth: Double = this.birthDayMonth,
+            birthDayDOM: Double = this.birthDayDOM
+        ) = Gold_QCollection(
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM
+        )
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(
+            name: String = this.name,
+            age: Double = this.age,
+            lastCall: Double = this.lastCall,
+            address: String = this.address,
+            favoriteColor: String = this.favoriteColor,
+            birthDayMonth: Double = this.birthDayMonth,
+            birthDayDOM: Double = this.birthDayDOM
+        ) = Gold_QCollection(
+            name = name,
+            age = age,
+            lastCall = lastCall,
+            address = address,
+            favoriteColor = favoriteColor,
+            birthDayMonth = birthDayMonth,
+            birthDayDOM = birthDayDOM,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
+
+        companion object : EntitySpec<Gold_QCollection> {
+
+            override val SCHEMA = Schema(
+                setOf(SchemaName("People")),
+                SchemaFields(
+                    singletons = mapOf(
+                        "name" to FieldType.Text,
+                        "age" to FieldType.Number,
+                        "lastCall" to FieldType.Number,
+                        "address" to FieldType.Text,
+                        "favoriteColor" to FieldType.Text,
+                        "birthDayMonth" to FieldType.Number,
+                        "birthDayDOM" to FieldType.Number
+                    ),
+                    collections = emptyMap()
+                ),
+                "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
+                refinement = { _ -> true },
+                query = { data, queryArgs ->
+                    val lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0)
+                    val name = data.singletons["name"].toPrimitiveValue(String::class, "")
+                    val queryArgument = queryArgs as String
+                    ((lastCall < 259200) && (name == queryArgument))
+                }
+            )
+
+            init {
+                SchemaRegistry.register(this)
+            }
+
+            override fun deserialize(data: RawEntity) = Gold_QCollection().apply { deserialize(data) }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    class Gold_Data(
+        num: Double = 0.0,
+        txt: String = "",
+        lnk: String = "",
+        flg: Boolean = false,
+        ref: Reference<GoldInternal1>? = null,
+        entityId: String? = null,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_Data", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+
+        var num: Double
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
+        var txt: String
+            get() = super.getSingletonValue("txt") as String? ?: ""
+            private set(_value) = super.setSingletonValue("txt", _value)
+        var lnk: String
+            get() = super.getSingletonValue("lnk") as String? ?: ""
+            private set(_value) = super.setSingletonValue("lnk", _value)
+        var flg: Boolean
+            get() = super.getSingletonValue("flg") as Boolean? ?: false
+            private set(_value) = super.setSingletonValue("flg", _value)
+        var ref: Reference<GoldInternal1>?
+            get() = super.getSingletonValue("ref") as Reference<GoldInternal1>?
+            private set(_value) = super.setSingletonValue("ref", _value)
+
+        init {
+            this.num = num
+            this.txt = txt
+            this.lnk = lnk
+            this.flg = flg
+            this.ref = ref
+        }
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(
+            num: Double = this.num,
+            txt: String = this.txt,
+            lnk: String = this.lnk,
+            flg: Boolean = this.flg,
+            ref: Reference<GoldInternal1>? = this.ref
+        ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg, ref = ref)
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(
+            num: Double = this.num,
+            txt: String = this.txt,
+            lnk: String = this.lnk,
+            flg: Boolean = this.flg,
+            ref: Reference<GoldInternal1>? = this.ref
+        ) = Gold_Data(
+            num = num,
+            txt = txt,
+            lnk = lnk,
+            flg = flg,
+            ref = ref,
+            entityId = entityId,
+            expirationTimestamp = expirationTimestamp,
+            creationTimestamp = creationTimestamp
+        )
+
+        companion object : EntitySpec<Gold_Data> {
+
+            override val SCHEMA = Schema(
+                setOf(),
+                SchemaFields(
+                    singletons = mapOf(
+                        "num" to FieldType.Number,
+                        "txt" to FieldType.Text,
+                        "lnk" to FieldType.Text,
+                        "flg" to FieldType.Boolean,
+                        "ref" to FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889")
+                    ),
+                    collections = emptyMap()
+                ),
+                "c539be82943f3c24e2503cb0410b865fa3688d06",
+                refinement = { _ -> true },
+                query = null
+            )
+
+            init {
+                SchemaRegistry.register(this)
+            }
+
+            override fun deserialize(data: RawEntity) = Gold_Data().apply { deserialize(data) }
+        }
+    }
+
+    class Handles : HandleHolderBase(
+        "Gold",
+        mapOf(
+            "Data" to Gold_Data,
+            "AllPeople" to Gold_AllPeople,
+            "QCollection" to Gold_QCollection,
+            "Alias" to GoldInternal1,
+            "Collection" to Gold_Collection,
+            "Foo" to Foo
+        )
+    ) {
+        val Data: ReadSingletonHandle<Gold_Data> by handles
+        val AllPeople: ReadCollectionHandle<Gold_AllPeople> by handles
+        val QCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
+        val Alias: WriteSingletonHandle<GoldInternal1> by handles
+        val Collection: ReadCollectionHandle<Gold_Collection> by handles
+        val Foo: WriteSingletonHandle<Foo> by handles
+    }
+}

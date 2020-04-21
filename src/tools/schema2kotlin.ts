@@ -144,6 +144,10 @@ ${imports.join('\n')}
   }
 
   generateEntityClassName(node: SchemaNode, i: number = null) {
+    if(node.uniqueSchemaName && node.schema.name) {
+      console.log(`Setting name to ${node.schema.name} instead of ${entityTypeName(node.particleName, node.connections[0])}`)
+      return node.schema.name;
+    }
     if (i === null) {
       return entityTypeName(node.particleName, node.connections[0]);
     }
@@ -240,11 +244,23 @@ ${imports.join('\n')}
       const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
       classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash, nodeGenerator.fieldLength));
       typeAliases.push(kotlinGenerator.generateAliases(particleName));
+
+      kotlinGenerator.node
     });
 
     for (const connection of particle.connections) {
-      const handleName = connection.name;
-      const entityType = entityTypeName(particle.name, connection.name);
+      const handleName = connection.name[0].toUpperCase() + connection.name.slice(1);
+      const ng = nodeGenerators.find(generator => {
+        const kg = <KotlinGenerator>generator.generator;
+        console.log(`does ${kg.node.connections} include ${handleName}`)
+        return kg.node.connections.includes(handleName);
+      });
+      let entityType = entityTypeName(particle.name, connection.name);
+      //const entityType = generator.node.name; //entityTypeName(particle.name, connection.name);
+      if(ng) {
+        const kg = <KotlinGenerator>ng.generator;
+        entityType = kg.node.name;
+      }
       const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);

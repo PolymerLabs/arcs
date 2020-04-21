@@ -13,7 +13,7 @@ schema HandleConnection
   ttl: Number
 
 // Represents a ParticleContext and Plan.Particle
-schema Particle
+schema ParticleSchema
   particleName: Text
   location: Text
   // ParticleState enum name
@@ -22,14 +22,14 @@ schema Particle
   handles: [&HandleConnection]
 
 particle ArcHostContextParticle
-  arcHostContext: reads writes ArcHostContext {
+  arcHostContext: reads writes ArcHostContextHandle {
     arcId: Text,
     hostId: Text,
     // ArcState enum name
     arcState: Text,
-    particles: [&Particle]
+    particles: [&ParticleSchema]
   }
-  particles: reads writes [Particle]
+  particles: reads writes [ParticleSchema]
   handleConnections: reads writes [HandleConnection]
 
 recipe ArcHostContext
