@@ -8,7 +8,7 @@ import arcs.core.crdt.CrdtEntity
 fun CrdtEntityReferenceProto.toCrdtEntityReference() = CrdtEntity.ReferenceImpl(id)
 
 /** Serializes a [CrdtEntity.ReferenceImpl] to its proto form. */
-fun CrdtEntity.ReferenceImpl.toProto() = CrdtEntityReferenceProto.newBuilder().setId(id).build()
+fun CrdtEntity.Reference.toProto() = CrdtEntityReferenceProto.newBuilder().setId(id).build()
 
 /** Reads a [CrdtEntity.ReferenceImpl] out of a [Parcel]. */
 fun Parcel.readCrdtEntityReference(): CrdtEntity.ReferenceImpl? =

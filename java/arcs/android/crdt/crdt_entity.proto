@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package arcs.android.crdt;
+
+option java_package = "arcs.android.crdt";
+option java_multiple_files = true;
+
+import "java/arcs/android/crdt/crdt_set.proto";
+import "java/arcs/android/crdt/crdt_singleton.proto";
+import "java/arcs/android/crdt/referencable.proto";
+import "java/arcs/android/crdt/version_map.proto";
+
+message CrdtEntityProto {
+  message Data {
+    VersionMapProto version_map = 1;
+    // Maps from field name to singleton.
+    map<string, CrdtSingletonProto.Data> singleton = 2;
+    // Maps from field name to collection.
+    map<string, CrdtSetProto.Data> collection = 3;
+    int64 creation_timestamp_ms = 4;
+    int64 expiration_timestamp_ms = 5;
+    string id = 6;
+  }
+
+  message Operation {
+    message SetSingleton {
+      string actor = 1;
+      VersionMapProto version_map = 2;
+      string field = 3;
+      CrdtEntityReferenceProto value = 4;
+    }
+
+    message ClearSingleton {
+      string actor = 1;
+      VersionMapProto version_map = 2;
+      string field = 3;
+    }
+
+    message AddToSet {
+      string actor = 1;
+      VersionMapProto version_map = 2;
+      string field = 3;
+      CrdtEntityReferenceProto added = 4;
+    }
+
+    message RemoveFromSet {
+      string actor = 1;
+      VersionMapProto version_map = 2;
+      string field = 3;
+      CrdtEntityReferenceProto removed = 4;
+    }
+
+    message ClearAll {
+      string actor = 1;
+      VersionMapProto version_map = 2;
+    }
+
+    oneof operation {
+      SetSingleton set_singleton = 4;
+      ClearSingleton clear_singleton = 5;
+      AddToSet add_to_set = 6;
+      RemoveFromSet remove_from_set = 7;
+      ClearAll clear_all = 8;
+    }
+  }
+}
