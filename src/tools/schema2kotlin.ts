@@ -161,6 +161,21 @@ ${imports.join('\n')}
     return new KotlinGenerator(node, this.opts);
   }
 
+  generateEntityClassName(node: SchemaNode, i: number = null) {
+    if(node.uniqueSchemaName && node.schema.name) {
+      console.log(`Setting name to ${node.schema.name} instead of ${entityTypeName(node.particleName, node.connections[0])}`)
+      return node.schema.name;
+    }
+    if (i === null) {
+      return entityTypeName(node.particleName, node.connections[0]);
+    }
+    return `${node.particleName}Internal${i}`;
+  }
+
+  generateAliasNames(node: SchemaNode): string[] {
+    return node.connections.map((s: string) => `${node.particleName}_${s}`);
+  }
+
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
   private handleContainerType(type: Type): string {
     return type.isCollectionType() ? 'Collection' : 'Singleton';
@@ -282,6 +297,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
       const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
       classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash));
       typeAliases.push(...kotlinGenerator.generateAliases(particleName));
+
     });
 
     const nodes = nodeGenerators.map(ng => ng.node);
@@ -291,6 +307,18 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
       // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
       //                    allowing multiple EntitySpecs for handles of tuples.
       const entityType = SchemaNode.singleSchemaHumanName(connection, nodes);
+      const ng = nodeGenerators.find(generator => {
+        const kg = <KotlinGenerator>generator.generator;
+        console.log(`does ${kg.node.connections} include ${handleName}`)
+        return kg.node.connections.includes(handleName);
+      });
+      let entityType = entityTypeName(particle.name, connection.name);
+      //const entityType = generator.node.name; //entityTypeName(particle.name, connection.name);
+      if(ng) {
+        const kg = <KotlinGenerator>ng.generator;
+        entityType = kg.node.name;
+      }
+      const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
       } else {

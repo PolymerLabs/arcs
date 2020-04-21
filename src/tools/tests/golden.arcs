@@ -16,3 +16,5 @@ particle Gold
   alias: writes {val: Text}
 
   collection: reads [{num: Number}]
+
+  foo: writes Foo {txt: Text}
