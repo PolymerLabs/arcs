@@ -64,6 +64,7 @@ export abstract class LoaderBase {
     this.staticMap = staticMap;
     this.compileRegExp(this.urlMap);
   }
+  abstract clone(): LoaderBase;
   setParticleExecutionContext(pec: ParticleExecutionContext): void {
     this.pec = pec;
   }
@@ -81,6 +82,13 @@ export abstract class LoaderBase {
       return this.loadUrl(path);
     }
     return this.loadFile(path);
+  }
+  /** https://regex101.com/r/0qpxfW/2 */
+  isJvmClasspath(candidate: string): boolean {
+    return /^(?:[a-z]\w*|[a-z]\w*\.)+(?:[A-Z]\w*|[A-Z]\w*\.)+$/.test(candidate);
+  }
+  jvmClassExists(classPath: string): boolean {
+    return false;
   }
   async loadBinaryResource(file: string): Promise<ArrayBuffer> {
     const content = this.loadStaticBinary(file);

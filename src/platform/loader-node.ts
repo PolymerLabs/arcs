@@ -44,6 +44,59 @@ export class Loader extends LoaderBase {
       });
     });
   }
+  /**
+   * Parse a Java-style package string to verify that class exists.
+   *
+   * @param classPath java.style.ClassPath
+   * @param startingPath (optional) list of (nested) directories to search in
+   */
+  jvmClassExists(classPath: string, startingPath: string[] = ['java']): boolean {
+    const isCapitalized = (word: string) => word[0] === word[0].toUpperCase();
+
+    const pathSoFar = startingPath;
+    let maybeFile = '';
+
+    for (const it of classPath.split('.')) {
+      // Parse directory
+      if (!isCapitalized(it)) {
+        pathSoFar.push(it);
+        if (!fs.existsSync(pathSoFar.join('/'))) {
+          return false;
+        }
+      }
+
+      // Parse class or inner class
+      else {
+        // Check inner class
+        if (maybeFile) {
+          if (!maybeFile.includes(it)) {
+            return false;
+          }
+        }
+
+        // Try to load Jvm file based on class name
+        else {
+          const path = pathSoFar.join('/');
+          const jvmFiles = fs.readdirSync(path, {withFileTypes: true})
+            .filter(x => x.name.endsWith('.java') || x.name.endsWith('.kt'))
+            .map(jvmFile => `${path}/${jvmFile.name}`);
+
+          for (const file of jvmFiles) {
+            const candidateFile = fs.readFileSync(file, {encoding: 'utf8'});
+            if (candidateFile.includes(`class ${it}`) || candidateFile.includes(`object ${it}`)) {
+              maybeFile = candidateFile;
+              break;
+            }
+          }
+
+          if (!maybeFile) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
   async requireParticle(fileName: string, blobUrl?: string): Promise<typeof Particle> {
     // inject path to this particle into the UrlMap,
     // allows Foo particle to invoke `importScripts(resolver('$here/othermodule.js'))`
