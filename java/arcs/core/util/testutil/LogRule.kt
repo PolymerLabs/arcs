@@ -16,6 +16,7 @@ import arcs.core.util.TaggedLog
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.Locale
+import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -27,7 +28,7 @@ class LogRule : TestRule {
 
     override fun apply(base: Statement, desc: Description): Statement = object : Statement() {
         override fun evaluate() {
-            val messages = mutableListOf<String>()
+            val messages = CopyOnWriteArrayList<String>()
             loggedMessages = messages
 
             println()
@@ -52,7 +53,7 @@ class LogRule : TestRule {
         private fun initLogForTest(collectedMessages: MutableList<String>) {
             Log.logIndex.value = 0
             Log.level = Log.Level.Debug
-            Log.writer = { level, renderedMessage ->
+            Log.writer = { level, renderedMessage, _ ->
                 collectedMessages.add(renderedMessage)
                 if (
                     level == Log.Level.Warning ||

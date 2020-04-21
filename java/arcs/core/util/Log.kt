@@ -40,7 +40,8 @@ object Log {
      *
      * Default implementation uses [println].
      */
-    var writer: (level: Level, renderedMessage: String) -> Unit = DEFAULT_WRITER
+    var writer: (level: Level, renderedMessage: String, throwable: Throwable?) -> Unit =
+        DEFAULT_WRITER
 
     /** Defines available logging-levels. */
     enum class Level {
@@ -78,7 +79,11 @@ object Log {
 
     private fun maybeLog(level: Level, throwable: Throwable? = null, messageBuilder: () -> String) {
         if (this.level <= level) {
-            writer(level, formatter(logIndex.incrementAndGet(), level, throwable, messageBuilder()))
+            writer(
+                level,
+                formatter(logIndex.incrementAndGet(), level, throwable, messageBuilder()),
+                throwable
+            )
         }
     }
 }
@@ -106,5 +111,7 @@ private val DEFAULT_FORMATTER: (
             } else ""
     }
 
-private val DEFAULT_WRITER: (level: Log.Level, renderedMessage: String) -> Unit =
-    { _, msg -> println(msg) }
+/* ktlint-disable max-line-length */
+private val DEFAULT_WRITER: (level: Log.Level, renderedMessage: String, throwable: Throwable?) -> Unit =
+    { _, msg, _ -> println(msg) }
+/* ktlint-enable max-line-length */
