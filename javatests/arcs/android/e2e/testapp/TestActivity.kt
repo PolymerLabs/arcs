@@ -25,7 +25,7 @@ import arcs.core.data.HandleMode
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
-import arcs.core.util.Scheduler
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
@@ -34,10 +34,9 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.util.concurrent.Executors
+import kotlin.coroutines.EmptyCoroutineContext
 
 /** Entry UI to launch Arcs Test. */
 class TestActivity : AppCompatActivity() {
@@ -50,6 +49,7 @@ class TestActivity : AppCompatActivity() {
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
     private var storageMode = TestEntity.StorageMode.IN_MEMORY
     private var isCollection = false
     private var setFromRemoteService = false
@@ -142,19 +142,15 @@ class TestActivity : AppCompatActivity() {
             AndroidManifestHostRegistry.create(this@TestActivity),
             EntityHandleManager(
                 time = JvmTime,
-                scheduler = Scheduler(
-                    JvmTime,
-                    coroutineContext
-                        + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                ),
+                scheduler = schedulerProvider("readWriteArc"),
                 activationFactory = ServiceStoreFactory(
                     context = this@TestActivity,
                     lifecycle = this@TestActivity.lifecycle
                 )
             )
         )
-        val arcId = allocator?.startArcForPlan("Person", PersonRecipePlan)
-        arcId?.let { allocator?.stopArc(it) }
+        allocator?.startArcForPlan("Person", PersonRecipePlan)
+            ?.also { allocator?.stopArc(it) }
     }
 
     private suspend fun startResurrectionArc() {
@@ -163,11 +159,7 @@ class TestActivity : AppCompatActivity() {
             AndroidManifestHostRegistry.create(this@TestActivity),
             EntityHandleManager(
                 time = JvmTime,
-                scheduler = Scheduler(
-                    JvmTime,
-                    coroutineContext
-                    + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                ),
+                scheduler = schedulerProvider("resurrectionArc"),
                 activationFactory = ServiceStoreFactory(
                     context = this@TestActivity,
                     lifecycle = this@TestActivity.lifecycle
@@ -199,15 +191,12 @@ class TestActivity : AppCompatActivity() {
 
     private suspend fun runPersistentPersonRecipe() {
         appendResultText(getString(R.string.waiting_for_result))
+
         val allocator = Allocator.create(
             AndroidManifestHostRegistry.create(this@TestActivity),
             EntityHandleManager(
                 time = JvmTime,
-                scheduler = Scheduler(
-                    JvmTime,
-                    coroutineContext
-                    + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                ),
+                scheduler = schedulerProvider("allocator"),
                 activationFactory = ServiceStoreFactory(
                     context = this@TestActivity,
                     lifecycle = this@TestActivity.lifecycle
@@ -239,11 +228,7 @@ class TestActivity : AppCompatActivity() {
 
         val handleManager = EntityHandleManager(
             time = JvmTime,
-            scheduler = Scheduler(
-                JvmTime,
-                coroutineContext
-                    + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-            ),
+            scheduler = schedulerProvider("handle"),
             activationFactory = ServiceStoreFactory(
                 this,
                 lifecycle

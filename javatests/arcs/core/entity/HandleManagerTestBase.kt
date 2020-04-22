@@ -12,11 +12,9 @@ import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
@@ -25,7 +23,6 @@ import arcs.jvm.util.testutil.FakeTime
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -33,6 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
 import kotlin.coroutines.resume
@@ -125,20 +123,24 @@ open class HandleManagerTestBase {
     @Test
     fun singleton_writeAndReadBackAndClear() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
+        val readHandle = readHandleManager.createSingletonHandle()
+        var readHandleUpdated = readHandle.onUpdateDeferred()
         writeHandle.store(entity1)
 
         // Now read back from a different handle
-        val readHandle = readHandleManager.createSingletonHandle()
-            as ReadSingletonHandle<Person>
-
+        readHandleUpdated.await()
         val readBack = readHandle.fetch()
         assertThat(readBack).isEqualTo(entity1)
 
+        readHandleUpdated = readHandle.onUpdateDeferred()
         writeHandle.store(entity2)
+        readHandleUpdated.await()
         val readBack2 = readHandle.fetch()
         assertThat(readBack2).isEqualTo(entity2)
 
+        readHandleUpdated = readHandle.onUpdateDeferred()
         writeHandle.clear()
+        readHandleUpdated.await()
         val readBack3 = readHandle.fetch()
         assertThat(readBack3).isNull()
     }
@@ -146,13 +148,12 @@ open class HandleManagerTestBase {
     @Test
     fun singleton_writeAndReadBack() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
-            as WriteSingletonHandle<Person>
+        val readHandle = readHandleManager.createSingletonHandle()
+        val readHandleUpdated = readHandle.onUpdateDeferred()
         writeHandle.store(entity1)
 
         // Now read back from a different handle
-        val readHandle = readHandleManager.createSingletonHandle()
-            as ReadSingletonHandle<Person>
-
+        readHandleUpdated.await()
         val readBack = readHandle.fetch()
         assertThat(readBack).isEqualTo(entity1)
     }
@@ -160,36 +161,35 @@ open class HandleManagerTestBase {
     @Test
     fun singleton_clearOnAClearDataWrittenByA() = testRunner {
         val handleA = writeHandleManager.createSingletonHandle()
-            as WriteSingletonHandle<Person>
+        val handleB = readHandleManager.createSingletonHandle()
 
+        var handleBUpdated = handleB.onUpdateDeferred()
         handleA.store(entity1)
+        handleBUpdated.await()
 
         // Now read back from a different handle
-        val handleB = readHandleManager.createSingletonHandle()
-            as ReadSingletonHandle<Person>
-
         assertThat(handleB.fetch()).isEqualTo(entity1)
 
-        val updateBDeferred = handleB.onUpdateDeferred()
-
+        handleBUpdated = handleB.onUpdateDeferred {
+            log("handleB updated: $it")
+            it == null
+        }
         handleA.clear()
+        handleBUpdated.await()
 
-        updateBDeferred.await()
         assertThat(handleB.fetch()).isNull()
     }
 
     @Test
     fun singleton_clearOnAClearDataWrittenByB() = testRunner {
         val handleA = writeHandleManager.createSingletonHandle()
+        val handleB = readHandleManager.createSingletonHandle()
+        val handleBUpdated = handleB.onUpdateDeferred()
         handleA.store(entity1)
+        withTimeout(1500) { handleBUpdated.await() }
 
         // Now read back from a different handle
-        val handleB = readHandleManager.createSingletonHandle()
-
-        handleB.awaitReady()
-
         val updateADeferred = handleA.onUpdateDeferred()
-
         handleB.clear()
 
         assertThat(handleB.fetch()).isNull()
@@ -217,11 +217,8 @@ open class HandleManagerTestBase {
     @Test
     fun singleton_dereferenceEntity() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
-            as WriteSingletonHandle<Person>
-
         val readHandle = readHandleManager.createSingletonHandle()
-            as ReadSingletonHandle<Person>
-
+        val readHandleUpdated = readHandle.onUpdateDeferred()
         writeHandle.store(entity1)
 
         // Create a second handle for the second entity, so we can store it.
@@ -230,17 +227,17 @@ open class HandleManagerTestBase {
             storageKey,
             "otherWriteHandle"
         )
-            as WriteSingletonHandle<Person>
-
         val refReadHandle = readHandleManager.createSingletonHandle(
             storageKey,
             "otherReadHandle"
         )
-            as ReadSingletonHandle<Person>
+        val refReadHandleUpdated = refReadHandle.onUpdateDeferred()
 
         refWriteHandle.store(entity2)
+        withTimeout(1500) { refReadHandleUpdated.await() }
 
         // Now read back entity1, and dereference its best_friend.
+        withTimeout(1500) { readHandleUpdated.await() }
         val dereferencedRawEntity2 =
             (readHandle.fetch()!!.bestFriend)!!
                 .also {
@@ -286,13 +283,13 @@ open class HandleManagerTestBase {
             hat = fezStorageRef
         )
         val writeHandle = writeHandleManager.createSingletonHandle()
-            as WriteSingletonHandle<Person>
+        val readHandle = readHandleManager.createSingletonHandle()
+        val readOnUpdate = readHandle.onUpdateDeferred()
+
         writeHandle.store(personWithHat)
+        readOnUpdate.await()
 
         // Read out the entity, and fetch its hat.
-        val readHandle = readHandleManager.createSingletonHandle()
-            as ReadSingletonHandle<Person>
-
         val entityOut = readHandle.fetch()!!
         val hatRef = entityOut.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
@@ -304,12 +301,10 @@ open class HandleManagerTestBase {
     @Test
     fun singleton_noTTL() = testRunner {
         val handle = writeHandleManager.createSingletonHandle()
-            as WriteSingletonHandle<Person>
-
-        handle.store(entity1)
-
         val handleB = readHandleManager.createSingletonHandle()
-            as ReadSingletonHandle<Person>
+        val handleBUpdated = handleB.onUpdateDeferred()
+        handle.store(entity1)
+        handleBUpdated.await()
 
         val readBack = handleB.fetch()!!
         assertThat(readBack.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
@@ -320,20 +315,21 @@ open class HandleManagerTestBase {
     fun singleton_withTTL() = testRunner {
         fakeTime.millis = 0
         val handle = writeHandleManager.createSingletonHandle(ttl = Ttl.Days(2))
-            as WriteSingletonHandle<Person>
-
-        handle.store(entity1)
-
         val handleB = readHandleManager.createSingletonHandle()
-            as ReadSingletonHandle<Person>
+
+        var handleBUpdated = handleB.onUpdateDeferred()
+        handle.store(entity1)
+        handleBUpdated.await()
 
         val readBack = handleB.fetch()!!
         assertThat(readBack.creationTimestamp).isEqualTo(0)
         assertThat(readBack.expirationTimestamp).isEqualTo(2*24*3600*1000)
 
         val handleC = readHandleManager.createSingletonHandle(ttl = Ttl.Minutes(2))
-
+        handleBUpdated = handleB.onUpdateDeferred()
         handleC.store(entity2)
+        handleBUpdated.await()
+
         val readBack2 = handleB.fetch()!!
         assertThat(readBack2.creationTimestamp).isEqualTo(0)
         assertThat(readBack2.expirationTimestamp).isEqualTo(2*60*1000)
@@ -347,12 +343,15 @@ open class HandleManagerTestBase {
     open fun singleton_referenceLiveness() = runBlocking {
         // Create and store an entity.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
+        val readEntityHandle = readHandleManager.createCollectionHandle()
         writeEntityHandle.store(entity1)
+        log("Created and stored an entity")
 
         // Create and store a reference to the entity.
         val entity1Ref = writeEntityHandle.createReference(entity1)
         val writeRefHandle = writeHandleManager.createReferenceSingletonHandle()
         writeRefHandle.store(entity1Ref)
+        log("Created and stored a reference")
 
         // Now read back the reference from a different handle.
         val readRefHandle = readHandleManager.createReferenceSingletonHandle()
@@ -367,10 +366,17 @@ open class HandleManagerTestBase {
 
         // Modify the entity.
         val modEntity1 = entity1.copy(name = "Ben")
+        val entityModified = readEntityHandle.onUpdateDeferred()
         writeEntityHandle.store(modEntity1)
+        withTimeout(1500) {
+            entityModified.await()
+        }
 
         // Reference should still be alive.
         reference = readRefHandle.fetch()!!
+        // Make sure the storage stack created to dereference is going to be pointing to the latest
+        // stuff.
+        delay(200)
         assertThat(reference.dereference()).isEqualTo(modEntity1)
         storageReference = reference.toReferencable()
         assertThat(storageReference.isAlive(coroutineContext)).isTrue()
@@ -378,6 +384,8 @@ open class HandleManagerTestBase {
 
         // Remove the entity from the collection.
         writeEntityHandle.remove(entity1)
+
+        delay(200) // Let the delete trickle down to the store.
 
         // Reference should be dead. (Removed entities currently aren't actually deleted, but
         // instead are "nulled out".)
@@ -411,16 +419,16 @@ open class HandleManagerTestBase {
         val handleA = writeHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
         val handleB = readHandleManager.createCollectionHandle()
-            as ReadWriteCollectionHandle<Person>
-
+        var gotUpdate = handleB.onUpdateDeferred()
         handleA.store(entity1)
         assertThat(handleA.fetchAll()).containsExactly(entity1)
+        gotUpdate.await()
         assertThat(handleB.fetchAll()).containsExactly(entity1)
 
         // Ensure we get update from A before checking.
         // Since some test configurations may result in the handles
         // operating on different threads.
-        val gotUpdate = handleA.onUpdateDeferred()
+        gotUpdate = handleA.onUpdateDeferred()
         handleB.store(entity2)
         assertThat(handleB.fetchAll()).containsExactly(entity1, entity2)
         gotUpdate.await()
@@ -430,14 +438,16 @@ open class HandleManagerTestBase {
     @Test
     fun collection_writeAndReadBack() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
-            as WriteCollectionHandle<Person>
+        val readHandle = readHandleManager.createCollectionHandle()
+        val allHeard = Job()
+        readHandle.onUpdate {
+            if (it.size == 2) allHeard.complete()
+        }
         writeHandle.store(entity1)
         writeHandle.store(entity2)
 
-        // Now read back from a different handle
-        val readHandle = readHandleManager.createCollectionHandle()
-            as ReadCollectionHandle<Person>
-
+        // Now read back from a different handle, after hearing the updates.
+        allHeard.join()
         val readBack = readHandle.fetchAll()
         assertThat(readBack).containsExactly(entity1, entity2)
     }
@@ -476,18 +486,24 @@ open class HandleManagerTestBase {
     @Test
     fun collection_removingFromA_isRemovedFromB() = testRunner {
         val handleA = readHandleManager.createCollectionHandle()
-            as ReadWriteCollectionHandle<Person>
+        val gotUpdateAtA = handleA.onUpdateDeferred {
 
+            it.size == 2
+        }
         val handleB = writeHandleManager.createCollectionHandle()
-            as ReadWriteCollectionHandle<Person>
+        var gotUpdateAtB = handleB.onUpdateDeferred {
+            it.size == 1
+        }
 
         handleA.store(entity1)
         handleB.store(entity2)
+        gotUpdateAtA.await()
+        gotUpdateAtB.await()
 
         assertThat(handleA.fetchAll()).containsExactly(entity1, entity2)
         assertThat(handleB.fetchAll()).containsExactly(entity1, entity2)
 
-        val gotUpdateAtB = handleB.onUpdateDeferred() { it.size == 1 }
+        gotUpdateAtB = handleB.onUpdateDeferred { it.size == 1 }
         handleA.remove(entity1)
         assertThat(handleA.fetchAll()).containsExactly(entity2)
 
@@ -502,6 +518,12 @@ open class HandleManagerTestBase {
         val handleB = writeHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
 
+        val handleBGotAll7 = Job()
+        handleB.onUpdate {
+            log("HandleB onUpdate: ${it.map(Person::entityId)}")
+            if (it.size == 7 || handleB.fetchAll().size == 7) handleBGotAll7.complete()
+        }
+
         handleA.store(Person("a", "a", 1.0, true))
         handleA.store(Person("b", "b", 2.0, false))
         handleA.store(Person("c", "c", 3.0, true))
@@ -511,36 +533,57 @@ open class HandleManagerTestBase {
         handleA.store(Person("g", "g", 7.0, true))
 
         assertThat(handleA.fetchAll()).hasSize(7)
+        withTimeout(15000) {
+            handleBGotAll7.join()
+        }
         assertThat(handleB.fetchAll()).hasSize(7)
 
         // Ensure we get update from A before checking.
         // Since some test configurations may result in the handles
         // operating on different threads.
-        val gotUpdate = handleA.onUpdateDeferred() { it.isEmpty() }
+        val gotUpdate = handleA.onUpdateDeferred {
+            log(
+                "HandleA onUpdate: ${it.map(Person::entityId)}, " +
+                    "HandleA fetchAll: ${handleA.fetchAll().map(Person::entityId)}"
+            )
+            // TODO: seems like the latest value is not always passed to the onUpdate callback. Not
+            //  only that, but sometimes the same value can be passed more than once.  Using
+            //  fetchAll here is more reliable. Need to figure out why.
+            handleA.fetchAll().isEmpty()
+        }
 
         handleB.clear()
         assertThat(handleB.fetchAll()).isEmpty()
 
-        gotUpdate.await()
+        withTimeout(15000) {
+            gotUpdate.await()
+        }
         assertThat(handleA.fetchAll()).isEmpty()
     }
 
     @Test
     fun collection_entityDereference() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
-            as WriteCollectionHandle<Person>
+        val readHandle = readHandleManager.createCollectionHandle()
+
+        val readUpdated = readHandle.onUpdateDeferred { it.size == 2 }
+
         writeHandle.store(entity1)
         writeHandle.store(entity2)
+        readUpdated.await()
 
-        val readHandle = readHandleManager.createCollectionHandle()
-            as ReadCollectionHandle<Person>
+        // Just give a little more time for the references to be populated in the RamDisk for
+        // dereferencing.
+        delay(100)
 
-        readHandle.fetchAll().also { assertThat(it).hasSize(2) }.forEach { entity ->
-            val expectedBestFriend = if (entity.entityId == "entity1") entity2 else entity1
-            val actualRawBestFriend = entity.bestFriend!!.dereference(coroutineContext)!!
-            val actualBestFriend = Person.deserialize(actualRawBestFriend)
-            assertThat(actualBestFriend).isEqualTo(expectedBestFriend)
-        }
+        readHandle.fetchAll()
+            .also { assertThat(it).hasSize(2) }
+            .forEach { entity ->
+                val expectedBestFriend = if (entity.entityId == "entity1") entity2 else entity1
+                val actualRawBestFriend = entity.bestFriend!!.dereference(coroutineContext)!!
+                val actualBestFriend = Person.deserialize(actualRawBestFriend)
+                assertThat(actualBestFriend).isEqualTo(expectedBestFriend)
+            }
     }
 
     @Test
@@ -579,6 +622,8 @@ open class HandleManagerTestBase {
         val readHandle = readHandleManager.createCollectionHandle()
             as ReadCollectionHandle<Person>
 
+        // TODO(jwf): remove this delay when we get around to throwing on invalid thread usage.
+        delay(100)
         val entityOut = readHandle.fetchAll().single { it.entityId == "a-hatted-individual" }
         val hatRef = entityOut.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
@@ -590,12 +635,10 @@ open class HandleManagerTestBase {
     @Test
     fun collection_noTTL() = testRunner {
         val handle = writeHandleManager.createCollectionHandle()
-            as WriteCollectionHandle<Person>
-
-        handle.store(entity1)
-
         val handleB = readHandleManager.createCollectionHandle()
-            as ReadCollectionHandle<Person>
+        val handleBChanged = handleB.onUpdateDeferred()
+        handle.store(entity1)
+        withTimeout(1500) { handleBChanged.await() }
 
         val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
         assertThat(readBack.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
@@ -606,20 +649,19 @@ open class HandleManagerTestBase {
     fun collection_withTTL() = testRunner {
         fakeTime.millis = 0
         val handle = writeHandleManager.createCollectionHandle(ttl = Ttl.Days(2))
-            as WriteCollectionHandle<Person>
-        handle.store(entity1)
-
         val handleB = readHandleManager.createCollectionHandle()
-            as ReadWriteCollectionHandle<Person>
+        var handleBChanged = handleB.onUpdateDeferred()
+        handle.store(entity1)
+        withTimeout(1500) { handleBChanged.await() }
 
         val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
         assertThat(readBack.creationTimestamp).isEqualTo(0)
         assertThat(readBack.expirationTimestamp).isEqualTo(2*24*3600*1000)
 
         val handleC = readHandleManager.createCollectionHandle(ttl = Ttl.Minutes(2))
-            as WriteCollectionHandle<Person>
-
+        handleBChanged = handleB.onUpdateDeferred()
         handleC.store(entity2)
+        handleBChanged.await()
         val readBack2 = handleB.fetchAll().first { it.entityId == entity2.entityId }
         assertThat(readBack2.creationTimestamp).isEqualTo(0)
         assertThat(readBack2.expirationTimestamp).isEqualTo(2*60*1000)
@@ -688,6 +730,7 @@ open class HandleManagerTestBase {
     open fun collection_referenceLiveness() = runBlocking<Unit> {
         // Create and store some entities.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
+        val readEntityHandle = readHandleManager.createCollectionHandle()
         writeEntityHandle.store(entity1)
         writeEntityHandle.store(entity2)
 
@@ -714,8 +757,17 @@ open class HandleManagerTestBase {
         // Modify the entities.
         val modEntity1 = entity1.copy(name = "Ben")
         val modEntity2 = entity2.copy(name = "Ben")
+        var count = 0
+        val entitiesWritten = readEntityHandle.onUpdateDeferred {
+            ++count == 2
+        }
         writeEntityHandle.store(modEntity1)
         writeEntityHandle.store(modEntity2)
+        withTimeout(5000) {
+            entitiesWritten.await()
+        }
+
+        delay(100) // Wait a little bit, to ensure the updates have propagated.
 
         // Reference should still be alive.
         references = readRefHandle.fetchAll()
@@ -729,6 +781,8 @@ open class HandleManagerTestBase {
         // Remove the entities from the collection.
         writeEntityHandle.remove(entity1)
         writeEntityHandle.remove(entity2)
+
+        delay(200) // Let the deletes propagate down
 
         // Reference should be dead. (Removed entities currently aren't actually deleted, but
         // instead are "nulled out".)
@@ -829,7 +883,7 @@ open class HandleManagerTestBase {
     ).also { it.awaitReady() } as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
 
     private suspend fun <T> ReadableHandle<T>.onUpdateDeferred(
-        predicate: (T) -> Boolean = { true }
+        predicate: suspend (T) -> Boolean = { true }
     ): Deferred<T> = CompletableDeferred<T>().also { deferred ->
         onUpdate {
             if (deferred.isActive && predicate(it)) {

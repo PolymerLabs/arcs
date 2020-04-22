@@ -6,10 +6,12 @@ import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.SchemaRegistry
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.Reference
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
@@ -31,10 +33,13 @@ class EntitySpecTest {
     private var currentTime: Long = 500L
 
     @get:Rule
+    val log = LogRule()
+
+    @get:Rule
     val harness = EntitySpecParticleTestHarness { EntitySpecParticle() }
 
     @Before
-    fun setUp() = runBlockingTest {
+    fun setUp() = runBlocking {
         idGenerator = Id.Generator.newForTest("session")
         harness.start()
     }
@@ -53,7 +58,7 @@ class EntitySpecTest {
     }
 
     @Test
-    fun createWithFieldValues() = runBlockingTest {
+    fun createWithFieldValues() = runBlocking<Unit> {
         val ref1 = createBarReference(Bar(value = "bar1"))
         val ref2 = createBarReference(Bar(value = "bar2"))
         val ref3 = createBarReference(Bar(value = "bar3"))
@@ -111,7 +116,7 @@ class EntitySpecTest {
     }
 
     @Test
-    fun copy() = runBlockingTest {
+    fun copy() = runBlocking<Unit> {
         val ref1 = createBarReference(Bar(value = "bar1"))
         val ref2 = createBarReference(Bar(value = "bar2"))
         val ref3 = createBarReference(Bar(value = "bar3"))
@@ -158,7 +163,7 @@ class EntitySpecTest {
     }
 
     @Test
-    fun serialize_roundTrip() = runBlockingTest {
+    fun serialize_roundTrip() = runBlocking {
         val ref1 = createBarReference(Bar(value = "bar1"))
         val ref2 = createBarReference(Bar(value = "bar2"))
         val ref3 = createBarReference(Bar(value = "bar3"))

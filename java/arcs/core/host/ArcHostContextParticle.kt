@@ -25,6 +25,8 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.plus
 import arcs.core.util.traverse
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.joinAll
 
 /**
  * An implicit [Particle] that lives within the [ArcHost] and used as a utility class to
@@ -41,7 +43,7 @@ class ArcHostContextParticle(
      * types, and write them to the appropriate handles. See `ArcHostContext.arcs` for schema
      * definitions.
      */
-    suspend fun writeArcHostContext(arcId: String, context: ArcHostContext) {
+    suspend fun writeArcHostContext(arcId: String, context: ArcHostContext) = onHandlesReady {
         try {
             val connections = context.particles.flatMap {
                 it.value.planParticle.handles.map { handle ->
@@ -92,12 +94,12 @@ class ArcHostContextParticle(
      */
     suspend fun readArcHostContext(
         arcHostContext: ArcHostContext
-    ): ArcHostContext? {
+    ): ArcHostContext? = onHandlesReady {
         val arcId = arcHostContext.arcId
 
         try {
             // TODO(cromwellian): replace with .query(arcId, hostId) when queryHandles are efficient
-            val arcStateEntity = handles.arcHostContext.fetch() ?: return null
+            val arcStateEntity = handles.arcHostContext.fetch() ?: return@onHandlesReady null
             val particles = arcStateEntity.particles.map {
                 requireNotNull(it.dereference()) {
                     "Invalid particle reference when deserialising arc $arcId for host $hostId"
@@ -116,8 +118,10 @@ class ArcHostContextParticle(
                 )
             }.toSet().associateBy({ it.first }, { it.second })
 
-            return ArcHostContext(
-                arcId, particles.toMutableMap(), ArcState.valueOf(arcStateEntity.arcState),
+            return@onHandlesReady ArcHostContext(
+                arcId,
+                particles.toMutableMap(),
+                ArcState.valueOf(arcStateEntity.arcState),
                 entityHandleManager = arcHostContext.entityHandleManager
             )
         } catch (e: Exception) {
@@ -130,6 +134,19 @@ class ArcHostContextParticle(
         location: String
     ): Particle = instantiatedParticles.getOrPut(particleName) {
         instantiateParticle(ParticleIdentifier.from(location))
+    }
+
+    private suspend inline fun <T> onHandlesReady(block: () -> T): T {
+        val onReadyJobs = mapOf(
+            "particles" to Job(),
+            "arcHostContext" to Job(),
+            "handleConnections" to Job()
+        )
+        handles.particles.onReady { onReadyJobs["particles"]?.complete() }
+        handles.arcHostContext.onReady { onReadyJobs["arcHostContext"]?.complete() }
+        handles.handleConnections.onReady { onReadyJobs["handleConnections"]?.complete() }
+        onReadyJobs.values.joinAll()
+        return block()
     }
 
     private suspend fun createHandlesMap(

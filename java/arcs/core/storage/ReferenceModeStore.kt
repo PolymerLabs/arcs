@@ -55,7 +55,9 @@ import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /**
  * [ReferenceModeStore]s adapt between a collection ([CrdtSet] or [CrdtSingleton]) of entities from
@@ -135,9 +137,12 @@ class ReferenceModeStore private constructor(
         backingType = backingType,
         callbackFactory = { muxId ->
             ProxyCallback { message ->
-                receiveQueue.enqueue(
-                    PreEnqueuedFromBackingStore(message.toReferenceModeMessage(), muxId)
-                )
+                CoroutineScope(coroutineContext).launch {
+                    receiveQueue.enqueue(
+                        PreEnqueuedFromBackingStore(message.toReferenceModeMessage(), muxId)
+                    )
+                }
+                true
             }
         }
     )
@@ -149,7 +154,10 @@ class ReferenceModeStore private constructor(
         ) { "Provided type must contain CrdtModelType" }.containedType
 
         containerStore.on(ProxyCallback {
-            receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
+            CoroutineScope(coroutineContext).launch {
+                receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
+            }
+            true
         })
     }
 

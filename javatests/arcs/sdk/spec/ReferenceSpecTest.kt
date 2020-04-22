@@ -1,10 +1,10 @@
 package arcs.sdk.spec
 
+import arcs.core.util.testutil.LogRule
 import arcs.sdk.Reference
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -18,14 +18,15 @@ private typealias Parent = ReferenceSpecParticle_Parents
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class ReferenceSpecTest {
-
     class ReferenceSpecParticle : AbstractReferenceSpecParticle()
 
+    @get:Rule
+    val log = LogRule()
     @get:Rule
     val harness = ReferenceSpecParticleTestHarness { ReferenceSpecParticle() }
 
     @Before
-    fun setUp() = runBlockingTest {
+    fun setUp() = runBlocking {
         harness.start()
     }
 
