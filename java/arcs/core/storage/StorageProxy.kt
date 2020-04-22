@@ -17,12 +17,14 @@ import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy.ProxyState.CLOSED
 import arcs.core.util.Scheduler
+import arcs.core.util.SchedulerDispatcher
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import java.lang.IllegalStateException
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -39,39 +41,14 @@ import kotlinx.coroutines.sync.withLock
 class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
     initialCrdt: CrdtModel<Data, Op, T>,
-    private val scheduler: Scheduler
+    scheduler: Scheduler
 ) {
-    // Visible for testing
-    enum class ProxyState {
-        /**
-         * The [StorageProxy] has not received any actions to invoke on storage events. A call to
-         * `onReady`, `onUpdate`, `onDesync` or `onResync` will change the state to [AWAITING_SYNC].
-         */
-        INIT,
-
-        /**
-         * The [StorageProxy] has received at least one action for storage events. A sync request
-         * has been sent to storage, but the response has not been received yet.
-         */
-        AWAITING_SYNC,
-
-        /**
-         * The [StorageProxy] is synchronized with its associated storage.
-         */
-        SYNC,
-
-        /**
-         * A set of model operations from storage failed to apply cleanly to the local CRDT model,
-         * so the [StorageProxy] is desynchronized. A request has been sent to resynchronize.
-         */
-        DESYNC,
-
-        /**
-         * The [StorageProxy] has been closed; no further operations are possible, and no
-         * messages from the store will be received.
-         */
-        CLOSED,
-    }
+    /**
+     * If you need to interact with the data managed by this [StorageProxy], and you're not a
+     * [Store], you must either be performing your interactions within a handle callback or on this
+     * [CoroutineDispatcher].
+     */
+    val dispatcher: CoroutineDispatcher = SchedulerDispatcher(scheduler)
 
     private val log = TaggedLog { "StorageProxy" }
 
@@ -393,5 +370,37 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private suspend fun checkNotClosed() = syncMutex.withLock {
         check(state != ProxyState.CLOSED) { "Unexpected operation on closed StorageProxy" }
+    }
+
+    // Visible for testing
+    enum class ProxyState {
+        /**
+         * The [StorageProxy] has not received any actions to invoke on storage events. A call to
+         * `onReady`, `onUpdate`, `onDesync` or `onResync` will change the state to [AWAITING_SYNC].
+         */
+        INIT,
+
+        /**
+         * The [StorageProxy] has received at least one action for storage events. A sync request
+         * has been sent to storage, but the response has not been received yet.
+         */
+        AWAITING_SYNC,
+
+        /**
+         * The [StorageProxy] is synchronized with its associated storage.
+         */
+        SYNC,
+
+        /**
+         * A set of model operations from storage failed to apply cleanly to the local CRDT model,
+         * so the [StorageProxy] is desynchronized. A request has been sent to resynchronize.
+         */
+        DESYNC,
+
+        /**
+         * The [StorageProxy] has been closed; no further operations are possible, and no
+         * messages from the store will be received.
+         */
+        CLOSED,
     }
 }

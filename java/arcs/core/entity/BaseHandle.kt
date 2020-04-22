@@ -12,10 +12,14 @@ package arcs.core.entity
 
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import kotlinx.coroutines.CoroutineDispatcher
 
 /** Base functionality common to all read/write singleton and collection handles. */
 abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
     override val name: String = config.name
+
+    override val dispatcher: CoroutineDispatcher
+        get() = storageProxy.dispatcher
 
     val spec: HandleSpec<out Entity> = config.spec
 

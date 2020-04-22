@@ -12,10 +12,17 @@
 package arcs.core.entity
 
 import arcs.core.data.HandleMode
+import kotlinx.coroutines.CoroutineDispatcher
 
 /** Base interface for all handle classes. */
 interface Handle {
     val name: String
+
+    /**
+     * If you need to access or mutate the [Handle]'s data from outside of a particle or handle
+     * lifecycle callback, you should use this dispatcher to run your operations.
+     */
+    val dispatcher: CoroutineDispatcher
 
     /** Assign a callback when the handle is synced for the first time. */
     suspend fun onReady(action: () -> Unit)
