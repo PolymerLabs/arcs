@@ -9,6 +9,7 @@ import "java/arcs/android/crdt/crdt.proto";
 import "google/protobuf/wrappers.proto";
 
 message ProxyMessageProto {
+  // ID is a nullable int32, so encode it as an Int32Value.
   google.protobuf.Int32Value id = 1;
 
   oneof message {

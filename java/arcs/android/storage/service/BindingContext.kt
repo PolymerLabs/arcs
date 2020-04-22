@@ -12,7 +12,6 @@
 package arcs.android.storage.service
 
 import androidx.annotation.VisibleForTesting
-import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.crdt.toParcelable
 import arcs.android.storage.ParcelableProxyMessage
 import arcs.android.storage.toParcelable
