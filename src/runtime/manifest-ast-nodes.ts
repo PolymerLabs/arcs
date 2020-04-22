@@ -48,6 +48,10 @@ export class BaseNodeWithRefinement extends BaseNode {
     refinement?: RefinementNode;
 }
 
+// Inline entities can have arbitrary field names, so we need a symbol-based field
+// to hold the BaseNode kind/location info.
+export const INLINE_ENTITY = Symbol('inline_entity');
+
 //  PARTICLE TYPES
 export interface BigCollectionType extends BaseNode {
   kind: 'big-collection-type';
@@ -139,10 +143,11 @@ export interface ManifestStorage extends BaseNode {
   version: string|null;
   tags: TagList;
   source: string;
-  origin: 'file' | 'resource' | 'storage';
+  origin: 'file' | 'resource' | 'storage' | 'inline';
   description: string|null;
   claim: ManifestStorageClaim;
-  storageKey?: string;
+  storageKey: string|null;
+  entities: ManifestStorageInlineEntity[]|null;
 }
 
 export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionType | TypeName;
@@ -169,6 +174,60 @@ export interface ManifestStorageResourceSource extends ManifestStorageSource {
 
 export interface ManifestStorageStorageSource extends ManifestStorageSource {
   origin: 'storage';
+}
+
+export interface ManifestStorageInlineSource extends ManifestStorageSource {
+  origin: 'inline';
+  entities: ManifestStorageInlineEntity[];
+}
+
+// Inline entities can have arbitrary field names, which means they could clash
+// with BaseNode's 'kind' and 'location', so this interface cannot extend BaseNode.
+// However, we still want to keep those fields, so put them under a symbol.
+export interface ManifestStorageInlineEntity {
+  [INLINE_ENTITY]: BaseNode;
+
+  [key: string]: ManifestStorageInlinePrimitiveType | ManifestStorageInlineReference |
+                 ManifestStorageInlineCollection | ManifestStorageInlineTuple;
+}
+
+export type ManifestStorageInlinePrimitiveType =
+  ManifestStorageInlineString | ManifestStorageInlineNumber |
+  ManifestStorageInlineBoolean | ManifestStorageInlineBytes;
+
+export interface ManifestStorageInlineString extends BaseNode {
+  kind: 'entity-string';
+  value: string;
+}
+
+export interface ManifestStorageInlineNumber extends BaseNode {
+  kind: 'entity-number';
+  value: number;
+}
+
+export interface ManifestStorageInlineBoolean extends BaseNode {
+  kind: 'entity-boolean';
+  value: boolean;
+}
+
+export interface ManifestStorageInlineBytes extends BaseNode {
+  kind: 'entity-bytes';
+  value: number[];
+}
+
+export interface ManifestStorageInlineReference extends BaseNode {
+  kind: 'entity-reference';
+  value: {id: string, storageKey: string};
+}
+
+export interface ManifestStorageInlineCollection extends BaseNode {
+  kind: 'entity-collection';
+  value: ManifestStorageInlinePrimitiveType[];
+}
+
+export interface ManifestStorageInlineTuple extends BaseNode {
+  kind: 'entity-tuple';
+  value: (ManifestStorageInlinePrimitiveType | ManifestStorageInlineReference)[];
 }
 
 export interface Meta extends BaseNode {

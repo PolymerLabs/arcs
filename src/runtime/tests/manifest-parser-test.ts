@@ -11,6 +11,7 @@
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Flags} from '../flags.js';
+import {INLINE_ENTITY} from '../manifest-ast-nodes.js';
 
 describe('manifest parser', () => {
   it('parses an empy manifest', () => {
@@ -660,5 +661,293 @@ describe('manifest parser', () => {
       JSON.stringify(JSON.parse(manifestAst[1].data)),
       '[{"type":"artist","name":"in this moment"}]'
     );
+  });
+
+  describe('inline data stores', () => {
+    // Strips 'location' fields from the AST.
+    function clean(manifestAst) {
+      return JSON.parse(JSON.stringify(manifestAst, (k, v) => k === 'location' ? undefined : v));
+    }
+
+    it('parses text fields', () => {
+      const manifestAst = clean(parse(`
+        store A of {txt: Text} with {
+          {txt: ''},
+          {txt: 'test string'},
+          {txt: '\\'quotes\\''},
+          {txt: 'more \\\\ escaping \\' here'},
+          {txt: '\\tabs and \\newlines are translated'},
+          {txt: '\\other \\chars are\\ n\\ot'},
+        }
+      `));
+      assert.deepStrictEqual(manifestAst[0].entities, [
+        {txt: {kind: 'entity-string', value: ''}},
+        {txt: {kind: 'entity-string', value: 'test string'}},
+        {txt: {kind: 'entity-string', value: '\'quotes\''}},
+        {txt: {kind: 'entity-string', value: 'more \\ escaping \' here'}},
+        {txt: {kind: 'entity-string', value: '\tabs and \newlines are translated'}},
+        {txt: {kind: 'entity-string', value: 'other chars are not'}}
+      ]);
+    });
+    it('parses url fields', () => {
+      const manifestAst = clean(parse(`
+        store A of {u: URL} with {
+          {u: ''}, {u: 'http://www.foo.com/go?q=%27hi?=%25'},
+        }
+      `));
+      assert.deepStrictEqual(manifestAst[0].entities, [
+        {u: {kind: 'entity-string', value: ''}},
+        {u: {kind: 'entity-string', value: 'http://www.foo.com/go?q=%27hi?=%25'}}
+      ]);
+    });
+    it('parses number fields', () => {
+      const manifestAst = clean(parse(`
+        store A of {num: Number} with {
+          {num: 0},
+          {num: 0.8},
+          {num: 51},
+          {num: -6},
+          {num: -120.5}
+        }
+      `));
+      assert.deepStrictEqual(manifestAst[0].entities, [
+        {num: {kind: 'entity-number', value: 0}},
+        {num: {kind: 'entity-number', value: 0.8}},
+        {num: {kind: 'entity-number', value: 51}},
+        {num: {kind: 'entity-number', value: -6}},
+        {num: {kind: 'entity-number', value: -120.5}}
+      ]);
+    });
+    it('parses boolean fields', () => {
+      const manifestAst = clean(parse(`
+        store A of {flg: Boolean} with { {flg: true}, {flg: false} }
+      `));
+      assert.deepStrictEqual(manifestAst[0].entities, [
+        {flg: {kind: 'entity-boolean', value: true}},
+        {flg: {kind: 'entity-boolean', value: false}}
+      ]);
+    });
+    it('parses bytes fields', () => {
+      const manifestAst = clean(parse(`
+        store A of {buf: Bytes} with {
+          {buf: ||},
+          {buf: |0|},
+          {buf: |23,|},
+          {buf: |7, ff, 4d|},
+          {buf: |7, ff, 4d,|},
+        }
+      `));
+      assert.deepStrictEqual(manifestAst[0].entities, [
+        {buf: {kind: 'entity-bytes', value: []}},
+        {buf: {kind: 'entity-bytes', value: [0]}},
+        {buf: {kind: 'entity-bytes', value: [0x23]}},
+        {buf: {kind: 'entity-bytes', value: [0x07, 0xff, 0x4d]}},
+        {buf: {kind: 'entity-bytes', value: [0x07, 0xff, 0x4d]}}
+      ]);
+    });
+    it('parses reference fields', () => {
+      const manifestAst = clean(parse(`
+        store A of {ref: &{z: Text}} with { {ref: <'id1', 'key1'>} }
+      `));
+      assert.deepStrictEqual(manifestAst[0].entities, [
+        {ref: {kind: 'entity-reference', value: {id: 'id1', storageKey: 'key1'}}}
+      ]);
+    });
+    it('parses collection fields', () => {
+      const manifestAst = clean(parse(`
+        store S0 of {col: [Text]} with {
+          {col: []},
+          {col: ['a', 'b\\'c']},
+        }
+
+        store S1 of {col: [Number]} with {
+          {col: [12]},
+          {col: [-5, 23.7, 0, ]},
+        }
+
+        store S2 of {col: [Boolean]} with {
+          {col: [true, true, false]}
+        }
+
+        store S3 of {col: [Bytes]} with {
+          {col: [|a2|, |0, 50|, ||]}
+        }
+
+        store S4 of {col: [&{n: Number}]} with {
+          {col: [<'i0', 'k0'>, <'i1', 'k1'>]}
+        }
+      `));
+      assert.deepStrictEqual(manifestAst[0].entities, [
+        {col: {kind: 'entity-collection', value: []}},
+        {col: {kind: 'entity-collection', value: [
+          {kind: 'entity-string', value: 'a'},
+          {kind: 'entity-string', value: 'b\'c'}
+        ]}},
+      ]);
+      assert.deepStrictEqual(manifestAst[1].entities, [
+        {col: {kind: 'entity-collection', value: [
+          {kind: 'entity-number', value: 12}
+        ]}},
+        {col: {kind: 'entity-collection', value: [
+          {kind: 'entity-number', value: -5},
+          {kind: 'entity-number', value: 23.7},
+          {kind: 'entity-number', value: 0}
+        ]}},
+      ]);
+      assert.deepStrictEqual(manifestAst[2].entities, [
+        {col: {kind: 'entity-collection', value: [
+          {kind: 'entity-boolean', value: true},
+          {kind: 'entity-boolean', value: true},
+          {kind: 'entity-boolean', value: false}
+        ]}},
+      ]);
+      assert.deepStrictEqual(manifestAst[3].entities, [
+        {col: {kind: 'entity-collection', value: [
+          {kind: 'entity-bytes', value: [0xa2]},
+          {kind: 'entity-bytes', value: [0, 0x50]},
+          {kind: 'entity-bytes', value: []}
+        ]}},
+      ]);
+      assert.deepStrictEqual(manifestAst[4].entities, [
+        {col: {kind: 'entity-collection', value: [
+          {kind: 'entity-reference', value: {id: 'i0', storageKey: 'k0'}},
+          {kind: 'entity-reference', value: {id: 'i1', storageKey: 'k1'}}
+        ]}},
+      ]);
+    });
+    it('parses tuple fields', () => {
+      const manifestAst = clean(parse(`
+        store A of {t: (Text, Number, Boolean, Bytes)} with {
+          {t: ('a\\tb', -7.9, false, |7e, 46,|)},
+          {t: ('', 0, true, ||)}
+        }
+      `));
+      assert.deepStrictEqual(manifestAst[0].entities, [
+        {t: {kind: 'entity-tuple', value: [
+          {kind: 'entity-string', value: 'a\tb'},
+          {kind: 'entity-number', value: -7.9},
+          {kind: 'entity-boolean', value: false},
+          {kind: 'entity-bytes', value: [0x7e, 0x46]}
+        ]}},
+        {t: {kind: 'entity-tuple', value: [
+          {kind: 'entity-string', value: ''},
+          {kind: 'entity-number', value: 0},
+          {kind: 'entity-boolean', value: true},
+          {kind: 'entity-bytes', value: []}
+        ]}},
+      ]);
+    });
+    it('parses standard components of store expressions', () => {
+      const manifestAst = clean(parse(`
+        store S0 of {n: Number} with { {n: 1} }
+
+        store S1 of {t: Text} 'id'!!'orig' @3 #tag with
+          {
+            {t: 'a'}
+          }
+          description \`inline store\`
+          claim is foo
+      `));
+      assert.deepInclude(manifestAst[0], {
+        kind: 'store',
+        name: 'S0',
+        id: null,
+        originalId: null,
+        version: null,
+        tags: null,
+        source: 'inline',
+        origin: 'inline',
+        storageKey: null,
+        description: null,
+        claim: null
+      });
+      assert.deepInclude(manifestAst[1], {
+        kind: 'store',
+        name: 'S1',
+        id: 'id',
+        originalId: 'orig',
+        version: '3',
+        tags: ['tag'],
+        source: 'inline',
+        origin: 'inline',
+        storageKey: null,
+        description: 'inline store',
+        claim: {kind: 'manifest-storage-claim', tags: ['foo']}
+      });
+    });
+    it('includes location fields for inline values and entities', () => {
+      const manifestAst = parse(`
+        store S0 of {n: Number} with { {n: 76} }
+      `);
+      const entity = manifestAst[0].entities[0];
+      assert.strictEqual(entity[INLINE_ENTITY].kind, 'entity-inline');
+      assert.containsAllKeys(entity[INLINE_ENTITY], ['location']);
+      assert.containsAllKeys(entity.n, ['location']);
+    });
+    it('parses complex schemas with variable spacing and comments', () => {
+      const manifestAst = clean(parse(`
+        store A of {n: Number, c: [Text], t: (Boolean, Bytes), r: [&{z: URL}]}  with  { // comment
+          {n:4.5,c:['abc'],t:(true,|0|),r:<'i','k'>},
+
+             {
+             n:
+               -0.0,//comment
+        c:   [ '\\'',
+        '\\t'  ,'',]   ,    t:  (  FALSE  , |   22,
+                d3  ,
+             |),
+              // full line comment
+             r:  <    'i'    ,
+
+
+                  'k'    >}}
+      `));
+      assert.deepStrictEqual(manifestAst[0].entities, [
+        {
+          n: {kind: 'entity-number', value: 4.5},
+          c: {kind: 'entity-collection', value: [
+            {kind: 'entity-string', value: 'abc'}
+          ]},
+          t: {kind: 'entity-tuple', value: [
+            {kind: 'entity-boolean', value: true},
+            {kind: 'entity-bytes', value: [0]}
+          ]},
+          r: {kind: 'entity-reference', value: {id: 'i', storageKey: 'k'}}
+        },
+        {
+          n: {kind: 'entity-number', value: 0},
+          c: {kind: 'entity-collection', value: [
+            {kind: 'entity-string', value: '\''},
+            {kind: 'entity-string', value: '\t'},
+            {kind: 'entity-string', value: ''}
+          ]},
+          t: {kind: 'entity-tuple', value: [
+            {kind: 'entity-boolean', value: false},
+            {kind: 'entity-bytes', value: [0x22, 0xd3]},
+          ]},
+          r: {kind: 'entity-reference', value: {id: 'i', storageKey: 'k'}}
+        }
+      ]);
+    });
+    it('requires consistent value types for collection fields', () => {
+      const msg = 'Collection fields for inline entities must have a consistent value type';
+      assert.throws(() => { parse(`
+        store A of {num: [Number]} with { {num: [5, 'x']} }`);
+      }, msg);
+      assert.throws(() => { parse(`
+        store A of {z: [Bytes]} with {
+          {z: [||, |5|, |0, aa|, 7, |4d|]}
+        }`);
+      }, msg);
+    });
+    it('requires the id and storage key to be present in references', () => {
+      const msg = 'Reference fields for inline entities must have both an id and a storage key';
+      assert.throws(() => { parse(`
+        store A of {ref: &{t: Text}} with { {ref: <'', 'key'>} }`);
+      }, msg);
+      assert.throws(() => { parse(`
+        store A of {ref: &{t: Text}} with { {ref: <'id', ''>} }`);
+      }, msg);
+    });
   });
 });

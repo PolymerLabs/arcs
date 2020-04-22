@@ -27,6 +27,7 @@
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
+
   function optional<S, R>(result: S, extract: (source: S) => R, defaultValue: R): R {
     if (result !== null) {
       const value = extract(result);
@@ -36,6 +37,7 @@
     }
     return defaultValue === null ? null : defaultValue;
   }
+
   function checkNormal(result, path: string = '') {
     if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
       return;
@@ -53,6 +55,11 @@
     }
     if (result.model) {
       internalError(`Unexpected 'model' in ${JSON.stringify(result)} at ${path}`);
+    }
+
+    // Inline entities store their kind and location fields under the INLINE_ENTITY symbol.
+    if (AstNode.INLINE_ENTITY in result) {
+      result = result[AstNode.INLINE_ENTITY];
     }
     if (!result.location) {
       internalError(`No 'location' in ${JSON.stringify(result)} at ${path}`);
@@ -108,6 +115,16 @@
       type,
       name: name || '*',
     });
+  }
+
+  // Expected usage to parse a list of bracket-enclosed Things:
+  // '[' multiLineSpace? parts:(Thing whiteSpace? ',' multiLineSpace?)* end:Thing? multiLineSpace? ']'
+  function combineMultiLine<T>(parts: [T, ...any[]][], end: T | null): T[] {
+    const res = parts.map(p => p[0]);
+    if (end != null) {
+      res.push(end);
+    }
+    return res;
   }
 
   function internalError(message: string) {
@@ -184,7 +201,6 @@ ResourceBody = lines:(SameOrMoreIndent ResourceLine)+ {
 
 ResourceLine = [^\n]* eol { return text(); }
 
-// TODO: Entity syntax.
 ManifestStorage
   = 'store' whiteSpace name:upperIdent whiteSpace 'of' whiteSpace type:ManifestStorageType id:(whiteSpace id)? originalId:('!!' id)?
     version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestStorageSource eolWhiteSpace
@@ -220,7 +236,8 @@ ManifestStorage
       tags: optional(tags, tags => tags[1], null),
       source: source.source,
       origin: source.origin,
-      storageKey: source['storageKey'] || null,
+      storageKey: source.storageKey || null,
+      entities: source.entities || null,
       description,
       claim,
     });
@@ -230,7 +247,7 @@ ManifestStorageType
   = SchemaInline / SingletonType / CollectionType / BigCollectionType / TypeName
 
 ManifestStorageSource
-  = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource
+  = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource / ManifestStorageInlineSource
 
 ManifestStorageFileSource
   = 'in' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageFileSource>({kind: 'manifest-storage-source', origin: 'file', source }); }
@@ -248,6 +265,100 @@ ManifestStorageResourceSource
 
 ManifestStorageStorageSource
   = 'at' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageStorageSource>({kind: 'manifest-storage-source', origin: 'storage', source }); }
+
+// TODO: allow a single entity to be declared without the outermost enclosing braces: store ... with {n: 3, t: 'a'}
+ManifestStorageInlineSource
+  = 'with' multiLineSpace? '{' multiLineSpace? parts:(ManifestStorageInlineEntity whiteSpace? ',' multiLineSpace?)*
+    end:ManifestStorageInlineEntity? multiLineSpace? '}'
+  {
+    return toAstNode<AstNode.ManifestStorageInlineSource>({
+      kind: 'manifest-storage-source',
+      origin: 'inline',
+      source: 'inline',
+      entities: combineMultiLine(parts, end)
+    });
+  }
+
+ManifestStorageInlineEntity
+  = '{' multiLineSpace? parts:(ManifestStorageInlineEntityField whiteSpace? ',' multiLineSpace?)*
+    end:ManifestStorageInlineEntityField? multiLineSpace? '}'
+  {
+    // Entity field names can clash with the BaseNode fields so we put them in a symbol field.
+    const entity = {
+      [AstNode.INLINE_ENTITY]: toAstNode<AstNode.BaseNode>({kind: 'entity-inline'})
+    };
+    return Object.assign(entity, ...combineMultiLine(parts, end));
+  }
+
+ManifestStorageInlineEntityField
+  = name:fieldName whiteSpace? ':' multiLineSpace? value:ManifestStorageInlineEntityValue
+  {
+    return {[name]: value};
+  }
+
+ManifestStorageInlineEntityValue
+  = ManifestStorageInlinePrimitive
+  / ManifestStorageInlineReference
+  / ManifestStorageInlineCollection
+  / ManifestStorageInlineTuple
+
+ManifestStorageInlinePrimitive
+  = value:QuotedString
+  {
+    return toAstNode<AstNode.ManifestStorageInlineString>({kind: 'entity-string', value});
+  }
+  / neg:'-'? whole:[0-9]+ fractional:('.' [0-9]+)?
+  {
+    const value = Number(text());
+    return toAstNode<AstNode.ManifestStorageInlineNumber>({kind: 'entity-number', value});
+  }
+  / bool:('true'i / 'false'i)
+  {
+    const value = bool.toLowerCase() === 'true';
+    return toAstNode<AstNode.ManifestStorageInlineBoolean>({kind: 'entity-boolean', value});
+  }
+  / '|' multiLineSpace? parts:(HexByte whiteSpace? ',' multiLineSpace?)* end:HexByte? multiLineSpace? '|'
+  {
+    const value = combineMultiLine(parts, end);
+    return toAstNode<AstNode.ManifestStorageInlineBytes>({kind: 'entity-bytes', value});
+  }
+
+HexByte = [0-9a-f]i[0-9a-f]i? { return Number('0x' + text()); }
+
+ManifestStorageInlineReference
+  = '<' multiLineSpace? id:QuotedString whiteSpace? ',' multiLineSpace? storageKey:QuotedString multiLineSpace? '>'
+  {
+    if (id.length === 0 || storageKey.length === 0) {
+      error('Reference fields for inline entities must have both an id and a storage key');
+    }
+    return toAstNode<AstNode.ManifestStorageInlineReference>({
+      kind: 'entity-reference',
+      value: {id, storageKey}
+    });
+  }
+
+ManifestStorageInlinePrimitiveOrReference = ManifestStorageInlinePrimitive / ManifestStorageInlineReference
+
+ManifestStorageInlineCollection
+  = '[' multiLineSpace? parts:(ManifestStorageInlinePrimitiveOrReference whiteSpace? ',' multiLineSpace?)*
+    end:ManifestStorageInlinePrimitiveOrReference? multiLineSpace? ']'
+  {
+    const value = combineMultiLine(parts, end);
+    if (value.length > 1 && value.some(item => item.kind !== value[0].kind)) {
+      error('Collection fields for inline entities must have a consistent value type');
+    }
+    return toAstNode<AstNode.ManifestStorageInlineCollection>({kind: 'entity-collection', value});
+  }
+
+ManifestStorageInlineTuple
+  = '(' multiLineSpace? parts:(ManifestStorageInlinePrimitive whiteSpace? ',' multiLineSpace?)*
+    end:ManifestStorageInlinePrimitive? multiLineSpace? ')'
+  {
+    return toAstNode<AstNode.ManifestStorageInlineTuple>({
+      kind: 'entity-tuple',
+      value: combineMultiLine(parts, end)
+    });
+  }
 
 ManifestStorageItem
   = ManifestStorageDescription
@@ -580,7 +691,7 @@ ParticleHandleConnectionType
   / ReferenceType
   / SlotType
   / TupleType
-  / type: SchemaInline whiteSpace? refinement:Refinement? 
+  / type: SchemaInline whiteSpace? refinement:Refinement?
   {
     type.refinement = refinement;
     return type;
@@ -1564,6 +1675,19 @@ ReservedWord
   expected(`identifier`);
 }
 
+QuotedString "a 'quoted string'"
+  = "'" parts:( [^\\']* "\\" . )* end:[^']* "'"
+  {
+    parts = parts.map(([text, slash, char]) => {
+      switch (char) {
+        case 't': char = '\t'; break;
+        case 'n': char = '\n'; break;
+      }
+      return text.join('') + char;
+    });
+    return parts.join('') + end.join('');
+ }
+
 backquotedString "a `backquoted string`"
   = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id "an identifier (e.g. 'id')"
@@ -1591,5 +1715,7 @@ eolWhiteSpace "a group of new lines (and optionally comments)"
   / spaceChar* eol eolWhiteSpace?
 eolPlusWhiteSpace "eol plus trailing whitespace"
   = eolWhiteSpace? whiteSpace?
+multiLineSpace "at least one whitespace and/or eol (and optionally comments)"
+  = (spaceChar / eol / ('//' [^\n]* eol))+
 eol "a new line"
   = "\r"? "\n" "\r"?
