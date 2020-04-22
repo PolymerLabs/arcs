@@ -89,7 +89,6 @@ class StorageService : ResurrectorService() {
         val options = parcelableOptions.actual
         return BindingContext(
             stores.computeIfAbsent(options.storageKey) { Store(options) },
-            parcelableOptions.crdtType,
             coroutineContext,
             stats
         ) { storageKey, message ->

@@ -12,7 +12,6 @@
 package arcs.android.storage.service
 
 import androidx.annotation.VisibleForTesting
-import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.crdt.toParcelable
 import arcs.android.storage.ParcelableProxyMessage
 import arcs.android.storage.toParcelable
@@ -42,11 +41,6 @@ class BindingContext(
      * other instances of [BindingContext].
      */
     private val store: Store<*, *, *>,
-    /**
-     * A hint used to facilitate translations between usable Crdt types and [Parcelable]s required
-     * for transmission via IBinder interfaces.
-     */
-    private val crdtType: ParcelableCrdtType,
     /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
     parentCoroutineContext: CoroutineContext,
     /** Sink to use for recording statistics about accessing data. */
@@ -75,7 +69,7 @@ class BindingContext(
                         ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
                             model = activeStore.getLocalData(),
                             id = null
-                        ).toParcelable(crdtType)
+                        ).toParcelable()
                     )
                 }
             }
@@ -91,7 +85,7 @@ class BindingContext(
                 // so that we catch any exceptions thrown within and re-throw on the same coroutine
                 // as the callback-caller.
                 supervisorScope {
-                    callback.onProxyMessage(message.toParcelable(crdtType))
+                    callback.onProxyMessage(message.toParcelable())
                 }
             }
 

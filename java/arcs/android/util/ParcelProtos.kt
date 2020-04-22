@@ -46,9 +46,15 @@ fun <T : MessageLite> Parcel.readProto(defaultInstance: T): T? {
     return defaultInstance.toBuilder().mergeFrom(bytes).build() as T
 }
 
-/** Non-nullable version of [readProto]. */
+/** Non-nullable version of [readProto], with a custom error message. */
 fun <T : MessageLite> Parcel.requireProto(defaultInstance: T, lazyMessage: () -> Any): T =
     requireNotNull(readProto(defaultInstance), lazyMessage)
+
+/** Non-nullable version of [readProto]. */
+fun <T : MessageLite> Parcel.requireProto(defaultInstance: T): T =
+    requireNotNull(readProto(defaultInstance)) {
+        "${defaultInstance::class} not found in parcel."
+    }
 
 /** Special marker used to indicate a null proto was stored. */
 private const val NULL_MARKER = -1
