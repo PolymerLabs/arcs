@@ -88,7 +88,7 @@ class StorageServiceTest {
             )
             val deferredResult = DeferredResult(this.coroutineContext)
             context.sendProxyMessage(
-                proxyMessage.toParcelable(ParcelableCrdtType.Count),
+                proxyMessage.toParcelable(),
                 deferredResult
             )
 

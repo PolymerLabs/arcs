@@ -83,7 +83,7 @@ class ServiceStoreTest {
             ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
                 listOf(CrdtCount.Operation.Increment("alice", 0 to 1)),
                 null
-            ).toParcelable(ParcelableCrdtType.Count),
+            ).toParcelable(),
             deferredResult
         )
 
