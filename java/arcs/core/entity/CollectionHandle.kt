@@ -40,15 +40,10 @@ typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<
  * exposes only the methods that should be exposed.
  */
 class CollectionHandle<T : Storable, R : Referencable>(
-    name: String,
-    spec: HandleSpec<out Entity>,
-    /** Interface to storage for [RawEntity] objects backing an `entity: T`. */
-    val storageProxy: CollectionProxy<R>,
-    /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
-    val storageAdapter: StorageAdapter<T, R>,
-    dereferencerFactory: EntityDereferencerFactory
-) : BaseHandle<T>(name, spec, storageProxy, dereferencerFactory),
-    ReadWriteQueryCollectionHandle<T, Any> {
+    config: Config<T, R>
+) : BaseHandle<T>(config), ReadWriteQueryCollectionHandle<T, Any> {
+    private val storageProxy = config.proxy
+    private val storageAdapter = config.storageAdapter
 
     init {
         check(spec.containerType == HandleContainerType.Collection)
@@ -142,4 +137,24 @@ class CollectionHandle<T : Storable, R : Referencable>(
     }.filterNotTo(mutableSetOf()) {
         storageAdapter.isExpired(it)
     }
+
+    /** Configuration required to instantiate a [CollectionHandle]. */
+    class Config<T : Storable, R : Referencable>(
+        /** See [BaseHandleConfig.name]. */
+        name: String,
+        /** See [BaseHandleConfig.spec]. */
+        spec: HandleSpec<out Entity>,
+        /**
+         * Interface to storage for [RawEntity] objects backing an `entity: T`.
+         *
+         * See [BaseHandleConfig.storageProxy].
+         */
+        val proxy: CollectionProxy<R>,
+        /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
+        val storageAdapter: StorageAdapter<T, R>,
+        /** See [BaseHandleConfig.dereferencerFactory]. */
+        dereferencerFactory: EntityDereferencerFactory,
+        /** See [BaseHandleConfig.particleId]. */
+        particleId: String
+    ) : BaseHandleConfig(name, spec, proxy, dereferencerFactory, particleId)
 }

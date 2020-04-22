@@ -245,7 +245,8 @@ abstract class AbstractArcHost(
                 context,
                 handleSpec.key,
                 handleSpec.value,
-                particle.handles
+                particle.handles,
+                particle.toString()
             )
         }
 
@@ -304,7 +305,7 @@ abstract class AbstractArcHost(
 
         // Should only happen if host crashes, restarts, and last persisted state was Running
         if (particleContext.particleState == ParticleState.Started) {
-            particleContext.particleState == ParticleState.Stopped
+            particleContext.particleState = ParticleState.Stopped
         }
 
         // If we reach here, particle is being restarted
@@ -392,12 +393,16 @@ abstract class AbstractArcHost(
     /**
      * Given a handle name, a [Plan.HandleConnection], and a [HandleHolder] construct an Entity
      * [Handle] of the right type.
+     *
+     * [particleId] is meant to be a namespace for the handle, wherein handle callbacks will be
+     * triggered according to the rules of the [Scheduler].
      */
     private suspend fun createHandle(
         arcHostContext: ArcHostContext,
         handleName: String,
         connectionSpec: Plan.HandleConnection,
-        holder: HandleHolder
+        holder: HandleHolder,
+        particleId: String = ""
     ): Handle {
         val containerType = when (connectionSpec.type) {
             is SingletonType<*>, is EntityType -> HandleContainerType.Singleton
@@ -413,7 +418,8 @@ abstract class AbstractArcHost(
         return arcHostContext.entityHandleManager.createHandle(
             handleSpec,
             connectionSpec.storageKey,
-            connectionSpec.ttl ?: Ttl.Infinite
+            connectionSpec.ttl ?: Ttl.Infinite,
+            particleId
         ).also { holder.setHandle(handleName, it) }
     }
 

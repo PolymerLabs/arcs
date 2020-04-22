@@ -37,7 +37,6 @@ import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
-import arcs.core.entity.Reference
 import arcs.core.entity.ReferenceStorageAdapter
 import arcs.core.entity.SingletonHandle
 import arcs.core.entity.SingletonProxy
@@ -95,15 +94,17 @@ class EntityHandleManager(
     suspend fun createHandle(
         spec: HandleSpec<out Entity>,
         storageKey: StorageKey,
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite,
+        particleId: String = ""
     ): Handle {
         val handleName = idGenerator.newChildId(
             idGenerator.newChildId(arcId.toArcId(), hostId),
             spec.baseName
         ).toString()
-        return when (spec.dataType) {
+
+        val storageAdapter = when (spec.dataType) {
             HandleDataType.Entity -> {
-                val storageAdapter = EntityStorageAdapter(
+                EntityStorageAdapter(
                     handleName,
                     idGenerator,
                     spec.entitySpec,
@@ -111,41 +112,34 @@ class EntityHandleManager(
                     time,
                     dereferencerFactory
                 )
-                createHandle(handleName, spec, storageKey, storageAdapter)
             }
             HandleDataType.Reference -> {
                 require(storageKey !is ReferenceModeStorageKey) {
                     "Reference-mode storage keys are not supported for reference-typed handles."
                 }
-                val storageAdapter = ReferenceStorageAdapter(
-                    spec.entitySpec
+                ReferenceStorageAdapter(
+                    spec.entitySpec,
+                    dereferencerFactory
                 )
-                createHandle(handleName, spec, storageKey, storageAdapter)
             }
         }
+
+        val config = HandleConfig(
+            handleName,
+            spec,
+            storageKey,
+            storageAdapter,
+            particleId
+        )
+        return createHandle(config)
     }
 
     /** Overload of [createHandle] parameterized by a type [R] of the data that is to be stored. */
     private suspend fun <T : Storable, R : Referencable> createHandle(
-        handleName: String,
-        spec: HandleSpec<out Entity>,
-        storageKey: StorageKey,
-        storageAdapter: StorageAdapter<T, R>
-    ): Handle {
-        return when (spec.containerType) {
-            HandleContainerType.Singleton -> createSingletonHandle(
-                handleName,
-                spec,
-                storageKey,
-                storageAdapter
-            )
-            HandleContainerType.Collection -> createCollectionHandle(
-                handleName,
-                spec,
-                storageKey,
-                storageAdapter
-            )
-        }
+        config: HandleConfig<T, R>
+    ): Handle = when (config.spec.containerType) {
+        HandleContainerType.Singleton -> createSingletonHandle(config)
+        HandleContainerType.Collection -> createCollectionHandle(config)
     }
 
     /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
@@ -158,49 +152,56 @@ class EntityHandleManager(
         }
     }
 
+    data class HandleConfig<T : Storable, R : Referencable>(
+        val handleName: String,
+        val spec: HandleSpec<out Entity>,
+        val storageKey: StorageKey,
+        val storageAdapter: StorageAdapter<T, R>,
+        val particleId: String = ""
+    )
+
     private suspend fun <T : Storable, R : Referencable> createSingletonHandle(
-        handleName: String,
-        spec: HandleSpec<out Entity>,
-        storageKey: StorageKey,
-        storageAdapter: StorageAdapter<T, R>
+        config: HandleConfig<T, R>
     ): Handle {
-        val singletonHandle = SingletonHandle(
-            name = handleName,
-            spec = spec,
-            storageProxy = singletonStoreProxy(
-                storageKey,
-                spec.entitySpec.SCHEMA,
-                spec.dataType.toStorageMode()
+        val singletonConfig = SingletonHandle.Config(
+            name = config.handleName,
+            spec = config.spec,
+            proxy = singletonStoreProxy(
+                config.storageKey,
+                config.spec.entitySpec.SCHEMA,
+                config.spec.dataType.toStorageMode()
             ),
-            storageAdapter = storageAdapter,
-            dereferencerFactory = dereferencerFactory
+            storageAdapter = config.storageAdapter,
+            dereferencerFactory = dereferencerFactory,
+            particleId = config.particleId
         )
-        return when (spec.mode) {
+
+        val singletonHandle = SingletonHandle(singletonConfig)
+        return when (config.spec.mode) {
             HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
             HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
             HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by singletonHandle {}
-            else -> throw Error("Singleton Handles do not support mode ${spec.mode}")
+            else -> throw Error("Singleton Handles do not support mode ${config.spec.mode}")
         }
     }
 
     private suspend fun <T : Storable, R : Referencable> createCollectionHandle(
-        handleName: String,
-        spec: HandleSpec<out Entity>,
-        storageKey: StorageKey,
-        storageAdapter: StorageAdapter<T, R>
+        config: HandleConfig<T, R>
     ): Handle {
-        val collectionHandle = CollectionHandle(
-            name = handleName,
-            spec = spec,
-            storageProxy = collectionStoreProxy(
-                storageKey,
-                spec.entitySpec.SCHEMA,
-                spec.dataType.toStorageMode()
+        val collectionConfig = CollectionHandle.Config(
+            name = config.handleName,
+            spec = config.spec,
+            proxy = collectionStoreProxy(
+                config.storageKey,
+                config.spec.entitySpec.SCHEMA,
+                config.spec.dataType.toStorageMode()
             ),
-            storageAdapter = storageAdapter,
-            dereferencerFactory = dereferencerFactory
+            storageAdapter = config.storageAdapter,
+            dereferencerFactory = dereferencerFactory,
+            particleId = config.particleId
         )
-        return when (spec.mode) {
+        val collectionHandle = CollectionHandle(collectionConfig)
+        return when (config.spec.mode) {
             HandleMode.Read -> object : ReadCollectionHandle<T> by collectionHandle {}
             HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}
             HandleMode.Query -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
