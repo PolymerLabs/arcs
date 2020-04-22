@@ -12,6 +12,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.HandleMode
+import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.data.RawEntity
@@ -25,25 +26,30 @@ import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.entity.QueryCollectionHandle
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertThrows
-import arcs.core.util.Scheduler
+import arcs.core.util.testutil.LogRule
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.coroutines.experimental.suspendCoroutine
+import kotlin.coroutines.EmptyCoroutineContext
 
 // Generated from ./javatests/arcs/android/host/test.arcs
 private typealias Person = AbstractTestParticle.TestParticleInternal1
@@ -57,6 +63,9 @@ fun Person.withQuery(): PersonWithQuery {
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
 class AndroidEntityHandleManagerTest : LifecycleOwner {
+    @get:Rule
+    val log = LogRule()
+
     private lateinit var app: Application
     private lateinit var lifecycle: LifecycleRegistry
     override fun getLifecycle() = lifecycle
@@ -92,6 +101,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         backingKey = RamDiskStorageKey("collection-back"), storageKey = RamDiskStorageKey("collection-ent")
     )
 
+    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+
     @Before
     fun setUp() = runBlockingTest {
         RamDisk.clear()
@@ -112,10 +123,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             "testArc",
             "testHost",
             FakeTime(),
-            Scheduler(
-                FakeTime(),
-                coroutineContext
-            ),
+            schedulerProvider("testArc"),
             StoreManager(),
             ServiceStoreFactory(
                 context = app,
@@ -176,13 +184,12 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     }
 
     @Test
-    fun singletonHandle_writeInOnSyncNoDesync() = runBlocking {
+    fun singletonHandle_writeInOnSyncNoDesync() = runBlocking<Unit> {
         val writeHandle = createSingletonHandle(
             handleManager,
             "writeHandle",
             HandleMode.Write
         )
-
 
         // Wait for sync
         val deferred = CompletableDeferred<Unit>()
@@ -317,7 +324,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         assertThat(queryBack3).isEmpty()
 
         val allData = readWriteQueryCollectionHandle.fetchAll()
-        assertThat(allData.map {it.toString()})
+        assertThat(allData.map { it.toString() })
             .containsExactly(
                 entity1.withQuery().toString(),
                 entity2.withQuery().toString()
@@ -326,7 +333,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
     @Test
     fun handle_nameIsGloballyUnique() = runBlocking<Unit> {
-
         val shandle1 = createSingletonHandle(
             handleManager,
             "writeHandle",
@@ -369,7 +375,10 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             handleHolder.getEntitySpec(handleName)
         ),
         singletonKey
-    ).also { handleHolder.setHandle(handleName, it) }
+    ).also {
+        it.awaitReady()
+        handleHolder.setHandle(handleName, it)
+    }
 
     private suspend fun createCollectionHandle(
         handleManager: EntityHandleManager,
@@ -383,5 +392,14 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             handleHolder.getEntitySpec(handleName)
         ),
         collectionKey
-    ).also { handleHolder.setHandle(handleName, it) }
+    ).also {
+        it.awaitReady()
+        handleHolder.setHandle(handleName, it)
+    }
+
+    private suspend fun Handle.awaitReady() = coroutineScope {
+        val readyJob = Job()
+        onReady { readyJob.complete() }
+        readyJob.join()
+    }
 }

@@ -22,101 +22,36 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
+import arcs.core.util.testutil.LogRule
+import arcs.jvm.host.JvmSchedulerProvider
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import arcs.core.storage.Reference as StorageReference
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
+    @get:Rule
+    val log = LogRule()
+
+    init {
+        SchemaRegistry.register(Person)
+        SchemaRegistry.register(Hat)
+    }
+
     private val backingKey = RamDiskStorageKey("entities")
     private val hatsBackingKey = RamDiskStorageKey("hats")
     protected lateinit var fakeTime: FakeTime
-
-    data class Person(
-        override val entityId: ReferenceId,
-        val name: String,
-        val age: Double,
-        val isCool: Boolean,
-        val bestFriend: StorageReference? = null,
-        val hat: StorageReference? = null
-    ) : Entity {
-
-        var raw: RawEntity? = null
-        var creationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
-        override var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
-
-        override fun ensureEntityFields(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {
-            creationTimestamp = time.currentTimeMillis
-            if (ttl != Ttl.Infinite) {
-                expirationTimestamp = ttl.calculateExpiration(time)
-            }
-        }
-
-        override fun serialize() = RawEntity(
-            entityId,
-            singletons = mapOf(
-                "name" to name.toReferencable(),
-                "age" to age.toReferencable(),
-                "is_cool" to isCool.toReferencable(),
-                "best_friend" to bestFriend,
-                "hat" to hat
-            ),
-            collections = emptyMap(),
-            creationTimestamp = creationTimestamp,
-            expirationTimestamp = expirationTimestamp
-        )
-
-        override fun reset() = throw NotImplementedError()
-
-        companion object : EntitySpec<Person> {
-
-            private val queryByAge = { value: RawEntity, args: Any ->
-                value.singletons["age"].toPrimitiveValue(Double::class, 0.0) == (args as Double)
-            }
-
-            private val refinementAgeGtZero = { value: RawEntity ->
-                value.singletons["age"].toPrimitiveValue(Double::class, 0.0) > 0.0
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            override fun deserialize(data: RawEntity) = Person(
-                entityId = data.id,
-                name = data.singletons["name"].toPrimitiveValue(String::class, ""),
-                age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0),
-                isCool = data.singletons["is_cool"].toPrimitiveValue(Boolean::class, false),
-                bestFriend = data.singletons["best_friend"] as? StorageReference,
-                hat = data.singletons["hat"] as? StorageReference
-            ).apply {
-                raw = data
-                expirationTimestamp = data.expirationTimestamp
-                creationTimestamp = data.creationTimestamp
-            }
-
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Person")),
-                SchemaFields(
-                    singletons = mapOf(
-                        "name" to FieldType.Text,
-                        "age" to FieldType.Number,
-                        "is_cool" to FieldType.Boolean,
-                        "best_friend" to FieldType.EntityRef("person-hash"),
-                        "hat" to FieldType.EntityRef("hat-hash")
-                    ),
-                    collections = emptyMap()
-                ),
-                "person-hash",
-                query = queryByAge,
-                refinement = refinementAgeGtZero
-            )
-        }
-    }
 
     private val entity1 = Person(
         entityId = "entity1",
@@ -134,40 +69,6 @@ open class HandleManagerTestBase {
         bestFriend = StorageReference("entity1", backingKey, null),
         hat = null
     )
-
-    data class Hat(
-        override val entityId: ReferenceId,
-        val style: String
-    ) : Entity {
-        override var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
-        override fun ensureEntityFields(idGenerator: Generator, handleName: String, time: Time, ttl: Ttl) {}
-
-        override fun serialize() = RawEntity(
-            entityId,
-            singletons = mapOf(
-                "style" to style.toReferencable()
-            ),
-            collections = emptyMap()
-        )
-
-        override fun reset() = throw NotImplementedError()
-
-        companion object : EntitySpec<Entity> {
-            override fun deserialize(data: RawEntity) = Hat(
-                entityId = data.id,
-                style = data.singletons["style"].toPrimitiveValue(String::class, "")
-            )
-
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Hat")),
-                SchemaFields(
-                    singletons = mapOf("style" to FieldType.Text),
-                    collections = emptyMap()
-                ),
-                "hat-hash"
-            )
-        }
-    }
 
     private val singletonRefKey = RamDiskStorageKey("single-ent")
     private val singletonKey = ReferenceModeStorageKey(
@@ -187,27 +88,31 @@ open class HandleManagerTestBase {
         storageKey = hatCollectionRefKey
     )
 
+    lateinit var schedulerProvider: JvmSchedulerProvider
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
 
     open var testRunner = { block: suspend CoroutineScope.() -> Unit ->
-        runBlockingTest { this.block() }
+        runBlocking {
+            this.block()
+            schedulerProvider.cancelAll()
+        }
     }
 
     // Must call from subclasses.
     open fun setUp() {
         fakeTime = FakeTime()
         DriverAndKeyConfigurator.configure(null)
-        SchemaRegistry.register(Person)
-        SchemaRegistry.register(Hat)
-        DriverFactory.register(RamDiskDriverProvider())
+        RamDisk.clear()
     }
 
     // Must call from subclasses
-    open fun tearDown() {
-        RamDisk.clear()
-        DriverFactory.clearRegistrations()
-        SchemaRegistry.clearForTest()
+    open fun tearDown() = runBlocking {
+        schedulerProvider.cancelAll()
+        // TODO(b/151366899): this is less than ideal - we should investigate how to make the entire
+        //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
+        //  over to other RamDisk listeners.
+        delay(100) // Let things calm down.
     }
 
     @Test
@@ -649,7 +554,7 @@ open class HandleManagerTestBase {
                 Hat
             ),
             hatCollectionKey
-        ) as ReadWriteCollectionHandle<Hat>
+        ).also { it.awaitReady() } as ReadWriteCollectionHandle<Hat>
 
         val fez = Hat(entityId = "fez-id", style = "fez")
         hatCollection.store(fez)
@@ -848,12 +753,10 @@ open class HandleManagerTestBase {
         )
     }
 
-    private suspend fun Handle.awaitReady() {
-        val deferred = CompletableDeferred<Unit>()
-        onReady {
-            deferred.complete(Unit)
-        }
-        deferred.await()
+    private suspend fun Handle.awaitReady() = coroutineScope {
+        val job = Job()
+        onReady { job.complete() }
+        job.join()
     }
 
     private suspend fun EntityHandleManager.createSingletonHandle(
@@ -869,7 +772,7 @@ open class HandleManagerTestBase {
         ),
         storageKey,
         ttl
-    ) as ReadWriteSingletonHandle<Person>
+    ).also { it.awaitReady() } as ReadWriteSingletonHandle<Person>
 
     private suspend fun EntityHandleManager.createCollectionHandle(
         storageKey: StorageKey = collectionKey,
@@ -891,7 +794,7 @@ open class HandleManagerTestBase {
         ),
         storageKey,
         ttl
-    ) as ReadWriteQueryCollectionHandle<T, Any>
+    ).also { it.awaitReady() } as ReadWriteQueryCollectionHandle<T, Any>
 
     private suspend fun EntityHandleManager.createReferenceSingletonHandle(
         storageKey: StorageKey = singletonRefKey,
@@ -907,7 +810,7 @@ open class HandleManagerTestBase {
         ),
         storageKey,
         ttl
-    ) as ReadWriteSingletonHandle<Reference<Person>>
+    ).also { it.awaitReady() } as ReadWriteSingletonHandle<Reference<Person>>
 
     private suspend fun EntityHandleManager.createReferenceCollectionHandle(
         storageKey: StorageKey = collectionRefKey,
@@ -923,7 +826,7 @@ open class HandleManagerTestBase {
         ),
         storageKey,
         ttl
-    ) as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
+    ).also { it.awaitReady() } as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
 
     private suspend fun <T> ReadableHandle<T>.onUpdateDeferred(
         predicate: (T) -> Boolean = { true }
@@ -948,4 +851,128 @@ open class HandleManagerTestBase {
         creationTimestamp = fakeTime.millis,
         expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
     )
+
+    data class Person(
+        override val entityId: ReferenceId,
+        val name: String,
+        val age: Double,
+        val isCool: Boolean,
+        val bestFriend: StorageReference? = null,
+        val hat: StorageReference? = null
+    ) : Entity {
+
+        var raw: RawEntity? = null
+        var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        override var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+
+        override fun ensureEntityFields(
+            idGenerator: Generator,
+            handleName: String,
+            time: Time,
+            ttl: Ttl
+        ) {
+            creationTimestamp = time.currentTimeMillis
+            if (ttl != Ttl.Infinite) {
+                expirationTimestamp = ttl.calculateExpiration(time)
+            }
+        }
+
+        override fun serialize() = RawEntity(
+            entityId,
+            singletons = mapOf(
+                "name" to name.toReferencable(),
+                "age" to age.toReferencable(),
+                "is_cool" to isCool.toReferencable(),
+                "best_friend" to bestFriend,
+                "hat" to hat
+            ),
+            collections = emptyMap(),
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )
+
+        override fun reset() = throw NotImplementedError()
+
+        companion object : EntitySpec<Person> {
+
+            private val queryByAge = { value: RawEntity, args: Any ->
+                value.singletons["age"].toPrimitiveValue(Double::class, 0.0) == (args as Double)
+            }
+
+            private val refinementAgeGtZero = { value: RawEntity ->
+                value.singletons["age"].toPrimitiveValue(Double::class, 0.0) > 0
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            override fun deserialize(data: RawEntity) = Person(
+                entityId = data.id,
+                name = (data.singletons["name"] as ReferencablePrimitive<String>).value,
+                age = (data.singletons["age"] as ReferencablePrimitive<Double>).value,
+                isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
+                bestFriend = data.singletons["best_friend"] as? StorageReference,
+                hat = data.singletons["hat"] as? StorageReference
+            ).apply {
+                raw = data
+                creationTimestamp = data.creationTimestamp
+                expirationTimestamp = data.expirationTimestamp
+            }
+
+            override val SCHEMA = Schema(
+                setOf(SchemaName("Person")),
+                SchemaFields(
+                    singletons = mapOf(
+                        "name" to FieldType.Text,
+                        "age" to FieldType.Number,
+                        "is_cool" to FieldType.Boolean,
+                        "best_friend" to FieldType.EntityRef("person-hash"),
+                        "hat" to FieldType.EntityRef("hat-hash")
+                    ),
+                    collections = emptyMap()
+                ),
+                "person-hash",
+                query = queryByAge,
+                refinement = refinementAgeGtZero
+            )
+        }
+    }
+
+    data class Hat(
+        override val entityId: ReferenceId,
+        val style: String
+    ) : Entity {
+        override var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
+
+        override fun ensureEntityFields(
+            idGenerator: Generator,
+            handleName: String,
+            time: Time,
+            ttl: Ttl
+        ) = Unit
+
+        override fun serialize() = RawEntity(
+            entityId,
+            singletons = mapOf(
+                "style" to style.toReferencable()
+            ),
+            collections = emptyMap()
+        )
+
+        override fun reset() = throw NotImplementedError()
+
+        companion object : EntitySpec<Entity> {
+            override fun deserialize(data: RawEntity) = Hat(
+                entityId = data.id,
+                style = (data.singletons["style"] as ReferencablePrimitive<String>).value
+            )
+
+            override val SCHEMA = Schema(
+                setOf(SchemaName("Hat")),
+                SchemaFields(
+                    singletons = mapOf("style" to FieldType.Text),
+                    collections = emptyMap()
+                ),
+                "hat-hash"
+            )
+        }
+    }
 }

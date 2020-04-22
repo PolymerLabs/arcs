@@ -9,17 +9,15 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
-import arcs.core.util.Scheduler
-import arcs.jvm.util.testutil.FakeTime
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
-import java.util.concurrent.Executors
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
@@ -40,14 +38,12 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     override fun setUp() {
         super.setUp()
         app = ApplicationProvider.getApplicationContext()
+        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
-            scheduler = Scheduler(
-                fakeTime,
-                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-            ),
+            scheduler = schedulerProvider("test"),
             stores = StoreManager(),
             activationFactory = ServiceStoreFactory(
                 app,

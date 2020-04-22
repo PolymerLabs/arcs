@@ -42,6 +42,24 @@ data class Reference(
         requireNotNull(dereferencer).dereference(this, coroutineContext)
 
     fun referencedStorageKey() = storageKey.childKeyWithComponent(id)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Reference
+
+        if (id != other.id) return false
+        if (storageKey != other.storageKey) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + storageKey.hashCode()
+        return result
+    }
 }
 
 /** Defines an object capable of de-referencing a [Reference]. */

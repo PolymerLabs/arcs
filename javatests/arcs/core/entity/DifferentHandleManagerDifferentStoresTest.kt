@@ -2,40 +2,32 @@ package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
-import arcs.core.util.Scheduler
-import arcs.jvm.util.testutil.FakeTime
-import kotlinx.coroutines.asCoroutineDispatcher
+import arcs.jvm.host.JvmSchedulerProvider
+import kotlin.coroutines.EmptyCoroutineContext
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.concurrent.Executors
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
-
     @Before
     override fun setUp() {
         super.setUp()
+        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readHandleManager = EntityHandleManager(
             arcId = "testArcId",
             hostId = "testHostId",
             time = fakeTime,
-            scheduler = Scheduler(
-                fakeTime,
-                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-            ),
+            scheduler = schedulerProvider("reader"),
             stores = StoreManager()
         )
         writeHandleManager = EntityHandleManager(
             arcId = "testArcId",
             hostId = "testHostId",
             time = fakeTime,
-            scheduler = Scheduler(
-                fakeTime,
-                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-            ),
+            scheduler = schedulerProvider("writer"),
             stores = StoreManager()
         )
     }
