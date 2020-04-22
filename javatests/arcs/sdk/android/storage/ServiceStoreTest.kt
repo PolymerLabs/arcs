@@ -153,7 +153,6 @@ class ServiceStoreTest {
         val store = Store(storeOpts.actual)
         return BindingContext(
             store,
-            ParcelableCrdtType.Count,
             coroutineContext,
             BindingContextStatsImpl()
         )

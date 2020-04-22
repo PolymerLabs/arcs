@@ -42,11 +42,6 @@ class BindingContext(
      * other instances of [BindingContext].
      */
     private val store: Store<*, *, *>,
-    /**
-     * A hint used to facilitate translations between usable Crdt types and [Parcelable]s required
-     * for transmission via IBinder interfaces.
-     */
-    private val crdtType: ParcelableCrdtType,
     /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
     parentCoroutineContext: CoroutineContext,
     /** Sink to use for recording statistics about accessing data. */

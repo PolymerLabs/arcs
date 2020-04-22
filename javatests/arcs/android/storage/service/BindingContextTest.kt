@@ -68,7 +68,6 @@ class BindingContextTest {
         callback: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
     ) = BindingContext(
         store,
-        ParcelableCrdtType.Count,
         coroutineContext,
         BindingContextStatsImpl(),
         callback
