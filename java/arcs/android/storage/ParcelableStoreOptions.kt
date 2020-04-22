@@ -36,7 +36,7 @@ data class ParcelableStoreOptions(
         parcel.writeInt(actual.mode.ordinal)
         // Skip StoreOptions.baseStore.
         parcel.writeString(actual.versionToken)
-        parcel.writeModelData(actual.model, flags)
+        parcel.writeModelData(actual.model)
     }
 
     override fun describeContents(): Int = 0
@@ -48,7 +48,7 @@ data class ParcelableStoreOptions(
             val type = requireNotNull(parcel.readType()) { "Could not extract Type from Parcel" }
             val mode = StorageMode.values()[parcel.readInt()]
             val versionToken = parcel.readString()
-            val modelData = parcel.readModelData(crdtType)
+            val modelData = parcel.readModelData()
 
             return ParcelableStoreOptions(
                 StoreOptions(

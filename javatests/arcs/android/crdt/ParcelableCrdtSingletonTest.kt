@@ -36,13 +36,13 @@ class ParcelableCrdtSingletonTest {
         ))
 
         val marshalled = with(Parcel.obtain()) {
-            writeModelData(data, 0)
+            writeModelData(data)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readModelData(ParcelableCrdtType.Singleton)
+            readModelData()
         }
 
         assertThat(unmarshalled).isEqualTo(data)
@@ -53,13 +53,13 @@ class ParcelableCrdtSingletonTest {
         val op = CrdtSingleton.Operation.Update("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeOperation(op, 0)
+            writeOperation(op)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readOperation(ParcelableCrdtType.Singleton)
+            readOperation()
         }
 
         assertThat(unmarshalled).isEqualTo(op)
@@ -70,13 +70,13 @@ class ParcelableCrdtSingletonTest {
         val op = CrdtSingleton.Operation.Clear<Referencable>("alice", versionMap)
 
         val marshalled = with(Parcel.obtain()) {
-            writeOperation(op, 0)
+            writeOperation(op)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readOperation(ParcelableCrdtType.Singleton)
+            readOperation()
         }
 
         assertThat(unmarshalled).isEqualTo(op)

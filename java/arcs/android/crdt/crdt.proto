@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package arcs.android.crdt;
+
+option java_package = "arcs.android.crdt";
+option java_multiple_files = true;
+
+import "java/arcs/android/crdt/crdt_count.proto";
+import "java/arcs/android/crdt/crdt_entity.proto";
+import "java/arcs/android/crdt/crdt_set.proto";
+import "java/arcs/android/crdt/crdt_singleton.proto";
+
+message CrdtDataProto {
+  oneof data {
+    CrdtCountProto.Data count = 1;
+    CrdtEntityProto.Data entity = 2;
+    CrdtSetProto.Data set = 3;
+    CrdtSingletonProto.Data singleton = 4;
+  }
+}
+
+message CrdtOperationProto {
+  oneof operation {
+    CrdtCountProto.Operation count = 1;
+    CrdtEntityProto.Operation entity = 2;
+    CrdtSetProto.Operation set = 3;
+    CrdtSingletonProto.Operation singleton = 4;
+  }
+}

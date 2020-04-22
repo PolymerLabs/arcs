@@ -53,13 +53,13 @@ class CrdtSetProtoTest {
         ))
 
         val marshalled = with(Parcel.obtain()) {
-            writeModelData(data, 0)
+            writeModelData(data)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readModelData(ParcelableCrdtType.Set)
+            readModelData()
         }
 
         assertThat(unmarshalled).isEqualTo(data)
@@ -70,13 +70,13 @@ class CrdtSetProtoTest {
         val op = CrdtSet.Operation.Add("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeOperation(op, 0)
+            writeOperation(op)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readOperation(ParcelableCrdtType.Set)
+            readOperation()
         }
 
         assertThat(unmarshalled).isEqualTo(op)
@@ -87,13 +87,13 @@ class CrdtSetProtoTest {
         val op = CrdtSet.Operation.Remove("alice", versionMap, entity1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeOperation(op, 0)
+            writeOperation(op)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readOperation(ParcelableCrdtType.Set)
+            readOperation()
         }
 
         assertThat(unmarshalled).isEqualTo(op)
@@ -111,13 +111,13 @@ class CrdtSetProtoTest {
         )
 
         val marshalled = with(Parcel.obtain()) {
-            writeOperation(op, 0)
+            writeOperation(op)
             marshall()
         }
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readOperation(ParcelableCrdtType.Set)
+            readOperation()
         }
 
         assertThat(unmarshalled).isEqualTo(op)
