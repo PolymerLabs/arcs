@@ -684,14 +684,8 @@ class DatabaseImpl(
             counters.increment(DatabaseCounters.DELETE_ENTITY)
             execSQL("DELETE FROM entities WHERE storage_key_id = ?", arrayOf(storageKeyId))
             counters.increment(DatabaseCounters.DELETE_ENTITY_FIELDS)
-            execSQL(
-                "DELETE FROM field_values WHERE entity_storage_key_id = ?",
-                arrayOf(storageKeyId)
-            )
 
             // entity_refs and types don't get deleted.
-
-            // TODO: Delete entity collection fields.
 
             if (collectionId != null) {
                 counters.increment(DatabaseCounters.DELETE_COLLECTION)
@@ -701,6 +695,8 @@ class DatabaseImpl(
                     "DELETE FROM collection_entries WHERE collection_id = ?",
                     arrayOf(collectionId)
                 )
+            } else {
+                deleteFields(arrayOf(storageKeyId.toString()), db)
             }
         }
     }
@@ -727,6 +723,7 @@ class DatabaseImpl(
         // Fix the time before starting the transaction.
         val nowMillis = JvmTime.currentTimeMillis
         writableDatabase.transaction {
+            val db = this
             // Find all expired entities.
             val storageKeyIdsPairs = rawQuery(
                 """
@@ -743,41 +740,7 @@ class DatabaseImpl(
             // List of question marks of the same length, to be used in queries.
             val questionMarks = questionMarks(storageKeyIds)
 
-            // Find collection ids for collection fields of the expired entities.
-            val collectionIdsToDelete = rawQuery(
-                """
-                    SELECT collection_id
-                    FROM fields
-                    LEFT JOIN field_values
-                        ON field_values.field_id = fields.id
-                    LEFT JOIN collection_entries
-                        ON fields.is_collection = 1
-                        AND collection_entries.collection_id = field_values.value_id
-                    WHERE fields.is_collection = 1
-                        AND field_values.entity_storage_key_id IN ($questionMarks)
-                """.trimIndent(),
-                storageKeyIds
-            ).map { it.getLong(0).toString() }.toSet().toTypedArray()
-            val collectionQuestionMarks = questionMarks(collectionIdsToDelete)
-            // Remove entries for those collections.
-            delete(
-                TABLE_COLLECTION_ENTRIES,
-                "collection_id IN ($collectionQuestionMarks)",
-                collectionIdsToDelete
-            )
-            // Remove those collections.
-            delete(
-                TABLE_COLLECTIONS,
-                "id IN ($collectionQuestionMarks)",
-                collectionIdsToDelete
-            )
-
-            // Remove field values for all expired entities.
-            delete(
-                TABLE_FIELD_VALUES,
-                "entity_storage_key_id IN ($questionMarks)",
-                storageKeyIds
-            )
+            deleteFields(storageKeyIds, db)
 
             // Clean up unused values as they can contain sensitive data.
             // This query will return all field value ids being referenced by collection or 
@@ -847,6 +810,46 @@ class DatabaseImpl(
                 }
             }
         }
+    }
+
+    private fun deleteFields(storageKeyIds: Array<String>, db: SQLiteDatabase) = db.transaction {
+        // List of question marks of the same length, to be used in queries.
+        val questionMarks = questionMarks(storageKeyIds)
+        // Find collection ids for collection fields of the expired entities.
+        val collectionIdsToDelete = rawQuery(
+            """
+                SELECT collection_id
+                FROM fields
+                LEFT JOIN field_values
+                    ON field_values.field_id = fields.id
+                LEFT JOIN collection_entries
+                    ON fields.is_collection = 1
+                    AND collection_entries.collection_id = field_values.value_id
+                WHERE fields.is_collection = 1
+                    AND field_values.entity_storage_key_id IN ($questionMarks)
+            """.trimIndent(),
+            storageKeyIds
+        ).map { it.getLong(0).toString() }.toSet().toTypedArray()
+        val collectionQuestionMarks = questionMarks(collectionIdsToDelete)
+        // Remove entries for those collections.
+        delete(
+            TABLE_COLLECTION_ENTRIES,
+            "collection_id IN ($collectionQuestionMarks)",
+            collectionIdsToDelete
+        )
+        // Remove those collections.
+        delete(
+            TABLE_COLLECTIONS,
+            "id IN ($collectionQuestionMarks)",
+            collectionIdsToDelete
+        )
+
+        // Remove field values for all expired entities.
+        delete(
+            TABLE_FIELD_VALUES,
+            "entity_storage_key_id IN ($questionMarks)",
+            storageKeyIds
+        )
     }
 
     /* Constructs a string with [array.size] question marks separated by a comma. This can be used
