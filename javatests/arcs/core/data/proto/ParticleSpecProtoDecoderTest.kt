@@ -1,15 +1,18 @@
 package arcs.core.data.proto
 
-import arcs.core.data.*
+import arcs.core.data.EntityType
+import arcs.core.data.FieldName
+import arcs.core.data.FieldType
+import arcs.core.data.HandleConnectionSpec
+import arcs.core.data.HandleMode
+import arcs.core.data.ParticleSpec
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import arcs.core.testutil.assertThrows
-import arcs.core.testutil.fail
 import arcs.core.util.Result
-import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
-import com.google.protobuf.Message.Builder
-import com.google.protobuf.Message
 import com.google.protobuf.TextFormat
-import java.io.File
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -40,6 +43,9 @@ fun decodeParticleSpecProto(protoText: String): ParticleSpec {
 class ParticleSpecProtoDecoderTest {
     @Test
     fun decodesDirectionProto() {
+        assertThrows(IllegalArgumentException::class) {
+            DirectionProto.UNSPECIFIED.decode()
+        }
         assertThat(DirectionProto.READS.decode()).isEqualTo(HandleMode.Read)
         assertThat(DirectionProto.WRITES.decode()).isEqualTo(HandleMode.Write)
         assertThat(DirectionProto.READS_WRITES.decode()).isEqualTo(HandleMode.ReadWrite)

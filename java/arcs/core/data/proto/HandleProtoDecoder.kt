@@ -17,6 +17,8 @@ import arcs.core.data.TypeVariable
 
 /** Converts [HandleProto.Fate] into [Handle.Fate]. */
 fun HandleProto.Fate.decode() = when (this) {
+    HandleProto.Fate.UNSPECIFIED ->
+        throw IllegalArgumentException("HandleProto.Fate value not set.")
     HandleProto.Fate.CREATE -> Handle.Fate.CREATE
     HandleProto.Fate.USE -> Handle.Fate.USE
     HandleProto.Fate.MAP -> Handle.Fate.MAP
@@ -44,7 +46,7 @@ fun List<HandleProto.Capability>.decode() = Capabilities(
  * Converts [HandleProto] into [Handle].
  *
  * If a type is not set in the [HandleProto], it is initialized to a newly created TypeVariable.
-*/
+ */
 fun HandleProto.decode() = Handle(
     name = name,
     fate = fate.decode(),

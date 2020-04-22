@@ -11,24 +11,20 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class ParseManifestProtoTest {
 
+    /**
+     * On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.
+     * On the Kotlin side we deserialize .pb.bin and validate it equals parsed .textproto file.
+     */
     @Test
     fun parsesSerializedManifestProto() {
-        val path = runfilesDir() + "java/arcs/core/data/testdata/example.pb.bin"
-        val recipe = RecipeEnvelopeProto.parseFrom(File(path).readBytes()).recipe
-        assertThat(recipe.name).isEqualTo("PassThrough")
-        assertThat(recipe.particlesList.map { it.specName }).containsExactly("Reader", "Writer")
-        assertThat(recipe.handlesList.map { it.name }).containsExactly("thing")
-    }
+        val binPath = runfilesDir() + "java/arcs/core/data/testdata/Manifest2ProtoTest.pb.bin"
+        val manifestBin = ManifestProto.parseFrom(File(binPath).readBytes())
 
-    @Test
-    fun parsesTextFormatManifestProto() {
-        val path = runfilesDir() + "java/arcs/core/data/testdata/example.textproto"
-        val builder = RecipeEnvelopeProto.newBuilder()
-        TextFormat.getParser().merge(File(path).readText(), builder)
-        val recipe = builder.build().recipe
-        assertThat(recipe.name).isEqualTo("PassThrough")
-        assertThat(recipe.particlesList.map { it.specName }).containsExactly("Reader", "Writer")
-        assertThat(recipe.handlesList.map { it.name }).containsExactly("thing")
+        val txtPath = runfilesDir() + "java/arcs/core/data/testdata/Manifest2ProtoTest.textproto"
+        val manifestTxt = ManifestProto.newBuilder()
+        TextFormat.getParser().merge(File(txtPath).readText(), manifestTxt)
+
+        assertThat(manifestTxt.build()).isEqualTo(manifestBin)
     }
 
     @Test

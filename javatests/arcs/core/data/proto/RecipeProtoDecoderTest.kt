@@ -117,19 +117,4 @@ class RecipeProtoDecoderTest {
             "Duplicate handle 'thing' when decoding recipe 'Duplicates'."
         )
     }
-
-    @Test
-    fun decodesRecipeEnvelope() {
-        val path = runfilesDir() + "java/arcs/core/data/testdata/example.textproto"
-        val builder = RecipeEnvelopeProto.newBuilder()
-        TextFormat.getParser().merge(File(path).readText(), builder)
-        val recipeEnvelopeProto = builder.build()
-        with(recipeEnvelopeProto.decodeRecipe()) {
-            assertThat(particles.map { it.spec.name }).containsExactly("Reader", "Writer")
-            assertThat(particles).containsExactly(
-                readerParticle.decode(context),
-                writerParticle.decode(context)
-            )
-        }
-    }
 }

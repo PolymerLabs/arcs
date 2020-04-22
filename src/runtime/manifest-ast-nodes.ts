@@ -9,7 +9,6 @@
  */
 import {ClaimType} from './particle-claim.js';
 import {CheckType} from './particle-check.js';
-import {type} from 'os';
 
 /**
  * Complete set of tokens used by `manifest-parser.pegjs`. To use this you

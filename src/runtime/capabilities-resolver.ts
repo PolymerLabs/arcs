@@ -7,14 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {assert} from '../platform/assert-web.js';
-
 import {ArcId} from './id.js';
 import {Capabilities} from './capabilities.js';
 import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {DriverFactory} from './storageNG/drivers/driver-factory.js';
-import {Schema} from './schema.js';
 import {Type} from './type.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 

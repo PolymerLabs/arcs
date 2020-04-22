@@ -4,14 +4,8 @@ import arcs.core.data.Capabilities
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
 import arcs.core.testutil.assertThrows
-import arcs.core.testutil.fail
-import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
-import com.google.protobuf.Message.Builder
-import com.google.protobuf.Message
 import com.google.protobuf.TextFormat
-import java.io.File
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -27,6 +21,9 @@ fun parseHandleProtoText(protoText: String): HandleProto {
 class HandleProtoDecoderTest {
     @Test
     fun decodesHandleProtoFate() {
+        assertThrows(IllegalArgumentException::class) {
+            HandleProto.Fate.UNSPECIFIED.decode()
+        }
         assertThat(HandleProto.Fate.CREATE.decode()).isEqualTo(Handle.Fate.CREATE)
         assertThat(HandleProto.Fate.USE.decode()).isEqualTo(Handle.Fate.USE)
         assertThat(HandleProto.Fate.MAP.decode()).isEqualTo(Handle.Fate.MAP)
