@@ -3,7 +3,6 @@ package arcs.android.crdt
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
-import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 
