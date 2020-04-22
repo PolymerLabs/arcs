@@ -1450,7 +1450,38 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun delete_collection_otherEntitiesUnaffected() = runBlockingTest {
+    fun delete_entityWithCollectionFields_getsRemoved() = runBlockingTest {
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity", 
+                mapOf("text" to "def".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()))
+            ),
+            newSchema(
+                "hash",
+                SchemaFields(
+                    singletons = mapOf("text" to FieldType.Text), 
+                    collections = mapOf("nums" to FieldType.Number)
+                )
+            ),
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entityKey = DummyStorageKey("entity")
+        database.insertOrUpdateEntity(entityKey, entity)
+
+        database.delete(entityKey)
+
+        assertTableIsEmpty("storage_keys")
+        assertTableIsEmpty("entities")
+        assertTableIsEmpty("field_values")
+        assertTableIsEmpty("collections")
+        assertTableIsEmpty("collection_entries")
+        assertThat(database.getEntity(entityKey, EMPTY_SCHEMA)).isNull()
+    }
+
+    @Test
+    fun delete_entity_otherEntitiesUnaffected() = runBlockingTest {
         val keyToKeep = DummyStorageKey("key-to-keep")
         val keyToDelete = DummyStorageKey("key-to-delete")
         database.insertOrUpdateEntity(keyToKeep, EMPTY_ENTITY)
