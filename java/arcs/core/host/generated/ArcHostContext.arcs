@@ -1,5 +1,5 @@
 meta
-  namespace: arcs.core.host
+  namespace: arcs.core.host.generated
 
 // Represents a Plan.HandleConnection
 schema HandleConnection
@@ -22,7 +22,7 @@ schema ParticleSchema
   handles: [&HandleConnection]
 
 particle ArcHostContextParticle
-  arcHostContext: reads writes ArcHostContextHandle {
+  arcHostContext: reads writes ArcHostContext {
     arcId: Text,
     hostId: Text,
     // ArcState enum name
