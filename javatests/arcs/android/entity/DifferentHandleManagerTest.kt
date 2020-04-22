@@ -9,17 +9,15 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
-import arcs.core.util.Scheduler
-import arcs.jvm.util.testutil.FakeTime
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
-import java.util.concurrent.Executors
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
@@ -42,14 +40,12 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
         app = ApplicationProvider.getApplicationContext()
         val stores = StoreManager()
         val testConnectionFactory = TestConnectionFactory(app)
+        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
-            scheduler = Scheduler(
-                fakeTime,
-                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-            ),
+            scheduler = schedulerProvider("reader"),
             stores = stores,
             activationFactory = ServiceStoreFactory(
                 app,
@@ -61,10 +57,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
-            scheduler = Scheduler(
-                fakeTime,
-                Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-            ),
+            scheduler = schedulerProvider("writer"),
             stores = stores,
             activationFactory = ServiceStoreFactory(
                 app,

@@ -7,6 +7,7 @@ licenses(["notice"])
 
 arcs_kt_android_test_suite(
     name = "entity",
+    size = "small",
     manifest = "AndroidManifest.xml",
     package = "arcs.android.entity",
     deps = [
@@ -19,6 +20,8 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util",
+        "//java/arcs/core/util/testutil",
+        "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service/testutil",
