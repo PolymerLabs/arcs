@@ -19,6 +19,8 @@ import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.entity.Reference
 import arcs.core.host.api.Particle
+import arcs.core.host.generated.AbstractArcHostContextParticle
+import arcs.core.host.generated.ArcHostContextPlan
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Tag
@@ -50,7 +52,7 @@ class ArcHostContextParticle(
         try {
             val connections = context.particles.flatMap {
                 it.value.planParticle.handles.map { handle ->
-                    ArcHostContextParticle_HandleConnections(
+                    HandleConnection(
                         handleName = handle.key, storageKey = handle.value.storageKey.toString(),
                         mode = handle.value.mode.name, type = handle.value.type.tag.name,
                         ttl = handle.value.ttl?.minutes?.toDouble() ?: Ttl.TTL_INFINITE
@@ -65,7 +67,7 @@ class ArcHostContextParticle(
             val storedConnections = handles.handleConnections.fetchAll()
 
             val particles = context.particles.map {
-                ArcHostContextParticle_Particles(
+                ParticleSchema(
                     particleName = it.key,
                     location = it.value.planParticle.location,
                     particleState = it.value.particleState.name,
@@ -82,7 +84,7 @@ class ArcHostContextParticle(
             // TODO(b/155320932): remove. Workaround for createReference precondition
             val storedParticles = handles.particles.fetchAll()
 
-            val arcState = ArcHostContextParticle_ArcHostContext(
+            val arcState = AbstractArcHostContextParticle.ArcHostContext(
                 arcId = arcId, hostId = hostId, arcState = context.arcState.name,
                 particles = storedParticles.map { handles.particles.createReference(it) }.toSet()
             )
@@ -167,7 +169,7 @@ class ArcHostContextParticle(
         arcId: String,
         particleName: String,
         particle: Particle,
-        handles: Set<Reference<ArcHostContextParticle_HandleConnections>>
+        handles: Set<Reference<HandleConnection>>
     ) = handles.map { handle ->
         requireNotNull(handle.dereference()) {
             "HandleConnection couldn't be dereferenced for arcId $arcId, particle $particleName"
@@ -225,7 +227,7 @@ class ArcHostContextParticle(
          */
         val arcHostContextKey = requireNotNull(
             resolver.createStorageKey(
-                capability, EntityType(ArcHostContextParticle_ArcHostContext.SCHEMA),
+                capability, EntityType(AbstractArcHostContextParticle.ArcHostContext.SCHEMA),
                 "${hostId}_arcState"
             )
         ) {
@@ -234,7 +236,7 @@ class ArcHostContextParticle(
 
         val particlesKey = requireNotNull(
             resolver.createStorageKey(
-                capability, EntityType(ArcHostContextParticle_Particles.SCHEMA),
+                capability, EntityType(ParticleSchema.SCHEMA),
                 "${hostId}_arcState_particles"
             )
         ) {
@@ -243,7 +245,7 @@ class ArcHostContextParticle(
 
         val handleConnectionsKey = requireNotNull(
             resolver.createStorageKey(
-                capability, EntityType(ArcHostContextParticle_HandleConnections.SCHEMA),
+                capability, EntityType(HandleConnection.SCHEMA),
                 "${hostId}_arcState_handleConnections"
             )
         ) {
