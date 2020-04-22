@@ -13,6 +13,7 @@ package arcs.android.crdt
 
 import android.os.Parcel
 import arcs.android.util.readProto
+import arcs.android.util.requireProto
 import arcs.android.util.writeProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
@@ -27,13 +28,15 @@ fun Parcel.readModelData(): CrdtData? =
     readProto(CrdtDataProto.getDefaultInstance())?.toData()
 
 /** Writes a [CrdtOperation] to the [Parcel]. */
-fun Parcel.writeOperation(operation: CrdtOperation?) {
-    writeProto(operation?.toProto())
+fun Parcel.writeOperation(operation: CrdtOperation) {
+    writeProto(operation.toProto())
 }
 
 /** Reads a [CrdtOperation] from the [Parcel]. */
-fun Parcel.readOperation(): CrdtOperation? =
-    readProto(CrdtOperationProto.getDefaultInstance())?.toOperation()
+fun Parcel.readOperation(): CrdtOperation =
+    requireProto(CrdtOperationProto.getDefaultInstance()) {
+        "CrdtOperation stored in parcel was null."
+    }.toOperation()
 
 /** Writes a [List] of [CrdtOperation]s to the [Parcel]. */
 fun Parcel.writeOperations(operations: List<CrdtOperation>) {
