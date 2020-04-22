@@ -112,10 +112,7 @@ class BindingContextTest {
             listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
             id = 1
         )
-        bindingContext.sendProxyMessage(
-            message.toParcelable(ParcelableCrdtType.Count),
-            deferredResult
-        )
+        bindingContext.sendProxyMessage(message.toParcelable(), deferredResult)
 
         assertThat(deferredResult.await()).isTrue()
 
@@ -188,10 +185,7 @@ class BindingContextTest {
             listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
             id = 1
         )
-        bindingContext.sendProxyMessage(
-            message.toParcelable(ParcelableCrdtType.Count),
-            deferredResult
-        )
+        bindingContext.sendProxyMessage(message.toParcelable(), deferredResult)
 
         assertThat(deferredResult.await()).isTrue()
 

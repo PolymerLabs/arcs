@@ -143,7 +143,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
         sendQueue.enqueue {
-            service.sendProxyMessage(message.toParcelable(crdtType), result)
+            service.sendProxyMessage(message.toParcelable(), result)
         }
         // Just return false if the message couldn't be applied.
         return try { result.await() } catch (e: CrdtException) { false }

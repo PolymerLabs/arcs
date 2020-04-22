@@ -14,3 +14,8 @@ alias(
     name = "protobuf_java",
     actual = "@com_google_protobuf//:protobuf_java",
 )
+
+alias(
+    name = "protobuf_wrappers",
+    actual = "@com_google_protobuf//:wrappers_proto",
+)

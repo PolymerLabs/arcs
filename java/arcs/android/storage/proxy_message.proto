@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package arcs.android.storage;
+
+option java_package = "arcs.android.storage";
+option java_multiple_files = true;
+
+import "java/arcs/android/crdt/crdt.proto";
+import "google/protobuf/wrappers.proto";
+
+message ProxyMessageProto {
+  google.protobuf.Int32Value id = 1;
+
+  oneof message {
+    SyncRequest sync_request = 2;
+    ModelUpdate model_update = 3;
+    Operations operations = 4;
+  }
+
+  message SyncRequest {}
+
+  message ModelUpdate {
+    arcs.android.crdt.CrdtDataProto data = 1;
+  }
+
+  message Operations {
+    repeated arcs.android.crdt.CrdtOperationProto operations = 1;
+  }
+}

@@ -75,7 +75,7 @@ class BindingContext(
                         ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
                             model = activeStore.getLocalData(),
                             id = null
-                        ).toParcelable(crdtType)
+                        ).toParcelable()
                     )
                 }
             }
@@ -91,7 +91,7 @@ class BindingContext(
                 // so that we catch any exceptions thrown within and re-throw on the same coroutine
                 // as the callback-caller.
                 supervisorScope {
-                    callback.onProxyMessage(message.toParcelable(crdtType))
+                    callback.onProxyMessage(message.toParcelable())
                 }
             }
 
