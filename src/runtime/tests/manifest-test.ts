@@ -713,7 +713,7 @@ ${particleStr1}
     const manifest = await parseManifest(`
       meta
         name: 'Awesome Arc'
-        namespace: com.some.namespace  
+        namespace: com.some.namespace
       particle P
         data: writes * {name: Text, age: Number}
     `);
@@ -1962,6 +1962,154 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     ]);
     DriverFactory.clearRegistrationsForTesting();
   });
+
+  it('loads inline entities with primitive and reference fields', async () => {
+    const manifest = await parseManifest(`
+      store X of [{n: Number, t: Text, u: URL, f: Boolean, b: Bytes, r: &{z: Text}}] with {
+        {n: 0, t: '', u: '', f: false, b: ||, r: <'i1', 'k1'>},
+        {n: 4.5, t: 'abc', u: 'site', f: true, b: |5a, 7, d|, r: <'i2', 'k2'>},
+      }
+    `, {fileName: 'the.manifest', memoryProvider});
+    const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
+    const handle = handleForActiveStore(store, manifest);
+    const entities = (await handle.toList()).map(Entity.serialize);
+    assert.lengthOf(entities, 2);
+
+    const [e1, e2] = entities;
+    assert.isTrue(e1.id.length && e2.id.length && e1.id !== e2.id);
+    assert.deepStrictEqual(e1.rawData, {
+      n: 0, t: '', u: '', f: false, b: new Uint8Array(),
+      r: {id: 'i1', entityStorageKey: 'k1', creationTimestamp: null, expirationTimestamp: null}
+    });
+    assert.deepStrictEqual(e2.rawData, {
+      n: 4.5, t: 'abc', u: 'site', f: true, b: new Uint8Array([0x5a, 0x07, 0x0d]),
+      r: {id: 'i2', entityStorageKey: 'k2', creationTimestamp: null, expirationTimestamp: null}
+    });
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
+  it('loads inline entities with collection fields', async () => {
+    const manifest = await parseManifest(`
+      store X of [{
+        n: [Number], t: [Text], u: [URL], f: [Boolean], b: [Bytes], r: [&{z: Text}]
+      }] with {
+        {n: [], t: [], u: [], f: [], b: [], r: []},
+        {
+            n: [0, 2, -8, 3.4, 2],
+            t: ['abc', 'abc', ''],
+            u: ['site'],
+            f: [true, false, true],
+            b: [|17, b0|, ||],
+            r: [<'i1', 'k1'>],
+        }
+      }
+    `, {fileName: 'the.manifest', memoryProvider});
+    const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
+    const handle = handleForActiveStore(store, manifest);
+    const entities = (await handle.toList()).map(Entity.serialize);
+    assert.lengthOf(entities, 2);
+
+    const [e1, e2] = entities;
+    assert.isTrue(e1.id.length && e2.id.length && e1.id !== e2.id);
+    assert.deepStrictEqual(e1.rawData, {
+      n: [], t: [], u: [], f: [], b: [], r: []
+    });
+    assert.deepStrictEqual(e2.rawData, {
+      n: [0, 2, -8, 3.4],
+      t: ['abc', ''],
+      u: ['site'],
+      f: [true, false],
+      b: [new Uint8Array([0x17, 0xb0]), new Uint8Array()],
+      r: [{id: 'i1', entityStorageKey: 'k1', creationTimestamp: null, expirationTimestamp: null}],
+    });
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
+  it('loads inline entities with tuple fields', async () => {
+    const manifest = await parseManifest(`
+      store X of [{
+        a: (Number, Number, Bytes, URL),
+        b: (Boolean, Text)
+      }] with {
+        {
+          a: (0, 0, ||, ''),
+          b: (false, ''),
+        },
+        {
+          a: (6.5, -2, |5e, 6|, 'link'),
+          b: (true, 'xyz'),
+        },
+      }
+    `, {fileName: 'the.manifest', memoryProvider});
+    const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
+    const handle = handleForActiveStore(store, manifest);
+    const entities = (await handle.toList()).map(Entity.serialize);
+    assert.lengthOf(entities, 2);
+
+    const [e1, e2] = entities;
+    assert.isTrue(e1.id.length && e2.id.length && e1.id !== e2.id);
+    assert.deepStrictEqual(e1.rawData, {
+      a: [0, 0, new Uint8Array(), ''],
+      b: [false, ''],
+    });
+    assert.deepStrictEqual(e2.rawData, {
+      a: [6.5, -2, new Uint8Array([0x5e, 0x06]), 'link'],
+      b: [true, 'xyz'],
+    });
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
+  it('loads inline entities with union fields', async () => {
+    const manifest = await parseManifest(`
+      store X of [{u: (Text or Number or Boolean or Bytes)}] with {
+        {u: 'str'},
+        {u: 52},
+        {u: true},
+        {u: |1e, e7|},
+      }
+    `, {fileName: 'the.manifest', memoryProvider});
+    const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
+    const handle = handleForActiveStore(store, manifest);
+    const entities = (await handle.toList()).map(e => Entity.serialize(e).rawData);
+
+    assert.deepStrictEqual(entities, [
+      {u: 'str'},
+      {u: 52},
+      {u: true},
+      {u: new Uint8Array([0x1e, 0xe7])},
+    ]);
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
+  it('throws an error when inline entities do not match the store schema', async () => {
+    const check = async (manifestStr, msg) => {
+      const manifest = await parseManifest(manifestStr, {fileName: 'the.manifest', memoryProvider});
+      const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
+      const handle = handleForActiveStore(store, manifest);
+      await assertThrowsAsync(async () => await handle.toList(), msg);
+    };
+
+    // Incorrect types
+    const mismatch = 'Type mismatch setting field z';
+    await check(`store X of [{z: Text}] with { {z: 5} }`, mismatch);
+    await check(`store X of [{z: URL}] with { {z: true} }`, mismatch);
+    await check(`store X of [{z: Number}] with { {z: 'str'} }`, mismatch);
+    await check(`store X of [{z: Boolean}] with { {z: |5a|} }`, mismatch);
+    await check(`store X of [{z: Bytes}] with { {z: 12} }`, mismatch);
+    await check(`store X of [{z: (Number or URL)}] with { {z: true} }`, mismatch);
+    await check(`store X of [{z: (Number, URL)}] with { {z: (6, 7)} }`, mismatch);
+    await check(`store X of [{z: [Text]}] with { {z: [30]} }`, mismatch);
+
+    await check(`store X of [{z: &{z: Text}}] with { {z: 1} }`, 'Cannot set reference z with non-reference');
+    await check(`store X of [{z: [Text]}] with { {z: 'str'} }`, 'Cannot set collection z with non-collection');
+    await check(`store X of [{z: (Number, URL)}] with { {z: |6|} }`, 'Cannot set tuple z with non-array value');
+
+    // Incorrect field name
+    await check(`store X of [{a: Text}] with { {b: 'abc'} }`, `Can't set field b; not in schema`);
+
+    DriverFactory.clearRegistrationsForTesting();
+  });
+
   it('resolves store names to ids', async () => {
     const manifestSource = `
         schema Thing
