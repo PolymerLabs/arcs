@@ -292,6 +292,12 @@ describe('CollectionHandle', async () => {
 });
 
 describe('SingletonHandle', async () => {
+  before(async () => {
+    const loader = new Loader();
+    const manifest = await Manifest.load('./src/runtime/tests/artifacts/test-particles.manifest', loader);
+    barType = new EntityType(manifest.schemas.Bar);
+    Bar = Entity.createEntityClass(barType.getEntitySchema(), null);
+  });
   it('can set and clear elements', async () => {
     const handle = await getSingletonHandle(barType);
     assert.strictEqual(await handle.fetch(), null);

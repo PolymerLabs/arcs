@@ -39,7 +39,7 @@ class MyEntity {
   creationTimestamp: number;
   rawData: {
     name?: {id: string};
-    age?: {id: string, value: number};
+    age?: number;
   } = {};
 }
 
@@ -108,7 +108,7 @@ describe('Reference Mode Store', async () => {
 
     const collection = new MyEntityCollection();
     const entity = new MyEntity();
-    entity.rawData.age = {id: '42', value: 42};
+    entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.creationTimestamp = now;
     entity.rawData.name = {id: 'bob'};
@@ -138,7 +138,7 @@ describe('Reference Mode Store', async () => {
     // Add some data.
     const collection = new MyEntityCollection();
     const entity = new MyEntity();
-    entity.rawData.age = {id: '42', value: 42};
+    entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.creationTimestamp = now;
     entity.rawData.name = {id: 'bob'};
@@ -161,7 +161,7 @@ describe('Reference Mode Store', async () => {
     driver.send = async model => {capturedModel = model; return true;};
 
     const entity = new MyEntity();
-    entity.rawData.age = {id: '42', value: 42};
+    entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.creationTimestamp = now;
     entity.rawData.name = {id: 'bob'};
@@ -189,7 +189,7 @@ describe('Reference Mode Store', async () => {
     const activeStore = await createReferenceModeStore();
 
     const entity = new MyEntity();
-    entity.rawData.age = {id: '42', value: 42};
+    entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.rawData.name = {id: 'bob'};
 
@@ -232,7 +232,7 @@ describe('Reference Mode Store', async () => {
 
     const collection = new MyEntityCollection();
     const entity = new MyEntity();
-    entity.rawData.age = {id: '42', value: 42};
+    entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.rawData.name = {id: 'bob'};
     const operation: CollectionOperation<MyEntity> = {type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity};
@@ -289,7 +289,7 @@ describe('Reference Mode Store', async () => {
 
     const collection = new MyEntityCollection();
     const entity = new MyEntity();
-    entity.rawData.age = {id: '42', value: 42};
+    entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.rawData.name = {id: 'bob'};
     collection.applyOperation({type: CollectionOpTypes.Add, clock: {me: 1}, actor: 'me', added: entity});
@@ -347,7 +347,7 @@ describe('Reference Mode Store', async () => {
     // local model from proxy
     const collection = new MyEntityCollection();
     const entity = new MyEntity();
-    entity.rawData.age = {id: '42', value: 42};
+    entity.rawData.age = 42;
     entity.id = 'an-id';
     entity.creationTimestamp = now;
     entity.rawData.name = {id: 'bob'};
@@ -442,7 +442,7 @@ describe('Reference Mode Store', async () => {
         }
         const entityRecord = message['model'].values['an-id'].value;
         assert.equal(entityRecord.rawData.name.id, 'bob');
-        assert.equal(entityRecord.rawData.age.value, 42);
+        assert.equal(entityRecord.rawData.age, 42);
         resolve();
       });
 
