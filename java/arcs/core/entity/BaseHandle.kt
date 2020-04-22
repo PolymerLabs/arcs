@@ -12,28 +12,35 @@ package arcs.core.entity
 
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import kotlinx.coroutines.CoroutineDispatcher
 
 /** Base functionality common to all read/write singleton and collection handles. */
 abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
     override val name: String = config.name
 
+    override val dispatcher: CoroutineDispatcher
+        get() = storageProxy.dispatcher
+
     val spec: HandleSpec<out Entity> = config.spec
 
     protected var closed = false
+    protected val callbackIdentifier =
+        StorageProxy.CallbackIdentifier(config.name, config.particleId)
 
     private val storageProxy = config.storageProxy
     private val dereferencerFactory = config.dereferencerFactory
 
-    override suspend fun onReady(action: () -> Unit) = storageProxy.addOnReady(name, action)
+    override fun onReady(action: () -> Unit) =
+        storageProxy.addOnReady(callbackIdentifier, action)
 
     protected inline fun <T> checkPreconditions(block: () -> T): T {
         check(!closed) { "Handle $name is closed" }
         return block()
     }
 
-    override suspend fun close() {
+    override fun close() {
         closed = true
-        storageProxy.removeCallbacksForName(name)
+        storageProxy.removeCallbacksForName(callbackIdentifier)
     }
 
     /**

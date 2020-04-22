@@ -15,15 +15,16 @@ import arcs.sdk.Handle
 import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withContext
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -131,22 +132,13 @@ open class BaseTestHarness<P : Particle>(
         val readySoFar = atomic(0)
         val readyJobs = handles.map { (_, handle) ->
             launch {
-                // TODO: switch to this version when onReady is non-suspending:
-                // suspendCoroutine<Unit> { cont ->
-                //    handle.onReady {
-                //        val ready = readySoFar.incrementAndGet()
-                //        cont.resume(Unit)
-                //        launch { particle.onHandleSync(handle, ready == handles.size) }
-                //    }
-                // }
-                // TODO: get rid of this version when onReady is non-suspending
-                val job = Job()
-                handle.onReady {
-                    val ready = readySoFar.incrementAndGet()
-                    job.complete()
-                    launch { particle.onHandleSync(handle, ready == handles.size) }
+                suspendCoroutine<Unit> { cont ->
+                    handle.onReady { cont.resume(Unit) }
                 }
-                withTimeout(1000) { job.join() }
+                withContext(handle.dispatcher) {
+                    val ready = readySoFar.incrementAndGet()
+                    particle.onHandleSync(handle, ready == handles.size)
+                }
             }
         }
 

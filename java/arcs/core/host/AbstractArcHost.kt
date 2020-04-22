@@ -28,9 +28,13 @@ import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
 typealias ParticleConstructor = suspend () -> Particle
@@ -317,11 +321,22 @@ abstract class AbstractArcHost(
         // We force sync() calls in lieu of onStartup() API for demos
         if (particleContext.particleState == ParticleState.Created) {
             try {
-                particleContext.handles.values.forEach { handle ->
-                    particleContext.run {
-                        particleContext.particle.onHandleSync(handle, false)
+                val completions = atomic(0)
+                val expectedCompletions = particleContext.handles.size
+
+                particleContext.handles.values.map { handle ->
+                    scope.launch(handle.dispatcher) {
+                        val soFar = suspendCoroutine<Int> {
+                            handle.onReady { it.resume(completions.incrementAndGet()) }
+                        }
+
+                        particleContext.particle.onHandleSync(
+                            handle,
+                            soFar == expectedCompletions
+                        )
+                        // TODO: call particle.onReady() when soFar == expectedCompletions
                     }
-                }
+                }.joinAll()
             } catch (e: Exception) {
                 log.error(e) { "Failure in particle during onHandleSync." }
                 markParticleAsFailed(particleContext)
@@ -454,9 +469,9 @@ abstract class AbstractArcHost(
             stopParticle(particleContext)
         }
         maybeCancelResurrection(context)
-        context.entityHandleManager.close()
         context.arcState = ArcState.Stopped
         updateArcHostContext(arcId, context)
+        context.entityHandleManager.close()
     }
 
     /**

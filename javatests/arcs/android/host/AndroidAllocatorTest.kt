@@ -33,6 +33,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -109,5 +110,23 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
                 PersonPlan
             )
         }
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_doesntCreateArcsOnDuplicateStartArc() {
+        super.allocator_doesntCreateArcsOnDuplicateStartArc()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_startFromOneAllocatorAndStopInAnother() {
+        super.allocator_startFromOneAllocatorAndStopInAnother()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_verifyStorageKeysNotOverwritten() {
+        super.allocator_verifyStorageKeysNotOverwritten()
     }
 }

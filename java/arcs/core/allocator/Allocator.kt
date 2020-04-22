@@ -37,8 +37,13 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
+import arcs.core.util.TaggedLog
 import arcs.core.util.plus
 import arcs.core.util.traverse
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.withContext
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -53,6 +58,7 @@ class Allocator private constructor(
     private val hostRegistry: HostRegistry,
     private val collection: ReadWriteCollectionHandle<EntityBase>
 ) {
+    private val log = TaggedLog { "Allocator" }
     /** Currently active Arcs and their associated [Plan.Partition]s. */
     private val partitionMap: MutableMap<ArcId, List<Plan.Partition>> = mutableMapOf()
 
@@ -69,7 +75,9 @@ class Allocator private constructor(
         val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(arcName)
         // Any unresolved handles ('create' fate) need storage keys
         val newPlan = createStorageKeysIfNecessary(arcId, idGenerator, plan)
+        log.debug { "Created storage keys" }
         val partitions = computePartitions(arcId, newPlan)
+        log.debug { "Computed partitions" }
         // Store computed partitions for later
         writePartitionMap(arcId, partitions)
         try {
@@ -116,21 +124,29 @@ class Allocator private constructor(
     private suspend fun writePartitionMap(arcId: ArcId, partitions: List<Plan.Partition>) {
         partitionMap[arcId] = partitions
 
-        partitions.forEach { partition ->
-            val entity = EntityBase("EntityBase", SCHEMA)
-            entity.setSingletonValue("arc", arcId.toString())
-            entity.setSingletonValue("host", partition.arcHost)
-            entity.setCollectionValue(
-                "particles",
-                partition.particles.map { it.particleName }.toSet()
-            )
-            collection.store(entity)
+        log.debug { "writePartitionMap()" }
+
+        val writes = withContext(collection.dispatcher) {
+            partitions.map { partition ->
+                val entity = EntityBase("EntityBase", SCHEMA)
+                entity.setSingletonValue("arc", arcId.toString())
+                entity.setSingletonValue("host", partition.arcHost)
+                entity.setCollectionValue(
+                    "particles",
+                    partition.particles.map { it.particleName }.toSet()
+                )
+                log.debug { "Writing $entity" }
+                collection.store(entity)
+            }
         }
+
+        writes.joinAll()
     }
 
     /** Looks up [RawEntity]s representing [PlanPartition]s for a given [ArcId] */
     private suspend fun entitiesForArc(arcId: ArcId): List<EntityBase> =
-        collection.fetchAll().filter { it.getSingletonValue("arc") == arcId.toString() }
+        withContext(collection.dispatcher) { collection.fetchAll() }
+            .filter { it.getSingletonValue("arc") == arcId.toString() }
 
     /** Converts a [RawEntity] to a [Plan.Partition] */
     private fun entityToPartition(entity: EntityBase): Plan.Partition =
@@ -148,7 +164,10 @@ class Allocator private constructor(
 
     private suspend fun readAndClearPartitions(arcId: ArcId): List<Plan.Partition> {
         val entities = entitiesForArc(arcId)
-        entities.forEach { collection.remove(it) }
+        val removals = withContext(collection.dispatcher) {
+            entities.map { collection.remove(it) }
+        }
+        removals.joinAll()
         return entities.map { entityToPartition(it) }
     }
 
@@ -266,6 +285,9 @@ class Allocator private constructor(
                 ),
                 STORAGE_KEY
             )
+
+            suspendCoroutine<Unit> { collection.onReady { it.resume(Unit) } }
+
             return Allocator(
                 hostRegistry,
                 collection as ReadWriteCollectionHandle<EntityBase>

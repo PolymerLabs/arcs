@@ -33,7 +33,7 @@ class ReferenceSpecTest {
     @Test
     fun createReference_singletonHandle() = runBlocking {
         val child = Child(age = 10.0)
-        harness.singletonChild.store(child)
+        harness.singletonChild.store(child).join()
         val ref = harness.singletonChild.createReference(child)
         assertThat(ref.dereference()).isEqualTo(child)
     }
@@ -41,7 +41,7 @@ class ReferenceSpecTest {
     @Test
     fun createReference_collectionHandle() = runBlocking {
         val child = Child(age = 10.0)
-        harness.collectionChild.store(child)
+        harness.collectionChild.store(child).join()
         val ref = harness.collectionChild.createReference(child)
         assertThat(ref.dereference()).isEqualTo(child)
     }
@@ -52,7 +52,7 @@ class ReferenceSpecTest {
         val childRef = createChildReference(child)
         val parent = Parent(age = 40.0, favorite = childRef)
 
-        harness.parents.store(parent)
+        harness.parents.store(parent).join()
         val parentOut = harness.parents.fetchAll().single()
 
         assertThat(parentOut).isEqualTo(parent)
@@ -68,7 +68,7 @@ class ReferenceSpecTest {
         val childRef2 = createChildReference(child2)
         val parent = Parent(age = 40.0, children = setOf(childRef1, childRef2))
 
-        harness.parents.store(parent)
+        harness.parents.store(parent).join()
         val parentOut = harness.parents.fetchAll().single()
 
         assertThat(parentOut).isEqualTo(parent)
@@ -120,7 +120,7 @@ class ReferenceSpecTest {
 
     /** Creates a [Reference] for the given [Child]. */
     private suspend fun createChildReference(child: Child): Reference<Child> {
-        harness.collectionChild.store(child)
+        harness.collectionChild.store(child).join()
         return harness.collectionChild.createReference(child)
     }
 }

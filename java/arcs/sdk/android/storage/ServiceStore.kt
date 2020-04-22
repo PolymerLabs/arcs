@@ -35,7 +35,7 @@ import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.util.SendQueue
+import arcs.core.util.TaggedLog
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageServiceConnection
@@ -47,7 +47,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
  * Factory which can be supplied to [Store.activate] to force store creation to use the
@@ -94,13 +100,18 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val connectionFactory: ConnectionFactory,
     private val coroutineContext: CoroutineContext
 ) : ActiveStore<Data, Op, ConsumerData>(options), LifecycleObserver {
+    private val log = TaggedLog { "ServiceStore(${options.storageKey})" }
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null
-    private val sendQueue = SendQueue()
+    private var channel = BroadcastChannel<suspend () -> Unit>(100)
 
     init {
         lifecycle.addObserver(this)
+        channel.asFlow()
+            .buffer()
+            .onEach { it() }
+            .launchIn(scope)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -132,17 +143,15 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
     override fun off(callbackToken: Int) {
         val service = checkNotNull(storageService)
-        scope.launch {
-            sendQueue.enqueue {
-                service.unregisterCallback(callbackToken)
-            }
+        runBlocking {
+            channel.send { service.unregisterCallback(callbackToken) }
         }
     }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
-        sendQueue.enqueue {
+        channel.send {
             service.sendProxyMessage(message.toProto().toByteArray(), result)
         }
         // Just return false if the message couldn't be applied.

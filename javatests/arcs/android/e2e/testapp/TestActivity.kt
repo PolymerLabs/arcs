@@ -344,7 +344,7 @@ class TestActivity : AppCompatActivity() {
                             number = i.toDouble(),
                             boolean = TestEntity.boolean
                         )
-                    )
+                    )?.join()
                 }
             } else {
                 singletonHandle?.store(
@@ -353,7 +353,7 @@ class TestActivity : AppCompatActivity() {
                         number = TestEntity.number,
                         boolean = TestEntity.boolean
                     )
-                )
+                )?.join()
             }
         }
     }
@@ -374,12 +374,12 @@ class TestActivity : AppCompatActivity() {
             )
             startService(intent)
         } else {
-            singletonHandle?.clear()
-            collectionHandle?.clear()
+            singletonHandle?.clear()?.join()
+            collectionHandle?.clear()?.join()
         }
     }
 
-    private suspend fun fetchAndUpdateResult(prefix: String) {
+    private fun fetchAndUpdateResult(prefix: String) {
         var result: String? = "null"
         if (isCollection) {
             val testEntities = collectionHandle?.fetchAll()
