@@ -730,6 +730,7 @@ open class HandleManagerTestBase {
     open fun collection_referenceLiveness() = runBlocking<Unit> {
         // Create and store some entities.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
+        val readEntityHandle = readHandleManager.createCollectionHandle()
         writeEntityHandle.store(entity1)
         writeEntityHandle.store(entity2)
 
@@ -882,7 +883,7 @@ open class HandleManagerTestBase {
     ).also { it.awaitReady() } as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
 
     private suspend fun <T> ReadableHandle<T>.onUpdateDeferred(
-        predicate: (T) -> Boolean = { true }
+        predicate: suspend (T) -> Boolean = { true }
     ): Deferred<T> = CompletableDeferred<T>().also { deferred ->
         onUpdate {
             if (deferred.isActive && predicate(it)) {
