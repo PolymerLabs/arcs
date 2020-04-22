@@ -30,15 +30,18 @@ import arcs.core.storage.StoreOptions
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.util.testutil.LogRule
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -46,6 +49,9 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServiceStoreTest {
+    @get:Rule
+    val log = LogRule()
+
     private lateinit var lifecycle: Lifecycle
     private val storeOptions = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(
         RamDiskStorageKey("myData"),
@@ -107,7 +113,7 @@ class ServiceStoreTest {
             ParcelableCrdtType.Count,
             lifecycle,
             connectionFactory,
-            coroutineContext
+            coroutineContext + Dispatchers.Default
         ).initialize()
 
         store.onProxyMessage(
