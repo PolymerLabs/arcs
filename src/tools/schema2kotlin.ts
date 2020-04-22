@@ -248,14 +248,14 @@ ${imports.join('\n')}
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const capitalHandleName = connection.name[0].toUpperCase() + connection.name.slice(1);
-      const ng = nodeGenerators.find(generator => {
-        const kg = <KotlinGenerator>generator.generator;
-        return kg.node.connections.includes(capitalHandleName);
+      const nodeGenerator = nodeGenerators.find(generator => {
+        const kotlinGenerator = <KotlinGenerator>generator.generator;
+        return kotlinGenerator.node.connections.includes(capitalHandleName);
       });
       let entityType = entityTypeName(particle.name, connection.name);
-      if (ng) {
-        const kg = <KotlinGenerator>ng.generator;
-        entityType = kg.node.name;
+      if (nodeGenerator) {
+        const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
+        entityType = kotlinGenerator.node.name;
       }
       const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
