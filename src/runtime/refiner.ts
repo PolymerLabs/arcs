@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
+import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, BuiltInNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
@@ -202,7 +202,7 @@ export interface RefinementExpressionLiteral {
   [propName: string]: any;
 }
 
-export type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode';
+export type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode' | 'BuiltInNode';
 
 abstract class RefinementExpression {
   evalType: Primitive;
@@ -216,6 +216,7 @@ abstract class RefinementExpression {
       case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
       case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
       case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
+      case 'built-in-node': return BuiltIn.fromAst(expr, typeData);
       case 'query-argument-node': return QueryArgumentPrimitive.fromAst(expr, typeData);
       case 'number-node': return NumberPrimitive.fromAst(expr);
       case 'boolean-node': return BooleanPrimitive.fromAst(expr);
@@ -233,6 +234,7 @@ abstract class RefinementExpression {
       case 'BinaryExpressionNode': return BinaryExpression.fromLiteral(expr);
       case 'UnaryExpressionNode': return UnaryExpression.fromLiteral(expr);
       case 'FieldNamePrimitiveNode': return FieldNamePrimitive.fromLiteral(expr);
+      case 'BuiltInNode': return BuiltIn.fromLiteral(expr);
       case 'QueryArgumentPrimitiveNode': return QueryArgumentPrimitive.fromLiteral(expr);
       case 'NumberPrimitiveNode': return NumberPrimitive.fromLiteral(expr);
       case 'BooleanPrimitiveNode': return BooleanPrimitive.fromLiteral(expr);
@@ -589,7 +591,7 @@ export class FieldNamePrimitive extends RefinementExpression {
   }
 
   static fromAst(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-    if (typeData[expression.value] == undefined) {
+    if (typeData[expression.value] === undefined) {
       throw new Error(`Unresolved field name '${expression.value}' in the refinement expression.`);
     }
     return new FieldNamePrimitive(expression.value, typeData[expression.value]);
@@ -687,17 +689,26 @@ export class QueryArgumentPrimitive extends RefinementExpression {
   }
 }
 
-export class NumberPrimitive extends RefinementExpression {
-  evalType = Primitive.NUMBER;
-  value: number;
+export class BuiltIn extends RefinementExpression {
+  evalType: Primitive;
+  value: string;
 
-  constructor(value: number) {
-    super('NumberPrimitiveNode');
+  constructor(value: string, evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT) {
+    super('BuiltInNode');
     this.value = value;
+    this.evalType = evalType;
   }
 
-  static fromAst(expression: NumberNode): RefinementExpression {
-    return new NumberPrimitive(expression.value);
+  static fromAst(expression: BuiltInNode, _typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+    let type = undefined;
+      switch (expression.value) {
+        case 'now()':
+          type = Primitive.NUMBER;
+          break;
+        default:
+          throw new Error(`Unresolved built in name '${expression.value}' in the refinement expression.`);
+      }
+    return new BuiltIn(expression.value, type);
   }
 
   toLiteral() {
@@ -709,7 +720,91 @@ export class NumberPrimitive extends RefinementExpression {
   }
 
   static fromLiteral(expr): RefinementExpression {
-    return new NumberPrimitive(expr.value);
+    return new BuiltIn(expr.value, expr.evalType);
+  }
+
+  toString(): string {
+    return this.value.toString();
+  }
+
+  toSQLExpression(codeGenerator: CodeGenerator): string {
+    if (this.value === 'now()') {
+      return this.value;
+    }
+    // TODO: Implement SQL getter for 'currentTime'
+    throw new Error(`Unhandled BuiltInNode '${this.value}' in toSQLExpression`);
+  }
+
+  toKTExpression(codeGenerator: CodeGenerator): string {
+    // TODO: Double check that millis are the correct default units.
+    if (this.value === 'now()') {
+      return `System.currentTimeMillis()`;
+    }
+
+    // TODO: Implement KT getter for 'currentTime'
+    throw new Error(`Unhandled BuiltInNode '${this.value}' in toKTExpression`);
+  }
+
+  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+    if (this.value === 'now()') {
+      return new Date().getTime(); // milliseconds since epoch;
+    }
+
+    // TODO: Implement TS getter for 'currentTime'
+    throw new Error(`Unhandled BuiltInNode '${this.value}' in applyOperator`);
+  }
+
+  getFieldParams(): Map<string, Primitive> {
+    return new Map<string, Primitive>();
+  }
+}
+
+export class NumberPrimitive extends RefinementExpression {
+  evalType = Primitive.NUMBER;
+  value: number;
+
+  constructor(value: number, units: string[] = []) {
+    super('NumberPrimitiveNode');
+
+    // Convert to Si units.
+    this.value = value;
+    // For time units, the base unit is milliseconds.
+    for (const unit of units) {
+      switch (unit) {
+        case 'milliseconds':
+          break;
+        case 'seconds':
+          this.value *= 1000;
+          break;
+        case 'minutes':
+          this.value *= 60 * 1000;
+          break;
+        case 'hours':
+          this.value *= 60 * 60 * 1000;
+          break;
+        case 'days':
+          this.value *= 24 * 60 * 60 * 1000;
+          break;
+        default:
+          throw new Error(`Unsupported units ${unit}`);
+      }
+    }
+  }
+
+  static fromAst(expression: NumberNode): RefinementExpression {
+    return new NumberPrimitive(expression.value, expression.units || []);
+  }
+
+  toLiteral() {
+    return {
+      kind: this.kind,
+      evalType: this.evalType,
+      value: this.value
+    };
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    return new NumberPrimitive(expr.value, expr.units);
   }
 
   toString(): string {

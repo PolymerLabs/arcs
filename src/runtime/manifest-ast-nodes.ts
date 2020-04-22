@@ -660,7 +660,7 @@ export interface RefinementNode extends BaseNode {
   expression: RefinementExpressionNode;
 }
 
-export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | NumberNode | BooleanNode | TextNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | BuiltInNode | NumberNode | BooleanNode | TextNode;
 
 export enum Op {
   AND = 'and',
@@ -704,9 +704,15 @@ export interface QueryNode extends BaseNode {
   value: string;
 }
 
+export interface BuiltInNode extends BaseNode {
+  kind: 'built-in-node';
+  value: string;
+}
+
 export interface NumberNode extends BaseNode {
   kind: 'number-node';
   value: number;
+  units?: string[];
 }
 
 export interface BooleanNode extends BaseNode {
