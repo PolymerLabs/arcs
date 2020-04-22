@@ -10,10 +10,10 @@ import arcs.core.crdt.CrdtSingleton
 @Suppress("UNCHECKED_CAST")
 fun CrdtEntityProto.Data.toData() = CrdtEntity.Data(
     versionMap = fromProto(versionMap),
-    singletons = singletonMap.mapValues {
+    singletons = singletonsMap.mapValues {
         CrdtSingleton.createWithData(it.value.toData()) as CrdtSingleton<CrdtEntity.Reference>
     },
-    collections = collectionMap.mapValues {
+    collections = collectionsMap.mapValues {
         CrdtSet.createWithData(it.value.toData()) as CrdtSet<CrdtEntity.Reference>
     },
     creationTimestamp = creationTimestampMs,
@@ -70,8 +70,8 @@ fun CrdtEntityProto.Operation.toOperation(): CrdtEntity.Operation =
 /** Serializes a [CrdtEntity.Data] to its proto form. */
 fun CrdtEntity.Data.toProto() = CrdtEntityProto.Data.newBuilder()
     .setVersionMap(versionMap.toProto())
-    .putAllSingleton(singletons.mapValues { it.value.data.toProto() })
-    .putAllCollection(collections.mapValues { it.value.data.toProto() })
+    .putAllSingletons(singletons.mapValues { it.value.data.toProto() })
+    .putAllCollections(collections.mapValues { it.value.data.toProto() })
     .setCreationTimestampMs(creationTimestamp)
     .setExpirationTimestampMs(expirationTimestamp)
     .setId(id)

@@ -14,9 +14,9 @@ message CrdtEntityProto {
   message Data {
     VersionMapProto version_map = 1;
     // Maps from field name to singleton.
-    map<string, CrdtSingletonProto.Data> singleton = 2;
+    map<string, CrdtSingletonProto.Data> singletons = 2;
     // Maps from field name to collection.
-    map<string, CrdtSetProto.Data> collection = 3;
+    map<string, CrdtSetProto.Data> collections = 3;
     int64 creation_timestamp_ms = 4;
     int64 expiration_timestamp_ms = 5;
     string id = 6;
