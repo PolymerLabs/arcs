@@ -46,7 +46,7 @@ class ArcHostContextParticle(
      * types, and write them to the appropriate handles. See `ArcHostContext.arcs` for schema
      * definitions.
      */
-    suspend fun writeArcHostContext(arcId: String, context: ArcHostContext) = onHandlesReady {
+    suspend fun writeArcHostContext(arcId: String, context: arcs.core.host.ArcHostContext) = onHandlesReady {
         try {
             val connections = context.particles.flatMap {
                 it.value.planParticle.handles.map { handle ->
@@ -102,8 +102,8 @@ class ArcHostContextParticle(
      * is stored in de-normalized format.
      */
     suspend fun readArcHostContext(
-        arcHostContext: ArcHostContext
-    ): ArcHostContext? = onHandlesReady {
+        arcHostContext: arcs.core.host.ArcHostContext
+    ): arcs.core.host.ArcHostContext? = onHandlesReady {
         val arcId = arcHostContext.arcId
 
         try {
@@ -128,7 +128,7 @@ class ArcHostContextParticle(
                 )
             }.toSet().associateBy({ it.first }, { it.second })
 
-            return@onHandlesReady ArcHostContext(
+            return@onHandlesReady arcs.core.host.ArcHostContext(
                 arcId,
                 particles.toMutableMap(),
                 ArcState.valueOf(arcStateEntity.arcState),
