@@ -18,10 +18,12 @@ arcs_kt_android_library(
         ":proxy_message_android_proto",
         "//java/arcs/android/crdt",
         "//java/arcs/android/type",
+        "//java/arcs/android/util",
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/type",
         "//third_party/java/androidx/annotation",
+        "//third_party/java/arcs/deps:protobuf_wrappers_android_proto",
     ],
 )
 
@@ -30,7 +32,7 @@ proto_library(
     srcs = ["proxy_message.proto"],
     deps = [
         "//java/arcs/android/crdt:crdt_proto",
-        "//third_party/java/arcs/deps:protobuf_wrappers",
+        "//third_party/java/arcs/deps:protobuf_wrappers_proto",
     ],
 )
 

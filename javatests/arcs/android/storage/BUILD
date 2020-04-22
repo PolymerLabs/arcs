@@ -14,7 +14,9 @@ arcs_kt_android_test_suite(
     deps = [
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",  # buildcleaner: keep
+        "//java/arcs/android/storage:proxy_message_android_proto",
         "//java/arcs/android/storage/database",
+        "//java/arcs/android/util",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
