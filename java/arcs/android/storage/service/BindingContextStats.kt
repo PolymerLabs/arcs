@@ -15,8 +15,7 @@ import arcs.core.util.RunningStatistics
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -75,7 +74,7 @@ class BindingContextStatsImpl : BindingContextStatistics {
 
     override fun measure(context: CoroutineContext, block: suspend () -> Unit) {
         val startTime = System.currentTimeMillis()
-        CoroutineScope(context).launch {
+        runBlocking(context) {
             try {
                 block()
             } finally {

@@ -96,13 +96,16 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 
     override suspend fun send(data: Data, version: Int): Boolean {
         log.debug { "send($data, $version)" }
-        val currentEntry: VolatileEntry<Data> = memory[storageKey]!!
+        val newEntry = synchronized(memory) {
+            val currentEntry: VolatileEntry<Data> = memory[storageKey]!!
 
-        // If the new version isn't immediately after this one, return false.
-        if (currentEntry.version != version - 1) return false
+            // If the new version isn't immediately after this one, return false.
+            if (currentEntry.version != version - 1) return false
 
-        val newEntry = VolatileEntry(data, version, currentEntry.drivers)
-        memory[storageKey] = newEntry
+            VolatileEntry(data, version, currentEntry.drivers).also {
+                memory[storageKey] = it
+            }
+        }
 
         newEntry.drivers.forEach { driver ->
             val receiver = driver.takeIf { it != this }?.receiver
