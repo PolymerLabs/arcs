@@ -1,6 +1,8 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-_kotlin_native_version = "1.3.50"
+# Release can be found at: https://github.com/JetBrains/kotlin/releases/tag/v<version>
+# For example, this version is located at: https://github.com/JetBrains/kotlin/releases/tag/v1.3.70
+_kotlin_native_version = "1.3.70"
 
 _repo_tmpl = _kotlin_native_version.join([
     "https://github.com/JetBrains/kotlin/releases/download/v",
@@ -8,6 +10,10 @@ _repo_tmpl = _kotlin_native_version.join([
     ".{ext}",
 ])
 
+# `http_archives` expect a sha256 of the artifacts: https://docs.bazel.build/versions/0.17.1/be/workspace.html#http_archive.sha256
+# These can be calculated with https://linux.die.net/man/1/sha256sum on the artifacts from the Bintray repository:
+# https://bintray.com/package/files/jetbrains/kotlin-native-dependencies/dependencies
+# These are typically slow to change.
 _WINDOWS_DEPENDENCIES = [
     ("libffi-3.2.1-mingw-w64-x86-64", "2047faedec4ca6bc074e12642ecf3a14545cbb248224ef3637965714d7e7ea5f"),
     ("msys2-mingw-w64-x86_64-gcc-7.3.0-clang-llvm-lld-6.0.1", "931131ae6545bc8afc497281cbd0a2c39eb2c067f3bfac53a993886fa00ba131"),
@@ -29,24 +35,26 @@ _LINUX_DEPENDENCIES = [
     ("target-sysroot-2-wasm", "039958041b364458d652237aaa06c12b89973ef0934819cca9d47299f1a76b64"),
 ]
 
+# `http_archives` expect a sha256 of the artifacts: https://docs.bazel.build/versions/0.17.1/be/workspace.html#http_archive.sha256
+# These can be calculated with https://linux.die.net/man/1/sha256sum on the artifacts from the Github release page (see above).
 PLATFORMS = {
     "windows": {
         "platform": "windows",
         "ext": "zip",
         "deps": _WINDOWS_DEPENDENCIES,
-        "sha": "2eed825696fcae19c49d3a32ee5a43971dd4992c2ce99a9a2be6e88334bcf875",
+        "sha": "13b622aa414c230df8939b3a75d11c9e748660869cfc94a76625d7d52b412e17",
     },
     "macos": {
         "platform": "macos",
         "ext": "tar.gz",
         "deps": _MACOS_DEPENDENCIES,
-        "sha": "100920f1a3352846bc5a2990c87cb71f221abf8261251632ad10c6459d962393",
+        "sha": "c189f26e70ff5617700ea8a3ddc8dcf3dc9c8f80413e005e2cef61c50d6d24d5",
     },
     "linux": {
         "platform": "linux",
         "ext": "tar.gz",
         "deps": _LINUX_DEPENDENCIES,
-        "sha": "15eb0589aef8dcb435e4cb04ef9a3ad90b8d936118b491618a70912cef742874",
+        "sha": "6b89467068be9a0f8197652bc0135c83bdbec0cb2d930763c3308b470982e8e0",
     },
 }
 
