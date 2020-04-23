@@ -23,7 +23,7 @@ import arcs.core.host.api.Particle
  * @property consecutiveFailureCount how many times this particle failed to start in a row
  */
 data class ParticleContext(
-    var particle: Particle,
+    val particle: Particle,
     val planParticle: Plan.Particle,
     val handles: MutableMap<String, Handle> = mutableMapOf(),
     var particleState: ParticleState = ParticleState.Instantiated,
