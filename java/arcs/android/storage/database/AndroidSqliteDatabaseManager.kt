@@ -60,4 +60,23 @@ class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
                 .forEach { it.removeExpiredEntities() }
         }
     }
+
+    override suspend fun removeAllEntities(): Job = coroutineScope {
+        launch {
+            registry.fetchAll()
+                .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
+                .forEach { it.removeAllEntities() }
+        }
+    }
+
+    override suspend fun removeEntitiesCreatedBetween(
+        startTimeMillis: Long,
+        endTimeMillis: Long
+    ): Job = coroutineScope {
+        launch {
+            registry.fetchAll()
+                .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
+                .forEach { it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis) }
+        }
+    }
 }

@@ -49,6 +49,14 @@ interface Database {
     /** Clears all expired entities, leaving only a tombstone with the version map. */
     suspend fun removeExpiredEntities()
 
+    /** Clears all entities, leaving only a tombstone with the version map. */
+    suspend fun removeAllEntities()
+
+    /** Clears all entities created in between the two times, leaving only a tombstone with the
+     * version map.
+     */
+    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
+
     /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
     suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot
 
