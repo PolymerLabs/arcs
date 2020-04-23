@@ -21,6 +21,7 @@ arcs_kt_android_library(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/util",
+        "//java/arcs/core/util",
         "//java/arcs/sdk/android/storage/service",
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/lifecycle",
