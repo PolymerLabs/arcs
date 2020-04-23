@@ -1733,12 +1733,12 @@ PrimaryExpression
     return toAstNode<AstNode.TextNode>({kind: 'text-node', value: txt.join('')});
   }
 
-Units = whiteSpace? name: Unitname {
+Units = whiteSpace? name: UnitName {
   // TODO: Support complex units like metres per second.
   return [name];
 }
 
-Unitname
+UnitName
   = unit:('day'
   / 'hour'
   / 'minute'
