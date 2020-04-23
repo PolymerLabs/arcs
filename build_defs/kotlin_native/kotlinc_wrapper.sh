@@ -47,7 +47,7 @@ set +f
 DEPENDENCIES=${_ALL_DEPS[idx]}
 
 
-repo_rel="${BASH_SOURCE[0]}.runfiles/kotlin_native_$PLATFORM/kotlin-native-$PLATFORM-1.3.50"
+repo_rel="${BASH_SOURCE[0]}.runfiles/kotlin_native_$PLATFORM/kotlin-native-$PLATFORM-1.3.70"
 repo=$(python -c '
 import sys
 import os.path
