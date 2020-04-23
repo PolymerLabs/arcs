@@ -84,12 +84,12 @@ class ManifestVisitor {
       }
       return;
     }
-    if (AstNode.INLINE_ENTITY in ast) {
+    assert(ast.location, 'expected manifest node to have `location`');
+    assert(ast.kind, 'expected manifest node to have `kind`');
+    if (ast.kind === 'entity-inline') {
       // This node holds an inline entity and will be handled by _processStore().
       return;
     }
-    assert(ast.location, 'expected manifest node to have `location`');
-    assert(ast.kind, 'expected manifest node to have `kind`');
     let childrenVisited = false;
     const visitChildren = () => {
       if (childrenVisited) {
